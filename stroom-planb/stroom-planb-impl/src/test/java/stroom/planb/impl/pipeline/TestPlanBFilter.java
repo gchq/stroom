@@ -1,0 +1,546 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.planb.impl.pipeline;
+
+import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
+import stroom.meta.shared.Meta;
+import stroom.pathways.shared.TraceWriter;
+import stroom.pathways.shared.otel.trace.AnyValue;
+import stroom.pathways.shared.otel.trace.ExportTraceServiceRequest;
+import stroom.pathways.shared.otel.trace.KeyValue;
+import stroom.pathways.shared.otel.trace.ResourceSpans;
+import stroom.pathways.shared.otel.trace.ScopeSpans;
+import stroom.pathways.shared.otel.trace.Span;
+import stroom.pathways.shared.otel.trace.SpanEvent;
+import stroom.pathways.shared.otel.trace.SpanLink;
+import stroom.pathways.shared.otel.trace.SpanStatus;
+import stroom.pathways.shared.otel.trace.StatusCode;
+import stroom.pipeline.LocationFactoryProxy;
+import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.errorhandler.FatalErrorReceiver;
+import stroom.pipeline.errorhandler.LoggingErrorReceiver;
+import stroom.pipeline.filter.TestFilter;
+import stroom.pipeline.filter.TestSAXEventFilter;
+import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.util.ProcessorUtil;
+import stroom.planb.impl.PlanBDocCache;
+import stroom.planb.impl.dao.PlanBStreamWriter;
+import stroom.planb.impl.dao.PlanBStreamWriterFactory;
+import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.data.value.TemporalValue;
+import stroom.planb.impl.serde.trace.SpanKey;
+import stroom.planb.impl.serde.trace.SpanValue;
+import stroom.planb.shared.PlanBDoc;
+import stroom.planb.shared.StateType;
+import stroom.util.json.JsonUtil;
+import stroom.util.shared.ElementId;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Consumer;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@ExtendWith(MockitoExtension.class)
+public class TestPlanBFilter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestPlanBFilter.class);
+    private static final JsonMapper MAPPER = createMapper(true);
+
+    @Mock
+    PlanBStreamWriterFactory shardWriters;
+    @Mock
+    PlanBStreamWriter shardWriter;
+    @Mock
+    PlanBDocCache planBDocCache;
+
+    @Test
+    void test() throws Exception {
+        final List<Span> spans = new ArrayList<>();
+
+        Mockito.when(shardWriters.createWriter(Mockito.any()))
+                .thenReturn(shardWriter);
+        Mockito.when(planBDocCache.get(Mockito.any()))
+                .thenReturn(PlanBDoc.builder()
+                        .uuid(UUID.randomUUID().toString())
+                        .stateType(StateType.TRACE)
+                        .build());
+        final Answer<?> answer = invocation -> {
+            final SpanKV spanKV = invocation.getArgument(1);
+            LOGGER.info(spanKV.toString());
+
+            assertThat(spans).isNotEmpty();
+            final Span expectedSpan = spans.removeFirst();
+            final SpanKey expectedKey = SpanKey.create(expectedSpan);
+            final SpanValue expectedValue = SpanValue.create(expectedSpan);
+            assertThat(spanKV.key()).isEqualTo(expectedKey);
+            assertThat(spanKV.val()).isEqualTo(expectedValue);
+
+            return null;
+        };
+        Mockito.doAnswer(answer)
+                .when(shardWriter)
+                .addSpanValue(Mockito.any(), Mockito.any());
+
+        // Write data as XML
+        final XmlWriter xmlWriter = new XmlWriter();
+        xmlWriter.element("plan-b",
+                List.of(
+                        new Attribute("xmlns", "plan-b:2"),
+                        new Attribute("version", "2.0")),
+                root -> {
+
+                    final TraceWriter writer = new TraceWriter() {
+                        @Override
+                        public void addSpan(final Span span) {
+                            spans.add(span);
+
+                            root.element("trace", trace -> {
+                                trace.data("map", "test");
+
+                                trace.element("span", spn -> {
+                                    spn.data("traceId", span.getTraceId());
+                                    spn.data("spanId", span.getSpanId());
+                                    spn.data("parentSpanId", span.getParentSpanId());
+                                    spn.data("traceState", span.getTraceState());
+                                    spn.data("flags", span.getFlags());
+                                    spn.data("name", span.getName());
+                                    spn.data("kind", span.getKind().getDisplayValue());
+                                    spn.data("startTimeUnixNano", span.getStartTimeUnixNano());
+                                    spn.data("endTimeUnixNano", span.getEndTimeUnixNano());
+
+                                    appendAttributes(spn, span.getAttributes());
+
+                                    spn.data("droppedAttributesCount", span.getDroppedAttributesCount());
+
+                                    if (span.getEvents() != null) {
+                                        spn.element("events", events -> {
+                                            for (final SpanEvent event : span.getEvents()) {
+                                                appendEvent(events, event);
+                                            }
+                                        });
+                                    }
+                                    spn.data("droppedEventsCount", span.getDroppedEventsCount());
+
+
+                                    if (span.getLinks() != null) {
+                                        spn.element("links", links -> {
+                                            for (final SpanLink link : span.getLinks()) {
+                                                appendLink(links, link);
+                                            }
+                                        });
+                                    }
+
+                                    spn.data("droppedLinksCount", span.getDroppedLinksCount());
+
+                                    if (span.getStatus() != null) {
+                                        spn.element("status", s -> {
+                                            s.data("message", span.getStatus().getMessage());
+                                            s.data("code", NullSafe
+                                                    .get(span,
+                                                            Span::getStatus,
+                                                            SpanStatus::getCode,
+                                                            StatusCode::getDisplayValue));
+                                        });
+                                    }
+                                });
+                            });
+                        }
+
+                        @Override
+                        public void close() {
+
+                        }
+                    };
+
+                    for (int i = 1; i <= 17; i++) {
+                        final Path p = Paths.get("src/test/resources/TestSpanValueSerde/TEST_TRACES~" + i + ".in");
+                        loadData(p, writer);
+                    }
+                });
+
+        assertThat(spans.size()).isEqualTo(166);
+
+        // Output XML
+        final String xml = xmlWriter.toString();
+        LOGGER.info(xml);
+
+        // Validate XML against Plan B schema.
+        final Path path = Paths.get("src/test/resources/TestPlanBFilter/plan_b_v2_0.xsd");
+        final Schema schema = loadSchema(Files.newInputStream(path));
+        schema.newValidator().validate(new StreamSource(new StringReader(xml)));
+
+        // Read spans back into PlanBFilter
+        testFilter(xml);
+    }
+
+    private void appendEvent(final XmlWriter sb, final SpanEvent spanEvent) {
+        sb.element("event", event -> {
+            event.data("timeUnixNano", spanEvent.getTimeUnixNano());
+            event.data("name", spanEvent.getName());
+            appendAttributes(event, spanEvent.getAttributes());
+            event.data("droppedAttributesCount", spanEvent.getDroppedAttributesCount());
+        });
+    }
+
+    private void appendLink(final XmlWriter xmlWriter, final SpanLink spanLink) {
+        xmlWriter.element("link", link -> {
+            link.data("traceId", spanLink.getTraceId());
+            link.data("spanId", spanLink.getSpanId());
+            link.data("traceState", spanLink.getTraceState());
+            appendAttributes(link, spanLink.getAttributes());
+            link.data("droppedAttributesCount", spanLink.getDroppedAttributesCount());
+        });
+    }
+
+    private void appendAttributes(final XmlWriter xmlWriter, final List<KeyValue> attributes) {
+        if (attributes != null) {
+            xmlWriter.element("attributes", writer -> {
+                for (final KeyValue keyValue : attributes) {
+                    appendKeyValue(writer, keyValue);
+                }
+            });
+        }
+    }
+
+    private void appendKeyValue(final XmlWriter xmlWriter, final KeyValue keyValue) {
+        xmlWriter.element("keyValue", writer -> {
+            writer.data("key", keyValue.getKey());
+            appendAnyValue(writer, keyValue.getValue());
+        });
+    }
+
+    private void appendAnyValue(final XmlWriter xmlWriter, final AnyValue anyValue) {
+        if (anyValue.getStringValue() != null) {
+            xmlWriter.data("stringValue", anyValue.getStringValue());
+        }
+        if (anyValue.getBoolValue() != null) {
+            xmlWriter.data("boolValue", anyValue.getBoolValue());
+        }
+        if (anyValue.getIntValue() != null) {
+            xmlWriter.data("intValue", anyValue.getIntValue());
+        }
+        if (anyValue.getDoubleValue() != null) {
+            xmlWriter.data("doubleValue", anyValue.getDoubleValue());
+        }
+        if (anyValue.getArrayValue() != null && anyValue.getArrayValue().getValues() != null) {
+            xmlWriter.element("arrayValue", arrayValue -> {
+                for (final AnyValue value : anyValue.getArrayValue().getValues()) {
+                    appendAnyValue(arrayValue, value);
+                }
+            });
+        }
+        if (anyValue.getKvlistValue() != null && anyValue.getKvlistValue().getValues() != null) {
+            xmlWriter.element("kvlistValue", kvlistValue -> {
+                for (final KeyValue value : anyValue.getKvlistValue().getValues()) {
+                    appendKeyValue(kvlistValue, value);
+                }
+            });
+        }
+        if (anyValue.getBytesValue() != null) {
+            xmlWriter.data("bytesValue", anyValue.getBytesValue());
+        }
+    }
+
+    private void loadData(final Path path,
+                          final TraceWriter writer) {
+        try (final BufferedReader lineReader = Files.newBufferedReader(path)) {
+            final String line = lineReader.readLine();
+            final ExportTraceServiceRequest exportRequest = MAPPER.readValue(line, ExportTraceServiceRequest.class);
+            for (final ResourceSpans resourceSpans : NullSafe.list(exportRequest.getResourceSpans())) {
+                for (final ScopeSpans scopeSpans : NullSafe.list(resourceSpans.getScopeSpans())) {
+                    for (final Span span : NullSafe.list(scopeSpans.getSpans())) {
+                        writer.addSpan(span);
+                    }
+                }
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private static JsonMapper createMapper(final boolean indent) {
+        return JsonUtil.getMapper(indent)
+                .rebuild()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true)
+                .build();
+    }
+
+    private Schema loadSchema(final InputStream inputStream) throws Exception {
+        final SchemaFactory schemaFactory = SchemaFactory.newInstance("http://www.w3.org/2001/XMLSchema");
+//        schemaFactory.setErrorHandler(new ErrorHandlerAdaptor());
+//        schemaFactory.setResourceResolver(new LSResourceResolverImpl(xmlSchemaCache, findXMLSchemaCriteria));
+
+        return schemaFactory.newSchema(new StreamSource(inputStream));
+    }
+
+    /**
+     * A trace without a span must be reported as a record error, not silently store the previous trace's
+     * span again.
+     */
+    @Test
+    void traceWithoutSpanDoesNotReuseThePreviousSpan() {
+        Mockito.when(shardWriters.createWriter(Mockito.any()))
+                .thenReturn(shardWriter);
+        Mockito.when(planBDocCache.get(Mockito.eq("test")))
+                .thenReturn(PlanBDoc.builder()
+                        .uuid(UUID.randomUUID().toString())
+                        .stateType(StateType.TRACE)
+                        .build());
+
+        final String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <plan-b xmlns="plan-b:2" version="2.0">
+                   <trace>
+                      <map>test</map>
+                      <span>
+                         <traceId>0123456789abcdef0123456789abcdef</traceId>
+                         <spanId>0123456789abcdef</spanId>
+                         <name>span-one</name>
+                         <kind>Internal</kind>
+                         <startTimeUnixNano>1000000000</startTimeUnixNano>
+                         <endTimeUnixNano>2000000000</endTimeUnixNano>
+                      </span>
+                   </trace>
+                   <trace>
+                      <map>test</map>
+                   </trace>
+                </plan-b>
+                """;
+
+        final LoggingErrorReceiver errorReceiver = process(xml);
+
+        // Only the trace that actually contained a span is stored; the span-less trace is an error.
+        Mockito.verify(shardWriter, Mockito.times(1)).addSpanValue(Mockito.any(), Mockito.any());
+        assertThat(errorReceiver.getTotal(Severity.ERROR)).isEqualTo(1);
+    }
+
+    /**
+     * A bad or missing histogram value must be reported as a record error and processing must continue
+     * with the next record, mirroring the from/to range handling.
+     */
+    @Test
+    void histogramBadValueIsARecordErrorNotFatal() {
+        Mockito.when(shardWriters.createWriter(Mockito.any()))
+                .thenReturn(shardWriter);
+        Mockito.when(planBDocCache.get(Mockito.eq("hmap")))
+                .thenReturn(PlanBDoc.builder()
+                        .uuid(UUID.randomUUID().toString())
+                        .stateType(StateType.HISTOGRAM)
+                        .build());
+
+        final String xml = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <plan-b xmlns="plan-b:2" version="2.0">
+                   <histogram>
+                      <map>hmap</map>
+                      <key>k1</key>
+                      <time>2000-01-01T00:00:00.000Z</time>
+                      <value>notanumber</value>
+                   </histogram>
+                   <histogram>
+                      <map>hmap</map>
+                      <key>k1</key>
+                      <time>2000-01-01T00:00:00.000Z</time>
+                      <value>42</value>
+                   </histogram>
+                </plan-b>
+                """;
+
+        final LoggingErrorReceiver errorReceiver = process(xml);
+
+        final ArgumentCaptor<TemporalValue> valueCaptor = ArgumentCaptor.forClass(TemporalValue.class);
+        Mockito.verify(shardWriter, Mockito.times(1)).addHistogramValue(Mockito.any(), valueCaptor.capture());
+        assertThat(valueCaptor.getValue().val()).isEqualTo(42L);
+        assertThat(errorReceiver.getTotal(Severity.ERROR)).isEqualTo(1);
+    }
+
+    /**
+     * Process xml through the filter, capturing record errors rather than failing on them.
+     */
+    private LoggingErrorReceiver process(final String xml) {
+        final LoggingErrorReceiver errorReceiver = new LoggingErrorReceiver();
+        final ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+
+        final MetaHolder metaHolder = new MetaHolder();
+        metaHolder.setMeta(new Meta());
+        final PlanBFilter filter = new PlanBFilter(
+                new ErrorReceiverProxy(errorReceiver),
+                new LocationFactoryProxy(),
+                metaHolder,
+                new ByteBufferFactoryImpl(),
+                shardWriters,
+                planBDocCache);
+        filter.setElementId(new ElementId("planBFilter"));
+
+        ProcessorUtil.processXml(input, new ErrorReceiverProxy(errorReceiver), filter,
+                new LocationFactoryProxy());
+        return errorReceiver;
+    }
+
+    private long countLines(final String text, final String prefix) {
+        return text.lines().filter(line -> line.startsWith(prefix)).count();
+    }
+
+    private void testFilter(final String xml) {
+        final ByteArrayInputStream input = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8));
+
+        final MetaHolder metaHolder = new MetaHolder();
+        metaHolder.setMeta(new Meta());
+        final PlanBFilter splitter = new PlanBFilter(
+                new ErrorReceiverProxy(new FatalErrorReceiver()),
+                new LocationFactoryProxy(),
+                metaHolder,
+                new ByteBufferFactoryImpl(),
+                shardWriters,
+                planBDocCache);
+
+        final TestFilter testFilter = new TestFilter(null, null);
+
+        final TestSAXEventFilter testSAXEventFilter = new TestSAXEventFilter();
+
+        splitter.setTarget(testFilter);
+        testFilter.setTarget(testSAXEventFilter);
+
+        ProcessorUtil.processXml(input, new ErrorReceiverProxy(new FatalErrorReceiver()), splitter,
+                new LocationFactoryProxy());
+
+        // The filter must forward balanced SAX events to downstream filters, including for trace content.
+        final String saxEvents = testSAXEventFilter.getOutput();
+        assertThat(countLines(saxEvents, "startElement:"))
+                .isGreaterThan(0)
+                .isEqualTo(countLines(saxEvents, "endElement:"));
+
+//        final List<String> actualXmlList = testFilter.getOutputs()
+//                .stream()
+//                .map(String::trim)
+//                .map(s -> s.replaceAll("\r", ""))
+//                .collect(Collectors.toList());
+//        final String actualSax = testSAXEventFilter.getOutput().trim();
+//
+//        // Test to see if the output SAX is the same as the expected SAX.
+//        ComparisonHelper.compareStrings(expectedSax, actualSax, "Expected and actual SAX do not match at index: ");
+//
+//        // Test to see if the output XML is the same as the expected XML.
+//        LOGGER.info(String.format("Expected List %d", expectedXmlList.size()));
+//        expectedXmlList.forEach(LOGGER::info);
+//        LOGGER.info(String.format("Actual List %d", actualXmlList.size()));
+//        actualXmlList.forEach(LOGGER::info);
+//
+//        assertThat(actualXmlList).hasSize(expectedXmlList.size()); // first just check the size
+//        final Iterator<String> actualXmlIter = actualXmlList.iterator();
+//        for (final String expectedXml : expectedXmlList) {
+//            final String actualXml = actualXmlIter.next();
+//            ComparisonHelper.compareStrings(expectedXml, actualXml,
+//            "Expected and actual XML do not match at index: ");
+//        }
+    }
+
+    private static class XmlWriter {
+
+        private final StringBuilder sb;
+        private final int depth;
+
+        public XmlWriter() {
+            this(new StringBuilder(), 0);
+            sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n");
+        }
+
+        private XmlWriter(final StringBuilder sb,
+                          final int depth) {
+            this.sb = sb;
+            this.depth = depth;
+        }
+
+        void data(final String name, final Object object) {
+            if (object != null) {
+                pad();
+                sb.append("<").append(name).append(">");
+                sb.append(object);
+                sb.append("</").append(name).append(">\n");
+            }
+        }
+
+
+        void element(final String name, final Consumer<XmlWriter> consumer) {
+            element(name, Collections.emptyList(), consumer);
+        }
+
+        void element(final String name,
+                     final List<Attribute> attributes,
+                     final Consumer<XmlWriter> consumer) {
+            pad();
+            sb.append("<").append(name);
+            for (final Attribute attribute : attributes) {
+                sb.append(" ");
+                sb.append(attribute.key);
+                sb.append("=\"");
+                sb.append(attribute.value);
+                sb.append("\"");
+            }
+            sb.append(">\n");
+            consumer.accept(new XmlWriter(sb, depth + 1));
+            pad();
+            sb.append("</").append(name).append(">\n");
+        }
+
+        private void pad() {
+            for (int i = 0; i < depth; i++) {
+                sb.append("   ");
+            }
+        }
+
+        @Override
+        public String toString() {
+            return sb.toString();
+        }
+    }
+
+    private record Attribute(String key, String value) {
+
+    }
+}

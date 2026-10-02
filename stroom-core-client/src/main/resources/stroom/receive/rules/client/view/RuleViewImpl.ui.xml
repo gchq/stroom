@@ -5,13 +5,24 @@
              xmlns:form="urn:import:stroom.widget.form.client"
 >
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="ruleExpression" label="Expression" addStyleNames="dock-max">
-            <g:SimplePanel ui:field="expression" styleName="max default-min-sizes stroom-control"/>
+        <form:FormGroup identity="ruleExpression"
+                        label="Expression"
+                        helpText="The expression to match against the meta entries on receipt."
+                        addStyleNames="dock-max">
+<!--            <g:SimplePanel ui:field="expression" styleName="max default-min-sizes stroom-control"/>-->
+            <g:SimplePanel ui:field="expression" styleName="max"/>
         </form:FormGroup>
-        <form:FormGroup identity="ruleRuleName" label="Rule Name (optional)">
+
+        <form:FormGroup identity="ruleRuleName"
+                        label="Rule Name (optional)"
+                        helpText="The name of the rule. This is optional and for the benefit of the user in
+                            distinguishing rules">
             <g:TextBox ui:field="name" addStyleNames="ruleViewImpl-name"/>
         </form:FormGroup>
-        <form:FormGroup identity="ruleAction" label="Action">
+
+        <form:FormGroup identity="ruleAction"
+                        label="Action"
+                        helpText="The action to perform on data that matches this rule.">
             <i:SelectionBox ui:field="action"/>
         </form:FormGroup>
     </g:FlowPanel>

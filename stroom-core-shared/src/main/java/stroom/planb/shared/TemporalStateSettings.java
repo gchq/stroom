@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -9,42 +25,53 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "condense",
-        "retention",
         "maxStoreSize",
-        "overwrite"
+        "synchroniseMerge",
+        "overwrite",
+        "retention",
+        "snapshotSettings",
+        "condense",
+        "keySchema",
+        "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public class TemporalStateSettings extends AbstractPlanBSettings {
+public final class TemporalStateSettings
+        extends AbstractHttpStoreSettings
+        implements HasCondenseSettings {
 
     @JsonProperty
     private final DurationSetting condense;
     @JsonProperty
-    private final DurationSetting retention;
+    private final TemporalStateKeySchema keySchema;
     @JsonProperty
-    private final Boolean overwrite;
+    private final StateValueSchema valueSchema;
 
     @JsonCreator
-    public TemporalStateSettings(@JsonProperty("condense") final DurationSetting condense,
-                                 @JsonProperty("retention") final DurationSetting retention,
-                                 @JsonProperty("maxStoreSize") final Long maxStoreSize,
-                                 @JsonProperty("overwrite") final Boolean overwrite) {
-        super(maxStoreSize);
-        this.condense = condense;
-        this.retention = retention;
-        this.overwrite = overwrite;
+    public TemporalStateSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
+                                 @JsonProperty("synchroniseMerge") final Boolean synchroniseMerge,
+                                 @JsonProperty("overwrite") final Boolean overwrite,
+                                 @JsonProperty("retention") final RetentionSettings retention,
+                                 @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                                 @JsonProperty("condense") final DurationSetting condense,
+                                 @JsonProperty("keySchema") final TemporalStateKeySchema keySchema,
+                                 @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
+        super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
+        this.condense = Objects.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new TemporalStateKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
+    @Override
     public DurationSetting getCondense() {
         return condense;
     }
 
-    public DurationSetting getRetention() {
-        return retention;
+    public TemporalStateKeySchema getKeySchema() {
+        return keySchema;
     }
 
-    public Boolean getOverwrite() {
-        return overwrite;
+    public StateValueSchema getValueSchema() {
+        return valueSchema;
     }
 
     @Override
@@ -60,46 +87,45 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
         }
         final TemporalStateSettings that = (TemporalStateSettings) o;
         return Objects.equals(condense, that.condense) &&
-               Objects.equals(retention, that.retention) &&
-               Objects.equals(overwrite, that.overwrite);
+               Objects.equals(keySchema, that.keySchema) &&
+               Objects.equals(valueSchema, that.valueSchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), condense, retention, overwrite);
+        return Objects.hash(
+                super.hashCode(),
+                condense,
+                keySchema,
+                valueSchema);
     }
 
     @Override
     public String toString() {
         return "TemporalStateSettings{" +
-               "condense=" + condense +
-               ", retention=" + retention +
-               ", overwrite=" + overwrite +
+               super.toString() +
+               ", condense=" + condense +
+               ", keySchema=" + keySchema +
+               ", valueSchema=" + valueSchema +
                '}';
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
+    public static class Builder extends AbstractHttpBuilder<TemporalStateSettings, Builder> {
 
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-    public static class Builder extends AbstractBuilder<TemporalStateSettings, Builder> {
-
-        protected DurationSetting condense;
-        protected DurationSetting retention;
-        protected Boolean overwrite;
+        private DurationSetting condense;
+        private TemporalStateKeySchema keySchema;
+        private StateValueSchema valueSchema;
 
         public Builder() {
         }
 
         public Builder(final TemporalStateSettings settings) {
             super(settings);
-            this.condense = settings.condense;
-            this.retention = settings.retention;
-            this.overwrite = settings.overwrite;
+            if (settings != null) {
+                this.condense = settings.condense;
+                this.keySchema = settings.keySchema;
+                this.valueSchema = settings.valueSchema;
+            }
         }
 
         public Builder condense(final DurationSetting condense) {
@@ -107,13 +133,13 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
             return self();
         }
 
-        public Builder retention(final DurationSetting retention) {
-            this.retention = retention;
+        public Builder keySchema(final TemporalStateKeySchema keySchema) {
+            this.keySchema = keySchema;
             return self();
         }
 
-        public Builder overwrite(final Boolean overwrite) {
-            this.overwrite = overwrite;
+        public Builder valueSchema(final StateValueSchema valueSchema) {
+            this.valueSchema = valueSchema;
             return self();
         }
 
@@ -125,10 +151,14 @@ public class TemporalStateSettings extends AbstractPlanBSettings {
         @Override
         public TemporalStateSettings build() {
             return new TemporalStateSettings(
-                    condense,
-                    retention,
                     maxStoreSize,
-                    overwrite);
+                    synchroniseMerge,
+                    overwrite,
+                    retention,
+                    snapshotSettings,
+                    condense,
+                    keySchema,
+                    valueSchema);
         }
     }
 }

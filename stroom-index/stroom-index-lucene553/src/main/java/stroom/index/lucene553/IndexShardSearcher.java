@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ class IndexShardSearcher {
                 searcherManager = new SearcherManager(directory, new SearcherFactory());
 
                 // Check the document count in the index matches the DB.
-                IndexSearcher indexSearcher = searcherManager.acquire();
+                final IndexSearcher indexSearcher = searcherManager.acquire();
                 try {
                     final int actualDocumentCount = indexSearcher.getIndexReader().numDocs();
                     if (indexShard.getDocumentCount() != actualDocumentCount) {
@@ -137,7 +137,7 @@ class IndexShardSearcher {
         // Check the document count in the index matches the DB. We are using
         // the writer so chances are there is a mismatch.
         if (LOGGER.isDebugEnabled()) {
-            IndexSearcher indexSearcher = searcherManager.acquire();
+            final IndexSearcher indexSearcher = searcherManager.acquire();
             try {
                 final int actualDocumentCount = indexSearcher.getIndexReader().numDocs();
                 if (indexShard.getDocumentCount() != actualDocumentCount) {

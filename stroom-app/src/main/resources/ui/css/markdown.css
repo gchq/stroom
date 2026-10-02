@@ -15,6 +15,7 @@
   -moz-user-select: text !important;
   -ms-user-select: text !important;
   padding-top: 5px;
+  scroll-behavior: smooth;
 }
 
 .markdown-container.markdown {

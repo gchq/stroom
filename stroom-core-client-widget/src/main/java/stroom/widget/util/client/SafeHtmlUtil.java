@@ -1,17 +1,48 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.util.client;
 
 import stroom.util.shared.NullSafe;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.safecss.shared.SafeStyles;
+import com.google.gwt.safecss.shared.SafeStylesBuilder;
+import com.google.gwt.safehtml.client.SafeHtmlTemplates;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
+import java.util.Optional;
+
 public class SafeHtmlUtil {
+
+    private static Template template;
 
     public static final SafeHtml NBSP = SafeHtmlUtils.fromSafeConstant("&nbsp;");
     public static final SafeHtml ENSP = SafeHtmlUtils.fromSafeConstant("&ensp;");
 
     private SafeHtmlUtil() {
+    }
+
+    public static Template getTemplate() {
+        if (template == null) {
+            template = GWT.create(Template.class);
+        }
+        return template;
     }
 
     public static SafeHtml nullSafe(final SafeHtml safeHtml) {
@@ -163,18 +194,17 @@ public class SafeHtmlUtil {
     }
 
     /**
+     * @param trustedColour Must be trusted and known at compile time
      * @return Text coloured grey if enabled is false
      */
-    public static SafeHtml getColouredText(final String string, final String colour) {
-        if (colour == null || colour.isEmpty()) {
-            return getSafeHtml(string);
+    public static SafeHtml getColouredText(final String text, final String trustedColour) {
+        if (NullSafe.isEmptyString(trustedColour)) {
+            return getSafeHtml(text);
+        } else {
+            return getTemplate().spanWithStyle(
+                    new SafeStylesBuilder().trustedColor(trustedColour).toSafeStyles(),
+                    SafeHtmlUtil.getSafeHtml(text));
         }
-
-        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-        builder.appendHtmlConstant("<span style=\"color:" + colour + "\">");
-        builder.appendEscaped(nullSafe(string));
-        builder.appendHtmlConstant("</span>");
-        return builder.toSafeHtml();
     }
 
     public static SafeHtml getColouredText(final String string,
@@ -187,87 +217,153 @@ public class SafeHtmlUtil {
         }
     }
 
-    public static SafeHtml from(boolean b) {
+    public static SafeHtml from(final boolean b) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(b));
     }
 
-    public static SafeHtml from(byte num) {
+    public static SafeHtml from(final byte num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(char c) {
+    public static SafeHtml from(final char c) {
         return SafeHtmlUtils.fromTrustedString(SafeHtmlUtils.htmlEscape(c));
     }
 
-    public static SafeHtml from(double num) {
+    public static SafeHtml from(final double num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(float num) {
+    public static SafeHtml from(final float num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(int num) {
+    public static SafeHtml from(final int num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(long num) {
+    public static SafeHtml from(final long num) {
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Boolean b) {
+    public static SafeHtml from(final Boolean b) {
         if (b == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(b));
     }
 
-    public static SafeHtml from(Byte num) {
+    public static SafeHtml from(final Byte num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Character c) {
+    public static SafeHtml from(final Character c) {
         if (c == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(SafeHtmlUtils.htmlEscape(c));
     }
 
-    public static SafeHtml from(Double num) {
+    public static SafeHtml from(final Double num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Float num) {
+    public static SafeHtml from(final Float num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Integer num) {
+    public static SafeHtml from(final Integer num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(Long num) {
+    public static SafeHtml from(final Long num) {
         if (num == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromTrustedString(String.valueOf(num));
     }
 
-    public static SafeHtml from(String string) {
+    public static SafeHtml from(final String string) {
         if (string == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
         return SafeHtmlUtils.fromString(string);
+    }
+
+    /**
+     * If untrustedColour is a valid HTML colour (i.e. a valid colour name or hex/rgb/rgba/hsl code)
+     * then an {@link Optional} will be returned populated with that colour. The returned value
+     * will also be html escaped for good measure.
+     *
+     * @param untrustedColour An untrusted colour value
+     * @return A trusted colour value.
+     */
+    public static Optional<String> asTrustedColour(final String untrustedColour) {
+        if (NullSafe.isNonBlankString(untrustedColour)) {
+            final String escaped = SafeHtmlUtils.htmlEscape(untrustedColour.trim());
+            if (nativeIsValidHtmlColour(escaped)
+                && !"unset".equalsIgnoreCase(escaped)
+                && !"initial".equalsIgnoreCase(escaped)
+                && !"inherit".equalsIgnoreCase(escaped)) {
+                return Optional.of(escaped);
+            } else {
+                return Optional.empty();
+            }
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @SuppressWarnings("GrazieInspection")
+    private static native boolean nativeIsValidHtmlColour(final String untrustedColour) /*-{
+        // Set the untrusted colour on a new Option element. If we can read it back non-empty
+        // then it is a valid colour.
+        var s = new Option().style;
+        s.color = untrustedColour;
+        return s.color !== '';
+    }-*/;
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface Template extends SafeHtmlTemplates {
+
+        @SafeHtmlTemplates.Template("<div>{0}</div>")
+        SafeHtml div(SafeHtml inner);
+
+        @SafeHtmlTemplates.Template("<div class=\"{0}\">{1}</div>")
+        SafeHtml divWithClass(String className, SafeHtml inner);
+
+        @SafeHtmlTemplates.Template("<div title=\"{0}\">{1}</div>")
+        SafeHtml divWithTitle(String title, SafeHtml inner);
+
+        @SafeHtmlTemplates.Template("<div style=\"{0}\">{1}</div>")
+        SafeHtml divWithStyle(SafeStyles style, SafeHtml inner);
+
+        @SafeHtmlTemplates.Template("<div class=\"{0}\" title=\"{1}\">{2}</div>")
+        SafeHtml divWithClassAndTitle(String className, String title, SafeHtml inner);
+
+        @SafeHtmlTemplates.Template("<div class=\"{0}\" style=\"{1}\" title=\"{2}\">{3}</div>")
+        SafeHtml divWithClassStyleAndTitle(String className, SafeStyles style, String title, SafeHtml inner);
+
+        @SafeHtmlTemplates.Template("<div class=\"{0}\" style=\"{1}\">{2}</div>")
+        SafeHtml divWithClassAndStyle(String className, SafeStyles style, SafeHtml inner);
+
+        @SafeHtmlTemplates.Template("<span class=\"{0}\">{1}</span>")
+        SafeHtml spanWithClass(String className, SafeHtml inner);
+
+        @SafeHtmlTemplates.Template("<span style=\"{0}\">{1}</span>")
+        SafeHtml spanWithStyle(SafeStyles style, SafeHtml inner);
     }
 }

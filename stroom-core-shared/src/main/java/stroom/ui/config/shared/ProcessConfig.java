@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
@@ -34,10 +50,10 @@ public class ProcessConfig extends AbstractConfig implements IsStroomConfig {
     }
 
     @JsonCreator
-    public ProcessConfig(@JsonProperty("defaultTimeLimit") final long defaultTimeLimit,
-                         @JsonProperty("defaultRecordLimit") final long defaultRecordLimit) {
-        this.defaultTimeLimit = defaultTimeLimit;
-        this.defaultRecordLimit = defaultRecordLimit;
+    public ProcessConfig(@JsonProperty("defaultTimeLimit") final Long defaultTimeLimit,
+                         @JsonProperty("defaultRecordLimit") final Long defaultRecordLimit) {
+        this.defaultTimeLimit = Objects.requireNonNullElse(defaultTimeLimit, DEFAULT_TIME_LIMIT);
+        this.defaultRecordLimit = Objects.requireNonNullElse(defaultRecordLimit, DEFAULT_RECORD_LIMIT);
     }
 
     public long getDefaultTimeLimit() {

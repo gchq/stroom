@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.core.dataprocess;
@@ -74,9 +73,9 @@ import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -86,6 +85,7 @@ import stroom.util.io.PreviewInputStream;
 import stroom.util.io.WrappedOutputStream;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -116,6 +116,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
     private static final Pattern XML_DECL_PATTERN = Pattern.compile(
             "<\\?\\s*xml[^>]*>",
             Pattern.CASE_INSENSITIVE);
+    private static final ElementId ELEMENT_ID = new ElementId("PipelineStreamProcessor");
 
     private final PipelineFactory pipelineFactory;
     private final Store streamStore;
@@ -314,6 +315,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             // Create some processing info.
             final String info = " pipeline=" +
                                 pipelineDoc.getName() +
+                                ", pipeline uuid=" + pipelineDoc.getUuid() +
                                 ", feed=" +
                                 feedName +
                                 ", meta_id=" +
@@ -400,7 +402,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
             final long count = source.count();
             for (long index = 0; index < count && !taskContext.isTerminated(); index++) {
                 try (final InputStreamProvider inputStreamProvider = source.get(index)) {
-                    InputStream inputStream;
+                    final InputStream inputStream;
 
                     // If the task requires specific events to be processed then
                     // add them.
@@ -463,8 +465,8 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                             }
 
                             // Reset the error statistics for the next stream.
-                            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics errorStatistics) {
-                                errorStatistics.reset();
+                            if (errorReceiverProxy.getErrorReceiver() instanceof final ErrorStatistics errorStats) {
+                                errorStats.reset();
                             }
                         }
                     }
@@ -492,13 +494,13 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                    || e instanceof RuntimeException) {
             // An exception that's gets here is definitely a failure.
             outputFatalError(e);
-        } else if (e instanceof Error err) {
+        } else if (e instanceof final Error err) {
             // If we get here we are into OOM, stackOverflow type critical JVM errors so try to log
             // the failure (if the JVM allows) but re-throw as we should not really be swallowing JVM Errors.
             try {
                 LOGGER.error("Error while processing data task: id = {}", NullSafe.get(meta, Meta::getId), e);
                 outputFatalError(e);
-            } catch (Exception e2) {
+            } catch (final Exception e2) {
                 // Error while logging
                 LOGGER.error("Error while trying to log error '{}'", e.getMessage(), e2);
             }
@@ -517,9 +519,9 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
         if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
             try {
                 if (e.getMessage() != null) {
-                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", e.getMessage(), e);
+                    errorReceiverProxy.log(severity, null, ELEMENT_ID, e.getMessage(), e);
                 } else {
-                    errorReceiverProxy.log(severity, null, "PipelineStreamProcessor", e.toString(), e);
+                    errorReceiverProxy.log(severity, null, ELEMENT_ID, e.toString(), e);
                 }
             } catch (final RuntimeException e2) {
                 // Ignore exception as we generated it.
@@ -527,7 +529,7 @@ public abstract class AbstractProcessorTaskExecutor implements ProcessorTaskExec
                         severity, e.getMessage(), e2);
             }
 
-            if (errorReceiverProxy.getErrorReceiver() instanceof ErrorStatistics errorStatistics) {
+            if (errorReceiverProxy.getErrorReceiver() instanceof final ErrorStatistics errorStatistics) {
                 errorStatistics.checkRecord(-1);
             }
 

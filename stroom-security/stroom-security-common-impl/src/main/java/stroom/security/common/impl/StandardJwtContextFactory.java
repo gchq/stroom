@@ -1,11 +1,26 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.openid.api.AbstractOpenIdConfig;
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.util.concurrent.CachedValue;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.json.JsonUtil;
@@ -13,6 +28,9 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
+import stroom.util.string.TemplateUtil;
+import stroom.util.string.TemplateUtil.Template;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -26,12 +44,16 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.Response;
 import org.eclipse.jetty.http.HttpStatus;
 import org.jose4j.base64url.SimplePEMEncoder;
+import org.jose4j.jwa.AlgorithmConstraints;
+import org.jose4j.jwa.AlgorithmConstraints.ConstraintType;
 import org.jose4j.jwk.JsonWebKeySet;
+import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.jwt.consumer.JwtContext;
+import org.jose4j.jwx.JsonWebStructure;
 import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
 import org.jose4j.keys.resolvers.VerificationKeyResolver;
 
@@ -45,6 +67,7 @@ import java.time.Duration;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -75,6 +98,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardJwtContextFactory.class);
 
     // TODO: 24/02/2023 These header keys ought to be in config
+    //  Do as part of https://github.com/gchq/stroom/issues/5070
     /**
      * The access token from the token endpoint, in plain text.
      */
@@ -91,32 +115,43 @@ public class StandardJwtContextFactory implements JwtContextFactory {
     static final String SIGNER_HEADER_KEY = "signer";
     static final String AMZN_OIDC_SIGNER_SPLIT_CHAR = ":";
     static final Pattern AMZN_REGION_PATTERN = Pattern.compile("^[a-z0-9-]+$");
+    // The AWS ELB key id (JWT 'kid') is inserted into the public-key URL path. The host is already pinned, but
+    // constrain the key id to a safe charset/length so it cannot inject path segments (e.g. '../') or other
+    // characters into that URL. AWS ELB key ids are UUIDs; this is deliberately a little more permissive.
+    static final Pattern AMZN_KEY_ID_PATTERN = Pattern.compile("^[a-zA-Z0-9._-]{1,128}$");
+    static final CIKey AWS_REGION_TEMPLATE_VARIABLE = CIKey.internStaticKey("awsRegion");
+    static final CIKey KEY_ID_TEMPLATE_VARIABLE = CIKey.internStaticKey("keyId");
 
     private static final String AUTHORIZATION_HEADER = HttpHeaders.AUTHORIZATION;
 
     private final Provider<OpenIdConfiguration> openIdConfigurationProvider;
     private final OpenIdPublicKeysSupplier openIdPublicKeysSupplier;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     private final JerseyClientFactory jerseyClientFactory;
 
     // Stateful things
     // Not clear whether AWS re-uses public keys or not so this may not be needed
     private volatile LoadingCache<String, PublicKey> awsPublicKeyCache = null; // uri => publicKey
+    private final CachedValue<Template, String> awsPublicKeyUriTemplator;
 
     @Inject
     public StandardJwtContextFactory(final Provider<OpenIdConfiguration> openIdConfigurationProvider,
                                      final OpenIdPublicKeysSupplier openIdPublicKeysSupplier,
-                                     final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                      final JerseyClientFactory jerseyClientFactory) {
         this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.openIdPublicKeysSupplier = openIdPublicKeysSupplier;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.jerseyClientFactory = jerseyClientFactory;
+
+        this.awsPublicKeyUriTemplator = CachedValue.builder()
+                .withMaxCheckIntervalMinutes(1)
+                .withStateSupplier(() ->
+                        NullSafe.nonBlankStringElse(openIdConfigurationProvider.get().getPublicKeyUriPattern(),
+                                AbstractOpenIdConfig.DEFAULT_AWS_PUBLIC_KEY_URI_TEMPLATE))
+                .withValueFunction(template -> TemplateUtil.parseTemplate(template))
+                .build();
     }
 
     private LoadingCache<String, PublicKey> createAwsPublicKeyCache() {
         LOGGER.info("Creating cache for AWS public keys");
-        // TODO: 24/02/2023 Probably ought to come from config
         // Need to use caffeine rather than StroomCache as this is used in proxy which
         // doesn't have it
         final LoadingCache<String, PublicKey> awsPublicKeyCache;
@@ -209,6 +244,33 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 });
     }
 
+    /**
+     * When {@code requiredAccessTokenType} is configured, a standard bearer token must carry that JOSE
+     * {@code typ} header value, so a token of another type (e.g. an id_token) cannot be replayed as an access
+     * token. When it is not configured, any type is accepted (identity providers do not agree on a single
+     * value - RFC 9068 uses {@code at+jwt}, Keycloak uses {@code Bearer}). The comparison is case-insensitive,
+     * as a JOSE {@code typ} is a media type (RFC 7515). This applies only to standard bearer tokens on the
+     * request path - not to the AWS ELB data token (verified with the ELB key) and not to the token
+     * verification used by the interactive auth-code flow.
+     */
+    private boolean hasAllowedAccessTokenType(final JwtContext jwtContext) {
+        final String requiredType = openIdConfigurationProvider.get().getRequiredAccessTokenType();
+        if (NullSafe.isBlankString(requiredType)) {
+            return true;
+        }
+        final List<JsonWebStructure> joseObjects = jwtContext.getJoseObjects();
+        final String type = joseObjects.isEmpty()
+                ? null
+                : joseObjects.getLast().getHeaders().getStringHeaderValue("typ");
+        if (!requiredType.equalsIgnoreCase(type)) {
+            LOGGER.warn(() -> LogUtil.message(
+                    "Rejecting a token presented as a bearer credential with typ '{}' (required '{}')",
+                    type, requiredType));
+            return false;
+        }
+        return true;
+    }
+
     private boolean isAwsSignedToken(final HeaderToken headerToken, final JwsParts jwsParts) {
         if (AMZN_OIDC_DATA_HEADER.equals(headerToken.header)) {
             LOGGER.debug("Found header {}", AMZN_OIDC_DATA_HEADER);
@@ -237,9 +299,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         final JwsParts jwsParts = parseJws(headerToken.jwt);
 
         if (isAwsSignedToken(headerToken, jwsParts)) {
+            // An AWS ELB data token arrives in its own header and is verified with the ELB's key; it is not a
+            // standard bearer access token, so the requiredAccessTokenType check does not apply to it.
             optJwtContext = getAwsJwtContext(jwsParts);
         } else {
-            optJwtContext = getStandardJwtContext(headerToken.jwt);
+            optJwtContext = getStandardJwtContext(headerToken.jwt)
+                    .filter(this::hasAllowedAccessTokenType);
         }
 
         LOGGER.debug(() -> LogUtil.message("jwtClaims:\n{}",
@@ -275,22 +340,28 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
 
     private JwsParts parseJws(final String jws) {
-        LOGGER.debug(() -> "jws=" + jws);
+        LOGGER.debug("jws: {}", jws);
 
-        // Step 1: Get the key id from JWT headers (the kid field)
-        // Regex split on single char will not use regex so no need to pre-compile
-        final String[] parts = jws.split("\\.");
-        final String header = parts[0];
-        final String payload = parts[1];
-        final String signature = parts[2];
+        try {
+            // Step 1: Get the key id from JWT headers (the kid field)
+            // Regex split on single char will not use regex so no need to pre-compile
+            final String[] parts = jws.split("\\.");
+            final String header = parts[0];
+            final String payload = parts[1];
+            final String signature = parts[2];
 
-        LOGGER.debug(() -> "header=" + header + ", payload=" + payload + ", signature=" + signature);
+            LOGGER.debug("""
+                    parseJws()
+                    header: {}
+                    payload: {}
+                    signature: {}""", header, payload, signature);
 
-        return new JwsParts(
-                jws,
-                header,
-                payload,
-                signature);
+            return new JwsParts(jws, header, payload, signature);
+        } catch (final Exception e) {
+            LOGGER.debug("Unable to parse '{}' as a JWT", jws, e);
+            throw new AuthenticationException(LogUtil.message(
+                    "Error parsing token as a JSON Web Token: {}", e.getMessage()));
+        }
     }
 
     private Optional<JwtContext> getAwsJwtContext(final JwsParts jwsParts) {
@@ -308,10 +379,14 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     .setVerificationKey(publicKey)
                     .setRelaxVerificationKeyValidation() // relaxes key length requirement
                     .setExpectedIssuers(true, validIssuers);
+            // Apply the same algorithm and audience constraints as the standard path. The audience claim is
+            // not required here because an AWS ELB data token may not carry one; when it does, it must match.
+            configureAlgorithmConstraints(builder);
+            configureAudienceValidation(builder, openIdConfigurationProvider.get(), false);
             final JwtConsumer jwtConsumer = builder.build();
             return Optional.ofNullable(jwtConsumer.process(jwsParts.jws));
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
             throw new RuntimeException(LogUtil.message("Error getting jwt context for AWS JWT: {}",
                     LogUtil.exceptionMessage(e)), e);
@@ -354,8 +429,12 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                         ? "<ERROR userDisplayNameClaim not configured>"
                         : JwtUtil.getClaimValue(jwtContext, userDisplayNameClaim).orElse(null);
 
-                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}'",
-                        uniqueIdentityClaim, uniqueId, userDisplayNameClaim, displayName));
+                LOGGER.debug(() -> LogUtil.message("Verified token - {}: '{}', {}: '{}', aud: '{}'",
+                        uniqueIdentityClaim,
+                        uniqueId,
+                        userDisplayNameClaim,
+                        displayName,
+                        JwtUtil.getClaimValue(jwtContext, OpenId.CLAIM__AUDIENCE)));
             }
 
             // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist
@@ -403,7 +482,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     .build();
             try {
                 optJwtContext = Optional.of(simpleJwtConsumer.process(jwt));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug(() -> "Unable to extract token: " + e.getMessage(), e);
             }
         }
@@ -420,16 +499,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 publicJsonWebKey.getJsonWebKeys());
         final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
 
-        final boolean useTestCreds = NullSafe.test(
-                openIdConfiguration,
-                OpenIdConfiguration::getIdentityProviderType,
-                IdpType.TEST_CREDENTIALS::equals);
-
-        final String[] validIssuers = useTestCreds
-                ? new String[]{defaultOpenIdCredentials.getOauth2Issuer()}
-                : getValidIssuers();
-
-        LOGGER.debug("Expecting issuers: {}", (Object) validIssuers);
+        final String[] validIssuers = getValidIssuers();
 
         final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account
@@ -437,26 +507,74 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                 .setRequireSubject() // the JWT must have a subject claim
                 .setVerificationKeyResolver(verificationKeyResolver)
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
-//                .setJwsAlgorithmConstraints(// only allow the expected signature algorithm(s) in the given context
-//                        new AlgorithmConstraints(
-//                                AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
-//                                AlgorithmIdentifiers.RSA_USING_SHA256))
                 .setExpectedIssuers(true, validIssuers);
+        configureAlgorithmConstraints(builder);
+        configureAudienceValidation(builder, openIdConfiguration, openIdConfiguration.isAudienceClaimRequired());
 
-        if (openIdConfiguration.isValidateAudience()) {
-            // aud does not appear in access tokens by default it seems so make the check optional
-            final String clientId = useTestCreds
-                    ? defaultOpenIdCredentials.getOauth2ClientId()
-                    : openIdConfiguration.getClientId();
-            builder.setExpectedAudience(clientId);
-        } else {
-            builder.setSkipDefaultAudienceValidation();
-        }
+        LOGGER.debug("validIssuers: {}, allowedAudiences: {}, clientId: {}, validateAudience: {}, " +
+                     "audienceClaimRequired: {}",
+                validIssuers,
+                openIdConfiguration.getAllowedAudiences(),
+                openIdConfiguration.getClientId(),
+                openIdConfiguration.isValidateAudience(),
+                openIdConfiguration.isAudienceClaimRequired());
         return builder.build();
     }
 
+    /**
+     * Constrain the signature algorithm. Permit the standard asymmetric families that real external IdPs use
+     * (RSA, RSA-PSS, ECDSA) rather than RS256 only, because a provider may legitimately sign with ES256/PS256
+     * (an AWS ELB signs its data token with ES256). This blocks the two alg-confusion vectors: {@code none}
+     * (unsigned) and the HMAC algs (where a known public key is abused as an HMAC secret).
+     */
+    private void configureAlgorithmConstraints(final JwtConsumerBuilder builder) {
+        builder.setJwsAlgorithmConstraints(new AlgorithmConstraints(
+                ConstraintType.PERMIT,
+                AlgorithmIdentifiers.RSA_USING_SHA256,
+                AlgorithmIdentifiers.RSA_USING_SHA384,
+                AlgorithmIdentifiers.RSA_USING_SHA512,
+                AlgorithmIdentifiers.RSA_PSS_USING_SHA256,
+                AlgorithmIdentifiers.RSA_PSS_USING_SHA384,
+                AlgorithmIdentifiers.RSA_PSS_USING_SHA512,
+                AlgorithmIdentifiers.ECDSA_USING_P256_CURVE_AND_SHA256,
+                AlgorithmIdentifiers.ECDSA_USING_P384_CURVE_AND_SHA384,
+                AlgorithmIdentifiers.ECDSA_USING_P521_CURVE_AND_SHA512));
+    }
+
+    /**
+     * Constrain the accepted audience so a token minted for a different application at the same identity
+     * provider cannot be replayed against stroom. The audience is matched against the configured
+     * {@code allowedAudiences}, or the {@code clientId} when none are configured; validation is skipped only
+     * when explicitly disabled or when there is nothing to match against.
+     *
+     * @param requireAudienceClaim whether a token with no audience claim at all is rejected. The standard
+     *                             path passes the configured {@code audienceClaimRequired}; the AWS ELB path
+     *                             passes {@code false} because an ELB data token may legitimately carry no
+     *                             audience, so it validates the audience only when one is present.
+     */
+    private void configureAudienceValidation(final JwtConsumerBuilder builder,
+                                             final OpenIdConfiguration openIdConfiguration,
+                                             final boolean requireAudienceClaim) {
+        final Set<String> allowedAudiences = openIdConfiguration.getAllowedAudiences();
+        final String clientId = openIdConfiguration.getClientId();
+        if (!openIdConfiguration.isValidateAudience()) {
+            // Audience validation has been explicitly disabled by config.
+            builder.setSkipDefaultAudienceValidation();
+        } else if (NullSafe.hasItems(allowedAudiences)) {
+            builder.setExpectedAudience(requireAudienceClaim, allowedAudiences.toArray(String[]::new));
+        } else if (NullSafe.isNonBlankString(clientId)) {
+            builder.setExpectedAudience(requireAudienceClaim, clientId);
+        } else {
+            // Nothing to validate the audience against (no clientId configured).
+            builder.setSkipDefaultAudienceValidation();
+        }
+    }
+
     private PublicKey getAwsPublicKey(final JwsParts jwsParts) {
-        final String uri = getAwsPublicKeyUri(jwsParts, openIdConfigurationProvider.get().getExpectedSignerPrefixes());
+        final String uri = getAwsPublicKeyUri(
+                jwsParts,
+                openIdConfigurationProvider.get().getExpectedSignerPrefixes(),
+                awsPublicKeyUriTemplator.getValue());
 
         // Lazy initialise the cache and its timer in case we never deal with aws keys
         if (awsPublicKeyCache == null) {
@@ -472,7 +590,8 @@ public class StandardJwtContextFactory implements JwtContextFactory {
 
     // pkg private for testing
     static String getAwsPublicKeyUri(final JwsParts jwsParts,
-                                     final Set<String> expectedSignerPrefixes) {
+                                     final Set<String> expectedSignerPrefixes,
+                                     final Template publicKeyUriTemplate) {
 
         final Map<String, String> headerValues = jwsParts.getHeaderValues(
                 SIGNER_HEADER_KEY,
@@ -508,15 +627,27 @@ public class StandardJwtContextFactory implements JwtContextFactory {
                     AbstractOpenIdConfig.PROP_NAME_EXPECTED_SIGNER_PREFIXES));
         }
 
-        final String keyId = Optional.ofNullable(headerValues.get(OpenId.KEY_ID))
-                .orElseThrow(() -> new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
-                        OpenId.KEY_ID, jwsParts.header)));
+        final String keyId = NullSafe.string(headerValues.get(OpenId.KEY_ID));
+        if (NullSafe.isBlankString(keyId)) {
+            throw new RuntimeException(LogUtil.message("Missing '{}' key in jws header {}",
+                    OpenId.KEY_ID, jwsParts.header));
+        }
+        if (!AMZN_KEY_ID_PATTERN.matcher(keyId).matches()) {
+            throw new RuntimeException(LogUtil.message(
+                    "The '{}' value '{}' in the JWS header does not match the expected format '{}'",
+                    OpenId.KEY_ID, keyId, AMZN_KEY_ID_PATTERN));
+        }
+        final String awsRegion = NullSafe.string(extractAwsRegionFromSigner(signer));
 
-        final String awsRegion = extractAwsRegionFromSigner(signer);
+        final String publicKeyUri = publicKeyUriTemplate.buildExecutor()
+                .addReplacement(AWS_REGION_TEMPLATE_VARIABLE, awsRegion)
+                .addReplacement(KEY_ID_TEMPLATE_VARIABLE, keyId)
+                .execute();
 
-        // TODO: 24/02/2023 Ought to come from config
-        return LogUtil.message("https://public-keys.auth.elb.{}.amazonaws.com/{}",
-                awsRegion, keyId);
+        LOGGER.debug("publicKeyUriTemplator: '{}', awsRegion: '{}', keyId: '{}', publicKeyUri: '{}'",
+                publicKeyUriTemplate, awsRegion, keyId, publicKeyUri);
+
+        return publicKeyUri;
     }
 
     private static String extractAwsRegionFromSigner(final String signer) {
@@ -555,26 +686,37 @@ public class StandardJwtContextFactory implements JwtContextFactory {
         // Don't use injected WebTargetFactory as that slaps a token on which we don't want in
         // this case as it is an unauthenticated endpoint
         final WebTarget target = client.target(uri);
-        final Response res = target
-                .request()
-                .get();
-        if (res.getStatus() == HttpStatus.OK_200) {
-            final String pubKey = res.readEntity(String.class);
-            LOGGER.debug(() -> "Received public key \"" + pubKey + "\"");
+        try {
+            final Response res = target
+                    .request()
+                    .get();
+            final int status = res.getStatus();
+            if (status == HttpStatus.OK_200) {
+                final String pubKey = res.readEntity(String.class);
+                LOGGER.debug("Received public key '{}'", pubKey);
 
-            // The public key is PEM format.
-            return decodePublicKey(pubKey, "EC");
-        } else {
-            throw new RuntimeException("Unable to retrieve public key from \"" +
-                                       uri +
-                                       "\"" +
-                                       res.getStatus() +
-                                       ": " +
-                                       res.readEntity(String.class));
+                // The public key is PEM format.
+                return decodeAwsPublicKey(pubKey, "EC");
+            } else {
+                final String msg = LogUtil.message(
+                        "Unable to retrieve AWS public key from uri: '{}', status: {}, response: '{}'",
+                        uri,
+                        status,
+                        LogUtil.swallowExceptions(() -> res.readEntity(String.class)));
+                LOGGER.error(msg);
+                throw new AuthenticationException();
+            }
+        } catch (final AuthenticationException e) {
+            final String msg = LogUtil.message(
+                    "Error retrieving AWS public key from uri: '{}' - {}",
+                    uri,
+                    LogUtil.exceptionMessage(e));
+            LOGGER.error(msg, e);
+            throw new AuthenticationException(msg, e);
         }
     }
 
-    private PublicKey decodePublicKey(final String pem, final String alg) {
+    private PublicKey decodeAwsPublicKey(final String pem, final String alg) {
         PublicKey publicKey = null;
 
         try {
@@ -583,15 +725,15 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             publicKeyPEM = publicKeyPEM.replace("-----BEGIN PUBLIC KEY-----\n", "");
             publicKeyPEM = publicKeyPEM.replace("-----END PUBLIC KEY-----", "");
 
-            byte[] publicKeyBytes = SimplePEMEncoder.decode(publicKeyPEM);
+            final byte[] publicKeyBytes = SimplePEMEncoder.decode(publicKeyPEM);
 
             // create a key object from the bytes
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance(alg);
+            final X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
+            final KeyFactory keyFactory = KeyFactory.getInstance(alg);
             publicKey = keyFactory.generatePublic(keySpec);
 
         } catch (final RuntimeException | NoSuchAlgorithmException | InvalidKeySpecException e) {
-            LOGGER.error(alg + " " + e.getMessage(), e);
+            LOGGER.error("decodeAwsPublicKey() - alg: {}, message: {}", alg, LogUtil.exceptionMessage(e), e);
         }
 
         return publicKey;
@@ -626,7 +768,7 @@ public class StandardJwtContextFactory implements JwtContextFactory {
             final String decoded;
             try {
                 decoded = new String(Base64.getDecoder().decode(input), StandardCharsets.UTF_8);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message("input is not in BASE64 format, input: '{}': {}",
                         input, LogUtil.exceptionMessage(e)), e);
             }

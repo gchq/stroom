@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 #
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
 # Stops Stroom (Proxy)
 
 # trap ctrl-c and call ctrl_c()
@@ -30,7 +46,7 @@ wait_for_pid_to_die() {
   # wait for the kill to finish
   # have to temporarily not stop script on errors
   set +e
-  while kill -0 "${pid}" >/dev/null 2>&1; do 
+  while kill -0 "${pid}" >/dev/null 2>&1; do
     sleep 1
   done
   set -e
@@ -50,7 +66,7 @@ kill_log_tailing() {
   if [ -n "${pid}" ]; then
     set +e
     # kill -0 returns true if the process is still alive
-    while kill -0 "${pid}" >/dev/null 2>&1; do 
+    while kill -0 "${pid}" >/dev/null 2>&1; do
       sleep 1
     done
     set -e
@@ -72,7 +88,7 @@ stop_stroom() {
 
     if [ "${stroom_pid}" = '' ]; then # If the pid file is empty for some reason
       warn "${NOT_RUNNING_MESSAGE}"
-    else 
+    else
       if ps -p "${stroom_pid}" > /dev/null
       then
         stroom_pid=$(cat "${STROOM_PID_FILE}");
@@ -90,7 +106,7 @@ stop_stroom() {
             # tail the log in the background
             info "Tailing log file ${BLUE}${PATH_TO_APP_LOG}${NC}"
             info "Press CTRL-C to terminate log tailing only."
-            ensure_file_exists "${PATH_TO_APP_LOG}" 
+            ensure_file_exists "${PATH_TO_APP_LOG}"
             tail -F "${PATH_TO_APP_LOG}" 2>/dev/null &
           fi
 
@@ -109,11 +125,11 @@ stop_stroom() {
           fi
         fi
 
-        # Removing the pid file if we haven't waited for the shutdown is not 
+        # Removing the pid file if we haven't waited for the shutdown is not
         # ideal
         rm "${STROOM_PID_FILE}"
         # ask_about_logs
-      else 
+      else
         warn "There was an instance of ${APP_NAME} running with process ID" \
           "${BLUE}${stroom_pid}${NC} but it looks like it" \
           "wasn't stopped gracefully.\nYou might want to check the logs.\nIf" \
@@ -143,20 +159,20 @@ main() {
   while getopts ":fhmq" arg; do
     # shellcheck disable=SC2034
     case $arg in
-      f )  
+      f )
         stop_stroom_args+=( "force" )
         ;;
-      h ) 
+      h )
         echo_usage
         exit 0
         ;;
-      m )  
-        MONOCHROME=true 
+      m )
+        MONOCHROME=true
         ;;
-      q )  
-        do_tailing=false 
+      q )
+        do_tailing=false
         ;;
-      * ) 
+      * )
         invalid_arguments
         ;;  # getopts already reported the illegal option
     esac

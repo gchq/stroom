@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,17 +22,17 @@ import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
-import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.Format;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.QueryKey;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.Row;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
+import stroom.query.api.TableResult;
+import stroom.query.api.TableSettings;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
@@ -80,7 +80,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
     @AfterEach
     void after() {
-        executorService.shutdown();
+        // Clear the stores before closing the executor. JUnit runs subclass @AfterEach methods
+        // before superclass ones, so without this explicit call the executor close would run
+        // first and, for a test that failed leaving a store unterminated, await that store's
+        // still-polling transfer task forever - turning a test failure into a hang. Clearing
+        // terminates every store's transfer thread, so the close() below then completes, giving
+        // deterministic ordering: transfer threads finished before JUnit deletes the @TempDir.
+        clearCreatedStores();
+        executorService.close();
     }
 
     @Override
@@ -122,25 +129,26 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 () -> executorService,
                 errorConsumer,
                 new ByteBufferFactoryImpl(),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                AnnotationMapperFactory.NO_OP,
+                //TODO: DS
+                null);
     }
 
     @Test
     void testBigValues() {
-        final FormatterFactory formatterFactory = new FormatterFactory(null);
-
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamSubstituteUtil.makeParam("Text2"))
+                        .expression(ParamUtil.create("Text2"))
                         .format(Format.TEXT)
                         .build())
                 .build();
@@ -171,9 +179,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    formatterFactory,
-                    new ExpressionPredicateFactory());
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator();
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -205,21 +211,21 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("Text")
                         .name("Text")
-                        .expression(ParamSubstituteUtil.makeParam("Text"))
+                        .expression(ParamUtil.create("Text"))
                         .format(Format.TEXT)
                         .group(0)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression(ParamSubstituteUtil.makeParam("Text2"))
+                        .expression(ParamUtil.create("Text2"))
                         .format(Format.TEXT)
                         .group(1)
                         .build())
                 .addColumns(Column.builder()
                         .id("Text2")
                         .name("Text2")
-                        .expression("first(" + ParamSubstituteUtil.makeParam("Text2") + ")")
+                        .expression("first(" + ParamUtil.create("Text2") + ")")
                         .format(Format.TEXT)
                         .build())
                 .addColumns(Column.builder()
@@ -361,31 +367,31 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .addColumns(Column.builder()
                         .id("StreamId")
                         .name("StreamId")
-                        .expression(ParamSubstituteUtil.makeParam("StreamId"))
+                        .expression(ParamUtil.create("StreamId"))
                         .format(Format.NUMBER)
                         .build())
                 .addColumns(Column.builder()
                         .id("EventId")
                         .name("EventId")
-                        .expression(ParamSubstituteUtil.makeParam("EventId"))
+                        .expression(ParamUtil.create("EventId"))
                         .format(Format.NUMBER)
                         .build())
                 .addColumns(Column.builder()
                         .id("EventTime")
                         .name("EventTime")
-                        .expression(ParamSubstituteUtil.makeParam("EventTime"))
+                        .expression(ParamUtil.create("EventTime"))
                         .format(Format.DATE_TIME)
                         .build())
                 .build();
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final SearchResultStoreConfig resultStoreConfig = new SearchResultStoreConfig();
+        final SearchResultStoreConfig resultStoreConfig = createResultStoreConfig();
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
                 .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
                 .build();
-        LmdbDataStore dataStore = (LmdbDataStore)
+        final LmdbDataStore dataStore = record((LmdbDataStore)
                 create(
                         searchRequestSource,
                         queryKey,
@@ -393,7 +399,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         tableSettings,
                         resultStoreConfig,
                         dataStoreSettings,
-                        "reload");
+                        "reload"));
 
         for (int i = 1; i <= 100; i++) {
             for (int j = 1; j <= 100; j++) {
@@ -429,8 +435,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         dataStore.getCompletionState().awaitCompletion();
         dataStore.close();
 
-        // Try and open the datastore again.
-        LmdbDataStore dataStore2 = (LmdbDataStore)
+        // Try and open the datastore again. Recorded after dataStore, so teardown clears it first
+        // (newest first) - it holds the "reload" env dir open that dataStore's clear() deletes.
+        final LmdbDataStore dataStore2 = record((LmdbDataStore)
                 create(
                         searchRequestSource,
                         queryKey,
@@ -438,7 +445,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         tableSettings,
                         resultStoreConfig,
                         dataStoreSettings,
-                        "reload");
+                        "reload"));
 
         currentDbState = dataStore2.sync();
         assertThat(currentDbState.getStreamId()).isEqualTo(100);
@@ -472,6 +479,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 tableResultRequest);
         assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(20000);
+
+        // dataStore2 is recorded, so teardown closes it before the @TempDir is deleted.
     }
 
     @Test

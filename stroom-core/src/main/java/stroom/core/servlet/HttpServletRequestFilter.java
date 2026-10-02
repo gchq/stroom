@@ -17,6 +17,7 @@
 package stroom.core.servlet;
 
 import stroom.util.servlet.HttpServletRequestHolder;
+import stroom.util.servlet.HttpServletResponseHolder;
 
 import jakarta.inject.Inject;
 import jakarta.servlet.Filter;
@@ -26,16 +27,20 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
 public class HttpServletRequestFilter implements Filter {
 
     private final HttpServletRequestHolder httpServletRequestHolder;
+    private final HttpServletResponseHolder httpServletResponseHolder;
 
     @Inject
-    HttpServletRequestFilter(final HttpServletRequestHolder httpServletRequestHolder) {
+    HttpServletRequestFilter(final HttpServletRequestHolder httpServletRequestHolder,
+                             final HttpServletResponseHolder httpServletResponseHolder) {
         this.httpServletRequestHolder = httpServletRequestHolder;
+        this.httpServletResponseHolder = httpServletResponseHolder;
     }
 
     @Override
@@ -49,12 +54,16 @@ public class HttpServletRequestFilter implements Filter {
         if (request instanceof final HttpServletRequest httpServletRequest) {
             try {
                 httpServletRequestHolder.set(httpServletRequest);
+                if (response instanceof final HttpServletResponse httpServletResponse) {
+                    httpServletResponseHolder.set(httpServletResponse);
+                }
                 // Continue the chain
                 chain.doFilter(request, response);
             } finally {
-                // Clear the held request in case the thread holding the thread scoped holder is re-used
-                // for something else
+                // Clear the held request/response in case the thread holding the thread scoped holder
+                // is re-used for something else
                 httpServletRequestHolder.set(null);
+                httpServletResponseHolder.set(null);
             }
         } else {
             // Continue the chain

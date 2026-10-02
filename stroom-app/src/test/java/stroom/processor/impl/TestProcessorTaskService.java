@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.processor.impl;
@@ -23,12 +22,13 @@ import stroom.meta.api.MetaService;
 import stroom.meta.shared.Meta;
 import stroom.node.shared.Node;
 import stroom.processor.api.ProcessorTaskService;
+import stroom.processor.impl.db.migration.legacyqd.ExpressionTerm;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.TaskStatus;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -208,8 +208,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
     void testApplyAllCriteria() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Node testNode = new Node();
-        testNode.setId(1);
+        final Node testNode = Node.builder().id(1).build();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")
@@ -240,8 +239,7 @@ class TestProcessorTaskService extends AbstractCoreIntegrationTest {
     void testApplyAllCriteriaSummary() {
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-        final Node testNode = new Node();
-        testNode.setId(1);
+        final Node testNode = Node.builder().id(1).build();
 
         final ExpressionOperator expression = ExpressionOperator.builder()
                 .addTextTerm(ProcessorTaskFields.NODE_NAME, Condition.EQUALS, "Node name")

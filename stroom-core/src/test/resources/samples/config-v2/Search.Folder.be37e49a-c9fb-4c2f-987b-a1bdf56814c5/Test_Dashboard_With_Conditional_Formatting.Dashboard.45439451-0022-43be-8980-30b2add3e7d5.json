@@ -1,0 +1,220 @@
+{
+  "components" : [ {
+    "type" : "table",
+    "id" : "table-IIO1T",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-JT8D7",
+      "fields" : [ {
+        "id" : "table-IIO1T|JTI4N",
+        "name" : "EventTime",
+        "expression" : "${EventTime}",
+        "sort" : {
+          "order" : 0,
+          "direction" : "DESCENDING"
+        },
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "width" : 168,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|UBF6U",
+        "name" : "UserId",
+        "expression" : "${UserId}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 155,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|S85CA",
+        "name" : "Description",
+        "expression" : "${Description}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 260,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|0NUOO",
+        "name" : "IPAddress",
+        "expression" : "${IPAddress}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 143,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|ZE3IQ",
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 81,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|NF49D",
+        "name" : "Decimal",
+        "expression" : "toLong(${EventId}) / 1000",
+        "format" : {
+          "type" : "NUMBER",
+          "settings" : {
+            "type" : "number",
+            "decimalPlaces" : 3,
+            "useSeparator" : false
+          }
+        },
+        "width" : 93,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "__stream_id__",
+        "name" : "__stream_id__",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      }, {
+        "id" : "__event_id__",
+        "name" : "__event_id__",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
+      } ],
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
+        "name" : "Example Extraction"
+      },
+      "maxResults" : [ 1000000 ],
+      "conditionalFormattingRules" : [ {
+        "id" : "OREP7",
+        "expression" : {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "Decimal",
+            "condition" : "GREATER_THAN",
+            "value" : "4.2"
+          } ]
+        },
+        "hide" : false,
+        "enabled" : true,
+        "customStyle" : {
+          "light" : {
+            "textColour" : "red"
+          },
+          "dark" : {
+            "textColour" : "red"
+          }
+        }
+      }, {
+        "id" : "LMM30",
+        "expression" : {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "Description",
+            "condition" : "EQUALS",
+            "value" : "*qui*"
+          } ]
+        },
+        "hide" : false,
+        "enabled" : true,
+        "customStyle" : {
+          "light" : {
+            "textColour" : "green"
+          },
+          "dark" : {
+            "textColour" : "green"
+          }
+        }
+      }, {
+        "id" : "VIK5Y",
+        "expression" : {
+          "type" : "operator",
+          "children" : [ {
+            "type" : "term",
+            "field" : "EventTime",
+            "condition" : "LESS_THAN_OR_EQUAL_TO",
+            "value" : "2020-06-04T16:00:00.000Z"
+          } ]
+        },
+        "hide" : false,
+        "enabled" : true,
+        "customStyle" : {
+          "light" : {
+            "backgroundColour" : "pink"
+          },
+          "dark" : {
+            "backgroundColour" : "pink"
+          }
+        }
+      } ]
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-JT8D7",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Index",
+        "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
+        "name" : "Example index"
+      },
+      "expression" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "EventTime",
+          "condition" : "BETWEEN",
+          "value" : "2020-06-01T00:00:00.000Z,2020-06-05T00:00:00.000Z"
+        } ]
+      },
+      "automate" : {
+        "open" : false,
+        "refresh" : false,
+        "refreshInterval" : "10s"
+      }
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 200,
+      "height" : 200
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 81
+      },
+      "tabs" : [ {
+        "id" : "query-JT8D7"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 463
+      },
+      "tabs" : [ {
+        "id" : "table-IIO1T"
+      } ],
+      "selected" : 0
+    } ]
+  }
+}

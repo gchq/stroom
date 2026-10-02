@@ -22,13 +22,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 import java.util.Optional;
 
 @JsonPropertyOrder({"lineNo", "colNo"})
 @JsonInclude(Include.NON_NULL)
-public class DefaultLocation implements Location {
+@Schema(allOf = Location.class)
+public final class DefaultLocation implements Location {
 
     @JsonProperty
     private final int lineNo;
@@ -36,10 +38,10 @@ public class DefaultLocation implements Location {
     private final int colNo;
 
     @JsonCreator
-    public DefaultLocation(@JsonProperty("lineNo") final int lineNo,
-                           @JsonProperty("colNo") final int colNo) {
-        this.lineNo = lineNo;
-        this.colNo = colNo;
+    public DefaultLocation(@JsonProperty("lineNo") final Integer lineNo,
+                           @JsonProperty("colNo") final Integer colNo) {
+        this.lineNo = Objects.requireNonNullElse(lineNo, 0);
+        this.colNo = Objects.requireNonNullElse(colNo, 0);
     }
 
     public static Location of(final int lineNo, final int colNo) {

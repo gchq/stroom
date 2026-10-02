@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,26 +18,27 @@ package stroom.search.impl;
 
 import stroom.bytebuffer.impl6.ByteBufferFactoryImpl;
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
 import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnvDirFactory;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.Sort;
-import stroom.query.api.v2.Sort.SortDirection;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.Format;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.ResultRequest.ResultStyle;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.Sort;
+import stroom.query.api.Sort.SortDirection;
+import stroom.query.api.TableSettings;
+import stroom.query.common.v2.AnnotationMapperFactory;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.CoprocessorsFactory;
@@ -52,6 +53,7 @@ import stroom.query.common.v2.LmdbDataStoreFactory;
 import stroom.query.common.v2.MapDataStoreFactory;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultStore;
+import stroom.query.common.v2.ResultStoreLmdbConfig;
 import stroom.query.common.v2.ResultStoreSettingsFactory;
 import stroom.query.common.v2.SearchDebugUtil;
 import stroom.query.common.v2.SearchResultStoreConfig;
@@ -62,15 +64,18 @@ import stroom.query.language.functions.ParamKeys;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
-import stroom.security.api.UserIdentity;
 import stroom.util.concurrent.ThreadUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -84,12 +89,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -101,15 +108,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 class TestSearchResultCreation {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestSearchResultCreation.class);
+
     // Make sure the search request is the same as the one we expected to make.
     private final Path resourcesDir = SearchDebugUtil.initialise();
 
     private DataStoreFactory dataStoreFactory;
     private ExecutorService executorService;
+    private Provider<Executor> executorProvider;
+    private final List<CoprocessorsImpl> createdCoprocessors = new ArrayList<>();
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
         executorService = Executors.newCachedThreadPool();
+        executorProvider = () -> executorService;
 
         final LmdbLibraryConfig lmdbLibraryConfig = new LmdbLibraryConfig();
         final TempDirProvider tempDirProvider = () -> tempDir;
@@ -118,17 +130,53 @@ class TestSearchResultCreation {
                 new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         dataStoreFactory = new LmdbDataStoreFactory(
                 lmdbEnvDirFactory,
-                SearchResultStoreConfig::new,
+                // The production default map size is 10GiB per store env, and each test opens a
+                // store per coprocessor.
+                () -> new SearchResultStoreConfig(
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        ResultStoreLmdbConfig.builder()
+                                .localDir("search_results")
+                                .maxStoreSize(ByteSize.ofMebibytes(100))
+                                .build(),
+                        null),
                 pathCreator,
-                () -> executorService,
+                executorProvider,
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
                 new ByteBufferFactoryImpl(),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                AnnotationMapperFactory.NO_OP,
+                null);
     }
 
     @AfterEach
     void afterEach() {
-        executorService.shutdown();
+        // The LMDB envs all live inside the coprocessors' data stores; clear() closes each store
+        // (waiting for its transfer thread to finish with the write txn) and deletes its env.
+        // Nothing else does this: the ResultStores are never destroyed by these tests, so without
+        // it every test leaked its envs and the @TempDir was deleted under them.
+        // Per-item catch so one failed clear doesn't leave the other coprocessors' stores open
+        // (which would also make the executor close below hang on their transfer threads).
+        createdCoprocessors.forEach(coprocessors -> {
+            try {
+                coprocessors.clear();
+            } catch (final RuntimeException e) {
+                LOGGER.error("Error clearing coprocessors: {}", e.getMessage(), e);
+            }
+        });
+        createdCoprocessors.clear();
+        // close() awaits the (now exited) transfer threads before JUnit deletes the @TempDir.
+        executorService.close();
+    }
+
+    private CoprocessorsImpl record(final CoprocessorsImpl coprocessors) {
+        createdCoprocessors.add(coprocessors);
+        return coprocessors;
     }
 
     @Test
@@ -143,16 +191,16 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory =
-                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory(), sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
         // Reorder values if field mappings have changed.
@@ -176,7 +224,7 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(), executorProvider);
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -255,16 +303,16 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory =
-                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory(), sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings()));
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -272,13 +320,13 @@ class TestSearchResultCreation {
         final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors2 = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -311,7 +359,8 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                executorProvider);
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -334,16 +383,16 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory =
-                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory(), sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createPayloadProducerSearchResultStoreSettings());
+                DataStoreSettings.createPayloadProducerSearchResultStoreSettings()));
 
         final ValuesConsumer consumer1 = createExtractionReceiver(coprocessors);
 
@@ -351,13 +400,13 @@ class TestSearchResultCreation {
         final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors2 = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
 
         // Add data to the consumer.
         final String[] lines = getLines();
@@ -392,7 +441,8 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                executorProvider);
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -429,16 +479,16 @@ class TestSearchResultCreation {
 
         // Create coprocessors.
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsFactory coprocessorsFactory =
-                new CoprocessorsFactory(dataStoreFactory, new ExpressionContextFactory(), sizesProvider);
+        final CoprocessorsFactory coprocessorsFactory = new CoprocessorsFactory(
+                dataStoreFactory, new ExpressionContextFactory(), sizesProvider, executorProvider);
         final List<CoprocessorSettings> coprocessorSettings = coprocessorsFactory.createSettings(searchRequest);
-        final CoprocessorsImpl coprocessors = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
 
         final ValuesConsumer consumer = createExtractionReceiver(coprocessors);
 
@@ -446,13 +496,13 @@ class TestSearchResultCreation {
         final int[] mappings = createMappings(coprocessors.getFieldIndex());
 
         final QueryKey queryKey2 = new QueryKey(UUID.randomUUID().toString());
-        final CoprocessorsImpl coprocessors2 = coprocessorsFactory.create(
+        final CoprocessorsImpl coprocessors2 = record(coprocessorsFactory.create(
                 SearchRequestSource.createBasic(),
                 DateTimeSettings.builder().build(),
                 queryKey2,
                 coprocessorSettings,
                 searchRequest.getQuery().getParams(),
-                DataStoreSettings.createBasicSearchResultStoreSettings());
+                DataStoreSettings.createBasicSearchResultStoreSettings()));
 
 
         final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -507,7 +557,8 @@ class TestSearchResultCreation {
                 "node",
                 new ResultStoreSettingsFactory().get(),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                executorProvider);
         // Mark the collector as artificially complete.
         resultStore.signalComplete();
 
@@ -581,7 +632,7 @@ class TestSearchResultCreation {
         final Map<DocRef, ValuesConsumer> receivers = new HashMap<>();
         coprocessors.forEachExtractionCoprocessor((docRef, coprocessorSet) -> {
             // Create a receiver that will send data to all coprocessors.
-            ValuesConsumer receiver;
+            final ValuesConsumer receiver;
             if (coprocessorSet.size() == 1) {
                 receiver = coprocessorSet.iterator().next();
             } else {
@@ -913,19 +964,5 @@ class TestSearchResultCreation {
                 .addMaxResults(20L, 100L, 1000L)
                 .showDetail(true)
                 .build();
-    }
-
-    private static final class TestUserIdentity implements UserIdentity {
-
-        private final String subjectId;
-
-        private TestUserIdentity(final String subjectId) {
-            this.subjectId = subjectId;
-        }
-
-        @Override
-        public String getSubjectId() {
-            return null;
-        }
     }
 }

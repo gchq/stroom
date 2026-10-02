@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.event.logging.api.StroomEventLoggingService;
@@ -56,7 +72,7 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public User fetch(String userUuid) {
+    public User fetch(final String userUuid) {
         return userServiceProvider.get().loadByUuid(userUuid)
                 .orElseThrow(() -> new NotFoundException("User " + userUuid + " does not exist"));
     }
@@ -166,6 +182,11 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
+    public User copyGroupsAndPermissions(final String fromUserUuid, final String toUserUuid) {
+        return userServiceProvider.get().copyGroupsAndPermissions(fromUserUuid, toUserUuid);
+    }
+
+    @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public Boolean addUserToGroup(final String userUuid,
                                   final String groupUuid) {
@@ -209,7 +230,7 @@ public class UserResourceImpl implements UserResource {
                     result,
                     null);
             return result;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             authorisationEventLogProvider.get().removePermission(
                     userIdForLogging.asRef(),
                     groupIdForLogging.asRef().toDisplayString(),

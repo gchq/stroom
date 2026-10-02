@@ -1,19 +1,17 @@
 /*
+ * Copyright 2018 Crown Copyright
  *
- *  * Copyright 2017 Crown Copyright
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package stroom.search.manualtesting;
@@ -22,13 +20,13 @@ package stroom.search.manualtesting;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexStore;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.Format;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.Row;
+import stroom.query.api.TableSettings;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.search.AbstractSearchTest;
 import stroom.search.CommonIndexingTestHelper;
@@ -96,11 +94,11 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     //    @Override
     protected boolean onAfterSetup() {
 
-        List<Path> dataFiles = new ArrayList<>();
+        final List<Path> dataFiles = new ArrayList<>();
 //        if (!Files.exists(dataFile)) {
         LOGGER.info("Generating test data");
         IntStream.rangeClosed(1, STREAM_COUNT).forEach(i -> {
-            Path dataFile = testDir.resolve(String.format(DATA_FILE_NAME_FORMAT, i));
+            final Path dataFile = testDir.resolve(String.format(DATA_FILE_NAME_FORMAT, i));
             LOGGER.info("Generating test data in {}", dataFile.toAbsolutePath().toString());
             NetworkMonitoringDataGenerator.generate(STREAM_ROW_COUNT, dataFile);
             dataFiles.add(dataFile);
@@ -141,15 +139,15 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
         final List<String> componentIds = Collections.singletonList("table-1");
 
         // we have 20 different user IDs so should get 20 rows
-        int expectedResultCount = 20;
-        boolean extractValues = true;
+        final int expectedResultCount = 20;
+        final boolean extractValues = true;
 
-        Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
+        final Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
             assertThat(resultMap.size()).isEqualTo(1);
-            List<Row> rows = resultMap.values().iterator().next();
+            final List<Row> rows = resultMap.values().iterator().next();
             assertThat(rows.size()).isEqualTo(expectedResultCount);
 
-            long totalCount = rows.stream()
+            final long totalCount = rows.stream()
                     .map(row -> row.getValues().get(1)) // get the 'count' field
                     .mapToLong(Long::parseLong)
                     .sum();
@@ -170,12 +168,12 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
         LOGGER.info("Completed search");
     }
 
-    private TableSettings createTableSettings(Boolean extractValues) {
+    private TableSettings createTableSettings(final Boolean extractValues) {
 
         final Column groupedUserId = Column.builder()
                 .id("User")
                 .name("User")
-                .expression(ParamSubstituteUtil.makeParam("User"))
+                .expression(ParamUtil.create("User"))
                 .group(0)
                 .build();
 
@@ -186,7 +184,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
                 .format(Format.NUMBER)
                 .build();
 
-        List<Column> columns = Arrays.asList(groupedUserId, countColumn);
+        final List<Column> columns = Arrays.asList(groupedUserId, countColumn);
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
 
         return TableSettings.builder()

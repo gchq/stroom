@@ -10,6 +10,8 @@ select StreamId, EventId, EventTime, Status
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -75,13 +77,6 @@ select StreamId, EventId, EventTime, Status
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -95,19 +90,29 @@ select StreamId, EventId, EventTime, Status
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -123,6 +128,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -188,13 +195,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -208,19 +208,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -237,6 +247,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -309,13 +321,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -329,19 +334,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -356,6 +371,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -421,13 +438,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -441,19 +451,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -468,6 +488,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -533,13 +555,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -553,19 +568,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -580,6 +605,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -631,13 +658,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -651,19 +671,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -677,6 +707,8 @@ select StreamId
   },
   "query" : {
     "dataSource" : {
+      "type" : "index_view",
+      "uuid" : "index_view",
       "name" : "index_view"
     },
     "expression" : {
@@ -700,13 +732,6 @@ select StreamId
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -720,19 +745,29 @@ select StreamId
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -747,6 +782,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -798,13 +835,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -818,19 +848,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -845,6 +885,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -896,13 +938,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -916,19 +951,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -943,6 +988,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -994,13 +1041,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1014,19 +1054,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1041,6 +1091,8 @@ select StreamId as "Stream Id", count as Count
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1068,16 +1120,19 @@ select StreamId as "Stream Id", count as Count
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1129,6 +1184,8 @@ select comp
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1146,13 +1203,6 @@ select comp
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1166,19 +1216,29 @@ select comp
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1193,6 +1253,8 @@ select StreamId, EventTime
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1221,16 +1283,19 @@ select StreamId, EventTime
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1245,6 +1310,8 @@ select ${Stream Id}, ${Event Time}
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1273,16 +1340,19 @@ select ${Stream Id}, ${Event Time}
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1298,6 +1368,8 @@ select ${Stream Id}, ${Event Time}
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1335,16 +1407,19 @@ select ${Stream Id}, ${Event Time}
       }
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1360,6 +1435,8 @@ select ${Event Time}
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1397,16 +1474,19 @@ select ${Event Time}
       }
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1420,6 +1500,8 @@ select StreamId
   },
   "query" : {
     "dataSource" : {
+      "type" : "index_view",
+      "uuid" : "index_view",
       "name" : "index_view"
     },
     "expression" : {
@@ -1429,6 +1511,8 @@ select StreamId
         "field" : "StreamId",
         "condition" : "IN_DICTIONARY",
         "docRef" : {
+          "type" : "Dictionary",
+          "uuid" : "my_dictionary",
           "name" : "my_dictionary"
         }
       } ]
@@ -1445,13 +1529,6 @@ select StreamId
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1465,19 +1542,29 @@ select StreamId
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1491,6 +1578,8 @@ select StreamId
   },
   "query" : {
     "dataSource" : {
+      "type" : "index_view",
+      "uuid" : "index_view",
       "name" : "index_view"
     },
     "expression" : {
@@ -1514,13 +1603,6 @@ select StreamId
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1534,19 +1616,29 @@ select StreamId
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1570,6 +1662,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1642,13 +1736,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1662,19 +1749,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1691,6 +1788,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1763,13 +1862,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1783,19 +1875,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1813,6 +1915,8 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -1885,13 +1989,6 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -1905,19 +2002,29 @@ select StreamId as "Stream Id", EventId as "Event Id", EventTime as "Event Time"
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -1933,6 +2040,8 @@ select StreamId, EventId, EventTime, Status
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -2003,13 +2112,6 @@ select StreamId, EventId, EventTime, Status
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -2023,19 +2125,29 @@ select StreamId, EventId, EventTime, Status
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----
@@ -2052,6 +2164,8 @@ select StreamId, EventId, EventTime, Status
   },
   "query" : {
     "dataSource" : {
+      "type" : "Test Index",
+      "uuid" : "Test Index",
       "name" : "Test Index"
     },
     "expression" : {
@@ -2130,13 +2244,6 @@ select StreamId, EventId, EventTime, Status
         "visible" : true,
         "special" : false
       }, {
-        "id" : "__id__",
-        "name" : "__id__",
-        "expression" : "${Id}",
-        "width" : 200,
-        "visible" : false,
-        "special" : true
-      }, {
         "id" : "__stream_id__",
         "name" : "__stream_id__",
         "expression" : "${StreamId}",
@@ -2150,19 +2257,29 @@ select StreamId, EventId, EventTime, Status
         "width" : 200,
         "visible" : false,
         "special" : true
+      }, {
+        "id" : "__annotation_id__",
+        "name" : "__annotation_id__",
+        "expression" : "${annotation:Id}",
+        "width" : 200,
+        "visible" : false,
+        "special" : true
       } ]
     } ],
     "resultStyle" : "TABLE",
-    "fetch" : "ALL"
+    "fetch" : "ALL",
+    "groupSelection" : {
+      "expandedDepth" : 0,
+      "openGroups" : [ ],
+      "closedGroups" : [ ]
+    }
   } ],
   "incremental" : false,
   "dateTimeSettings" : {
     "dateTimePattern" : "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
     "localZoneId" : "Z",
     "referenceTime" : 0,
-    "timeZone" : {
-      "use" : "UTC"
-    }
+    "timeZone" : { }
   }
 }
 -----

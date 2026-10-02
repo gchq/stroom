@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,29 +12,30 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.ReportDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
 import javax.inject.Provider;
 
 public class ReportPresenter
-        extends DocumentEditTabPresenter<LinkTabPanelView, ReportDoc> {
+        extends DocTabPresenter<LinkTabPanelView, ReportDoc> {
 
     private static final TabData QUERY = new TabDataImpl("Query");
     private static final TabData SETTINGS = new TabDataImpl("Settings");
@@ -43,25 +44,33 @@ public class ReportPresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
+    private final ReportQueryEditPresenter reportQueryEditPresenter;
+    private final ReportNotificationPresenter reportNotificationPresenter;
+
     @Inject
     public ReportPresenter(final EventBus eventBus,
                            final LinkTabPanelView view,
                            final ReportQueryEditPresenter reportQueryEditPresenter,
                            final Provider<ReportSettingsPresenter> reportSettingsPresenterProvider,
-                           final Provider<ReportNotificationListPresenter> notificationPresenterProvider,
+                           final Provider<ReportNotificationPresenter> notificationPresenterProvider,
                            final Provider<ReportProcessingPresenter> processPresenterProvider,
                            final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                            final DocumentUserPermissionsTabProvider<ReportDoc>
                                    documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        this.reportQueryEditPresenter = reportQueryEditPresenter;
 
         final ReportProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
         analyticProcessingPresenter.setDocumentEditPresenter(this);
 
-        addTab(QUERY, new DocumentEditTabProvider<>(() -> reportQueryEditPresenter));
-        addTab(SETTINGS, new DocumentEditTabProvider<>(reportSettingsPresenterProvider::get));
-        addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
-        addTab(EXECUTION, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
+        // Created up front rather than by the tab provider, so it can be told the processing type whether or
+        // not the tab has been opened.
+        this.reportNotificationPresenter = notificationPresenterProvider.get();
+
+        addTab(QUERY, new DocTabProvider<>(() -> reportQueryEditPresenter));
+        addTab(SETTINGS, new DocTabProvider<>(reportSettingsPresenterProvider::get));
+        addTab(NOTIFICATIONS, new DocTabProvider<>(() -> reportNotificationPresenter));
+        addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
         addTab(DOCUMENTATION, new MarkdownTabProvider<ReportDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -83,8 +92,31 @@ public class ReportPresenter
     }
 
     @Override
+    public boolean handleKeyAction(final Action action) {
+        if (Action.OK == action
+            && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+            reportQueryEditPresenter.start();
+            return true;
+        } else if (Action.CLOSE == action
+                   && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
+            reportQueryEditPresenter.stop();
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    @Override
     public String getType() {
         return ReportDoc.TYPE;
+    }
+
+    @Override
+    protected void onRead(final DocRef docRef, final ReportDoc document, final boolean readOnly) {
+        super.onRead(docRef, document, readOnly);
+        // A report is always a scheduled query, but tell the notifications tab explicitly rather than leaving
+        // it to infer anything.
+        reportNotificationPresenter.setAnalyticProcessType(document.getAnalyticProcessType());
     }
 
     @Override

@@ -17,9 +17,11 @@
 package stroom.core.receive;
 
 import stroom.receive.common.CertificateExtractorImpl;
+import stroom.receive.common.ContentAutoCreationAttrMapFilterFactory;
 import stroom.receive.common.FeedStatusService;
 import stroom.receive.common.ReceiptIdGenerator;
 import stroom.receive.common.RequestHandler;
+import stroom.receive.common.S3EventConsumer;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.guice.RestResourcesBinder;
 
@@ -31,11 +33,13 @@ public class ReceiveDataModule extends AbstractModule {
     protected void configure() {
         bind(CertificateExtractor.class).to(CertificateExtractorImpl.class);
         bind(ContentAutoCreationService.class).to(ContentAutoCreationServiceImpl.class);
+        bind(ContentAutoCreationAttrMapFilterFactory.class).to(StroomContentAutoCreationAttrMapFactoryImpl.class);
         bind(FeedStatusService.class).to(FeedStatusServiceImpl.class);
         bind(ReceiptIdGenerator.class).to(StroomReceiptIdGenerator.class).asEagerSingleton();
         bind(RequestHandler.class).to(ReceiveDataRequestHandler.class);
         bind(ContentTemplateStore.class).to(ContentTemplateStoreImpl.class);
         bind(ContentTemplateService.class).to(ContentTemplateServiceImpl.class);
+        bind(S3EventConsumer.class).to(StroomS3EventConsumer.class);
 
         RestResourcesBinder.create(binder())
                 .bind(ContentTemplateResourceImpl.class);

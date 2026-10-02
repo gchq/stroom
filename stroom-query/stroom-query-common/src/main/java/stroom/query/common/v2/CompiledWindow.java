@@ -1,11 +1,27 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.HoppingWindow;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.Sort;
-import stroom.query.api.v2.Sort.SortDirection;
-import stroom.query.api.v2.Window;
+import stroom.query.api.Column;
+import stroom.query.api.HoppingWindow;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.Sort;
+import stroom.query.api.Sort.SortDirection;
+import stroom.query.api.Window;
 import stroom.query.language.functions.Expression;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
@@ -69,8 +85,8 @@ public class CompiledWindow {
                 offsets = new ArrayList<>();
                 SimpleDuration offset = SimpleDuration.ZERO;
 
-                LocalDateTime reference = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
-                LocalDateTime maximum = SimpleDurationUtil.plus(reference, windowSize);
+                final LocalDateTime reference = LocalDateTime.of(1970, 1, 1, 0, 0, 0);
+                final LocalDateTime maximum = SimpleDurationUtil.plus(reference, windowSize);
                 LocalDateTime added = reference;
 
                 while (added.isBefore(maximum) || added.equals(maximum)) {
@@ -123,19 +139,19 @@ public class CompiledWindow {
 
         // Fix or insert time column.
         if (timeField != null) {
-            Column timeColumn = columnMap.get(timeField);
+            final Column timeColumn = columnMap.get(timeField);
             if (timeColumn != null) {
                 final int index = columns.indexOf(timeColumn);
                 columns.set(index, timeColumn
                         .copy()
-                        .expression(ParamSubstituteUtil.makeParam(timeField))
+                        .expression(ParamUtil.create(timeField))
                         .group(0)
                         .build());
             } else {
                 columns.add(Column.builder()
                         .id(timeField)
                         .name(timeField)
-                        .expression(ParamSubstituteUtil.makeParam(timeField))
+                        .expression(ParamUtil.create(timeField))
                         .group(0)
                         .sort(Sort.builder().order(0).direction(SortDirection.ASCENDING).build())
                         .visible(true)
@@ -146,7 +162,7 @@ public class CompiledWindow {
         // Add period columns.
         for (int i = 0; i < offsets.size(); i++) {
             final String fieldId = FIELD_PREFIX + i;
-            Expression expression = expressionMap.get(fieldId);
+            final Expression expression = expressionMap.get(fieldId);
             final String expressionString = expression.toString();
             final Column column = columnMap.get(fieldId);
             if (column != null) {
@@ -210,7 +226,7 @@ public class CompiledWindow {
         public void process(final Val[] values,
                             final BiConsumer<Val[], Integer> consumer) {
             int iteration = 0;
-            for (SimpleDuration offset : offsets) {
+            for (final SimpleDuration offset : offsets) {
                 final Val[] modifiedValues = addWindow(values, offset);
                 consumer.accept(modifiedValues, iteration);
                 iteration++;

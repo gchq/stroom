@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package stroom.query.shared;
 
-import stroom.query.api.v2.LifespanInfo;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.LifespanInfo;
+import stroom.query.api.QueryKey;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

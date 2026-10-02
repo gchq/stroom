@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.node.client;
 
 import stroom.alert.client.event.AlertEvent;
@@ -105,7 +121,7 @@ public class JobNodeListHelper {
 
 //    public BrowserEventHandler<JobNodeAndInfo> createExecuteJobNowHandler() {
 //        return (Context context, Element elem, JobNodeAndInfo jobNodeAndInfo, NativeEvent event) ->
-//                executeJobNow(hasHandlers, taskListener, GwtNullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode));
+//                executeJobNow(hasHandlers, taskListener, NullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobNode));
 //    }
 
     public void executeJobNow(final JobNode jobNode) {
@@ -139,10 +155,10 @@ public class JobNodeListHelper {
             final TaskMonitorFactory taskMonitorFactory,
             final Runnable onSuccessHandler) {
 
-        return (int rowIndex, JobNodeAndInfo jobNodeAndInfo, TickBoxState value) -> {
+        return (final int rowIndex, final JobNodeAndInfo jobNodeAndInfo, final TickBoxState value) -> {
             if (jobNodeAndInfo != null) {
                 final boolean isEnabled = NullSafe.isTrue(value.toBoolean());
-                jobNodeAndInfo.getJobNode().setEnabled(isEnabled);
+//                jobNodeAndInfo.getJobNode().setEnabled(isEnabled);
                 restFactory
                         .create(JOB_NODE_RESOURCE)
                         .call(jobNodeResource ->
@@ -202,7 +218,7 @@ public class JobNodeListHelper {
                     ConfirmEvent.fire(hasHandlers, msg, isConfirm -> {
                         if (isConfirm) {
                             schedulePresenter.show(schedule -> {
-                                JobNodeUtil.setSchedule(jobNode, schedule);
+//                                jobNode = JobNodeUtil.setSchedule(jobNode, schedule);
                                 final Set<Integer> ids = selectedItems.stream()
                                         .map(JobNode::getId)
                                         .collect(Collectors.toSet());
@@ -224,7 +240,7 @@ public class JobNodeListHelper {
                 }
             } else {
                 schedulePresenter.show(schedule -> {
-                    JobNodeUtil.setSchedule(jobNode, schedule);
+//                    jobNode = JobNodeUtil.setSchedule(jobNode, schedule);
                     restFactory
                             .create(JOB_NODE_RESOURCE)
                             .call(resource ->
@@ -240,7 +256,7 @@ public class JobNodeListHelper {
         }
     }
 
-    public String getCurrentTaskCountAsStr(JobNodeAndInfo jobNodeAndInfo) {
+    public String getCurrentTaskCountAsStr(final JobNodeAndInfo jobNodeAndInfo) {
         return NullSafe.getOrElse(
                 jobNodeAndInfo,
                 JobNodeAndInfo::getJobNodeInfo,
@@ -248,7 +264,7 @@ public class JobNodeListHelper {
                 "?");
     }
 
-    public String getLastExecutedTimeAsStr(JobNodeAndInfo jobNodeAndInfo) {
+    public String getLastExecutedTimeAsStr(final JobNodeAndInfo jobNodeAndInfo) {
         if (NullSafe.test(jobNodeAndInfo, jobNode2 ->
                 jobNode2.getJobType() == JobType.CRON
                 || jobNode2.getJobType() == JobType.FREQUENCY)) {
@@ -262,7 +278,7 @@ public class JobNodeListHelper {
         }
     }
 
-    public String getNextScheduledTimeAsStr(JobNodeAndInfo jobNodeAndInfo) {
+    public String getNextScheduledTimeAsStr(final JobNodeAndInfo jobNodeAndInfo) {
         final JobType jobType = NullSafe.get(jobNodeAndInfo, JobNodeAndInfo::getJobType);
         final boolean isJobNodeEnabled = isJobNodeEnabled(jobNodeAndInfo);
 
@@ -308,7 +324,7 @@ public class JobNodeListHelper {
         return null;
     }
 
-    public static String buildJobTypeStr(JobNodeAndInfo jobNodeAndInfo) {
+    public static String buildJobTypeStr(final JobNodeAndInfo jobNodeAndInfo) {
         //noinspection EnhancedSwitchMigration // not in GWT
         switch (jobNodeAndInfo.getJobType()) {
             case CRON:
@@ -437,7 +453,7 @@ public class JobNodeListHelper {
     public void addNodeStateColumn(final MyDataGrid<JobNodeAndInfo> dataGrid) {
         dataGrid.addColumn(
                 DataGridUtil.textColumnBuilder(
-                                (JobNodeAndInfo jobNodeAndInfo) -> {
+                                (final JobNodeAndInfo jobNodeAndInfo) -> {
                                     final String nodeName = NullSafe.get(
                                             jobNodeAndInfo, JobNodeAndInfo::getNodeName);
                                     return isNodeEnabled(nodeName)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,18 @@
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardFields;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -90,8 +92,10 @@ public class IndexShardServiceImpl implements IndexShardService, Searchable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
-                       final ValuesConsumer consumer) {
+                       final DateTimeSettings dateTimeSettings,
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         securityContext.secure(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION, () ->
-                indexShardDao.search(criteria, fieldIndex, consumer));
+                indexShardDao.search(criteria, fieldIndex, valuesConsumer));
     }
 }

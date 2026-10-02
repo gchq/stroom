@@ -29,7 +29,7 @@ class CurrentTime extends StroomExtensionFunctionCall {
     public static final String FUNCTION_NAME = "current-time";
 
     @Override
-    protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         String result = null;
 
         try {

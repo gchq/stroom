@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.UserRef;
+import stroom.util.shared.time.SimpleDuration;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -40,41 +42,54 @@ public class CreateProcessFilterRequest {
     @JsonProperty
     private final int maxProcessingTasks;
     @JsonProperty
+    private final String profileName;
+    @JsonProperty
     private final boolean autoPriority;
     @JsonProperty
     private final boolean reprocess;
     @JsonProperty
     private final boolean enabled;
     @JsonProperty
+    private final boolean export;
+    @JsonProperty
     private final Long minMetaCreateTimeMs;
     @JsonProperty
     private final Long maxMetaCreateTimeMs;
     @JsonProperty
     private final UserRef runAsUser;
+    @JsonProperty
+    private final SimpleDuration maxTaskCreationDelay;
 
     @JsonCreator
     public CreateProcessFilterRequest(@JsonProperty("processorType") final ProcessorType processorType,
                                       @JsonProperty("pipeline") final DocRef pipeline,
                                       @JsonProperty("queryData") final QueryData queryData,
-                                      @JsonProperty("priority") final int priority,
-                                      @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
-                                      @JsonProperty("autoPriority") final boolean autoPriority,
-                                      @JsonProperty("reprocess") final boolean reprocess,
-                                      @JsonProperty("enabled") final boolean enabled,
+                                      @JsonProperty("priority") final Integer priority,
+                                      @JsonProperty("maxProcessingTasks") final Integer maxProcessingTasks,
+                                      @JsonProperty("profileName") final String profileName,
+                                      @JsonProperty("autoPriority") final Boolean autoPriority,
+                                      @JsonProperty("reprocess") final Boolean reprocess,
+                                      @JsonProperty("enabled") final Boolean enabled,
+                                      @JsonProperty("export") final Boolean export,
                                       @JsonProperty("minMetaCreateTimeMs") final Long minMetaCreateTimeMs,
                                       @JsonProperty("maxMetaCreateTimeMs") final Long maxMetaCreateTimeMs,
-                                      @JsonProperty("runAsUser") final UserRef runAsUser) {
+                                      @JsonProperty("runAsUser") final UserRef runAsUser,
+                                      @JsonProperty("maxTaskCreationDelay")
+                                      final SimpleDuration maxTaskCreationDelay) {
         this.processorType = processorType;
         this.pipeline = pipeline;
         this.queryData = queryData;
-        this.priority = priority;
-        this.maxProcessingTasks = maxProcessingTasks;
-        this.autoPriority = autoPriority;
-        this.reprocess = reprocess;
-        this.enabled = enabled;
+        this.priority = Objects.requireNonNullElse(priority, 0);
+        this.maxProcessingTasks = Objects.requireNonNullElse(maxProcessingTasks, 0);
+        this.profileName = profileName;
+        this.autoPriority = Objects.requireNonNullElse(autoPriority, false);
+        this.reprocess = Objects.requireNonNullElse(reprocess, false);
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.export = Objects.requireNonNullElse(export, false);
         this.minMetaCreateTimeMs = minMetaCreateTimeMs;
         this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
         this.runAsUser = runAsUser;
+        this.maxTaskCreationDelay = maxTaskCreationDelay;
     }
 
     public ProcessorType getProcessorType() {
@@ -97,6 +112,17 @@ public class CreateProcessFilterRequest {
         return maxProcessingTasks;
     }
 
+    public String getProfileName() {
+        return profileName;
+    }
+
+    /**
+     * Null means use the cluster wide skipNonProducingFiltersMaxDuration property.
+     */
+    public SimpleDuration getMaxTaskCreationDelay() {
+        return maxTaskCreationDelay;
+    }
+
     public boolean isAutoPriority() {
         return autoPriority;
     }
@@ -107,6 +133,10 @@ public class CreateProcessFilterRequest {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public boolean isExport() {
+        return export;
     }
 
     public Long getMinMetaCreateTimeMs() {
@@ -131,66 +161,81 @@ public class CreateProcessFilterRequest {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final CreateProcessFilterRequest that = (CreateProcessFilterRequest) o;
         return priority == that.priority &&
+               maxProcessingTasks == that.maxProcessingTasks &&
                autoPriority == that.autoPriority &&
                reprocess == that.reprocess &&
                enabled == that.enabled &&
+               export == that.export &&
+               processorType == that.processorType &&
                Objects.equals(pipeline, that.pipeline) &&
                Objects.equals(queryData, that.queryData) &&
+               Objects.equals(profileName, that.profileName) &&
                Objects.equals(minMetaCreateTimeMs, that.minMetaCreateTimeMs) &&
-               Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs);
+               Objects.equals(maxMetaCreateTimeMs, that.maxMetaCreateTimeMs) &&
+               Objects.equals(runAsUser, that.runAsUser) &&
+               Objects.equals(maxTaskCreationDelay, that.maxTaskCreationDelay);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pipeline,
+        return Objects.hash(processorType,
+                pipeline,
                 queryData,
                 priority,
+                maxProcessingTasks,
+                profileName,
                 autoPriority,
                 reprocess,
                 enabled,
+                export,
                 minMetaCreateTimeMs,
-                maxMetaCreateTimeMs);
+                maxMetaCreateTimeMs,
+                runAsUser,
+                maxTaskCreationDelay);
     }
 
     @Override
     public String toString() {
         return "CreateProcessFilterRequest{" +
-               "pipeline=" + pipeline +
+               "processorType=" + processorType +
+               ", pipeline=" + pipeline +
                ", queryData=" + queryData +
                ", priority=" + priority +
+               ", maxProcessingTasks=" + maxProcessingTasks +
+               ", profileName='" + profileName + '\'' +
                ", autoPriority=" + autoPriority +
                ", reprocess=" + reprocess +
                ", enabled=" + enabled +
+               ", export=" + export +
                ", minMetaCreateTimeMs=" + minMetaCreateTimeMs +
                ", maxMetaCreateTimeMs=" + maxMetaCreateTimeMs +
+               ", runAsUser=" + runAsUser +
+               ", maxTaskCreationDelay=" + maxTaskCreationDelay +
                '}';
     }
 
-
-    // --------------------------------------------------------------------------------
-
-
-    public static class Builder {
+    public static class Builder
+            extends AbstractBuilder<CreateProcessFilterRequest, CreateProcessFilterRequest.Builder> {
 
         private ProcessorType processorType = ProcessorType.PIPELINE;
         private DocRef pipeline;
         private QueryData queryData;
         private int priority = 10;
         private int maxProcessingTasks = 0;
+        private String profileName;
         private boolean autoPriority;
         private boolean reprocess;
         private boolean enabled = true;
+        private boolean export = false;
         private Long minMetaCreateTimeMs;
         private Long maxMetaCreateTimeMs;
         private UserRef runAsUser;
+        private SimpleDuration maxTaskCreationDelay;
 
         private Builder() {
         }
@@ -201,66 +246,92 @@ public class CreateProcessFilterRequest {
             this.queryData = request.queryData;
             this.priority = request.priority;
             this.maxProcessingTasks = request.maxProcessingTasks;
+            this.profileName = request.profileName;
             this.autoPriority = request.autoPriority;
             this.reprocess = request.reprocess;
             this.enabled = request.enabled;
+            this.export = request.export;
             this.minMetaCreateTimeMs = request.minMetaCreateTimeMs;
             this.maxMetaCreateTimeMs = request.maxMetaCreateTimeMs;
             this.runAsUser = request.runAsUser;
+            this.maxTaskCreationDelay = request.maxTaskCreationDelay;
         }
 
         public Builder processorType(final ProcessorType processorType) {
             this.processorType = processorType;
-            return this;
+            return self();
         }
 
         public Builder pipeline(final DocRef pipeline) {
             this.pipeline = pipeline;
-            return this;
+            return self();
         }
 
         public Builder queryData(final QueryData queryData) {
             this.queryData = queryData;
-            return this;
+            return self();
         }
 
         public Builder priority(final int priority) {
             this.priority = priority;
-            return this;
+            return self();
         }
 
         public Builder maxProcessingTasks(final int maxProcessingTasks) {
             this.maxProcessingTasks = maxProcessingTasks;
-            return this;
+            return self();
+        }
+
+        public Builder profileName(final String profileName) {
+            this.profileName = profileName;
+            return self();
         }
 
         public Builder autoPriority(final boolean autoPriority) {
             this.autoPriority = autoPriority;
-            return this;
+            return self();
         }
 
         public Builder reprocess(final boolean reprocess) {
             this.reprocess = reprocess;
-            return this;
+            return self();
         }
 
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
-            return this;
+            return self();
+        }
+
+        public Builder export(final boolean export) {
+            this.export = export;
+            return self();
         }
 
         public Builder minMetaCreateTimeMs(final Long minMetaCreateTimeMs) {
             this.minMetaCreateTimeMs = minMetaCreateTimeMs;
-            return this;
+            return self();
         }
 
         public Builder maxMetaCreateTimeMs(final Long maxMetaCreateTimeMs) {
             this.maxMetaCreateTimeMs = maxMetaCreateTimeMs;
-            return this;
+            return self();
+        }
+
+        /**
+         * Null means use the cluster wide skipNonProducingFiltersMaxDuration property.
+         */
+        public Builder maxTaskCreationDelay(final SimpleDuration maxTaskCreationDelay) {
+            this.maxTaskCreationDelay = maxTaskCreationDelay;
+            return self();
         }
 
         public Builder runAsUser(final UserRef runAsUser) {
             this.runAsUser = runAsUser;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
             return this;
         }
 
@@ -271,12 +342,15 @@ public class CreateProcessFilterRequest {
                     queryData,
                     priority,
                     maxProcessingTasks,
+                    profileName,
                     autoPriority,
                     reprocess,
                     enabled,
+                    export,
                     minMetaCreateTimeMs,
                     maxMetaCreateTimeMs,
-                    runAsUser);
+                    runAsUser,
+                    maxTaskCreationDelay);
         }
     }
 }

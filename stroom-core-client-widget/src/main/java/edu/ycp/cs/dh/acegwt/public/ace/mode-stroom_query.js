@@ -29,7 +29,7 @@ var StroomQueryHighlightRules = function() {
             end : "\\*/"
         }, {
             token : "keyword", // From Dual | From "My View"
-            regex : /(from|show)/,
+            regex : /(from|show)\b/,
             next : "doc-rule" // All subsequent matching done with doc-rule set
         }, {
             token : "keyword.operator", // in dictionary
@@ -56,7 +56,7 @@ var StroomQueryHighlightRules = function() {
             regex : /("[\w\s]+")(\s*)(\()/
         }, {
             token : "keyword.operator",
-            regex : /in|\+|\-|\/|\/\/|%|\^|~|<|>|<=|=>|==|!=|<>|=/
+            regex : /in\b|\+|\-|\/|\/\/|%|\^|~|<|>|<=|=>|==|!=|<>|=/
         }, {
             token : "paren.lparen",
             regex : /[\(]/

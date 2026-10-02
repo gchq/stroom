@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata;
 
 import stroom.meta.api.EffectiveMeta;
@@ -72,7 +88,7 @@ class TestEffectiveStreamInternPool {
 
         LOGGER.info("set1:\n{}", set1);
 
-        EffectiveMetaSet set2 = EffectiveMetaSet.builder("SET2 FEED-COMBINED-V2.0", "Reference")
+        final EffectiveMetaSet set2 = EffectiveMetaSet.builder("SET2 FEED-COMBINED-V2.0", "Reference")
                 .add(56826239, DateUtil.parseNormalDateTimeString("2024-08-06T13:52:10.000Z"))
                 .add(56890073, DateUtil.parseNormalDateTimeString("2024-08-07T13:52:16.000Z"))
                 .build();
@@ -80,7 +96,7 @@ class TestEffectiveStreamInternPool {
         LOGGER.info("set2:\n{}", set2);
         LOGGER.info("--------------------------------------------------------------------------------");
 
-        EffectiveStreamInternPool internPool = new EffectiveStreamInternPool();
+        final EffectiveStreamInternPool internPool = new EffectiveStreamInternPool();
 
         final EffectiveMetaSet interned1 = internPool.intern(set1);
 

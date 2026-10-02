@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ abstract class Calculator {
             }
             return ValDouble.create(op(cur, val));
 
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return ValErr.create(e.getMessage());
         }
     }

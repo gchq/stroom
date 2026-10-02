@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,27 @@ package stroom.query.language.functions;
 
 import stroom.util.shared.ModelStringUtil;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.Duration;
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValDuration implements ValNumber {
 
     private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
             ValDuration.class, ValComparators.AS_LONG_COMPARATOR);
 
     public static final Type TYPE = Type.DURATION;
+    @JsonProperty
     private final long milliseconds;
 
-    private ValDuration(final long milliseconds) {
-        this.milliseconds = milliseconds;
+    @JsonCreator
+    private ValDuration(@JsonProperty("milliseconds") final Long milliseconds) {
+        this.milliseconds = Objects.requireNonNullElse(milliseconds, 0L);
     }
 
     public static ValDuration create(final long milliseconds) {

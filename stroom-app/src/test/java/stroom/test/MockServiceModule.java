@@ -1,18 +1,47 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test;
 
 import stroom.activity.mock.MockActivityModule;
+import stroom.ai.impl.AiDao;
+import stroom.ai.impl.mock.MockAiDao;
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
+import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.core.dataprocess.PipelineStreamTaskModule;
+import stroom.credentials.api.KeyStore;
+import stroom.credentials.api.StoredSecret;
+import stroom.credentials.api.StoredSecrets;
+import stroom.credentials.impl.dao.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
+import stroom.dictionary.api.DictionaryStore;
+import stroom.dictionary.impl.DictionaryStoreImpl;
 import stroom.dictionary.mock.MockWordListProviderModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.impl.DocFinderModule;
+import stroom.docstore.impl.DocStoreModule;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.api.VolumeGroupNameProvider;
 import stroom.feed.impl.MockFeedModule;
+import stroom.gitrepo.mock.MockGitRepoModule;
 import stroom.importexport.impl.ImportExportModule;
 import stroom.index.mock.MockIndexModule;
-import stroom.legacy.impex_6_1.LegacyImpexModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.node.mock.MockNodeServiceModule;
 import stroom.pipeline.xmlschema.MockXmlSchemaModule;
@@ -24,11 +53,9 @@ import stroom.security.api.UserService;
 import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.shared.User;
-import stroom.state.impl.MockStateModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
 import stroom.task.impl.MockTaskModule;
 import stroom.test.common.MockMetricsModule;
-import stroom.util.entityevent.EntityEventBus;
 import stroom.util.http.BasicHttpClientFactory;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.io.HomeDirProvider;
@@ -59,21 +86,22 @@ public class MockServiceModule extends AbstractModule {
         install(new MockSecurityContextModule());
         install(new MockJerseyModule());
         install(new MockActivityModule());
-        install(new MockDocRefInfoModule());
         install(new MockMetricsModule());
         install(new CacheModule());
         install(new CacheServiceModule());
+        install(new MockCredentialsDaoModule());
         install(new MockMetaModule());
         install(new MockStreamStoreModule());
         install(new MockWordListProviderModule());
         install(new MockEnvironmentModule());
-        install(new stroom.docstore.impl.DocStoreModule());
+        install(new DocStoreModule());
+        install(new DocFinderModule());
         install(new stroom.docstore.impl.memory.MemoryPersistenceModule());
         install(new stroom.event.logging.impl.EventLoggingModule());
         install(new MockExplorerModule());
         install(new MockFeedModule());
+        install(new MockGitRepoModule());
         install(new ImportExportModule());
-        install(new LegacyImpexModule());
         install(new MockIndexModule());
         install(new MockNodeServiceModule());
         install(new stroom.pipeline.PipelineModule());
@@ -83,6 +111,7 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.pipeline.factory.PipelineFactoryModule());
         install(new PipelineScopeModule());
         install(new PipelineStreamTaskModule());
+        install(new stroom.pipeline.xsltfunctions.AiXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.CommonXsltFunctionModule());
         install(new stroom.pipeline.xsltfunctions.DataStoreXsltFunctionModule());
         install(new stroom.pipeline.refdata.ReferenceDataModule());
@@ -95,11 +124,27 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.test.MockTestControlModule());
         install(new MockServletModule());
         install(new MockXmlSchemaModule());
-        install(new MockStateModule());
         install(new MockPlanBModule());
+        install(new MockClusterLockModule());
+        install(new MockAiModule());
+        install(new stroom.core.entity.event.EntityEventModule());
 
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
+        bind(AiDao.class).to(MockAiDao.class);
+        bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
         bind(ContentPackUserService.class).to(MockSecurityContext.class);
         bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);
+        bind(StoredSecrets.class).toInstance(new StoredSecrets() {
+            @Override
+            public StoredSecret get(final String name) {
+                return null;
+            }
+
+            @Override
+            public KeyStore getKeyStore(final String name) {
+                return null;
+            }
+        });
 
         final UserService mockUserService = mock(UserService.class);
         when(mockUserService.loadByUuid(any())).then((Answer<User>) invocation -> {
@@ -138,12 +183,6 @@ public class MockServiceModule extends AbstractModule {
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
-    }
-
-    @Provides
-    EntityEventBus entityEventBus() {
-        return event -> {
-        };
     }
 
     @Provides

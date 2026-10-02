@@ -93,7 +93,7 @@ public final class PeriodUtil {
         return millis;
     }
 
-    public static int getPrecision(final long duration, int pointsRequired) {
+    public static int getPrecision(final long duration, final int pointsRequired) {
         final double durationLog = Math.log10(duration);
         final double pointLog = Math.log10(pointsRequired);
         return (int) (durationLog - pointLog);

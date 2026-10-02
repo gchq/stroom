@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import stroom.dashboard.shared.TextComponentSettings;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.ColumnRef;
 import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -95,10 +95,9 @@ public class BasicTextSettingsPresenter
     }
 
     private void addColumnNames(final Component component, final List<ColumnRef> allColumns) {
-        if (component instanceof HasComponentSelection) {
-            final HasComponentSelection hasSelectedRows = (HasComponentSelection) component;
-            final List<ColumnRef> columns = hasSelectedRows.getColumns();
-            if (columns != null && columns.size() > 0) {
+        if (component instanceof final HasComponentSelection hasSelectedRows) {
+            final List<ColumnRef> columns = hasSelectedRows.getColumnRefs();
+            if (columns != null && !columns.isEmpty()) {
                 allColumns.addAll(columns);
             }
         }
@@ -116,7 +115,7 @@ public class BasicTextSettingsPresenter
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
-        final List<Component> list = getComponents().getSortedComponentsByType(
+        final List<Component> list = getDashboardContext().getComponents().getSortedComponentsByType(
                 TablePresenter.TYPE.getId(),
                 EmbeddedQueryPresenter.TYPE.getId());
         setTableList(list);
@@ -174,7 +173,7 @@ public class BasicTextSettingsPresenter
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        ComponentConfig result = super.write(componentConfig);
+        final ComponentConfig result = super.write(componentConfig);
         final TextComponentSettings oldSettings = (TextComponentSettings) result.getSettings();
         final TextComponentSettings newSettings = writeSettings(oldSettings);
         return result.copy().settings(newSettings).build();
@@ -207,7 +206,7 @@ public class BasicTextSettingsPresenter
     }
 
     private void setTableId(final String tableId) {
-        getView().setTable(getComponents().get(tableId));
+        getView().setTable(getDashboardContext().getComponents().get(tableId));
     }
 
     @Override

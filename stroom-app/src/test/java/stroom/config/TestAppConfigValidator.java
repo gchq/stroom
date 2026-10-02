@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config;
 
 import stroom.config.app.AppConfig;
@@ -31,7 +47,7 @@ public class TestAppConfigValidator extends AbstractCoreIntegrationTest {
     @Test
     void testValidate_noErrors() {
         // Make sure we can validate the whole tree
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(appConfig);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(appConfig);
 
         result.handleViolations((constraintViolation, validationSeverity) -> {
             switch (validationSeverity) {
@@ -54,7 +70,7 @@ public class TestAppConfigValidator extends AbstractCoreIntegrationTest {
         final Set<String> dataFormats = new HashSet<>(DataFormatNames.ALL_HARD_CODED_FORMAT_NAMES);
         // Add a raw type that is not in the set of types so should fail validation
         rawTypes.add("foo");
-        MetaServiceConfig metaServiceConfig = new MetaServiceConfig(
+        final MetaServiceConfig metaServiceConfig = new MetaServiceConfig(
                 null,
                 null,
                 null,

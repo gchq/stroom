@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,14 +44,14 @@ public class QueryHelpRow {
     @JsonCreator
     public QueryHelpRow(@JsonProperty("type") final QueryHelpType type,
                         @JsonProperty("id") final String id,
-                        @JsonProperty("hasChildren") final boolean hasChildren,
+                        @JsonProperty("hasChildren") final Boolean hasChildren,
                         @JsonProperty("documentType") final String documentType,
                         @JsonProperty("iconTooltip") final String iconTooltip,
                         @JsonProperty("title") final String title,
                         @JsonProperty("data") final QueryHelpData data) {
         this.type = type;
         this.id = id;
-        this.hasChildren = hasChildren;
+        this.hasChildren = Objects.requireNonNullElse(hasChildren, false);
         this.documentType = documentType;
         this.iconTooltip = iconTooltip;
         this.title = title;
@@ -91,15 +91,16 @@ public class QueryHelpRow {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof QueryHelpRow)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        return Objects.equals(id, ((QueryHelpRow) o).id);
+        final QueryHelpRow that = (QueryHelpRow) o;
+        return hasChildren == that.hasChildren && Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(id, hasChildren);
     }
 
     public Builder copy() {

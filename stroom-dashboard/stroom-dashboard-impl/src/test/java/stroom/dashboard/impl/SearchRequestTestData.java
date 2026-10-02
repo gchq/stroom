@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,22 +24,22 @@ import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.docref.DocRef;
-import stroom.expression.api.UserTimeZone;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.DateTimeFormatSettings;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.Format.Type;
-import stroom.query.api.v2.IncludeExcludeFilter;
-import stroom.query.api.v2.NumberFormatSettings;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
-import stroom.query.api.v2.Sort;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.DateTimeFormatSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.Format;
+import stroom.query.api.Format.Type;
+import stroom.query.api.IncludeExcludeFilter;
+import stroom.query.api.NumberFormatSettings;
+import stroom.query.api.Param;
+import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
+import stroom.query.api.Sort;
+import stroom.query.api.TableSettings;
+import stroom.query.api.UserTimeZone;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,29 +49,29 @@ import java.util.Map;
 public class SearchRequestTestData {
 
     static SearchRequest apiSearchRequest() {
-        DashboardSearchRequest dashboardSearchRequest = dashboardSearchRequest();
+        final DashboardSearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
-        SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
+        final SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
         return searchRequestMapper.mapRequest(dashboardSearchRequest);
     }
 
     static DashboardSearchRequest dashboardSearchRequest() {
         final DocRef docRef = new DocRef("docRefType", "docRefUuid", "docRefName");
 
-        ExpressionOperator.Builder expressionOperator = ExpressionOperator.builder();
+        final ExpressionOperator.Builder expressionOperator = ExpressionOperator.builder();
         expressionOperator.addTerm("field1", ExpressionTerm.Condition.EQUALS, "value1");
         expressionOperator.addOperator(ExpressionOperator.builder().build());
         expressionOperator.addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2");
 
         final String componentId = "componentSettingsMapKey";
-        TableComponentSettings tableSettings = TableComponentSettings.builder()
+        final TableComponentSettings tableSettings = TableComponentSettings.builder()
                 .queryId("someQueryId")
                 .addColumn(Column.builder()
                         .id("1")
                         .name("name1")
                         .expression("expression1")
                         .sort(new Sort(1, Sort.SortDirection.ASCENDING))
-                        .filter(new IncludeExcludeFilter("include1", "exclude1"))
+                        .filter(new IncludeExcludeFilter("include1", "exclude1", null, null))
                         .format(Format.builder()
                                 .type(Format.Type.NUMBER)
                                 .settings(new NumberFormatSettings(
@@ -88,7 +88,7 @@ public class SearchRequestTestData {
                         .name("name2")
                         .expression("expression2")
                         .sort(new Sort(2, Sort.SortDirection.DESCENDING))
-                        .filter(new IncludeExcludeFilter("include2", "exclude2"))
+                        .filter(new IncludeExcludeFilter("include2", "exclude2", null, null))
                         .format(Format.builder()
                                 .type(Type.DATE_TIME)
                                 .settings(createDateTimeFormat())
@@ -105,7 +105,7 @@ public class SearchRequestTestData {
                 .showDetail(false)
                 .build();
 
-        Map<String, ComponentSettings> componentSettingsMap = new HashMap<>();
+        final Map<String, ComponentSettings> componentSettingsMap = new HashMap<>();
         componentSettingsMap.put(componentId, tableSettings);
 
         final List<Param> params = List.of(new Param("param1", "val1"), new Param("param2", "val2"));
@@ -122,7 +122,7 @@ public class SearchRequestTestData {
         for (final Map.Entry<String, ComponentSettings> entry : componentSettingsMap.entrySet()) {
             final TableComponentSettings tableComponentSettings = (TableComponentSettings) entry.getValue();
             final TableSettings ts = tableComponentSettings.copy().buildTableSettings();
-            TableResultRequest tableResultRequest = TableResultRequest.builder()
+            final TableResultRequest tableResultRequest = TableResultRequest.builder()
                     .componentId(entry.getKey())
                     .tableSettings(ts)
                     .fetch(Fetch.CHANGES)

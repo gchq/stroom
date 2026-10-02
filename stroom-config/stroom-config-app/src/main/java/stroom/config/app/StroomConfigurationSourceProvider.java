@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.app;
 
 import stroom.util.io.DiffUtil;
@@ -12,7 +28,7 @@ import stroom.util.io.TempDirProviderImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlV2Util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,7 +82,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
         try (final InputStream in = delegate.open(path)) {
             // This is the yaml tree after passing though the delegate
             // substitutions
-            final ObjectMapper mapper = YamlUtil.getNoIndentMapper();
+            final ObjectMapper mapper = YamlV2Util.getNoIndentMapper();
             final JsonNode rootNode = mapper.readTree(in);
 
             Objects.requireNonNull(rootNode, () ->
@@ -109,7 +125,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
             throw new RuntimeException("No config node found at " + APP_CONFIG_JSON_POINTER);
         }
 
-        YamlUtil.mergeYamlNodeTrees(
+        YamlV2Util.mergeYamlNodeTrees(
                 objectMapper,
                 objectMapper2 ->
                         appConfigNode,
@@ -133,7 +149,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
                     diffLines ->
                             log("Comparing original and modified yaml:\n{}",
                                     String.join("\n", diffLines)));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             log("Unable to read file " + path, e);
         }
     }
@@ -230,7 +246,7 @@ public class StroomConfigurationSourceProvider implements ConfigurationSourcePro
         }
     }
 
-    private void log(final String msg, Object... args) {
+    private void log(final String msg, final Object... args) {
         // Use system.out as we have no logger at this point
         if (logChanges) {
             // Use system.out as we have no logger at this point

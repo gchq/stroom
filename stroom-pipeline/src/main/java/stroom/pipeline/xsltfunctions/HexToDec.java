@@ -27,7 +27,7 @@ class HexToDec extends StroomExtensionFunctionCall {
     public static final String FUNCTION_NAME = "hex-to-dec";
 
     @Override
-    protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         String result = null;
 
         String hex = null;
@@ -35,7 +35,7 @@ class HexToDec extends StroomExtensionFunctionCall {
             hex = getSafeString(functionName, context, arguments, 0);
             final long l = Long.parseLong(hex, 16);
             result = Long.toString(l);
-        } catch (NumberFormatException nfe) {
+        } catch (final NumberFormatException nfe) {
             final StringBuilder sb = new StringBuilder();
             sb.append("Error converting input '")
                     .append(hex)

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.concurrent;
 
 import stroom.util.concurrent.UniqueId.NodeType;
@@ -7,6 +23,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -18,6 +35,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,7 +54,7 @@ class TestUniqueIdGenerator {
 
     @Test
     void simple() {
-        UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
+        final UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
         ThreadUtil.sleep(20);
         final UniqueId uniqueId = generator.generateId();
 
@@ -52,7 +70,7 @@ class TestUniqueIdGenerator {
 
     @Test
     void parse() {
-        UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
+        final UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
         final UniqueId uniqueId1 = generator.generateId();
 
         final String str = uniqueId1.toString();
@@ -72,9 +90,9 @@ class TestUniqueIdGenerator {
         final CountDownLatch completionLatch = new CountDownLatch(cores);
         final UniqueIdGenerator generator = new UniqueIdGenerator(NodeType.PROXY, "node1");
 
-        int iterations = 100_000;
+        final int iterations = 100_000;
         final List<UniqueId>[] lists = new List[cores];
-        DurationTimer timer = DurationTimer.start();
+        final DurationTimer timer = DurationTimer.start();
 
         for (int i = 0; i < cores; i++) {
             final int coreIdx = i;
@@ -94,7 +112,7 @@ class TestUniqueIdGenerator {
                     lists[coreIdx] = uniqueIdList;
                     assertThat(uniqueIdList)
                             .hasSize(iterations);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.error("Error", e);
                 } finally {
 //                    LOGGER.info("Thread {} completing", coreIdx);
@@ -107,11 +125,14 @@ class TestUniqueIdGenerator {
 
         ThreadUtil.await(completionLatch);
 
-        int totalCount = iterations * cores;
+        final int totalCount = iterations * cores;
         final Duration duration = timer.get();
-        LOGGER.info("Generated {} uniqueIds in {}, millis per iter: {}",
+        LOGGER.info("Generated {} uniqueIds in {}, " +
+                    "uniqueIds/sec: {}, " +
+                    "millis per iter: {}",
                 ModelStringUtil.formatCsv(totalCount),
                 duration,
+                totalCount / (double) duration.toMillis() * 1000,
                 duration.toMillis() / (double) totalCount);
 
         final List<UniqueId> allIds = new ArrayList<>(totalCount);
@@ -125,5 +146,36 @@ class TestUniqueIdGenerator {
         // No dupes should have dropped out, so size is unchanged
         assertThat(uniqueIds)
                 .hasSize(totalCount);
+    }
+
+    /**
+     * On a 12 core/24 thread cpu, I get about 4mil ops/sec
+     */
+    @Disabled // Manual perf test only
+    @Test
+    void testPerf() {
+        final UniqueIdGenerator uniqueIdGenerator = new UniqueIdGenerator(NodeType.STROOM, "stroom1");
+
+        final int iterations = 10_000_000;
+        final String[] arr = new String[iterations];
+
+        final DurationTimer timer = DurationTimer.start();
+        IntStream.range(0, iterations)
+                .parallel()
+                .forEach(i -> {
+                    final String str = uniqueIdGenerator.generateId().toString();
+                    arr[i] = str;
+                });
+
+        final Duration duration = timer.get();
+        LOGGER.info("time: {}, {} ops/sec",
+                duration,
+                iterations / ((double) duration.toMillis() / 1000));
+
+        for (int i = 0; i < iterations; i++) {
+            Assertions.assertThat(arr[i])
+                    .isNotNull()
+                    .isNotBlank();
+        }
     }
 }

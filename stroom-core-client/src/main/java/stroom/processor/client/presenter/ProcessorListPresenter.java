@@ -29,8 +29,8 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.OpenLinkUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.table.client.Refreshable;
@@ -50,13 +50,12 @@ import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
-import stroom.util.shared.TreeRow;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -64,7 +63,6 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -79,7 +77,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-@SuppressWarnings("PatternVariableCanBeUsed") // Cos GWT
 public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         implements Refreshable, HasDocumentRead<Object> {
 
@@ -116,7 +113,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         super(eventBus, view);
         this.securityContext = securityContext;
 
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Processors");
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -221,7 +219,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private void onChangeData(final ProcessorListRowResultPage data) {
-        ProcessorListRow selected = selectionModel.getSelected();
+        final ProcessorListRow selected = selectionModel.getSelected();
 
         if (nextSelection != null) {
             for (final ProcessorListRow row : data.getValues()) {
@@ -258,7 +256,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         addEnabledColumn();
         addPipelineColumn();
         addPriorityColumn();
-        addMaxProcessingTasksColumn();
+//        addMaxProcessingTasksColumn();
         addStatusColumn();
 //        addTrackerColumns();
         addLastPollColumns();
@@ -266,7 +264,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 //        addEventsColumn();
         addReprocessColumn();
         addRunAsUserColumn();
-        addEndColumn();
     }
 
     private void addInfoColumn() {
@@ -278,6 +275,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                 tooltipPresenter.show(safeHtml, popupPosition);
             }
         };
+        OpenLinkUtil.addClickHandler(this, tooltipPresenter.getWidget());
+
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
@@ -286,9 +285,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public Expander getValue(final ProcessorListRow row) {
                 Expander expander = null;
-                if (row instanceof TreeRow) {
-                    final TreeRow treeRow = row;
-                    expander = treeRow.getExpander();
+                if (row != null) {
+                    expander = row.getExpander();
                 }
                 return expander;
             }
@@ -372,8 +370,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public String getValue(final ProcessorListRow row) {
                 String lastPoll = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     lastPoll = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getLastPollAge();
                 }
                 return lastPoll;
@@ -387,8 +384,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number priority = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     if (allowUpdate) {
                         priority = new EditableInteger(processorFilterRow.getProcessorFilter().getPriority());
                     } else {
@@ -399,64 +395,56 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             }
         };
         if (allowUpdate) {
-            priorityColumn.setFieldUpdater(new FieldUpdater<ProcessorListRow, Number>() {
-                @Override
-                public void update(final int index, final ProcessorListRow row, final Number value) {
-                    if (row instanceof ProcessorFilterRow) {
-                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                        final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                        processorFilter.setPriority(value.intValue());
-                        processorFilterPrioritySaveQueue.setValue(processorFilter.getId(), value.intValue());
-                    }
+            priorityColumn.setFieldUpdater((index, row, value) -> {
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
+                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+                    processorFilterRow.setProcessorFilter(
+                            processorFilter.copy().priority(value.intValue()).build());
+                    processorFilterPrioritySaveQueue.setValue(processorFilter.getId(), value.intValue());
                 }
             });
         }
         dataGrid.addColumn(priorityColumn, "Priority", ColumnSizeConstants.MEDIUM_COL);
     }
 
-    private void addMaxProcessingTasksColumn() {
-        final Column<ProcessorListRow, Number> maxProcessingTasksColumn = new Column<ProcessorListRow, Number>(
-                new ValueSpinnerCell(
-                        ProcessorFilter.MIN_MAX_PROCESSING_TASKS,
-                        ProcessorFilter.MAX_MAX_PROCESSING_TASKS)) {
-            @Override
-            public Number getValue(final ProcessorListRow row) {
-                Number maxProcessingTasks = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    if (allowUpdate) {
-                        maxProcessingTasks = new EditableInteger(processorFilterRow.getProcessorFilter()
-                                .getMaxProcessingTasks());
-                    } else {
-                        maxProcessingTasks = processorFilterRow.getProcessorFilter().getMaxProcessingTasks();
-                    }
-                }
-                return maxProcessingTasks;
-            }
-        };
-        if (allowUpdate) {
-            maxProcessingTasksColumn.setFieldUpdater(new FieldUpdater<ProcessorListRow, Number>() {
-                @Override
-                public void update(final int index, final ProcessorListRow row, final Number value) {
-                    if (row instanceof ProcessorFilterRow) {
-                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                        final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                        processorFilter.setMaxProcessingTasks(value.intValue());
-                        processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
-                    }
-                }
-            });
-        }
-        dataGrid.addColumn(maxProcessingTasksColumn, "Max Concurrent", 120);
-    }
+//    private void addMaxProcessingTasksColumn() {
+//        final Column<ProcessorListRow, Number> maxProcessingTasksColumn = new Column<ProcessorListRow, Number>(
+//                new ValueSpinnerCell(
+//                        ProcessorFilter.MIN_MAX_PROCESSING_TASKS,
+//                        ProcessorFilter.MAX_MAX_PROCESSING_TASKS)) {
+//            @Override
+//            public Number getValue(final ProcessorListRow row) {
+//                Number maxProcessingTasks = null;
+//                if (row instanceof final ProcessorFilterRow processorFilterRow) {
+//                    if (allowUpdate) {
+//                        maxProcessingTasks = new EditableInteger(processorFilterRow.getProcessorFilter()
+//                                .getMaxProcessingTasks());
+//                    } else {
+//                        maxProcessingTasks = processorFilterRow.getProcessorFilter().getMaxProcessingTasks();
+//                    }
+//                }
+//                return maxProcessingTasks;
+//            }
+//        };
+//        if (allowUpdate) {
+//            maxProcessingTasksColumn.setFieldUpdater((index, row, value) -> {
+//                if (row instanceof final ProcessorFilterRow processorFilterRow) {
+//                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+//                    processorFilterRow.setProcessorFilter(
+//                            processorFilter.copy().maxProcessingTasks(value.intValue()).build());
+//                    processorFilterMaxProcessingTasksSaveQueue.setValue(processorFilter.getId(), value.intValue());
+//                }
+//            });
+//        }
+//        dataGrid.addColumn(maxProcessingTasksColumn, "Max Concurrent", 120);
+//    }
 
     private void addTasksColumn() {
         dataGrid.addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
             @Override
             public Number getValue(final ProcessorListRow row) {
                 Number value = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     value = processorFilterRow.getProcessorFilter().getProcessorFilterTracker().getMetaCount();
                 }
                 return value;
@@ -508,19 +496,19 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
 
         if (allowUpdate) {
             enabledColumn.setFieldUpdater((index, row, value) -> {
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-                    processorFilter.setEnabled(value.toBoolean());
+                    processorFilterRow.setProcessorFilter(
+                            processorFilter.copy().enabled(value.toBoolean()).build());
 
                     processorFilterEnabledSaveQueue.setValue(processorFilter.getId(), value.toBoolean());
 //                    final Rest<ProcessorFilter> rest = restFactory.create();
 //                    rest.call(PROCESSOR_FILTER_RESOURCE).setEnabled(processorFilter.getId(), value.toBoolean());
 
-                } else if (row instanceof ProcessorRow) {
-                    final ProcessorRow processorRow = (ProcessorRow) row;
+                } else if (row instanceof final ProcessorRow processorRow) {
                     final Processor processor = processorRow.getProcessor();
-                    processor.setEnabled(value.toBoolean());
+                    processorRow.setProcessor(
+                            processor.copy().enabled(value.toBoolean()).build());
 
                     processorEnabledSaveQueue.setValue(processor.getId(), value.toBoolean());
 //                    final Rest<Processor> rest = restFactory.create();
@@ -536,8 +524,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
             @Override
             public String getValue(final ProcessorListRow row) {
                 String reprocess = null;
-                if (row instanceof ProcessorFilterRow) {
-                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                if (row instanceof final ProcessorFilterRow processorFilterRow) {
                     reprocess = processorFilterRow.getProcessorFilter().isReprocess()
                             ? "True"
                             : "False";
@@ -550,9 +537,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
     private void addRunAsUserColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.userRefColumnBuilder(
-                                (ProcessorListRow row) -> {
-                                    if (row instanceof ProcessorFilterRow) {
-                                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                                (final ProcessorListRow row) -> {
+                                    if (row instanceof final ProcessorFilterRow processorFilterRow) {
                                         return Optional
                                                 .of(processorFilterRow)
                                                 .map(ProcessorFilterRow::getProcessorFilter)
@@ -566,9 +552,8 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                                 securityContext,
                                 true,
                                 DisplayType.AUTO)
-                        .enabledWhen((ProcessorListRow row) -> {
-                            if (row instanceof ProcessorFilterRow) {
-                                final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                        .enabledWhen((final ProcessorListRow row) -> {
+                            if (row instanceof final ProcessorFilterRow processorFilterRow) {
                                 return Optional
                                         .of(processorFilterRow)
                                         .map(ProcessorFilterRow::getProcessorFilter)
@@ -584,10 +569,6 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
                         .withToolTip("The processor will run with the same permissions as the Run As User.")
                         .build(),
                 ColumnSizeConstants.USER_DISPLAY_NAME_COL);
-    }
-
-    private void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     public MultiSelectionModel<ProcessorListRow> getSelectionModel() {

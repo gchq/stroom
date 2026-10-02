@@ -41,7 +41,19 @@ public class SignInServlet extends AppServlet implements IsServlet {
     }
 
     @Override
+    boolean useBootstrap() {
+        // The sign-in page IS the login UI — it must load the GWT script directly
+        // without redirecting to the IdP (which would cause a redirect loop).
+        return false;
+    }
+
+    @Override
     public Set<String> getPathSpecs() {
         return PATH_SPECS;
+    }
+
+    @Override
+    public String getName() {
+        return ResourcePaths.SIGN_IN_SERVLET_NAME;
     }
 }

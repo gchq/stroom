@@ -49,7 +49,7 @@ public class CustomThreadFactory implements ThreadFactory {
         return daemon;
     }
 
-    public void setDaemon(boolean daemon) {
+    public void setDaemon(final boolean daemon) {
         this.daemon = daemon;
     }
 
@@ -57,7 +57,7 @@ public class CustomThreadFactory implements ThreadFactory {
         return threadGroup;
     }
 
-    public void setThreadGroup(ThreadGroup threadGroup) {
+    public void setThreadGroup(final ThreadGroup threadGroup) {
         this.threadGroup = threadGroup;
     }
 
@@ -65,7 +65,7 @@ public class CustomThreadFactory implements ThreadFactory {
         return priority;
     }
 
-    public void setPriority(int priority) {
+    public void setPriority(final int priority) {
         this.priority = priority;
     }
 }

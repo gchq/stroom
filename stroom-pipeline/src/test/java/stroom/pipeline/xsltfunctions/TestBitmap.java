@@ -80,7 +80,7 @@ class TestBitmap extends StroomUnitTest {
         int bit = 0;
         while (workingValue > 0) {
             LOGGER.trace("Bits: {}", Integer.toBinaryString(workingValue));
-            int bitValue = workingValue & 1;
+            final int bitValue = workingValue & 1;
             LOGGER.trace("Pos: {}, value: {}", bit, bitValue);
             bitValues.add(bitValue);
             workingValue = workingValue >> 1;

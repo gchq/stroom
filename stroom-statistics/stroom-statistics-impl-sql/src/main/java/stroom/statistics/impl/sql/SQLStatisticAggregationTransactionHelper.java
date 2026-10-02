@@ -419,7 +419,7 @@ public class SQLStatisticAggregationTransactionHelper {
                         // the grouped stats and the CNT column
                         // gets the count of the number of records in the group
 
-                        int rowsAffectedOnUpsert = callUpsert1(
+                        final int rowsAffectedOnUpsert = callUpsert1(
                                 connection,
                                 taskContext,
                                 newPrefix,
@@ -478,7 +478,7 @@ public class SQLStatisticAggregationTransactionHelper {
                             final byte valueType,
                             final long aggregateToMs,
                             final long batchMaxId) throws SQLException {
-        int count;
+        final int count;
         final LogExecutionTime time = new LogExecutionTime();
         taskContext.info(() -> prefix);
 
@@ -517,8 +517,8 @@ public class SQLStatisticAggregationTransactionHelper {
                             final long aggregateToMs,
                             final int batchSize,
                             final int batchNo) throws SQLException {
-        int upsertCount;
-        int deleteCount;
+        final int upsertCount;
+        final int deleteCount;
         final LogExecutionTime time = new LogExecutionTime();
 
         final Supplier<String> infoSupplier = () -> prefix +
@@ -581,7 +581,7 @@ public class SQLStatisticAggregationTransactionHelper {
                                       final Instant timeNow)
             throws SQLException {
         long totalCount = 0;
-        List<Integer> iterationsLog = new ArrayList<>(aggregateConfig.length);
+        final List<Integer> iterationsLog = new ArrayList<>(aggregateConfig.length);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             // Stage 2 is about moving stats from one precision in STAT_VAL to a
@@ -687,7 +687,7 @@ public class SQLStatisticAggregationTransactionHelper {
             if (c == '?') {
                 try {
                     sqlString.append(args.get(arg++));
-                } catch (IndexOutOfBoundsException e) {
+                } catch (final IndexOutOfBoundsException e) {
                     LOGGER.warn("Mismatch between '?' and args. sql: {}, args: {}", sql, args);
                     sqlString.append(c);
                 }

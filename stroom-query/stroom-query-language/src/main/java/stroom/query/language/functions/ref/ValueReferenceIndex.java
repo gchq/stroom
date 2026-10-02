@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.functions.ref;
 
 import org.slf4j.Logger;
@@ -5,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ValueReferenceIndex {
 
@@ -33,7 +50,7 @@ public class ValueReferenceIndex {
                 new FieldValReference(list.size(), fieldIndex, name);
 
         // Only store one reference to each field.
-        int index = list.indexOf(valueReference);
+        final int index = list.indexOf(valueReference);
         if (index != -1) {
             return (FieldValReference) list.get(index);
         }
@@ -50,7 +67,19 @@ public class ValueReferenceIndex {
         return add(new ValReference(list.size(), name));
     }
 
-    private <T extends ValueReference<?>> T add(T valueReference) {
+    public Integer getFieldValIndex(final String name) {
+        for (int index = 0; index < list.size(); index++) {
+            final ValueReference<?> valueReference = list.get(index);
+            if (valueReference instanceof FieldValReference) {
+                if (Objects.equals(valueReference.toString(), name)) {
+                    return index;
+                }
+            }
+        }
+        return null;
+    }
+
+    private <T extends ValueReference<?>> T add(final T valueReference) {
         list.add(valueReference);
         return valueReference;
     }
@@ -62,21 +91,21 @@ public class ValueReferenceIndex {
     public StoredValues read(final DataReader reader) {
         try {
             final StoredValues storedValues = createStoredValues();
-            for (ValueReference<?> valueReference : list) {
+            for (final ValueReference<?> valueReference : list) {
                 valueReference.read(storedValues, reader);
             }
             return storedValues;
         } catch (final RuntimeException e) {
             final String sb = "Error reading value:\n" +
-                    e.getClass().getSimpleName() +
-                    "\n" +
-                    e.getMessage() +
-                    "\n" +
-                    "Byte Buffer:\n" +
-                    reader.toString() +
-                    "\n" +
-                    "Value Reference Index:\n" +
-                    this;
+                              e.getClass().getSimpleName() +
+                              "\n" +
+                              e.getMessage() +
+                              "\n" +
+                              "Byte Buffer:\n" +
+                              reader.toString() +
+                              "\n" +
+                              "Value Reference Index:\n" +
+                              this;
             LOGGER.error(sb, e);
 
             throw e;
@@ -85,17 +114,17 @@ public class ValueReferenceIndex {
 
     public void write(final StoredValues storedValues, final DataWriter writer) {
         try {
-            for (ValueReference<?> valueReference : list) {
+            for (final ValueReference<?> valueReference : list) {
                 valueReference.write(storedValues, writer);
             }
         } catch (final RuntimeException e) {
             final String sb = "Error writing value:\n" +
-                    e.getClass().getSimpleName() +
-                    "\n" +
-                    e.getMessage() +
-                    "\n" +
-                    "Value Reference Index:\n" +
-                    this;
+                              e.getClass().getSimpleName() +
+                              "\n" +
+                              e.getMessage() +
+                              "\n" +
+                              "Value Reference Index:\n" +
+                              this;
             LOGGER.error(sb, e);
 
             throw e;

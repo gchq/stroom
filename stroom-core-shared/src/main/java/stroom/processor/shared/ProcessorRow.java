@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"processor", "expander"})
 @JsonInclude(Include.NON_NULL)
-public class ProcessorRow extends ProcessorListRow {
+public final class ProcessorRow extends ProcessorListRow {
 
     @JsonProperty
-    private final Processor processor;
+    private Processor processor;
     @JsonProperty
     private final Expander expander;
 
@@ -44,6 +44,10 @@ public class ProcessorRow extends ProcessorListRow {
 
     public Processor getProcessor() {
         return processor;
+    }
+
+    public void setProcessor(final Processor processor) {
+        this.processor = processor;
     }
 
     @Override

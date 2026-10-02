@@ -19,6 +19,8 @@ package stroom.dashboard.client.query.gin;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter;
 import stroom.dashboard.client.query.BasicQuerySettingsPresenter.BasicQuerySettingsView;
 import stroom.dashboard.client.query.BasicQuerySettingsViewImpl;
+import stroom.dashboard.client.query.CurrentSelectionPresenter;
+import stroom.dashboard.client.query.CurrentSelectionViewImpl;
 import stroom.dashboard.client.query.NamePresenter;
 import stroom.dashboard.client.query.NamePresenter.NameView;
 import stroom.dashboard.client.query.NameViewImpl;
@@ -67,5 +69,9 @@ public class QueryModule extends AbstractPresenterModule {
                 SelectionHandlerPresenter.class,
                 SelectionHandlerPresenter.SelectionHandlerView.class,
                 SelectionHandlerViewImpl.class);
+        bindPresenterWidget(
+                CurrentSelectionPresenter.class,
+                CurrentSelectionPresenter.CurrentSelectionView.class,
+                CurrentSelectionViewImpl.class);
     }
 }

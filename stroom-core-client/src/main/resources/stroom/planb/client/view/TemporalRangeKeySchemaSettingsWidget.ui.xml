@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup label="Range Type"
+                        helpText="Choose the data type to use to define the range.">
+            <i:SelectionBox ui:field="rangeType" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Temporal Precision"
+                        helpText="Choose how to store the temporal dimension.">
+            <i:SelectionBox ui:field="temporalPrecision" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

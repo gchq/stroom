@@ -78,7 +78,7 @@ class TestXPathFilter extends StroomUnitTest {
 
                     try {
                         return match(xPathFilter, steppingFilter);
-                    } catch (XPathExpressionException e) {
+                    } catch (final XPathExpressionException e) {
                         throw new RuntimeException(e);
                     }
                 })

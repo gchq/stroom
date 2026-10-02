@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.impl;
 
 import stroom.util.shared.AbstractConfig;
@@ -14,6 +30,10 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class MetaValueConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final int DEFAULT_DELETE_BATCH_SIZE = 500;
+    private static final int DEFAULT_FLUSH_BATCH_SIZE = 500;
+    private static final boolean DEFAULT_ADD_ASYNC = true;
 
     @NotNull
     @JsonProperty
@@ -39,20 +59,20 @@ public class MetaValueConfig extends AbstractConfig implements IsStroomConfig {
 
     public MetaValueConfig() {
         deleteAge = StroomDuration.ofDays(30);
-        deleteBatchSize = 500;
-        flushBatchSize = 500;
-        addAsync = true;
+        deleteBatchSize = DEFAULT_DELETE_BATCH_SIZE;
+        flushBatchSize = DEFAULT_FLUSH_BATCH_SIZE;
+        addAsync = DEFAULT_ADD_ASYNC;
     }
 
     @JsonCreator
     public MetaValueConfig(@JsonProperty("deleteAge") final StroomDuration deleteAge,
-                           @JsonProperty("deleteBatchSize") final int deleteBatchSize,
-                           @JsonProperty("flushBatchSize") final int flushBatchSize,
-                           @JsonProperty("addAsync") final boolean addAsync) {
+                           @JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
+                           @JsonProperty("flushBatchSize") final Integer flushBatchSize,
+                           @JsonProperty("addAsync") final Boolean addAsync) {
         this.deleteAge = deleteAge;
-        this.deleteBatchSize = deleteBatchSize;
-        this.flushBatchSize = flushBatchSize;
-        this.addAsync = addAsync;
+        this.deleteBatchSize = Objects.requireNonNullElse(deleteBatchSize, DEFAULT_DELETE_BATCH_SIZE);
+        this.flushBatchSize = Objects.requireNonNullElse(flushBatchSize, DEFAULT_FLUSH_BATCH_SIZE);
+        this.addAsync = Objects.requireNonNullElse(addAsync, DEFAULT_ADD_ASYNC);
     }
 
     public StroomDuration getDeleteAge() {

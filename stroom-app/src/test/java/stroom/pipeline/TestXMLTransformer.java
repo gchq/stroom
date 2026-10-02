@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
@@ -73,8 +74,8 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
     private static final String XSLT_PATH = DIR + "DATA_SPLITTER-EVENTS_no-ref.xsl";
     private static final String FRAGMENT_WRAPPER = DIR + "fragment_wrapper.xml";
 
-    private static final String TRANSFORMER_PIPELINE = DIR + "XMLTransformer.Pipeline.data.xml";
-    private static final String FRAGMENT_PIPELINE = DIR + "XMLFragment.Pipeline.data.xml";
+    private static final String TRANSFORMER_PIPELINE = DIR + "XMLTransformer.Pipeline.json";
+    private static final String FRAGMENT_PIPELINE = DIR + "XMLFragment.Pipeline.json";
 
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
@@ -143,18 +144,22 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(FRAGMENT_WRAPPER);
         final DocRef docRef = textConverterStore.createDocument("Test Text Converter");
-        final TextConverterDoc textConverter = textConverterStore.readDocument(docRef);
-        textConverter.setConverterType(TextConverterType.XML_FRAGMENT);
-        textConverter.setData(StreamUtil.streamToString(textConverterInputStream));
+        final TextConverterDoc textConverter = textConverterStore.readDocument(docRef)
+                .copy()
+                .converterType(TextConverterType.XML_FRAGMENT)
+                .data(StreamUtil.streamToString(textConverterInputStream))
+                .build();
         textConverterStore.writeDocument(textConverter);
 
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(FRAGMENT_PIPELINE);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-        pipelineDoc.getPipelineData().addProperty(
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
+        builder.addProperty(
                 PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", docRef));
-        pipelineDoc.setParentPipeline(createTransformerPipeline());
+        pipelineDoc = pipelineDoc
+                .copy().pipelineData(builder.build()).parentPipeline(createTransformerPipeline()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }
@@ -163,16 +168,17 @@ class TestXMLTransformer extends AbstractProcessIntegrationTest {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(XSLT_PATH);
         final DocRef xsltRef = xsltStore.createDocument("Test XSLT");
-        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
-        xsltDoc.setData(StreamUtil.streamToString(xsltInputStream));
+        final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef)
+                .copy().data(StreamUtil.streamToString(xsltInputStream)).build();
         xsltStore.writeDocument(xsltDoc);
 
         // Get the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(TRANSFORMER_PIPELINE);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-        pipelineDoc.getPipelineData()
-                .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
+        builder.addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }

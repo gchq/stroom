@@ -123,14 +123,14 @@ class TestTaskProgressUtil {
 
         for (int i = 0; i < 10; i++) {
             final long parentSubmitTime = baseSubmitTime + (long) (Math.random() * 100);
-            Node node;
+            final Node node;
             if (((int) (Math.random() * 100)) % 2 == 0) {
                 node = node1;
             } else {
                 node = node2;
             }
 
-            String user;
+            final String user;
             if (((int) (Math.random() * 100)) % 2 == 0) {
                 user = "user1";
             } else {

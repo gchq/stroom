@@ -21,67 +21,55 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlType;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Elements", propOrder = {"add", "remove"})
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add, remove"})
-public class PipelineElements {
-
-    @XmlElementWrapper(name = "add")
-    @XmlElement(name = "element")
-    @JsonProperty
-    private final List<PipelineElement> add;
-
-    @XmlElementWrapper(name = "remove")
-    @XmlElement(name = "element")
-    @JsonProperty
-    private final List<PipelineElement> remove;
-
-    public PipelineElements() {
-        add = new ArrayList<>();
-        remove = new ArrayList<>();
-    }
+public class PipelineElements extends AbstractAddRemove<PipelineElement> {
 
     @JsonCreator
     public PipelineElements(@JsonProperty("add") final List<PipelineElement> add,
                             @JsonProperty("remove") final List<PipelineElement> remove) {
-        this.add = add;
-        this.remove = remove;
+        super(add, remove);
     }
 
-    public List<PipelineElement> getAdd() {
-        return add;
-    }
-
-    public List<PipelineElement> getRemove() {
-        return remove;
+    /**
+     * Element order carries no meaning, so lists are compared ignoring it. Elements are compared by
+     * content rather than by {@link PipelineElement#equals(Object)}, which only tests graph identity
+     * (id and type) and would therefore report a renamed or re-described element as unchanged.
+     */
+    @Override
+    protected boolean listsEqual(final List<PipelineElement> list, final List<PipelineElement> other) {
+        return unorderedEquals(list, other, PipelineElement::contentEquals);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        final PipelineElements that = (PipelineElements) o;
-        return Objects.equals(add, that.add) &&
-                Objects.equals(remove, that.remove);
+    protected int listHashCode(final List<PipelineElement> list) {
+        return unorderedHashCode(list, PipelineElement::contentHashCode);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(add, remove);
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class Builder extends AbstractAddRemoveListBuilder<PipelineElement, PipelineElements, Builder> {
+
+        public Builder() {
+
+        }
+
+        public Builder(final PipelineElements elements) {
+            super(elements);
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public PipelineElements build() {
+            return new PipelineElements(copyAddList(), copyRemoveList());
+        }
     }
 }

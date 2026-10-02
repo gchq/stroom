@@ -1,20 +1,18 @@
 
 /*
+ * Copyright 2016 Crown Copyright
  *
- *  * Copyright 2018 Crown Copyright
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License");
- *  * you may not use this file except in compliance with the License.
- *  * You may obtain a copy of the License at
- *  *
- *  *     http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software
- *  * distributed under the License is distributed on an "AS IS" BASIS,
- *  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  * See the License for the specific language governing permissions and
- *  * limitations under the License.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package stroom.data.store.impl;
@@ -194,7 +192,7 @@ public class DataFetcher {
                 try (final InputStreamProvider inputStreamProvider = source.get(partNo)) {
                     return inputStreamProvider.getChildTypes();
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(LogUtil.message("Error opening stream {}, part {}", id, partNo), e);
             }
         });
@@ -202,11 +200,11 @@ public class DataFetcher {
 
     public AbstractFetchDataResult getData(final FetchDataRequest fetchDataRequest) {
         return taskContextFactory.contextResult("Data Fetcher", taskContext -> {
-            taskContext.info(() -> "Fetching data for " +
+            taskContext.info(() -> "Fetching data for stream_id=" +
                                    fetchDataRequest.getSourceLocation().getMetaId() +
-                                   ":" +
+                                   ", part=" +
                                    fetchDataRequest.getSourceLocation().getPartIndex() +
-                                   ":" +
+                                   ", record=" +
                                    fetchDataRequest.getSourceLocation().getRecordIndex());
 
             LOGGER.debug(() -> LogUtil.message("getData called for {}:{}:{}",
@@ -244,7 +242,7 @@ public class DataFetcher {
                                 new Count<>(0L, true));
                     }
 
-                    long partIndex = fetchDataRequest.getSourceLocation().getPartIndex();
+                    final long partIndex = fetchDataRequest.getSourceLocation().getPartIndex();
 
 
                     // Prevent user going past last part
@@ -346,7 +344,7 @@ public class DataFetcher {
                             // Have a stab at getting the types so we can display all possible tabs
                             // It is possible the partindex is out of range but we will swallow any ex.
                             availableChildStreamTypes = getAvailableChildStreamTypes(inputStreamProvider);
-                        } catch (Exception e2) {
+                        } catch (final Exception e2) {
                             LOGGER.debug("Error trying to get child stream types", e2);
                         }
                     }
@@ -403,7 +401,7 @@ public class DataFetcher {
                                                       final SourceLocation sourceLocation,
                                                       final Set<String> availableChildStreamTypes,
                                                       final Severity... expandedSeverities) throws IOException {
-        List<Marker> markersList;
+        final List<Marker> markersList;
 
         // Get the appropriate encoding for the stream type. No child type as this is error strm
         final String encoding = feedProperties.getEncoding(feedName, streamTypeName, null);
@@ -901,7 +899,7 @@ public class DataFetcher {
 //                        currColNo,
 //                        decodedChar.isLineBreak() ? "\\n" : decodedChar.getAsString());
 
-                boolean isCharAfterRequestedRange = exclusiveToPredicate.test(tracker);
+                final boolean isCharAfterRequestedRange = exclusiveToPredicate.test(tracker);
 
                 if (isCharAfterRequestedRange) {
                     tracker.extraCharCount++;
@@ -1078,7 +1076,7 @@ public class DataFetcher {
                                                                        final boolean limitChars) {
         // TO (exclusive)
 
-        long maxChars = limitChars
+        final long maxChars = limitChars
                 ? sourceConfig.getMaxCharactersPerFetch()
                 : Long.MAX_VALUE;
 

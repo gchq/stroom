@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.Objects;
         "visualisation",
         "json"})
 @JsonInclude(Include.NON_NULL)
-public class VisComponentSettings implements ComponentSettings {
+public final class VisComponentSettings implements ComponentSettings {
 
     @JsonProperty
     private final String tableId;
@@ -70,6 +70,12 @@ public class VisComponentSettings implements ComponentSettings {
             return false;
         }
         final VisComponentSettings that = (VisComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(tableId, that.tableId);
+//        final boolean b2 = Objects.equals(visualisation, that.visualisation);
+//        final boolean b3 = Objects.equals(json, that.json);
+
         return Objects.equals(tableId, that.tableId) &&
                Objects.equals(visualisation, that.visualisation) &&
                Objects.equals(json, that.json);

@@ -16,8 +16,6 @@
 
 package stroom.util.config;
 
-import jakarta.xml.bind.annotation.XmlElement;
-
 public class Parameter {
 
     private String name;
@@ -35,39 +33,35 @@ public class Parameter {
         this.regEx = regEx;
     }
 
-    @XmlElement
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
     }
 
-    @XmlElement
     public String getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(final String value) {
         this.value = value;
     }
 
-    @XmlElement
     public String getRegEx() {
         return regEx;
     }
 
-    public void setRegEx(String regEx) {
+    public void setRegEx(final String regEx) {
         this.regEx = regEx;
     }
 
-    @XmlElement
     public String getDescription() {
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(final String description) {
         this.description = description;
     }
 

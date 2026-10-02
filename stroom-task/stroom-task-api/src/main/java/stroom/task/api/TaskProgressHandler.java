@@ -50,8 +50,8 @@ public class TaskProgressHandler implements Consumer<Long> {
         progress(totalBytes);
     }
 
-    private void progress(long totalBytes) {
-        long timeNow = System.currentTimeMillis();
+    private void progress(final long totalBytes) {
+        final long timeNow = System.currentTimeMillis();
 
         if (lastProgressTime + INTERVAL_MS < timeNow) {
             lastProgressTime = timeNow;

@@ -12,17 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.client.presenter;
 
-import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -31,6 +29,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ExpressionPresenter
         extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
@@ -63,8 +62,7 @@ public class ExpressionPresenter
         fieldSelectionBoxModel.addItems(fields);
         editExpressionPresenter.init(restFactory, dataSource, fieldSelectionBoxModel);
 
-        editExpressionPresenter.read(NullSafe.requireNonNullElseGet(
-                expression,
+        editExpressionPresenter.read(Objects.requireNonNullElseGet(expression,
                 () -> ExpressionOperator.builder().build()));
     }
 

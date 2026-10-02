@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 /**
  * This XML filter captures XML content that defines key, value maps to be
@@ -77,7 +76,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ReferenceDataFilter.class);
 
-    private static final Pattern PREFIX_DELIMITER_PATTERN = Pattern.compile(":");
 
     /*
         Example xml data
@@ -123,12 +121,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     The following are all examples of an element inside <value> and how the namespacing is
     treated in the resulting fragment that is stored in the ref store:
 
-        <Location>  =>  <Location xmlns="reference-data:2">  // default ns inherited from above so it is added in
-        <evt:Location>  =>  <Location xmlns:evt="event-logging:3"> // ns prefix defined above so it is added in
+        <Location>  =>  <Location xmlns="reference-data:2">  // default ns inherited from above, so it is added in
+        <evt:Location>  =>  <Location xmlns:evt="event-logging:3"> // ns prefix defined above, so it is added in
         <evt:Location xmlns:evt="event-logging:3">  =>  <Location xmlns:evt="event-logging:3">
         <Location xmlns="event-logging:3">  =>  <Location xmlns="event-logging:3">
 
-    The following is valid XML so we don't need to worry about prefix clashes between the ref fragment
+    The following is valid XML, so we don't need to worry about prefix clashes between the ref fragment
     and the XML it is being injected into.
 
         <root xmlns:evt="event-logging:3">
@@ -155,6 +153,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private String mapName;
     private String key;
     private boolean insideValueElement;
+    private int valueElementDepthLevel = -1;
     private boolean haveSeenXmlInValueElement = false;
     private Long rangeFrom;
     private Long rangeTo;
@@ -186,98 +185,110 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         this.stagingValueOutputStream = stagingValueOutputStream;
     }
 
-
     @Override
     public void startProcessing() {
-        super.startProcessing();
-        saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
+        try {
+            saxDocumentSerializer.setOutputStream(stagingValueOutputStream);
 //        try {
 //            saxDocumentSerializer.startDocument();
 //        } catch (SAXException e) {
 //            throw new RuntimeException(e);
 //        }
-        final RefDataLoader refDataLoader = refDataLoaderHolder.getRefDataLoader();
-        final PutOutcome putOutcome = refDataLoader.initialise(overrideExistingValues);
+            final RefDataLoader refDataLoader = refDataLoaderHolder.getRefDataLoader();
+            final PutOutcome putOutcome = refDataLoader.initialise(overrideExistingValues);
 
-        refDataLoader.setKeyPutOutcomeHandler(this::validateKeyValuePutSuccess);
-        refDataLoader.setRangePutOutcomeHandler(this::validateRangeValuePutSuccess);
+            refDataLoader.setKeyPutOutcomeHandler(this::validateKeyValuePutSuccess);
+            refDataLoader.setRangePutOutcomeHandler(this::validateRangeValuePutSuccess);
 
-        if (!putOutcome.isSuccess()) {
-            errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                    LogUtil.message(
-                            "A processing info entry already exists for this reference pipeline {}, " +
-                            "version {}, streamId {}",
-                            refStreamDefinition.getPipelineDocRef(),
-                            refStreamDefinition.getPipelineVersion(),
-                            refStreamDefinition.getStreamId()), null);
+            if (!putOutcome.isSuccess()) {
+                errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                        LogUtil.message(
+                                "A processing info entry already exists for this reference pipeline {}, " +
+                                "version {}, streamId {}",
+                                refStreamDefinition.getPipelineDocRef(),
+                                refStreamDefinition.getPipelineVersion(),
+                                refStreamDefinition.getStreamId()), null);
+            }
+        } finally {
+            super.startProcessing();
         }
     }
 
     @Override
     public void startStream() {
-        super.startStream();
-        // Pretty sure startStream is never called by the pipeline processing, so favour startProcessing
-        // which is
+        try {
+            // Pretty sure startStream is never called by the pipeline processing, so favour startProcessing
+            // which is
 
-        // build the definition of the stream that is being processed
+            // build the definition of the stream that is being processed
 
-        if (refDataLoaderHolder.getRefDataLoader() == null) {
-            errorReceiverProxy.log(
-                    Severity.FATAL_ERROR,
-                    null,
-                    getElementId(),
-                    "RefDataLoader is missing",
-                    null);
+            if (refDataLoaderHolder.getRefDataLoader() == null) {
+                errorReceiverProxy.log(
+                        Severity.FATAL_ERROR,
+                        null,
+                        getElementId(),
+                        "RefDataLoader is missing",
+                        null);
+            }
+
+            refStreamDefinition = refDataLoaderHolder.getRefDataLoader()
+                    .getRefStreamDefinition();
+
+            LOGGER.debug("StartStream called, refStreamDefinition: {}", refStreamDefinition);
+        } finally {
+            super.startStream();
         }
-
-        refStreamDefinition = refDataLoaderHolder.getRefDataLoader()
-                .getRefStreamDefinition();
-
-        LOGGER.debug("StartStream called, refStreamDefinition: {}", refStreamDefinition);
     }
 
     @Override
     public void endStream() {
-        super.endStream();
-
-        if (refDataLoaderHolder.getRefDataLoader() == null) {
-            errorReceiverProxy.log(
-                    Severity.FATAL_ERROR,
-                    null,
-                    getElementId(),
-                    "RefDataLoader is missing",
-                    null);
-        }
+        try {
+            if (refDataLoaderHolder.getRefDataLoader() == null) {
+                errorReceiverProxy.log(
+                        Severity.FATAL_ERROR,
+                        null,
+                        getElementId(),
+                        "RefDataLoader is missing",
+                        null);
+            }
 //        refDataLoaderHolder.getRefDataLoader().completeProcessing();
+        } finally {
+            super.endStream();
+        }
     }
 
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
-        super.startPrefixMapping(prefix, uri);
-        LOGGER.trace("startPrefixMapping({}, {})", prefix, uri);
+        try {
+            LOGGER.trace("startPrefixMapping({}, {})", prefix, uri);
 
-        if (insideValueElement) {
-            recordHavingSeenXmlContent();
-            fastInfosetStartPrefixMapping(prefix, uri);
-        } else {
-            // capture all the prefixmappings we encounter before we are in the value and hold them for use later
-            addWrapperPrefixMapping(prefix, uri);
+            if (insideValueElement) {
+                recordHavingSeenXmlContent();
+                fastInfosetStartPrefixMapping(prefix, uri);
+            } else {
+                // capture all the prefixmappings we encounter before we are in the value and hold them for use later
+                addWrapperPrefixMapping(prefix, uri);
+            }
+        } finally {
+            super.startPrefixMapping(prefix, uri);
         }
     }
 
 
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
-        super.endPrefixMapping(prefix);
-        LOGGER.trace("endPrefixMapping({})", prefix);
+        try {
+            LOGGER.trace("endPrefixMapping({})", prefix);
+            if (insideValueElement) {
+                fastInfoSetStartDocumentIfNeeded();
 
-        if (insideValueElement) {
-            fastInfoSetStartDocumentIfNeeded();
-
-            fastInfosetEndPrefixMapping(prefix);
-        } else {
-            // TODO @AT do we need to remove the prefix from the map?
-            removeWrapperPrefixMapping(prefix);
+                fastInfosetEndPrefixMapping(prefix);
+            } else {
+                // TODO @AT do we need to remove the prefix from the map?
+                removeWrapperPrefixMapping(prefix);
+            }
+        } finally {
+            super.endPrefixMapping(prefix);
         }
     }
 
@@ -317,7 +328,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                              final Attributes atts)
             throws SAXException {
 
-        // For slowing down a load in testing
+        try {
+            // For slowing down a load in testing
 //        try {
 //            Thread.sleep(2_000);
 //            LOGGER.info("Finished sleep");
@@ -326,69 +338,84 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 //            Thread.currentThread().interrupt();
 //        }
 
-        depthLevel++;
-        insideElement = true;
-        content.clear();
+            depthLevel++;
+            insideElement = true;
+            content.clear();
 
-        LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
+            LOGGER.trace("startElement {} {} {}, level:{}", uri, localName, qName, depthLevel);
 
-        if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
-            insideValueElement = true;
-            stagingValueOutputStream.clear();
-        } else if (insideValueElement) {
-            recordHavingSeenXmlContent();
+            if (insideValueElement) {
+                LOGGER.trace("Inside reference value element {} {} {}, level:{}", uri, localName, qName, depthLevel);
+                // We are on an element somewhere inside the /referenceData/reference/value element
+                recordHavingSeenXmlContent();
 
-            final String prefix = getPrefix(qName);
-            if (!hasUriBeenApplied(prefix, uri)) {
-                // elm has a uri that we have not done a fastInfoSet startPrefixMapping to
-                // so do it now
-                fastInfosetManuallyAddPrefixMapping(prefix, uri);
-            }
-
-            for (int i = 0; i < atts.getLength(); i++) {
-                final String attrPrefix = getPrefix(atts.getQName(i));
-                if (!hasUriBeenApplied(attrPrefix)) {
-                    // attr has a uri that we have not done a fastInfoSet startPrefixMapping
+                final String prefix = getPrefix(qName);
+                if (!hasUriBeenApplied(prefix, uri)) {
+                    // elm has a URI that we have not done a fastInfoSet startPrefixMapping to
                     // so do it now
-                    final String attrUri = prefixToUriMap.get(attrPrefix);
-                    if (attrUri != null) {
-                        fastInfosetManuallyAddPrefixMapping(attrPrefix, attrUri);
+                    LOGGER.trace("Manually starting prefix mapping {}:{} for element {}", prefix, uri, qName);
+                    fastInfosetManuallyAddPrefixMapping(prefix, uri);
+                }
+
+                for (int i = 0; i < atts.getLength(); i++) {
+                    final String attrQName = atts.getQName(i);
+                    final String attrPrefix = getPrefix(attrQName);
+                    if (NullSafe.isNonBlankString(attrPrefix) && !hasUriBeenApplied(attrPrefix)) {
+                        // attr has a URI that we have not done a fastInfoSet startPrefixMapping
+                        // so do it now
+                        final String attrUri = prefixToUriMap.get(attrPrefix);
+                        if (attrUri != null) {
+                            LOGGER.trace("Manually starting prefix mapping {}:{} for attribute {}",
+                                    prefix, uri, attrQName);
+                            fastInfosetManuallyAddPrefixMapping(attrPrefix, attrUri);
+                        }
                     }
                 }
+
+                //            LOGGER.trace("appliedUris {}", appliedUris);
+                ////            if (!appliedUris.contains(uri) && !uri.equals(valueXmlDefaultNamespaceUri)) {
+                //            uriToPrefixMap.c
+                //            if (!appliedUris.contains(uri)) {
+                //                // we haven't seen this uri before so find its prefix and call startPrefixMapping
+                //                // on the
+                //                // serializer so it understands them
+                //                String prefix = uriToPrefixMap.get(uri);
+                //                if (prefix != null) {
+                ////                    fastInfosetStartPrefixMapping(prefix, uri);
+                //                }
+                //                appliedUris.add(uri);
+                //            }
+
+                //            if (uri.equals(valueXmlDefaultNamespaceUri)) {
+                //                // This is the default namespace so remove it from the element
+                ////                newUri = "";
+                //                newQName = localName;
+                ////                fastInfosetStartPrefixMapping("", uri);
+                //            }
+
+                fastInfosetStartElement(localName, uri, qName, atts);
+            } else if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
+                LOGGER.trace("Reference value start element found, {} {} {}, level:{}",
+                        uri, localName, qName, depthLevel);
+                // We are no inside /referenceData/reference/value element, so we must be starting
+                // the /referenceData/reference/value element.
+                insideValueElement = true;
+                // Capture the depth of the reference value element in case the value element
+                // contains an XML ref value that also contains an element called 'value'
+                valueElementDepthLevel = depthLevel;
+                stagingValueOutputStream.clear();
             }
-
-//            LOGGER.trace("appliedUris {}", appliedUris);
-////            if (!appliedUris.contains(uri) && !uri.equals(valueXmlDefaultNamespaceUri)) {
-//            uriToPrefixMap.c
-//            if (!appliedUris.contains(uri)) {
-//                // we haven't seen this uri before so find its prefix and call startPrefixMapping on the
-//                // serializer so it understands them
-//                String prefix = uriToPrefixMap.get(uri);
-//                if (prefix != null) {
-////                    fastInfosetStartPrefixMapping(prefix, uri);
-//                }
-//                appliedUris.add(uri);
-//            }
-
-//            if (uri.equals(valueXmlDefaultNamespaceUri)) {
-//                // This is the default namespace so remove it from the element
-////                newUri = "";
-//                newQName = localName;
-////                fastInfosetStartPrefixMapping("", uri);
-//            }
-
-            fastInfosetStartElement(localName, uri, qName, atts);
+        } finally {
+            super.startElement(uri, localName, qName, atts);
         }
-
-        super.startElement(uri, localName, qName, atts);
     }
 
 
     private void recordHavingSeenXmlContent() throws SAXException {
-        // This is an xml element inside the <value></value> element so we need to treat it as XML content
-        // and delegate to the fastinfoset content handler to serialise it.
+        // This is an XML element inside the <value></value> element, so we need to treat it as XML content
+        // and delegate to the fastInfoset content handler to serialise it.
         if (insideValueElement && !haveSeenXmlInValueElement) {
-            // This is the first startElement inside the value element so we are dealing with XML refdata
+            // This is the first startElement inside the value element, so we are dealing with XML refdata
             haveSeenXmlInValueElement = true;
             if (LOGGER.isTraceEnabled()) {
                 LOGGER.trace("================================================");
@@ -402,12 +429,9 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private String getPrefix(final String qName) {
         if (qName == null) {
             return null;
-        } else if (qName.isEmpty() || !qName.contains(":")) {
-            return "";
-        } else {
-            final String[] parts = PREFIX_DELIMITER_PATTERN.split(qName);
-            return parts[0];
         }
+        final int colonIdx = qName.indexOf(':');
+        return colonIdx < 0 ? "" : qName.substring(0, colonIdx);
     }
 
     /**
@@ -425,92 +449,100 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      */
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        LOGGER.trace("endElement {} {} {} level:{}", uri, localName, qName, depthLevel);
+        try {
+            LOGGER.trace("endElement {} {} {} level:{}, valueElementDepthLevel: {}, insideValueElement: {}",
+                    uri, localName, qName, depthLevel, valueElementDepthLevel, insideValueElement);
 
-        insideElement = false;
-        if (VALUE_ELEMENT.equalsIgnoreCase(localName)) {
-            handleValueEndElement();
-        }
-
-        if (insideValueElement) {
-            String newUri = uri;
-            String newQName = qName;
-            if (uri.equals(valueXmlDefaultNamespaceUri)) {
-                // This is the default namespace so remove it from the element
-                newQName = localName;
-                newUri = "";
-            }
-            fastInfosetEndElement(localName, newUri, newQName);
-        } else {
-            if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
-                // capture the name of the map that the subsequent values will belong to. A ref
-                // stream can contain data for multiple maps
-                mapName = content.toString();
-            } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
-                // the key for the KV pair
-                key = content.toString();
-            } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
-                // the start key for the key range
-                final String string = content.toString();
-                try {
-                    rangeFrom = Long.parseLong(string);
-                } catch (final RuntimeException e) {
-                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                            "Unable to parse string \"" + string + "\" as long for range from", e);
+            insideElement = false;
+            if (insideValueElement
+                && depthLevel == valueElementDepthLevel
+                && VALUE_ELEMENT.equalsIgnoreCase(localName)) {
+                // The end of /referenceData/reference/value element.
+                // We check the depth to make sure it is the right </value> element and not one nested inside
+                // the reference value. Can't test with namespace as the schema supports no namespace inside
+                // the value
+                handleValueEndElement();
+            } else if (insideValueElement) {
+                // We are somewhere inside the /referenceData/reference/value element
+                String newUri = uri;
+                String newQName = qName;
+                if (uri.equals(valueXmlDefaultNamespaceUri)) {
+                    // This is the default namespace so remove it from the element
+                    newQName = localName;
+                    newUri = "";
                 }
-            } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
-                // the end key for the key range
-                final String string = content.toString();
-                try {
-                    rangeTo = Long.parseLong(string);
-                } catch (final RuntimeException e) {
-                    errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
-                            "Unable to parse string \"" + string + "\" as long for range to", e);
+                fastInfosetEndElement(localName, newUri, newQName);
+            } else {
+                if (MAP_ELEMENT.equalsIgnoreCase(localName)) {
+                    // capture the name of the map that the subsequent values will belong to. A ref
+                    // stream can contain data for multiple maps
+                    mapName = content.toString();
+                } else if (KEY_ELEMENT.equalsIgnoreCase(localName)) {
+                    // the key for the KV pair
+                    key = content.toString();
+                } else if (FROM_ELEMENT.equalsIgnoreCase(localName)) {
+                    // the start key for the key range
+                    final String string = content.toString();
+                    try {
+                        rangeFrom = Long.parseLong(string);
+                    } catch (final RuntimeException e) {
+                        errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                "Unable to parse string \"" + string + "\" as long for range from", e);
+                    }
+                } else if (TO_ELEMENT.equalsIgnoreCase(localName)) {
+                    // the end key for the key range
+                    final String string = content.toString();
+                    try {
+                        rangeTo = Long.parseLong(string);
+                    } catch (final RuntimeException e) {
+                        errorReceiverProxy.log(Severity.ERROR, null, getElementId(),
+                                "Unable to parse string \"" + string + "\" as long for range to", e);
+                    }
+
+                } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
+                    handleReferenceEndElement();
+                }
+            }
+
+            content.clear();
+
+            // Manually call endPrefixMapping for those prefixes we added
+            final Set<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(
+                    depthLevel,
+                    Collections.emptySet());
+
+            if (!manuallyAddedPrefixes.isEmpty()) {
+                LOGGER.trace(() ->
+                        LogUtil.message("Ending {} manually added prefixes at level {}",
+                                manuallyAddedPrefixes.size(),
+                                depthLevel));
+
+                // Can't use .forEach() due to the SaxException
+                for (final String manuallyAddedPrefix : manuallyAddedPrefixes) {
+                    fastInfosetEndPrefixMapping(manuallyAddedPrefix);
                 }
 
-            } else if (REFERENCE_ELEMENT.equalsIgnoreCase(localName)) {
-                handleReferenceEndElement();
+                // We are leaving this level so can now delete the prefix mappings for this level
+                manuallyAddedLevelToPrefixMap.get(depthLevel)
+                        .clear();
             }
+            // Leaving this level so
+            depthLevel--;
+        } finally {
+            super.endElement(uri, localName, qName);
         }
-
-        content.clear();
-
-        // Manually call endPrefixMapping for those prefixes we added
-        final Set<String> manuallyAddedPrefixes = manuallyAddedLevelToPrefixMap.getOrDefault(
-                depthLevel,
-                Collections.emptySet());
-
-        if (!manuallyAddedPrefixes.isEmpty()) {
-            LOGGER.trace(() ->
-                    LogUtil.message("Ending {} manually added prefixes at level {}",
-                            manuallyAddedPrefixes.size(),
-                            depthLevel));
-
-            // Can't use .forEach() due to the SaxException
-            for (final String manuallyAddedPrefix : manuallyAddedPrefixes) {
-                fastInfosetEndPrefixMapping(manuallyAddedPrefix);
-            }
-
-            // We are leaving this level so can now delete the prefix mappings for this level
-            manuallyAddedLevelToPrefixMap.get(depthLevel)
-                    .clear();
-        }
-
-        super.endElement(uri, localName, qName);
-
-        // Leaving this level so
-        depthLevel--;
     }
 
     private void handleValueEndElement() throws SAXException {
-        LOGGER.trace("End of value XML fragment");
-        LOGGER.trace("================================================");
         insideValueElement = false;
+        valueElementDepthLevel = -1;
 
         if (haveSeenXmlInValueElement) {
             // Complete the fastInfoSet serialisation to stagingValueOutputStream
             fastInfosetEndDocument();
             stagingValueOutputStream.setTypeId(FastInfosetValue.TYPE_ID);
+            LOGGER.trace("End of value XML fragment");
+            LOGGER.trace("================================================");
         } else {
             // Simple string value
             final String value = content.toString();
@@ -520,11 +552,12 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 try {
                     stagingValueOutputStream.setTypeId(StringValue.TYPE_ID);
                     stagingValueOutputStream.write(value);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     throw new RuntimeException(LogUtil.message(
                             "Error writing string to stagingValueOutputStream: {}\n{}", e.getMessage(), value), e);
                 }
             }
+            LOGGER.trace("End of simple string value '{}'", value);
         }
     }
 
@@ -563,16 +596,16 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 }
             }
         } catch (final BufferOverflowException boe) {
-            final String msg = LogUtil.message("Value for key {} in map {} is too big for the buffer",
+            final String msg = LogUtil.message("Value for key '{}' in map '{}' is too big for the buffer",
                     key,
                     mapName);
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(), msg, boe);
             LOGGER.error(msg, boe);
         } catch (final RuntimeException e) {
             errorReceiverProxy.log(Severity.ERROR, null, getElementId(), e.getMessage(), e);
-            LOGGER.error("Error putting key {} into map {}: {} {}",
+            LOGGER.error("Error putting key '{}' into map '{}': {} {}",
                     key, mapName, e.getClass().getSimpleName(), e.getMessage());
-            LOGGER.debug("Error putting key {} into map {}: {}", key, mapName, e.getMessage(), e);
+            LOGGER.debug("Error putting key '{}' into map '{}': {}", key, mapName, e.getMessage(), e);
         }
 
         // Set keys to null.
@@ -585,17 +618,17 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     }
 
     private String getKeyText(final String key) {
-        return LogUtil.message("key [{}]", key);
+        return LogUtil.message("key '{}'", key);
     }
 
     private String getRangeText(final Range<Long> range) {
-        return LogUtil.message("range [{}] to [{}]", range.getFrom(), range.getTo());
+        return LogUtil.message("range '{}' to '{}'", range.getFrom(), range.getTo());
     }
 
     private void validateRangeValuePutSuccess(final Supplier<MapDefinition> mapDefSupplier,
                                               final Range<Long> range,
                                               final PutOutcome putOutcome) {
-        LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map {}",
+        LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map '{}'",
                 putOutcome, getRangeText(range), mapDefSupplier.get().getMapName()));
         validatePutSuccess(mapDefSupplier, () -> getRangeText(range), putOutcome);
     }
@@ -603,7 +636,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     private void validateKeyValuePutSuccess(final Supplier<MapDefinition> mapDefSupplier,
                                             final String key,
                                             final PutOutcome putOutcome) {
-        LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map {}",
+        LOGGER.debug(() -> LogUtil.message("PutOutcome {} for {} in map '{}'",
                 putOutcome, getKeyText(key), mapDefSupplier.get().getMapName()));
         validatePutSuccess(mapDefSupplier, () -> getKeyText(key), putOutcome);
     }
@@ -619,8 +652,8 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
                 final MapDefinition mapDefinition = mapDefSupplier.get();
                 errorReceiverProxy.log(Severity.WARNING, null, getElementId(),
                         LogUtil.message(
-                                "Replaced entry for {} in map {} from stream {} as an entry already exists in the " +
-                                "store and overrideExistingValues is set to true on the reference " +
+                                "Replaced entry for '{}' in map '{}' from stream {} as an entry already " +
+                                "exists in the store and overrideExistingValues is set to true on the reference " +
                                 "loader pipeline. Set warnOnDuplicateKeys to false to hide these warnings.",
                                 keyTextSupplier.get(),
                                 mapDefinition.getMapName(),
@@ -658,7 +691,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
 //            // Not seen any XML content so treat as string or null
 //            final String content = contentBuffer.toString();
 //            // simple string value so use content buffer
-//            if (GwtNullSafe.isBlankString(content)) {
+//            if (NullSafe.isBlankString(content)) {
 //                LOGGER.trace("Null value");
 //                refDataValue = NullValue.getInstance();
 //            } else {
@@ -685,32 +718,37 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
      */
     @Override
     public void characters(final char[] ch, final int start, final int length) throws SAXException {
-        if (insideValueElement) {
-            if (haveSeenXmlInValueElement) {
-                // This is an XML FastInfoSet value
-                LOGGER.trace(() -> LogUtil.message(
-                        "characters(\"{}\")", new String(ch, start, length).trim()));
-                if (insideElement || !isAllWhitespace(ch, start, length)) {
-                    // Delegate to the fastInfoset content handler which will write to stagingValueOutputStream
-                    fastInfosetCharacters(ch, start, length);
+        try {
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(
+                        "characters '{}', insideValueElement: {}, haveSeenXmlInValueElement: {}",
+                        new String(ch, start, length).trim(), insideValueElement, haveSeenXmlInValueElement);
+            }
+            if (insideValueElement) {
+                if (haveSeenXmlInValueElement) {
+                    // This is an XML FastInfoSet value
+                    if (insideElement || !isAllWhitespace(ch, start, length)) {
+                        // Delegate to the fastInfoset content handler which will write to stagingValueOutputStream
+                        fastInfosetCharacters(ch, start, length);
+                    }
+                } else {
+                    content.append(ch, start, length);
+                    //                // This is a simple String value
+                    //                final String str = new String(ch, start, length);
+                    //                try {
+                    //                    stagingValueOutputStream.write(str.getBytes(StandardCharsets.UTF_8));
+                    //                } catch (IOException e) {
+                    //                    throw new RuntimeException(LogUtil.message(
+                    //                            "Error writing chars '{}' to stagingValueOutputStream", str), e);
+                    //                }
                 }
             } else {
+                // outside the value element so capture the chars, so we can get keys, map names, etc.
                 content.append(ch, start, length);
-//                // This is a simple String value
-//                final String str = new String(ch, start, length);
-//                try {
-//                    stagingValueOutputStream.write(str.getBytes(StandardCharsets.UTF_8));
-//                } catch (IOException e) {
-//                    throw new RuntimeException(LogUtil.message(
-//                            "Error writing chars '{}' to stagingValueOutputStream", str), e);
-//                }
             }
-        } else {
-            // outside the value element so capture the chars, so we can get keys, map names, etc.
-            content.append(ch, start, length);
+        } finally {
+            super.characters(ch, start, length);
         }
-
-        super.characters(ch, start, length);
     }
 
     @Override
@@ -718,17 +756,20 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         LOGGER.debug("Processed {} XML ref data entries for ref stream {}",
                 valueCount,
                 refStreamDefinition);
-
         try {
-            refDataLoaderHolder.getRefDataLoader().markPutsComplete();
+            try {
+                refDataLoaderHolder.getRefDataLoader().markPutsComplete();
+            } finally {
+                // It is critical that this happens else the buffer it uses will not be released back to the pool
+                LOGGER.debug("closing stagingValueOutputStream");
+                stagingValueOutputStream.close();
+            }
         } finally {
-            // It is critical that this happens else the buffer it uses will not be released back to the pool
-            LOGGER.debug("closing stagingValueOutputStream");
-            stagingValueOutputStream.close();
             super.endProcessing();
         }
     }
 
+    @SuppressWarnings("unused")
     @PipelineProperty(description = "Warn if there are duplicate keys found in the reference data?",
             defaultValue = "false",
             displayPriority = 1)
@@ -736,6 +777,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         this.warnOnDuplicateKeys = warnOnDuplicateKeys;
     }
 
+    @SuppressWarnings("unused")
     @PipelineProperty(description = "Allow duplicate keys to override existing values?",
             defaultValue = "true",
             displayPriority = 2)
@@ -743,7 +785,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         this.overrideExistingValues = overrideExistingValues;
     }
 
-    private boolean isAllWhitespace(char[] ch, final int start, final int length) {
+    private boolean isAllWhitespace(final char[] ch, final int start, final int length) {
 
         boolean isOnlyWhitespace = true;
         for (int i = start; i < start + length; i++) {
@@ -773,7 +815,6 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     }
 
     private void fastInfosetManuallyAddPrefixMapping(final String prefix, final String uri) throws SAXException {
-        LOGGER.trace("Manually starting prefix mapping {}:{}", prefix, uri);
         manuallyAddedLevelToPrefixMap.computeIfAbsent(depthLevel, key -> new HashSet<>())
                 .add(prefix);
         fastInfosetStartPrefixMapping(prefix, uri);
@@ -807,6 +848,18 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
         isFastInfosetDocStarted = false;
     }
 
+    @Override
+    public void startDocument() throws SAXException {
+        LOGGER.trace("startDocument");
+        super.startDocument();
+    }
+
+    @Override
+    public void endDocument() throws SAXException {
+        LOGGER.trace("endDocument");
+        super.endDocument();
+    }
+
     private void fastInfosetEndElement(final String localName,
                                        final String newUri,
                                        final String newQName) throws SAXException {
@@ -823,11 +876,7 @@ public class ReferenceDataFilter extends AbstractXMLFilter {
     }
 
     private boolean hasUriBeenApplied(final String prefix, final String uri) {
-        return appliedPrefixToUriMap.entrySet()
-                .stream()
-                .anyMatch(prefixToUriEntry ->
-                        Objects.equals(prefixToUriEntry.getKey(), prefix)
-                        && Objects.equals(prefixToUriEntry.getValue(), uri));
+        return Objects.equals(appliedPrefixToUriMap.get(prefix), uri);
     }
 
     private boolean hasUriBeenApplied(final String prefix) {

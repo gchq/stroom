@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
@@ -10,12 +26,17 @@ import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.receive.common.AttributeMapFilter;
 import stroom.receive.common.AttributeMapFilterFactory;
+import stroom.receive.common.InputStreamUtils;
+import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.slf4j.Logger;
@@ -23,7 +44,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -40,6 +60,8 @@ public class SimpleReceiver implements Receiver {
     private static final String META_FILE_NAME = "0000000001.meta";
     private static final String DATA_FILE_NAME = "0000000001.dat";
 
+    private final ReceiveDataConfig receiveDataConfig;
+    private final FsyncMode fsyncModeOnReceipt;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     private final LogStream logStream;
@@ -50,10 +72,14 @@ public class SimpleReceiver implements Receiver {
     public SimpleReceiver(final AttributeMapFilterFactory attributeMapFilterFactory,
                           final DataDirProvider dataDirProvider,
                           final LogStream logStream,
-                          final DropReceiver dropReceiver) {
+                          final DropReceiver dropReceiver,
+                          final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                          final FsyncConfig fsyncConfig) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
         this.dropReceiver = dropReceiver;
+        this.receiveDataConfig = receiveDataConfigProvider.get();
+        this.fsyncModeOnReceipt = fsyncConfig.getReceivingMode();
 
         // Make receiving zip dir.
         final Path receivingDir = dataDirProvider.get().resolve(DirNames.RECEIVING_SIMPLE);
@@ -71,85 +97,104 @@ public class SimpleReceiver implements Receiver {
                         final AttributeMap attributeMap,
                         final String requestUri,
                         final InputStreamSupplier inputStreamSupplier) {
-
         // Determine if the feed is allowed to receive data or if we should ignore it.
         // Throws an exception if we should reject.
+        // Callers must already be running as the processing user: filtering can consult feed status,
+        // which needs an identity, and no entry point's own user would carry the permission for it.
+        // Every entry point does this - see ProxyRequestHandler, ZipDirScanner and EventStore - so
+        // this must not elevate again here.
         final AttributeMapFilter attributeMapFilter = attributeMapFilterFactory.create();
+        final String receiptId = NullSafe.get(attributeMap, map -> map.get(StandardHeaderArguments.RECEIPT_ID));
         if (attributeMapFilter.filter(attributeMap)) {
-            long bytesRead = 0;
-            try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStreamSupplier.get())) {
-                // Read an initial buffer full, so we can see if there is any data
-                bufferedInputStream.mark(1);
-                if (bufferedInputStream.read() == -1) {
-                    LOGGER.warn("process() - Skipping Zero Content Stream" + attributeMap);
-                } else {
-                    bufferedInputStream.reset();
-
-                    final Path receivingDir = receivingDirProvider.get();
-                    final FileGroup fileGroup = new FileGroup(receivingDir);
-
-                    // Get a buffer to help us transfer data.
-                    final byte[] buffer = LocalByteBuffer.get();
-
-                    try (final ProxyZipWriter zipWriter = new ProxyZipWriter(fileGroup.getZip(), buffer)) {
-                        // Write meta first.
-                        final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);
-                        final byte[] metaBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
-                        zipWriter.writeStream(META_FILE_NAME, new ByteArrayInputStream(metaBytes));
-
-                        // Deal with GZIP compression.
-                        final InputStream in;
-                        final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
-                        if (StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)) {
-                            in = new GzipCompressorInputStream(bufferedInputStream);
-                        } else {
-                            in = bufferedInputStream;
-                        }
-
-                        // Write the data.
-                        zipWriter.writeStream(DATA_FILE_NAME, in);
-
-                        final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
-                        final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
-                        // Write the entries for quick reference.
-                        final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(
-                                feedName,
-                                typeName,
-                                null,
-                                new Entry(META_FILE_NAME, metaBytes.length),
-                                null,
-                                new Entry(DATA_FILE_NAME, bytesRead));
-
-                        // Write zip entry.
-                        try (final Writer entryWriter = Files.newBufferedWriter(fileGroup.getEntries())) {
-                            zipEntryGroup.write(entryWriter);
-                        }
-
-                        // Write the meta.
-                        AttributeMapUtil.write(entryAttributeMap, fileGroup.getMeta());
-                    }
-
-                    // Now move the temp files to the file store or forward if there is a single destination.
-                    destination.accept(receivingDir);
-                }
-
-                final Duration duration = Duration.between(startTime, Instant.now());
-                logStream.log(
-                        RECEIVE_LOG,
-                        attributeMap,
-                        EventType.RECEIVE,
-                        requestUri,
-                        StroomStatusCode.OK,
-                        attributeMap.get(StandardHeaderArguments.RECEIPT_ID),
-                        bytesRead,
-                        duration.toMillis());
-            } catch (final IOException e) {
-                throw StroomStreamException.create(e, attributeMap);
-            }
-
+            doReceive(startTime, attributeMap, requestUri, inputStreamSupplier, receiptId);
         } else {
             // Drop the data.
             dropReceiver.receive(startTime, attributeMap, requestUri, inputStreamSupplier);
+        }
+    }
+
+    private void doReceive(final Instant startTime,
+                           final AttributeMap attributeMap,
+                           final String requestUri,
+                           final InputStreamSupplier inputStreamSupplier,
+                           final String receiptId) {
+        long bytesRead = 0;
+        try (final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStreamSupplier.get())) {
+            // Read an initial buffer full, so we can see if there is any data
+            bufferedInputStream.mark(1);
+            if (bufferedInputStream.read() == -1) {
+                LOGGER.warn("process() - Skipping Zero Content Stream" + attributeMap);
+            } else {
+                bufferedInputStream.reset();
+
+                final Path receivingDir = receivingDirProvider.get();
+                final FileGroup fileGroup = new FileGroup(receivingDir);
+
+                // Get a buffer to help us transfer data.
+                final byte[] buffer = LocalByteBuffer.get();
+
+                try (final ProxyZipWriter zipWriter = new ProxyZipWriter(fileGroup.getZip(), buffer)) {
+                    // Write .meta in the zip first
+                    final AttributeMap entryAttributeMap = AttributeMapUtil.cloneAllowable(attributeMap);
+                    final byte[] metaBytes = AttributeMapUtil.toByteArray(entryAttributeMap);
+                    zipWriter.writeStream(META_FILE_NAME, new ByteArrayInputStream(metaBytes));
+
+                    // Deal with GZIP compression.
+                    final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
+                    final InputStream in = StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)
+                            ? new GzipCompressorInputStream(bufferedInputStream, true)
+                            : bufferedInputStream;
+
+                    // Write the .dat file in the zip
+                    try (final InputStream boundedInputStream = InputStreamUtils.getBoundedInputStream(
+                            in, receiveDataConfig.getMaxRequestSize())) {
+                        bytesRead = zipWriter.writeStream(DATA_FILE_NAME, boundedInputStream);
+                    }
+
+                    final String feedName = attributeMap.get(StandardHeaderArguments.FEED);
+                    final String typeName = attributeMap.get(StandardHeaderArguments.TYPE);
+                    // Write the entries for quick reference.
+                    final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(
+                            feedName,
+                            typeName,
+                            null,
+                            new Entry(META_FILE_NAME, (long) metaBytes.length),
+                            null,
+                            new Entry(DATA_FILE_NAME, bytesRead));
+
+                    // Write .entries file, so we know what is in the zip
+                    try (final Writer entryWriter = Files.newBufferedWriter(fileGroup.getEntries())) {
+                        zipEntryGroup.write(entryWriter);
+                    }
+
+                    // Write the .meta file
+                    AttributeMapUtil.write(entryAttributeMap, fileGroup.getMeta());
+                }
+
+                // Force the received data to disk before we acknowledge receipt of it, otherwise we
+                // may tell the sender the data is safe when it is still only in the page cache.
+                if (fsyncModeOnReceipt.isAnyFsyncEnabled()) {
+                    fileGroup.sync(fsyncModeOnReceipt);
+                }
+
+                // Now move the temp files to the file store or forward if there is a single destination.
+                destination.accept(receivingDir);
+            }
+
+            final Duration duration = Duration.between(startTime, Instant.now());
+            LOGGER.debug("receive() - Received simple stream, duration: {}, attributeMap: {}",
+                    duration, attributeMap);
+            logStream.log(
+                    RECEIVE_LOG,
+                    attributeMap,
+                    EventType.RECEIVE,
+                    requestUri,
+                    StroomStatusCode.OK,
+                    receiptId,
+                    bytesRead,
+                    duration.toMillis());
+        } catch (final Exception e) {
+            throw StroomStreamException.create(e, attributeMap);
         }
     }
 

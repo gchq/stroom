@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.pipeline.shared;
 
+import stroom.annotation.shared.EventId;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.TextRange;
 
@@ -57,18 +58,25 @@ public class SourceLocation {
     private final List<DataRange> highlights;
 
     @JsonCreator
-    public SourceLocation(@JsonProperty("metaId") final long metaId,
+    public SourceLocation(@JsonProperty("metaId") final Long metaId,
                           @JsonProperty("childType") final String childType,
-                          @JsonProperty("partIndex") final long partIndex,
-                          @JsonProperty("recordIndex") final long recordIndex,
+                          @JsonProperty("partIndex") final Long partIndex,
+                          @JsonProperty("recordIndex") final Long recordIndex,
                           @JsonProperty("dataRange") final DataRange dataRange,
                           @JsonProperty("highlights") final List<DataRange> highlights) {
-        this.metaId = metaId;
+        this.metaId = Objects.requireNonNullElse(metaId, 0L);
         this.childType = childType;
-        this.partIndex = partIndex;
-        this.recordIndex = recordIndex;
+        this.partIndex = Objects.requireNonNullElse(partIndex, 0L);
+        this.recordIndex = Objects.requireNonNullElse(recordIndex, 0L);
         this.dataRange = dataRange;
         this.highlights = highlights;
+    }
+
+    public static SourceLocation fromEventId(final EventId eventId) {
+        return SourceLocation
+                .builder(eventId.getStreamId())
+                .withRecordIndex(eventId.getEventId() - 1)
+                .build();
     }
 
     private SourceLocation(final Builder builder) {
@@ -152,8 +160,8 @@ public class SourceLocation {
             return false;
         } else {
             return this.metaId == other.metaId
-                    && this.partIndex == other.partIndex
-                    && Objects.equals(this.childType, other.childType);
+                   && this.partIndex == other.partIndex
+                   && Objects.equals(this.childType, other.childType);
         }
     }
 
@@ -162,8 +170,8 @@ public class SourceLocation {
             return false;
         } else {
             return this.isSameSource(other)
-                    && this.recordIndex == other.recordIndex
-                    && Objects.equals(this.dataRange, other.dataRange);
+                   && this.recordIndex == other.recordIndex
+                   && Objects.equals(this.dataRange, other.dataRange);
         }
     }
 
@@ -186,11 +194,11 @@ public class SourceLocation {
         }
         final SourceLocation that = (SourceLocation) o;
         return metaId == that.metaId &&
-                partIndex == that.partIndex &&
-                recordIndex == that.recordIndex &&
-                Objects.equals(childType, that.childType) &&
-                Objects.equals(dataRange, that.dataRange) &&
-                Objects.equals(highlights, that.highlights);
+               partIndex == that.partIndex &&
+               recordIndex == that.recordIndex &&
+               Objects.equals(childType, that.childType) &&
+               Objects.equals(dataRange, that.dataRange) &&
+               Objects.equals(highlights, that.highlights);
     }
 
     @Override
@@ -201,13 +209,13 @@ public class SourceLocation {
     @Override
     public String toString() {
         return "SourceLocation{" +
-                "metaId=" + metaId +
-                ", childType='" + childType + '\'' +
-                ", partIndex=" + partIndex +
-                ", recordIndex=" + recordIndex +
-                ", dataRange=" + dataRange +
-                ", highlight=" + highlights +
-                '}';
+               "metaId=" + metaId +
+               ", childType='" + childType + '\'' +
+               ", partIndex=" + partIndex +
+               ", recordIndex=" + recordIndex +
+               ", dataRange=" + dataRange +
+               ", highlight=" + highlights +
+               '}';
     }
 
     public static Builder builder() {

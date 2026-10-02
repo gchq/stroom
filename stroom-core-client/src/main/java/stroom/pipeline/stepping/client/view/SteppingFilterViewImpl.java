@@ -88,7 +88,7 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     }
 
     @Override
-    public void setSkipToErrors(Severity value) {
+    public void setSkipToErrors(final Severity value) {
         skipToErrors.setValue(value);
     }
 
@@ -103,7 +103,7 @@ public class SteppingFilterViewImpl extends ViewImpl implements SteppingFilterVi
     }
 
     @Override
-    public void setSkipToOutput(OutputState value) {
+    public void setSkipToOutput(final OutputState value) {
         skipToOutput.setValue(value);
     }
 

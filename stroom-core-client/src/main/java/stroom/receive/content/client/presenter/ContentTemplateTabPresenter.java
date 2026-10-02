@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,8 +26,8 @@ import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter.ContentTemplateTabView;
 import stroom.receive.content.shared.ContentTemplate;
@@ -68,6 +68,7 @@ public class ContentTemplateTabPresenter
             ContentTemplateResource.class);
 
     private static final Preset DELETE_TEMPLATE_SVG_PRESET = SvgPresets.DELETE.title("Delete template");
+    //    private static final Preset DISABLE_TEMPLATE_SVG_PRESET = SvgPresets.DISABLE.title("Enable/Disable template");
     protected static final Preset ADD_ABOVE_SVG_PRESET = SvgPresets.ADD_ABOVE.title(
             "Add new template above the selected one");
     protected static final Preset ADD_BELOW_SVG_PRESET = SvgPresets.ADD_BELOW.title(
@@ -218,13 +219,19 @@ public class ContentTemplateTabPresenter
                                 .text("Delete template")
                                 .command(() ->
                                         deleteRule(contentTemplate)))
-                .withIconMenuItemIf(contentTemplate.getTemplateNumber() > 0, itemBuilder ->
+//                .withIconMenuItem(itemBuilder ->
+//                        itemBuilder
+//                                .icon(SvgImage.DISABLE)
+//                                .text("Enable/Disable template")
+//                                .command(() ->
+//                                        setRuleEnabledState(contentTemplate, !contentTemplate.isEnabled())))
+                .withIconMenuItemIf(contentTemplate.getTemplateNumber() > 1, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
                                 .text("Move template Up")
                                 .command(() ->
                                         moveRuleUp(contentTemplate)))
-                .withIconMenuItemIf(contentTemplate.getTemplateNumber() < getMaxTemplateIndex(),
+                .withIconMenuItemIf(contentTemplate.getTemplateNumber() < getTemplateCount(),
                         itemBuilder ->
                                 itemBuilder
                                         .icon(SvgImage.DOWN)
@@ -235,21 +242,23 @@ public class ContentTemplateTabPresenter
     }
 
     private void addEnabledClickHandler() {
-        listPresenter.setEnabledStateHandler((currTemplate, isEnabled) -> {
-            if (contentTemplates != null) {
-                if (currTemplate != null) {
-                    final ContentTemplate newTemplate = currTemplate.withEnabledState(isEnabled);
-                    int index = contentTemplates.indexOf(currTemplate);
-                    contentTemplates.set(index, newTemplate);
+        listPresenter.setEnabledStateHandler(this::setRuleEnabledState);
+    }
+
+    private void setRuleEnabledState(final ContentTemplate currTemplate, final boolean isEnabled) {
+        if (contentTemplates != null) {
+            if (currTemplate != null) {
+                final ContentTemplate newTemplate = currTemplate.withEnabledState(isEnabled);
+                final int index = contentTemplates.indexOf(currTemplate);
+                contentTemplates.set(index, newTemplate);
 //                    contentTemplates.remove(index);
 //                    contentTemplates.add(index, newTemplate);
 //                    index = contentTemplates.indexOf(newTemplate);
-                    update();
-                    setDirty(true);
-                    setSelected(contentTemplates.get(index));
-                }
+                update();
+                setDirty(true);
+                setSelected(contentTemplates.get(index));
             }
-        });
+        }
     }
 
     private void addListSelectionHandler() {
@@ -343,7 +352,7 @@ public class ContentTemplateTabPresenter
                     : "";
             ConfirmEvent.fire(
                     this,
-                    "Are you sure you want to delete rule "
+                    "Are you sure you want to delete template "
                     + rule.getTemplateNumber()
                     + nameStr + "?",
                     ok -> {
@@ -393,8 +402,8 @@ public class ContentTemplateTabPresenter
         if (sourceTemplate != null) {
 
             // Make sure the copy has a unique name
-            int sourceIdx = contentTemplates.indexOf(sourceTemplate);
-            int newIdx = sourceIdx + 1;
+            final int sourceIdx = contentTemplates.indexOf(sourceTemplate);
+            final int newIdx = sourceIdx + 1;
             int copyNo = 0;
             String newName;
             do {
@@ -457,7 +466,7 @@ public class ContentTemplateTabPresenter
                     .create(CONTENT_TEMPLATE_RESOURCE)
                     .method(res ->
                             res.update(contentTemplatesWrapper.copy()
-                                    .withContentTemplates(getTemplates())
+                                    .contentTemplates(getTemplates())
                                     .build()))
                     .onSuccess(result -> {
                         contentTemplatesWrapper = result;
@@ -565,7 +574,7 @@ public class ContentTemplateTabPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Edit Template")
-                .onShow(e -> listPresenter.focus())
+                .onShow(e -> editRulePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ContentTemplate rule = editRulePresenter.write();

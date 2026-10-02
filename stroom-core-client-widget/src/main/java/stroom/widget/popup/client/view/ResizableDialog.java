@@ -101,7 +101,6 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
     ResizableDialog(final DialogActionUiHandlers dialogEventHandler,
                     final PopupSize popupSize) {
         this(dialogEventHandler, false, popupSize);
-        spinner.setSoft(true);
         spinner.setVisible(false);
     }
 
@@ -148,7 +147,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         addDomHandler(mouseHandler, MouseMoveEvent.getType());
 
         setResizeEnabled((popupSize != null && popupSize.getWidth() != null && popupSize.getWidth().isResizable()) ||
-                (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
+                         (popupSize != null && popupSize.getHeight() != null && popupSize.getHeight().isResizable()));
 
         SvgImageUtil.setSvgAsInnerHtml(resizeSE, SvgImage.RESIZE_HANDLE);
     }
@@ -314,7 +313,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                 final Size heightSize = popupSize.getHeight();
 
                 if (resizeWidth && widthSize != null && widthSize.isResizable()) {
-                    double newWidth = moveX
+                    final double newWidth = moveX
                             ? dragStartWindow.getWidth() - dx
                             : dragStartWindow.getWidth() + dx;
                     double constrainedWidth = newWidth;
@@ -330,13 +329,13 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                     constrainedWidth = Math.min(initialWindowWidth, constrainedWidth);
 
                     // If we were constrained then reduce the move distance.
-                    double constraintDiff = newWidth - constrainedWidth;
+                    final double constraintDiff = newWidth - constrainedWidth;
                     dx = dx + constraintDiff;
 
                     elem.getStyle().setPropertyPx("width", (int) constrainedWidth);
                 }
                 if (resizeHeight && heightSize != null && heightSize.isResizable()) {
-                    double newHeight = moveY
+                    final double newHeight = moveY
                             ? dragStartWindow.getHeight() - dy
                             : dragStartWindow.getHeight() + dy;
                     double constrainedHeight = newHeight;
@@ -352,7 +351,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
                     constrainedHeight = Math.min(initialWindowHeight, constrainedHeight);
 
                     // If we were constrained then reduce the move distance.
-                    double constraintDiff = newHeight - constrainedHeight;
+                    final double constraintDiff = newHeight - constrainedHeight;
                     dy = dy + constraintDiff;
 
                     elem.getStyle().setPropertyPx("height", (int) constrainedHeight);
@@ -413,7 +412,7 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         final NativeEvent nativeEvent = event.getNativeEvent();
 
         if (!event.isCanceled() && (event.getTypeInt() == Event.ONMOUSEDOWN)
-                && (isCaptionEvent(nativeEvent) || isResizeHandleEvent(nativeEvent))) {
+            && (isCaptionEvent(nativeEvent) || isResizeHandleEvent(nativeEvent))) {
             nativeEvent.preventDefault();
         }
 
@@ -451,13 +450,13 @@ public class ResizableDialog extends AbstractPopupPanel implements TaskMonitorFa
         if (Element.is(target)) {
             final Element element = Element.as(target);
             return resizeN.getElement().isOrHasChild(element) ||
-                    resizeE.getElement().isOrHasChild(element) ||
-                    resizeS.getElement().isOrHasChild(element) ||
-                    resizeW.getElement().isOrHasChild(element) ||
-                    resizeNE.getElement().isOrHasChild(element) ||
-                    resizeNW.getElement().isOrHasChild(element) ||
-                    resizeSE.getElement().isOrHasChild(element) ||
-                    resizeSW.getElement().isOrHasChild(element);
+                   resizeE.getElement().isOrHasChild(element) ||
+                   resizeS.getElement().isOrHasChild(element) ||
+                   resizeW.getElement().isOrHasChild(element) ||
+                   resizeNE.getElement().isOrHasChild(element) ||
+                   resizeNW.getElement().isOrHasChild(element) ||
+                   resizeSE.getElement().isOrHasChild(element) ||
+                   resizeSW.getElement().isOrHasChild(element);
         }
         return false;
     }

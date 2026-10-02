@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,14 @@
 
 package stroom.query.language.functions;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class ValInteger implements ValNumber {
 
     private static final Comparator<Val> COMPARATOR = ValComparators.asGenericComparator(
@@ -26,10 +31,12 @@ public final class ValInteger implements ValNumber {
 
     public static final Type TYPE = Type.INTEGER;
 
+    @JsonProperty("value")
     private final int value;
 
-    private ValInteger(final int value) {
-        this.value = value;
+    @JsonCreator
+    private ValInteger(@JsonProperty("value") final Integer value) {
+        this.value = Objects.requireNonNullElse(value, 0);
     }
 
     public static ValInteger create(final int value) {

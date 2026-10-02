@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.query;
@@ -21,9 +20,8 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter;
 import stroom.dashboard.client.main.AbstractSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
-import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.query.SelectionHandlersPresenter.SelectionHandlersView;
-import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSelectionHandler;
 import stroom.dashboard.shared.ComponentSettings;
@@ -33,14 +31,15 @@ import stroom.dashboard.shared.HasSelectionFilterBuilder;
 import stroom.dashboard.shared.HasSelectionQuery;
 import stroom.dashboard.shared.HasSelectionQueryBuilder;
 import stroom.dashboard.shared.TableComponentSettings;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Format;
+import stroom.query.api.Column;
+import stroom.query.api.Format;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.query.client.presenter.QueryResultTablePresenter;
@@ -85,7 +84,6 @@ public class SelectionHandlersPresenter
     private final ButtonView moveDownButton;
 
     private boolean dirty;
-    private List<Component> componentList;
     private FieldSelectionListModel fieldSelectionListModel;
     // Determine if we are using this to set a filter or query selection handler.
     private boolean useForFilter;
@@ -187,7 +185,7 @@ public class SelectionHandlersPresenter
         registerHandler(moveUpButton.addClickHandler(event -> {
             final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
-                int index = selectionHandlers.indexOf(rule);
+                final int index = selectionHandlers.indexOf(rule);
                 if (index > 0) {
                     selectionHandlers.remove(rule);
                     selectionHandlers.add(index - 1, rule);
@@ -199,7 +197,7 @@ public class SelectionHandlersPresenter
         registerHandler(moveDownButton.addClickHandler(event -> {
             final ComponentSelectionHandler rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
-                int index = selectionHandlers.indexOf(rule);
+                final int index = selectionHandlers.indexOf(rule);
                 if (index < selectionHandlers.size() - 1) {
                     selectionHandlers.remove(rule);
                     selectionHandlers.add(index + 1, rule);
@@ -230,57 +228,55 @@ public class SelectionHandlersPresenter
                 .id(RandomId.createId(5))
                 .enabled(true)
                 .build();
-        final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-        editSelectionHandlerPresenter.setComponents(getComponents());
-        editSelectionHandlerPresenter.read(newRule, componentList, fieldSelectionListModel);
-
-        final PopupSize popupSize = PopupSize.resizable(800, 800);
-        ShowPopupEvent.builder(editSelectionHandlerPresenter)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
-                .popupSize(popupSize)
-                .caption("Add New Selection Handler")
-                .onShow(e -> editSelectionHandlerPresenter.focus())
-                .onHideRequest(e -> {
-                    if (e.isOk()) {
-                        final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                        selectionHandlers.add(rule);
-                        update();
-                        listPresenter.getSelectionModel().setSelected(rule);
-                        setDirty(true);
-                    }
-                    e.hide();
-                })
-                .fire();
+        edit(newRule, "Add New Selection Handler", rule -> {
+            selectionHandlers.add(rule);
+            update();
+            listPresenter.getSelectionModel().setSelected(rule);
+            setDirty(true);
+        });
     }
 
     private void edit(final ComponentSelectionHandler existingRule) {
-        final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
-        editSelectionHandlerPresenter.setComponents(getComponents());
-        editSelectionHandlerPresenter.read(existingRule, componentList, fieldSelectionListModel);
+        edit(existingRule, "Edit Selection Handler", rule -> {
+            final int index = selectionHandlers.indexOf(existingRule);
+            selectionHandlers.remove(index);
+            selectionHandlers.add(index, rule);
 
-        final PopupSize popupSize = PopupSize.resizable(800, 800);
+            update();
+            listPresenter.getSelectionModel().setSelected(rule);
+
+            // Only mark the policies as dirty if the rule was actually changed.
+            if (!existingRule.equals(rule)) {
+                setDirty(true);
+            }
+        });
+    }
+
+    private void edit(final ComponentSelectionHandler existingRule,
+                      final String caption,
+                      final Consumer<ComponentSelectionHandler> consumer) {
+        final SelectionHandlerPresenter editSelectionHandlerPresenter = editRulePresenterProvider.get();
+        editSelectionHandlerPresenter.read(existingRule, fieldSelectionListModel);
+
+        final DashboardContext dashboardContext = getDashboardContext();
+        editSelectionHandlerPresenter.refreshSelection(dashboardContext);
+        final HandlerRegistration handlerRegistration = dashboardContext
+                .addContextChangeHandler(e -> editSelectionHandlerPresenter.refreshSelection(dashboardContext));
+
+        final PopupSize popupSize = PopupSize.resizable(1200, 1000, 800, 600);
         ShowPopupEvent.builder(editSelectionHandlerPresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
-                .caption("Edit Selection Handler")
+                .caption(caption)
                 .onShow(e -> editSelectionHandlerPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ComponentSelectionHandler rule = editSelectionHandlerPresenter.write();
-                        final int index = selectionHandlers.indexOf(existingRule);
-                        selectionHandlers.remove(index);
-                        selectionHandlers.add(index, rule);
-
-                        update();
-                        listPresenter.getSelectionModel().setSelected(rule);
-
-                        // Only mark the policies as dirty if the rule was actually changed.
-                        if (!existingRule.equals(rule)) {
-                            setDirty(true);
-                        }
+                        consumer.accept(rule);
                     }
                     e.hide();
                 })
+                .onHide(e -> handlerRegistration.removeHandler())
                 .fire();
     }
 
@@ -289,15 +285,12 @@ public class SelectionHandlersPresenter
 
         // Get field list model.
         fieldSelectionListModel = dynamicFieldSelectionListModel;
-        if (componentConfig.getSettings() instanceof TableComponentSettings) {
-            final TableComponentSettings settings =
-                    (TableComponentSettings) componentConfig.getSettings();
+        if (componentConfig.getSettings() instanceof final TableComponentSettings settings) {
             fieldSelectionListModel = createSelectionListModelFromColumns(settings.getColumns());
         } else if (useForFilter) {
-            final Component component = getComponents().get(componentConfig.getId());
-            if (component instanceof EmbeddedQueryPresenter) {
+            final Component component = getDashboardContext().getComponents().get(componentConfig.getId());
+            if (component instanceof final EmbeddedQueryPresenter embeddedQueryPresenter) {
                 List<Column> columns = Collections.emptyList();
-                final EmbeddedQueryPresenter embeddedQueryPresenter = (EmbeddedQueryPresenter) component;
                 final QueryResultTablePresenter queryResultTablePresenter =
                         embeddedQueryPresenter.getCurrentTablePresenter();
                 if (queryResultTablePresenter != null) {
@@ -309,29 +302,20 @@ public class SelectionHandlersPresenter
 
         // Read selection handlers.
         if (useForFilter) {
-            if (componentConfig.getSettings() instanceof HasSelectionFilter) {
-                final HasSelectionFilter hasSelectionFilter = (HasSelectionFilter) componentConfig.getSettings();
+            if (componentConfig.getSettings() instanceof final HasSelectionFilter hasSelectionFilter) {
                 if (hasSelectionFilter.getSelectionFilter() != null) {
                     this.selectionHandlers = hasSelectionFilter.getSelectionFilter();
                 } else {
                     this.selectionHandlers.clear();
                 }
             }
-        } else if (componentConfig.getSettings() instanceof HasSelectionQuery) {
-            final HasSelectionQuery hasSelectionQuery =
-                    (HasSelectionQuery) componentConfig.getSettings();
+        } else if (componentConfig.getSettings() instanceof final HasSelectionQuery hasSelectionQuery) {
             if (hasSelectionQuery.getSelectionQuery() != null) {
                 this.selectionHandlers = hasSelectionQuery.getSelectionQuery();
             } else {
                 this.selectionHandlers.clear();
             }
         }
-
-        componentList = getComponents()
-                .getComponents()
-                .stream()
-                .filter(c -> c instanceof HasComponentSelection)
-                .collect(Collectors.toList());
 
         listPresenter.getSelectionModel().clear();
         setDirty(false);
@@ -341,12 +325,22 @@ public class SelectionHandlersPresenter
     private FieldSelectionListModel createSelectionListModelFromColumns(final List<Column> columns) {
         final List<QueryField> fields = columns
                 .stream()
-                .map(column -> QueryField
-                        .builder()
-                        .fldName(column.getName())
-                        .fldType(getFieldType(column))
-                        .queryable(true)
-                        .build())
+                .map(column -> {
+                    final FieldType fieldType = getFieldType(column);
+                    final ConditionSet conditionSet = switch (fieldType) {
+                        case LONG -> ConditionSet.ALL_UI_NUMERIC;
+                        case DATE -> ConditionSet.ALL_UI_DATE;
+                        default -> ConditionSet.ALL_UI_TEXT;
+                    };
+
+                    return QueryField
+                            .builder()
+                            .fldName(column.getName())
+                            .fldType(getFieldType(column))
+                            .queryable(true)
+                            .conditionSet(conditionSet)
+                            .build();
+                })
                 .collect(Collectors.toList());
         final SimpleFieldSelectionListModel simpleFieldSelectionListModel = new SimpleFieldSelectionListModel();
         simpleFieldSelectionListModel.addItems(fields);
@@ -373,13 +367,11 @@ public class SelectionHandlersPresenter
         final AbstractBuilder<?, ?> builder = componentConfig.getSettings().copy();
 
         if (useForFilter) {
-            if (builder instanceof HasSelectionFilterBuilder<?, ?>) {
-                final HasSelectionFilterBuilder<?, ?> hasSelectionFilter = (HasSelectionFilterBuilder<?, ?>) builder;
+            if (builder instanceof final HasSelectionFilterBuilder<?, ?> hasSelectionFilter) {
                 hasSelectionFilter.selectionFilter(selectionHandlers);
             }
         } else {
-            if (builder instanceof HasSelectionQueryBuilder<?, ?>) {
-                final HasSelectionQueryBuilder<?, ?> hasSelectionQuery = (HasSelectionQueryBuilder<?, ?>) builder;
+            if (builder instanceof final HasSelectionQueryBuilder<?, ?> hasSelectionQuery) {
                 hasSelectionQuery.selectionQuery(selectionHandlers);
             }
         }
@@ -404,9 +396,9 @@ public class SelectionHandlersPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        listPresenter.setComponents(components);
-        super.setComponents(components);
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        listPresenter.setComponents(dashboardContext.getComponents());
+        super.setDashboardContext(dashboardContext);
     }
 
     private void updateButtons() {

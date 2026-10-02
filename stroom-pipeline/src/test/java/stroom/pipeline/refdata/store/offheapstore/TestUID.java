@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
@@ -32,7 +48,7 @@ class TestUID {
 
         // Compare two buffers of different capacities
         final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(uid1.getBackingBuffer().capacity() * 2);
-        UID uid2 = UID.of(5, byteBuffer);
+        final UID uid2 = UID.of(5, byteBuffer);
 
         LOGGER.info("uid1: {}", uid1);
         LOGGER.info("uid2: {}", uid2);
@@ -57,7 +73,7 @@ class TestUID {
         byteBuffer.put(new byte[]{0, 0, 0, 5});
         byteBuffer.flip();
         byteBuffer.position(2);
-        UID uid2 = UID.wrap(byteBuffer);
+        final UID uid2 = UID.wrap(byteBuffer);
 
         LOGGER.info("uid1: {}", uid1);
         LOGGER.info("uid2: {}", uid2);

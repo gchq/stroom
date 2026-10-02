@@ -1,4 +1,20 @@
 /*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -31,7 +47,7 @@ public class CalendarUtil {
 
     static {
         if (GWT.isClient()) {
-            DateTimeFormatInfo dateTimeFormatInfo = LocaleInfo.getCurrentLocale().getDateTimeFormatInfo();
+            final DateTimeFormatInfo dateTimeFormatInfo = LocaleInfo.getCurrentLocale().getDateTimeFormatInfo();
             // Finding the start and end of weekend
             firstDayOfWeekend = dateTimeFormatInfo.weekendStart();
             lastDayOfWeekend = dateTimeFormatInfo.weekendEnd();
@@ -45,7 +61,7 @@ public class CalendarUtil {
      * @param date the date
      * @param days number of days
      */
-    public static void addDaysToDate(UTCDate date, int days) {
+    public static void addDaysToDate(final UTCDate date, final int days) {
         date.setDate(date.getDate() + days);
     }
 
@@ -55,7 +71,7 @@ public class CalendarUtil {
      * @param date the date
      * @param months number of months
      */
-    public static void addMonthsToDate(UTCDate date, int months) {
+    public static void addMonthsToDate(final UTCDate date, final int months) {
         if (months != 0) {
             date.setMonth(date.getMonth() + months);
         }
@@ -67,7 +83,7 @@ public class CalendarUtil {
      * @param date the date
      * @return the copy
      */
-    public static UTCDate copyDate(UTCDate date) {
+    public static UTCDate copyDate(final UTCDate date) {
         if (date == null) {
             return null;
         }
@@ -88,8 +104,8 @@ public class CalendarUtil {
         finish = copyDate(finish);
         resetTime(finish);
 
-        double aTime = start.getTime();
-        double bTime = finish.getTime();
+        final double aTime = start.getTime();
+        final double bTime = finish.getTime();
 
         long adjust = 60 * 60 * 1000;
         adjust = (bTime > aTime) ? adjust : -adjust;
@@ -115,7 +131,7 @@ public class CalendarUtil {
      * @param date1 a second date
      * @return true if the dates are the same
      */
-    public static boolean isSameDate(UTCDate date0, UTCDate date1) {
+    public static boolean isSameDate(final UTCDate date0, final UTCDate date1) {
         assert date0 != null : "date0 cannot be null";
         assert date1 != null : "date1 cannot be null";
         return date0.getFullYear() == date1.getFullYear()
@@ -129,7 +145,7 @@ public class CalendarUtil {
      *
      * @param date the date
      */
-    public static void setToFirstDayOfMonth(UTCDate date) {
+    public static void setToFirstDayOfMonth(final UTCDate date) {
         resetTime(date);
         date.setDate(1);
     }
@@ -140,7 +156,7 @@ public class CalendarUtil {
      * @param dayOfWeek day of week
      * @return is the day of week a weekend?
      */
-    static boolean isWeekend(int dayOfWeek) {
+    static boolean isWeekend(final int dayOfWeek) {
         return dayOfWeek == firstDayOfWeekend || dayOfWeek == lastDayOfWeekend;
     }
 
@@ -150,7 +166,7 @@ public class CalendarUtil {
      *
      * @param date the date
      */
-    public static void resetTime(UTCDate date) {
+    public static void resetTime(final UTCDate date) {
         date.setHours(0);
         date.setMinutes(0);
         date.setSeconds(0);

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
@@ -44,7 +60,7 @@ class TestForwardFileDestinationImpl {
     private PathCreator pathCreator;
 
     @BeforeEach
-    void setUp(@TempDir Path homeDir) {
+    void setUp(@TempDir final Path homeDir) {
         dirs = new Dirs(homeDir);
         pathCreator = new SimplePathCreator(dirs::getHomeDir, dirs::getTempDir);
     }
@@ -54,7 +70,8 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -91,7 +108,7 @@ class TestForwardFileDestinationImpl {
     }
 
     private ForwardFileDestination createForwardFileDest() {
-        return new ForwardFileDestinationImpl(dirs.getStoreDir(), NAME, pathCreator);
+        return new ForwardFileDestinationImpl(dirs.getStoreDir(), NAME, pathCreator, true);
     }
 
     @Test
@@ -99,7 +116,8 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -163,7 +181,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig(subPathStr),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(subPath)
                 .exists()
@@ -209,7 +228,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig("${feed}/${year}", TemplatingMode.REPLACE_UNKNOWN_PARAMS),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -294,7 +314,8 @@ class TestForwardFileDestinationImpl {
                 PathTemplateConfig.DISABLED,
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(subPath)
                 .exists()
@@ -340,7 +361,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig("${foo}/${year}", TemplatingMode.REPLACE_UNKNOWN_PARAMS),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -390,7 +412,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig("${foo}/${year}", TemplatingMode.REMOVE_UNKNOWN_PARAMS),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -440,7 +463,8 @@ class TestForwardFileDestinationImpl {
                 new PathTemplateConfig("${foo}/${year}", TemplatingMode.IGNORE_UNKNOWN_PARAMS),
                 null,
                 null,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -492,7 +516,8 @@ class TestForwardFileDestinationImpl {
                             TemplatingMode.REPLACE_UNKNOWN_PARAMS),
                     null,
                     null,
-                    pathCreator);
+                    pathCreator,
+                    true);
         }).isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -501,7 +526,8 @@ class TestForwardFileDestinationImpl {
         final ForwardFileDestination forwardFileDest = new ForwardFileDestinationImpl(
                 dirs.getStoreDir(),
                 NAME,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dirs.getStoreDir())
                 .isEmptyDirectory();
@@ -546,7 +572,8 @@ class TestForwardFileDestinationImpl {
                 null,
                 "health.check",
                 LivenessCheckMode.WRITE,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(file)
                 .doesNotExist();
@@ -579,7 +606,8 @@ class TestForwardFileDestinationImpl {
                 null,
                 "health.check",
                 LivenessCheckMode.READ,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(file)
                 .doesNotExist();
@@ -612,7 +640,8 @@ class TestForwardFileDestinationImpl {
                 null,
                 "health.check",
                 LivenessCheckMode.READ,
-                pathCreator);
+                pathCreator,
+                true);
 
         assertThat(dir)
                 .doesNotExist();
@@ -646,7 +675,7 @@ class TestForwardFileDestinationImpl {
     private List<Path> listContent(final Path path) {
         try (final Stream<Path> stream = Files.list(path)) {
             return stream.toList();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -691,7 +720,7 @@ class TestForwardFileDestinationImpl {
                 final AttributeMap attributeMap = new AttributeMap(attrs);
                 AttributeMapUtil.write(attributeMap, meta);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
         return sourceDir;
@@ -701,7 +730,7 @@ class TestForwardFileDestinationImpl {
         try {
             Assertions.assertThat(forwardDestination.performLivenessCheck())
                     .isEqualTo(isLive);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             if (isLive) {
                 Assertions.fail(LogUtil.message("Expecting {} to be live", forwardDestination));
             }

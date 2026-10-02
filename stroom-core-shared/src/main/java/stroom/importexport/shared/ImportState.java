@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This has been put here as import export API is not Serializable.
@@ -50,22 +51,26 @@ public class ImportState {
     private final List<String> updatedFieldList;
     @JsonProperty
     private State state;
+    @JsonProperty
+    private DocRef ownerDocRef;
 
     @JsonCreator
     public ImportState(@JsonProperty("docRef") final DocRef docRef,
                        @JsonProperty("sourcePath") final String sourcePath,
                        @JsonProperty("destPath") final String destPath,
-                       @JsonProperty("action") final boolean action,
+                       @JsonProperty("action") final Boolean action,
                        @JsonProperty("messageList") final List<Message> messageList,
                        @JsonProperty("updatedFieldList") final List<String> updatedFieldList,
-                       @JsonProperty("state") final State state) {
+                       @JsonProperty("state") final State state,
+                       @JsonProperty("ownerDocRef") final DocRef ownerDocRef) {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
         this.destPath = destPath;
-        this.action = action;
+        this.action = Objects.requireNonNullElse(action, false);
         this.messageList = messageList;
         this.updatedFieldList = updatedFieldList;
         this.state = state;
+        this.ownerDocRef = ownerDocRef;
     }
 
     public ImportState(final DocRef docRef, final String sourcePath) {
@@ -95,6 +100,25 @@ public class ImportState {
         this.destPath = destPath;
     }
 
+    /**
+     * @return The owner document, if this is a non-explorer document that belongs to another document,
+     * e.g. a processor filter belongs to a Pipeline.
+     */
+    public DocRef getOwnerDocRef() {
+        return ownerDocRef;
+    }
+
+    /**
+     * @param ownerDocRef The owner document, if this is a non-explorer document that belongs to another document,
+     *                    e.g. a processor filter belongs to a Pipeline.
+     */
+    public void setOwnerDocRef(final DocRef ownerDocRef) {
+        this.ownerDocRef = ownerDocRef;
+    }
+
+    /**
+     * @return True if this item has been selected for import by the user.
+     */
     public boolean isAction() {
         return action;
     }
@@ -158,11 +182,16 @@ public class ImportState {
         return docRef.toString();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public enum State implements HasDisplayValue {
         NEW("New"),
         UPDATE("Update"),
         EQUAL("Equal"),
-        IGNORE("Ignore");
+        IGNORE("Ignore"),
+        ;
 
         private final String displayValue;
 

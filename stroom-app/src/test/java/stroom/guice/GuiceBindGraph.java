@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.guice;
 
 import stroom.app.guice.AppModule;
@@ -23,7 +39,7 @@ public class GuiceBindGraph {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GuiceBindGraph.class);
 
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
         // This produces a dot file but xdot and dot seem unable to deal with it, probably
         // due to the size.
         new GuiceBindGraph().produceGraph();
@@ -31,7 +47,7 @@ public class GuiceBindGraph {
 
     public void produceGraph() throws IOException {
 
-        Config config = new Config();
+        final Config config = new Config();
         config.setYamlAppConfig(new AppConfig());
         final Injector injector = Guice.createInjector(
                 new BootStrapModule(
@@ -43,7 +59,7 @@ public class GuiceBindGraph {
         graph(("build/AppModule.dot"), injector);
     }
 
-    private void graph(String filename, Injector demoInjector) throws IOException {
+    private void graph(final String filename, final Injector demoInjector) throws IOException {
         final Path dotFile = Paths.get(filename);
         final PrintWriter out = new PrintWriter(filename, StandardCharsets.UTF_8);
 

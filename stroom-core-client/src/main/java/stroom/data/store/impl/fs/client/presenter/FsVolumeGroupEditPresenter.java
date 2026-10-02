@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.impl.fs.client.presenter;
@@ -113,8 +112,9 @@ public class FsVolumeGroupEditPresenter
     }
 
     private void create() {
-        final FsVolume fsVolume = new FsVolume();
-        fsVolume.setVolumeGroupId(volumeGroup.getId());
+        final FsVolume fsVolume = FsVolume.builder()
+                .volumeGroup(volumeGroup)
+                .build();
         editVolume(fsVolume, "Add Volume");
     }
 
@@ -204,10 +204,10 @@ public class FsVolumeGroupEditPresenter
                     .onShow(e -> getView().focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
-                            volumeGroup.setName(getView().getName());
+                            final FsVolumeGroup updated = volumeGroup.copy().name(getView().getName()).build();
                             try {
-                                doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup, e), e);
+                                doWithGroupNameValidation(getView().getName(), updated.getId(), () ->
+                                        createVolumeGroup(consumer, updated, e), e);
                             } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(
                                         FsVolumeGroupEditPresenter.this,
@@ -244,8 +244,8 @@ public class FsVolumeGroupEditPresenter
                             AlertEvent.fireError(
                                     FsVolumeGroupEditPresenter.this,
                                     "Group name '"
-                                            + groupName
-                                            + "' is already in use by another group.",
+                                    + groupName
+                                    + "' is already in use by another group.",
                                     event::reset);
                         } else {
                             work.run();

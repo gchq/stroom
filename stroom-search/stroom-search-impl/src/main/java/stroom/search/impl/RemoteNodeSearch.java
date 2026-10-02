@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.impl;
 
 import stroom.node.api.NodeCallUtil;
@@ -107,7 +123,7 @@ public class RemoteNodeSearch implements NodeSearch {
                 RemoteSearchResource.START_PATH_PART);
 
         try {
-            try (Response response = webTargetFactory
+            try (final Response response = webTargetFactory
                     .create(url)
                     .request(MediaType.APPLICATION_JSON)
                     .post(Entity.json(nodeSearchTask))) {
@@ -119,7 +135,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
                 return response.readEntity(Boolean.class);
             }
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             LOGGER.debug(e::getMessage, e);
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
@@ -128,7 +144,7 @@ public class RemoteNodeSearch implements NodeSearch {
     private Boolean pollRemoteSearch(final String nodeName,
                                      final String queryKey,
                                      final ResultStore resultCollector) throws IOException {
-        boolean complete;
+        final boolean complete;
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeInfo, nodeService, nodeName)
                 + ResourcePaths.buildAuthenticatedApiPath(
                 RemoteSearchResource.BASE_PATH,
@@ -158,7 +174,7 @@ public class RemoteNodeSearch implements NodeSearch {
             WebTarget webTarget = webTargetFactory.create(url);
             webTarget = UriBuilderUtil.addParam(webTarget, "queryKey", queryKey);
 
-            try (Response response = webTarget
+            try (final Response response = webTarget
                     .request(MediaType.APPLICATION_JSON)
                     .get()) {
                 if (response.getStatus() == Status.NOT_FOUND.getStatusCode()) {
@@ -169,7 +185,7 @@ public class RemoteNodeSearch implements NodeSearch {
 
                 return response.readEntity(Boolean.class);
             }
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             LOGGER.debug(e::getMessage, e);
             throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }

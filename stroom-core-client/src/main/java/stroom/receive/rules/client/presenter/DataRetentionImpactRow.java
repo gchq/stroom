@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.rules.client.presenter;
 
 import stroom.data.retention.shared.DataRetentionDeleteSummary;
@@ -143,7 +159,7 @@ public class DataRetentionImpactRow {
         final List<CriteriaFieldSort> sortList = criteria.getSortList();
         if (NullSafe.hasItems(sortList)) {
             //noinspection SimplifyStreamApiCallChains // Cos GWT
-            List<Comparator<DataRetentionImpactRow>> comparators = sortList.stream()
+            final List<Comparator<DataRetentionImpactRow>> comparators = sortList.stream()
                     .filter(Objects::nonNull)
                     .map(sort ->
                             Optional.ofNullable(FIELD_TO_COMPARATOR_MAP.get(sort.getId()))
@@ -160,7 +176,7 @@ public class DataRetentionImpactRow {
 
             return (o1, o2) -> {
                 int result;
-                for (Comparator<DataRetentionImpactRow> comparator : comparators) {
+                for (final Comparator<DataRetentionImpactRow> comparator : comparators) {
                     if ((result = comparator.compare(o1, o2)) != 0) {
                         return result;
                     }
@@ -177,7 +193,7 @@ public class DataRetentionImpactRow {
                                                               final List<DataRetentionDeleteSummary> summaries,
                                                               final FindDataRetentionImpactCriteria criteria) {
 
-        Map<Integer, DataRetentionRule> ruleNoToRuleMap = rules.stream()
+        final Map<Integer, DataRetentionRule> ruleNoToRuleMap = rules.stream()
                 .collect(Collectors.toMap(
                         DataRetentionRule::getRuleNumber, // Manual boxing to keep GWT happy
                         Function.identity()));
@@ -266,7 +282,7 @@ public class DataRetentionImpactRow {
                                     if (isExpanded(treeAction, metaTypeRow, 1)
                                         && summariesForRuleAndType != null) {
 
-                                        Comparator<DataRetentionImpactRow> feedRowComparator = getComparator(
+                                        final Comparator<DataRetentionImpactRow> feedRowComparator = getComparator(
                                                 criteria,
                                                 FEED_COMPARATOR,
                                                 FIELD_NAME_FEED,
@@ -409,7 +425,7 @@ public class DataRetentionImpactRow {
                                     final int depth,
                                     final boolean isLeaf) {
 
-        boolean isExpanded = isExpanded(treeAction, row, depth);
+        final boolean isExpanded = isExpanded(treeAction, row, depth);
 
         if (row.getExpander() == null) {
             row.setExpander(new Expander(depth, isExpanded, isLeaf));
@@ -426,8 +442,8 @@ public class DataRetentionImpactRow {
                                       final DataRetentionImpactRow row,
                                       final int depth) {
         // expanded if explicitly set or default to expanded if not set
-        boolean isExpanded = treeAction.isRowExpanded(row);
-        boolean isCollapsed = treeAction.isRowCollapsed(row);
+        final boolean isExpanded = treeAction.isRowExpanded(row);
+        final boolean isCollapsed = treeAction.isRowCollapsed(row);
         if (!isExpanded && !isCollapsed) {
             // State not known so default to collapsed for all but root level
             return depth <= 0;

@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -78,9 +78,10 @@ import java.util.function.Supplier;
                                 name = Data.ARG_VIEW_TYPE,
                                 description = "The view of the data to display. 'preview' shows a formatted portion " +
                                         "of the data starting, 'source' shows the un-formatted raw view of the data. " +
+                                        "'info' shows the stream metadata. " +
                                         "Defaults to 'preview'.",
                                 isOptional = true,
-                                allowedValues = {"preview", "source"},
+                                allowedValues = {"preview", "source", "info"},
                                 argType = ValString.class),
                         @FunctionArg(
                                 name = Data.ARG_DISPLAY_TYPE,

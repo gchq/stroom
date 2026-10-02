@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ class TestKVMapUtil {
         assertThat(result).isEqualTo("user1 user2");
     }
 
-    private void testKV(String text, String... expectedParams) {
+    private void testKV(final String text, final String... expectedParams) {
         final Map<String, String> map = KVMapUtil.parse(text);
 
         assertThat(expectedParams.length > 0).isTrue();
@@ -106,8 +106,8 @@ class TestKVMapUtil {
         assertThat(map).hasSize(expectedParams.length / 2);
 
         for (int i = 0; i < expectedParams.length; i += 2) {
-            String key = expectedParams[i];
-            String value = expectedParams[i + 1];
+            final String key = expectedParams[i];
+            final String value = expectedParams[i + 1];
             assertThat(map.get(key)).isEqualTo(value);
         }
     }

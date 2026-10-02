@@ -1,5 +1,22 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.onheapstore;
 
+import stroom.bytebuffer.ByteBufferUtils;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.FastInfosetValue;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -20,9 +37,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.time.Instant;
@@ -40,8 +54,7 @@ import java.util.TreeMap;
 
 class OnHeapRefDataLoader implements RefDataLoader {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(OnHeapRefDataLoader.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(OnHeapRefDataLoader.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(OnHeapRefDataLoader.class);
 
     private static final Comparator<Range<Long>> RANGE_COMPARATOR = Comparator
             .comparingLong(Range::getFrom);
@@ -110,7 +123,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
                 EnumSet.noneOf(RefStreamFeature.class),
                 Collections.emptyList());
 
-        PutOutcome putOutcome = putProcessingInfo(refStreamDefinition, refDataProcessingInfo);
+        final PutOutcome putOutcome = putProcessingInfo(refStreamDefinition, refDataProcessingInfo);
 
         currentLoaderState = LoaderState.INITIALISED;
         return putOutcome;
@@ -168,7 +181,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
             }
 
 
-//        LAMBDA_LOGGER.doIfTraceEnabled(() ->
+//        LOGGER.doIfTraceEnabled(() ->
 //                refDataStore.logAllContents(LOGGER::trace));
 
             currentLoaderState = LoaderState.COMPLETED;
@@ -188,7 +201,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
         checkCurrentState(LoaderState.INITIALISED);
         final KeyValueMapKey mapKey = new KeyValueMapKey(mapDefinition, key);
 
-        LAMBDA_LOGGER.trace(() ->
+        LOGGER.trace(() ->
                 LogUtil.message("containsKey == {}", keyValueMap.containsKey(mapKey)));
 
         final PutOutcome putOutcome = putRefEntryWithOutcome(
@@ -199,7 +212,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
         recordPut(mapDefinition, putOutcome.isSuccess());
 
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
+        LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, key, refDataValue, keyValueMap.size()));
 
         NullSafe.consume(keyPutOutcomeHandler, handler -> handler.handleOutcome(
@@ -226,7 +239,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
                 overwriteExisting);
 
         recordPut(mapDefinition, putOutcome.isSuccess());
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
+        LOGGER.trace(() -> LogUtil.message("put completed for {} {} {}, size now {}",
                 mapDefinition, keyRange, refDataValue,
                 Optional.ofNullable(rangeValueNestedMap.get(mapDefinition))
                         .map(NavigableMap::size)
@@ -268,7 +281,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
         processingInfoMap.compute(refStreamDefinition, (refStreamDef, refDataProcessingInfo) -> {
             if (refDataProcessingInfo != null) {
-                RefDataProcessingInfo newRefDataProcessingInfo = refDataProcessingInfo
+                final RefDataProcessingInfo newRefDataProcessingInfo = refDataProcessingInfo
                         .cloneWithNewState(newProcessingState, touchLastAccessedTime);
                 return newRefDataProcessingInfo;
             } else {
@@ -306,7 +319,7 @@ class OnHeapRefDataLoader implements RefDataLoader {
 
     private void checkCurrentState(final LoaderState... validStates) {
         boolean isCurrentStateValid = false;
-        for (LoaderState loaderState : validStates) {
+        for (final LoaderState loaderState : validStates) {
             if (currentLoaderState.equals(loaderState)) {
                 isCurrentStateValid = true;
                 break;
@@ -353,26 +366,27 @@ class OnHeapRefDataLoader implements RefDataLoader {
         // Ensure nulls are consistent
         if (newRefDataValue.isNullValue() && !(newRefDataValue instanceof NullValue)) {
             newRefDataValue = NullValue.getInstance();
-        }
 
-        if (newRefDataValue instanceof StagingValueOutputStream) {
-
-            final StagingValueOutputStream stagingValueOutputStream = (StagingValueOutputStream) newRefDataValue;
+        } else if (newRefDataValue instanceof final StagingValueOutputStream stagingValueOutputStream) {
             final int typeId = stagingValueOutputStream.getTypeId();
-
-            return switch (typeId) {
+            newRefDataValue = switch (typeId) {
                 case NullValue.TYPE_ID -> NullValue.getInstance();
                 case StringValue.TYPE_ID -> new StringValue(stagingValueOutputStream);
-                case FastInfosetValue.TYPE_ID -> new FastInfosetValue(stagingValueOutputStream);
+                case FastInfosetValue.TYPE_ID -> {
+                    final ByteBuffer heapBuffer = ByteBuffer.allocate(stagingValueOutputStream.getValueBuffer()
+                            .remaining());
+                    ByteBufferUtils.copy(stagingValueOutputStream.getValueBuffer(), heapBuffer);
+                    yield new FastInfosetValue(
+                            heapBuffer,
+                            stagingValueOutputStream.getValueHashCode(),
+                            stagingValueOutputStream.getValueStoreHashAlgorithm());
+                }
                 default -> throw new RuntimeException("Unexpected type " + typeId);
             };
-        }
-
-        if (refDataValue instanceof FastInfosetValue) {
+        } else if (newRefDataValue instanceof final FastInfosetValue fastInfosetValue) {
             // FastInfosetValue may contain a buffer that is reused, so we need to copy
             // it into a new heap buffer
             LOGGER.debug("Copying fastInfosetValue to a heap based buffer");
-            final FastInfosetValue fastInfosetValue = (FastInfosetValue) refDataValue;
             newRefDataValue = fastInfosetValue.copy(() ->
                     ByteBuffer.allocate(fastInfosetValue.size()));
         }

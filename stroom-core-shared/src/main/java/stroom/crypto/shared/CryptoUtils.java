@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.crypto.shared;
 
 import java.nio.ByteBuffer;
@@ -27,7 +43,7 @@ public class CryptoUtils {
      * @param length Length in bytes of the IV
      */
     public static byte[] getRandomNonce(final int length) {
-        byte[] nonce = new byte[length];
+        final byte[] nonce = new byte[length];
         new SecureRandom().nextBytes(nonce);
 
         return nonce;
@@ -38,8 +54,8 @@ public class CryptoUtils {
      */
     public static SecretKey getAESKeyFromPassword(final String password, final byte[] salt)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-        KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, KEY_ITERATION_COUNT, KEY_LENGTH);
+        final SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+        final KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, KEY_ITERATION_COUNT, KEY_LENGTH);
 
         return new SecretKeySpec(keyFactory.generateSecret(keySpec).getEncoded(), "AES");
     }

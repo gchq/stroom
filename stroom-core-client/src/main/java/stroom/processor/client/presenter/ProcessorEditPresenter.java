@@ -1,28 +1,48 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.shared.CreateProcessFilterRequest;
+import stroom.processor.shared.FeedDependencies;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.query.shared.ExpressionResource;
 import stroom.query.shared.ValidateExpressionRequest;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
-import stroom.util.shared.UserRef;
+import stroom.security.shared.FindUserContext;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -30,15 +50,19 @@ import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class ProcessorEditPresenter
-        extends MyPresenterWidget<ProcessorEditView> {
+        extends MyPresenterWidget<ProcessorEditView>
+        implements ProcessorEditUiHandlers {
 
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
     private static final ExpressionResource EXPRESSION_RESOURCE = GWT.create(ExpressionResource.class);
@@ -48,9 +72,11 @@ public class ProcessorEditPresenter
     private final DateTimeSettingsFactory dateTimeSettingsFactory;
     private final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
     private final ClientSecurityContext clientSecurityContext;
+    private final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider;
 
     private ProcessorType processorType;
     private DocRef pipelineRef;
+    private FeedDependencies feedDependencies;
     private Consumer<ProcessorFilter> consumer;
 
     @Inject
@@ -60,35 +86,49 @@ public class ProcessorEditPresenter
                                   final RestFactory restFactory,
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
                                   final UserRefSelectionBoxPresenter userRefSelectionBoxPresenter,
-                                  final ClientSecurityContext clientSecurityContext) {
+                                  final ClientSecurityContext clientSecurityContext,
+                                  final Provider<FeedDependencyPresenter> feedDependencyPresenterProvider,
+                                  final ProcessorProfileClient processorProfileClient) {
         super(eventBus, view);
+        view.setUiHandlers(this);
+
         this.editExpressionPresenter = editExpressionPresenter;
         this.restFactory = restFactory;
         this.dateTimeSettingsFactory = dateTimeSettingsFactory;
         this.userRefSelectionBoxPresenter = userRefSelectionBoxPresenter;
         this.clientSecurityContext = clientSecurityContext;
+        this.feedDependencyPresenterProvider = feedDependencyPresenterProvider;
         view.setExpressionView(editExpressionPresenter.getView());
         view.setRunAsUserView(userRefSelectionBoxPresenter.getView());
-        userRefSelectionBoxPresenter.showActiveUsersOnly(true);
+        userRefSelectionBoxPresenter.setContext(FindUserContext.RUN_AS);
+
+        final ProcessorProfileListModel processorProfileListModel =
+                new ProcessorProfileListModel(eventBus, processorProfileClient);
+        processorProfileListModel.setTaskMonitorFactory(this);
+        view.getProfile().setModel(processorProfileListModel);
     }
 
-    public void read(final ExpressionOperator expression,
-                     final DocRef dataSource,
-                     final List<QueryField> fields,
-                     final Long minMetaCreateTimeMs,
-                     final Long maxMetaCreateTimeMs) {
+    private void read(final ExpressionOperator expression,
+                      final DocRef dataSource,
+                      final List<QueryField> fields,
+                      final Long minMetaCreateTimeMs,
+                      final Long maxMetaCreateTimeMs,
+                      final Integer maxProcessingTasks,
+                      final String profileName,
+                      final SimpleDuration maxTaskCreationDelay,
+                      final boolean export) {
+
         final SimpleFieldSelectionListModel selectionBoxModel = new SimpleFieldSelectionListModel();
         selectionBoxModel.addItems(fields);
         editExpressionPresenter.init(restFactory, dataSource, selectionBoxModel);
-
-        if (expression != null) {
-            editExpressionPresenter.read(expression);
-        } else {
-            editExpressionPresenter.read(ExpressionOperator.builder().build());
-        }
+        editExpressionPresenter.read(Objects.requireNonNullElse(expression, ExpressionOperator.builder().build()));
 
         getView().setMinMetaCreateTimeMs(minMetaCreateTimeMs);
         getView().setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
+        getView().setMaxProcessingTasks(maxProcessingTasks);
+        getView().getProfile().setValue(profileName);
+        getView().setMaxTaskCreationDelay(maxTaskCreationDelay);
+        getView().setExport(export);
     }
 
     public void show(final ProcessorType processorType,
@@ -98,20 +138,35 @@ public class ProcessorEditPresenter
                      final Consumer<ProcessorFilter> consumer) {
         final Long minMetaCreateTimeMs;
         final Long maxMetaCreateTimeMs;
+        final Integer maxProcessingTasks;
+        final String profileName;
         if (filter == null) {
             minMetaCreateTimeMs = null;
             maxMetaCreateTimeMs = null;
+            maxProcessingTasks = null;
+            profileName = null;
             userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
         } else {
             minMetaCreateTimeMs = filter.getMinMetaCreateTimeMs();
             maxMetaCreateTimeMs = filter.getMaxMetaCreateTimeMs();
+            maxProcessingTasks = filter.getMaxProcessingTasks();
+            profileName = filter.getProfileName();
             if (filter.getRunAsUser() == null) {
                 userRefSelectionBoxPresenter.setSelected(clientSecurityContext.getUserRef());
             } else {
                 userRefSelectionBoxPresenter.setSelected(filter.getRunAsUser());
             }
         }
-        show(processorType, pipelineRef, filter, defaultExpression, minMetaCreateTimeMs, maxMetaCreateTimeMs, consumer);
+        show(
+                processorType,
+                pipelineRef,
+                filter,
+                defaultExpression,
+                minMetaCreateTimeMs,
+                maxMetaCreateTimeMs,
+                maxProcessingTasks,
+                profileName,
+                consumer);
     }
 
     public void show(final ProcessorType processorType,
@@ -120,6 +175,8 @@ public class ProcessorEditPresenter
                      final ExpressionOperator defaultExpression,
                      final Long minMetaCreateTimeMs,
                      final Long maxMetaCreateTimeMs,
+                     final Integer maxProcessingTasks,
+                     final String profileName,
                      final Consumer<ProcessorFilter> consumer) {
         this.processorType = processorType;
         this.pipelineRef = pipelineRef;
@@ -127,16 +184,23 @@ public class ProcessorEditPresenter
 
         final boolean existingFilter = filter != null && filter.getId() != null;
         final QueryData queryData = getOrCreateQueryData(filter, defaultExpression);
-        final List<QueryField> fields = MetaFields.getAllFields();
+        final List<QueryField> fields = MetaFields.getProcessorFilterFields();
+        final boolean export = NullSafe.getOrElse(filter, ProcessorFilter::isExport, false);
+        final SimpleDuration maxTaskCreationDelay = NullSafe.get(filter, ProcessorFilter::getMaxTaskCreationDelay);
+        feedDependencies = NullSafe.get(queryData, QueryData::getFeedDependencies);
         read(
                 queryData.getExpression(),
                 MetaFields.STREAM_STORE_DOC_REF,
                 fields,
                 minMetaCreateTimeMs,
-                maxMetaCreateTimeMs);
+                maxMetaCreateTimeMs,
+                maxProcessingTasks,
+                profileName,
+                maxTaskCreationDelay,
+                export);
 
         // Show the processor creation dialog.
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
+        final PopupSize popupSize = PopupSize.resizable(800, 800);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -150,12 +214,17 @@ public class ProcessorEditPresenter
                         final ExpressionOperator expression = editExpressionPresenter.write();
                         final Long minMetaCreateTime = getView().getMinMetaCreateTimeMs();
                         final Long maxMetaCreateTime = getView().getMaxMetaCreateTimeMs();
-                        final UserRef userRef = userRefSelectionBoxPresenter.getSelected();
+                        final Integer maxTasks = getView().getMaxProcessingTasks();
+                        final String profile = getView().getProfile().getValue();
+                        final boolean exportRead = getView().isExport();
 
                         validateExpression(fields, expression, () -> {
                             try {
-                                queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
-                                queryData.setExpression(expression);
+                                final QueryData qd = queryData
+                                        .copy()
+                                        .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                                        .expression(expression)
+                                        .build();
 
                                 if (existingFilter) {
                                     ConfirmEvent.fire(
@@ -167,13 +236,27 @@ public class ProcessorEditPresenter
                                             result -> {
                                                 if (result) {
                                                     validateFeed(
-                                                            filter, queryData, minMetaCreateTime, maxMetaCreateTime, e);
+                                                            filter,
+                                                            qd,
+                                                            minMetaCreateTime,
+                                                            maxMetaCreateTime,
+                                                            maxTasks,
+                                                            profile,
+                                                            exportRead,
+                                                            e);
                                                 } else {
                                                     e.reset();
                                                 }
                                             });
                                 } else {
-                                    validateFeed(null, queryData, minMetaCreateTime, maxMetaCreateTime, e);
+                                    validateFeed(null,
+                                            qd,
+                                            minMetaCreateTime,
+                                            maxMetaCreateTime,
+                                            maxTasks,
+                                            profile,
+                                            exportRead,
+                                            e);
                                 }
                             } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(ProcessorEditPresenter.this, ex.getMessage(), e::reset);
@@ -185,6 +268,12 @@ public class ProcessorEditPresenter
                     }
                 })
                 .fire();
+    }
+
+    @Override
+    public void onEditFeedDependencies() {
+        final FeedDependencyPresenter feedDependencyPresenter = feedDependencyPresenterProvider.get();
+        feedDependencyPresenter.show(feedDependencies, updated -> this.feedDependencies = updated);
     }
 
     private void validateExpression(final List<QueryField> fields,
@@ -204,9 +293,8 @@ public class ProcessorEditPresenter
                         AlertEvent.fireError(ProcessorEditPresenter.this, result.getString(), null);
                     }
                 })
-                .onFailure(throwable -> {
-                    AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null);
-                })
+                .onFailure(throwable ->
+                        AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null))
                 .taskMonitorFactory(this)
                 .exec();
     }
@@ -228,7 +316,11 @@ public class ProcessorEditPresenter
                               final QueryData queryData,
                               final Long minMetaCreateTimeMs,
                               final Long maxMetaCreateTimeMs,
+                              final Integer maxProcessingTasks,
+                              final String profileName,
+                              final boolean export,
                               final HidePopupRequestEvent event) {
+
         final int feedCount = termCount(queryData, MetaFields.FEED);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
         final int parentStreamIdCount = termCount(queryData, MetaFields.PARENT_ID);
@@ -239,13 +331,29 @@ public class ProcessorEditPresenter
             ConfirmEvent.fire(this,
                     "You are about to process all feeds. Are you sure you wish to do this?", result -> {
                         if (result) {
-                            validateStreamType(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+                            validateStreamType(
+                                    filter,
+                                    queryData,
+                                    minMetaCreateTimeMs,
+                                    maxMetaCreateTimeMs,
+                                    maxProcessingTasks,
+                                    profileName,
+                                    export,
+                                    event);
                         } else {
                             event.reset();
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+            createOrUpdateProcessor(
+                    filter,
+                    queryData,
+                    minMetaCreateTimeMs,
+                    maxMetaCreateTimeMs,
+                    maxProcessingTasks,
+                    profileName,
+                    export,
+                    event);
         }
     }
 
@@ -253,6 +361,9 @@ public class ProcessorEditPresenter
                                     final QueryData queryData,
                                     final Long minMetaCreateTimeMs,
                                     final Long maxMetaCreateTimeMs,
+                                    final Integer maxProcessingTasks,
+                                    final String profileName,
+                                    final boolean export,
                                     final HidePopupRequestEvent event) {
         final int streamTypeCount = termCount(queryData, MetaFields.TYPE);
         final int streamIdCount = termCount(queryData, MetaFields.ID);
@@ -265,13 +376,29 @@ public class ProcessorEditPresenter
                     "You are about to process all stream types. Are you sure you wish to do this?",
                     result -> {
                         if (result) {
-                            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+                            createOrUpdateProcessor(
+                                    filter,
+                                    queryData,
+                                    minMetaCreateTimeMs,
+                                    maxMetaCreateTimeMs,
+                                    maxProcessingTasks,
+                                    profileName,
+                                    export,
+                                    event);
                         } else {
                             event.reset();
                         }
                     });
         } else {
-            createOrUpdateProcessor(filter, queryData, minMetaCreateTimeMs, maxMetaCreateTimeMs, event);
+            createOrUpdateProcessor(
+                    filter,
+                    queryData,
+                    minMetaCreateTimeMs,
+                    maxMetaCreateTimeMs,
+                    maxProcessingTasks,
+                    profileName,
+                    export,
+                    event);
         }
     }
 
@@ -286,17 +413,29 @@ public class ProcessorEditPresenter
                                          final QueryData queryData,
                                          final Long minMetaCreateTimeMs,
                                          final Long maxMetaCreateTimeMs,
+                                         final Integer maxProcessingTasks,
+                                         final String profileName,
+                                         final boolean export,
                                          final HidePopupRequestEvent event) {
+        // Not threaded through the validation callbacks like the rest as the popup is still
+        // showing while they run, so the view is still the source of truth.
+        final SimpleDuration maxTaskCreationDelay = getView().getMaxTaskCreationDelay();
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
-            filter.setQueryData(queryData);
-            filter.setMinMetaCreateTimeMs(minMetaCreateTimeMs);
-            filter.setMaxMetaCreateTimeMs(maxMetaCreateTimeMs);
-            filter.setRunAsUser(userRefSelectionBoxPresenter.getSelected());
+            final ProcessorFilter updated = filter.copy()
+                    .queryData(queryData.copy().feedDependencies(feedDependencies).build())
+                    .minMetaCreateTimeMs(minMetaCreateTimeMs)
+                    .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
+                    .maxProcessingTasks(maxProcessingTasks)
+                    .profileName(profileName)
+                    .maxTaskCreationDelay(maxTaskCreationDelay)
+                    .export(export)
+                    .runAsUser(userRefSelectionBoxPresenter.getSelected())
+                    .build();
 
             restFactory
                     .create(PROCESSOR_FILTER_RESOURCE)
-                    .method(res -> res.update(filter.getId(), filter))
+                    .method(res -> res.update(updated.getId(), updated))
                     .onSuccess(r -> hide(r, event))
                     .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskMonitorFactory(this)
@@ -311,8 +450,12 @@ public class ProcessorEditPresenter
                     .queryData(queryData)
                     .autoPriority(true)
                     .enabled(false)
+                    .export(export)
                     .minMetaCreateTimeMs(minMetaCreateTimeMs)
                     .maxMetaCreateTimeMs(maxMetaCreateTimeMs)
+                    .maxProcessingTasks(maxProcessingTasks)
+                    .profileName(profileName)
+                    .maxTaskCreationDelay(maxTaskCreationDelay)
                     .runAsUser(userRefSelectionBoxPresenter.getSelected())
                     .build();
             restFactory
@@ -328,7 +471,7 @@ public class ProcessorEditPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface ProcessorEditView extends View {
+    public interface ProcessorEditView extends View, HasUiHandlers<ProcessorEditUiHandlers> {
 
         void setExpressionView(View view);
 
@@ -339,6 +482,20 @@ public class ProcessorEditPresenter
         Long getMaxMetaCreateTimeMs();
 
         void setMaxMetaCreateTimeMs(Long maxMetaCreateTimeMs);
+
+        Integer getMaxProcessingTasks();
+
+        void setMaxProcessingTasks(Integer maxProcessingTasks);
+
+        SelectionBox<String> getProfile();
+
+        SimpleDuration getMaxTaskCreationDelay();
+
+        void setMaxTaskCreationDelay(SimpleDuration maxTaskCreationDelay);
+
+        boolean isExport();
+
+        void setExport(boolean export);
 
         void setRunAsUserView(View view);
     }

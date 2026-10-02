@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,45 +21,43 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.SelectContentTabEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.HasSave;
+import stroom.core.client.TabPlugin;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.core.client.event.CloseContentEvent.Callback;
 import stroom.core.client.event.CloseContentEvent.DirtyMode;
 import stroom.core.client.event.CloseContentEvent.Handler;
 import stroom.core.client.event.ShowFullScreenEvent;
-import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermission;
-import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
 
-import com.google.gwt.core.client.GWT;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
+public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
-    private final Map<DocRef, DocumentTabData> documentToTabDataMap = new HashMap<>();
-    private final Map<DocumentTabData, DocRef> tabDataToDocumentMap = new HashMap<>();
+    private final DocumentTabManager documentTabManager = new DocumentTabManager();
     private final ContentManager contentManager;
     private final ClientSecurityContext securityContext;
 
@@ -104,23 +102,44 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     /**
      * 4. This method will open a document and show it in the content pane.
      */
-    @SuppressWarnings("unchecked")
-    public MyPresenterWidget<?> open(final DocRef docRef,
+    public final MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
                                      final TaskMonitorFactory taskMonitorFactory) {
-        return open(docRef, forceOpen, fullScreen, null, taskMonitorFactory);
+        return open(docRef, forceOpen, fullScreen, true, null, null, false, taskMonitorFactory);
+    }
+
+    public final MyPresenterWidget<?> open(final DocRef docRef,
+                                     final boolean forceOpen,
+                                     final boolean fullScreen,
+                                     final boolean selectDefaultTab,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final TaskMonitorFactory taskMonitorFactory) {
+        return open(docRef, forceOpen, fullScreen, selectDefaultTab, null, callbackOnOpen, false, taskMonitorFactory);
+    }
+
+    public final MyPresenterWidget<?> open(final DocRef docRef,
+                                     final boolean forceOpen,
+                                     final boolean fullScreen,
+                                     final CommonDocLinkTab selectedLinkTab,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final boolean duplicate,
+                                     final TaskMonitorFactory taskMonitorFactory) {
+        return open(docRef, forceOpen, fullScreen, true, selectedLinkTab, callbackOnOpen, duplicate,
+                taskMonitorFactory);
     }
 
     /**
      * 4. This method will open a document and show it in the content pane with the desired
      * selectedTab
      */
-    @SuppressWarnings("unchecked")
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
+                                     final boolean selectDefaultTab,
                                      final CommonDocLinkTab selectedLinkTab,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         MyPresenterWidget<?> presenter = null;
         final TaskMonitor taskMonitor = taskMonitorFactory.createTaskMonitor();
@@ -129,23 +148,28 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
             // Start spinning.
             taskMonitor.onStart(task);
 
-            final DocumentTabData existing = documentToTabDataMap.get(docRef);
+            final List<DocumentTabData> existing = documentTabManager.get(docRef);
             // If we already have a tab item for this document then make sure it is
             // visible.
-            if (existing != null) {
+            if (!existing.isEmpty() && !duplicate) {
+                final DocumentTabData existingTab = existing.get(0);
                 // Tell the content presenter to select this existing tab.
-                SelectContentTabEvent.fire(this, existing);
+                SelectContentTabEvent.fire(this, existingTab);
 
-                if (existing instanceof DocumentEditPresenter) {
-                    presenter = (DocumentEditPresenter<?, D>) existing;
+                if (existingTab instanceof DocPresenter) {
+                    presenter = (DocPresenter<?, D>) existingTab;
+
+                    if (callbackOnOpen != null) {
+                        callbackOnOpen.accept(presenter);
+                    }
                 }
 
                 if (selectedLinkTab != null) {
-                    GWT.log("existing - " + existing.getClass().getName());
-                    if (existing instanceof DocumentEditTabPresenter<?, ?>) {
-                        ((DocumentEditTabPresenter<?, ?>) existing).selectCommonTab(selectedLinkTab);
-                    } else if (existing instanceof LinkTabPanelPresenter) {
-                        ((LinkTabPanelPresenter) existing).selectCommonTab(selectedLinkTab);
+//                    GWT.log("existing - " + existingTab.getClass().getName());
+                    if (existingTab instanceof DocTabPresenter<?, ?>) {
+                        ((DocTabPresenter<?, ?>) existingTab).selectCommonTab(selectedLinkTab);
+                    } else if (existingTab instanceof LinkTabPanelPresenter) {
+                        ((LinkTabPanelPresenter) existingTab).selectCommonTab(selectedLinkTab);
                     }
                 }
             } else if (forceOpen) {
@@ -154,16 +178,27 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 final MyPresenterWidget<?> documentEditPresenter = createEditor();
                 presenter = documentEditPresenter;
 
-                if (documentEditPresenter != null) {
-                    ((HasTaskMonitorFactory) documentEditPresenter).setTaskMonitorFactory(taskMonitorFactory);
+                if (presenter instanceof final HasMultipleInstances hasMultipleInstances) {
+                    final List<DocumentTabData> tabs = documentTabManager.get(docRef);
+                    if (!tabs.isEmpty()) {
+                        final Optional<Integer> maxInstance = tabs.stream()
+                                .filter(t -> t instanceof HasMultipleInstances)
+                                .map(t -> (HasMultipleInstances) t)
+                                .map(HasMultipleInstances::getInstance)
+                                .max(Integer::compare);
+                        if (maxInstance.isPresent()) {
+                            hasMultipleInstances.setInstance(maxInstance.get() + 1);
+                        }
+                    }
                 }
 
-                if (documentEditPresenter instanceof DocumentTabData) {
-                    final DocumentTabData tabData = (DocumentTabData) documentEditPresenter;
+                if (documentEditPresenter != null) {
+                    documentEditPresenter.setTaskMonitorFactory(taskMonitorFactory);
+                }
 
+                if (documentEditPresenter instanceof final DocumentTabData tabData) {
                     // Register the tab as being open.
-                    documentToTabDataMap.put(docRef, tabData);
-                    tabDataToDocumentMap.put(tabData, docRef);
+                    documentTabManager.put(docRef, tabData);
 
                     // Load the document and show the tab.
                     final CloseContentEvent.Handler closeHandler = new EntityCloseHandler(tabData);
@@ -173,7 +208,9 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                             closeHandler,
                             tabData,
                             fullScreen,
+                            selectDefaultTab,
                             selectedLinkTab,
+                            callbackOnOpen,
                             taskMonitorFactory);
                 }
             }
@@ -186,65 +223,79 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         return presenter;
     }
 
-    @SuppressWarnings("unchecked")
-    protected void showDocument(final DocRef docRef,
+    protected final void showDocument(final DocRef docRef,
                                 final MyPresenterWidget<?> documentEditPresenter,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
-                                final boolean fullScreen,
                                 final TaskMonitorFactory taskMonitorFactory) {
         showDocument(
                 docRef,
                 documentEditPresenter,
                 closeHandler,
                 tabData,
-                fullScreen,
+                false,
+                true,
+                null,
                 null,
                 taskMonitorFactory);
     }
 
     @SuppressWarnings("unchecked")
     protected void showDocument(final DocRef docRef,
-                                final MyPresenterWidget<?> documentEditPresenter,
+                                final MyPresenterWidget<?> myPresenterWidget,
                                 final Handler closeHandler,
                                 final DocumentTabData tabData,
                                 final boolean fullScreen,
-                                final CommonDocLinkTab selectedTab,
+                                final boolean selectDefaultTab,
+                                final CommonDocLinkTab selectedCommonTab,
+                                final Consumer<MyPresenterWidget<?>> callbackOnOpen,
                                 final TaskMonitorFactory taskMonitorFactory) {
         final RestErrorHandler errorHandler = caught ->
                 AlertEvent.fireError(
                         DocumentPlugin.this,
-                        "Unable to load document " + docRef, caught.getMessage(),
+                        "Unable to load document " + DocRefUtil.createTypedDocRefString(docRef), caught.getMessage(),
                         null);
 
         final Consumer<D> loadConsumer = doc -> {
             if (doc == null) {
-                AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
+                AlertEvent.fireError(DocumentPlugin.this,
+                        "Unable to load document " + DocRefUtil.createTypedDocRefString(docRef),
+                        null);
             } else {
-                if (selectedTab != null) {
-                    if (documentEditPresenter instanceof DocumentEditTabPresenter<?, ?>) {
-                        ((DocumentEditTabPresenter<?, ?>) documentEditPresenter).selectCommonTab(selectedTab);
-                    } else if (documentEditPresenter instanceof LinkTabPanelPresenter) {
-                        ((LinkTabPanelPresenter) documentEditPresenter).selectCommonTab(selectedTab);
+                if (selectedCommonTab != null) {
+                    if (myPresenterWidget instanceof DocTabPresenter<?, ?>) {
+                        ((DocTabPresenter<?, ?>) myPresenterWidget).selectCommonTab(selectedCommonTab);
+                    } else if (myPresenterWidget instanceof LinkTabPanelPresenter) {
+                        ((LinkTabPanelPresenter) myPresenterWidget).selectCommonTab(selectedCommonTab);
+                    }
+                } else {
+                    if (myPresenterWidget instanceof final DocTabPresenter<?, ?> docTabPresenter) {
+                        if (selectDefaultTab) {
+                            docTabPresenter.getDefaultTab().ifPresent(docTabPresenter::selectTab);
+                        }
                     }
                 }
                 // Read the newly loaded document.
-                if (documentEditPresenter instanceof HasDocumentRead) {
+                if (myPresenterWidget instanceof HasDocumentRead) {
                     // Check document permissions and read.
                     securityContext
                             .hasDocumentPermission(
                                     docRef,
                                     DocumentPermission.EDIT,
                                     allowUpdate -> {
-                                        ((HasDocumentRead<D>) documentEditPresenter).read(
+                                        ((HasDocumentRead<D>) myPresenterWidget).read(
                                                 getDocRef(doc),
                                                 doc,
                                                 !allowUpdate);
                                         // Open the tab.
                                         if (fullScreen) {
-                                            showFullScreen(documentEditPresenter);
+                                            showFullScreen(myPresenterWidget);
                                         } else {
-                                            contentManager.open(closeHandler, tabData, documentEditPresenter);
+                                            contentManager.open(closeHandler,
+                                                    tabData,
+                                                    myPresenterWidget,
+                                                    myPresenterWidget,
+                                                    callbackOnOpen);
                                         }
                                     },
                                     throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
@@ -252,9 +303,9 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                 } else {
                     // Open the tab.
                     if (fullScreen) {
-                        showFullScreen(documentEditPresenter);
+                        showFullScreen(myPresenterWidget);
                     } else {
-                        contentManager.open(closeHandler, tabData, documentEditPresenter);
+                        contentManager.open(closeHandler, tabData, myPresenterWidget);
                     }
                 }
             }
@@ -273,29 +324,63 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
      */
     @SuppressWarnings("unchecked")
     public void save(final DocumentTabData tabData) {
-        if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+        save(tabData, () -> {
+        });
+    }
+
+    public void save(final DocumentTabData tabData, final Runnable onComplete) {
+        if (tabData instanceof DocPresenter<?, ?>) {
+            final DocPresenter<?, D> presenter = (DocPresenter<?, D>) tabData;
             if (presenter.isDirty()) {
                 D document = presenter.getEntity();
                 document = presenter.write(document);
-                final D finalDocument = document;
-                save(getDocRef(document), document,
-                        doc -> presenter.read(getDocRef(doc), doc, presenter.isReadOnly()),
-                        throwable -> AlertEvent.fireError(
-                                this,
-                                "Unable to save document " + finalDocument,
-                                throwable.getMessage(), null),
-                        presenter);
+                if (document != null) {
+                    final String validationError = getPreSaveError(document);
+                    if (validationError != null) {
+                        AlertEvent.fireWarn(this, validationError, onComplete::run);
+                        return;
+                    }
+                    final D finalDocument = document;
+                    save(getDocRef(document), document,
+                            presenter.getPostSaveCallback(),
+                            doc -> {
+                                presenter.read(getDocRef(doc), doc, presenter.isReadOnly());
+                                onComplete.run();
+                            },
+                            throwable -> {
+                                AlertEvent.fireError(
+                                        this,
+                                        "Unable to save document "
+                                        + DocRefUtil.createTypedDocRefString(getDocRef(finalDocument)),
+                                        throwable.getMessage(), null);
+                                onComplete.run();
+                            },
+                            presenter);
+                    return;
+                }
             }
         }
+        onComplete.run();
+    }
+
+    /**
+     * Called after {@link DocPresenter#write} but before the document is sent to the server.
+     * Subclasses may override to block the save when the document is in an invalid state.
+     *
+     * @param doc The document as produced by the presenter's write step.
+     * @return A user-facing validation error message to display, or {@code null} if the
+     *         document is valid and the save should proceed.
+     */
+    protected String getPreSaveError(final D doc) {
+        return null;
     }
 
     @SuppressWarnings("unchecked")
     public void saveAs(final DocumentTabData tabData,
                        final ExplorerNode explorerNode) {
         final DocRef docRef = explorerNode.getDocRef();
-        if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+        if (tabData instanceof DocPresenter<?, ?>) {
+            final DocPresenter<?, D> presenter = (DocPresenter<?, D>) tabData;
 
             final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
                 final DocRef newDocRef = newNode.getDocRef();
@@ -303,16 +388,19 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                     // Read the new document into this presenter.
                     presenter.read(newDocRef, saved, false);
                     // Record that the open document has been switched.
-                    documentToTabDataMap.remove(docRef);
-                    documentToTabDataMap.put(newDocRef, tabData);
-                    tabDataToDocumentMap.put(tabData, newDocRef);
+                    documentTabManager.remove(docRef, tabData);
+                    documentTabManager.put(newDocRef, tabData);
                 };
 
                 final Consumer<D> loadConsumer = document -> {
                     // Write to the newly created document.
                     document = presenter.write(document);
                     // Save the new document and read it back into the presenter.
-                    save(newDocRef, document, saveConsumer, null,
+                    save(newDocRef,
+                            document,
+                            presenter.getPostSaveAsCallback(),
+                            saveConsumer,
+                            null,
                             presenter);
                 };
 
@@ -335,16 +423,15 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
     @Override
     public void save() {
-        for (final DocumentTabData tabData : tabDataToDocumentMap.keySet()) {
+        for (final DocumentTabData tabData : documentTabManager.getAll()) {
             save(tabData);
         }
     }
 
     @Override
     public boolean isDirty() {
-        for (final DocumentTabData tabData : tabDataToDocumentMap.keySet()) {
-            if (tabData instanceof DocumentEditPresenter<?, ?>) {
-                final DocumentEditPresenter<?, ?> presenter = (DocumentEditPresenter<?, ?>) tabData;
+        for (final DocumentTabData tabData : documentTabManager.getAll()) {
+            if (tabData instanceof final DocPresenter<?, ?> presenter) {
                 if (presenter.isDirty()) {
                     return true;
                 }
@@ -354,10 +441,13 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     }
 
     public boolean isDirty(final DocRef docRef) {
-        final DocumentTabData tabData = documentToTabDataMap.get(docRef);
-        if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, ?> presenter = (DocumentEditPresenter<?, ?>) tabData;
-            return presenter.isDirty();
+        final List<DocumentTabData> tabDataList = documentTabManager.get(docRef);
+        for (final DocumentTabData tabData : tabDataList) {
+            if (tabData instanceof final DocPresenter<?, ?> presenter) {
+                if (presenter.isDirty()) {
+                    return true;
+                }
+            }
         }
         return false;
     }
@@ -545,27 +635,30 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     @SuppressWarnings("unchecked")
     public void reload(final DocRef docRef) {
         // Get the existing tab data for this document.
-        final DocumentTabData tabData = documentToTabDataMap.get(docRef);
+        final List<DocumentTabData> tabDataList = documentTabManager.get(docRef);
         // If we have an document edit presenter then reload the document.
-        if (tabData instanceof DocumentEditPresenter<?, ?>) {
-            final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+        for (final DocumentTabData tabData : tabDataList) {
+            if (tabData instanceof DocPresenter<?, ?>) {
+                final DocPresenter<?, D> presenter = (DocPresenter<?, D>) tabData;
 
-            // Reload the document.
-            load(docRef,
-                    doc -> {
-                        // Read the reloaded document.
-                        presenter.read(getDocRef(doc), doc, presenter.isReadOnly());
-                    },
-                    throwable -> {
-                    },
-                    presenter);
+                // Reload the document.
+                load(docRef,
+                        doc -> {
+                            // Read the reloaded document.
+                            presenter.read(getDocRef(doc), doc, presenter.isReadOnly());
+                        },
+                        throwable -> {
+                        },
+                        presenter);
+            }
         }
     }
 
     public List<DocumentTabData> getOpenDocuments(final List<DocRef> docRefs) {
         return NullSafe.stream(docRefs)
-                .map(documentToTabDataMap::get)
+                .map(documentTabManager::get)
                 .filter(Objects::nonNull)
+                .flatMap(List::stream)
                 .collect(Collectors.toList());
     }
 
@@ -582,8 +675,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 //    }
 
     private void removeTabData(final DocumentTabData tabData) {
-        final DocRef docRef = tabDataToDocumentMap.remove(tabData);
-        documentToTabDataMap.remove(docRef);
+        documentTabManager.remove(tabData.getDocRef(), tabData);
     }
 
     protected abstract MyPresenterWidget<?> createEditor();
@@ -599,10 +691,36 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
                               final RestErrorHandler errorHandler,
                               final TaskMonitorFactory taskMonitorFactory);
 
+    /**
+     * Extension to the class API to handle a callback after save completes.
+     * Default is to call the old save() method for back compatibility.
+     * Override if you return non-null from DocumentEditPresenter.getPostSaveCallback()
+     * otherwise you'll get an IllegalStateException from this method.
+     */
+    public void save(final DocRef docRef,
+                     final D document,
+                     final BiConsumer<D, Consumer<D>> postSaveCallback,
+                     final Consumer<D> resultConsumer,
+                     final RestErrorHandler errorHandler,
+                     final TaskMonitorFactory taskMonitorFactory) {
+        if (postSaveCallback != null) {
+            throw new IllegalStateException("PostSaveCallback is defined but "
+                                            + "DocumentPlugin.save() is not reimplemented");
+        } else {
+            save(docRef, document, resultConsumer, errorHandler, taskMonitorFactory);
+        }
+    }
+
     protected abstract DocRef getDocRef(D document);
 
     public abstract String getType();
 
+    public void create(final String documentName,
+                       final Consumer<D> resultConsumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        throw new RuntimeException("Not yet implemented");
+    }
 
     // --------------------------------------------------------------------------------
 
@@ -619,8 +737,8 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
         @SuppressWarnings("unchecked")
         public void onCloseRequest(final CloseContentEvent event) {
             if (tabData != null) {
-                if (tabData instanceof DocumentEditPresenter<?, ?>) {
-                    final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
+                if (tabData instanceof DocPresenter<?, ?>) {
+                    final DocPresenter<?, D> presenter = (DocPresenter<?, D>) tabData;
                     final DirtyMode dirtyMode = event.getDirtyMode();
                     if (presenter.isDirty() && DirtyMode.FORCE != dirtyMode) {
                         if (DirtyMode.CONFIRM_DIRTY == dirtyMode) {
@@ -649,7 +767,7 @@ public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
 
         private void actuallyClose(final DocumentTabData tabData,
                                    final Callback callback,
-                                   final DocumentEditPresenter<?, D> presenter,
+                                   final DocPresenter<?, D> presenter,
                                    final boolean ok) {
             if (ok) {
                 // Tell the presenter we are closing.

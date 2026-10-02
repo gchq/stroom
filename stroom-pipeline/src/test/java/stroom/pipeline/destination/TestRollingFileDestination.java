@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestRollingFileDestination {
 
     @Test
-    void testFrequency(@TempDir Path tempDir) throws IOException {
+    void testFrequency(@TempDir final Path tempDir) throws IOException {
         final Instant time = DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T00:00:00.000Z");
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");
@@ -64,7 +64,7 @@ class TestRollingFileDestination {
     }
 
     @Test
-    void testSchedule(@TempDir Path tempDir) throws IOException {
+    void testSchedule(@TempDir final Path tempDir) throws IOException {
         final Instant time = DateUtil.parseNormalDateTimeStringToInstant("2010-01-01T00:00:00.000Z");
         final Path dir = Files.createTempDirectory("stroom");
         final Path file = dir.resolve("test.log");

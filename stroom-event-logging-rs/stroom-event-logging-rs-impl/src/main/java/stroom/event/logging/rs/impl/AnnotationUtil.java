@@ -26,7 +26,8 @@ import java.util.OptionalInt;
 /**
  * Class that finds annotations on superclasses/interfaces of supplied instance.
  * <p>
- * Credit for initial implementation goes to the author of this answer on Stack Overflow: https://stackoverflow.com/a/17281097
+ * Credit for initial implementation goes to the author of this answer on
+ * Stack Overflow: https://stackoverflow.com/a/17281097
  */
 public final class AnnotationUtil {
 
@@ -35,7 +36,7 @@ public final class AnnotationUtil {
     }
 
     public static <A extends Annotation> A getInheritedClassOrMethodAnnotation(
-            Class<A> annotationClass, AnnotatedElement annotatedElement) {
+            final Class<A> annotationClass, final AnnotatedElement annotatedElement) {
         if (annotatedElement instanceof Class<?>) {
             return getInheritedClassAnnotation(annotationClass, (Class<?>) annotatedElement);
         }
@@ -46,11 +47,11 @@ public final class AnnotationUtil {
             return null;
         }
         throw new IllegalArgumentException("This method requires an instance of Method or Class, got "
-                + annotatedElement.getClass().getName());
+                                           + annotatedElement.getClass().getName());
     }
 
     public static <A extends Annotation> A getInheritedClassAnnotation(
-            Class<A> annotationClass, Class<?> annotatedClass) {
+            final Class<A> annotationClass, final Class<?> annotatedClass) {
         //Check class itself
         A annotation = annotatedClass.getAnnotation(annotationClass);
 
@@ -78,7 +79,7 @@ public final class AnnotationUtil {
     }
 
     public static <A extends Annotation> A getInheritedMethodAnnotation(
-            Class<A> annotationClass, Method method) {
+            final Class<A> annotationClass, final Method method) {
         A annotation = method.getAnnotation(annotationClass);
         if (annotation == null) {
             annotation = getOverriddenAnnotation(annotationClass, Optional.of(method), OptionalInt.empty());
@@ -88,7 +89,7 @@ public final class AnnotationUtil {
     }
 
     public static <A extends Annotation> A getInheritedParameterAnnotation(
-            Class<A> annotationClass, Method method, Parameter annotatedParameter) {
+            final Class<A> annotationClass, final Method method, final Parameter annotatedParameter) {
         A annotation = annotatedParameter.getAnnotation(annotationClass);
         if (annotation == null) {
             int paramNumber;
@@ -104,11 +105,11 @@ public final class AnnotationUtil {
     }
 
     private static <A extends Annotation> A getOverriddenAnnotation(
-            Class<A> annotationClass, Optional<Method> annotatedMethod,
-            OptionalInt annotatedParamNumber) {
+            final Class<A> annotationClass, final Optional<Method> annotatedMethod,
+            final OptionalInt annotatedParamNumber) {
         if (annotatedMethod.isEmpty()) {
             throw new IllegalArgumentException("Must be supplied with either an annotated class or method to search" +
-                    " but neither were provided.");
+                                               " but neither were provided.");
         }
         final Method method = annotatedMethod.get();
         final Class<?> methodClass = method.getDeclaringClass();
@@ -137,16 +138,19 @@ public final class AnnotationUtil {
         return null;
     }
 
-    private static <A extends Annotation> A getOverriddenAnnotationFrom(
-            Class<A> annotationClass, Class<?> searchClass, String name, Class<?>[] params, OptionalInt paramNumber) {
+    private static <A extends Annotation> A getOverriddenAnnotationFrom(final Class<A> annotationClass,
+                                                                        final Class<?> searchClass,
+                                                                        final String name,
+                                                                        final Class<?>[] params,
+                                                                        final OptionalInt paramNumber) {
         try {
             final Method method = searchClass.getMethod(name, params);
 
             if (paramNumber.isPresent()) {
-                int param = paramNumber.getAsInt();
+                final int param = paramNumber.getAsInt();
                 if (param > method.getParameterCount()) {
                     throw new IllegalArgumentException("Parameter number " + param + " out of range for "
-                            + searchClass.getName() + " method " + name);
+                                                       + searchClass.getName() + " method " + name);
                 }
                 final A annotation = method.getParameters()[param].getAnnotation(annotationClass);
                 if (annotation != null) {

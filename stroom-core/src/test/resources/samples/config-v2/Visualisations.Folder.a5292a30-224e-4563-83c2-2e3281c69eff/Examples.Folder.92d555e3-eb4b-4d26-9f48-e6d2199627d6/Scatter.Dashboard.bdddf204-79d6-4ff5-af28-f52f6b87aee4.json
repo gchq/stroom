@@ -1,0 +1,160 @@
+{
+  "components" : [ {
+    "type" : "table",
+    "id" : "table-IIO1T",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-JT8D7",
+      "fields" : [ {
+        "name" : "timestamp",
+        "expression" : "${timestamp}",
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "width" : 168,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "connection_type",
+        "expression" : "${connection_type}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 115,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "isp_user",
+        "expression" : "${isp_user}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 69,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "actual_download",
+        "expression" : "${actual_download}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : false
+      }, {
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : false
+      } ],
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "03064900-4fe9-4c57-bcaf-5a755c5c75d7",
+        "name" : "BROADBAND_SPEED_TESTS-EXTRACTION"
+      },
+      "maxResults" : [ 1000000 ]
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-JT8D7",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Index",
+        "uuid" : "97228148-b412-4851-903d-4a05c7c81e8f",
+        "name" : "BROADBAND_SPEED_TESTS-INDEX"
+      },
+      "expression" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "timestamp",
+          "condition" : "BETWEEN",
+          "value" : "2017-01-01T00:00:00.000Z,2018-01-01T00:00:00.000Z"
+        }, {
+          "type" : "term",
+          "field" : "isp_user",
+          "condition" : "EQUALS",
+          "value" : "*"
+        } ]
+      },
+      "automate" : {
+        "open" : true,
+        "refresh" : false
+      }
+    }
+  }, {
+    "type" : "vis",
+    "id" : "vis-BX59A",
+    "name" : "Visualisation",
+    "settings" : {
+      "type" : "vis",
+      "tableId" : "table-IIO1T",
+      "visualisation" : {
+        "type" : "Visualisation",
+        "uuid" : "8b5e5f4f-c1a8-474f-9ff2-88bdb0f9a0a5",
+        "name" : "Scatter"
+      },
+      "json" : "{\"x\":\"timestamp\", \"y\":\"actual_download\", \"pointSeries\":\"isp_user\", \"gridSeries\":\"connection_type\", \"sortPointSeries\":\"Ascending\", \"maxPointSeries\":\"100\", \"seriesDateFormat\":\"\", \"sortGridSeries\":\"Ascending\", \"maxGridSeries\":\"36\", \"gridSeriesDateFormat\":\"\", \"synchXAxis\":\"True\", \"displayXAxis\":\"True\", \"synchYAxis\":\"True\", \"displayYAxis\":\"True\", \"synchSeries\":\"True\"}"
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "splitLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 132
+      },
+      "dimension" : 0,
+      "children" : [ {
+        "type" : "tabLayout",
+        "preferredSize" : {
+          "width" : 662,
+          "height" : 76
+        },
+        "tabs" : [ {
+          "id" : "query-JT8D7",
+          "visible" : true
+        } ],
+        "selected" : 0
+      }, {
+        "type" : "tabLayout",
+        "preferredSize" : {
+          "width" : 764,
+          "height" : 0
+        },
+        "tabs" : [ {
+          "id" : "table-IIO1T",
+          "visible" : true
+        } ],
+        "selected" : 0
+      } ]
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 912
+      },
+      "tabs" : [ {
+        "id" : "vis-BX59A",
+        "visible" : true
+      } ],
+      "selected" : 0
+    } ]
+  }
+}

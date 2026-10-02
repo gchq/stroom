@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.client.table.ColumnFilterPresenter.ColumnFilterView;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnFilter;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -56,7 +56,7 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
                 .onShow(e -> editorPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final ColumnFilter filter = getColumnFilter();
+                        final ColumnFilter filter = getColumnFilter(column);
                         if ((filter == null && column.getFilter() != null)
                             || (filter != null && !filter.equals(column.getColumnFilter()))) {
                             columnChangeConsumer.accept(column, column.copy().columnFilter(filter).build());
@@ -79,15 +79,13 @@ public class ColumnFilterPresenter extends MyPresenterWidget<ColumnFilterView> {
         editorPresenter.setText(expression);
     }
 
-    public ColumnFilter getColumnFilter() {
-        ColumnFilter filter = null;
-
-        String expression = editorPresenter.getText().trim();
+    public ColumnFilter getColumnFilter(final Column column) {
+        final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
+        final String expression = editorPresenter.getText().trim();
         if (expression.length() > 0) {
-            filter = new ColumnFilter(expression);
+            builder.filter(expression);
         }
-
-        return filter;
+        return builder.build();
     }
 
     public interface ColumnFilterView extends View {

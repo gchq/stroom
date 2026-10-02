@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package stroom.query.client;
 
 import stroom.item.client.EventBinder;
 import stroom.item.client.SelectionBox;
-import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.ExpressionOperator.Op;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -39,10 +39,7 @@ public class OperatorEditor extends Composite {
         protected void onBind() {
             super.onBind();
             registerHandler(listBox.addValueChangeHandler(event -> {
-                if (!reading && operator != null) {
-                    operator.setOp(event.getValue());
-                    fireDirty();
-                }
+                onChange();
             }));
         }
     };
@@ -93,6 +90,14 @@ public class OperatorEditor extends Composite {
         }
     }
 
+    public void write() {
+        if (editing) {
+//            layout.setVisible(false);
+//
+//            editing = false;
+        }
+    }
+
     public void endEdit() {
         if (editing) {
             layout.setVisible(false);
@@ -101,10 +106,11 @@ public class OperatorEditor extends Composite {
         }
     }
 
-    private void fireDirty() {
-        if (!reading) {
+    private void onChange() {
+        if (!reading && operator != null) {
+            operator.setOp(listBox.getValue());
             if (uiHandlers != null) {
-                uiHandlers.fireDirty();
+                uiHandlers.onChange();
             }
         }
     }

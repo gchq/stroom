@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.impl;
@@ -26,37 +25,36 @@ import stroom.dashboard.impl.visualisation.VisualisationStore;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.TableResultRequest;
-import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultRequest.Builder;
-import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.Sort.SortDirection;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.Format;
+import stroom.query.api.GroupSelection;
+import stroom.query.api.Param;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.Query;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.Builder;
+import stroom.query.api.ResultRequest.ResultStyle;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.Sort.SortDirection;
+import stroom.query.api.TableSettings;
 import stroom.util.json.JsonUtil;
 import stroom.visualisation.shared.VisualisationDoc;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import org.apache.commons.text.StringEscapeUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 
 public class SearchRequestMapper {
 
@@ -120,7 +118,7 @@ public class SearchRequestMapper {
                         params,
                         searchRequest.getSearch().getTimeRange());
 
-            } catch (RuntimeException ex) {
+            } catch (final RuntimeException ex) {
                 throw new RuntimeException("Invalid JSON for expression.  Got: " + expressionJson, ex);
             }
 
@@ -134,20 +132,26 @@ public class SearchRequestMapper {
 
     private List<ResultRequest> mapResultRequests(final DashboardSearchRequest searchRequest) {
         if (searchRequest.getComponentResultRequests() == null
-                || searchRequest.getComponentResultRequests().size() == 0) {
+            || searchRequest.getComponentResultRequests().size() == 0) {
             return null;
         }
 
         final List<ResultRequest> resultRequests = new ArrayList<>(searchRequest.getComponentResultRequests().size());
         for (final ComponentResultRequest componentResultRequest : searchRequest.getComponentResultRequests()) {
             if (componentResultRequest instanceof final TableResultRequest tableResultRequest) {
+
+                final GroupSelection groupSelection = Optional.ofNullable(tableResultRequest.getGroupSelection())
+                        .orElse(GroupSelection.builder().openGroups(tableResultRequest.getOpenGroups()).build());
+
                 final ResultRequest copy = ResultRequest.builder()
                         .componentId(tableResultRequest.getComponentId())
+                        .searchRequestSource(searchRequest.getSearchRequestSource())
+                        .tableName(tableResultRequest.getTableName())
                         .addMappings(tableResultRequest.getTableSettings())
                         .requestedRange(tableResultRequest.getRequestedRange())
                         .resultStyle(ResultStyle.TABLE)
                         .fetch(tableResultRequest.getFetch())
-                        .openGroups(tableResultRequest.getOpenGroups())
+                        .groupSelection(groupSelection)
                         .build();
                 resultRequests.add(copy);
 
@@ -201,16 +205,17 @@ public class SearchRequestMapper {
 //
 //        return tableComponentSettings;
 //
-////        final TableSettings tableSettings = TableSettings.builder()
-////                .queryId(tableComponentSettings.getQueryId())
-////                .addFields(mapFields(tableComponentSettings.getFields()))
-////                .extractValues(tableComponentSettings.extractValues())
-////                .extractionPipeline(tableComponentSettings.getExtractionPipeline())
-////                .addMaxResults(mapIntArray(tableComponentSettings.getMaxResults()))
-////                .showDetail(tableComponentSettings.getShowDetail())
-////                .build();
-////
-////        return tableSettings;
+
+    /// /        final TableSettings tableSettings = TableSettings.builder()
+    /// /                .queryId(tableComponentSettings.getQueryId())
+    /// /                .addFields(mapFields(tableComponentSettings.getFields()))
+    /// /                .extractValues(tableComponentSettings.extractValues())
+    /// /                .extractionPipeline(tableComponentSettings.getExtractionPipeline())
+    /// /                .addMaxResults(mapIntArray(tableComponentSettings.getMaxResults()))
+    /// /                .showDetail(tableComponentSettings.getShowDetail())
+    /// /                .build();
+    /// /
+    /// /        return tableSettings;
 //    }
 
 //    private List<Field> mapFields(final List<Field> fields) {
@@ -220,7 +225,7 @@ public class SearchRequestMapper {
 //
 //        final List<Field> list = new ArrayList<>(fields.size());
 //        for (final Field field : fields) {
-//            final stroom.query.api.v2.Field.Builder builder = new stroom.query.api.v2.Field.Builder()
+//            final stroom.query.api.Field.Builder builder = new stroom.query.api.Field.Builder()
 //                    .id(field.getId())
 //                    .name(field.getName())
 //                    .expression(field.getExpression())
@@ -263,15 +268,15 @@ public class SearchRequestMapper {
 //        return copy;
 //    }
 //
-//    private stroom.query.api.v2.OffsetRange mapOffsetRange(final OffsetRange<Integer> offsetRange) {
+//    private stroom.query.api.OffsetRange mapOffsetRange(final OffsetRange<Integer> offsetRange) {
 //        if (offsetRange == null) {
 //            return null;
 //        }
 //
-//        return new stroom.query.api.v2.OffsetRange(offsetRange.getOffset(), offsetRange.getLength());
+//        return new stroom.query.api.OffsetRange(offsetRange.getOffset(), offsetRange.getLength());
 //    }
 //
-//    private stroom.query.api.v2.Sort mapSort(final Sort sort) {
+//    private stroom.query.api.Sort mapSort(final Sort sort) {
 //        if (sort == null) {
 //            return null;
 //        }
@@ -281,18 +286,18 @@ public class SearchRequestMapper {
 //            sortDirection = SortDirection.valueOf(sort.getDirection().name());
 //        }
 //
-//        return new stroom.query.api.v2.Sort(sort.getOrder(), sortDirection);
+//        return new stroom.query.api.Sort(sort.getOrder(), sortDirection);
 //    }
 //
-//    private stroom.query.api.v2.Filter mapFilter(final Filter filter) {
+//    private stroom.query.api.Filter mapFilter(final Filter filter) {
 //        if (filter == null) {
 //            return null;
 //        }
 //
-//        return new stroom.query.api.v2.Filter(filter.getIncludes(), filter.getExcludes());
+//        return new stroom.query.api.Filter(filter.getIncludes(), filter.getExcludes());
 //    }
 //
-//    private stroom.query.api.v2.Format mapFormat(final Format format) {
+//    private stroom.query.api.Format mapFormat(final Format format) {
 //        if (format == null) {
 //            return null;
 //        }
@@ -303,7 +308,7 @@ public class SearchRequestMapper {
 //            type = Type.valueOf(format.getType().name());
 //        }
 //
-//        return new stroom.query.api.v2.Format(type, mapNumberFormat(
+//        return new stroom.query.api.Format(type, mapNumberFormat(
 //        format.getSettings()), mapDateTimeFormat(format.getSettings()));
 //    }
 //
@@ -343,16 +348,16 @@ public class SearchRequestMapper {
 
 //    private TableSettings visStructureToTableSettings(
 //    final VisStructure visStructure, final TableSettings parentTableSettings) {
-//        final Map<String, stroom.query.api.v2.Format> formatMap = new HashMap<>();
+//        final Map<String, stroom.query.api.Format> formatMap = new HashMap<>();
 //        if (parentTableSettings.getFields() != null) {
-//            for (final stroom.query.api.v2.Field field : parentTableSettings.getFields()) {
+//            for (final stroom.query.api.Field field : parentTableSettings.getFields()) {
 //                if (field != null) {
 //                    formatMap.put(field.getName(), field.getFormat());
 //                }
 //            }
 //        }
 //
-//        List<stroom.query.api.v2.Field> fields = new ArrayList<>();
+//        List<stroom.query.api.Field> fields = new ArrayList<>();
 //        List<Integer> limits = new ArrayList<>();
 //
 //        VisNest nest = visStructure.getNest();
@@ -360,7 +365,7 @@ public class SearchRequestMapper {
 //
 //        int group = 0;
 //        while (nest != null) {
-//            stroom.query.api.v2.Field field = convertField(nest.getKey(), formatMap);
+//            stroom.query.api.Field field = convertField(nest.getKey(), formatMap);
 //            field.setGroup(group++);
 //
 //            fields.add(field);
@@ -392,26 +397,25 @@ public class SearchRequestMapper {
 //        }
 //
 //        final TableSettings tableSettings = new TableSettings();
-//        tableSettings.setFields(fields.toArray(new stroom.query.api.v2.Field[0]));
+//        tableSettings.setFields(fields.toArray(new stroom.query.api.Field[0]));
 //        tableSettings.setMaxResults(limits.toArray(new Integer[0]));
 //        tableSettings.setShowDetail(true);
 //
 //        return tableSettings;
 //    }
-
     private Column.Builder convertField(final VisField visField,
-                                        final Map<String, stroom.query.api.v2.Format> formatMap) {
+                                        final Map<String, stroom.query.api.Format> formatMap) {
         final Column.Builder builder = Column.builder();
 
         builder.format(Format.GENERAL);
 
         if (visField.getId() != null) {
-            final stroom.query.api.v2.Format format = formatMap.get(visField.getId());
+            final stroom.query.api.Format format = formatMap.get(visField.getId());
             if (format != null) {
                 builder.format(format);
             }
 
-            builder.expression(ParamSubstituteUtil.makeParam(visField.getId()));
+            builder.expression(ParamUtil.create(visField.getId()));
         }
         builder.sort(visField.getSort());
 
@@ -419,11 +423,11 @@ public class SearchRequestMapper {
     }
 
 
-    private stroom.query.api.v2.TableSettings mapVisSettingsToTableSettings(
+    private stroom.query.api.TableSettings mapVisSettingsToTableSettings(
             final VisResultRequest visResultRequest,
             final TableSettings parentTableSettings) {
 
-        DocRef docRef = visResultRequest.getVisualisation();
+        final DocRef docRef = visResultRequest.getVisualisation();
         TableSettings tableSettings = null;
 
         if (docRef == null) {
@@ -433,8 +437,8 @@ public class SearchRequestMapper {
         final VisualisationDoc visualisation = visualisationStore.readDocument(docRef);
 
         if (visualisation == null
-                || visualisation.getSettings() == null
-                || visualisation.getSettings().length() == 0) {
+            || visualisation.getSettings() == null
+            || visualisation.getSettings().length() == 0) {
             return null;
         }
 
@@ -445,7 +449,7 @@ public class SearchRequestMapper {
             final Structure structure = visSettings.getData().getStructure();
             if (structure != null) {
 
-                final Map<String, stroom.query.api.v2.Format> formatMap = new HashMap<>();
+                final Map<String, stroom.query.api.Format> formatMap = new HashMap<>();
                 if (parentTableSettings.getColumns() != null) {
                     for (final Column column : parentTableSettings.getColumns()) {
                         if (column != null) {
@@ -454,8 +458,8 @@ public class SearchRequestMapper {
                     }
                 }
 
-                List<Column> columns = new ArrayList<>();
-                List<Long> limits = new ArrayList<>();
+                final List<Column> columns = new ArrayList<>();
+                final List<Long> limits = new ArrayList<>();
 
                 VisNest nest = mapNest(structure.getNest(), settingResolver);
                 VisValues values = mapVisValues(structure.getValues(), settingResolver);
@@ -566,14 +570,14 @@ public class SearchRequestMapper {
         return copy;
     }
 
-    private stroom.query.api.v2.Sort mapVisSort(final VisSettings.Sort sort, final SettingResolver settingResolver) {
+    private stroom.query.api.Sort mapVisSort(final VisSettings.Sort sort, final SettingResolver settingResolver) {
         if (sort == null) {
             return null;
         }
 
-        Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
+        final Boolean enabled = settingResolver.resolveBoolean(sort.getEnabled());
         if (enabled != null && enabled) {
-            String dir = settingResolver.resolveString(sort.getDirection());
+            final String dir = settingResolver.resolveString(sort.getDirection());
 
             if (dir != null) {
                 final SortDirection direction;
@@ -584,7 +588,7 @@ public class SearchRequestMapper {
                 } else {
                     return null;
                 }
-                return new stroom.query.api.v2.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
+                return new stroom.query.api.Sort(settingResolver.resolveInteger(sort.getPriority()), direction);
             }
         }
         return null;
@@ -612,7 +616,7 @@ public class SearchRequestMapper {
 
     private VisLimit mapVisLimit(final VisSettings.Limit limit, final SettingResolver settingResolver) {
         if (limit != null) {
-            Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
+            final Boolean enabled = settingResolver.resolveBoolean(limit.getEnabled());
             if (enabled == null || enabled) {
                 final VisLimit copy = new VisLimit();
                 copy.setSize(settingResolver.resolveLong(limit.getSize()));
@@ -675,7 +679,7 @@ public class SearchRequestMapper {
         }
 
         public Boolean resolveBoolean(final String value) {
-            String str = resolveString(value);
+            final String str = resolveString(value);
             if (str == null) {
                 return null;
             }
@@ -683,7 +687,7 @@ public class SearchRequestMapper {
         }
 
         public Integer resolveInteger(final String value) {
-            String str = resolveString(value);
+            final String str = resolveString(value);
             if (str == null) {
                 return null;
             }
@@ -691,7 +695,7 @@ public class SearchRequestMapper {
         }
 
         public Long resolveLong(final String value) {
-            String str = resolveString(value);
+            final String str = resolveString(value);
             if (str == null) {
                 return null;
             }
@@ -714,27 +718,22 @@ public class SearchRequestMapper {
         }
 
         private Map<String, String> getDashboardSettingsMap(final String json) {
-            Map<String, String> map = new HashMap<>();
+            final Map<String, String> map = new HashMap<>();
 
-            try {
-                if (json != null && !json.isEmpty()) {
-                    ObjectMapper objectMapper = JsonUtil.getNoIndentMapper();
-                    final JsonNode node = objectMapper.readTree(json);
+            if (json != null && !json.isEmpty()) {
+                final JsonMapper jsonMapper = JsonUtil.getNoIndentMapper();
+                final JsonNode node = jsonMapper.readTree(json);
 
-                    Iterator<Entry<String, JsonNode>> iterator = node.fields();
-                    while (iterator.hasNext()) {
-                        Entry<String, JsonNode> entry = iterator.next();
-                        JsonNode val = entry.getValue();
-                        if (val != null) {
-                            final String str = val.textValue();
-                            if (str != null) {
-                                map.put(entry.getKey(), str);
-                            }
+                final Set<Entry<String, JsonNode>> iterator = node.properties();
+                node.properties().forEach(entry -> {
+                    final JsonNode val = entry.getValue();
+                    if (val != null) {
+                        final String str = val.stringValue();
+                        if (str != null) {
+                            map.put(entry.getKey(), str);
                         }
                     }
-                }
-            } catch (final IOException e) {
-                throw new UncheckedIOException(e);
+                });
             }
 
             return map;

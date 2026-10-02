@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,10 +41,16 @@ public class ScheduleBounds {
         this.endTimeMs = endTimeMs;
     }
 
+    /**
+     * @return Start time in epoch millis (inc.), may be null.
+     */
     public Long getStartTimeMs() {
         return startTimeMs;
     }
 
+    /**
+     * @return End time in epoch millis (inc.), may be null.
+     */
     public Long getEndTimeMs() {
         return endTimeMs;
     }
@@ -46,7 +68,7 @@ public class ScheduleBounds {
         }
         final ScheduleBounds that = (ScheduleBounds) o;
         return Objects.equals(startTimeMs, that.startTimeMs) &&
-                Objects.equals(endTimeMs, that.endTimeMs);
+               Objects.equals(endTimeMs, that.endTimeMs);
     }
 
     @Override
@@ -59,9 +81,9 @@ public class ScheduleBounds {
     @Override
     public String toString() {
         return "ScheduleBounds{" +
-                "startTimeMs=" + startTimeMs +
-                ", endTimeMs=" + endTimeMs +
-                '}';
+               "startTimeMs=" + startTimeMs +
+               ", endTimeMs=" + endTimeMs +
+               '}';
     }
 
     public Builder copy() {
@@ -71,6 +93,10 @@ public class ScheduleBounds {
     public static Builder builder() {
         return new Builder();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 
@@ -86,11 +112,17 @@ public class ScheduleBounds {
         }
 
 
+        /**
+         * Start time in epoch millis (inc.)
+         */
         public Builder startTimeMs(final Long startTimeMs) {
             this.startTimeMs = startTimeMs;
             return this;
         }
 
+        /**
+         * End time in epoch millis (inc.)
+         */
         public Builder endTimeMs(final Long endTimeMs) {
             this.endTimeMs = endTimeMs;
             return this;

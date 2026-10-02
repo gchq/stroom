@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,15 @@
 
 package stroom.query.language.token;
 
-import stroom.query.language.token.TokenGroup.Builder;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.AbstractTokenGroup;
+import stroom.query.api.token.FunctionGroup;
+import stroom.query.api.token.KeywordGroup;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenGroup;
+import stroom.query.api.token.TokenGroup.Builder;
+import stroom.query.api.token.TokenType;
 
 import java.util.ArrayList;
 import java.util.List;

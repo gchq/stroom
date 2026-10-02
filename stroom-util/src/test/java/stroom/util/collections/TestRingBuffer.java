@@ -75,7 +75,7 @@ class TestRingBuffer {
 
         assertThat(ringBuffer.containsTailElements((Integer[]) null))
                 .isFalse();
-        Integer[] emptyArr = new Integer[0];
+        final Integer[] emptyArr = new Integer[0];
         assertThat(ringBuffer.containsTailElements(emptyArr))
                 .isFalse();
         assertThat(ringBuffer.containsTailElements(1, 2, 3, 4, 5, 6))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -33,7 +32,7 @@ public class UIDSerde implements Serde<UID>, Serializer<UID>, Deserializer<UID> 
 
     @Override
     public UID deserialize(final ByteBuffer byteBuffer) {
-        UID uid = getUid(byteBuffer);
+        final UID uid = getUid(byteBuffer);
         byteBuffer.rewind();
         return uid;
     }

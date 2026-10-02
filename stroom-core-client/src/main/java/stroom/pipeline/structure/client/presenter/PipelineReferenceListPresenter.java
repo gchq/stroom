@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.structure.client.presenter;
@@ -20,25 +19,20 @@ package stroom.pipeline.structure.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.DocRefCell.Builder;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.DocRef.DisplayType;
-import stroom.docstore.shared.DocRefUtil;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.planb.shared.PlanBDoc;
-import stroom.state.shared.StateDoc;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -60,7 +54,6 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
-import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
@@ -72,8 +65,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
-        implements HasDirtyHandlers {
+public class PipelineReferenceListPresenter
+        extends MyPresenterWidget<PagerView> {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final String ADDED = "pipelineStructureViewImpl-property-added";
@@ -89,8 +82,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     private final List<PipelineReference> references = new ArrayList<>();
     private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
     private final RestFactory restFactory;
+    private final PipelineElementTypesFactory pipelineElementTypesFactory;
 
-    private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineDoc pipeline;
     private PipelineModel pipelineModel;
     private PipelineElement currentElement;
@@ -102,16 +95,19 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     public PipelineReferenceListPresenter(final EventBus eventBus,
                                           final PagerView view,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
-                                          final RestFactory restFactory) {
+                                          final RestFactory restFactory,
+                                          final PipelineElementTypesFactory pipelineElementTypesFactory) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Pipeline References");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
         this.newPipelineReferencePresenter = newPipelineReferencePresenter;
         this.restFactory = restFactory;
+        this.pipelineElementTypesFactory = pipelineElementTypesFactory;
 
         addButton = view.addButton(SvgPresets.NEW_ITEM);
         editButton = view.addButton(SvgPresets.EDIT);
@@ -151,8 +147,6 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         addFeedColumn();
         addStreamTypeColumn();
         addInheritedFromColumn();
-
-        addEndColumn();
     }
 
     private void addPipelineColumn() {
@@ -166,9 +160,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
                         return SafeHtmlUtils.fromString(pipelineReference.getPipeline()
-                                .getDisplayValue(NullSafe.requireNonNullElse(
-                                        DisplayType.AUTO,
-                                        DisplayType.AUTO)));
+                                .getDisplayValue(DisplayType.AUTO));
                     }
                 })
                 .docRefFunction(pipelineProperty -> NullSafe.get(
@@ -192,9 +184,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
                         return SafeHtmlUtils.fromString(pipelineReference.getFeed()
-                                .getDisplayValue(NullSafe.requireNonNullElse(
-                                        DisplayType.AUTO,
-                                        DisplayType.AUTO)));
+                                .getDisplayValue(DisplayType.AUTO));
                     }
                 })
                 .docRefFunction(pipelineProperty -> NullSafe.get(
@@ -228,20 +218,17 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                 .eventBus(getEventBus())
                 .cssClassFunction(this::getStateCssClass)
                 .cellTextFunction(pipelineReference -> {
+                    final DocRef source = pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference);
                     if (pipelineReference == null ||
-                        pipelineReference.getSourcePipeline() == null ||
-                        pipeline.getUuid().equals(pipelineReference.getSourcePipeline().getUuid())) {
+                        source == null ||
+                        pipeline.getUuid().equals(source.getUuid())) {
                         return SafeHtmlUtils.EMPTY_SAFE_HTML;
                     } else {
-                        return SafeHtmlUtils.fromString(pipelineReference.getSourcePipeline()
-                                .getDisplayValue(NullSafe.requireNonNullElse(
-                                        DisplayType.AUTO,
-                                        DisplayType.AUTO)));
+                        return SafeHtmlUtils.fromString(source.getDisplayValue(DisplayType.AUTO));
                     }
                 })
-                .docRefFunction(pipelineProperty -> NullSafe.get(
-                        pipelineProperty,
-                        PipelineReference::getSourcePipeline));
+                .docRefFunction(pipelineReference ->
+                        pipelineModel.getBaseData().getPipelineReferenceSource(pipelineReference));
 
         final Column<PipelineReference, PipelineReference> inheritedFromCol = DataGridUtil.docRefColumnBuilder(
                         cellBuilder)
@@ -250,28 +237,17 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         dataGrid.addResizableColumn(inheritedFromCol, "Inherited From", 350);
     }
 
-    private void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
-    }
-
     private SafeHtml getSafeHtmlWithState(final PipelineReference pipelineReference, final String string) {
         if (string == null) {
             return SafeHtmlUtils.EMPTY_SAFE_HTML;
         }
 
-        String className = null;
         final State state = referenceStateMap.get(pipelineReference);
-        switch (state) {
-            case ADDED:
-                className = ADDED;
-                break;
-            case REMOVED:
-                className = REMOVED;
-                break;
-            case INHERITED:
-                className = INHERITED;
-                break;
-        }
+        final String className = switch (state) {
+            case ADDED -> ADDED;
+            case REMOVED -> REMOVED;
+            case INHERITED -> INHERITED;
+        };
 
         final SafeHtmlBuilder builder = new SafeHtmlBuilder();
         builder.append(SafeHtmlUtils.fromTrustedString("<div class=\"" + className + "\">"));
@@ -281,25 +257,21 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     }
 
     private String getStateCssClass(final PipelineReference pipelineReference) {
-        String className = null;
         final State state = referenceStateMap.get(pipelineReference);
-        switch (state) {
-            case ADDED:
-                className = ADDED;
-                break;
-            case REMOVED:
-                className = REMOVED;
-                break;
-            case INHERITED:
-                className = INHERITED;
-                break;
-        }
-        return className;
+        return switch (state) {
+            case ADDED -> ADDED;
+            case REMOVED -> REMOVED;
+            case INHERITED -> INHERITED;
+        };
     }
 
     public void setReadOnly(final boolean readOnly) {
         this.readOnly = readOnly;
         enableButtons();
+    }
+
+    public void setTableName(final String tableName) {
+        dataGrid.setTableName(tableName);
     }
 
     public void setPipeline(final PipelineDoc pipeline) {
@@ -311,35 +283,31 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     }
 
     public void setCurrentElement(final PipelineElement currentElement) {
-        this.currentElement = currentElement;
-        enableButtons();
+        pipelineElementTypesFactory.get(this, elementTypes -> {
+            this.currentElement = currentElement;
+            enableButtons();
 
-        // Discover the reference property type.
-        this.propertyType = null;
-        if (currentElement != null && allPropertyTypes != null) {
-            final Map<String, PipelinePropertyType> propertyTypes = allPropertyTypes
-                    .get(currentElement.getElementType());
-            if (propertyTypes != null) {
-                for (final PipelinePropertyType propertyType : propertyTypes.values()) {
-                    if (propertyType.isPipelineReference()) {
-                        this.propertyType = propertyType;
+            // Discover the reference property type.
+            this.propertyType = null;
+            if (currentElement != null) {
+                final Map<String, PipelinePropertyType> propertyTypes = elementTypes.getPropertyTypes(currentElement);
+                if (propertyTypes != null) {
+                    for (final PipelinePropertyType propertyType : propertyTypes.values()) {
+                        if (propertyType.isPipelineReference()) {
+                            this.propertyType = propertyType;
+                        }
                     }
                 }
             }
-        }
 
-        refresh();
-    }
-
-    public void setPropertyTypes(final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes) {
-        this.allPropertyTypes = propertyTypes;
+            refresh();
+        });
     }
 
     private void onAdd(final ClickEvent event) {
         if (currentElement != null) {
             final PipelineReference pipelineReference = new PipelineReference(currentElement.getId(),
-                    propertyType.getName(), null, null, StreamTypeNames.REFERENCE, null);
-            pipelineReference.setSourcePipeline(DocRefUtil.create(pipeline));
+                    propertyType.getName(), null, null, StreamTypeNames.REFERENCE);
             showEditor(pipelineReference, true);
         }
     }
@@ -354,36 +322,37 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         }
     }
 
-    private void showEditor(final PipelineReference pipelineReference, final boolean isNew) {
+    private void showEditor(final PipelineReference pipelineReference,
+                            final boolean isNew) {
         if (pipelineReference != null) {
-            final List<PipelineReference> added = pipelineModel.getPipelineData().getAddedPipelineReferences();
-            added.remove(pipelineReference);
+            final PipelineData pipelineData = pipelineModel.getPipelineData();
+            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+            builder.getReferences().getAddList().remove(pipelineReference);
 
             final NewPipelineReferencePresenter editor = newPipelineReferencePresenter.get();
 
             final HidePopupRequestEvent.Handler handler = e -> {
                 if (e.isOk()) {
-                    editor.write(pipelineReference);
+                    final PipelineReference updated = editor.write();
 
-                    if (pipelineReference.getPipeline() == null) {
+                    if (updated.getPipeline() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a pipeline to use.", e::reset);
-                    } else if (!StateDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                               !PlanBDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                               pipelineReference.getFeed() == null) {
+                    } else if (!PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
+                               updated.getFeed() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this, "You must specify a feed to use.",
                                 e::reset);
-                    } else if (!StateDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                               !PlanBDoc.TYPE.equals(pipelineReference.getPipeline().getType()) &&
-                               pipelineReference.getStreamType() == null) {
+                    } else if (!PlanBDoc.TYPE.equals(updated.getPipeline().getType()) &&
+                               updated.getStreamType() == null) {
                         AlertEvent.fireError(PipelineReferenceListPresenter.this,
                                 "You must specify a stream type to use.", e::reset);
                     } else {
-                        if (!added.contains(pipelineReference)) {
-                            added.add(pipelineReference);
+                        if (!builder.getReferences().getAddList().contains(updated)) {
+                            builder.getReferences().getAddList().add(updated);
                         }
 
-                        setDirty(isNew || editor.isDirty());
+                        setPipelineData(builder.build());
+
                         refresh();
                         e.hide();
                     }
@@ -391,10 +360,11 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                     // User has cancelled edit so add the reference back to
                     // the list if this was an existing reference
                     if (!isNew) {
-                        if (!added.contains(pipelineReference)) {
-                            added.add(pipelineReference);
+                        if (!builder.getReferences().getAddList().contains(pipelineReference)) {
+                            builder.getReferences().getAddList().add(pipelineReference);
                         }
                     }
+                    setPipelineData(builder.build());
 
                     e.hide();
                 }
@@ -419,24 +389,32 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
     private void onRemove() {
         final PipelineReference selected = selectionModel.getSelected();
         if (selected != null) {
-            if (pipelineModel.getPipelineData().getAddedPipelineReferences().contains(selected)) {
-                pipelineModel.getPipelineData().getAddedPipelineReferences().remove(selected);
-                pipelineModel.getPipelineData().getRemovedPipelineReferences().remove(selected);
+            final PipelineData pipelineData = pipelineModel.getPipelineData();
+            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+            if (builder.getReferences().getAddList().contains(selected)) {
+                builder.getReferences().getAddList().remove(selected);
+                builder.getReferences().getRemoveList().remove(selected);
 
             } else {
-                if (pipelineModel.getPipelineData().getRemovedPipelineReferences().contains(selected)) {
-                    pipelineModel.getPipelineData().getRemovedPipelineReferences().remove(selected);
+                if (builder.getReferences().getRemoveList().contains(selected)) {
+                    builder.getReferences().getRemoveList().remove(selected);
                 } else {
-                    pipelineModel.getPipelineData().getRemovedPipelineReferences().add(selected);
+                    builder.getReferences().getRemoveList().add(selected);
                 }
             }
 
-            setDirty(true);
+            setPipelineData(builder.build());
             refresh();
         }
     }
 
-    private void addReference(final PipelineReference reference, State state) {
+    private void setPipelineData(final PipelineData pipelineData) {
+        // Update the model rather than just setting the layer on it. The resulting change event is
+        // what makes the pipeline re-evaluate whether it is dirty and so enables the Save button.
+        pipelineModel.update(pipelineData);
+    }
+
+    private void addReference(final PipelineReference reference, final State state) {
         // It is important that the pipe references are displayed in the order in which
         // they appear in the pipe doc (with inherited ones first)
         // Order is important as the ref lookup will try each loader in this o
@@ -465,7 +443,8 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                         }
                     }
                 }
-                for (final PipelineReference reference : pipelineModel.getPipelineData().getAddedPipelineReferences()) {
+                for (final PipelineReference reference : pipelineModel.getPipelineData()
+                        .getAddedPipelineReferences()) {
                     if (id.equals(reference.getElement())) {
                         addReference(reference, State.ADDED);
                     }
@@ -492,11 +471,15 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
                                 .stream()
                                 .collect(Collectors.toMap(Function.identity(), Function.identity()));
 
+                        final List<PipelineReference> newList = new ArrayList<>(references.size());
                         for (final PipelineReference reference : references) {
-                            reference.setFeed(resolve(fetchedDocRefs, reference.getFeed()));
-                            reference.setPipeline(resolve(fetchedDocRefs, reference.getPipeline()));
+                            newList.add(new PipelineReference.Builder(reference)
+                                    .feed(resolve(fetchedDocRefs, reference.getFeed()))
+                                    .pipeline(resolve(fetchedDocRefs, reference.getPipeline()))
+                                    .build());
                         }
-
+                        references.clear();
+                        references.addAll(newList);
                         setData(references);
                     })
                     .taskMonitorFactory(getView())
@@ -519,7 +502,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
         return docRef;
     }
 
-    private void addPipelineReference(final Set<DocRef> docRefs, PipelineReference reference) {
+    private void addPipelineReference(final Set<DocRef> docRefs, final PipelineReference reference) {
         if (reference.getFeed() != null) {
             docRefs.add(reference.getFeed());
         }
@@ -552,17 +535,6 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<PagerView>
             editButton.setTitle("Edit Reference");
             removeButton.setTitle("Remove Reference");
         }
-    }
-
-    protected void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
-    }
-
-    @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
     }
 
     private enum State {

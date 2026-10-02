@@ -25,7 +25,7 @@ import java.io.UncheckedIOException;
 
 public class URLTestTool {
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
             final HttpGet httpGet = new HttpGet(args[0]);
             httpClient.execute(httpGet, response -> {

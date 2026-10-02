@@ -1,8 +1,24 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.documentation.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -19,22 +35,18 @@ import java.util.Objects;
              "into a folder to describe the contents of that folder.")
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class DocumentationDoc extends Doc implements HasData {
+public class DocumentationDoc extends AbstractDoc implements HasData {
 
     public static final String TYPE = "Documentation";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.DOCUMENTATION_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String documentation;
+    private final String documentation;
     @JsonProperty
-    private String data;
-
-    public DocumentationDoc() {
-    }
+    private final String data;
 
     @JsonCreator
-    public DocumentationDoc(@JsonProperty("type") final String type,
-                            @JsonProperty("uuid") final String uuid,
+    public DocumentationDoc(@JsonProperty("uuid") final String uuid,
                             @JsonProperty("name") final String name,
                             @JsonProperty("version") final String version,
                             @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -43,7 +55,7 @@ public class DocumentationDoc extends Doc implements HasData {
                             @JsonProperty("updateUser") final String updateUser,
                             @JsonProperty("documentation") final String documentation,
                             @JsonProperty("data") final String data) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.documentation = documentation;
         this.data = data;
     }
@@ -68,10 +80,6 @@ public class DocumentationDoc extends Doc implements HasData {
         return data;
     }
 
-    public void setData(final String data) {
-        this.data = data;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -91,5 +99,62 @@ public class DocumentationDoc extends Doc implements HasData {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), documentation, data);
+    }
+
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    @Override
+    public HasData copyWithData(final String data) {
+        return copy().data(data).build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractBuilder<DocumentationDoc, Builder> {
+
+        private String documentation;
+        private String data;
+
+        private Builder() {
+        }
+
+        private Builder(final DocumentationDoc documentationDoc) {
+            super(documentationDoc);
+            this.documentation = documentationDoc.documentation;
+            this.data = documentationDoc.data;
+        }
+
+        public Builder documentation(final String documentation) {
+            this.documentation = documentation;
+            return self();
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public DocumentationDoc build() {
+            return new DocumentationDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    documentation,
+                    data);
+        }
     }
 }

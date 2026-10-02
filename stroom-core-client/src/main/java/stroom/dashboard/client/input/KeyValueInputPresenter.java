@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import stroom.dashboard.client.main.HasParams;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.KeyValueInputComponentSettings;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.ParamUtil;
+import stroom.query.api.Param;
+import stroom.query.api.ParamUtil;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -58,7 +58,7 @@ public class KeyValueInputPresenter
     public void onValueChanged(final String value) {
         setSettings(getKeyValueInputSettings().copy().text(value).build());
         ComponentChangeEvent.fire(this, this);
-        setDirty(true);
+        onChange();
     }
 
     @Override
@@ -69,7 +69,7 @@ public class KeyValueInputPresenter
     @Override
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
-        ComponentSettings settings = componentConfig.getSettings();
+        final ComponentSettings settings = componentConfig.getSettings();
         if (!(settings instanceof KeyValueInputComponentSettings)) {
             setSettings(createSettings());
         }

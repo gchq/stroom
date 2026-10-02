@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,16 +18,13 @@ ext.moduleName = 'stroom.query.common'
 
 dependencies {
     implementation project(':stroom-bytebuffer')
-    implementation project(':stroom-cache:stroom-cache-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
-    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-lmdb')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-security:stroom-security-user-api')
@@ -35,30 +32,21 @@ dependencies {
     implementation project(':stroom-util-shared')
     implementation project(':stroom-util')
 
-    implementation libs.dropwizard.metrics.annotation
     implementation libs.eventLogging
     implementation libs.guava
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
-    implementation libs.jackson.core
     implementation libs.jakarta.validation.api
     implementation libs.jakarta.inject
-    implementation libs.jaxb.api
     implementation libs.kryo
     implementation libs.lmdbjava
     implementation libs.slf4j.api
+    implementation libs.swagger.annotations
     implementation libs.zero.allocation.hashing
 
-    //--------testing----------
-    testImplementation libs.assertj.core
-    testCompileOnly libs.junit.jupiter.api
-    testImplementation libs.jaxb.api
-    testImplementation libs.mockito.core
-    testImplementation project(':stroom-query:stroom-query-language').sourceSets.test.output
+    testImplementation testFixtures(project(':stroom-query:stroom-query-language'))
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
-    testRuntimeOnly libs.junit.jupiter.engine
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

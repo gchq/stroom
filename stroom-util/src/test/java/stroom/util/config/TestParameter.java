@@ -25,7 +25,7 @@ class TestParameter {
 
     @Test
     void testNodeName() {
-        Parameter parameter = new Parameter();
+        final Parameter parameter = new Parameter();
         parameter.setRegEx("[a-zA-Z0-9-_]+");
 
         parameter.setValue("");
@@ -47,7 +47,7 @@ class TestParameter {
 
     @Test
     void testPortPrefix() {
-        Parameter parameter = new Parameter();
+        final Parameter parameter = new Parameter();
         parameter.setRegEx("[0-9]{2}");
 
         parameter.setValue("1");

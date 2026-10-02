@@ -24,6 +24,7 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.IdEnrichmentExpectedIds;
 import stroom.pipeline.state.MetaHolder;
+import stroom.pipeline.stepping.capture.SteppingCounter;
 import stroom.svg.shared.SvgImage;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -45,6 +46,7 @@ import java.util.Set;
  */
 @ConfigurableElement(
         type = "IdEnrichmentFilter",
+        displayValue = "ID Enrichment Filter",
         category = Category.FILTER,
         description = """
                 Adds the attributes 'StreamId' and 'EventId' to the 'event' element to enrich the event \
@@ -59,7 +61,7 @@ import java.util.Set;
                 PipelineElementType.VISABILITY_STEPPING,
                 PipelineElementType.ROLE_MUTATOR},
         icon = SvgImage.PIPELINE_ID)
-public class IdEnrichmentFilter extends AbstractXMLFilter {
+public class IdEnrichmentFilter extends AbstractXMLFilter implements SteppingCounter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IdEnrichmentFilter.class);
 
@@ -74,6 +76,7 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
 
     private int depth;
     private long count;
+    private String cachedStreamIdStr;
 
     @Inject
     public IdEnrichmentFilter(final MetaHolder metaHolder,
@@ -105,6 +108,21 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
         } finally {
             super.startStream();
         }
+    }
+
+    /**
+     * The {@code EventId} this filter writes is a running count over the whole stream, so a replayed record
+     * has to be told what the count was before it. Without this it would restart at zero and label a
+     * mid-stream event as event 1.
+     */
+    @Override
+    public long getSteppingCount() {
+        return count;
+    }
+
+    @Override
+    public void setSteppingCount(final long count) {
+        this.count = count;
     }
 
     @Override
@@ -150,7 +168,7 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 // This is a first level element.
                 count++;
 
-                String eventId;
+                final String eventId;
                 // If we are using this is search result output then we need to
                 // get event ids from a list.
                 if (eventIds != null) {
@@ -202,7 +220,10 @@ public class IdEnrichmentFilter extends AbstractXMLFilter {
                 }
 
                 // Add the ids to the element.
-                idAtts.addAttribute(URI, STREAM_ID, STREAM_ID, STRING, String.valueOf(streamId));
+                if (cachedStreamIdStr == null) {
+                    cachedStreamIdStr = String.valueOf(streamId);
+                }
+                idAtts.addAttribute(URI, STREAM_ID, STREAM_ID, STRING, cachedStreamIdStr);
                 idAtts.addAttribute(URI, EVENT_ID, EVENT_ID, STRING, eventId);
 
                 newAtts = idAtts;

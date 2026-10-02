@@ -27,9 +27,10 @@ import stroom.pipeline.parser.CombinedParser;
 import stroom.pipeline.parser.CombinedParser.Mode;
 import stroom.pipeline.parser.XMLParser;
 import stroom.pipeline.reader.ByteStreamDecoder.DecodedChar;
-import stroom.pipeline.stepping.Recorder;
+import stroom.pipeline.stepping.capture.Recorder;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -273,7 +274,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             }
         }
 
-        private char charAt(int index) {
+        private char charAt(final int index) {
             return stringBuilder.charAt(index);
         }
 
@@ -310,7 +311,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
         private final ByteBuffer byteBuffer = new ByteBuffer();
         private final RangeMode rangeMode;
         private final ErrorReceiverProxy errorReceiverProxy;
-        private final String elementId;
+        private final ElementId elementId;
 
         private int lineNo = BASE_LINE_NO;
         private int colNo = BASE_COL_NO;
@@ -319,7 +320,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                     final String encoding,
                     final RangeMode rangeMode,
                     final ErrorReceiverProxy errorReceiverProxy,
-                    final String elementId) {
+                    final ElementId elementId) {
             super(in);
             this.encoding = encoding;
             this.rangeMode = rangeMode;
@@ -401,7 +402,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
 
             boolean found = false;
             boolean inRecord = false;
-            boolean isEndInclusive = rangeMode.isEndInclusive();
+            final boolean isEndInclusive = rangeMode.isEndInclusive();
 
             int advance = 0;
             final MutableInt offset = new MutableInt(0);
@@ -529,7 +530,7 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             clear();
         }
 
-        private byte byteAt(int index) {
+        private byte byteAt(final int index) {
             return byteBuffer.getByte(index);
         }
 

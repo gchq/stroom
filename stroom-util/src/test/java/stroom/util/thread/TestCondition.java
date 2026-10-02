@@ -60,7 +60,7 @@ class TestCondition {
             System.out.println("sleep");
             lock.lock();
             try {
-                boolean didWait = condition.await(10, TimeUnit.SECONDS);
+                final boolean didWait = condition.await(10, TimeUnit.SECONDS);
                 System.out.println("didWait=" + didWait);
             } finally {
                 lock.unlock();

@@ -16,7 +16,7 @@ public class AceDefaultCommandLine implements AceCommandLine {
      *
      * @param textBox any GWT value box like TextBox or TextArea
      */
-    public AceDefaultCommandLine(ValueBoxBase<String> textBox) {
+    public AceDefaultCommandLine(final ValueBoxBase<String> textBox) {
         this.textBox = textBox;
     }
 
@@ -53,7 +53,7 @@ public class AceDefaultCommandLine implements AceCommandLine {
      * @param value text to be placed into command line
      */
     @Override
-    public void setValue(String value) {
+    public void setValue(final String value) {
         textBox.setValue(value);
     }
 }

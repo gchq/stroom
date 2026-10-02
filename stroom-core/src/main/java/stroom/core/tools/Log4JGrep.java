@@ -23,31 +23,31 @@ import java.io.LineNumberReader;
 
 public class Log4JGrep {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
         new Log4JGrep().doMain(System.in, args);
 
     }
 
-    public void doMain(InputStream is, String[] args) throws IOException {
-        LineNumberReader reader = new LineNumberReader(new InputStreamReader(is));
-        int startPos = Integer.parseInt(args[0]);
+    public void doMain(final InputStream is, final String[] args) throws IOException {
+        final LineNumberReader reader = new LineNumberReader(new InputStreamReader(is));
+        final int startPos = Integer.parseInt(args[0]);
 
         String line;
 
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
 
         while ((line = reader.readLine()) != null) {
-            String upperLine = line.toUpperCase();
+            final String upperLine = line.toUpperCase();
             builder.setLength(0);
             builder.append(line, 0, startPos);
 
             for (int i = 1; i < args.length; i++) {
                 builder.append(",");
-                String upperMatch = args[i].toUpperCase();
-                int pos = upperLine.indexOf(upperMatch);
+                final String upperMatch = args[i].toUpperCase();
+                final int pos = upperLine.indexOf(upperMatch);
                 if (pos > 0) {
                     for (int lp = pos; lp < line.length(); lp++) {
-                        char c = line.charAt(lp);
+                        final char c = line.charAt(lp);
                         if (c == ',' || c == ' ') {
                             break;
                         }

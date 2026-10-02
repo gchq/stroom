@@ -42,7 +42,7 @@ public class ReaderLocator extends WrappedReader implements Locator {
     }
 
     @Override
-    public int read(char[] cbuf, int off, int len) throws IOException {
+    public int read(final char[] cbuf, final int off, final int len) throws IOException {
         final int length = super.read(cbuf, off, len);
         for (int i = 0; i < length; i++) {
             processChar(cbuf[i]);
@@ -51,7 +51,7 @@ public class ReaderLocator extends WrappedReader implements Locator {
     }
 
     @Override
-    public int read(char[] cbuf) throws IOException {
+    public int read(final char[] cbuf) throws IOException {
         final int length = super.read(cbuf);
         for (int i = 0; i < length; i++) {
             processChar(cbuf[i]);

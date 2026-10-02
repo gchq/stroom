@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ package stroom.view.client.presenter;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.security.shared.DocumentPermission;
 import stroom.ui.config.client.UiConfigCache;
@@ -38,7 +38,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsView, ViewDoc> {
+public class ViewSettingsPresenter extends DocPresenter<ViewSettingsView, ViewDoc> {
 
     private final RestFactory restFactory;
     private final DocSelectionBoxPresenter dataSourceSelectionPresenter;
@@ -65,6 +65,7 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
         dataSourceSelectionPresenter.setNodeFlags(NodeFlag.DATA_SOURCE);
         dataSourceSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
+        dataSourceSelectionPresenter.setItemType("Data Source");
 
         pipelineSelectionPresenter.setIncludedTypes(PipelineDoc.TYPE);
         pipelineSelectionPresenter.setRequiredPermissions(DocumentPermission.USE);
@@ -87,9 +88,9 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
     }
 
     private void registerHandlers() {
-        registerHandler(dataSourceSelectionPresenter.addDataSelectionHandler(event -> setDirty(true)));
-        registerHandler(pipelineSelectionPresenter.addDataSelectionHandler(event -> setDirty(true)));
-        registerHandler(expressionPresenter.addDirtyHandler(event -> setDirty(true)));
+        registerHandler(dataSourceSelectionPresenter.addDataSelectionHandler(event -> onChange()));
+        registerHandler(pipelineSelectionPresenter.addDataSelectionHandler(event -> onChange()));
+        registerHandler(expressionPresenter.addChangeHandler(this::onChange));
     }
 
     @Override
@@ -110,10 +111,12 @@ public class ViewSettingsPresenter extends DocumentEditPresenter<ViewSettingsVie
 
     @Override
     protected ViewDoc onWrite(final ViewDoc entity) {
-        entity.setDataSource(dataSourceSelectionPresenter.getSelectedEntityReference());
-        entity.setPipeline(pipelineSelectionPresenter.getSelectedEntityReference());
-        entity.setFilter(expressionPresenter.write());
-        return entity;
+        return entity
+                .copy()
+                .dataSource(dataSourceSelectionPresenter.getSelectedEntityReference())
+                .pipeline(pipelineSelectionPresenter.getSelectedEntityReference())
+                .filter(expressionPresenter.write())
+                .build();
     }
 
 

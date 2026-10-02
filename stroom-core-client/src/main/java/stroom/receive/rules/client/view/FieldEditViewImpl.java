@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.client.view;
 
-import stroom.datasource.api.v2.FieldType;
 import stroom.item.client.SelectionBox;
+import stroom.query.api.datasource.FieldType;
 import stroom.receive.rules.client.presenter.FieldEditPresenter.FieldEditView;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -28,7 +27,20 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
+
+    private static final Set<FieldType> VALID_FIELD_TYPES = EnumSet.of(
+            FieldType.TEXT,
+            FieldType.DATE,
+            FieldType.INTEGER,
+            FieldType.LONG,
+            FieldType.FLOAT,
+            FieldType.DOUBLE,
+            FieldType.BOOLEAN,
+            FieldType.IPV4_ADDRESS);
 
     private final Widget widget;
     @UiField
@@ -39,7 +51,7 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     @Inject
     public FieldEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-        type.addItems(FieldType.TYPES);
+        type.addItems(VALID_FIELD_TYPES);
     }
 
     @Override
@@ -71,6 +83,10 @@ public class FieldEditViewImpl extends ViewImpl implements FieldEditView {
     public void focus() {
         type.focus();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, FieldEditViewImpl> {
 

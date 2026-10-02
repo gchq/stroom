@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.lmdb;
 
 import stroom.bytebuffer.ByteBufferPool;
@@ -36,7 +52,17 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
     public static final int ITERATIONS = 1_000_000;
     public static final int ROUNDS = 7;
 
+    // These are manual perf tests writing ITERATIONS entries, so they need far more than the small
+    // default the base class uses for the tests that actually run in CI. This is the size they were
+    // getting from that default before it was reduced.
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+
     private final ByteBufferPool byteBufferPool = new ByteBufferPoolFactory().getByteBufferPool();
+
+    @Override
+    protected ByteSize getMaxSizeBytes() {
+        return DB_MAX_SIZE;
+    }
 
     private BasicLmdbDb<Integer, String> db1;
     private BasicLmdbDb<Integer, String> db2;
@@ -265,7 +291,7 @@ public class TestLmdbPerformance extends AbstractDualEnvLmdbTest {
             DurationTimer timer = DurationTimer.start();
             putValues(db, false, isOrdered, inputData);
             timer.stop();
-            double bytesPerEntry = lmdbEnv.getSizeOnDisk() / (double) db.getEntryCount();
+            final double bytesPerEntry = lmdbEnv.getSizeOnDisk() / (double) db.getEntryCount();
             LOGGER.info("{} puts,    size on disk: {}, bytes/entry: {}, time: {}, entry count: {}",
                     ModelStringUtil.formatCsv(iterations),
                     ByteSize.ofBytes(lmdbEnv.getSizeOnDisk()),

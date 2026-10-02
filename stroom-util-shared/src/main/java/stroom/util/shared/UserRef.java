@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import stroom.util.shared.string.CaseType;
@@ -42,9 +58,12 @@ public final class UserRef {
                    @JsonProperty("subjectId") final String subjectId,
                    @JsonProperty("displayName") final String displayName,
                    @JsonProperty("fullName") final String fullName,
-                   @JsonProperty("group") final boolean group,
-                   @JsonProperty("enabled") final boolean enabled) {
-        if (group && !enabled) {
+                   @JsonProperty("group") final Boolean group,
+                   @JsonProperty("enabled") final Boolean enabled) {
+        this.group = Objects.requireNonNullElse(group, false);
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+
+        if (this.group && !this.enabled) {
             throw new IllegalArgumentException("Groups cannot be disabled");
         }
 
@@ -52,8 +71,6 @@ public final class UserRef {
         this.subjectId = subjectId;
         this.displayName = displayName;
         this.fullName = fullName;
-        this.group = group;
-        this.enabled = enabled;
     }
 
     /**
@@ -176,7 +193,7 @@ public final class UserRef {
     }
 
     public String toDisplayString(final DisplayType displayType) {
-        final Function<UserRef, String> displayTextFunc = NullSafe.requireNonNullElse(
+        final Function<UserRef, String> displayTextFunc = Objects.requireNonNullElse(
                         displayType, DisplayType.AUTO)
                 .getDisplayTextFunc();
         return displayTextFunc.apply(this);
@@ -188,7 +205,7 @@ public final class UserRef {
         } else if (subjectId != null) {
             return subjectId;
         } else {
-            return NullSafe.requireNonNullElseGet(fullName, () ->
+            return Objects.requireNonNullElseGet(fullName, () ->
                     "{" + uuid + "}");
         }
     }

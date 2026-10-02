@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,17 @@ import java.nio.file.Path;
 public class MockResourceStore implements ResourceStore {
 
     @Override
-    public ResourceKey createTempFile(String name) {
+    public ResourceKey createTempFile(final String name) {
         return null;
     }
 
     @Override
-    public Path getTempFile(ResourceKey key) {
+    public Path getTempFile(final ResourceKey key) {
         return null;
     }
 
     @Override
-    public void deleteTempFile(ResourceKey key) {
+    public void deleteTempFile(final ResourceKey key) {
     }
 
 }

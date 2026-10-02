@@ -17,11 +17,11 @@
 package stroom.core.servlet;
 
 import stroom.util.servlet.SessionIdProvider;
+import stroom.util.servlet.SessionUtil;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 
 class SessionIdProviderImpl implements SessionIdProvider {
 
@@ -37,14 +37,6 @@ class SessionIdProviderImpl implements SessionIdProvider {
      */
     @Override
     public String get() {
-        final HttpServletRequest request = httpServletRequestProvider.get();
-        if (request != null) {
-            final HttpSession httpSession = request.getSession(false);
-            if (httpSession != null) {
-                return httpSession.getId();
-            }
-        }
-
-        return null;
+        return SessionUtil.getSessionId(httpServletRequestProvider.get());
     }
 }

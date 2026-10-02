@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common;
 
 import stroom.util.io.FileUtil;
@@ -7,6 +23,7 @@ import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -45,12 +62,15 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
     public TemporaryPathCreator(final Path tempBaseDir) {
         try {
             baseDir = tempBaseDir;
-            LOGGER.debug(() -> "Created directory " + baseDir.toAbsolutePath().normalize());
             homeDir = baseDir.resolve("home");
             tempDir = baseDir.resolve("temp");
+            LOGGER.debug(() -> LogUtil.message(
+                    "Created home dir: {}, temp dir: {}",
+                    homeDir.toAbsolutePath().normalize(),
+                    tempDir.toAbsolutePath().normalize()));
             Files.createDirectories(homeDir);
             Files.createDirectories(tempDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error creating temp dir with prefix 'stroom'", e);
         }
         homeDirProvider = () -> homeDir;
@@ -66,8 +86,16 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
         FileUtil.deleteDir(baseDir);
     }
 
+    public Path getTempDir() {
+        return tempDirProvider.get();
+    }
+
     public TempDirProvider getTempDirProvider() {
         return tempDirProvider;
+    }
+
+    public Path getHomeDir() {
+        return homeDirProvider.get();
     }
 
     public HomeDirProvider getHomeDirProvider() {
@@ -116,17 +144,17 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
 
     @Override
     public String replace(final String path,
-                          final String type,
+                          final String var,
                           final LongSupplier replacementSupplier,
                           final int pad) {
-        return delegate.replace(path, type, replacementSupplier, pad);
+        return delegate.replace(path, var, replacementSupplier, pad);
     }
 
     @Override
-    public String replace(final String path,
-                          final String type,
+    public String replace(final String str,
+                          final String var,
                           final Supplier<String> replacementSupplier) {
-        return delegate.replace(path, type, replacementSupplier);
+        return delegate.replace(str, var, replacementSupplier);
     }
 
     @Override
@@ -157,7 +185,7 @@ public class TemporaryPathCreator implements PathCreator, AutoCloseable {
                     "0");
             final String prefix = "stroom_" + gradleWorker + "_";
             return Files.createTempDirectory(prefix);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }

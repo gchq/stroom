@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,8 +16,8 @@
 
 package stroom.pipeline.shared.stepping;
 
-import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.pipeline.shared.PipelineDoc;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.Map;
+import java.util.Objects;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PipelineStepRequest {
@@ -45,7 +46,7 @@ public class PipelineStepRequest {
     @JsonProperty
     private final Map<String, SteppingFilterSettings> stepFilterMap;
     @JsonProperty
-    private final DocRef pipeline;
+    private final PipelineDoc pipelineDoc;
     @JsonProperty
     private final Map<String, String> code;
     @JsonProperty
@@ -61,9 +62,9 @@ public class PipelineStepRequest {
                                @JsonProperty("stepLocation") final StepLocation stepLocation,
                                @JsonProperty("stepType") final StepType stepType,
                                @JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
-                               @JsonProperty("pipeline") final DocRef pipeline,
+                               @JsonProperty("pipelineDoc") final PipelineDoc pipelineDoc,
                                @JsonProperty("code") final Map<String, String> code,
-                               @JsonProperty("stepSize") int stepSize,
+                               @JsonProperty("stepSize") final Integer stepSize,
                                @JsonProperty("timeout") final Long timeout) {
         this.sessionUuid = sessionUuid;
         this.criteria = criteria;
@@ -71,9 +72,9 @@ public class PipelineStepRequest {
         this.stepLocation = stepLocation;
         this.stepType = stepType;
         this.stepFilterMap = stepFilterMap;
-        this.pipeline = pipeline;
+        this.pipelineDoc = pipelineDoc;
         this.code = code;
-        this.stepSize = stepSize;
+        this.stepSize = Objects.requireNonNullElse(stepSize, 0);
         this.timeout = timeout;
     }
 
@@ -89,8 +90,8 @@ public class PipelineStepRequest {
         return childStreamType;
     }
 
-    public DocRef getPipeline() {
-        return pipeline;
+    public PipelineDoc getPipelineDoc() {
+        return pipelineDoc;
     }
 
     public Map<String, String> getCode() {
@@ -140,7 +141,7 @@ public class PipelineStepRequest {
         private StepLocation stepLocation;
         private StepType stepType;
         private Map<String, SteppingFilterSettings> stepFilterMap;
-        private DocRef pipeline;
+        private PipelineDoc pipelineDoc;
         private Map<String, String> code;
         private int stepSize = 1;
         private Long timeout = 1000L;
@@ -148,14 +149,14 @@ public class PipelineStepRequest {
         private Builder() {
         }
 
-        private Builder(PipelineStepRequest request) {
+        private Builder(final PipelineStepRequest request) {
             this.sessionUuid = request.sessionUuid;
             this.criteria = request.criteria;
             this.childStreamType = request.childStreamType;
             this.stepLocation = request.stepLocation;
             this.stepType = request.stepType;
             this.stepFilterMap = request.stepFilterMap;
-            this.pipeline = request.pipeline;
+            this.pipelineDoc = request.pipelineDoc;
             this.code = request.code;
             this.stepSize = request.stepSize;
             this.timeout = request.timeout;
@@ -191,8 +192,8 @@ public class PipelineStepRequest {
             return this;
         }
 
-        public Builder pipeline(final DocRef pipeline) {
-            this.pipeline = pipeline;
+        public Builder pipelineDoc(final PipelineDoc pipelineDoc) {
+            this.pipelineDoc = pipelineDoc;
             return this;
         }
 
@@ -219,7 +220,7 @@ public class PipelineStepRequest {
                     stepLocation,
                     stepType,
                     stepFilterMap,
-                    pipeline,
+                    pipelineDoc,
                     code,
                     stepSize,
                     timeout);

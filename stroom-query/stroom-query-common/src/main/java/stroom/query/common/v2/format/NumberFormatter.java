@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,7 @@
 
 package stroom.query.common.v2.format;
 
-import stroom.query.api.v2.NumberFormatSettings;
+import stroom.query.api.NumberFormatSettings;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValDate;
 import stroom.query.language.functions.ValDuration;
@@ -62,8 +62,8 @@ public class NumberFormatter implements Formatter {
     private static String asStringWithNoFormatting(final Val val) {
         Objects.requireNonNull(val);
         return switch (val) {
-            case ValDuration valDuration -> String.valueOf(valDuration.toLong());
-            case ValDate valDate -> String.valueOf(valDate.toLong());
+            case final ValDuration valDuration -> String.valueOf(valDuration.toLong());
+            case final ValDate valDate -> String.valueOf(valDate.toLong());
             default -> val.toString();
         };
     }
@@ -78,12 +78,12 @@ public class NumberFormatter implements Formatter {
         final int groupSize = useSeparators
                 ? 3
                 : 0;
-        if (numberFormat instanceof DecimalFormat decimalFormat) {
+        if (numberFormat instanceof final DecimalFormat decimalFormat) {
             decimalFormat.setGroupingSize(groupSize);
         }
 
         final int decimalPlaces = Objects.requireNonNullElse(formatSettings.getDecimalPlaces(), 0);
-        if (numberFormat instanceof DecimalFormat decimalFormat) {
+        if (numberFormat instanceof final DecimalFormat decimalFormat) {
             decimalFormat.setMinimumFractionDigits(decimalPlaces);
             decimalFormat.setMaximumFractionDigits(decimalPlaces);
         }

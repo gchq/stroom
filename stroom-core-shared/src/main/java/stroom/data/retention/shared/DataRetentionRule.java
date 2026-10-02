@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,7 @@
 package stroom.data.retention.shared;
 
 
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,54 +25,29 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlTransient;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Comparator;
 import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataRetentionRule", propOrder = {
-        "ruleNumber",
-        "creationTime",
-        "name",
-        "enabled",
-        "expression",
-        "age",
-        "timeUnit",
-        "forever"})
-@XmlRootElement(name = "dataRetentionRule")
 @JsonInclude(Include.NON_NULL)
 public class DataRetentionRule {
 
     public static final String FOREVER = "Forever";
 
-    @XmlElement(name = "ruleNumber")
     @JsonProperty
     private int ruleNumber;
-    @XmlElement(name = "creationTime")
     @JsonProperty
     private long creationTime;
-    @XmlElement(name = "name")
     @JsonProperty
     private String name;
-    @XmlElement(name = "enabled")
     @JsonProperty
     private boolean enabled;
-    @XmlElement(name = "expression")
     @JsonProperty
     private ExpressionOperator expression;
-    @XmlElement(name = "age")
     @JsonProperty
     private int age;
-    @XmlElement(name = "timeUnit")
     @JsonProperty
     private TimeUnit timeUnit;
-    @XmlElement(name = "forever")
     @JsonProperty
     private boolean forever;
 
@@ -80,22 +55,22 @@ public class DataRetentionRule {
     }
 
     @JsonCreator
-    public DataRetentionRule(@JsonProperty("ruleNumber") final int ruleNumber,
-                             @JsonProperty("creationTime") final long creationTime,
+    public DataRetentionRule(@JsonProperty("ruleNumber") final Integer ruleNumber,
+                             @JsonProperty("creationTime") final Long creationTime,
                              @JsonProperty("name") final String name,
-                             @JsonProperty("enabled") final boolean enabled,
+                             @JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("expression") final ExpressionOperator expression,
-                             @JsonProperty("age") final int age,
+                             @JsonProperty("age") final Integer age,
                              @JsonProperty("timeUnit") final TimeUnit timeUnit,
-                             @JsonProperty("forever") final boolean forever) {
-        this.ruleNumber = ruleNumber;
-        this.creationTime = creationTime;
+                             @JsonProperty("forever") final Boolean forever) {
+        this.ruleNumber = Objects.requireNonNullElse(ruleNumber, 0);
+        this.creationTime = Objects.requireNonNullElse(creationTime, 0L);
         this.name = name;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.expression = expression;
-        this.age = age;
+        this.age = Objects.requireNonNullElse(age, 0);
         this.timeUnit = timeUnit;
-        this.forever = forever;
+        this.forever = Objects.requireNonNullElse(forever, false);
     }
 
     public static DataRetentionRule foreverRule(final int ruleNumber,
@@ -166,7 +141,6 @@ public class DataRetentionRule {
         return forever;
     }
 
-    @XmlTransient
     @JsonIgnore
     public String getAgeString() {
 
@@ -215,7 +189,7 @@ public class DataRetentionRule {
     @Override
     public String toString() {
         // Create a rule name that includes the rule number.
-        String ruleName;
+        final String ruleName;
         if (name != null && !name.isEmpty()) {
             ruleName = ruleNumber + " " + name;
         } else {

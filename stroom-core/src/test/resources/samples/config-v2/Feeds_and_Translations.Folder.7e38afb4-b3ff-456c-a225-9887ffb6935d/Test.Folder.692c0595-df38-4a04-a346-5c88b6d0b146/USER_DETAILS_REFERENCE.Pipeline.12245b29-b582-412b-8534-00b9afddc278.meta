@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "12245b29-b582-412b-8534-00b9afddc278",
+  "name" : "USER-DETAILS-REFERENCE",
+  "version" : "da62231b-b008-4cec-8105-5904e3d9515b",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "7630b1ff-e65d-4744-b05f-0ea178a97a41",
+    "name" : "Common Test Reference Pipeline"
+  }
+}

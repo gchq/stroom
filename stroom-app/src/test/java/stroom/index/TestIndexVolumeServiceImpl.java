@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,16 +94,18 @@ public class TestIndexVolumeServiceImpl extends AbstractCoreIntegrationTest {
                             .computeIfAbsent(nodeName, k -> new ArrayList<>())
                             .add(path);
 
-                    final IndexVolume indexVolume = new IndexVolume();
-                    indexVolume.setIndexVolumeGroupId(volumeGroup.getId());
-                    indexVolume.setPath(path);
-                    indexVolume.setNodeName(nodeName);
-                    indexVolume.setState(i == 2
-                            ? VolumeUseState.CLOSED
-                            : VolumeUseState.ACTIVE);
-                    indexVolume.setBytesTotal(ByteSizeUnit.GIBIBYTE.longBytes(5));
-                    indexVolume.setBytesUsed(ByteSizeUnit.GIBIBYTE.longBytes(1));
-                    indexVolume.setBytesFree(ByteSizeUnit.GIBIBYTE.longBytes(4));
+                    final IndexVolume indexVolume = IndexVolume
+                            .builder()
+                            .indexVolumeGroupId(volumeGroup.getId())
+                            .path(path)
+                            .nodeName(nodeName)
+                            .state(i == 2
+                                    ? VolumeUseState.CLOSED
+                                    : VolumeUseState.ACTIVE)
+                            .bytesTotal(ByteSizeUnit.GIBIBYTE.longBytes(5))
+                            .bytesUsed(ByteSizeUnit.GIBIBYTE.longBytes(1))
+                            .bytesFree(ByteSizeUnit.GIBIBYTE.longBytes(4))
+                            .build();
 
                     final IndexVolume dbIndexVolume = indexVolumeService.create(indexVolume);
                     grpToNodeToVolMap.computeIfAbsent(groupName, k -> new HashMap<>())

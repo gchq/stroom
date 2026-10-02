@@ -1,0 +1,142 @@
+{
+  "components" : [ {
+    "type" : "table",
+    "id" : "table-IIO1T",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-JT8D7",
+      "fields" : [ {
+        "name" : "Year",
+        "expression" : "formatDate(floorYear(${ReportPeriod}), 'yyyy', '+0000')",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 112,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "AirCargoTons",
+        "expression" : "sum(${AirCargoTons})",
+        "sort" : {
+          "order" : 0,
+          "direction" : "DESCENDING"
+        },
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      }, {
+        "name" : "StreamId",
+        "expression" : "${StreamId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : false
+      }, {
+        "name" : "EventId",
+        "expression" : "${EventId}",
+        "width" : 200,
+        "visible" : false,
+        "special" : false
+      } ],
+      "extractionPipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "a7fed513-fb9c-4530-802f-54ef65e80589",
+        "name" : "LAX_CARGO_VOLUME-EXTRACTION"
+      },
+      "maxResults" : [ 1000000 ]
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-JT8D7",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Index",
+        "uuid" : "c9dd857d-324c-49b2-ab16-020d7e921dd8",
+        "name" : "LAX_CARGO_VOLUME"
+      },
+      "expression" : {
+        "type" : "operator",
+        "children" : [ {
+          "type" : "term",
+          "field" : "DataExtractDate",
+          "condition" : "BETWEEN",
+          "value" : "2000-10-01T00:00:00.000Z,2018-12-14T00:00:00.000Z"
+        } ]
+      },
+      "automate" : {
+        "open" : true,
+        "refresh" : false
+      }
+    }
+  }, {
+    "type" : "vis",
+    "id" : "vis-BX59A",
+    "name" : "Visualisation",
+    "settings" : {
+      "type" : "vis",
+      "tableId" : "table-IIO1T",
+      "visualisation" : {
+        "type" : "Visualisation",
+        "uuid" : "1eae814a-c11a-4cc5-865d-b906908a5b28",
+        "name" : "TrafficLights"
+      },
+      "json" : "{\"field\":\"AirCargoTons\", \"gridSeries\":\"Year\", \"maxGridSeries\":\"36\", \"sortGridSeries\":\"Descending\", \"ShowValue\":\"true\", \"RedHi\":\"1899999\", \"RedLo\":\"1500000\", \"AmberHi\":\"2499999\", \"AmberLo\":\"1900000\", \"GreenHi\":\"3000000\", \"GreenLo\":\"2500000\"}"
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "splitLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 148
+      },
+      "dimension" : 0,
+      "children" : [ {
+        "type" : "tabLayout",
+        "preferredSize" : {
+          "width" : 713,
+          "height" : 76
+        },
+        "tabs" : [ {
+          "id" : "query-JT8D7",
+          "visible" : true
+        } ],
+        "selected" : 0
+      }, {
+        "type" : "tabLayout",
+        "preferredSize" : {
+          "width" : 713,
+          "height" : 0
+        },
+        "tabs" : [ {
+          "id" : "table-IIO1T",
+          "visible" : true
+        } ],
+        "selected" : 0
+      } ]
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 869
+      },
+      "tabs" : [ {
+        "id" : "vis-BX59A",
+        "visible" : true
+      } ],
+      "selected" : 0
+    } ]
+  }
+}

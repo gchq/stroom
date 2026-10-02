@@ -69,7 +69,7 @@ public final class Characters extends BaseEvent {
      */
     @Override
     public void fire(final ContentHandler handler) throws SAXException {
-        char[] ch = chars.toCharArray();
+        final char[] ch = chars.toCharArray();
         handler.characters(ch, 0, ch.length);
     }
 

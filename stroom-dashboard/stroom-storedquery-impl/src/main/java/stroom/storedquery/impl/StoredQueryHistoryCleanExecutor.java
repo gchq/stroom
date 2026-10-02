@@ -12,11 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.storedquery.impl;
 
+import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.logging.LambdaLogger;
@@ -75,7 +75,7 @@ public class StoredQueryHistoryCleanExecutor {
         LOGGER.debug(() -> LogUtil.message("Found {} userUuids", userUuids.size()));
 
         userUuids.forEach(ownerUuid -> {
-            final String userDisplayName = userRefLookup.getByUuid(ownerUuid)
+            final String userDisplayName = userRefLookup.getByUuid(ownerUuid, FindUserContext.RUN_AS)
                     .map(UserRef::toInfoString)
                     .orElse("?");
 

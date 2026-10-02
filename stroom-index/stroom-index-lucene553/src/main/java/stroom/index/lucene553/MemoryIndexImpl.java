@@ -1,9 +1,25 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.lucene553;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.shared.LuceneIndexField;
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.datasource.IndexField;
 import stroom.search.extraction.FieldValue;
 import stroom.search.impl.SearchException;
 import stroom.util.logging.LambdaLogger;
@@ -42,7 +58,7 @@ class MemoryIndexImpl implements stroom.search.extraction.MemoryIndex {
             if (luceneIndexField.isIndexed()) {
                 final Analyzer fieldAnalyzer = searchExpressionQueryCache.getAnalyser(luceneIndexField);
                 final IndexableField field = FieldFactory.create(fieldValue);
-                TokenStream tokenStream = field.tokenStream(fieldAnalyzer, null);
+                final TokenStream tokenStream = field.tokenStream(fieldAnalyzer, null);
                 if (tokenStream != null) {
                     memoryIndex.addField(field.name(), tokenStream, field.boost());
                 }

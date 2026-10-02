@@ -1,6 +1,23 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.repo;
 
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -9,6 +26,7 @@ import stroom.util.thread.StroomThreadGroup;
 
 import io.dropwizard.lifecycle.Managed;
 
+import java.time.Duration;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
@@ -20,6 +38,11 @@ import java.util.function.Supplier;
 public class ParallelExecutor implements Managed {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ParallelExecutor.class);
+
+    /**
+     * How long {@link #stop()} waits for interrupted tasks to finish before giving up on them.
+     */
+    private static final Duration TERMINATION_TIMEOUT = Duration.ofSeconds(30);
 
     private final ExecutorService executorService;
     private final Supplier<Runnable> runnableSupplier;
@@ -110,19 +133,45 @@ public class ParallelExecutor implements Managed {
         isStopped.set(false);
     }
 
+    /**
+     * Note this method is deliberately <b>not</b> synchronized, unlike its siblings.
+     * <p>
+     * Waiting for termination while holding this object's monitor deadlocks: a worker finishing its current
+     * task takes the same monitor in {@link #run()}'s finally block to decide whether to release its permit,
+     * so the thread we are waiting for cannot finish until we let go of the lock we are holding while
+     * waiting. Only the state change below needs the monitor; the wait must happen outside it.
+     * </p>
+     * <p>
+     * Mutual exclusion between concurrent callers is provided by the {@code isStopping} compare-and-set
+     * rather than by the monitor, and {@link #start()} refuses to run once that flag is set.
+     * </p>
+     */
     @Override
-    public synchronized void stop() throws Exception {
+    public void stop() throws Exception {
         if (isStopping.compareAndSet(false, true)) {
-            if (isPaused.get()) {
-                // We need to release the blocked threads so the executor can shut down
-                resume();
+            synchronized (this) {
+                if (isPaused.get()) {
+                    // We need to release the blocked threads so the executor can shut down
+                    resume();
+                }
             }
-            LOGGER.debug("Stopping parallel executor '{}', threadCount: {}",
+            LOGGER.info("Stopping parallel executor '{}', threadCount: {}",
                     threadNamePrefix, threadCount);
+            final DurationTimer timer = DurationTimer.start();
             executorService.shutdownNow();
-            final boolean didTerminate = executorService.awaitTermination(1, TimeUnit.DAYS);
-            LOGGER.debug("Stopped parallel executor '{}', threadCount: {}, didTerminate: {}",
-                    threadNamePrefix, threadCount, didTerminate);
+            final boolean didTerminate = executorService.awaitTermination(
+                    TERMINATION_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+            if (didTerminate) {
+                LOGGER.info("Stopped parallel executor '{}', threadCount: {}, duration: {}",
+                        threadNamePrefix, threadCount, timer);
+            } else {
+                // Bounded on purpose. An unbounded wait here turns a stuck task into a shutdown that never
+                // completes, which is worse than abandoning the thread: the tasks have already been
+                // interrupted, and nothing after this depends on them having finished.
+                LOGGER.error("Timed out after {} waiting for parallel executor '{}' to stop, threadCount: {}. " +
+                             "One or more tasks did not respond to interruption and have been abandoned.",
+                        TERMINATION_TIMEOUT, threadNamePrefix, threadCount);
+            }
             isStopped.set(true);
         } else {
             throw new IllegalStateException(LogUtil.message(
@@ -157,7 +206,7 @@ public class ParallelExecutor implements Managed {
                     }
                     // Got our permit, so run the task
                     runTask();
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     // Don't reset the interrupted flag as the thread is going straight back to the pool
                     throw new UncheckedInterruptedException(e);
                 } finally {
@@ -197,7 +246,11 @@ public class ParallelExecutor implements Managed {
             LOGGER.debug("Running task");
             try {
                 task.run();
-            } catch (Exception e) {
+            } catch (final UncheckedInterruptedException e) {
+                // Swallow the exception to keep this thread running
+                LOGGER.debug("Parallel executor interrupted: '{}' task: {}",
+                        threadNamePrefix, LogUtil.exceptionMessage(e), e);
+            } catch (final Exception e) {
                 // Swallow the exception to keep this thread running
                 LOGGER.error("Error running parallel executor '{}' task: {}",
                         threadNamePrefix, LogUtil.exceptionMessage(e), e);

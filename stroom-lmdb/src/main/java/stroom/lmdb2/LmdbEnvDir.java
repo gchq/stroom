@@ -1,12 +1,29 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.lmdb2;
 
-import stroom.lmdb.LmdbEnv;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -35,8 +52,23 @@ public class LmdbEnvDir {
         return envDir;
     }
 
+    public void ensureExists() {
+        try {
+            Files.createDirectories(envDir);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(LogUtil.message("Error ensuring directory '{}' exists"), e);
+        }
+    }
+
     /**
-     * Deletes {@link LmdbEnv} from the filesystem if it is already closed.
+     * Deletes this env's dir, or its files if the dir is not dedicated to the env,
+     * UNCONDITIONALLY. This class holds no reference to an env so it cannot tell whether one is
+     * open here; the caller must ensure it is closed first. Deleting the files of an open env
+     * leaves that env mapping unlinked files, so anything it writes is silently lost.
+     * <p>
+     * Prefer {@link stroom.lmdb2.LmdbEnv#delete()}, which refuses unless its own env is closed.
+     * Call this directly only where the caller can show no env is open here, which means
+     * accounting for envs held open elsewhere, e.g. by a pool, not just ones it opened itself.
      */
     public void delete() {
         LOGGER.debug("Deleting LMDB environment {} and all its contents", this);
@@ -64,7 +96,7 @@ public class LmdbEnvDir {
             try {
                 LOGGER.info("Deleting file {}", FileUtil.getCanonicalPath(file));
                 Files.delete(file);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException("Unable to delete file: " + FileUtil.getCanonicalPath(file));
             }
         } else {
@@ -74,7 +106,7 @@ public class LmdbEnvDir {
 
     private void dumpMdbFileSize() {
         if (Files.isDirectory(envDir)) {
-            try (Stream<Path> stream = Files.list(envDir)) {
+            try (final Stream<Path> stream = Files.list(envDir)) {
                 stream
                         .filter(path ->
                                 !Files.isDirectory(path))
@@ -84,9 +116,9 @@ public class LmdbEnvDir {
                             try {
                                 final long fileSizeBytes = Files.size(file);
                                 return envDir.getFileName().resolve(file.getFileName())
-                                        + " - file size: "
-                                        + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
-                            } catch (IOException e) {
+                                       + " - file size: "
+                                       + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
+                            } catch (final IOException e) {
                                 throw new RuntimeException(e);
                             }
                         })
@@ -106,6 +138,6 @@ public class LmdbEnvDir {
 
     public static boolean isLmdbDataFile(final Path file) {
         return file != null
-                && (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
+               && (file.endsWith(DATA_FILE_NAME) || file.endsWith(LOCK_FILE_NAME));
     }
 }

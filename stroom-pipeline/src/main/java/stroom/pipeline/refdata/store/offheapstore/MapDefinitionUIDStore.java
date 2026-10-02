@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
@@ -193,8 +209,8 @@ public class MapDefinitionUIDStore {
     }
 
     public long getEntryCount() {
-        long entryCountForward = mapUidForwardDb.getEntryCount();
-        long entryCountReverse = mapUidReverseDb.getEntryCount();
+        final long entryCountForward = mapUidForwardDb.getEntryCount();
+        final long entryCountReverse = mapUidReverseDb.getEntryCount();
 
         if (entryCountForward != entryCountReverse) {
             throw new RuntimeException(LogUtil.message("Entry counts don't match, forward {}, reverse {}",
@@ -261,7 +277,7 @@ public class MapDefinitionUIDStore {
         LOGGER.trace(() -> "nextUidKeyBuffer " + ByteBufferUtils.byteBufferToHexAll(nextUidKeyBuffer));
 
         // ensure it is ready for reading again as we are returning it
-        UID mapUid = UID.wrap(nextUidKeyBuffer);
+        final UID mapUid = UID.wrap(nextUidKeyBuffer);
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("nextUidKeyBuffer {}", ByteBufferUtils.byteBufferInfo(nextUidKeyBuffer));

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common.data;
 
 import org.assertj.core.api.Assertions;
@@ -33,10 +49,10 @@ public class TestDataGenerator {
 
     @Test
     public void testCsv_default() {
-        DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
+        final DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
-        int recCount = 10;
-        Queue<String> lines = new ConcurrentLinkedQueue<>();
+        final int recCount = 10;
+        final Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(FlatDataWriterBuilder.defaultCsvFormat())
                 .rowCount(recCount)
@@ -52,10 +68,10 @@ public class TestDataGenerator {
 
     @Test
     public void testCsv_custom() {
-        DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
+        final DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
-        int recCount = 10;
-        Queue<String> lines = new ConcurrentLinkedQueue<>();
+        final int recCount = 10;
+        final Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(FlatDataWriterBuilder.builder()
                         .delimitedBy("|")
@@ -76,11 +92,11 @@ public class TestDataGenerator {
 
     @Test
     public void testMultiLineFileOutputConsumer() {
-        DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
+        final DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
-        int recCount = 10;
-        Path outFile = getTempFilePath();
-        Queue<String> lines = new ConcurrentLinkedQueue<>();
+        final int recCount = 10;
+        final Path outFile = getTempFilePath();
+        final Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(FlatDataWriterBuilder.defaultCsvFormat())
                 .rowCount(recCount)
@@ -98,11 +114,11 @@ public class TestDataGenerator {
 
     @Test
     public void testSingleLineFileOutputConsumer() {
-        DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
+        final DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
-        int recCount = 10;
-        Path outFile = getTempFilePath();
-        Queue<String> lines = new ConcurrentLinkedQueue<>();
+        final int recCount = 10;
+        final Path outFile = getTempFilePath();
+        final Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(FlatDataWriterBuilder.defaultCsvFormat())
                 .rowCount(recCount)
@@ -120,10 +136,10 @@ public class TestDataGenerator {
 
     @Test
     public void testXmlElements_default() {
-        DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
+        final DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
-        int recCount = 10;
-        Queue<String> lines = new ConcurrentLinkedQueue<>();
+        final int recCount = 10;
+        final Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(XmlElementsDataWriterBuilder.defaultXmlElementFormat())
                 .rowCount(recCount)
@@ -140,10 +156,10 @@ public class TestDataGenerator {
 
     @Test
     public void testXmlElements_custom() {
-        DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
+        final DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
-        int recCount = 10;
-        Queue<String> lines = new ConcurrentLinkedQueue<>();
+        final int recCount = 10;
+        final Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(XmlElementsDataWriterBuilder.builder()
                         .namespace("myNamespace")
@@ -164,10 +180,10 @@ public class TestDataGenerator {
 
     @Test
     public void testXmlAttributes_default() {
-        DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
+        final DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
-        int recCount = 10;
-        Queue<String> lines = new ConcurrentLinkedQueue<>();
+        final int recCount = 10;
+        final Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(XmlAttributesDataWriterBuilder.defaultXmlElementFormat())
                 .rowCount(recCount)
@@ -184,10 +200,10 @@ public class TestDataGenerator {
 
     @Test
     public void testXmlAttributes_custom() {
-        DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
+        final DataGenerator.DefinitionBuilder builder = buildBasicDefinition();
 
-        int recCount = 10;
-        Queue<String> lines = new ConcurrentLinkedQueue<>();
+        final int recCount = 10;
+        final Queue<String> lines = new ConcurrentLinkedQueue<>();
         builder
                 .setDataWriter(XmlAttributesDataWriterBuilder.builder()
                         .namespace("myNamespace")
@@ -209,13 +225,13 @@ public class TestDataGenerator {
 
     @Test
     public void testRandomWordsField_singleItem() {
-        Field field = DataGenerator.randomWordsField(
+        final Field field = DataGenerator.randomWordsField(
                 "myField",
                 2,
                 4,
                 Collections.singletonList("MY_SINGLE_VALUE"));
 
-        String val = field.getNext(new Random(), null);
+        final String val = field.getNext(new Random(), null);
 
         System.out.println("val = " + val);
     }
@@ -224,13 +240,13 @@ public class TestDataGenerator {
     public void testRandomWordsField_emptyList() {
         Assertions.assertThatExceptionOfType(RuntimeException.class)
                 .isThrownBy(() -> {
-                    Field field = DataGenerator.randomWordsField(
+                    final Field field = DataGenerator.randomWordsField(
                             "myField",
                             2,
                             4,
                             Collections.emptyList());
 
-                    String val = field.getNext(new Random(), null);
+                    final String val = field.getNext(new Random(), null);
                 })
                 .withMessageContaining("wordList must have size greater than zero");
     }
@@ -308,12 +324,12 @@ public class TestDataGenerator {
 
     private Path getTempFilePath() {
         try {
-            Path file = Files.createTempFile(tempDir, "stroom-test-", "");
+            final Path file = Files.createTempFile(tempDir, "stroom-test-", "");
             // Delete it to ensure we are testing its creation
             Files.delete(file);
             LOGGER.info("Using file path {}", file.toAbsolutePath().normalize().toString());
             return file;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }
@@ -322,7 +338,7 @@ public class TestDataGenerator {
         Objects.requireNonNull(file);
         Utils.checkArgument(Files.isReadable(file));
         try {
-            try (Stream<String> stringStream = Files.lines(file)) {
+            try (final Stream<String> stringStream = Files.lines(file)) {
                 final AtomicInteger counter = new AtomicInteger(0);
                 final String content = stringStream
                         .peek(str -> counter.incrementAndGet())
@@ -334,7 +350,7 @@ public class TestDataGenerator {
 
                 return counter.get();
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }

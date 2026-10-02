@@ -1,4 +1,20 @@
 /*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -121,8 +137,8 @@ public final class DefaultMonthSelector extends MonthSelector {
     }
 
     private InlineSvgButton createNavigationButton(
-            final SvgImage svgImage, final int noOfMonths, String styleName) {
-        InlineSvgButton button = new InlineSvgButton();
+            final SvgImage svgImage, final int noOfMonths, final String styleName) {
+        final InlineSvgButton button = new InlineSvgButton();
         button.setSvg(svgImage);
         button.addClickHandler(event -> addMonths(noOfMonths));
         button.addStyleName(styleName);
@@ -139,9 +155,9 @@ public final class DefaultMonthSelector extends MonthSelector {
         }
 
         monthListBox.addValueChangeHandler(e -> {
-            int previousMonth = getModel().getCurrentMonth().getMonth();
-            int newMonth = monthListBox.getValue().getValue();
-            int delta = newMonth - previousMonth;
+            final int previousMonth = getModel().getCurrentMonth().getMonth();
+            final int newMonth = monthListBox.getValue().getValue();
+            final int delta = newMonth - previousMonth;
             addMonths(delta);
         });
         monthListBox.addDomHandler(e -> {
@@ -158,9 +174,9 @@ public final class DefaultMonthSelector extends MonthSelector {
     private SelectionBox<IntItem> createYearSelect() {
         final SelectionBox<IntItem> yearListBox = new SelectionBox<>();
         yearListBox.addValueChangeHandler(e -> {
-            int previousYear = getModel().getCurrentMonth().getFullYear();
-            int newYear = yearListBox.getValue().getValue();
-            int delta = newYear - previousYear;
+            final int previousYear = getModel().getCurrentMonth().getFullYear();
+            final int newYear = yearListBox.getValue().getValue();
+            final int delta = newYear - previousYear;
             addMonths(delta * DateTimeModel.MONTHS_IN_YEAR);
         });
         yearListBox.addDomHandler(e -> {
@@ -176,27 +192,27 @@ public final class DefaultMonthSelector extends MonthSelector {
 
 
     private boolean isDatePickerConfigChanged() {
-        boolean isMonthCurrentlySelectable = monthSelect.getParent() != null;
-        boolean isYearNavigationCurrentlyEnabled = yearBackwards.getParent() != null;
+        final boolean isMonthCurrentlySelectable = monthSelect.getParent() != null;
+        final boolean isYearNavigationCurrentlyEnabled = yearBackwards.getParent() != null;
 
         return getDatePicker().isYearAndMonthDropdownVisible() != isMonthCurrentlySelectable ||
                 getDatePicker().isYearArrowsVisible() != isYearNavigationCurrentlyEnabled;
     }
 
-    private void setDate(UTCDate date) {
+    private void setDate(final UTCDate date) {
         if (getDatePicker().isYearAndMonthDropdownVisible()) {
             // setup months dropdown
-            int month = date.getMonth();
+            final int month = date.getMonth();
             monthSelect.setValue(new IntItem(getModel().formatMonth(month), month));
 
             // setup years dropdown
             yearSelect.clear();
 
-            int year = date.getFullYear();
-            int startYear = year - getNoOfYearsToDisplayBefore();
-            int endYear = year + getNoOfYearsToDisplayAfter();
+            final int year = date.getFullYear();
+            final int startYear = year - getNoOfYearsToDisplayBefore();
+            final int endYear = year + getNoOfYearsToDisplayAfter();
 
-            UTCDate newDate = UTCDate.create();
+            final UTCDate newDate = UTCDate.create();
 
             for (int i = startYear; i <= endYear; i++) {
                 newDate.setFullYear(i);
@@ -209,7 +225,7 @@ public final class DefaultMonthSelector extends MonthSelector {
         }
     }
 
-    private String formatYear(UTCDate newDate) {
+    private String formatYear(final UTCDate newDate) {
         final FormatOptions yearFormat = FormatOptions.builder().year(Year.NUMERIC).build();
         return IntlDateTimeFormat.format(newDate, IntlDateTimeFormat.DEFAULT_LOCALE, yearFormat);
     }

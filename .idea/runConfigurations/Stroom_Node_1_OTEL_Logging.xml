@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Stroom Node 1 OTEL Logging" type="Application" factoryName="Application" singleton="false">
+    <envs>
+      <env name="STROOM_RESOURCES_REPO_DIR" value="$PROJECT_DIR$/../stroom-resources" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="stroom.app.App" />
+    <module name="stroom.stroom-app.main" />
+    <option name="PROGRAM_PARAMETERS" value="server local.yml" />
+    <option name="VM_PARAMETERS" value="-DgwtSuperDevMode=true -Xmx4g -Devent.logging.validate=true --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED -javaagent:$USER_HOME$/otel/opentelemetry-javaagent.jar -Dotel.service.name=stroom" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

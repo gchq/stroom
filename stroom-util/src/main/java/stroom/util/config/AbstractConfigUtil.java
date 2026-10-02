@@ -1,14 +1,27 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.ObjectInfo;
-import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -40,11 +53,9 @@ public class AbstractConfigUtil {
             final Map<PropertyPath, Object> replacementValueMap) {
 
         final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap = new HashMap<>();
-        final ObjectMapper objectMapper = JsonUtil.getMapper();
-        ;
 
         // Walk the tree to get the object info for each branch
-        buildObjectInfoMap(objectMapper, config, basePath, objectInfoMap);
+        buildObjectInfoMap(config, basePath, objectInfoMap);
         // Take a copy so we can remove items as we go
         final Map<PropertyPath, Object> replacementValueMapCopy = new HashMap<>(replacementValueMap);
 
@@ -71,7 +82,6 @@ public class AbstractConfigUtil {
      * @param config The root config
      */
     public static void buildObjectInfoMap(
-            final ObjectMapper objectMapper,
             final AbstractConfig config,
             final PropertyPath path,
             final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap) {
@@ -79,7 +89,6 @@ public class AbstractConfigUtil {
         config.setBasePath(path);
 
         final ObjectInfo<AbstractConfig> objectInfo = PropertyUtil.getObjectInfo(
-                objectMapper,
                 path.getPropertyName(),
                 config);
 
@@ -104,7 +113,6 @@ public class AbstractConfigUtil {
                         if (childConfigObject != null) {
                             // Recurse into the child
                             buildObjectInfoMap(
-                                    objectMapper,
                                     childConfigObject,
                                     fullPath,
                                     objectInfoMap);
@@ -136,7 +144,7 @@ public class AbstractConfigUtil {
             final Map<String, Object> valueMap = new HashMap<>();
 
             // No replacement for the whole branch so check all its props
-            AtomicBoolean haveAnyPropsChanged = new AtomicBoolean(false);
+            final AtomicBoolean haveAnyPropsChanged = new AtomicBoolean(false);
             objectInfo.getPropertyMap().forEach((propName, prop) -> {
                 final PropertyPath propPath = config.getBasePath().merge(propName);
                 final Class<?> valueClass = prop.getValueClass();
@@ -155,7 +163,7 @@ public class AbstractConfigUtil {
                     if (existingPropValue != null
                         && AbstractConfig.class.isAssignableFrom(valueClass)) {
                         // Branch so recurse
-                        Object newPropValue = mutateBranch((AbstractConfig) existingPropValue,
+                        final Object newPropValue = mutateBranch((AbstractConfig) existingPropValue,
                                 objectInfoMap,
                                 replacementValueMap);
                         if (!Objects.equals(existingPropValue, newPropValue) && !haveAnyPropsChanged.get()) {

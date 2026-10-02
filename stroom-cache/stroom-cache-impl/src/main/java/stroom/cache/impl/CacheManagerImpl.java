@@ -109,7 +109,10 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
         return caches.containsKey(name);
     }
 
+    @Override
     public void registerCache(final String name, final StroomCache<?, ?> cache) {
+        Objects.requireNonNull(name);
+        Objects.requireNonNull(cache);
         if (exists(name)) {
             throw new CacheExistsException(name);
         }
@@ -124,7 +127,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
     public <K, V> StroomCache<K, V> getCache(final String name) {
         try {
             return (StroomCache<K, V>) caches.get(name);
-        } catch (ClassCastException e) {
+        } catch (final ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Cache {} is not of the expected type: {}", e.getMessage(), e));
         }
     }
@@ -133,7 +136,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
     public <K, V> LoadingStroomCache<K, V> getLoadingCache(final String name) {
         try {
             return (LoadingStroomCache<K, V>) caches.get(name);
-        } catch (ClassCastException e) {
+        } catch (final ClassCastException e) {
             throw new RuntimeException(LogUtil.message("Cache {} is not of the expected type: {}", e.getMessage(), e));
         }
     }
@@ -188,7 +191,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                                 try {
                                     // Try and serialise it
                                     JsonUtil.writeValueAsString(key);
-                                } catch (Exception e) {
+                                } catch (final Exception e) {
                                     return "Unable to serialise Key as JSON, dumping as string: "
                                            + key.toString().substring(0, 1_000);
                                 }
@@ -210,7 +213,7 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                 throw new RuntimeException(LogUtil.message("Unknown cache name {}", cacheName));
             }
         } else {
-            final List<String> cacheNames = caches.keySet()
+            final List<String> cacheNames = getCacheNames()
                     .stream()
                     .sorted()
                     .limit(limit)
@@ -239,5 +242,15 @@ public class CacheManagerImpl implements CacheManager, HasSystemInfo {
                 ParamInfo.optionalParam(PARAM_NAME_CACHE_NAME,
                         "The name of the cache to see the list of keys for. " +
                         "If not supplied a list of cache names will be returned"));
+    }
+
+    @Override
+    public List<NamedParamCombination> getNamedParamCombinations() {
+        return getCacheNames()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(cacheName ->
+                        new NamedParamCombination(PARAM_NAME_CACHE_NAME, cacheName))
+                .toList();
     }
 }

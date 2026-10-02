@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,12 @@
 package stroom.receive.content.client.presenter;
 
 import stroom.cell.info.client.ActionCell;
-import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.DocRefCell;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.receive.content.shared.ContentTemplate;
-import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
@@ -52,7 +49,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -68,7 +64,8 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
     public ContentTemplateListPresenter(final EventBus eventBus,
                                         final PagerView view) {
         super(eventBus, view);
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Content Templates");
         this.selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
         initTableColumns();
@@ -87,10 +84,11 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                 DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(ContentTemplate::isEnabled))
                         .enabledWhen(ContentTemplate::isEnabled)
                         .centerAligned()
-                        .withFieldUpdater((index, contentTemplate, tickBoxState) -> {
+                        .withFieldUpdater((rowIndex, contentTemplate, tickBoxState) -> {
                             if (enabledStateHandler != null) {
                                 enabledStateHandler.accept(contentTemplate, tickBoxState.toBoolean());
                             }
+                            dataGrid.redrawRow(rowIndex);
                         })
                         .build(),
                 DataGridUtil.headingBuilder("Enabled")
@@ -136,7 +134,20 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                 DataGridUtil.headingBuilder("Type")
                         .withToolTip("The type of content to create.")
                         .build(),
-                160);
+                140);
+
+        dataGrid.addColumn(
+                DataGridUtil.readOnlyTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
+                                ContentTemplate::isCopyElementDependencies))
+                        .enabledWhen(ContentTemplate::isEnabled)
+                        .centerAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Copy Dependencies")
+                        .withToolTip("If Template Type is INHERIT_PIPELINE then this option allows you to copy " +
+                                     "any entities set within the properties of the pipeline being inherited from. " +
+                                     "It will not copy entities referenced on any ancestor pipelines.")
+                        .build(),
+                140);
 
         final DocRefCell.Builder<ContentTemplate> docRefCellBuilder =
                 new DocRefCell.Builder<ContentTemplate>()
@@ -199,8 +210,6 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                         .build(),
                 "",
                 24);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addColumn(final String name,
@@ -252,35 +261,35 @@ public class ContentTemplateListPresenter extends MyPresenterWidget<PagerView> i
                 .fire(this);
     }
 
-    private void addTickBoxColumn(final String name,
-                                  final int width,
-                                  final Function<ContentTemplate, Boolean> valueFunc) {
+//    private void addTickBoxColumn(final String name,
+//                                  final int width,
+//                                  final Function<ContentTemplate, Boolean> valueFunc) {
+//
+//        final Column<ContentTemplate, TickBoxState> enabledColumn = new Column<ContentTemplate, TickBoxState>(
+//                TickBoxCell.create(false, false)) {
+//
+//            @Override
+//            public TickBoxState getValue(final ContentTemplate rule) {
+//                if (rule != null && !isDefaultRule(rule)) {
+//                    return TickBoxState.fromBoolean(valueFunc.apply(rule));
+//                }
+//                return null;
+//            }
+//        };
+//
+//        enabledColumn.setFieldUpdater((index, rule, value) -> {
+//            if (enabledStateHandler != null && !isDefaultRule(rule)) {
+//                enabledStateHandler.accept(rule, value.toBoolean());
+//            }
+//        });
+//        dataGrid.addColumn(enabledColumn, name, width);
+//    }
 
-        final Column<ContentTemplate, TickBoxState> enabledColumn = new Column<ContentTemplate, TickBoxState>(
-                TickBoxCell.create(false, false)) {
-
-            @Override
-            public TickBoxState getValue(final ContentTemplate rule) {
-                if (rule != null && !isDefaultRule(rule)) {
-                    return TickBoxState.fromBoolean(valueFunc.apply(rule));
-                }
-                return null;
-            }
-        };
-
-        enabledColumn.setFieldUpdater((index, rule, value) -> {
-            if (enabledStateHandler != null && !isDefaultRule(rule)) {
-                enabledStateHandler.accept(rule, value.toBoolean());
-            }
-        });
-        dataGrid.addColumn(enabledColumn, name, width);
-    }
-
-    private boolean isDefaultRule(final ContentTemplate rule) {
-        return Objects.equals(
-                DataRetentionPolicyPresenter.DEFAULT_UI_ONLY_RETAIN_ALL_RULE.getName(),
-                rule.getName());
-    }
+//    private boolean isDefaultRule(final ContentTemplate rule) {
+//        return Objects.equals(
+//                DataRetentionPolicyPresenter.DEFAULT_UI_ONLY_RETAIN_ALL_RULE.getName(),
+//                rule.getName());
+//    }
 
     private SafeHtml getSafeHtml(final String string, final ContentTemplate rule) {
         if (!rule.isEnabled()) {

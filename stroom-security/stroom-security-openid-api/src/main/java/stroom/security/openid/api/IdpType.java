@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.openid.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -21,12 +37,6 @@ public enum IdpType {
     EXTERNAL_IDP(true),
 
     /**
-     * Use hard-coded credentials for testing/demo only
-     */
-    @JsonPropertyDescription("Use hard-coded credentials for testing/demo only")
-    TEST_CREDENTIALS(false),
-
-    /**
      * No Open ID Connect identity provider. This may be used for remote proxies with no OIDC
      * infrastructure that only talk to downstream proxies or stroom where stroom is using
      * an internal IDP.  Feed status checks can be done by setting apiKey in the feedStatus config.
@@ -43,7 +53,7 @@ public enum IdpType {
 
     // Support case-insensitive de-ser, but default to uppercase for ser
     @JsonCreator
-    public static IdpType fromString(String type) {
+    public static IdpType fromString(final String type) {
         // Seems to deser as "null" if not set in the yaml
         return (type == null || type.equalsIgnoreCase("null"))
                 ? null

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.validation;
 
 import stroom.util.logging.LambdaLogger;
@@ -69,14 +85,14 @@ public class CustomConstraintValidatorFactory implements ConstraintValidatorFact
      */
     @Override
     public <T extends ConstraintValidator<?, ?>> T getInstance(final Class<T> key) {
-        T validator;
+        final T validator;
 
         // See if guice has the validator class we are after, i.e. one of our custom validators
         if (key.getCanonicalName().startsWith("stroom.")) {
             try {
                 validator = getStroomValidatorInstance(key);
                 LOGGER.debug(() -> LogUtil.message("Obtained class {} from Guice injector", key.getName()));
-            } catch (ConfigurationException e) {
+            } catch (final ConfigurationException e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error getting instance of {} from Guice", key.getCanonicalName(), e));
             }

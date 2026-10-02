@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.logging;
 
 import org.slf4j.Logger;
@@ -20,7 +36,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void trace(final Supplier<String> message) {
         try {
             if (logger.isTraceEnabled()) {
-                logger.trace(message.get());
+                logger.trace(getSafeMessage(message));
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -31,7 +47,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void trace(final Supplier<String> message, final Throwable t) {
         try {
             if (logger.isTraceEnabled()) {
-                logger.trace(message.get(), t);
+                logger.trace(getSafeMessage(message), t);
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -42,10 +58,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void debug(final Supplier<String> message) {
         try {
             if (logger.isDebugEnabled()) {
-                String msg = message.get();
-                if (msg != null) {
-                    logger.debug(msg);
-                }
+                logger.debug(getSafeMessage(message));
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -56,7 +69,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void debug(final Supplier<String> message, final Throwable t) {
         try {
             if (logger.isDebugEnabled()) {
-                logger.debug(message.get(), t);
+                logger.debug(getSafeMessage(message), t);
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -67,7 +80,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void info(final Supplier<String> message) {
         try {
             if (logger.isInfoEnabled()) {
-                logger.info(message.get());
+                logger.info(getSafeMessage(message));
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -78,7 +91,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void info(final Supplier<String> message, final Throwable t) {
         try {
             if (logger.isInfoEnabled()) {
-                logger.info(message.get(), t);
+                logger.info(getSafeMessage(message), t);
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -89,7 +102,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void warn(final Supplier<String> message) {
         try {
             if (logger.isWarnEnabled()) {
-                logger.warn(message.get());
+                logger.warn(getSafeMessage(message));
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -100,7 +113,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void warn(final Supplier<String> message, final Throwable t) {
         try {
             if (logger.isWarnEnabled()) {
-                logger.warn(message.get(), t);
+                logger.warn(getSafeMessage(message), t);
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -111,7 +124,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void error(final Supplier<String> message) {
         try {
             if (logger.isErrorEnabled()) {
-                logger.error(message.get());
+                logger.error(getSafeMessage(message));
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -122,7 +135,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
     public void error(final Supplier<String> message, final Throwable t) {
         try {
             if (logger.isErrorEnabled()) {
-                logger.error(message.get(), t);
+                logger.error(getSafeMessage(message), t);
             }
         } catch (final RuntimeException e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
@@ -140,7 +153,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.error(message);
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -156,7 +169,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.error(format, arg);
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -175,7 +188,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.error(format, arg1, arg2);
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -191,7 +204,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.error(format, args);
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -202,32 +215,32 @@ public final class BasicLambdaLogger implements LambdaLogger {
             switch (logLevel) {
                 case TRACE -> {
                     if (logger.isTraceEnabled()) {
-                        logger.trace(messageSupplier.get());
+                        logger.trace(getSafeMessage(messageSupplier));
                     }
                 }
                 case DEBUG -> {
                     if (logger.isDebugEnabled()) {
-                        logger.debug(messageSupplier.get());
+                        logger.debug(getSafeMessage(messageSupplier));
                     }
                 }
                 case INFO -> {
                     if (logger.isInfoEnabled()) {
-                        logger.info(messageSupplier.get());
+                        logger.info(getSafeMessage(messageSupplier));
                     }
                 }
                 case WARN -> {
                     if (logger.isWarnEnabled()) {
-                        logger.warn(messageSupplier.get());
+                        logger.warn(getSafeMessage(messageSupplier));
                     }
                 }
                 case ERROR -> {
                     if (logger.isErrorEnabled()) {
-                        logger.error(messageSupplier.get());
+                        logger.error(getSafeMessage(messageSupplier));
                     }
                 }
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -240,32 +253,32 @@ public final class BasicLambdaLogger implements LambdaLogger {
             switch (logLevel) {
                 case TRACE -> {
                     if (logger.isTraceEnabled()) {
-                        logger.trace(messageSupplier.get(), t);
+                        logger.trace(getSafeMessage(messageSupplier), t);
                     }
                 }
                 case DEBUG -> {
                     if (logger.isDebugEnabled()) {
-                        logger.debug(messageSupplier.get(), t);
+                        logger.debug(getSafeMessage(messageSupplier), t);
                     }
                 }
                 case INFO -> {
                     if (logger.isInfoEnabled()) {
-                        logger.info(messageSupplier.get(), t);
+                        logger.info(getSafeMessage(messageSupplier), t);
                     }
                 }
                 case WARN -> {
                     if (logger.isWarnEnabled()) {
-                        logger.warn(messageSupplier.get(), t);
+                        logger.warn(getSafeMessage(messageSupplier), t);
                     }
                 }
                 case ERROR -> {
                     if (logger.isErrorEnabled()) {
-                        logger.error(messageSupplier.get(), t);
+                        logger.error(getSafeMessage(messageSupplier), t);
                     }
                 }
                 default -> logger.error("Unexpected logLevel: {}", logLevel);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
         }
     }
@@ -306,7 +319,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
                 case ERROR -> logger.isErrorEnabled();
                 default -> throw new RuntimeException("Unexpected logLevel: " + logLevel);
             };
-        } catch (Exception e) {
+        } catch (final Exception e) {
             logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             return false;
         }
@@ -320,7 +333,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             try {
-                logger.trace(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.trace(LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -338,7 +351,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             try {
-                logger.trace(LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration));
+                logger.trace(LogUtil.getDurationMessage(getSafeMessage(workDescriptionFunction, result), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -356,7 +369,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             try {
-                logger.debug(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.debug(LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -374,7 +387,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             try {
-                logger.debug(LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration));
+                logger.debug(LogUtil.getDurationMessage(getSafeMessage(workDescriptionFunction, result), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -392,7 +405,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             try {
-                logger.info(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.info(LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -410,7 +423,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
             final T result = timedWork.get();
             final Duration duration = durationTimer.get();
             try {
-                logger.info(LogUtil.getDurationMessage(workDescriptionFunction.apply(result), duration));
+                logger.info(LogUtil.getDurationMessage(getSafeMessage(workDescriptionFunction, result), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -426,7 +439,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
         if (logger.isTraceEnabled()) {
             final Duration duration = DurationTimer.measure(timedWork);
             try {
-                logger.trace(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.trace(LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -441,7 +454,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
         if (logger.isDebugEnabled()) {
             final Duration duration = DurationTimer.measure(timedWork);
             try {
-                logger.debug(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.debug(LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -456,7 +469,7 @@ public final class BasicLambdaLogger implements LambdaLogger {
         if (logger.isInfoEnabled()) {
             final Duration duration = DurationTimer.measure(timedWork);
             try {
-                logger.info(LogUtil.getDurationMessage(workDescriptionSupplier.get(), duration));
+                logger.info(LogUtil.getDurationMessage(getSafeMessage(workDescriptionSupplier), duration));
             } catch (final RuntimeException e) {
                 logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
             }
@@ -708,5 +721,28 @@ public final class BasicLambdaLogger implements LambdaLogger {
 
     public void error(final Marker marker, final String msg, final Throwable t) {
         logger.error(marker, msg, t);
+    }
+
+
+    private String getSafeMessage(final Supplier<String> supplier) {
+        if (supplier != null) {
+            try {
+                return supplier.get();
+            } catch (final RuntimeException e) {
+                logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+            }
+        }
+        return null;
+    }
+
+    private <T> String getSafeMessage(final Function<T, String> function, final T t) {
+        if (function != null) {
+            try {
+                return function.apply(t);
+            } catch (final RuntimeException e) {
+                logger.error("ERROR LOGGING MESSAGE - " + e.getMessage(), e);
+            }
+        }
+        return null;
     }
 }

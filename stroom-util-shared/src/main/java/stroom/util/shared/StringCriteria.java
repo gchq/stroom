@@ -57,20 +57,20 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     public StringCriteria(@JsonProperty("string") final String string,
                           @JsonProperty("stringUpper") final String stringUpper,
                           @JsonProperty("matchStyle") final MatchStyle matchStyle,
-                          @JsonProperty("caseInsensitive") final boolean caseInsensitive,
+                          @JsonProperty("caseInsensitive") final Boolean caseInsensitive,
                           @JsonProperty("matchNull") final Boolean matchNull) {
         this.string = string;
         this.stringUpper = stringUpper;
         this.matchStyle = matchStyle;
-        this.caseInsensitive = caseInsensitive;
+        this.caseInsensitive = Objects.requireNonNullElse(caseInsensitive, false);
         this.matchNull = matchNull;
     }
 
-    public static List<StringCriteria> convertStringList(List<String> strings) {
-        List<StringCriteria> criteriaList = new ArrayList<>();
+    public static List<StringCriteria> convertStringList(final List<String> strings) {
+        final List<StringCriteria> criteriaList = new ArrayList<>();
 
         if (strings != null) {
-            for (String string : strings) {
+            for (final String string : strings) {
                 criteriaList.add(new StringCriteria(string));
             }
         }

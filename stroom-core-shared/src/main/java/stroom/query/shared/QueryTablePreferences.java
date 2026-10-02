@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 
 package stroom.query.shared;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.TableSettings;
 import stroom.util.shared.AbstractBuilder;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -34,12 +35,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({
         "columns",
         "pageSize",
         "conditionalFormattingRules",
         "applyValueFilters",
+        "showValueFilters",
         "selectionFilter"})
 @JsonInclude(Include.NON_NULL)
 public class QueryTablePreferences {
@@ -52,7 +55,10 @@ public class QueryTablePreferences {
     @JsonProperty("conditionalFormattingRules")
     private final List<ConditionalFormattingRule> conditionalFormattingRules;
     @JsonProperty
+    @Deprecated
     private final Boolean applyValueFilters;
+    @JsonProperty
+    private final Boolean showValueFilters;
     @JsonProperty
     private final ExpressionOperator selectionFilter;
 
@@ -63,13 +69,48 @@ public class QueryTablePreferences {
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule>
                     conditionalFormattingRules,
             @JsonProperty("applyValueFilters") final Boolean applyValueFilters,
+            @JsonProperty("showValueFilters") final Boolean showValueFilters,
             @JsonProperty("selectionFilter") final ExpressionOperator selectionFilter) {
-        this.columns = columns;
         this.pageSize = pageSize;
         this.conditionalFormattingRules = conditionalFormattingRules;
-        this.applyValueFilters = applyValueFilters;
         this.selectionFilter = selectionFilter;
+
+        // Migrate value filter property as it is only responsible for showing now, individual columns do application.
+        if (applyValueFilters != null) {
+            this.showValueFilters = applyValueFilters;
+        } else {
+            this.showValueFilters = showValueFilters;
+        }
+
+        this.applyValueFilters = null;
+
+        // Migrate column value filter enabled state.
+        this.columns = migrateColumnValueFilters(columns, applyValueFilters);
     }
+
+    @Deprecated
+    private List<Column> migrateColumnValueFilters(final List<Column> columns,
+                                                   final Boolean applyValueFilters) {
+        List<Column> cols = columns;
+        if (applyValueFilters != null && columns != null) {
+            cols = columns.stream().map(column -> {
+                final ColumnFilter columnFilter = column.getColumnFilter();
+                if (columnFilter == null) {
+                    return column;
+                }
+                return column
+                        .copy()
+                        .columnFilter(ColumnFilter
+                                .builder()
+                                .filter(columnFilter.getFilter())
+                                .enabled(applyValueFilters)
+                                .build())
+                        .build();
+            }).collect(Collectors.toList());
+        }
+        return cols;
+    }
+
 
     public List<Column> getColumns() {
         return columns;
@@ -83,12 +124,17 @@ public class QueryTablePreferences {
         return conditionalFormattingRules;
     }
 
+    @Deprecated
     public Boolean getApplyValueFilters() {
         return applyValueFilters;
     }
 
-    public boolean applyValueFilters() {
-        return applyValueFilters == Boolean.TRUE;
+    public Boolean getShowValueFilters() {
+        return showValueFilters;
+    }
+
+    public boolean showValueFilters() {
+        return showValueFilters == Boolean.TRUE;
     }
 
     public ExpressionOperator getSelectionFilter() {
@@ -104,10 +150,19 @@ public class QueryTablePreferences {
             return false;
         }
         final QueryTablePreferences that = (QueryTablePreferences) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(columns, that.columns);
+//        final boolean b2 = Objects.equals(pageSize, that.pageSize);
+//        final boolean b3 = Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
+//        final boolean b4 = Objects.equals(applyValueFilters, that.applyValueFilters);
+//        final boolean b5 = Objects.equals(selectionFilter, that.selectionFilter);
+
         return Objects.equals(columns, that.columns) &&
                Objects.equals(pageSize, that.pageSize) &&
                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
                Objects.equals(applyValueFilters, that.applyValueFilters) &&
+               Objects.equals(showValueFilters, that.showValueFilters) &&
                Objects.equals(selectionFilter, that.selectionFilter);
     }
 
@@ -118,6 +173,7 @@ public class QueryTablePreferences {
                 pageSize,
                 conditionalFormattingRules,
                 applyValueFilters,
+                showValueFilters,
                 selectionFilter);
     }
 
@@ -128,6 +184,7 @@ public class QueryTablePreferences {
                ", pageSize=" + pageSize +
                ", conditionalFormattingRules=" + conditionalFormattingRules +
                ", applyValueFilters='" + applyValueFilters + '\'' +
+               ", showValueFilters=" + showValueFilters +
                ", selectionFilter='" + selectionFilter + '\'' +
                '}';
     }
@@ -156,7 +213,7 @@ public class QueryTablePreferences {
         private List<Column> columns;
         private Integer pageSize;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
-        private Boolean applyValueFilters;
+        private Boolean showValueFilters;
         private ExpressionOperator selectionFilter;
 
         private Builder() {
@@ -170,7 +227,7 @@ public class QueryTablePreferences {
             this.conditionalFormattingRules = tableSettings.conditionalFormattingRules == null
                     ? null
                     : new ArrayList<>(tableSettings.conditionalFormattingRules);
-            this.applyValueFilters = tableSettings.applyValueFilters;
+            this.showValueFilters = tableSettings.showValueFilters;
             this.selectionFilter = tableSettings.selectionFilter;
         }
 
@@ -212,8 +269,8 @@ public class QueryTablePreferences {
             return self();
         }
 
-        public Builder applyValueFilters(final Boolean applyValueFilters) {
-            this.applyValueFilters = applyValueFilters;
+        public Builder showValueFilters(final Boolean showValueFilters) {
+            this.showValueFilters = showValueFilters;
             return self();
         }
 
@@ -233,7 +290,8 @@ public class QueryTablePreferences {
                     columns,
                     pageSize,
                     conditionalFormattingRules,
-                    applyValueFilters,
+                    null,
+                    showValueFilters,
                     selectionFilter);
         }
     }

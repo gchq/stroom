@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
@@ -39,8 +38,6 @@ import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
@@ -51,8 +48,7 @@ public class KeyValueStoreDb
         extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey>
         implements EntryStoreDb<KeyValueStoreKey> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreDb.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreDb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreDb.class);
 
 
     public static final String DB_NAME = "KeyValueStore";
@@ -77,8 +73,8 @@ public class KeyValueStoreDb
                                  final EntryConsumer entryConsumer) {
         LOGGER.debug("deleteMapEntries(..., {}, ...)", mapUid);
 
-        try (PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
-                PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
+        try (final PooledByteBuffer startKeyIncPooledBuffer = getPooledKeyBuffer();
+                final PooledByteBuffer endKeyExcPooledBuffer = getPooledKeyBuffer()) {
 
             final KeyRange<ByteBuffer> singleMapUidKeyRange = buildSingleMapUidKeyRange(
                     mapUid,
@@ -92,7 +88,7 @@ public class KeyValueStoreDb
             // and break out. After the inner loop we commit the txn, so the iterable has to be re-created.
             while (!isComplete) {
                 boolean foundMatchingEntry = false;
-                try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+                try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                         batchingWriteTxn.getTxn(), singleMapUidKeyRange)) {
 
                     boolean didBreakOutEarly = false;
@@ -101,7 +97,7 @@ public class KeyValueStoreDb
 
                     while (iterator.hasNext()) {
                         final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        LAMBDA_LOGGER.trace(() -> LogUtil.message("Entry {} {}",
+                        LOGGER.trace(() -> LogUtil.message("Entry {} {}",
                                 ByteBufferUtils.byteBufferInfo(keyVal.key()),
                                 ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
@@ -160,11 +156,11 @@ public class KeyValueStoreDb
                     startKeyBuffer.getByteBuffer(),
                     endKeyBuffer.getByteBuffer());
 
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
+            try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(
                     readTxn, keyRange)) {
                 //noinspection unused
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-//                    LAMBDA_LOGGER.trace(() -> LogUtil.message(
+//                    LOGGER.trace(() -> LogUtil.message(
 //                            "Key: {}",
 //                            ByteBufferUtils.byteBufferInfo(keyVal.key())));
 
@@ -193,9 +189,9 @@ public class KeyValueStoreDb
         }
     }
 
-    public Optional<UID> getMaxUid(final Txn<ByteBuffer> txn, PooledByteBuffer pooledByteBuffer) {
+    public Optional<UID> getMaxUid(final Txn<ByteBuffer> txn, final PooledByteBuffer pooledByteBuffer) {
 
-        try (CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+        try (final CursorIterable<ByteBuffer> iterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
             final Iterator<KeyVal<ByteBuffer>> iterator = iterable.iterator();
 
             if (iterator.hasNext()) {
@@ -226,7 +222,7 @@ public class KeyValueStoreDb
 
 //        final KeyValueStoreKey endKeyExc = new KeyValueStoreKey(nextMapUid, "");
 
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
+        LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
                 ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
                 ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
 

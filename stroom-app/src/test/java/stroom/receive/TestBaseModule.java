@@ -1,20 +1,46 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive;
 
+import stroom.aws.s3.client.S3ClientModule;
+import stroom.aws.s3.impl.S3ConfigModule;
 import stroom.cache.impl.CacheModule;
 import stroom.cache.service.impl.CacheServiceModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.core.receive.ReceiveDataModule;
+import stroom.credentials.api.KeyStore;
+import stroom.credentials.api.StoredSecret;
+import stroom.credentials.api.StoredSecrets;
+import stroom.credentials.impl.dao.MockCredentialsDaoModule;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
-import stroom.docrefinfo.mock.MockDocRefInfoModule;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
+import stroom.docstore.impl.dao.MockDocDependencyService;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.documentation.impl.DocumentationModule;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.event.logging.mock.MockStroomEventLoggingModule;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
-import stroom.legacy.impex_6_1.LegacyImpexModule;
+import stroom.gitrepo.mock.MockGitRepoModule;
+import stroom.importexport.impl.ImportExportModule;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
@@ -23,13 +49,22 @@ import stroom.pipeline.PipelineService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.receive.common.RequestAuthenticator;
 import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
+import stroom.security.api.ContentPackUserService;
 import stroom.security.api.UserIdentity;
+import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.security.mock.MockSecurityModule;
 import stroom.task.impl.TaskContextModule;
 import stroom.test.common.MockMetricsModule;
 import stroom.test.common.util.guice.GuiceTestUtil;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.io.HomeDirProvider;
+import stroom.util.io.HomeDirProviderImpl;
+import stroom.util.io.PathConfig;
+import stroom.util.io.StroomPathConfig;
+import stroom.util.io.TempDirProvider;
+import stroom.util.io.TempDirProviderImpl;
+import stroom.util.jersey.MockJerseyModule;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 
 import com.google.inject.AbstractModule;
@@ -46,9 +81,14 @@ public class TestBaseModule extends AbstractModule {
         install(new DictionaryModule());
         install(new DocumentationModule());
         install(new DocStoreModule());
-        install(new MockDocRefInfoModule());
+        install(new DocFinderModule());
         install(new FeedModule());
-        install(new LegacyImpexModule());
+        install(new MockGitRepoModule());
+        // The Git repo storage service builds an HTTP client from the document's own configuration, so
+        // it needs the client cache even in tests that never touch Git.
+        install(new MockJerseyModule());
+        install(new MockCredentialsDaoModule());
+        install(new ImportExportModule());
         install(new MemoryPersistenceModule());
         install(new MockClusterLockModule());
         install(new MockExplorerModule());
@@ -59,23 +99,43 @@ public class TestBaseModule extends AbstractModule {
         install(new MockSecurityModule());
         install(new MockSecurityContextModule());
         install(new MockStreamStoreModule());
+        install(new MockStroomEventLoggingModule());
         install(new PipelineScopeModule());
         install(new ReceiveDataModule());
         install(new ReceiveDataRuleSetModule());
         install(new MockCollectionModule());
         install(new TaskContextModule());
+        install(new S3ClientModule());
+        install(new S3ConfigModule());
         GuiceTestUtil.buildMockBinder(binder())
                 .addMockBindingFor(PipelineService.class)
                 .addMockBindingFor(ProcessorFilterService.class);
 
         bind(DocumentEventLog.class).toProvider(Providers.of(null));
+
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
+        bind(HomeDirProvider.class).to(HomeDirProviderImpl.class);
+        bind(ContentPackUserService.class).to(MockSecurityContext.class); //?
+        bind(PathConfig.class).to(StroomPathConfig.class);
+        bind(TempDirProvider.class).to(TempDirProviderImpl.class);
+
+        bind(StoredSecrets.class).toInstance(new StoredSecrets() {
+            @Override
+            public StoredSecret get(final String name) {
+                return null;
+            }
+
+            @Override
+            public KeyStore getKeyStore(final String name) {
+                return null;
+            }
+        });
     }
 
     @SuppressWarnings("unused")
     @Provides
     EntityEventBus entityEventBus() {
-        return event -> {
-        };
+        return EntityEventBus.NO_OP_EVENT_BUS;
     }
 
     @SuppressWarnings("unused")

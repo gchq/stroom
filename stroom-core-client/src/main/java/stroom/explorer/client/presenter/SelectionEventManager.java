@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.client.presenter;
 
 import stroom.widget.util.client.AbstractSelectionEventManager;
@@ -119,22 +135,22 @@ public class SelectionEventManager<I>
 
     protected void nextPage() {
         if (this.cellTable != null) {
-            Range range = this.cellTable.getVisibleRange();
+            final Range range = this.cellTable.getVisibleRange();
             this.setPageStart(range.getStart() + range.getLength());
         }
     }
 
     protected void previousPage() {
         if (this.cellTable != null) {
-            Range range = this.cellTable.getVisibleRange();
+            final Range range = this.cellTable.getVisibleRange();
             this.setPageStart(range.getStart() - range.getLength());
         }
     }
 
     protected void setPageStart(int index) {
         if (this.cellTable != null) {
-            Range range = this.cellTable.getVisibleRange();
-            int pageSize = range.getLength();
+            final Range range = this.cellTable.getVisibleRange();
+            final int pageSize = range.getLength();
             if (this.cellTable.isRowCountExact()) {
                 index = Math.min(index, this.cellTable.getRowCount() - pageSize);
             }

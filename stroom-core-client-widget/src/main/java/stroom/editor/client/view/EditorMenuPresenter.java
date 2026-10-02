@@ -71,16 +71,21 @@ public class EditorMenuPresenter {
         return menuItems;
     }
 
-    private void addMenuItem(int position, final List<Item> menuItems, final Option option) {
+    private void addMenuItem(final int position, final List<Item> menuItems, final Option option) {
         if (option.isAvailable()) {
-            menuItems.add(createItem(option.getText(), () ->
-                    option.setOn(!option.isOn()), position));
+            menuItems.add(createItem(
+                    option.getText(),
+                    () -> option.setOn(!option.isOn()),
+                    position));
         }
     }
 
-    private void addMenuItem(int position, final List<Item> menuItems, final Action action) {
+    private void addMenuItem(final int position, final List<Item> menuItems, final Action action) {
         if (action.isAvailable()) {
-            menuItems.add(createItem(action.getText(), action::execute, position));
+            menuItems.add(createItem(
+                    action.getText(),
+                    action::execute,
+                    position));
         }
     }
 

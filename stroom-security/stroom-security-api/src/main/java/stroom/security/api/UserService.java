@@ -12,11 +12,11 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.security.api;
 
+import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.User;
@@ -30,13 +30,13 @@ import java.util.function.Consumer;
 
 public interface UserService {
 
-    default User getOrCreateUser(String subjectId) {
+    default User getOrCreateUser(final String subjectId) {
         return getOrCreateUser(UserDesc.builder(subjectId)
                 .displayName(subjectId)
                 .build(), null);
     }
 
-    default User getOrCreateUser(UserDesc userDesc) {
+    default User getOrCreateUser(final UserDesc userDesc) {
         return getOrCreateUser(userDesc, null);
     }
 
@@ -44,7 +44,7 @@ public interface UserService {
 
     Optional<User> getUserBySubjectId(String subjectId);
 
-    default User getOrCreateUserGroup(String groupName) {
+    default User getOrCreateUserGroup(final String groupName) {
         return getOrCreateUserGroup(groupName, null);
     }
 
@@ -56,9 +56,11 @@ public interface UserService {
 
     User update(User user);
 
+    User copyGroupsAndPermissions(String fromUserUuid, String toUserUuid);
+
     ResultPage<User> find(FindUserCriteria criteria);
 
-    UserRef getUserByUuid(String uuid);
+    UserRef getUserByUuid(String uuid, FindUserContext context);
 
     ResultPage<User> findUsersInGroup(String groupUuid, FindUserCriteria criteria);
 

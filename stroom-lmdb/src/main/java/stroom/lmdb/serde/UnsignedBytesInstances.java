@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.lmdb.serde;
@@ -22,7 +21,10 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Each instance provides methods for working with unsigned longs that are written
@@ -30,6 +32,7 @@ import java.util.Objects;
  * by len, e.g for len == 1, the range of values are 0-255.
  */
 public enum UnsignedBytesInstances implements UnsignedBytes {
+    ZERO(0), //   max                         0
     ONE(1), //    max                       255
     TWO(2), //    max                    65,535
     THREE(3), //  max                16,777,215
@@ -44,11 +47,14 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
     private final UnsignedLongSerde serde;
 
     private static final byte[] ZERO_BYTES = new byte[0];
-    private static final UnsignedBytes[] INSTANCES = new UnsignedBytesInstances[9];
+    private static final UnsignedBytes[] INSTANCES = Arrays
+            .stream(values())
+            .sorted(Comparator.comparingInt(UnsignedBytes::length))
+            .toArray(UnsignedBytes[]::new);
 
-    static {
-        for (final UnsignedBytesInstances instance : values()) {
-            INSTANCES[instance.len] = instance;
+    public static void allPositive(final Consumer<UnsignedBytes> consumer) {
+        for (int i = 1; i <= 8; i++) {
+            consumer.accept(INSTANCES[i]);
         }
     }
 
@@ -57,8 +63,8 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
             throw new IllegalArgumentException(
                     "You cannot use more than 8 bytes to store a value as only long values are supported.");
         }
-        if (len < 1) {
-            throw new IllegalArgumentException("You cannot use less than 1 byte to store a value.");
+        if (len < 0) {
+            throw new IllegalArgumentException("You cannot use less than 0 bytes to store a value.");
         }
         this.len = len;
         maxVal = computeMaxVal(len);
@@ -66,8 +72,8 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
     }
 
     public static UnsignedBytes ofLength(final int len) {
-        if (len == 0) {
-            throw new IllegalArgumentException("Length of zero not allowed");
+        if (len < 0) {
+            throw new IllegalArgumentException("Negative length not allowed");
         }
         if (len > 8) {
             throw new IllegalArgumentException("Lengths > 8 not allowed");
@@ -76,8 +82,10 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
     }
 
     public static UnsignedBytes forValue(final long value) {
-        if (value <= 0) {
-            throw new IllegalArgumentException("Non positive values are not allowed");
+        if (value < 0) {
+            throw new IllegalArgumentException("Negative values are not allowed");
+        } else if (value == 0) {
+            return ZERO;
         }
 
         for (int i = 1; i < INSTANCES.length; i++) {
@@ -185,7 +193,7 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
         if (cap >= len) {
             // Work from right to left
             for (int i = index + len - 1; i >= index; i--) {
-                byte b = byteBuffer.get(i);
+                final byte b = byteBuffer.get(i);
                 if (b == (byte) 0xFF) {
                     if (i == index) {
                         // Every byte is FF so we can't increment anymore
@@ -223,7 +231,7 @@ public enum UnsignedBytesInstances implements UnsignedBytes {
         if (cap >= len) {
             // Work from right to left
             for (int i = index + len - 1; i >= index; i--) {
-                byte b = byteBuffer.get(i);
+                final byte b = byteBuffer.get(i);
                 if (b == (byte) 0x00) {
                     if (i == index) {
                         // Every byte is 00 so we can't decrement anymore

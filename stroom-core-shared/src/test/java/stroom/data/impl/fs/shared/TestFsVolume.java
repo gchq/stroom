@@ -1,6 +1,23 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.impl.fs.shared;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.data.store.impl.fs.shared.FsVolumeGroup;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.util.json.JsonUtil;
 
@@ -20,6 +37,9 @@ public class TestFsVolume {
                 "path":"sdfg",
                 "status":"ACTIVE",
                 "byteLimit":233887098470,
+                "volumeGroup":{
+                    "name":"grp4"
+                },
                 "volumeState":{
                     "id":12,
                     "version":6,
@@ -36,7 +56,7 @@ public class TestFsVolume {
      */
     @Test
     public void testJsonBindings() {
-        var fsVolume = JsonUtil.readValue(TEST_JSON, FsVolume.class);
+        final FsVolume fsVolume = JsonUtil.readValue(TEST_JSON, FsVolume.class);
         Assertions.assertThat(fsVolume)
                 .isNotNull();
         Assertions.assertThat(fsVolume.getVolumeState())
@@ -86,8 +106,6 @@ public class TestFsVolume {
     private void doIsFullTest(final Long limit,
                               final Long used,
                               final boolean expectedIsFull) {
-        final FsVolume fsVolume = new FsVolume();
-        fsVolume.setByteLimit(limit);
         final long total = 1000;
         final long free = total - used;
         final FsVolumeState fsVolumeState = new FsVolumeState(
@@ -97,7 +115,14 @@ public class TestFsVolume {
                 free,
                 total,
                 System.currentTimeMillis());
-        fsVolume.setVolumeState(fsVolumeState);
+
+        final FsVolume fsVolume = FsVolume.builder()
+                .byteLimit(limit)
+                .volumeState(fsVolumeState)
+                .volumeGroup(FsVolumeGroup.builder()
+                        .name("grp4")
+                        .build())
+                .build();
 
         Assertions.assertThat(fsVolume.getCapacityInfo().isFull())
                 .isEqualTo(expectedIsFull);

@@ -1,9 +1,26 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.logging;
 
 import stroom.test.common.TestUtil;
 import stroom.test.common.TestUtil.TimedCase;
 import stroom.util.concurrent.DurationAdder;
 
+import com.google.inject.TypeLiteral;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -12,8 +29,10 @@ import org.junit.jupiter.api.TestFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +58,7 @@ class TestLogUtil {
                         └───────────────┘""");
     }
 
+    @SuppressWarnings("checkstyle:RegexpSingleline") // IDE keeps adding trailing spaces to text block
     @Test
     void inBox_newLine() {
         final String box = LogUtil.inBoxOnNewLine("Hello World");
@@ -46,12 +66,13 @@ class TestLogUtil {
 
         assertThat(box)
                 .isEqualTo("""
-
+                        
                         ┌───────────────┐
                         │  Hello World  │
                         └───────────────┘""");
     }
 
+    @SuppressWarnings("checkstyle:RegexpSingleline") // IDE keeps adding trailing spaces to text block
     @Test
     void inBoxMultiLine() {
         final String box = LogUtil.inBoxOnNewLine("""
@@ -63,7 +84,7 @@ class TestLogUtil {
         LOGGER.info(box);
         assertThat(box)
                 .isEqualTo("""
-
+                        
                         ┌───────────────────────┐
                         │  This is              │
                         │  an example showing   │
@@ -99,8 +120,8 @@ class TestLogUtil {
 
     @Test
     void withPercentage_durationAdder() {
-        DurationAdder durationAdderVal = new DurationAdder(Duration.ofSeconds(30));
-        DurationAdder durationAdderTotal = new DurationAdder(Duration.ofMinutes(1));
+        final DurationAdder durationAdderVal = new DurationAdder(Duration.ofSeconds(30));
+        final DurationAdder durationAdderTotal = new DurationAdder(Duration.ofMinutes(1));
 
         assertThat(LogUtil.withPercentage(durationAdderVal, durationAdderTotal))
                 .isEqualTo("PT30S (50%)");
@@ -360,5 +381,42 @@ class TestLogUtil {
     @Test
     void message_tooManyArgs() {
         System.out.println(LogUtil.message("Hello {}", "world", "foo"));
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testToCsv() {
+
+        return TestUtil.buildDynamicTestStream()
+                .withWrappedInputType(new TypeLiteral<List<Integer>>() {
+                })
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(list ->
+                        LogUtil.toCsv(list, i -> i * 10))
+                .withSimpleEqualityAssertion()
+                .addCase(null, "")
+                .addCase(Collections.emptyList(), "")
+                .addCase(List.of(1, 2, 3), "10, 20, 30")
+                .build();
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testSample() {
+        final List<Integer> list = IntStream.rangeClosed(1, 5)
+                .boxed()
+                .toList();
+
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(int.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(size ->
+                        LogUtil.getSample(list, size, i -> "X" + i))
+                .withSimpleEqualityAssertion()
+                .addCase(0, "")
+                .addCase(1, "[X1, ...]")
+                .addCase(2, "[X1, X2, ...]")
+                .addCase(4, "[X1, X2, X3, X4, ...]")
+                .addCase(5, "[X1, X2, X3, X4, X5]")
+                .addCase(10, "[X1, X2, X3, X4, X5]")
+                .build();
     }
 }

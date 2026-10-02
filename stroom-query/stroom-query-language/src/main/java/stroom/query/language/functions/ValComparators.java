@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.functions;
 
 import stroom.util.logging.LogUtil;
@@ -81,16 +97,19 @@ public class ValComparators {
     private static final double DOUBLE_TOLERANCE_FRACTION = 0.000001d;
 
     static {
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.NULL, (o1, o2) -> 0);
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.BOOLEAN, AS_BOOLEAN_COMPARATOR);
-        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DATE, AS_LONG_COMPARATOR);
-        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DOUBLE, AS_DOUBLE_COMPARATOR);
-        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DURATION, AS_LONG_COMPARATOR);
-        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.ERR, AS_CASE_INSENSITIVE_STRING_COMPARATOR); // always prefixed with Err:
-        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.FLOAT, AS_FLOAT_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.BYTE, AS_INTEGER_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.SHORT, AS_INTEGER_COMPARATOR);
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.INTEGER, AS_INTEGER_COMPARATOR);
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.LONG, AS_LONG_COMPARATOR);
-        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.NULL, (o1, o2) -> 0);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DOUBLE, AS_DOUBLE_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.FLOAT, AS_FLOAT_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DATE, AS_LONG_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.DURATION, AS_LONG_COMPARATOR);
         SORT_COMPARATORS_BY_TYPE_MAP.put(Type.STRING, AS_DOUBLE_THEN_CASE_INSENSITIVE_STRING_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.XML, AS_CASE_INSENSITIVE_STRING_COMPARATOR);
+        SORT_COMPARATORS_BY_TYPE_MAP.put(Type.ERR, AS_CASE_INSENSITIVE_STRING_COMPARATOR); // always prefixed with Err:
 
         // NOTE: Types get added both ways round by the method, so order doesn't matter.
         // Don't need to define pairs with the same type as the default comparator
@@ -105,6 +124,12 @@ public class ValComparators {
         addTypePair(Type.STRING, Type.DOUBLE, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
         addTypePair(Type.STRING, Type.FLOAT, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
 
+        // May be comparing "1.23" with 10
+        addTypePair(Type.XML, Type.LONG, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
+        addTypePair(Type.XML, Type.INTEGER, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
+        addTypePair(Type.XML, Type.DOUBLE, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
+        addTypePair(Type.XML, Type.FLOAT, AS_DOUBLE_THEN_STRING_COMPARATOR_FACTORY);
+
         addTypePair(Type.DURATION, Type.LONG, AS_LONG_COMPARATOR);
         addTypePair(Type.DURATION, Type.INTEGER, AS_LONG_COMPARATOR);
         addTypePair(Type.DURATION, Type.FLOAT, AS_LONG_COMPARATOR);
@@ -116,6 +141,14 @@ public class ValComparators {
         addTypePair(Type.DATE, Type.FLOAT, AS_LONG_COMPARATOR);
         addTypePair(Type.DATE, Type.DOUBLE, AS_LONG_COMPARATOR);
         addTypePair(Type.DATE, Type.STRING, AS_LONG_THEN_STRING_COMPARATOR_FACTORY);
+
+        addTypePair(Type.BYTE, Type.LONG, AS_LONG_COMPARATOR);
+        addTypePair(Type.BYTE, Type.FLOAT, AS_DOUBLE_COMPARATOR);
+        addTypePair(Type.BYTE, Type.DOUBLE, AS_DOUBLE_COMPARATOR);
+
+        addTypePair(Type.SHORT, Type.LONG, AS_LONG_COMPARATOR);
+        addTypePair(Type.SHORT, Type.FLOAT, AS_DOUBLE_COMPARATOR);
+        addTypePair(Type.SHORT, Type.DOUBLE, AS_DOUBLE_COMPARATOR);
 
         addTypePair(Type.INTEGER, Type.LONG, AS_LONG_COMPARATOR);
         addTypePair(Type.INTEGER, Type.FLOAT, AS_DOUBLE_COMPARATOR);

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.form.client;
 
 import stroom.util.shared.NullSafe;
@@ -26,7 +42,7 @@ import java.util.Objects;
  * To add a help button to the right of the label you have two options:
  * <p>
  * <p/>
- * For plain text help use the {@code helpText} attr (any HTML will be escaped):
+ * For simple plain text help use the {@code helpText} attr (any HTML will be escaped):
  * <pre>{@code
  * <form:FormGroup ... helpText="This is my help text">
  * }</pre>
@@ -68,6 +84,10 @@ import java.util.Objects;
 public class FormGroup extends Composite implements HasWidgets {
 
     public static final String CLASS_NAME_FORM_GROUP_HELP = "form-group-help";
+    public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER = "form-group-description-container";
+    public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED =
+            STYLE_FORM_GROUP_DESCRIPTION_CONTAINER + "--disabled";
+
     private final FlowPanel formGroupPanel = new FlowPanel();
     private final FormLabel formLabel = new FormLabel();
     private final HelpButton helpButton = HelpButton.create();
@@ -86,13 +106,14 @@ public class FormGroup extends Composite implements HasWidgets {
     // Trumps helpText and helpHTML
     private SafeHtml helpTextOverride = null;
     private DescriptionHTML descriptionHTML = null;
+    private boolean disabled = false;
 
     public FormGroup() {
         feedbackLabel.setStyleName("invalid-feedback");
         formGroupPanel.addStyleName("form-group");
         labelPanel.addStyleName("form-group-label-container");
         formLabel.addStyleName("form-group-label");
-        descriptionPanel.addStyleName("form-group-description-container");
+        descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER);
         helpButton.addStyleName("form-group-help");
 
         // Don't want the user to have to tab over each help btn when you can
@@ -142,6 +163,25 @@ public class FormGroup extends Composite implements HasWidgets {
     }
 
     /**
+     * If disabled, the {@link FormGroup} label and descriptionHtml text will be greyed out
+     * to show the group as being disabled. This helps when it is not easy to see that
+     * the control in the group is disabled.
+     */
+    public void setDisabled(final boolean disabled) {
+        this.disabled = disabled;
+        formLabel.setDisabled(disabled);
+        if (disabled) {
+            descriptionPanel.addStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED);
+        } else {
+            descriptionPanel.removeStyleName(STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED);
+        }
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    /**
      * Plain text, any HTML will be escaped.
      * The helpText attr trumps the {@code <form:HelpHTML>} element.
      * <p>
@@ -155,7 +195,7 @@ public class FormGroup extends Composite implements HasWidgets {
 //        // This allows us to have hard coded help in the ui.xml but override it
 //        // using helpText, or set helpText back to null to use the hardcoded
 //        // ui.xml content
-//        if (GwtNullSafe.isBlankString(helpText) && helpHTML != null) {
+//        if (NullSafe.isBlankString(helpText) && helpHTML != null) {
 //            this.helpText = helpHTML.getHTML();
 //        }
         updateHelpButton();
@@ -212,19 +252,19 @@ public class FormGroup extends Composite implements HasWidgets {
 //        }
         updateLabelPanel();
 
-//        if (GwtNullSafe.isNonBlankString(plainHelpText)) {
+//        if (NullSafe.isNonBlankString(plainHelpText)) {
 //            haveHelpText = true;
 //            // Escape any html in there
 //            effectiveHelpText = SafeHtmlUtils.fromString(plainHelpText);
 //        }
 //
-//        if (GwtNullSafe.isBlankString(helpText) && helpHTML != null) {
+//        if (NullSafe.isBlankString(helpText) && helpHTML != null) {
 //            effectiveHelpText = SafeHtmlUtils.fromTrustedString(helpHTML.getHTML());
 //            haveHelpText = true;
 //        } else {
 //
 //        }
-//        if (!GwtNullSafe.isBlankString(getHelpText())) {
+//        if (!NullSafe.isBlankString(getHelpText())) {
 //            helpButton.setHelpContent(SafeHtmlUtils.fromSafeConstant(getHelpText()));
 //        } else {
 //            helpButton.setHelpContent(null);
@@ -282,7 +322,7 @@ public class FormGroup extends Composite implements HasWidgets {
 
         updateHelpButton();
 //        // helpText trumps helpHTML
-//        if (GwtNullSafe.isBlankString(helpText)) {
+//        if (NullSafe.isBlankString(helpText)) {
 //            this.helpText = this.helpHTML.getHTML();
 //        }
     }

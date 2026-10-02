@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
@@ -8,10 +24,10 @@ import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.analytics.shared.TableBuilderAnalyticTrackerData;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.node.client.NodeManager;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
+import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.util.client.HtmlBuilder;
@@ -32,14 +48,14 @@ import java.util.List;
 
 public class TableBuilderProcessingPresenter
         extends MyPresenterWidget<TableBuilderProcessingPresenter.TableBuilderProcessingView>
-        implements ProcessingStatusUiHandlers, HasDirtyHandlers {
+        implements ProcessingStatusUiHandlers, HasChangeHandlers {
 
     private static final AnalyticProcessResource ANALYTIC_PROCESS_RESOURCE =
             GWT.create(AnalyticProcessResource.class);
 
     private final DateTimeFormatter dateTimeFormatter;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
 
     private DocRef ruleDocRef;
 
@@ -48,16 +64,16 @@ public class TableBuilderProcessingPresenter
                                            final TableBuilderProcessingView view,
                                            final DateTimeFormatter dateTimeFormatter,
                                            final RestFactory restFactory,
-                                           final NodeManager nodeManager) {
+                                           final NodeClient nodeClient) {
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
     }
 
     public void read(final DocRef ruleDocRef,
                      final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 list -> {
                     if (list != null && list.size() > 0) {
                         getView().setNodes(list);
@@ -151,13 +167,13 @@ public class TableBuilderProcessingPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     public interface TableBuilderProcessingView extends View, HasUiHandlers<ProcessingStatusUiHandlers> {

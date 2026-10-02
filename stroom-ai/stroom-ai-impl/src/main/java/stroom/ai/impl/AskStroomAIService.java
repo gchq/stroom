@@ -1,0 +1,1778 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.impl;
+
+import stroom.ai.api.AiService;
+import stroom.ai.api.OpenAIModelStore;
+import stroom.ai.api.TableSource;
+import stroom.ai.api.TableSummaryProgressListener;
+import stroom.ai.api.TableSummaryRequest;
+import stroom.ai.shared.AiAttachmentDataPage;
+import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiAttachmentType;
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatPollRequest;
+import stroom.ai.shared.AiChatPollResponse;
+import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AskStroomAiConfig;
+import stroom.ai.shared.AskStroomAiContext;
+import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.AskStroomAiResponse;
+import stroom.ai.shared.DashboardTableContext;
+import stroom.ai.shared.DownloadChatHistoryRequest;
+import stroom.ai.shared.FindAiChatHistoryCriteria;
+import stroom.ai.shared.GeneralTableContext;
+import stroom.ai.shared.GetAttachmentDataRequest;
+import stroom.ai.shared.QueryTableContext;
+import stroom.ai.shared.TableAnalysisConfig;
+import stroom.config.global.api.GlobalConfig;
+import stroom.dashboard.impl.DashboardService;
+import stroom.dashboard.shared.ComponentResultRequest;
+import stroom.dashboard.shared.DashboardSearchRequest;
+import stroom.dashboard.shared.DownloadSearchResultFileType;
+import stroom.dashboard.shared.DownloadSearchResultsRequest;
+import stroom.dashboard.shared.TableResultRequest;
+import stroom.docref.DocRef;
+import stroom.openai.shared.OpenAIModelDoc;
+import stroom.query.api.OffsetRange;
+import stroom.query.impl.QueryService;
+import stroom.query.shared.DownloadQueryResultsRequest;
+import stroom.query.shared.QuerySearchRequest;
+import stroom.resource.api.ResourceStore;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContextFactory;
+import stroom.task.api.TaskTerminatedException;
+import stroom.util.json.JsonUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResultPage;
+
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.exception.HttpException;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+
+/**
+ * Singleton because cancellation is tracked in {@link #cancellationFlags}, which is state shared
+ * between the request processing a question and the request asking to stop it. Without a single
+ * instance the stop request looks up an empty map and does nothing.
+ */
+@Singleton
+public class AskStroomAIService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAIService.class);
+
+    /**
+     * Polling interval (ms) when waiting for attachments.
+     */
+    private static final long ATTACHMENT_POLL_INTERVAL_MS = 1_000;
+
+    private final AiService aiService;
+    private final AiAttachmentFileStore attachmentFileStore;
+    private final DashboardService dashboardService;
+    private final QueryService queryService;
+    private final OpenAIModelStore openAIModelStore;
+    private final ResourceStore resourceStore;
+    private final ExecutorProvider executorProvider;
+    private final Provider<AskStroomAiConfig> defaultConfigProvider;
+    private final Provider<GlobalConfig> globalConfigProvider;
+    private final Provider<TableAnalysisConfig> tableAnalysisConfigProvider;
+    private final ConcurrentHashMap<Integer, AtomicBoolean> cancellationFlags = new ConcurrentHashMap<>();
+    private final TaskContextFactory taskContextFactory;
+    private final TableSummariserImpl tableSummariser;
+
+    @Inject
+    public AskStroomAIService(final AiService aiService,
+                              final AiAttachmentFileStore attachmentFileStore,
+                              final DashboardService dashboardService,
+                              final QueryService queryService,
+                              final OpenAIModelStore openAIModelStore,
+                              final ResourceStore resourceStore,
+                              final ExecutorProvider executorProvider,
+                              final Provider<AskStroomAiConfig> defaultConfigProvider,
+                              final Provider<GlobalConfig> globalConfigProvider,
+                              final Provider<TableAnalysisConfig> tableAnalysisConfigProvider,
+                              final TaskContextFactory taskContextFactory,
+                              final TableSummariserImpl tableSummariser) {
+        this.aiService = aiService;
+        this.attachmentFileStore = attachmentFileStore;
+        this.dashboardService = dashboardService;
+        this.queryService = queryService;
+        this.openAIModelStore = openAIModelStore;
+        this.resourceStore = resourceStore;
+        this.executorProvider = executorProvider;
+        this.defaultConfigProvider = defaultConfigProvider;
+        this.globalConfigProvider = globalConfigProvider;
+        this.tableAnalysisConfigProvider = tableAnalysisConfigProvider;
+        this.taskContextFactory = taskContextFactory;
+        this.tableSummariser = tableSummariser;
+    }
+
+    /**
+     * Main entry point for AI requests. Operates in two stages:
+     * <ol>
+     *   <li>If a context (table data source) is present, create an attachment and start downloading.</li>
+     *   <li>If a message is present, process the question (waiting for any in-flight attachments).</li>
+     * </ol>
+     */
+    public AskStroomAiResponse askStroomAi(final AskStroomAiRequest request) {
+        final AiChat aiChat = request.getAiChat();
+        final Integer chatId = NullSafe.get(aiChat, AiChat::getId);
+        aiService.verifyOwnership(chatId);
+
+        LOGGER.debug(() -> "askStroomAi: chatId=" + chatId
+                           + " hasContext=" + (request.getContext() != null)
+                           + " hasMessage=" + (request.getMessage() != null));
+
+        // Stage 1: If context is present, create an attachment (and start async download if needed).
+        if (request.getContext() != null) {
+            try {
+                createAttachment(chatId, request.getContext(), request.getConfig());
+                LOGGER.debug(() -> "Attachment created for chatId=" + chatId
+                                   + " contextType=" + request.getContext().getClass().getSimpleName());
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+                aiService.storeMessage(chatId, AiMessageType.ERROR, e.getMessage());
+            }
+        }
+
+        // Stage 2: If a user message is present, process the question.
+        if (request.getMessage() != null) {
+            aiService.storeMessage(chatId, AiMessageType.USER_MESSAGE, request.getMessage());
+
+            String responseText;
+            try {
+                responseText = processQuestion(request);
+
+                if (responseText != null) {
+                    aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText);
+                    final String rt = responseText;
+                    LOGGER.debug(() -> "Response stored for chatId=" + chatId
+                                       + " responseLength=" + rt.length());
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+                if (isTimeoutError(e)) {
+                    responseText = "The AI model took too long to respond and the request "
+                                   + "timed out. This can happen with complex questions, large "
+                                   + "context, or reasoning models. You can increase the timeout "
+                                   + "in the OpenAI Model document's HTTP Client Configuration "
+                                   + "settings (timeout field).";
+                } else {
+                    responseText = e.getMessage();
+                }
+                aiService.storeMessage(chatId, AiMessageType.ERROR, responseText);
+            }
+
+            return new AskStroomAiResponse(responseText);
+        }
+
+        // Context-only request (attachment created, no question yet).
+        return new AskStroomAiResponse(null);
+    }
+
+    // ---------------------------------------------------------------------
+    // Attachment lifecycle
+    // ---------------------------------------------------------------------
+
+    /**
+     * Creates an attachment record and starts downloading the data.
+     * For GeneralTableContext, data is already on the server so we convert synchronously.
+     * For Dashboard/Query contexts, we submit an async download task.
+     */
+    private void createAttachment(final int chatId,
+                                  final AskStroomAiContext context,
+                                  final AskStroomAiConfig config) {
+        final AiAttachmentType attachmentType = switch (context) {
+            case final DashboardTableContext dashboardTableContext -> AiAttachmentType.DASHBOARD;
+            case final QueryTableContext queryTableContext -> AiAttachmentType.QUERY;
+            case final GeneralTableContext generalTableContext -> AiAttachmentType.GENERAL;
+            default -> throw new IllegalStateException("Unsupported context type: " + context.getClass().getName());
+        };
+
+        LOGGER.debug(() -> "createAttachment: chatId=" + chatId
+                           + " type=" + attachmentType
+                           + " description='" + context.getDescription() + "'");
+
+        final String contextJson = JsonUtil.writeValueAsString(context);
+        final AiChatAttachment attachment = aiService.createAttachment(chatId, attachmentType, contextJson);
+
+        // Store an ATTACHMENT message in the chat history linking to this attachment.
+        aiService.storeMessage(chatId, AiMessageType.ATTACHMENT, attachment.getId(),
+                context.getDescription());
+
+        if (context instanceof final GeneralTableContext generalTableContext) {
+            // Synchronous — data is already in memory, just convert to markdown.
+            processGeneralAttachment(attachment.getId(), generalTableContext,
+                    getTableAnalysisConfig(config));
+        } else {
+            // Async download for Dashboard/Query contexts.
+            submitAsyncDownload(attachment.getId(), chatId, context, config);
+        }
+    }
+
+    /**
+     * Converts GeneralTableContext (in-memory table data) directly to a markdown file
+     * in the attachment file store and marks the attachment as READY.
+     */
+    private void processGeneralAttachment(final int attachmentId,
+                                          final GeneralTableContext generalTableContext,
+                                          final TableAnalysisConfig tableAnalysisConfig) {
+        LOGGER.debug(() -> "processGeneralAttachment: attachmentId=" + attachmentId
+                           + " cols=" + generalTableContext.getColumns().size()
+                           + " rows=" + generalTableContext.getRows().size());
+        try {
+            aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.DOWNLOADING,
+                    null, null, null, false);
+
+            final Path mdFile = attachmentFileStore.createAttachmentFile(attachmentId);
+            final int[] rowCountHolder = {0};
+            LOGGER.logDurationIfDebugEnabled(() -> {
+                try (final BufferedWriter writer = Files.newBufferedWriter(mdFile)) {
+                    // Write markdown header
+                    final List<String> columns = generalTableContext.getColumns();
+                    writer.write(columns.stream()
+                            .map(col -> "| " + escapeMarkdownCell(col) + " ")
+                            .collect(Collectors.joining()));
+                    writer.write("|\n");
+                    // Write separator row
+                    writer.write(columns.stream()
+                            .map(val -> "| --- ")
+                            .collect(Collectors.joining()));
+                    writer.write("|\n");
+                    // Write rows
+                    final int maxRows = tableAnalysisConfig.getMaxTotalRows();
+                    for (final List<String> rowValues : generalTableContext.getRows()) {
+                        if (rowCountHolder[0] >= maxRows) {
+                            break;
+                        }
+                        writer.write(rowValues.stream()
+                                .map(val -> "| " + escapeMarkdownCell(val) + " ")
+                                .collect(Collectors.joining()));
+                        writer.write("|\n");
+                        rowCountHolder[0]++;
+                    }
+                } catch (final IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }, () -> "processGeneralAttachment attachmentId=" + attachmentId
+                     + " rows=" + rowCountHolder[0]);
+            final int rowCount = rowCountHolder[0];
+            final boolean truncated = rowCount < generalTableContext.getRows().size();
+
+            final String description = generalTableContext.getDescription()
+                                       + " (" + rowCount + " rows, "
+                                       + generalTableContext.getColumns().size() + " cols"
+                                       + (truncated
+                    ? ", truncated to limit"
+                    : "") + ")";
+            aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
+                    rowCount, description, null, truncated);
+        } catch (final Exception e) {
+            LOGGER.debug(e::getMessage, e);
+            aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.ERROR,
+                    null, null, e.getMessage(), false);
+            attachmentFileStore.deleteAttachmentFile(attachmentId);
+        }
+    }
+
+    /**
+     * Submits an async task to download table data from a Dashboard or Query search
+     * and save the markdown to the attachment file store.
+     */
+    private void submitAsyncDownload(final int attachmentId,
+                                     final int chatId,
+                                     final AskStroomAiContext context,
+                                     final AskStroomAiConfig config) {
+        final Runnable runnable = taskContextFactory.context(
+                "Download search results for AI analysis",
+                taskContext -> {
+                    try {
+                        info(taskContext, () -> "Async download started: attachmentId=" + attachmentId
+                                                + " chatId=" + chatId
+                                                + " contextType=" + context.getClass().getSimpleName());
+                        aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.DOWNLOADING,
+                                null, null, null, false);
+
+                        final TableAnalysisConfig tableAnalysisConfig = getTableAnalysisConfig(config);
+                        final Supplier<ResourceGeneration> downloadSupplier =
+                                buildDownloadSupplier(context, tableAnalysisConfig);
+                        final ResourceGeneration resourceGeneration = LOGGER.logDurationIfDebugEnabled(
+                                downloadSupplier,
+                                rg -> "Download completed for attachmentId=" + attachmentId);
+                        final ResourceKey resourceKey = resourceGeneration.getResourceKey();
+
+                        try {
+                            final Path tempFile = resourceStore.getTempFile(resourceKey);
+                            final Path targetFile = attachmentFileStore.createAttachmentFile(attachmentId);
+                            Files.move(tempFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+
+                            // Count rows by streaming the markdown file
+                            // (skip header line and separator line).
+                            final int maxRows = tableAnalysisConfig.getMaxTotalRows();
+                            int rowCount = 0;
+                            try (final BufferedReader reader = Files.newBufferedReader(targetFile)) {
+                                reader.readLine(); // skip markdown header
+                                reader.readLine(); // skip separator row
+                                while (reader.readLine() != null) {
+                                    rowCount++;
+                                }
+                            }
+
+                            // Truncated if we got more rows than the configured max
+                            // (we requested maxRows+1 to probe for overflow).
+                            final boolean truncated = rowCount > maxRows;
+                            final int reportedRowCount;
+
+                            if (truncated) {
+                                // Rewrite the file without the overflow probe row.
+                                final Path trimmedFile = targetFile.resolveSibling(
+                                        targetFile.getFileName() + ".tmp");
+                                try (final BufferedReader reader = Files.newBufferedReader(targetFile);
+                                        final BufferedWriter writer = Files.newBufferedWriter(trimmedFile)) {
+                                    int linesWritten = 0;
+                                    String line;
+                                    // Keep header + separator + maxRows data lines
+                                    final int maxLines = maxRows + 2;
+                                    while ((line = reader.readLine()) != null) {
+                                        if (linesWritten < maxLines) {
+                                            writer.write(line);
+                                            writer.newLine();
+                                            linesWritten++;
+                                        } else {
+                                            break;
+                                        }
+                                    }
+                                }
+                                Files.move(trimmedFile, targetFile, StandardCopyOption.REPLACE_EXISTING);
+                                reportedRowCount = maxRows;
+                            } else {
+                                reportedRowCount = rowCount;
+                            }
+
+                            final int colCount;
+                            try (final BufferedReader reader = Files.newBufferedReader(targetFile)) {
+                                final String header = reader.readLine();
+                                colCount = header != null
+                                        ? parseMarkdownColumnCount(header)
+                                        : 0;
+                            }
+
+                            final String description = context.getDescription()
+                                                       + " (" + reportedRowCount + " rows, " + colCount + " cols"
+                                                       + (truncated
+                                    ? ", truncated to limit"
+                                    : "") + ")";
+
+                            info(taskContext, () -> "Async download finished: attachmentId=" + attachmentId
+                                                    + " rows=" + reportedRowCount + " cols=" + colCount
+                                                    + " truncated=" + truncated);
+                            aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.READY,
+                                    reportedRowCount, description, null, truncated);
+                        } finally {
+                            try {
+                                resourceStore.deleteTempFile(resourceKey);
+                            } catch (final Exception e) {
+                                LOGGER.debug(() -> "Failed to delete temp file", e);
+                            }
+                        }
+                    } catch (final Exception e) {
+                        LOGGER.debug(e::getMessage, e);
+                        aiService.updateAttachmentStatus(attachmentId, AiAttachmentStatus.ERROR,
+                                null, null, e.getMessage(), false);
+                        attachmentFileStore.deleteAttachmentFile(attachmentId);
+                    }
+                });
+        executorProvider.get().execute(runnable);
+    }
+
+    private void info(final TaskContext taskContext, final Supplier<String> message) {
+        taskContext.info(message);
+        LOGGER.debug(message);
+    }
+
+    /**
+     * Builds the download supplier for Dashboard or Query contexts.
+     * Applies row-limiting via the existing requestedRange on the search request.
+     */
+    private Supplier<ResourceGeneration> buildDownloadSupplier(final AskStroomAiContext context,
+                                                               final TableAnalysisConfig tableAnalysisConfig) {
+        // Request one extra row beyond the limit to detect truncation.
+        // If we get maxRows+1 rows back, we know the data is genuinely truncated.
+        final long maxRows = tableAnalysisConfig.getMaxTotalRows();
+        final OffsetRange probeRange = new OffsetRange(0L, maxRows + 1);
+
+        if (context instanceof final DashboardTableContext ctx) {
+            return () -> {
+                final DashboardSearchRequest searchRequest = ctx.getSearchRequest();
+                // Override requestedRange on each TableResultRequest to limit rows.
+                final List<ComponentResultRequest> limitedRequests =
+                        searchRequest.getComponentResultRequests().stream()
+                                .map(crr -> {
+                                    if (crr instanceof final TableResultRequest trr) {
+                                        return trr.copy()
+                                                .requestedRange(probeRange)
+                                                .build();
+                                    }
+                                    return crr;
+                                }).toList();
+
+                final DashboardSearchRequest limitedSearchRequest = searchRequest.copy()
+                        .componentResultRequests(limitedRequests)
+                        .build();
+
+                final String componentId = limitedRequests.stream()
+                        .filter(crr -> crr instanceof TableResultRequest)
+                        .map(ComponentResultRequest::getComponentId)
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("No table component found"));
+                final DownloadSearchResultsRequest downloadRequest = new DownloadSearchResultsRequest(
+                        limitedSearchRequest, componentId, DownloadSearchResultFileType.MARKDOWN,
+                        false, false, 100);
+                return dashboardService.downloadSearchResults(downloadRequest);
+            };
+        } else if (context instanceof final QueryTableContext ctx) {
+            return () -> {
+                final QuerySearchRequest searchRequest = ctx.getSearchRequest();
+                final QuerySearchRequest limitedSearchRequest = searchRequest.copy()
+                        .requestedRange(probeRange)
+                        .build();
+                final DownloadQueryResultsRequest downloadRequest = new DownloadQueryResultsRequest(
+                        limitedSearchRequest, DownloadSearchResultFileType.MARKDOWN, false, 100);
+                return queryService.downloadSearchResults(downloadRequest);
+            };
+        }
+        throw new IllegalStateException("Cannot build download supplier for: " + context.getClass().getName());
+    }
+
+    // ---------------------------------------------------------------------
+    // Question processing
+    // ---------------------------------------------------------------------
+
+    /**
+     * Core question processing. Creates a single WORKING message that is updated in place
+     * as processing progresses, then deleted when complete. Waits for any in-flight
+     * attachments, then uses optimistic send with progressive trim and summarisation:
+     * <ol>
+     *     <li>Try sending full conversation history to the LLM.</li>
+     *     <li>On context overflow, summarise the dropped messages and retry with fewer.</li>
+     *     <li>If history is fully trimmed and it still overflows, fall back to batch processing.</li>
+     * </ol>
+     */
+    private String processQuestion(final AskStroomAiRequest request) {
+        final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
+        if (chatId == null) {
+            throw new RuntimeException("Cannot process question without a chat");
+        }
+
+        LOGGER.debug(() -> "processQuestion: chatId=" + chatId);
+
+        final AskStroomAiConfig config = request.getConfig();
+        final OpenAIModelDoc modelDoc = getModelDoc(config);
+        final ChatModel chatModel = getChatModel(modelDoc);
+        final int maxContextTokens = modelDoc.getMaxContextWindowTokens();
+        final boolean debugEnabled = NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAiConfig::isEnableDebugDetail,
+                AskStroomAiConfig.DEFAULT_ENABLE_DEBUG_DETAIL);
+
+        // Clear anything left behind by a previous question that did not get to clean up after
+        // itself, or the chat would look like it was working forever.
+        aiService.deleteWorkingMessages(chatId);
+
+        // Create a single WORKING message that will be updated in place.
+        final AiChatMessage workingMsg = aiService.storeMessage(
+                chatId, AiMessageType.WORKING, "Working...");
+        final int workingMessageId = workingMsg.getId();
+
+        // Registered for the whole question rather than just for batch analysis, so that a stop issued
+        // while waiting for attachments, or between retries, is seen at all.
+        final AtomicBoolean cancelled = new AtomicBoolean(false);
+        registerCancellation(chatId, cancelled);
+
+        try {
+            // Wait for any DOWNLOADING attachments to become READY.
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> waitForAttachments(chatId, workingMessageId),
+                    () -> "waitForAttachments chatId=" + chatId);
+
+            // Check for READY attachments.
+            final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
+            final List<AiChatAttachment> readyAttachments = attachments.stream()
+                    .filter(a -> a.getStatus() == AiAttachmentStatus.READY)
+                    .toList();
+
+            LOGGER.debug(() -> "processQuestion: chatId=" + chatId
+                               + " readyAttachments=" + readyAttachments.size());
+
+            // Build the full relevant history (filtered and capped by safety limit).
+            final Map<Integer, AiChatAttachment> attachmentMap = readyAttachments.stream()
+                    .collect(Collectors.toMap(AiChatAttachment::getId, a -> a));
+            final List<AiChatMessage> history = aiService.getMessages(chatId);
+            final List<AiChatMessage> relevantHistory = history.stream()
+                    .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
+                                 || m.getMessageType() == AiMessageType.AI_RESPONSE
+                                 || m.getMessageType() == AiMessageType.ERROR
+                                 || m.getMessageType() == AiMessageType.ATTACHMENT)
+                    .toList();
+
+            final int safetyCap = NullSafe.getOrElse(
+                    defaultConfigProvider.get(),
+                    AskStroomAiConfig::getMaxHistorySafetyCapMessages,
+                    AskStroomAiConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
+            int maxHistory = Math.min(safetyCap, relevantHistory.size());
+            String contextSummary = null;
+            boolean wasTrimmed = false;
+
+            // Accumulate debug detail across all attempts.
+            final StringBuilder debugLog = debugEnabled
+                    ? new StringBuilder()
+                    : null;
+
+            // Progressive-trim retry loop.
+            for (int attempt = 1; ; attempt++) {
+                if (cancelled.get()) {
+                    LOGGER.info(() -> "processQuestion: cancelled before attempt for chatId=" + chatId);
+                    return "Analysis was cancelled before a response was produced.";
+                }
+
+                final int currentAttempt = attempt;
+                final int currentMaxHistory = maxHistory;
+                final String currentSummary = contextSummary;
+
+                final List<ChatMessage> messages = buildUnifiedMessages(
+                        request, chatId, attachmentMap, relevantHistory,
+                        currentMaxHistory, currentSummary);
+
+                LOGGER.debug(() -> "processQuestion: attempt " + currentAttempt
+                                   + " maxHistory=" + currentMaxHistory
+                                   + " messages=" + messages.size()
+                                   + " hasSummary=" + (currentSummary != null)
+                                   + " chatId=" + chatId);
+
+                // Proactive check: if the context window size is configured and we
+                // have attachments, estimate the total token count. If it exceeds
+                // the context window, go straight to batch processing to avoid a
+                // wasteful round-trip that will fail.
+                if (maxContextTokens > 0 && !readyAttachments.isEmpty() && currentAttempt == 1) {
+                    final int estimatedTokens = estimateTokenCount(messages);
+                    if (estimatedTokens > maxContextTokens) {
+                        LOGGER.info(() -> "Estimated " + estimatedTokens
+                                          + " tokens exceeds context window of " + maxContextTokens
+                                          + " for chatId=" + chatId
+                                          + ", going directly to batch processing");
+                        if (debugLog != null) {
+                            debugLog.append("### Proactive Overflow Detection\n\n")
+                                    .append("Estimated tokens: ").append(estimatedTokens)
+                                    .append(", context window: ").append(maxContextTokens)
+                                    .append("\n\n---\n\n");
+                        }
+                        final String result = analyseWithAttachments(request, chatModel,
+                                readyAttachments, chatId, workingMessageId, debugLog);
+                        if (debugLog != null) {
+                            storeDebugDetail(chatId, debugLog.toString());
+                        }
+                        return result;
+                    }
+                }
+
+                try {
+                    final ChatResponse chatResponse = processUnified(
+                            chatModel, chatId, messages, currentAttempt);
+                    final String responseText = chatResponse.aiMessage().text();
+
+                    // Capture successful attempt.
+                    if (debugLog != null) {
+                        debugLog.append("### Attempt ")
+                                .append(currentAttempt)
+                                .append(" (")
+                                .append(messages.size())
+                                .append(" messages) — SUCCESS\n\n")
+                                .append(formatMessagesAsDebugDetail(messages, responseText));
+                    }
+
+                    // Store debug detail.
+                    final String finalResponseText;
+                    if (wasTrimmed) {
+                        finalResponseText = responseText
+                                            + "\n\n---\n*Note: Some earlier conversation history was "
+                                            + "summarised to fit the model's context window. "
+                                            + "The most recent messages and attachments were preserved.*";
+                    } else {
+                        finalResponseText = responseText;
+                    }
+
+                    // Store the debug detail after the AI response will be stored.
+                    if (debugLog != null) {
+                        storeDebugDetail(chatId, debugLog.toString());
+                    }
+
+                    // Store LLM reasoning/thinking content if present.
+                    storeThinkingContent(chatId, chatResponse);
+
+                    return finalResponseText;
+
+                } catch (final Exception e) {
+                    // A terminated task, or a stop flipped mid-call, is a deliberate stop rather
+                    // than a failure. processUnified throws TaskTerminatedException when the task
+                    // is terminated before the model call; treat both the same friendly way as a
+                    // stop caught between attempts, rather than surfacing a raw error to the user.
+                    if (e instanceof TaskTerminatedException || cancelled.get()) {
+                        LOGGER.info(() -> "processQuestion: terminated/cancelled for chatId=" + chatId);
+                        return "Analysis was cancelled before a response was produced.";
+                    }
+
+                    if (!isContextOverflowError(e)) {
+                        throw e;
+                    }
+
+                    // Capture failed attempt.
+                    if (debugLog != null) {
+                        debugLog.append("### Attempt ")
+                                .append(currentAttempt)
+                                .append(" (")
+                                .append(messages.size())
+                                .append(" messages) — OVERFLOW\n\n")
+                                .append(formatMessagesAsDebugDetail(messages, null))
+                                .append("\n---\n\n");
+                    }
+
+                    // Can we trim further?
+                    if (maxHistory <= 0) {
+                        // Nothing left to trim — fall back to batch if there are attachments.
+                        if (!readyAttachments.isEmpty()) {
+                            LOGGER.info(() -> "Context overflow with no history remaining for "
+                                              + "chatId=" + chatId
+                                              + ", falling back to batch processing");
+                            final String result = analyseWithAttachments(request, chatModel,
+                                    readyAttachments, chatId, workingMessageId,
+                                    debugLog);
+                            if (debugLog != null) {
+                                storeDebugDetail(chatId, debugLog.toString());
+                            }
+                            return result;
+                        }
+                        // No attachments and still overflowing. There is no partial answer to give
+                        // here - nothing has been produced yet - so at least say what was tried.
+                        throw new RuntimeException(
+                                "The question is too large for the model's context window, even with all "
+                                + "earlier conversation history removed. Try a shorter question, start a "
+                                + "new chat, or raise 'Max Context Window Tokens' on the model document. "
+                                + "The model said: " + e.getMessage(), e);
+                    }
+
+                    // Summarise the messages being dropped before trimming.
+                    wasTrimmed = true;
+                    final int newMaxHistory = Math.max(0, maxHistory - 2);
+                    final int oldStartIdx = Math.max(0,
+                            relevantHistory.size() - maxHistory - 1);
+                    final int newStartIdx = Math.max(0,
+                            relevantHistory.size() - newMaxHistory - 1);
+
+                    // Collect the messages being dropped in this trim step.
+                    final List<AiChatMessage> droppedMessages = new ArrayList<>();
+                    for (int i = oldStartIdx; i < newStartIdx
+                                              && i < relevantHistory.size() - 1; i++) {
+                        droppedMessages.add(relevantHistory.get(i));
+                    }
+
+                    if (!droppedMessages.isEmpty()) {
+                        LOGGER.debug(() -> "processQuestion: trimming " + droppedMessages.size()
+                                           + " messages, summarising for chatId=" + chatId);
+                        try {
+                            contextSummary = summariseDroppedMessages(
+                                    chatModel, contextSummary, droppedMessages, config);
+                        } catch (final Exception sumEx) {
+                            LOGGER.warn(() -> "Failed to summarise dropped messages, "
+                                              + "continuing without summary", sumEx);
+                            // Continue without summary — better than failing entirely.
+                        }
+                    }
+
+                    maxHistory = newMaxHistory;
+                    LOGGER.info(() -> "Context overflow for chatId=" + chatId
+                                      + ", retrying with maxHistory=" + newMaxHistory);
+                }
+            }
+        } finally {
+            deregisterCancellation(chatId);
+            // Always clean up the WORKING message when processing is done.
+            try {
+                aiService.deleteMessage(workingMessageId);
+            } catch (final Exception e) {
+                LOGGER.debug(() -> "Failed to delete working message " + workingMessageId, e);
+            }
+        }
+    }
+
+    /**
+     * Builds the list of ChatMessages for a unified LLM call. Includes system prompt,
+     * optional context summary (from prior trimming), filtered conversation history
+     * with inline attachment data, and the current user message.
+     *
+     * @param maxHistory     maximum number of history messages to include (from the end)
+     * @param contextSummary optional summary of earlier messages that were trimmed
+     */
+    private List<ChatMessage> buildUnifiedMessages(final AskStroomAiRequest request,
+                                                   final int chatId,
+                                                   final Map<Integer, AiChatAttachment> attachmentMap,
+                                                   final List<AiChatMessage> relevantHistory,
+                                                   final int maxHistory,
+                                                   final String contextSummary) {
+        final List<ChatMessage> messages = new ArrayList<>();
+
+        // System message.
+        messages.add(new SystemMessage(NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAiConfig::getChatSystemPrompt,
+                AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT)));
+
+        // If we have a summary of earlier (trimmed) conversation, inject it.
+        if (contextSummary != null && !contextSummary.isBlank()) {
+            messages.add(new UserMessage(
+                    "[Prior conversation summary]: " + contextSummary));
+            messages.add(new AiMessage(
+                    "Understood, I'll keep the prior context in mind."));
+        }
+
+        // Add history messages (skip the current user message which was just stored).
+        final int startIdx = Math.max(0, relevantHistory.size() - maxHistory - 1);
+        for (int i = startIdx; i < relevantHistory.size() - 1; i++) {
+            final AiChatMessage msg = relevantHistory.get(i);
+            switch (msg.getMessageType()) {
+                case ATTACHMENT -> {
+                    // Read the attachment's markdown file and inject it as a UserMessage
+                    // tagged with the source description.
+                    final Integer attachmentId = msg.getAttachmentId();
+                    final AiChatAttachment attachment = attachmentId != null
+                            ? attachmentMap.get(attachmentId)
+                            : null;
+                    if (attachment != null) {
+                        final Path mdFile = attachmentFileStore.getAttachmentFile(attachment.getId());
+                        if (Files.exists(mdFile)) {
+                            try {
+                                final String markdown = Files.readString(mdFile, StandardCharsets.UTF_8);
+                                final String description = NullSafe.getOrElse(
+                                        attachment, AiChatAttachment::getDescription,
+                                        "Attachment " + attachment.getId());
+                                final StringBuilder tagged = new StringBuilder();
+                                tagged
+                                        .append("[Attached Table: ")
+                                        .append(description);
+                                if (attachment.getRowCount() != null) {
+                                    tagged
+                                            .append(" (")
+                                            .append(attachment.getRowCount())
+                                            .append(" rows)");
+                                }
+                                if (attachment.isTruncated()) {
+                                    tagged
+                                            .append(" TRUNCATED");
+                                }
+                                tagged
+                                        .append("]\n")
+                                        .append(markdown);
+                                messages.add(new UserMessage(tagged.toString()));
+                            } catch (final IOException e) {
+                                LOGGER.warn(() -> "Failed to read attachment file: " + mdFile, e);
+                            }
+                        }
+                    }
+                }
+                case USER_MESSAGE -> messages.add(new UserMessage(msg.getMessage()));
+                default -> messages.add(new AiMessage(msg.getMessage()));
+            }
+        }
+
+        // Add the current user message.
+        messages.add(new UserMessage(request.getMessage()));
+
+        return messages;
+    }
+
+    /**
+     * Sends the pre-built message list to the LLM and returns the full ChatResponse
+     * so callers can access both the response text and any thinking/reasoning content.
+     */
+    private ChatResponse processUnified(final ChatModel chatModel,
+                                        final int chatId,
+                                        final List<ChatMessage> messages,
+                                        final int attempt) {
+        return taskContextFactory.contextResult(
+                "AI data analysis",
+                taskContext -> {
+                    taskContext.info(() -> "Chat Id: " + chatId);
+
+                    if (taskContext.isTerminated()) {
+                        throw new TaskTerminatedException();
+                    }
+
+                    LOGGER.debug(() -> "processUnified: sending " + messages.size()
+                                       + " messages to LLM for chatId=" + chatId
+                                       + " (attempt " + attempt + ")");
+
+                    final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
+                            () -> chatModel.chat(messages),
+                            r -> "processUnified chatId=" + chatId
+                                 + " attempt=" + attempt
+                                 + " responseLength=" + r.aiMessage().text().length());
+                    LOGGER.trace(() -> "processUnified response:\n" + response.aiMessage().text());
+                    return response;
+                }).get();
+    }
+
+    /**
+     * Summarises dropped conversation messages so that context is preserved
+     * even after progressive trimming. If a previous summary exists, it is
+     * included so that context accumulates across trim iterations.
+     *
+     * @param existingSummary previous summary from earlier trim iterations (may be null)
+     * @param droppedMessages the messages being dropped in this trim step
+     * @return a concise summary string
+     */
+    private String summariseDroppedMessages(final ChatModel chatModel,
+                                            final String existingSummary,
+                                            final List<AiChatMessage> droppedMessages,
+                                            final AskStroomAiConfig config) {
+        final StringBuilder input = new StringBuilder();
+        if (existingSummary != null && !existingSummary.isBlank()) {
+            input
+                    .append("Previous context summary:\n")
+                    .append(existingSummary)
+                    .append("\n\n");
+        }
+        input.append("Additional conversation to summarise:\n");
+        for (final AiChatMessage msg : droppedMessages) {
+            switch (msg.getMessageType()) {
+                case USER_MESSAGE -> input
+                        .append("User: ")
+                        .append(msg.getMessage())
+                        .append('\n');
+                case AI_RESPONSE -> input
+                        .append("Assistant: ")
+                        .append(msg.getMessage())
+                        .append('\n');
+                case ATTACHMENT -> input
+                        .append("User attached table: ")
+                        .append(msg.getMessage())
+                        .append('\n');
+                default -> input
+                        .append("System: ")
+                        .append(msg.getMessage())
+                        .append('\n');
+            }
+        }
+
+        final String systemPrompt = NullSafe.getOrElse(
+                config,
+                AskStroomAiConfig::getHistorySummaryPrompt,
+                AskStroomAiConfig.DEFAULT_HISTORY_SUMMARY_PROMPT);
+
+        final List<ChatMessage> messages = List.of(
+                new SystemMessage(systemPrompt),
+                new UserMessage(input.toString()));
+
+        final ChatResponse response = LOGGER.logDurationIfDebugEnabled(
+                () -> chatModel.chat(messages),
+                r -> "summariseDroppedMessages: responseLength="
+                     + r.aiMessage().text().length());
+        LOGGER.trace(() -> "summariseDroppedMessages response:\n" + response.aiMessage().text());
+        return response.aiMessage().text();
+    }
+
+    /**
+     * Performs parallel batch analysis over all READY attachments, reading markdown data
+     * from the attachment file store. Each batch is submitted to the LLM concurrently.
+     * Results are merged in a single pass. Used as a fallback when the unified
+     * single-call approach exceeds the model's context window.
+     */
+    private String analyseWithAttachments(final AskStroomAiRequest request,
+                                          final ChatModel chatModel,
+                                          final List<AiChatAttachment> attachments,
+                                          final int chatId,
+                                          final int workingMessageId,
+                                          final StringBuilder debugLog) {
+        return taskContextFactory.contextResult(
+                "Batched AI data analysis",
+                taskContext -> analyseWithAttachments(taskContext,
+                        request, chatModel, attachments, chatId, workingMessageId, debugLog)).get();
+    }
+
+    private String analyseWithAttachments(final TaskContext taskContext,
+                                          final AskStroomAiRequest request,
+                                          final ChatModel chatModel,
+                                          final List<AiChatAttachment> attachments,
+                                          final int chatId,
+                                          final int workingMessageId,
+                                          final StringBuilder debugLog) {
+        // Shares the flag registered for the whole question, so a stop issued before batch analysis
+        // started is not lost.
+        final AtomicBoolean cancelled = cancellationFlags.computeIfAbsent(
+                chatId, k -> new AtomicBoolean(false));
+
+        // Either signal means stop: the explicit user stop, or the task being terminated.
+        final BooleanSupplier stopRequested = () -> cancelled.get() || taskContext.isTerminated();
+
+        info(taskContext, () -> "Reading attachments");
+
+        final List<TableSource> sources = attachments
+                .stream()
+                .map(attachment -> new TableSource(
+                        "attachment " + attachment.getId() + " for chatId=" + chatId,
+                        attachmentFileStore.getAttachmentFile(attachment.getId()),
+                        attachment.isTruncated()))
+                .toList();
+
+        final TableSummaryRequest summaryRequest = TableSummaryRequest
+                .builder()
+                .sources(sources)
+                .chatModel(chatModel)
+                .config(getTableAnalysisConfig(request.getConfig()))
+                .query(request.getMessage())
+                .context(buildConversationSummary(chatId))
+                .cancelled(stopRequested)
+                .progressListener(new TableSummaryProgressListener() {
+                    @Override
+                    public void onBatchesBuilt(final int batchCount, final int sourceCount) {
+                        final String message = "Analysing " + batchCount + " batch(es) across "
+                                               + sourceCount + " attachment(s)...";
+                        info(taskContext, () -> message);
+                        aiService.updateMessageText(workingMessageId, message);
+                    }
+
+                    @Override
+                    public void onBatchStarted(final int batchNumber, final int batchCount) {
+                        final String message = "Analysing batch " + batchNumber + " of " + batchCount + "...";
+                        info(taskContext, () -> message);
+                        aiService.updateMessageText(workingMessageId, message);
+                    }
+
+                    @Override
+                    public void onCancelledAwaitingBatches() {
+                        aiService.updateMessageText(workingMessageId,
+                                "Cancelled - waiting briefly for batches already in progress...");
+                    }
+
+                    @Override
+                    public void onCancelledBeforeMerge(final int summaryCount) {
+                        aiService.updateMessageText(workingMessageId,
+                                "Cancelled - summarising the " + summaryCount
+                                + " batch(es) completed so far...");
+                    }
+                })
+                .build();
+
+        // Batching is this caller's fallback rather than its normal path, so only this caller has cause
+        // to explain it. Everything else the reader needs to know is added by the summariser.
+        final AnswerNotes notes = new AnswerNotes()
+                .add("The attached data was too large to analyse in a single call, so it was "
+                     + "processed in batches, which may not capture cross-row patterns or "
+                     + "cross-table comparisons as well");
+
+        // The chat shows whatever came back, summary or not, as that is the answer to the question.
+        return tableSummariser
+                .summarise(summaryRequest, notes, debugLog, this::formatMessagesAsDebugDetail)
+                .text();
+    }
+
+    /**
+     * Formats a list of ChatMessages and the LLM response into a readable
+     * markdown string suitable for storage as a DEBUG_DETAIL message.
+     * Table data in user messages is truncated to keep the detail manageable.
+     */
+    private String formatMessagesAsDebugDetail(final List<ChatMessage> messages,
+                                               final String responseText) {
+        final int MAX_TABLE_LINES = 20;
+        final StringBuilder sb = new StringBuilder();
+
+        for (final ChatMessage msg : messages) {
+            if (msg instanceof final SystemMessage systemMessage) {
+                sb
+                        .append("**System Prompt:**\n> ")
+                        .append(systemMessage.text().replace("\n", "\n> "))
+                        .append("\n\n");
+            } else if (msg instanceof final UserMessage userMessage) {
+                final String text = userMessage.singleText();
+                // Truncate table data for readability.
+                final String displayText = truncateTableData(text, MAX_TABLE_LINES);
+                sb
+                        .append("**User:**\n")
+                        .append(displayText)
+                        .append("\n\n");
+            } else if (msg instanceof final AiMessage aiMessage) {
+                sb
+                        .append("**Assistant:**\n")
+                        .append(aiMessage.text())
+                        .append("\n\n");
+            }
+        }
+
+        if (responseText != null) {
+            sb
+                    .append("**Response:**\n")
+                    .append(responseText)
+                    .append("\n\n");
+        } else {
+            sb
+                    .append("*(No response — context overflow)*\n\n");
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Truncates markdown table data in a message to the given number of data rows.
+     * Preserves the header and separator rows, then shows up to maxLines data rows
+     * with a note about truncation.
+     */
+    private String truncateTableData(final String text,
+                                     final int maxLines) {
+        // Only truncate if text contains a Markdown table (pipe-delimited lines).
+        if (!text.contains("| ---")) {
+            return text;
+        }
+
+        final String[] lines = text.split("\n");
+        final StringBuilder result = new StringBuilder();
+        boolean inTable = false;
+        int dataRowCount = 0;
+        boolean truncated = false;
+
+        for (final String line : lines) {
+            if (line.startsWith("|")) {
+                if (!inTable) {
+                    inTable = true;
+                    dataRowCount = 0;
+                    result
+                            .append(line)
+                            .append('\n');
+                    continue;
+                }
+                // Separator row (| --- | --- |).
+                if (line.contains("---")) {
+                    result
+                            .append(line)
+                            .append('\n');
+                    continue;
+                }
+                // Data row.
+                dataRowCount++;
+                if (dataRowCount <= maxLines) {
+                    result
+                            .append(line)
+                            .append('\n');
+                } else if (!truncated) {
+                    truncated = true;
+                    result
+                            .append("| *... (remaining rows truncated for display)* |\n");
+                }
+            } else {
+                inTable = false;
+                dataRowCount = 0;
+                result
+                        .append(line)
+                        .append('\n');
+            }
+        }
+
+        return result.toString();
+    }
+
+    /**
+     * Stores a DEBUG_DETAIL message in the chat history.
+     */
+    private void storeDebugDetail(final int chatId, final String debugDetail) {
+        try {
+            aiService.storeMessage(chatId, AiMessageType.DEBUG_DETAIL, debugDetail);
+        } catch (final Exception e) {
+            LOGGER.warn(() -> "Failed to store debug detail for chatId=" + chatId, e);
+        }
+    }
+
+    /**
+     * Extracts LLM reasoning/thinking content from the ChatResponse and stores it
+     * as a THINKING message. Models that don't produce reasoning tokens will have
+     * null thinking content, which is silently ignored.
+     */
+    private void storeThinkingContent(final int chatId, final ChatResponse chatResponse) {
+        try {
+            final String thinking = chatResponse.aiMessage().thinking();
+            if (thinking != null && !thinking.isBlank()) {
+                aiService.storeMessage(chatId, AiMessageType.THINKING, thinking);
+                LOGGER.debug(() -> "Stored thinking content for chatId=" + chatId
+                                   + " length=" + thinking.length());
+            }
+        } catch (final Exception e) {
+            LOGGER.warn(() -> "Failed to store thinking content for chatId=" + chatId, e);
+        }
+    }
+
+    /**
+     * Checks whether an exception represents a context window overflow error
+     * from the LLM API. These typically come as HTTP 400 errors with messages
+     * about token limits being exceeded.
+     */
+    private boolean isContextOverflowError(final Exception e) {
+        // Check for HTTP 413 Payload Too Large.
+        if (e instanceof final HttpException httpException) {
+            if (httpException.statusCode() == 413) {
+                return true;
+            }
+        }
+
+        final String message = e.getMessage();
+        if (message == null) {
+            return false;
+        }
+        final String lowerMessage = message.toLowerCase();
+        return lowerMessage.contains("maximum context length")
+               || lowerMessage.contains("token limit")
+               || lowerMessage.contains("too many tokens")
+               || lowerMessage.contains("context_length_exceeded")
+               || lowerMessage.contains("max_tokens")
+               || lowerMessage.contains("context window")
+               || lowerMessage.contains("input is too long")
+               || lowerMessage.contains("request too large");
+    }
+
+    /**
+     * Checks if the exception (or its cause chain) is a socket timeout error,
+     * indicating the AI model took too long to respond.
+     */
+    private boolean isTimeoutError(final Exception e) {
+        Throwable current = e;
+        while (current != null) {
+            if (current instanceof SocketTimeoutException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    /**
+     * Estimates the total token count for a list of chat messages using a simple
+     * character-based approximation (~4 characters per token).
+     */
+    private int estimateTokenCount(final List<ChatMessage> messages) {
+        int totalChars = 0;
+        for (final ChatMessage message : messages) {
+            totalChars += message.toString().length();
+        }
+        return totalChars / 4;
+    }
+
+    /**
+     * Waits for any DOWNLOADING attachments to become READY (or ERROR).
+     * Polls with a configurable interval and respects the overall timeout.
+     * Updates the existing WORKING message in place to give the user progress feedback.
+     */
+    private void waitForAttachments(final int chatId, final int workingMessageId) {
+        final long timeoutMs = NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAiConfig::getAttachmentDownloadTimeoutMs,
+                AskStroomAiConfig.DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS);
+        final long deadline = System.currentTimeMillis() + timeoutMs;
+
+        LOGGER.debug(() -> "waitForAttachments: chatId=" + chatId + " timeoutMs=" + timeoutMs);
+
+        // Look up the cancellation flag (may be null if not yet registered for this chat).
+        final AtomicBoolean cancelled = cancellationFlags.get(chatId);
+
+        while (System.currentTimeMillis() < deadline) {
+            // Respect cancellation — exit immediately if the user has cancelled.
+            if (cancelled != null && cancelled.get()) {
+                return;
+            }
+
+            final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
+            final boolean anyDownloading = attachments.stream()
+                    .anyMatch(a -> a.getStatus() == AiAttachmentStatus.PENDING
+                                   || a.getStatus() == AiAttachmentStatus.DOWNLOADING);
+
+            if (!anyDownloading) {
+                LOGGER.debug(() -> "waitForAttachments: chatId=" + chatId + " all attachments ready");
+                return;
+            }
+
+            LOGGER.trace(() -> "waitForAttachments: chatId=" + chatId
+                               + " still waiting, statuses=" + attachments.stream()
+                                       .map(a -> a.getId() + ":" + a.getStatus())
+                                       .collect(java.util.stream.Collectors.joining(",")));
+
+            aiService.updateMessageText(workingMessageId,
+                    "Waiting for table data download...");
+
+            try {
+                Thread.sleep(ATTACHMENT_POLL_INTERVAL_MS);
+            } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted while waiting for attachments", e);
+            }
+        }
+
+        // Timed out — log a warning but continue (the question will use whatever is READY).
+        LOGGER.warn(() -> "Timed out waiting for attachment downloads for chat " + chatId);
+        aiService.updateMessageText(workingMessageId,
+                "Attachment download timed out, proceeding with available data");
+    }
+
+    /**
+     * Builds a textual summary of the recent conversation history for inclusion in
+     * LLM prompts. This allows the AI to be aware of prior questions and answers.
+     */
+    private String buildConversationSummary(final int chatId) {
+        final List<AiChatMessage> history = aiService.getMessages(chatId);
+        final List<AiChatMessage> relevantMessages = history.stream()
+                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE
+                             || m.getMessageType() == AiMessageType.AI_RESPONSE)
+                .toList();
+
+        if (relevantMessages.isEmpty()) {
+            return "";
+        }
+
+        // Take last N messages for context.
+        final int maxHistory = NullSafe.getOrElse(
+                defaultConfigProvider.get(),
+                AskStroomAiConfig::getMaxHistorySafetyCapMessages,
+                AskStroomAiConfig.DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES);
+        final int startIdx = Math.max(0, relevantMessages.size() - maxHistory);
+
+        final StringBuilder sb = new StringBuilder();
+        for (int i = startIdx; i < relevantMessages.size(); i++) {
+            final AiChatMessage msg = relevantMessages.get(i);
+            if (msg.getMessageType() == AiMessageType.USER_MESSAGE) {
+                sb
+                        .append("User: ")
+                        .append(msg.getMessage())
+                        .append('\n');
+            } else {
+                sb
+                        .append("AI: ")
+                        .append(msg.getMessage())
+                        .append('\n');
+            }
+        }
+        return sb.toString();
+    }
+
+    private OpenAIModelDoc getModelDoc(final AskStroomAiConfig config) {
+        if (config == null || config.getModelRef() == null) {
+            throw new RuntimeException("No model specified");
+        }
+        final DocRef docRef = config.getModelRef();
+        if (!OpenAIModelDoc.TYPE.equals(docRef.getType())) {
+            throw new RuntimeException("Default OpenAI API doc ref is incorrect");
+        }
+
+        final OpenAIModelDoc openAIModelDoc = openAIModelStore.readDocument(docRef);
+        if (openAIModelDoc == null) {
+            throw new RuntimeException("Default OpenAI API doc cannot be found");
+        }
+        return openAIModelDoc;
+    }
+
+    private ChatModel getChatModel(final OpenAIModelDoc openAIModelDoc) {
+        // Note that the stub ChatModel for offline testing is applied by AiService.getChatModel().
+        LOGGER.debug(() -> "getChatModel: modelId='" + openAIModelDoc.getModelId()
+                           + "' docRef=" + openAIModelDoc.getUuid());
+        return aiService.getChatModel(openAIModelDoc);
+    }
+
+    private TableAnalysisConfig getTableAnalysisConfig(final AskStroomAiConfig config) {
+        return NullSafe.getOrElse(
+                config,
+                AskStroomAiConfig::getTableAnalysis,
+                new TableAnalysisConfig());
+    }
+
+
+    /**
+     * Escapes a cell value for safe inclusion in a markdown table.
+     * Replaces pipe characters that would break the table structure.
+     */
+    private String escapeMarkdownCell(final String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replace("|", "\\|").replace("\n", " ");
+    }
+
+    /**
+     * Counts the number of columns in a markdown table header line.
+     * Header format is: {@code | col1 | col2 | col3 |}
+     */
+    private int parseMarkdownColumnCount(final String headerLine) {
+        if (headerLine == null || headerLine.isBlank()) {
+            return 0;
+        }
+        // Count pipe characters and subtract 1 (there's one more pipe than columns).
+        int pipeCount = 0;
+        for (int i = 0; i < headerLine.length(); i++) {
+            if (headerLine.charAt(i) == '|') {
+                pipeCount++;
+            }
+        }
+        // | col1 | col2 | col3 | has 4 pipes for 3 columns
+        return Math.max(0, pipeCount - 1);
+    }
+
+    // ---------------------------------------------------------------------
+    // Cancellation methods
+    // ---------------------------------------------------------------------
+
+    void registerCancellation(final int chatId, final AtomicBoolean flag) {
+        cancellationFlags.put(chatId, flag);
+    }
+
+    /**
+     * Signals cancellation for an in-progress batch analysis.
+     * The batch processing checks this flag before each batch.
+     */
+    public boolean cancelProcessing(final int chatId) {
+        aiService.verifyOwnership(chatId);
+        final AtomicBoolean flag = cancellationFlags.get(chatId);
+        LOGGER.debug(() -> "cancelProcessing: chatId=" + chatId + " flagFound=" + (flag != null));
+        if (flag != null) {
+            flag.set(true);
+            return true;
+        }
+        return false;
+    }
+
+    void deregisterCancellation(final int chatId) {
+        cancellationFlags.remove(chatId);
+    }
+
+    // ---------------------------------------------------------------------
+    // Chat management methods
+    // ---------------------------------------------------------------------
+
+    public AiChat createChat() {
+        return aiService.createChat();
+    }
+
+    public ResultPage<AiChat> listChats(final FindAiChatHistoryCriteria criteria) {
+        return aiService.listChats(criteria);
+    }
+
+    public AiChat getChat(final int chatId) {
+        return aiService.getChat(chatId);
+    }
+
+    public void deleteChat(final int chatId) {
+        // Get attachment IDs before cascade-deleting the chat records.
+        final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
+        final List<Integer> attachmentIds = attachments.stream()
+                .map(AiChatAttachment::getId)
+                .toList();
+
+        LOGGER.debug(() -> "deleteChat: chatId=" + chatId + " attachments=" + attachmentIds.size());
+
+        aiService.deleteChat(chatId); // CASCADE deletes DB records
+        attachmentFileStore.deleteAttachmentFiles(attachmentIds); // cleanup attachment files
+    }
+
+    public void deleteMessage(final int chatId, final int messageId) {
+        aiService.verifyOwnership(chatId);
+
+        // Look up the message to check for an associated attachment.
+        final List<AiChatMessage> messages = aiService.getMessages(chatId);
+        final AiChatMessage targetMessage = messages.stream()
+                .filter(m -> m.getId() == messageId)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException(
+                        "Message " + messageId + " not found in chat " + chatId));
+
+        // If this is an ATTACHMENT message, delete the attachment record + file.
+        if (targetMessage.getAttachmentId() != null) {
+            final int attachmentId = targetMessage.getAttachmentId();
+            // Delete DB records (message + attachment) in a transaction.
+            aiService.deleteAttachment(attachmentId);
+            // Clean up the attachment file on disk.
+            attachmentFileStore.deleteAttachmentFile(attachmentId);
+        } else {
+            // Simple message deletion.
+            aiService.deleteMessage(messageId);
+        }
+    }
+
+    public void deleteAllMessages(final int chatId) {
+        aiService.verifyOwnership(chatId);
+
+        // Get attachment IDs for filesystem cleanup.
+        final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
+        final List<Integer> attachmentIds = attachments.stream()
+                .map(AiChatAttachment::getId)
+                .toList();
+
+        // Delete all messages and attachments in a single transaction.
+        aiService.deleteAllChatMessagesAndAttachments(chatId);
+
+        // Clean up attachment files on disk.
+        attachmentFileStore.deleteAttachmentFiles(attachmentIds);
+    }
+
+    public void updateChatTitle(final int chatId, final String title) {
+        aiService.updateChatTitle(chatId, title);
+    }
+
+    public List<AiChatMessage> getMessages(final int chatId) {
+        return aiService.getMessages(chatId);
+    }
+
+    public AiChatPollResponse pollMessages(final int chatId, final AiChatPollRequest request) {
+        final List<AiChatAttachment> attachments = aiService.getAttachmentsByChatId(chatId);
+
+        // The WORKING message is updated in place as processing advances, so it is reported as it
+        // stands rather than as one of the new messages - once the client had seen it, it would never
+        // be sent again, and its progress would never be seen.
+        final AiChatMessage workingMessage = aiService.getWorkingMessage(chatId).orElse(null);
+        final List<AiChatMessage> newMessages = aiService
+                .getMessagesSince(chatId, request.getLastSeenMessageId())
+                .stream()
+                .filter(msg -> msg.getMessageType() != AiMessageType.WORKING)
+                .toList();
+
+        // The conversation is complete when nothing is working on it and all attachments have
+        // finished downloading. Asking whether a WORKING message is in place says that; asking
+        // whether one happens to be among the new messages does not, as a client that has already
+        // seen it would be told the work had finished.
+        final boolean attachmentsComplete = attachments.stream()
+                .noneMatch(a -> a.getStatus() == AiAttachmentStatus.PENDING
+                                || a.getStatus() == AiAttachmentStatus.DOWNLOADING);
+        final boolean complete = workingMessage == null && attachmentsComplete;
+        return new AiChatPollResponse(newMessages, attachments, workingMessage, complete);
+    }
+
+    // ---------------------------------------------------------------------
+    // Config methods
+    // ---------------------------------------------------------------------
+
+    public AskStroomAiConfig getDefaultConfig() {
+        return defaultConfigProvider.get();
+    }
+
+    public Boolean setDefaultAskStroomAIConfig(final AskStroomAiConfig config) {
+        setDefaultTableAnalysisConfig(config.getTableAnalysis());
+
+        final AskStroomAiConfig currentConfig = getDefaultConfig();
+        globalConfigProvider.get().setDocRef(currentConfig,
+                AskStroomAiConfig.PROP_NAME_MODEL_REF,
+                config.getModelRef());
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_DOCK_TYPE,
+                config.getDockType().toString());
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_DOCK_LOCATION,
+                config.getDockLocation().toString());
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_CHAT_SYSTEM_PROMPT,
+                config.getChatSystemPrompt());
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_HISTORY_SUMMARY_PROMPT,
+                config.getHistorySummaryPrompt());
+        globalConfigProvider.get().setInt(currentConfig,
+                AskStroomAiConfig.PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES,
+                config.getMaxHistorySafetyCapMessages());
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS,
+                String.valueOf(config.getAttachmentDownloadTimeoutMs()));
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_ENABLE_DEBUG_DETAIL,
+                String.valueOf(config.isEnableDebugDetail()));
+        return true;
+    }
+
+    private void setDefaultTableAnalysisConfig(final TableAnalysisConfig config) {
+        final TableAnalysisConfig defaultTableAnalysisConfig = tableAnalysisConfigProvider.get();
+        globalConfigProvider.get().setInt(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_MAXIMUM_BATCH_SIZE,
+                config.getMaxRowsPerBatch());
+        globalConfigProvider.get().setInt(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_MAXIMUM_TABLE_INPUT_ROWS,
+                config.getMaxTotalRows());
+        globalConfigProvider.get().setInt(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_MAX_PARALLEL_BATCHES,
+                config.getMaxParallelBatches());
+        globalConfigProvider.get().setString(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_TABLE_QUERY_SYSTEM_PROMPT,
+                config.getTableQuerySystemPrompt());
+        globalConfigProvider.get().setString(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_TABLE_QUERY_USER_PROMPT,
+                config.getTableQueryUserPrompt());
+        globalConfigProvider.get().setString(defaultTableAnalysisConfig,
+                TableAnalysisConfig.PROP_NAME_MULTI_SUMMARY_MERGE_PROMPT,
+                config.getMultiSummaryMergePrompt());
+    }
+
+    // ---------------------------------------------------------------------
+    // Attachment data viewing
+    // ---------------------------------------------------------------------
+
+    /**
+     * Reads the markdown attachment file for the given attachment ID,
+     * parses the header row and a page of data rows, and returns them.
+     */
+    public AiAttachmentDataPage getAttachmentData(final GetAttachmentDataRequest request) {
+        final int chatId = request.getChatId();
+        final int attachmentId = request.getAttachmentId();
+        aiService.verifyOwnership(chatId);
+
+        // Verify the attachment belongs to this chat.
+        final AiChatAttachment attachment = aiService.getAttachment(attachmentId)
+                .orElseThrow(() -> new RuntimeException(
+                        "Attachment " + attachmentId + " not found"));
+        if (attachment.getChatId() != chatId) {
+            throw new RuntimeException(
+                    "Attachment " + attachmentId + " does not belong to chat " + chatId);
+        }
+
+        final Path mdFile = attachmentFileStore.getAttachmentFile(attachmentId);
+        if (!Files.exists(mdFile)) {
+            return new AiAttachmentDataPage(
+                    Collections.emptyList(), Collections.emptyList(), 0, 0);
+        }
+
+        final int offset = NullSafe.getOrElse(
+                request.getPageRequest(), PageRequest::getOffset, 0);
+        final int length = NullSafe.getOrElse(
+                request.getPageRequest(), PageRequest::getLength, PageRequest.DEFAULT_PAGE_LENGTH);
+
+        try (final BufferedReader reader = Files.newBufferedReader(mdFile, StandardCharsets.UTF_8)) {
+            // Line 1: header row  "| Col1 | Col2 | Col3 |"
+            final String headerLine = reader.readLine();
+            if (headerLine == null) {
+                return new AiAttachmentDataPage(
+                        Collections.emptyList(), Collections.emptyList(), 0, 0);
+            }
+            final List<String> headers = parseMarkdownRow(headerLine);
+
+            // Line 2: separator row "| --- | --- | --- |"
+            reader.readLine();
+
+            // Read through data rows, counting total and collecting the requested page.
+            final List<List<String>> pageRows = new ArrayList<>();
+            int totalRowCount = 0;
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.isBlank()) {
+                    if (totalRowCount >= offset && totalRowCount < offset + length) {
+                        pageRows.add(parseMarkdownRow(line));
+                    }
+                    totalRowCount++;
+                }
+            }
+
+            return new AiAttachmentDataPage(headers, pageRows, totalRowCount, offset);
+        } catch (final IOException e) {
+            throw new UncheckedIOException(
+                    "Failed to read attachment file for ID " + attachmentId, e);
+        }
+    }
+
+    /**
+     * Parse a single markdown table row into a list of cell values.
+     * Input: "| val1 | val2 | val3 |"
+     * Output: ["val1", "val2", "val3"]
+     */
+    private List<String> parseMarkdownRow(final String line) {
+        final List<String> cells = new ArrayList<>();
+        // Split on unescaped pipe characters.
+        final String[] parts = line.split("(?<!\\\\)\\|", -1);
+        for (final String part : parts) {
+            final String trimmed = part.trim();
+            if (!trimmed.isEmpty()) {
+                // Unescape any escaped pipes.
+                cells.add(trimmed.replace("\\|", "|"));
+            }
+        }
+        return cells;
+    }
+
+    // ---------------------------------------------------------------------
+    // Chat history download
+    // ---------------------------------------------------------------------
+
+    public ResourceGeneration downloadChatHistory(final DownloadChatHistoryRequest request) {
+        final int chatId = request.getChatId();
+        aiService.verifyOwnership(chatId);
+
+        final boolean includeDataContexts = request.isIncludeDataContexts();
+
+        final AiChat chat = aiService.getChat(chatId);
+        final List<AiChatMessage> messages = aiService.getMessages(chatId);
+
+        LOGGER.debug(() -> "downloadChatHistory: chatId=" + chatId
+                           + " includeDataContexts=" + includeDataContexts
+                           + " messageCount=" + messages.size());
+
+        final String title = chat != null && chat.getTitle() != null
+                ? chat.getTitle()
+                : "chat-" + chatId;
+        final String timestamp = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
+                .withZone(ZoneOffset.UTC)
+                .format(Instant.now());
+        final DateTimeFormatter msgFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss 'UTC'")
+                .withZone(ZoneOffset.UTC);
+
+        final String filename = sanitiseFilename(title) + ".md";
+        final ResourceKey key = resourceStore.createTempFile(filename);
+        final Path file = resourceStore.getTempFile(key);
+        try (final BufferedWriter writer = Files.newBufferedWriter(file, StandardCharsets.UTF_8)) {
+            writer.write("# ");
+            writer.write(title);
+            writer.write("\n\n_Downloaded: ");
+            writer.write(timestamp);
+            writer.write("_\n\n---\n\n");
+
+            for (final AiChatMessage msg : messages) {
+                final String label;
+                switch (msg.getMessageType()) {
+                    case USER_MESSAGE:
+                        label = "**You**";
+                        break;
+                    case AI_RESPONSE:
+                        label = "**AI**";
+                        break;
+                    case ERROR:
+                        label = "**Error**";
+                        break;
+                    case ATTACHMENT:
+                        if (!includeDataContexts || msg.getAttachmentId() == null) {
+                            continue;
+                        }
+                        label = "**Data Context**";
+                        break;
+                    default:
+                        // WORKING, DASHBOARD_DATA, QUERY_DATA, TABLE_DATA, THINKING,
+                        // DEBUG_DETAIL are always omitted (the actual table data lives in
+                        // the attachment file store; thinking/debug detail is only for
+                        // in-UI inspection).
+                        continue;
+                }
+
+                final String ts = msgFmt.format(Instant.ofEpochMilli(msg.getCreateTimeMs()));
+                writer.write(label);
+                writer.write(" _(");
+                writer.write(ts);
+                writer.write(")_\n\n");
+
+                if (msg.getMessageType() == AiMessageType.ATTACHMENT) {
+                    // Stream the markdown from the attachment file store as a Markdown table.
+                    writeAttachmentAsMarkdownTable(writer, msg.getAttachmentId(), msg.getMessage());
+                } else {
+                    final String body = msg.getMessage() != null
+                            ? msg.getMessage()
+                            : "";
+                    writer.write(body);
+                    writer.newLine();
+                }
+                writer.newLine();
+                writer.write("---\n\n");
+            }
+        } catch (final IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        LOGGER.debug(() -> {
+            try {
+                return "downloadChatHistory: wrote " + filename
+                       + " (" + Files.size(file) + " bytes)";
+            } catch (final IOException e) {
+                return "downloadChatHistory: wrote " + filename;
+            }
+        });
+        return new ResourceGeneration(key, new ArrayList<>());
+    }
+
+    /**
+     * Reads the markdown attachment file for the given attachment ID and writes it as a
+     * Markdown table directly to the supplied writer. If the file is not found or
+     * cannot be read, a fallback description line is written instead.
+     */
+    private void writeAttachmentAsMarkdownTable(final BufferedWriter writer,
+                                                final int attachmentId,
+                                                final String description) throws IOException {
+        final Path mdFile = attachmentFileStore.getAttachmentFile(attachmentId);
+        if (!Files.exists(mdFile)) {
+            LOGGER.debug(() -> "writeAttachmentAsMarkdownTable: file not found for attachmentId="
+                               + attachmentId + " (may have been cleaned up)");
+            writer.write("_Data not available (attachment ");
+            writer.write(String.valueOf(attachmentId));
+            writer.write(" may have been cleaned up)_\n");
+            return;
+        }
+        if (description != null && !description.isBlank()) {
+            writer.write("_");
+            writer.write(description);
+            writer.write("_\n\n");
+        }
+        try (final BufferedReader reader = Files.newBufferedReader(mdFile, StandardCharsets.UTF_8)) {
+            // File is already in markdown format — stream it directly.
+            String line;
+            while ((line = reader.readLine()) != null) {
+                writer.write(line);
+                writer.newLine();
+            }
+        }
+    }
+
+    private static String sanitiseFilename(final String name) {
+        if (name == null || name.isBlank()) {
+            return "chat-history";
+        }
+        // Replace characters that are illegal in common filesystems with underscores.
+        return name.replaceAll("[^a-zA-Z0-9._\\-]", "_").replaceAll("_+", "_");
+    }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package stroom.task.impl;
 
-import stroom.expression.api.DateTimeSettings;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldProviderImpl;
 import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
@@ -105,8 +105,10 @@ class TaskManagerImpl implements TaskManager {
 
     @Override
     public synchronized void startup() {
-        LOGGER.info("startup()");
-        executorProvider.setStop(false);
+        if (executorProvider.isStopped()) {
+            throw new IllegalStateException("ExecutorProvider is stopped");
+        }
+        LOGGER.info("Starting Stroom Task Manager");
     }
 
     /**
@@ -115,7 +117,7 @@ class TaskManagerImpl implements TaskManager {
      */
     @Override
     public synchronized void shutdown() {
-        LOGGER.info("shutdown()");
+        LOGGER.info("Stopping Stroom Task Manager");
         executorProvider.setStop(true);
 
         try {
@@ -130,7 +132,7 @@ class TaskManagerImpl implements TaskManager {
                 if (waiting) {
                     // Output some debug to list the tasks that are executing
                     // and queued.
-                    LOGGER.info("shutdown() - Waiting for {} tasks to complete. {}",
+                    LOGGER.info("Waiting for {} tasks to complete. {}",
                             currentCount,
                             taskRegistry.list().stream()
                                     .map(TaskContextImpl::toString)
@@ -151,7 +153,7 @@ class TaskManagerImpl implements TaskManager {
         }
 
         executorProvider.setStop(false);
-        LOGGER.info("shutdown() - Complete");
+        LOGGER.info("Stroom Task Manager stopped successfully");
     }
 
     ResultPage<TaskProgress> terminate(final FindTaskCriteria criteria) {
@@ -284,7 +286,7 @@ class TaskManagerImpl implements TaskManager {
         if (userIdentity instanceof final HasUserRef hasUserRef) {
             userRef = hasUserRef.getUserRef();
         } else {
-            userRef = UserRef.builder().subjectId(userIdentity.getSubjectId()).build();
+            userRef = UserRef.builder().subjectId(userIdentity.subjectId()).build();
         }
 
         final TaskProgress taskProgress = new TaskProgress();
@@ -376,10 +378,10 @@ class TaskManagerImpl implements TaskManager {
         final List<TaskProgress> colourTasks = taskNames.stream()
                 .flatMap(taskname -> {
                     // Need to make sure task IDs are unique over the cluster
-                    TaskId grandparentTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(), null);
-                    TaskId parentTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(),
+                    final TaskId grandparentTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(), null);
+                    final TaskId parentTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(),
                             grandparentTaskId);
-                    TaskId childTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(),
+                    final TaskId childTaskId = new TaskId(thisNodeName + "-" + id.incrementAndGet(),
                             parentTaskId);
                     return Stream.of(
                             Tuple.of(taskname + "-grandparent", grandparentTaskId),
@@ -387,8 +389,8 @@ class TaskManagerImpl implements TaskManager {
                             Tuple.of(taskname + "-child", childTaskId));
                 })
                 .map(tuple2 -> {
-                    String taskName = tuple2._1();
-                    TaskId taskId = tuple2._2();
+                    final String taskName = tuple2._1();
+                    final TaskId taskId = tuple2._2();
                     String taskInfo = "taskInfo-" + taskName;
                     // Make a long taskInfo so we can test cell wrapping
                     for (int i = 0; i < 3; i++) {

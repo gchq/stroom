@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
 
@@ -43,7 +44,7 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
     public void run() {
         try {
             Class.forName(jdbcDriverClassName);
-            try (Connection connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername,
+            try (final Connection connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername,
                     jdbcDriverPassword)) {
                 final List<String> tableColumns = buildTableColumns(connection);
                 tableColumns.forEach(System.out::println);
@@ -57,7 +58,7 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
         final List<String> rtnList = new ArrayList<>();
         final DatabaseMetaData databaseMetaData = connection.getMetaData();
 
-        final HashSet<String> tables = new HashSet<>();
+        final Set<String> tables = new HashSet<>();
         String cat = null;
         String schema = null;
 
@@ -74,7 +75,7 @@ public class DatabaseSchemaDumpTool extends AbstractCommandLineTool {
                 while (resultSet.next()) {
                     rtnList.add((table + " COL " + resultSet.getString("COLUMN_NAME") + "(" + resultSet.getString(
                             "DOCUMENT_TYPE")
-                            + ")").toUpperCase());
+                                 + ")").toUpperCase());
                 }
             }
             try (final ResultSet resultSet = databaseMetaData.getIndexInfo(cat,

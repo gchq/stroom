@@ -150,7 +150,7 @@ class TestHDFSFileAppender extends StroomUnitTest {
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
         final HDFSFileAppender provider = new HDFSFileAppender(null, pathCreator);
 
-        String dir = tempDir.toAbsolutePath().toString();
+        final String dir = tempDir.toAbsolutePath().toString();
         provider.setOutputPaths(
                 dir + "/t1" + name + "," +
                 dir + "/t2" + name + "," +
@@ -160,6 +160,10 @@ class TestHDFSFileAppender extends StroomUnitTest {
         provider.setConf(conf);
         return provider;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MockFileSystem extends DistributedFileSystem {
 

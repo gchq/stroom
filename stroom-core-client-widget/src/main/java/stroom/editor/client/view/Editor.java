@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -182,14 +182,14 @@ public class Editor extends Composite implements
         }
     }
 
-    public void replaceSelectedText(String text) {
+    public void replaceSelectedText(final String text) {
         if (started) {
             editor.replaceSelectedText(text);
             this.text = editor.getText();
         }
     }
 
-    public void insertSnippet(String snippet) {
+    public void insertSnippet(final String snippet) {
         if (started) {
             editor.insertSnippet(snippet);
             this.text = editor.getText();

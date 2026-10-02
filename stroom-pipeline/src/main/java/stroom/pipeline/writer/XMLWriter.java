@@ -17,7 +17,7 @@
 package stroom.pipeline.writer;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.cache.PoolItem;
 import stroom.pipeline.cache.StoredXsltExecutable;
@@ -33,8 +33,8 @@ import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
-import stroom.pipeline.filter.DocFinder;
 import stroom.pipeline.filter.NullXMLFilter;
+import stroom.pipeline.filter.PipelineDocFinder;
 import stroom.pipeline.filter.XMLFilter;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -94,7 +94,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     private final PathCreator pathCreator;
     final Provider<FeedHolder> feedHolder;
     final Provider<PipelineHolder> pipelineHolder;
-    final DocRefInfoService docRefInfoService;
+    final DocFinder docFinder;
 
     private ContentHandler handler = NullXMLFilter.INSTANCE;
 
@@ -103,6 +103,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     private String rootElement;
 
     private boolean indentOutput = false;
+    private boolean preventEscapeSwitching = false;
 
     //XSL related props in order to support <xsl:output>
     private final XsltStore xsltStore;
@@ -126,7 +127,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         this.pathCreator = null;
         this.feedHolder = null;
         this.pipelineHolder = null;
-        this.docRefInfoService = null;
+        this.docFinder = null;
     }
 
     @Inject
@@ -137,7 +138,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                      final PathCreator pathCreator,
                      final Provider<FeedHolder> feedHolder,
                      final Provider<PipelineHolder> pipelineHolder,
-                     final DocRefInfoService docRefInfoService) {
+                     final DocFinder docFinder) {
         super(errorReceiverProxy);
         this.locationFactory = locationFactory;
         this.xsltStore = xsltStore;
@@ -145,7 +146,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
         this.pathCreator = pathCreator;
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -164,13 +165,13 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                     // Get compiled XSLT from the pool.
                     final ErrorReceiver errorReceiver = new ErrorReceiverIdDecorator(getElementId(),
                             getErrorReceiver());
-                    PoolItem<StoredXsltExecutable> poolItem = xsltPool.borrowConfiguredTemplate(xslt, errorReceiver,
-                            locationFactory, List.of(), true);
+                    final PoolItem<StoredXsltExecutable> poolItem = xsltPool.borrowConfiguredTemplate(
+                            xslt, errorReceiver, locationFactory, List.of(), true);
                     final StoredXsltExecutable storedXsltExecutable = poolItem.getValue();
                     // Get the errors.
                     final StoredErrorReceiver storedErrors = storedXsltExecutable.getErrorReceiver();
                     // Get the XSLT executable.
-                    XsltExecutable xsltExecutable = storedXsltExecutable.getXsltExecutable();
+                    final XsltExecutable xsltExecutable = storedXsltExecutable.getXsltExecutable();
                     if (storedErrors.getTotalErrors() > 0) {
                         // Replay any exceptions that were created when
                         // compiling the XSLT into the pipeline error handler.
@@ -186,7 +187,8 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
             final ErrorListener errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory,
                     getErrorReceiver());
-            final TransformerHandler th = XMLUtil.createTransformerHandler(errorListener, indentOutput);
+            final TransformerHandler th = XMLUtil
+                    .createTransformerHandler(errorListener, indentOutput, preventEscapeSwitching);
 
             if (outputProperties != null) {
                 th.getTransformer().setOutputProperties(outputProperties);
@@ -205,13 +207,12 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
     public XsltDoc loadXsltDoc() {
 
-        final DocFinder<XsltDoc> docFinder = new DocFinder<>(
+        final PipelineDocFinder<XsltDoc> pipelineDocFinder = new PipelineDocFinder<>(
                 XsltDoc.TYPE,
                 pathCreator,
-                xsltStore,
-                docRefInfoService);
+                docFinder);
         final DocRef docRef =
-                docFinder.findDoc(
+                pipelineDocFinder.findDoc(
                         xsltRef,
                         xsltNamePattern,
                         getFeedName(),
@@ -224,8 +225,8 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
             final XsltDoc xsltDoc = xsltStore.readDocument(docRef);
             if (xsltDoc == null) {
                 final String message = "XSLT \"" +
-                        docRef.getName() +
-                        "\" appears to have been deleted";
+                                       docRef.getName() +
+                                       "\" appears to have been deleted";
                 throw ProcessException.create(message);
             }
 
@@ -348,7 +349,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                 if (!doneElement) {
                     doneElement = true;
 
-                    if (cb.length() > 0) {
+                    if (!cb.isEmpty()) {
                         // Compensate for the fact that the writer will not have
                         // received a closing bracket as it waits to see if the
                         // current start element will be an empty element. We
@@ -423,7 +424,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
 
                 // If depth = 1 then we have finished an event.
                 if (depth == 1) {
-                    if (cb.length() > 0) {
+                    if (!cb.isEmpty()) {
                         // Compensate for the fact that the writer will now have
                         // received a closing bracket see comment in
                         // startElement() for an explanation.
@@ -548,14 +549,14 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     @PipelineProperty(
             description = "A previously saved XSLT, used to modify the output via xsl:output attributes.",
             displayPriority = 1)
-    @PipelinePropertyDocRef(types = XsltDoc.TYPE)
+    @PipelinePropertyDocRef(types = XsltDoc.TYPE, canEmbed = true)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }
 
     @PipelineProperty(
             description = "A name pattern for dynamic loading of an XSLT, that will modfy the output via " +
-                    "xsl:output attributes.",
+                          "xsl:output attributes.",
             displayPriority = 2)
     public void setXsltNamePattern(final String xsltNamePattern) {
         this.xsltNamePattern = xsltNamePattern;
@@ -567,6 +568,15 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
             displayPriority = 3)
     public void setSuppressXSLTNotFoundWarnings(final boolean suppressXSLTNotFoundWarnings) {
         this.suppressXSLTNotFoundWarnings = suppressXSLTNotFoundWarnings;
+    }
+
+    @PipelineProperty(
+            description = "Some inputs might contain control character 0 which turns off output escaping. " +
+                          "Set this to true to prevent that behaviour.",
+            defaultValue = "false",
+            displayPriority = 4)
+    public void setPreventEscapeSwitching(final boolean preventEscapeSwitching) {
+        this.preventEscapeSwitching = preventEscapeSwitching;
     }
 
     /**
@@ -599,14 +609,14 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
     }
 
     @SuppressWarnings("unused") //useful for debugging
-    private static String truncateAndStripWhitespace(String str) {
+    private static String truncateAndStripWhitespace(final String str) {
         //remove any line breaks and white space, accepting that white space in element text or attributes will be lost
         //but is this is intended for debugging that is ok.
         String truncatedStr = str
                 .replaceAll("\\s+", "")
                 .replace("\n", "");
         if (truncatedStr != null) {
-            int strLen = truncatedStr.length();
+            final int strLen = truncatedStr.length();
             if (strLen > 100) {
                 truncatedStr = String.format("%s..TRUNCATED..%s",
                         truncatedStr.substring(0, 45),
@@ -634,6 +644,4 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
                 ? charBuffer.toString()
                 : "";
     }
-
-
 }

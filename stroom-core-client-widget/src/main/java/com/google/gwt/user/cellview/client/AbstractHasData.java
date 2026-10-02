@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 package com.google.gwt.user.cellview.client;
 
 import com.google.gwt.cell.client.Cell;
@@ -84,7 +85,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
          *
          * @param display the display being handled
          */
-        public DefaultKeyboardSelectionHandler(AbstractHasData<T> display) {
+        public DefaultKeyboardSelectionHandler(final AbstractHasData<T> display) {
             this.display = display;
         }
 
@@ -93,9 +94,9 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         }
 
         @Override
-        public void onCellPreview(CellPreviewEvent<T> event) {
-            NativeEvent nativeEvent = event.getNativeEvent();
-            String eventType = event.getNativeEvent().getType();
+        public void onCellPreview(final CellPreviewEvent<T> event) {
+            final NativeEvent nativeEvent = event.getNativeEvent();
+            final String eventType = event.getNativeEvent().getType();
             if (BrowserEvents.KEYDOWN.equals(eventType) && !event.isCellEditing()) {
                 /*
                  * Handle keyboard navigation, unless the cell is being edited. If the
@@ -140,19 +141,19 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
                  * edited. Unlike key events, we aren't moving the currently selected
                  * row, just updating it based on where the user clicked.
                  */
-                int relRow = event.getIndex() - display.getPageStart();
+                final int relRow = event.getIndex() - display.getPageStart();
 
                 // If a natively focusable element was just clicked, then do not steal
                 // focus.
                 boolean isFocusable = false;
-                Element target = Element.as(event.getNativeEvent().getEventTarget());
+                final Element target = Element.as(event.getNativeEvent().getEventTarget());
                 isFocusable = CellBasedWidgetImpl.get().isFocusable(target);
                 display.setKeyboardSelectedRow(relRow, !isFocusable);
 
                 // Do not cancel the event as the click may have occurred on a Cell.
             } else if (BrowserEvents.FOCUS.equals(eventType)) {
                 // Move keyboard focus to match the currently focused element.
-                int relRow = event.getIndex() - display.getPageStart();
+                final int relRow = event.getIndex() - display.getPageStart();
                 if (display.getKeyboardSelectedRow() != relRow) {
                     // Do not steal focus as this was a focus event.
                     display.setKeyboardSelectedRow(relRow, false);
@@ -168,7 +169,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
             setKeyboardSelectedRow(display.getRowCount() - 1);
         }
 
-        void handledEvent(CellPreviewEvent<?> event) {
+        void handledEvent(final CellPreviewEvent<?> event) {
             event.setCanceled(true);
             event.getNativeEvent().preventDefault();
         }
@@ -180,7 +181,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
 
         // Visible for testing.
         void nextPage() {
-            KeyboardPagingPolicy keyboardPagingPolicy = display.getKeyboardPagingPolicy();
+            final KeyboardPagingPolicy keyboardPagingPolicy = display.getKeyboardPagingPolicy();
             if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
                 // 0th index of next page.
                 setKeyboardSelectedRow(display.getPageSize());
@@ -196,7 +197,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
 
         // Visible for testing.
         void prevPage() {
-            KeyboardPagingPolicy keyboardPagingPolicy = display.getKeyboardPagingPolicy();
+            final KeyboardPagingPolicy keyboardPagingPolicy = display.getKeyboardPagingPolicy();
             if (KeyboardPagingPolicy.CHANGE_PAGE == keyboardPagingPolicy) {
                 // 0th index of previous page.
                 setKeyboardSelectedRow(-display.getPageSize());
@@ -211,7 +212,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         }
 
         // Visible for testing.
-        void setKeyboardSelectedRow(int row) {
+        void setKeyboardSelectedRow(final int row) {
             display.setKeyboardSelectedRow(row, true);
         }
     }
@@ -227,6 +228,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
          * Implemented by objects that handle {@link RedrawEvent}.
          */
         public interface Handler extends EventHandler {
+
             /**
              * Performs implementation-specific work when the cell list re-renders one or more existing
              * rows.
@@ -234,11 +236,13 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
             void onRedraw();
         }
 
-        @Override public Type<Handler> getAssociatedType() {
+        @Override
+        public Type<Handler> getAssociatedType() {
             return TYPE;
         }
 
-        @Override protected void dispatch(RedrawEvent.Handler handler) {
+        @Override
+        protected void dispatch(final RedrawEvent.Handler handler) {
             handler.onRedraw();
         }
     }
@@ -253,19 +257,19 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         private final AbstractHasData<T> hasData;
         private boolean wasFocused;
 
-        public View(AbstractHasData<T> hasData) {
+        public View(final AbstractHasData<T> hasData) {
             this.hasData = hasData;
         }
 
         @Override
-        public <H extends EventHandler> HandlerRegistration addHandler(H handler, Type<H> type) {
+        public <H extends EventHandler> HandlerRegistration addHandler(final H handler, final Type<H> type) {
             return hasData.addHandler(handler, type);
         }
 
         @Override
-        public void replaceAllChildren(List<T> values, SelectionModel<? super T> selectionModel,
-                                       boolean stealFocus) {
-            SafeHtml html = renderRowValues(values, hasData.getPageStart(), selectionModel);
+        public void replaceAllChildren(final List<T> values, final SelectionModel<? super T> selectionModel,
+                                       final boolean stealFocus) {
+            final SafeHtml html = renderRowValues(values, hasData.getPageStart(), selectionModel);
 
             // Removing elements can fire a blur event, which we ignore.
             hasData.isFocused = hasData.isFocused || stealFocus;
@@ -275,7 +279,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
             hasData.isRefreshing = false;
 
             // Ensure that the keyboard selected element is focusable.
-            Element elem = hasData.getKeyboardSelectedElement();
+            final Element elem = hasData.getKeyboardSelectedElement();
             if (elem != null) {
                 hasData.setFocusable(elem, true);
                 if (hasData.isFocused) {
@@ -288,9 +292,9 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         }
 
         @Override
-        public void replaceChildren(List<T> values, int start,
-                                    SelectionModel<? super T> selectionModel, boolean stealFocus) {
-            SafeHtml html = renderRowValues(values, hasData.getPageStart() + start, selectionModel);
+        public void replaceChildren(final List<T> values, final int start,
+                                    final SelectionModel<? super T> selectionModel, final boolean stealFocus) {
+            final SafeHtml html = renderRowValues(values, hasData.getPageStart() + start, selectionModel);
 
             // Removing elements can fire a blur event, which we ignore.
             hasData.isFocused = hasData.isFocused || stealFocus;
@@ -300,7 +304,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
             hasData.isRefreshing = false;
 
             // Ensure that the keyboard selected element is focusable.
-            Element elem = hasData.getKeyboardSelectedElement();
+            final Element elem = hasData.getKeyboardSelectedElement();
             if (elem != null) {
                 hasData.setFocusable(elem, true);
                 if (hasData.isFocused) {
@@ -319,7 +323,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
                     @Override
                     public void execute() {
                         if (!hasData.resetFocusOnCell() && wasFocused) {
-                            Element elem = hasData.getKeyboardSelectedElement();
+                            final Element elem = hasData.getKeyboardSelectedElement();
                             if (elem != null) {
                                 FocusUtil.focusRow(elem);
                             }
@@ -330,13 +334,13 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         }
 
         @Override
-        public void setKeyboardSelected(int index, boolean seleted, boolean stealFocus) {
+        public void setKeyboardSelected(final int index, final boolean seleted, final boolean stealFocus) {
             hasData.isFocused = hasData.isFocused || stealFocus;
             hasData.setKeyboardSelected(index, seleted, stealFocus);
         }
 
         @Override
-        public void setLoadingState(LoadingState state) {
+        public void setLoadingState(final LoadingState state) {
             hasData.isRefreshing = true;
             hasData.onLoadingStateChanged(state);
             hasData.isRefreshing = false;
@@ -356,18 +360,18 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         /**
          * Render a list of row values.
          *
-         * @param values the row values
-         * @param start the absolute start index of the values
+         * @param values         the row values
+         * @param start          the absolute start index of the values
          * @param selectionModel the {@link SelectionModel}
          * @return null, unless the implementation renders using SafeHtml
          */
-        private SafeHtml renderRowValues(List<T> values, int start,
-                                         SelectionModel<? super T> selectionModel) {
+        private SafeHtml renderRowValues(final List<T> values, final int start,
+                                         final SelectionModel<? super T> selectionModel) {
             try {
-                SafeHtmlBuilder sb = new SafeHtmlBuilder();
+                final SafeHtmlBuilder sb = new SafeHtmlBuilder();
                 hasData.renderRowValues(sb, values, start, selectionModel);
                 return sb.toSafeHtml();
-            } catch (UnsupportedOperationException e) {
+            } catch (final UnsupportedOperationException e) {
                 // If renderRowValues throws, the implementation will render directly in
                 // the replaceChildren method.
                 return null;
@@ -384,11 +388,11 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * Convenience method to convert the specified HTML into DOM elements and
      * return the parent of the DOM elements.
      *
-     * @param html the HTML to convert
+     * @param html    the HTML to convert
      * @param tmpElem a temporary element
      * @return the parent element
      */
-    static Element convertToElements(Widget widget, Element tmpElem, SafeHtml html) {
+    static Element convertToElements(final Widget widget, final Element tmpElem, final SafeHtml html) {
         // Attach an event listener so we can catch synchronous load events from
         // cached images.
         DOM.setEventListener(tmpElem, widget);
@@ -404,11 +408,11 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     /**
      * Convenience method to replace all children of a Widget.
      *
-     * @param widget the widget who's contents will be replaced
+     * @param widget         the widget who's contents will be replaced
      * @param childContainer the container that holds the contents
-     * @param html the html to set
+     * @param html           the html to set
      */
-    static void replaceAllChildren(Widget widget, Element childContainer, SafeHtml html) {
+    static void replaceAllChildren(final Widget widget, final Element childContainer, final SafeHtml html) {
         // If the widget is not attached, attach an event listener so we can catch
         // synchronous load events from cached images.
         if (!widget.isAttached()) {
@@ -430,29 +434,29 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * number of children specified exceeds the existing number of children, the
      * remaining children should be appended.
      *
-     * @param widget the widget who's contents will be replaced
+     * @param widget         the widget who's contents will be replaced
      * @param childContainer the container that holds the contents
-     * @param newChildren an element containing the new children
-     * @param start the start index to replace
-     * @param html the HTML to convert
+     * @param newChildren    an element containing the new children
+     * @param start          the start index to replace
+     * @param html           the HTML to convert
      */
-    static void replaceChildren(Widget widget, Element childContainer, Element newChildren,
-                                int start, SafeHtml html) {
+    static void replaceChildren(final Widget widget, final Element childContainer, final Element newChildren,
+                                final int start, final SafeHtml html) {
         // Get the first element to be replaced.
-        int childCount = childContainer.getChildCount();
+        final int childCount = childContainer.getChildCount();
         Element toReplace = null;
         if (start < childCount) {
             toReplace = childContainer.getChild(start).cast();
         }
 
         // Replace the elements.
-        int count = newChildren.getChildCount();
+        final int count = newChildren.getChildCount();
         for (int i = 0; i < count; i++) {
             if (toReplace == null) {
                 // The child will be removed from tmpElem, so always use index 0.
                 childContainer.appendChild(newChildren.getChild(0));
             } else {
-                Element nextSibling = toReplace.getNextSiblingElement();
+                final Element nextSibling = toReplace.getNextSiblingElement();
                 childContainer.replaceChild(newChildren.getChild(0), toReplace);
                 toReplace = nextSibling;
             }
@@ -490,8 +494,8 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     /**
      * Constructs an {@link AbstractHasData} with the given page size.
      *
-     * @param elem the parent {@link Element}
-     * @param pageSize the page size
+     * @param elem        the parent {@link Element}
+     * @param pageSize    the page size
      * @param keyProvider the key provider, or null
      */
     public AbstractHasData(final Element elem, final int pageSize, final ProvidesKey<T> keyProvider) {
@@ -505,16 +509,16 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     /**
      * Constructs an {@link AbstractHasData} with the given page size.
      *
-     * @param widget the parent {@link Widget}
-     * @param pageSize the page size
+     * @param widget      the parent {@link Widget}
+     * @param pageSize    the page size
      * @param keyProvider the key provider, or null
      */
-    public AbstractHasData(Widget widget, final int pageSize, final ProvidesKey<T> keyProvider) {
+    public AbstractHasData(final Widget widget, final int pageSize, final ProvidesKey<T> keyProvider) {
         initWidget(widget);
         this.presenter = new HasDataPresenter<T>(this, new View<T>(this), pageSize, keyProvider);
 
         // Sink events.
-        Set<String> eventTypes = new HashSet<String>();
+        final Set<String> eventTypes = new HashSet<String>();
         eventTypes.add(BrowserEvents.FOCUS);
         eventTypes.add(BrowserEvents.BLUR);
         eventTypes.add(BrowserEvents.KEYDOWN); // Used for keyboard navigation.
@@ -525,14 +529,14 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
 
         // Add a default selection event manager.
         selectionManagerReg =
-                addCellPreviewHandler(DefaultSelectionEventManager.<T> createDefaultManager());
+                addCellPreviewHandler(DefaultSelectionEventManager.<T>createDefaultManager());
 
         // Add a default keyboard selection handler.
         setKeyboardSelectionHandler(new DefaultKeyboardSelectionHandler<T>(this));
     }
 
     @Override
-    public HandlerRegistration addCellPreviewHandler(CellPreviewEvent.Handler<T> handler) {
+    public HandlerRegistration addCellPreviewHandler(final CellPreviewEvent.Handler<T> handler) {
         return presenter.addCellPreviewHandler(handler);
     }
 
@@ -547,24 +551,24 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @param handler the handle
      * @return the registration for the handler
      */
-    public HandlerRegistration addLoadingStateChangeHandler(LoadingStateChangeEvent.Handler handler) {
+    public HandlerRegistration addLoadingStateChangeHandler(final LoadingStateChangeEvent.Handler handler) {
         return presenter.addLoadingStateChangeHandler(handler);
     }
 
     @Override
-    public HandlerRegistration addRangeChangeHandler(RangeChangeEvent.Handler handler) {
+    public HandlerRegistration addRangeChangeHandler(final RangeChangeEvent.Handler handler) {
         return presenter.addRangeChangeHandler(handler);
     }
 
     @Override
-    public HandlerRegistration addRowCountChangeHandler(RowCountChangeEvent.Handler handler) {
+    public HandlerRegistration addRowCountChangeHandler(final RowCountChangeEvent.Handler handler) {
         return presenter.addRowCountChangeHandler(handler);
     }
 
     /**
      * Adds the given handler as a callback that is notified of events of type {@link RedrawEvent}.
      */
-    public HandlerRegistration addRedrawHandler(RedrawEvent.Handler handler) {
+    public HandlerRegistration addRedrawHandler(final RedrawEvent.Handler handler) {
         return addHandler(handler, RedrawEvent.TYPE);
     }
 
@@ -587,7 +591,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @deprecated use {@link #getVisibleItem(int)} instead
      */
     @Deprecated
-    public T getDisplayedItem(int indexOnPage) {
+    public T getDisplayedItem(final int indexOnPage) {
         return getVisibleItem(indexOnPage);
     }
 
@@ -638,7 +642,6 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * Return the range size.
      *
      * @return the size of the range as an int
-     *
      * @see #getVisibleRange()
      * @see #setPageSize(int)
      */
@@ -650,7 +653,6 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * Return the range start.
      *
      * @return the start of the range as an int
-     *
      * @see #getVisibleRange()
      * @see #setPageStart(int)
      */
@@ -692,13 +694,15 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @param value the value
      * @return the key
      */
-    public Object getValueKey(T value) {
-        ProvidesKey<T> keyProvider = getKeyProvider();
-        return (keyProvider == null || value == null) ? value : keyProvider.getKey(value);
+    public Object getValueKey(final T value) {
+        final ProvidesKey<T> keyProvider = getKeyProvider();
+        return (keyProvider == null || value == null)
+                ? value
+                : keyProvider.getKey(value);
     }
 
     @Override
-    public T getVisibleItem(int indexOnPage) {
+    public T getVisibleItem(final int indexOnPage) {
         checkRowBounds(indexOnPage);
         return presenter.getVisibleItem(indexOnPage);
     }
@@ -737,7 +741,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @see #onBrowserEvent2(Event)
      */
     @Override
-    public final void onBrowserEvent(Event event) {
+    public final void onBrowserEvent(final Event event) {
         CellBasedWidgetImpl.get().onBrowserEvent(this, event);
 
         // Ignore spurious events (such as onblur) while we refresh the table.
@@ -747,7 +751,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
 
         // Verify that the target is still a child of this widget. IE fires focus
         // events even after the element has been removed from the DOM.
-        EventTarget eventTarget = event.getEventTarget();
+        final EventTarget eventTarget = event.getEventTarget();
         if (!Element.is(eventTarget)) {
             return;
         }
@@ -771,7 +775,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
         });
     }
 
-    private void rememberFocus(Event event) {
+    private void rememberFocus(final Event event) {
         final String eventType = event.getType();
         final EventTarget eventTarget = event.getEventTarget();
         final Element target = Element.as(eventTarget);
@@ -785,7 +789,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
             // A key event indicates that we already have focus.
             isFocused = allowFocus(target);
         } else if (BrowserEvents.MOUSEDOWN.equals(eventType)
-                && CellBasedWidgetImpl.get().isFocusable(Element.as(target))) {
+                   && CellBasedWidgetImpl.get().isFocusable(Element.as(target))) {
             // If a natively focusable element was just clicked, then we must have
             // focus.
             isFocused = allowFocus(target);
@@ -796,7 +800,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * Provide a method so that subclasses can choose if this widget is allowed to obtain focus.
      * This was introduced to fix issue gh-4684
      */
-    boolean allowFocus(Element element) {
+    boolean allowFocus(final Element element) {
         return true;
     }
 
@@ -812,8 +816,8 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      *
      * @param absRowIndex the absolute row index to redraw
      */
-    public void redrawRow(int absRowIndex) {
-        int relRowIndex = absRowIndex - getPageStart();
+    public void redrawRow(final int absRowIndex) {
+        final int relRowIndex = absRowIndex - getPageStart();
         checkRowBounds(relRowIndex);
         setRowData(absRowIndex, Collections.singletonList(getVisibleItem(relRowIndex)));
     }
@@ -824,14 +828,14 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @see #getAccessKey()
      */
     @Override
-    public void setAccessKey(char key) {
+    public void setAccessKey(final char key) {
         this.accessKey = key;
         setKeyboardSelected(getKeyboardSelectedRow(), true, false);
     }
 
     @Override
-    public void setFocus(boolean focused) {
-        Element elem = getKeyboardSelectedElement();
+    public void setFocus(final boolean focused) {
+        final Element elem = getKeyboardSelectedElement();
         if (elem != null) {
             if (focused) {
                 FocusUtil.focusRow(elem);
@@ -842,7 +846,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     }
 
     @Override
-    public void setKeyboardPagingPolicy(KeyboardPagingPolicy policy) {
+    public void setKeyboardPagingPolicy(final KeyboardPagingPolicy policy) {
         presenter.setKeyboardPagingPolicy(policy);
     }
 
@@ -864,25 +868,25 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      *
      * @param row the row index relative to the page start
      */
-    public final void setKeyboardSelectedRow(int row) {
+    public final void setKeyboardSelectedRow(final int row) {
         setKeyboardSelectedRow(row, true);
     }
 
     /**
      * Set the keyboard selected row and optionally focus on the new row.
      *
-     * @param row the row index relative to the page start
+     * @param row        the row index relative to the page start
      * @param stealFocus true to focus on the new row
      * @see #setKeyboardSelectedRow(int)
      */
-    public void setKeyboardSelectedRow(int row, boolean stealFocus) {
+    public void setKeyboardSelectedRow(final int row, final boolean stealFocus) {
         presenter.setKeyboardSelectedRow(row, stealFocus, true);
     }
 
     /**
      * Set the handler that handles keyboard selection/navigation.
      */
-    public void setKeyboardSelectionHandler(CellPreviewEvent.Handler<T> keyboardSelectionReg) {
+    public void setKeyboardSelectionHandler(final CellPreviewEvent.Handler<T> keyboardSelectionReg) {
         // Remove the old manager.
         if (this.keyboardSelectionReg != null) {
             this.keyboardSelectionReg.removeHandler();
@@ -896,7 +900,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     }
 
     @Override
-    public void setKeyboardSelectionPolicy(KeyboardSelectionPolicy policy) {
+    public void setKeyboardSelectionPolicy(final KeyboardSelectionPolicy policy) {
         presenter.setKeyboardSelectionPolicy(policy);
     }
 
@@ -907,7 +911,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @see #setVisibleRange(Range)
      * @see #getPageSize()
      */
-    public final void setPageSize(int pageSize) {
+    public final void setPageSize(final int pageSize) {
         setVisibleRange(getPageStart(), pageSize);
     }
 
@@ -916,21 +920,21 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * will be clamped in the range [0, getSize() - 1].
      *
      * @param pageStart the index of the row that should appear at the start of
-     *          the page
+     *                  the page
      * @see #setVisibleRange(Range)
      * @see #getPageStart()
      */
-    public final void setPageStart(int pageStart) {
+    public final void setPageStart(final int pageStart) {
         setVisibleRange(pageStart, getPageSize());
     }
 
     @Override
-    public final void setRowCount(int count) {
+    public final void setRowCount(final int count) {
         setRowCount(count, true);
     }
 
     @Override
-    public void setRowCount(int size, boolean isExact) {
+    public void setRowCount(final int size, final boolean isExact) {
         presenter.setRowCount(size, isExact);
     }
 
@@ -947,14 +951,14 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      *
      * @param values
      */
-    public final void setRowData(List<? extends T> values) {
+    public final void setRowData(final List<? extends T> values) {
         setRowCount(values.size());
         setVisibleRange(0, values.size());
         setRowData(0, values);
     }
 
     @Override
-    public void setRowData(int start, List<? extends T> values) {
+    public void setRowData(final int start, final List<? extends T> values) {
         presenter.setRowData(start, values);
     }
 
@@ -965,18 +969,19 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * By default, selection occurs when the user clicks on a Cell or presses the
      * spacebar. If you need finer control over selection, you can specify a
      * {@link DefaultSelectionEventManager} using
-     * {@link #setSelectionModel(SelectionModel, com.google.gwt.view.client.CellPreviewEvent.Handler)}. {@link DefaultSelectionEventManager} provides some default
+     * {@link #setSelectionModel(SelectionModel, com.google.gwt.view.client.CellPreviewEvent.Handler)}.
+     * {@link DefaultSelectionEventManager} provides some default
      * implementations to handle checkbox based selection, as well as a blacklist
      * or whitelist of columns to prevent or allow selection.
      * </p>
      *
      * @param selectionModel the {@link SelectionModel}
      * @see #setSelectionModel(SelectionModel,
-     *      com.google.gwt.view.client.CellPreviewEvent.Handler)
+     * com.google.gwt.view.client.CellPreviewEvent.Handler)
      * @see #getSelectionModel()
      */
     @Override
-    public void setSelectionModel(SelectionModel<? super T> selectionModel) {
+    public void setSelectionModel(final SelectionModel<? super T> selectionModel) {
         presenter.setSelectionModel(selectionModel);
     }
 
@@ -985,11 +990,11 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * the {@link com.google.gwt.view.client.CellPreviewEvent.Handler} that
      * controls how user selection is handled.
      *
-     * @param selectionModel the {@link SelectionModel} that defines selection
+     * @param selectionModel        the {@link SelectionModel} that defines selection
      * @param selectionEventManager the handler that controls user selection
      */
-    public void setSelectionModel(SelectionModel<? super T> selectionModel,
-                                  CellPreviewEvent.Handler<T> selectionEventManager) {
+    public void setSelectionModel(final SelectionModel<? super T> selectionModel,
+                                  final CellPreviewEvent.Handler<T> selectionEventManager) {
         // Remove the old manager.
         if (this.selectionManagerReg != null) {
             this.selectionManagerReg.removeHandler();
@@ -1006,35 +1011,35 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     }
 
     @Override
-    public void setTabIndex(int index) {
+    public void setTabIndex(final int index) {
         this.tabIndex = index;
         setKeyboardSelected(getKeyboardSelectedRow(), true, false);
     }
 
     @Override
-    public final void setVisibleRange(int start, int length) {
+    public final void setVisibleRange(final int start, final int length) {
         setVisibleRange(new Range(start, length));
     }
 
     @Override
-    public void setVisibleRange(Range range) {
+    public void setVisibleRange(final Range range) {
         presenter.setVisibleRange(range);
     }
 
     @Override
-    public void setVisibleRangeAndClearData(Range range, boolean forceRangeChangeEvent) {
+    public void setVisibleRangeAndClearData(final Range range, final boolean forceRangeChangeEvent) {
         presenter.setVisibleRangeAndClearData(range, forceRangeChangeEvent);
     }
 
     /**
      * Check if a cell consumes the specified event type.
      *
-     * @param cell the cell
+     * @param cell      the cell
      * @param eventType the event type to check
      * @return true if consumed, false if not
      */
-    protected boolean cellConsumesEventType(Cell<?> cell, String eventType) {
-        Set<String> consumedEvents = cell.getConsumedEvents();
+    protected boolean cellConsumesEventType(final Cell<?> cell, final String eventType) {
+        final Set<String> consumedEvents = cell.getConsumedEvents();
         return consumedEvents != null && consumedEvents.contains(eventType);
     }
 
@@ -1044,7 +1049,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @param row row index to check
      * @throws IndexOutOfBoundsException
      */
-    protected void checkRowBounds(int row) {
+    protected void checkRowBounds(final int row) {
         if (!isRowWithinBounds(row)) {
             throw new IndexOutOfBoundsException("Row index: " + row + ", Row size: " + getRowCount());
         }
@@ -1057,7 +1062,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @param html the HTML to convert
      * @return the parent element
      */
-    protected Element convertToElements(SafeHtml html) {
+    protected Element convertToElements(final SafeHtml html) {
         return convertToElements(this, getTmpElem(), html);
     }
 
@@ -1081,10 +1086,13 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @param index the index of the row value
      * @return the child element, or null if it does not exist
      */
-    protected Element getChildElement(int index) {
-        Element childContainer = getChildContainer();
-        int childCount = childContainer.getChildCount();
-        return (index < childCount) ? childContainer.getChild(index).<Element> cast() : null;
+    protected Element getChildElement(final int index) {
+        final Element childContainer = getChildContainer();
+        final int childCount = childContainer.getChildCount();
+        //noinspection RedundantTypeArguments // Cos GWT
+        return (index < childCount)
+                ? childContainer.getChild(index).<Element>cast()
+                : null;
     }
 
     /**
@@ -1108,7 +1116,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @param row row index to check
      * @return true if within bounds, false if not
      */
-    protected boolean isRowWithinBounds(int row) {
+    protected boolean isRowWithinBounds(final int row) {
         return row >= 0 && row < presenter.getVisibleItemCount();
     }
 
@@ -1123,7 +1131,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      *
      * @param event the event that was fired
      */
-    protected void onBrowserEvent2(Event event) {
+    protected void onBrowserEvent2(final Event event) {
     }
 
     /**
@@ -1138,7 +1146,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      *
      * @param state the new loading state
      */
-    protected void onLoadingStateChanged(LoadingState state) {
+    protected void onLoadingStateChanged(final LoadingState state) {
         fireEvent(new LoadingStateChangeEvent(state));
     }
 
@@ -1161,26 +1169,27 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * newer widgets that use other builders, such as the ElementBuilder API.
      * </p>
      *
-     * @param sb the {@link SafeHtmlBuilder} to render into
-     * @param values the row values
-     * @param start the absolute start index of the values
+     * @param sb             the {@link SafeHtmlBuilder} to render into
+     * @param values         the row values
+     * @param start          the absolute start index of the values
      * @param selectionModel the {@link SelectionModel}
      * @throws UnsupportedOperationException if the values will be rendered in
-     *           {@link #replaceAllChildren(List, SafeHtml)} and
-     *           {@link #replaceChildren(List, int, SafeHtml)}
+     *                                       {@link #replaceAllChildren(List, SafeHtml)} and
+     *                                       {@link #replaceChildren(List, int, SafeHtml)}
      */
     protected abstract void renderRowValues(SafeHtmlBuilder sb, List<T> values, int start,
-                                            SelectionModel<? super T> selectionModel) throws UnsupportedOperationException;
+                                            SelectionModel<? super T> selectionModel)
+            throws UnsupportedOperationException;
 
     /**
      * Replace all children with the specified html.
      *
      * @param values the values of the new children
-     * @param html the html to render, or null if
-     *          {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
-     *          throws an {@link UnsupportedOperationException}
+     * @param html   the html to render, or null if
+     *               {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
+     *               throws an {@link UnsupportedOperationException}
      */
-    protected void replaceAllChildren(List<T> values, SafeHtml html) {
+    protected void replaceAllChildren(final List<T> values, final SafeHtml html) {
         replaceAllChildren(this, getChildContainer(), html);
     }
 
@@ -1191,13 +1200,13 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * should be appended.
      *
      * @param values the values of the new children
-     * @param start the start index to be replaced, relative to the page start
-     * @param html the html to render, or null if
-     *          {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
-     *          throws an {@link UnsupportedOperationException}
+     * @param start  the start index to be replaced, relative to the page start
+     * @param html   the html to render, or null if
+     *               {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
+     *               throws an {@link UnsupportedOperationException}
      */
-    protected void replaceChildren(List<T> values, int start, SafeHtml html) {
-        Element newChildren = convertToElements(html);
+    protected void replaceChildren(final List<T> values, final int start, final SafeHtml html) {
+        final Element newChildren = convertToElements(html);
         replaceChildren(this, getChildContainer(), newChildren, start, html);
     }
 
@@ -1211,12 +1220,12 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     /**
      * Make an element focusable or not.
      *
-     * @param elem the element
+     * @param elem      the element
      * @param focusable true to make focusable, false to make unfocusable
      */
-    protected void setFocusable(Element elem, boolean focusable) {
+    protected void setFocusable(final Element elem, final boolean focusable) {
         if (focusable) {
-            FocusImpl focusImpl = FocusImpl.getFocusImplForWidget();
+            final FocusImpl focusImpl = FocusImpl.getFocusImplForWidget();
             focusImpl.setTabIndex(elem, getTabIndex());
             if (accessKey != 0) {
                 focusImpl.setAccessKey(elem, accessKey);
@@ -1233,8 +1242,8 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     /**
      * Update an element to reflect its keyboard selected state.
      *
-     * @param index the index of the element
-     * @param selected true if selected, false if not
+     * @param index      the index of the element
+     * @param selected   true if selected, false if not
      * @param stealFocus true if the row should steal focus, false if not
      */
     protected abstract void setKeyboardSelected(int index, boolean selected, boolean stealFocus);
@@ -1242,14 +1251,14 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
     /**
      * Update an element to reflect its selected state.
      *
-     * @param elem the element to update
+     * @param elem     the element to update
      * @param selected true if selected, false if not
      * @deprecated this method is never called by AbstractHasData, render the
-     *             selected styles in
-     *             {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
+     * selected styles in
+     * {@link #renderRowValues(SafeHtmlBuilder, List, int, SelectionModel)}
      */
     @Deprecated
-    protected void setSelected(Element elem, boolean selected) {
+    protected void setSelected(final Element elem, final boolean selected) {
         // Never called.
     }
 
@@ -1261,7 +1270,7 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * @param handler the handler
      * @return a {@link HandlerRegistration} to remove the handler
      */
-    final HandlerRegistration addValueChangeHandler(ValueChangeHandler<List<T>> handler) {
+    final HandlerRegistration addValueChangeHandler(final ValueChangeHandler<List<T>> handler) {
         return addHandler(handler, ValueChangeEvent.getType());
     }
 
@@ -1300,9 +1309,9 @@ public abstract class AbstractHasData<T> extends Composite implements HasData<T>
      * Show or hide an element.
      *
      * @param element the element
-     * @param show true to show, false to hide
+     * @param show    true to show, false to hide
      */
-    void showOrHide(Element element, boolean show) {
+    void showOrHide(final Element element, final boolean show) {
         if (element == null) {
             return;
         }

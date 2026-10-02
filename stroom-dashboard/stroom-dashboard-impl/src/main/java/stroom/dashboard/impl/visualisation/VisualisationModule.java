@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 
 package stroom.dashboard.impl.visualisation;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.query.language.VisualisationTokenConsumer;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
+import stroom.util.guice.ServletBinder;
 import stroom.util.shared.Clearable;
 import stroom.visualisation.shared.VisualisationDoc;
 
@@ -33,27 +31,23 @@ public class VisualisationModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(VisualisationStore.class).to(VisualisationStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(VisualisationDoc.TYPE, VisualisationStore.class, VisualisationStoreImpl.class);
+
         bind(VisualisationTokenConsumer.class).to(VisualisationTokenConsumerImpl.class);
         bind(VisualisationDocCache.class).to(VisualisationDocCacheImpl.class);
 
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(VisualisationStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(VisualisationStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(VisualisationStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(VisualisationDoc.TYPE, VisualisationStoreImpl.class);
-
         RestResourcesBinder.create(binder())
                 .bind(VisualisationResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(VisualisationAssetResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(VisualisationDocCacheImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(VisualisationDocCacheImpl.class);
+
+        ServletBinder.create(binder()).bind(VisualisationAssetServlet.class);
     }
 }

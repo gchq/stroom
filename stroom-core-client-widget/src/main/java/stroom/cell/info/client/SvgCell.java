@@ -51,7 +51,7 @@ public class SvgCell extends AbstractCell<Preset> {
         if (isButton) {
             super.onBrowserEvent(context, parent, value, event, valueUpdater);
             if ("click".equals(event.getType())) {
-                EventTarget eventTarget = event.getEventTarget();
+                final EventTarget eventTarget = event.getEventTarget();
                 if (!Element.is(eventTarget)) {
                     return;
                 }

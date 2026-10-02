@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@ public class FunctionSignatureUtil {
                 sigStr = args
                         .stream()
                         .flatMap(arg -> {
-                            List<String> argStrs = new ArrayList<>();
+                            final List<String> argStrs = new ArrayList<>();
 
                             if (arg.isVarargs()) {
                                 for (int i = 1; i <= arg.getMinVarargsCount() + 1; i++) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,12 @@ import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class ProcessorFilterRow extends ProcessorListRow {
+public final class ProcessorFilterRow extends ProcessorListRow {
 
     private static final Expander EXPANDER = new Expander(1, false, true);
 
     @JsonProperty
-    private final ProcessorFilter processorFilter;
+    private ProcessorFilter processorFilter;
 
     @JsonCreator
     public ProcessorFilterRow(@JsonProperty("processorFilter") final ProcessorFilter processorFilter) {
@@ -43,6 +43,10 @@ public class ProcessorFilterRow extends ProcessorListRow {
 
     public ProcessorFilter getProcessorFilter() {
         return processorFilter;
+    }
+
+    public void setProcessorFilter(final ProcessorFilter processorFilter) {
+        this.processorFilter = processorFilter;
     }
 
     @JsonIgnore

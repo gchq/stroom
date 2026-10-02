@@ -42,15 +42,15 @@ public class FindActivityCriteria extends BaseCriteria {
     @JsonCreator
     public FindActivityCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                 @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
-                                @JsonProperty("userId") final UserRef userRef,
-                                @JsonProperty("name") final String filter) {
+                                @JsonProperty("userRef") final UserRef userRef,
+                                @JsonProperty("filter") final String filter) {
         super(pageRequest, sortList);
         this.userRef = userRef;
         this.filter = filter;
     }
 
     public static FindActivityCriteria create(final String filter) {
-        FindActivityCriteria criteria = new FindActivityCriteria();
+        final FindActivityCriteria criteria = new FindActivityCriteria();
         criteria.setFilter(filter);
         return criteria;
     }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.solr;
 
 import stroom.search.solr.shared.SolrConnectionConfig;
@@ -20,14 +36,14 @@ public class SolrClientFactory {
             } else if (config.getSolrUrls().size() != 1) {
                 throw new SolrIndexException("Expected a single Solr URL but found " + config.getSolrUrls().size());
             }
-            Http2SolrClient.Builder builder = new Http2SolrClient.Builder(config.getSolrUrls().getFirst());
+            final Http2SolrClient.Builder builder = new Http2SolrClient.Builder(config.getSolrUrls().getFirst());
             return builder.build();
 
         } else if (config.isUseZk()) {
             if (config.getZkHosts() == null || config.getZkHosts().isEmpty()) {
                 throw new SolrIndexException("No ZK hosts have been provided");
             }
-            CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
+            final CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
                     Optional.ofNullable(config.getZkPath()))
                     .withHttpClient(
                             new Http2SolrClient.Builder()
@@ -42,7 +58,7 @@ public class SolrClientFactory {
             if (config.getSolrUrls() == null || config.getSolrUrls().isEmpty()) {
                 throw new SolrIndexException("No Solr URLs have been provided");
             }
-            CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
+            final CloudHttp2SolrClient.Builder builder = new CloudSolrClient.Builder(config.getZkHosts(),
                     Optional.ofNullable(config.getZkPath()))
                     .withHttpClient(
                             new Http2SolrClient.Builder()

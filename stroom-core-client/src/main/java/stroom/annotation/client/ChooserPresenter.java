@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
+import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.util.client.BasicSelectionEventManager;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.ui.Widget;
@@ -53,7 +55,8 @@ public class ChooserPresenter<T>
     private final MySingleSelectionModel<T> selectionModel = new MySingleSelectionModel<>();
     private final CellTable<T> cellTable;
     private DataSupplier<T> dataSupplier;
-    private Function<T, String> displayValueFunction = Objects::toString;
+    private Function<T, SafeHtml> displayValueFunction = t -> SafeHtmlUtils.fromString(t.toString());
+    private Function<T, String> tooltipFunction = null;
 
     @Inject
     public ChooserPresenter(final EventBus eventBus,
@@ -68,13 +71,20 @@ public class ChooserPresenter<T>
             @Override
             protected void onClose(final CellPreviewEvent<T> e) {
                 super.onClose(e);
-                HidePopupRequestEvent.builder(ChooserPresenter.this).autoClose(true).ok(false).fire();
+                HidePopupRequestEvent.builder(ChooserPresenter.this).autoClose(true)
+                        .action(DialogAction.CLOSE)
+                        .fire();
             }
 
             @Override
             protected void onExecute(final CellPreviewEvent<T> e) {
-                super.onExecute(e);
-                SelectionChangeEvent.fire(selectionModel);
+                final T item = e.getValue();
+                final boolean alreadySelected = Objects.equals(selectionModel.getSelectedObject(), item);
+                selectionModel.setSelected(item, true);
+                if (alreadySelected) {
+                    // setSelected won't fire if selection unchanged, so fire manually
+                    SelectionChangeEvent.fire(selectionModel);
+                }
             }
         });
         view.setBottomWidget(cellTable);
@@ -84,9 +94,20 @@ public class ChooserPresenter<T>
             @Override
             public SafeHtml getValue(final T value) {
                 final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
+                if (value != null && tooltipFunction != null) {
+                    final String tooltip = tooltipFunction.apply(value);
+                    if (tooltip != null && !tooltip.isEmpty()) {
+                        builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\" title=\"");
+                        builder.appendEscaped(tooltip);
+                        builder.appendHtmlConstant("\">");
+                    } else {
+                        builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
+                    }
+                } else {
+                    builder.appendHtmlConstant("<div style=\"padding: 5px; min-width: 200px\">");
+                }
                 if (value != null) {
-                    builder.appendEscaped(displayValueFunction.apply(value));
+                    builder.append(displayValueFunction.apply(value));
                 }
                 builder.appendHtmlConstant("</div>");
                 return builder.toSafeHtml();
@@ -113,18 +134,26 @@ public class ChooserPresenter<T>
         getView().clearFilter();
     }
 
+    void clearSelection() {
+        selectionModel.clear();
+    }
+
     /**
      * Sets the function to provide a display value for value T.
      */
-    public void setDisplayValueFunction(final Function<T, String> displayValueFunction) {
+    public void setDisplayValueFunction(final Function<T, SafeHtml> displayValueFunction) {
         this.displayValueFunction = Objects.requireNonNull(displayValueFunction);
+    }
+
+    public void setTooltipFunction(final Function<T, String> tooltipFunction) {
+        this.tooltipFunction = tooltipFunction;
     }
 
     public T getSelected() {
         return selectionModel.getSelectedObject();
     }
 
-    public String getSelectedDisplayValue() {
+    public SafeHtml getSelectedDisplayValue() {
         final T selected = getSelected();
         return NullSafe.get(selected, displayValueFunction);
     }

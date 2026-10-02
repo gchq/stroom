@@ -16,32 +16,30 @@
 
 package stroom.dashboard.impl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({"size"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "VisLimit", propOrder = {"size"})
 public class VisLimit implements Serializable {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
+    @JsonProperty
     private Long size;
 
     public VisLimit() {
     }
 
-    public VisLimit(final Long size) {
+    @JsonCreator
+    public VisLimit(@JsonProperty("size") final Long size) {
         this.size = size;
     }
 
-    @XmlElement
     public Long getSize() {
         return size;
     }

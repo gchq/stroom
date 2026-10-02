@@ -16,10 +16,10 @@
 
 package stroom.search.elastic.search;
 
-import stroom.datasource.api.v2.DataSourceResource;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.datasource.DataSourceResource;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 

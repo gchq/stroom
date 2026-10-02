@@ -1,8 +1,24 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dashboard.client.table;
 
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ColumnFilter;
-import stroom.query.api.v2.IncludeExcludeFilter;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
+import stroom.query.api.IncludeExcludeFilter;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -59,9 +75,10 @@ public class TableFilterPresenter
 
     public void show(final Column column,
                      final BiConsumer<Column, Column> columnChangeConsumer) {
+        columnFilterPresenter.setColumnFilter(column.getColumnFilter());
         includeExcludeFilterPresenter.setFilter(column.getFilter());
 
-        final PopupSize popupSize = PopupSize.resizable(400, 500);
+        final PopupSize popupSize = PopupSize.resizable(1085, 500, 1085, 500);
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
@@ -70,7 +87,7 @@ public class TableFilterPresenter
                 .onShow(e -> focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final ColumnFilter columnFilter = columnFilterPresenter.getColumnFilter();
+                        final ColumnFilter columnFilter = columnFilterPresenter.getColumnFilter(column);
                         final IncludeExcludeFilter includeExcludeFilter = includeExcludeFilterPresenter.getFilter();
                         if ((!Objects.equals(columnFilter, column.getColumnFilter()) ||
                              (!Objects.equals(includeExcludeFilter, column.getFilter())))) {

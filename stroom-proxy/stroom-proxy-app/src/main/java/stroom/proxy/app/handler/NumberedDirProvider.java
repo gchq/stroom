@@ -1,11 +1,25 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
-
-import com.google.common.base.Strings;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -18,6 +32,17 @@ import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
 
+/**
+ * Creates unique non-nested directories as direct children of parentDir, where each child
+ * is a number padded to 10 digits.
+ * <p>
+ * See also {@link DirUtil#createNestedNumberedDirProvider(Path)} for a nested directory
+ * structure with <= 999 items per directory.
+ * </p>
+ * <p>
+ * e.g. {@code parent_dir/0000000123}
+ * </p>
+ */
 public class NumberedDirProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NumberedDirProvider.class);
@@ -56,8 +81,28 @@ public class NumberedDirProvider {
      * @param num The number to create the name from.
      * @return A `0` padded string representing the supplied number.
      */
-    private String create(final long num) {
-        return Strings.padStart(Long.toString(num), 10, '0');
+    static String create(final long num) {
+        // This method is ~2x as quick as
+        // return Strings.padStart(Long.toString(num), 10, '0');
+        if (num == 0) {
+            return "0000000000";
+        } else {
+            final String str = String.valueOf(num);
+            final int len = str.length();
+            return switch (len) {
+                case 0 -> "0000000000";
+                case 1 -> "000000000" + str;
+                case 2 -> "00000000" + str;
+                case 3 -> "0000000" + str;
+                case 4 -> "000000" + str;
+                case 5 -> "00000" + str;
+                case 6 -> "0000" + str;
+                case 7 -> "000" + str;
+                case 8 -> "00" + str;
+                case 9 -> "0" + str;
+                default -> str;
+            };
+        }
     }
 
     /**
@@ -65,6 +110,7 @@ public class NumberedDirProvider {
      * Find all direct child directories in path.
      */
     private static Stream<Path> findDirectories(final Path path) throws IOException {
+        //noinspection resource // See javadoc.
         return Files.find(path, 1,
                         (aPath, basicFileAttributes) -> {
                             LOGGER.trace(() -> LogUtil.message("aPath: {}, isDirectory {}",

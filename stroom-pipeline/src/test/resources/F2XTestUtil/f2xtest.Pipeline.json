@@ -1,0 +1,81 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "Source",
+      "type" : "Source"
+    }, {
+      "id" : "combinedParser",
+      "type" : "CombinedParser"
+    }, {
+      "id" : "readRecordCountFilter",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "xsltFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "schemaFilter",
+      "type" : "SchemaFilter"
+    }, {
+      "id" : "writeRecordCountFilter",
+      "type" : "RecordCountFilter"
+    }, {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    }, {
+      "id" : "testAppender",
+      "type" : "TestAppender"
+    } ],
+    "remove" : [ ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "readRecordCountFilter",
+      "name" : "countRead",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "schemaFilter",
+      "name" : "schemaGroup",
+      "value" : {
+        "string" : "REFERENCE_DATA"
+      }
+    }, {
+      "element" : "writeRecordCountFilter",
+      "name" : "countRead",
+      "value" : {
+        "boolean" : false
+      }
+    } ],
+    "remove" : [ ]
+  },
+  "pipelineReferences" : {
+    "add" : [ ],
+    "remove" : [ ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "Source",
+      "to" : "combinedParser"
+    }, {
+      "from" : "combinedParser",
+      "to" : "readRecordCountFilter"
+    }, {
+      "from" : "readRecordCountFilter",
+      "to" : "xsltFilter"
+    }, {
+      "from" : "xsltFilter",
+      "to" : "schemaFilter"
+    }, {
+      "from" : "schemaFilter",
+      "to" : "writeRecordCountFilter"
+    }, {
+      "from" : "writeRecordCountFilter",
+      "to" : "xmlWriter"
+    }, {
+      "from" : "xmlWriter",
+      "to" : "testAppender"
+    } ],
+    "remove" : [ ]
+  }
+}

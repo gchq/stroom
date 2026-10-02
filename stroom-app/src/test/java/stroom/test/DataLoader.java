@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.test;
@@ -196,7 +195,7 @@ public class DataLoader {
         // Get the stem of the file name.
         String stem = getBaseName(file);
 
-        int index = stem.indexOf('~');
+        final int index = stem.indexOf('~');
         if (index != -1) {
             stem = stem.substring(0, index);
         }
@@ -205,8 +204,8 @@ public class DataLoader {
     }
 
     private String getBaseName(final Path file) {
-        String baseName = file.getFileName().toString();
-        int index = baseName.indexOf('.');
+        final String baseName = file.getFileName().toString();
+        final int index = baseName.indexOf('.');
         if (index != -1) {
             return baseName.substring(0, index);
         } else {
@@ -228,7 +227,7 @@ public class DataLoader {
             } else {
                 return Optional.empty();
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Unable to parse effective date from " + file.toString(), e);
         }
     }

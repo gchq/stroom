@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.client.presenter;
 
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.query.client.presenter.QueryEditPresenter;
 import stroom.query.client.presenter.QueryEditPresenter.QueryEditView;
@@ -32,7 +31,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 public abstract class AbstractQueryEditPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocumentEditPresenter<QueryEditView, D>
+        extends DocPresenter<QueryEditView, D>
         implements HasToolbar {
 
     final QueryEditPresenter queryEditPresenter;
@@ -52,17 +51,14 @@ public abstract class AbstractQueryEditPresenter<D extends AbstractAnalyticRuleD
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(queryEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
+        registerHandler(queryEditPresenter.addChangeHandler(this::onChange));
     }
 
     @Override
     public void onRead(final DocRef docRef, final D entity, final boolean readOnly) {
         queryEditPresenter.setTimeRange(entity.getTimeRange());
         queryEditPresenter.setQuery(docRef, entity.getQuery(), readOnly);
+        queryEditPresenter.read(entity.getQueryTablePreferences());
     }
 
     @Override

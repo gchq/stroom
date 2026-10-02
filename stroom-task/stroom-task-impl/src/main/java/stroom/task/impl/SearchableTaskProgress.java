@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ package stroom.task.impl;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -35,6 +36,7 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -132,7 +134,9 @@ class SearchableTaskProgress implements Searchable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
-                       final ValuesConsumer consumer) {
+                       final DateTimeSettings dateTimeSettings,
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         securityContext.secure(AppPermission.MANAGE_TASKS_PERMISSION, () -> {
             final Map<String, TaskProgressResponse> nodeResponses = searchAllNodes();
 
@@ -182,7 +186,7 @@ class SearchableTaskProgress implements Searchable {
                             }
                             arr[i] = val;
                         }
-                        consumer.accept(Val.of(arr));
+                        valuesConsumer.accept(Val.of(arr));
                     });
         });
     }

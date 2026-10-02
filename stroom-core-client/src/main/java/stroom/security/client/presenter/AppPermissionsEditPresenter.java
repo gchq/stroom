@@ -81,8 +81,9 @@ public class AppPermissionsEditPresenter
         this.restFactory = restFactory;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>();
-        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Application Permissions");
+        selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<AppPermission> selectionEventManager = new DataGridSelectionEventManager<>(
                 dataGrid,
                 selectionModel,
@@ -187,6 +188,7 @@ public class AppPermissionsEditPresenter
                         .exec();
             });
         }
+        dataGrid.setMultiLine(true);
 
         dataGrid.addColumn(selectionColumn,
                 DataGridUtil.headingBuilder("Granted")
@@ -215,8 +217,6 @@ public class AppPermissionsEditPresenter
                         .withToolTip("Description of what the permission allows the user/group to do.")
                         .build(),
                 700);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private boolean hasPermission(final AppPermission permission) {
@@ -268,7 +268,7 @@ public class AppPermissionsEditPresenter
     }
 
     private SafeHtml getDetails() {
-        AppUserPermissionsReport currentPermissions = getCurrentPermissions();
+        final AppUserPermissionsReport currentPermissions = getCurrentPermissions();
         final DescriptionBuilder sb = new DescriptionBuilder();
         final AppPermission permission = getSelectionModel().getSelected();
         if (permission != null) {

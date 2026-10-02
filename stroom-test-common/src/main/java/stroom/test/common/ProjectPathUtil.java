@@ -31,7 +31,7 @@ public final class ProjectPathUtil {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProjectPathUtil.class);
 
     public static Path resolveDir(final String projectDir) {
-        Path root = Paths.get(".").toAbsolutePath().normalize();
+        final Path root = Paths.get(".").toAbsolutePath().normalize();
         Path dir = root.resolve(projectDir);
         if (!Files.isDirectory(dir)) {
             dir = root.getParent().resolve(projectDir);

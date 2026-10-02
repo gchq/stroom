@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
 import stroom.security.api.exception.AuthenticationException;
@@ -15,9 +31,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -25,11 +38,15 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.ws.rs.client.WebTarget;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -99,17 +116,11 @@ public class ExternalIdpConfigurationProvider
         } else {
             // Hit the config endpoint to check the IDP is accessible.
             // Even if we already have the config from it, if we can't see the IDP we have problems.
+            resultBuilder.withDetail("url", configurationEndpoint);
             try {
-                resultBuilder.withDetail("configUri", configurationEndpoint);
-                OpenIdConfigurationResponse response = fetchOpenIdConfigurationResponse(
-                        configurationEndpoint, abstractOpenIdConfig);
-                if (response != null) {
-                    resultBuilder.healthy();
-                } else {
-                    resultBuilder.unhealthy()
-                            .withMessage("Null response");
-                }
-            } catch (Exception e) {
+                fetchOpenIdConfigurationResponse(configurationEndpoint, abstractOpenIdConfig);
+                resultBuilder.healthy();
+            } catch (final Exception e) {
                 resultBuilder.unhealthy(e)
                         .withMessage("Error fetching Open ID Connect configuration from " +
                                      configurationEndpoint + ". Is the identity provider down?");
@@ -175,7 +186,7 @@ public class ExternalIdpConfigurationProvider
                 final WebTarget webTarget = jerseyClientFactory.getNamedClient(JerseyClientName.OPEN_ID)
                         .target(configurationEndpoint);
 
-                try (Response response = webTarget.request(MediaType.APPLICATION_JSON).get()) {
+                try (final Response response = webTarget.request(MediaType.APPLICATION_JSON).get()) {
                     if (response.getStatus() == HttpServletResponse.SC_OK) {
                         // According to the spec, the response may contain unexpected props so as we don't easily
                         // have access to configure the client to relax jackson, do it manually.
@@ -195,11 +206,11 @@ public class ExternalIdpConfigurationProvider
                                                           " from " + configurationEndpoint);
                     }
                 }
-            } catch (AuthenticationException e) {
+            } catch (final AuthenticationException e) {
                 // This is not a connection issue so just bubble it up and likely crash the app
                 // if this is happening as part of the guice injector init.
                 throw e;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // The app is pretty dead without a connection to the IDP so keep retrying
                 LOGGER.warn(LogUtil.message(
                         "Unable to establish connection to the identity provider at {} to fetch Open ID " +
@@ -234,15 +245,16 @@ public class ExternalIdpConfigurationProvider
 
     private OpenIdConfigurationResponse parseConfigurationResponse(final String configurationEndpoint,
                                                                    final String msg) {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        final JsonMapper jsonMapper = JsonMapper.builder()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .build();
 
         final OpenIdConfigurationResponse openIdConfigurationResponse;
         try {
-            openIdConfigurationResponse = mapper.readValue(
+            openIdConfigurationResponse = jsonMapper.readValue(
                     msg,
                     OpenIdConfigurationResponse.class);
-        } catch (JsonProcessingException e) {
+        } catch (final JacksonException e) {
             throw new AuthenticationException(LogUtil.message("Unable to parse open ID configuration " +
                                                               "from {}. {}", configurationEndpoint, e.getMessage()), e);
         }
@@ -321,6 +333,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public String getRequiredAccessTokenType() {
+        return localOpenIdConfigProvider.get().getRequiredAccessTokenType();
+    }
+
+    @Override
     public String getClientSecret() {
         return localOpenIdConfigProvider.get().getClientSecret();
     }
@@ -338,6 +355,16 @@ public class ExternalIdpConfigurationProvider
     @Override
     public List<String> getClientCredentialsScopes() {
         return localOpenIdConfigProvider.get().getClientCredentialsScopes();
+    }
+
+    @Override
+    public Set<String> getAllowedAudiences() {
+        return localOpenIdConfigProvider.get().getAllowedAudiences();
+    }
+
+    @Override
+    public boolean isAudienceClaimRequired() {
+        return localOpenIdConfigProvider.get().isAudienceClaimRequired();
     }
 
     @Override
@@ -361,6 +388,11 @@ public class ExternalIdpConfigurationProvider
     }
 
     @Override
+    public String getFullNameClaimTemplate() {
+        return localOpenIdConfigProvider.get().getFullNameClaimTemplate();
+    }
+
+    @Override
     public String getLogoutRedirectParamName() {
         return localOpenIdConfigProvider.get().getLogoutRedirectParamName();
     }
@@ -368,5 +400,15 @@ public class ExternalIdpConfigurationProvider
     @Override
     public Set<String> getExpectedSignerPrefixes() {
         return localOpenIdConfigProvider.get().getExpectedSignerPrefixes();
+    }
+
+    @Override
+    public Map<String, String> getAuthenticationRequestExtraParams() {
+        return localOpenIdConfigProvider.get().getAuthenticationRequestExtraParams();
+    }
+
+    @Override
+    public String getPublicKeyUriPattern() {
+        return localOpenIdConfigProvider.get().getPublicKeyUriPattern();
     }
 }

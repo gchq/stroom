@@ -1,10 +1,30 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.concurrent;
 
 import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
 import java.util.Objects;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class ThreadUtil {
 
@@ -61,11 +81,75 @@ public class ThreadUtil {
         }
     }
 
+    /**
+     * Calls {@link CountDownLatch#await()} with any {@link InterruptedException}
+     * wrapped in a {@link UncheckedInterruptedException}.
+     */
     public static void await(final CountDownLatch latch) {
         try {
             Objects.requireNonNull(latch).await();
         } catch (final InterruptedException e) {
             throw UncheckedInterruptedException.create(e);
+        }
+    }
+
+    /**
+     * Calls {@link CountDownLatch#await(long, TimeUnit)} with any {@link InterruptedException}
+     * wrapped in a {@link UncheckedInterruptedException}.
+     *
+     * @return The return value from {@link CountDownLatch#await(long, TimeUnit)}
+     */
+    public static boolean await(final CountDownLatch latch,
+                                final long timeout,
+                                final TimeUnit unit) {
+        try {
+            Objects.requireNonNull(latch);
+            return latch.await(timeout, unit);
+        } catch (final InterruptedException e) {
+            throw UncheckedInterruptedException.create(e);
+        }
+    }
+
+    public static void checkInterrupt() {
+        if (Thread.currentThread().isInterrupted()) {
+            try {
+                throw new InterruptedException("Interrupted");
+            } catch (final InterruptedException e) {
+                throw UncheckedInterruptedException.create(e);
+            }
+        }
+    }
+
+    /**
+     * If throwable is a {@link CompletionException} or {@link ExecutionException} then return
+     * its cause, else return throwable. Handles nulls.
+     */
+    public static Throwable getCompletionException(final Throwable throwable) {
+        return switch (throwable) {
+            case final CompletionException completionException -> completionException.getCause();
+            case final ExecutionException executionException -> executionException.getCause();
+            case null, default -> throwable;
+        };
+    }
+
+    /**
+     * If throwable is a {@link CompletionException} or {@link ExecutionException} then pass
+     * its cause to throwableConsumer, else just pass throwable to throwableConsumer.
+     * If throwable or throwableConsumer are null it is a no-op.
+     */
+    public static void consumeCompletionException(final Throwable throwable,
+                                                  final Consumer<Throwable> throwableConsumer) {
+        if (throwableConsumer != null) {
+            final Throwable cause = switch (throwable) {
+                case final CompletionException completionException -> Objects.requireNonNullElse(
+                        completionException.getCause(), throwable);
+                case final ExecutionException executionException -> Objects.requireNonNullElse(
+                        executionException.getCause(), throwable);
+                case null, default -> throwable;
+            };
+            if (cause != null) {
+                throwableConsumer.accept(cause);
+            }
         }
     }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics;
 
 import stroom.data.shared.StreamTypeNames;
@@ -24,11 +40,11 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.CommonTranslationTestHelper;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 import stroom.test.StoreCreationTool;
 import stroom.test.common.ProjectPathUtil;
 import stroom.util.io.StreamUtil;
@@ -58,7 +74,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Singleton
 public class AnalyticsDataSetup {
 
-    private final ContentImportService contentImportService;
+    private final ContentStoreTestSetup contentStoreTestSetup;
     private final CommonTranslationTestHelper commonTranslationTestHelper;
     private final StoreCreationTool storeCreationTool;
     private final ViewStore viewStore;
@@ -73,7 +89,7 @@ public class AnalyticsDataSetup {
     private DocRef detections;
 
     @Inject
-    public AnalyticsDataSetup(final ContentImportService contentImportService,
+    public AnalyticsDataSetup(final ContentStoreTestSetup contentStoreTestSetup,
                               final CommonTranslationTestHelper commonTranslationTestHelper,
                               final StoreCreationTool storeCreationTool,
                               final ViewStore viewStore,
@@ -84,7 +100,7 @@ public class AnalyticsDataSetup {
                               final ProcessorService processorService,
                               final ProcessorFilterService processorFilterService,
                               final IndexShardManager indexShardManager) {
-        this.contentImportService = contentImportService;
+        this.contentStoreTestSetup = contentStoreTestSetup;
         this.commonTranslationTestHelper = commonTranslationTestHelper;
         this.storeCreationTool = storeCreationTool;
         this.viewStore = viewStore;
@@ -98,7 +114,7 @@ public class AnalyticsDataSetup {
     }
 
     final void setup() {
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
 
         final Path resourcePath = ProjectPathUtil.resolveDir("stroom-app")
                 .resolve("src")
@@ -117,17 +133,19 @@ public class AnalyticsDataSetup {
         // Add extraction pipeline.
         final DocRef searchResultPipeline = storeCreationTool.getSearchResultPipeline(
                 "Search result",
-                resourcePath.resolve("dynamic-result-pipeline.xml"),
+                resourcePath.resolve("dynamic-result-pipeline.json"),
                 resourcePath.resolve("dynamic-index.xsl"));
 
         // Add view.
         final DocRef viewDocRef = viewStore.createDocument("index_view");
-        ViewDoc viewDoc = viewStore.readDocument(viewDocRef);
-        viewDoc.setDataSource(indexDocRef);
-        viewDoc.setPipeline(searchResultPipeline);
-        viewDoc.setFilter(ExpressionOperator.builder()
-                .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
-                .build());
+        final ViewDoc viewDoc = viewStore.readDocument(viewDocRef)
+                .copy()
+                .dataSource(indexDocRef)
+                .pipeline(searchResultPipeline)
+                .filter(ExpressionOperator.builder()
+                        .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, StreamTypeNames.EVENTS)
+                        .build())
+                .build();
         viewStore.writeDocument(viewDoc);
 
         // Create somewhere to put the alerts.
@@ -138,10 +156,10 @@ public class AnalyticsDataSetup {
         // Add some data.
         commonTranslationTestHelper.setup();
         // Translate data.
-        List<ProcessorResult> results = commonTranslationTestHelper.processAll();
+        final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
 
         // 3 ref data streams plus our data streams
-        int expectedTaskCount = 3 + 1;
+        final int expectedTaskCount = 3 + 1;
 
         assertThat(results.size())
                 .isEqualTo(expectedTaskCount);
@@ -158,7 +176,7 @@ public class AnalyticsDataSetup {
         // Create index pipeline.
         final DocRef indexPipeline = storeCreationTool.getIndexPipeline(
                 "Dynamic Index",
-                resourcePath.resolve("indexing-pipeline.xml"),
+                resourcePath.resolve("indexing-pipeline.json"),
                 resourcePath.resolve("dynamic-index.xsl"),
                 indexDocRef);
 
@@ -183,7 +201,7 @@ public class AnalyticsDataSetup {
         }
 
         // Translate data.
-        List<ProcessorResult> results = commonTranslationTestHelper.processAll();
+        final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(1);
 
         results.forEach(this::assertProcessorResult);
@@ -221,7 +239,7 @@ public class AnalyticsDataSetup {
         }
 
         // Translate data.
-        List<ProcessorResult> results = commonTranslationTestHelper.processAll();
+        final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
 
         assertThat(results.size())
                 .isEqualTo(1);

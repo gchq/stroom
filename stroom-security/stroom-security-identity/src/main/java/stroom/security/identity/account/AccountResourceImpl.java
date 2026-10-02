@@ -1,19 +1,17 @@
 /*
+ * Copyright 2020 Crown Copyright
  *
- *   Copyright 2017 Crown Copyright
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package stroom.security.identity.account;
@@ -24,11 +22,11 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.security.api.SecurityContext;
 import stroom.security.identity.shared.Account;
+import stroom.security.identity.shared.AccountChange;
 import stroom.security.identity.shared.AccountResource;
 import stroom.security.identity.shared.AccountResultPage;
 import stroom.security.identity.shared.CreateAccountRequest;
 import stroom.security.identity.shared.FindAccountRequest;
-import stroom.security.identity.shared.UpdateAccountRequest;
 import stroom.util.shared.ResultPage;
 
 import com.codahale.metrics.annotation.Timed;
@@ -57,6 +55,7 @@ import jakarta.ws.rs.NotFoundException;
 import java.math.BigInteger;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AccountResourceImpl implements AccountResource {
@@ -112,8 +111,8 @@ class AccountResourceImpl implements AccountResource {
 
         return result;
 
-//        if (GwtNullSafe.isBlankString(request, FindAccountRequest::getQuickFilter)
-//                && GwtNullSafe.isEmptyCollection(request, FindAccountRequest::getSortList)) {
+//        if (NullSafe.isBlankString(request, FindAccountRequest::getQuickFilter)
+//                && NullSafe.isEmptyCollection(request, FindAccountRequest::getSortList)) {
 //            return list();
 //        } else {
 //
@@ -216,25 +215,25 @@ class AccountResourceImpl implements AccountResource {
                 .getResultAndLog();
     }
 
-    private MultiObject getBefore(int accountId) {
+    private MultiObject getBefore(final int accountId) {
         User user = User.builder().withId("" + accountId).build();
 
         try {
-            Optional<Account> accountOptional = securityContextProvider.get().asProcessingUserResult(
+            final Optional<Account> accountOptional = securityContextProvider.get().asProcessingUserResult(
                     () -> serviceProvider.get().read(accountId)
             );
             if (accountOptional.isPresent()) {
                 user = userForAccount(accountOptional.get());
             }
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             //Ignore
         }
 
         return MultiObject.builder().addUser(user).build();
     }
 
-    private User userForAccount(Account account) {
-        User.Builder<Void> builder = User.builder();
+    private User userForAccount(final Account account) {
+        final User.Builder<Void> builder = User.builder();
 
         if (account == null) {
             builder.withState("Not found");
@@ -256,41 +255,67 @@ class AccountResourceImpl implements AccountResource {
 
     @Timed
     @Override
-    public Boolean update(final UpdateAccountRequest request,
+    public Boolean update(final AccountChange change,
                           final int accountId) {
-
-        final User afterUser = userForAccount(request.getAccount());
-
 
         final Boolean result;
         try {
             result = stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
                     .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "update"))
-                    .withDescription("Update account for user " + accountId)
+                    .withDescription(describeChange(change, accountId))
                     .withDefaultEventAction(UpdateEventAction.builder()
                             .withBefore(getBefore(accountId))
-                            .withAfter(MultiObject.builder()
-                                    .addUser(afterUser)
-                                    .build())
                             .build())
-                    .withSimpleLoggedResult(() -> {
+                    .withComplexLoggedResult(updateEventAction -> {
                         serviceProvider.get()
-                                .update(request, accountId);
-                        return true;
+                                .update(change, accountId);
+
+                        // The account is read back rather than described from the change, because a change
+                        // carries only the parts being altered and so cannot describe the resulting account.
+                        return ComplexLoggedOutcome.success(
+                                Boolean.TRUE,
+                                updateEventAction.newCopyBuilder()
+                                        .withAfter(getBefore(accountId))
+                                        .build());
                     })
                     .getResultAndLog();
 
-            if (request.getPassword() != null) {
+            if (change.getPassword() != null) {
                 // Password change so log that separately
-                logChangePassword(accountId, afterUser, null);
+                logChangePassword(accountId, currentUser(accountId), null);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Password change so log that separately
-            logChangePassword(accountId, afterUser, e);
+            logChangePassword(accountId, currentUser(accountId), e);
             throw e;
         }
 
         return result;
+    }
+
+    /**
+     * Names the state an administrator asked for, so the audit records what was done rather than only that
+     * something was.
+     */
+    private String describeChange(final AccountChange change, final int accountId) {
+        final String actions = change.getActions()
+                .stream()
+                .map(Enum::name)
+                .sorted()
+                .collect(Collectors.joining(", "));
+        return actions.isEmpty()
+                ? "Update account for user " + accountId
+                : "Update account for user " + accountId + " (" + actions + ")";
+    }
+
+    private User currentUser(final int accountId) {
+        try {
+            return userForAccount(securityContextProvider.get().asProcessingUserResult(
+                            () -> serviceProvider.get().read(accountId))
+                    .orElse(null));
+        } catch (final Exception e) {
+            return userForAccount(null);
+        }
     }
 
     private void logChangePassword(final int accountId,

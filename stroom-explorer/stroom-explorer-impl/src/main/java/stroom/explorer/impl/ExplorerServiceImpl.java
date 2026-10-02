@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.explorer.impl;
 import stroom.collection.api.CollectionService;
 import stroom.docref.DocRef;
 import stroom.docstore.api.ContentIndex;
+import stroom.docstore.api.DocDependencyService;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.explorer.api.ExplorerActionHandler;
@@ -29,6 +30,7 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DeleteConfirmation;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocContentMatch;
 import stroom.explorer.shared.DocumentFindRequest;
@@ -52,9 +54,10 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardExplorerTags;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.TermMatcher;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.gitrepo.shared.GitRepoDoc;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
@@ -115,7 +118,8 @@ class ExplorerServiceImpl
     private static final Set<String> FOLDER_TYPES = Set.of(
             ExplorerConstants.SYSTEM_TYPE,
             ExplorerConstants.FAVOURITES_TYPE,
-            ExplorerConstants.FOLDER_TYPE);
+            ExplorerConstants.FOLDER_TYPE,
+            GitRepoDoc.TYPE);
 
     // NONE/DESTINATION involve clearing all current perms and COMBINED means adding additional perms.
     // All are something only an OWNER (or admin) can do.
@@ -123,6 +127,13 @@ class ExplorerServiceImpl
             PermissionInheritance.DESTINATION,
             PermissionInheritance.NONE,
             PermissionInheritance.COMBINED);
+
+    // The maximum number of contained items to list in a delete confirmation; the true total is always
+    // reported, this just bounds how many are named so the dialog stays manageable for large folders.
+    private static final int MAX_CHILD_ITEMS_DISPLAYED = 100;
+    private static final Comparator<DocRef> DOC_REF_DISPLAY_ORDER = Comparator
+            .comparing(DocRef::getType, Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(DocRef::getName, Comparator.nullsLast(Comparator.naturalOrder()));
 
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;
@@ -135,6 +146,7 @@ class ExplorerServiceImpl
     private final DocumentPermissionService documentPermissionService;
     private final ContentIndex contentIndex;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final DocDependencyService docDependencyService;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
@@ -147,7 +159,8 @@ class ExplorerServiceImpl
                         final EntityEventBus entityEventBus,
                         final DocumentPermissionService documentPermissionService,
                         final ContentIndex contentIndex,
-                        final ExpressionPredicateFactory expressionPredicateFactory) {
+                        final ExpressionPredicateFactory expressionPredicateFactory,
+                        final DocDependencyService docDependencyService) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
@@ -159,6 +172,7 @@ class ExplorerServiceImpl
         this.documentPermissionService = documentPermissionService;
         this.contentIndex = contentIndex;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.docDependencyService = docDependencyService;
 
         explorerNodeService.ensureRootNodeExists();
     }
@@ -178,6 +192,9 @@ class ExplorerServiceImpl
                         OpenItemsImpl.create(criteria.getTemporaryOpenedItems()),
                         OpenItemsImpl.create(criteria.getEnsureVisible()));
             }
+
+            // Add favourites nodes to the master tree model.
+            buildFavouritesNode(masterTreeModelClone);
 
             // See if we need to open any more folders to see nodes we want to ensure are visible.
             final Set<ExplorerNodeKey> forcedOpenItems = getForcedOpenItems(masterTreeModelClone, criteria);
@@ -199,7 +216,7 @@ class ExplorerServiceImpl
             }
             return result;
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error fetching nodes with criteria {}", criteria, e);
             throw e;
         }
@@ -215,7 +232,6 @@ class ExplorerServiceImpl
                 .stream()
                 .map(DocRef::getUuid)
                 .collect(Collectors.toSet());
-        buildFavouritesNode(masterTreeModelClone);
 
         final FilteredTreeModel filteredModel = new FilteredTreeModel(
                 masterTreeModelClone.getId(),
@@ -241,10 +257,10 @@ class ExplorerServiceImpl
                 metrics);
 
         // Sort the tree model
-        filteredModel.sort(this::getPriority);
+        filteredModel.sort();
 
         // If the name filter has changed then we want to temporarily expand all nodes.
-        Set<ExplorerNodeKey> temporaryOpenItems;
+        final Set<ExplorerNodeKey> temporaryOpenItems;
         if (filter.isNameFilterChange()) {
             if (NullSafe.isBlankString(filter.getNameFilter()) || nodeStates.openNodes.isEmpty()) {
                 temporaryOpenItems = Collections.emptySet();
@@ -256,7 +272,7 @@ class ExplorerServiceImpl
             temporaryOpenItems = null;
         }
 
-        List<ExplorerNodeKey> openedItems = new ArrayList<>();
+        final List<ExplorerNodeKey> openedItems = new ArrayList<>();
         List<ExplorerNode> rootNodes = addRoots(
                 filteredModel,
                 openItems,
@@ -343,7 +359,7 @@ class ExplorerServiceImpl
         if (openItems == null) {
             return null;
         } else {
-            if (openItems instanceof OpenItemsImpl openItemsImpl) {
+            if (openItems instanceof final OpenItemsImpl openItemsImpl) {
                 try {
                     return openItemsImpl.getOpenItemSet()
                             .stream()
@@ -353,7 +369,7 @@ class ExplorerServiceImpl
                                          + node.getName()
                                          + " (" + node.getUuid() + ")")
                             .collect(Collectors.joining("\n"));
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.trace(e::getMessage, e);
                     return Objects.toString(openItems);
                 }
@@ -403,7 +419,7 @@ class ExplorerServiceImpl
 
     private static Optional<ExplorerNode> removeMatchingNode(final List<ExplorerNode> nodes,
                                                              final ExplorerNode targetNode) {
-        List<ExplorerNode> list = NullSafe.list(nodes);
+        final List<ExplorerNode> list = NullSafe.list(nodes);
 
         for (int i = 0; i < list.size(); i++) {
             final ExplorerNode node = list.get(i);
@@ -430,6 +446,11 @@ class ExplorerServiceImpl
 
         for (final DocRef favDocRef : explorerFavService.get().getUserFavourites()) {
             final ExplorerNode treeModelNode = treeModel.getNode(favDocRef.getUuid());
+            if (treeModelNode == null) {
+                // The favourite refers to a node that isn't in the tree model so there is nothing to show.
+                LOGGER.debug("No tree model node for favourite: {}", favDocRef);
+                continue;
+            }
             final ExplorerNode childNode = treeModelNode.copy()
                     .rootNodeUuid(favRootNode)
                     .depth(1)
@@ -597,7 +618,6 @@ class ExplorerServiceImpl
         if (criteria.getMinDepth() != null && criteria.getMinDepth() > 0) {
             forceMinDepthOpen(masterTreeModel, forcedOpen, null, null,
                     criteria.getMinDepth(), 1);
-            forcedOpen.add(ExplorerConstants.FAVOURITES_NODE.getUniqueKey());
         }
 
         return forcedOpen;
@@ -877,7 +897,7 @@ class ExplorerServiceImpl
                                      final List<ExplorerNodeKey> openedItems,
                                      final LocalMetrics metrics) {
         return metrics.measure("addChildren", () -> {
-            ExplorerNode.Builder builder = parent.copy();
+            final ExplorerNode.Builder builder = parent.copy();
             builder.depth(currentDepth);
 
             final ExplorerNodeKey parentNodeKey = parent.getUniqueKey();
@@ -925,7 +945,7 @@ class ExplorerServiceImpl
         final DocRef folderRef = getDestinationFolderRef(destinationFolder);
         final ExplorerActionHandler handler = explorerActionHandlers.getHandler(type);
 
-        DocRef result;
+        final DocRef result;
 
         // Create the document.
         try {
@@ -940,11 +960,14 @@ class ExplorerServiceImpl
             throw e;
         }
 
-        // Create the explorer node.
+        // Create the explorer node
         explorerNodeService.createNode(result, folderRef, permissionInheritance);
 
         // Make sure the tree model is rebuilt.
         rebuildTree();
+
+        // Fire a POST_CREATE event
+        EntityEvent.fire(entityEventBus, result, EntityAction.POST_CREATE);
 
         return ExplorerNode.builder()
                 .docRef(result)
@@ -972,7 +995,7 @@ class ExplorerServiceImpl
                     docPath, explorerNodeService.getRoot()));
         }
         Objects.requireNonNull(docPath);
-        AtomicReference<ExplorerNode> parentNode = new AtomicReference<>(baseNode);
+        final AtomicReference<ExplorerNode> parentNode = new AtomicReference<>(baseNode);
         docPath.forEach((idx, pathPart) -> {
             final List<ExplorerNode> childNodes = explorerNodeService.getNodesByNameAndType(
                     parentNode.get(),
@@ -993,7 +1016,7 @@ class ExplorerServiceImpl
                         PermissionInheritance.DESTINATION);
             } else {
                 // One node found
-                childNode = childNodes.get(0);
+                childNode = childNodes.getFirst();
             }
             parentNode.set(childNode);
         });
@@ -1057,10 +1080,11 @@ class ExplorerServiceImpl
         remappings.values().forEach(newExplorerNode -> {
             final ExplorerActionHandler handler = explorerActionHandlers.getHandler(newExplorerNode.getType());
             if (handler != null) {
-                final HashMap<DocRef, DocRef> docRefRemappings = new HashMap<>();
-                for (final var remapping : remappings.entrySet()) {
-                    docRefRemappings.put(remapping.getKey().getDocRef(), remapping.getValue().getDocRef());
-                }
+                final Map<DocRef, DocRef> docRefRemappings = remappings.entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                entry -> entry.getKey().getDocRef(),
+                                entry -> entry.getValue().getDocRef()));
                 handler.remapDependencies(newExplorerNode.getDocRef(), docRefRemappings);
             }
         });
@@ -1070,6 +1094,9 @@ class ExplorerServiceImpl
             // Although the copy above will have fired entity events, they were before the deps
             // get re-mapped. Thus, we need to let the exp tree know that deps may have changed
             EntityEvent.fire(entityEventBus, newNode.getDocRef(), EntityAction.CREATE_EXPLORER_NODE);
+
+            // Tell listeners that the nodes are in the explorer tree
+            EntityEvent.fire(entityEventBus, newNode.getDocRef(), EntityAction.POST_CREATE);
         });
 
         return new BulkActionResult(new ArrayList<>(remappings.values()), resultMessage.toString());
@@ -1115,7 +1142,7 @@ class ExplorerServiceImpl
 
                 // Copy the item to the destination folder.
                 String name = sourceNode.getDocRef().getName();
-                if (allowRename && !NullSafe.isBlankString(docName)) {
+                if (allowRename && NullSafe.isNonBlankString(docName)) {
                     name = docName;
                 }
                 final DocRef destinationDocRef = handler.copyDocument(
@@ -1245,6 +1272,7 @@ class ExplorerServiceImpl
             }
             // Let the tree know it has changed
             EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), result, EntityAction.UPDATE_EXPLORER_NODE);
+            EntityEvent.fire(entityEventBus, result, EntityAction.UPDATE);
         }
 
         return new BulkActionResult(resultNodes, resultMessage.toString());
@@ -1285,6 +1313,7 @@ class ExplorerServiceImpl
 
         // Make sure the tree model is rebuilt.
         EntityEvent.fire(entityEventBus, result.getDocRef(), EntityAction.UPDATE_EXPLORER_NODE);
+        EntityEvent.fire(entityEventBus, result.getDocRef(), EntityAction.UPDATE);
 
         return result;
     }
@@ -1319,6 +1348,7 @@ class ExplorerServiceImpl
 
             // Make sure the tree model is rebuilt.
             EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE_EXPLORER_NODE);
+            EntityEvent.fire(entityEventBus, docRef, EntityAction.UPDATE);
             return afterNode;
         } catch (final Exception e) {
             explorerEventLog.update(beforeNode, afterNode, e);
@@ -1360,7 +1390,7 @@ class ExplorerServiceImpl
     private ExplorerNode rename(final ExplorerActionHandler handler,
                                 final ExplorerNode explorerNode,
                                 final String docName) {
-        DocRef result;
+        final DocRef result;
 
         try {
             result = handler.renameDocument(explorerNode.getDocRef(), docName);
@@ -1385,7 +1415,12 @@ class ExplorerServiceImpl
         final List<ExplorerNode> resultNodes = new ArrayList<>();
         final StringBuilder resultMessage = new StringBuilder();
 
-        final HashSet<ExplorerNode> deleted = new HashSet<>();
+        // Fire the PRE_DELETE event so listeners can find ancestors of
+        // the nodes before they disappear from the Explorer
+        explorerNodes.forEach(explorerNode ->
+                EntityEvent.fire(entityEventBus, explorerNode.getDocRef(), EntityAction.PRE_DELETE));
+
+        final Set<ExplorerNode> deleted = new HashSet<>();
         explorerNodes.forEach(explorerNode -> {
             // Check this document hasn't already been deleted.
             if (!deleted.contains(explorerNode)) {
@@ -1403,8 +1438,114 @@ class ExplorerServiceImpl
         return new BulkActionResult(resultNodes, resultMessage.toString());
     }
 
+    @Override
+    public DeleteConfirmation getDeleteConfirmation(final List<DocRef> docRefs) {
+        if (NullSafe.isEmptyCollection(docRefs)) {
+            return DeleteConfirmation.EMPTY;
+        }
+
+        // Expand the supplied docs to include folder descendants, as a delete recurses into folders.
+        // getDescendants includes the folder itself, so the delete set covers everything that will go.
+        final Set<DocRef> deleteSet = new HashSet<>();
+        for (final DocRef docRef : docRefs) {
+            explorerNodeService.getDescendants(docRef)
+                    .forEach(node -> deleteSet.add(node.getDocRef()));
+        }
+        // Belt and braces - make sure the originally supplied refs are in the set even if a node
+        // lookup returned nothing for them.
+        deleteSet.addAll(docRefs);
+
+        final Set<String> deleteUuids = deleteSet.stream()
+                .map(DocRef::getUuid)
+                .collect(Collectors.toSet());
+        final Set<String> selectedUuids = docRefs.stream()
+                .map(DocRef::getUuid)
+                .collect(Collectors.toSet());
+
+        final ChildItems childItems = getChildItems(deleteSet, selectedUuids);
+        final Dependants dependants = getDependants(deleteSet, deleteUuids);
+
+        return new DeleteConfirmation(
+                childItems.visible,
+                childItems.totalCount,
+                childItems.typeCounts,
+                childItems.hasHidden,
+                childItems.truncated,
+                dependants.visible,
+                dependants.hasHidden);
+    }
+
+    /**
+     * Determine the items contained within the selected folders that would also be deleted, i.e. every
+     * doc in the (descendant-expanded) delete set that was not itself explicitly selected. Only items
+     * the user may view are counted and grouped by type; the presence of any hidden ones is flagged.
+     */
+    private ChildItems getChildItems(final Set<DocRef> deleteSet, final Set<String> selectedUuids) {
+        final List<DocRef> visible = new ArrayList<>();
+        final Map<String, Integer> typeCounts = new HashMap<>();
+        boolean hasHidden = false;
+        for (final DocRef docRef : deleteSet) {
+            if (selectedUuids.contains(docRef.getUuid())) {
+                // The user explicitly selected this, so it is not a surprise "contained" item.
+                continue;
+            }
+            if (canView(docRef)) {
+                visible.add(docRef);
+                typeCounts.merge(docRef.getType(), 1, Integer::sum);
+            } else {
+                hasHidden = true;
+            }
+        }
+        visible.sort(DOC_REF_DISPLAY_ORDER);
+        final boolean truncated = visible.size() > MAX_CHILD_ITEMS_DISPLAYED;
+        final List<DocRef> capped = truncated
+                ? new ArrayList<>(visible.subList(0, MAX_CHILD_ITEMS_DISPLAYED))
+                : visible;
+        return new ChildItems(capped, visible.size(), typeCounts, hasHidden, truncated);
+    }
+
+    /**
+     * Determine the documents outside the delete set that depend on what is being deleted.
+     */
+    private Dependants getDependants(final Set<DocRef> deleteSet, final Set<String> deleteUuids) {
+        // Union the dependants of everything being deleted.
+        final Set<DocRef> dependants = new HashSet<>();
+        for (final DocRef docRef : deleteSet) {
+            dependants.addAll(docDependencyService.getDependantsOf(docRef));
+        }
+
+        // Drop dependants that are themselves inside the delete set - they are going too.
+        // DocRef equality is UUID-only, so matching on UUID de-dupes correctly.
+        dependants.removeIf(dep -> deleteUuids.contains(dep.getUuid()));
+
+        // Partition the remaining dependants by whether the user may view them. Those they cannot
+        // view are not named, but their existence is disclosed via the hasHidden flag.
+        final List<DocRef> visible = new ArrayList<>();
+        boolean hasHidden = false;
+        for (final DocRef dep : dependants) {
+            if (canView(dep)) {
+                visible.add(dep);
+            } else {
+                hasHidden = true;
+            }
+        }
+        visible.sort(DOC_REF_DISPLAY_ORDER);
+        return new Dependants(visible, hasHidden);
+    }
+
+    private boolean canView(final DocRef docRef) {
+        try {
+            return securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW);
+        } catch (final RuntimeException e) {
+            // If the permission check fails (e.g. the type isn't a real document, such as a
+            // ProcessorFilter source) allow it through rather than hiding the dependant, mirroring
+            // DocDependencyServiceImpl's fail-open behaviour for the dependencies grid.
+            return true;
+        }
+    }
+
     private void recursiveDelete(final List<ExplorerNode> explorerNodes,
-                                 final HashSet<ExplorerNode> deleted,
+                                 final Set<ExplorerNode> deleted,
                                  final List<ExplorerNode> resultDocRefs,
                                  final StringBuilder resultMessage) {
         explorerNodes.forEach(explorerNode -> {
@@ -1655,7 +1796,7 @@ class ExplorerServiceImpl
 
             return ResultPage.createPageLimitedList(results, request.getPageRequest());
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
             throw e;
         }
@@ -1704,7 +1845,7 @@ class ExplorerServiceImpl
 
             return ResultPage.createPageLimitedList(results, request.getPageRequest());
 
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
             throw e;
         }
@@ -1751,7 +1892,7 @@ class ExplorerServiceImpl
                 }
                 return true;
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error finding nodes with request {}", request, e);
             throw e;
         }
@@ -1934,7 +2075,7 @@ class ExplorerServiceImpl
             }
             final StringBuilder parentPath = new StringBuilder();
             for (int i = parents.size() - 1; i >= 0; i--) {
-                String parent = parents.get(i);
+                final String parent = parents.get(i);
                 parentPath.append(parent);
                 if (i > 0) {
                     parentPath.append(" / ");
@@ -2014,5 +2155,22 @@ class ExplorerServiceImpl
          * Consume a node and return true if we should keep descending.
          */
         boolean consume(SequencedSet<DocRef> nodePath, ExplorerNode node);
+    }
+
+
+    // The viewable contained items (capped), the viewable total, viewable counts by type, and whether
+    // any contained items were hidden or the list was capped.
+    private record ChildItems(List<DocRef> visible,
+                              int totalCount,
+                              Map<String, Integer> typeCounts,
+                              boolean hasHidden,
+                              boolean truncated) {
+
+    }
+
+    // The viewable dependants and whether any dependants were hidden.
+    private record Dependants(List<DocRef> visible,
+                              boolean hasHidden) {
+
     }
 }

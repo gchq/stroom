@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.menu.client.presenter;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -29,7 +45,7 @@ public class HideMenuEvent
     }
 
     @Override
-    protected void dispatch(Handler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onHide(this);
     }
 
@@ -43,7 +59,7 @@ public class HideMenuEvent
         public Builder() {
         }
 
-        public void fire(HasHandlers hasHandlers) {
+        public void fire(final HasHandlers hasHandlers) {
             hasHandlers.fireEvent(new HideMenuEvent());
         }
     }

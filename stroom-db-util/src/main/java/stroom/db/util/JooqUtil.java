@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaFieldSort;
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.HasId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
@@ -36,8 +36,12 @@ import stroom.util.shared.Selection;
 import stroom.util.shared.StringCriteria;
 import stroom.util.string.PatternUtil;
 
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
+import it.unimi.dsi.fastutil.longs.LongLists;
 import org.jooq.Condition;
 import org.jooq.Configuration;
+import org.jooq.Cursor;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.OrderField;
@@ -53,9 +57,12 @@ import org.jooq.exception.DataChangedException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.DefaultConfiguration;
 import org.jooq.impl.SQLDataType;
+import org.jspecify.annotations.NullMarked;
 
 import java.sql.Connection;
 import java.sql.Date;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.SQLTransactionRollbackException;
 import java.sql.Timestamp;
@@ -69,6 +76,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -80,6 +88,11 @@ public final class JooqUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JooqUtil.class);
     private static final ThreadLocal<DataSource> DATA_SOURCE_THREAD_LOCAL = new ThreadLocal<>();
+    /**
+     * Used to hold the current stack trace when checking if a data source is already in use.
+     * Only used if DEBUG in set.
+     */
+    private static final ThreadLocal<StackTraceElement[]> DEBUG_STACK_TRACE_THREAD_LOCAL = new ThreadLocal<>();
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
     private static final Boolean RENDER_SCHEMA = false;
@@ -95,7 +108,7 @@ public final class JooqUtil {
     }
 
     private static Settings createSettings(final boolean isExecuteWithOptimisticLocking) {
-        Settings settings = new Settings();
+        final Settings settings = new Settings();
         // Turn off fully qualified schemata.
         settings.withRenderSchema(RENDER_SCHEMA);
 
@@ -231,7 +244,7 @@ public final class JooqUtil {
 
     public static <R> R contextResult(final DataSource dataSource,
                                       final Function<DSLContext, R> function) {
-        R result;
+        final R result;
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
@@ -254,7 +267,7 @@ public final class JooqUtil {
     public static <R> TimedResult<R> timedContextResult(final DataSource dataSource,
                                                         final boolean isTimed,
                                                         final Function<DSLContext, R> function) {
-        TimedResult<R> timedResult;
+        final TimedResult<R> timedResult;
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
@@ -294,7 +307,7 @@ public final class JooqUtil {
      */
     public static <R> R contextResultWithOptimisticLocking(final DataSource dataSource,
                                                            final Function<DSLContext, R> function) {
-        R result;
+        final R result;
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 checkDataSource(dataSource);
@@ -303,7 +316,7 @@ public final class JooqUtil {
             } finally {
                 releaseDataSource();
             }
-        } catch (DataChangedException e) {
+        } catch (final DataChangedException e) {
             throw new stroom.util.exception.DataChangedException(e.getMessage(), e);
         } catch (final Exception e) {
             throw convertException(e);
@@ -337,6 +350,20 @@ public final class JooqUtil {
             } finally {
                 releaseDataSource();
             }
+        } catch (final Exception e) {
+            throw convertException(e);
+        }
+        return record;
+    }
+
+    public static <R extends UpdatableRecord<R>> R create(final DSLContext context, final R record) {
+        Objects.requireNonNull(context);
+        Objects.requireNonNull(record);
+        LOGGER.debug(() -> "Creating a " + record.getTable() + " record:\n" + record);
+        try {
+            record.attach(context.configuration());
+            final int count = record.store();
+            LOGGER.debug("create() - count: {}, record: {}", count, record);
         } catch (final Exception e) {
             throw convertException(e);
         }
@@ -438,7 +465,7 @@ public final class JooqUtil {
             if (onCreateAction != null) {
                 onCreateAction.accept(persistedRecord);
             }
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             if (isDuplicateKeyException(e)) {
                 LOGGER.debug(e::getMessage, e);
 
@@ -510,7 +537,7 @@ public final class JooqUtil {
         try {
             // Attempt to write the record, which may already be there
             result = record.insert();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             if (isDuplicateKeyException(e)) {
                 LOGGER.debug(e::getMessage, e);
             } else {
@@ -551,7 +578,7 @@ public final class JooqUtil {
             } finally {
                 releaseDataSource();
             }
-        } catch (DataChangedException e) {
+        } catch (final DataChangedException e) {
             throw new stroom.util.exception.DataChangedException(e.getMessage(), e);
         } catch (final Exception e) {
             throw convertException(e);
@@ -658,8 +685,8 @@ public final class JooqUtil {
                 }
 
                 return result;
-            } catch (DataAccessException e) {
-                if (e.getCause() instanceof SQLTransactionRollbackException sqlTxnRollbackEx
+            } catch (final DataAccessException e) {
+                if (e.getCause() instanceof final SQLTransactionRollbackException sqlTxnRollbackEx
                     && NullSafe.containsIgnoringCase(sqlTxnRollbackEx.getMessage(), "deadlock")) {
 
                     if (attempt.get() >= MAX_DEADLOCK_RETRY_ATTEMPTS) {
@@ -687,7 +714,7 @@ public final class JooqUtil {
         }
     }
 
-    private static Field<Integer> getIdField(Table<?> table) {
+    private static Field<Integer> getIdField(final Table<?> table) {
         final Field<Integer> idField = table.field(DEFAULT_ID_FIELD_NAME, Integer.class);
         if (idField == null) {
             throw new RuntimeException(LogUtil.message("Field [id] not found on table [{}]", table.getName()));
@@ -932,14 +959,14 @@ public final class JooqUtil {
     /**
      * Converts a time in millis since epoch to a {@link java.sql.Timestamp}
      */
-    public static Field<Timestamp> epochMsToTimestamp(Field<? extends Number> field) {
+    public static Field<Timestamp> epochMsToTimestamp(final Field<? extends Number> field) {
         return DSL.field("from_unixtime({0} / 1000)", SQLDataType.TIMESTAMP, field);
     }
 
     /**
      * Converts a time in millis since epoch to a {@link java.sql.Date}
      */
-    public static Field<Date> epochMsToDate(Field<? extends Number> field) {
+    public static Field<Date> epochMsToDate(final Field<? extends Number> field) {
         return DSL.field("from_unixtime({0} / 1000)", SQLDataType.DATE, field);
     }
 
@@ -1099,15 +1126,45 @@ public final class JooqUtil {
      * @param dataSource The datasource to check.
      */
     private static void checkDataSource(final DataSource dataSource) {
-        DataSource currentDataSource = DATA_SOURCE_THREAD_LOCAL.get();
+        final DataSource currentDataSource = DATA_SOURCE_THREAD_LOCAL.get();
         if (currentDataSource != null && currentDataSource.equals(dataSource)) {
+            LOGGER.debug(() -> LogUtil.message(
+                    """
+                            Data source already in use, stack trace for the first to acquire it:
+                            {}
+                            Current stack trace:
+                            {}""",
+                    stackTraceToString(DEBUG_STACK_TRACE_THREAD_LOCAL.get()),
+                    stackTraceToString(Thread.currentThread().getStackTrace())));
             try {
-                throw new RuntimeException("Data source already in use");
+                // If you see this then it likely means you are doing something like this:
+                // JooqUtil.contextResult(dataSource, context1 -> {
+                //     // do Stuff with context1
+                //     JooqUtil.contextResult(dataSource, context2 -> {
+                //         // do Stuff with context2
+                //     });
+                // });
+                // Don't, as it risks a thread blocking itself because has two db connections in play.
+                // Instead, pass the context around withing the outer lambda to re-use it for multiple
+                // SQL statements.
+                throw new RuntimeException(LogUtil.message(
+                        "Data source {} already in use. This error will be swallowed but it indicates a problem " +
+                        "in the code as this should not happen.", currentDataSource.getClass().getSimpleName()));
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
         }
+
         DATA_SOURCE_THREAD_LOCAL.set(dataSource);
+        if (LOGGER.isDebugEnabled()) {
+            DEBUG_STACK_TRACE_THREAD_LOCAL.set(Thread.currentThread().getStackTrace());
+        }
+    }
+
+    private static String stackTraceToString(final StackTraceElement[] stackTraceElements) {
+        return NullSafe.stream(stackTraceElements)
+                .map(StackTraceElement::toString)
+                .collect(Collectors.joining("\n"));
     }
 
     private static void releaseDataSource() {
@@ -1158,20 +1215,10 @@ public final class JooqUtil {
         }
     }
 
-    public static void mapAuditFields(final Record record, final HasAuditInfo hasAuditInfo) {
-        Objects.requireNonNull(record);
-        Objects.requireNonNull(hasAuditInfo);
-
-        hasAuditInfo.setCreateTimeMs(record.get("create_time_ms", Long.class));
-        hasAuditInfo.setUpdateTimeMs(record.get("update_time_ms", Long.class));
-        hasAuditInfo.setCreateUser(record.get("create_user", String.class));
-        hasAuditInfo.setCreateUser(record.get("update_user", String.class));
-    }
-
     public static void onDuplicateKeyIgnore(final Runnable runnable) {
         try {
             runnable.run();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             if (isDuplicateKeyException(e)) {
                 LOGGER.debug(e::getMessage, e);
             } else {
@@ -1185,7 +1232,7 @@ public final class JooqUtil {
     public static <R> Optional<R> onDuplicateKeyIgnore(final Supplier<Optional<R>> supplier) {
         try {
             return supplier.get();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             if (isDuplicateKeyException(e)) {
                 LOGGER.debug(e::getMessage, e);
                 return Optional.empty();
@@ -1197,12 +1244,116 @@ public final class JooqUtil {
         }
     }
 
-    private static boolean isDuplicateKeyException(final Throwable throwable) {
+    public static boolean isDuplicateKeyException(final Throwable throwable) {
         // 1062 is a duplicate key exception so someone else has already inserted it
         return NullSafe.test(throwable, e ->
                 e instanceof DataAccessException
-                && e.getCause() instanceof SQLIntegrityConstraintViolationException sqlEx
+                && e.getCause() instanceof final SQLIntegrityConstraintViolationException sqlEx
                 && sqlEx.getErrorCode() == 1062);
+    }
+
+    /**
+     * @param expectedCount  The number of IDs you expect to get. Only used to initialise an array backed
+     *                       {@link LongList}. If not know set it to a reasonable guess. The array will grow
+     *                       to accommodate the values if expectedCount is too small.
+     * @param cursorSupplier Supplies a Jooq {@link Cursor} for a single column {@link Record1} that contains a long
+     *                       value.
+     * @return An immutable {@link LongList} of the values returned by the cursor.
+     */
+    @NullMarked
+    public static LongList fetchIds(final int expectedCount,
+                                    final Supplier<Cursor<Record1<Long>>> cursorSupplier) {
+        Objects.requireNonNull(cursorSupplier);
+        if (expectedCount <= 0) {
+            throw new IllegalArgumentException("Expected capacity <= 0");
+        }
+
+        // Use a cursor+resultSet so we can get primitives, which jooq can't do
+        try (final Cursor<Record1<Long>> cursor = cursorSupplier.get()) {
+            Objects.requireNonNull(cursor, "Supplier returned a null Cursor");
+            try (final ResultSet resultSet = cursor.resultSet()) {
+                Objects.requireNonNull(resultSet, "Cursor returned a null ResultSet");
+                final LongList ids = new LongArrayList(expectedCount);
+                while (resultSet.next()) {
+                    ids.add(resultSet.getLong(1));
+                }
+                return LongLists.unmodifiable(ids);
+            } catch (final SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    /**
+     * Method to do some work in batches, where the batch is defined by a {@link LongList} of ids.
+     *
+     * @param batchSize       The size of the batch.
+     * @param idBatchSupplier Will be called at least once. MUST return a {@link LongList} with size <= batchSize.
+     *                        On each call it must return a new batch of Ids, else it will endlessly loop.
+     * @param idBatchConsumer Will be called for each batch of ids supplied by idBatchSupplier. Won't be called
+     *                        if no ids are found in a batch.
+     */
+    @NullMarked
+    public static void batchProcessById(final int batchSize,
+                                        final Supplier<LongList> idBatchSupplier,
+                                        final Consumer<LongList> idBatchConsumer) {
+        Objects.requireNonNull(idBatchSupplier);
+        Objects.requireNonNull(idBatchConsumer);
+        boolean fetchAgain = true;
+        int iteration = 0;
+        while (fetchAgain) {
+            iteration++;
+            final LongList ids = idBatchSupplier.get();
+            final int countInBatch = ids.size();
+            if (countInBatch > batchSize) {
+                throw new RuntimeException(LogUtil.message("Was supplied more items {} than the batch size {}",
+                        countInBatch, batchSize));
+            }
+            fetchAgain = countInBatch >= batchSize;
+            LOGGER.debug("batchProcessById() - batchSize: {}, iteration: {}, countInBatch: {}, fetchAgain: {}",
+                    batchSize, iteration, countInBatch, fetchAgain);
+            if (!ids.isEmpty()) {
+                idBatchConsumer.accept(ids);
+            }
+        }
+    }
+
+    /**
+     * Method to do some work in batches, where the batch is defined by a {@link LongList} of ids.
+     *
+     * @param batchSize       The size of the batch.
+     * @param idBatchSupplier Will be called at least once. MUST return a {@link LongList} with size <= batchSize.
+     *                        On each call it must return a new batch of Ids, else it will endlessly loop.
+     * @param idBatchConsumer Will be called for each batch of ids supplied by idBatchSupplier. Won't be called
+     *                        if no ids are found in a batch. The consumer will be passed the batch of {@link HasId}s
+     *                        and for convenience a {@link LongList} of the ids from the {@link HasId} list (in the
+     *                        same order)
+     */
+    @NullMarked
+    public static <T extends HasId> void batchProcessByHasId(final int batchSize,
+                                                             final Supplier<List<T>> idBatchSupplier,
+                                                             final BiConsumer<List<Long>, List<T>> idBatchConsumer) {
+        Objects.requireNonNull(idBatchSupplier);
+        Objects.requireNonNull(idBatchConsumer);
+        boolean fetchAgain = true;
+        int iteration = 0;
+        while (fetchAgain) {
+            iteration++;
+            final List<T> hasIds = idBatchSupplier.get();
+            final int countInBatch = hasIds.size();
+            if (countInBatch > batchSize) {
+                throw new RuntimeException(LogUtil.message("Was supplied more items {} than the batch size {}",
+                        countInBatch, batchSize));
+            }
+            fetchAgain = countInBatch >= batchSize;
+            LOGGER.debug("batchProcessByHasId() - batchSize: {}, iteration: {}, countInBatch: {}, fetchAgain: {}",
+                    batchSize, iteration, countInBatch, fetchAgain);
+            if (!hasIds.isEmpty()) {
+
+                final List<Long> ids = HasId.asIdList(hasIds);
+                idBatchConsumer.accept(ids, hasIds);
+            }
+        }
     }
 
 

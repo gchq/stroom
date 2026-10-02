@@ -20,12 +20,11 @@ import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
 import stroom.cell.info.client.ActionCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -76,7 +75,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
     private final MyDataGrid<CacheInfo> dataGrid;
 
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
 
     private final Map<String, List<CacheInfo>> responseMap = new HashMap<>();
 
@@ -94,14 +93,15 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
     public CacheNodeListPresenter(final EventBus eventBus,
                                   final PagerView view,
                                   final RestFactory restFactory,
-                                  final NodeManager nodeManager) {
+                                  final NodeClient nodeClient) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Cache Nodes");
         view.setDataWidget(dataGrid);
 
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.delayedUpdate = new DelayedUpdate(this::update);
     }
 
@@ -116,10 +116,6 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         // Node.
         addNodeColumn();
         addStatColumns();
-
-        final EndColumn<CacheInfo> endColumn = new EndColumn<>();
-        columns.add(endColumn);
-        dataGrid.addEndColumn(endColumn);
     }
 
     private void addClearColumn() {
@@ -137,22 +133,35 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                 });
     }
 
+    private Set<String> getCacheInfoKeys() {
+        return cacheInfoKeys;
+    }
+
+    private boolean doesCacheHaveHitRatio() {
+        final Set<String> cacheInfoKeys = getCacheInfoKeys();
+        return cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
+               && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT);
+    }
+
     private void addStatColumns() {
         final List<String> sortedCacheKeys = new ArrayList<>(cacheInfoKeys);
-        sortedCacheKeys.add(HIT_RATIO_KEY);
+        // Hit ratio is a derived col, so need to make sure this cache
+        // has the two underlying columns for us to make it
+        final boolean doesCacheHaveHitRatio = doesCacheHaveHitRatio();
+        if (doesCacheHaveHitRatio) {
+            sortedCacheKeys.add(HIT_RATIO_KEY);
+        }
         sortedCacheKeys.sort(Comparator.naturalOrder());
 
         for (final String cacheInfoKey : sortedCacheKeys) {
             final String name = convertUpperCamelToHuman(cacheInfoKey);
 
-            if (HIT_RATIO_KEY.equals(cacheInfoKey)
-                && cacheInfoKeys.contains(CACHE_INFO_KEY_HIT_COUNT)
-                && cacheInfoKeys.contains(CACHE_INFO_KEY_MISS_COUNT)) {
+            if (HIT_RATIO_KEY.equals(cacheInfoKey)) {
                 addStatColumn("Hit Ratio", -1, row ->
                         getCacheHitRatio(row.getMap()));
             } else {
                 addStatColumn(name, -1, row -> {
-                    String value = row.getMap().get(cacheInfoKey);
+                    final String value = row.getMap().get(cacheInfoKey);
                     return formatValue(cacheInfoKey, value);
                 });
             }
@@ -232,7 +241,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         } else {
             try {
                 return ModelStringUtil.formatCsv(Long.parseLong(value));
-            } catch (NumberFormatException e) {
+            } catch (final NumberFormatException e) {
                 return value;
             }
         }
@@ -242,7 +251,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
         return CASE_CONVERSION_REGEX.replace(str, "$1 $2");
     }
 
-    private void addColumn(Column<CacheInfo, ?> column, String name, int width) {
+    private void addColumn(final Column<CacheInfo, ?> column, final String name, final int width) {
         columns.add(column);
         final int newWidth = width == -1
                 ? determineColumnWidth(name)
@@ -300,7 +309,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
                         CacheNodeListPresenter.this.range = range;
                         CacheNodeListPresenter.this.dataConsumer = dataConsumer;
                         delayedUpdate.reset();
-                        nodeManager.listAllNodes(nodeNames ->
+                        nodeClient.listAllNodes(nodeNames ->
                                 fetchTasksForNodes(dataConsumer, errorHandler, nodeNames), errorHandler, getView());
                     }
                 };
@@ -350,7 +359,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<PagerView> {
             trimmed.add(list.get(i));
         }
         final CacheInfoResponse response = new CacheInfoResponse(trimmed,
-                new PageResponse(range.getStart(), trimmed.size(), total, true));
+                new PageResponse((long) range.getStart(), trimmed.size(), total, true));
         dataConsumer.accept(response);
     }
 }

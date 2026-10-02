@@ -1,0 +1,41 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:p="urn:import:stroom.widget.button.client"
+             xmlns:spinner="urn:import:stroom.widget.spinner.client">
+    <g:FlowPanel ui:field="root" styleName="askStroomAiViewImpl max default-min-sizes dock-container-vertical empty">
+        <g:FlowPanel styleName="dock-min askStroomAiViewImpl-top">
+            <g:FlowPanel styleName="dock-max askStroomAiViewImpl-title">
+                <g:Label ui:field="chatTitle" text="Agent"/>
+            </g:FlowPanel>
+            <g:FlowPanel styleName="dock-min askStroomAiViewImpl-buttons">
+                <p:InlineSvgButton ui:field="newChat" text="New Conversation"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
+                <p:InlineSvgButton ui:field="chatHistory" text="Conversation History"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
+                <p:InlineSvgButton ui:field="download" text="Download"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
+                <p:InlineSvgButton ui:field="deleteAll" text="Delete All Messages"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
+                <p:InlineSvgButton ui:field="configure" text="Configure"
+                                   addStyleNames="allow-focus navigation-menu-button"/>
+            </g:FlowPanel>
+        </g:FlowPanel>
+        <g:SimplePanel ui:field="markdownPreview" styleName="dock-max askStroomAiViewImpl-middle markdown-container"/>
+        <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
+            <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
+            <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
+                <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
+                    <g:Label ui:field="contextIndicator"
+                             styleName="askStroomAiViewImpl-contextChip"/>
+                    <g:TextArea ui:field="message" addStyleNames="dock-max w-100"/>
+                </g:FlowPanel>
+                <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
+                    <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
+                    <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
+                    <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>
+                </g:FlowPanel>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>

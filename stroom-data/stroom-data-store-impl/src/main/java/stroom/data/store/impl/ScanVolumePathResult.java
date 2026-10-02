@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class ScanVolumePathResult implements Serializable {
         return fileCount;
     }
 
-    public void setFileCount(long fileCount) {
+    public void setFileCount(final long fileCount) {
         this.fileCount = fileCount;
     }
 
@@ -51,11 +51,11 @@ public class ScanVolumePathResult implements Serializable {
         return childDirectoryList;
     }
 
-    public void addChildDirectory(String path) {
+    public void addChildDirectory(final String path) {
         childDirectoryList.add(path);
     }
 
-    public void addDelete(String file) {
+    public void addDelete(final String file) {
         deleteList.add(file);
     }
 

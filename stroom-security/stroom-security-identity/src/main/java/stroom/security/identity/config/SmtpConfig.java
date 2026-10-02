@@ -1,20 +1,17 @@
 /*
+ * Copyright 2020 Crown Copyright
  *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *
- *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *   Copyright 2017 Crown Copyright
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   See the License for the specific language governing permissions and
- *   Unless required by applicable law or agreed to in writing, software
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   You may obtain a copy of the License at
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   import stroom.util.shared.IsStroomConfig;
- *   limitations under the License.
- *   you may not use this file except in compliance with the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package stroom.security.identity.config;
@@ -34,9 +31,14 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import org.simplejavamail.api.mailer.config.TransportStrategy;
 
+import java.util.Objects;
+
 @NotInjectableConfig
 @JsonPropertyOrder(alphabetic = true)
 public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final int DEFAULT_PORT = 2525;
+    private static final String DEFAULT_TRANSPORT = "plain";
 
     @NotNull
     @JsonProperty("host")
@@ -65,8 +67,8 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
     public SmtpConfig() {
         host = "localhost";
-        port = 2525;
-        transport = "plain";
+        port = DEFAULT_PORT;
+        transport = DEFAULT_TRANSPORT;
         password = null;
         username = null;
     }
@@ -74,13 +76,16 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
     @SuppressWarnings("unused")
     @JsonCreator
     public SmtpConfig(@JsonProperty("host") final String host,
-                      @JsonProperty("port") final int port,
+                      @JsonProperty("port") final Integer port,
                       @JsonProperty("transport") final String transport,
                       @JsonProperty("username") final String username,
                       @JsonProperty("password") final String password) {
         this.host = host;
-        this.port = port;
-        this.transport = transport;
+        this.port = Objects.requireNonNullElse(port, DEFAULT_PORT);
+        // Defaulted like the port. Left raw, an smtp block that omits it makes getTransportStrategy
+        // throw inside the executor that sends the mail - by which point the user has already been
+        // told their reset email is on its way.
+        this.transport = Objects.requireNonNullElse(transport, DEFAULT_TRANSPORT);
         this.username = username;
         this.password = password;
     }
@@ -118,12 +123,15 @@ public class SmtpConfig extends AbstractConfig implements IsStroomConfig {
 
     @Override
     public String toString() {
+        // Deliberately does NOT include the password, so the object can be logged without leaking the SMTP
+        // credential. This is chained into EmailConfig and IdentityConfig, so any debug log or config dump that
+        // renders the identity configuration would otherwise write it to disk.
         return "SmtpConfig{" +
                 "host='" + host + '\'' +
                 ", port=" + port +
                 ", transport='" + transport + '\'' +
                 ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
+                ", password='****'" +
                 '}';
     }
 }

@@ -30,14 +30,12 @@ import org.xml.sax.helpers.AttributesImpl;
 
 @ConfigurableElement(
         type = "SafeXMLFilter",
+        displayValue = "Safe XML Filter",
         category = Category.FILTER,
-        description = """
-                Restricts the characters to a very simple set consisting of `[a-zA-Z0-9]` and `["""
-                + SafeBuffer.OTHER_CHARS
-                + """
-                ]`.
-                All other characters are replaced by `~NNN`, where `NNN` is a three digit codepoint for the \
-                replaced character.""",
+        description = "Restricts the characters to a very simple set consisting of `[a-zA-Z0-9]` and `["
+                      + SafeBuffer.OTHER_CHARS
+                      + "]`. All other characters are replaced by `~NNN`, where `NNN` is a three " +
+                      "digit codepoint for the replaced character.",
         roles = {
                 PipelineElementType.ROLE_TARGET,
                 PipelineElementType.ROLE_HAS_TARGETS,
@@ -50,20 +48,23 @@ public class SafeXMLFilter extends AbstractXMLFilter {
     private final SafeAttributes safeAttributes = new SafeAttributes(safeBuffer);
 
     @Override
-    public void startElement(String uri, String localName, String name, Attributes atts) throws SAXException {
+    public void startElement(final String uri,
+                             final String localName,
+                             final String name,
+                             final Attributes atts) throws SAXException {
         outputChars();
         safeAttributes.setAtts(atts);
         super.startElement(uri, localName, name, safeAttributes);
     }
 
     @Override
-    public void endElement(String uri, String localName, String name) throws SAXException {
+    public void endElement(final String uri, final String localName, final String name) throws SAXException {
         outputChars();
         super.endElement(uri, localName, name);
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
         safeBuffer.append(ch, start, length);
     }
 
@@ -84,34 +85,28 @@ public class SafeXMLFilter extends AbstractXMLFilter {
         private static final String LOWERCASE_CHARS = "abcdefghijklmnopqrstuvwxyz";
         private static final String UPPERCASE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         static final String OTHER_CHARS = " .:-_/";
-        private static final int[] DIGIT_CODEPOINTS;
-        private static final int[] LOWERCASE_CODEPOINTS;
-        private static final int[] UPPERCASE_CODEPOINTS;
-        private static final int[] OTHER_CODEPOINTS;
 
         private static final int MAX_SAFE_LENGTH = 500;
         private static final String TRUNC_MARKER = "...";
 
+        /**
+         * Precomputed lookup table: SAFE_CHARS[codePoint] == true means the character is safe.
+         * All safe characters are in the ASCII range (< 128).
+         */
+        private static final boolean[] SAFE_CHARS = new boolean[128];
+
         static {
-            char[] chars = DIGIT_CHARS.toCharArray();
-            DIGIT_CODEPOINTS = new int[chars.length];
-            for (int i = 0; i < chars.length; i++) {
-                DIGIT_CODEPOINTS[i] = chars[i];
+            for (final char c : DIGIT_CHARS.toCharArray()) {
+                SAFE_CHARS[c] = true;
             }
-            chars = LOWERCASE_CHARS.toCharArray();
-            LOWERCASE_CODEPOINTS = new int[chars.length];
-            for (int i = 0; i < chars.length; i++) {
-                LOWERCASE_CODEPOINTS[i] = chars[i];
+            for (final char c : LOWERCASE_CHARS.toCharArray()) {
+                SAFE_CHARS[c] = true;
             }
-            chars = UPPERCASE_CHARS.toCharArray();
-            UPPERCASE_CODEPOINTS = new int[chars.length];
-            for (int i = 0; i < chars.length; i++) {
-                UPPERCASE_CODEPOINTS[i] = chars[i];
+            for (final char c : UPPERCASE_CHARS.toCharArray()) {
+                SAFE_CHARS[c] = true;
             }
-            chars = OTHER_CHARS.toCharArray();
-            OTHER_CODEPOINTS = new int[chars.length];
-            for (int i = 0; i < chars.length; i++) {
-                OTHER_CODEPOINTS[i] = chars[i];
+            for (final char c : OTHER_CHARS.toCharArray()) {
+                SAFE_CHARS[c] = true;
             }
         }
 
@@ -160,8 +155,7 @@ public class SafeXMLFilter extends AbstractXMLFilter {
                 c = buffer[i];
                 codePoint = c;
 
-                if (inRange(codePoint, DIGIT_CODEPOINTS) || inRange(codePoint, LOWERCASE_CODEPOINTS)
-                        || inRange(codePoint, UPPERCASE_CODEPOINTS) || inValues(codePoint, OTHER_CODEPOINTS)) {
+                if (isSafe(codePoint)) {
                     outputBuffer.append(c);
                     j++;
                 } else {
@@ -179,17 +173,8 @@ public class SafeXMLFilter extends AbstractXMLFilter {
             }
         }
 
-        private boolean inRange(final int codePoint, final int[] codePoints) {
-            return codePoint >= codePoints[0] && codePoint <= codePoints[codePoints.length - 1];
-        }
-
-        private boolean inValues(final int codePoint, final int[] codePoints) {
-            for (final int codePoint1 : codePoints) {
-                if (codePoint == codePoint1) {
-                    return true;
-                }
-            }
-            return false;
+        private static boolean isSafe(final int codePoint) {
+            return codePoint >= 0 && codePoint < SAFE_CHARS.length && SAFE_CHARS[codePoint];
         }
 
         /**

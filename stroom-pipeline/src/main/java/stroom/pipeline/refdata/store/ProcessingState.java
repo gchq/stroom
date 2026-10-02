@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store;
@@ -65,7 +64,7 @@ public enum ProcessingState {
     private static final ProcessingState[] states = new ProcessingState[ProcessingState.values().length];
 
     static {
-        for (ProcessingState state : ProcessingState.values()) {
+        for (final ProcessingState state : ProcessingState.values()) {
             if (states[state.getId()] != null) {
                 throw new RuntimeException("ID " + state.getId() + " is already in use");
             }

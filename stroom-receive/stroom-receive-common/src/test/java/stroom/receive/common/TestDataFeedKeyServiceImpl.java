@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
 
 import stroom.cache.impl.CacheManagerImpl;
@@ -20,6 +36,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -36,7 +54,6 @@ class TestDataFeedKeyServiceImpl {
 
     @Mock
     private HttpServletRequest mockHttpServletRequest;
-
 
     @Test
     void authenticate_noKey() {
@@ -134,9 +151,7 @@ class TestDataFeedKeyServiceImpl {
                 hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
         ));
 
-        dataFeedKeyService.addDataFeedKeys(
-                new HashedDataFeedKeys(List.of(hashedDataFeedKey)),
-                Path.of("foo"));
+        dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
 
         ThreadUtil.sleep(expiryDuration);
 
@@ -169,20 +184,117 @@ class TestDataFeedKeyServiceImpl {
                 hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID)
         ));
 
-        dataFeedKeyService.addDataFeedKeys(
-                new HashedDataFeedKeys(List.of(hashedDataFeedKey)),
-                Path.of("foo"));
+        dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
 
         final Optional<UserIdentity> optUserIdentity = dataFeedKeyService.authenticate(
                 mockHttpServletRequest,
                 attributeMap);
 
         final UserIdentity userIdentity = optUserIdentity.get();
-        assertThat(userIdentity.getSubjectId())
-                .isEqualTo(DataFeedKeyUserIdentity.SUBJECT_ID_PREFIX
+        assertThat(userIdentity.subjectId())
+                .isEqualTo(DataFeedUserIdentity.SUBJECT_ID_PREFIX
                            + hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID));
         assertThat(userIdentity.getDisplayName())
-                .isEqualTo(userIdentity.getSubjectId());
+                .isEqualTo(userIdentity.subjectId());
+    }
+
+    @Test
+    void authenticate_multipleValidKnownKeys() {
+        final ReceiveDataConfig receiveDataConfig = getReceiveDataConfig();
+        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+                () -> receiveDataConfig,
+                DATA_FEED_KEY_HASHERS,
+                new CacheManagerImpl());
+        final List<KeyWithHash> keys = new ArrayList<>(15);
+        final Instant time = Instant.now();
+        for (int accId = 1; accId <= 3; accId++) {
+            for (int i = 0; i < 5; i++) {
+                final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
+                        String.valueOf(accId),
+                        Map.of(),
+                        time.plus(i + 1, ChronoUnit.MINUTES));
+                keys.add(keyWithHash);
+            }
+        }
+        final List<HashedDataFeedKey> hashedDataFeedKeys = keys.stream()
+                .map(KeyWithHash::hashedDataFeedKey)
+                .toList();
+        for (final HashedDataFeedKey hashedDataFeedKey : hashedDataFeedKeys) {
+            dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
+        }
+
+        for (final KeyWithHash key : keys) {
+            final String plainKey = key.key();
+            final HashedDataFeedKey hashedDataFeedKey = key.hashedDataFeedKey();
+            final String accId = hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID);
+
+            setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + plainKey);
+            final AttributeMap attributeMap = hashedDataFeedKey.getAttributeMap();
+
+            final Optional<UserIdentity> optUserIdentity = dataFeedKeyService.authenticate(
+                    mockHttpServletRequest,
+                    attributeMap);
+
+            final UserIdentity userIdentity = optUserIdentity.get();
+            assertThat(userIdentity.subjectId())
+                    .isEqualTo(DataFeedUserIdentity.SUBJECT_ID_PREFIX
+                               + accId);
+            assertThat(userIdentity.getDisplayName())
+                    .isEqualTo(userIdentity.subjectId());
+        }
+    }
+
+    @Test
+    void authenticate_duplicateValidKnownKeys() {
+        final ReceiveDataConfig receiveDataConfig = getReceiveDataConfig();
+        final DataFeedKeyServiceImpl dataFeedKeyService = new DataFeedKeyServiceImpl(
+                () -> receiveDataConfig,
+                DATA_FEED_KEY_HASHERS,
+                new CacheManagerImpl());
+        final List<KeyWithHash> keys = new ArrayList<>(5);
+        final List<KeyWithHash> keysToUse = new ArrayList<>(5);
+        final Instant time = Instant.now();
+        final int accId = 1;
+        // Five unique keys, each duplicated 3 times
+        for (int i = 0; i < 5; i++) {
+            final KeyWithHash keyWithHash = DataFeedKeyGenerator.generateRandomKey(
+                    String.valueOf(accId),
+                    Map.of(),
+                    time.plus(i + 1, ChronoUnit.MINUTES));
+            for (int j = 0; j < 3; j++) {
+                keys.add(keyWithHash);
+            }
+            keysToUse.add(keyWithHash);
+        }
+        final List<HashedDataFeedKey> hashedDataFeedKeys = keys.stream()
+                .map(KeyWithHash::hashedDataFeedKey)
+                .toList();
+        for (final HashedDataFeedKey hashedDataFeedKey : hashedDataFeedKeys) {
+            dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
+        }
+
+        // Test each key twice to get a cache hit on 2nd go
+        for (int i = 0; i < 2; i++) {
+            for (final KeyWithHash key : keysToUse) {
+                final String plainKey = key.key();
+                final HashedDataFeedKey hashedDataFeedKey = key.hashedDataFeedKey();
+                final String accId2 = hashedDataFeedKey.getStreamMetaValue(StandardHeaderArguments.ACCOUNT_ID);
+
+                setAuthHeaderOnMock(DataFeedKeyServiceImpl.BEARER_PREFIX + plainKey);
+                final AttributeMap attributeMap = hashedDataFeedKey.getAttributeMap();
+
+                final Optional<UserIdentity> optUserIdentity = dataFeedKeyService.authenticate(
+                        mockHttpServletRequest,
+                        attributeMap);
+
+                final UserIdentity userIdentity = optUserIdentity.get();
+                assertThat(userIdentity.subjectId())
+                        .isEqualTo(DataFeedUserIdentity.SUBJECT_ID_PREFIX
+                                   + accId2);
+                assertThat(userIdentity.getDisplayName())
+                        .isEqualTo(userIdentity.subjectId());
+            }
+        }
     }
 
     @Test
@@ -197,9 +309,7 @@ class TestDataFeedKeyServiceImpl {
         final AttributeMap attributeMap = new AttributeMap(Map.of(
                 StandardHeaderArguments.ACCOUNT_ID, "foo"));
 
-        dataFeedKeyService.addDataFeedKeys(
-                new HashedDataFeedKeys(List.of(hashedDataFeedKey)),
-                Path.of("foo"));
+        dataFeedKeyService.addDataFeedKey(hashedDataFeedKey, Path.of("foo"));
 
         Assertions.assertThatThrownBy(
                         () -> {

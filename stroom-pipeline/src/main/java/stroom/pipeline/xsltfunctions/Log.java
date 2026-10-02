@@ -28,7 +28,7 @@ class Log extends StroomExtensionFunctionCall {
     public static final String FUNCTION_NAME = "log";
 
     @Override
-    protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         try {
             final String severity = getSafeString(functionName, context, arguments, 0);
             final String message = getSafeString(functionName, context, arguments, 1);

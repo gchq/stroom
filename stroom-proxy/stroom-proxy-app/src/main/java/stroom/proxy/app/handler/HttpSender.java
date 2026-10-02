@@ -1,20 +1,39 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
+import stroom.proxy.app.DownstreamHostConfig;
 import stroom.proxy.repo.LogStream;
 import stroom.proxy.repo.LogStream.EventType;
 import stroom.proxy.repo.ProxyServices;
 import stroom.receive.common.StroomStreamException;
 import stroom.security.api.UserIdentityFactory;
 import stroom.util.io.ByteCountInputStream;
+import stroom.util.io.ByteSize;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.metrics.Metrics;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import com.codahale.metrics.Timer;
 import org.apache.commons.io.IOUtils;
@@ -35,14 +54,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.EnumSet;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.LongSupplier;
 import java.util.stream.Collectors;
 
@@ -58,55 +75,57 @@ public class HttpSender implements StreamDestination {
     // TODO Consider whether a UNKNOWN_ERROR(500) is recoverable or not
     private static final Set<StroomStatusCode> NON_RECOVERABLE_STATUS_CODES = EnumSet.of(
             StroomStatusCode.FEED_IS_NOT_SET_TO_RECEIVE_DATA,
+            StroomStatusCode.REJECTED_BY_POLICY_RULES,
             StroomStatusCode.UNEXPECTED_DATA_TYPE,
             StroomStatusCode.FEED_MUST_BE_SPECIFIED);
 
     private final LogStream logStream;
-    private final ForwardHttpPostConfig config;
+    private final ForwardHttpPostConfig forwardHttpPostConfig;
+    private final DownstreamHostConfig downstreamHostConfig;
     private final String userAgent;
     private final UserIdentityFactory userIdentityFactory;
     private final HttpClient httpClient;
     private final String forwardUrl;
+    private final String livenessCheckUrl;
     private final String forwarderName;
     private final ProxyServices proxyServices;
     private final Timer sendTimer;
+    private final Set<CIKey> headerAllowSet;
 
     public HttpSender(final LogStream logStream,
-                      final ForwardHttpPostConfig config,
+                      final DownstreamHostConfig downstreamHostConfig,
+                      final ForwardHttpPostConfig forwardHttpPostConfig,
                       final String userAgent,
                       final UserIdentityFactory userIdentityFactory,
                       final HttpClient httpClient,
                       final Metrics metrics,
                       final ProxyServices proxyServices) {
         this.logStream = logStream;
-        this.config = config;
+        this.forwardHttpPostConfig = forwardHttpPostConfig;
+        this.downstreamHostConfig = downstreamHostConfig;
         this.userAgent = userAgent;
         this.userIdentityFactory = userIdentityFactory;
         this.httpClient = httpClient;
-        this.forwardUrl = config.getForwardUrl();
-        this.forwarderName = config.getName();
+        this.forwardUrl = forwardHttpPostConfig.createForwardUrl(downstreamHostConfig);
+        this.livenessCheckUrl = forwardHttpPostConfig.createLivenessCheckUrl(downstreamHostConfig);
+        this.forwarderName = forwardHttpPostConfig.getName();
         this.proxyServices = proxyServices;
         this.sendTimer = metrics.registrationBuilder(getClass())
                 .addNamePart(forwarderName)
-                .addNamePart("send")
+                .addNamePart(Metrics.SEND)
                 .timer()
                 .createAndRegister();
+        this.headerAllowSet = buildHeaderAllowSet(forwardHttpPostConfig);
     }
 
     @Override
     public void send(final AttributeMap attributeMap,
                      final InputStream inputStream) throws ForwardException {
-        final Instant startTime = Instant.now();
-
         if (NullSafe.isEmptyString(attributeMap.get(StandardHeaderArguments.FEED))) {
             throw new StroomStreamException(StroomStatusCode.FEED_MUST_BE_SPECIFIED, attributeMap);
         }
 
-        // We need to add the authentication token to our headers
-        final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
-        attributeMap.putAll(authHeaders);
-
-        attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
+        attributeMap.putRandomUuidIfAbsent(StandardHeaderArguments.GUID);
 
         LOGGER.debug(() -> LogUtil.message(
                 "'{}' - Opening connection, forwardUrl: {}, userAgent: {}, attributeMap (" +
@@ -123,14 +142,14 @@ public class HttpSender implements StreamDestination {
 
         // Execute and get the response.
         final ResponseStatus responseStatus = sendTimer.timeSupplier(() ->
-                post(httpPost, startTime, attributeMap, byteCountInputStream::getCount));
+                post(httpPost, attributeMap, byteCountInputStream::getCount));
         LOGGER.debug("responseStatus: {}", responseStatus);
     }
 
     @Override
     public boolean performLivenessCheck() throws Exception {
-        final String url = config.getLivenessCheckUrl();
-        boolean isLive;
+        final String url = livenessCheckUrl;
+        LOGGER.debug("performLivenessCheck() - url: '{}'", url);
 
         if (NullSafe.isNonBlankString(url)) {
             final HttpGet httpGet = new HttpGet(url);
@@ -140,27 +159,31 @@ public class HttpSender implements StreamDestination {
             try {
                 final int responseCode = httpClient.execute(httpGet, response -> {
                     final int code = response.getCode();
-                    LOGGER.debug("Liveness check, code: {}, response: '{}'", code, response);
+                    LOGGER.debug("performLivenessCheck() - code: {}, response: '{}'", code, response);
                     consumeAndCloseResponseContent(response);
                     return code;
                 });
 
-                isLive = responseCode == HttpStatus.SC_OK;
+                final boolean isLive = responseCode == HttpStatus.SC_OK;
                 if (!isLive) {
                     throw new Exception(LogUtil.message("Got response code {} from livenessCheckUrl '{}'",
                             responseCode, url));
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 final String msg = LogUtil.message("Error calling livenessCheckUrl '{}': {}",
                         url, LogUtil.exceptionMessage(e));
                 LOGGER.debug(msg, e);
                 // Consider it not live
                 throw new Exception(msg, e);
             }
-        } else {
-            isLive = true;
         }
-        return isLive;
+        return true;
+    }
+
+    @Override
+    public boolean hasLivenessCheck() {
+        return forwardHttpPostConfig.isLivenessCheckEnabled()
+               && NullSafe.isNonBlankString(livenessCheckUrl);
     }
 
     private HttpPost createHttpPost(final AttributeMap attributeMap) {
@@ -168,12 +191,16 @@ public class HttpSender implements StreamDestination {
         httpPost.addHeader("User-Agent", userAgent);
         httpPost.addHeader("Content-Type", "application/audit");
 
+        // Add the header(s) for authenticating with the downstream (e.g. API key/OAuth token)
         addAuthHeaders(httpPost);
 
-        final AttributeMap sendHeader = AttributeMapUtil.cloneAllowable(attributeMap);
-        for (Entry<String, String> entry : sendHeader.entrySet()) {
-            httpPost.addHeader(entry.getKey(), entry.getValue());
-        }
+        // Add meta entries that we are allowed to include
+        attributeMap.forEach((k, v) -> {
+            final CIKey ciKey = CIKey.of(k);
+            if (headerAllowSet.contains(ciKey)) {
+                httpPost.addHeader(k, v);
+            }
+        });
 
         // We may be doing an instant forward so need to pass on the compression type.
         // If it is a forward after a store/agg then the caller should have set it in
@@ -186,15 +213,26 @@ public class HttpSender implements StreamDestination {
         return httpPost;
     }
 
+    private String getApiKey() {
+        if (NullSafe.isNonBlankString(forwardHttpPostConfig.getApiKey())) {
+            return forwardHttpPostConfig.getApiKey().trim();
+        } else if (downstreamHostConfig.isEnabled() && NullSafe.isNonBlankString(downstreamHostConfig.getApiKey())) {
+            return downstreamHostConfig.getApiKey().trim();
+        } else {
+            return null;
+        }
+    }
+
     private void addAuthHeaders(final BasicHttpRequest request) {
         Objects.requireNonNull(request);
-        final String apiKey = config.getApiKey();
-        if (NullSafe.isNonBlankString(apiKey)) {
-            request.addHeader("Authorization", "Bearer " + apiKey.trim());
-        }
-
-        // Allows sending to systems on the same OpenId realm as us using an access token
-        if (config.isAddOpenIdAccessToken()) {
+        if (NullSafe.isNonBlankString(forwardHttpPostConfig.getApiKey())) {
+            final String apiKey = forwardHttpPostConfig.getApiKey();
+            LOGGER.debug(() -> LogUtil.message("addAuthHeaders() - Using configured forwarder apiKey {}",
+                    NullSafe.subString(apiKey, 0, 15)));
+            userIdentityFactory.getAuthHeaders(apiKey)
+                    .forEach(request::addHeader);
+        } else if (forwardHttpPostConfig.isAddOpenIdAccessToken()) {
+            // Allows sending to systems on the same OpenId realm as us using an access token
             LOGGER.debug(() -> LogUtil.message(
                     "'{}' - Setting request props (values truncated):\n{}",
                     forwarderName,
@@ -213,23 +251,32 @@ public class HttpSender implements StreamDestination {
 
             userIdentityFactory.getServiceUserAuthHeaders()
                     .forEach(request::addHeader);
+        } else if (NullSafe.isNonBlankString(downstreamHostConfig.getApiKey())) {
+            // Fall back to the downstream host's API key
+            final String apiKey = downstreamHostConfig.getApiKey();
+            LOGGER.debug(() -> LogUtil.message("addAuthHeaders() - Using configured downstream host apiKey {}",
+                    NullSafe.subString(apiKey, 0, 15)));
+            userIdentityFactory.getAuthHeaders(apiKey)
+                    .forEach(request::addHeader);
+        } else {
+            LOGGER.debug("authHeaders() - No headers added");
         }
     }
 
     private ResponseStatus post(final HttpPost httpPost,
-                                final Instant startTime,
                                 final AttributeMap attributeMap,
                                 final LongSupplier contentLengthSupplier) throws ForwardException {
         // Execute and get the response.
+        final DurationTimer timer = DurationTimer.start();
         try {
             final ResponseStatus responseStatus = httpClient.execute(httpPost, response -> {
                 LOGGER.debug(() -> LogUtil.message(
                         "'{}' - Closing stream, response header fields:\n{}",
                         forwarderName, formatHeaderEntryListForLogging(response.getHeaders())));
-                return logResponseToSendLog(startTime, response, attributeMap, contentLengthSupplier);
+                return logResponseToSendLog(timer.get(), response, attributeMap, contentLengthSupplier);
             });
 
-            LOGGER.debug("'{}' - responseStatus: {}", forwarderName, responseStatus);
+            LOGGER.debug("'{}' - responseStatus: {}, duration: {}", forwarderName, responseStatus, timer);
 
             // There is no point retrying with these
             final StroomStatusCode stroomStatusCode = responseStatus.stroomStatusCode;
@@ -244,10 +291,15 @@ public class HttpSender implements StreamDestination {
             // Created above so we will have already logged
             throw e;
         } catch (final Exception e) {
-            logErrorToSendLog(startTime, e, attributeMap);
+            final Duration duration = timer.get();
+            final long byteCount = LogUtil.swallowExceptions(contentLengthSupplier)
+                    .orElse(0);
             // Have to assume that any exception is recoverable
+            final String msg = LogUtil.message("Error during HTTP POST, data sent: {}, duration: {}, error: {}",
+                    ByteSize.ofBytes(byteCount), duration, LogUtil.exceptionMessage(e));
+            logErrorToSendLog(duration, e, msg, attributeMap);
             throw ForwardException.recoverable(
-                    StroomStatusCode.UNKNOWN_ERROR, attributeMap, e.getMessage(), e);
+                    StroomStatusCode.UNKNOWN_ERROR, attributeMap, msg, e);
         }
     }
 
@@ -284,10 +336,11 @@ public class HttpSender implements StreamDestination {
                 .collect(Collectors.joining("\n"));
     }
 
-    private void logErrorToSendLog(final Instant startTime,
-                                   final Throwable e,
+    private void logErrorToSendLog(final Duration duration,
+                                   final Exception e,
+                                   final String exceptionMessage,
                                    final AttributeMap attributeMap) {
-        LOGGER.debug(() -> LogUtil.message("'{}' - {}", forwarderName, LogUtil.exceptionMessage(e), e));
+        LOGGER.debug(() -> LogUtil.message("'{}' - {}", forwarderName, exceptionMessage, e));
         logStream.log(
                 SEND_LOG,
                 attributeMap,
@@ -296,11 +349,11 @@ public class HttpSender implements StreamDestination {
                 StroomStatusCode.UNKNOWN_ERROR,
                 null,
                 0,
-                Duration.between(startTime, Instant.now()).toMillis(),
+                duration.toMillis(),
                 LogUtil.exceptionMessage(e));
     }
 
-    private ResponseStatus logResponseToSendLog(final Instant startTime,
+    private ResponseStatus logResponseToSendLog(final Duration duration,
                                                 final ClassicHttpResponse response,
                                                 final AttributeMap attributeMap,
                                                 final LongSupplier contentLengthSupplier) {
@@ -313,8 +366,13 @@ public class HttpSender implements StreamDestination {
             final ResponseStatus responseStatus = checkConnectionResponse(response, attributeMap);
             final StroomStatusCode stroomStatusCode = responseStatus.stroomStatusCode;
             final String receiptId = responseStatus.receiptId;
-            LOGGER.debug("'{}' - stroomStatusCode: {}, receiptId {}, contentLength: {}",
-                    forwarderName, stroomStatusCode, receiptId, contentLength);
+            LOGGER.debug(() -> LogUtil.message(
+                    "'{}' - stroomStatusCode: {}, receiptId {}, contentLength: {}, compression: '{}'",
+                    forwarderName,
+                    stroomStatusCode,
+                    receiptId,
+                    ByteSize.ofBytes(contentLength),
+                    attributeMap.get(StandardHeaderArguments.COMPRESSION)));
 
             final EventType eventType = stroomStatusCode == StroomStatusCode.OK
                     ? EventType.SEND
@@ -328,7 +386,7 @@ public class HttpSender implements StreamDestination {
                     stroomStatusCode,
                     receiptId,
                     contentLength,
-                    Duration.between(startTime, Instant.now()).toMillis());
+                    duration.toMillis());
 
             return responseStatus;
 //        } catch (StroomStreamException e) {
@@ -342,7 +400,7 @@ public class HttpSender implements StreamDestination {
 //                errorMsg = e.getMessage();
 //                throw e;
 //            }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(() ->
                     LogUtil.message("'{}' - Exception reading response {}",
                             forwarderName, LogUtil.exceptionMessage(e), e));
@@ -390,7 +448,7 @@ public class HttpSender implements StreamDestination {
             if (value != null) {
                 return Integer.parseInt(value);
             }
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             LOGGER.error(e::getMessage, e);
         }
         return def;
@@ -405,7 +463,7 @@ public class HttpSender implements StreamDestination {
                 final int code = Integer.parseInt(value);
                 return StroomStatusCode.fromCode(code);
             }
-        } catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             LOGGER.error("Error parsing stroom status code from header '{}' with value '{}': {}",
                     header, value, LogUtil.exceptionMessage(e), e);
         }
@@ -422,9 +480,9 @@ public class HttpSender implements StreamDestination {
     public ResponseStatus checkConnectionResponse(final ClassicHttpResponse response,
                                                   final AttributeMap attributeMap) {
         StroomStatusCode stroomStatusCode;
-        int httpResponseCode;
-        String receiptId;
-        String responseMessage;
+        final int httpResponseCode;
+        final String receiptId;
+        final String responseMessage;
         try {
             httpResponseCode = response.getCode();
             responseMessage = NullSafe.nonBlankStringElseGet(
@@ -485,12 +543,30 @@ public class HttpSender implements StreamDestination {
 
         try (final InputStream inputStream = response.getEntity().getContent()) {
             if (inputStream != null) {
-                return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+                return NullSafe.trim(IOUtils.toString(inputStream, StandardCharsets.UTF_8));
             }
         } catch (final IOException ioex) {
             LOGGER.debug(ioex.getMessage(), ioex);
         }
         return "";
+    }
+
+    private Set<CIKey> buildHeaderAllowSet(final ForwardHttpPostConfig config) {
+        final Set<CIKey> baseSet = StandardHeaderArguments.HTTP_POST_BASE_META_ALLOW_SET;
+        final Set<String> additionalSet = NullSafe.set(NullSafe.get(
+                config,
+                ForwardHttpPostConfig::getForwardHeadersAdditionalAllowSet));
+
+        final Set<CIKey> combinedSet = new HashSet<>(baseSet.size() + additionalSet.size());
+        combinedSet.addAll(baseSet);
+        config.getForwardHeadersAdditionalAllowSet()
+                .stream()
+                .filter(NullSafe::isNonBlankString)
+                .map(CIKey::of)
+                .forEach(combinedSet::add);
+
+        LOGGER.debug("buildHeaderAllowSet() - combinedSet: {}", combinedSet);
+        return combinedSet;
     }
 
 

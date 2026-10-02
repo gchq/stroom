@@ -33,7 +33,7 @@ class TestFunctions {
 
     @Test
     void testBuildFunctionCompletions() {
-        Functions functions = new Functions(UiConfig::new);
+        final Functions functions = new Functions(UiConfig::new);
         final List<CompletionItem> completionItems = functions.buildFunctionCompletions()
                 .stream()
                 .sorted(Comparator.comparing(CompletionItem::getCaption))

@@ -30,7 +30,7 @@ public class UniqueInt {
             boolean found = false;
             int i = 0;
             for (; i < arr.length; i++) {
-                int existing = arr[i];
+                final int existing = arr[i];
                 if (existing == val) {
                     found = true;
                     break;

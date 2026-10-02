@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.api.SegmentInputStream;
 import stroom.util.io.SeekableInputStream;
 import stroom.util.io.StreamUtil;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,10 +30,12 @@ import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.util.Iterator;
+import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
+ * <p>Random Access Segment Input Stream</p>
  * This is an implementation of <code>SegmentInputStream</code> that uses random
  * access files for the data and index.
  * <p>
@@ -41,7 +44,8 @@ import java.util.TreeSet;
  * window).
  */
 public class RASegmentInputStream extends SegmentInputStream {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RASegmentInputStream.class);
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RASegmentInputStream.class);
     private static final int INT8 = 8;
     private final byte[] eightBytes = new byte[INT8];
     private final byte[] singleByte = new byte[1];
@@ -62,18 +66,6 @@ public class RASegmentInputStream extends SegmentInputStream {
     private long windowSegmentCount = 0;
     private long totalSegmentCount;
 
-//    RASegmentInputStream(final InputStream data,
-//                         final InputStream inputStream) {
-//        this(data, inputStream);
-//    }
-//
-//    RASegmentInputStream(final InputStream data,
-//                         final InputStream inputStream,
-//                         final long byteStart,
-//                         final long byteEnd) {
-//        this(data, () -> inputStream, byteStart, byteEnd);
-//    }
-
     public RASegmentInputStream(final InputStream data, final InputStream indexInputStream) {
         try {
             this.data = data;
@@ -85,10 +77,10 @@ public class RASegmentInputStream extends SegmentInputStream {
         }
     }
 
-    RASegmentInputStream(final InputStream data,
-                         final InputStream indexInputStream,
-                         final long byteStart,
-                         final long byteEnd) {
+    public RASegmentInputStream(final InputStream data,
+                                final InputStream indexInputStream,
+                                final long byteStart,
+                                final long byteEnd) {
         try {
             this.data = data;
             this.indexInputStream = indexInputStream;
@@ -100,7 +92,9 @@ public class RASegmentInputStream extends SegmentInputStream {
     }
 
     private long getDataSize() throws IOException {
-        return ((SeekableInputStream) data).getSize();
+        final long size = ((SeekableInputStream) data).getSize();
+        LOGGER.debug(() -> LogUtil.message("getDataSize() - size: {}", ModelStringUtil.formatCsv(size)));
+        return size;
     }
 
     private void initWindow(final long byteStart, final long byteEnd) throws IOException {
@@ -587,11 +581,11 @@ public class RASegmentInputStream extends SegmentInputStream {
         }
     }
 
-    public void setIncluded(final TreeSet<Long> included) {
+    public void setIncluded(final NavigableSet<Long> included) {
         this.included = included;
     }
 
-    public void setExcluded(final TreeSet<Long> excluded) {
+    public void setExcluded(final NavigableSet<Long> excluded) {
         this.excluded = excluded;
     }
 
@@ -616,7 +610,7 @@ public class RASegmentInputStream extends SegmentInputStream {
     /**
      * Return the byte offset in the underlying stream given a segment number
      */
-    long byteOffset(final long segment) throws IOException {
+    public long byteOffset(final long segment) throws IOException {
         return byteOffset(segment, true);
     }
 
@@ -647,7 +641,7 @@ public class RASegmentInputStream extends SegmentInputStream {
     /**
      * Return the segment number given a byte position
      */
-    long segmentAtByteOffset(final long findBytePos) throws IOException {
+    public long segmentAtByteOffset(final long findBytePos) throws IOException {
         return segmentAtByteOffset(findBytePos, true);
     }
 
@@ -656,7 +650,7 @@ public class RASegmentInputStream extends SegmentInputStream {
      * will look for the lowest one skipping back over any empty segments
      * otherwise it will skip forward.
      */
-    long segmentAtByteOffset(final long findBytePos, final boolean lowerBound) throws IOException {
+    public long segmentAtByteOffset(final long findBytePos, final boolean lowerBound) throws IOException {
         // Seek past EOF?
         if (findBytePos > getDataSize()) {
             return -1;
@@ -681,7 +675,7 @@ public class RASegmentInputStream extends SegmentInputStream {
                 // Skip back over any empty segments
                 long prevMidPointBytePos;
                 while ((midPointSegment > 0)
-                        && (prevMidPointBytePos = byteOffset(midPointSegment - 1)) == midPointBytePos) {
+                       && (prevMidPointBytePos = byteOffset(midPointSegment - 1)) == midPointBytePos) {
                     midPointSegment--;
                     midPointBytePos = prevMidPointBytePos;
                 }
@@ -689,7 +683,7 @@ public class RASegmentInputStream extends SegmentInputStream {
                 // Skip forward over any empty segments
                 long nextMidPointBytePos;
                 while ((midPointSegment + 1 < totalSegmentCount)
-                        && (nextMidPointBytePos = byteOffset(midPointSegment + 1, false)) == midPointBytePos) {
+                       && (nextMidPointBytePos = byteOffset(midPointSegment + 1, false)) == midPointBytePos) {
                     midPointSegment++;
                     midPointBytePos = nextMidPointBytePos;
                 }
@@ -709,7 +703,6 @@ public class RASegmentInputStream extends SegmentInputStream {
             return midPointSegment;
         }
         return segmentAtByteOffset(findBytePos, midPointSegment, workingUpperSegment, lowerBound);
-
     }
 
     @Override
@@ -717,7 +710,12 @@ public class RASegmentInputStream extends SegmentInputStream {
         return windowByteEnd - windowByteStart;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class ByteRange {
+
         private final long start;
         private final long end;
 

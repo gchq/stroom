@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.impl.fs.client.presenter;
@@ -29,6 +28,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -43,7 +43,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class FsVolumeEditPresenter
         extends MyPresenterWidget<FsVolumeEditView> {
@@ -52,7 +56,6 @@ public class FsVolumeEditPresenter
 
     private final EditorPresenter editorPresenter;
     private final RestFactory restFactory;
-    private FsVolume volume;
 
     @Inject
     public FsVolumeEditPresenter(final EventBus eventBus,
@@ -75,15 +78,15 @@ public class FsVolumeEditPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption(title)
-                .onShow(e -> getView().focus())
+                .onShow(ignored -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        write();
+                        final FsVolume updated = write(volume);
                         try {
-                            if (volume.getId() == null) {
-                                doWithVolumeValidation(volume, () -> createVolume(consumer, volume, e), e);
+                            if (updated.getId() == null) {
+                                doWithVolumeValidation(updated, () -> createVolume(consumer, updated, e), e);
                             } else {
-                                doWithVolumeValidation(volume, () -> updateVolume(consumer, volume, e), e);
+                                doWithVolumeValidation(updated, () -> updateVolume(consumer, updated, e), e);
                             }
                         } catch (final RuntimeException ex) {
                             AlertEvent.fireError(FsVolumeEditPresenter.this, ex.getMessage(), e::reset);
@@ -101,7 +104,8 @@ public class FsVolumeEditPresenter
                                         final HidePopupRequestEvent event) {
         restFactory
                 .create(FS_VOLUME_RESOURCE)
-                .method(res -> res.validate(volume))
+                .method(res ->
+                        res.validate(volume))
                 .onSuccess(validationResult -> {
                     if (validationResult.isOk()) {
                         work.run();
@@ -133,7 +137,8 @@ public class FsVolumeEditPresenter
                               final HidePopupRequestEvent event) {
         restFactory
                 .create(FS_VOLUME_RESOURCE)
-                .method(res -> res.update(volume.getId(), volume))
+                .method(res ->
+                        res.update(volume.getId(), volume))
                 .onSuccess(r -> {
                     consumer.accept(r);
                     event.hide();
@@ -158,10 +163,14 @@ public class FsVolumeEditPresenter
                 .exec();
     }
 
-    private void read(final FsVolume volume) {
-        this.volume = volume;
+    private List<FsVolumeType> getVolumeTypesInDisplayOrder() {
+        return Arrays.stream(FsVolumeType.values())
+                .sorted(Comparator.comparingInt(FsVolumeType::getDisplayIndex))
+                .collect(Collectors.toList());
+    }
 
-        getView().getVolumeType().addItems(FsVolumeType.values());
+    private void read(final FsVolume volume) {
+        getView().getVolumeType().addItems(getVolumeTypesInDisplayOrder());
         getView().getVolumeType().setValue(volume.getVolumeType());
         getView().getPath().setText(volume.getPath());
         getView().getVolumeStatus().addItems(VolumeUseStatus.values());
@@ -178,19 +187,23 @@ public class FsVolumeEditPresenter
         }
     }
 
-    private void write() {
-        volume.setVolumeType(getView().getVolumeType().getValue());
-        volume.setPath(getView().getPath().getText());
-        volume.setStatus(getView().getVolumeStatus().getValue());
-        volume.setS3ClientConfigData(editorPresenter.getText());
-
+    private FsVolume write(final FsVolume volume) {
         Long bytesLimit = null;
         final String limit = getView().getByteLimit().getText().trim();
-        if (limit.length() > 0) {
+        if (NullSafe.isNonEmptyString(limit)) {
             bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
         }
-        volume.setByteLimit(bytesLimit);
+        return volume
+                .copy()
+                .volumeType(getView().getVolumeType().getValue())
+                .path(getView().getPath().getText())
+                .status(getView().getVolumeStatus().getValue())
+                .s3ClientConfigData(editorPresenter.getText())
+                .byteLimit(bytesLimit)
+                .build();
     }
+
+    // --------------------------------------------------------------------------------
 
     public interface FsVolumeEditView extends View, Focus {
 

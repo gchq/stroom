@@ -18,6 +18,7 @@ package stroom.data.client.presenter;
 
 import stroom.data.client.SourceTabPlugin;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
+import stroom.data.client.presenter.OpenLinkUtil.LinkType;
 import stroom.data.shared.DataInfoSection;
 import stroom.data.shared.DataResource;
 import stroom.data.shared.DataType;
@@ -61,7 +62,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Focus;
@@ -122,6 +122,7 @@ public class DataPresenter
     private final NavigatorData navigatorData = new NavigatorData();
 
     private DisplayMode displayMode = null;
+    private DataViewType initDataViewType;
     private Boolean errorMarkerMode = null;
     // This is the parent stream type as opposed to the child stream type,
     // i.e. Raw Events rather than say Context
@@ -150,6 +151,8 @@ public class DataPresenter
     private String lastTabName;
     // The currently selected tab
     private String currentTabName = null;
+
+    private static final List<String> STREAM_ATTRIBUTE_NAMES = List.of("Parent Stream Id", "Stream Id");
 
     @Inject
     public DataPresenter(final EventBus eventBus,
@@ -536,6 +539,17 @@ public class DataPresenter
                     refreshMarkers(lastResult);
                 }
             }
+
+            if (initDataViewType != null) {
+                if (initDataViewType.equals(DataViewType.INFO)) {
+                    setActiveTab(infoTab, currentStreamType);
+                    onNewTabSelected(infoTab);
+                } else if (initDataViewType.equals(DataViewType.PREVIEW)) {
+                    setActiveTab(dataTab, currentStreamType);
+                    onNewTabSelected(dataTab);
+                }
+                setInitDataViewType(null);
+            }
         } else {
             // Null meta
             showErrors(
@@ -582,8 +596,13 @@ public class DataPresenter
                                 currentAvailableStreamTypes = availableChildStreamTypes;
                                 update(fireEvents, streamTypeName, availableChildStreamTypes);
                             })
-                            .onFailure(caught ->
-                                    itemNavigatorPresenter.setRefreshing(false))
+                            .onFailure(caught -> {
+                                itemNavigatorPresenter.setRefreshing(false);
+                                showSimpleError(caught.getMessage());
+                                final Set<String> availableChildStreamTypes = Collections.emptySet();
+                                currentAvailableStreamTypes = availableChildStreamTypes;
+                                update(fireEvents, streamTypeName, availableChildStreamTypes);
+                            })
                             .taskMonitorFactory(dataView)
                             .exec();
                 } else {
@@ -786,7 +805,7 @@ public class DataPresenter
                     PAGE_PAGER_UNIT);
         } else if (result instanceof FetchDataResult) {
 
-            FetchDataResult fetchDataResult = (FetchDataResult) result;
+            final FetchDataResult fetchDataResult = (FetchDataResult) result;
 
             if (DataType.SEGMENTED.equals(fetchDataResult.getDataType())) {
                 // Record: a of b   Characters: x to y of z
@@ -957,7 +976,7 @@ public class DataPresenter
     }
 
     private void setActiveTab(final TabData tab, final String streamType) {
-//        GWT.log("Setting active tab to " + tab.getLabel());
+        GWT.log("Setting active tab to " + tab.getLabel());
         dataView.getTabBar().selectTab(tab);
         currentTabName = tab.getLabel();
         updateEditorDisplay();
@@ -1089,7 +1108,7 @@ public class DataPresenter
     }
 
     private void refreshMarkers(final AbstractFetchDataResult result) {
-        int pageOffset = 0;
+        final int pageOffset = 0;
         int pageCount = 0;
 
         if (result != null) {
@@ -1135,22 +1154,26 @@ public class DataPresenter
 
             // Add rows.
             section.getEntries()
-                    .forEach(entry ->
-                            tableBuilder
-                                    .row(SafeHtmlUtils.fromString(entry.getKey()),
-                                            toHtmlLineBreaks(entry.getValue())));
+                    .forEach(entry -> {
+                        final String key = entry.getKey();
+                        final String value = entry.getValue();
+
+                        tableBuilder.row(SafeHtmlUtils.fromString(key), toHtmlLineBreaks(key, value));
+                    });
         }
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tableBuilder::write, Attribute.className("infoTable"));
         htmlPresenter.setHtml(htmlBuilder.toSafeHtml().asString());
+
+        OpenLinkUtil.addClickHandler(this, htmlPresenter.getWidget());
     }
 
-    private SafeHtml toHtmlLineBreaks(final String str) {
-        if (str != null) {
+    private SafeHtml toHtmlLineBreaks(final String key, final String value) {
+        if (value != null) {
             final HtmlBuilder sb = new HtmlBuilder();
             // Change any line breaks html line breaks
-            final String[] lines = str.split("\n");
+            final String[] lines = value.split("\n");
             for (int i = 0; i < lines.length; i++) {
                 final String line = lines[i];
                 if (i > 0) {
@@ -1159,8 +1182,13 @@ public class DataPresenter
                 sb.append(line);
             }
 
-            final SafeHtmlBuilder copyLinkHtml = new SafeHtmlBuilder();
-            CopyTextUtil.render(str, sb.toSafeHtml(), copyLinkHtml);
+            final HtmlBuilder copyLinkHtml = new HtmlBuilder();
+            CopyTextUtil.render(value, sb.toSafeHtml(), copyLinkHtml, false);
+            if (STREAM_ATTRIBUTE_NAMES.contains(key)) {
+                return OpenLinkUtil.render(value, LinkType.STREAM, copyLinkHtml.toSafeHtml());
+            } else if ("Feed".equals(key)) {
+                return OpenLinkUtil.render(value, LinkType.FEED, copyLinkHtml.toSafeHtml());
+            }
 
             return copyLinkHtml.toSafeHtml();
         } else {
@@ -1229,6 +1257,16 @@ public class DataPresenter
         dataView.setSourceLinkVisible(false, false);
         setErrorText(title, errorText);
         showTextPresenter();
+    }
+
+    private void showSimpleError(final String errorText) {
+        dataView.setSourceLinkVisible(false, false);
+        setErrorText("Unable to display source", errorText);
+        showTextPresenter();
+    }
+
+    public void setInitDataViewType(final DataViewType initDataViewType) {
+        this.initDataViewType = initDataViewType;
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1386,8 +1424,8 @@ public class DataPresenter
             final long itemOffset = itemRangeSupplier.get().getOffset();
             if (totalItemCount.isExact()) {
                 // Zero based pages
-                int currPage = (int) (itemOffset / maxItemsPerPage);
-                int newPage = Math.max(0, currPage - 1);
+                final int currPage = (int) (itemOffset / maxItemsPerPage);
+                final int newPage = Math.max(0, currPage - 1);
                 setItemNo(newPage * maxItemsPerPage);
             } else {
                 setItemNo(Math.max(0, itemOffset - maxItemsPerPage));

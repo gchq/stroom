@@ -18,6 +18,7 @@ package stroom.pipeline.reader;
 
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 
@@ -37,7 +38,7 @@ public class FindReplaceFilter extends FilterReader {
     private final int bufferSize;
     private final LocationFactory locationFactory;
     private final ErrorReceiver errorReceiver;
-    private final String elementId;
+    private final ElementId elementId;
 
     private int inputOffset;
     private int replacementCount;
@@ -59,7 +60,7 @@ public class FindReplaceFilter extends FilterReader {
                               final int bufferSize,
                               final LocationFactory locationFactory,
                               final ErrorReceiver errorReceiver,
-                              final String elementId) {
+                              final ElementId elementId) {
         super(reader);
         this.bufferSize = Math.max(MIN_SIZE, bufferSize);
         this.locationFactory = locationFactory;
@@ -172,7 +173,7 @@ public class FindReplaceFilter extends FilterReader {
         return doneReplacement;
     }
 
-    private void copyBuffer(int length) {
+    private void copyBuffer(final int length) {
         if (length > 0) {
             final CharSequence charSequence = inBuffer.subSequence(0, length);
             outBuffer.append(charSequence, 0, charSequence.length());
@@ -180,7 +181,7 @@ public class FindReplaceFilter extends FilterReader {
         }
     }
 
-    private void move(int length) {
+    private void move(final int length) {
         if (length > 0) {
             // Move our location to aid error reporting.
             for (int i = 0; i < length; i++) {
@@ -210,7 +211,7 @@ public class FindReplaceFilter extends FilterReader {
      * @throws java.nio.ReadOnlyBufferException if target is a read only buffer
      * @since 1.5
      */
-    public int read(java.nio.CharBuffer target) throws IOException {
+    public int read(final java.nio.CharBuffer target) throws IOException {
         final int len = target.remaining();
         final char[] cbuf = new char[len];
         final int n = read(cbuf, 0, len);
@@ -251,7 +252,7 @@ public class FindReplaceFilter extends FilterReader {
      * has been reached
      * @throws IOException If an I/O error occurs
      */
-    public int read(char[] cbuf) throws IOException {
+    public int read(final char[] cbuf) throws IOException {
         return read(cbuf, 0, cbuf.length);
     }
 
@@ -530,7 +531,7 @@ public class FindReplaceFilter extends FilterReader {
             sb.append(s, start, end);
         }
 
-        void getChars(int srcBegin, int srcEnd, char[] dst, int dstBegin) {
+        void getChars(final int srcBegin, final int srcEnd, final char[] dst, final int dstBegin) {
             sb.getChars(srcBegin + offset, srcEnd + offset, dst, dstBegin);
         }
 
@@ -580,7 +581,7 @@ public class FindReplaceFilter extends FilterReader {
         private int bufferSize;
         private LocationFactory locationFactory;
         private ErrorReceiver errorReceiver;
-        private String elementId;
+        private ElementId elementId;
 
         private Builder() {
         }
@@ -632,7 +633,7 @@ public class FindReplaceFilter extends FilterReader {
             return this;
         }
 
-        public Builder elementId(final String elementId) {
+        public Builder elementId(final ElementId elementId) {
             this.elementId = elementId;
             return this;
         }

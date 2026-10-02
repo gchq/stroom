@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 
 package stroom.dashboard.client.vis;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -38,11 +39,11 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.query.api.v2.ColumnRef;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.VisResult;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.TableSettings;
+import stroom.query.api.VisResult;
 import stroom.script.client.ScriptCache;
 import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
@@ -53,6 +54,7 @@ import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.visualisation.shared.VisualisationAssetResource;
 import stroom.visualisation.shared.VisualisationResource;
 
 import com.google.gwt.core.client.GWT;
@@ -60,12 +62,15 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.safehtml.shared.SafeUri;
+import com.google.gwt.safehtml.shared.UriUtils;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.View;
@@ -81,6 +86,8 @@ public class VisPresenter
     public static final String TAB_TYPE = "vis-component";
     private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
     private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
+    private static final VisualisationAssetResource VISUALISATION_ASSET_RESOURCE =
+            GWT.create(VisualisationAssetResource.class);
 
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation", ComponentUse.PANEL);
     private static final long UPDATE_INTERVAL = 2000;
@@ -123,6 +130,8 @@ public class VisPresenter
     private final VisSelectionModel visSelectionModel;
     private boolean pause;
 
+    private HandlerRegistration loadIframeHandlerRegistration;
+
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
                         final Provider<VisSettingsPresenter> settingsPresenterProvider,
@@ -135,7 +144,8 @@ public class VisPresenter
         this.currentPreferences = currentPreferences;
 
         visSelectionModel = new VisSelectionModel();
-        visSelectionModel.addSelectionHandler(event -> getComponents().fireComponentChangeEvent(VisPresenter.this));
+        visSelectionModel.addSelectionHandler(event ->
+                getDashboardContext().fireComponentChangeEvent(VisPresenter.this));
 
         visFrame = new VisFrame(eventBus);
         visFrame.setTaskMonitorFactory(getView().getRefreshButton());
@@ -193,9 +203,7 @@ public class VisPresenter
         registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 visFrame.setClassName(getClassName(event.getTheme()))));
 
-        registerHandler(getView().getRefreshButton().addClickHandler(e -> {
-            setPause(!pause, true);
-        }));
+        registerHandler(getView().getRefreshButton().addClickHandler(e -> setPause(!pause, true)));
     }
 
     private void setPause(final boolean pause,
@@ -227,9 +235,9 @@ public class VisPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(dashboardContext.addComponentChangeHandler(event -> {
             if (getVisSettings() != null && Objects.equals(getVisSettings().getTableId(),
                     event.getComponentId())) {
                 updateTableId(event.getComponentId());
@@ -243,16 +251,14 @@ public class VisPresenter
 
         builder.tableId(tableId);
 
-        final Component component = getComponents().get(getVisSettings().getTableId());
-        if (component instanceof TablePresenter) {
-            final TablePresenter tablePresenter = (TablePresenter) component;
-
+        final Component component = getDashboardContext().getComponents().get(tableId);
+        if (component instanceof final TablePresenter tablePresenter) {
             final TableComponentSettings tableComponentSettings = tablePresenter
                     .getTableComponentSettings();
             final String queryId = tableComponentSettings.getQueryId();
             setQueryId(queryId);
 
-            final TableSettings tableSettings = tablePresenter.getTableSettings();
+            final TableSettings tableSettings = tablePresenter.resolveTableSettings();
 
             // Refresh if the linked table settings have changed.
             if (!Objects.equals(currentLinkedTableSettings, tableSettings)) {
@@ -272,12 +278,12 @@ public class VisPresenter
         cleanupSearchModelAssociation();
 
         if (queryId != null) {
-            final Component component = getComponents().get(queryId);
-            if (component instanceof QueryPresenter) {
-                final QueryPresenter queryPresenter = (QueryPresenter) component;
-                currentSearchModel = queryPresenter.getSearchModel();
-                if (currentSearchModel != null) {
-                    currentSearchModel.addComponent(getComponentConfig().getId(), this);
+            final Component component = getDashboardContext().getComponents().get(queryId);
+            if (component instanceof final QueryPresenter queryPresenter) {
+                final SearchModel searchModel = queryPresenter.getSearchModel();
+                currentSearchModel = searchModel;
+                if (searchModel != null) {
+                    searchModel.addComponent(getComponentConfig().getId(), this);
                 }
             }
         }
@@ -315,26 +321,30 @@ public class VisPresenter
     }
 
     private void cleanupSearchModelAssociation() {
-        if (currentSearchModel != null) {
+        final SearchModel searchModel = currentSearchModel;
+        if (searchModel != null) {
             // Remove this component from the list of components the search
             // model expects to update.
-            currentSearchModel.removeComponent(getComponentConfig().getId());
+            searchModel.removeComponent(getComponentConfig().getId());
             currentSearchModel = null;
         }
     }
 
     private void refresh() {
+        final SearchModel searchModel = currentSearchModel;
         getView().getRefreshButton().setRefreshing(true);
-        currentSearchModel.refresh(getComponentConfig().getId(), result -> {
-            try {
-                if (result != null) {
-                    setDataInternal(result);
+        if (searchModel != null) {
+            searchModel.refresh(getComponentConfig().getId(), result -> {
+                try {
+                    if (result != null) {
+                        setDataInternal(result);
+                    }
+                } catch (final Exception e) {
+                    GWT.log(e.getMessage());
                 }
-            } catch (final Exception e) {
-                GWT.log(e.getMessage());
-            }
-            getView().getRefreshButton().setRefreshing(currentSearchModel.isSearching());
-        });
+                getView().getRefreshButton().setRefreshing(searchModel.isSearching());
+            });
+        }
     }
 
     void clear() {
@@ -444,6 +454,8 @@ public class VisPresenter
                 .method(res -> res.fetch(visualisationDocRef.getUuid()))
                 .onSuccess(result -> {
                     if (result != null) {
+                        function.setFunctionName(result.getFunctionName());
+
                         // Get all possible settings for this visualisation.
                         possibleSettings = null;
                         try {
@@ -455,21 +467,52 @@ public class VisPresenter
                                               + getVisSettings().getVisualisation());
                         }
 
-                        function.setFunctionName(result.getFunctionName());
+                        // Is there an asset named index.html? If so load it. Otherwise, use old mechanism.
+                        restFactory
+                                .create(VISUALISATION_ASSET_RESOURCE)
+                                .method(res -> res.indexAssetExists(visualisationDocRef.getUuid()))
+                                .onSuccess(indexAssetExists -> {
+                                    if (indexAssetExists) {
+                                        loadIframeHandlerRegistration = visFrame.addLoadHandler(event -> {
+                                            function.setStatus(LoadStatus.LOADED);
 
-                        // Do we have required scripts.
-                        if (result.getScriptRef() != null) {
-                            // Now we have loaded the visualisation, load all
-                            // associated scripts.
-                            loadScripts(function, result.getScriptRef());
+                                            // Remove the load handler again
+                                            if (loadIframeHandlerRegistration != null) {
+                                                loadIframeHandlerRegistration.removeHandler();
+                                                loadIframeHandlerRegistration = null;
+                                            }
+                                        });
 
-                        } else {
-                            // Set the function status to loaded. This will tell all
-                            // handlers that the function is ready for use.
-                            if (!LoadStatus.FAILURE.equals(function.getStatus())) {
-                                function.setStatus(LoadStatus.LOADED);
-                            }
-                        }
+                                        // Load the index.html into the iframe
+                                        final SafeUri safeDocRef = UriUtils.fromString(visualisationDocRef.getUuid());
+                                        visFrame.setUrl("/assets/"
+                                                        + safeDocRef.asString()
+                                                        + "/index.html");
+
+                                    } else {
+                                        // Do we have required scripts.
+                                        if (result.getScriptRef() != null) {
+                                            // Now we have loaded the visualisation, load all
+                                            // associated scripts.
+                                            loadScripts(function, result.getScriptRef());
+
+                                        } else {
+                                            // Set the function status to loaded. This will tell all
+                                            // handlers that the function is ready for use.
+                                            if (!LoadStatus.FAILURE.equals(function.getStatus())) {
+                                                function.setStatus(LoadStatus.LOADED);
+                                            }
+                                        }
+                                    }
+                                })
+                                .onFailure(caught -> {
+                                    AlertEvent.fireError(this,
+                                            "There was an error checking if the visualisation document "
+                                            + "has an index.html asset: " + caught.getMessage(),
+                                            null);
+                                })
+                                .taskMonitorFactory(getView().getRefreshButton())
+                                .exec();
                     } else {
                         failure(function,
                                 "No visualisation found for: " + getVisSettings().getVisualisation());
@@ -499,13 +542,17 @@ public class VisPresenter
 
     @Override
     public void onChange(final VisFunction function) {
+
         // Ensure this is a load event for the current function.
         if (function.equals(currentFunction)) {
             if (LoadStatus.LOADED.equals(function.getStatus())) {
                 try {
-                    if (loadedFunction == null || !loadedFunction.equals(function)) {
-                        loadedFunction = function;
-                        visFrame.setVisType(function.getFunctionName(), getClassName(currentPreferences.getTheme()));
+                    if (function.getFunctionName() != null) {
+                        if (loadedFunction == null || !loadedFunction.equals(function)) {
+                            loadedFunction = function;
+                            visFrame.setVisType(function.getFunctionName(),
+                                    getClassName(currentPreferences.getTheme()));
+                        }
                     }
 
                     currentError = null;
@@ -608,7 +655,8 @@ public class VisPresenter
     @Override
     public void link() {
         String tableId = getVisSettings().getTableId();
-        tableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
+        tableId = getDashboardContext()
+                .getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
         updateTableId(tableId);
     }
 
@@ -624,7 +672,7 @@ public class VisPresenter
     }
 
     private void refreshVisualisation() {
-        visFrame.setData(getComponents().getContext(), currentSettings, currentData);
+        visFrame.setData(getDashboardContext().getComponents().getContext(), currentSettings, currentData);
     }
 
     @Override
@@ -640,6 +688,9 @@ public class VisPresenter
     @Override
     public ComponentResultRequest getResultRequest(final Fetch fetch) {
         final VisComponentSettings visComponentSettings = getVisSettings();
+
+        // make sure table settings up to date
+        updateTableId(visComponentSettings.getTableId());
 
         // Update table settings.
         return VisResultRequest
@@ -709,8 +760,8 @@ public class VisPresenter
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
-        return visSelectionModel.getColumns();
+    public List<ColumnRef> getColumnRefs() {
+        return visSelectionModel.getColumnRefs();
     }
 
     @Override

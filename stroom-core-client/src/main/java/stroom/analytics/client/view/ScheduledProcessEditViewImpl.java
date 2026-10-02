@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,18 @@
 
 package stroom.analytics.client.view;
 
-import stroom.analytics.client.presenter.ProcessingStatusUiHandlers;
+import stroom.analytics.client.presenter.ScheduledProcessEditUiHandlers;
 import stroom.analytics.client.presenter.ScheduledProcessEditView;
 import stroom.item.client.SelectionBox;
 import stroom.schedule.client.ScheduleBox;
+import stroom.util.shared.scheduler.Schedule;
+import stroom.util.shared.scheduler.ScheduleType;
+import stroom.widget.button.client.Button;
 import stroom.widget.datepicker.client.DateTimeBox;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -37,7 +42,7 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import java.util.List;
 
 public class ScheduledProcessEditViewImpl
-        extends ViewWithUiHandlers<ProcessingStatusUiHandlers>
+        extends ViewWithUiHandlers<ScheduledProcessEditUiHandlers>
         implements ScheduledProcessEditView {
 
     private final Widget widget;
@@ -49,19 +54,61 @@ public class ScheduledProcessEditViewImpl
     @UiField
     SelectionBox<String> node;
     @UiField
-    ScheduleBox schedule;
+    FormGroup scheduleForm;
+    @UiField
+    ScheduleBox scheduleBox;
     @UiField
     DateTimeBox startTime;
     @UiField
     DateTimeBox endTime;
     @UiField
     SimplePanel runAsUser;
+    @UiField
+    Button setDefaultNode;
 
     private String selectedNode;
 
     @Inject
     public ScheduledProcessEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        endTime.setOptional(true);
+        scheduleBox.addValueChangeHandler(this::onSchedule);
+        setDefaultNode.setTitle("Set as the default processing node for all users");
+    }
+
+    @Override
+    public void setSetDefaultVisible(final boolean visible) {
+        this.setDefaultNode.setVisible(visible);
+    }
+
+    @UiHandler("setDefaultNode")
+    public void onSetDefaultNode(final ClickEvent event) {
+        getUiHandlers().onSetDefaultNode();
+    }
+
+    private void onSchedule(final ValueChangeEvent<Schedule> event) {
+        if (event == null) {
+            return;
+        }
+        if (event.getValue() == null) {
+            return;
+        }
+        updateNonInstantUI(event.getValue().getType());
+    }
+
+    private void updateNonInstantUI(final ScheduleType scheduleType) {
+        startTime.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
+        endTime.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
+        scheduleBox.setEnabled(!scheduleType.equals(ScheduleType.INSTANT));
+        if (scheduleType.equals(ScheduleType.INSTANT)) {
+            scheduleBox.setValue(scheduleBox
+                    .getValue()
+                    .copy()
+                    .expression(ScheduleType.INSTANT.getDisplayValue())
+                    .build()
+            );
+        }
+        scheduleForm.setLabel("Schedule (" + scheduleType.getDisplayValue() + ")");
     }
 
     @Override
@@ -73,6 +120,10 @@ public class ScheduledProcessEditViewImpl
     public void focus() {
         name.setFocus(true);
         name.selectAll();
+
+        if (scheduleBox != null) {
+            updateNonInstantUI(scheduleBox.getValue().getType());
+        }
     }
 
     @Override
@@ -124,7 +175,7 @@ public class ScheduledProcessEditViewImpl
 
     @Override
     public ScheduleBox getScheduleBox() {
-        return schedule;
+        return scheduleBox;
     }
 
     @Override
@@ -145,27 +196,27 @@ public class ScheduledProcessEditViewImpl
 
     @UiHandler("name")
     public void onName(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("enabled")
     public void onEnabled(final ValueChangeEvent<Boolean> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("node")
     public void onNode(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("startTime")
     public void onStartTime(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("endTime")
     public void onEndTime(final ValueChangeEvent<String> event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     public interface Binder extends UiBinder<Widget, ScheduledProcessEditViewImpl> {

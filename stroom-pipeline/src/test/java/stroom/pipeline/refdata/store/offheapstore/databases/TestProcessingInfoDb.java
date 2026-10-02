@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
@@ -22,8 +21,10 @@ import stroom.bytebuffer.ByteBufferPoolFactory;
 import stroom.lmdb.PutOutcome;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
+import stroom.pipeline.refdata.store.RefDataProcessingInfo.RefMapFeature;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo.RefStreamFeature;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
+import stroom.pipeline.refdata.store.offheapstore.UID;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefDataProcessingInfoSerde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.RefStreamDefinitionSerde;
 
@@ -32,10 +33,12 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -58,7 +61,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
     @Test
     void testPutAndGet() {
 
-        byte version = 0;
+        final byte version = 0;
         final RefStreamDefinition refStreamDefinitionA = buildUniqueRefStreamDefinition();
         final RefStreamDefinition refStreamDefinitionB = buildUniqueRefStreamDefinition();
 
@@ -70,7 +73,12 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
                 RefDataProcessingInfo.STRUCTURE_VERSION_2,
                 EnumSet.of(RefStreamFeature.SUPPORTS_DIRECT_VALUES),
                 List.of(
-                        M
+                        new RefDataProcessingInfo.RefMapInfo(
+                                UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 1),
+                                Set.of(RefMapFeature.ALL_KEYS)),
+                        new RefDataProcessingInfo.RefMapInfo(
+                                UID.of(ByteBuffer.allocateDirect(UID.UID_ARRAY_LENGTH), 1, 0, 0, 2),
+                                Set.of(RefMapFeature.ALL_KEYS))
                 ));
 
         final RefDataProcessingInfo refDataProcessingInfoB = new RefDataProcessingInfo(
@@ -78,8 +86,8 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
                 5678901L,
                 789012L,
                 ProcessingState.LOAD_IN_PROGRESS,
-                structureVersion,
-                refStreamFeatures,
+                1,
+                Set.of(RefStreamFeature.SUPPORTS_DIRECT_VALUES),
                 mapInfoList);
 
         PutOutcome putOutcome;
@@ -94,10 +102,10 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
         assertThat(putOutcome.isDuplicate())
                 .hasValue(false);
 
-        Map<String, String> dbInfo = processingInfoDb.getDbInfo();
+        final Map<String, String> dbInfo = processingInfoDb.getDbInfo();
         LOGGER.debug("DB info: {}", dbInfo);
 
-        int entries = Optional.ofNullable(dbInfo.get("entries")).map(Integer::parseInt).orElse(-1);
+        final int entries = Optional.ofNullable(dbInfo.get("entries")).map(Integer::parseInt).orElse(-1);
         assertThat(entries).isEqualTo(2);
 
         final RefDataProcessingInfo refDataProcessingInfoA2 = processingInfoDb.get(refStreamDefinitionA).get();
@@ -109,7 +117,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
     @Test
     void updateState() {
 
-        byte version = 0;
+        final byte version = 0;
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
@@ -170,7 +178,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
     @Test
     void testUpdateLastAccessTime() {
 
-        byte version = 0;
+        final byte version = 0;
         final RefStreamDefinition refStreamDefinition = buildUniqueRefStreamDefinition();
 
         final RefDataProcessingInfo refDataProcessingInfoBefore = new RefDataProcessingInfo(
@@ -209,7 +217,7 @@ class TestProcessingInfoDb extends AbstractStoreDbTest {
                 345L,
                 ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
-        PutOutcome putOutcome;
+        final PutOutcome putOutcome;
 
         // initial put into empty db so will succeed
         putOutcome = processingInfoDb.put(refStreamDefinition, refDataProcessingInfoBefore, false);

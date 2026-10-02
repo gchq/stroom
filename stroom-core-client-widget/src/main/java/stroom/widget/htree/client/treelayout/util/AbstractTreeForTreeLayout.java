@@ -1,4 +1,20 @@
 /*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * [The "BSD license"]
  * Copyright (c) 2011, abego Software GmbH, Germany (http://www.abego.org)
  * All rights reserved.
@@ -51,7 +67,7 @@ public abstract class AbstractTreeForTreeLayout<T_TREE_NODE> implements TreeForT
 
     private final T_TREE_NODE root;
 
-    public AbstractTreeForTreeLayout(T_TREE_NODE root) {
+    public AbstractTreeForTreeLayout(final T_TREE_NODE root) {
         this.root = root;
     }
 
@@ -85,32 +101,32 @@ public abstract class AbstractTreeForTreeLayout<T_TREE_NODE> implements TreeForT
     }
 
     @Override
-    public boolean isLeaf(T_TREE_NODE node) {
+    public boolean isLeaf(final T_TREE_NODE node) {
         return getChildrenList(node).isEmpty();
     }
 
     @Override
-    public boolean isChildOfParent(T_TREE_NODE node, T_TREE_NODE parentNode) {
+    public boolean isChildOfParent(final T_TREE_NODE node, final T_TREE_NODE parentNode) {
         return getParent(node) == parentNode;
     }
 
     @Override
-    public List<T_TREE_NODE> getChildren(T_TREE_NODE node) {
+    public List<T_TREE_NODE> getChildren(final T_TREE_NODE node) {
         return getChildrenList(node);
     }
 
     @Override
-    public Iterable<T_TREE_NODE> getChildrenReverse(T_TREE_NODE node) {
+    public Iterable<T_TREE_NODE> getChildrenReverse(final T_TREE_NODE node) {
         return IterableUtil.createReverseIterable(getChildrenList(node));
     }
 
     @Override
-    public T_TREE_NODE getFirstChild(T_TREE_NODE parentNode) {
+    public T_TREE_NODE getFirstChild(final T_TREE_NODE parentNode) {
         return getChildrenList(parentNode).get(0);
     }
 
     @Override
-    public T_TREE_NODE getLastChild(T_TREE_NODE parentNode) {
+    public T_TREE_NODE getLastChild(final T_TREE_NODE parentNode) {
         return ListUtil.getLast(getChildrenList(parentNode));
     }
 }

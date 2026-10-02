@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.table.ComponentSelection;
 import stroom.dashboard.client.table.HasComponentSelection;
 import stroom.dashboard.client.table.TablePresenter;
@@ -40,13 +40,14 @@ import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.query.api.v2.ColumnRef;
-import stroom.query.api.v2.SpecialColumns;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.SpecialColumns;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.Version;
 
@@ -74,7 +75,8 @@ public class TextPresenter
     public static final String TAB_TYPE = "text-component";
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
 
-    public static final ComponentType TYPE = new ComponentType(2, "text", "Text", ComponentUse.PANEL);
+    public static final ComponentType TYPE = new ComponentType(
+            2, "text", "Text", ComponentUse.PANEL);
 
     private static final Version CURRENT_MODEL_VERSION = new Version(7, 8, 0);
     private static final ColumnRef DEFAULT_STREAM_ID_COLUMN = new ColumnRef(
@@ -220,7 +222,7 @@ public class TextPresenter
         final List<TextRange> highlights = new ArrayList<>();
 
         // See if we are going to add highlights.
-        if (input != null && highlightStrings != null && highlightStrings.size() > 0) {
+        if (input != null && NullSafe.hasItems(highlightStrings)) {
             final char[] inputChars = input.toLowerCase().toCharArray();
             final int inputLength = inputChars.length;
 
@@ -304,9 +306,9 @@ public class TextPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(dashboardContext.addComponentChangeHandler(event -> {
             if (getTextSettings() != null) {
                 final Component component = event.getComponent();
                 if (getTextSettings().getTableId() == null) {
@@ -347,17 +349,17 @@ public class TextPresenter
                     final ComponentSelection selected = selection.get(0);
                     currentStreamId = getLong(getTextSettings().getStreamIdColumn(), selected);
                     if (currentStreamId == null) {
-                        currentStreamId = getLong(selected.get(SpecialColumns.RESERVED_STREAM_ID));
+                        currentStreamId = getLong(selected.getParamValue(SpecialColumns.RESERVED_STREAM_ID));
                         if (currentStreamId == null) {
-                            currentStreamId = getLong(selected.get(OLD_STREAM_ID));
+                            currentStreamId = getLong(selected.getParamValue(OLD_STREAM_ID));
                         }
                     }
                     currentPartIndex = convertToIndex(getLong(getTextSettings().getPartNoColumn(), selected));
                     currentRecordIndex = convertToIndex(getLong(getTextSettings().getRecordNoColumn(), selected));
                     if (currentRecordIndex == null) {
-                        currentRecordIndex = getLong(selected.get(SpecialColumns.RESERVED_EVENT_ID));
+                        currentRecordIndex = getLong(selected.getParamValue(SpecialColumns.RESERVED_EVENT_ID));
                         if (currentRecordIndex == null) {
-                            currentRecordIndex = getLong(selected.get(OLD_EVENT_ID));
+                            currentRecordIndex = getLong(selected.getParamValue(OLD_EVENT_ID));
                         }
                     }
                     final Long currentLineFrom = getLong(getTextSettings().getLineFromColumn(), selected);
@@ -484,7 +486,7 @@ public class TextPresenter
     }
 
     private long getStartLine(final TextRange highlight) {
-        int lineNoFrom = highlight.getFrom().getLineNo();
+        final int lineNoFrom = highlight.getFrom().getLineNo();
         if (lineNoFrom == 1) {
             // Content starts on first line so convert to an offset as the server code
             // works in zero based line numbers
@@ -496,7 +498,7 @@ public class TextPresenter
     }
 
     private long getLineCount(final TextRange highlight) {
-        int lineNoFrom = highlight.getFrom().getLineNo();
+        final int lineNoFrom = highlight.getFrom().getLineNo();
         if (lineNoFrom == 1) {
             return highlight.getTo().getLineNo() - highlight.getFrom().getLineNo() + 1;
         } else {
@@ -546,9 +548,9 @@ public class TextPresenter
 
     private Long getLong(final ColumnRef column, final ComponentSelection row) {
         if (column != null && row != null) {
-            String val = row.get(column.getId());
+            String val = row.getParamValue(column.getId());
             if (val == null) {
-                val = row.get(column.getName());
+                val = row.getParamValue(column.getName());
             }
             return getLong(val);
         }
@@ -594,12 +596,12 @@ public class TextPresenter
                             .onSuccess(result -> {
                                 // If we are queueing more actions then don't update
                                 // the text.
-                                if (fetchDataQueue.size() == 0) {
-                                    String data = "The data has been deleted or reprocessed since this index was built";
+                                if (fetchDataQueue.isEmpty()) {
+                                    final String data = "The data has been deleted or reprocessed since this " +
+                                                        "index was built";
                                     boolean isHtml = false;
                                     if (result != null) {
-                                        if (result instanceof FetchDataResult) {
-                                            final FetchDataResult fetchDataResult = (FetchDataResult) result;
+                                        if (result instanceof final FetchDataResult fetchDataResult) {
                                             isHtml = fetchDataResult.isHtml();
                                             if (fetchDataResult.hasErrors()) {
                                                 showError(request, fetchDataResult);
@@ -632,8 +634,7 @@ public class TextPresenter
         final TextComponentSettings.Builder builder;
         final ComponentSettings settings = componentConfig.getSettings();
 
-        if (settings instanceof TextComponentSettings) {
-            final TextComponentSettings textComponentSettings = (TextComponentSettings) settings;
+        if (settings instanceof final TextComponentSettings textComponentSettings) {
             builder = textComponentSettings.copy();
 
             final Version version = Version.parse(textComponentSettings.getModelVersion());
@@ -667,7 +668,8 @@ public class TextPresenter
     @Override
     public void link() {
         final String tableId = getTextSettings().getTableId();
-        String newTableId = getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
+        String newTableId = getDashboardContext()
+                .getComponents().validateOrGetLastComponentId(tableId, TablePresenter.TYPE.getId());
 
         // If we can't get the same table id then set to null so that changes to any table can be listened to.
         if (!Objects.equals(tableId, newTableId)) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.statistics.impl.sql.internal;
 
 import stroom.docref.DocRef;
@@ -42,7 +58,7 @@ class SQLInternalStatisticsService implements InternalStatisticsService {
         // This may be called by pipe processing which runs as a lowly user so record
         // the stat as the proc user.
         securityContext.asProcessingUser(() -> {
-            List<StatisticEvent> statisticEvents = Preconditions.checkNotNull(eventsMap).entrySet().stream()
+            final List<StatisticEvent> statisticEvents = Preconditions.checkNotNull(eventsMap).entrySet().stream()
                     .flatMap(entry ->
                             entry.getValue().stream()
                                     .map(event -> new Tuple2<>(entry.getKey(), event)))

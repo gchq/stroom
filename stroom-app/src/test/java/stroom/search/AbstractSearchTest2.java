@@ -18,23 +18,24 @@ package stroom.search;
 
 
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.Row;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResult;
+import stroom.query.api.TableSettings;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.ErrorMessage;
 
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -65,7 +66,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
 
     protected static SearchResponse search(final SearchRequest searchRequest,
                                            final ResultStoreManager searchResponseCreatorManager) {
-        SearchResponse response = searchResponseCreatorManager.search(searchRequest);
+        final SearchResponse response = searchResponseCreatorManager.search(searchRequest);
         if (!response.complete()) {
             throw new RuntimeException("NOT COMPLETE");
         }
@@ -134,8 +135,10 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
                 .search(searchRequest, searchResponseCreatorManager);
 
         assertThat(searchResponse).as("Search response is null").isNotNull();
-        if (searchResponse.getErrors() != null && searchResponse.getErrors().size() > 0) {
-            final String errors = String.join(", ", searchResponse.getErrors());
+        if (searchResponse.getErrorMessages() != null && searchResponse.getErrorMessages().size() > 0) {
+            final List<String> messages = searchResponse.getErrorMessages().stream()
+                    .map(ErrorMessage::getMessage).toList();
+            final String errors = String.join(", ", messages);
             assertThat(errors).as("Found errors: " + errors).isBlank();
         }
         assertThat(searchResponse.complete()).as("Search is not complete").isTrue();
@@ -147,7 +150,7 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
             final TableResult tableResult = (TableResult) result;
 
             if (tableResult.getResultRange() != null && tableResult.getRows() != null) {
-                final stroom.query.api.v2.OffsetRange range = tableResult.getResultRange();
+                final stroom.query.api.OffsetRange range = tableResult.getResultRange();
 
                 for (long i = range.getOffset(); i < range.getLength(); i++) {
                     final List<Row> values = rows.computeIfAbsent(componentId, k -> new ArrayList<>());
@@ -161,13 +164,13 @@ public abstract class AbstractSearchTest2 extends AbstractCoreIntegrationTest {
         } else {
             assertThat(rows).hasSize(componentIds.size());
 
-            int count = rows.values().iterator().next().size();
+            final int count = rows.values().iterator().next().size();
             assertThat(count).as("Incorrect number of results found").isEqualTo(expectResultCount);
         }
         resultMapConsumer.accept(rows);
     }
 
-    protected SearchResponse search(SearchRequest searchRequest) {
+    protected SearchResponse search(final SearchRequest searchRequest) {
         return search(searchRequest, searchResponseCreatorManager);
     }
 

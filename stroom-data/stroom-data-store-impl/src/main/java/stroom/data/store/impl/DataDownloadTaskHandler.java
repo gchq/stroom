@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -275,7 +275,7 @@ public class DataDownloadTaskHandler {
 
         taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
-        StroomZipOutputStreamImpl outputStream;
+        final StroomZipOutputStreamImpl outputStream;
 
         // Create directories and files in a synchronized way so that the clean() method will not remove empty
         // directories that we are just about to write to.

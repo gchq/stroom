@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package stroom.planb.shared;
 
 import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -28,21 +29,36 @@ import java.util.Objects;
 
 @JsonPropertyOrder({
         "enabled",
-        "duration"
+        "duration",
+        "checkInterval"
 })
 @JsonInclude(Include.NON_NULL)
 public class DurationSetting {
 
+    private static final SimpleDuration DEFAULT_DURATION = SimpleDuration.builder()
+            .time(1)
+            .timeUnit(TimeUnit.DAYS)
+            .build();
+
+    static final SimpleDuration DEFAULT_CHECK_INTERVAL = SimpleDuration.builder()
+            .time(1)
+            .timeUnit(TimeUnit.HOURS)
+            .build();
+
     @JsonProperty
-    private final boolean enabled;
+    final boolean enabled;
     @JsonProperty
-    private final SimpleDuration duration;
+    final SimpleDuration duration;
+    @JsonProperty
+    final SimpleDuration checkInterval;
 
     @JsonCreator
-    public DurationSetting(@JsonProperty("enabled") final boolean enabled,
-                           @JsonProperty("duration") final SimpleDuration duration) {
-        this.enabled = enabled;
-        this.duration = duration;
+    public DurationSetting(@JsonProperty("enabled") final Boolean enabled,
+                           @JsonProperty("duration") final SimpleDuration duration,
+                           @JsonProperty("checkInterval") final SimpleDuration checkInterval) {
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.duration = Objects.requireNonNullElse(duration, DEFAULT_DURATION);
+        this.checkInterval = Objects.requireNonNullElse(checkInterval, DEFAULT_CHECK_INTERVAL);
     }
 
     public boolean isEnabled() {
@@ -51,6 +67,15 @@ public class DurationSetting {
 
     public SimpleDuration getDuration() {
         return duration;
+    }
+
+    /**
+     * How often to check whether this setting needs applying. This is the schedule, not the
+     * policy: {@link #getDuration()} decides which data is affected, this decides how often
+     * we look, so the setting is only honoured to within this interval.
+     */
+    public SimpleDuration getCheckInterval() {
+        return checkInterval;
     }
 
     @Override
@@ -63,12 +88,13 @@ public class DurationSetting {
         }
         final DurationSetting that = (DurationSetting) o;
         return enabled == that.enabled &&
-               Objects.equals(duration, that.duration);
+               Objects.equals(duration, that.duration) &&
+               Objects.equals(checkInterval, that.checkInterval);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(enabled, duration);
+        return Objects.hash(enabled, duration, checkInterval);
     }
 
     @Override
@@ -76,28 +102,25 @@ public class DurationSetting {
         return "DurationSetting{" +
                "enabled=" + enabled +
                ", duration=" + duration +
+               ", checkInterval=" + checkInterval +
                '}';
-    }
-
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     public static class Builder {
 
         private boolean enabled;
         private SimpleDuration duration;
+        private SimpleDuration checkInterval;
 
-        private Builder() {
+        public Builder() {
         }
 
-        private Builder(final DurationSetting durationSetting) {
-            this.enabled = durationSetting.enabled;
-            this.duration = durationSetting.duration;
+        public Builder(final DurationSetting durationSetting) {
+            if (durationSetting != null) {
+                this.enabled = durationSetting.enabled;
+                this.duration = durationSetting.duration;
+                this.checkInterval = durationSetting.checkInterval;
+            }
         }
 
         public Builder enabled(final boolean enabled) {
@@ -110,8 +133,13 @@ public class DurationSetting {
             return this;
         }
 
+        public Builder checkInterval(final SimpleDuration checkInterval) {
+            this.checkInterval = checkInterval;
+            return this;
+        }
+
         public DurationSetting build() {
-            return new DurationSetting(enabled, duration);
+            return new DurationSetting(enabled, duration, checkInterval);
         }
     }
 }

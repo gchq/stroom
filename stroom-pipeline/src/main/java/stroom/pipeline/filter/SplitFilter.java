@@ -71,7 +71,7 @@ public class SplitFilter extends AbstractXMLFilter {
      * A stack of DOM elements. Elements are put onto the stack within
      * startElement() and popped within endElement().
      */
-    private Event[] events = new Event[10];
+    private Event[] events = new Event[32];
 
     /**
      * The current working length of the elements array.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.security.impl;
@@ -41,6 +40,8 @@ import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.security.shared.DocumentUserPermissionsRequest;
 import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.SingleDocumentPermissionChangeRequest;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -61,6 +62,8 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class DocumentPermissionServiceImpl implements DocumentPermissionService {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentPermissionServiceImpl.class);
 
     private final DocumentPermissionDao documentPermissionDao;
     private final UserGroupsCache userGroupsCache;
@@ -188,6 +191,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             }
             case final AddAllPermissionsFrom req -> {
                 Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+                // Copying a source doc's permissions exposes them on the destination (which the caller can
+                // then read), so require permission to read the source's permissions too.
+                checkGetPermission(req.getSourceDocRef());
                 documentPermissionDao.addDocumentPermissions(
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
@@ -201,6 +207,9 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             }
             case final SetAllPermissionsFrom req -> {
                 Objects.requireNonNull(req.getSourceDocRef(), "Null sourceDocRef");
+                // Copying a source doc's permissions exposes them on the destination (which the caller can
+                // then read), so require permission to read the source's permissions too.
+                checkGetPermission(req.getSourceDocRef());
                 documentPermissionDao.setDocumentPermissions(
                         req.getSourceDocRef().getUuid(),
                         docRef.getUuid());
@@ -212,7 +221,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                 }
                 PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
             }
-            case RemoveAllPermissions ignored -> {
+            case final RemoveAllPermissions ignored -> {
                 documentPermissionDao.removeAllDocumentPermissions(docRef.getUuid());
                 PermissionChangeEvent.fire(permissionChangeEventBus, null, docRef);
             }
@@ -323,6 +332,8 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         final Set<String> explicitCreatePermissions = documentPermissionDao
                 .getDocumentUserCreatePermissions(docRef.getUuid(), userRef.getUuid());
 
+        LOGGER.debug("Inherited permissions: {}: {}", inheritedPermissions, convertToPaths(inheritedPermissions));
+
         return new DocumentUserPermissionsReport(
                 explicitPermission,
                 explicitCreatePermissions,
@@ -333,20 +344,12 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     private <T> Map<T, List<String>> convertToPaths(final Map<T, List<List<UserRef>>> map) {
         return map.entrySet()
                 .stream()
-                .collect(Collectors.toMap(Entry::getKey, entry -> {
-                    return entry.getValue()
-                            .stream()
-                            .map(list -> list.stream()
-                                    .map(UserRef::toDisplayString)
-//                                    .map(userRef ->
-//                                            userRef.getType(CaseType.SENTENCE)
-//                                            + ": \""
-//                                            + userRef.toDisplayString()
-//                                            + "\""
-//                                    )
-                                    .collect(Collectors.joining(" --> ")))
-                            .toList();
-                }));
+                .collect(Collectors.toMap(Entry::getKey, entry -> entry.getValue()
+                        .stream()
+                        .map(list -> list.stream()
+                                .map(UserRef::toDisplayString)
+                                .collect(Collectors.joining(" --> ")))
+                        .toList()));
     }
 
     private void addDeepPermissionsAndPaths(final UserRef userRef,

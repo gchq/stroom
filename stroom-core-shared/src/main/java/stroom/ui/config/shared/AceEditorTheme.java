@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // Copyright (c) 2011 David H. Hovemeyer <david.hovemeyer@gmail.com>
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,8 +35,6 @@
 // THE SOFTWARE.
 
 package stroom.ui.config.shared;
-
-import stroom.util.shared.NullSafe;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -127,7 +141,7 @@ public enum AceEditorTheme {
     private final String name;
     private final ThemeType themeType;
 
-    AceEditorTheme(String name, final ThemeType themeType) {
+    AceEditorTheme(final String name, final ThemeType themeType) {
         this.name = Objects.requireNonNull(name);
         this.themeType = Objects.requireNonNull(themeType);
     }
@@ -159,7 +173,7 @@ public enum AceEditorTheme {
         }
     }
 
-    public static boolean matchesThemeType(final String themeName, ThemeType themeType) {
+    public static boolean matchesThemeType(final String themeName, final ThemeType themeType) {
         Objects.requireNonNull(themeName);
         Objects.requireNonNull(themeType);
         return TYPE_TO_THEME_MAP.get(themeType)
@@ -179,6 +193,6 @@ public enum AceEditorTheme {
 
     public static AceEditorTheme getDefaultEditorTheme(final ThemeType themeType) {
         return TYPE_TO_DEFAULT_THEME_MAP.get(
-                NullSafe.requireNonNullElse(themeType, Theme.DEFAULT_THEME_TYPE));
+                Objects.requireNonNullElse(themeType, Theme.DEFAULT_THEME_TYPE));
     }
 }

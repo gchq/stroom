@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class EventRefs implements Iterable<EventRef> {
@@ -39,7 +40,7 @@ public class EventRefs implements Iterable<EventRef> {
     @JsonProperty
     private final long maxEventsPerStream;
     @JsonProperty
-    private final List<EventRef> list = new ArrayList<>();
+    private final List<EventRef> list;
     @JsonProperty
     private volatile EventRef maxEvent;
     @JsonProperty
@@ -47,15 +48,32 @@ public class EventRefs implements Iterable<EventRef> {
 
     @JsonCreator
     public EventRefs(@JsonProperty("minEvent") final EventRef minEvent,
+                     @JsonProperty("maxStreams") final Long maxStreams,
+                     @JsonProperty("maxEvents") final Long maxEvents,
+                     @JsonProperty("maxEventsPerStream") final Long maxEventsPerStream,
+                     @JsonProperty("list") final List<EventRef> list,
                      @JsonProperty("maxEvent") final EventRef maxEvent,
-                     @JsonProperty("maxStreams") final long maxStreams,
-                     @JsonProperty("maxEvents") final long maxEvents,
-                     @JsonProperty("maxEventsPerStream") final long maxEventsPerStream) {
+                     @JsonProperty("reachedLimit") final Boolean reachedLimit) {
+        this.minEvent = minEvent;
+        this.maxStreams = Objects.requireNonNullElse(maxStreams, 0L);
+        this.maxEvents = Objects.requireNonNullElse(maxEvents, 0L);
+        this.maxEventsPerStream = Objects.requireNonNullElse(maxEventsPerStream, 0L);
+        this.list = list;
+        this.maxEvent = maxEvent;
+        this.reachedLimit = Objects.requireNonNullElse(reachedLimit, false);
+    }
+
+    public EventRefs(final EventRef minEvent,
+                     final EventRef maxEvent,
+                     final long maxStreams,
+                     final long maxEvents,
+                     final long maxEventsPerStream) {
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;
         this.maxEvents = maxEvents;
         this.maxEventsPerStream = maxEventsPerStream;
+        list = new ArrayList<>();
     }
 
     public void add(final List<EventRef> eventRefs) {
@@ -78,9 +96,9 @@ public class EventRefs implements Iterable<EventRef> {
 
     public void add(final EventRef ref) {
         if ((ref.getStreamId() > minEvent.getStreamId()
-                || (ref.getStreamId() == minEvent.getStreamId() && ref.getEventId() >= minEvent.getEventId()))
-                && (ref.getStreamId() < maxEvent.getStreamId() || (ref.getStreamId() == maxEvent.getStreamId()
-                && ref.getEventId() <= maxEvent.getEventId()))) {
+             || (ref.getStreamId() == minEvent.getStreamId() && ref.getEventId() >= minEvent.getEventId()))
+            && (ref.getStreamId() < maxEvent.getStreamId() || (ref.getStreamId() == maxEvent.getStreamId()
+                                                               && ref.getEventId() <= maxEvent.getEventId()))) {
             list.add(ref);
 
             // Trim if the list gets bigger than double the number of events.

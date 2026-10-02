@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package stroom.index.lucene553;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.index.shared.LuceneIndexField;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValBoolean;
 import stroom.query.language.functions.ValDate;

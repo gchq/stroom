@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.io.InputStream;
  * <p>
  * Also allows us to use the buffer to read another stream.
  */
-class BlockBufferedInputStream extends BufferedInputStream {
+public class BlockBufferedInputStream extends BufferedInputStream {
 
     /**
      * How far we have read along the stream.
@@ -36,7 +36,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
     /**
      * @param in the stream we are buffering.
      */
-    BlockBufferedInputStream(final InputStream in) {
+    public BlockBufferedInputStream(final InputStream in) {
         super(in);
     }
 
@@ -44,7 +44,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
      * @param in      the stream we are buffering.
      * @param bufSize buffer size to use
      */
-    BlockBufferedInputStream(final InputStream in, final int bufSize) {
+    public BlockBufferedInputStream(final InputStream in, final int bufSize) {
         super(in, bufSize);
     }
 
@@ -54,7 +54,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
      *
      * @param newIn new stream to read
      */
-    void recycle(final InputStream newIn) {
+    public void recycle(final InputStream newIn) {
         count = 0;
         pos = 0;
         streamPosition = 0;
@@ -65,7 +65,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
 
     @Override
     public int read() throws IOException {
-        int rtn = super.read();
+        final int rtn = super.read();
         if (rtn != -1) {
             // did we read a byte?
             streamPosition++;
@@ -76,7 +76,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
     @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b) throws IOException {
-        int rtn = super.read(b);
+        final int rtn = super.read(b);
         if (rtn != -1) {
             // Accumulate the bytes read
             streamPosition += rtn;
@@ -87,7 +87,7 @@ class BlockBufferedInputStream extends BufferedInputStream {
     @SuppressWarnings("NullableProblems")
     @Override
     public int read(final byte[] b, final int off, final int len) throws IOException {
-        int rtn = super.read(b, off, len);
+        final int rtn = super.read(b, off, len);
         if (rtn != -1) {
             // Accumulate the bytes read
             streamPosition += rtn;

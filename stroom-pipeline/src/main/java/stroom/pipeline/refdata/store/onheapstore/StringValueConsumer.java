@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.onheapstore;
@@ -41,20 +40,25 @@ public class StringValueConsumer implements RefDataValueConsumer {
 
     @Override
     public void consume(final RefDataValue refDataValue) {
-        String value = ((StringValue) refDataValue).getValue();
+        final String value = ((StringValue) refDataValue).getValue();
         LOGGER.trace("consuming {}", value);
 
         try {
             receiver.characters(value, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             throw new RuntimeException(LogUtil.message("Error passing string {} to receiver", value), e);
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class Factory implements RefDataValueConsumer.Factory {
 
         @Override
-        public RefDataValueConsumer create(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
+        public RefDataValueConsumer create(final Receiver receiver,
+                                           final PipelineConfiguration pipelineConfiguration) {
             return new StringValueConsumer(receiver);
         }
     }

@@ -55,14 +55,14 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
     }
 
     public Column<T, ?> getColumn(final Element elem) {
-        String cellId = this.getColumnId(elem);
+        final String cellId = this.getColumnId(elem);
         return cellId == null
                 ? null
                 : this.idToColumnMap.get(cellId);
     }
 
     public Header<?> getHeader(final Element elem) {
-        String headerId = this.getHeaderId(elem);
+        final String headerId = this.getHeaderId(elem);
         return headerId == null
                 ? null
                 : this.idToHeaderMap.getValue(headerId);
@@ -96,7 +96,7 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
 
     protected final void enableColumnHandlers(final ElementBuilderBase<?> builder,
                                               final Column<T, ?> column) {
-        String columnId = "column-" + Document.get().createUniqueId();
+        final String columnId = "column-" + Document.get().createUniqueId();
         this.idToColumnMap.put(columnId, column);
         builder.attribute("__gwt_column", columnId);
     }
@@ -121,7 +121,7 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
         }
 
         out.attribute("__gwt_header", headerId);
-        SafeHtmlBuilder sb = new SafeHtmlBuilder();
+        final SafeHtmlBuilder sb = new SafeHtmlBuilder();
         header.render(context, sb);
         out.html(sb.toSafeHtml());
     }
@@ -134,7 +134,7 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
         if (this.section.getDepth() < 1) {
             throw new IllegalStateException("Cannot start a row.  Did you call TableRowBuilder.end() too many times?");
         } else {
-            TableRowBuilder row = this.section.startTR();
+            final TableRowBuilder row = this.section.startTR();
             row.attribute("__gwt_header_row", this.rowIndex);
             ++this.rowIndex;
             return row;
@@ -167,7 +167,7 @@ public abstract class AbstractHeaderOrFooterBuilder<T> implements HeaderBuilder<
         if (elem == null) {
             return null;
         } else {
-            String value = elem.getAttribute(attribute);
+            final String value = elem.getAttribute(attribute);
             return NullSafe.isNonEmptyString(value)
                     ? value
                     : null;

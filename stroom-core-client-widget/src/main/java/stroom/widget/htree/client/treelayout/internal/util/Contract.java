@@ -1,4 +1,20 @@
 /*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * [The "BSD license"]
  * Copyright (c) 2011, abego Software GmbH, Germany (http://www.abego.org)
  * All rights reserved.
@@ -37,13 +53,13 @@ package stroom.widget.htree.client.treelayout.internal.util;
  */
 public class Contract {
 
-    public static void checkArg(boolean isOK, String s) {
+    public static void checkArg(final boolean isOK, final String s) {
         if (!isOK) {
             throw new IllegalArgumentException(s);
         }
     }
 
-    public static void checkState(boolean isOK, String s) {
+    public static void checkState(final boolean isOK, final String s) {
         if (!isOK) {
             throw new IllegalStateException(s);
         }

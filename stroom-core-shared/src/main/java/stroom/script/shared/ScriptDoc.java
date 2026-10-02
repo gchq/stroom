@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package stroom.script.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -49,24 +49,20 @@ import java.util.Objects;
         "dependencies",
         "data"})
 @JsonInclude(Include.NON_NULL)
-public class ScriptDoc extends Doc implements HasData {
+public class ScriptDoc extends AbstractDoc implements HasData {
 
     public static final String TYPE = "Script";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.SCRIPT_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private List<DocRef> dependencies;
+    private final List<DocRef> dependencies;
     @JsonProperty
-    private String data;
-
-    public ScriptDoc() {
-    }
+    private final String data;
 
     @JsonCreator
-    public ScriptDoc(@JsonProperty("type") final String type,
-                     @JsonProperty("uuid") final String uuid,
+    public ScriptDoc(@JsonProperty("uuid") final String uuid,
                      @JsonProperty("name") final String name,
                      @JsonProperty("version") final String version,
                      @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -76,7 +72,7 @@ public class ScriptDoc extends Doc implements HasData {
                      @JsonProperty("description") final String description,
                      @JsonProperty("dependencies") final List<DocRef> dependencies,
                      @JsonProperty("data") final String data) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.dependencies = dependencies;
         this.data = data;
@@ -102,26 +98,13 @@ public class ScriptDoc extends Doc implements HasData {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public List<DocRef> getDependencies() {
         return dependencies;
-    }
-
-    public void setDependencies(final List<DocRef> dependencies) {
-        this.dependencies = dependencies;
     }
 
     @Override
     public String getData() {
         return data;
-    }
-
-    @Override
-    public void setData(final String data) {
-        this.data = data;
     }
 
     @Override
@@ -144,5 +127,69 @@ public class ScriptDoc extends Doc implements HasData {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, dependencies, data);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    @Override
+    public HasData copyWithData(final String data) {
+        return copy().data(data).build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractBuilder<ScriptDoc, Builder> {
+
+        private String description;
+        private List<DocRef> dependencies;
+        private String data;
+
+        private Builder() {
+        }
+
+        private Builder(final ScriptDoc scriptDoc) {
+            super(scriptDoc);
+            this.description = scriptDoc.description;
+            this.dependencies = scriptDoc.dependencies;
+            this.data = scriptDoc.data;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder dependencies(final List<DocRef> dependencies) {
+            this.dependencies = dependencies;
+            return self();
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public ScriptDoc build() {
+            return new ScriptDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    dependencies,
+                    data);
+        }
     }
 }

@@ -1,4 +1,20 @@
 /*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Copyright 2009 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -40,6 +56,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 import com.google.gwt.user.client.ui.DirectionalTextHelper;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.HasDirectionalSafeHtml;
 import com.google.gwt.user.client.ui.HasName;
@@ -78,7 +95,7 @@ import com.google.gwt.user.client.ui.Widget;
  * {@example com.google.gwt.examples.CheckBoxExample}
  * </p>
  */
-public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Boolean>,
+public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Boolean>, Focus,
         HasWordWrap, HasDirectionalSafeHtml, HasDirectionEstimator,
         IsEditor<LeafValueEditor<Boolean>> {
 
@@ -128,8 +145,13 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     }
 
     @Override
+    public void focus() {
+        inputElem.focus();
+    }
+
+    @Override
     public HandlerRegistration addValueChangeHandler(
-            ValueChangeHandler<Boolean> handler) {
+            final ValueChangeHandler<Boolean> handler) {
         // Is this the first value change handler? If so, time to add handlers
         if (!valueChangeHandlerInitialized) {
             ensureDomEventHandlers();
@@ -240,7 +262,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     }
 
     @Override
-    public void setAccessKey(char key) {
+    public void setAccessKey(final char key) {
         inputElem.setAccessKey("" + key);
     }
 
@@ -252,7 +274,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
      * @deprecated Use {@link #setValue(Boolean)} instead
      */
     @Deprecated
-    public void setChecked(boolean checked) {
+    public void setChecked(final boolean checked) {
         setValue(checked);
     }
 
@@ -262,7 +284,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
      * See note at {@link #setDirectionEstimator(DirectionEstimator)}.
      */
     @Override
-    public void setDirectionEstimator(boolean enabled) {
+    public void setDirectionEstimator(final boolean enabled) {
         directionalTextHelper.setDirectionEstimator(enabled);
     }
 
@@ -276,12 +298,12 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
      * should be avoided.
      */
     @Override
-    public void setDirectionEstimator(DirectionEstimator directionEstimator) {
+    public void setDirectionEstimator(final DirectionEstimator directionEstimator) {
         directionalTextHelper.setDirectionEstimator(directionEstimator);
     }
 
     @Override
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         inputElem.setDisabled(!enabled);
         if (enabled) {
             removeStyleDependentName("disabled");
@@ -291,7 +313,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     }
 
     @Override
-    public void setFocus(boolean focused) {
+    public void setFocus(final boolean focused) {
         if (focused) {
             inputElem.focus();
         } else {
@@ -310,27 +332,27 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
      *
      * @param value
      */
-    public void setFormValue(String value) {
+    public void setFormValue(final String value) {
         inputElem.setAttribute("value", value);
     }
 
     @Override
-    public void setHTML(SafeHtml html, Direction dir) {
+    public void setHTML(final SafeHtml html, final Direction dir) {
         directionalTextHelper.setHtml(html, dir);
     }
 
     @Override
-    public void setHTML(@IsSafeHtml String html) {
+    public void setHTML(@IsSafeHtml final String html) {
         directionalTextHelper.setHtml(html);
     }
 
     @Override
-    public void setName(String name) {
+    public void setName(final String name) {
         inputElem.setName(name);
     }
 
     @Override
-    public void setTabIndex(int index) {
+    public void setTabIndex(final int index) {
         // Need to guard against call to setTabIndex before inputElem is
         // initialized. This happens because FocusWidget's (a superclass of
         // CheckBox) setElement method calls setTabIndex before inputElem is
@@ -341,12 +363,12 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     }
 
     @Override
-    public void setText(String text) {
+    public void setText(final String text) {
         directionalTextHelper.setText(text);
     }
 
     @Override
-    public void setText(String text, Direction dir) {
+    public void setText(final String text, final Direction dir) {
         directionalTextHelper.setText(text, dir);
     }
 
@@ -360,7 +382,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
      * @param value true to check, false to uncheck; null value implies false
      */
     @Override
-    public void setValue(Boolean value) {
+    public void setValue(final Boolean value) {
         setValue(value, false);
     }
 
@@ -377,12 +399,12 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
      *                   {@link ValueChangeEvent}
      */
     @Override
-    public void setValue(Boolean value, boolean fireEvents) {
+    public void setValue(Boolean value, final boolean fireEvents) {
         if (value == null) {
             value = Boolean.FALSE;
         }
 
-        Boolean oldValue = getValue();
+        final Boolean oldValue = getValue();
         inputElem.setChecked(value);
         inputElem.setDefaultChecked(value);
         if (value.equals(oldValue)) {
@@ -394,7 +416,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     }
 
     @Override
-    public void setWordWrap(boolean wrap) {
+    public void setWordWrap(final boolean wrap) {
         getElement().getStyle().setWhiteSpace(wrap
                 ? WhiteSpace.NORMAL
                 : WhiteSpace.NOWRAP);
@@ -403,7 +425,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     // Unlike other widgets the CheckBox sinks on its inputElement, not
     // its wrapper
     @Override
-    public void sinkEvents(int eventBitsToAdd) {
+    public void sinkEvents(final int eventBitsToAdd) {
         if (isOrWasAttached()) {
             Event.sinkEvents(inputElem, eventBitsToAdd
                     | Event.getEventsSunk(inputElem));
@@ -415,7 +437,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     protected void ensureDomEventHandlers() {
         addClickHandler(new ClickHandler() {
             @Override
-            public void onClick(ClickEvent event) {
+            public void onClick(final ClickEvent event) {
                 // Checkboxes always toggle their value, no need to compare
                 // with old value. Radio buttons are not so lucky, see
                 // overrides in RadioButton

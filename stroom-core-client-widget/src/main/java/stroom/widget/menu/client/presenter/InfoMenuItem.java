@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.menu.client.presenter;
 
 import stroom.widget.util.client.KeyBinding.Action;
@@ -8,18 +24,11 @@ import com.google.gwt.user.client.Command;
 
 public class InfoMenuItem extends MenuItem {
 
-    private final SafeHtml text;
-
     public InfoMenuItem(final SafeHtml text,
                         final Action action,
                         final Boolean enabled,
                         final Command command) {
-        super(0, SafeHtmlUtils.EMPTY_SAFE_HTML, action, enabled, command);
-        this.text = text;
-    }
-
-    public SafeHtml getText() {
-        return text;
+        super(0, text, SafeHtmlUtils.EMPTY_SAFE_HTML, action, enabled, command);
     }
 
     public static Builder builder() {

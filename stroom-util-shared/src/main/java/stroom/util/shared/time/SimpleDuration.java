@@ -1,6 +1,23 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared.time;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -12,7 +29,7 @@ import java.util.Objects;
 @JsonPropertyOrder(alphabetic = true)
 public class SimpleDuration {
 
-    public static SimpleDuration ZERO = new SimpleDuration(0, TimeUnit.NANOSECONDS);
+    public static SimpleDuration ZERO = new SimpleDuration(0L, TimeUnit.NANOSECONDS);
 
     @JsonProperty
     private final long time;
@@ -20,12 +37,28 @@ public class SimpleDuration {
     private final TimeUnit timeUnit;
 
     @JsonCreator
-    public SimpleDuration(@JsonProperty("time") final long time,
+    public SimpleDuration(@JsonProperty("time") final Long time,
                           @JsonProperty("timeUnit") final TimeUnit timeUnit) {
-        this.time = time;
+        this.time = Math.max(Objects.requireNonNullElse(time, 0L), 0L);
         this.timeUnit = timeUnit == null
                 ? TimeUnit.DAYS
                 : timeUnit;
+    }
+
+    @JsonCreator
+    public static SimpleDuration parse(final String value) {
+        if (value == null) {
+            throw new NullPointerException("Null value passed to SimpleDuration");
+        }
+
+        final TimeUnit timeUnit = TimeUnit.parse(value);
+        if (timeUnit != null) {
+            final String num = value.substring(0, value.length() - timeUnit.getShortForm().length());
+            final long l = Long.parseLong(num);
+            return new SimpleDuration(l, timeUnit);
+        }
+
+        throw new RuntimeException("Error parsing simple duration: " + value);
     }
 
     public long getTime() {
@@ -34,6 +67,32 @@ public class SimpleDuration {
 
     public TimeUnit getTimeUnit() {
         return timeUnit;
+    }
+
+    /**
+     * The duration in milliseconds, for comparing two durations expressed in different units.
+     *
+     * <p>Approximate because months and years are not fixed length: a month counts as 31 days and
+     * a year as 365, matching {@code SimpleDurationUtil.convertToStroomDuration} so client and
+     * server agree. Use {@code SimpleDurationUtil.plus/minus} for real date arithmetic — those
+     * work in calendar terms and are exact.
+     */
+    @JsonIgnore
+    public long getApproxMillis() {
+        if (timeUnit == null) {
+            return 0L;
+        }
+        return switch (timeUnit) {
+            case NANOSECONDS -> time / 1_000_000L;
+            case MILLISECONDS -> time;
+            case SECONDS -> time * 1_000L;
+            case MINUTES -> time * 60_000L;
+            case HOURS -> time * 3_600_000L;
+            case DAYS -> time * 86_400_000L;
+            case WEEKS -> time * 7L * 86_400_000L;
+            case MONTHS -> time * 31L * 86_400_000L;
+            case YEARS -> time * 365L * 86_400_000L;
+        };
     }
 
     @Override
@@ -58,6 +117,10 @@ public class SimpleDuration {
         return time + timeUnit.getShortForm();
     }
 
+    public String toLongString() {
+        return time + " " + timeUnit.getDisplayValue();
+    }
+
     public Builder copy() {
         return new Builder(this);
     }
@@ -75,8 +138,10 @@ public class SimpleDuration {
         }
 
         private Builder(final SimpleDuration simpleDuration) {
-            this.time = simpleDuration.time;
-            this.timeUnit = simpleDuration.timeUnit;
+            if (simpleDuration != null) {
+                this.time = simpleDuration.time;
+                this.timeUnit = simpleDuration.timeUnit;
+            }
         }
 
         public Builder time(final long time) {
@@ -90,9 +155,6 @@ public class SimpleDuration {
         }
 
         public SimpleDuration build() {
-            if (timeUnit == null) {
-                timeUnit = TimeUnit.DAYS;
-            }
             return new SimpleDuration(time, timeUnit);
         }
     }

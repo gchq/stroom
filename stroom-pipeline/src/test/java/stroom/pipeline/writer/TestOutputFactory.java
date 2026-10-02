@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.writer;
 
 import stroom.pipeline.state.MetaDataHolder;
@@ -33,11 +49,13 @@ class TestOutputFactory {
         final Path filePath = tempDir.resolve("file.gz");
         LOGGER.info("Using filePath: {}", filePath.toAbsolutePath().normalize());
 
-        OutputFactory outputFactory = new OutputFactory(new MetaDataHolder());
+        final OutputFactory outputFactory = new OutputFactory(new MetaDataHolder());
         outputFactory.setUseCompression(true);
         outputFactory.setCompressionMethod(CompressorStreamFactory.GZIP);
 
-        try (OutputStream outputStream = outputFactory.create(Files.newOutputStream(filePath)).getOutputStream()) {
+        try (final OutputStream outputStream = outputFactory.create(
+                Files.newOutputStream(filePath)).getOutputStream()) {
+
             final PrintWriter printWriter = new PrintWriter(outputStream);
             printWriter.println(content);
             printWriter.flush();
@@ -45,8 +63,9 @@ class TestOutputFactory {
         }
 
         final String text;
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new GzipCompressorInputStream(
-                Files.newInputStream(filePath))))) {
+        try (final BufferedReader bufferedReader = new BufferedReader(
+                new InputStreamReader(new GzipCompressorInputStream(Files.newInputStream(filePath))))) {
+
             text = bufferedReader.readLine();
             assertThat(text)
                     .isEqualTo(content);
@@ -111,10 +130,12 @@ class TestOutputFactory {
         final Path filePath = tempDir.resolve("file.txt");
         LOGGER.info("Using filePath: {}", filePath.toAbsolutePath().normalize());
 
-        OutputFactory outputFactory = new OutputFactory(new MetaDataHolder());
+        final OutputFactory outputFactory = new OutputFactory(new MetaDataHolder());
         outputFactory.setUseCompression(false);
 
-        try (OutputStream outputStream = outputFactory.create(Files.newOutputStream(filePath)).getOutputStream()) {
+        try (final OutputStream outputStream = outputFactory.create(
+                Files.newOutputStream(filePath)).getOutputStream()) {
+
             final PrintWriter printWriter = new PrintWriter(outputStream);
             printWriter.println(content);
             printWriter.flush();
@@ -122,7 +143,7 @@ class TestOutputFactory {
         }
 
         final String text;
-        try (BufferedReader bufferedReader = new BufferedReader(
+        try (final BufferedReader bufferedReader = new BufferedReader(
                 new InputStreamReader(Files.newInputStream(filePath)))) {
             text = bufferedReader.readLine();
             assertThat(text)

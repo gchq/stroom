@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2016-2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ ext.moduleName = 'stroom.event.logging.rs.api'
 
 dependencies {
     implementation project (':stroom-event-logging:stroom-event-logging-api')
-//    implementation project (':stroom-util-shared')
     implementation libs.eventLogging
     implementation libs.ws.rs.api
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.jersey;
 
 import stroom.proxy.app.Config;
@@ -22,7 +38,7 @@ class TestProxyJerseyClientFactoryImpl {
      * Mostly to make sure the factory ctor works ok
      */
     @Test
-    void test(@TempDir Path tempDir) {
+    void test(@TempDir final Path tempDir) {
 
         final Config config = new Config();
         final JerseyClientConfiguration jerseyClientConfiguration = new JerseyClientConfiguration();
@@ -31,7 +47,7 @@ class TestProxyJerseyClientFactoryImpl {
         config.setJerseyClients(Map.of(
                 JerseyClientName.DEFAULT.name(), jerseyClientConfiguration));
 
-        ProxyJerseyClientFactoryImpl proxyJerseyClientFactory = new ProxyJerseyClientFactoryImpl(
+        final ProxyJerseyClientFactoryImpl proxyJerseyClientFactory = new ProxyJerseyClientFactoryImpl(
                 config,
                 () -> new BuildInfo(0L, "1.2.3", 0L),
                 new Environment("test"),

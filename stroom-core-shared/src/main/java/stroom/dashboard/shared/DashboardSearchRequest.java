@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package stroom.dashboard.shared;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
@@ -66,15 +67,15 @@ public class DashboardSearchRequest {
             @JsonProperty("search") final Search search,
             @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
             @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
-            @JsonProperty("timeout") final long timeout,
-            @JsonProperty("storeHistory") final boolean storeHistory) {
+            @JsonProperty("timeout") final Long timeout,
+            @JsonProperty("storeHistory") final Boolean storeHistory) {
         this.searchRequestSource = searchRequestSource;
         this.queryKey = queryKey;
         this.search = search;
         this.componentResultRequests = componentResultRequests;
         this.dateTimeSettings = dateTimeSettings;
-        this.timeout = timeout;
-        this.storeHistory = storeHistory;
+        this.timeout = Objects.requireNonNullElse(timeout, 0L);
+        this.storeHistory = Objects.requireNonNullElse(storeHistory, false);
     }
 
     public SearchRequestSource getSearchRequestSource() {

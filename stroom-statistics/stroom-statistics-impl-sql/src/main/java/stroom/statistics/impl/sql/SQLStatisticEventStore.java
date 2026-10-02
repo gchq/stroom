@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.QueryField;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
 import stroom.statistics.impl.sql.entity.StatisticStoreValidator;
@@ -353,7 +353,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                 while (objectPool.getNumWaiters() > 0) {
                     try {
                         Thread.sleep(200);
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         Thread.currentThread().interrupt();
                         LOGGER.error("Thread interrupted while waiting for object pool waiters", e);
                     }
@@ -371,7 +371,7 @@ public class SQLStatisticEventStore implements Statistics, HasSystemInfo {
                 while (objectPool.getNumActive() > 0) {
                     try {
                         Thread.sleep(200);
-                    } catch (InterruptedException e) {
+                    } catch (final InterruptedException e) {
                         Thread.currentThread().interrupt();
                         LOGGER.error("Thread interrupted while waiting for pool objects to be returned", e);
                     }

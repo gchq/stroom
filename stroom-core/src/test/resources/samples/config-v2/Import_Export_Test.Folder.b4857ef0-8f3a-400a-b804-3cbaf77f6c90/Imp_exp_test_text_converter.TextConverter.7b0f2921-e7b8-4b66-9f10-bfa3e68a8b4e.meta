@@ -1,0 +1,8 @@
+{
+  "type" : "TextConverter",
+  "uuid" : "7b0f2921-e7b8-4b66-9f10-bfa3e68a8b4e",
+  "name" : "Imp_exp_test_text_converter",
+  "version" : "e65a8209-263e-4778-98b0-add31c4064c4",
+  "description" : "My description",
+  "converterType" : "DATA_SPLITTER"
+}

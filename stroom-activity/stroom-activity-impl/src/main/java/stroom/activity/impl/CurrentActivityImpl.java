@@ -19,11 +19,11 @@ package stroom.activity.impl;
 import stroom.activity.api.CurrentActivity;
 import stroom.activity.shared.Activity;
 import stroom.security.api.SecurityContext;
+import stroom.util.servlet.SessionUtil;
 
 import com.google.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,17 +49,7 @@ public class CurrentActivityImpl implements CurrentActivity {
 
             try {
                 final HttpServletRequest request = httpServletRequestProvider.get();
-                if (request != null) {
-                    final HttpSession session = request.getSession(false);
-                    if (session != null) {
-                        final Object object = session.getAttribute(NAME);
-                        if (object instanceof Activity) {
-                            activity = (Activity) object;
-                        }
-                    } else {
-                        LOGGER.debug("No Session");
-                    }
-                }
+                activity = SessionUtil.getAttribute(request, NAME, Activity.class, false);
             } catch (final RuntimeException e) {
                 LOGGER.debug(e.getMessage(), e);
             }
@@ -72,14 +62,7 @@ public class CurrentActivityImpl implements CurrentActivity {
     public void setActivity(final Activity activity) {
         securityContext.secure(() -> {
             final HttpServletRequest request = httpServletRequestProvider.get();
-            if (request != null) {
-                final HttpSession session = request.getSession(false);
-                if (session != null) {
-                    session.setAttribute(NAME, activity);
-                } else {
-                    LOGGER.debug("No Session");
-                }
-            }
+            SessionUtil.setAttribute(request, NAME, activity, false);
         });
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package stroom.aws.s3.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -46,27 +46,18 @@ import java.util.Objects;
         "description",
         "data"})
 @JsonInclude(Include.NON_EMPTY)
-public class S3ConfigDoc extends Doc implements HasData {
+public class S3ConfigDoc extends AbstractDoc implements HasData {
 
     public static final String TYPE = "S3Config";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.S3_CONFIG_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description = "";
-
+    private final String description;
     @JsonProperty
-    private String data = "";
-
-    public S3ConfigDoc() {
-    }
-
-    public S3ConfigDoc(final String type, final String uuid, final String name) {
-        super(type, uuid, name);
-    }
+    private final String data;
 
     @JsonCreator
-    public S3ConfigDoc(@JsonProperty("type") final String type,
-                       @JsonProperty("uuid") final String uuid,
+    public S3ConfigDoc(@JsonProperty("uuid") final String uuid,
                        @JsonProperty("name") final String name,
                        @JsonProperty("version") final String version,
                        @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -75,7 +66,7 @@ public class S3ConfigDoc extends Doc implements HasData {
                        @JsonProperty("updateUser") final String updateUser,
                        @JsonProperty("description") final String description,
                        @JsonProperty("data") final String data) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.data = data;
     }
@@ -100,19 +91,9 @@ public class S3ConfigDoc extends Doc implements HasData {
         return description;
     }
 
-    @SuppressWarnings("unused")
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     @Override
     public String getData() {
         return data;
-    }
-
-    @Override
-    public void setData(final String data) {
-        this.data = data;
     }
 
     @Override
@@ -136,4 +117,63 @@ public class S3ConfigDoc extends Doc implements HasData {
         return Objects.hash(super.hashCode(), description, data);
     }
 
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    @Override
+    public HasData copyWithData(final String data) {
+        return copy().data(data).build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder extends AbstractBuilder<S3ConfigDoc, Builder> {
+
+        private String description = "";
+        private String data = "";
+
+        private Builder() {
+        }
+
+        private Builder(final S3ConfigDoc s3ConfigDoc) {
+            super(s3ConfigDoc);
+            this.description = s3ConfigDoc.description;
+            this.data = s3ConfigDoc.data;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public S3ConfigDoc build() {
+            return new S3ConfigDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    data);
+        }
+    }
 }

@@ -1,0 +1,15 @@
+{
+  "properties" : {
+    "add" : [ {
+      "element" : "xsltFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "e2d36115-d7dd-415e-a9c2-8a896efc6bfb",
+          "name" : "LAX_CARGO_VOLUME-INDEX"
+        }
+      }
+    } ]
+  }
+}

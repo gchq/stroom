@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store;
@@ -43,7 +42,9 @@ import stroom.pipeline.refdata.store.onheapstore.OnHeapRefDataValueProxyConsumer
 import stroom.pipeline.refdata.store.onheapstore.StringValueConsumer;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.RunnableWrapper;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HasSystemInfoBinder;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
@@ -93,6 +94,10 @@ public class RefDataStoreModule extends AbstractModule {
         HasSystemInfoBinder.create(binder())
                 .bind(DelegatingRefDataOffHeapStore.class);
 
+        // Allows integration tests to close/delete all the store's LMDB envs between tests
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(DelegatingRefDataOffHeapStore.class);
+
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(RefDataPurge.class, builder -> builder
                         .name(RefDataPurge.JOB_NAME)
@@ -117,7 +122,7 @@ public class RefDataStoreModule extends AbstractModule {
                 try {
                     LOGGER.info("Running job '{}'", JOB_NAME);
                     refDataStoreFactory.purgeOldData();
-                } catch (TaskTerminatedException e) {
+                } catch (final TaskTerminatedException e) {
                     LOGGER.debug("Reference Data Purge terminated", e);
                     LOGGER.warn("Reference Data Purge terminated");
                 }

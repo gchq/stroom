@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.ExpressionOperator;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -38,7 +37,7 @@ import java.util.Objects;
         "lastQueryNode"
 })
 @JsonInclude(Include.NON_NULL)
-public class QueryComponentSettings extends AbstractQueryComponentSettings {
+public final class QueryComponentSettings extends AbstractQueryComponentSettings implements ComponentSettings {
 
     @JsonProperty("dataSource")
     private final DocRef dataSource;
@@ -50,10 +49,8 @@ public class QueryComponentSettings extends AbstractQueryComponentSettings {
     public QueryComponentSettings(@JsonProperty("dataSource") final DocRef dataSource,
                                   @JsonProperty("expression") final ExpressionOperator expression,
                                   @JsonProperty("automate") final Automate automate,
-                                  @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
-                                  @JsonProperty("lastQueryKey") final QueryKey lastQueryKey,
-                                  @JsonProperty("lastQueryNode") final String lastQueryNode) {
-        super(automate, selectionHandlers, lastQueryKey, lastQueryNode);
+                                  @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
+        super(automate, selectionHandlers);
         this.dataSource = dataSource;
         this.expression = expression;
     }
@@ -78,8 +75,13 @@ public class QueryComponentSettings extends AbstractQueryComponentSettings {
             return false;
         }
         final QueryComponentSettings that = (QueryComponentSettings) o;
-        return Objects.equals(dataSource, that.dataSource) && Objects.equals(expression,
-                that.expression);
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(dataSource, that.dataSource);
+//        final boolean b2 = Objects.equals(expression, that.expression);
+
+        return Objects.equals(dataSource, that.dataSource) &&
+               Objects.equals(expression, that.expression);
     }
 
     @Override
@@ -90,9 +92,9 @@ public class QueryComponentSettings extends AbstractQueryComponentSettings {
     @Override
     public String toString() {
         return "QueryComponentSettings{" +
-                "dataSource=" + dataSource +
-                ", expression=" + expression +
-                '}';
+               "dataSource=" + dataSource +
+               ", expression=" + expression +
+               '}';
     }
 
     public static Builder builder() {
@@ -105,7 +107,8 @@ public class QueryComponentSettings extends AbstractQueryComponentSettings {
     }
 
     public static final class Builder
-            extends AbstractBuilder<QueryComponentSettings, QueryComponentSettings.Builder>
+            extends AbstractQueryComponentSettings
+            .AbstractBuilder<QueryComponentSettings, QueryComponentSettings.Builder>
             implements
             HasSelectionQueryBuilder<QueryComponentSettings, Builder> {
 
@@ -144,9 +147,7 @@ public class QueryComponentSettings extends AbstractQueryComponentSettings {
                     dataSource,
                     expression,
                     automate,
-                    selectionQuery,
-                    lastQueryKey,
-                    lastQueryNode);
+                    selectionQuery);
         }
     }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
@@ -31,17 +47,19 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     private final Provider<ReceiveDataConfig> receiveDataConfigProvider;
     // Inject this so we can mock it for testing
     private final Provider<DataFeedKeyService> dataFeedKeyServiceProvider;
+    private final Provider<CertificateIdentityService> certificateIdentityServiceProvider;
     private final Provider<OidcTokenAuthenticator> oidcTokenAuthenticatorProvider;
     private final Provider<CertificateAuthenticator> certificateAuthenticatorProvider;
     private final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider;
 
-    private final CachedValue<AuthenticatorFilter, ConfigState> updatableAttributeMapFilter;
+    private final CachedValue<AuthenticatorFilter, ConfigState> cachedAuthenticationFilter;
 
     @Inject
     public RequestAuthenticatorImpl(
             final UserIdentityFactory userIdentityFactory,
             final Provider<ReceiveDataConfig> receiveDataConfigProvider,
             final Provider<DataFeedKeyService> dataFeedKeyServiceProvider,
+            final Provider<CertificateIdentityService> certificateIdentityServiceProvider,
             final Provider<OidcTokenAuthenticator> oidcTokenAuthenticatorProvider,
             final Provider<CertificateAuthenticator> certificateAuthenticatorProvider,
             final Provider<AllowUnauthenticatedAuthenticator> allowUnauthenticatedAuthenticatorProvider) {
@@ -50,12 +68,13 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         this.receiveDataConfigProvider = receiveDataConfigProvider;
 
         // Every 60s, see if config has changed and if so create a new filter
-        this.updatableAttributeMapFilter = CachedValue.builder()
+        this.cachedAuthenticationFilter = CachedValue.builder()
                 .withMaxCheckIntervalSeconds(60)
                 .withStateSupplier(() -> ConfigState.fromConfig(receiveDataConfigProvider.get()))
                 .withValueFunction(this::createFilter)
                 .build();
         this.dataFeedKeyServiceProvider = dataFeedKeyServiceProvider;
+        this.certificateIdentityServiceProvider = certificateIdentityServiceProvider;
         this.oidcTokenAuthenticatorProvider = oidcTokenAuthenticatorProvider;
         this.certificateAuthenticatorProvider = certificateAuthenticatorProvider;
         this.allowUnauthenticatedAuthenticatorProvider = allowUnauthenticatedAuthenticatorProvider;
@@ -65,11 +84,11 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
     public UserIdentity authenticate(final HttpServletRequest request,
                                      final AttributeMap attributeMap) {
         try {
-            final AuthenticatorFilter filter = updatableAttributeMapFilter.getValue();
+            final AuthenticatorFilter filter = cachedAuthenticationFilter.getValue();
             LOGGER.debug(() -> "Using filter: " + filter.getClass().getName());
             final Optional<UserIdentity> optUserIdentity = filter.authenticate(request, attributeMap);
 
-            final ConfigState configState = updatableAttributeMapFilter.getState();
+            final ConfigState configState = cachedAuthenticationFilter.getState();
             final Set<AuthenticationType> enabledAuthenticationTypes = configState.enabledAuthenticationTypes;
             final boolean isAuthRequired = configState.isAuthenticationRequired;
 
@@ -83,11 +102,11 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                     switch (authenticationType) {
                         case DATA_FEED_KEY -> throw new StroomStreamException(
                                 StroomStatusCode.CLIENT_DATA_FEED_KEY_REQUIRED, attributeMap);
+                        case CERTIFICATE_IDENTITY,
+                             CERTIFICATE -> throw new StroomStreamException(
+                                StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED, attributeMap);
                         case TOKEN ->
                                 throw new StroomStreamException(StroomStatusCode.CLIENT_TOKEN_REQUIRED, attributeMap);
-                        case CERTIFICATE ->
-                                throw new StroomStreamException(StroomStatusCode.CLIENT_CERTIFICATE_REQUIRED,
-                                        attributeMap);
                         default -> {
                             LOGGER.error("Unexpected type {}", authenticationType);
                             throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, attributeMap,
@@ -126,7 +145,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
                         request.getRequestURI(), attributeMap);
                 return new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, attributeMap);
             });
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             // To help diagnose auth errors. Prob don't want to log to ERROR as there
             // may be lots of legitimate auth errors that we don't care about
             LOGGER.debug("Error authenticating request {}: {}",
@@ -135,25 +154,21 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         }
     }
 
-    private String getMechanismNameOrNull(final boolean isEnabled, final String name) {
-        return isEnabled
-                ? name
-                : null;
-    }
-
     /**
      * Create a combined filter that takes into account the currently configured
      * auth mechanisms
-     *
-     * @param configState
-     * @return
      */
     private AuthenticatorFilter createFilter(final ConfigState configState) {
         final List<AuthenticatorFilter> filters = new ArrayList<>();
+        LOGGER.debug("createFilter() - configState: {}", configState);
 
         // We want to do this in a consistent order and to prefer say token over cert
         if (configState.isEnabled(AuthenticationType.DATA_FEED_KEY)) {
             filters.add(dataFeedKeyServiceProvider.get());
+        }
+
+        if (configState.isEnabled(AuthenticationType.CERTIFICATE_IDENTITY)) {
+            filters.add(certificateIdentityServiceProvider.get());
         }
 
         if (configState.isEnabled(AuthenticationType.TOKEN)) {
@@ -165,7 +180,9 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
         }
 
         // If auth is not required then add a fallback filter to provide an UnauthenticatedUserIdentity
-        // rather than returning an empty optional
+        // rather than returning an empty optional.
+        // We still need the above if blocks as auth may not be required, but we might want
+        // to authenticate if an enabled auth method is provided.
         if (!configState.isAuthenticationRequired) {
             filters.add(allowUnauthenticatedAuthenticatorProvider.get());
         }
@@ -181,7 +198,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             // username will be more useful for a human to read.
             // Set them to null if we have no identity to prevent clients from setting these
             // headers themselves.
-            final String uploadUserId = optUserIdentity.map(UserIdentity::getSubjectId)
+            final String uploadUserId = optUserIdentity.map(UserIdentity::subjectId)
                     .filter(NullSafe::isNonBlankString)
                     .orElse(null);
             final String uploadUsername = optUserIdentity.map(UserIdentity::getDisplayName)
@@ -194,6 +211,7 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
             // Remove authorization header from attributes as it should not be stored or
             // forwarded on.
             NullSafe.consume(attributeMap, userIdentityFactory::removeAuthEntries);
+            LOGGER.debug("processAttributes() - attributeMap: {}", attributeMap);
         }
     }
 
@@ -202,16 +220,15 @@ public class RequestAuthenticatorImpl implements RequestAuthenticator {
 
 
     private record ConfigState(
-            String receiptPolicyUuid,
             boolean isAuthenticationRequired,
             Set<AuthenticationType> enabledAuthenticationTypes) {
 
         public static ConfigState fromConfig(final ReceiveDataConfig receiveDataConfig) {
 
             return new ConfigState(
-                    receiveDataConfig.getReceiptPolicyUuid(),
                     receiveDataConfig.isAuthenticationRequired(),
-                    NullSafe.enumSet(AuthenticationType.class, receiveDataConfig.getEnabledAuthenticationTypes()));
+                    NullSafe.mutableEnumSet(AuthenticationType.class,
+                            receiveDataConfig.getEnabledAuthenticationTypes()));
         }
 
         public boolean isEnabled(final AuthenticationType authenticationType) {

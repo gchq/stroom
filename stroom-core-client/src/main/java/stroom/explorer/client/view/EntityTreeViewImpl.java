@@ -67,7 +67,7 @@ public class EntityTreeViewImpl extends ViewWithUiHandlers<EntityTreeUiHandlers>
     }
 
     @Override
-    public void setCellTree(Widget cellTree) {
+    public void setCellTree(final Widget cellTree) {
         explorerTreeContainer.setWidget(cellTree);
     }
 

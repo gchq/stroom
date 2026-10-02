@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.identity.openid;
 
 import stroom.config.common.UriFactory;
@@ -8,6 +24,7 @@ import stroom.security.identity.authenticate.api.AuthenticationService.AuthStatu
 import stroom.security.identity.config.TokenConfig;
 import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.identity.openid.OpenIdService.AuthResult;
+import stroom.security.openid.api.OpenId;
 import stroom.security.openid.api.OpenIdConfigurationResponse;
 import stroom.security.openid.api.PublicJsonWebKeyProvider;
 import stroom.security.openid.api.TokenResponse;
@@ -23,6 +40,7 @@ import event.logging.AuthenticateOutcomeReason;
 import event.logging.Data;
 import event.logging.OtherObject;
 import event.logging.ViewEventAction;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,7 +48,6 @@ import jakarta.ws.rs.RedirectionException;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response.Status;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.slf4j.Logger;
@@ -75,7 +92,9 @@ class OpenIdResourceImpl implements OpenIdResource {
                      final String redirectUri,
                      @Nullable final String nonce,
                      @Nullable final String state,
-                     @Nullable final String prompt) {
+                     @Nullable final String prompt,
+                     @Nullable final String codeChallenge,
+                     @Nullable final String codeChallengeMethod) {
 
         final AuthResult result = openIdServiceProvider.get().auth(
                 request,
@@ -85,10 +104,12 @@ class OpenIdResourceImpl implements OpenIdResource {
                 redirectUri,
                 nonce,
                 state,
-                prompt);
+                prompt,
+                codeChallenge,
+                codeChallengeMethod);
 
         if (result.getStatus().isPresent() && result.getStatus().get().isNew()) {
-            AuthStatus status = result.getStatus().get();
+            final AuthStatus status = result.getStatus().get();
 
             final AuthenticateEventAction.Builder<Void> eventBuilder = event.logging.AuthenticateEventAction.builder()
                     .withAction(AuthenticateAction.LOGON)
@@ -159,7 +180,11 @@ class OpenIdResourceImpl implements OpenIdResource {
                     "Stroom token authentication",
                     eventBuilder.build());
 
-            throw new WebApplicationException(e.getMessage(), e);
+            // Return a single generic message to the caller so the specific reason (missing/expired code,
+            // unexpected client id, unexpected or disallowed redirect uri, incorrect secret, failed PKCE)
+            // cannot be used as a probing oracle to enumerate valid values. The specific reason is retained
+            // in the audit event and debug log above.
+            throw new WebApplicationException("The token request is invalid.", e);
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             throw e;
@@ -203,24 +228,24 @@ class OpenIdResourceImpl implements OpenIdResource {
     public String openIdConfiguration() {
         try {
             final OpenIdConfigurationResponse response = OpenIdConfigurationResponse.builder()
-                    .authorizationEndpoint(uriFactoryProvider.get().publicUri("/oauth2/v1/noauth/auth").toString())
-                    .idTokenSigningSlgValuesSupported(new String[]{"RS256"})
-                    .issuer(tokenConfigProvider.get().getJwsIssuer())
-                    .jwksUri(uriFactoryProvider.get().publicUri("/oauth2/v1/noauth/certs").toString())
-                    .responseTypesSupported(new String[]{
-                            "code",
-                            "token",
-                            "id_token",
-                            "code token",
-                            "code id_token",
-                            "token id_token",
-                            "code token id_token",
-                            "none"})
-                    .scopesSupported(new String[]{
-                            "openid",
-                            "email"})
+                    // The issuer is the public OAuth base as an https URL (the same value token iss
+                    // carries), matching how Keycloak, Cognito and Google identify themselves.
+                    .issuer(uriFactoryProvider.get().publicUri("/oauth2/v1").toString())
+                    .authorizationEndpoint(uriFactoryProvider.get().publicUri("/oauth2/v1/auth").toString())
+                    .tokenEndpoint(uriFactoryProvider.get().publicUri("/oauth2/v1/token").toString())
+                    .jwksUri(uriFactoryProvider.get().publicUri("/oauth2/v1/certs").toString())
+                    // Only the authorization code flow is implemented, so only 'code' is advertised.
+                    .responseTypesSupported(new String[]{OpenId.RESPONSE_TYPE__CODE})
+                    .grantTypesSupported(new String[]{
+                            OpenId.GRANT_TYPE__AUTHORIZATION_CODE,
+                            OpenId.GRANT_TYPE__REFRESH_TOKEN})
+                    // PKCE is required and only the S256 method is accepted.
+                    .codeChallengeMethodsSupported(new String[]{OpenId.CODE_CHALLENGE_METHOD__S256})
+                    // The client authenticates at the token endpoint by posting its secret.
+                    .tokenEndpointAuthMethodsSupported(new String[]{"client_secret_post"})
+                    .scopesSupported(new String[]{OpenId.SCOPE__OPENID, OpenId.SCOPE__EMAIL})
                     .subjectTypesSupported(new String[]{"public"})
-                    .tokenEndpoint(uriFactoryProvider.get().publicUri("/oauth2/v1/noauth/token").toString())
+                    .idTokenSigningSlgValuesSupported(new String[]{"RS256"})
                     .build();
             return JsonUtil.writeValueAsString(response);
         } catch (final RuntimeException e) {

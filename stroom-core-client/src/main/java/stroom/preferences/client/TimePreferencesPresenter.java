@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.preferences.client;
 
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.document.client.event.HasDirtyHandlers;
-import stroom.expression.api.UserTimeZone;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.preferences.client.TimePreferencesPresenter.TimePreferencesView;
+import stroom.query.api.UserTimeZone;
 import stroom.ui.config.shared.UserPreferences;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -35,7 +34,7 @@ import com.gwtplatform.mvp.client.View;
 
 public final class TimePreferencesPresenter
         extends MyPresenterWidget<TimePreferencesView>
-        implements DirtyUiHandlers, HasDirtyHandlers {
+        implements ChangeUiHandlers, HasChangeHandlers {
 
     @Inject
     public TimePreferencesPresenter(
@@ -46,8 +45,8 @@ public final class TimePreferencesPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     public void read(final UserPreferences userPreferences) {
@@ -74,11 +73,11 @@ public final class TimePreferencesPresenter
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
-    public interface TimePreferencesView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {
+    public interface TimePreferencesView extends View, Focus, HasUiHandlers<ChangeUiHandlers> {
 
         String getPattern();
 

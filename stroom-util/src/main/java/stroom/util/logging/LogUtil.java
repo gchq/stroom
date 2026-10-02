@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.logging;
 
 import stroom.util.NullSafeExtra;
@@ -6,6 +22,7 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Strings;
+import org.slf4j.Logger;
 import org.slf4j.helpers.MessageFormatter;
 
 import java.io.PrintWriter;
@@ -19,8 +36,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.OptionalLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.IntSupplier;
+import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public final class LogUtil {
@@ -64,7 +87,7 @@ public final class LogUtil {
      * @param args   The values for any placeholders in the message format
      * @return A formatted message
      */
-    public static String message(String format, Object... args) {
+    public static String message(final String format, final Object... args) {
         return MessageFormatter.arrayFormat(format, args).getMessage();
     }
 
@@ -265,35 +288,39 @@ public final class LogUtil {
         if (value == null || total == null) {
             return null;
         } else {
-            if (value instanceof Duration) {
-                return withPercentage(value,
-                        ((Duration) value).toMillis(),
-                        ((Duration) total).toMillis());
-            } else if (value instanceof final DurationAdder durationAdder) {
-                return withPercentage(value,
-                        durationAdder.toMillis(),
-                        ((DurationAdder) total).toMillis());
-            } else if (value instanceof final DurationTimer durationTimer) {
-                return withPercentage(value,
-                        durationTimer.get().toMillis(),
-                        ((DurationTimer) total).get().toMillis());
-            } else if (value instanceof Number) {
-                final double valNum = ((Number) value).doubleValue();
-                final double totalNum = ((Number) total).doubleValue();
-                if (totalNum == 0) {
-                    return originalValue + " (undefined%)";
-                } else {
+            switch (value) {
+                case final Duration duration -> {
+                    return withPercentage(value,
+                            duration.toMillis(),
+                            ((Duration) total).toMillis());
+                }
+                case final DurationAdder durationAdder -> {
+                    return withPercentage(value,
+                            durationAdder.toMillis(),
+                            ((DurationAdder) total).toMillis());
+                }
+                case final DurationTimer durationTimer -> {
+                    return withPercentage(value,
+                            durationTimer.get().toMillis(),
+                            ((DurationTimer) total).get().toMillis());
+                }
+                case final Number number -> {
+                    final double valNum = number.doubleValue();
+                    final double totalNum = ((Number) total).doubleValue();
+                    if (totalNum == 0) {
+                        return originalValue + " (undefined%)";
+                    } else {
 //                    final int pct = (int) (valNum / totalNum * 100);
 
-                    BigDecimal pct = BigDecimal.valueOf(valNum / totalNum * 100)
-                            .stripTrailingZeros()
-                            .round(new MathContext(3, RoundingMode.HALF_UP));
-                    return originalValue + " (" + pct.toPlainString() + "%)";
+                        final BigDecimal pct = BigDecimal.valueOf(valNum / totalNum * 100)
+                                .stripTrailingZeros()
+                                .round(new MathContext(3, RoundingMode.HALF_UP));
+                        return originalValue + " (" + pct.toPlainString() + "%)";
+                    }
                 }
-            } else {
-                throw new IllegalArgumentException("Type "
-                                                   + value.getClass().getSimpleName()
-                                                   + " not supported");
+                default -> throw new IllegalArgumentException("Type "
+                                                              + value.getClass().getSimpleName()
+                                                              + " not supported");
             }
         }
     }
@@ -316,12 +343,29 @@ public final class LogUtil {
                     if (str.startsWith("{") && str.endsWith("}")) {
                         str = str.substring(1, str.length() - 1);
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.error("Error stripping class name from {}", obj, e);
                     return str;
                 }
             }
             return str;
+        }
+    }
+
+    /**
+     * Applies itemMapper to each item in collection then calls {@link NullSafe#toString(Object)}
+     * on each one, then joins all the resulting strings with ', '.
+     * If itemMapper is null or collection is null or empty, it returns an empty string.
+     */
+    public static <T> String toCsv(final Collection<T> collection,
+                                   final Function<T, Object> itemMapper) {
+        if (itemMapper == null) {
+            return "";
+        } else {
+            return NullSafe.stream(collection)
+                    .map(itemMapper)
+                    .map(NullSafe::toString)
+                    .collect(Collectors.joining(", "));
         }
     }
 
@@ -333,7 +377,7 @@ public final class LogUtil {
         if (value == null) {
             return null;
         } else {
-            return value.getClass().getSimpleName() + " " + value;
+            return "(" + value.getClass().getSimpleName() + ") " + value;
         }
     }
 
@@ -394,10 +438,16 @@ public final class LogUtil {
      * @return The path as an absolute and normalised path or null if path is null
      */
     public static String path(final Path path) {
-        return NullSafe.toString(
-                path,
-                Path::toAbsolutePath,
-                Path::normalize);
+        try {
+            return NullSafe.toString(
+                    path,
+                    Path::toAbsolutePath,
+                    Path::normalize);
+        } catch (final Exception e) {
+            LOGGER.error("Error converting '{}' to an absolute and normalised path - {}",
+                    path, LogUtil.exceptionMessage(e), e);
+            return NullSafe.toString(path);
+        }
     }
 
     /**
@@ -412,10 +462,145 @@ public final class LogUtil {
                 new Exception("Dumping Stack Trace").printStackTrace(pw);
                 logConsumer.accept(
                         Objects.requireNonNullElse(message, "Dumping stack trace") + "\n" + writer);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 logConsumer.accept(
                         "Error dumping stack trace: " + e.getMessage());
             }
+        }
+    }
+
+    /**
+     * Return the value supplied by supplier. Any exceptions will be swallowed and logged to debug only.
+     * Useful for getting values for logging that may throw.
+     *
+     * @return The supplied value or an empty optional if an exception is thrown and swallowed.
+     */
+    public static <T> Optional<T> swallowExceptions(final Supplier<T> supplier) {
+        try {
+            return Optional.ofNullable(supplier.get());
+        } catch (final Exception e) {
+            LOGGER.debug("Error swallowed", e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Return the value supplied by supplier. Any exceptions will be swallowed and logged to debug only.
+     * Useful for getting values for logging that may throw.
+     *
+     * @return The supplied value or an empty optional if an exception is thrown and swallowed.
+     */
+    public static OptionalLong swallowExceptions(final LongSupplier supplier) {
+        try {
+            return OptionalLong.of(supplier.getAsLong());
+        } catch (final Exception e) {
+            LOGGER.debug("Error swallowed", e);
+            return OptionalLong.empty();
+        }
+    }
+
+    /**
+     * Return the value supplied by supplier. Any exceptions will be swallowed and logged to debug only.
+     * Useful for getting values for logging that may throw.
+     *
+     * @return The supplied value or an empty optional if an exception is thrown and swallowed.
+     */
+    public static OptionalInt swallowExceptions(final IntSupplier supplier) {
+        try {
+            return OptionalInt.of(supplier.getAsInt());
+        } catch (final Exception e) {
+            LOGGER.debug("Error swallowed", e);
+            return OptionalInt.empty();
+        }
+    }
+
+    /**
+     * If DEBUG logging is enabled, create, start and return a new {@link DurationTimer}
+     * instance, else just return null.
+     * This avoids unnecessary object creation if DEBUG is not enabled.
+     */
+    public static DurationTimer startTimerIfDebugEnabled(final Logger logger) {
+        return logger != null && logger.isDebugEnabled()
+                ? DurationTimer.start()
+                : null;
+    }
+
+    /**
+     * If DEBUG logging is enabled, create, start and return a new {@link DurationTimer}
+     * instance, else just return null.
+     * This avoids unnecessary object creation if TRACE is not enabled.
+     */
+    public static DurationTimer startTimerIfTraceEnabled(final Logger logger) {
+        return logger != null && logger.isTraceEnabled()
+                ? DurationTimer.start()
+                : null;
+    }
+
+    /**
+     * Null-safe way to get the class simple name of an object.
+     *
+     * @return Class simple name or null if obj is null.
+     */
+    public static String getSimpleClassName(final Object obj) {
+        return NullSafe.get(obj, Object::getClass, Class::getSimpleName);
+    }
+
+    /**
+     * Null-safe way to get the class name of an object.
+     *
+     * @return Class name or null if obj is null.
+     */
+    public static String getClassName(final Object obj) {
+        return NullSafe.get(obj, Object::getClass, Class::getName);
+    }
+
+    /**
+     * Returns a comma-delimited string of sampleSize items from the collection.
+     * Each item is converted to a string using {@link Objects#toString()}.
+     *
+     * @param sampleSize The number of items in the collection to output,
+     *                   taken in iteration order.
+     * @return null if collection is null, else something like '[X, Y, Z, ...]'
+     */
+    public static <T> String getSample(final Collection<T> collection,
+                                       final int sampleSize) {
+        return getSample(collection, sampleSize, null);
+    }
+
+    /**
+     * Returns a comma-delimited string of sampleSize items from the collection.
+     * Each item is converted to a string using {@link Objects#toString()}.
+     *
+     * @param sampleSize       The number of items in the collection to output,
+     *                         taken in iteration order.
+     * @param toStringFunction The function to use to convert each item to a string.
+     * @return null if collection is null, else something like '[X, Y, Z, ...]'
+     */
+    public static <T> String getSample(final Collection<T> collection,
+                                       final int sampleSize,
+                                       final Function<T, String> toStringFunction) {
+        try {
+            if (collection == null) {
+                return null;
+            } else if (sampleSize <= 0) {
+                return "";
+            } else {
+                final Function<T, String> func = Objects.requireNonNullElse(
+                        toStringFunction,
+                        Objects::toString);
+                final int size = collection.size();
+                final String str = collection.stream()
+                        .limit(sampleSize)
+                        .map(func)
+                        .collect(Collectors.joining(", "));
+                final String truncatedPart = sampleSize < size
+                        ? ", ..."
+                        : "";
+                return "[" + str + truncatedPart + "]";
+            }
+        } catch (final Exception e) {
+            LOGGER.error("Error in getSample - {}", LogUtil.exceptionMessage(e), e);
+            return "?";
         }
     }
 }

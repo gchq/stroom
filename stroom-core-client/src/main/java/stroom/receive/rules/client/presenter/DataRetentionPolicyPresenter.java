@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
 import stroom.svg.client.Preset;
@@ -132,7 +132,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 .onSuccess(result -> {
                     policy = result;
                     if (policy.getRules() == null) {
-                        policy.setRules(new ArrayList<>());
+                        policy = policy.copy().rules(new ArrayList<>()).build();
                     }
                     setVisibleRules(policy.getRules());
                     update();
@@ -142,7 +142,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void setVisibleRules(final List<DataRetentionRule> rules) {
-        List<DataRetentionRule> allRules = new ArrayList<>();
+        final List<DataRetentionRule> allRules = new ArrayList<>();
         if (rules != null) {
             allRules.addAll(rules);
         }
@@ -230,7 +230,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                                 .text("Delete Rule")
                                 .command(() ->
                                         deleteRule(rule)))
-                .withIconMenuItemIf(!isDefaultRule && rule.getRuleNumber() > 0, itemBuilder ->
+                .withIconMenuItemIf(!isDefaultRule && rule.getRuleNumber() > 1, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
                                 .text("Move Rule Up")
@@ -448,7 +448,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     private void addSaveButtonHandler() {
         registerHandler(saveButton.addClickHandler(event -> {
             // Get the user's rules without our default one
-            policy.setRules(getUserRules());
+            policy = policy.copy().rules(getUserRules()).build();
 
             restFactory
                     .create(DATA_RETENTION_RULES_RESOURCE)
@@ -516,7 +516,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Edit Rule")
-                .onShow(e -> listPresenter.focus())
+                .onShow(e -> editRulePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final DataRetentionRule rule = editRulePresenter.write();
@@ -555,7 +555,7 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             }
             listPresenter.setData(visibleRules);
             // Update the policy so the impact tab can see the unsaved changes
-            policy.setRules(getUserRules());
+            policy = policy.copy().rules(getUserRules()).build();
         }
         updateButtons();
     }
@@ -587,10 +587,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
                                   && index < visibleRules.size() - 2);
     }
 
-    boolean isDirty() {
-        return dirty;
-    }
-
     private void setDirty(final boolean dirty) {
         if (this.dirty != dirty) {
             this.dirty = dirty;
@@ -602,6 +598,10 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     void setParentPresenter(final DataRetentionPresenter dataRetentionPresenter) {
         this.dataRetentionPresenter = dataRetentionPresenter;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface DataRetentionPolicyView extends View {
 

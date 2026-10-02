@@ -1,13 +1,30 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.event.logging.api;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.QueryKey;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.Selection;
 import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
@@ -42,7 +59,7 @@ public class StroomEventLoggingUtil {
     private StroomEventLoggingUtil() {
     }
 
-    public static <T extends RestResource> String buildTypeId(final T restResource, final String method) {
+    public static <T> String buildTypeId(final T restResource, final String method) {
         return String.join(".",
                 Objects.requireNonNull(restResource.getClass().getSimpleName()),
                 Objects.requireNonNull(method));
@@ -188,11 +205,16 @@ public class StroomEventLoggingUtil {
     }
 
     public static Query convertExpression(final ExpressionItem expressionItem) {
+        return convertExpression(null, expressionItem);
+    }
+
+    public static Query convertExpression(final QueryKey queryKey,
+                                          final ExpressionItem expressionItem) {
         final Builder<Void> builder = Query.builder();
+        NullSafe.consume(queryKey, key -> builder.withId(key.getUuid()));
         appendExpression(builder, expressionItem);
         return builder.build();
     }
-
 
     public static void appendExpression(final Query.Builder<Void> queryBuilder,
                                         final ExpressionItem expressionItem) {
@@ -217,7 +239,7 @@ public class StroomEventLoggingUtil {
                             .map(StroomEventLoggingUtil::convertItem)
                             .filter(Objects::nonNull)
                             .collect(Collectors.toList());
-                    if (children.size() > 0) {
+                    if (!children.isEmpty()) {
                         if (expressionOperator.op().equals(Op.AND)) {
                             return And.builder().withQueryItems(children).build();
                         } else if (expressionOperator.op().equals(Op.OR)) {
@@ -302,6 +324,7 @@ public class StroomEventLoggingUtil {
                     value = "docRef: " + expressionTerm.getDocRef();
                     break;
                 case IS_USER_REF:
+                case IS_NOT_USER_REF:
                 case USER_HAS_PERM:
                 case USER_HAS_OWNER:
                 case USER_HAS_DELETE:

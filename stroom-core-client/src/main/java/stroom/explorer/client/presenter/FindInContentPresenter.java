@@ -119,8 +119,8 @@ public class FindInContentPresenter
         };
         cellTable.addStyleName("FindCellTable");
 
-        selectionModel = new MultiSelectionModelImpl<>(cellTable);
-        SelectionEventManager<FindInContentResult> selectionEventManager = new SelectionEventManager<>(
+        selectionModel = new MultiSelectionModelImpl<>();
+        final SelectionEventManager<FindInContentResult> selectionEventManager = new SelectionEventManager<>(
                 cellTable,
                 selectionModel,
                 this::openDocument,

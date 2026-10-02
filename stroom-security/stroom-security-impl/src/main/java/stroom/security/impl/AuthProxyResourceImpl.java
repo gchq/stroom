@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ public class AuthProxyResourceImpl implements AuthProxyResource {
             final String token = idpProxyServiceProvider.get().fetchToken(clientCredentials);
 
             return token;
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             throw new BadRequestException(e.getMessage(), e);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Let the ex mapper handle it
             throw e;
         }

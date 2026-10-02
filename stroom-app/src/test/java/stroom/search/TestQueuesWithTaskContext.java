@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,7 +132,7 @@ public class TestQueuesWithTaskContext extends AbstractCoreIntegrationTest {
                                                     queue.put(new Event(1, id, Val.of(
                                                             ValString.create("test"),
                                                             ValString.create("test"))));
-                                                } catch (CompleteException e) {
+                                                } catch (final CompleteException e) {
                                                     throw new RuntimeException(e);
                                                 }
                                             }

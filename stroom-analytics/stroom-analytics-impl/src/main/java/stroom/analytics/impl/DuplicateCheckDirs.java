@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -19,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -72,9 +89,26 @@ public class DuplicateCheckDirs {
         return uuidList;
     }
 
+    /**
+     * Deletes the stores of rules that no longer exist, using {@link #deleteDuplicateStore},
+     * which does NOT check whether an env is open on the store. Prefer the overload taking a
+     * deleter wherever a caller may hold stores open, e.g. via a pool.
+     */
     public List<String> deleteUnused(
             final List<String> duplicateStoreUuids,
             final List<AnalyticRuleDoc> analytics) {
+        return deleteUnused(duplicateStoreUuids, analytics, this::deleteDuplicateStore);
+    }
+
+    /**
+     * @param deleter Deletes the store for a uuid, returning the uuid if it actually did. Lets a
+     *                caller that may hold a store open interpose, so a store's files are never
+     *                unlinked while an env is still mapping them.
+     */
+    public List<String> deleteUnused(
+            final List<String> duplicateStoreUuids,
+            final List<AnalyticRuleDoc> analytics,
+            final Function<String, Optional<String>> deleter) {
         final List<String> deletedUuids = new ArrayList<>();
         try {
             LOGGER.debug(() -> LogUtil.message(
@@ -99,7 +133,7 @@ public class DuplicateCheckDirs {
 
                 // Delete unused duplicate stores.
                 redundantDupStoreUuids.stream()
-                        .map(this::deleteDuplicateStore)
+                        .map(deleter)
                         .filter(Optional::isPresent)
                         .map(Optional::get)
                         .forEach(deletedUuids::add);
@@ -115,7 +149,11 @@ public class DuplicateCheckDirs {
         return deletedUuids;
     }
 
-    private Optional<String> deleteDuplicateStore(final String uuid) {
+    /**
+     * Deletes the store's files unconditionally; the caller must ensure no env is open on
+     * them.
+     */
+    Optional<String> deleteDuplicateStore(final String uuid) {
         try {
             final LmdbEnvDir lmdbEnvDir = getDir(uuid);
             lmdbEnvDir.delete();

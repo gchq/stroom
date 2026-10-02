@@ -31,9 +31,9 @@ class TestStreamUtil {
 
     @Test
     void testFullRead() throws IOException {
-        byte[] buffer = new byte[10];
+        final byte[] buffer = new byte[10];
 
-        InputStream testStream = new TestInputStream();
+        final InputStream testStream = new TestInputStream();
         Assertions.assertThat(StreamUtil.eagerRead(testStream, buffer)).isEqualTo(10);
         assertThat(StreamUtil.eagerRead(testStream, buffer)).isEqualTo(10);
         assertThat(StreamUtil.eagerRead(testStream, buffer)).isEqualTo(5);
@@ -45,8 +45,8 @@ class TestStreamUtil {
     void testException() {
         try {
             throw new RuntimeException();
-        } catch (RuntimeException ex) {
-            String callStack = StreamUtil.exceptionCallStack(ex);
+        } catch (final RuntimeException ex) {
+            final String callStack = StreamUtil.exceptionCallStack(ex);
             assertThat(callStack.contains("testException")).as(callStack).isTrue();
         }
     }
@@ -65,12 +65,12 @@ class TestStreamUtil {
         }
 
         @Override
-        public int read(byte[] b) throws IOException {
+        public int read(final byte[] b) throws IOException {
             return read(b, 0, 1);
         }
 
         @Override
-        public int read(byte[] b, int off, int len) throws IOException {
+        public int read(final byte[] b, final int off, final int len) throws IOException {
             return super.read(b, off, 1);
         }
     }

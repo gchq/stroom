@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,10 +73,17 @@ public class ComponentConfig {
             return false;
         }
         final ComponentConfig that = (ComponentConfig) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(type, that.type);
+//        final boolean b2 = Objects.equals(id, that.id);
+//        final boolean b3 = Objects.equals(name, that.name);
+//        final boolean b4 = Objects.equals(settings, that.settings);
+
         return Objects.equals(type, that.type) &&
-                Objects.equals(id, that.id) &&
-                Objects.equals(name, that.name) &&
-                Objects.equals(settings, that.settings);
+               Objects.equals(id, that.id) &&
+               Objects.equals(name, that.name) &&
+               Objects.equals(settings, that.settings);
     }
 
     @Override
@@ -87,11 +94,11 @@ public class ComponentConfig {
     @Override
     public String toString() {
         return "ComponentConfig{" +
-                "type='" + type + '\'' +
-                ", id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", settings=" + settings +
-                '}';
+               "type='" + type + '\'' +
+               ", id='" + id + '\'' +
+               ", name='" + name + '\'' +
+               ", settings=" + settings +
+               '}';
     }
 
     public static Builder builder() {

@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,7 +19,6 @@ package stroom.query.language.functions;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.StringListReference;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
-import stroom.query.language.token.Param;
 
 import java.text.ParseException;
 import java.util.List;
@@ -182,7 +181,7 @@ class Joining extends AbstractFunction implements AggregateFunction {
         public Val eval(final StoredValues storedValues, final Supplier<ChildData> childDataSupplier) {
             final List<String> list = stringListReference.get(storedValues);
             final StringBuilder sb = new StringBuilder();
-            for (String s : list) {
+            for (final String s : list) {
                 sb.append(s);
                 sb.append(delimiter);
             }
@@ -210,7 +209,7 @@ class Joining extends AbstractFunction implements AggregateFunction {
             int trimSize = 0;
 
             int totalLength = 0;
-            for (String s : list) {
+            for (final String s : list) {
                 totalLength += s.length();
                 trimSize++;
                 if (totalLength >= maxStringLength) {

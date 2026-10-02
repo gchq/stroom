@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.time;
 
 import stroom.util.shared.ModelStringUtil;
@@ -56,13 +72,13 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
         } else {
             this.duration = Duration.from(temporalAmount);
         }
-        String durationStr = duration.toString();
+        final String durationStr = duration.toString();
         // Duration won't output in days, instead using multiple hours, e.g. P30D => PT720H
         // which is a bit grim, so do a simple hack to deal with whole numbers of days.
         if (durationStr.matches("^PT[0-9]+[hH]$")) {
             // get the number of hours
-            long hours = Long.parseLong(durationStr.substring(2, durationStr.length() - 1));
-            long remainderHours = hours % 24;
+            final long hours = Long.parseLong(durationStr.substring(2, durationStr.length() - 1));
+            final long remainderHours = hours % 24;
 //            if (hours >= 24 && hours % 24 == 0) {
             if (hours >= 24) {
                 String valueAsStr = "P" + hours / 24 + "D";
@@ -83,6 +99,11 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
     @JsonCreator
     public static StroomDuration parse(final String value) {
         return new StroomDuration(value, parseToDuration(value));
+    }
+
+    @JsonCreator
+    public static StroomDuration parse(final long value) {
+        return StroomDuration.ofMillis(value);
     }
 
     public static StroomDuration of(final TemporalAmount temporalAmount) {
@@ -146,6 +167,10 @@ public class StroomDuration implements Comparable<StroomDuration>, TemporalAmoun
 
     public long toMillis() {
         return duration.toMillis();
+    }
+
+    public long toSeconds() {
+        return duration.toSeconds();
     }
 
     public long toNanos() {

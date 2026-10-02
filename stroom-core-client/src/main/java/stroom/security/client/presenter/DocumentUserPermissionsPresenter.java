@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.security.client.presenter;
@@ -21,7 +20,6 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.explorer.client.presenter.DocumentTypeCache;
 import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.DocumentUserPermissionsPresenter.DocumentUserPermissionsView;
 import stroom.security.shared.DocumentPermission;
@@ -60,7 +58,6 @@ public class DocumentUserPermissionsPresenter
     private final DocPermissionRestClient docPermissionClient;
     private final ButtonView docEdit;
     private final SelectionBox<PermissionShowLevel> permissionVisibility;
-    private final DocumentTypeCache documentTypeCache;
     private DocRef docRef;
 
     @Inject
@@ -69,14 +66,12 @@ public class DocumentUserPermissionsPresenter
             final DocPermissionRestClient docPermissionClient,
             final DocumentUserPermissionsView view,
             final DocumentUserPermissionsListPresenter documentUserPermissionsListPresenter,
-            final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider,
-            final DocumentTypeCache documentTypeCache) {
+            final Provider<DocumentUserPermissionsEditPresenter> documentUserPermissionsEditPresenterProvider) {
 
         super(eventBus, view);
         this.documentUserPermissionsListPresenter = documentUserPermissionsListPresenter;
         this.documentUserPermissionsEditPresenterProvider = documentUserPermissionsEditPresenterProvider;
         this.docPermissionClient = docPermissionClient;
-        this.documentTypeCache = documentTypeCache;
         view.setDocUserPermissionListView(documentUserPermissionsListPresenter.getView());
 
         docEdit = documentUserPermissionsListPresenter.addButton(new Preset(

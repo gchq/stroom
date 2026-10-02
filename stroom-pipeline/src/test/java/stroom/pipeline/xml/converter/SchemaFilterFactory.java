@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.xml.converter;
@@ -20,7 +19,6 @@ package stroom.pipeline.xml.converter;
 import stroom.content.ContentPack;
 import stroom.content.ContentPacks;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.mock.MockDocRefInfoService;
 import stroom.docstore.impl.Persistence;
 import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.docstore.impl.StoreFactoryImpl;
@@ -56,11 +54,12 @@ public class SchemaFilterFactory {
             new StoreFactoryImpl(
                     persistence,
                     null,
-                    null,
                     securityContext,
-                    MockDocRefInfoService::new),
+                    null,
+                    null),
+            securityContext,
             serialiser);
-    private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore);
+    private final XmlSchemaCache xmlSchemaCache = new XmlSchemaCache(xmlSchemaStore, securityContext);
     private final SchemaLoaderImpl schemaLoader = new SchemaLoaderImpl(xmlSchemaCache);
 
     public SchemaFilterFactory() {
@@ -74,9 +73,9 @@ public class SchemaFilterFactory {
                 DS3ParserFactory.NAMESPACE_URI,
                 DS3ParserFactory.SYSTEM_ID,
                 ContentPacks.CORE_XML_SCHEMAS_PACK,
-                "XML Schemas/" +
-                        "data-splitter/" +
-                        "data_splitter_v3_0.XMLSchema.9e1e2567-ba83-4720-95c0-f882b951bd3e.data.xsd");
+                "XML_Schemas/" +
+                "data_splitter/" +
+                "data_splitter_v3_0.XMLSchema.9e1e2567-ba83-4720-95c0-f882b951bd3e.xsd");
     }
 
     public SchemaFilter getSchemaFilter(final String namespaceURI, final ErrorReceiverProxy errorReceiverProxy) {
@@ -101,12 +100,14 @@ public class SchemaFilterFactory {
         final Path schemaFile = getSchemaFile(contentPack, fileName);
 
         final DocRef docRef = xmlSchemaStore.createDocument(schemaName);
-        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef);
-        xmlSchema.setSchemaGroup(schemaGroup);
-        xmlSchema.setName(schemaName);
-        xmlSchema.setNamespaceURI(namespaceURI);
-        xmlSchema.setSystemId(systemId);
-        xmlSchema.setData(StreamUtil.fileToString(schemaFile));
+        final XmlSchemaDoc xmlSchema = xmlSchemaStore.readDocument(docRef)
+                .copy()
+                .schemaGroup(schemaGroup)
+                .name(schemaName)
+                .namespaceURI(namespaceURI)
+                .systemId(systemId)
+                .data(StreamUtil.fileToString(schemaFile))
+                .build();
         xmlSchemaStore.writeDocument(xmlSchema);
     }
 

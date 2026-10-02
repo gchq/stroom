@@ -1,0 +1,25 @@
+{
+  "properties" : {
+    "add" : [ {
+      "element" : "combinedParser",
+      "name" : "textConverter",
+      "value" : {
+        "entity" : {
+          "type" : "TextConverter",
+          "uuid" : "7e4452ed-bf26-4187-b849-e3e721780cba",
+          "name" : "CSV_WITH_HEADER"
+        }
+      }
+    }, {
+      "element" : "translationFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "144514e5-4bf3-416a-a623-a25d592aab94",
+          "name" : "STAFF-NO-REFERENCE"
+        }
+      }
+    } ]
+  }
+}

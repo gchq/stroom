@@ -1,16 +1,52 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
+
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.util.Objects;
 
 interface DataFeedKeyHasher {
 
+    LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataFeedKeyHasher.class);
+
+    String generateSalt();
+
     /**
-     * Generate the hash of a datafeed key.
+     * Generate the hash of a datafeed key using the supplied salt.
+     *
+     * @param dataFeedKey The datafeed key to generate a hash for
+     * @param salt        The salt to use when hashing the dataFeedKey.
+     * @return The hash and the salt used.
+     */
+    HashOutput hash(String dataFeedKey, String salt);
+
+    /**
+     * Generate the hash of a datafeed key using a randomly generated salt.
      *
      * @param dataFeedKey The datafeed key to generate a hash for
      * @return The hash and the salt used.
      */
-    HashOutput hash(String dataFeedKey);
+    default HashOutput hash(final String dataFeedKey) {
+        Objects.requireNonNull(dataFeedKey);
+        final String generatedSalt = generateSalt();
+        return hash(dataFeedKey, generatedSalt);
+    }
 
     /**
      * Verify a dataFeedKey against its hash, and if provided include its salt.
@@ -20,9 +56,12 @@ interface DataFeedKeyHasher {
      * @param salt        An optional salt to include in the verification
      * @return True if verification is successful
      */
-    default boolean verify(String dataFeedKey, String hash, String salt) {
+    default boolean verify(final String dataFeedKey, final String hash, final String salt) {
         final HashOutput hashOutput = hash(Objects.requireNonNull(dataFeedKey));
-        return Objects.equals(Objects.requireNonNull(hash), hashOutput.hash);
+        final boolean isValid = Objects.equals(Objects.requireNonNull(hash), hashOutput.hash);
+        LOGGER.debug("verify() - salt: '{}', hash: '{}', dataFeedKey: '{}', isValid: {}",
+                salt, hash, dataFeedKey, isValid);
+        return isValid;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,38 @@
 
 package stroom.config.app;
 
-import stroom.activity.impl.db.ActivityConfig;
+import stroom.activity.impl.dao.ActivityConfig;
+import stroom.ai.impl.AiConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.lock.impl.dao.ClusterLockConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.NodeUriConfig;
 import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
+import stroom.contentindex.ContentIndexConfig;
+import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
+import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
-import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.dashboard.impl.db.VisualisationAssetDbConfig;
+import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
+import stroom.docstore.impl.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
+import stroom.gitrepo.impl.GitRepoConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
-import stroom.index.impl.IndexFieldDbConfig;
+import stroom.index.impl.db.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
-import stroom.legacy.db.LegacyConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.node.impl.NodeConfig;
@@ -48,10 +55,10 @@ import stroom.pipeline.PipelineConfig;
 import stroom.planb.impl.PlanBConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StroomPathConfig;
@@ -67,6 +74,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import jakarta.validation.constraints.AssertTrue;
 
+import java.util.Objects;
+
 @JsonRootName(AppConfig.NAME)
 @JsonPropertyOrder(alphabetic = true)
 public class AppConfig extends AbstractConfig implements IsStroomConfig {
@@ -74,11 +83,17 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String NAME = "stroom";
     public static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts(NAME);
 
+    private static final boolean DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = true;
+
     public static final String ROOT_PROPERTY_NAME = "appConfig";
 
     public static final String PROP_NAME_ACTIVITY = "activity";
+    public static final String PROP_NAME_AI = "ai";
     public static final String PROP_NAME_ANNOTATION = "annotation";
     public static final String PROP_NAME_ANALYTICS = "analytics";
+    public static final String PROP_NAME_ASK_STROOM_AI = "askStroomAi";
+    public static final String PROP_NAME_CONTENT_INDEX = "contentIndex";
+    public static final String PROP_NAME_CONTENT_STORE = "contentStore";
     public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_AUTO_CONTENT_CREATION = "autoContentCreation";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
@@ -88,8 +103,8 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
     public static final String PROP_NAME_COMMON_DB_DETAILS = "commonDbDetails";
     public static final String PROP_NAME_CONTENT_PACK_IMPORT = "contentPackImport";
+    public static final String PROP_NAME_CREDENTIALS = "credentials";
     public static final String PROP_NAME_CORE = "core";
-    public static final String PROP_NAME_CORS = "cors";
     public static final String PROP_NAME_DASHBOARD = "dashboard";
     public static final String PROP_NAME_DATA = "data";
     public static final String PROP_NAME_DOCSTORE = "docstore";
@@ -97,6 +112,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_EXPLORER = "explorer";
     public static final String PROP_NAME_EXPORT = "export";
     public static final String PROP_NAME_FEED = "feed";
+    public static final String PROP_NAME_GIT_REPO = "gitRepo";
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
     public static final String PROP_NAME_INDEX = "index";
     public static final String PROP_NAME_JOB = "job";
@@ -114,33 +130,38 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_PUBLIC_URI = "publicUri";
     public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
     public static final String PROP_NAME_RECEIVE = "receive";
+    public static final String PROP_NAME_RECEIPT_POLICY = "receiptPolicy";
     public static final String PROP_NAME_S3 = "s3";
     public static final String PROP_NAME_SEARCH = "search";
     public static final String PROP_NAME_SECURITY = "security";
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
     public static final String PROP_NAME_SESSION = "session";
     public static final String PROP_NAME_SOLR = "solr";
-    public static final String PROP_NAME_STATE = "state";
     public static final String PROP_NAME_PLANB = "planb";
     public static final String PROP_NAME_STATISTICS = "statistics";
     public static final String PROP_NAME_UI = "ui";
     public static final String PROP_NAME_UI_URI = "uiUri";
+    public static final String PROP_NAME_VISUALISATION_ASSET = "visualisationAsset";
+    public static final String PROP_NAME_VISUALISATION_ASSET_DB = "visualisationAssetDb";
     public static final String PROP_NAME_VOLUMES = "volumes";
 
     private final boolean haltBootOnConfigValidationFailure;
 
     private final CrossModuleConfig crossModuleConfig;
+    private final AiConfig aiConfig;
     private final ActivityConfig activityConfig;
     private final AnalyticsConfig analyticsConfig;
     private final AnnotationConfig annotationConfig;
+    private final AskStroomAiConfig askStroomAIConfig;
+    private final ContentStoreConfig contentStoreConfig;
+    private final ContentIndexConfig contentIndexConfig;
     private final AutoContentCreationConfig autoContentCreationConfig;
     private final ByteBufferPoolConfig byteBufferPoolConfig;
     private final ClusterConfig clusterConfig;
     private final ClusterLockConfig clusterLockConfig;
     private final CommonDbConfig commonDbConfig;
     private final ContentPackImportConfig contentPackImportConfig;
-    //    private final CorsConfig corsConfig;
-    private final LegacyConfig legacyConfig;
+    private final CredentialsConfig credentialsConfig;
     private final DashboardConfig dashboardConfig;
     private final DataConfig dataConfig;
     private final DocStoreConfig docStoreConfig;
@@ -148,6 +169,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final ExplorerConfig explorerConfig;
     private final ExportConfig exportConfig;
     private final FeedConfig feedConfig;
+    private final GitRepoConfig gitRepoConfig;
     private final IndexConfig indexConfig;
     private final JobSystemConfig jobSystemConfig;
     private final KafkaConfig kafkaConfig;
@@ -162,90 +184,101 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final PublicUriConfig publicUri;
     private final IndexFieldDbConfig queryDataSourceConfig;
     private final ReceiveDataConfig receiveDataConfig;
+    private final StroomReceiptPolicyConfig receiptPolicyConfig;
     private final S3Config s3Config;
     private final SearchConfig searchConfig;
     private final SecurityConfig securityConfig;
     private final SessionCookieConfig sessionCookieConfig;
     private final SessionConfig sessionConfig;
     private final SolrConfig solrConfig;
-    private final StateConfig stateConfig;
     private final PlanBConfig planBConfig;
     private final StatisticsConfig statisticsConfig;
     private final StoredQueryConfig storedQueryConfig;
     private final StroomPathConfig pathConfig;
     private final UiConfig uiConfig;
     private final UiUriConfig uiUri;
+    private final VisualisationAssetConfig visualisationAssetConfig;
+    private final VisualisationAssetDbConfig visualisationAssetDbConfig;
     private final VolumeConfig volumeConfig;
 
     /**
      * Will construct a full immutable AppConfig tree will ALL defaults set.
      */
     public AppConfig() {
-        this(true,
-                new CrossModuleConfig(),
-                new ActivityConfig(),
-                new AnalyticsConfig(),
-                new AnnotationConfig(),
-                new AutoContentCreationConfig(),
-                new ByteBufferPoolConfig(),
-                new ClusterConfig(),
-                new ClusterLockConfig(),
-                new CommonDbConfig(),
-                new ContentPackImportConfig(),
-//                new CorsConfig(),
-                new LegacyConfig(),
-                new DashboardConfig(),
-                new DataConfig(),
-                new DocStoreConfig(),
-                new ElasticConfig(),
-                new ExplorerConfig(),
-                new ExportConfig(),
-                new FeedConfig(),
-                new IndexConfig(),
-                new JobSystemConfig(),
-                new KafkaConfig(),
-                new LifecycleConfig(),
-                new LmdbLibraryConfig(),
-                new LoggingConfig(),
-                new NodeConfig(),
-                new NodeUriConfig(),
-                new PipelineConfig(),
-                new ProcessorConfig(),
-                new PropertyServiceConfig(),
-                new PublicUriConfig(),
-                new IndexFieldDbConfig(),
-                new ReceiveDataConfig(),
-                new S3Config(),
-                new SearchConfig(),
-                new SecurityConfig(),
-                new SessionCookieConfig(),
-                new SessionConfig(),
-                new SolrConfig(),
-                new StateConfig(),
-                new PlanBConfig(),
-                new StatisticsConfig(),
-                new StoredQueryConfig(),
-                new StroomPathConfig(),
-                new UiConfig(),
-                new UiUriConfig(),
-                new VolumeConfig());
+        this.haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
+        this.crossModuleConfig = new CrossModuleConfig();
+        this.activityConfig = new ActivityConfig();
+        this.aiConfig = new AiConfig();
+        this.analyticsConfig = new AnalyticsConfig();
+        this.annotationConfig = new AnnotationConfig();
+        this.askStroomAIConfig = new AskStroomAiConfig();
+        this.contentIndexConfig = new ContentIndexConfig();
+        this.contentStoreConfig = new ContentStoreConfig();
+        this.autoContentCreationConfig = new AutoContentCreationConfig();
+        this.byteBufferPoolConfig = new ByteBufferPoolConfig();
+        this.clusterConfig = new ClusterConfig();
+        this.clusterLockConfig = new ClusterLockConfig();
+        this.commonDbConfig = new CommonDbConfig();
+        this.contentPackImportConfig = new ContentPackImportConfig();
+        this.credentialsConfig = new CredentialsConfig();
+        this.dashboardConfig = new DashboardConfig();
+        this.dataConfig = new DataConfig();
+        this.docStoreConfig = new DocStoreConfig();
+        this.elasticConfig = new ElasticConfig();
+        this.explorerConfig = new ExplorerConfig();
+        this.exportConfig = new ExportConfig();
+        this.feedConfig = new FeedConfig();
+        this.gitRepoConfig = new GitRepoConfig();
+        this.indexConfig = new IndexConfig();
+        this.jobSystemConfig = new JobSystemConfig();
+        this.kafkaConfig = new KafkaConfig();
+        this.lifecycleConfig = new LifecycleConfig();
+        this.lmdbLibraryConfig = new LmdbLibraryConfig();
+        this.loggingConfig = new LoggingConfig();
+        this.nodeConfig = new NodeConfig();
+        this.nodeUri = new NodeUriConfig();
+        this.pipelineConfig = new PipelineConfig();
+        this.processorConfig = new ProcessorConfig();
+        this.propertyServiceConfig = new PropertyServiceConfig();
+        this.publicUri = new PublicUriConfig();
+        this.queryDataSourceConfig = new IndexFieldDbConfig();
+        this.receiveDataConfig = new ReceiveDataConfig();
+        this.receiptPolicyConfig = new StroomReceiptPolicyConfig();
+        this.s3Config = new S3Config();
+        this.searchConfig = new SearchConfig();
+        this.securityConfig = new SecurityConfig();
+        this.sessionCookieConfig = new SessionCookieConfig();
+        this.sessionConfig = new SessionConfig();
+        this.solrConfig = new SolrConfig();
+        this.planBConfig = new PlanBConfig();
+        this.statisticsConfig = new StatisticsConfig();
+        this.storedQueryConfig = new StoredQueryConfig();
+        this.pathConfig = new StroomPathConfig();
+        this.uiConfig = new UiConfig();
+        this.uiUri = new UiUriConfig();
+        this.visualisationAssetConfig = new VisualisationAssetConfig();
+        this.visualisationAssetDbConfig = new VisualisationAssetDbConfig();
+        this.volumeConfig = new VolumeConfig();
     }
 
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
+    public AppConfig(@JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final Boolean haltBootOnConfigValidationFailure,
                      @JsonProperty(CrossModuleConfig.NAME) final CrossModuleConfig crossModuleConfig,
                      @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
+                     @JsonProperty(PROP_NAME_AI) final AiConfig aiConfig,
                      @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                      @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
+                     @JsonProperty(PROP_NAME_ASK_STROOM_AI) final AskStroomAiConfig askStroomAIConfig,
                      @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                      @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
                      @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                      @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                      @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                      @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
-//                     @JsonProperty(PROP_NAME_CORS) final CorsConfig corsConfig,
-                     @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
+                     @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
+                     @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
+                     @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                      @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                      @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                      @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
@@ -253,6 +286,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
                      @JsonProperty(PROP_NAME_EXPORT) final ExportConfig exportConfig,
                      @JsonProperty(PROP_NAME_FEED) final FeedConfig feedConfig,
+                     @JsonProperty(PROP_NAME_GIT_REPO) final GitRepoConfig gitRepoConfig,
                      @JsonProperty(PROP_NAME_INDEX) final IndexConfig indexConfig,
                      @JsonProperty(PROP_NAME_JOB) final JobSystemConfig jobSystemConfig,
                      @JsonProperty(PROP_NAME_KAFKA) final KafkaConfig kafkaConfig,
@@ -267,33 +301,39 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                      @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                      @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                     @JsonProperty(PROP_NAME_RECEIPT_POLICY) final StroomReceiptPolicyConfig receiptPolicyConfig,
                      @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                      @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                      @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                      @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
-                     @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                      @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
                      @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                      @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                      @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
                      @JsonProperty(PROP_NAME_UI) final UiConfig uiConfig,
                      @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
+                     @JsonProperty(PROP_NAME_VISUALISATION_ASSET) final VisualisationAssetConfig visualisationAssetConfig,
+                     @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB) final VisualisationAssetDbConfig visualisationAssetDbConfig,
                      @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
-        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+        this.haltBootOnConfigValidationFailure = Objects.requireNonNullElse(haltBootOnConfigValidationFailure,
+                DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE);
         this.crossModuleConfig = crossModuleConfig;
         this.activityConfig = activityConfig;
+        this.aiConfig = aiConfig;
         this.analyticsConfig = analyticsConfig;
         this.annotationConfig = annotationConfig;
+        this.askStroomAIConfig = askStroomAIConfig;
+        this.contentIndexConfig = contentIndexConfig;
+        this.contentStoreConfig = contentStoreConfig;
         this.autoContentCreationConfig = autoContentCreationConfig;
         this.byteBufferPoolConfig = byteBufferPoolConfig;
         this.clusterConfig = clusterConfig;
         this.clusterLockConfig = clusterLockConfig;
         this.commonDbConfig = commonDbConfig;
         this.contentPackImportConfig = contentPackImportConfig;
-//        this.corsConfig = corsConfig;
-        this.legacyConfig = legacyConfig;
+        this.credentialsConfig = credentialsConfig;
         this.dashboardConfig = dashboardConfig;
         this.dataConfig = dataConfig;
         this.docStoreConfig = docStoreConfig;
@@ -301,6 +341,7 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
         this.feedConfig = feedConfig;
+        this.gitRepoConfig = gitRepoConfig;
         this.indexConfig = indexConfig;
         this.jobSystemConfig = jobSystemConfig;
         this.kafkaConfig = kafkaConfig;
@@ -315,19 +356,21 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.publicUri = publicUri;
         this.queryDataSourceConfig = queryDataSourceConfig;
         this.receiveDataConfig = receiveDataConfig;
+        this.receiptPolicyConfig = receiptPolicyConfig;
         this.s3Config = s3Config;
         this.searchConfig = searchConfig;
         this.securityConfig = securityConfig;
         this.sessionCookieConfig = sessionCookieConfig;
         this.sessionConfig = sessionConfig;
         this.solrConfig = solrConfig;
-        this.stateConfig = stateConfig;
         this.planBConfig = planBConfig;
         this.statisticsConfig = statisticsConfig;
         this.storedQueryConfig = storedQueryConfig;
         this.pathConfig = pathConfig;
         this.uiConfig = uiConfig;
         this.uiUri = uiUri;
+        this.visualisationAssetConfig = visualisationAssetConfig;
+        this.visualisationAssetDbConfig = visualisationAssetDbConfig;
         this.volumeConfig = volumeConfig;
     }
 
@@ -353,6 +396,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return activityConfig;
     }
 
+    @JsonProperty(PROP_NAME_AI)
+    public AiConfig getAiConfig() {
+        return aiConfig;
+    }
+
     @JsonProperty(PROP_NAME_ANALYTICS)
     public AnalyticsConfig getAnalyticsConfig() {
         return analyticsConfig;
@@ -361,6 +409,26 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_ANNOTATION)
     public AnnotationConfig getAnnotationConfig() {
         return annotationConfig;
+    }
+
+    @JsonProperty(PROP_NAME_ASK_STROOM_AI)
+    public AskStroomAiConfig getAskStroomAIConfig() {
+        return askStroomAIConfig;
+    }
+
+    @JsonProperty(PROP_NAME_CONTENT_INDEX)
+    public ContentIndexConfig getContentIndexConfig() {
+        return contentIndexConfig;
+    }
+
+    @JsonProperty(PROP_NAME_CONTENT_STORE)
+    public ContentStoreConfig getContentStoreConfig() {
+        return contentStoreConfig;
+    }
+
+    @JsonProperty(PROP_NAME_CREDENTIALS)
+    public CredentialsConfig getCredentialsConfig() {
+        return credentialsConfig;
     }
 
     @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION)
@@ -395,17 +463,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT)
     public ContentPackImportConfig getContentPackImportConfig() {
         return contentPackImportConfig;
-    }
-
-//    @JsonProperty(PROP_NAME_CORS)
-//    public CorsConfig getCorsConfig() {
-//        return corsConfig;
-//    }
-
-    @JsonProperty(PROP_NAME_CORE)
-    @JsonPropertyDescription("Configuration for the core stroom DB")
-    public LegacyConfig getLegacyConfig() {
-        return legacyConfig;
     }
 
     @JsonProperty(PROP_NAME_DASHBOARD)
@@ -443,6 +500,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_EXPORT)
     public ExportConfig getExportConfig() {
         return exportConfig;
+    }
+
+    @JsonProperty(PROP_NAME_GIT_REPO)
+    public GitRepoConfig getGitRepoConfig() {
+        return gitRepoConfig;
     }
 
     @JsonProperty(PROP_NAME_INDEX)
@@ -529,6 +591,11 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return receiveDataConfig;
     }
 
+    @JsonProperty(PROP_NAME_RECEIPT_POLICY)
+    public StroomReceiptPolicyConfig getReceiptPolicyConfig() {
+        return receiptPolicyConfig;
+    }
+
     @JsonProperty(PROP_NAME_LOGGING)
     public LoggingConfig getRequestLoggingConfig() {
         return loggingConfig;
@@ -565,12 +632,6 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return sessionConfig;
     }
 
-    @JsonProperty(PROP_NAME_STATE)
-    @JsonPropertyDescription("Configuration for the stroom state service")
-    public StateConfig getStateConfig() {
-        return stateConfig;
-    }
-
     @JsonProperty(PROP_NAME_PLANB)
     @JsonPropertyDescription("Configuration for the stroom Plan B state service")
     public PlanBConfig getPlanBConfig() {
@@ -593,6 +654,16 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty(PROP_NAME_UI_URI)
     public UiUriConfig getUiUri() {
         return uiUri;
+    }
+
+    @JsonProperty(PROP_NAME_VISUALISATION_ASSET)
+    public VisualisationAssetConfig getVisualisationAsset() {
+        return visualisationAssetConfig;
+    }
+
+    @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB)
+    public VisualisationAssetDbConfig getVisualisationAssetDbConfig() {
+        return visualisationAssetDbConfig;
     }
 
     @JsonProperty(PROP_NAME_VOLUMES)

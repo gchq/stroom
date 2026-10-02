@@ -1,0 +1,41 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup
+                label="Enabled"
+                helpText="Choose if we want to delete old data after a period of time.">
+            <tickbox:CustomCheckBox ui:field="retentionEnabled"
+                                    identity="retentionEnabled"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="retentionCheckIntervalPanel"
+                        identity="retentionCheckIntervalPanel"
+                        label="Frequency"
+                        helpText="How often to look for data that has passed its retention period. This is the schedule, not the policy: 'Retain For' above decides which data is deleted, this decides how often we check. Retention is only honoured to within this interval, so it must be shorter than the retention period.">
+            <g:FlowPanel styleName="durationSetting">
+                <valuespinner:ValueSpinner ui:field="retentionCheckInterval"/>
+                <i:SelectionBox ui:field="retentionCheckIntervalTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup ui:field="retentionAgePanel"
+                        identity="retentionAgePanel"
+                        label="Retain For"
+                        helpText="Choose how long to keep data for.">
+            <g:FlowPanel styleName="durationSetting">
+                <valuespinner:ValueSpinner ui:field="retentionAge"/>
+                <i:SelectionBox ui:field="retentionTimeUnit" addStyleNames="allow-focus"/>
+            </g:FlowPanel>
+        </form:FormGroup>
+        <form:FormGroup ui:field="useStateTimePanel"
+                        identity="useStateTimePanel"
+                        label="Use State Time"
+                        helpText="Perform retention based on temporal state time rather than data insert time.">
+            <tickbox:CustomCheckBox ui:field="useStateTime"
+                                    identity="useStateTime"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder> 

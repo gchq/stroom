@@ -16,7 +16,6 @@
 
 package stroom.main.client.view;
 
-import stroom.main.client.presenter.MainPresenter.SpinnerDisplay;
 import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.core.client.GWT;
@@ -30,7 +29,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 
-public class Spinner extends Composite implements SpinnerDisplay {
+public class Spinner extends Composite {
 
     private static final Binder binder = GWT.create(Binder.class);
     private final SpinnerLarge spinner;
@@ -53,7 +52,6 @@ public class Spinner extends Composite implements SpinnerDisplay {
         };
     }
 
-    @Override
     public void start() {
         // The search polling hits this method on every poll and if we start the spinner immediately
         // then the CPU is caned constantly updating the DOM. Add a small delay to give the polling
@@ -68,7 +66,6 @@ public class Spinner extends Composite implements SpinnerDisplay {
         spinner.setVisible(true);
     }
 
-    @Override
     public void stop() {
         if (timer.isRunning()) {
             timer.cancel();
@@ -79,12 +76,10 @@ public class Spinner extends Composite implements SpinnerDisplay {
         }
     }
 
-    @Override
     public HandlerRegistration addClickHandler(final ClickHandler handler) {
         return addDomHandler(handler, ClickEvent.getType());
     }
 
-    @Override
     public HandlerRegistration addDoubleClickHandler(final DoubleClickHandler handler) {
         return addDomHandler(handler, DoubleClickEvent.getType());
     }

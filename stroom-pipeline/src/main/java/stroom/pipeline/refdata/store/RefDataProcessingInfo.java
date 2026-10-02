@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store;
@@ -83,18 +82,19 @@ public class RefDataProcessingInfo {
     }
 
     @JsonCreator
-    public RefDataProcessingInfo(@JsonProperty("createTimeEpochMs") final long createTimeEpochMs,
-                                 @JsonProperty("lastAccessedTimeEpochMs") final long lastAccessedTimeEpochMs,
-                                 @JsonProperty("effectiveTimeEpochMs") final long effectiveTimeEpochMs,
+    public RefDataProcessingInfo(@JsonProperty("createTimeEpochMs") final Long createTimeEpochMs,
+                                 @JsonProperty("lastAccessedTimeEpochMs") final Long lastAccessedTimeEpochMs,
+                                 @JsonProperty("effectiveTimeEpochMs") final Long effectiveTimeEpochMs,
                                  @JsonProperty("processingState") final ProcessingState processingState,
                                  @JsonProperty("structureVersion") final Integer structureVersion,
                                  @JsonProperty("refStreamFeatures") final Set<RefStreamFeature> refStreamFeatures,
                                  @JsonProperty("mapInfoList") final List<RefMapInfo> mapInfoList) {
-        this.createTimeEpochMs = createTimeEpochMs;
+        this.createTimeEpochMs = Objects.requireNonNullElse(createTimeEpochMs, 0L);
         // To make it clear that we only update the last access time at intervals to avoid
         // frequent writes, truncate the value.
-        this.lastAccessedTimeEpochMs = truncateLastAccessTime(lastAccessedTimeEpochMs);
-        this.effectiveTimeEpochMs = effectiveTimeEpochMs;
+        this.lastAccessedTimeEpochMs = truncateLastAccessTime(
+                Objects.requireNonNullElse(lastAccessedTimeEpochMs, 0L));
+        this.effectiveTimeEpochMs = Objects.requireNonNullElse(effectiveTimeEpochMs, 0L);
         this.processingState = processingState;
         this.structureVersion = Objects.requireNonNullElse(structureVersion, LEGACY_STRUCTURE_VERSION);
         this.refStreamFeatures = Collections.unmodifiableSet(Objects.requireNonNullElseGet(
@@ -119,7 +119,7 @@ public class RefDataProcessingInfo {
     public RefDataProcessingInfo cloneWithNewState(final ProcessingState newProcessingState,
                                                    final boolean touchLastAccessedTime) {
 
-        long newLastAccessedTime;
+        final long newLastAccessedTime;
         if (touchLastAccessedTime) {
             newLastAccessedTime = truncateLastAccessTime(System.currentTimeMillis());
         } else {

@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -34,9 +33,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -56,8 +52,7 @@ public class RefDataProcessingInfoSerde implements
         Serializer<RefDataProcessingInfo>,
         Deserializer<RefDataProcessingInfo> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RefDataProcessingInfoSerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataProcessingInfoSerde.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataProcessingInfoSerde.class);
 
     public static final int CREATE_TIME_OFFSET = 0;
     public static final int LAST_ACCESSED_TIME_OFFSET = CREATE_TIME_OFFSET + Long.BYTES;
@@ -158,7 +153,7 @@ public class RefDataProcessingInfoSerde implements
 
     public static ProcessingState extractProcessingState(final ByteBuffer byteBuffer) {
         try {
-            byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
+            final byte bState = byteBuffer.get(PROCESSING_STATE_OFFSET);
             return ProcessingState.fromByte(bState);
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error getting byte at offset {}, byteBuffer: {}",
@@ -179,7 +174,7 @@ public class RefDataProcessingInfoSerde implements
                 processingStateIds[i++] = processingState.getId();
             }
             return byteBuffer -> {
-                byte bState = extractProcessingStateAsByte(byteBuffer);
+                final byte bState = extractProcessingStateAsByte(byteBuffer);
                 for (final byte processingStateId : processingStateIds) {
                     if (processingStateId == bState) {
                         return true;
@@ -211,11 +206,11 @@ public class RefDataProcessingInfoSerde implements
      * @param timeMsBuffer         a {@link ByteBuffer} containing a long representing an epoch millis time
      */
     public static boolean wasAccessedAfter(final ByteBuffer processingInfoBuffer, final ByteBuffer timeMsBuffer) {
-        int compareResult = ByteBufferUtils.compareAsLong(
+        final int compareResult = ByteBufferUtils.compareAsLong(
                 timeMsBuffer, timeMsBuffer.position(),
                 processingInfoBuffer, LAST_ACCESSED_TIME_OFFSET);
 
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("wasAccessedAfter returns {} for test time {} lastAccessed time {}",
+        LOGGER.trace(() -> LogUtil.message("wasAccessedAfter returns {} for test time {} lastAccessed time {}",
                 compareResult,
                 Instant.ofEpochMilli(timeMsBuffer.getLong(0)),
                 Instant.ofEpochMilli(processingInfoBuffer.getLong(LAST_ACCESSED_TIME_OFFSET))));

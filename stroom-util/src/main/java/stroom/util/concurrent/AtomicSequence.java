@@ -54,15 +54,15 @@ public class AtomicSequence {
      */
     public int next(final int limit) {
         for (; ; ) {
-            long current = sequence.get();
+            final long current = sequence.get();
 
             if (current > limit) {
-                long next = current - limit + 1;
+                final long next = current - limit + 1;
                 if (sequence.compareAndSet(current, next)) {
                     return (int) current % limit;
                 }
             } else {
-                long next = current + 1;
+                final long next = current + 1;
                 if (sequence.compareAndSet(current, next)) {
                     return (int) current % limit;
                 }

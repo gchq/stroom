@@ -1,4 +1,20 @@
 /*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * [The "BSD license"]
  * Copyright (c) 2011, abego Software GmbH, Germany (http://www.abego.org)
  * All rights reserved.
@@ -62,8 +78,8 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
      *                         {@link stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel#Center
      *                         Center}]
      */
-    public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes, Location location,
-                                AlignmentInLevel alignmentInLevel) {
+    public DefaultConfiguration(final double gapBetweenLevels, final double gapBetweenNodes, final Location location,
+                                final AlignmentInLevel alignmentInLevel) {
         checkArg(gapBetweenLevels >= 0, "gapBetweenLevels must be >= 0");
         checkArg(gapBetweenNodes >= 0, "gapBetweenNodes must be >= 0");
 
@@ -86,7 +102,7 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
      * stroom.widget.htree.client.treelayout.Configuration.Location,
      * stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
      */
-    public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes, Location location) {
+    public DefaultConfiguration(final double gapBetweenLevels, final double gapBetweenNodes, final Location location) {
         this(gapBetweenLevels, gapBetweenNodes, location, AlignmentInLevel.Center);
     }
 
@@ -101,7 +117,7 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
      * stroom.widget.htree.client.treelayout.Configuration.Location,
      * stroom.widget.htree.client.treelayout.Configuration.AlignmentInLevel)}
      */
-    public DefaultConfiguration(double gapBetweenLevels, double gapBetweenNodes) {
+    public DefaultConfiguration(final double gapBetweenLevels, final double gapBetweenNodes) {
         this(gapBetweenLevels, gapBetweenNodes, Location.Top, AlignmentInLevel.Center);
     }
 
@@ -109,12 +125,12 @@ public class DefaultConfiguration<T_TREE_NODE> implements Configuration<T_TREE_N
     // location
 
     @Override
-    public double getGapBetweenLevels(int nextLevel) {
+    public double getGapBetweenLevels(final int nextLevel) {
         return gapBetweenLevels;
     }
 
     @Override
-    public double getGapBetweenNodes(T_TREE_NODE node1, T_TREE_NODE node2) {
+    public double getGapBetweenNodes(final T_TREE_NODE node1, final T_TREE_NODE node2) {
         return gapBetweenNodes;
     }
 

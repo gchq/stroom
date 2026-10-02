@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,18 @@
 
 package stroom.searchable.api;
 
-import stroom.datasource.api.v2.DataSourceProvider;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 
 public interface Searchable extends DataSourceProvider {
 
-    void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
+    void search(ExpressionCriteria criteria,
+                FieldIndex fieldIndex,
+                DateTimeSettings dateTimeSettings,
+                ValuesConsumer consumer,
+                ErrorConsumer errorConsumer);
 }

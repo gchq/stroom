@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class ExplorerTree extends AbstractExplorerTree {
     @Override
     MultiSelectionModelImpl<ExplorerNode> getSelectionModel() {
         if (multiSelectionModel == null) {
-            multiSelectionModel = new MultiSelectionModelImpl<>(this);
+            multiSelectionModel = new MultiSelectionModelImpl<>();
         }
         return multiSelectionModel;
     }

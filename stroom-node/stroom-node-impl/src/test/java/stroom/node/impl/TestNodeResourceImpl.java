@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.node.impl;
 
 import stroom.cluster.api.ClusterNodeManager;
@@ -49,18 +65,19 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         initNodes();
 
         final String subPath = ResourcePaths.buildPath(NodeResource.FIND_PATH_PART);
-        ;
 
         final FetchNodeStatusResponse expectedResponse = getTestNodes().stream()
                 .map(testNode -> {
-                    Node node2 = new Node();
-                    node2.setEnabled(testNode.isEnabled());
-                    node2.setName(testNode.getNodeName());
+                    final Node node2 = Node
+                            .builder()
+                            .enabled(testNode.isEnabled())
+                            .name(testNode.getNodeName())
+                            .build();
                     return new NodeStatusResult(node2, testNode.getNodeName().equals("node1"));
                 })
                 .collect(FetchNodeStatusResponse.collector(FetchNodeStatusResponse::new));
 
-        FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
+        final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
 
         doPostTest(
                 subPath,
@@ -244,9 +261,11 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                 subPath,
                 10L);
 
-        Node newNode = new Node();
-        newNode.setName("node2");
-        newNode.setPriority(10);
+        final Node newNode = Node
+                .builder()
+                .name("node2")
+                .priority(10)
+                .build();
 
         // We are hitting node1 but setting node2
         verify(nodeServiceMap.get("node1"), Mockito.times(1))
@@ -263,9 +282,11 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
                 subPath,
                 Boolean.FALSE);
 
-        Node newNode = new Node();
-        newNode.setName("node2");
-        newNode.setEnabled(false);
+        final Node newNode = Node
+                .builder()
+                .name("node2")
+                .enabled(false)
+                .build();
 
         // We are hitting node1 but setting node2
         verify(nodeServiceMap.get("node1"), Mockito.times(1))
@@ -296,19 +317,19 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         when(nodeService.find(Mockito.any(FindNodeCriteria.class)))
                 .thenReturn(allNodes.stream()
                         .map(testNode -> {
-                            Node node2 = new Node();
-                            node2.setEnabled(testNode.isEnabled());
-                            node2.setName(testNode.getNodeName());
+                            final Node node2 = Node
+                                    .builder()
+                                    .enabled(testNode.isEnabled())
+                                    .name(testNode.getNodeName())
+                                    .build();
                             return node2;
                         })
                         .collect(ResultPage.collector(ResultPage::new)));
 
         when(nodeService.getNode(Mockito.anyString()))
                 .thenAnswer(invocation -> {
-                    String nodeName = invocation.getArgument(0);
-                    Node node2 = new Node();
-                    node2.setName(nodeName);
-                    return node2;
+                    final String nodeName = invocation.getArgument(0);
+                    return Node.builder().name(nodeName).build();
                 });
 
         nodeServiceMap.put(node.getNodeName(), nodeService);
@@ -325,7 +346,7 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         final ClusterNodeManager clusterNodeManager = createNamedMock(ClusterNodeManager.class, node);
 
         final long now = System.currentTimeMillis();
-        ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(
+        final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(
                 now,
                 new BuildInfo(
                         now,

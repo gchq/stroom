@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.client;
@@ -20,9 +19,11 @@ package stroom.receive.rules.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.receive.rules.client.presenter.DataRetentionPresenter;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -42,8 +43,9 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
     public DataRetentionPlugin(final EventBus eventBus,
                                final ContentManager eventManager,
                                final Provider<DataRetentionPresenter> presenterProvider,
-                               final ClientSecurityContext securityContext) {
-        super(eventBus, eventManager, presenterProvider, securityContext);
+                               final ClientSecurityContext securityContext,
+                               final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -72,5 +74,10 @@ public class DataRetentionPlugin extends MonitoringPlugin<DataRetentionPresenter
                 .action(getOpenAction())
                 .command(this::open)
                 .build();
+    }
+
+    @Override
+    public String getType() {
+        return DataRetentionPresenter.TAB_TYPE;
     }
 }

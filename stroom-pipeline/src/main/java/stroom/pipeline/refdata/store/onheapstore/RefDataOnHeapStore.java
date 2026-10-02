@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.onheapstore;
 
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
@@ -17,9 +33,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Range;
 import stroom.util.time.StroomDuration;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,8 +57,7 @@ import java.util.stream.Collectors;
  */
 public class RefDataOnHeapStore extends AbstractRefDataStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RefDataOnHeapStore.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RefDataOnHeapStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RefDataOnHeapStore.class);
 
     private final Map<RefStreamDefinition, RefDataProcessingInfo> processingInfoMap;
     private final Set<MapDefinition> mapDefinitions;
@@ -96,8 +108,8 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         // try the KV store first
 
         Optional<RefDataValue> result;
-        KeyValueMapKey keyValueMapKey = new KeyValueMapKey(mapDefinition, key);
-        RefDataValue refDataValue = keyValueMap.get(keyValueMapKey);
+        final KeyValueMapKey keyValueMapKey = new KeyValueMapKey(mapDefinition, key);
+        final RefDataValue refDataValue = keyValueMap.get(keyValueMapKey);
         if (refDataValue != null) {
             result = Optional.of(refDataValue);
         } else {
@@ -118,11 +130,11 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
                     result = Optional.empty();
                 }
 
-            } catch (NumberFormatException e) {
+            } catch (final NumberFormatException e) {
                 // key could not be converted to a long, either this mapdef has no ranges or
                 // an invalid key was used. See if we have any ranges at all for this mapdef
                 // to determine whether to error or not.
-                boolean doesStoreContainRanges = rangeValueNestedMap.containsKey(mapDefinition);
+                final boolean doesStoreContainRanges = rangeValueNestedMap.containsKey(mapDefinition);
                 if (doesStoreContainRanges) {
                     // we have ranges for this map def, so we would expect to be able to convert the key
                     throw new RuntimeException(LogUtil.message(
@@ -136,7 +148,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
             }
         }
         final Optional<RefDataValue> result2 = result;
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("getValue({}, {}) returning {}", mapDefinition, key, result2));
+        LOGGER.trace(() -> LogUtil.message("getValue({}, {}) returning {}", mapDefinition, key, result2));
         return result;
     }
 
@@ -177,7 +189,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
         // create a sub-set of the map starting at the key of interest or the next smallest
         // range from value. Note the map is reverse sorted to increase confusion.
         final SortedMap<Range<Long>, RefDataValue> tailMap = rangeSubMap.tailMap(startKey);
-        for (Map.Entry<Range<Long>, RefDataValue> entry : tailMap.entrySet()) {
+        for (final Map.Entry<Range<Long>, RefDataValue> entry : tailMap.entrySet()) {
             // see if our key is in the found range
             if (entry.getKey().contains(key)) {
                 // found our entry
@@ -303,7 +315,7 @@ public class RefDataOnHeapStore extends AbstractRefDataStore {
     /**
      * Intended only for testing use.
      */
-    void setLastAccessedTime(final RefStreamDefinition refStreamDefinition, long timeMs) {
+    void setLastAccessedTime(final RefStreamDefinition refStreamDefinition, final long timeMs) {
 
         processingInfoMap.compute(refStreamDefinition, (refStreamDef, refDataProcessingInfo) -> {
             if (refDataProcessingInfo != null) {

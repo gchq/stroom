@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
@@ -37,16 +36,13 @@ import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapUidReverseDb.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapUidReverseDb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MapUidReverseDb.class);
 
     public static final String DB_NAME = "MapUidBackward";
 
@@ -66,14 +62,14 @@ public class MapUidReverseDb extends AbstractLmdbDb<UID, MapDefinition> {
                                  final PooledByteBuffer newUidPooledBuffer) {
         final ByteBuffer nextUidBuffer = newUidPooledBuffer.getByteBuffer();
         // scan backwards over all entries to find the first (i.e. highest) key
-        try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
+        try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, KeyRange.allBackward())) {
             final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
             if (iterator.hasNext()) {
                 final CursorIterable.KeyVal<ByteBuffer> highestKeyVal = iterator.next();
 
                 final ByteBuffer highestUidBuffer = highestKeyVal.key();
 
-                LAMBDA_LOGGER.trace(() ->
+                LOGGER.trace(() ->
                         LogUtil.message("highestKey: {}", ByteBufferUtils.byteBufferInfo(highestUidBuffer)));
 
                 // DB has a UID in it so create a new one that is one higher

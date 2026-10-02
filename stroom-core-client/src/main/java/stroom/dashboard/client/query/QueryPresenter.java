@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,27 @@
 package stroom.dashboard.client.query;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.FireAlertEventFunction;
 import stroom.core.client.LocationManager;
 import stroom.core.client.event.WindowCloseEvent;
-import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.core.client.messages.ErrorMessageTemplates;
+import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
 import stroom.dashboard.client.main.IndexLoader;
-import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.main.SearchModel;
+import stroom.dashboard.client.query.QueryPresenter.QueryView;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
@@ -45,11 +45,11 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.Limits;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.QueryKey;
+import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
@@ -68,8 +68,11 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.ErrorMessages;
+import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -80,7 +83,6 @@ import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -89,15 +91,17 @@ import com.gwtplatform.mvp.client.View;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class QueryPresenter
-        extends AbstractComponentPresenter<QueryPresenter.QueryView>
-        implements HasDirtyHandlers, Queryable, SearchStateListener, SearchErrorListener {
+        extends AbstractRefreshableComponentPresenter<QueryView>
+        implements HasChangeHandlers, SearchStateListener, SearchErrorListener {
 
     public static final String TAB_TYPE = "query-component";
     private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ResultStoreResource RESULT_STORE_RESOURCE = GWT.create(ResultStoreResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+    private static final ErrorMessageTemplates ERROR_MESSAGE_TEMPLATES = GWT.create(ErrorMessageTemplates.class);
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
     static final int TEN_SECONDS = 10000;
@@ -121,11 +125,10 @@ public class QueryPresenter
     private final ButtonView historyButton;
     private final ButtonView favouriteButton;
     private final ButtonView downloadQueryButton;
-    private final ButtonView warningsButton;
-    private List<String> currentErrors;
+    private final InlineSvgButton errorsButton;
+    private ErrorMessages currentErrors;
     private ButtonView processButton;
     private boolean initialised;
-    private Timer autoRefreshTimer;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
     private ExpressionOperator currentSelectionQuery;
@@ -173,8 +176,8 @@ public class QueryPresenter
 
         expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
             @Override
-            public void fireDirty() {
-                setDirty(true);
+            public void onChange() {
+                QueryPresenter.this.onChange();
             }
 
             @Override
@@ -198,8 +201,9 @@ public class QueryPresenter
             processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
         }
 
-        warningsButton = view.addButtonRight(SvgPresets.ALERT.title("Show Warnings"));
-        setWarningsVisible(false);
+        errorsButton = new InlineSvgButton();
+        view.addButtonRight(errorsButton);
+        setErrorsVisible(false);
 
         searchModel = new SearchModel(
                 eventBus,
@@ -218,7 +222,7 @@ public class QueryPresenter
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems.size() > 0) {
+            if (!menuItems.isEmpty()) {
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
@@ -249,7 +253,8 @@ public class QueryPresenter
         }));
         registerHandler(historyButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                historyPresenter.show(QueryPresenter.this, getComponents().getDashboard().getUuid());
+                historyPresenter.show(QueryPresenter.this,
+                        getDashboardContext().getDashboardDocRef().getUuid());
             }
         }));
         registerHandler(favouriteButton.addClickHandler(event -> {
@@ -257,7 +262,7 @@ public class QueryPresenter
                 final ExpressionOperator root = expressionPresenter.write();
                 favouritesPresenter.show(
                         QueryPresenter.this,
-                        getComponents().getDashboard().getUuid(),
+                        getDashboardContext().getDashboardDocRef().getUuid(),
                         getQuerySettings().getDataSource(),
                         root);
 
@@ -270,9 +275,9 @@ public class QueryPresenter
                 }
             }));
         }
-        registerHandler(warningsButton.addClickHandler(event -> {
+        registerHandler(errorsButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {
-                showWarnings();
+                showErrors();
             }
         }));
         registerHandler(indexLoader.addChangeDataHandler(event ->
@@ -287,13 +292,12 @@ public class QueryPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(dashboardContext.addContextChangeHandler(event -> {
             if (initialised) {
-                final ExpressionOperator selectionQuery = SelectionHandlerExpressionBuilder
-                        .create(components.getComponents(), getQuerySettings().getSelectionQuery())
+                final ExpressionOperator selectionQuery = dashboardContext
+                        .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())
                         .orElse(null);
                 if (!Objects.equals(currentSelectionQuery, selectionQuery)) {
                     currentSelectionQuery = selectionQuery;
@@ -356,14 +360,30 @@ public class QueryPresenter
     }
 
     @Override
-    public void onError(final List<String> errors) {
-        currentErrors = errors;
-        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
+    public void onError(final List<ErrorMessage> errors) {
+        currentErrors = new ErrorMessages(errors);
+        setErrorsVisible(!currentErrors.isEmpty());
+        if (!currentErrors.isEmpty()) {
+            setErrorSeverity(currentErrors.getHighestSeverity());
+        }
+    }
+
+    private void setErrorSeverity(final Severity severity) {
+        if (Severity.FATAL_ERROR.equals(severity) || Severity.ERROR.equals(severity)) {
+            errorsButton.setSvg(SvgImage.ERROR);
+            errorsButton.setTitle("Show Errors");
+        } else if (Severity.WARNING.equals(severity)) {
+            errorsButton.setSvg(SvgImage.ALERT);
+            errorsButton.setTitle("Show Warning");
+        } else if (Severity.INFO.equals(severity)) {
+            errorsButton.setSvg(SvgImage.INFO);
+            errorsButton.setTitle("Show Messages");
+        }
     }
 
     @Override
-    public List<String> getCurrentErrors() {
-        return currentErrors;
+    public List<ErrorMessage> getCurrentErrors() {
+        return currentErrors.getErrorMessages();
     }
 
     private void setButtonsEnabled() {
@@ -414,7 +434,7 @@ public class QueryPresenter
                     .copy()
                     .dataSource(dataSourceRef)
                     .build());
-            setDirty(true);
+            onChange();
         }
 
         // Only allow searching if we have a data source and have loaded fields from it successfully.
@@ -463,11 +483,13 @@ public class QueryPresenter
         final ExpressionOperator root = expressionPresenter.write();
 
         final DashboardContext dashboardContext = getDashboardContext();
-        final QueryData queryData = new QueryData();
-        queryData.setDataSource(getQuerySettings().getDataSource());
-        queryData.setExpression(root);
-        queryData.setParams(dashboardContext.getParams());
-        queryData.setTimeRange(dashboardContext.getTimeRange());
+        final QueryData queryData = QueryData
+                .builder()
+                .dataSource(getQuerySettings().getDataSource())
+                .expression(root)
+                .params(dashboardContext.getParams())
+                .timeRange(dashboardContext.getResolvedTimeRange())
+                .build();
 
         final DocSelectionPopup chooser = pipelineSelection.get();
         chooser.setCaption("Choose Pipeline To Process Results With");
@@ -494,15 +516,14 @@ public class QueryPresenter
                         .onShow(e -> processorLimitsPresenter.getView().focus())
                         .onHideRequest(e -> {
                             if (e.isOk()) {
-                                final Limits limits = new Limits();
+                                final Limits.Builder limitsBuilder = Limits.builder();
                                 if (processorLimitsPresenter.getRecordLimit() != null) {
-                                    limits.setEventCount(processorLimitsPresenter.getRecordLimit());
+                                    limitsBuilder.eventCount(processorLimitsPresenter.getRecordLimit());
                                 }
                                 if (processorLimitsPresenter.getTimeLimitMins() != null) {
-                                    limits.setDurationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
+                                    limitsBuilder.durationMs(processorLimitsPresenter.getTimeLimitMins() * 60 * 1000);
                                 }
-                                queryData.setLimits(limits);
-                                openEditor(queryData, pipeline);
+                                createProcessFilter(queryData.copy().limits(limitsBuilder.build()).build(), pipeline);
                             }
                             e.hide();
                         })
@@ -511,7 +532,8 @@ public class QueryPresenter
         }, this);
     }
 
-    private void openEditor(final QueryData queryData, final DocRef pipeline) {
+    private void createProcessFilter(final QueryData queryData,
+                                     final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
         final CreateProcessFilterRequest request = CreateProcessFilterRequest
                 .builder()
@@ -533,15 +555,42 @@ public class QueryPresenter
                 .exec();
     }
 
-    private void showWarnings() {
-        if (currentErrors != null && !currentErrors.isEmpty()) {
-            final String msg = currentErrors.size() == 1
-                    ? ("The following warning was created while running this search:")
-                    : ("The following " + currentErrors.size()
-                       + " warnings have been created while running this search:");
-            final String errors = String.join("\n", currentErrors);
-            AlertEvent.fireWarn(this, msg, errors, null);
+    private void showErrors() {
+        if (!currentErrors.isEmpty()) {
+            if (currentErrors.containsAny(Severity.FATAL_ERROR, Severity.ERROR)) {
+                fireAlertEvent(AlertEvent::fireError);
+            } else if (currentErrors.containsAny(Severity.WARNING)) {
+                fireAlertEvent(AlertEvent::fireWarn);
+            } else if (currentErrors.containsAny(Severity.INFO)) {
+                fireAlertEvent(AlertEvent::fireInfo);
+            }
         }
+    }
+
+    private void fireAlertEvent(final FireAlertEventFunction fireAlertEventFunction) {
+        final List<ErrorMessage> errorMessages = currentErrors.getErrorMessagesOrderedBySeverity();
+        final String msg = getAlertMessage(errorMessages.size());
+        final List<String> messages = errorMessages.stream()
+                .map(this::toDisplayMessage)
+                .collect(Collectors.toList());
+
+        fireAlertEventFunction.apply(this, msg, String.join("\n", messages), null);
+    }
+
+    private String toDisplayMessage(final ErrorMessage errorMessage) {
+        if (errorMessage.getNode() == null) {
+            return ERROR_MESSAGE_TEMPLATES.errorMessage(errorMessage.getSeverity().getDisplayValue(),
+                    errorMessage.getMessage());
+        }
+        return ERROR_MESSAGE_TEMPLATES.errorMessageWithNode(errorMessage.getSeverity().getDisplayValue(),
+                errorMessage.getMessage(), errorMessage.getNode());
+    }
+
+    private String getAlertMessage(final int numberOfMessages) {
+        return numberOfMessages == 1
+                ? ERROR_MESSAGE_TEMPLATES.errorMessageCreatedSingular()
+                :
+                        ERROR_MESSAGE_TEMPLATES.errorMessagesCreatedPlural();
     }
 
     @Override
@@ -565,10 +614,7 @@ public class QueryPresenter
 
     @Override
     public void stop() {
-        if (autoRefreshTimer != null) {
-            autoRefreshTimer.cancel();
-            autoRefreshTimer = null;
-        }
+        cancelRefresh();
         searchModel.stop();
     }
 
@@ -577,8 +623,9 @@ public class QueryPresenter
         return searchModel.isSearching();
     }
 
-    private void run(final boolean incremental,
-                     final boolean storeHistory) {
+    @Override
+    public void run(final boolean incremental,
+                    final boolean storeHistory) {
         run(incremental, storeHistory, null);
     }
 
@@ -593,18 +640,20 @@ public class QueryPresenter
             currentErrors = null;
             expressionPresenter.clearSelection();
 
-            setWarningsVisible(false);
+            setErrorsVisible(false);
 
             // Write expression.
             final ExpressionOperator root = expressionPresenter.write();
-            final ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
+            ExpressionOperator decorated = ExpressionUtil.combine(root, expressionDecorator);
+
+            final DashboardContext dashboardContext = getDashboardContext();
+            decorated = dashboardContext.replaceExpression(decorated, true);
 
             // Start search.
-            final DashboardContext dashboardContext = getDashboardContext();
             searchModel.startNewSearch(
                     decorated,
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange(),
+                    dashboardContext.getResolvedTimeRange(),
                     incremental,
                     storeHistory,
                     queryInfo.getMessage(),
@@ -623,17 +672,18 @@ public class QueryPresenter
             currentErrors = null;
             expressionPresenter.clearSelection();
 
-            setWarningsVisible(false);
+            setErrorsVisible(false);
 
             // Write expression.
-            final ExpressionOperator root = expressionPresenter.write();
+            ExpressionOperator root = expressionPresenter.write();
+            final DashboardContext dashboardContext = getDashboardContext();
+            root = dashboardContext.replaceExpression(root, true);
 
             // Start search.
-            final DashboardContext dashboardContext = getDashboardContext();
             searchModel.startNewSearch(
                     root,
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange(),
+                    dashboardContext.getResolvedTimeRange(),
                     true,
                     false,
                     queryInfo.getMessage(),
@@ -660,9 +710,16 @@ public class QueryPresenter
                     .build());
         }
 
+        // Fix legacy selection filters.
+        setSettings(getQuerySettings()
+                .copy()
+                .selectionQuery(SelectionHandlerExpressionBuilder
+                        .fixLegacySelectionHandlers(getQuerySettings().getSelectionQuery()))
+                .build());
+
         // Set the dashboard UUID for the search model to be able to store query history for this dashboard.
-        final DashboardDoc dashboard = getComponents().getDashboard();
-        searchModel.init(dashboard.asDocRef(), componentConfig.getId());
+        final DocRef dashboardDocRef = getDashboardContext().getDashboardDocRef();
+        searchModel.init(dashboardDocRef, componentConfig.getId());
 
         // Read data source.
         loadDataSource(getQuerySettings().getDataSource());
@@ -678,12 +735,7 @@ public class QueryPresenter
     @Override
     public ComponentConfig write() {
         // Write expression.
-        setSettings(getQuerySettings()
-                .copy()
-                .expression(expressionPresenter.write())
-                .lastQueryKey(searchModel.getCurrentQueryKey())
-                .lastQueryNode(searchModel.getCurrentNode())
-                .build());
+        setSettings(getQuerySettings().copy().expression(expressionPresenter.write()).build());
         return super.write();
     }
 
@@ -717,21 +769,6 @@ public class QueryPresenter
             final Automate automate = getQuerySettings().getAutomate();
             if (queryOnOpen || automate.isOpen()) {
                 run(true, false);
-
-            } else if (getQuerySettings().getLastQueryKey() != null) {
-                // See if the result store exists before we try and resume a query.
-                restFactory
-                        .create(RESULT_STORE_RESOURCE)
-                        .method(res -> res.exists(getQuerySettings().getLastQueryNode(),
-                                getQuerySettings().getLastQueryKey()))
-                        .onSuccess(result -> {
-                            if (result != null && result) {
-                                // Resume search if we have a stored query key.
-                                resume(getQuerySettings().getLastQueryNode(), getQuerySettings().getLastQueryKey());
-                            }
-                        })
-                        .taskMonitorFactory(this)
-                        .exec();
             }
         }
     }
@@ -751,6 +788,21 @@ public class QueryPresenter
         return searchModel;
     }
 
+    @Override
+    public boolean isSearching() {
+        return searchModel.isSearching();
+    }
+
+    @Override
+    public boolean isInitialised() {
+        return initialised;
+    }
+
+    @Override
+    public Automate getAutomate() {
+        return getQuerySettings().getAutomate();
+    }
+
     public void setExpression(final ExpressionOperator root) {
         expressionPresenter.read(root);
     }
@@ -762,42 +814,6 @@ public class QueryPresenter
         // If this is the end of a query then schedule a refresh.
         if (!searching) {
             scheduleRefresh();
-        }
-    }
-
-    private void scheduleRefresh() {
-        // Schedule auto refresh after a query has finished.
-        if (autoRefreshTimer != null) {
-            autoRefreshTimer.cancel();
-        }
-        autoRefreshTimer = null;
-
-        final Automate automate = getQuerySettings().getAutomate();
-        if (initialised && automate.isRefresh()) {
-            try {
-                final String interval = automate.getRefreshInterval();
-                int millis = ModelStringUtil.parseDurationString(interval).intValue();
-
-                // Ensure that the refresh interval is not less than 10 seconds.
-                millis = Math.max(millis, TEN_SECONDS);
-
-                autoRefreshTimer = new Timer() {
-                    @Override
-                    public void run() {
-                        if (!initialised) {
-                            stop();
-                        } else {
-                            // Make sure search is currently inactive before we attempt to execute a new query.
-                            if (!searchModel.isSearching()) {
-                                QueryPresenter.this.run(false, false);
-                            }
-                        }
-                    }
-                };
-                autoRefreshTimer.schedule(millis);
-            } catch (final RuntimeException e) {
-                // Ignore as we cannot display this error now.
-            }
         }
     }
 
@@ -874,7 +890,7 @@ public class QueryPresenter
             final DashboardSearchRequest searchRequest = searchModel.createDownloadQueryRequest(
                     expressionPresenter.write(),
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange());
+                    dashboardContext.getResolvedTimeRange());
 
             restFactory
                     .create(DASHBOARD_RESOURCE)
@@ -886,8 +902,8 @@ public class QueryPresenter
         }
     }
 
-    private void setWarningsVisible(final boolean show) {
-        warningsButton.asWidget().getElement().getStyle().setOpacity(show
+    private void setErrorsVisible(final boolean show) {
+        errorsButton.asWidget().getElement().getStyle().setOpacity(show
                 ? 1
                 : 0);
     }
@@ -911,6 +927,8 @@ public class QueryPresenter
         ButtonView addButtonLeft(Preset preset);
 
         ButtonView addButtonRight(Preset preset);
+
+        void addButtonRight(final ButtonView button);
 
         void setExpressionView(View view);
 

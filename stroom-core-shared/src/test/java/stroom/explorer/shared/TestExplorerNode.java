@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
@@ -14,13 +30,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.explorer.shared.NodeFlag.NodeFlagGroups.EXPANDER_GROUP;
 
 class TestExplorerNode {
 
     @Test
     void testSerDeser() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .addNodeFlags(NodeFlag.CLOSED, NodeFlag.FOLDER, NodeFlag.FAVOURITE)
                 .addNodeFlag(NodeFlag.FILTER_MATCH)
                 .build();
@@ -33,7 +48,7 @@ class TestExplorerNode {
 
     @Test
     void testHasNodeFlag_false() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .build();
 
         assertThat(node.hasNodeFlag(NodeFlag.OPEN))
@@ -48,7 +63,7 @@ class TestExplorerNode {
 
     @Test
     void testHasNodeFlag_true() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .addNodeFlag(NodeFlag.OPEN)
                 .addNodeFlag(NodeFlag.FAVOURITE)
                 .addNodeFlag(NodeFlag.FOLDER)
@@ -68,13 +83,13 @@ class TestExplorerNode {
 
     @Test
     void testHasNodeGroup_true() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .addNodeFlag(NodeFlag.OPEN)
                 .addNodeFlag(NodeFlag.FAVOURITE)
                 .addNodeFlag(NodeFlag.FILTER_MATCH)
                 .build();
 
-        assertThat(node.hasNodeFlagGroup(EXPANDER_GROUP))
+        assertThat(node.hasNodeFlagGroup(NodeFlagGroups.EXPANDER_GROUP))
                 .isTrue();
         assertThat(node.hasNodeFlagGroup(NodeFlagGroups.FILTER_MATCH_PAIR))
                 .isTrue();
@@ -82,11 +97,11 @@ class TestExplorerNode {
 
     @Test
     void testHasNodeGroup_false() {
-        ExplorerNode node = ExplorerNode.builder()
+        final ExplorerNode node = ExplorerNode.builder()
                 .addNodeFlag(NodeFlag.FAVOURITE)
                 .build();
 
-        assertThat(node.hasNodeFlagGroup(EXPANDER_GROUP))
+        assertThat(node.hasNodeFlagGroup(NodeFlagGroups.EXPANDER_GROUP))
                 .isFalse();
         assertThat(node.hasNodeFlagGroup(NodeFlagGroups.FILTER_MATCH_PAIR))
                 .isFalse();

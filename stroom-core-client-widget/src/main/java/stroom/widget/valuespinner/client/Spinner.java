@@ -96,13 +96,13 @@ public class Spinner implements HasValueChangeHandlers<Long> {
         incrementArrow.getElement().setInnerSafeHtml(upSafeHtml);
 //                "valueSpinner-arrow",
 //                "valueSpinner-arrowUp"));
-        MouseUpHandler mouseUpHandler = event -> {
+        final MouseUpHandler mouseUpHandler = event -> {
             if (enabled) {
                 cancelTimer((Widget) event.getSource());
             }
         };
         incrementArrow.addDomHandler(mouseUpHandler, MouseUpEvent.getType());
-        MouseDownHandler mouseDownHandler = event -> {
+        final MouseDownHandler mouseDownHandler = event -> {
             if (enabled) {
                 final Widget sender = (Widget) event.getSource();
                 if (sender == incrementArrow) {
@@ -118,7 +118,7 @@ public class Spinner implements HasValueChangeHandlers<Long> {
             }
         };
         incrementArrow.addDomHandler(mouseDownHandler, MouseDownEvent.getType());
-        MouseOverHandler mouseOverHandler = event -> {
+        final MouseOverHandler mouseOverHandler = event -> {
             if (enabled) {
                 final Widget sender = (Widget) event.getSource();
                 if (sender == incrementArrow) {
@@ -129,7 +129,7 @@ public class Spinner implements HasValueChangeHandlers<Long> {
             }
         };
         incrementArrow.addDomHandler(mouseOverHandler, MouseOverEvent.getType());
-        MouseOutHandler mouseOutHandler = event -> {
+        final MouseOutHandler mouseOutHandler = event -> {
             if (enabled) {
                 cancelTimer((Widget) event.getSource());
             }

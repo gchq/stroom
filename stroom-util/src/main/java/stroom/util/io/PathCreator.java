@@ -17,6 +17,7 @@
 package stroom.util.io;
 
 import com.google.inject.ImplementedBy;
+import org.jspecify.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -36,7 +37,7 @@ public interface PathCreator {
      * Turns an application relative path into an absolute path making use of the home directory location set for the
      * application and performing any other system property replacement that may be needed.
      */
-    Path toAppPath(String pathString);
+    Path toAppPath(@Nullable String pathString);
 
     String replaceUUIDVars(String path);
 
@@ -47,16 +48,28 @@ public interface PathCreator {
     boolean containsVars(String path);
 
     String replace(String path,
-                   String type,
+                   String var,
                    LongSupplier replacementSupplier,
                    int pad);
 
-    String replace(String path,
-                   String type,
+    /**
+     * Replaces ALL instances of '{@code ${param}}' with the value supplied by replacementSupplier.
+     *
+     * @param str                 The {@link String} to replace params in.
+     * @param var                 The param to replace (without the wrapping '{@code ${...}}'.
+     * @param replacementSupplier Supplier of the replacement value.
+     * @return str with all instances of param replaced.
+     */
+    String replace(String str,
+                   String var,
                    Supplier<String> replacementSupplier);
 
     String replaceAll(String path);
 
+    /**
+     * Replacements depend on the implementation of the PathCreator used. It may be a no-op.
+     * The implementation may also depend on being in a pipeline scope to work fully.
+     */
     String replaceContextVars(String path);
 
     @Override

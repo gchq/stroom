@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionValue;
 import stroom.query.shared.CompletionsRequest;
+import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QueryResource;
 import stroom.task.client.DefaultTaskMonitorFactory;
@@ -59,6 +60,7 @@ public class QueryHelpAceCompletionProvider
 
     private DocRef dataSourceRef;
     private Set<QueryHelpType> includedTypes = QueryHelpType.ALL_TYPES;
+    private TextType textType = TextType.STROOM_QUERY_LANGUAGE;
 
     @Inject
     public QueryHelpAceCompletionProvider(final EventBus eventBus,
@@ -81,6 +83,7 @@ public class QueryHelpAceCompletionProvider
             final CompletionsRequest completionsRequest =
                     new CompletionsRequest(
                             dataSourceRef,
+                            textType,
                             editor.getText(),
                             pos.getRow(),
                             pos.getColumn(),
@@ -99,12 +102,11 @@ public class QueryHelpAceCompletionProvider
 
                         callback.invokeWithCompletions(aceCompletions);
                     })
-                .taskMonitorFactory(taskMonitorFactory)
+                    .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         });
     }
 
-    @SuppressWarnings("PatternVariableCanBeUsed") // cos GWT
     private AceCompletion convertCompletion(final CompletionItem completionItem) {
         if (completionItem == null) {
             return null;
@@ -119,8 +121,7 @@ public class QueryHelpAceCompletionProvider
 
             final AceCompletion aceCompletion;
 
-            if (completionItem instanceof CompletionValue) {
-                final CompletionValue completionValue = (CompletionValue) completionItem;
+            if (completionItem instanceof final CompletionValue completionValue) {
                 aceCompletion = new AceCompletionValue(
                         caption,
                         completionValue.getValue(),
@@ -128,8 +129,7 @@ public class QueryHelpAceCompletionProvider
                         tooltipHtml,
                         score);
 
-            } else if (completionItem instanceof CompletionSnippet) {
-                final CompletionSnippet completionSnippet = (CompletionSnippet) completionItem;
+            } else if (completionItem instanceof final CompletionSnippet completionSnippet) {
                 aceCompletion = new AceCompletionSnippet(
                         caption,
                         completionSnippet.getSnippet(),
@@ -149,6 +149,10 @@ public class QueryHelpAceCompletionProvider
 
     public void setIncludedTypes(final Set<QueryHelpType> includedTypes) {
         this.includedTypes = includedTypes;
+    }
+
+    public void setTextType(final TextType textType) {
+        this.textType = textType;
     }
 
     @Override

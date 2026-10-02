@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.DynamicFieldSelectionListModel;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
@@ -34,6 +34,7 @@ import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
@@ -42,9 +43,10 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.UUID;
 
 public class SolrIndexSettingsPresenter
-        extends DocumentEditPresenter<SolrIndexSettingsView, SolrIndexDoc>
+        extends DocPresenter<SolrIndexSettingsView, SolrIndexDoc>
         implements SolrIndexSettingsUiHandlers {
 
     private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
@@ -77,19 +79,14 @@ public class SolrIndexSettingsPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(editExpressionPresenter.addDirtyHandler(dirty -> setDirty(true)));
-        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> setDirty(true)));
-    }
-
-    @Override
-    public void onChange() {
-        setDirty(true);
+        registerHandler(editExpressionPresenter.addChangeHandler(this::onChange));
+        registerHandler(pipelinePresenter.addDataSelectionHandler(selection -> onChange()));
     }
 
     @Override
     public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
         getView().setTestingConnection(true);
-        final SolrIndexDoc index = onWrite(new SolrIndexDoc());
+        final SolrIndexDoc index = onWrite(SolrIndexDoc.builder().uuid(UUID.randomUUID().toString()).build());
         restFactory
                 .create(SOLR_INDEX_RESOURCE)
                 .method(res -> res.solrConnectionTest(index))
@@ -119,35 +116,43 @@ public class SolrIndexSettingsPresenter
         }
 
         getView().setCollection(index.getCollection());
+        getView().setTimeField(index.getTimeField());
 
-        if (index.getRetentionExpression() == null) {
-            index.setRetentionExpression(ExpressionOperator.builder().build());
+        ExpressionOperator retentionExpression = index.getRetentionExpression();
+        if (retentionExpression == null) {
+            retentionExpression = ExpressionOperator.builder().build();
         }
 
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
-        editExpressionPresenter.read(index.getRetentionExpression());
+        editExpressionPresenter.read(retentionExpression);
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
     }
 
     @Override
     protected SolrIndexDoc onWrite(final SolrIndexDoc index) {
-        final SolrConnectionConfig connectionConfig = new SolrConnectionConfig();
-        connectionConfig.setInstanceType(getView().getInstanceType());
-        connectionConfig.setSolrUrls(getView().getSolrUrls());
-        connectionConfig.setZkHosts(getView().getZkHosts());
-        connectionConfig.setZkPath(getView().getZkPath());
-        connectionConfig.setUseZk(getView().isUseZk());
-        index.setSolrConnectionConfig(connectionConfig);
+        final SolrConnectionConfig connectionConfig = SolrConnectionConfig
+                .builder()
+                .instanceType(getView().getInstanceType())
+                .solrUrls(getView().getSolrUrls())
+                .zkHosts(getView().getZkHosts())
+                .zkPath(getView().getZkPath())
+                .useZk(getView().isUseZk())
+                .build();
 
-        if (getView().getCollection().trim().length() == 0) {
-            index.setCollection(null);
-        } else {
-            index.setCollection(getView().getCollection().trim());
+        String collection = null;
+        if (!NullSafe.isBlankString(getView().getCollection())) {
+            collection = getView().getCollection().trim();
         }
-        index.setRetentionExpression(editExpressionPresenter.write());
-        index.setDefaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference());
-        return index;
+
+        return index
+                .copy()
+                .collection(collection)
+                .timeField(getView().getTimeField())
+                .solrConnectionConfig(connectionConfig)
+                .retentionExpression(editExpressionPresenter.write())
+                .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
+                .build();
     }
 
     @Override

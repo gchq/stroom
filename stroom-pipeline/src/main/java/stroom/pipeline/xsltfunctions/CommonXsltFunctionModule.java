@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.xsltfunctions;
 
 import stroom.util.pipeline.scope.PipelineScoped;
@@ -18,11 +34,14 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
 
     @Override
     protected void configureFunctions() {
+        bindFunction(AddMetaFunction.class);
         bindFunction(CidrToNumericIPRangeFunction.class);
         bindFunction(ClassificationFunction.class);
         bindFunction(ColFromFunction.class);
         bindFunction(ColToFunction.class);
+        bindFunction(CosineSimilarityFunction.class);
         bindFunction(CurrentTimeFunction.class);
+        bindFunction(CurrentUnixTimeFunction.class);
         bindFunction(CurrentUserFunction.class);
         bindFunction(DecodeUrlFunction.class);
         bindFunction(DictionaryFunction.class);
@@ -31,6 +50,8 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(FeedNameFunction.class);
         bindFunction(FetchJsonFunction.class);
         bindFunction(FormatDateFunction.class);
+        bindFunction(FormatDateTimeFunction.class);
+        bindFunction(FromUnixTimeFunction.class);
         bindFunction(GetFunction.class);
         bindFunction(HashFunction.class);
         bindFunction(HexToDecFunction.class);
@@ -44,11 +65,16 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(LineToFunction.class);
         bindFunction(LinkFunction.class);
         bindFunction(LogFunction.class);
+        bindFunction(ManifestFunction.class);
+        bindFunction(ManifestForIdFunction.class);
         bindFunction(MetaFunction.class);
-        bindFunction(MetaKeysFunction.class);
         bindFunction(MetaAttributesFunction.class);
+        bindFunction(MetaKeysFunction.class);
+        bindFunction(MetaStreamFunction.class);
+        bindFunction(MetaStreamForIdFunction.class);
         bindFunction(NumericIPFunction.class);
         bindFunction(IPInCidrFunction.class);
+        bindFunction(ParseDateTimeFunction.class);
         bindFunction(ParseUriFunction.class);
         bindFunction(PipelineNameFunction.class);
         bindFunction(PointIsInsideXYPolygonFunction.class);
@@ -56,7 +82,25 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(RandomFunction.class);
         bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
+        bindFunction(SplitDocumentFunction.class);
         bindFunction(SourceFunction.class);
+        bindFunction(ToUnixTimeFunction.class);
+    }
+
+    private static class AddMetaFunction extends StroomExtensionFunctionDefinition<AddMeta> {
+
+        @Inject
+        AddMetaFunction(final Provider<AddMeta> functionCallProvider) {
+            super(
+                    AddMeta.FUNCTION_NAME,
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_STRING},
+                    SequenceType.EMPTY_SEQUENCE,
+                    functionCallProvider);
+        }
     }
 
     private static class CidrToNumericIPRangeFunction extends StroomExtensionFunctionDefinition<CidrToNumericIPRange> {
@@ -101,6 +145,23 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
+    private static class CosineSimilarityFunction extends StroomExtensionFunctionDefinition<CosineSimilarity> {
+
+        @Inject
+        CosineSimilarityFunction(final Provider<CosineSimilarity> functionCallProvider) {
+            super(
+                    CosineSimilarity.FUNCTION_NAME,
+                    2,
+                    2,
+                    new SequenceType[]{
+                            SequenceType.ATOMIC_SEQUENCE,
+                            SequenceType.ATOMIC_SEQUENCE
+                    },
+                    SequenceType.SINGLE_NUMERIC,
+                    functionCallProvider);
+        }
+    }
+
     private static class ColToFunction extends StroomExtensionFunctionDefinition<ColTo> {
 
         @Inject
@@ -125,6 +186,20 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class CurrentUnixTimeFunction extends StroomExtensionFunctionDefinition<CurrentUnixTime> {
+
+        @Inject
+        CurrentUnixTimeFunction(final Provider<CurrentUnixTime> functionCallProvider) {
+            super(
+                    CurrentUnixTime.FUNCTION_NAME,
+                    0,
+                    0,
+                    new SequenceType[]{},
+                    SequenceType.OPTIONAL_INTEGER,
                     functionCallProvider);
         }
     }
@@ -251,6 +326,58 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
+    private static class ParseDateTimeFunction extends StroomExtensionFunctionDefinition<ParseDateTime> {
+
+        @Inject
+        ParseDateTimeFunction(final Provider<ParseDateTime> functionCallProvider) {
+            super(
+                    ParseDateTime.FUNCTION_NAME,
+                    1,
+                    3,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_STRING,
+                            SequenceType.OPTIONAL_STRING
+                    },
+                    SequenceType.OPTIONAL_DATE_TIME,
+                    functionCallProvider);
+        }
+    }
+
+    private static class FormatDateTimeFunction extends StroomExtensionFunctionDefinition<FormatDateTime> {
+
+        @Inject
+        FormatDateTimeFunction(final Provider<FormatDateTime> functionCallProvider) {
+            super(
+                    FormatDateTime.FUNCTION_NAME,
+                    1,
+                    3,
+                    new SequenceType[]{
+                            SequenceType.OPTIONAL_DATE_TIME,
+                            SequenceType.OPTIONAL_STRING,
+                            SequenceType.OPTIONAL_STRING
+                    },
+                    SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class FromUnixTimeFunction extends StroomExtensionFunctionDefinition<FromUnixTime> {
+
+        @Inject
+        FromUnixTimeFunction(final Provider<FromUnixTime> functionCallProvider) {
+            super(
+                    FromUnixTime.FUNCTION_NAME,
+                    1,
+                    1,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_INTEGER
+                    },
+                    SequenceType.OPTIONAL_DATE_TIME,
+                    functionCallProvider);
+        }
+    }
+
     private static class GetFunction extends StroomExtensionFunctionDefinition<Get> {
 
         @Inject
@@ -332,10 +459,12 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HostAddressFunction(final Provider<HostAddress> functionCallProvider) {
             super(
-                    "host-address",
+                    HostAddress.FUNCTION_NAME,
                     1,
-                    1,
-                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_BOOLEAN},
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
@@ -346,10 +475,12 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         HostNameFunction(final Provider<HostName> functionCallProvider) {
             super(
-                    "host-name",
+                    HostName.FUNCTION_NAME,
                     1,
-                    1,
-                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    2,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.OPTIONAL_BOOLEAN},
                     SequenceType.OPTIONAL_STRING,
                     functionCallProvider);
         }
@@ -449,12 +580,54 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
+    private static class ManifestFunction extends StroomExtensionFunctionDefinition<Manifest> {
+
+        @Inject
+        ManifestFunction(final Provider<Manifest> functionCallProvider) {
+            super(
+                    Manifest.FUNCTION_NAME_NO_ARGS,
+                    0,
+                    0,
+                    new SequenceType[]{},
+                    SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
+    }
+
+    private static class ManifestForIdFunction extends StroomExtensionFunctionDefinition<Manifest> {
+
+        @Inject
+        ManifestForIdFunction(final Provider<Manifest> functionCallProvider) {
+            super(
+                    Manifest.FUNCTION_NAME_FOR_ID,
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
+    }
+
     private static class MetaFunction extends StroomExtensionFunctionDefinition<Meta> {
 
         @Inject
         MetaFunction(final Provider<Meta> functionCallProvider) {
             super(
                     "meta",
+                    1,
+                    1,
+                    new SequenceType[]{SequenceType.SINGLE_STRING},
+                    SequenceType.OPTIONAL_STRING,
+                    functionCallProvider);
+        }
+    }
+
+    private static class MetaAttributesFunction extends StroomExtensionFunctionDefinition<MetaAttribute> {
+
+        @Inject
+        MetaAttributesFunction(final Provider<MetaAttribute> functionCallProvider) {
+            super(
+                    "meta-attribute",
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -477,16 +650,31 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class MetaAttributesFunction extends StroomExtensionFunctionDefinition<MetaAttribute> {
+    private static class MetaStreamFunction extends StroomExtensionFunctionDefinition<MetaStream> {
 
         @Inject
-        MetaAttributesFunction(final Provider<MetaAttribute> functionCallProvider) {
+        MetaStreamFunction(final Provider<MetaStream> functionCallProvider) {
             super(
-                    "meta-attribute",
-                    1,
-                    1,
-                    new SequenceType[]{SequenceType.SINGLE_STRING},
-                    SequenceType.OPTIONAL_STRING,
+                    MetaStream.FUNCTION_NAME_NO_ARGS,
+                    0,
+                    0,
+                    new SequenceType[]{},
+                    SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
+    }
+
+    private static class MetaStreamForIdFunction extends StroomExtensionFunctionDefinition<MetaStream> {
+
+        @Inject
+        MetaStreamForIdFunction(final Provider<MetaStream> functionCallProvider) {
+            super(
+                    MetaStream.FUNCTION_NAME_FOR_ID,
+                    2,
+                    2,
+                    new SequenceType[]{SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_INTEGER},
+                    SequenceType.NODE_SEQUENCE,
                     functionCallProvider);
         }
     }
@@ -629,6 +817,24 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
+    private static class SplitDocumentFunction extends StroomExtensionFunctionDefinition<SplitDocument> {
+
+        @Inject
+        SplitDocumentFunction(final Provider<SplitDocument> functionCallProvider) {
+            super(
+                    SplitDocument.FUNCTION_NAME,
+                    3,
+                    3,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_STRING,
+                            SequenceType.SINGLE_NUMERIC,
+                            SequenceType.SINGLE_NUMERIC
+                    },
+                    ArrayItemType.SINGLE_ARRAY,
+                    functionCallProvider);
+        }
+    }
+
     private static class SourceFunction extends StroomExtensionFunctionDefinition<Source> {
 
         @Inject
@@ -639,6 +845,22 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     SequenceType.NODE_SEQUENCE,
+                    functionCallProvider);
+        }
+    }
+
+    private static class ToUnixTimeFunction extends StroomExtensionFunctionDefinition<ToUnixTime> {
+
+        @Inject
+        ToUnixTimeFunction(final Provider<ToUnixTime> functionCallProvider) {
+            super(
+                    ToUnixTime.FUNCTION_NAME,
+                    1,
+                    1,
+                    new SequenceType[]{
+                            SequenceType.OPTIONAL_DATE_TIME
+                    },
+                    SequenceType.OPTIONAL_INTEGER,
                     functionCallProvider);
         }
     }

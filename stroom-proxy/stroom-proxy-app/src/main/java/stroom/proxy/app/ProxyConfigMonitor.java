@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.proxy.app.guice.ProxyConfigProvider;
@@ -50,7 +66,7 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
 
         try {
             newProxyConfig = ProxyYamlUtil.readProxyConfig(configFile);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Swallow error as we don't want to break the app because the file is bad.
             // Admin can fix file and try again.
             if (LOGGER.isDebugEnabled()) {
@@ -74,7 +90,7 @@ public class ProxyConfigMonitor extends AbstractFileChangeMonitor implements Man
                 try {
                     LOGGER.info("Updating application config from file.");
                     proxyConfigProvider.rebuildConfigInstances(newProxyConfig);
-                } catch (Throwable e) {
+                } catch (final Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad
                     // The admins can fix the problem and let it have another go.
                     LOGGER.error("Error updating runtime configuration from file {}",

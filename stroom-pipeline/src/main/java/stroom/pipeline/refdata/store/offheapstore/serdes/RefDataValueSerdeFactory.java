@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -40,7 +39,7 @@ public class RefDataValueSerdeFactory {
             throw new RuntimeException("Unexpected typeId " + typeId);
         }
 
-        RefDataValueSerde serde = SERDES[typeId];
+        final RefDataValueSerde serde = SERDES[typeId];
         if (serde == null) {
             throw new RuntimeException("Unexpected typeId " + typeId);
         }

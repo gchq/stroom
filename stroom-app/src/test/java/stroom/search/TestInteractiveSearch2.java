@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,16 @@
 
 package stroom.search;
 
-import stroom.annotation.api.AnnotationFields;
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.dictionary.api.DictionaryStore;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexConstants;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamSubstituteUtil;
-import stroom.query.api.v2.Row;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.Column;
+import stroom.query.api.Format;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.Row;
+import stroom.query.api.TableSettings;
 import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.impl.ExecutorProviderImpl;
@@ -79,7 +79,7 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
      */
     @Test
     void positiveCaseInsensitiveTest() {
-        String queryString = """
+        final String queryString = """
                 from "Test index"
                 where UserId = user5 and Description = e0567
                 and EventTime >= 2000-01-01T00:00:00.000Z
@@ -98,7 +98,7 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
      */
     @Test
     void testHavingEquals() {
-        String queryString = """
+        final String queryString = """
                 from "Test index"
                 where UserId = user5 and Description = e0567
                 and EventTime >= 2000-01-01T00:00:00.000Z
@@ -423,7 +423,7 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
                                  final boolean extractValues) {
 
         // code to test the results when they come back
-        Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
+        final Consumer<Map<String, List<Row>>> resultMapConsumer = resultMap -> {
             for (final List<Row> values : resultMap.values()) {
                 if (expectResultCount == 0) {
                     assertThat(values.size()).isEqualTo(0);
@@ -466,26 +466,26 @@ class TestInteractiveSearch2 extends AbstractSearchTest2 {
         final Column streamIdColumn = Column.builder()
                 .id("Stream Id")
                 .name("Stream Id")
-                .expression(ParamSubstituteUtil.makeParam(IndexConstants.STREAM_ID))
+                .expression(ParamUtil.create(IndexConstants.STREAM_ID))
                 .build();
 
         final Column eventIdColumn = Column.builder()
                 .id("Event Id")
                 .name("Event Id")
-                .expression(ParamSubstituteUtil.makeParam(IndexConstants.EVENT_ID))
+                .expression(ParamUtil.create(IndexConstants.EVENT_ID))
                 .build();
 
         final Column timeColumn = Column.builder()
                 .id("Event Time")
                 .name("Event Time")
-                .expression(ParamSubstituteUtil.makeParam("EventTime"))
+                .expression(ParamUtil.create("EventTime"))
                 .format(Format.DATE_TIME)
                 .build();
 
         final Column statusColumn = Column.builder()
                 .id("Status")
                 .name("Status")
-                .expression(ParamSubstituteUtil.makeParam(AnnotationFields.STATUS))
+                .expression(ParamUtil.create(AnnotationDecorationFields.ANNOTATION_STATUS))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();

@@ -120,7 +120,7 @@ public class FindIndexShardCriteria extends BaseCriteria {
         return documentCountRange;
     }
 
-    public void setDocumentCountRange(Range<Integer> documentCountRange) {
+    public void setDocumentCountRange(final Range<Integer> documentCountRange) {
         this.documentCountRange = documentCountRange;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,38 @@
 package stroom.query.language;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.HoppingWindow;
-import stroom.query.api.v2.IncludeExcludeFilter;
-import stroom.query.api.v2.ParamUtil;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.Sort;
-import stroom.query.api.v2.Sort.SortDirection;
-import stroom.query.api.v2.SpecialColumns;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.Window;
+import stroom.query.api.Column;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.GroupSelection;
+import stroom.query.api.HoppingWindow;
+import stroom.query.api.IncludeExcludeFilter;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.Query;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.ResultRequest.ResultStyle;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.Sort;
+import stroom.query.api.Sort.SortDirection;
+import stroom.query.api.SpecialColumns;
+import stroom.query.api.TableSettings;
+import stroom.query.api.Window;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QueryFieldProvider;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.FunctionGroup;
+import stroom.query.api.token.KeywordGroup;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenGroup;
+import stroom.query.api.token.TokenType;
 import stroom.query.common.v2.CompiledWindow;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.DateExpressionParser.DatePoint;
@@ -45,20 +57,17 @@ import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.ExpressionParser;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ParamFactory;
-import stroom.query.language.token.AbstractToken;
-import stroom.query.language.token.FunctionGroup;
-import stroom.query.language.token.KeywordGroup;
 import stroom.query.language.token.StructureBuilder;
-import stroom.query.language.token.Token;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenGroup;
-import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
+import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -85,24 +94,32 @@ public class SearchRequestFactory {
     public static final String VIS_COMPONENT_ID = "vis";
 
     private final VisualisationTokenConsumer visualisationTokenConsumer;
-    private final DocResolver docResolver;
-
+    private final DataSourceResolver dataSourceResolver;
+    private final Provider<QueryFieldProvider> queryFieldProviderProvider;
+    private final SecurityContext securityContext;
 
     @Inject
     public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
-                                final DocResolver docResolver) {
+                                final DataSourceResolver dataSourceResolver,
+                                final Provider<QueryFieldProvider> queryFieldProviderProvider,
+                                final SecurityContext securityContext) {
         this.visualisationTokenConsumer = visualisationTokenConsumer;
-        this.docResolver = docResolver;
+        this.dataSourceResolver = dataSourceResolver;
+        this.queryFieldProviderProvider = queryFieldProviderProvider;
+        this.securityContext = securityContext;
     }
 
-    public void extractDataSourceOnly(final String string, final Consumer<DocRef> consumer) {
-        new Builder(visualisationTokenConsumer, docResolver).extractDataSourceOnly(string, consumer);
+    public void extractDataSourceOnly(final String string,
+                                      final Consumer<DocRef> consumer) {
+        new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
+                .extractDataSourceOnly(string, consumer);
     }
 
     public SearchRequest create(final String string,
                                 final SearchRequest in,
                                 final ExpressionContext expressionContext) {
-        return new Builder(visualisationTokenConsumer, docResolver).create(string, in, expressionContext);
+        return new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
+                .create(string, in, expressionContext);
     }
 
 
@@ -112,8 +129,9 @@ public class SearchRequestFactory {
     private static class Builder {
 
         private final VisualisationTokenConsumer visualisationTokenConsumer;
-
-        private final DocResolver docResolver;
+        private final DataSourceResolver dataSourceResolver;
+        private final Provider<QueryFieldProvider> queryFieldProviderProvider;
+        private final SecurityContext securityContext;
 
         private ExpressionContext expressionContext;
         private final FieldIndex fieldIndex;
@@ -125,9 +143,13 @@ public class SearchRequestFactory {
         private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
 
         Builder(final VisualisationTokenConsumer visualisationTokenConsumer,
-                final DocResolver docResolver) {
+                final DataSourceResolver dataSourceResolver,
+                final Provider<QueryFieldProvider> queryFieldProviderProvider,
+                final SecurityContext securityContext) {
             this.visualisationTokenConsumer = visualisationTokenConsumer;
-            this.docResolver = docResolver;
+            this.dataSourceResolver = dataSourceResolver;
+            this.queryFieldProviderProvider = queryFieldProviderProvider;
+            this.securityContext = securityContext;
             this.fieldIndex = new FieldIndex();
             this.paramMap = Collections.emptyMap();
             this.expressionMap = new HashMap<>();
@@ -186,8 +208,8 @@ public class SearchRequestFactory {
                 final List<TokenType> consumedTokens = new ArrayList<>();
 
                 // Create result requests.
-                final List<ResultRequest> resultRequests = new ArrayList<>();
-                addTableSettings(childTokens, consumedTokens, resultRequests, queryBuilder);
+                final List<ResultRequest> resultRequests = addTableSettings(
+                        in.getSearchRequestSource(), childTokens, consumedTokens, queryBuilder);
 
                 // Try to make a query.
                 Query query = queryBuilder.build();
@@ -227,7 +249,7 @@ public class SearchRequestFactory {
         private List<AbstractToken> addDataSource(final List<AbstractToken> tokens,
                                                   final Consumer<DocRef> consumer,
                                                   final boolean isLenient) {
-            AbstractToken token = tokens.getFirst();
+            final AbstractToken token = tokens.getFirst();
 
             // The first token must be `FROM`.
             if (!TokenType.FROM.equals(token.getTokenType())) {
@@ -250,7 +272,10 @@ public class SearchRequestFactory {
                 throw new TokenException(dataSourceToken, "Expected a token of type string");
             }
             final String dataSourceName = dataSourceToken.getUnescapedText();
-            consumer.accept(docResolver.resolveDataSourceRef(dataSourceName));
+            final DocRef dataSourceDocRef = securityContext.useAsReadResult(() ->
+                    dataSourceResolver.resolveDataSourceRef(dataSourceName));
+
+            consumer.accept(dataSourceDocRef);
 
             return tokens.subList(1, tokens.size());
         }
@@ -307,7 +332,7 @@ public class SearchRequestFactory {
 
         private ExpressionTerm createTerm(
                 final List<AbstractToken> tokens) {
-            ExpressionTerm expressionTerm;
+            final ExpressionTerm expressionTerm;
 
             if (NullSafe.isEmptyCollection(tokens)) {
                 throw new RuntimeException("createTerm called with empty list");
@@ -352,7 +377,7 @@ public class SearchRequestFactory {
                 }
 
                 // If we have a where clause then we expect the next token to contain an expression.
-                Condition cond;
+                final Condition cond;
                 switch (conditionToken.getTokenType()) {
                     case EQUALS -> cond = Condition.EQUALS;
                     case NOT_EQUALS -> cond = Condition.NOT_EQUALS;
@@ -391,7 +416,7 @@ public class SearchRequestFactory {
 
         private ExpressionTerm createInTerm(
                 final List<AbstractToken> tokens) {
-            ExpressionTerm expressionTerm;
+            final ExpressionTerm expressionTerm;
 
             final AbstractToken fieldToken = tokens.get(0);
             final AbstractToken conditionToken = tokens.get(1);
@@ -418,7 +443,7 @@ public class SearchRequestFactory {
                 final String dictionaryName = dictionaryNameToken.getUnescapedText().trim();
                 final DocRef dictionaryRef;
                 try {
-                    dictionaryRef = docResolver.resolveDocRef("Dictionary", dictionaryName);
+                    dictionaryRef = dataSourceResolver.findDictionaryDoc(dictionaryName);
                 } catch (final RuntimeException e) {
                     throw new TokenException(dictionaryNameToken, e.getMessage());
                 }
@@ -719,10 +744,12 @@ public class SearchRequestFactory {
             return out;
         }
 
-        private void addTableSettings(final List<AbstractToken> tokens,
-                                      final List<TokenType> consumedTokens,
-                                      final List<ResultRequest> resultRequests,
-                                      final Query.Builder queryBuilder) {
+        private List<ResultRequest> addTableSettings(final SearchRequestSource searchRequestSource,
+                                                     final List<AbstractToken> tokens,
+                                                     final List<TokenType> consumedTokens,
+                                                     final Query.Builder queryBuilder) {
+            final List<ResultRequest> resultRequests = new ArrayList<>();
+
             final Map<String, Sort> sortMap = new HashMap<>();
             final Map<String, Integer> groupMap = new HashMap<>();
             final Map<String, IncludeExcludeFilter> filterMap = new HashMap<>();
@@ -809,7 +836,8 @@ public class SearchRequestFactory {
                                     sortMap,
                                     groupMap,
                                     filterMap,
-                                    tableSettingsBuilder);
+                                    tableSettingsBuilder,
+                                    queryBuilder);
                             remaining.removeFirst();
                         }
                         case LIMIT -> {
@@ -837,10 +865,6 @@ public class SearchRequestFactory {
 
             // Ensure StreamId and EventId fields exist if there is no grouping.
             if (groupDepth == 0) {
-                if (!addedFields.contains(SpecialColumns.RESERVED_ID)) {
-                    tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_ID_COLUMN);
-                    addedFields.add(SpecialColumns.RESERVED_ID);
-                }
                 if (!addedFields.contains(SpecialColumns.RESERVED_STREAM_ID)) {
                     tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
                     addedFields.add(SpecialColumns.RESERVED_STREAM_ID);
@@ -848,6 +872,10 @@ public class SearchRequestFactory {
                 if (!addedFields.contains(SpecialColumns.RESERVED_EVENT_ID)) {
                     tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
                     addedFields.add(SpecialColumns.RESERVED_EVENT_ID);
+                }
+                if (!addedFields.contains(SpecialColumns.RESERVED_ANNOTATION_ID)) {
+                    tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_ANNOTATION_ID_COLUMN);
+                    addedFields.add(SpecialColumns.RESERVED_ANNOTATION_ID);
                 }
             }
 
@@ -872,28 +900,30 @@ public class SearchRequestFactory {
                     .extractValues(true)
                     .build();
 
-            final ResultRequest tableResultRequest = new ResultRequest(TABLE_COMPONENT_ID,
-                    Collections.singletonList(tableSettings),
-                    null,
-                    null,
-                    null,
-                    ResultStyle.TABLE,
-                    Fetch.ALL);
+            final ResultRequest tableResultRequest = ResultRequest.builder()
+                    .componentId(TABLE_COMPONENT_ID)
+                    .searchRequestSource(searchRequestSource)
+                    .mappings(Collections.singletonList(tableSettings))
+                    .resultStyle(ResultStyle.TABLE)
+                    .fetch(Fetch.ALL)
+                    .groupSelection(new GroupSelection())
+                    .build();
             resultRequests.add(tableResultRequest);
 
             if (visTableSettings != null) {
                 final List<TableSettings> tableSettingsList = new ArrayList<>();
                 tableSettingsList.add(tableSettings);
                 tableSettingsList.add(visTableSettings);
-                final ResultRequest qlVisResultRequest = new ResultRequest(VIS_COMPONENT_ID,
-                        tableSettingsList,
-                        null,
-                        null,
-                        null,
-                        ResultStyle.QL_VIS,
-                        Fetch.ALL);
+                final ResultRequest qlVisResultRequest = ResultRequest.builder()
+                        .componentId(VIS_COMPONENT_ID)
+                        .mappings(tableSettingsList)
+                        .resultStyle(ResultStyle.QL_VIS)
+                        .fetch(Fetch.ALL)
+                        .groupSelection(new GroupSelection())
+                        .build();
                 resultRequests.add(qlVisResultRequest);
             }
+            return resultRequests;
         }
 
         private void processWindow(final KeywordGroup keywordGroup,
@@ -982,7 +1012,7 @@ public class SearchRequestFactory {
 
             final Window window = hoppingWindowBuilder.build();
             final CompiledWindow compiledWindow = CompiledWindow.create(window);
-            // Add time window fields so they can be used by other expressions.
+            // Add time window fields, so they can be used by other expressions.
             compiledWindow.addWindowFields(expressionContext, fieldIndex, expressionMap);
             optionalCompiledWindow = Optional.of(compiledWindow);
             builder.window(window);
@@ -1030,7 +1060,8 @@ public class SearchRequestFactory {
                                    final Map<String, Sort> sortMap,
                                    final Map<String, Integer> groupMap,
                                    final Map<String, IncludeExcludeFilter> filterMap,
-                                   final TableSettings.Builder tableSettingsBuilder) {
+                                   final TableSettings.Builder tableSettingsBuilder,
+                                   final Query.Builder queryBuilder) {
             final List<AbstractToken> children = keywordGroup.getChildren();
             AbstractToken fieldToken = null;
             Expression fieldExpression = null;
@@ -1058,8 +1089,9 @@ public class SearchRequestFactory {
                         throw new TokenException(keywordGroup, e.getMessage());
                     }
 
-                } else if (TokenType.isString(token)) {
+                } else if (TokenType.isString(token) || TokenType.MULTIPLICATION.equals(token.getTokenType())) {
                     // If we have a string then it is either a field name or a column name if provided after AS.
+                    // Note that we also allow `*` (TokenType.MULTIPLICATION) to add `all` fields.
                     if (afterAs) {
                         if (doneAs) {
                             throw new TokenException(token, "Syntax exception, unexpected column name");
@@ -1090,31 +1122,16 @@ public class SearchRequestFactory {
                     afterAs = true;
 
                 } else if (TokenType.COMMA.equals(token.getTokenType())) {
-                    if (fieldToken != null) {
-                        final String columnId = createColumnId(columnCount, columnName);
-                        columns.add(createColumn(
-                                fieldToken,
-                                columnId,
-                                fieldToken.getUnescapedText(),
-                                columnName,
-                                true,
-                                false,
-                                sortMap,
-                                groupMap,
-                                filterMap));
-
-                    } else if (fieldExpression != null) {
-                        final String columnId = createColumnId(columnCount, columnName);
-                        columns.add(createColumn(
-                                columnId,
-                                fieldExpression,
-                                columnName,
-                                sortMap,
-                                groupMap,
-                                filterMap));
-                    } else {
-                        throw new TokenException(token, "Syntax exception, expected field name");
-                    }
+                    addColumn(sortMap,
+                            groupMap,
+                            filterMap,
+                            queryBuilder,
+                            columnCount,
+                            columns,
+                            token,
+                            fieldToken,
+                            columnName,
+                            fieldExpression);
 
                     fieldToken = null;
                     fieldExpression = null;
@@ -1125,18 +1142,61 @@ public class SearchRequestFactory {
             }
 
             // Add final field if we have one.
-            if (fieldToken != null) {
-                final String columnId = createColumnId(columnCount, columnName);
-                columns.add(createColumn(
-                        fieldToken,
-                        columnId,
-                        fieldToken.getUnescapedText(),
-                        columnName,
-                        true,
-                        false,
-                        sortMap,
+            if (fieldToken != null || fieldExpression != null) {
+                addColumn(sortMap,
                         groupMap,
-                        filterMap));
+                        filterMap,
+                        queryBuilder,
+                        columnCount,
+                        columns,
+                        fieldToken,
+                        fieldToken,
+                        columnName,
+                        fieldExpression);
+            }
+
+            // Modify columns if we have a time window.
+            final List<Column> modifiedColumns = optionalCompiledWindow.map(compiledWindow ->
+                    compiledWindow.addPeriodColumns(columns, expressionMap)).orElse(columns);
+            tableSettingsBuilder.addColumns(modifiedColumns);
+        }
+
+        private void addColumn(final Map<String, Sort> sortMap,
+                               final Map<String, Integer> groupMap,
+                               final Map<String, IncludeExcludeFilter> filterMap,
+                               final Query.Builder queryBuilder,
+                               final Map<String, AtomicInteger> columnCount,
+                               final List<Column> columns,
+                               final AbstractToken token,
+                               final AbstractToken fieldToken,
+                               final String columnName,
+                               final Expression fieldExpression) {
+
+            if (fieldToken != null) {
+                if (columnName.equals("*") ||
+                    (TokenType.PARAM.equals(fieldToken.getTokenType()) && columnName.contains("*"))) {
+                    expandStarredField(
+                            sortMap,
+                            groupMap,
+                            filterMap,
+                            queryBuilder,
+                            columnCount,
+                            columns,
+                            fieldToken.getUnescapedText());
+
+                } else {
+                    final String columnId = createColumnId(columnCount, columnName);
+                    columns.add(createColumn(
+                            fieldToken,
+                            columnId,
+                            fieldToken.getUnescapedText(),
+                            columnName,
+                            true,
+                            false,
+                            sortMap,
+                            groupMap,
+                            filterMap));
+                }
 
             } else if (fieldExpression != null) {
                 final String columnId = createColumnId(columnCount, columnName);
@@ -1147,12 +1207,56 @@ public class SearchRequestFactory {
                         sortMap,
                         groupMap,
                         filterMap));
+            } else {
+                throw new TokenException(token, "Syntax exception, expected field name");
             }
+        }
 
-            // Modify columns if we have a time window.
-            final List<Column> modifiedColumns = optionalCompiledWindow.map(compiledWindow ->
-                    compiledWindow.addPeriodColumns(columns, expressionMap)).orElse(columns);
-            tableSettingsBuilder.addColumns(modifiedColumns);
+        private void expandStarredField(final Map<String, Sort> sortMap,
+                                        final Map<String, Integer> groupMap,
+                                        final Map<String, IncludeExcludeFilter> filterMap,
+                                        final Query.Builder queryBuilder,
+                                        final Map<String, AtomicInteger> columnCount,
+                                        final List<Column> columns,
+                                        final String fieldNameFilter) {
+            final DocRef dataSource = queryBuilder.build().getDataSource();
+            if (dataSource != null) {
+                String filter = fieldNameFilter;
+
+                // Create a regex name filter if the user has used a *.
+                if (filter.equals("*")) {
+                    filter = null;
+                } else if (filter.contains("*")) {
+                    filter = filter.replaceAll("\\*", ".*");
+                    filter = filter.replaceAll("\\?", ".?");
+                    filter = "/" + filter;
+                }
+
+                final FindFieldCriteria criteria = new FindFieldCriteria(
+                        PageRequest.createDefault(),
+                        FindFieldCriteria.DEFAULT_SORT_LIST,
+                        dataSource,
+                        filter,
+                        null);
+                final ResultPage<QueryField> resultPage = queryFieldProviderProvider.get().findFields(criteria);
+                final List<QueryField> fields = resultPage.getValues();
+                for (final QueryField field : fields) {
+                    final String fieldName = field.getFldName();
+                    final char[] chars = fieldName.toCharArray();
+                    final String columnId = createColumnId(columnCount, fieldName);
+                    final Token t = new Token(TokenType.STRING, chars, 0, chars.length - 1);
+                    columns.add(createColumn(
+                            t,
+                            columnId,
+                            t.getUnescapedText(),
+                            fieldName,
+                            true,
+                            false,
+                            sortMap,
+                            groupMap,
+                            filterMap));
+                }
+            }
         }
 
         private String createColumnId(final Map<String, AtomicInteger> map, final String name) {
@@ -1177,7 +1281,7 @@ public class SearchRequestFactory {
             addedFields.add(fieldName);
             Expression expression = expressionMap.get(fieldName);
             if (expression == null) {
-                ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
+                final ExpressionParser expressionParser = new ExpressionParser(new ParamFactory(expressionMap));
                 try {
                     expression = expressionParser.parse(
                             expressionContext,

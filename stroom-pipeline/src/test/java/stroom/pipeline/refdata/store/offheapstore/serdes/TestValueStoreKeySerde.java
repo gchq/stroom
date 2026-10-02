@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.offheapstore.serdes;
 
 
@@ -23,13 +39,13 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
 
     @Test
     void testIncrementId() {
-        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, (short) 123);
+        final ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, (short) 123);
 
-        ByteBuffer byteBuffer = serialize(originalValueStoreKey);
+        final ByteBuffer byteBuffer = serialize(originalValueStoreKey);
 
         ValueStoreKeySerde.incrementId(byteBuffer);
 
-        ValueStoreKey newValueStoreKey = deserialize(byteBuffer);
+        final ValueStoreKey newValueStoreKey = deserialize(byteBuffer);
 
         assertThat(newValueStoreKey.getValueHashCode()).isEqualTo(originalValueStoreKey.getValueHashCode());
         assertThat(newValueStoreKey.getUniqueId()).isEqualTo((short) (originalValueStoreKey.getUniqueId() + 1));
@@ -37,17 +53,17 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
 
     @Test
     void testUpdateId() {
-        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, (short) 123);
+        final ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, (short) 123);
 
-        ValueStoreKeySerde serde = new ValueStoreKeySerde();
+        final ValueStoreKeySerde serde = new ValueStoreKeySerde();
 
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(serde.getBufferCapacity());
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(serde.getBufferCapacity());
 
         serde.serialize(byteBuffer, originalValueStoreKey);
 
         ValueStoreKeySerde.updateId(byteBuffer, (short) 456);
 
-        ValueStoreKey newValueStoreKey = serde.deserialize(byteBuffer);
+        final ValueStoreKey newValueStoreKey = serde.deserialize(byteBuffer);
 
         assertThat(newValueStoreKey.getValueHashCode()).isEqualTo(originalValueStoreKey.getValueHashCode());
         assertThat(newValueStoreKey.getUniqueId()).isEqualTo((short) 456);
@@ -55,15 +71,15 @@ class TestValueStoreKeySerde extends AbstractSerdeTest<ValueStoreKey, ValueStore
 
     @Test
     void testExtractId() {
-        short id = 123;
-        ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, id);
+        final short id = 123;
+        final ValueStoreKey originalValueStoreKey = new ValueStoreKey(1234567L, id);
 
-        ValueStoreKeySerde serde = new ValueStoreKeySerde();
+        final ValueStoreKeySerde serde = new ValueStoreKeySerde();
 
-        ByteBuffer byteBuffer = ByteBuffer.allocateDirect(serde.getBufferCapacity());
+        final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(serde.getBufferCapacity());
         serde.serialize(byteBuffer, originalValueStoreKey);
 
-        short extractedId = ValueStoreKeySerde.extractId(byteBuffer);
+        final short extractedId = ValueStoreKeySerde.extractId(byteBuffer);
 
         assertThat(extractedId).isEqualTo(id);
     }

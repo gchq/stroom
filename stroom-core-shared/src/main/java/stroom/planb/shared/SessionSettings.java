@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -9,42 +25,44 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({
-        "condense",
-        "retention",
         "maxStoreSize",
-        "overwrite"
+        "synchroniseMerge",
+        "overwrite",
+        "retention",
+        "snapshotSettings",
+        "condense",
+        "keySchema"
 })
 @JsonInclude(Include.NON_NULL)
-public class SessionSettings extends AbstractPlanBSettings {
+public final class SessionSettings
+        extends AbstractHttpStoreSettings
+        implements HasCondenseSettings {
 
     @JsonProperty
     private final DurationSetting condense;
     @JsonProperty
-    private final DurationSetting retention;
-    @JsonProperty
-    private final Boolean overwrite;
+    private final SessionKeySchema keySchema;
 
     @JsonCreator
-    public SessionSettings(@JsonProperty("condense") final DurationSetting condense,
-                           @JsonProperty("retention") final DurationSetting retention,
-                           @JsonProperty("maxStoreSize") final Long maxStoreSize,
-                           @JsonProperty("overwrite") final Boolean overwrite) {
-        super(maxStoreSize);
-        this.condense = condense;
-        this.retention = retention;
-        this.overwrite = overwrite;
+    public SessionSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
+                           @JsonProperty("synchroniseMerge") final Boolean synchroniseMerge,
+                           @JsonProperty("overwrite") final Boolean overwrite,
+                           @JsonProperty("retention") final RetentionSettings retention,
+                           @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                           @JsonProperty("condense") final DurationSetting condense,
+                           @JsonProperty("keySchema") final SessionKeySchema keySchema) {
+        super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
+        this.condense = Objects.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new SessionKeySchema.Builder().build());
     }
 
+    @Override
     public DurationSetting getCondense() {
         return condense;
     }
 
-    public DurationSetting getRetention() {
-        return retention;
-    }
-
-    public Boolean getOverwrite() {
-        return overwrite;
+    public SessionKeySchema getKeySchema() {
+        return keySchema;
     }
 
     @Override
@@ -60,46 +78,39 @@ public class SessionSettings extends AbstractPlanBSettings {
         }
         final SessionSettings that = (SessionSettings) o;
         return Objects.equals(condense, that.condense) &&
-               Objects.equals(retention, that.retention) &&
-               Objects.equals(overwrite, that.overwrite);
+               Objects.equals(keySchema, that.keySchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), condense, retention, overwrite);
+        return Objects.hash(super.hashCode(),
+                condense,
+                keySchema);
     }
 
     @Override
     public String toString() {
         return "SessionSettings{" +
-               "condense=" + condense +
-               ", retention=" + retention +
-               ", overwrite=" + overwrite +
+               super.toString() +
+               ", condense=" + condense +
+               ", keySchema=" + keySchema +
                '}';
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
+    public static class Builder extends AbstractHttpBuilder<SessionSettings, Builder> {
 
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-    public static class Builder extends AbstractBuilder<SessionSettings, Builder> {
-
-        protected DurationSetting condense;
-        protected DurationSetting retention;
-        protected Boolean overwrite;
+        private DurationSetting condense;
+        private SessionKeySchema keySchema;
 
         public Builder() {
         }
 
         public Builder(final SessionSettings settings) {
             super(settings);
-            this.condense = settings.condense;
-            this.retention = settings.retention;
-            this.overwrite = settings.overwrite;
+            if (settings != null) {
+                this.condense = settings.condense;
+                this.keySchema = settings.keySchema;
+            }
         }
 
         public Builder condense(final DurationSetting condense) {
@@ -107,13 +118,8 @@ public class SessionSettings extends AbstractPlanBSettings {
             return self();
         }
 
-        public Builder retention(final DurationSetting retention) {
-            this.retention = retention;
-            return self();
-        }
-
-        public Builder overwrite(final Boolean overwrite) {
-            this.overwrite = overwrite;
+        public Builder keySchema(final SessionKeySchema keySchema) {
+            this.keySchema = keySchema;
             return self();
         }
 
@@ -125,10 +131,13 @@ public class SessionSettings extends AbstractPlanBSettings {
         @Override
         public SessionSettings build() {
             return new SessionSettings(
-                    condense,
-                    retention,
                     maxStoreSize,
-                    overwrite);
+                    synchroniseMerge,
+                    overwrite,
+                    retention,
+                    snapshotSettings,
+                    condense,
+                    keySchema);
         }
     }
 }

@@ -171,9 +171,9 @@ class TestQuartzCronScheduler {
         textNext("0 20-23 *", startTime, "2010-03-26T22:00:00.000Z");
     }
 
-    public String textNext(String expression, String start, String end) {
+    public String textNext(final String expression, final String start, final String end) {
         try {
-            Trigger cron = new CronTrigger(expression);
+            final Trigger cron = new CronTrigger(expression);
             final Instant time = DateUtil.parseNormalDateTimeStringToInstant(start);
 
             final String timeString = DateUtil.createNormalDateTimeString(time);
@@ -188,10 +188,10 @@ class TestQuartzCronScheduler {
         return end;
     }
 
-    public String textLast(String expression, String start, String end) {
+    public String textLast(final String expression, final String start, final String end) {
         try {
-            Trigger cron = new CronTrigger(expression);
-            Long time = DateUtil.parseNormalDateTimeString(start);
+            final Trigger cron = new CronTrigger(expression);
+            final Long time = DateUtil.parseNormalDateTimeString(start);
 
             assertThat(DateUtil.createNormalDateTimeString(time)).isEqualTo(start);
 
@@ -206,7 +206,7 @@ class TestQuartzCronScheduler {
     @Test
     void testUnderLoadTypical() {
         // Every Day
-        SimpleScheduleExec executor = new SimpleScheduleExec(new CronTrigger("0 0 *"));
+        final SimpleScheduleExec executor = new SimpleScheduleExec(new CronTrigger("0 0 *"));
 
         // Application starts at 2pm
         Instant currentTime = DateUtil.parseNormalDateTimeStringToInstant("2010-03-29T14:00:00.000Z");
@@ -234,7 +234,7 @@ class TestQuartzCronScheduler {
 
     @Test
     void testMove() {
-        Trigger cron = new CronTrigger("0,10,20,30,40,50 * *");
+        final Trigger cron = new CronTrigger("0,10,20,30,40,50 * *");
 
         assertThat(DateUtil.createNormalDateTimeString(
                 cron.getNextExecutionTimeAfter(

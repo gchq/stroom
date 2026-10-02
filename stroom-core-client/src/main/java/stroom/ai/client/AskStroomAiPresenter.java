@@ -1,0 +1,1165 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.ai.client;
+
+import stroom.ai.client.AskStroomAiPresenter.AskStroomAiProxy;
+import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.shared.AiAttachmentStatus;
+import stroom.ai.shared.AiChat;
+import stroom.ai.shared.AiChatAttachment;
+import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AskStroomAiConfig;
+import stroom.ai.shared.AskStroomAiConfig.DockLocation;
+import stroom.ai.shared.AskStroomAiConfig.DockType;
+import stroom.ai.shared.AskStroomAiContext;
+import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.DownloadChatHistoryRequest;
+import stroom.alert.client.event.AlertCallback;
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
+import stroom.core.client.LocationManager;
+import stroom.data.client.event.AskStroomAiEvent;
+import stroom.data.client.event.ShowAskStroomAiEvent;
+import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.RestError;
+import stroom.entity.client.presenter.MarkdownConverter;
+import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.main.client.event.DockEvent;
+import stroom.main.client.event.DockResizeEvent;
+import stroom.openai.shared.OpenAIModelDoc;
+import stroom.preferences.client.DateTimeFormatter;
+import stroom.security.shared.DocumentPermission;
+import stroom.svg.shared.SvgImage;
+import stroom.task.client.TaskMonitorFactory;
+import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.NullSafe;
+import stroom.widget.popup.client.event.HidePopupEvent;
+import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.Size;
+
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.ui.Focus;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
+import com.gwtplatform.mvp.client.MyPresenter;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
+import com.gwtplatform.mvp.client.annotations.ProxyEvent;
+import com.gwtplatform.mvp.client.proxy.Proxy;
+
+import java.util.Objects;
+import java.util.function.Consumer;
+
+public class AskStroomAiPresenter
+        extends MyPresenter<AskStroomAiView, AskStroomAiProxy>
+        implements AskStroomAiUiHandlers, ShowAskStroomAiEvent.Handler, AskStroomAiEvent.Handler {
+
+    private static final DockBehaviour DEFAULT_DOCK_BEHAVIOUR = new DockBehaviour(DockType.DOCK, DockLocation.RIGHT);
+    private static final int DEFAULT_DOCK_WIDTH = 350;
+    private static final int DEFAULT_DOCK_HEIGHT = 250;
+    private static final int MAX_TITLE_LENGTH = 60;
+    private static final SafeHtml SUMMARY = SafeHtmlUtils.fromSafeConstant("summary");
+    private static final SafeHtml DETAILS = SafeHtmlUtils.fromSafeConstant("details");
+    private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
+    private static final String WORKING_MESSAGE_ID = "ai-working-message";
+    private static final String WORKING_TEXT_ID = "ai-working-text";
+
+    private final DocSelectionBoxPresenter docSelectionBoxPresenter;
+    private final MarkdownConverter markdownConverter;
+    private final AskStroomAiClient askStroomAiClient;
+    private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
+    private final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider;
+    private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
+    private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
+    private final LocationManager locationManager;
+    private final DateTimeFormatter dateTimeFormatter;
+    private AskStroomAiContext data;
+    private AiChat currentChat;
+    private boolean titleGenerated;
+    private int lastSeenMessageId;
+
+    private boolean showing;
+    private boolean docked;
+    /**
+     * True while a request is with the server. Polling continues for as long as this is set, since a
+     * poll can otherwise outrun the work and conclude it has finished before it has started.
+     */
+    private boolean requestInFlight;
+    private boolean polling;
+
+    @Inject
+    public AskStroomAiPresenter(final EventBus eventBus,
+                                final AskStroomAiView view,
+                                final AskStroomAiProxy askStroomAiProxy,
+                                final DocSelectionBoxPresenter docSelectionBoxPresenter,
+                                final MarkdownConverter markdownConverter,
+                                final AskStroomAiClient askStroomAiClient,
+                                final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider,
+                                final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
+                                final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
+                                final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
+                                final LocationManager locationManager,
+                                final DateTimeFormatter dateTimeFormatter) {
+        super(eventBus, view, askStroomAiProxy);
+        this.markdownConverter = markdownConverter;
+        this.askStroomAiClient = askStroomAiClient;
+        this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
+        this.aiChatHistoryPresenterProvider = aiChatHistoryPresenterProvider;
+        this.downloadChatPresenterProvider = downloadChatPresenterProvider;
+        this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
+        this.locationManager = locationManager;
+        this.docSelectionBoxPresenter = docSelectionBoxPresenter;
+        this.dateTimeFormatter = dateTimeFormatter;
+
+        getView().setModelRefSelection(docSelectionBoxPresenter.getView());
+        docSelectionBoxPresenter.setIncludedTypes(OpenAIModelDoc.TYPE);
+        docSelectionBoxPresenter.setRequiredPermissions(DocumentPermission.USE);
+        view.setUiHandlers(this);
+
+        // Initiate the selection box presenter with the default model if one is set.
+        readModel();
+    }
+
+    @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event ->
+                writeModel()));
+
+        registerHandler(getView().getMarkdownContainer().addDomHandler(e -> {
+            if (MouseUtil.isPrimary(e)) {
+                final Element target = e.getNativeEvent().getEventTarget().cast();
+                final Element button = ElementUtil.findParent(target, element ->
+                        element.getTagName().equalsIgnoreCase("button"), 5);
+                if (button != null) {
+                    // Capture "View data" click events.
+                    final String attachmentIdStr = button.getAttribute("data-attachment-id");
+                    if (NullSafe.isNonBlankString(attachmentIdStr)) {
+                        final String desc = button.getAttribute("data-attachment-desc");
+                        onViewAttachmentData(Integer.parseInt(attachmentIdStr), desc);
+                        return;
+                    }
+
+                    // Capture delete click events.
+                    final String messageIdStr = button.getAttribute("data-delete-message-id");
+                    if (NullSafe.isNonBlankString(messageIdStr)) {
+                        onDeleteMessage(Integer.parseInt(messageIdStr));
+                        return;
+                    }
+
+                    // Capture copy click events.
+                    final String data = button.getAttribute("data");
+                    if (NullSafe.isNonBlankString(data)) {
+                        if (ClipboardUtil.copy(data)) {
+                            // Code to change label
+                            final Element copyIcon = ElementUtil.findChild(button, "svgIcon");
+                            final Element copyLabel = ElementUtil.findChild(button, "ai-message-copy-label");
+                            if (copyLabel != null) {
+                                copyIcon.setInnerHTML(SvgImage.OK.getSvg());
+                                copyLabel.setInnerHTML("Copied");
+                                new com.google.gwt.user.client.Timer() {
+                                    @Override
+                                    public void run() {
+                                        copyIcon.setInnerHTML(SvgImage.COPY.getSvg());
+                                        copyLabel.setInnerHTML("Copy");
+                                    }
+                                }.schedule(2000);
+                            }
+                        }
+                    }
+                }
+            }
+        }, ClickEvent.getType()));
+
+        // Listen for dock splitter resize events to persist the new size.
+        addRegisteredHandler(DockResizeEvent.getType(), event -> {
+            if (docked) {
+                getDockBehaviourFromPrefs(dockBehaviour -> {
+                    final Size newSize = event.getNewSize();
+                    final DockLocation loc = dockBehaviour.getDockLocation();
+                    final int dimension;
+                    if (loc == DockLocation.LEFT || loc == DockLocation.RIGHT) {
+                        dimension = (int) newSize.getWidth();
+                    } else {
+                        dimension = (int) newSize.getHeight();
+                    }
+                    saveDockSizeToPrefs(dimension);
+                });
+            }
+        });
+    }
+
+    @Override
+    protected void revealInParent() {
+
+    }
+
+    @ProxyEvent
+    @Override
+    public void onAsk(final AskStroomAiEvent event) {
+        // Show if not already showing.
+        ShowAskStroomAiEvent.fire(this, true);
+
+        Scheduler.get().scheduleDeferred(() -> {
+            // Auto-create a chat if none exists.
+            ensureChat(() -> {
+                setContext(event.getData());
+                getView().focus();
+
+                // Immediately send context-only request to create the attachment on the server
+                // and start the async download. The ATTACHMENT message will appear in the chat
+                // history when we poll for new messages.
+                if (this.data != null) {
+                    getView().setEmptyState(false);
+                    askStroomAiClient.getConfig(config -> {
+                        final AskStroomAiRequest request = new AskStroomAiRequest(
+                                currentChat, config, this.data, null);
+                        // Generate a title from the attachment type.
+                        maybeGenerateTitle(getContextTitle(this.data));
+                        // Clear context so it isn't re-attached when the user sends a question.
+                        this.data = null;
+                        getView().clearContextIndicator();
+                        askStroomAiClient.sendMessage(request,
+                                response -> pollForNewMessages(),
+                                error -> showError(error, "Failed to create attachment", null),
+                                getView());
+                    }, getView());
+                }
+            });
+        });
+    }
+
+    @ProxyEvent
+    @Override
+    public void onShow(final ShowAskStroomAiEvent event) {
+        getDockSize(dockSize -> {
+            getDockBehaviourFromPrefs(dockBehaviour -> {
+                if (event.isShow()) {
+                    if (!showing) {
+                        showing = true;
+
+                        if (dockBehaviour.getDockType() == DockType.DOCK) {
+                            // Dock mode: fire DockEvent to attach to main layout.
+                            DockEvent.fire(this, this, dockBehaviour, dockSize);
+                            docked = true;
+                        } else {
+                            // Dialog mode: show as popup.
+                            ShowPopupEvent.builder(this)
+                                    .popupType(PopupType.CLOSE_DIALOG)
+                                    .popupSize(PopupSize.resizable(700, 500))
+                                    .caption("Ask Stroom AI")
+                                    .onHideRequest(e -> {
+                                        ShowAskStroomAiEvent.fire(this, false);
+                                    })
+                                    .onHide(e -> {
+                                        showing = false;
+                                    })
+                                    .fire();
+                        }
+                    }
+                } else {
+                    if (showing) {
+                        showing = false;
+                        if (dockBehaviour.getDockType() == DockType.DOCK) {
+                            // Dock mode: fire DockEvent to detach to main layout.
+                            docked = false;
+                            DockEvent.fireUndock(this, this);
+                        } else {
+                            // Dialog mode: hide popup.
+                            HidePopupEvent.builder(this).fire();
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    @Override
+    public void onChangeConfig() {
+        askStroomAiClient.getConfig(config -> {
+            getDockBehaviourFromPrefs(dockBehaviour -> {
+                final AskStroomAiConfigPresenter askStroomAiConfigPresenter = askStroomAiConfigPresenterProvider.get();
+                askStroomAiConfigPresenter.show(
+                        config, this::updateConfig, dockBehaviour, this::onDockBehaviourChange);
+            });
+        }, this);
+    }
+
+    private void updateConfig(final AskStroomAiConfig config) {
+        askStroomAiClient.setConfig(config, this);
+        readModel();
+    }
+
+    private void readModel() {
+        askStroomAiClient.getConfig(config ->
+                docSelectionBoxPresenter.setSelectedEntityReference(config.getModelRef(), true), this);
+    }
+
+    private void writeModel() {
+        askStroomAiClient.getConfig(config -> {
+            final AskStroomAiConfig newConfig = config.copy()
+                    .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
+                    .build();
+            askStroomAiClient.setConfig(newConfig, this);
+        }, this);
+    }
+
+    void onDockBehaviourChange(final DockBehaviour dockBehaviour) {
+        getDockSize(dockSize -> {
+            getDockBehaviourFromPrefs(currentDockBehaviour -> {
+                // Idempotency: if the behaviour hasn't changed, nothing to do.
+                // This handles the duplicate call that occurs when a live-preview change
+                // (radio button) is followed by the user clicking OK, which calls the
+                // consumer again with the same value.
+                if (dockBehaviour.equals(currentDockBehaviour)) {
+                    return;
+                }
+
+                // Persist to user preferences.
+                saveDockBehaviourToPrefs(dockBehaviour);
+
+                if (showing) {
+                    final boolean wasDocked = docked;
+                    final boolean wantsDock = dockBehaviour.getDockType() == DockType.DOCK;
+
+                    if (wasDocked && wantsDock) {
+                        // Location change while docked: defer so any in-flight settings-dialog
+                        // hide sequence completes first, then undock and re-dock.
+                        Scheduler.get().scheduleDeferred(() -> {
+                            DockEvent.fireUndock(this, this);
+                            DockEvent.fire(this, this, dockBehaviour, dockSize);
+                            getView().focus();
+                        });
+
+                    } else if (wasDocked) {
+                        // DOCK → DIALOG: defer so settings dialog closes first.
+                        Scheduler.get().scheduleDeferred(() -> {
+                            DockEvent.fireUndock(this, this);
+                            docked = false;
+                            showing = false;
+                            showAsDialog();
+                        });
+
+                    } else if (wantsDock) {
+                        // DIALOG → DOCK: use HidePopupEvent (not HidePopupRequestEvent) for a
+                        // direct programmatic dismiss that doesn't re-enter onHideRequest.
+                        // HidePopupEvent fires synchronously and calls onHide (showing=false),
+                        // then the deferred re-enables showing, sets docked, and fires DockEvent.
+                        HidePopupEvent.builder(this).fire();
+                        Scheduler.get().scheduleDeferred(() -> {
+                            showing = true;
+                            docked = true;
+                            DockEvent.fire(this, this, dockBehaviour, dockSize);
+                            getView().focus();
+                        });
+                    }
+                }
+            });
+        });
+    }
+
+    @ProxyCodeSplit
+    public interface AskStroomAiProxy extends Proxy<AskStroomAiPresenter> {
+
+    }
+
+    @Override
+    public void setContext(final AskStroomAiContext data) {
+        this.data = data;
+
+        // Show attachment-style context indicator using the context's description.
+        if (data != null) {
+            getView().setContextIndicator(SvgImage.CLIPBOARD, data.getDescription());
+        } else {
+            getView().clearContextIndicator();
+        }
+    }
+
+    @Override
+    public void onSendMessage(final String message) {
+        getView().setSendButtonLoadingState(true);
+        getView().setEmptyState(false);
+        getView().clearContextIndicator();
+
+        final long nowMs = System.currentTimeMillis();
+        final HtmlBuilder hb = new HtmlBuilder();
+        appendMessageHtml(hb, "ai-message ai-message--user", "> " + message,
+                nowMs, nowMs, false, 0, false);
+        appendToContainer(hb);
+
+        // Scroll markdown container to bottom, so the user's message is displayed
+        final SimplePanel markdownContainer = getView().getMarkdownContainer();
+        markdownContainer.getElement().setScrollTop(markdownContainer.getElement().getScrollHeight());
+
+        ensureChat(() -> askStroomAiClient.getConfig(config -> {
+            final AskStroomAiRequest request = new AskStroomAiRequest(
+                    currentChat, config, data, message);
+            // Clear context so follow-up messages don't re-attach the same data.
+            this.data = null;
+            requestInFlight = true;
+            askStroomAiClient.sendMessage(request,
+                    response -> {
+                        requestInFlight = false;
+                        // Poll to get the properly typed, persisted messages. Also picks up a partial
+                        // answer, where the user cancelled part way through.
+                        startPolling();
+                        maybeGenerateTitle(message);
+                    }, error -> {
+                        requestInFlight = false;
+                        showError(error, "Stroom AI request failed", () ->
+                                getView().setSendButtonLoadingState(false));
+                    }, getView());
+            // Poll while the request runs, so progress is seen as it happens rather than all at once
+            // when the request returns.
+            startPolling();
+        }, getView()));
+    }
+
+    @Override
+    public void onCancelProcessing() {
+        if (currentChat != null) {
+            askStroomAiClient.cancelProcessing(currentChat.getId(),
+                    success -> {
+                        // Server will set the cancellation flag; the poll loop will pick up
+                        // partial results and stop. Reset UI now so the user can type again.
+                        getView().setSendButtonLoadingState(false);
+                    }, getView());
+        }
+    }
+
+    private void showError(final RestError error,
+                           final String message,
+                           final AlertCallback callback) {
+        AlertEvent.fireError(
+                AskStroomAiPresenter.this,
+                message + " - " + error.getMessage(),
+                null,
+                callback);
+    }
+
+    /**
+     * Poll for new messages since lastSeenMessageId. Renders any new messages
+     * with type-aware formatting and updates the lastSeenMessageId.
+     */
+    private void startPolling() {
+        if (!polling) {
+            polling = true;
+            pollForNewMessages();
+        }
+    }
+
+    private void pollForNewMessages() {
+        if (currentChat == null) {
+            polling = false;
+            return;
+        }
+        final int chatId = currentChat.getId();
+        askStroomAiClient.pollMessages(chatId, lastSeenMessageId, response -> {
+            if (currentChat == null || currentChat.getId() != chatId) {
+                // The user has moved to another chat since this poll was sent. Rendering the reply
+                // now would put one chat's messages into another's.
+                polling = false;
+                return;
+            }
+
+            final boolean hasNewMessages = response.getNewMessages() != null
+                                           && !response.getNewMessages().isEmpty();
+            if (hasNewMessages) {
+                final long nowMs = System.currentTimeMillis();
+                final HtmlBuilder hb = new HtmlBuilder();
+                for (final AiChatMessage msg : response.getNewMessages()) {
+                    // Skip USER_MESSAGE — we already rendered it inline in onSendMessage.
+                    if (msg.getMessageType() != AiMessageType.USER_MESSAGE) {
+                        renderMessage(hb, msg, nowMs);
+                    }
+                    // Track the highest seen message ID.
+                    lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
+                }
+                // Scroll to show new content.
+                appendToContainer(hb);
+            }
+
+            // Update attachment status elements in-place.
+            updateAttachmentStatuses(response.getAttachments());
+
+            // Show what the server is currently doing, and take the line away when it is done.
+            updateWorkingMessage(response.getWorkingMessage());
+
+            // Keep polling while this client is waiting on a request, while data is still coming
+            // down, or while messages are still arriving. A WORKING message on its own is not reason
+            // enough: one can be left behind by a server that stopped mid-question, and polling for
+            // that would never end.
+            if (requestInFlight || hasNewMessages || isDownloading(response.getAttachments())) {
+                // If the conversation is still in-flight, schedule another poll after 1s.
+                new com.google.gwt.user.client.Timer() {
+                    @Override
+                    public void run() {
+                        pollForNewMessages();
+                    }
+                }.schedule(1000);
+            } else {
+                polling = false;
+                getView().setSendButtonLoadingState(false);
+            }
+        }, error -> {
+            // Clear loading state on poll failure so the UI doesn't get stuck.
+            polling = false;
+            getView().setSendButtonLoadingState(false);
+        }, getView());
+    }
+
+    void appendToContainer(final HtmlBuilder hb) {
+        final Element markdownContainer = getView().getMarkdownContainer().getElement();
+        final String current = NullSafe.toString(markdownContainer.getInnerHTML());
+        markdownContainer.setInnerHTML(current + hb.toSafeHtml().asString());
+        markdownContainer.setScrollTop(markdownContainer.getScrollHeight());
+    }
+
+    /**
+     * Render a single message with type-aware HTML structure.
+     */
+    private void renderMessage(final HtmlBuilder hb, final AiChatMessage msg, final long nowMs) {
+        final long timeMs = msg.getCreateTimeMs();
+        final int messageId = msg.getId();
+        final boolean deletable = msg.getMessageType() == AiMessageType.USER_MESSAGE
+                                  || msg.getMessageType() == AiMessageType.ATTACHMENT;
+        switch (msg.getMessageType()) {
+            case USER_MESSAGE:
+                appendMessageHtml(hb, "ai-message ai-message--user", "> " + msg.getMessage(),
+                        timeMs, nowMs, false, messageId, deletable);
+                break;
+            case AI_RESPONSE:
+                appendMessageHtml(hb, "ai-message ai-message--assistant", msg.getMessage(),
+                        timeMs, nowMs, true, messageId, false);
+                break;
+            case ERROR:
+                appendMessageHtml(hb, "ai-message ai-message--error", msg.getMessage(),
+                        timeMs, nowMs, false, messageId, false);
+                break;
+            case WORKING:
+                appendWorkingMessage(hb, msg, timeMs, nowMs);
+                break;
+            case THINKING:
+                appendDetailsElement(hb, "ai-message ai-message--thinking",
+                        SvgImage.AI, "Thinking", msg.getMessage(), timeMs, nowMs);
+                break;
+            case DASHBOARD_DATA:
+            case QUERY_DATA:
+            case TABLE_DATA:
+                appendDetailsElement(hb, "ai-message ai-message--data",
+                        SvgImage.TABLE, "Data context", msg.getMessage(), timeMs, nowMs);
+                break;
+            case DEBUG_DETAIL:
+                appendDetailsElement(hb, "ai-message ai-message--debug-detail",
+                        SvgImage.INFO, "Request detail", msg.getMessage(), timeMs, nowMs);
+                break;
+            case ATTACHMENT:
+                appendAttachmentMessage(hb, msg, timeMs, nowMs, messageId, deletable);
+                break;
+            default:
+                appendMessageHtml(hb, "ai-message", msg.getMessage(), timeMs, nowMs, false, 0, false);
+                break;
+        }
+    }
+
+    /**
+     * Append a message div with the given CSS class, markdown content, and timestamp.
+     * If {@code showCopy} is true, a copy button is added for AI responses.
+     */
+    private void appendMessageHtml(final HtmlBuilder hb,
+                                   final String cssClass,
+                                   final String markdownText,
+                                   final long timeMs,
+                                   final long nowMs,
+                                   final boolean showCopy,
+                                   final int messageId,
+                                   final boolean deletable) {
+        final SafeHtml markdownHtml = markdownConverter.convertMarkdownToHtml(markdownText);
+
+        hb.div(wrapper -> {
+            wrapper.append(markdownHtml);
+            // Add message footer (timestamp + optional copy/delete buttons).
+            wrapper.div(footer -> {
+
+                // Add delete button.
+                if (deletable && messageId > 0) {
+                    button(footer,
+                            SvgImage.DELETE,
+                            iconButtonClassName("ai-message-delete"),
+                            Attribute.title("Delete message"),
+                            new Attribute("data-delete-message-id", String.valueOf(messageId)));
+                }
+
+                // Add copy button.
+                if (showCopy) {
+                    footer.elem(button ->
+                                    setCopyButtonContent(button, SvgImage.COPY, "Copy"),
+                            BUTTON,
+                            Attribute.className("ai-message-copy"),
+                            new Attribute("data", markdownText));
+                }
+
+                // Add timestamp.
+                timestamp(footer, timeMs, nowMs);
+
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className(cssClass));
+    }
+
+    /**
+     * Append a collapsible details/summary element for thinking and data messages.
+     * Uses native HTML {@code <details>/<summary>} so content is collapsed by default.
+     */
+    private void appendDetailsElement(final HtmlBuilder hb,
+                                      final String cssClass,
+                                      final SvgImage icon,
+                                      final String summaryText,
+                                      final String markdownText,
+                                      final long timeMs,
+                                      final long nowMs) {
+        hb.elem(details -> {
+            details.elem(summary -> {
+                button(summary, icon, iconButtonClassName("ai-message-summary-icon"));
+                summary.append(summaryText);
+            }, SUMMARY, Attribute.className("ai-message-header"));
+
+            // Add markdown message.
+            details.div(contentDiv ->
+                            contentDiv.append(markdownConverter.convertMarkdownToHtml(markdownText)),
+                    Attribute.className("ai-details-content"));
+
+            // Add timestamp footer.
+            details.div(footer ->
+                    timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
+        }, DETAILS, Attribute.className(cssClass));
+    }
+
+    /**
+     * Render an ATTACHMENT message with a status line that can be updated in-place
+     * via a unique DOM ID.
+     */
+    private void appendAttachmentMessage(final HtmlBuilder hb,
+                                         final AiChatMessage msg,
+                                         final long timeMs,
+                                         final long nowMs,
+                                         final int messageId,
+                                         final boolean deletable) {
+        final Integer attachmentId = msg.getAttachmentId();
+        hb.div(container -> {
+            // Header with icon and description.
+            container.div(header -> {
+                final String description = NullSafe.getOrElse(
+                        msg, AiChatMessage::getMessage, "Table attachment");
+                button(header, SvgImage.TABLE,
+                        iconButtonClassName("ai-attachment-icon"),
+                        Attribute.title("View data"),
+                        new Attribute("data-attachment-id", String.valueOf(attachmentId)),
+                        new Attribute("data-attachment-desc", description));
+                header.append(description);
+            }, Attribute.className("ai-message-header"));
+
+            // Status line — will be updated in-place by polling.
+            if (attachmentId != null) {
+                container.div(statusDiv ->
+                                appendStatus(statusDiv, SvgImage.DOWNLOAD, "Downloading..."),
+                        Attribute.className("ai-attachment-status"), new Attribute("id",
+                                "ai-attachment-status-" +
+                                attachmentId));
+            }
+
+            // Footer with timestamp and optional delete button.
+            container.div(footer -> {
+                // Add delete button.
+                if (deletable && messageId > 0) {
+                    button(footer,
+                            SvgImage.DELETE,
+                            iconButtonClassName("ai-message-delete"),
+                            Attribute.title("Delete attachment"),
+                            new Attribute("data-delete-message-id", String.valueOf(messageId)));
+                }
+                timestamp(footer, timeMs, nowMs);
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className("ai-message ai-message--data"));
+    }
+
+    /**
+     * Renders the WORKING message with stable DOM ids, so that polling can update the progress text
+     * where it stands rather than appending a new line every time it changes. The text is in the
+     * summary because that is the part that is visible without expanding it.
+     */
+    private void appendWorkingMessage(final HtmlBuilder hb,
+                                      final AiChatMessage msg,
+                                      final long timeMs,
+                                      final long nowMs) {
+        hb.elem(details -> {
+            details.elem(summary -> {
+                button(summary, SvgImage.INFO, iconButtonClassName("ai-message-summary-icon"));
+                summary.span(text -> text.append(workingText(msg)), new Attribute("id", WORKING_TEXT_ID));
+            }, SUMMARY, Attribute.className("ai-message-header"));
+
+            details.div(footer ->
+                timestamp(footer, timeMs, nowMs), Attribute.className("ai-message-footer"));
+        }, DETAILS, Attribute.className("ai-message ai-message--working"),
+            new Attribute("id", WORKING_MESSAGE_ID));
+    }
+
+    /**
+     * Adds, updates or removes the progress line to match what the server says it is doing.
+     */
+    private void updateWorkingMessage(final AiChatMessage workingMessage) {
+        final Document doc = Document.get();
+        final Element existing = doc.getElementById(WORKING_MESSAGE_ID);
+
+        if (workingMessage == null) {
+            // Nothing is being worked on, so the progress line has served its purpose.
+            if (existing != null) {
+                existing.removeFromParent();
+            }
+        } else if (existing == null) {
+            final HtmlBuilder hb = new HtmlBuilder();
+            appendWorkingMessage(hb, workingMessage,
+                    workingMessage.getCreateTimeMs(), System.currentTimeMillis());
+            appendToContainer(hb);
+        } else {
+            final Element text = doc.getElementById(WORKING_TEXT_ID);
+            if (text != null) {
+                text.setInnerText(workingText(workingMessage));
+            }
+        }
+    }
+
+    private String workingText(final AiChatMessage msg) {
+        return NullSafe.getOrElse(msg, AiChatMessage::getMessage, "Working...");
+    }
+
+    private void appendStatus(final HtmlBuilder hb, final SvgImage icon, final String text) {
+        button(hb, icon, iconButtonClassName("ai-attachment-status-icon"));
+        hb.div(status -> status.append(text), Attribute.className("ai-attachment-status-text"));
+    }
+
+    /**
+     * @return True if any attachment is still being fetched, so there is more to come.
+     */
+    private boolean isDownloading(final java.util.List<AiChatAttachment> attachments) {
+        if (attachments != null) {
+            for (final AiChatAttachment attachment : attachments) {
+                if (attachment.getStatus() == AiAttachmentStatus.PENDING
+                    || attachment.getStatus() == AiAttachmentStatus.DOWNLOADING) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Update existing attachment status elements in the DOM with current status.
+     */
+    private void updateAttachmentStatuses(final java.util.List<AiChatAttachment> attachments) {
+        if (attachments == null) {
+            return;
+        }
+        for (final AiChatAttachment attachment : attachments) {
+            final Document doc = Document.get();
+            final Element statusEl = doc.getElementById("ai-attachment-status-" + attachment.getId());
+            if (statusEl != null) {
+                statusEl.setInnerHTML(formatAttachmentStatus(attachment));
+            }
+        }
+    }
+
+    /**
+     * Format a human-readable status string with an appropriate icon for the
+     * given attachment status.
+     */
+    private String formatAttachmentStatus(final AiChatAttachment attachment) {
+        final HtmlBuilder hb = new HtmlBuilder();
+        switch (attachment.getStatus()) {
+            case PENDING -> appendStatus(hb, SvgImage.DOWNLOAD, "Pending...");
+            case DOWNLOADING -> appendStatus(hb, SvgImage.DOWNLOAD, "Downloading...");
+            case READY -> {
+                final StringBuilder sb = new StringBuilder();
+                sb.append(" Ready");
+                if (attachment.getRowCount() != null) {
+                    sb.append(" --- ").append(attachment.getRowCount()).append(" rows");
+                }
+                if (attachment.isTruncated()) {
+                    sb.append(" (truncated to limit)");
+                }
+                appendStatus(hb, SvgImage.OK, sb.toString());
+            }
+            case ERROR -> appendStatus(hb, SvgImage.ERROR, "Error: " +
+                                                           NullSafe.getOrElse(attachment,
+                                                                   AiChatAttachment::getErrorMessage,
+                                                                   "Unknown error"));
+        }
+        return hb.toSafeHtml().asString();
+    }
+
+    private static void icon(final HtmlBuilder hb, final SvgImage icon) {
+        hb.div(div -> div.appendTrustedString(icon.getSvg()),
+                Attribute.className("svgIcon " + icon.getClassName()));
+    }
+
+    private static Attribute iconButtonClassName(final String className) {
+        return Attribute.className(className + " icon-button");
+    }
+
+    private static void button(final HtmlBuilder hb,
+                               final SvgImage icon,
+                               final Attribute... attributes) {
+        hb.elem(button -> button.div(div -> div.appendTrustedString(icon.getSvg()),
+                        Attribute.className("svg-image " + icon.getClassName() + " face")),
+                BUTTON,
+                attributes);
+    }
+
+    private void timestamp(final HtmlBuilder html, final long timeMs, final long nowMs) {
+        html.div(timestamp -> timestamp.append(dateTimeFormatter.formatRelative(timeMs, nowMs)),
+                Attribute.className("ai-message-timestamp"),
+                Attribute.title(dateTimeFormatter.format(timeMs)));
+    }
+
+    /**
+     * Set the content of a copy button to an SVG icon + label.
+     */
+    private static void setCopyButtonContent(final HtmlBuilder button,
+                                             final SvgImage icon,
+                                             final String label) {
+        icon(button, icon);
+        button.div(text -> text.append(label), Attribute.className("ai-message-copy-label"));
+    }
+
+    @Override
+    public void onNewChat() {
+        askStroomAiClient.createChat(chat -> {
+            currentChat = chat;
+            titleGenerated = false;
+            lastSeenMessageId = 0;
+            data = null;
+            getView().clearMessages();
+            getView().setEmptyState(true);
+            getView().clearContextIndicator();
+            getView().setTitle(chat.getTitle());
+            getView().setDownloadEnabled(true);
+            getView().setDeleteAllEnabled(true);
+            getView().focus();
+        }, this);
+    }
+
+    @Override
+    public void onShowHistory() {
+        aiChatHistoryPresenterProvider.get().show(this::loadChat);
+    }
+
+    @Override
+    public void onDownloadChat() {
+        if (currentChat == null) {
+            return;
+        }
+        final DownloadChatPresenter dlPresenter = downloadChatPresenterProvider.get();
+        ShowPopupEvent.builder(dlPresenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Download Options")
+                .onShow(e -> dlPresenter.getView().focus())
+                .onHideRequest(e -> {
+                    if (e.isOk()) {
+                        final DownloadChatHistoryRequest request = new DownloadChatHistoryRequest(
+                                currentChat.getId(),
+                                dlPresenter.isIncludeDataContexts());
+                        askStroomAiClient.downloadChatHistory(request,
+                                result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result),
+                                error -> showError(error, "Failed to download chat history", null),
+                                this);
+                    }
+                    e.hide();
+                })
+                .fire();
+    }
+
+    private void onViewAttachmentData(final int attachmentId, final String description) {
+        if (currentChat == null) {
+            return;
+        }
+        final AiAttachmentDataPresenter presenter = aiAttachmentDataPresenterProvider.get();
+        presenter.show(currentChat.getId(), attachmentId, description);
+    }
+
+    private void onDeleteMessage(final int messageId) {
+        if (currentChat == null) {
+            return;
+        }
+        ConfirmEvent.fire(this,
+                "Are you sure you want to delete this message?",
+                ok -> {
+                    if (ok) {
+                        askStroomAiClient.deleteMessage(
+                                currentChat.getId(), messageId,
+                                success -> reloadCurrentChat(),
+                                getView());
+                    }
+                });
+    }
+
+    @Override
+    public void onDeleteAllMessages() {
+        if (currentChat == null) {
+            return;
+        }
+        ConfirmEvent.fire(this,
+                "Are you sure you want to delete all messages and attachments in this conversation?",
+                ok -> {
+                    if (ok) {
+                        askStroomAiClient.deleteAllMessages(
+                                currentChat.getId(),
+                                success -> reloadCurrentChat(),
+                                getView());
+                    }
+                });
+    }
+
+    private void reloadCurrentChat() {
+        if (currentChat != null) {
+            loadChat(currentChat);
+        }
+    }
+
+    private void loadChat(final AiChat chat) {
+        currentChat = chat;
+        // A loaded chat already has a title.
+        titleGenerated = true;
+        lastSeenMessageId = 0;
+        data = null;
+        getView().clearMessages();
+        getView().clearContextIndicator();
+        getView().setTitle(chat.getTitle());
+        getView().setDownloadEnabled(true);
+        getView().setDeleteAllEnabled(true);
+
+        // Load messages for the selected chat.
+        askStroomAiClient.getMessages(chat.getId(), messages -> {
+            final long nowMs = System.currentTimeMillis();
+            final HtmlBuilder hb = new HtmlBuilder();
+            if (messages != null && !messages.isEmpty()) {
+                getView().setEmptyState(false);
+                for (final AiChatMessage msg : messages) {
+                    renderMessage(hb, msg, nowMs);
+                    lastSeenMessageId = Math.max(lastSeenMessageId, msg.getId());
+                }
+            } else {
+                getView().setEmptyState(true);
+            }
+            // Scroll to bottom after loading all messages.
+            appendToContainer(hb);
+            getView().focus();
+
+            // Fetch attachment statuses to update status elements rendered above.
+            // For historical chats, attachments are already in their final state (READY/ERROR).
+            askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, response ->
+                    updateAttachmentStatuses(response.getAttachments()), error -> { /* ignore */ }, this);
+        }, this);
+    }
+
+    /**
+     * Ensure a chat exists, creating one if necessary, then run the callback.
+     */
+    private void ensureChat(final Runnable then) {
+        if (currentChat != null) {
+            then.run();
+        } else {
+            askStroomAiClient.createChat(chat -> {
+                currentChat = chat;
+                titleGenerated = false;
+                lastSeenMessageId = 0;
+                getView().setTitle(chat.getTitle());
+                then.run();
+            }, this);
+        }
+    }
+
+    /**
+     * Auto-generate a conversation title from the first user message.
+     * Only fires once per conversation.
+     */
+    private void maybeGenerateTitle(final String userMessage) {
+        if (titleGenerated || currentChat == null || userMessage == null) {
+            return;
+        }
+        titleGenerated = true;
+
+        final String title;
+        if (userMessage.length() <= MAX_TITLE_LENGTH) {
+            title = userMessage;
+        } else {
+            title = userMessage.substring(0, MAX_TITLE_LENGTH) + "…";
+        }
+
+        getView().setTitle(title);
+        askStroomAiClient.updateChatTitle(currentChat.getId(), title, success -> {
+            // Title persisted successfully — nothing more to do.
+        }, this);
+    }
+
+    /**
+     * Returns a human-readable title for the given context type.
+     */
+    private String getContextTitle(final AskStroomAiContext context) {
+        return context.getDescription();
+    }
+
+    public interface AskStroomAiView extends View, Focus, TaskMonitorFactory, HasUiHandlers<AskStroomAiUiHandlers> {
+
+        void setModelRefSelection(View view);
+
+        SimplePanel getMarkdownContainer();
+
+        String getMessage();
+
+        void setSendButtonLoadingState(final boolean enabled);
+
+        void setTitle(String title);
+
+        void clearMessages();
+
+        void setEmptyState(boolean empty);
+
+        void setContextIndicator(SvgImage icon, String text);
+
+        void clearContextIndicator();
+
+        void setDownloadEnabled(boolean enabled);
+
+        void setDeleteAllEnabled(boolean enabled);
+    }
+
+    // ---- Dock preference helpers ----
+
+    private void getDockBehaviourFromPrefs(final Consumer<DockBehaviour> consumer) {
+        askStroomAiClient.getConfig(currentConfig -> {
+            if (currentConfig != null) {
+                final DockType type = currentConfig.getDockType();
+                final DockLocation location = currentConfig.getDockLocation();
+                consumer.accept(new DockBehaviour(type, location));
+            } else {
+                consumer.accept(DEFAULT_DOCK_BEHAVIOUR);
+            }
+        }, this);
+    }
+
+    private void saveDockBehaviourToPrefs(final DockBehaviour behaviour) {
+        askStroomAiClient.getConfig(currentConfig -> {
+            final AskStroomAiConfig newConfig = currentConfig.copy()
+                    .dockType(behaviour.getDockType())
+                    .dockLocation(behaviour.getDockLocation())
+                    .build();
+            askStroomAiClient.setConfig(newConfig, this);
+        }, this);
+    }
+
+    private void saveDockSizeToPrefs(final int size) {
+        askStroomAiClient.getConfig(currentConfig -> {
+            final AskStroomAiConfig newConfig = currentConfig.copy()
+                    .dockSize(size)
+                    .build();
+            askStroomAiClient.setConfig(newConfig, this);
+        }, this);
+    }
+
+    private void getDockSize(final Consumer<Size> consumer) {
+        askStroomAiClient.getConfig(currentConfig -> {
+            getDockBehaviourFromPrefs(dockBehaviour -> {
+                final DockLocation loc = dockBehaviour.getDockLocation();
+                final int defaultSize;
+                if (loc == DockLocation.LEFT || loc == DockLocation.RIGHT) {
+                    defaultSize = DEFAULT_DOCK_WIDTH;
+                } else {
+                    defaultSize = DEFAULT_DOCK_HEIGHT;
+                }
+                final int size = NullSafe.getOrElse(currentConfig, AskStroomAiConfig::getDockSize, defaultSize);
+                consumer.accept(new Size.Builder()
+                        .width(size)
+                        .height(size)
+                        .build());
+            });
+        }, this);
+    }
+
+    private void showAsDialog() {
+        showing = true;
+        ShowPopupEvent.builder(this)
+                .popupType(PopupType.CLOSE_DIALOG)
+                .popupSize(PopupSize.resizable(700, 500))
+                .caption("Ask Stroom AI")
+                .onShow(e -> getView().focus())
+                .onHideRequest(e -> {
+                    // Notify MainPresenter so the toolbar toggle button is reset.
+                    ShowAskStroomAiEvent.fire(this, false);
+                })
+                .onHide(e -> showing = false)
+                .fire();
+    }
+
+    public static class DockBehaviour {
+
+        private final DockType dockType;
+        private final DockLocation dockLocation;
+
+        public DockBehaviour(final DockType dockType,
+                             final DockLocation dockLocation) {
+            this.dockType = dockType;
+            this.dockLocation = dockLocation;
+        }
+
+        public DockType getDockType() {
+            return dockType;
+        }
+
+        public DockLocation getDockLocation() {
+            return dockLocation;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final DockBehaviour that = (DockBehaviour) o;
+            return dockType == that.dockType &&
+                   dockLocation == that.dockLocation;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dockType, dockLocation);
+        }
+    }
+}

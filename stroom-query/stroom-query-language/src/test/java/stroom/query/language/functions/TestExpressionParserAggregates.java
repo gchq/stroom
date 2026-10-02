@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -226,7 +226,7 @@ class TestExpressionParserAggregates extends AbstractExpressionParserTest {
     @Test
     void testVariance1() {
         createGenerator("variance(600, 470, 170, 430, 300)", (gen, storedValues) -> {
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
             assertThat(out.toDouble()).isEqualTo(21704D, Offset.offset(0D));
         });
     }
@@ -240,7 +240,7 @@ class TestExpressionParserAggregates extends AbstractExpressionParserTest {
             gen.set(Val.of(430), storedValues);
             gen.set(Val.of(300), storedValues);
 
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
             assertThat(out.toDouble()).isEqualTo(21704D, Offset.offset(0D));
         });
     }
@@ -248,7 +248,7 @@ class TestExpressionParserAggregates extends AbstractExpressionParserTest {
     @Test
     void testStDev1() {
         createGenerator("round(stDev(600, 470, 170, 430, 300))", (gen, storedValues) -> {
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
             assertThat(out.toDouble()).isEqualTo(147, Offset.offset(0D));
         });
     }
@@ -262,7 +262,7 @@ class TestExpressionParserAggregates extends AbstractExpressionParserTest {
             gen.set(Val.of(430), storedValues);
             gen.set(Val.of(300), storedValues);
 
-            Val out = gen.eval(storedValues, null);
+            final Val out = gen.eval(storedValues, null);
             assertThat(out.toDouble()).isEqualTo(147, Offset.offset(0D));
         });
     }

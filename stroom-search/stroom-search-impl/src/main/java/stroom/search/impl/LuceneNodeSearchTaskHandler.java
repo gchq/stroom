@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.impl;
 
-import stroom.annotation.api.AnnotationFields;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.Query;
+import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.Query;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
@@ -97,7 +96,7 @@ class LuceneNodeSearchTaskHandler implements NodeSearchTaskHandler {
 
             // Search all index shards.
             final ExpressionFilter expressionFilter = ExpressionFilter.builder()
-                    .addPrefixExcludeFilter(AnnotationFields.ANNOTATION_FIELD_PREFIX)
+                    .addPrefixExcludeFilter(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)
                     .build();
             final ExpressionOperator expression = expressionFilter.copy(query.getExpression());
             final CompletableFuture<Void> indexShardSearchFuture = luceneSearcher.search(

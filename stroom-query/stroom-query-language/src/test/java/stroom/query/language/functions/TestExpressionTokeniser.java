@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,12 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.token.AbstractToken;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenGroup;
+import stroom.query.api.token.TokenType;
 import stroom.query.language.token.StructureBuilder;
-import stroom.query.language.token.Token;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenGroup;
-import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
 
 import org.junit.jupiter.api.DynamicTest;

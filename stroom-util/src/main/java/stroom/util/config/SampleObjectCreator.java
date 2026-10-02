@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.config;
 
 import stroom.util.io.ByteSize;
@@ -161,7 +177,7 @@ public class SampleObjectCreator {
                 } else if (getter.getReturnType().isEnum()) {
                     final Object[] constants = getter.getReturnType().getEnumConstants();
                     if (constants != null && constants.length > 0) {
-                        int index = (int) Math.round(Math.random() * (constants.length - 1));
+                        final int index = (int) Math.round(Math.random() * (constants.length - 1));
                         return constants[index];
                     }
                 }
@@ -191,7 +207,7 @@ public class SampleObjectCreator {
         for (final Method method : methods) {
             if (method.getParameterCount() == 0) {
                 if (method.getName().startsWith("get") || method.getName().startsWith("is")) {
-                    JsonProperty jsonProperty = method.getAnnotation(JsonProperty.class);
+                    final JsonProperty jsonProperty = method.getAnnotation(JsonProperty.class);
                     if (jsonProperty != null) {
                         if (name.equals(jsonProperty.value())) {
 //                            if (!type.isAssignableFrom(method.getReturnType())) {
@@ -245,7 +261,7 @@ public class SampleObjectCreator {
     private static Field findAnnotatedField(final Class<?> clazz, final Class<?> type, final String name) {
         final Field[] fields = clazz.getDeclaredFields();
         for (final Field field : fields) {
-            JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
+            final JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
             if (jsonProperty != null) {
                 if (name.equals(jsonProperty.value())) {
 //                    if (!type.isAssignableFrom(field.getType())) {

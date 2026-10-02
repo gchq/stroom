@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.onheapstore;
@@ -29,13 +28,13 @@ class TestKeyValueMapKey {
 
     @Test
     void testEqualsAndHashcode() {
-        KeyValueMapKey key1 = new KeyValueMapKey(
+        final KeyValueMapKey key1 = new KeyValueMapKey(
                 new MapDefinition(
                         new RefStreamDefinition("uid1", "ver1", 123L),
                         "myMap"),
                 "myKey");
 
-        KeyValueMapKey key2 = new KeyValueMapKey(
+        final KeyValueMapKey key2 = new KeyValueMapKey(
                 new MapDefinition(
                         new RefStreamDefinition("uid1", "ver1", 123L),
                         "myMap"),
@@ -47,13 +46,13 @@ class TestKeyValueMapKey {
 
     @Test
     void testEqualsAndHashcode_differentKey() {
-        KeyValueMapKey key1 = new KeyValueMapKey(
+        final KeyValueMapKey key1 = new KeyValueMapKey(
                 new MapDefinition(
                         new RefStreamDefinition("uid1", "ver1", 123L),
                         "myMap"),
                 "myKeyxxxxxx");
 
-        KeyValueMapKey key2 = new KeyValueMapKey(
+        final KeyValueMapKey key2 = new KeyValueMapKey(
                 new MapDefinition(
                         new RefStreamDefinition("uid1", "ver1", 123L),
                         "myMap"),

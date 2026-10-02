@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package stroom.query.impl;
 
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionValue;
@@ -114,7 +114,7 @@ public class Fields {
                 resultPage.getValues().forEach(fieldInfo -> {
                     final QueryHelpRow row = new QueryHelpRow(
                             QueryHelpType.FIELD,
-                            "fields." + fieldInfo.getFldName(),
+                            FIELDS_PARENT + fieldInfo.getFldName(),
                             false,
                             null,
                             null,
@@ -128,7 +128,8 @@ public class Fields {
 
     public void addCompletions(final CompletionsRequest request,
                                final int maxCompletions,
-                               final List<CompletionItem> resultList) {
+                               final List<CompletionItem> resultList,
+                               final Boolean queryable) {
         try {
             final QueryService queryService = queryServiceProvider.get();
             final Optional<DocRef> optDataSourceRef = Optional.ofNullable(request.getDataSourceRef())
@@ -158,7 +159,7 @@ public class Fields {
                                     FindFieldCriteria.DEFAULT_SORT_LIST,
                                     dataSourceRef,
                                     pattern,
-                                    null))
+                                    queryable))
                             .getValues();
 
                     // Score the matching fields so we get the best matches
@@ -184,7 +185,7 @@ public class Fields {
                                     FindFieldCriteria.DEFAULT_SORT_LIST,
                                     dataSourceRef,
                                     null,
-                                    null))
+                                    queryable))
                             .getValues();
                     LOGGER.debug(() -> LogUtil.message("Found {} match results using offset {}, maxCompletions {}",
                             fields.size(), maxCompletions));
@@ -193,7 +194,7 @@ public class Fields {
                             .forEach(resultList::add);
                 }
             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error adding field completions: {}", e.getMessage(), e);
         }
     }
@@ -244,11 +245,11 @@ public class Fields {
         if (FIELDS_ID.equals(row.getId())) {
             final InsertType insertType = InsertType.NOT_INSERTABLE;
             final String documentation = "A list of the fields available to 'select' from the specified data source. " +
-                                         "The fields will only become available one the data source has been " +
+                                         "The fields will only become available once the data source has been " +
                                          "specified using the 'from' keyword.";
             return Optional.of(new QueryHelpDetail(insertType, null, documentation));
 
-        } else if (row.getId().startsWith(FIELDS_ID + ".") && row.getData() instanceof
+        } else if (row.getId().startsWith(FIELDS_PARENT) && row.getData() instanceof
                 final QueryHelpField queryHelpField) {
             final QueryField fieldInfo = queryHelpField.getField();
             final InsertType insertType = InsertType.plainText(row.getTitle());

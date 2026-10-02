@@ -62,6 +62,10 @@ final class SystemPropertyUtil {
         return replaceProperty(string, SYSTEM_PROPERTY_PROVIDER, ignore);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class SystemPropertyProvider implements PropertyProvider {
 
         @Override

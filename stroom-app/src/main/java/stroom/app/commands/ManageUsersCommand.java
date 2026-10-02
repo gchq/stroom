@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app.commands;
 
 import stroom.config.app.Config;
@@ -7,6 +23,8 @@ import stroom.security.api.AppPermissionService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserService;
 import stroom.security.shared.AppPermission;
+import stroom.util.logging.AsciiTable;
+import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -32,11 +50,11 @@ import net.sourceforge.argparse4j.inf.Subparser;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Creates an account in the internal identity provider
@@ -180,15 +198,20 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
 
     private void listPermissions(final Namespace namespace) {
         if (namespace.getBoolean(LIST_PERMISSIONS_ARG_NAME)) {
-            String perms = Arrays.stream(AppPermission.values())
-                    .map(AppPermission::getDisplayValue)
-                    .sorted()
-                    .collect(Collectors.joining("\n"));
-            LOGGER.info("Valid application permission names:\n" +
-                        "--------------------\n" +
-                        "  {}\n" +
-                        "--------------------",
-                    perms);
+            final List<AppPermission> perms = Arrays.stream(AppPermission.values())
+                    .sorted(Comparator.comparing(AppPermission::getDisplayValue))
+                    .toList();
+
+            final String table = AsciiTable.builder(perms)
+                    .withColumn(Column.of("Permission", AppPermission::getDisplayValue))
+                    .withColumn(Column.of("Description", AppPermission::getDescription))
+                    .build();
+
+            LOGGER.info("""
+                            Valid application permission names:
+                            {}
+                            """,
+                    table);
         }
     }
 
@@ -202,7 +225,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                         new RuntimeException(LogUtil.message(
                                                 "No username supplied for {}. Argument value: '{}'",
                                                 CREATE_USER_ARG_NAME, userCsvData)));
-                    } catch (RuntimeException e) {
+                    } catch (final RuntimeException e) {
                         throw new RuntimeException(LogUtil.message(
                                 "Error parsing value for {}. Argument value: '{}'",
                                 CREATE_USER_ARG_NAME, userCsvData));
@@ -229,8 +252,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                     final String outcomeMsg = LogUtil
                                             .message("User '{}' already exists but is disabled, enabling",
                                                     user.asRef().toInfoString());
-                                    user.setEnabled(true);
-                                    userService.update(user);
+                                    userService.update(user.copy().enabled(true).build());
                                     indentedWarn(LOGGER, outcomeMsg, "  ");
                                     logCreateUserEvent(userName, false, outcomeMsg);
                                 } else {
@@ -247,7 +269,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                         "Created user '" + userName + "'",
                                         "  ");
                             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Error", e);
             throw new RuntimeException("Error " + msg + ":" + e.getMessage(), e);
         }
@@ -264,8 +286,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                 if (!user.isEnabled()) {
                                     final String outcomeMsg = LogUtil
                                             .message("Group '{}' already exists but is disabled, enabling", groupName);
-                                    user.setEnabled(true);
-                                    userService.update(user);
+                                    userService.update(user.copy().enabled(true).build());
                                     indentedWarn(LOGGER, outcomeMsg, "  ");
                                     logCreateGroupEvent(groupName, true, outcomeMsg);
                                 } else {
@@ -279,7 +300,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                 logCreateGroupEvent(groupName, true, null);
                                 indentedInfo(LOGGER, "Created group '" + groupName + "'", "  ");
                             });
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Error", e);
             throw new RuntimeException("Error " + msg + ":" + e.getMessage(), e);
         }
@@ -312,7 +333,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                         + targetGroup.toDisplayString() + "'",
                         "  ");
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
                         userOrGroupId,
@@ -353,7 +374,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                         + " from group " + targetGroup.toDisplayString(),
                         "  ");
 
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
                         userOrGroupId,
@@ -404,7 +425,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                     indentedInfo(LOGGER, LogUtil.message("Granted application permission '{}' to '{}'",
                             permission, userOrGroup.toInfoString()), "  ");
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
                         userOrGroupId,
@@ -462,7 +483,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                             failMsg,
                             false);
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.debug("Error", e);
                 logAddOrRemoveFromGroupEvent(
                         userOrGroupId,
@@ -502,7 +523,7 @@ public class ManageUsersCommand extends AbstractStroomAppCommand {
                                          "Falling back to treating it as a displayName",
                     expectedUserType.displayName, subjectId, argGroupName));
         }
-        stroom.security.shared.User userOrGroup = optUserOrGroup
+        final stroom.security.shared.User userOrGroup = optUserOrGroup
                 .orElseThrow(() -> new RuntimeException(LogUtil.message(
                         "A {} cannot be found with a subjectId or displayName matching identifier '{}' " +
                         "in arg group '{}'",

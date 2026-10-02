@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.index.mock;
 
 import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.shared.IndexVolumeGroup;
-import stroom.util.AuditUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,18 +42,22 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
 
     @Override
     public IndexVolumeGroup create() {
-        final IndexVolumeGroup group = new IndexVolumeGroup();
-        group.setName("New name");
-        AuditUtil.stamp(() -> TEST_USER, group);
+        final IndexVolumeGroup group = IndexVolumeGroup
+                .builder()
+                .name("New name")
+                .stampAudit(TEST_USER)
+                .build();
         groups.add(group);
         return group;
     }
 
     @Override
     public IndexVolumeGroup getOrCreate(final String name) {
-        final IndexVolumeGroup group = new IndexVolumeGroup();
-        group.setName(name);
-        AuditUtil.stamp(() -> TEST_USER, group);
+        final IndexVolumeGroup group = IndexVolumeGroup
+                .builder()
+                .name(name)
+                .stampAudit(TEST_USER)
+                .build();
         groups.add(group);
         return group;
     }
@@ -65,7 +68,7 @@ public class MockIndexVolumeGroupService implements IndexVolumeGroupService {
     }
 
     @Override
-    public IndexVolumeGroup get(String name) {
+    public IndexVolumeGroup get(final String name) {
         return null;
     }
 

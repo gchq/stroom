@@ -32,10 +32,10 @@ public class FilePermissionUtil {
 
     static final long MS_IN_DAY = 24L * 60L * 60L * 1000L;
 
-    public static void tracePath(Path file) throws IOException {
-        BasicFileAttributes basicFileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
+    public static void tracePath(final Path file) throws IOException {
+        final BasicFileAttributes basicFileAttributes = Files.readAttributes(file, BasicFileAttributes.class);
 
-        Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(file);
+        final Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(file);
 
         System.out.println("File Attributes: " + file);
         System.out.println();
@@ -46,17 +46,17 @@ public class FilePermissionUtil {
         System.out.println();
     }
 
-    public static void main(String[] args) throws IOException {
-        Path file = Paths.get(args[0]);
+    public static void main(final String[] args) throws IOException {
+        final Path file = Paths.get(args[0]);
 
         tracePath(file);
-        Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(file);
+        final Set<PosixFilePermission> filePermissions = Files.getPosixFilePermissions(file);
 
         System.out.println("Setting Permission ");
         System.out.println();
 
-        Set<PosixFilePermission> newFilePermissions = new HashSet<>();
-        for (PosixFilePermission filePermission : filePermissions) {
+        final Set<PosixFilePermission> newFilePermissions = new HashSet<>();
+        for (final PosixFilePermission filePermission : filePermissions) {
             if (filePermission.equals(PosixFilePermission.OWNER_WRITE)) {
                 newFilePermissions.add(PosixFilePermission.OWNER_READ);
             } else if (filePermission.equals(PosixFilePermission.GROUP_WRITE)) {
@@ -71,7 +71,7 @@ public class FilePermissionUtil {
         Files.setPosixFilePermissions(file,
                 new HashSet<>(Arrays.asList(PosixFilePermission.OWNER_READ, PosixFilePermission.GROUP_READ)));
 
-        FileTime newFileAccessTime = FileTime.fromMillis(
+        final FileTime newFileAccessTime = FileTime.fromMillis(
                 Files.readAttributes(file, BasicFileAttributes.class).lastAccessTime().toMillis() + MS_IN_DAY);
         System.out.println("Setting lastAccessTime +24H");
         Files.setAttribute(file, "lastAccessTime", newFileAccessTime);

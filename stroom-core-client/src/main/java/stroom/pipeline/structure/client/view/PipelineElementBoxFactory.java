@@ -17,24 +17,21 @@
 package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-
-@Singleton
 public class PipelineElementBoxFactory {
 
-    @Inject
-    public PipelineElementBoxFactory() {
+    private final PipelineModel pipelineModel;
+
+    public PipelineElementBoxFactory(final PipelineModel pipelineModel) {
+        this.pipelineModel = pipelineModel;
     }
 
     public PipelineElementBox create(final PipelineElement pipelineElement) {
-        final SvgImage icon = pipelineElement.getElementType().getIcon();
-        if (icon != null) {
-            return new PipelineElementBox(pipelineElement, icon);
-        } else {
-            return new PipelineElementBox(pipelineElement, null);
-        }
+        final SvgImage icon = NullSafe.get(pipelineModel.getElementType(pipelineElement), PipelineElementType::getIcon);
+        return new PipelineElementBox(pipelineModel, pipelineElement, icon);
     }
 }

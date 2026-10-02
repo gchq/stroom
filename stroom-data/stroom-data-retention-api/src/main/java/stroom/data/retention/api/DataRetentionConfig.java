@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.retention.api;
 
 import stroom.util.shared.AbstractConfig;
@@ -8,9 +24,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 
 @JsonPropertyOrder(alphabetic = true)
 public class DataRetentionConfig extends AbstractConfig implements IsStroomConfig {
+
+    private static final int DEFAULT_DELETE_BATCH_SIZE = 1_000;
+    private static final boolean DEFAULT_USE_QUERY_OPTIMISATION = true;
 
     @JsonProperty
     @JsonPropertyDescription("The number of records that will be logically deleted in each pass of the data " +
@@ -26,15 +47,15 @@ public class DataRetentionConfig extends AbstractConfig implements IsStroomConfi
 
 
     public DataRetentionConfig() {
-        deleteBatchSize = 1_000;
-        useQueryOptimisation = true;
+        deleteBatchSize = DEFAULT_DELETE_BATCH_SIZE;
+        useQueryOptimisation = DEFAULT_USE_QUERY_OPTIMISATION;
     }
 
     @JsonCreator
-    public DataRetentionConfig(@JsonProperty("deleteBatchSize") final int deleteBatchSize,
-                               @JsonProperty("useQueryOptimisation") final boolean useQueryOptimisation) {
-        this.deleteBatchSize = deleteBatchSize;
-        this.useQueryOptimisation = useQueryOptimisation;
+    public DataRetentionConfig(@JsonProperty("deleteBatchSize") final Integer deleteBatchSize,
+                               @JsonProperty("useQueryOptimisation") final Boolean useQueryOptimisation) {
+        this.deleteBatchSize = Objects.requireNonNullElse(deleteBatchSize, DEFAULT_DELETE_BATCH_SIZE);
+        this.useQueryOptimisation = Objects.requireNonNullElse(useQueryOptimisation, DEFAULT_USE_QUERY_OPTIMISATION);
     }
 
     public int getDeleteBatchSize() {

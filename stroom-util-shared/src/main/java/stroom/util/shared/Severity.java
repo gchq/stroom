@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-
 public enum Severity implements HasDisplayValue {
     // In case anyone is using the default enum ordinal compare, these must be defined
     // in ascending order of severity and so must the IDs
@@ -104,7 +103,7 @@ public enum Severity implements HasDisplayValue {
         return summaryValue;
     }
 
-    private int getId() {
+    public int getId() {
         return id;
     }
 

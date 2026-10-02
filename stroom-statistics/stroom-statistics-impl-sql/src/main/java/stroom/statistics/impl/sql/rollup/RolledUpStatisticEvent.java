@@ -133,7 +133,7 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(final Object obj) {
         if (this == obj) {
             return true;
         }
@@ -143,7 +143,7 @@ public class RolledUpStatisticEvent implements Iterable<TimeAgnosticStatisticEve
         if (getClass() != obj.getClass()) {
             return false;
         }
-        RolledUpStatisticEvent other = (RolledUpStatisticEvent) obj;
+        final RolledUpStatisticEvent other = (RolledUpStatisticEvent) obj;
         if (originalStatisticEvent == null) {
             if (other.originalStatisticEvent != null) {
                 return false;

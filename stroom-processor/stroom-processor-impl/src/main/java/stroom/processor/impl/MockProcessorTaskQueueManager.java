@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.processor.impl;
@@ -56,7 +55,7 @@ public class MockProcessorTaskQueueManager implements ProcessorTaskQueueManager 
         final ExpressionCriteria criteria = new ExpressionCriteria();
         final List<ProcessorFilter> processorFilters = processorFilterService
                 .find(criteria).getValues();
-        if (processorFilters != null && processorFilters.size() > 0) {
+        if (processorFilters != null && !processorFilters.isEmpty()) {
             // Sort by priority.
             processorFilters.sort((o1, o2) -> o2.getPriority() - o1.getPriority());
 
@@ -71,20 +70,21 @@ public class MockProcessorTaskQueueManager implements ProcessorTaskQueueManager 
 
                 streams.sort(Comparator.comparing(Meta::getId));
 
-                if (streams.size() > 0) {
+                if (!streams.isEmpty()) {
                     for (final Meta meta : streams) {
                         if (meta.getId() >= filter.getProcessorFilterTracker().getMinMetaId()) {
                             // Only process streams with an id of 1 or more
                             // greater than this stream in future.
                             filter.getProcessorFilterTracker().setMinMetaId(meta.getId() + 1);
 
-                            final ProcessorTask streamTask = new ProcessorTask();
-                            streamTask.setMetaId(meta.getId());
-                            streamTask.setProcessorFilter(filter);
-                            streamTask.setNodeName(nodeName);
-                            streamTask.setStatus(TaskStatus.PROCESSING);
+                            final ProcessorTask task = ProcessorTask.builder()
+                                    .metaId(meta.getId())
+                                    .processorFilter(filter)
+                                    .nodeName(nodeName)
+                                    .status(TaskStatus.PROCESSING)
+                                    .build();
 
-                            taskList.add(streamTask);
+                            taskList.add(task);
                         }
                     }
                 }

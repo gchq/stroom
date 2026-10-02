@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,10 @@ class RequestInfo {
                 () -> findBeforeOrAfterCallObj(containerResourceInfo.getResource(), requestObj));
     }
 
-    public static boolean objectIsLoggable(Object obj) {
-        return obj != null && !obj.getClass().getName().startsWith("java.") && !(obj instanceof Collection);
+    public static boolean objectIsLoggable(final Object obj) {
+        return obj != null
+               && !obj.getClass().getName().startsWith("java.")
+               && !(obj instanceof Collection);
     }
 
     public RequestInfo(final SecurityContext securityContext,
@@ -84,7 +86,7 @@ class RequestInfo {
         return beforeCallObj;
     }
 
-    public synchronized Object getAfterCallObj(SecurityContext securityContext) {
+    public synchronized Object getAfterCallObj(final SecurityContext securityContext) {
         if (afterCallObjFound) {
             return afterCallObj;
         }
@@ -98,26 +100,26 @@ class RequestInfo {
         return containerResourceInfo;
     }
 
-    private Object findBeforeOrAfterCallObj(Object resource, Object template) {
+    private Object findBeforeOrAfterCallObj(final Object resource, final Object template) {
         if (template == null || resource == null) {
             return null;
         }
         Object result = null;
 
         //Only required for update and delete operations
-        if (OperationType.UPDATE.equals(containerResourceInfo.getOperationType()) ||
-            OperationType.DELETE.equals(containerResourceInfo.getOperationType())) {
+        if (OperationType.UPDATE == containerResourceInfo.getOperationType() ||
+            OperationType.DELETE == containerResourceInfo.getOperationType()) {
             try {
-                boolean templateHasAnId = template instanceof HasId ||
-                                          template instanceof HasIntegerId || template instanceof HasUuid;
+                final boolean templateHasAnId = template instanceof HasId ||
+                                                template instanceof HasIntegerId || template instanceof HasUuid;
 
                 if (templateHasAnId) {
                     if (resource instanceof FetchWithIntegerId<?>) {
-                        FetchWithIntegerId<?> integerReadSupportingResource = (FetchWithIntegerId<?>) resource;
+                        final FetchWithIntegerId<?> integerReadSupportingResource = (FetchWithIntegerId<?>) resource;
                         if (template instanceof HasIntegerId) {
                             result = integerReadSupportingResource.fetch(((HasIntegerId) template).getId());
                         } else if (template instanceof HasId) {
-                            HasId hasId = (HasId) template;
+                            final HasId hasId = (HasId) template;
                             if (hasId.getId() > Integer.MAX_VALUE) {
                                 LOGGER.error("ID out of range for int in request of type " +
                                              template.getClass().getSimpleName());
@@ -129,11 +131,11 @@ class RequestInfo {
                                          template.getClass().getSimpleName());
                         }
                     } else if (resource instanceof FetchWithLongId<?>) {
-                        FetchWithLongId<?> integerReadSupportingResource = (FetchWithLongId<?>) resource;
+                        final FetchWithLongId<?> integerReadSupportingResource = (FetchWithLongId<?>) resource;
                         if (template instanceof HasIntegerId) {
                             result = integerReadSupportingResource.fetch(((HasIntegerId) template).getId().longValue());
                         } else if (template instanceof HasId) {
-                            HasId hasId = (HasId) template;
+                            final HasId hasId = (HasId) template;
                             if (hasId.getId() > Integer.MAX_VALUE) {
                                 LOGGER.error("ID out of range for int in request of type " +
                                              template.getClass().getSimpleName());
@@ -145,9 +147,9 @@ class RequestInfo {
                                          template.getClass().getSimpleName());
                         }
                     } else if (resource instanceof FetchWithUuid<?>) {
-                        FetchWithUuid<?> docrefReadSupportingResource = (FetchWithUuid<?>) resource;
+                        final FetchWithUuid<?> docrefReadSupportingResource = (FetchWithUuid<?>) resource;
                         if (template instanceof HasUuid) {
-                            String uuid = ((HasUuid) template).getUuid();
+                            final String uuid = ((HasUuid) template).getUuid();
                             result = docrefReadSupportingResource.fetch(uuid);
                         } else {
                             LOGGER.error(
@@ -156,9 +158,10 @@ class RequestInfo {
                         }
                     }
                 } else if (resource instanceof FetchWithTemplate<?>) {
-                    FetchWithTemplate<Object> templateReadSupportingResource = (FetchWithTemplate<Object>) resource;
+                    final FetchWithTemplate<Object> templateReadSupportingResource =
+                            (FetchWithTemplate<Object>) resource;
 
-                    Optional<Method> fetchMethodOptional =
+                    final Optional<Method> fetchMethodOptional =
                             Arrays.stream(templateReadSupportingResource.getClass().getMethods())
                                     .filter(m ->
                                             m.getName().equals("fetch")
@@ -174,10 +177,10 @@ class RequestInfo {
                                 template.getClass().getSimpleName());
                     }
                 } else if (resource instanceof FindWithCriteria<?, ?>) {
-                    FindWithCriteria<Object, Object> findWithCriteriaSupportingResource =
+                    final FindWithCriteria<Object, Object> findWithCriteriaSupportingResource =
                             (FindWithCriteria<Object, Object>) resource;
 
-                    Optional<Method> findMethodOptional =
+                    final Optional<Method> findMethodOptional =
                             Arrays.stream(findWithCriteriaSupportingResource.getClass().getMethods())
                                     .filter(m ->
                                             m.getName().equals("find")
@@ -185,7 +188,7 @@ class RequestInfo {
                                             && m.getParameters()[0].getType().isAssignableFrom(template.getClass()))
                                     .findFirst();
                     if (findMethodOptional.isPresent()) {
-                        ResultPage<Object> resultPage = findWithCriteriaSupportingResource.find(template);
+                        final ResultPage<Object> resultPage = findWithCriteriaSupportingResource.find(template);
                         if (resultPage != null) {
                             result = resultPage.getValues();
                         } else {
@@ -203,7 +206,7 @@ class RequestInfo {
                                 " Before operation object will not be available.");
                 }
 
-            } catch (Exception ex) {
+            } catch (final Exception ex) {
                 LOGGER.info("Unable to find existing/previous version of object", ex);
             }
 
@@ -213,24 +216,24 @@ class RequestInfo {
     }
 
     private Object findRequestObj() {
-        int numberOfPathParms = containerResourceInfo.getRequestContext()
+        final int numberOfPathParms = containerResourceInfo.getRequestContext()
                 .getUriInfo()
                 .getPathParameters(false)
                 .keySet()
                 .size();
-        int numberOfQueryParams = containerResourceInfo.getRequestContext()
+        final int numberOfQueryParams = containerResourceInfo.getRequestContext()
                 .getUriInfo()
                 .getQueryParameters(false)
                 .keySet()
                 .size();
-        int numberOfPathAndQueryParms = numberOfPathParms + numberOfQueryParams;
+        final int numberOfPathAndQueryParms = numberOfPathParms + numberOfQueryParams;
 
         if (numberOfPathAndQueryParms == 0) {
             return null;
         }
 
         if (numberOfPathAndQueryParms > 1) {
-            WithParameters obj = new WithParameters(
+            final WithParameters obj = new WithParameters(
                     containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false));
             obj.addParams(containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false));
             return obj;
@@ -241,14 +244,14 @@ class RequestInfo {
             } else {
                 paramMap = containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false);
             }
-            String paramName = paramMap.keySet().stream().findFirst().get();
-            String paramValue = paramMap.get(paramName).stream().collect(Collectors.joining(", "));
+            final String paramName = paramMap.keySet().stream().findFirst().get();
+            final String paramValue = paramMap.get(paramName).stream().collect(Collectors.joining(", "));
             if ("id".equals(paramName)) {
                 return new ObjectId(paramValue);
             } else if ("uuid".equals(paramName)) {
                 return new ObjectUuid(paramValue);
             } else {
-                WithParameters obj = new WithParameters(
+                final WithParameters obj = new WithParameters(
                         containerResourceInfo.getRequestContext().getUriInfo().getPathParameters(false));
                 obj.addParams(containerResourceInfo.getRequestContext().getUriInfo().getQueryParameters(false));
                 return obj;
@@ -265,11 +268,11 @@ class RequestInfo {
 
         private final long id;
 
-        public ObjectId(String val) {
+        public ObjectId(final String val) {
             long id = 0;
             try {
                 id = Long.parseLong(val);
-            } catch (NumberFormatException ex) {
+            } catch (final NumberFormatException ex) {
                 LOGGER.error("Unable to log id of entity with non-numeric id " + val);
             } finally {
                 this.id = id;
@@ -282,11 +285,15 @@ class RequestInfo {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class ObjectUuid implements HasUuid {
 
         private final String uuid;
 
-        public ObjectUuid(String uuid) {
+        public ObjectUuid(final String uuid) {
             this.uuid = uuid;
         }
 
@@ -296,17 +303,21 @@ class RequestInfo {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public static class WithParameters extends Properties implements HasName {
 
 //        private Properties allParameters = new Properties();
 
-        public WithParameters(MultivaluedMap<String, String> origParams) {
-            Set<Entry<String, String>> params = createParms(origParams);
+        public WithParameters(final MultivaluedMap<String, String> origParams) {
+            final Set<Entry<String, String>> params = createParms(origParams);
 
             params.stream().forEach((entry) -> this.put(entry.getKey(), entry.getValue()));
         }
 
-        private Set<Entry<String, String>> createParms(MultivaluedMap<String, String> origParams) {
+        private Set<Entry<String, String>> createParms(final MultivaluedMap<String, String> origParams) {
             return origParams.keySet().stream().map(k -> {
                 return new Entry<String, String>() {
                     @Override
@@ -327,11 +338,11 @@ class RequestInfo {
             }).collect(Collectors.toSet());
         }
 
-        public void addParams(MultivaluedMap<String, String> origParams) {
+        public void addParams(final MultivaluedMap<String, String> origParams) {
             if (origParams == null || origParams.size() == 0) {
                 return;
             }
-            Set<Entry<String, String>> parms = createParms(origParams);
+            final Set<Entry<String, String>> parms = createParms(origParams);
 
             parms.stream().forEach((entry) -> this.put(entry.getKey(), entry.getValue()));
         }

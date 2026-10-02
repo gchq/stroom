@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
 import stroom.data.store.api.Store;
@@ -13,6 +29,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -25,6 +42,7 @@ import java.util.function.Function;
 public class AnalyticErrorWriter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnalyticErrorWriter.class);
+    private static final ElementId ELEMENT_ID = new ElementId("AnalyticsExecutor");
 
     private final RecordErrorReceiver recordErrorReceiver;
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -32,6 +50,7 @@ public class AnalyticErrorWriter {
     private final RecordCount recordCount;
     private final Store store;
     private final VolumeGroupNameProvider volumeGroupNameProvider;
+    private final AnalyticRuleHolder analyticRuleHolder;
 
     @Inject
     public AnalyticErrorWriter(final RecordErrorReceiver recordErrorReceiver,
@@ -39,13 +58,15 @@ public class AnalyticErrorWriter {
                                final ErrorWriterProxy errorWriterProxy,
                                final RecordCount recordCount,
                                final Store store,
-                               final VolumeGroupNameProvider volumeGroupNameProvider) {
+                               final VolumeGroupNameProvider volumeGroupNameProvider,
+                               final AnalyticRuleHolder analyticRuleHolder) {
         this.recordErrorReceiver = recordErrorReceiver;
         this.errorReceiverProxy = errorReceiverProxy;
         this.errorWriterProxy = errorWriterProxy;
         this.recordCount = recordCount;
         this.store = store;
         this.volumeGroupNameProvider = volumeGroupNameProvider;
+        this.analyticRuleHolder = analyticRuleHolder;
     }
 
     <R> R exec(final String errorFeedName,
@@ -96,11 +117,10 @@ public class AnalyticErrorWriter {
     private void outputError(final Exception e, final Severity severity) {
         if (errorReceiverProxy != null && !(e instanceof LoggedException)) {
             try {
-                if (e.getMessage() != null) {
-                    errorReceiverProxy.log(severity, null, "AnalyticsExecutor", e.getMessage(), e);
-                } else {
-                    errorReceiverProxy.log(severity, null, "AnalyticsExecutor", e.toString(), e);
-                }
+                final String message = e.getMessage() != null
+                        ? e.getMessage()
+                        : e.toString();
+                errorReceiverProxy.log(severity, null, ELEMENT_ID, prefixWithRuleIdentity(message), e);
             } catch (final RuntimeException e2) {
                 // Ignore exception as we generated it.
             }
@@ -111,5 +131,13 @@ public class AnalyticErrorWriter {
         } else {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
         }
+    }
+
+    private String prefixWithRuleIdentity(final String message) {
+        final String ruleIdentity = analyticRuleHolder.getRuleIdentity();
+        if (ruleIdentity != null) {
+            return ruleIdentity + ": " + message;
+        }
+        return message;
     }
 }

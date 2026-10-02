@@ -19,6 +19,7 @@ package stroom.pipeline.xsltfunctions;
 import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.shared.data.PipelineReference;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.Location;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -29,6 +30,7 @@ import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.BooleanValue;
+import net.sf.saxon.value.DateTimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,6 +91,31 @@ abstract class StroomExtensionFunctionCall {
         return string;
     }
 
+    DateTimeValue getSafeDateTime(final String functionName,
+                                       final XPathContext context,
+                                       final Sequence[] arguments,
+                                       final int index) throws XPathException {
+        DateTimeValue dateTime = null;
+        final Sequence sequence = arguments[index];
+        if (sequence != null) {
+            final Item item = sequence.iterate().next();
+            if (item != null && item instanceof DateTimeValue) {
+                dateTime = ((DateTimeValue) item);
+            }
+        }
+
+        if (dateTime == null) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Illegal non dateTime argument found in function ");
+            sb.append(functionName);
+            sb.append("() at position ");
+            sb.append(index);
+            outputWarning(context, sb, null);
+        }
+
+        return dateTime;
+    }
+
     Boolean getSafeBoolean(final String functionName,
                            final XPathContext context,
                            final Sequence[] arguments,
@@ -112,6 +139,28 @@ abstract class StroomExtensionFunctionCall {
         }
 
         return bool;
+    }
+
+    /**
+     * Get the value of an optional trailing boolean argument that indicates whether warnings should
+     * be suppressed. If the argument has not been supplied, or it cannot be read, then warnings will
+     * not be suppressed.
+     */
+    boolean isIgnoreWarnings(final String functionName,
+                             final XPathContext context,
+                             final Sequence[] arguments,
+                             final int index) {
+        if (arguments.length <= index) {
+            return false;
+        }
+
+        try {
+            return NullSafe.isTrue(getSafeBoolean(functionName, context, arguments, index));
+        } catch (final XPathException | RuntimeException e) {
+            LOGGER.debug("Unable to read the ignore warnings argument of function {}() at position {}",
+                    functionName, index, e);
+            return false;
+        }
     }
 
     void outputWarning(final XPathContext context, final StringBuilder msgBuilder, final Throwable e) {
@@ -145,7 +194,7 @@ abstract class StroomExtensionFunctionCall {
 
     void log(final XPathContext context, final Severity severity, final String message, final Throwable e) {
         final Location location = getLocation(context);
-        errorReceiver.log(severity, location, getClass().getSimpleName(), message, e);
+        errorReceiver.log(severity, location, new ElementId(getClass().getSimpleName()), message, e);
     }
 
     private Location getLocation(final XPathContext context) {

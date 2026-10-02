@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app.commands;
 
 import stroom.config.app.Config;
@@ -31,7 +47,7 @@ public class CreateAccountCommand extends AbstractStroomAppCommand {
     private static final Logger LOGGER = LoggerFactory.getLogger(CreateAccountCommand.class);
     private static final String COMMAND_NAME = "create_account";
     private static final String COMMAND_DESCRIPTION = "Creates the specified user account in the internal identity " +
-            "provider";
+                                                      "provider";
 
     private static final String USERNAME_ARG_NAME = "user";
     private static final String PASSWORD_ARG_NAME = "password";
@@ -95,7 +111,7 @@ public class CreateAccountCommand extends AbstractStroomAppCommand {
                 .help("The user's first name");
 
         subparser.addArgument(asArg('s', LAST_NAME_ARG_NAME))
-                .dest(FIRST_NAME_ARG_NAME)
+                .dest(LAST_NAME_ARG_NAME)
                 .type(String.class)
                 .required(false)
                 .help("The user's last name");
@@ -153,11 +169,12 @@ public class CreateAccountCommand extends AbstractStroomAppCommand {
         final String lastName = namespace.getString(LAST_NAME_ARG_NAME);
         final boolean noPasswordChange = namespace.getBoolean(NO_PASSWORD_CHANGE);
         final boolean neverExpires = namespace.getBoolean(NEVER_EXPIRES_CHANGE_ARG_NAME);
-        final long now = System.currentTimeMillis();
 
-        LOGGER.info("Creating account for user '{}'", username);
+        LOGGER.info("Creating account for user '{}' - email '{}', first name '{}', last name '{}', " +
+                    "no password change '{}', never expires '{}'",
+                username, email, firstName, lastName, noPasswordChange, neverExpires);
 
-        CreateAccountRequest createAccountRequest = new CreateAccountRequest(
+        final CreateAccountRequest createAccountRequest = new CreateAccountRequest(
                 firstName,
                 lastName,
                 username,

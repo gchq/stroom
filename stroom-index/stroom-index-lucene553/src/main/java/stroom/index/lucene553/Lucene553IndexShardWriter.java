@@ -16,8 +16,6 @@
 
 package stroom.index.lucene553;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.IndexField;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexShardDao;
@@ -28,6 +26,8 @@ import stroom.index.impl.UncheckedLockObtainException;
 import stroom.index.lucene553.analyser.AnalyzerFactory;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.IndexField;
 import stroom.search.extraction.FieldValue;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
@@ -145,7 +145,7 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
             dir = IndexShardUtil.getIndexPath(indexShard, pathCreator);
             LOGGER.debug(() -> LogUtil.message("Creating index shard writer for dir {} {}", dir, this));
 
-            Directory directory;
+            final Directory directory;
 
             // Open the index writer.
             // If we already have a directory then this is an existing index.
@@ -250,7 +250,7 @@ class Lucene553IndexShardWriter implements IndexShardWriter {
                 fieldAnalyzers.put(indexField.getFldName(), analyzer);
             }
 
-            org.apache.lucene553.document.Field field = FieldFactory.create(fieldValue);
+            final org.apache.lucene553.document.Field field = FieldFactory.create(fieldValue);
 
             // Add the current field to the document if it is not null.
             if (field != null) {

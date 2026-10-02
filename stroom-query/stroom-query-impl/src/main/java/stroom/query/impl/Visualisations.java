@@ -157,7 +157,7 @@ public class Visualisations {
                         .map(matchResult -> createCompletionSnippet(matchResult.item(), matchResult.score()))
                         .forEach(resultList::add);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error adding visualisation completions: {}", e.getMessage(), e);
         }
     }
@@ -196,7 +196,7 @@ public class Visualisations {
         String snippetText;
         try {
             snippetText = getSnippetText(doc);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug(() -> "Error getting vis settings: " + e.getMessage(), e);
             // Fall back to a CompletionValue
             snippetText = getInsertText(doc.asDocRef());
@@ -230,7 +230,7 @@ public class Visualisations {
         final List<Control> dataControls = NullSafe.asList(
                 NullSafe.get(dataTab, Tab::getControls));
 
-        StringBuilder sb = new StringBuilder(visName)
+        final StringBuilder sb = new StringBuilder(visName)
                 .append("(");
 
         int tabStop = 1;

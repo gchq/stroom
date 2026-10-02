@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DataDirProvider;
@@ -24,18 +40,21 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
     private final DataDirProvider dataDirProvider;
     private final PathCreator pathCreator;
     private final FileStores fileStores;
+    private final FsyncConfig fsyncConfig;
 
     @Inject
     public ForwardFileDestinationFactoryImpl(final ProxyServices proxyServices,
                                              final DirQueueFactory dirQueueFactory,
                                              final DataDirProvider dataDirProvider,
                                              final PathCreator pathCreator,
-                                             final FileStores fileStores) {
+                                             final FileStores fileStores,
+                                             final FsyncConfig fsyncConfig) {
         this.proxyServices = proxyServices;
         this.dirQueueFactory = dirQueueFactory;
         this.dataDirProvider = dataDirProvider;
         this.pathCreator = pathCreator;
         this.fileStores = fileStores;
+        this.fsyncConfig = fsyncConfig;
     }
 
     @Override
@@ -74,6 +93,7 @@ public class ForwardFileDestinationFactoryImpl implements ForwardFileDestination
                 pathCreator,
                 dirQueueFactory,
                 proxyServices,
-                fileStores);
+                fileStores,
+                fsyncConfig.getForwardingInputQueueMode());
     }
 }

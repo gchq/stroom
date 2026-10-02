@@ -51,11 +51,11 @@ public class PasswordTextBox extends TextBox {
      *
      * @param element the element to be wrapped
      */
-    public static PasswordTextBox wrap(Element element) {
+    public static PasswordTextBox wrap(final Element element) {
         // Assert that the element is attached.
         assert Document.get().getBody().isOrHasChild(element);
 
-        PasswordTextBox textBox = new PasswordTextBox(element);
+        final PasswordTextBox textBox = new PasswordTextBox(element);
 
         // Mark it attached and remember it for cleanup.
         textBox.onAttach();
@@ -78,7 +78,7 @@ public class PasswordTextBox extends TextBox {
      *
      * @param element the element to be used
      */
-    protected PasswordTextBox(Element element) {
+    protected PasswordTextBox(final Element element) {
         super(element, null);
         assert InputElement.as(element).getType().equalsIgnoreCase("password");
     }

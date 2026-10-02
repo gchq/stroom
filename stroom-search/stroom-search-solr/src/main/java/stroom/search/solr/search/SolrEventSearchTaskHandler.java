@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package stroom.search.solr.search;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Query;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.Query;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
@@ -70,7 +70,7 @@ public class SolrEventSearchTaskHandler {
 
     public EventRefs exec(final SolrEventSearchTask task) {
         return securityContext.secureResult(() -> {
-            EventRefs eventRefs;
+            final EventRefs eventRefs;
 
             // Get the current time in millis since epoch.
             final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();

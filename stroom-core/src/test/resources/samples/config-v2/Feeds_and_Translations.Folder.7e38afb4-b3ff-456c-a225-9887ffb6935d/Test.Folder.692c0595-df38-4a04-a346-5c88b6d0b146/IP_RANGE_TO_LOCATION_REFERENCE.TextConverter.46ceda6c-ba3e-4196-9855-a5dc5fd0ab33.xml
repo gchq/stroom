@@ -1,0 +1,16 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<dataSplitter xmlns="data-splitter:3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="data-splitter:3 file://data-splitter-v3.0.xsd" version="3.0" ignoreErrors="true">
+  <split delimiter="\n">
+    <group reverse="true" ignoreErrors="true">
+      <regex pattern="&#34;\s*(\d+.\d+.\d+.\d+) ot (\d+.\d+.\d+.\d+) - ([^&#34;]+)">
+        <data name="zone" value="$3" />
+        <data name="from" value="$2" />
+        <data name="to" value="$1" />
+      </regex>
+      <regex pattern="&#34;\s*(\d+.\d+.\d+.\d+) - ([^&#34;]+)">
+        <data name="zone" value="$2" />
+        <data name="key" value="$1" />
+      </regex>
+    </group>
+  </split>
+</dataSplitter>

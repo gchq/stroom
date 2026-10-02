@@ -38,7 +38,7 @@ public class CompositeRef implements Ref {
                 if (chars == null) {
                     chars = arr;
                 } else {
-                    char[] tmp = new char[chars.length + arr.length];
+                    final char[] tmp = new char[chars.length + arr.length];
                     System.arraycopy(chars, 0, tmp, 0, chars.length);
                     System.arraycopy(arr, 0, tmp, chars.length, arr.length);
                     chars = tmp;

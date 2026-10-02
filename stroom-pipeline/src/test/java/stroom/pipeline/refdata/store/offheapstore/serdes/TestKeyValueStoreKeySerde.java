@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -64,9 +63,9 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
     void testOutput() {
 
         // verify that we can directly use Output and Input classes to manage our own (de)ser
-        ByteBuffer byteBuffer = ByteBuffer.allocate(20);
+        final ByteBuffer byteBuffer = ByteBuffer.allocate(20);
         LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
-        Output output = new Output(new ByteBufferOutputStream(byteBuffer));
+        final Output output = new Output(new ByteBufferOutputStream(byteBuffer));
         LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
         output.writeString("MyTestString");
         output.flush();
@@ -77,9 +76,9 @@ class TestKeyValueStoreKeySerde extends AbstractSerdeTest<KeyValueStoreKey, KeyV
         byteBuffer.flip();
         LOGGER.info("{}", ByteBufferUtils.byteBufferInfo(byteBuffer));
 
-        Input input = new Input(new ByteBufferInputStream(byteBuffer));
-        String str = input.readString();
-        int i = input.readInt(true);
+        final Input input = new Input(new ByteBufferInputStream(byteBuffer));
+        final String str = input.readString();
+        final int i = input.readInt(true);
         assertThat(str).isEqualTo("MyTestString");
         assertThat(i).isEqualTo(1);
     }

@@ -16,36 +16,34 @@
 
 package stroom.dashboard.impl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.io.Serializable;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"fields", "limit"})
 @JsonInclude(Include.NON_NULL)
-@XmlType(name = "VisValues", propOrder = {"fields", "limit"})
 public class VisValues implements Serializable {
 
-    private static final long serialVersionUID = 1272545271946712570L;
-
+    @JsonProperty
     private VisField[] fields;
+    @JsonProperty
     private VisLimit limit;
 
     public VisValues() {
     }
 
-    public VisValues(final VisField[] fields, final VisLimit limit) {
+    @JsonCreator
+    public VisValues(@JsonProperty("fields") final VisField[] fields,
+                     @JsonProperty("limit") final VisLimit limit) {
         this.fields = fields;
         this.limit = limit;
     }
 
-    @XmlElementWrapper(name = "fields")
-    @XmlElement(name = "field")
     public VisField[] getFields() {
         return fields;
     }
@@ -54,7 +52,6 @@ public class VisValues implements Serializable {
         this.fields = fields;
     }
 
-    @XmlElement
     public VisLimit getLimit() {
         return limit;
     }
@@ -95,8 +92,8 @@ public class VisValues implements Serializable {
     @Override
     public String toString() {
         return "VisValues{" +
-                "fields=" + Arrays.toString(fields) +
-                ", limit=" + limit +
-                '}';
+               "fields=" + Arrays.toString(fields) +
+               ", limit=" + limit +
+               '}';
     }
 }

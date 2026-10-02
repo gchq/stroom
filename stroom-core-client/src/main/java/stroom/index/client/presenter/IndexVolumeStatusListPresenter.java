@@ -19,7 +19,6 @@ package stroom.index.client.presenter;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -68,7 +67,8 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Index Volumes");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -202,8 +202,6 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<PagerView>
                         .withToolTip("The date/time this volume was last written to.")
                         .build(),
                 ColumnSizeConstants.DATE_AND_DURATION_COL);
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private Number getUsePercentage(final IndexVolume volume) {

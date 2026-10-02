@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 ext.moduleName = 'stroom.test.common'
 
 dependencies {
@@ -9,40 +25,37 @@ dependencies {
 
     implementation libs.assertj.core
     implementation libs.classgraph
-    implementation libs.commons.codec
     implementation libs.commons.compress
-    implementation libs.commons.lang
     implementation libs.data.faker
-    implementation libs.dropwizard.jersey
     implementation libs.dropwizard.testing
-    implementation libs.dropwizard.validation
-    implementation libs.flyway.core
     implementation libs.flyway.mysql
-    implementation libs.guava
     implementation libs.guice
     implementation libs.hikari
-    implementation libs.jackson.core
-    implementation libs.jackson.databind
     implementation libs.jackson.dataformat.yaml
-    implementation libs.jackson.datatype.jdk8
     implementation libs.jgit
     implementation libs.jooq
-    implementation libs.junit.jupiter.api
     implementation libs.junit.platform.launcher
-    implementation libs.mockito.core
     implementation libs.mockito.junit.jupiter
-    implementation libs.slf4j.api
     implementation libs.vavr
 
     runtimeOnly libs.mysql.connector.java
-
-    // The following logging libs are needed when running junits outside dropwizard
-    runtimeOnly libs.jcl.over.slf4j
-    runtimeOnly libs.jul.to.slf4j
-    runtimeOnly libs.log4j.over.slf4j
-    runtimeOnly libs.logback.classic
-    runtimeOnly libs.logback.core
-
-    runtimeOnly libs.junit.jupiter.engine
+    runtimeOnly libs.bundles.common.test.runtime
     runtimeOnly libs.jersey.test.framework.grizzly2
+}
+
+// Interactive setup of a named dev environment (creates the DB and rewrites the
+// local*.yml / proxy-*.yml config files). Prompts for input, so run with
+// --console=plain, e.g. ./gradlew :stroom-test-common:setupDevEnv --console=plain
+tasks.register('setupDevEnv', JavaExec) {
+    group = 'stroom'
+    description = 'Interactive setup of a named dev environment (DB + config files)'
+    mainClass = 'stroom.test.common.util.db.SetupDevEnv'
+    classpath = sourceSets.main.runtimeClasspath
+    workingDir = rootProject.projectDir // so it finds local.yml at the repo root
+    standardInput = System.in // it prompts for input
+    jvmArgs = [
+            '--add-opens', 'java.base/java.nio=ALL-UNNAMED',
+            '--add-opens', 'java.base/sun.nio.ch=ALL-UNNAMED',
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+    ]
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,17 @@
 
 package stroom.task.impl;
 
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.util.shared.ResultPage;
 
@@ -78,12 +80,14 @@ public class SearchableDual implements Searchable {
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
-                       final ValuesConsumer consumer) {
+                       final DateTimeSettings dateTimeSettings,
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         final String[] fields = fieldIndex.getFields();
         final Val[] valArr = new Val[fields.length];
         for (int i = 0; i < fields.length; i++) {
             valArr[i] = ValString.create("X");
         }
-        consumer.accept(Val.of(valArr));
+        valuesConsumer.accept(Val.of(valArr));
     }
 }

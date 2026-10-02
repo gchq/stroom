@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,15 +16,16 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.TableSettings;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.concurrent.Executors;
 
 class TestMapDataStore extends AbstractDataStoreTest {
 
@@ -47,7 +48,8 @@ class TestMapDataStore extends AbstractDataStoreTest {
                 Collections.emptyMap(),
                 dataStoreSettings,
                 errorConsumer,
-                resultStoreConfig.getMapConfig());
+                resultStoreConfig.getMapConfig(),
+                Executors::newCachedThreadPool);
     }
 
     @Test

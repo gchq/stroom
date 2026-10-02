@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "d6fb12ff-fb94-437e-90c3-b95372572efd",
+  "name" : "DATA_SPLITTER-EVENTS",
+  "version" : "ba49644c-9d95-416e-9142-708a9913c255",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "bd7be478-632b-40fe-8fda-f578ec57e959",
+    "name" : "Common Test Event Pipeline"
+  }
+}

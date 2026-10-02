@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.proxy.app.guice.ProxyModule;
@@ -24,7 +40,7 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
 
     @Test
     public void testAllGuiceBinds() {
-        Injector injector = ((MyApp) getDropwizard().getApplication()).getInjector();
+        final Injector injector = ((MyApp) getDropwizard().getApplication()).getInjector();
 
         // Test all the constructors to make sure guice can bind them
         // As proxy shares classes with stroom we have no way of knowing which shared classes are used
@@ -39,7 +55,7 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
         LOGGER.info("Finding all classes in {} with {} constructors",
                 packagePrefix, annotationClass.getCanonicalName());
 
-        ScanResult scanResult = new ClassGraph()
+        final ScanResult scanResult = new ClassGraph()
                 .acceptPackages(packagePrefix)
                 .enableClassInfo()
                 .enableMethodInfo()
@@ -48,11 +64,11 @@ public class TestProxyGuiceBindings extends AbstractApplicationTest {
 
         scanResult.getClassesWithMethodAnnotation(annotationClass.getName())
                 .forEach(classInfo -> {
-                    Class<?> clazz = classInfo.loadClass();
+                    final Class<?> clazz = classInfo.loadClass();
                     LOGGER.info("  Testing injection for " + clazz.getCanonicalName());
                     try {
                         actionPerClass.accept(clazz);
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         // TODO At the moment we can only log an error and not fail the test as not all
                         //   visible classes are meant to be injectable. Leaving this test here in  case
                         //   this changes.

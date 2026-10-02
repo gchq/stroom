@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -27,7 +26,7 @@ class TestStringSerde extends AbstractSerdeTest<String, StringSerde> {
 
     @Test
     void testSerialisationDeserialisation() {
-        String str = "this is my string";
+        final String str = "this is my string";
 
         doSerialisationDeserialisationTest(str);
     }

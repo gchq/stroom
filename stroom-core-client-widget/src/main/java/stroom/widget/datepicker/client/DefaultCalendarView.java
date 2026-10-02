@@ -1,4 +1,20 @@
 /*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -42,7 +58,7 @@ public final class DefaultCalendarView extends CalendarView {
     }
 
     @Override
-    public void addStyleToDate(String styleName, UTCDate date) {
+    public void addStyleToDate(final String styleName, final UTCDate date) {
         assert getDatePicker().isDateVisible(date) : "You tried to add style " + styleName + " to "
                 + date + ". The calendar is currently showing " + getFirstDate()
                 + " to " + getLastDate();
@@ -63,7 +79,7 @@ public final class DefaultCalendarView extends CalendarView {
     }
 
     @Override
-    public boolean isDateEnabled(UTCDate date) {
+    public boolean isDateEnabled(final UTCDate date) {
         final DateCell dateCell = getCell(date);
         if (dateCell != null) {
             return dateCell.isEnabled();
@@ -94,12 +110,12 @@ public final class DefaultCalendarView extends CalendarView {
         setAriaSelectedCell(null);
     }
 
-    private static void addDays(UTCDate date, int days) {
+    private static void addDays(final UTCDate date, final int days) {
         CalendarUtil.addDaysToDate(date, days);
     }
 
     @Override
-    public void removeStyleFromDate(String styleName, UTCDate date) {
+    public void removeStyleFromDate(final String styleName, final UTCDate date) {
         final DateCell dateCell = getCell(date);
         if (dateCell != null) {
             dateCell.removeStyleName(styleName);
@@ -107,11 +123,11 @@ public final class DefaultCalendarView extends CalendarView {
     }
 
     @Override
-    public void setAriaSelectedCell(UTCDate date) {
+    public void setAriaSelectedCell(final UTCDate date) {
         if (ariaSelectedCell != null) {
             ariaSelectedCell.setAriaSelected(false);
         }
-        DateCell newSelectedCell = date != null
+        final DateCell newSelectedCell = date != null
                 ? getCell(date)
                 : null;
         if (newSelectedCell != null) {
@@ -133,7 +149,7 @@ public final class DefaultCalendarView extends CalendarView {
     }
 
     @Override
-    public void setEnabledOnDate(boolean enabled, UTCDate date) {
+    public void setEnabledOnDate(final boolean enabled, final UTCDate date) {
         final DateCell dateCell = getCell(date);
         if (dateCell != null) {
             dateCell.setEnabled(enabled);
@@ -143,14 +159,14 @@ public final class DefaultCalendarView extends CalendarView {
     @Override
     public void setup() {
         // Preparation
-        CellFormatter formatter = grid.getCellFormatter();
+        final CellFormatter formatter = grid.getCellFormatter();
         int weekendStartColumn = -1;
         int weekendEndColumn = -1;
 
         // Set up the day labels.
         for (int i = 0; i < DateTimeModel.DAYS_IN_WEEK; i++) {
-            int shift = CalendarUtil.getStartingDayOfWeek();
-            int dayIdx = i + shift < DateTimeModel.DAYS_IN_WEEK
+            final int shift = CalendarUtil.getStartingDayOfWeek();
+            final int dayIdx = i + shift < DateTimeModel.DAYS_IN_WEEK
                     ? i + shift
                     : i + shift - DateTimeModel.DAYS_IN_WEEK;
             final DayLabel cell = new DayLabel(getModel().formatDayOfWeek(dayIdx));
@@ -187,8 +203,8 @@ public final class DefaultCalendarView extends CalendarView {
         grid.setStyleName(css().days());
     }
 
-    private DateCell getCell(UTCDate date) {
-        int index = CalendarUtil.getDaysBetween(firstDisplayed, date);
+    private DateCell getCell(final UTCDate date) {
+        final int index = CalendarUtil.getDaysBetween(firstDisplayed, date);
         if (index < 0 || grid.getNumCells() <= index) {
             return null;
         }

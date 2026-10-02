@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.query.language.token.Param;
 
 import java.text.ParseException;
-import java.time.Instant;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -50,16 +48,16 @@ import java.util.function.Supplier;
 class GetState extends AbstractManyChildFunction {
 
     static final String NAME = "getState";
-    private final StateFetcher stateFetcher;
+    private final StateProvider stateProvider;
     private Generator gen;
     private String map;
     private String key;
-    private Instant effectiveTime;
+    private Long effectiveTimeMs;
 
     public GetState(final ExpressionContext expressionContext, final String name) {
         super(name, 2, 3);
-        this.stateFetcher = expressionContext.getStateFetcher();
-        Objects.requireNonNull(stateFetcher, "Null lookup provider");
+        this.stateProvider = expressionContext.getStateProvider();
+        Objects.requireNonNull(stateProvider, "Null state provider");
     }
 
     @Override
@@ -74,16 +72,16 @@ class GetState extends AbstractManyChildFunction {
         }
         if (params.length > 2) {
             if (params[2] instanceof final Val val) {
-                effectiveTime = Instant.ofEpochMilli(val.toLong());
+                effectiveTimeMs = val.toLong();
             }
         } else {
-            effectiveTime = Instant.now();
+            effectiveTimeMs = System.currentTimeMillis();
         }
 
         // If we have values for all params then do a lookup now.
-        if (map != null && key != null && effectiveTime != null) {
+        if (map != null && key != null && effectiveTimeMs != null) {
             // Create static value.
-            final Val val = stateFetcher.getState(map, key, effectiveTime);
+            final Val val = stateProvider.getState(map, key, effectiveTimeMs);
             gen = new StaticValueGen(val);
         }
     }
@@ -98,26 +96,26 @@ class GetState extends AbstractManyChildFunction {
 
     @Override
     protected Generator createGenerator(final Generator[] childGenerators) {
-        return new Gen(stateFetcher, map, key, effectiveTime, childGenerators);
+        return new Gen(stateProvider, map, key, effectiveTimeMs, childGenerators);
     }
 
     private static final class Gen extends AbstractManyChildGenerator {
 
-        private final StateFetcher stateProvider;
+        private final StateProvider stateProvider;
         private final String map;
         private final String key;
-        private final Instant effectiveTime;
+        private final Long effectiveTimeMs;
 
-        Gen(final StateFetcher stateProvider,
+        Gen(final StateProvider stateProvider,
             final String map,
             final String key,
-            final Instant effectiveTime,
+            final Long effectiveTimeMs,
             final Generator[] childGenerators) {
             super(childGenerators);
             this.stateProvider = stateProvider;
             this.map = map;
             this.key = key;
-            this.effectiveTime = effectiveTime;
+            this.effectiveTimeMs = effectiveTimeMs;
         }
 
         @Override
@@ -125,7 +123,7 @@ class GetState extends AbstractManyChildFunction {
             try {
                 String map = this.map;
                 String key = this.key;
-                Instant effectiveTime = this.effectiveTime;
+                Long effectiveTimeMs = this.effectiveTimeMs;
 
                 if (map == null) {
                     final Val val = childGenerators[0].eval(storedValues, childDataSupplier);
@@ -141,16 +139,16 @@ class GetState extends AbstractManyChildFunction {
                     }
                 }
 
-                if (map != null && key != null && effectiveTime == null) {
+                if (map != null && key != null && effectiveTimeMs == null) {
                     final Val val = childGenerators[2].eval(storedValues, childDataSupplier);
                     if (val.type().isValue()) {
-                        effectiveTime = Instant.ofEpochMilli(val.toLong());
+                        effectiveTimeMs = val.toLong();
                     }
                 }
 
                 Val val = ValNull.INSTANCE;
-                if (map != null && key != null && effectiveTime != null) {
-                    val = stateProvider.getState(map, key, effectiveTime);
+                if (map != null && key != null && effectiveTimeMs != null) {
+                    val = stateProvider.getState(map, key, effectiveTimeMs);
                 }
                 return val;
 

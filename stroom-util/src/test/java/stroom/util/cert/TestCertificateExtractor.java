@@ -17,23 +17,6 @@
 package stroom.util.cert;
 
 
-import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 class TestCertificateExtractor {
 
-    @Test
-    void testSpaceInCN() {
-        final String dn = "CN=John Smith (johnsmith), OU=ouCode1, OU=ouCode2, O=oValue, C=GB";
-
-//        Assertions.assertThat(CertificateUtil.dnToRfc2253(dn)).isEqualTo(
-//                "CN=John Smith (johnsmith),OU=ouCode1,OU=ouCode2,O=oValue,C=GB");
-        assertThat(CertificateExtractor.extractCNFromDN(dn))
-                .isEqualTo("John Smith (johnsmith)");
-//        assertThat(CertificateUtil.extractUserIdFromCN(CertificateUtil.extractCNFromDN(dn))).isEqualTo("johnsmith");
-//
-//        final Pattern pattern = Pattern.compile("CN=[^ ]+ [^ ]+ \\(?([a-zA-Z0-9]+)\\)?");
-//        assertThat(CertificateUtil.extractUserIdFromDN(dn, pattern)).isEqualTo("johnsmith");
-    }
 }

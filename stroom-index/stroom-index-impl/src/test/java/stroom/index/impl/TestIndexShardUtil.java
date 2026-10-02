@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.impl;
 
 import stroom.index.shared.IndexShard;
@@ -36,13 +52,17 @@ class TestIndexShardUtil {
     void getIndexPath() throws IOException {
         final Path path = tempDir.resolve("idxVol");
         Files.createDirectories(path);
-        IndexVolume indexVolume = new IndexVolume();
-        indexVolume.setPath(path.toString());
-        IndexShard indexShard = new IndexShard();
-        indexShard.setId(123L);
-        indexShard.setIndexUuid(String.valueOf(UUID.randomUUID()));
-        indexShard.setPartition("partition1");
-        indexShard.setVolume(indexVolume);
+        final IndexVolume indexVolume = IndexVolume
+                .builder()
+                .path(path.toString())
+                .build();
+        final IndexShard indexShard = IndexShard
+                .builder()
+                .id(123L)
+                .indexUuid(String.valueOf(UUID.randomUUID()))
+                .partition("partition1")
+                .volume(indexVolume)
+                .build();
 
         final Path indexPath = IndexShardUtil.getIndexPath(indexShard, pathCreator);
         LOGGER.info("indexPath: {}", indexPath);
@@ -57,13 +77,17 @@ class TestIndexShardUtil {
         final Path path = pathCreator.toAppPath(relPathStr);
         Files.createDirectories(path);
 
-        IndexVolume indexVolume = new IndexVolume();
-        indexVolume.setPath(relPathStr);
-        IndexShard indexShard = new IndexShard();
-        indexShard.setId(123L);
-        indexShard.setIndexUuid(String.valueOf(UUID.randomUUID()));
-        indexShard.setPartition("partition1");
-        indexShard.setVolume(indexVolume);
+        final IndexVolume indexVolume = IndexVolume
+                .builder()
+                .path(relPathStr)
+                .build();
+        final IndexShard indexShard = IndexShard
+                .builder()
+                .id(123L)
+                .indexUuid(String.valueOf(UUID.randomUUID()))
+                .partition("partition1")
+                .volume(indexVolume)
+                .build();
 
         final Path indexPath = IndexShardUtil.getIndexPath(indexShard, pathCreator);
         LOGGER.info("indexPath: {}", indexPath);

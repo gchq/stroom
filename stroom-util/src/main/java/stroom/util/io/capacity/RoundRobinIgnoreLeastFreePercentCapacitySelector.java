@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class RoundRobinIgnoreLeastFreePercentCapacitySelector extends AbstractSe
         for (int i = 0; i < list.size(); i++) {
             final OptionalDouble optFreePercent = list.get(i).getCapacityInfo().getFreeCapacityPercent();
             if (optFreePercent.isPresent()) {
-                double freePercent = optFreePercent.getAsDouble();
+                final double freePercent = optFreePercent.getAsDouble();
                 if (freePercent < lowestFreePercent) {
                     lowestFreePercent = freePercent;
                     lowestFreePercentIdxs = List.of(i);

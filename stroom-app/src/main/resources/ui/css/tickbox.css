@@ -55,6 +55,11 @@
 .tickBox-untick {
 }
 
+.tickBox-tick.tickBox-noBorder,
+.tickBox-untick.tickBox-noBorder {
+    background: none !important;
+}
+
 .tickBox-tick + .tickBox-noBorder {
     border: 3px solid transparent;
 }

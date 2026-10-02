@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.impl.fs;
@@ -23,12 +22,17 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
+import stroom.data.store.impl.DataVolumeService;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.EffectiveMeta;
 import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.api.EffectiveMetaSet;
@@ -41,14 +45,13 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
-import stroom.util.io.FileUtil;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
@@ -59,9 +62,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -73,7 +74,6 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.fail;
 
 class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
@@ -96,6 +96,8 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
     private FeedStore feedService;
     @Inject
     private ExplorerNodeService explorerNodeService;
+    @Inject
+    private DocFinder docFinder;
 
     private DocRef feed1;
     private DocRef feed2;
@@ -133,7 +135,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
      * Setup some test data.
      */
     private DocRef setupFeed(final String feedName) {
-        List<DocRef> docRefs = feedService.findByName(feedName);
+        final List<DocRef> docRefs = docFinder.findByName(FeedDoc.TYPE, feedName);
         if (docRefs != null && docRefs.size() > 0) {
             return docRefs.get(0);
         }
@@ -158,7 +160,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         return year + "-01-01T00:00:00.000Z," + (year + 1) + "-01-01T00:00:00.000Z";
     }
 
-    private String createToDateWithOffset(long time, int offset) {
+    private String createToDateWithOffset(final long time, final int offset) {
         final long from = time;
         final long to = time + (offset * 1000 * 60 * 60 * 24);
         return DateUtil.createNormalDateTimeString(from) + "," + DateUtil.createNormalDateTimeString(to);
@@ -241,7 +243,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        Meta rootMeta;
+        final Meta rootMeta;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             rootMeta = streamTarget.getMeta();
             TargetUtil.write(streamTarget, testString);
@@ -252,7 +254,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .parent(rootMeta)
                 .build();
-        Meta childMeta;
+        final Meta childMeta;
         try (final Target childTarget = streamStore.openTarget(childProperties)) {
             childMeta = childTarget.getMeta();
             TargetUtil.write(childTarget, testString);
@@ -263,7 +265,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .parent(childMeta)
                 .build();
-        Meta grandChildMeta;
+        final Meta grandChildMeta;
         try (final Target grandChildTarget = streamStore.openTarget(grandChildProperties)) {
             grandChildMeta = grandChildTarget.getMeta();
             TargetUtil.write(grandChildTarget, testString);
@@ -423,7 +425,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .feedName(FEED1)
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
-        Meta meta;
+        final Meta meta;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             meta = streamTarget.getMeta();
             TargetUtil.write(streamTarget, testString);
@@ -457,7 +459,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void doTestDeleteTarget(final DeleteTestStyle style) throws IOException {
+    private void doTestLogicallyDeleteTarget(final DeleteTestStyle style) throws IOException {
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
         final MetaProperties metaProperties = MetaProperties.builder()
@@ -476,19 +478,19 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         } else if (DeleteTestStyle.OPEN.equals(style)) {
             try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 meta = streamTarget.getMeta();
-                streamStore.deleteTarget(streamTarget);
+                streamStore.logicallyDeleteTarget(streamTarget);
             }
         } else if (DeleteTestStyle.OPEN_TOUCHED.equals(style)) {
             try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 meta = streamTarget.getMeta();
                 TargetUtil.write(streamTarget, testString);
-                streamStore.deleteTarget(streamTarget);
+                streamStore.logicallyDeleteTarget(streamTarget);
             }
         } else if (DeleteTestStyle.OPEN_TOUCHED_CLOSED.equals(style)) {
             try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
                 meta = streamTarget.getMeta();
                 TargetUtil.write(streamTarget, testString);
-                streamStore.deleteTarget(streamTarget);
+                streamStore.logicallyDeleteTarget(streamTarget);
             }
         }
 
@@ -509,17 +511,17 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testDelete4() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.META);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.META);
     }
 
     @Test
     void testDelete5() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.OPEN);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.OPEN);
     }
 
     @Test
     void testDelete6() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.OPEN_TOUCHED);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.OPEN_TOUCHED);
     }
 
     @Test
@@ -529,7 +531,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
     @Test
     void testDelete8() throws IOException {
-        doTestDeleteTarget(DeleteTestStyle.OPEN_TOUCHED_CLOSED);
+        doTestLogicallyDeleteTarget(DeleteTestStyle.OPEN_TOUCHED_CLOSED);
     }
 
     @Test
@@ -541,7 +543,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        Meta exactMetaData;
+        final Meta exactMetaData;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             exactMetaData = streamTarget.getMeta();
             TargetUtil.write(streamTarget, testString);
@@ -575,7 +577,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        Meta exactMetaData;
+        final Meta exactMetaData;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             exactMetaData = streamTarget.getMeta();
         }
@@ -603,7 +605,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         final Meta refData3 = buildRefData(feed2, 2010, 2, StreamTypeNames.REFERENCE, false);
 
         // These 2 should get ignored as one is locked and the other is RAW
-        final HashSet<Long> invalidFeeds = new HashSet<>();
+        final Set<Long> invalidFeeds = new HashSet<>();
         invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamTypeNames.REFERENCE, true).getId());
 
         invalidFeeds.add(buildRefData(feed2, 2010, 2, StreamTypeNames.RAW_REFERENCE, false).getId());
@@ -699,13 +701,13 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 
         final String testString = FileSystemTestUtil.getUniqueTestString();
 
-        Meta meta;
-        Target t;
+        final Meta meta;
+        final Target t;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             meta = streamTarget.getMeta();
             t = streamTarget;
             TargetUtil.write(streamTarget, testString);
-            streamStore.deleteTarget(t);
+            streamStore.logicallyDeleteTarget(t);
         }
 
         // We shouldn't be able to close a stream target again.
@@ -714,7 +716,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
         Meta reloadedMeta = metaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
         assertThat(reloadedMeta).isNull();
 
-        streamStore.deleteTarget(t);
+        streamStore.logicallyDeleteTarget(t);
 
         reloadedMeta = metaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
         assertThat(reloadedMeta).isNull();
@@ -734,7 +736,7 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
                 .typeName(StreamTypeNames.RAW_EVENTS)
                 .build();
 
-        Meta meta;
+        final Meta meta;
         try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
             meta = streamTarget.getMeta();
             TargetUtil.write(streamTarget, "xyz");
@@ -787,40 +789,45 @@ class TestS3StreamStore extends AbstractCoreIntegrationTest {
 //        }
     }
 
-    /**
-     * Test.
-     */
-    @Test
-    void testIOErrors() throws IOException {
-        final String testString = FileSystemTestUtil.getUniqueTestString();
+    // TODO Not testing S3, so commented out
+//    /**
+//     * Test.
+//     */
+//    @Test
+//    void testIOErrors() throws IOException {
+//        final String testString = FileSystemTestUtil.getUniqueTestString();
+//
+//        final MetaProperties metaProperties = MetaProperties.builder()
+//                .feedName(FEED1)
+//                .typeName(StreamTypeNames.RAW_EVENTS)
+//                .build();
+//
+//        Path dir = null;
+//        try {
+//            try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
+//                TargetUtil.write(streamTarget, testString);
+//
+//                dir = ((FsTarget) streamTarget).getFile().getParent();
+//                FileUtil.removeFilePermission(dir,
+//                        PosixFilePermission.OWNER_WRITE,
+//                        PosixFilePermission.GROUP_WRITE,
+//                        PosixFilePermission.OTHERS_WRITE);
+//            }
+//
+//            fail("Expecting an error");
+//        } catch (final RuntimeException e) {
+//            // Expected.
+//        } finally {
+//            FileUtil.addFilePermission(dir,
+//                    PosixFilePermission.OWNER_WRITE,
+//                    PosixFilePermission.GROUP_WRITE,
+//                    PosixFilePermission.OTHERS_WRITE);
+//        }
+//    }
 
-        final MetaProperties metaProperties = MetaProperties.builder()
-                .feedName(FEED1)
-                .typeName(StreamTypeNames.RAW_EVENTS)
-                .build();
 
-        Path dir = null;
-        try {
-            try (final Target streamTarget = streamStore.openTarget(metaProperties)) {
-                TargetUtil.write(streamTarget, testString);
+    // --------------------------------------------------------------------------------
 
-                dir = ((FsTarget) streamTarget).getFile().getParent();
-                FileUtil.removeFilePermission(dir,
-                        PosixFilePermission.OWNER_WRITE,
-                        PosixFilePermission.GROUP_WRITE,
-                        PosixFilePermission.OTHERS_WRITE);
-            }
-
-            fail("Expecting an error");
-        } catch (final RuntimeException e) {
-            // Expected.
-        } finally {
-            FileUtil.addFilePermission(dir,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.GROUP_WRITE,
-                    PosixFilePermission.OTHERS_WRITE);
-        }
-    }
 
     private enum DeleteTestStyle {
         META,

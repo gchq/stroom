@@ -1,8 +1,23 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.client.presenter;
 
 import stroom.data.client.presenter.DocRefCell;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
@@ -13,7 +28,7 @@ import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest.Builder
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.FindResult;
 import stroom.explorer.shared.FindResultWithPermissions;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.util.client.DataGridUtil;
@@ -55,7 +70,8 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
         super(eventBus, view);
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Document Permissions");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         getView().setDataWidget(dataGrid);
         addColumns();
@@ -139,7 +155,7 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //                new Column<FindResultWithPermissions, String>(new TextCell()) {
 //                    @Override
 //                    public String getValue(final FindResultWithPermissions row) {
-//                        return GwtNullSafe.get(
+//                        return NullSafe.get(
 //                                row.getPermissions(),
 //                                DocumentUserPermissions::getDocumentCreatePermissions,
 //                                set -> set.stream().collect(Collectors.joining(", ")));
@@ -152,15 +168,13 @@ public class DocumentPermissionsListPresenter extends MyPresenterWidget<PagerVie
 //                new Column<FindResultWithPermissions, String>(new TextCell()) {
 //                    @Override
 //                    public String getValue(final FindResultWithPermissions row) {
-//                        return GwtNullSafe.get(
+//                        return NullSafe.get(
 //                                row.getPermissions(),
 //                                DocumentUserPermissions::getInheritedDocumentCreatePermissions,
 //                                set -> set.stream().collect(Collectors.joining(", ")));
 //                    }
 //                };
 //        dataGrid.addResizableColumn(inheritedCreatePermissionCol, "Inherited Create Permission", 400);
-
-        dataGrid.addEndColumn(new EndColumn<>());
 
 
 //        final ColumnSortEvent.Handler columnSortHandler = event -> {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class GeneratePipelineElementsDoc implements DocumentationGenerator {
     );
 
     @GeneratesDocumentation
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final GeneratePipelineElementsDoc generatePipelineElementsDoc = new GeneratePipelineElementsDoc();
 
         generatePipelineElementsDoc.generatePipelineElementReferenceContent();

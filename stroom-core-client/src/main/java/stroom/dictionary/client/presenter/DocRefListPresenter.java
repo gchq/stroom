@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.dictionary.client.presenter;
 
 import stroom.cell.info.client.CommandLink;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
@@ -45,40 +44,41 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
                                final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Document References");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
-
-        initTableColumns();
     }
 
     /**
      * Add the columns to the table.
      */
-    private void initTableColumns() {
-        // Name.
-        final Column<DocRef, CommandLink> nodeNameColumn = DataGridUtil.commandLinkColumnBuilder(
-                        buildOpenDocCommandLink())
-                .build();
-        DataGridUtil.addCommandLinkFieldUpdater(nodeNameColumn);
-        dataGrid.addAutoResizableColumn(
-                nodeNameColumn,
-                DataGridUtil.headingBuilder("Document Name")
-                        .build(),
-                500);
-
-        dataGrid.addEndColumn(new EndColumn<>());
+    public void initTableColumns(final String columnName, final boolean hasOpenLink) {
+        if (hasOpenLink) {
+            final Column<DocRef, CommandLink> nodeNameColumn = DataGridUtil.commandLinkColumnBuilder(
+                            buildOpenDocCommandLink())
+                    .build();
+            DataGridUtil.addCommandLinkFieldUpdater(nodeNameColumn);
+            dataGrid.addAutoResizableColumn(
+                    nodeNameColumn,
+                    DataGridUtil.headingBuilder(columnName)
+                            .build(),
+                    500);
+        } else {
+            dataGrid.addAutoResizableColumn(DataGridUtil.textColumnBuilder(DocRef::getName).build(),
+                    DataGridUtil.headingBuilder(columnName).build(),
+                    500);
+        }
     }
 
     private Function<DocRef, CommandLink> buildOpenDocCommandLink() {
-        return (DocRef docRef) -> {
+        return (final DocRef docRef) -> {
             if (docRef != null) {
                 final String name = docRef.getName();
                 return new CommandLink(
                         name,
                         "Open " + docRef.getType() + " '" + name + "'.",
-                        () ->
-                                OpenDocumentEvent.fire(DocRefListPresenter.this, docRef, true));
+                        () -> OpenDocumentEvent.fire(DocRefListPresenter.this, docRef, true));
             } else {
                 return null;
             }
@@ -101,6 +101,10 @@ public class DocRefListPresenter extends MyPresenterWidget<PagerView> {
 
     public MultiSelectionModel<DocRef> getSelectionModel() {
         return selectionModel;
+    }
+
+    public void setTableName(final String tableName) {
+        dataGrid.setTableName(tableName);
     }
 //
 //    public void setSelectionModel(final SelectionModel<Volume> selectionModel) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.PooledByteBuffer;
@@ -125,13 +141,13 @@ public class StoreMigrator {
             LOGGER.info("Completed migration of ref stream {} into store {} in {}",
                     refStreamId, destinationStore.getName(), timer);
 
-        } catch (TaskTerminatedException e) {
+        } catch (final TaskTerminatedException e) {
             // Expected behaviour so just rethrow, stopping it being picked up by the other
             // catch block
             LOGGER.debug("Migration terminated, refStreamId: " + refStreamId, e);
             LOGGER.warn("Migration terminated, refStreamId: " + refStreamId);
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(() -> "Migration of refStreamId " + refStreamId + " failed due to " + e.getMessage());
             throw e;
         }
@@ -229,7 +245,7 @@ public class StoreMigrator {
             }
 
             destStoreLoader.completeProcessing(ProcessingState.COMPLETE);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             destStoreLoader.completeProcessing(ProcessingState.FAILED);
             throw new RuntimeException(e);
         }

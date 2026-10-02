@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.task;
 
 import stroom.data.shared.StreamTypeNames;
@@ -15,7 +31,7 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeListResponse;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
-import stroom.meta.impl.db.MetaDaoImpl;
+import stroom.meta.impl.dao.MetaDaoImpl;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
@@ -34,8 +50,8 @@ import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorType;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.CoreTestModule;
 import stroom.test.StroomIntegrationTest;
@@ -116,7 +132,9 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         // Create tasks.
         LOGGER.info("Creating tasks");
         assertThat(processorTaskDao.find(new ExpressionCriteria()).size()).isZero();
-        processorConfigProvider.get().setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+        final ProcessorConfig processorConfig = processorConfigProvider.get();
+        processorConfig.setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+        processorConfig.setUseMaxMetaIdFromPreviousPoll(false);
         prioritisedFilters.clear();
 
         // Manually create tasks.
@@ -125,7 +143,8 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
                 filter,
                 new ProgressMonitor(1),
                 metaCount,
-                new LongAdder());
+                new LongAdder(),
+                processorConfig);
 
         // Fetch tasks and execute them.
         executeTasks(countDownLatch);
@@ -141,6 +160,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         LOGGER.info("Creating tasks");
         assertThat(processorTaskDao.find(new ExpressionCriteria()).size()).isZero();
         processorConfigProvider.get().setSkipNonProducingFiltersDuration(StroomDuration.ZERO);
+        processorConfigProvider.get().setUseMaxMetaIdFromPreviousPoll(false);
         prioritisedFilters.clear();
 
         try (final ScheduledExecutorService scheduledExecutorService =
@@ -173,7 +193,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
         jobBootstrap.startup();
 
         final AtomicLong executionCount = new AtomicLong();
-        dataProcessorTaskFactory.setRunnableFactory(processorTask -> () -> {
+        dataProcessorTaskFactory.setRunnableFactory((processorTask, alreadyClaimed) -> () -> {
             final long count = executionCount.incrementAndGet();
             if (count % (metaCount / 10) == 0) {
                 LOGGER.info("Execute " + count);
@@ -186,8 +206,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
                 Collections.emptyList(),
                 new StringCriteria(JobNames.DATA_PROCESSOR)));
         final Job job = jobs.getFirst();
-        job.setEnabled(true);
-        jobDao.update(job);
+        jobDao.update(job.copy().enabled(true).build());
 
         final JobNodeListResponse response = jobNodeDao.find(new FindJobNodeCriteria(
                 PageRequest.oneRow(),
@@ -195,8 +214,7 @@ public class TestTaskAssignmentPerformance extends StroomIntegrationTest {
                 new StringCriteria(JobNames.DATA_PROCESSOR),
                 null, null));
         final JobNode jobNode = response.getFirst();
-        jobNode.setEnabled(true);
-        jobNodeDao.update(jobNode);
+        jobNodeDao.update(jobNode.copy().enabled(true).build());
 
         final String feedName = "TEST-FEED";
         final DocRef feedRef = feedStore.createDocument(feedName);

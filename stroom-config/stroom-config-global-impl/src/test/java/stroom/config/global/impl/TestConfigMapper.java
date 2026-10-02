@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
 
 package stroom.config.global.impl;
 
-import stroom.activity.impl.db.ActivityConfig;
+import stroom.activity.impl.dao.ActivityConfig;
+import stroom.ai.impl.AiConfig;
+import stroom.ai.shared.AskStroomAiConfig;
 import stroom.analytics.impl.AnalyticsConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.aws.s3.impl.S3Config;
 import stroom.bytebuffer.ByteBufferPoolConfig;
 import stroom.cluster.api.ClusterConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.lock.impl.dao.ClusterLockConfig;
 import stroom.config.app.AppConfig;
 import stroom.config.app.CrossModuleConfig;
 import stroom.config.app.DataConfig;
@@ -37,21 +39,26 @@ import stroom.config.common.PublicUriConfig;
 import stroom.config.common.UiUriConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
+import stroom.contentindex.ContentIndexConfig;
+import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
+import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
+import stroom.dashboard.impl.db.VisualisationAssetDbConfig;
+import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
 import stroom.docref.DocRef;
-import stroom.docstore.impl.db.DocStoreConfig;
+import stroom.docstore.impl.DocStoreConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
+import stroom.gitrepo.impl.GitRepoConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
-import stroom.index.impl.IndexFieldDbConfig;
+import stroom.index.impl.db.IndexFieldDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
 import stroom.kafka.impl.KafkaConfig;
-import stroom.legacy.db.LegacyConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb.LmdbLibraryConfig;
@@ -61,10 +68,10 @@ import stroom.pipeline.refdata.ReferenceDataLmdbConfig;
 import stroom.planb.impl.PlanBConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
-import stroom.state.impl.StateConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.config.PropertyUtil.Prop;
@@ -72,6 +79,8 @@ import stroom.util.io.ByteSize;
 import stroom.util.io.StroomPathConfig;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 import stroom.util.time.StroomDuration;
@@ -79,7 +88,6 @@ import stroom.util.time.StroomDuration;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.reflect.TypeToken;
-import io.dropwizard.configuration.ConfigurationException;
 import io.dropwizard.core.Configuration;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
@@ -87,10 +95,7 @@ import io.vavr.Tuple8;
 import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -112,28 +117,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestConfigMapper {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestConfigMapper.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestConfigMapper.class);
 
     @Test
-    void getGlobalProperties() throws IOException, ConfigurationException {
+    void getGlobalProperties() {
 
-        ConfigMapper configMapper = new ConfigMapper();
+        final ConfigMapper configMapper = new ConfigMapper();
 
-        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+        final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
 
-        var rows = configProperties.stream()
+        //noinspection VariableTypeCanBeExplicit
+        final var rows = configProperties.stream()
                 .sorted(Comparator.comparing(ConfigProperty::getName))
                 .map(configProperty ->
                         Tuple.of(
                                 configProperty.getName().toString(),
                                 configProperty.getDataTypeName(),
-                                StringUtils.truncate(configProperty.getDefaultValue().orElse("").toString(), 0, 50),
-                                StringUtils.truncate(configProperty.getDatabaseOverrideValue().getValueOrElse("UNSET",
-                                        null), 0, 50),
-                                StringUtils.truncate(configProperty.getYamlOverrideValue().getValueOrElse("UNSET",
-                                        null), 0, 50),
-                                StringUtils.truncate(configProperty.getEffectiveValue().orElse("").toString(), 0, 50),
+                                StringUtils.truncate(
+                                        configProperty.getDefaultValue().orElse(""),
+                                        0,
+                                        50),
+                                StringUtils.truncate(
+                                        configProperty.getDatabaseOverrideValue().getValueOrElse(
+                                                "UNSET", null),
+                                        0,
+                                        50),
+                                StringUtils.truncate(
+                                        configProperty.getYamlOverrideValue().getValueOrElse(
+                                                "UNSET", null),
+                                        0,
+                                        50),
+                                StringUtils.truncate(
+                                        configProperty.getEffectiveValue().orElse(""),
+                                        0,
+                                        50),
                                 configProperty.getSource().getName(),
                                 StringUtils.truncate(configProperty.getDescription(), 0, 100)))
                 .collect(Collectors.toList());
@@ -208,40 +226,41 @@ class TestConfigMapper {
     @Test
     void testSerdeAllProperties() {
 
-        TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+        final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         // getting each prop as a ConfigProperty ensure we can serialise to string
         configProperties.forEach(configProperty -> {
-            configProperty.setDatabaseOverrideValue(configProperty.getDefaultValue().orElse(null));
+            final ConfigProperty updated = configProperty.copy()
+                    .databaseOverrideValue(configProperty.getDefaultValue().orElse(null))
+                    .build();
 
             // verify we can convert back to an object from a string
-            ConfigProperty newConfigProperty = configMapper.decorateDbConfigProperty(configProperty);
+            final ConfigProperty newConfigProperty = configMapper.decorateDbConfigProperty(updated);
 
-            LOGGER.debug(configProperty.toString());
+            LOGGER.debug(updated.toString());
             assertThat(newConfigProperty.getSource())
                     .isIn(ConfigProperty.SourceType.DATABASE, ConfigProperty.SourceType.DEFAULT);
         });
     }
 
-
     @Test
     void testValidatePropertyPath_valid() {
-        ConfigMapper configMapper = new ConfigMapper();
+        final ConfigMapper configMapper = new ConfigMapper();
 
-        boolean isValid = configMapper.validatePropertyPath(PropertyPath.fromPathString("stroom.ui.aboutHtml"));
+        final boolean isValid = configMapper.validatePropertyPath(PropertyPath.fromPathString("stroom.ui.aboutHtml"));
 
         assertThat(isValid).isTrue();
     }
 
     @Test
     void testValidatePropertyPath_invalid() {
-        AppConfig appConfig = new AppConfig();
-        ConfigMapper configMapper = new ConfigMapper();
+        final AppConfig appConfig = new AppConfig();
+        final ConfigMapper configMapper = new ConfigMapper();
 
-        boolean isValid = configMapper.validatePropertyPath(PropertyPath.fromPathString("stroom.unknown.prop"));
+        final boolean isValid = configMapper.validatePropertyPath(PropertyPath.fromPathString("stroom.unknown.prop"));
 
         assertThat(isValid).isFalse();
     }
@@ -266,7 +285,7 @@ class TestConfigMapper {
     @Test
     void testGetGlobalProperties_defaultValueWithValue() {
 
-        AppConfig appConfig = getAppConfig();
+        final AppConfig appConfig = getAppConfig();
 
         // simulate dropwiz setting a prop from the yaml
         final ReferenceDataLmdbConfig referenceDataLmdbConfig = appConfig.getPipelineConfig()
@@ -277,7 +296,7 @@ class TestConfigMapper {
         final String newValue = initialValue + "xxx";
         referenceDataLmdbConfig.setLocalDir(newValue);
 
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
+        final ConfigMapper configMapper = new ConfigMapper(appConfig);
 //        configMapper.updateConfigFromYaml();
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
@@ -298,7 +317,7 @@ class TestConfigMapper {
 
     @Test
     void testGetGlobalProperties_defaultValueWithNullValue() {
-        AppConfig appConfig = getAppConfig();
+        final AppConfig appConfig = getAppConfig();
 
         // simulate a prop not being defined in the yaml
         final ReferenceDataLmdbConfig lmdbConfig = appConfig.getPipelineConfig()
@@ -308,7 +327,7 @@ class TestConfigMapper {
         final String newYamlValue = null;
         lmdbConfig.setLocalDir(newYamlValue);
 
-        ConfigMapper configMapper = new ConfigMapper();
+        final ConfigMapper configMapper = new ConfigMapper();
         configMapper.refreshGlobalPropYamlOverrides(appConfig);
 
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
@@ -336,11 +355,11 @@ class TestConfigMapper {
 
     @Test
     void testGetGlobalProperties2() {
-        TestConfig testConfig = new TestConfig();
+        final TestConfig testConfig = new TestConfig();
 
-        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+        final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         configProperties.forEach(configProperty ->
                 LOGGER.debug("{} - {}", configProperty.getName(), configProperty.getEffectiveValue()
@@ -484,18 +503,18 @@ class TestConfigMapper {
 
         LOGGER.info("Testing {}, with new value {}", path, newValueAsStr);
 
-        TestConfig testConfig = new TestConfig();
+        final TestConfig testConfig = new TestConfig();
 
         final T originalObj = getter.apply(testConfig);
 
         final PropertyPath fullPath = PropertyPath.fromPathString(path);
 
-        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
         final Prop prop = configMapper.getProp(fullPath)
                 .orElseThrow();
 
-        boolean isValidPath = configMapper.validatePropertyPath(PropertyPath.fromPathString(path));
+        final boolean isValidPath = configMapper.validatePropertyPath(PropertyPath.fromPathString(path));
 
         assertThat(isValidPath).isTrue();
 
@@ -507,8 +526,10 @@ class TestConfigMapper {
         // make sure our new value differs from the current one
         assertThat(configPropertyCopy.getDefaultValue().get()).isNotEqualTo(newValueAsStr);
 
-        configPropertyCopy.setDatabaseOverrideValue(newValueAsStr);
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(newValueAsStr)
+                .build());
 
         final T newObj = parseFunc.apply(prop, newValueAsStr);
 
@@ -525,11 +546,11 @@ class TestConfigMapper {
 
     @Test
     void update_docRefList() {
-        TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        List<DocRef> initialValue = testConfig.getDocRefListProp();
-        List<DocRef> newValue = new ArrayList<>();
+        final List<DocRef> initialValue = testConfig.getDocRefListProp();
+        final List<DocRef> newValue = new ArrayList<>();
         initialValue.forEach(docRef ->
                 newValue.add(DocRef.builder()
                         .type(docRef.getType() + "x")
@@ -540,14 +561,16 @@ class TestConfigMapper {
                 .type("NewDocRefType")
                 .uuid(UUID.randomUUID().toString())
                 .build());
-        PropertyPath fullPath = PropertyPath.fromPathString("stroom.docRefListProp");
+        final PropertyPath fullPath = PropertyPath.fromPathString("stroom.docRefListProp");
 
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
+        final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
-        ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
-        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(ConfigMapper.convertToString(newValue))
+                .build());
 
         final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
 
@@ -556,20 +579,22 @@ class TestConfigMapper {
 
     @Test
     void update_enumList() {
-        TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        List<TestConfig.State> initialValue = testConfig.getStateListProp();
-        List<TestConfig.State> newValue = new ArrayList<>(initialValue);
+        final List<TestConfig.State> initialValue = testConfig.getStateListProp();
+        final List<TestConfig.State> newValue = new ArrayList<>(initialValue);
         newValue.add(TestConfig.State.ON);
-        PropertyPath fullPath = PropertyPath.fromPathString("stroom.stateListProp");
+        final PropertyPath fullPath = PropertyPath.fromPathString("stroom.stateListProp");
 
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
+        final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
-        ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
-        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(ConfigMapper.convertToString(newValue))
+                .build());
 
         final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
 
@@ -578,22 +603,24 @@ class TestConfigMapper {
 
     @Test
     void update_stringList() {
-        TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        List<String> initialValue = testConfig.getStringListProp();
-        List<String> newValue = Stream.of(initialValue, initialValue)
+        final List<String> initialValue = testConfig.getStringListProp();
+        final List<String> newValue = Stream.of(initialValue, initialValue)
                 .flatMap(List::stream)
                 .map(str -> str + "x")
                 .collect(Collectors.toList());
-        PropertyPath fullPath = PropertyPath.fromPathString("stroom.stringListProp");
+        final PropertyPath fullPath = PropertyPath.fromPathString("stroom.stringListProp");
 
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
+        final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
-        ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
-        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(ConfigMapper.convertToString(newValue))
+                .build());
 
         final TestConfig newtTestConfig = configMapper.getConfigObject(TestConfig.class);
 
@@ -618,8 +645,10 @@ class TestConfigMapper {
         // Make a copy as decorateDbConfigProperty will be comparing the one from the map
         // against this one.
         final ConfigProperty configPropertyCopy = copyConfigProperty(configProperty);
-        configPropertyCopy.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configPropertyCopy);
+        configMapper.decorateDbConfigProperty(configPropertyCopy
+                .copy()
+                .databaseOverrideValue(ConfigMapper.convertToString(newValue))
+                .build());
 
         final TestConfig newTestConfig = configMapper.getConfigObject(TestConfig.class);
         assertThat(newTestConfig.getStringLongMapProp()).isEqualTo(newValue);
@@ -627,12 +656,12 @@ class TestConfigMapper {
 
     @Test
     void testPrecedenceDefaultOnly() {
-        TestConfig testConfig = new TestConfig();
-        String defaultValue = testConfig.getStringProp();
+        final TestConfig testConfig = new TestConfig();
+        final String defaultValue = testConfig.getStringProp();
 
-        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
 
-        ConfigProperty configProperty = configMapper
+        final ConfigProperty configProperty = configMapper
                 .getGlobalProperty(PropertyPath.fromPathString("stroom.stringProp"))
                 .orElseThrow();
 
@@ -777,10 +806,10 @@ class TestConfigMapper {
 //        configMapper.refreshConfig(appConfig);
 //    }
 
-    private void doValidateStringValueTest(final String path, final String value, boolean shouldValidate) {
-        TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
-        PropertyPath propertyPath = PropertyPath.fromPathString(path);
+    private void doValidateStringValueTest(final String path, final String value, final boolean shouldValidate) {
+        final TestConfig testConfig = new TestConfig();
+        final ConfigMapper configMapper = new ConfigMapper(testConfig, TestConfig::new);
+        final PropertyPath propertyPath = PropertyPath.fromPathString(path);
 
         if (shouldValidate) {
             configMapper.validateValueSerialisation(propertyPath, value);
@@ -797,7 +826,7 @@ class TestConfigMapper {
     }
 
     private ConfigProperty copyConfigProperty(final ConfigProperty configProperty) {
-        ConfigProperty newConfigProperty = new ConfigProperty(
+        final ConfigProperty newConfigProperty = new ConfigProperty(
                 configProperty.getId(),
                 configProperty.getVersion(),
                 configProperty.getCreateTimeMs(),
@@ -919,16 +948,19 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE) final boolean haltBootOnConfigValidationFailure,
                 @JsonProperty(CrossModuleConfig.NAME) final CrossModuleConfig crossModuleConfig,
                 @JsonProperty(PROP_NAME_ACTIVITY) final ActivityConfig activityConfig,
+                @JsonProperty(PROP_NAME_AI) final AiConfig aiConfig,
                 @JsonProperty(PROP_NAME_ANALYTICS) final AnalyticsConfig analyticsConfig,
                 @JsonProperty(PROP_NAME_ANNOTATION) final AnnotationConfig annotationConfig,
+                @JsonProperty(PROP_NAME_ASK_STROOM_AI) final AskStroomAiConfig askStroomAIConfig,
                 @JsonProperty(PROP_NAME_AUTO_CONTENT_CREATION) final AutoContentCreationConfig autoContentCreationConfig,
                 @JsonProperty(PROP_NAME_BYTE_BUFFER_POOL) final ByteBufferPoolConfig byteBufferPoolConfig,
                 @JsonProperty(PROP_NAME_CLUSTER) final ClusterConfig clusterConfig,
                 @JsonProperty(PROP_NAME_CLUSTER_LOCK) final ClusterLockConfig clusterLockConfig,
                 @JsonProperty(PROP_NAME_COMMON_DB_DETAILS) final CommonDbConfig commonDbConfig,
                 @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT) final ContentPackImportConfig contentPackImportConfig,
-//                @JsonProperty(PROP_NAME_CORS) final CorsConfig corsConfig,
-                @JsonProperty(PROP_NAME_CORE) final LegacyConfig legacyConfig,
+                @JsonProperty(PROP_NAME_CONTENT_INDEX) final ContentIndexConfig contentIndexConfig,
+                @JsonProperty(PROP_NAME_CONTENT_STORE) final ContentStoreConfig contentStoreConfig,
+                @JsonProperty(PROP_NAME_CREDENTIALS) final CredentialsConfig credentialsConfig,
                 @JsonProperty(PROP_NAME_DASHBOARD) final DashboardConfig dashboardConfig,
                 @JsonProperty(PROP_NAME_DATA) final DataConfig dataConfig,
                 @JsonProperty(PROP_NAME_DOCSTORE) final DocStoreConfig docStoreConfig,
@@ -936,6 +968,7 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_EXPLORER) final ExplorerConfig explorerConfig,
                 @JsonProperty(PROP_NAME_EXPORT) final ExportConfig exportConfig,
                 @JsonProperty(PROP_NAME_FEED) final FeedConfig feedConfig,
+                @JsonProperty(PROP_NAME_GIT_REPO) final GitRepoConfig gitRepoConfig,
                 @JsonProperty(PROP_NAME_INDEX) final IndexConfig indexConfig,
                 @JsonProperty(PROP_NAME_JOB) final JobSystemConfig jobSystemConfig,
                 @JsonProperty(PROP_NAME_KAFKA) final KafkaConfig kafkaConfig,
@@ -950,19 +983,21 @@ class TestConfigMapper {
                 @JsonProperty(PROP_NAME_PUBLIC_URI) final PublicUriConfig publicUri,
                 @JsonProperty(PROP_NAME_QUERY_DATASOURCE) final IndexFieldDbConfig queryDataSourceConfig,
                 @JsonProperty(PROP_NAME_RECEIVE) final ReceiveDataConfig receiveDataConfig,
+                @JsonProperty(PROP_NAME_RECEIPT_POLICY) final StroomReceiptPolicyConfig receiptPolicyConfig,
                 @JsonProperty(PROP_NAME_S3) final S3Config s3Config,
                 @JsonProperty(PROP_NAME_SEARCH) final SearchConfig searchConfig,
                 @JsonProperty(PROP_NAME_SECURITY) final SecurityConfig securityConfig,
                 @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                 @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                 @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
-                @JsonProperty(PROP_NAME_STATE) final StateConfig stateConfig,
                 @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
                 @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                 @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                 @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
                 @JsonProperty(PROP_NAME_UI) final UiConfig uiConfig,
                 @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
+                @JsonProperty(PROP_NAME_VISUALISATION_ASSET) final VisualisationAssetConfig visualisationAssetConfig,
+                @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB) final VisualisationAssetDbConfig visualisationAssetDbConfig,
                 @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig,
                 @JsonProperty("stringProp") final String stringProp,
                 @JsonProperty("stringListProp") final List<String> stringListProp,
@@ -982,16 +1017,19 @@ class TestConfigMapper {
             super(haltBootOnConfigValidationFailure,
                     crossModuleConfig,
                     activityConfig,
+                    aiConfig,
                     analyticsConfig,
                     annotationConfig,
+                    askStroomAIConfig,
                     autoContentCreationConfig,
                     byteBufferPoolConfig,
                     clusterConfig,
                     clusterLockConfig,
                     commonDbConfig,
                     contentPackImportConfig,
-//                    corsConfig,
-                    legacyConfig,
+                    contentIndexConfig,
+                    contentStoreConfig,
+                    credentialsConfig,
                     dashboardConfig,
                     dataConfig,
                     docStoreConfig,
@@ -999,6 +1037,7 @@ class TestConfigMapper {
                     explorerConfig,
                     exportConfig,
                     feedConfig,
+                    gitRepoConfig,
                     indexConfig,
                     jobSystemConfig,
                     kafkaConfig,
@@ -1013,19 +1052,21 @@ class TestConfigMapper {
                     publicUri,
                     queryDataSourceConfig,
                     receiveDataConfig,
+                    receiptPolicyConfig,
                     s3Config,
                     searchConfig,
                     securityConfig,
                     sessionCookieConfig,
                     sessionConfig,
                     solrConfig,
-                    stateConfig,
                     planBConfig,
                     statisticsConfig,
                     storedQueryConfig,
                     pathConfig,
                     uiConfig,
                     uiUri,
+                    visualisationAssetConfig,
+                    visualisationAssetDbConfig,
                     volumeConfig);
 
             this.stringProp = stringProp;

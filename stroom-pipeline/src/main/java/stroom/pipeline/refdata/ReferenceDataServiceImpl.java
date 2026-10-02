@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,11 @@ package stroom.pipeline.refdata;
 
 import stroom.bytebuffer.ByteBufferPool;
 import stroom.data.shared.StreamTypeNames;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeService;
 import stroom.pipeline.refdata.RefDataLookupRequest.ReferenceLoader;
@@ -40,11 +38,14 @@ import stroom.pipeline.refdata.store.offheapstore.OffHeapStoreInfo;
 import stroom.pipeline.refdata.store.offheapstore.OffHeapStoreInfoCache;
 import stroom.pipeline.shared.ReferenceDataFields;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
@@ -55,8 +56,11 @@ import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValNull;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskTerminatedException;
@@ -91,6 +95,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
@@ -136,7 +141,6 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final DelegatingRefDataOffHeapStore refDataStore;
     private final RefDataStoreFactory refDataStoreFactory;
     private final SecurityContext securityContext;
-    private final FeedStore feedStore;
     private final Provider<ReferenceData> referenceDataProvider;
     private final RefDataValueConverter refDataValueConverter;
     private final PipelineScopeRunnable pipelineScopeRunnable;
@@ -145,14 +149,14 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     private final ByteBufferPool byteBufferPool;
     private final NodeService nodeService;
     private final WordListProvider wordListProvider;
-    private final DocRefInfoService docRefInfoService;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
     private final OffHeapStoreInfoCache offHeapStoreInfoCache;
+    private final Executor executor;
+    private final DocFinder docFinder;
 
     @Inject
     public ReferenceDataServiceImpl(final RefDataStoreFactory refDataStoreFactory,
                                     final SecurityContext securityContext,
-                                    final FeedStore feedStore,
                                     final Provider<ReferenceData> referenceDataProvider,
                                     final RefDataValueConverter refDataValueConverter,
                                     final PipelineScopeRunnable pipelineScopeRunnable,
@@ -161,13 +165,13 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                     final ByteBufferPool byteBufferPool,
                                     final NodeService nodeService,
                                     final WordListProvider wordListProvider,
-                                    final DocRefInfoService docRefInfoService,
                                     final FieldInfoResultPageFactory fieldInfoResultPageFactory,
+                                    final ExecutorProvider executorProvider,
+                                    final DocFinder docFinder,
                                     final OffHeapStoreInfoCache offHeapStoreInfoCache) {
         this.refDataStore = refDataStoreFactory.getOffHeapStore();
         this.refDataStoreFactory = refDataStoreFactory;
         this.securityContext = securityContext;
-        this.feedStore = feedStore;
         this.referenceDataProvider = referenceDataProvider;
         this.refDataValueConverter = refDataValueConverter;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
@@ -176,10 +180,10 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
         this.byteBufferPool = byteBufferPool;
         this.nodeService = nodeService;
         this.wordListProvider = wordListProvider;
-        this.docRefInfoService = docRefInfoService;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
         this.offHeapStoreInfoCache = offHeapStoreInfoCache;
-
+        this.executor = executorProvider.get();
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -209,7 +213,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 }
 
                 entries = refDataStore.list(limit, predicate);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error listing reference data", e);
                 throw e;
             }
@@ -244,7 +248,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 }
 
                 entries = refDataStore.listProcessingInfo(limit, predicate);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error listing ref stream processing info data", e);
                 throw e;
             }
@@ -326,7 +330,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                             nodeName2)));
 
                                     return CompletableFuture
-                                            .runAsync(runnable)
+                                            .runAsync(runnable, executor)
                                             .exceptionally(throwable -> {
                                                 failedNodes.add(nodeName2);
                                                 exception.set(throwable);
@@ -395,7 +399,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                                             nodeName2)));
 
                                     return CompletableFuture
-                                            .runAsync(runnable)
+                                            .runAsync(runnable, executor)
                                             .exceptionally(throwable -> {
                                                 failedNodes.add(nodeName2);
                                                 exception.set(throwable);
@@ -484,7 +488,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                             });
 
                                     return CompletableFuture
-                                            .runAsync(runnable)
+                                            .runAsync(runnable, executor)
                                             .exceptionally(throwable -> {
                                                 failedNodes.add(nodeName2);
                                                 exception.set(throwable);
@@ -557,7 +561,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                             });
 
                                     return CompletableFuture
-                                            .runAsync(runnable)
+                                            .runAsync(runnable, executor)
                                             .exceptionally(throwable -> {
                                                 failedNodes.add(nodeName2);
                                                 exception.set(throwable);
@@ -637,7 +641,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             }
 
             return stringWriter.toString();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Errors for unknown keys are to be expected
             if (!(e instanceof NotFoundException)) {
                 LOGGER.error("Error looking up {}", refDataLookupRequest, e);
@@ -653,6 +657,9 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             return referenceLoaders.stream()
                     .map(referenceLoader -> {
                         final DocRef feedDocRef = getFeedDocRef(referenceLoader);
+                        final DocRef loaderPipeline = referenceLoader.getLoaderPipeline();
+
+                        requireUsePermissionIfPresent(securityContext, loaderPipeline);
 
                         // TODO validate the stream type name
                         final String streamType = Objects.requireNonNullElse(
@@ -660,11 +667,24 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                                 StreamTypeNames.REFERENCE);
 
                         return new PipelineReference(
-                                referenceLoader.getLoaderPipeline(),
+                                loaderPipeline,
                                 feedDocRef,
                                 streamType);
                     })
                     .collect(Collectors.toList());
+        }
+    }
+
+    /**
+     * The loader pipeline in a lookup request is client-supplied, so the caller must have USE permission on
+     * it before a lookup executes it. A null pipeline is left for downstream validation to reject.
+     */
+    static void requireUsePermissionIfPresent(final SecurityContext securityContext,
+                                              final DocRef loaderPipeline) {
+        if (loaderPipeline != null
+            && !securityContext.hasDocumentPermission(loaderPipeline, DocumentPermission.USE)) {
+            throw new PermissionException(securityContext.getUserRef(), LogUtil.message(
+                    "You do not have USE permission on reference loader pipeline {}", loaderPipeline));
         }
     }
 
@@ -678,7 +698,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 return referenceLoader.getReferenceFeed();
             } else if (referenceLoader.getReferenceFeed().getName() != null) {
                 // Feed names are unique
-                return feedStore.findByName(referenceLoader.getReferenceFeed().getName())
+                return docFinder
+                        .findByName(FeedDoc.TYPE, referenceLoader.getReferenceFeed().getName(), false)
                         .stream()
                         .findFirst()
                         .orElseThrow(() ->
@@ -740,10 +761,14 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final FieldIndex fieldIndex, final ValuesConsumer consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         withPermissionCheck(() -> LOGGER.logDurationIfInfoEnabled(
                 () -> taskContextFactory.context("Querying reference data store", taskContext ->
-                                doSearch(criteria, fieldIndex, consumer, taskContext))
+                                doSearch(criteria, fieldIndex, valuesConsumer, taskContext))
                         .run(),
                 "Querying ref store"));
     }
@@ -835,7 +860,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             } else {
                 return refStoreEntry -> true;
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error building predicate for {}", expressionCriteria, e);
             throw e;
         }
@@ -899,7 +924,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
                 // expecting all list items to be non null
                 for (final Predicate<T> childPredicate : childPredicates) {
-                    boolean testResult = childPredicate.test(val);
+                    final boolean testResult = childPredicate.test(val);
 
                     compoundResult = compoundResult && testResult;
 
@@ -924,7 +949,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
                 // expecting all list items to be non null
                 for (final Predicate<T> childPredicate : childPredicates) {
-                    boolean testResult = childPredicate.test(val);
+                    final boolean testResult = childPredicate.test(val);
 
                     compoundResult = compoundResult || testResult;
 
@@ -950,7 +975,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 // expecting all list items to be non null
                 for (final Predicate<T> childPredicate : childPredicates) {
                     // treat NOT(x, y) as AND(NOT(x), NOT(y))
-                    boolean testResult = !childPredicate.test(val);
+                    final boolean testResult = !childPredicate.test(val);
 
                     if (compoundResult == null) {
                         compoundResult = testResult;
@@ -980,7 +1005,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
 
         // name => field
         // field => fieldType
-        QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
+        final QueryField abstractField = FIELD_NAME_TO_FIELD_MAP.get(expressionTerm.getField());
 
         return switch (abstractField.getFldType()) {
             case TEXT -> buildTextFieldPredicate(expressionTerm, refStoreEntry ->
@@ -1088,7 +1113,7 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
                 if (docRef == null) {
                     return false;
                 } else {
-                    return docRefInfoService.name(docRef)
+                    return docFinder.getName(docRef)
                             .map(namePredicate::test)
                             .orElse(false);
                 }
@@ -1128,8 +1153,8 @@ public class ReferenceDataServiceImpl implements ReferenceDataService {
             return ValNull.INSTANCE;
         } else {
             String val = docRef.getUuid();
-            if (docRefInfoService != null) {
-                val = docRefInfoService.name(docRef).orElse(docRef.getUuid());
+            if (docFinder != null) {
+                val = docFinder.getName(docRef).orElse(docRef.getUuid());
             }
             return ValString.create(val);
         }

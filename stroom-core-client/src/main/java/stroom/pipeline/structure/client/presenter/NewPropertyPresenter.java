@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaResource;
+import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
@@ -57,6 +58,8 @@ public class NewPropertyPresenter
     private final DocSelectionBoxPresenter entityDropDownPresenter;
     private boolean dirty;
 
+    private PipelineElement pipelineElement;
+    private PipelinePropertyType propertyType;
     private PipelineProperty defaultProperty;
     private PipelineProperty inheritedProperty;
     private PipelineProperty localProperty;
@@ -92,26 +95,34 @@ public class NewPropertyPresenter
     public void onSourceChange(final Source source) {
         if (!this.source.equals(source)) {
             NewPropertyPresenter.this.source = source;
-            setDirty(true, false);
+            onChange(false);
             startEdit(source);
         }
     }
 
-    public void edit(final PipelineProperty defaultProperty,
+    public void edit(final PipelineElement pipelineElement,
+                     final PipelinePropertyType propertyType,
+                     final PipelineProperty defaultProperty,
                      final PipelineProperty inheritedProperty,
                      final PipelineProperty localProperty,
                      final Source source,
                      final String defaultValue,
                      final String inheritedValue,
                      final String inheritedFrom) {
+        this.pipelineElement = pipelineElement;
+        this.propertyType = propertyType;
         this.defaultProperty = defaultProperty;
         this.inheritedProperty = inheritedProperty;
         this.localProperty = localProperty;
         this.source = source;
 
-        getView().setElement(defaultProperty.getElement());
+        if (propertyType.canEmbed()) {
+            getView().addSource(Source.EMBEDDED);
+        }
+
+        getView().setElement(pipelineElement.getDisplayName());
         getView().setName(defaultProperty.getName());
-        getView().setDescription(defaultProperty.getPropertyType().getDescription());
+        getView().setDescription(propertyType.getDescription());
         getView().setDefaultValue(defaultValue);
         getView().setInherited(inheritedFrom, inheritedValue);
         getView().setSource(source);
@@ -130,12 +141,20 @@ public class NewPropertyPresenter
             case LOCAL:
                 startEdit(localProperty);
                 break;
+            case EMBEDDED:
+                showEmbeddedProperty();
+                break;
         }
     }
 
-    private void startEdit(final PipelineProperty property) {
-        final PipelinePropertyType propertyType = property.getPropertyType();
+    private void showEmbeddedProperty() {
+        final String embeddedPropertyName = "EMBEDDED " + propertyType.getDocRefTypes()[0] + " (" +
+                                            pipelineElement.getId() + ")";
+        enterStringMode(PipelineProperty.builder().value(new PipelinePropertyValue(embeddedPropertyName)).build());
+        textBox.setEnabled(false);
+    }
 
+    private void startEdit(final PipelineProperty property) {
         if ("streamType".equals(propertyType.getName())) {
             enterDataTypeMode(property);
         } else if ("volumeGroup".equals(propertyType.getName())) {
@@ -159,24 +178,22 @@ public class NewPropertyPresenter
         return getView().getSource();
     }
 
-    public void write(final PipelineProperty property) {
-        final PipelinePropertyType propertyType = property.getPropertyType();
-
+    public PipelinePropertyValue writeValue() {
         if ("streamType".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+            return new PipelinePropertyValue(dataTypeWidget.getValue());
         } else if ("volumeGroup".equals(propertyType.getName())) {
-            property.setValue(new PipelinePropertyValue(dataTypeWidget.getValue()));
+            return new PipelinePropertyValue(dataTypeWidget.getValue());
         } else if ("boolean".equals(propertyType.getType())) {
             final String value = listBox.getValue();
-            property.setValue(new PipelinePropertyValue(Boolean.valueOf(value)));
+            return new PipelinePropertyValue(Boolean.valueOf(value));
         } else if ("int".equals(propertyType.getType())) {
             final Integer value = valueSpinner.getIntValue();
-            property.setValue(new PipelinePropertyValue(value));
+            return new PipelinePropertyValue(value);
         } else if ("long".equals(propertyType.getType())) {
             final Long value = (long) valueSpinner.getIntValue();
-            property.setValue(new PipelinePropertyValue(value));
+            return new PipelinePropertyValue(value);
         } else if ("String".equals(propertyType.getType())) {
-            property.setValue(new PipelinePropertyValue(textBox.getText()));
+            return new PipelinePropertyValue(textBox.getText());
 //        } else if (StreamType.DOCUMENT_TYPE.equals(propertyType.getType())) {
 //            property.setValue(new PipelinePropertyValue(streamTypesWidget.getSelectedItem()));
         } else {
@@ -185,7 +202,7 @@ public class NewPropertyPresenter
             if (namedEntity != null) {
                 value = new PipelinePropertyValue(namedEntity);
             }
-            property.setValue(value);
+            return value;
         }
     }
 
@@ -196,7 +213,7 @@ public class NewPropertyPresenter
             listBox.addItem("false");
 
             listBox.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -240,7 +257,7 @@ public class NewPropertyPresenter
             valueSpinner.setMax(10000000);
 
             registerHandler(valueSpinner.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             }));
 
@@ -259,7 +276,7 @@ public class NewPropertyPresenter
             textBox = new TextBox();
 
             textBox.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -274,7 +291,7 @@ public class NewPropertyPresenter
         if (property.getValue() != null && property.getValue().getString() != null) {
             value = property.getValue().getString();
         }
-
+        textBox.setEnabled(true);
         textBox.setText(value);
     }
 
@@ -301,7 +318,7 @@ public class NewPropertyPresenter
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -351,7 +368,7 @@ public class NewPropertyPresenter
                     .exec();
 
             dataTypeWidget.addValueChangeHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -374,7 +391,7 @@ public class NewPropertyPresenter
     private void enterEntityMode(final PipelineProperty property) {
         if (!entityPresenterInitialised) {
             entityDropDownPresenter.addDataSelectionHandler(event -> {
-                setDirty(true);
+                onChange();
                 getView().setSource(Source.LOCAL);
             });
 
@@ -391,7 +408,7 @@ public class NewPropertyPresenter
             value = property.getValue().getEntity();
         }
 
-        entityDropDownPresenter.setIncludedTypes(property.getPropertyType().getDocRefTypes());
+        entityDropDownPresenter.setIncludedTypes(propertyType.getDocRefTypes());
         entityDropDownPresenter.setRequiredPermissions(DocumentPermission.USE);
         try {
             entityDropDownPresenter.setSelectedEntityReference(value, true);
@@ -401,8 +418,8 @@ public class NewPropertyPresenter
 
     }
 
-    private void setDirty(final boolean dirty, final boolean changeSource) {
-        this.dirty = dirty;
+    private void onChange(final boolean changeSource) {
+        this.dirty = true;
         if (changeSource) {
             getView().setSource(Source.LOCAL);
         }
@@ -412,8 +429,8 @@ public class NewPropertyPresenter
         return dirty;
     }
 
-    private void setDirty(final boolean dirty) {
-        setDirty(dirty, true);
+    private void onChange() {
+        onChange(true);
     }
 
 
@@ -437,5 +454,7 @@ public class NewPropertyPresenter
         void setSource(Source source);
 
         void setValueWidget(Widget widget);
+
+        void addSource(Source source);
     }
 }

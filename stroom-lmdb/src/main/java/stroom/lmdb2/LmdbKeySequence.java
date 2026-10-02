@@ -1,102 +1,104 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.lmdb2;
 
 import stroom.bytebuffer.ByteBufferUtils;
-import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.bytebuffer.impl6.ByteBuffers;
 import stroom.lmdb.serde.UnsignedBytes;
 import stroom.lmdb.serde.UnsignedBytesInstances;
+import stroom.lmdb.stream.LmdbEntry;
+import stroom.lmdb.stream.LmdbIterable;
+import stroom.lmdb.stream.LmdbKeyRange;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
-import org.lmdbjava.CursorIterable;
-import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.Dbi;
-import org.lmdbjava.KeyRange;
-import org.lmdbjava.KeyRangeType;
 import org.lmdbjava.Txn;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class LmdbKeySequence {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LmdbKeySequence.class);
 
-    private final ByteBufferFactory byteBufferFactory;
+    private final ByteBuffers byteBuffers;
 
-    public LmdbKeySequence(final ByteBufferFactory byteBufferFactory) {
-        this.byteBufferFactory = byteBufferFactory;
+    public LmdbKeySequence(final ByteBuffers byteBuffers) {
+        this.byteBuffers = byteBuffers;
     }
 
-    public void find(final Dbi<ByteBuffer> dbi,
-                     final Txn<ByteBuffer> writeTxn,
-                     final ByteBuffer rowKey,
-                     final ByteBuffer rowValue,
-                     final Predicate<BBKV> matchPredicate,
-                     final Consumer<Match> matchConsumer) {
+    public <R> R find(final Dbi<ByteBuffer> dbi,
+                      final Txn<ByteBuffer> writeTxn,
+                      final ByteBuffer rowKey,
+                      final ByteBuffer rowValue,
+                      final Predicate<ByteBuffer> matchPredicate,
+                      final Function<Match, R> matchConsumer) {
+        long nextNo = 0;
+
         // Just try to find without a cursor.
         final ByteBuffer valueBuffer = dbi.get(writeTxn, rowKey);
-        if (valueBuffer != null && matchPredicate.test(new BBKV(rowKey, valueBuffer))) {
-            // Found our value, job done
-            LOGGER.debug("Found row directly {}", rowValue);
-            matchConsumer.accept(new Match(rowKey, null));
-
-        } else {
-            // Look forward from the provided row key across all subsequent sequence numbers.
-            final KeyRange<ByteBuffer> keyRange = new KeyRange<>(KeyRangeType.FORWARD_GREATER_THAN, rowKey, rowKey);
-            // Iterate over all entries with the same hash. Will only be one unless
-            // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
-            // gaps in the seq numbers.
-            try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn, keyRange)) {
-                final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
-                Long lastSeqNo = null;
-                Long nextNo = null;
-                while (iterator.hasNext()) {
-                    final BBKV kv = BBKV.create(iterator.next());
-                    final ByteBuffer key = kv.key();
-
-                    // Stop iterating if we go beyond the prefix.
-                    if (!ByteBufferUtils.containsPrefix(key, rowKey)) {
-                        break;
-                    }
-
-                    final long seqNo = extractSequenceNumber(key, rowKey.limit());
-
-                    // See if the value is the same as ours
-                    if (matchPredicate.test(kv)) {
-                        // Found our value, job done
-                        LOGGER.debug("Found row with cursor {}", kv.val());
-                        matchConsumer.accept(new Match(key, null));
-                        return;
-                    } else {
-                        LOGGER.debug(() -> LogUtil.message("Same hash different value, sequenceNo: {}, key {}, val {}",
-                                seqNo,
-                                ByteBufferUtils.byteBufferInfo(kv.key()),
-                                ByteBufferUtils.byteBufferInfo(kv.val())));
-                    }
-
-                    // Remember the last sequence number.
-                    if (lastSeqNo == null) {
-                        lastSeqNo = seqNo;
-                    } else if (seqNo > lastSeqNo) {
-                        // See if we have found a possible insert position.
-                        if (nextNo == null && lastSeqNo + 1 < seqNo) {
-                            nextNo = lastSeqNo + 1;
-                        }
-                        lastSeqNo = seqNo;
-                    }
-                }
-
-                if (lastSeqNo == null) {
-                    nextNo = 1L;
-                } else if (nextNo == null) {
-                    nextNo = lastSeqNo + 1;
-                }
-
-                matchConsumer.accept(new Match(null, nextNo));
+        if (valueBuffer != null) {
+            nextNo = 1;
+            if (valueBuffer.equals(rowValue)) {
+                // Found our value, job done
+                LOGGER.debug("Found row directly {}", rowValue);
+                return matchConsumer.apply(new Match(rowKey, null));
             }
+        }
+
+        // Look forward from the provided row key across all subsequent sequence numbers.
+        // Iterate over all entries with the same hash. Will only be one unless
+        // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
+        // gaps in the seq numbers.
+        final LmdbKeyRange keyRange = LmdbKeyRange.builder().start(rowKey).build();
+        try (final LmdbIterable iterable = LmdbIterable.create(writeTxn, dbi, keyRange)) {
+            for (final LmdbEntry entry : iterable) {
+                final ByteBuffer key = entry.getKey();
+                final ByteBuffer val = entry.getVal();
+
+                // Stop iterating if we go beyond the prefix.
+                if (!ByteBufferUtils.containsPrefix(key, rowKey)) {
+                    break;
+                }
+
+                // See if the value is the same as ours
+                if (val.equals(rowValue)) {
+                    // Found our value, job done
+                    LOGGER.debug("Found row with cursor {}", val);
+                    return matchConsumer.apply(new Match(key, null));
+                }
+
+                final long seqNo = extractSequenceNumber(key, rowKey.limit());
+                LOGGER.debug(() -> LogUtil.message("Same hash different value, sequenceNo: {}, key {}, val {}",
+                        seqNo,
+                        ByteBufferUtils.byteBufferInfo(key),
+                        ByteBufferUtils.byteBufferInfo(val)));
+
+                // Figure out the next sequence number.
+                if (seqNo >= nextNo) {
+                    nextNo = seqNo + 1;
+                }
+            }
+
+            return matchConsumer.apply(new Match(null, nextNo));
         }
     }
 
@@ -105,15 +107,15 @@ public class LmdbKeySequence {
                        final ByteBuffer rowKey,
                        final Predicate<ByteBuffer> valueMatchPredicate) {
         // Iterate forward from the key onwards until we find a match to delete.
-        final KeyRange<ByteBuffer> keyRange = new KeyRange<>(KeyRangeType.FORWARD_AT_LEAST, rowKey, rowKey);
-        // Iterate over all entries with the same hash. Will only be one unless
-        // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
-        // gaps in the seq numbers.
-        try (final CursorIterable<ByteBuffer> cursorIterable = dbi.iterate(writeTxn, keyRange)) {
-            final Iterator<KeyVal<ByteBuffer>> iterator = cursorIterable.iterator();
+        final LmdbKeyRange keyRange = LmdbKeyRange.builder().start(rowKey).build();
+        try (final LmdbIterable iterable = LmdbIterable.create(writeTxn, dbi, keyRange)) {
+            // Iterate over all entries with the same hash. Will only be one unless
+            // we get a hash clash. Have to use a cursor as entries can be deleted, thus leaving
+            // gaps in the seq numbers.
+            final Iterator<LmdbEntry> iterator = iterable.iterator();
             while (iterator.hasNext()) {
-                final KeyVal<ByteBuffer> cursorKeyVal = iterator.next();
-                final ByteBuffer key = cursorKeyVal.key();
+                final LmdbEntry cursorKeyVal = iterator.next();
+                final ByteBuffer key = cursorKeyVal.getKey();
 
                 // Stop iterating if we go beyond the prefix.
                 if (!ByteBufferUtils.containsPrefix(key, rowKey)) {
@@ -121,7 +123,7 @@ public class LmdbKeySequence {
                 }
 
                 // See if the value is the same as ours
-                if (valueMatchPredicate.test(cursorKeyVal.val())) {
+                if (valueMatchPredicate.test(cursorKeyVal.getVal())) {
                     // Found our value, delete it
                     LOGGER.debug("Deleted via iterator {}", cursorKeyVal);
                     iterator.remove();
@@ -148,31 +150,26 @@ public class LmdbKeySequence {
      * Updates the keyBuffer with the provided sequence number value.
      * Absolute, no flip required.
      */
-    public void addSequenceNumber(final ByteBuffer keyBuffer,
-                                  final int offset,
-                                  final long sequenceNumber,
-                                  final Consumer<ByteBuffer> keyBufferConsumer) {
+    public <R> R addSequenceNumber(final ByteBuffer keyBuffer,
+                                   final int offset,
+                                   final long sequenceNumber,
+                                   final Function<ByteBuffer, R> keyBufferConsumer) {
         final UnsignedBytes unsignedBytes = UnsignedBytesInstances.forValue(sequenceNumber);
 
         // See if the key byte buffer is big enough to add the sequence number.
         if (keyBuffer.capacity() - keyBuffer.limit() >= unsignedBytes.length()) {
             keyBuffer.limit(offset + unsignedBytes.length());
             unsignedBytes.put(keyBuffer, offset, sequenceNumber);
-            keyBufferConsumer.accept(keyBuffer);
+            return keyBufferConsumer.apply(keyBuffer);
 
         } else {
             // We need to make a bigger buffer to store the sequence number.
-            final ByteBuffer newBuffer = byteBufferFactory
-                    .acquire(offset + unsignedBytes.length());
-            try {
+            return byteBuffers.use(offset + unsignedBytes.length(), newBuffer -> {
                 newBuffer.put(keyBuffer);
                 unsignedBytes.put(newBuffer, sequenceNumber);
                 newBuffer.flip();
-                keyBufferConsumer.accept(newBuffer);
-
-            } finally {
-                byteBufferFactory.release(newBuffer);
-            }
+                return keyBufferConsumer.apply(newBuffer);
+            });
         }
     }
 

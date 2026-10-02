@@ -34,7 +34,7 @@ public class PrimitiveValueConverterMapImpl<E extends HasPrimitiveValue>
                                    final E[] values) {
         this.mapByPrimitiveValue = new HashMap<>(values.length);
         this.itemType = itemType;
-        for (E value : values) {
+        for (final E value : values) {
             final byte primitiveValue = value.getPrimitiveValue();
             final E previousValue = mapByPrimitiveValue.put(primitiveValue, value);
             if (previousValue != null) {
@@ -49,6 +49,15 @@ public class PrimitiveValueConverterMapImpl<E extends HasPrimitiveValue>
     @Override
     public E fromPrimitiveValue(final byte i) {
         return mapByPrimitiveValue.get(i);
+    }
+
+    @Override
+    public E fromPrimitiveValueOrThrow(final byte i) {
+        final E value = mapByPrimitiveValue.get(i);
+        if (value == null) {
+            throw new RuntimeException("Unknown primitive value " + i + " in " + itemType.getSimpleName());
+        }
+        return value;
     }
 
     public E fromPrimitiveValue(final Byte i) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.ui.config.shared;
 
 import stroom.util.shared.AbstractConfig;
@@ -16,6 +32,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class SplashConfig extends AbstractConfig implements IsStroomConfig {
 
+    private static final boolean DEFAULT_ENABLED = false;
+
     @JsonProperty
     @JsonPropertyDescription("If you would like users to see a splash screen on login.")
     private final boolean enabled;
@@ -33,18 +51,18 @@ public class SplashConfig extends AbstractConfig implements IsStroomConfig {
     private final String version;
 
     public SplashConfig() {
-        enabled = false;
+        enabled = DEFAULT_ENABLED;
         title = "Splash Screen";
         body = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
         version = "v0.1";
     }
 
     @JsonCreator
-    public SplashConfig(@JsonProperty("enabled") final boolean enabled,
+    public SplashConfig(@JsonProperty("enabled") final Boolean enabled,
                         @JsonProperty("title") final String title,
                         @JsonProperty("body") final String body,
                         @JsonProperty("version") final String version) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, DEFAULT_ENABLED);
         this.title = title;
         this.body = body;
         this.version = version;

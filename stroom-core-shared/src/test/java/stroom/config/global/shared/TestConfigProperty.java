@@ -1,11 +1,27 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.global.shared;
 
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.PropertyPath;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 
@@ -17,8 +33,8 @@ class TestConfigProperty {
 
     @Test
     void testPrecedenceNullDefaultOnly() {
-
-        ConfigProperty configProperty = new ConfigProperty();
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .build();
 
         assertThat(configProperty.getDefaultValue())
                 .isEmpty();
@@ -39,10 +55,10 @@ class TestConfigProperty {
 
     @Test
     void testPrecedenceDefaultOnly() {
-
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        configProperty.setDefaultValue(defaultValue);
+        final String defaultValue = "default";
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .defaultValue(defaultValue)
+                .build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -60,12 +76,12 @@ class TestConfigProperty {
 
     @Test
     void testPrecedenceDefaultAndDb() {
-
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String dbValue = "database";
-        configProperty.setDefaultValue(defaultValue);
-        configProperty.setDatabaseOverrideValue(dbValue);
+        final String defaultValue = "default";
+        final String dbValue = "database";
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .defaultValue(defaultValue)
+                .databaseOverrideValue(dbValue)
+                .build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -86,12 +102,12 @@ class TestConfigProperty {
 
     @Test
     void testPrecedenceDefaultAndNullDb() {
-
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String dbValue = null;
-        configProperty.setDefaultValue(defaultValue);
-        configProperty.setDatabaseOverrideValue(dbValue);
+        final String defaultValue = "default";
+        final String dbValue = null;
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .defaultValue(defaultValue)
+                .databaseOverrideValue(dbValue)
+                .build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -109,12 +125,12 @@ class TestConfigProperty {
 
     @Test
     void testPrecedenceDefaultAndYaml() {
-
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String yamlValue = "yaml";
-        configProperty.setDefaultValue(defaultValue);
-        configProperty.setYamlOverrideValue(yamlValue);
+        final String defaultValue = "default";
+        final String yamlValue = "yaml";
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .defaultValue(defaultValue)
+                .yamlOverrideValue(yamlValue)
+                .build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -135,12 +151,12 @@ class TestConfigProperty {
 
     @Test
     void testPrecedenceDefaultAndNullYaml() {
-
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String yamlValue = null;
-        configProperty.setDefaultValue(defaultValue);
-        configProperty.setYamlOverrideValue(yamlValue);
+        final String defaultValue = "default";
+        final String yamlValue = null;
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .defaultValue(defaultValue)
+                .yamlOverrideValue(yamlValue)
+                .build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -161,14 +177,14 @@ class TestConfigProperty {
 
     @Test
     void testPrecedenceDefaultAndDbAndYaml() {
-
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String dbValue = "database";
-        String yamlValue = "yaml";
-        configProperty.setDefaultValue(defaultValue);
-        configProperty.setDatabaseOverrideValue(dbValue);
-        configProperty.setYamlOverrideValue(yamlValue);
+        final String defaultValue = "default";
+        final String dbValue = "database";
+        final String yamlValue = "yaml";
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .defaultValue(defaultValue)
+                .databaseOverrideValue(dbValue)
+                .yamlOverrideValue(yamlValue)
+                .build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -189,14 +205,14 @@ class TestConfigProperty {
 
     @Test
     void testPrecedenceDefaultAndDbAndNullYaml() {
-
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        String dbValue = "database";
-        String yamlValue = null;
-        configProperty.setDefaultValue(defaultValue);
-        configProperty.setDatabaseOverrideValue(dbValue);
-        configProperty.setYamlOverrideValue(yamlValue);
+        final String defaultValue = "default";
+        final String dbValue = "database";
+        final String yamlValue = null;
+        ConfigProperty configProperty = ConfigProperty.builder()
+                .defaultValue(defaultValue)
+                .databaseOverrideValue(dbValue)
+                .yamlOverrideValue(yamlValue)
+                .build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -215,7 +231,7 @@ class TestConfigProperty {
                 .isEmpty();
 
         // Now remove the yaml override
-        configProperty.removeYamlOverride();
+        configProperty = configProperty.copy().removeYamlOverride().build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -227,26 +243,29 @@ class TestConfigProperty {
 
         assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValueAsOptional()))
+        final ConfigProperty cp1 = configProperty;
+        assertThat(Assertions.catchThrowable(() -> cp1.getYamlOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
                 .isEqualTo(dbValue);
 
         // now remove the db override
-        configProperty.removeDatabaseOverride();
+        configProperty = configProperty.copy().removeDatabaseOverride().build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
 
         assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValueAsOptional()))
+        final ConfigProperty cp2 = configProperty;
+        assertThat(Assertions.catchThrowable(() -> cp2.getDatabaseOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValueAsOptional()))
+        final ConfigProperty cp3 = configProperty;
+        assertThat(Assertions.catchThrowable(() -> cp3.getYamlOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -255,11 +274,11 @@ class TestConfigProperty {
 
     @Test
     void testPassword() {
-
-        ConfigProperty configProperty = new ConfigProperty();
-        String defaultValue = "default";
-        configProperty.setDefaultValue(defaultValue);
-        configProperty.setPassword(true);
+        final String defaultValue = "default";
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .defaultValue(defaultValue)
+                .password(true)
+                .build();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -276,33 +295,32 @@ class TestConfigProperty {
 
     @Test
     void testSerialisation1() throws IOException {
-
-        final ConfigProperty configProperty = new ConfigProperty();
-        configProperty.setId(123);
-        configProperty.setName(PropertyPath.fromPathString("stroom.node.name"));
-        configProperty.setEditable(true);
-        configProperty.setPassword(false);
-        configProperty.setRequireRestart(true);
-        configProperty.setRequireUiRestart(true);
-        configProperty.setDefaultValue("default-123");
-        configProperty.setYamlOverrideValue("yaml-123");
-        configProperty.setDatabaseOverrideValue("db-123");
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .id(123)
+                .name(PropertyPath.fromPathString("stroom.node.name"))
+                .editable(true)
+                .password(false)
+                .requireRestart(true)
+                .requireUiRestart(true)
+                .defaultValue("default-123")
+                .yamlOverrideValue("yaml-123")
+                .databaseOverrideValue("db-123")
+                .build();
         doSerdeTest(configProperty);
     }
 
     @Test
     void testSerialisation2() throws IOException {
-
-        ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("some.name"));
+        final ConfigProperty configProperty = ConfigProperty
+                .builder()
+                .name(PropertyPath.fromPathString("some.name"))
+                .build();
         doSerdeTest(configProperty);
     }
 
     private void doSerdeTest(final ConfigProperty configProperty) throws IOException {
-        final ObjectMapper mapper = JsonUtil.getMapper();
-        assertThat(mapper.canSerialize(ConfigProperty.class)).isTrue();
-        assertThat(mapper.canSerialize(OverrideValue.class)).isTrue();
-
-        String json = mapper.writeValueAsString(configProperty);
+        final JsonMapper mapper = JsonUtil.getMapper();
+        final String json = mapper.writeValueAsString(configProperty);
         System.out.println("\n" + json);
 
         final ConfigProperty configProperty2 = mapper.readValue(json, ConfigProperty.class);

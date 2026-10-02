@@ -28,11 +28,11 @@ class StringCriteriaTest {
 
     @Test
     void testConvertStringList() {
-        List<String> strings = new ArrayList<>();
+        final List<String> strings = new ArrayList<>();
         strings.add("abcdef");
         strings.add("ABCDEF");
 
-        List<StringCriteria> criteriaList = StringCriteria.convertStringList(strings);
+        final List<StringCriteria> criteriaList = StringCriteria.convertStringList(strings);
 
         for (int i = 0; i < strings.size(); i++) {
             assertThat(criteriaList.get(i).toString()).isEqualTo(strings.get(i));

@@ -22,15 +22,15 @@ public class PipelineFactoryException extends RuntimeException {
     public PipelineFactoryException() {
     }
 
-    public PipelineFactoryException(String message) {
+    public PipelineFactoryException(final String message) {
         super(message);
     }
 
-    public PipelineFactoryException(String message, Throwable cause) {
+    public PipelineFactoryException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
-    public PipelineFactoryException(Throwable cause) {
+    public PipelineFactoryException(final Throwable cause) {
         super(cause);
     }
 }

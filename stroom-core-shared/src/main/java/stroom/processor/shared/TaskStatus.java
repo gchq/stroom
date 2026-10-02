@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public enum TaskStatus implements HasDisplayValue, HasPrimitiveValue {
     private final String displayValue;
     private final byte primitiveValue;
 
-    TaskStatus(final String displayValue, int primitiveValue) {
+    TaskStatus(final String displayValue, final int primitiveValue) {
         this.displayValue = displayValue;
         this.primitiveValue = (byte) primitiveValue;
     }

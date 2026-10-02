@@ -1,4 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2016-2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0//EN"
         "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
 <module rename-to='stroom'>
@@ -29,6 +45,7 @@
     <inherits name='stroom.event.Event' />
     <inherits name='stroom.task.Task'/>
     <inherits name='stroom.main.Main'/>
+    <inherits name='stroom.http.Http' />
     <inherits name='stroom.widget.popup.Popup'/>
     <inherits name='stroom.security.Security'/>
     <inherits name='stroom.service.Service'/>
@@ -97,14 +114,17 @@
     <inherits name="stroom.search.elastic.ElasticCluster" />
     <inherits name="stroom.search.elastic.ElasticIndex" />
     <inherits name="stroom.search.solr.SolrIndex" />
+    <inherits name="stroom.ai.AI" />
     <inherits name="stroom.dashboard.Dashboard" />
-    <inherits name="stroom.state.ScyllaDb" />
-    <inherits name="stroom.state.StateStore" />
+    <inherits name="stroom.pathways.Pathways" />
     <inherits name="stroom.planb.PlanB" />
+    <inherits name="stroom.contentstore.ContentStore" />
+    <inherits name="stroom.gitrepo.GitRepo" />
+    <inherits name="stroom.credentials.Credentials"/>
+    <inherits name="stroom.openai.OpenAIModel" />
 
     <inherits name="stroom.query.Query" />
 
-    <inherits name="stroom.statistics.impl.hbase.HbaseStatistics"/>
     <inherits name="stroom.statistics.impl.sql.SqlStatistics"/>
     <inherits name="stroom.benchmark.Benchmark" />
     <inherits name="stroom.docstore.DocStore"/>
@@ -120,6 +140,7 @@
     <inherits name="stroom.processor.Processor"/>
     <inherits name="stroom.xmlschema.XMLSchema" />
     <inherits name="stroom.kafka.KafkaConfig" />
+    <inherits name="stroom.aws.common.AwsCommon" />
     <inherits name="stroom.aws.s3.S3Config" />
     <inherits name="stroom.pool.Pool" />
     <inherits name="stroom.cache.Cache" />
@@ -131,6 +152,7 @@
     <inherits name="stroom.monitoring.Monitoring" />
     <inherits name="stroom.index.Index"/>
     <inherits name="stroom.analytics.Analytics" />
+    <inherits name="stroom.datagen.DataGen" />
     <inherits name="stroom.view.View" />
     <!--
     <inherits name="stroom.nstat.store.monitoring.StatsMonitoring" />

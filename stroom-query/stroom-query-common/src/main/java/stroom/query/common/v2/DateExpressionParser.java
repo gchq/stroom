@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,12 +16,13 @@
 
 package stroom.query.common.v2;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.TimeFilter;
-import stroom.query.api.v2.TimeRange;
-import stroom.query.language.token.AbstractToken;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenType;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.TimeFilter;
+import stroom.query.api.TimeRange;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenType;
+import stroom.query.language.functions.UserTimeZoneUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -49,7 +50,10 @@ public class DateExpressionParser {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DateExpressionParser.class);
 
-    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d+[smhdwMy])+");
+    // The inner digit run is possessive (\d++): a duration digit run is always terminated by a unit letter
+    // ([smhdwMy], disjoint from \d), so no backtracking into the digits is ever needed. This avoids O(n^2)
+    // scanning (ReDoS) on a long run of digits with no trailing unit.
+    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d++[smhdwMy])+");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
     private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Z");
 
@@ -283,30 +287,9 @@ public class DateExpressionParser {
             // Assume a timezone is specified on the string.
             return ZonedDateTime.parse(trimmed);
         } catch (final DateTimeParseException e) {
-
             try {
-                if (dateTimeSettings.getTimeZone() != null && dateTimeSettings.getTimeZone().getUse() != null) {
-                    switch (dateTimeSettings.getTimeZone().getUse()) {
-                        case LOCAL -> {
-                            final ZoneId zoneId = ZoneId.of(dateTimeSettings.getLocalZoneId());
-                            return LocalDateTime.parse(trimmed).atZone(zoneId);
-                        }
-                        case UTC -> {
-                            final ZoneId zoneId = ZoneId.of("Z");
-                            return LocalDateTime.parse(trimmed).atZone(zoneId);
-                        }
-                        case ID -> {
-                            final ZoneId zoneId = ZoneId.of(dateTimeSettings.getTimeZone().getId());
-                            return LocalDateTime.parse(trimmed).atZone(zoneId);
-                        }
-                        case OFFSET -> {
-                            final ZoneOffset zoneOffset = ZoneOffset
-                                    .ofHoursMinutes(dateTimeSettings.getTimeZone().getOffsetHours(),
-                                            dateTimeSettings.getTimeZone().getOffsetMinutes());
-                            return LocalDateTime.parse(trimmed).atOffset(zoneOffset).toZonedDateTime();
-                        }
-                    }
-                }
+                final ZoneId zoneId = UserTimeZoneUtil.getZoneId(dateTimeSettings);
+                return LocalDateTime.parse(trimmed).atZone(zoneId);
             } catch (final RuntimeException ex) {
                 // Ignore error
             }
@@ -358,7 +341,7 @@ public class DateExpressionParser {
             boolean found;
             do {
                 found = false;
-                char c = chars[index];
+                final char c = chars[index];
                 if (c == '+') {
                     sign = c;
                     index++;
@@ -396,16 +379,16 @@ public class DateExpressionParser {
         final String expression = WHITESPACE.matcher(string).replaceAll("");
 
         int start = 0;
-        char[] chars = expression.toCharArray();
+        final char[] chars = expression.toCharArray();
 
         TimeFunction lastFunction = null;
         while (start < chars.length) {
             // Get digits.
-            int numStart = start;
+            final int numStart = start;
             while (Character.isDigit(chars[start])) {
                 start++;
             }
-            long num = Long.parseLong(new String(chars, numStart, start - numStart));
+            final long num = Long.parseLong(new String(chars, numStart, start - numStart));
 
             // Get duration type.
             final char type = chars[start++];

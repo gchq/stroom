@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -18,12 +34,12 @@ public class BuildInfo {
     private final String buildVersion;
 
     @JsonCreator
-    public BuildInfo(@JsonProperty("upTime") final long upTime,
+    public BuildInfo(@JsonProperty("upTime") final Long upTime,
                      @JsonProperty("buildVersion") final String buildVersion,
-                     @JsonProperty("buildTime") final long buildTime) {
-        this.upTime = upTime;
+                     @JsonProperty("buildTime") final Long buildTime) {
+        this.upTime = Objects.requireNonNullElse(upTime, 0L);
         this.buildVersion = buildVersion;
-        this.buildTime = buildTime;
+        this.buildTime = Objects.requireNonNullElse(buildTime, 0L);
     }
 
     public String getBuildVersion() {
@@ -43,12 +59,12 @@ public class BuildInfo {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof BuildInfo)) {
+        if (!(o instanceof final BuildInfo buildInfo)) {
             return false;
         }
-        final BuildInfo buildInfo = (BuildInfo) o;
-        return upTime == buildInfo.upTime && buildTime == buildInfo.buildTime && Objects.equals(buildVersion,
-                buildInfo.buildVersion);
+        return upTime == buildInfo.upTime
+               && buildTime == buildInfo.buildTime
+               && Objects.equals(buildVersion, buildInfo.buildVersion);
     }
 
     @Override
@@ -59,9 +75,9 @@ public class BuildInfo {
     @Override
     public String toString() {
         return "BuildInfo{" +
-                "upTime='" + upTime + '\'' +
-                ", buildTime='" + buildTime + '\'' +
-                ", buildVersion='" + buildVersion + '\'' +
-                '}';
+               "upTime='" + upTime + '\'' +
+               ", buildTime='" + buildTime + '\'' +
+               ", buildVersion='" + buildVersion + '\'' +
+               '}';
     }
 }

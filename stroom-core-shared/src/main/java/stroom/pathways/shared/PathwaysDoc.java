@@ -1,0 +1,355 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pathways.shared;
+
+import stroom.docref.DocRef;
+import stroom.docs.shared.Description;
+import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.DocumentType;
+import stroom.docstore.shared.DocumentTypeRegistry;
+import stroom.pathways.shared.pathway.Pathway;
+import stroom.util.shared.time.SimpleDuration;
+import stroom.util.shared.time.TimeUnit;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.List;
+import java.util.Objects;
+
+@Description(
+        """
+        Analyses trace logs held in a Plan B store to learn the paths that traces take between services, \
+        e.g. A -> B -> C.
+        Each distinct path is remembered, so that a new or changed path can be reported as soon as it appears.
+        For each span on a path it also learns constraints on the span's duration, kind, flags and \
+        attributes, held as an exact value, a set, a range or a regular expression, and widens them as \
+        further traces are seen.
+        Whether new paths and constraints may be added, and whether those already learnt may be widened, \
+        is controlled per document, so Pathways can be left learning or fixed so that anything deviating \
+        from what it has learnt is reported instead of absorbed.
+        Findings are written to a nominated Feed for analytic rules to act on.
+        Pathways makes no judgement about the changes it reports.
+        """)
+@JsonPropertyOrder({
+        "type",
+        "uuid",
+        "name",
+        "version",
+        "createTimeMs",
+        "updateTimeMs",
+        "createUser",
+        "updateUser",
+        "description",
+        "pathways"})
+@JsonInclude(Include.NON_NULL)
+public class PathwaysDoc extends AbstractDoc {
+
+    private static final boolean DEFAULT_ALLOW_PATHWAY_CREATION = true;
+    private static final boolean DEFAULT_ALLOW_PATHWAY_MUTATION = true;
+    private static final boolean DEFAULT_ALLOW_CONSTRAINT_CREATION = true;
+    private static final boolean DEFAULT_ALLOW_CONSTRAINT_MUTATION = true;
+
+    public static final String TYPE = "Pathways";
+    public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PATHWAYS_DOCUMENT_TYPE;
+
+    @JsonProperty
+    private final String description;
+    @JsonProperty
+    private final SimpleDuration temporalOrderingTolerance;
+    @JsonProperty
+    private final List<Pathway> pathways;
+    @JsonProperty
+    private final boolean allowPathwayCreation;
+    @JsonProperty
+    private final boolean allowPathwayMutation;
+    @JsonProperty
+    private final boolean allowConstraintCreation;
+    @JsonProperty
+    private final boolean allowConstraintMutation;
+    @JsonProperty
+    private final DocRef tracesDocRef;
+    @JsonProperty
+    private final DocRef infoFeed;
+    @JsonProperty
+    private final String processingNode;
+
+    @JsonCreator
+    public PathwaysDoc(@JsonProperty("uuid") final String uuid,
+                       @JsonProperty("name") final String name,
+                       @JsonProperty("version") final String version,
+                       @JsonProperty("createTimeMs") final Long createTimeMs,
+                       @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                       @JsonProperty("createUser") final String createUser,
+                       @JsonProperty("updateUser") final String updateUser,
+                       @JsonProperty("description") final String description,
+                       @JsonProperty("temporalOrderingTolerance") final SimpleDuration temporalOrderingTolerance,
+                       @JsonProperty("pathways") final List<Pathway> pathways,
+                       @JsonProperty("allowPathwayCreation") final Boolean allowPathwayCreation,
+                       @JsonProperty("allowPathwayMutation") final Boolean allowPathwayMutation,
+                       @JsonProperty("allowConstraintCreation") final Boolean allowConstraintCreation,
+                       @JsonProperty("allowConstraintMutation") final Boolean allowConstraintMutation,
+                       @JsonProperty("tracesDocRef") final DocRef tracesDocRef,
+                       @JsonProperty("infoFeed") final DocRef infoFeed,
+                       @JsonProperty("processingNode") final String processingNode) {
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        this.description = description;
+        this.temporalOrderingTolerance = temporalOrderingTolerance;
+        this.pathways = pathways;
+        this.allowPathwayCreation =
+                Objects.requireNonNullElse(allowPathwayCreation, DEFAULT_ALLOW_PATHWAY_CREATION);
+        this.allowPathwayMutation =
+                Objects.requireNonNullElse(allowPathwayMutation, DEFAULT_ALLOW_PATHWAY_MUTATION);
+        this.allowConstraintCreation =
+                Objects.requireNonNullElse(allowConstraintCreation, DEFAULT_ALLOW_CONSTRAINT_CREATION);
+        this.allowConstraintMutation =
+                Objects.requireNonNullElse(allowConstraintMutation, DEFAULT_ALLOW_CONSTRAINT_MUTATION);
+        this.tracesDocRef = tracesDocRef;
+        this.infoFeed = infoFeed;
+        this.processingNode = processingNode;
+    }
+
+    /**
+     * @return A new {@link DocRef} for this document's type with the supplied uuid.
+     */
+    public static DocRef getDocRef(final String uuid) {
+        return DocRef.builder(TYPE)
+                .uuid(uuid)
+                .build();
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public SimpleDuration getTemporalOrderingTolerance() {
+        return temporalOrderingTolerance;
+    }
+
+    public List<Pathway> getPathways() {
+        return pathways;
+    }
+
+    public boolean isAllowPathwayCreation() {
+        return allowPathwayCreation;
+    }
+
+    public boolean isAllowPathwayMutation() {
+        return allowPathwayMutation;
+    }
+
+    public boolean isAllowConstraintCreation() {
+        return allowConstraintCreation;
+    }
+
+    public boolean isAllowConstraintMutation() {
+        return allowConstraintMutation;
+    }
+
+    public DocRef getTracesDocRef() {
+        return tracesDocRef;
+    }
+
+    public DocRef getInfoFeed() {
+        return infoFeed;
+    }
+
+    public String getProcessingNode() {
+        return processingNode;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final PathwaysDoc that = (PathwaysDoc) o;
+        return allowPathwayCreation == that.allowPathwayCreation &&
+               allowPathwayMutation == that.allowPathwayMutation &&
+               allowConstraintCreation == that.allowConstraintCreation &&
+               allowConstraintMutation == that.allowConstraintMutation &&
+               Objects.equals(description, that.description) &&
+               Objects.equals(temporalOrderingTolerance, that.temporalOrderingTolerance) &&
+               Objects.equals(pathways, that.pathways) &&
+               Objects.equals(tracesDocRef, that.tracesDocRef) &&
+               Objects.equals(infoFeed, that.infoFeed) &&
+               Objects.equals(processingNode, that.processingNode);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(),
+                description,
+                temporalOrderingTolerance,
+                pathways,
+                allowPathwayCreation,
+                allowPathwayMutation,
+                allowConstraintCreation,
+                allowConstraintMutation,
+                tracesDocRef,
+                infoFeed,
+                processingNode);
+    }
+
+    @Override
+    public String toString() {
+        return "PathwaysDoc{" +
+               "description='" + description + '\'' +
+               ", temporalOrderingTolerance=" + temporalOrderingTolerance +
+               ", pathways=" + pathways +
+               ", allowPathwayCreation=" + allowPathwayCreation +
+               ", allowPathwayMutation=" + allowPathwayMutation +
+               ", allowConstraintCreation=" + allowConstraintCreation +
+               ", allowConstraintMutation=" + allowConstraintMutation +
+               ", tracesDocRef=" + tracesDocRef +
+               ", infoFeed=" + infoFeed +
+               ", processingNode=" + processingNode +
+               '}';
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractBuilder<PathwaysDoc, Builder> {
+
+        private String description;
+        private SimpleDuration temporalOrderingTolerance = new SimpleDuration(0L, TimeUnit.NANOSECONDS);
+        private List<Pathway> pathways;
+        private boolean allowPathwayCreation = true;
+        private boolean allowPathwayMutation = true;
+        private boolean allowConstraintCreation = true;
+        private boolean allowConstraintMutation = true;
+        private DocRef tracesDocRef;
+        private DocRef infoFeed;
+        private String processingNode;
+
+        private Builder() {
+        }
+
+        private Builder(final PathwaysDoc pathwaysDoc) {
+            super(pathwaysDoc);
+            this.description = pathwaysDoc.description;
+            this.temporalOrderingTolerance = pathwaysDoc.temporalOrderingTolerance;
+            this.pathways = pathwaysDoc.pathways;
+            this.allowPathwayCreation = pathwaysDoc.allowPathwayCreation;
+            this.allowPathwayMutation = pathwaysDoc.allowPathwayMutation;
+            this.allowConstraintCreation = pathwaysDoc.allowConstraintCreation;
+            this.allowConstraintMutation = pathwaysDoc.allowConstraintMutation;
+            this.tracesDocRef = pathwaysDoc.tracesDocRef;
+            this.infoFeed = pathwaysDoc.infoFeed;
+            this.processingNode = pathwaysDoc.processingNode;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder temporalOrderingTolerance(final SimpleDuration temporalOrderingTolerance) {
+            this.temporalOrderingTolerance = temporalOrderingTolerance;
+            return self();
+        }
+
+        public Builder pathways(final List<Pathway> pathways) {
+            this.pathways = pathways;
+            return self();
+        }
+
+        public Builder allowPathwayCreation(final boolean allowPathwayCreation) {
+            this.allowPathwayCreation = allowPathwayCreation;
+            return self();
+        }
+
+        public Builder allowPathwayMutation(final boolean allowPathwayMutation) {
+            this.allowPathwayMutation = allowPathwayMutation;
+            return self();
+        }
+
+        public Builder allowConstraintCreation(final boolean allowConstraintCreation) {
+            this.allowConstraintCreation = allowConstraintCreation;
+            return self();
+        }
+
+        public Builder allowConstraintMutation(final boolean allowConstraintMutation) {
+            this.allowConstraintMutation = allowConstraintMutation;
+            return self();
+        }
+
+        public Builder tracesDocRef(final DocRef tracesDocRef) {
+            this.tracesDocRef = tracesDocRef;
+            return self();
+        }
+
+        public Builder infoFeed(final DocRef infoFeed) {
+            this.infoFeed = infoFeed;
+            return self();
+        }
+
+        public Builder processingNode(final String processingNode) {
+            this.processingNode = processingNode;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public PathwaysDoc build() {
+            return new PathwaysDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    temporalOrderingTolerance,
+                    pathways,
+                    allowPathwayCreation = true,
+                    allowPathwayMutation = true,
+                    allowConstraintCreation = true,
+                    allowConstraintMutation = true,
+                    tracesDocRef,
+                    infoFeed,
+                    processingNode);
+        }
+    }
+}

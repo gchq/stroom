@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store;
@@ -63,20 +62,20 @@ public class RefStreamDefinition {
     public RefStreamDefinition(final DocRef pipelineDocRef,
                                final String pipelineVersion,
                                final long streamId) {
-        this(pipelineDocRef, pipelineVersion, streamId, DEFAULT_PART_INDEX);
+        this(pipelineDocRef, pipelineVersion, streamId, (long) DEFAULT_PART_INDEX);
     }
 
     @JsonCreator
     public RefStreamDefinition(@JsonProperty("pipelineDocRef") final DocRef pipelineDocRef,
                                @JsonProperty("pipelineVersion") final String pipelineVersion,
-                               @JsonProperty("streamId") final long streamId,
-                               @JsonProperty("partIndex") final long partIndex) {
+                               @JsonProperty("streamId") final Long streamId,
+                               @JsonProperty("partIndex") final Long partIndex) {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
-        this.streamId = streamId;
-        this.partIndex = partIndex;
-        // pre compute the hash
-        this.hashCode = Objects.hash(pipelineDocRef, pipelineVersion, streamId, partIndex);
+        this.streamId = Objects.requireNonNullElse(streamId, 0L);
+        this.partIndex = Objects.requireNonNullElse(partIndex, 0L);
+        // pre-compute the hash
+        this.hashCode = Objects.hash(pipelineDocRef, pipelineVersion, this.streamId, this.partIndex);
     }
 
     public DocRef getPipelineDocRef() {
@@ -109,21 +108,21 @@ public class RefStreamDefinition {
     @Override
     public String toString() {
         return "RefStreamDefinition{" +
-                "streamId=" + streamId +
-                ", partIdx=" + partIndex +
-                ", pipeline=" + pipelineDocRef +
-                ", pipelineVersion='" + pipelineVersion + '\'' +
-                '}';
+               "streamId=" + streamId +
+               ", partIdx=" + partIndex +
+               ", pipeline=" + pipelineDocRef +
+               ", pipelineVersion='" + pipelineVersion + '\'' +
+               '}';
     }
 
     public String asUiFriendlyString() {
         // make partIndex one based
         return "reference stream: " + streamId +
-                ":" + (partIndex + 1) +
-                " pipeline: " +
-                (pipelineDocRef.getName() != null
-                        ? pipelineDocRef.getName()
-                        : pipelineDocRef.getUuid());
+               ":" + (partIndex + 1) +
+               " pipeline: " +
+               (pipelineDocRef.getName() != null
+                       ? pipelineDocRef.getName()
+                       : pipelineDocRef.getUuid());
     }
 
     @Override
@@ -136,9 +135,9 @@ public class RefStreamDefinition {
         }
         final RefStreamDefinition that = (RefStreamDefinition) o;
         return Objects.equals(pipelineVersion, that.pipelineVersion) &&
-                streamId == that.streamId &&
-                partIndex == that.partIndex &&
-                Objects.equals(pipelineDocRef, that.pipelineDocRef);
+               streamId == that.streamId &&
+               partIndex == that.partIndex &&
+               Objects.equals(pipelineDocRef, that.pipelineDocRef);
     }
 
     @Override

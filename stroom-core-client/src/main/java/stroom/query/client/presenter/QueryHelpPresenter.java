@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,17 +21,21 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.MarkdownConverter;
 import stroom.item.client.SelectionList;
 import stroom.query.client.presenter.QueryHelpPresenter.QueryHelpView;
+import stroom.query.shared.CompletionsRequest.TextType;
 import stroom.query.shared.InsertType;
 import stroom.query.shared.QueryHelpRow;
 import stroom.query.shared.QueryHelpType;
 import stroom.task.client.TaskMonitorFactory;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.client.ClipboardUtil;
+import stroom.util.shared.NullSafe;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSelectionPolicy;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -42,6 +46,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceCompletionProvider;
 
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 
 public class QueryHelpPresenter
         extends MyPresenterWidget<QueryHelpView>
@@ -52,16 +57,14 @@ public class QueryHelpPresenter
     private final QueryHelpDetailProvider detailProvider;
     private final MarkdownConverter markdownConverter;
 
-    private String currentQuery;
-    private Timer requestTimer;
-
     @Inject
     public QueryHelpPresenter(final EventBus eventBus,
                               final QueryHelpView view,
                               final QueryHelpAceCompletionProvider keyedAceCompletionProvider,
                               final QueryHelpDetailProvider detailProvider,
                               final DynamicQueryHelpSelectionListModel model,
-                              final MarkdownConverter markdownConverter) {
+                              final MarkdownConverter markdownConverter,
+                              final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         view.setUiHandlers(this);
         this.keyedAceCompletionProvider = keyedAceCompletionProvider;
@@ -70,8 +73,13 @@ public class QueryHelpPresenter
         this.markdownConverter = markdownConverter;
 
         view.getSelectionList().setKeyboardSelectionPolicy(KeyboardSelectionPolicy.BOUND_TO_SELECTION);
-        model.setSelectionList(view.getSelectionList());
         view.getSelectionList().init(model);
+
+        // Set up the tooltip for the quickfilter
+        uiConfigCache.get(uiConfig ->
+                NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
+                        view.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip("Field Quick Filter", helpUrl))));
     }
 
     @Override
@@ -126,9 +134,9 @@ public class QueryHelpPresenter
         if (row != null) {
             detailProvider.getDetail(row, detail -> {
                 if (detail != null &&
-                        detail.getInsertType() != null &&
-                        detail.getInsertType().isInsertable() &&
-                        detail.getInsertText() != null) {
+                    detail.getInsertType() != null &&
+                    detail.getInsertType().isInsertable() &&
+                    detail.getInsertText() != null) {
                     ClipboardUtil.copy(detail.getInsertText());
                 }
             });
@@ -141,9 +149,9 @@ public class QueryHelpPresenter
         if (row != null) {
             detailProvider.getDetail(row, detail -> {
                 if (detail != null &&
-                        detail.getInsertType() != null &&
-                        detail.getInsertType().isInsertable() &&
-                        detail.getInsertText() != null) {
+                    detail.getInsertType() != null &&
+                    detail.getInsertType().isInsertable() &&
+                    detail.getInsertText() != null) {
                     InsertEditorTextEvent.fire(
                             this,
                             detail.getInsertText(),
@@ -154,25 +162,11 @@ public class QueryHelpPresenter
     }
 
     public void setQuery(final String query) {
-        // Debounce requests so we don't spam the backend
-        if (requestTimer != null) {
-            requestTimer.cancel();
-        }
-
-        requestTimer = new Timer() {
-            @Override
-            public void run() {
-                if (!Objects.equals(currentQuery, query)) {
-                    currentQuery = query;
-                    model.setQuery(query);
-                    refresh();
-                }
-            }
-        };
-        requestTimer.schedule(400);
+        model.setQuery(query);
+        refresh();
     }
 
-    private HandlerRegistration addInsertHandler(InsertEditorTextEvent.Handler handler) {
+    private HandlerRegistration addInsertHandler(final InsertEditorTextEvent.Handler handler) {
         return addHandlerToSource(InsertEditorTextEvent.getType(), handler);
     }
 
@@ -207,9 +201,13 @@ public class QueryHelpPresenter
         keyedAceCompletionProvider.setDataSourceRef(dataSourceRef);
     }
 
-    public void setIncludedTypes(Set<QueryHelpType> includedTypes) {
+    public void setIncludedTypes(final Set<QueryHelpType> includedTypes) {
         model.setIncludedTypes(includedTypes);
         keyedAceCompletionProvider.setIncludedTypes(includedTypes);
+    }
+
+    public void setTextType(final TextType textType) {
+        keyedAceCompletionProvider.setTextType(textType);
     }
 
     @Override
@@ -230,5 +228,7 @@ public class QueryHelpPresenter
         void setDetails(SafeHtml details);
 
         void enableButtons(boolean enable);
+
+        void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
     }
 }

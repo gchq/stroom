@@ -1,15 +1,29 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import stroom.test.common.TestUtil;
+import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.util.stream.Stream;
@@ -20,7 +34,7 @@ class TestDocPath {
 
     @Test
     void blank() {
-        DocPath docPath = DocPath.blank();
+        final DocPath docPath = DocPath.blank();
 
         assertThat(docPath.toString())
                 .isEqualTo("/");
@@ -48,7 +62,7 @@ class TestDocPath {
 
     @Test
     void testAbsolute() {
-        DocPath docPath = DocPath.fromPathString("/stroom/node/name");
+        final DocPath docPath = DocPath.fromPathString("/stroom/node/name");
         Assertions.assertThat(docPath.isAbsolute())
                 .isTrue();
         Assertions.assertThat(docPath.isRelative())
@@ -59,7 +73,7 @@ class TestDocPath {
 
     @Test
     void testAbsolute2() {
-        DocPath docPath = DocPath.fromPathString("/stroom/node/name/");
+        final DocPath docPath = DocPath.fromPathString("/stroom/node/name/");
         Assertions.assertThat(docPath.isAbsolute())
                 .isTrue();
         Assertions.assertThat(docPath.isRelative())
@@ -70,7 +84,7 @@ class TestDocPath {
 
     @Test
     void testRelative() {
-        DocPath docPath = DocPath.fromPathString("stroom/node/name");
+        final DocPath docPath = DocPath.fromPathString("stroom/node/name");
         Assertions.assertThat(docPath.isAbsolute())
                 .isFalse();
         Assertions.assertThat(docPath.isRelative())
@@ -81,7 +95,7 @@ class TestDocPath {
 
     @Test
     void testRelative2() {
-        DocPath docPath = DocPath.fromPathString("stroom/node/name/");
+        final DocPath docPath = DocPath.fromPathString("stroom/node/name/");
         Assertions.assertThat(docPath.isAbsolute())
                 .isFalse();
         Assertions.assertThat(docPath.isRelative())
@@ -92,7 +106,7 @@ class TestDocPath {
 
     @Test
     void testWhitespace() {
-        DocPath docPath = DocPath.fromPathString(" / stroom / node / name / ");
+        final DocPath docPath = DocPath.fromPathString(" / stroom / node / name / ");
         Assertions.assertThat(docPath.isAbsolute())
                 .isTrue();
         Assertions.assertThat(docPath.toString())
@@ -101,7 +115,7 @@ class TestDocPath {
 
     @Test
     void testWhitespace2() {
-        DocPath docPath = DocPath.fromPathString("  stroom / node / name /");
+        final DocPath docPath = DocPath.fromPathString("  stroom / node / name /");
         Assertions.assertThat(docPath.isAbsolute())
                 .isEqualTo(!docPath.isRelative())
                 .isFalse();
@@ -111,7 +125,7 @@ class TestDocPath {
 
     @Test
     void testWhitespace3() {
-        DocPath docPath = DocPath.fromPathString("  stroom / has a few spaces / name /");
+        final DocPath docPath = DocPath.fromPathString("  stroom / has a few spaces / name /");
         Assertions.assertThat(docPath.isAbsolute())
                 .isEqualTo(!docPath.isRelative())
                 .isFalse();
@@ -121,7 +135,7 @@ class TestDocPath {
 
     @Test
     void getDocPath() {
-        DocPath docPath = DocPath.fromParts("stroom", "node", "name");
+        final DocPath docPath = DocPath.fromParts("stroom", "node", "name");
 
         assertThat(docPath.toString())
                 .isEqualTo("/stroom/node/name");
@@ -132,31 +146,31 @@ class TestDocPath {
 
     @Test
     void merge() {
-        DocPath docPath1 = DocPath.fromParts("stroom", "node");
-        DocPath docPath2 = DocPath.fromParts("name").toRelativePath();
+        final DocPath docPath1 = DocPath.fromParts("stroom", "node");
+        final DocPath docPath2 = DocPath.fromParts("name").toRelativePath();
         assertThat(docPath1.append(docPath2).toString())
                 .isEqualTo("/stroom/node/name");
     }
 
     @Test
     void merge2() {
-        DocPath docPath1 = DocPath.fromParts("stroom", "node");
-        String part2 = "name";
+        final DocPath docPath1 = DocPath.fromParts("stroom", "node");
+        final String part2 = "name";
         Assertions.assertThat(docPath1.append(part2).toString())
                 .isEqualTo("/stroom/node/name");
     }
 
     @Test
     void merge3() {
-        DocPath docPath1 = DocPath.fromParts("stroom", "node");
+        final DocPath docPath1 = DocPath.fromParts("stroom", "node");
         Assertions.assertThat(docPath1.append("name", "other").toString())
                 .isEqualTo("/stroom/node/name/other");
     }
 
     @Test
     void merge4() {
-        DocPath docPath1 = DocPath.fromParts("stroom", "node");
-        DocPath docPath2 = DocPath.fromParts("name");
+        final DocPath docPath1 = DocPath.fromParts("stroom", "node");
+        final DocPath docPath2 = DocPath.fromParts("name");
 
         Assertions.assertThatThrownBy(
                         () -> {
@@ -168,7 +182,7 @@ class TestDocPath {
 
     @Test
     void containsPart1() {
-        DocPath docPath = DocPath.fromParts("stroom", "node", "name");
+        final DocPath docPath = DocPath.fromParts("stroom", "node", "name");
         docPath.getParts()
                 .forEach(part -> {
                     assertThat(docPath.containsPart(part))
@@ -178,14 +192,14 @@ class TestDocPath {
 
     @Test
     void containsPart2() {
-        DocPath docPath = DocPath.fromParts("stroom", "node", "name");
+        final DocPath docPath = DocPath.fromParts("stroom", "node", "name");
         assertThat(docPath.containsPart("not_found"))
                 .isFalse();
     }
 
     @Test
     void builder() {
-        DocPath docPath = DocPath.builder()
+        final DocPath docPath = DocPath.builder()
                 .add("stroom")
                 .add("node")
                 .add("name")
@@ -223,10 +237,10 @@ class TestDocPath {
     private void doEqualsIgnoreCaseTest(final String pathString1,
                                         final String pathString2,
                                         final boolean expectedResult) {
-        DocPath path1 = DocPath.fromPathString(pathString1);
-        DocPath path2 = DocPath.fromPathString(pathString2);
+        final DocPath path1 = DocPath.fromPathString(pathString1);
+        final DocPath path2 = DocPath.fromPathString(pathString2);
 
-        boolean result = path1.equalsIgnoreCase(path2);
+        final boolean result = path1.equalsIgnoreCase(path2);
 
         assertThat(result)
                 .isEqualTo(expectedResult);
@@ -280,16 +294,8 @@ class TestDocPath {
     private <T> void doSerdeTest(final T entity,
                                  final Class<T> clazz) throws IOException {
 
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new Jdk8Module());
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-
-
-        assertThat(mapper.canSerialize(entity.getClass()))
-                .isTrue();
-
-        String json = mapper.writeValueAsString(entity);
+        final JsonMapper mapper = JsonUtil.getMapper();
+        final String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);
 
         final T entity2 = mapper.readValue(json, clazz);

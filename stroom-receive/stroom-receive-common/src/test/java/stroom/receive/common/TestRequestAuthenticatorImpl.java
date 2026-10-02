@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
 
 import stroom.meta.api.AttributeMap;
@@ -16,7 +32,6 @@ import org.junit.jupiter.api.TestFactory;
 import org.mockito.Mockito;
 
 import java.util.EnumSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -63,13 +78,13 @@ class TestRequestAuthenticatorImpl {
         final UserIdentity tokenUser = new TestUserIdentity("1"); // We are mocking so type doesn't matter here
         final UserIdentity certUser = new CertificateUserIdentity(certCn); // Type matters here
 
-        final HashedDataFeedKey hashedDataFeedKey = new HashedDataFeedKey(
-                "my hash",
-                "my salt",
-                DataFeedKeyHashAlgorithm.ARGON2,
-                Map.of(StandardHeaderArguments.ACCOUNT_ID, "MyAccountId"),
-                Long.MAX_VALUE);
-        final UserIdentity dataFeedKeyUser = new DataFeedKeyUserIdentity("MyAccountId");
+//        final HashedDataFeedKey hashedDataFeedKey = new HashedDataFeedKey(
+//                "my hash",
+//                "my salt",
+//                DataFeedKeyHashAlgorithm.ARGON2,
+//                Map.of(StandardHeaderArguments.ACCOUNT_ID, "MyAccountId"),
+//                Long.MAX_VALUE);
+        final UserIdentity dataFeedKeyUser = new DataFeedUserIdentity("MyAccountId");
 
         // Type matters here
         final UnauthenticatedUserIdentity unauthUser = UnauthenticatedUserIdentity.getInstance();
@@ -79,6 +94,8 @@ class TestRequestAuthenticatorImpl {
                 .withOutputTypes(UserIdentity.class, StroomStatusCode.class)
                 .withTestFunction(testCase -> {
                     final HttpServletRequest mockHttpServletRequest = Mockito.mock(HttpServletRequest.class);
+                    final CertificateIdentityService mockCertificateIdentityService = Mockito.mock(
+                            CertificateIdentityService.class);
                     final DataFeedKeyService mockDataFeedKeyService = Mockito.mock(DataFeedKeyService.class);
                     final OidcTokenAuthenticator mockOidcTokenAuthenticator = Mockito.mock(
                             OidcTokenAuthenticator.class);
@@ -90,6 +107,7 @@ class TestRequestAuthenticatorImpl {
                             mockUserIdentityFactory,
                             () -> testCase.getInput().receiveDataConfig,
                             () -> mockDataFeedKeyService,
+                            () -> mockCertificateIdentityService,
                             () -> mockOidcTokenAuthenticator,
                             () -> mockCertificateAuthenticator,
                             () -> mockAllowUnauthenticatedAuthenticator);
@@ -152,7 +170,7 @@ class TestRequestAuthenticatorImpl {
                         outputUserIdentity = requestAuthenticator.authenticate(
                                 mockHttpServletRequest,
                                 attributeMap);
-                    } catch (StroomStreamException e) {
+                    } catch (final StroomStreamException e) {
                         stroomStatusCode = e.getStroomStreamStatus().getStroomStatusCode();
                     }
                     return Tuple.of(outputUserIdentity, stroomStatusCode);
@@ -168,7 +186,7 @@ class TestRequestAuthenticatorImpl {
                         Assertions.assertThat(attributeMap.keySet())
                                 .doesNotContain(HttpHeaders.AUTHORIZATION);
                         Assertions.assertThat(attributeMap.get(StandardHeaderArguments.UPLOAD_USER_ID))
-                                .isEqualTo(testOutcome.getActualOutput()._1.getSubjectId());
+                                .isEqualTo(testOutcome.getActualOutput()._1.subjectId());
                     } else {
                         // Ex thrown
                         Assertions.assertThat(attributeMap.size())
@@ -315,7 +333,7 @@ class TestRequestAuthenticatorImpl {
         }
 
         @Override
-        public String getSubjectId() {
+        public String subjectId() {
             return id;
         }
 

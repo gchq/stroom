@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app.commands;
 
 import stroom.app.BootstrapUtil;
@@ -73,18 +89,18 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
 
             try {
                 runCommand(bootstrap, namespace, config, childInjector);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 final String msg = "Error running command "
-                        + commandName
-                        + ": " + e.getMessage()
-                        + ". Check logs for more detail.";
+                                   + commandName
+                                   + ": " + e.getMessage()
+                                   + ". Check logs for more detail.";
                 error(LOGGER, msg, e);
                 System.exit(1);
             }
 
             info(LOGGER, "Command " + commandName + " completed successfully");
             System.exit(0);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             final String msg = "Error initialising application";
             error(LOGGER, msg, e);
             System.exit(1);
@@ -95,7 +111,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
      * Convenience method to get an instance from the injector.
      * See {@link Injector#getInstance(Class)}.
      */
-    <T> T getInstance(Class<T> type) {
+    <T> T getInstance(final Class<T> type) {
         return childInjector.getInstance(type);
     }
 
@@ -103,7 +119,7 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
      * Convenience method to get an instance from the injector.
      * See {@link Injector#getInstance(Key)}.
      */
-    <T> T getInstance(Key<T> key) {
+    <T> T getInstance(final Key<T> key) {
         return childInjector.getInstance(key);
     }
 
@@ -227,19 +243,29 @@ public abstract class AbstractStroomBaseCommand extends ConfiguredCommand<Config
                     })
                     .sorted(Entry.comparingByKey())
                     .map(entry ->
-                            "--" + entry.getKey() + " " + argValueToString(entry.getValue()))
+                            "--" + entry.getKey() + " " + argValueToString(entry.getKey(), entry.getValue()))
                     .collect(Collectors.joining(" "));
         }
     }
 
-    final String argValueToString(final Object value) {
+    protected String obfuscateArgValue(final String argName, final String value) {
+        if ("password".equalsIgnoreCase(argName)) {
+            return "*****";
+        } else {
+            return value;
+        }
+    }
+
+    final String argValueToString(final String argName, final Object value) {
+        final String str;
         if (value instanceof final List<?> listVal) {
-            return listVal.stream()
+            str = listVal.stream()
                     .map(item -> "'" + item.toString() + "'")
                     .collect(Collectors.joining(" "));
         } else {
-            return value.toString();
+            str = value.toString();
         }
+        return obfuscateArgValue(argName, str);
     }
 
     /**

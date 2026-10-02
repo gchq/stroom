@@ -1,0 +1,24 @@
+Now each span is formatted as a single JSON object per line (JSONL/NDJSON format). This is the standard format for:
+Log ingestion systems:
+
+Elasticsearch/OpenSearch
+Splunk
+Fluentd/Fluent Bit
+Logstash
+Cloud logging services (AWS CloudWatch, GCP Cloud Logging, etc.)
+
+Trace analysis tools:
+
+Jaeger (uses this format for bulk ingestion)
+Zipkin collectors
+Custom trace processors
+
+Benefits of one-per-line format:
+
+Easy to stream and process line by line
+Efficient for large trace volumes
+Simple to parse with standard JSON parsers
+Compatible with Unix text processing tools (grep, awk, etc.)
+Reduces memory usage during processing
+
+Each line contains a complete span with all its metadata, making it easy to process individual spans without needing to parse the entire trace structure at once.

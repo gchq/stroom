@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,6 @@ import java.util.Map;
 class MockMetaStatistics implements MetaStatistics {
 
     @Override
-    public void recordStatistics(Map<String, String> metaData) {
+    public void recordStatistics(final Map<String, String> metaData) {
     }
 }

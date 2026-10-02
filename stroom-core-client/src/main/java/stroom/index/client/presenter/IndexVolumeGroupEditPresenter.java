@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.client.presenter;
@@ -27,9 +26,9 @@ import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.index.shared.IndexVolumeResource;
-import stroom.node.client.NodeManager;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.node.client.NodeClient;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
 import stroom.widget.button.client.ButtonView;
@@ -60,7 +59,7 @@ public class IndexVolumeGroupEditPresenter
     private final IndexVolumeStatusListPresenter volumeStatusListPresenter;
     private final Provider<IndexVolumeEditPresenter> editProvider;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
 
     private final ButtonView newButton;
     private final ButtonView openButton;
@@ -79,12 +78,12 @@ public class IndexVolumeGroupEditPresenter
                                          final IndexVolumeStatusListPresenter volumeStatusListPresenter,
                                          final Provider<IndexVolumeEditPresenter> editProvider,
                                          final RestFactory restFactory,
-                                         final NodeManager nodeManager) {
+                                         final NodeClient nodeClient) {
         super(eventBus, view);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
 
         newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
         openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
@@ -109,7 +108,7 @@ public class IndexVolumeGroupEditPresenter
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
             delayedUpdate.reset();
-            nodeManager.listAllNodes(nodeNames ->
+            nodeClient.listAllNodes(nodeNames ->
                             nodeNames.forEach(nodeName ->
                                     restFactory
                                             .create(INDEX_VOLUME_RESOURCE)
@@ -217,10 +216,10 @@ public class IndexVolumeGroupEditPresenter
                     .onShow(e -> getView().focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
-                            volumeGroup.setName(getView().getName());
+                            final IndexVolumeGroup updated = volumeGroup.copy().name(getView().getName()).build();
                             try {
-                                doWithGroupNameValidation(getView().getName(), volumeGroup.getId(), () ->
-                                        createVolumeGroup(consumer, volumeGroup, e), e);
+                                doWithGroupNameValidation(getView().getName(), updated.getId(), () ->
+                                        createVolumeGroup(consumer, updated, e), e);
                             } catch (final RuntimeException ex) {
                                 AlertEvent.fireError(
                                         IndexVolumeGroupEditPresenter.this,
@@ -257,8 +256,8 @@ public class IndexVolumeGroupEditPresenter
                             AlertEvent.fireError(
                                     IndexVolumeGroupEditPresenter.this,
                                     "Group name '"
-                                            + groupName
-                                            + "' is already in use by another group.",
+                                    + groupName
+                                    + "' is already in use by another group.",
                                     event::reset);
                         } else {
                             work.run();

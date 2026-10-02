@@ -1,62 +1,65 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 ext.moduleName = 'stroom.dashboard.impl'
 
 dependencies {
     implementation project(':stroom-cache:stroom-cache-api')
-    implementation project(':stroom-config:stroom-config-common')
     implementation project(':stroom-core-shared')
+    implementation project(':stroom-dashboard:stroom-dashboard-impl-db')
     implementation project(':stroom-dashboard:stroom-storedquery-api')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
     implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-collection-api')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
     implementation project(':stroom-explorer:stroom-explorer-api')
     implementation project(':stroom-event-logging:stroom-event-logging-api')
     implementation project(':stroom-importexport:stroom-importexport-api')
     implementation project(':stroom-node:stroom-node-api')
     implementation project(':stroom-query:stroom-query-language')
-    implementation project(':stroom-query:stroom-query-language-api')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-resource:stroom-resource-api')
     implementation project(':stroom-security:stroom-security-api')
     implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-db-util')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.commons.text
-    implementation libs.dropwizard.jersey
-    //implementation libs.dropwizard.websockets
     implementation libs.eventLogging
-    implementation libs.guava
     implementation libs.guice
-    implementation libs.jackson.annotations
-    implementation libs.jackson.core
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
-    implementation libs.jakarta.inject
-    implementation libs.jaxb.api
-    implementation libs.jersey.client
-    implementation libs.jersey.common
-    implementation libs.poi
     implementation libs.poi.ooxml
+    implementation libs.jooq
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.ws.rs.api
 
-    testImplementation libs.assertj.core
-    testImplementation libs.mockito.core
-    testImplementation libs.mockito.junit.jupiter
-    testImplementation libs.junit.jupiter.api
+    runtimeOnly libs.mysql.connector.java
 
-    // The following logging libs are needed when running junits outside dropwizard
-    testRuntimeOnly libs.jakarta.activation
-    testRuntimeOnly libs.jaxb.impl
-    testRuntimeOnly libs.jcl.over.slf4j
-    testRuntimeOnly libs.jul.to.slf4j
-    testRuntimeOnly libs.junit.jupiter.engine
-    testRuntimeOnly libs.log4j.over.slf4j
-    testRuntimeOnly libs.logback.classic
-    testRuntimeOnly libs.logback.core
+    // Constructing the real document store in a test needs the docstore implementation
+    // (StoreFactoryImpl, Serialiser2FactoryImpl) and an in-memory persistence.
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation project(':stroom-test-common')
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

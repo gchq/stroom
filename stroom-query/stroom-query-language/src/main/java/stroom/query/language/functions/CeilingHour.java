@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,47 +16,38 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = CeilingHour.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.CEILING_SUB_CATEGORY,
-        commonReturnType = ValLong.class,
-        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
+        commonSubCategories = AbstractRoundDateTime.CEILING_SUB_CATEGORY,
+        commonReturnType = ValDate.class,
+        commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
                 description = "Rounds the supplied time up to the start of the next hour.",
                 args = {
                         @FunctionArg(
                                 name = "time",
-                                description = "The time to round in milliseconds since the epoch or as a string " +
-                                        "formatted using the default date format.",
+                                description = "The time to round.",
                                 argType = Val.class)}))
-class CeilingHour extends RoundDate {
+class CeilingHour extends AbstractRoundDateTime {
 
     static final String NAME = "ceilingHour";
-    private static final Calc CALC = new Calc();
 
-    public CeilingHour(final String name) {
-        super(name);
+    public CeilingHour(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
-    }
-
-    static class Calc extends RoundDateCalculator {
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.truncatedTo(ChronoUnit.HOURS);
-            if (dateTime.isAfter(result)) {
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            ZonedDateTime result = FloorHour.floor(zonedDateTime);
+            if (zonedDateTime.isAfter(result)) {
                 result = result.plusHours(1);
             }
             return result;
-        }
+        };
     }
 }

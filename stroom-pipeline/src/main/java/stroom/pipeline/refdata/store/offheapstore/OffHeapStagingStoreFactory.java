@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.PooledByteBufferOutputStream;
@@ -80,15 +96,34 @@ public class OffHeapStagingStoreFactory {
                 lmdbEnvFactory,
                 refStreamDefinition);
 
-        final KeyValueStagingDb keyValueStagingDb = keyValueStagingDbFactory.create(stagingLmdbEnv);
-        final RangeValueStagingDb rangeValueStagingDb = rangeValueStagingDbFactory.create(stagingLmdbEnv);
+        // If anything below fails the env is open but no store references it, so nothing could
+        // ever close it and its dir would linger too. The loader only closes what create()
+        // returned, so unwind here instead. Guarded with a flag rather than catch(Exception) so
+        // that an Error leaks the env no more than an exception does.
+        boolean storeCreated = false;
+        try {
+            final KeyValueStagingDb keyValueStagingDb = keyValueStagingDbFactory.create(stagingLmdbEnv);
+            final RangeValueStagingDb rangeValueStagingDb = rangeValueStagingDbFactory.create(stagingLmdbEnv);
 
-        return new OffHeapStagingStore(
-                stagingLmdbEnv,
-                keyValueStagingDb,
-                rangeValueStagingDb,
-                mapDefinitionUIDStore,
-                pooledByteBufferOutputStreamFactory);
+            final OffHeapStagingStore stagingStore = new OffHeapStagingStore(
+                    stagingLmdbEnv,
+                    keyValueStagingDb,
+                    rangeValueStagingDb,
+                    mapDefinitionUIDStore,
+                    pooledByteBufferOutputStreamFactory);
+            storeCreated = true;
+            return stagingStore;
+        } finally {
+            if (!storeCreated) {
+                try {
+                    stagingLmdbEnv.close();
+                    stagingLmdbEnv.delete();
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Error cleaning up staging LMDB env {}: {}",
+                            stagingLmdbEnv, e.getMessage(), e);
+                }
+            }
+        }
     }
 
     private LmdbEnv buildStagingEnv(final LmdbEnvFactory lmdbEnvFactory,
@@ -121,7 +156,7 @@ public class OffHeapStagingStoreFactory {
                     .addEnvFlag(EnvFlags.MDB_NOTLS)
                     .singleThreaded()
                     .build();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error building staging LMDB in {}: {}",
                     subDirPath, e.getMessage()), e);
         }

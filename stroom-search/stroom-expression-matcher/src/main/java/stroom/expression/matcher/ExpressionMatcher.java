@@ -12,22 +12,22 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.expression.matcher;
 
 import stroom.collection.api.CollectionService;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.util.shared.NullSafe;
 
 import java.util.Collection;
 import java.util.List;
@@ -44,6 +44,7 @@ public class ExpressionMatcher {
     private final Map<String, QueryField> fieldMap;
     private final WordListProvider wordListProvider;
     private final CollectionService collectionService;
+    // TODO Ideally we should be holding a map of Set<S
     private final Map<DocRef, String[]> wordMap = new ConcurrentHashMap<>();
     private final Map<String, Pattern> patternMap = new ConcurrentHashMap<>();
     private final DateTimeSettings dateTimeSettings;
@@ -385,33 +386,33 @@ public class ExpressionMatcher {
     }
 
     private boolean isInFolder(final String fieldName,
-                               final DocRef docRef,
+                               final DocRef folderDocRef,
                                final QueryField field,
                                final Object attribute) {
         if (FieldType.DOC_REF.equals(field.getFldType())) {
-            final String type = field.getDocRefType();
-            if (type != null && collectionService != null) {
-                final Set<DocRef> descendants = collectionService.getDescendants(docRef, type);
-                if (descendants != null && descendants.size() > 0) {
-                    if (attribute instanceof DocRef) {
-                        final String uuid = ((DocRef) attribute).getUuid();
+            final String fieldDocRefType = field.getDocRefType();
+            if (fieldDocRefType != null && collectionService != null) {
+                final Set<DocRef> descendants = collectionService.getDescendants(folderDocRef, fieldDocRefType);
+                if (NullSafe.hasItems(descendants)) {
+                    if (attribute instanceof final DocRef attrAsDocRef) {
+                        final String uuid = attrAsDocRef.getUuid();
                         if (uuid != null) {
-                            for (final DocRef descendant : descendants) {
-                                if (uuid.equals(descendant.getUuid())) {
-                                    return true;
-                                }
-                            }
+                            return descendants.stream()
+                                    .map(DocRef::getUuid)
+                                    .anyMatch(descendantUuid ->
+                                            Objects.equals(uuid, descendantUuid));
                         }
                     }
                 }
             }
         }
-
         return false;
     }
 
-    private boolean isDocRef(final String fieldName, final DocRef docRef,
-                             final QueryField field, final Object attribute) {
+    private boolean isDocRef(final String fieldName,
+                             final DocRef docRef,
+                             final QueryField field,
+                             final Object attribute) {
         if (attribute instanceof DocRef) {
             final String uuid = ((DocRef) attribute).getUuid();
             return (null != uuid && uuid.equals(docRef.getUuid()));

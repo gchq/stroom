@@ -16,8 +16,8 @@
 
 package stroom.search.solr.shared;
 
-import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.QueryField;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.QueryField;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -43,7 +43,7 @@ public class IndicatorEvent extends GwtEvent<IndicatorEvent.IndicatorHandler> {
     }
 
     @Override
-    protected void dispatch(IndicatorHandler handler) {
+    protected void dispatch(final IndicatorHandler handler) {
         handler.onIndicator(this);
     }
 

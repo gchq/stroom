@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,10 @@ import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.common.util.test.ContentPackZipDownloader;
 import stroom.util.io.PathCreator;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlFileUtil;
 
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
 import org.apache.hc.client5.http.classic.HttpClient;
 
@@ -51,42 +52,51 @@ import java.nio.file.Path;
  */
 public final class SetupSampleData {
 
+    @Inject
+    private TaskManager taskManager;
+    @Inject
+    private CommonTestControl commonTestControl;
+    @Inject
+    private ContentStoreTestSetup devSetup;
+    @Inject
+    private SetupSampleDataProcess setupSampleDataBean;
+
     public static void main(final String[] args) {
         if (args.length != 1) {
             throw new RuntimeException("Expected 1 argument that is the location of the config.");
         }
-        final Path configFile = YamlUtil.getYamlFileFromArgs(args);
-        Config config;
+        final Path configFile = YamlFileUtil.getYamlFileFromArgs(args);
+        final Config config;
         try {
             config = StroomYamlUtil.readConfig(configFile);
         } catch (final IOException e) {
             throw new RuntimeException("Unable to read yaml config");
         }
 
+        new SetupSampleData().run(configFile, config);
+    }
+
+    private void run(final Path configFile, final Config config) {
         // We are running stroom so want to use a proper db
         final Injector injector = Guice.createInjector(new SetupSampleDataModule(config, configFile));
+        injector.injectMembers(this);
 
         // Start task manager
-        injector.getInstance(TaskManager.class).startup();
-
-        final CommonTestControl commonTestControl = injector.getInstance(CommonTestControl.class);
+        taskManager.startup();
 
         // Clear the DB and remove all content and data.
         commonTestControl.clear();
         // Setup the DB ready to load content and data.
         commonTestControl.setup(null);
 
+        // Pull in content packs from the content store
+        devSetup.installSampleDataPacks();
+
         // Load the sample data and content from the 'samples' dirs
-        final SetupSampleDataBean setupSampleDataBean = injector.getInstance(SetupSampleDataBean.class);
         setupSampleDataBean.run(true);
 
-        // Load the content packs specified in the definition.
-        final Path contentPackDefinition = configFile.getParent().resolve("content-packs.yml");
-        final ContentImportService contentImportService = injector.getInstance(ContentImportService.class);
-        contentImportService.importFromDefinitionYaml(contentPackDefinition);
-
         // Stop task manager
-        injector.getInstance(TaskManager.class).shutdown();
+        taskManager.shutdown();
     }
 
     private static void downloadContent(final Path contentPacksDefinition,

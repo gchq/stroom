@@ -1,5 +1,22 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.event.logging.impl;
 
+import stroom.util.json.JsonV2Util;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -38,7 +55,8 @@ public class GenerateXPaths {
 
     @Test
     void name() throws Exception {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        // TODO using legacy v2 jackson as introspect() is not a thing in v3
+        final ObjectMapper objectMapper = JsonV2Util.getMapper();
 //        final Events events = new Events();
         final List<String> xPaths = new ArrayList<>();
         inspectClass(objectMapper,
@@ -61,7 +79,7 @@ public class GenerateXPaths {
                                   final String name,
                                   final Class<T> clazz,
                                   final int depth,
-                                  boolean hasMultiple) throws Exception {
+                                  final boolean hasMultiple) throws Exception {
 
         if (depth <= 20) {
             final String padding = Strings.repeat(" ", (depth - 1) * 2);
@@ -76,8 +94,8 @@ public class GenerateXPaths {
 
             final String xPath = xPathBuilder.toString();
             if (xPath.endsWith(name)
-                    || xPath.endsWith(name + "[0]")
-                    || (xPath.endsWith("/Groups/Group[0]") && name.equals("Groups"))) {
+                || xPath.endsWith(name + "[0]")
+                || (xPath.endsWith("/Groups/Group[0]") && name.equals("Groups"))) {
                 // Hack to stop infinite recursion
             } else {
                 xPathBuilder.append("/")
@@ -114,7 +132,7 @@ public class GenerateXPaths {
             if (xmlElemAnno != null) {
                 final String propElmName = xmlElemAnno.name();
                 if (propClass.getName().startsWith("event.logging")
-                        && !Void.class.equals(propClass)) {
+                    && !Void.class.equals(propClass)) {
 
                     inspectClass(objectMapper,
                             xPaths,
@@ -127,7 +145,7 @@ public class GenerateXPaths {
                 } else if (List.class.isAssignableFrom(propClass)) {
                     final JavaType propSubType = propType.findTypeParameters(List.class)[0];
                     if (propSubType.getRawClass().getName().startsWith("event.logging")
-                            && !Void.class.equals(propSubType.getRawClass())) {
+                        && !Void.class.equals(propSubType.getRawClass())) {
                         inspectClass(objectMapper,
                                 xPaths,
                                 new StringBuilder(xPathBuilder),
@@ -141,10 +159,10 @@ public class GenerateXPaths {
                 }
             } else if (xmlAttrAnno != null) {
                 xPaths.add(xPathBuilder +
-                        "/@" +
-                        xmlAttrAnno.name());
+                           "/@" +
+                           xmlAttrAnno.name());
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(LogUtil.message("Unable to inspect prop {} at path {} - {}",
                     propName, xPathBuilder.toString(), e.getMessage()));
         }

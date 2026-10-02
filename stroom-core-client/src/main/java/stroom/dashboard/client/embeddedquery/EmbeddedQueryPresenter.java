@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,35 +16,45 @@
 
 package stroom.dashboard.client.embeddedquery;
 
+import stroom.core.client.ContentManager;
 import stroom.core.client.event.WindowCloseEvent;
 import stroom.dashboard.client.embeddedquery.EmbeddedQueryPresenter.EmbeddedQueryView;
-import stroom.dashboard.client.main.AbstractComponentPresenter;
+import stroom.dashboard.client.input.FilterableTable;
+import stroom.dashboard.client.main.AbstractRefreshableComponentPresenter;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentUse;
-import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.DashboardContext;
-import stroom.dashboard.client.main.Queryable;
 import stroom.dashboard.client.query.QueryInfo;
 import stroom.dashboard.client.query.SelectionHandlerExpressionBuilder;
+import stroom.dashboard.client.table.ColumnValuesDataSupplier;
 import stroom.dashboard.client.table.ComponentSelection;
+import stroom.dashboard.client.table.FilterCellManager;
 import stroom.dashboard.client.table.HasComponentSelection;
+import stroom.dashboard.client.table.TableUpdateEvent;
 import stroom.dashboard.client.vis.VisSelectionModel;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
+import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
-import stroom.query.api.v2.ColumnRef;
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.QLVisResult;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.TableResult;
+import stroom.query.api.Column;
+import stroom.query.api.ColumnRef;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.GroupSelection;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.QLVisResult;
+import stroom.query.api.Result;
+import stroom.query.api.ResultStoreInfo;
+import stroom.query.api.TableResult;
+import stroom.query.client.QueryClient;
 import stroom.query.client.presenter.DateTimeSettingsFactory;
+import stroom.query.client.presenter.QueryDocPresenter;
 import stroom.query.client.presenter.QueryModel;
 import stroom.query.client.presenter.QueryResultTablePresenter;
 import stroom.query.client.presenter.QueryResultVisPresenter;
@@ -52,19 +62,19 @@ import stroom.query.client.presenter.ResultComponent;
 import stroom.query.client.presenter.ResultStoreModel;
 import stroom.query.client.presenter.SearchErrorListener;
 import stroom.query.client.presenter.SearchStateListener;
-import stroom.query.shared.QueryResource;
+import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
+import com.google.web.bindery.event.shared.SimpleEventBus;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.ArrayList;
@@ -74,8 +84,8 @@ import java.util.Objects;
 import java.util.Set;
 
 public class EmbeddedQueryPresenter
-        extends AbstractComponentPresenter<EmbeddedQueryView>
-        implements Queryable, SearchStateListener, SearchErrorListener, HasComponentSelection {
+        extends AbstractRefreshableComponentPresenter<EmbeddedQueryView>
+        implements SearchStateListener, SearchErrorListener, HasComponentSelection, FilterableTable {
 
     public static final String TAB_TYPE = "embedded-query-component";
 
@@ -86,13 +96,10 @@ public class EmbeddedQueryPresenter
             "Embedded Query",
             ComponentUse.PANEL);
 
-
-    private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
-
-    static final int TEN_SECONDS = 10000;
-
-    private final RestFactory restFactory;
+    private final QueryClient queryClient;
     private final QueryModel queryModel;
+    private final Provider<QueryDocPresenter> queryDocPresenterProvider;
+    private final ContentManager contentManager;
     //    private final QueryResultTabsView linkTabsLayoutView;
     private boolean queryOnOpen;
     private QueryInfo queryInfo;
@@ -105,11 +112,11 @@ public class EmbeddedQueryPresenter
     private QueryResultVisPresenter currentVisPresenter;
     private final List<HandlerRegistration> tableHandlerRegistrations = new ArrayList<>();
 
-    private List<String> currentErrors;
+    private List<ErrorMessage> currentErrors;
     private boolean initialised;
-    private Timer autoRefreshTimer;
     private ExpressionOperator currentSelectionQuery;
     private DocRef loadedQueryRef;
+    private final EventBus tableEventBus = new SimpleEventBus();
 
     @Inject
     public EmbeddedQueryPresenter(final EventBus eventBus,
@@ -117,13 +124,18 @@ public class EmbeddedQueryPresenter
                                   final Provider<EmbeddedQuerySettingsPresenter> settingsPresenterProvider,
                                   final Provider<QueryResultTablePresenter> tablePresenterProvider,
                                   final Provider<QueryResultVisPresenter> visPresenterProvider,
+                                  final Provider<QueryDocPresenter> queryDocPresenterProvider,
+                                  final QueryClient queryClient,
                                   final RestFactory restFactory,
                                   final DateTimeSettingsFactory dateTimeSettingsFactory,
-                                  final ResultStoreModel resultStoreModel) {
+                                  final ResultStoreModel resultStoreModel,
+                                  final ContentManager contentManager) {
         super(eventBus, view, settingsPresenterProvider);
-        this.restFactory = restFactory;
+        this.queryClient = queryClient;
         this.tablePresenterProvider = tablePresenterProvider;
         this.visPresenterProvider = visPresenterProvider;
+        this.queryDocPresenterProvider = queryDocPresenterProvider;
+        this.contentManager = contentManager;
 
         final stroom.query.client.presenter.ResultComponent tableResultConsumer = new ResultComponent() {
             boolean start;
@@ -135,8 +147,8 @@ public class EmbeddedQueryPresenter
             }
 
             @Override
-            public Set<String> getOpenGroups() {
-                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getOpenGroups);
+            public GroupSelection getGroupSelection() {
+                return NullSafe.get(currentTablePresenter, QueryResultTablePresenter::getGroupSelection);
             }
 
             @Override
@@ -174,12 +186,12 @@ public class EmbeddedQueryPresenter
                         start = false;
                     }
 
-                    if (tableResult.getRows() != null && tableResult.getRows().size() > 0) {
+                    if (tableResult.getRows() != null && !tableResult.getRows().isEmpty()) {
                         hasData = true;
                     }
 
                     // Update the columns that are known to the query table preferences.
-                    if (tableResult.getColumns() != null && tableResult.getColumns().size() > 0) {
+                    if (tableResult.getColumns() != null && !tableResult.getColumns().isEmpty()) {
                         final QueryTablePreferences queryTablePreferences = QueryTablePreferences
                                 .copy(getQuerySettings().getQueryTablePreferences())
                                 .columns(tableResult.getColumns())
@@ -220,8 +232,8 @@ public class EmbeddedQueryPresenter
             }
 
             @Override
-            public Set<String> getOpenGroups() {
-                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getOpenGroups);
+            public GroupSelection getGroupSelection() {
+                return NullSafe.get(currentVisPresenter, QueryResultVisPresenter::getGroupSelection);
             }
 
             @Override
@@ -331,22 +343,50 @@ public class EmbeddedQueryPresenter
         return currentVisPresenter != null;
     }
 
-    public void showTable(boolean show) {
+    public void showTable(final boolean show) {
         if (show) {
             setSettings(getQuerySettings().copy().showTable(Boolean.TRUE).build());
-            setDirty(true);
+            onChange();
             updateVisibleResult();
         } else {
             setSettings(getQuerySettings().copy().showTable(null).build());
-            setDirty(true);
+            onChange();
             updateVisibleResult();
         }
     }
 
     public void editQuery() {
-        if (getQuerySettings().getQueryRef() != null) {
+        if (getQuerySettings().reference()) {
             OpenDocumentEvent.fire(this, getQuerySettings().getQueryRef(), true);
+        } else {
+            final QueryDoc doc = getQueryDoc();
+            final QueryDocPresenter queryDocPresenter = queryDocPresenterProvider.get();
+            queryDocPresenter.setSaveInterceptor(() -> {
+                final QueryDoc embeddedQueryDoc = queryDocPresenter.write(doc);
+                final EmbeddedQueryComponentSettings settings = getQuerySettings();
+                final EmbeddedQueryComponentSettings updatedSettings = settings
+                        .copy()
+                        .embeddedQueryDoc(embeddedQueryDoc)
+                        .build();
+                setSettings(updatedSettings);
+                updateQueryDoc(embeddedQueryDoc, updatedSettings);
+                queryDocPresenter.read(embeddedQueryDoc.asDocRef(), embeddedQueryDoc, false);
+                onChange();
+            });
+            queryDocPresenter.read(doc.asDocRef(), doc, false);
+            contentManager.open(e -> e.getCallback().closeTab(true), queryDocPresenter, queryDocPresenter);
         }
+    }
+
+    private QueryDoc getQueryDoc() {
+        QueryDoc doc = getQuerySettings().getEmbeddedQueryDoc();
+        if (doc == null) {
+            doc = QueryDoc.builder().uuid("Embedded Query").build();
+        }
+        return doc
+                .copy()
+                .name(getDashboardContext().getDashboardDocRef().getName() + " - " + getComponentConfig().getName())
+                .build();
     }
 
     public void runQuery() {
@@ -354,13 +394,12 @@ public class EmbeddedQueryPresenter
     }
 
     @Override
-    public void setComponents(final Components components) {
-        super.setComponents(components);
-
-        registerHandler(components.addComponentChangeHandler(event -> {
+    public void setDashboardContext(final DashboardContext dashboardContext) {
+        super.setDashboardContext(dashboardContext);
+        registerHandler(dashboardContext.addContextChangeHandler(event -> {
             if (initialised) {
-                final ExpressionOperator selectionQuery = SelectionHandlerExpressionBuilder
-                        .create(components.getComponents(), getQuerySettings().getSelectionQuery())
+                final ExpressionOperator selectionQuery = dashboardContext
+                        .createSelectionHandlerExpression(getQuerySettings().getSelectionQuery())
                         .orElse(null);
 
                 if (!Objects.equals(currentSelectionQuery, selectionQuery)) {
@@ -370,8 +409,9 @@ public class EmbeddedQueryPresenter
                 }
 
                 if (currentTablePresenter != null) {
-                    final ExpressionOperator selectionFilter = SelectionHandlerExpressionBuilder
-                            .create(components.getComponents(), getQuerySettings().getSelectionFilter())
+                    currentTablePresenter.setDashboardContext(dashboardContext);
+                    final ExpressionOperator selectionFilter = dashboardContext
+                            .createSelectionHandlerExpression(getQuerySettings().getSelectionFilter())
                             .orElse(null);
                     if (!Objects.equals(currentTablePresenter.getCurrentSelectionFilter(), selectionFilter)) {
                         currentTablePresenter.setCurrentSelectionFilter(selectionFilter);
@@ -421,6 +461,7 @@ public class EmbeddedQueryPresenter
     private void createNewTable() {
         if (currentTablePresenter == null) {
             currentTablePresenter = tablePresenterProvider.get();
+            currentTablePresenter.setDashboardContext(getDashboardContext());
             currentTablePresenter.setQueryTablePreferencesSupplier(() ->
                     getQuerySettings().getQueryTablePreferences());
             currentTablePresenter.setQueryTablePreferencesConsumer(queryTablePreferences ->
@@ -428,13 +469,18 @@ public class EmbeddedQueryPresenter
             currentTablePresenter.setQueryModel(queryModel);
             currentTablePresenter.setTaskMonitorFactory(this);
             currentTablePresenter.updateQueryTablePreferences();
-            tableHandlerRegistrations.add(currentTablePresenter.addDirtyHandler(e -> setDirty(true)));
+            tableHandlerRegistrations.add(currentTablePresenter.addChangeHandler(this::onChange));
             tableHandlerRegistrations.add(currentTablePresenter.getSelectionModel()
-                    .addSelectionHandler(event -> getComponents().fireComponentChangeEvent(this)));
+                    .addSelectionHandler(event ->
+                            getDashboardContext().fireComponentChangeEvent(this)));
 
             if (currentVisPresenter != null) {
                 currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
             }
+
+            // Chain update events.
+            tableHandlerRegistrations.add(currentTablePresenter.addUpdateHandler(e ->
+                    fireColumnAndDataUpdate()));
         }
     }
 
@@ -452,7 +498,7 @@ public class EmbeddedQueryPresenter
         if (currentVisPresenter == null) {
             final VisSelectionModel visSelectionModel = new VisSelectionModel();
             visSelectionModel.addSelectionHandler(event ->
-                    getComponents().fireComponentChangeEvent(EmbeddedQueryPresenter.this));
+                    getDashboardContext().fireComponentChangeEvent(EmbeddedQueryPresenter.this));
 
             currentVisPresenter = visPresenterProvider.get();
             currentVisPresenter.setQueryModel(queryModel);
@@ -470,7 +516,7 @@ public class EmbeddedQueryPresenter
             currentVisPresenter.onRemove();
             currentVisPresenter = null;
             if (currentTablePresenter != null) {
-                currentTablePresenter.setQueryResultVisPresenter(currentVisPresenter);
+                currentTablePresenter.setQueryResultVisPresenter(null);
             }
         }
     }
@@ -506,11 +552,13 @@ public class EmbeddedQueryPresenter
 
     @Override
     public void stop() {
+        cancelRefresh();
         queryModel.stop();
     }
 
-    private void run(final boolean incremental,
-                     final boolean storeHistory) {
+    @Override
+    public void run(final boolean incremental,
+                    final boolean storeHistory) {
         // No point running the search if there is no query
         run(incremental, storeHistory, currentSelectionQuery);
     }
@@ -529,12 +577,16 @@ public class EmbeddedQueryPresenter
             // Destroy any previous query.
             queryModel.reset(DestroyReason.NO_LONGER_NEEDED);
 
+            // Perform parameter substitution on query.
+            final String replaced = ParamUtil
+                    .replaceParameters(query, getDashboardContext(), true);
+
             // Start search.
             final DashboardContext dashboardContext = getDashboardContext();
-            queryModel.startNewSearch(
-                    query,
+            queryModel.startNewSearch(getComponentConfig().getId(), getComponentConfig().getName(),
+                    replaced,
                     dashboardContext.getParams(),
-                    dashboardContext.getTimeRange(),
+                    dashboardContext.getResolvedTimeRange(),
                     incremental,
                     storeHistory,
                     queryInfo.getMessage(),
@@ -567,39 +619,55 @@ public class EmbeddedQueryPresenter
                     .build());
         }
 
+        // Fix legacy selection filters.
+        setSettings(getQuerySettings()
+                .copy()
+                .selectionQuery(SelectionHandlerExpressionBuilder
+                        .fixLegacySelectionHandlers(getQuerySettings().getSelectionQuery()))
+                .selectionFilter(SelectionHandlerExpressionBuilder
+                        .fixLegacySelectionHandlers(getQuerySettings().getSelectionFilter()))
+                .build());
+
         loadEmbeddedQuery();
     }
 
     private void loadEmbeddedQuery() {
         final EmbeddedQueryComponentSettings settings = getQuerySettings();
         final DocRef queryRef = settings.getQueryRef();
-        if (queryRef != null && !Objects.equals(queryRef, loadedQueryRef)) {
-            initialised = false;
-            loadedQueryRef = queryRef;
-            restFactory
-                    .create(QUERY_RESOURCE)
-                    .method(res -> res.fetch(queryRef.getUuid()))
-                    .onSuccess(result -> {
-                        if (result != null) {
-                            if (settings.getQueryTablePreferences() == null &&
-                                result.getQueryTablePreferences() != null) {
-                                setSettings(settings
-                                        .copy()
-                                        .queryTablePreferences(result.getQueryTablePreferences())
-                                        .build());
-                            }
+        if (settings.reference()) {
+            if (!Objects.equals(queryRef, loadedQueryRef)) {
+                initialised = false;
+                loadedQueryRef = queryRef;
+                queryClient.loadQueryDoc(queryRef, result ->
+                                updateQueryDoc(result, settings),
+                        new DefaultErrorHandler(this, null),
+                        this);
+            }
+        } else if (!Objects.equals(settings.getEmbeddedQueryDoc().asDocRef(), loadedQueryRef)) {
+            loadedQueryRef = settings.getEmbeddedQueryDoc().asDocRef();
+            updateQueryDoc(settings.getEmbeddedQueryDoc(), settings);
+        }
+    }
 
-                            // Read expression.
-                            queryModel.init(result.asDocRef());
-                            query = result.getQuery();
-                            initialised = true;
-                            if (queryOnOpen) {
-                                run(true, false);
-                            }
-                        }
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
+    private void updateQueryDoc(final QueryDoc queryDoc,
+                                final EmbeddedQueryComponentSettings settings) {
+        if (queryDoc != null) {
+            if (settings.getQueryTablePreferences() == null &&
+                queryDoc.getQueryTablePreferences() != null) {
+                setSettings(settings
+                        .copy()
+                        .queryTablePreferences(queryDoc.getQueryTablePreferences())
+                        .build());
+            }
+
+            // Read expression.
+            queryModel.init(queryDoc.asDocRef());
+            query = queryDoc.getQuery();
+            initialised = true;
+            final Automate automate = settings.getAutomate();
+            if (queryOnOpen || automate.isOpen()) {
+                run(true, false);
+            }
         }
     }
 
@@ -614,12 +682,23 @@ public class EmbeddedQueryPresenter
     @Override
     public ComponentConfig write() {
         // Write expression.
-        setSettings(getQuerySettings()
-                .copy()
-                .lastQueryKey(queryModel.getCurrentQueryKey())
-                .lastQueryNode(queryModel.getCurrentNode())
-                .build());
+        setSettings(getQuerySettings());
         return super.write();
+    }
+
+    @Override
+    public boolean isSearching() {
+        return queryModel.isSearching();
+    }
+
+    @Override
+    public boolean isInitialised() {
+        return initialised;
+    }
+
+    @Override
+    public Automate getAutomate() {
+        return getQuerySettings().getAutomate();
     }
 
     private EmbeddedQueryComponentSettings getQuerySettings() {
@@ -678,13 +757,13 @@ public class EmbeddedQueryPresenter
     }
 
     @Override
-    public void onError(final List<String> errors) {
+    public void onError(final List<ErrorMessage> errors) {
         currentErrors = errors;
 //        setWarningsVisible(currentErrors != null && !currentErrors.isEmpty());
     }
 
     @Override
-    public List<String> getCurrentErrors() {
+    public List<ErrorMessage> getCurrentErrors() {
         return currentErrors;
     }
 
@@ -703,58 +782,22 @@ public class EmbeddedQueryPresenter
         }
     }
 
-    private void scheduleRefresh() {
-        // Schedule auto refresh after a query has finished.
-        if (autoRefreshTimer != null) {
-            autoRefreshTimer.cancel();
-        }
-        autoRefreshTimer = null;
-
-        final Automate automate = getQuerySettings().getAutomate();
-        if (initialised && automate.isRefresh()) {
-            try {
-                final String interval = automate.getRefreshInterval();
-                int millis = ModelStringUtil.parseDurationString(interval).intValue();
-
-                // Ensure that the refresh interval is not less than 10 seconds.
-                millis = Math.max(millis, TEN_SECONDS);
-
-                autoRefreshTimer = new Timer() {
-                    @Override
-                    public void run() {
-                        if (!initialised) {
-                            stop();
-                        } else {
-                            // Make sure search is currently inactive before we attempt to execute a new query.
-                            if (!queryModel.isSearching()) {
-                                EmbeddedQueryPresenter.this.run(false, false);
-                            }
-                        }
-                    }
-                };
-                autoRefreshTimer.schedule(millis);
-            } catch (final RuntimeException e) {
-                // Ignore as we cannot display this error now.
-            }
-        }
-    }
-
-
     @Override
     protected void changeSettings() {
         super.changeSettings();
         if (currentTablePresenter != null) {
+            currentTablePresenter.changeSettings();
             currentTablePresenter.refresh();
         }
         loadEmbeddedQuery();
     }
 
     @Override
-    public List<ColumnRef> getColumns() {
+    public List<ColumnRef> getColumnRefs() {
         if (currentVisPresenter != null) {
-            return currentVisPresenter.getColumns();
+            return currentVisPresenter.getColumnRefs();
         } else if (currentTablePresenter != null) {
-            return currentTablePresenter.getColumns();
+            return currentTablePresenter.getColumnRefs();
         }
         return Collections.emptyList();
     }
@@ -786,6 +829,55 @@ public class EmbeddedQueryPresenter
 
     public QueryResultTablePresenter getCurrentTablePresenter() {
         return currentTablePresenter;
+    }
+
+    @Override
+    public void onContentTabVisible(final boolean visible) {
+        if (currentTablePresenter != null) {
+            currentTablePresenter.onContentTabVisible(visible);
+        }
+    }
+
+    @Override
+    public List<Column> getColumns() {
+        return NullSafe.getOrElse(
+                currentTablePresenter,
+                QueryResultTablePresenter::getColumns,
+                Collections.emptyList());
+    }
+
+    @Override
+    public Element getFilterButton(final Column column) {
+        if (currentTablePresenter == null) {
+            return null;
+        }
+        return currentTablePresenter.getFilterButton(column);
+    }
+
+    @Override
+    public ColumnValuesDataSupplier getDataSupplier(final Column column,
+                                                    final List<ConditionalFormattingRule> conditionalFormattingRules) {
+        if (currentTablePresenter == null) {
+            return null;
+        }
+        return currentTablePresenter.getDataSupplier(column, conditionalFormattingRules);
+    }
+
+    private void fireColumnAndDataUpdate() {
+        TableUpdateEvent.fire(tableEventBus::fireEvent);
+    }
+
+    @Override
+    public HandlerRegistration addUpdateHandler(final TableUpdateEvent.Handler handler) {
+        return tableEventBus.addHandler(TableUpdateEvent.getType(), handler);
+    }
+
+    @Override
+    public FilterCellManager getFilterCellManager() {
+        if (currentTablePresenter == null) {
+            return null;
+        }
+        return currentTablePresenter.getFilterCellManager();
     }
 
     public interface EmbeddedQueryView extends View, RequiresResize {

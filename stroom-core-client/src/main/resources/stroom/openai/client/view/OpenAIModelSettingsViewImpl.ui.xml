@@ -1,0 +1,48 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:l="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup identity="openAIModelBaseUrl"
+                        label="Base URL (optional)"
+                        helpText="The URL of the AI service">
+            <g:TextBox ui:field="baseUrl" width="400px"
+                       title="Override the URL for the vector embeddings endpoint. Example: https://model-server.example.com/v1"/>
+        </form:FormGroup>
+        <form:FormGroup identity="openAIModelApiKey"
+                        label="API Key (optional)"
+                        helpText="Select the API key to use if needed">
+            <l:SelectionBox ui:field="apiKey"/>
+        </form:FormGroup>
+        <form:FormGroup identity="openAIModelId"
+                        label="Model ID"
+                        helpText="Specify the model identity to use">
+            <g:TextBox ui:field="modelId" width="400px"
+                       title="ID of the model to use to generate embeddings. Example: intfloat/e5-mistral-7b-instruct"/>
+        </form:FormGroup>
+        <form:FormGroup identity="openAIMaxContextWindowTokens"
+                        label="Maximum context window tokens"
+                        helpText="Specify the maximum number of tokens to be used for the context window">
+            <v:ValueSpinner ui:field="maxContextWindowTokens" width="80px"
+                            title="Maximum number of tokens allowed in the model's context window. Set to zero to disable."/>
+        </form:FormGroup>
+        <form:FormGroup identity="openAIReasoningEffort"
+                        label="Reasoning Effort (optional)"
+                        helpText="Controls reasoning depth for models that support it (e.g. OpenAI o-series). Values: low, medium, high. Leave blank for default.">
+            <g:TextBox ui:field="reasoningEffort" width="400px"
+                       title="Reasoning effort level: low, medium, or high. Leave blank if the model does not support reasoning."/>
+        </form:FormGroup>
+        <form:FormGroup identity="embeddingModelDimensions"
+                        label="Embedding model dimensions"
+                        helpText="Specify the number of dimensions to use for embedding models. Lucene has a max of 1024 but Elastic can handle 4096. Set to zero to disable and allow models to use their default.">
+            <v:ValueSpinner ui:field="embeddingModelDimensions" width="80px"
+                            title="Number of dimensions to use for embedding models."/>
+        </form:FormGroup>
+        <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
+                  addStyleNames="allow-focus"/>
+        <b:Button ui:field="testModel" text="Test Model" width="200px" addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>

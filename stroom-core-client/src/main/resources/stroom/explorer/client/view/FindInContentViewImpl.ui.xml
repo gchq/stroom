@@ -3,15 +3,15 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:p="urn:import:stroom.widget.button.client"
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
-    <g:FlowPanel styleName="max form">
-        <g:FlowPanel styleName="dock-container-horizontal dock-min find-topBar">
+    <g:FlowPanel styleName="FindViewImpl FindViewImpl--dialog max dock-container-vertical">
+        <g:FlowPanel styleName="FindViewImpl-top dock-container-horizontal dock-min">
             <g:TextArea ui:field="pattern" addStyleNames="dock-max allow-focus"/>
             <g:FlowPanel ui:field="buttonContainer" styleName="dock-min find-buttons">
                 <p:InlineSvgToggleButton ui:field="toggleMatchCase"/>
                 <p:InlineSvgToggleButton ui:field="toggleRegex"/>
             </g:FlowPanel>
         </g:FlowPanel>
-        <g:MySplitLayoutPanel styleName="dock-max">
+        <g:MySplitLayoutPanel styleName="FindViewImpl-bottom dock-max overflow-hidden">
             <g:north size="300">
                 <g:SimplePanel ui:field="resultContainer"
                                styleName="max form-control-border form-control-background"/>

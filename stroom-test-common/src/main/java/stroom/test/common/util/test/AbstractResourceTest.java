@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common.util.test;
 
 import stroom.util.jersey.WebTargetFactory;
@@ -94,11 +110,11 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
         WebTarget webTarget = getWebTarget(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
-        Invocation.Builder builder = webTarget
+        final Invocation.Builder builder = webTarget
                 .request();
 
         final Entity<T_REQ> entity = Entity.json(request);
@@ -118,7 +134,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
                     response.getStatus(), validationErrorMessage.getErrors()));
         }
 
-        T_RESP responseEntity = response.readEntity(responseType);
+        final T_RESP responseEntity = response.readEntity(responseType);
 
         if (expectedResponse != null) {
             Assertions.assertThat(responseEntity)
@@ -152,14 +168,14 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
         WebTarget webTarget = getWebTarget(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
-        Invocation.Builder builder = webTarget
+        final Invocation.Builder builder = webTarget
                 .request();
 
-        Response response = builder.put(Entity.json(requestEntity));
+        final Response response = builder.put(Entity.json(requestEntity));
 
         if (!isSuccessful(response.getStatus())) {
             throw new RuntimeException(LogUtil.message("Error: {} {}",
@@ -191,11 +207,11 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 
         WebTarget webTarget = getWebTarget(subPath);
 
-        for (Function<WebTarget, WebTarget> method : builderMethods) {
+        for (final Function<WebTarget, WebTarget> method : builderMethods) {
             webTarget = method.apply(webTarget);
         }
 
-        Invocation.Builder builder = webTarget
+        final Invocation.Builder builder = webTarget
                 .request();
 
         final Response response = operation.apply(builder);
@@ -209,7 +225,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
 //
 //        LOGGER.info("json:\n{}", json);
 
-        T_RESP entity = response.readEntity(responseType);
+        final T_RESP entity = response.readEntity(responseType);
 
         if (expectedResponse != null) {
             Assertions.assertThat(entity)

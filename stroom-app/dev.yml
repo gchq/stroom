@@ -5,6 +5,9 @@ server:
     - type: http
       port: ${STROOM_APP_PORT:-8080}
       useForwardedHeaders: true
+      # Edge session cookies (e.g. ALB+Cognito's sharded AWSELBAuthSessionCookie-0/-1) plus
+      # injected token headers exceed Jetty's 8KiB default.
+      maxRequestHeaderSize: 32KiB
   adminConnectors:
     - type: http
       port: ${STROOM_ADMIN_PORT:-8081}
@@ -103,26 +106,23 @@ appConfig:
     # Versioned dirs for dev to allow running multiple stroom instances
     home: "${STROOM_HOME:-~/.stroom/v7/node1a}"
     temp: "${STROOM_TEMP:-/tmp/stroom/v7/node1a}"
-
+  planb:
+    nodeList: [ node2a ]
   # Comment out the publicUri block if you are not running with nginx
   publicUri:
     hostname: ${API_GATEWAY_HOST:-localhost}
     port: ${API_GATEWAY_PORT:-}
   security:
     identity:
+      autoCreateAdminAccountOnBoot: true
       passwordPolicy:
-        minimumPasswordStrength: 1
+        minimumPasswordStrength: 0
         minimumPasswordLength: 1
     authentication:
       openId:
-        identityProviderType: ${IDP_TYPE:-TEST_CREDENTIALS}
+        identityProviderType: ${IDP_TYPE:-INTERNAL_IDP}
 
   statistics:
-    hbase:
-      # UUID of the Kafka Config Doc that is created by Setup Sample Data
-      # Debatable if the doc should be added to a content pack or not
-      kafkaConfigUuid: 7cbf9153-869c-43bb-a316-1c652673e680
     internal:
       enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore" ]}
-#      enabledStoreTypes: ${STROOM_ENABLED_STAT_STORE_TYPES:-[ "StatisticStore", "StroomStatsStore" ]}
 

@@ -18,6 +18,7 @@ package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocumentType;
+import stroom.gitrepo.shared.GitRepoDoc;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -39,7 +40,8 @@ public class DocumentTypes {
 
     public static final String[] FOLDER_TYPES = new String[]{
             ExplorerConstants.SYSTEM,
-            ExplorerConstants.FOLDER_TYPE
+            ExplorerConstants.FOLDER_TYPE,
+            GitRepoDoc.TYPE
     };
 
     public static final Set<String> FOLDER_TYPES_SET = Collections.unmodifiableSet(Arrays.stream(FOLDER_TYPES)

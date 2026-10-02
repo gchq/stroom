@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.sysinfo;
 
 import stroom.util.json.JsonUtil;
@@ -18,7 +34,7 @@ class TestSystemInfoResult {
     @Test
     void test() {
 
-        SystemInfoResult systemInfoResult = SystemInfoResult.builder()
+        final SystemInfoResult systemInfoResult = SystemInfoResult.builder()
                 .name("name1")
                 .addDetail("key1", "value1")
                 .addDetail("key2", "value2")
@@ -29,7 +45,7 @@ class TestSystemInfoResult {
 
     @Test
     void testSerde() throws IOException {
-        SystemInfoResult systemInfoResult = SystemInfoResult.builder()
+        final SystemInfoResult systemInfoResult = SystemInfoResult.builder()
                 .name("name1")
                 .addDetail("key1", "value1")
                 .addDetail("key2", "value2")
@@ -45,7 +61,7 @@ class TestSystemInfoResult {
 //
 //        LOGGER.info("json:\n{}", json2);
 
-        SystemInfoResult systemInfoResult2 = JsonUtil.readValue(json, SystemInfoResult.class);
+        final SystemInfoResult systemInfoResult2 = JsonUtil.readValue(json, SystemInfoResult.class);
 
         Assertions.assertThat(systemInfoResult2)
                 .isEqualTo(systemInfoResult);
@@ -82,7 +98,7 @@ class TestSystemInfoResult {
 //
 //        LOGGER.info("json:\n{}", json2);
 
-        SystemInfoResultList systemInfoResultList2 = JsonUtil.readValue(json, SystemInfoResultList.class);
+        final SystemInfoResultList systemInfoResultList2 = JsonUtil.readValue(json, SystemInfoResultList.class);
 
         Assertions.assertThat(systemInfoResultList2)
                 .isEqualTo(systemInfoResultList);

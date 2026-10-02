@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.xsltfunctions;
 
 import stroom.util.shared.Severity;
@@ -35,7 +51,7 @@ class IPInCidr extends StroomExtensionFunctionCall {
                 final int subnetMask = 0xFFFFFFFF << (32 - prefixLength);
 
                 // Convert subnet mask to byte array
-                byte[] subnetMaskBytes = new byte[]{
+                final byte[] subnetMaskBytes = new byte[]{
                         (byte) ((subnetMask & 0xFF000000) >>> 24),
                         (byte) ((subnetMask & 0x00FF0000) >>> 16),
                         (byte) ((subnetMask & 0x0000FF00) >>> 8),
@@ -53,9 +69,9 @@ class IPInCidr extends StroomExtensionFunctionCall {
             } else {
                 throw new XPathException("Invalid CIDR format: " + cidr);
             }
-        } catch (UnknownHostException e) {
+        } catch (final UnknownHostException e) {
             log(context, Severity.ERROR, "Invalid IP address format", e);
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 

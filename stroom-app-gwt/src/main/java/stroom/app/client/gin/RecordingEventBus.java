@@ -35,17 +35,17 @@ public class RecordingEventBus extends EventBus {
         this(new SimpleEventBus());
     }
 
-    public RecordingEventBus(EventBus wrapped) {
+    public RecordingEventBus(final EventBus wrapped) {
         this.wrapped = wrapped;
     }
 
     @Override
-    public <H> HandlerRegistration addHandler(Type<H> type, H handler) {
+    public <H> HandlerRegistration addHandler(final Type<H> type, final H handler) {
         return wrapped.addHandler(type, handler);
     }
 
     @Override
-    public <H> HandlerRegistration addHandlerToSource(Type<H> type, Object source, H handler) {
+    public <H> HandlerRegistration addHandlerToSource(final Type<H> type, final Object source, final H handler) {
         return wrapped.addHandlerToSource(type, source, handler);
     }
 
@@ -58,13 +58,13 @@ public class RecordingEventBus extends EventBus {
     }
 
     @Override
-    public void fireEvent(Event<?> event) {
+    public void fireEvent(final Event<?> event) {
         wrapped.fireEvent(event);
         firedEvents.add(event);
     }
 
     @Override
-    public void fireEventFromSource(Event<?> event, Object source) {
+    public void fireEventFromSource(final Event<?> event, final Object source) {
         firedSourceEvents.add(event);
         wrapped.fireEventFromSource(event, source);
     }

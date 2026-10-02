@@ -1,0 +1,44 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "Source",
+      "type" : "Source"
+    }, {
+      "id" : "bomRemovalFilterInput",
+      "type" : "BOMRemovalFilterInput"
+    }, {
+      "id" : "invalidCharFilterReader",
+      "type" : "InvalidCharFilterReader"
+    }, {
+      "id" : "InvalidXMLCharFilterReader",
+      "type" : "InvalidXMLCharFilterReader"
+    }, {
+      "id" : "streamAppender",
+      "type" : "StreamAppender"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "streamAppender",
+      "name" : "streamType",
+      "value" : {
+        "string" : "Test Events"
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "Source",
+      "to" : "bomRemovalFilterInput"
+    }, {
+      "from" : "bomRemovalFilterInput",
+      "to" : "invalidCharFilterReader"
+    }, {
+      "from" : "invalidCharFilterReader",
+      "to" : "InvalidXMLCharFilterReader"
+    }, {
+      "from" : "InvalidXMLCharFilterReader",
+      "to" : "streamAppender"
+    } ]
+  }
+}

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.impl.selection;
 
 import stroom.util.cache.CacheConfig;
@@ -14,11 +30,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     public static final String PROP_NAME_DEFAULT_VOLUME_GROUP_NAME = "defaultIndexVolumeGroupName";
+
+    private static final boolean DEFAULT_CREATE_DEFAULT_INDEX_VOLUMES_ON_START = true;
+    private static final double DEFAULT_DEFAULT_INDEX_VOLUME_FILESYSTEM_UTILISATION = 0.9;
 
     private final String volumeSelector;
     private final boolean createDefaultIndexVolumesOnStart;
@@ -29,10 +49,10 @@ public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
 
     public VolumeConfig() {
         volumeSelector = "RoundRobin";
-        createDefaultIndexVolumesOnStart = true;
+        createDefaultIndexVolumesOnStart = DEFAULT_CREATE_DEFAULT_INDEX_VOLUMES_ON_START;
         defaultIndexVolumeGroupName = "Default Volume Group";
         defaultIndexVolumeGroupPaths = List.of("volumes/default_index_volume");
-        defaultIndexVolumeFilesystemUtilisation = 0.9;
+        defaultIndexVolumeFilesystemUtilisation = DEFAULT_DEFAULT_INDEX_VOLUME_FILESYSTEM_UTILISATION;
         // Most volume selectors hold state (e.g. round-robin position) so we need to cache
         // them. Use a fairly long life do avoid the selector being aged off and the position
         // being lost.
@@ -46,16 +66,16 @@ public class VolumeConfig extends AbstractConfig implements IsStroomConfig {
     @JsonCreator
     public VolumeConfig(
             @JsonProperty("volumeSelector") final String volumeSelector,
-            @JsonProperty("createDefaultIndexVolumesOnStart") final boolean createDefaultIndexVolumesOnStart,
+            @JsonProperty("createDefaultIndexVolumesOnStart") final Boolean createDefaultIndexVolumesOnStart,
             @JsonProperty(PROP_NAME_DEFAULT_VOLUME_GROUP_NAME) final String defaultIndexVolumeGroupName,
             @JsonProperty("defaultIndexVolumeGroupPaths") final List<String> defaultIndexVolumeGroupPaths,
-            @JsonProperty("defaultIndexVolumeFilesystemUtilisation") final double defaultIndexVolumeFilesystemUtilisation,
+            @JsonProperty("defaultIndexVolumeFilesystemUtilisation") final Double defaultIndexVolumeFilesystemUtilisation,
             @JsonProperty("volumeSelectorCache") final CacheConfig volumeSelectorCache) {
         this.volumeSelector = volumeSelector;
-        this.createDefaultIndexVolumesOnStart = createDefaultIndexVolumesOnStart;
+        this.createDefaultIndexVolumesOnStart = Objects.requireNonNullElse(createDefaultIndexVolumesOnStart, DEFAULT_CREATE_DEFAULT_INDEX_VOLUMES_ON_START);
         this.defaultIndexVolumeGroupName = defaultIndexVolumeGroupName;
         this.defaultIndexVolumeGroupPaths = defaultIndexVolumeGroupPaths;
-        this.defaultIndexVolumeFilesystemUtilisation = defaultIndexVolumeFilesystemUtilisation;
+        this.defaultIndexVolumeFilesystemUtilisation = Objects.requireNonNullElse(defaultIndexVolumeFilesystemUtilisation, DEFAULT_DEFAULT_INDEX_VOLUME_FILESYSTEM_UTILISATION);
         this.volumeSelectorCache = volumeSelectorCache;
     }
 

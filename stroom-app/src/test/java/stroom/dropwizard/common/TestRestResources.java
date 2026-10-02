@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dropwizard.common;
 
 import stroom.event.logging.rs.api.AutoLogged;
@@ -5,6 +21,8 @@ import stroom.event.logging.rs.api.AutoLogged.OperationType;
 import stroom.event.logging.rs.impl.AnnotationUtil;
 import stroom.security.api.SecurityContext;
 import stroom.util.ConsoleColour;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.FetchWithIntegerId;
 import stroom.util.shared.FetchWithLongId;
 import stroom.util.shared.FetchWithTemplate;
@@ -37,8 +55,6 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -62,14 +78,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestRestResources {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestRestResources.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestRestResources.class);
 
 
     //    @Disabled // Temp while REST resource refactoring / annotation work is ongoing.
     @TestFactory
     @SuppressWarnings("unchecked")
     Stream<DynamicTest> buildQualityAssuranceTests() {
-        try (ScanResult result = new ClassGraph()
+        try (final ScanResult result = new ClassGraph()
                 .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
@@ -104,7 +120,7 @@ class TestRestResources {
     @SuppressWarnings("unchecked")
     void listMethods() {
 
-        try (ScanResult result = new ClassGraph()
+        try (final ScanResult result = new ClassGraph()
                 .acceptPackages("stroom")
                 .enableClassInfo()
                 .ignoreClassVisibility()
@@ -507,9 +523,9 @@ class TestRestResources {
 
     private void assertFetchDeclared(final Class<? extends RestResource> resourceClass,
                                      final SoftAssertions softAssertions) {
-        boolean fetchMethodPresent = Arrays.stream(resourceClass.getMethods())
+        final boolean fetchMethodPresent = Arrays.stream(resourceClass.getMethods())
                 .anyMatch(m -> m.getName().equals("fetch") && m.getParameterCount() == 1);
-        boolean updateOrDeleteMethodPresent = Arrays.stream(resourceClass.getMethods())
+        final boolean updateOrDeleteMethodPresent = Arrays.stream(resourceClass.getMethods())
                 .anyMatch(m -> m.getName().equals("update") || m.getName().equals("delete"));
         if (fetchMethodPresent && updateOrDeleteMethodPresent) {
             if (!FetchWithUuid.class.isAssignableFrom(resourceClass) &&
@@ -524,7 +540,7 @@ class TestRestResources {
 
     private void assertProviders(final Class<? extends RestResource> resourceClass,
                                  final SoftAssertions softAssertions) {
-        List<Class<?>> nonProvidedFields = Arrays.stream(resourceClass.getDeclaredFields())
+        final List<Class<?>> nonProvidedFields = Arrays.stream(resourceClass.getDeclaredFields())
                 .filter(field ->
                         Modifier.isPrivate(field.getModifiers())
                         && Modifier.isFinal(field.getModifiers())
@@ -535,7 +551,7 @@ class TestRestResources {
                 .collect(Collectors.toList());
 
         if (!nonProvidedFields.isEmpty()) {
-            LOGGER.warn("Non provided fields {}", nonProvidedFields);
+            LOGGER.error("Non provided fields {}", nonProvidedFields);
             softAssertions.assertThat(nonProvidedFields)
                     .withFailMessage("Resource implementations/classes must inject all objects " +
                                      "via Providers.")
@@ -545,7 +561,7 @@ class TestRestResources {
 
     private void assertNoSecurityContext(final Class<? extends RestResource> resourceClass,
                                          final SoftAssertions softAssertions) {
-        List<Field> securityContextFields = Arrays.stream(resourceClass.getDeclaredFields())
+        final List<Field> securityContextFields = Arrays.stream(resourceClass.getDeclaredFields())
                 .filter(field -> {
                     if (SecurityContext.class.isAssignableFrom(field.getType())) {
                         return true;
@@ -575,7 +591,7 @@ class TestRestResources {
     }
 
     private boolean hasJaxRsAnnotation(final Class<?> clazz, final Method method, final boolean checkInterfaces) {
-        boolean thisMethodHasJaxRs = Arrays.stream(method.getAnnotations())
+        final boolean thisMethodHasJaxRs = Arrays.stream(method.getAnnotations())
                 .anyMatch(annotation ->
                         annotation.annotationType().getPackageName().equals("jakarta.ws.rs"));
         if (!checkInterfaces) {

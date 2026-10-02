@@ -16,6 +16,7 @@
 
 package stroom.search.extraction;
 
+import stroom.index.shared.IndexConstants;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -54,13 +55,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-
-import static stroom.index.shared.IndexConstants.EVENT_ID;
-import static stroom.index.shared.IndexConstants.STREAM_ID;
+import java.util.Map;
 
 
 @ConfigurableElement(
         type = "XPathExtractionOutputFilter",
+        displayValue = "XPath Extraction Output Filter",
         category = Category.FILTER,
         roles = {
                 PipelineElementType.ROLE_TARGET},
@@ -85,7 +85,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
     private String secondLevelElementToCreateDocs = "";
     private int depth = 0;
 
-    private HashMap<String, String> prefixMappings = new HashMap<>();
+    private Map<String, String> prefixMappings = new HashMap<>();
     private XPathExecutable[] xPathExecutables = null;
 
     private String topLevelUri = null;
@@ -150,7 +150,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
                 contentHandler.setPipelineConfiguration(pipeConfig);
                 contentHandler.setReceiver(builder);
 
-                for (String key : prefixMappings.keySet()) {
+                for (final String key : prefixMappings.keySet()) {
                     contentHandler.startPrefixMapping(key, prefixMappings.get(key));
                 }
                 contentHandler.startDocument();
@@ -161,7 +161,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
             } else {
                 contentHandler.startElement(uri, localName, qName, atts);
             }
-        } catch (SAXException saxException) {
+        } catch (final SAXException saxException) {
 
             log(Severity.ERROR, LogUtil.message("XML error creating element {}", localName), saxException);
         }
@@ -178,33 +178,35 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
             if (fieldName != null) {
                 String xpathPart = fieldName;
 
-                if (EVENT_ID.equals(xpathPart)) {
-                    xpathPart = "@" + EVENT_ID;
-                } else if (STREAM_ID.equals(xpathPart)) {
-                    xpathPart = "@" + STREAM_ID;
+                if (IndexConstants.EVENT_ID.equals(xpathPart)) {
+                    xpathPart = "@" + IndexConstants.EVENT_ID;
+                } else if (IndexConstants.STREAM_ID.equals(xpathPart)) {
+                    xpathPart = "@" + IndexConstants.STREAM_ID;
                 }
 
-                String xpath = "/" + topLevelElementToSkip + "/" + secondLevelElementToCreateDocs + "/" + xpathPart;
+                final String xpath = "/" + topLevelElementToSkip
+                                     + "/" + secondLevelElementToCreateDocs
+                                     + "/" + xpathPart;
 
                 try {
                     xPathExecutables[pos] = compiler.compile(xpath);
-                } catch (SaxonApiException e) {
+                } catch (final SaxonApiException e) {
                     log(Severity.FATAL_ERROR, LogUtil.message("Error in XPath Expression: {}", xpath), e);
                 }
             }
         }
     }
 
-    private int stringifyItem(XdmItem item, StringBuilder thisVal, int numberOfVals) {
+    private int stringifyItem(final XdmItem item, final StringBuilder thisVal, int numberOfVals) {
         if (item instanceof XdmAtomicValue) {
             if (numberOfVals > 0) {
                 thisVal.append(multipleValueDelimiter);
             }
-            String value = item.getStringValue();
+            final String value = item.getStringValue();
             thisVal.append(value);
             numberOfVals++;
         } else if (item instanceof final XdmNode node) {
-            XdmNodeKind type = node.getNodeKind();
+            final XdmNodeKind type = node.getNodeKind();
 
             if (type == XdmNodeKind.ELEMENT) {
                 boolean hasChildElement = false;
@@ -230,9 +232,9 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
                 }
 
                 if (hasChildElement) {
-                    boolean createJson = false;
+                    final boolean createJson = false;
                     if (createJson) {
-                        String serialisedForm = complexElementToJson(node.toString());
+                        final String serialisedForm = complexElementToJson(node.toString());
                         thisVal.append(serialisedForm);
                     } else {
                         thisVal.append(node);
@@ -241,7 +243,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
                 } else {
                     iterator = node.axisIterator(Axis.CHILD);
                     while (iterator.hasNext()) {
-                        XdmNode childNode = iterator.next();
+                        final XdmNode childNode = iterator.next();
 //                        if (item instanceof XdmAtomicValue) {
 //                            if (numberOfVals > 0) {
 //                                thisVal.append(multipleValueDelimiter);
@@ -251,13 +253,13 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
 //                            numberOfVals++;
 //                        } else if (item instanceof XdmNode) {
 //                            XdmNode childNode = child;
-                        XdmNodeKind childType = childNode.getNodeKind();
+                        final XdmNodeKind childType = childNode.getNodeKind();
 
                         if (childType == XdmNodeKind.TEXT) {
                             if (numberOfVals > 0) {
                                 thisVal.append(multipleValueDelimiter);
                             }
-                            String value = item.getStringValue();
+                            final String value = item.getStringValue();
                             thisVal.append(value);
                             numberOfVals++;
                         }
@@ -278,7 +280,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
         return numberOfVals;
     }
 
-    protected String complexElementToJson(String xml) {
+    protected String complexElementToJson(final String xml) {
         return "Not Supported in this Version";
     }
 
@@ -306,17 +308,17 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
                         selector.setContextItem(new XdmNode(tree.getRootNode()));
                         final Iterator<XdmItem> iterator = selector.iterator();
 
-                        StringBuilder thisVal = new StringBuilder();
+                        final StringBuilder thisVal = new StringBuilder();
                         int numVals = 0;
                         while (iterator.hasNext()) {
-                            XdmItem item = iterator.next();
+                            final XdmItem item = iterator.next();
                             numVals = stringifyItem(item, thisVal, numVals);
                         }
                         stringFieldValues.add(new StringFieldValue(fieldName, thisVal.toString()));
                     }
                     fieldListConsumerHolder.acceptStringValues(stringFieldValues);
 
-                } catch (SaxonApiException ex) {
+                } catch (final SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);
                 } finally {
                     contentHandler = null;
@@ -348,7 +350,7 @@ public class XPathExtractionOutputFilter extends AbstractXMLFilter {
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
         if (contentHandler != null) {
             contentHandler.characters(ch, start, length);
         } else {

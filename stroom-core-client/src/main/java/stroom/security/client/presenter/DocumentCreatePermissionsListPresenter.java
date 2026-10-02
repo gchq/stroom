@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,8 +72,9 @@ public class DocumentCreatePermissionsListPresenter
         this.documentTypeCache = documentTypeCache;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>();
-        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Document Create Permissions");
+        selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<DocumentType> selectionEventManager =
                 new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);

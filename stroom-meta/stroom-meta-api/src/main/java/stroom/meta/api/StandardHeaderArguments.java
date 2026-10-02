@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,17 @@
 
 package stroom.meta.api;
 
+import stroom.util.shared.string.CIKey;
+import stroom.util.shared.string.CIKeys;
+
 import java.util.Set;
 
 public interface StandardHeaderArguments {
 
+    /**
+     * Intended to be set to a new GUID on receipt by the first proxy/stroom instance
+     * then never changed.
+     */
     String GUID = "GUID";
     String COMPRESSION = "Compression";
     String COMPRESSION_ZIP = "ZIP";
@@ -41,21 +48,59 @@ public interface StandardHeaderArguments {
 
     String USER_AGENT = "user-agent";
 
+    /**
+     * The IP address of the client that sent data to the FIRST proxy/stroom instance
+     * in the chain.
+     */
     String REMOTE_ADDRESS = "RemoteAddress";
+    /**
+     * The hostname of the client that sent data to the FIRST proxy/stroom instance
+     * in the chain.
+     */
     String REMOTE_HOST = "RemoteHost";
+    /**
+     * To be set to the current time by EACH proxy/stroom instance on receipt.
+     */
     String RECEIVED_TIME = "ReceivedTime";
     /**
      * A comma delimited list of ReceivedTime values, oldest first that includes the
      * ReceivedTime value as its last item.
      */
     String RECEIVED_TIME_HISTORY = "ReceivedTimeHistory";
+    /**
+     * A comma delimited list of hostnames of EACH proxy/stroom instance that have received
+     * this data. The most recent host is the last item in the list.
+     */
     String RECEIVED_PATH = "ReceivedPath";
     String EFFECTIVE_TIME = "EffectiveTime";
+    /**
+     * If an X509 certificate is present on a request, this will be set with the subject
+     * distinguished name from the certificate.
+     */
     String REMOTE_DN = "RemoteDN";
+    /**
+     * If an X509 certificate is present on a request, this will be set with the expiry
+     * datetime of the certificate in Stroom normal date format.
+     */
     String REMOTE_CERT_EXPIRY = "RemoteCertExpiry";
+    /**
+     * Set to the name of the file when uploading file based data to stroom.
+     */
     String REMOTE_FILE = "RemoteFile";
+    /**
+     * To be set to a unique receipt ID by EACH proxy/stroom instance on receipt.
+     */
     String RECEIPT_ID = "ReceiptId";
+    /**
+     * To have ReceiptId appended to it by EACH proxy/stroom instance on receipt.
+     */
     String RECEIPT_ID_PATH = "ReceiptIdPath";
+
+    /**
+     * The number of the Data Receipt rule that matched the data, or 'NO_MATCH' if
+     * no rule matched.
+     */
+    String DATA_RECEIPT_RULE = "DataReceiptRule";
     /**
      * The unique message from an AWS SQS queue.
      */
@@ -76,6 +121,7 @@ public interface StandardHeaderArguments {
     String SYSTEM = "System";
     String COMPONENT = "Component";
     String FEED = "Feed";
+    String HOST = "Host"; // Receiving host
     String TYPE = "Type";
     String ENVIRONMENT = "Environment";
     String FORMAT = "Format"; // The data format, e.g. XML, JSON, CSV, etc.
@@ -97,6 +143,27 @@ public interface StandardHeaderArguments {
             "transfer-encoding",
             "expect",
             COMPRESSION);
+
+    /**
+     * A base allow-set of meta keys for inclusion in the request when proxy forwards data downstream.
+     * This set represents the headers that stroom/proxy may make use of when ingesting data.
+     */
+    Set<CIKey> HTTP_POST_BASE_META_ALLOW_SET = Set.of(
+            CIKeys.ACCOUNT_ID,
+            CIKeys.ACCOUNT_NAME,
+            CIKeys.CLASSIFICATION,
+            CIKeys.COMPONENT,
+            CIKeys.CONTEXT_ENCODING,
+            CIKeys.CONTEXT_FORMAT,
+            CIKeys.ENCODING,
+            CIKeys.ENVIRONMENT,
+            CIKeys.FEED,
+            CIKeys.FORMAT,
+            CIKeys.GUID,
+            CIKeys.SCHEMA,
+            CIKeys.SCHEMA_VERSION,
+            CIKeys.SYSTEM,
+            CIKeys.TYPE);
 
     /**
      * Header keys for values that are date/time strings

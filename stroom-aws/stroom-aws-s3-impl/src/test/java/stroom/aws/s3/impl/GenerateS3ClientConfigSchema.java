@@ -1,6 +1,23 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.aws.s3.impl;
 
 import stroom.aws.s3.shared.S3ClientConfig;
+import stroom.util.json.JsonV2Util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,20 +34,21 @@ public class GenerateS3ClientConfigSchema {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateS3ClientConfigSchema.class);
 
-    public static void main(String[] args) throws IOException {
-        Path schemaFile = getBasePath().resolve("s3config-schema.json");
+    public static void main(final String[] args) throws IOException {
+        final Path schemaFile = getBasePath().resolve("s3config-schema.json");
         generateJsonSchema(schemaFile);
     }
 
     static void generateJsonSchema(final Path schemaFile) throws IOException {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        // Use legacy jackson as JsonSchemaGenerator lib depends on jackson v2
+        final ObjectMapper objectMapper = JsonV2Util.getMapper();
         final JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper);
 
         // If you want to configure it manually:
         // JsonSchemaConfig config = JsonSchemaConfig.create(...);
         // JsonSchemaGenerator generator = new JsonSchemaGenerator(objectMapper, config);
 
-        JsonNode jsonSchema = jsonSchemaGenerator.generateJsonSchema(S3ClientConfig.class);
+        final JsonNode jsonSchema = jsonSchemaGenerator.generateJsonSchema(S3ClientConfig.class);
         objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
 
         LOGGER.info("Writing schema file to {}", schemaFile.toAbsolutePath());

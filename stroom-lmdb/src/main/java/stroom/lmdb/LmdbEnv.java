@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.lmdb;
 
 
@@ -268,13 +284,13 @@ public class LmdbEnv implements AutoCloseable {
             LOGGER.trace("About to open write tx");
             try (final Txn<ByteBuffer> writeTxn = env.txnWrite()) {
                 LOGGER.trace("Performing work with write txn");
-                T result = work.apply(writeTxn);
+                final T result = work.apply(writeTxn);
                 LOGGER.trace("Committing the txn");
                 writeTxn.commit();
                 return result;
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 throw new RuntimeException(LogUtil.message(
-                        "Error performing work in read transaction: {}",
+                        "Error performing work in write transaction: {}",
                         e.getMessage()), e);
             }
         } finally {
@@ -352,7 +368,7 @@ public class LmdbEnv implements AutoCloseable {
             try (final Txn<ByteBuffer> txn = env.txnRead()) {
                 LOGGER.trace("Performing work with read txn");
                 return work.apply(txn);
-            } catch (RuntimeException e) {
+            } catch (final RuntimeException e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error performing work in read transaction: {}",
                         e.getMessage()), e);
@@ -487,7 +503,7 @@ public class LmdbEnv implements AutoCloseable {
             try {
                 LOGGER.info("Deleting file {}", file.toAbsolutePath());
                 Files.delete(file);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException("Unable to delete file: " + FileUtil.getCanonicalPath(file));
             }
         } else {
@@ -657,7 +673,7 @@ public class LmdbEnv implements AutoCloseable {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.trace("{} acquired", lockName);
                 if (startTime != null) {
-                    Duration waitDuration = Duration.between(startTime, Instant.now());
+                    final Duration waitDuration = Duration.between(startTime, Instant.now());
                     if (waitDuration.getSeconds() >= 1) {
                         LOGGER.debug("Waited {} to acquire {}", waitDuration, lockName);
                     }
@@ -669,7 +685,7 @@ public class LmdbEnv implements AutoCloseable {
     private void dumpMdbFileSize() {
         if (Files.isDirectory(localDir)) {
 
-            try (Stream<Path> stream = Files.list(localDir)) {
+            try (final Stream<Path> stream = Files.list(localDir)) {
                 stream
                         .filter(path ->
                                 !Files.isDirectory(path))
@@ -681,13 +697,13 @@ public class LmdbEnv implements AutoCloseable {
                                 return localDir.getFileName().resolve(file.getFileName())
                                        + " - file size: "
                                        + ModelStringUtil.formatIECByteSizeString(fileSizeBytes);
-                            } catch (IOException e) {
+                            } catch (final IOException e) {
                                 throw new RuntimeException(e);
                             }
                         })
                         .forEach(LOGGER::debug);
 
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.debug("Unable to list dir {} due to {}",
                         localDir.toAbsolutePath().normalize(), e.getMessage());
             }
@@ -784,13 +800,13 @@ public class LmdbEnv implements AutoCloseable {
                     .mapToLong(path -> {
                         try {
                             return Files.size(path);
-                        } catch (IOException e) {
+                        } catch (final IOException e) {
                             throw new RuntimeException(e);
                         }
                     })
                     .sum();
-        } catch (IOException
-                 | RuntimeException e) {
+        } catch (final IOException
+                       | RuntimeException e) {
             LOGGER.error("Error calculating disk usage for path {}",
                     localDir.normalize(), e);
             totalSizeBytes = -1;

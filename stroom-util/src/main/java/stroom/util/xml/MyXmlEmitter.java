@@ -1,9 +1,25 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Copyright (c) 2015 Saxonica Limited.
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0.
 // If a copy of the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 // This Source Code Form is "Incompatible With Secondary Licenses", as defined by the Mozilla Public License, v. 2.0.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 package stroom.util.xml;
 
@@ -55,6 +71,15 @@ public class MyXmlEmitter extends XMLEmitter {
         IS_SPECIAL_IN_ATT['>'] = true;
         IS_SPECIAL_IN_ATT['&'] = true;
         IS_SPECIAL_IN_ATT['\"'] = true;
+    }
+
+    /**
+     * Use this flag to determine if we are going to let the control character 0 toggle escape switching.
+     */
+    private final boolean preventEscapeSwitching;
+
+    public MyXmlEmitter(final boolean preventEscapeSwitching) {
+        this.preventEscapeSwitching = preventEscapeSwitching;
     }
 
     /**
@@ -123,22 +148,22 @@ public class MyXmlEmitter extends XMLEmitter {
 
             // examine the special character that interrupted the scan
             final char c = chars.charAt(i);
-            if (c == 0) {
+            if (c == 0 && !preventEscapeSwitching) {
                 // used to switch escaping on and off
                 disabled = !disabled;
             } else if (disabled) {
                 if (c > 127) {
                     if (UTF16CharacterSet.isHighSurrogate(c)) {
-                        int cc = UTF16CharacterSet.combinePair(c, chars.charAt(i + 1));
+                        final int cc = UTF16CharacterSet.combinePair(c, chars.charAt(i + 1));
                         if (!characterSet.inCharset(cc)) {
-                            XPathException de = new XPathException("Character x" + Integer.toHexString(cc) +
-                                    " is not available in the chosen encoding");
+                            final XPathException de = new XPathException("Character x" + Integer.toHexString(cc) +
+                                                                         " is not available in the chosen encoding");
                             de.setErrorCode("SERE0008");
                             throw de;
                         }
                     } else if (!characterSet.inCharset(c)) {
-                        XPathException de = new XPathException("Character " + c + " (x" + Integer.toHexString(c) +
-                                ") is not available in the chosen encoding");
+                        final XPathException de = new XPathException("Character " + c + " (x" + Integer.toHexString(c) +
+                                                                     ") is not available in the chosen encoding");
                         de.setErrorCode("SERE0008");
                         throw de;
                     }
@@ -168,8 +193,8 @@ public class MyXmlEmitter extends XMLEmitter {
                 // XML 1.1 requires these characters to be written as character references
                 characterReferenceGenerator.outputCharacterReference(c, writer);
             } else if (UTF16CharacterSet.isHighSurrogate(c)) {
-                char d = chars.charAt(++i);
-                int charval = UTF16CharacterSet.combinePair(c, d);
+                final char d = chars.charAt(++i);
+                final int charval = UTF16CharacterSet.combinePair(c, d);
                 if (characterSet.inCharset(charval)) {
                     writer.write(c);
                     writer.write(d);

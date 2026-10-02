@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store;
@@ -49,7 +48,7 @@ public class StringValue implements RefDataValue {
         this.valueHash = stagingValue.getValueHashCode();
     }
 
-    public static StringValue of(String value) {
+    public static StringValue of(final String value) {
         return new StringValue(value);
     }
 

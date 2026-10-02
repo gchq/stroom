@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.bytebuffer;
@@ -30,6 +29,7 @@ import java.nio.charset.StandardCharsets;
 public class ByteBufferUtils {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferUtils.class);
+    private static final byte MAX_BYTE_UNSIGNED = (byte) -1;
 
     private ByteBufferUtils() {
         // static util methods only
@@ -49,7 +49,7 @@ public class ByteBufferUtils {
     public static String byteBufferToHexAll(final ByteBuffer byteBuffer) {
         final StringBuilder sb = new StringBuilder();
         if (byteBuffer != null) {
-            int endOffsetEx = byteBuffer.limit();
+            final int endOffsetEx = byteBuffer.limit();
             for (int i = 0; i < endOffsetEx; i++) {
                 final byte[] oneByteArr = new byte[1];
                 if (i == byteBuffer.position()) {
@@ -124,7 +124,7 @@ public class ByteBufferUtils {
                                  final int len) {
         // Work from right to left
         for (int i = idx + len - 1; i >= idx; i--) {
-            byte b = byteBuffer.get(i);
+            final byte b = byteBuffer.get(i);
             if (b == (byte) 0xFF) {
                 // Byte rolls around to zero and we need to carry over to the next one
                 byteBuffer.put(i, (byte) 0x00);
@@ -149,7 +149,7 @@ public class ByteBufferUtils {
         String asInt;
         try {
             asInt = String.valueOf(byteBuffer.duplicate().getInt());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Unable to convert to long", e);
             asInt = "CANT_CONVERT";
         }
@@ -171,7 +171,7 @@ public class ByteBufferUtils {
         String asLong;
         try {
             asLong = String.valueOf(byteBuffer.duplicate().getLong());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Unable to convert to long", e);
             asLong = "CANT_CONVERT";
         }
@@ -185,43 +185,33 @@ public class ByteBufferUtils {
     }
 
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
+        return byteBufferInfo(byteBuffer, true);
+    }
+
+    public static String byteBufferInfo(final ByteBuffer byteBuffer, final boolean decodeToStr) {
         if (byteBuffer == null) {
             return "null";
         }
 
         final String value = byteBufferToHexAll(byteBuffer);
-        return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
-                byteBuffer.capacity(),
-                byteBuffer.position(),
-                byteBuffer.limit(),
-                byteBuffer.remaining(),
-                value,
-                StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
+        if (decodeToStr) {
+            return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
+                    byteBuffer.capacity(),
+                    byteBuffer.position(),
+                    byteBuffer.limit(),
+                    byteBuffer.remaining(),
+                    value,
+                    StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
+        } else {
+            return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}]",
+                    byteBuffer.capacity(),
+                    byteBuffer.position(),
+                    byteBuffer.limit(),
+                    byteBuffer.remaining(),
+                    value);
+        }
     }
 
-//    public static String byteBufferToAllForms(final ByteBuffer byteBuffer) {
-//        if (byteBuffer == null) {
-//            return "null";
-//        }
-//        return ByteArrayUtils.byteArrayToAllForms(toBytes(byteBuffer));
-//    }
-//
-//    public static int compare(final ByteBuffer left, final ByteBuffer right) {
-//        int cmpResult = stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
-//                left, left.position(), left.remaining(),
-//                right, right.position(), right.remaining());
-//
-//        LOGGER.trace(() -> LogUtil.message("compare({}, {}) returned {}",
-//                ByteBufferUtils.byteBufferInfo(left),
-//                ByteBufferUtils.byteBufferInfo(right),
-//                cmpResult));
-//        return cmpResult;
-//
-//    }
-
-    public static int compareTo(ByteBuffer buf1, int o1, int l1, ByteBuffer buf2, int o2, int l2) {
-        return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(buf1, o1, l1, buf2, o2, l2);
-    }
 
     /**
      * Compare two {@link ByteBuffer} objects as if they are longs
@@ -239,9 +229,9 @@ public class ByteBufferUtils {
      * Compare two {@link ByteBuffer} objects as if they are longs
      *
      * @param left     A {@link ByteBuffer} representing a long
-     * @param leftPos  The absolute position of the long in the the left {@link ByteBuffer}
+     * @param leftPos  The absolute position of the long in the left {@link ByteBuffer}
      * @param right    A {@link ByteBuffer} representing a long
-     * @param rightPos The absolute position of the long in the the right {@link ByteBuffer}
+     * @param rightPos The absolute position of the long in the right {@link ByteBuffer}
      * @return The result of the comparison, 0 if identical, <0 if left < right,
      * >0 if left < right
      */
@@ -257,7 +247,7 @@ public class ByteBufferUtils {
     public static int compareAsLong(final long left, final ByteBuffer right, final int rightPos) {
 
         long val = left;
-        byte[] leftBytes = new byte[8];
+        final byte[] leftBytes = new byte[8];
         for (int i = 7; i >= 0; i--) {
             leftBytes[i] = (byte) (val & 0xFF);
             val >>= 8;
@@ -271,13 +261,13 @@ public class ByteBufferUtils {
         int cmp = 0;
 
         for (int i = 0; i < Long.BYTES && cmp == 0; i++) {
-            int iRight = i + rightPos;
+            final int iRight = i + rightPos;
             cmp = (i == 0 || (leftBytes[i] >= 0 == right.get(iRight) >= 0))
                     ? leftBytes[i] - right.get(iRight)
                     : right.get(iRight) - leftBytes[i];
         }
 //        final int cmp2 = cmp;
-//        LAMBDA_LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
+//        LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
 //                byteBufferInfo(left), leftPos,
 //                byteBufferInfo(right), rightPos,
 //                cmp2));
@@ -310,21 +300,8 @@ public class ByteBufferUtils {
     }
 
     public static boolean containsPrefix(final ByteBuffer buffer, final ByteBuffer prefixBuffer) {
-        boolean result = true;
-        if (buffer.remaining() < prefixBuffer.remaining()) {
-            result = false;
-        } else {
-            for (int i = 0; i < prefixBuffer.remaining(); i++) {
-                if (prefixBuffer.get(i) != buffer.get(i)) {
-                    result = false;
-                    break;
-                }
-            }
-        }
-//        boolean result2 = result;
-//        LOGGER.trace(() -> LogUtil.message("containsPrefix({} {}) returns {}",
-//                ByteBufferUtils.byteBufferInfo(buffer), ByteBufferUtils.byteBufferInfo(prefixBuffer), result2));
-        return result;
+        final int pos = prefixBuffer.mismatch(buffer);
+        return pos == -1 || pos == prefixBuffer.limit();
     }
 
     public static void copy(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
@@ -349,7 +326,7 @@ public class ByteBufferUtils {
      * buffer. The new buffer will be flipped to set its position read for get operations
      */
     public static ByteBuffer copyToDirectBuffer(final ByteBuffer input) {
-        ByteBuffer output = ByteBuffer.allocateDirect(input.remaining());
+        final ByteBuffer output = ByteBuffer.allocateDirect(input.remaining());
         output.put(input);
         output.flip();
         input.rewind();
@@ -362,7 +339,7 @@ public class ByteBufferUtils {
      * buffer. The new buffer will be flipped to set its position read for get operations
      */
     public static ByteBuffer copyToHeapBuffer(final ByteBuffer input) {
-        ByteBuffer output = ByteBuffer.allocate(input.remaining());
+        final ByteBuffer output = ByteBuffer.allocate(input.remaining());
         output.put(input);
         output.flip();
         input.rewind();
@@ -373,21 +350,21 @@ public class ByteBufferUtils {
      * Credit for this code goes to Dima
      * (see https://stackoverflow.com/questions/34166809/faster-comparison-of-longs-in-byte-format)
      */
-    private static int compareAs(final ByteBuffer left, int leftPos,
-                                 final ByteBuffer right, int rightPos,
-                                 int length) {
+    private static int compareAs(final ByteBuffer left, final int leftPos,
+                                 final ByteBuffer right, final int rightPos,
+                                 final int length) {
 
 
         int cmp = 0;
         for (int i = 0; i < length && cmp == 0; i++) {
-            int iLeft = i + leftPos;
-            int iRight = i + rightPos;
+            final int iLeft = i + leftPos;
+            final int iRight = i + rightPos;
             cmp = (i == 0 || (left.get(iLeft) >= 0 == right.get(iRight) >= 0))
                     ? left.get(iLeft) - right.get(iRight)
                     : right.get(iRight) - left.get(iLeft);
         }
 //        final int cmp2 = cmp;
-//        LAMBDA_LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
+//        LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
 //                byteBufferInfo(left), leftPos,
 //                byteBufferInfo(right), rightPos,
 //                cmp2));
@@ -405,8 +382,8 @@ public class ByteBufferUtils {
     public static int basicHashCode(final ByteBuffer byteBuffer) {
         int hash = 1;
 
-        int pos = byteBuffer.position();
-        int limit = byteBuffer.limit();
+        final int pos = byteBuffer.position();
+        final int limit = byteBuffer.limit();
         for (int i = pos; i < limit; ++i) {
             hash = 31 * hash + byteBuffer.get(i);
         }
@@ -423,7 +400,7 @@ public class ByteBufferUtils {
     /**
      * Get the requested length number of bytes from the specified index.
      */
-    public static byte[] toBytes(final ByteBuffer byteBuffer, int index, int length) {
+    public static byte[] toBytes(final ByteBuffer byteBuffer, final int index, final int length) {
         final byte[] arr = new byte[length];
         byteBuffer.get(index, arr, 0, length);
         return arr;
@@ -431,9 +408,13 @@ public class ByteBufferUtils {
 
     public static byte[] getBytes(final ByteBuffer byteBuffer) {
         final ByteBuffer dupBuffer = byteBuffer.duplicate();
-        byte[] result = new byte[dupBuffer.remaining()];
+        final byte[] result = new byte[dupBuffer.remaining()];
         dupBuffer.get(result);
         return result;
+    }
+
+    public static String toString(final ByteBuffer byteBuffer) {
+        return new String(toBytes(byteBuffer), StandardCharsets.UTF_8);
     }
 
     /**
@@ -471,4 +452,60 @@ public class ByteBufferUtils {
 //    public static void debugCurrent(final UnsafeByteBufferOutput output) {
 //        debugCurrent(output.getByteBuffer());
 //    }
+
+    /**
+     * Add max unsigned byte padding to the supplied buffer.
+     *
+     * @param byteBuffer The buffer to write to.
+     * @param length     The number of bytes to write.
+     */
+    public static void padMax(final ByteBuffer byteBuffer, final int length) {
+        for (int i = 0; i < length; i++) {
+            byteBuffer.put(MAX_BYTE_UNSIGNED);
+        }
+    }
+
+    /**
+     * Add max unsigned byte padding to the supplied buffer.
+     *
+     * @param byteBuffer The buffer to write to.
+     * @param offset     The offset to start writing at.
+     * @param length     The number of bytes to write.
+     */
+    public static void padMax(final ByteBuffer byteBuffer, final int offset, final int length) {
+        for (int i = offset; i < offset + length; i++) {
+            byteBuffer.put(i, MAX_BYTE_UNSIGNED);
+        }
+    }
+
+    /**
+     * Check for byte buffer equality over portions of two buffers. This is generally quicker than slicing as no object
+     * creation is required.
+     *
+     * @param a      Byte buffer 1.
+     * @param aOff   Byte buffer 1 offset.
+     * @param b      Byte buffer 2.
+     * @param bOff   Byte buffer 2 offset.
+     * @param length Length to compare.
+     * @return True if byte buffer portions are equal.
+     */
+    public static boolean equals(final ByteBuffer a,
+                                 final int aOff,
+                                 final ByteBuffer b,
+                                 final int bOff,
+                                 final int length) {
+        if (length > 7) {
+            return a.slice(aOff, length).equals(b.slice(bOff, length));
+        }
+        for (int i = 0; i < length; i++) {
+            if (a.get(aOff + i) != b.get(bOff + i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void skip(final ByteBuffer byteBuffer, final int len) {
+        byteBuffer.position(byteBuffer.position() + len);
+    }
 }

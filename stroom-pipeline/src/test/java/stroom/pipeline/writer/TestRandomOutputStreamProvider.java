@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestRandomOutputStreamProvider extends StroomUnitTest {
 
     @Test
-    void testCycleDirs(@TempDir Path tempDir) throws IOException {
+    void testCycleDirs(@TempDir final Path tempDir) throws IOException {
         final FileAppender provider = buildTestObject(tempDir);
 
         boolean found1 = false;

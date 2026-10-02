@@ -1,10 +1,27 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app.commands;
 
 import stroom.config.app.Config;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.security.api.SecurityContext;
 import stroom.security.identity.account.AccountDao;
+import stroom.security.identity.shared.Account;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Injector;
 import event.logging.AuthenticateAction;
@@ -31,7 +48,7 @@ public class ResetPasswordCommand extends AbstractStroomAppCommand {
 
     private static final String COMMAND_NAME = "reset_password";
     private static final String COMMAND_DESCRIPTION = "Reset the password of the user account " +
-            "in the internal identity provider";
+                                                      "in the internal identity provider";
 
     private static final String USERNAME_ARG_NAME = "user";
     private static final String PASSWORD_ARG_NAME = "password";
@@ -40,18 +57,13 @@ public class ResetPasswordCommand extends AbstractStroomAppCommand {
             USERNAME_ARG_NAME,
             PASSWORD_ARG_NAME);
 
-    private final Path configFile;
-
     @Inject
     private AccountDao accountDao;
-    @Inject
-    private SecurityContext securityContext;
     @Inject
     private StroomEventLoggingService stroomEventLoggingService;
 
     public ResetPasswordCommand(final Path configFile) {
         super(configFile, COMMAND_NAME, COMMAND_DESCRIPTION);
-        this.configFile = configFile;
     }
 
     @Override
@@ -81,17 +93,34 @@ public class ResetPasswordCommand extends AbstractStroomAppCommand {
                                      final Namespace namespace,
                                      final Config config,
                                      final Injector injector) {
-
         final String username = namespace.getString(USERNAME_ARG_NAME);
+        if (NullSafe.isEmptyString(username)) {
+            throw new RuntimeException("Username must be provided");
+        }
+
         final String newPassword = namespace.getString(PASSWORD_ARG_NAME);
+        if (NullSafe.isEmptyString(newPassword)) {
+            throw new RuntimeException("Password must be provided");
+        }
 
         LOGGER.debug("Resetting password for account {}", username);
 
         injector.injectMembers(this);
 
+        // Refuse to reset a disabled account. resetPassword() clears the disabled/inactive/locked flags as
+        // well as setting the password, so resetting a deliberately disabled account would silently
+        // re-enable it. Require an administrator to enable it explicitly first.
+        final Account account = accountDao.get(username)
+                .orElseThrow(() -> new RuntimeException("No account exists for user " + username));
+        if (!account.isEnabled()) {
+            throw new RuntimeException("The account for user " + username + " is disabled. Enable it first "
+                                       + "(e.g. with the 'manage_users' command) before resetting its "
+                                       + "password, so the reset does not silently re-enable it.");
+        }
+
         accountDao.resetPassword(username, newPassword);
 
-        String msg = LogUtil.message("Password reset complete for user {}", username);
+        final String msg = LogUtil.message("Password reset complete for user {}", username);
         LOGGER.info(msg);
         logEvent(username, true, msg);
     }

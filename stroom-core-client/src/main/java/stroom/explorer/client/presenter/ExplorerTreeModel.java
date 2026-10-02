@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import stroom.explorer.shared.NodeFlag.NodeFlagGroups;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -126,7 +127,7 @@ public class ExplorerTreeModel {
         this.ensureVisible = null;
         if (NullSafe.hasItems(ensureVisible)) {
             this.ensureVisible = new HashSet<>();
-            for (ExplorerNode node : ensureVisible) {
+            for (final ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
                     this.ensureVisible.add(node.getUniqueKey());
 //                    GWT.log("setEnsureVisible: " + node.getName());
@@ -139,7 +140,7 @@ public class ExplorerTreeModel {
         this.ensureVisible = null;
         if (NullSafe.hasItems(ensureVisible)) {
             this.ensureVisible = new HashSet<>();
-            for (ExplorerNode node : ensureVisible) {
+            for (final ExplorerNode node : ensureVisible) {
                 if (node != null && node.getUniqueKey() != null) {
                     this.ensureVisible.add(node.getUniqueKey());
 //                    GWT.log("setEnsureVisible: " + node.getName());
@@ -207,8 +208,8 @@ public class ExplorerTreeModel {
     private void handleFetchResult(final FetchExplorerNodesRequest criteria,
                                    final FetchExplorerNodeResult result) {
 //        GWT.log("handleFetchResult - filter: " + result.getQualifiedFilterInput()
-//                + " openItems: " + GwtNullSafe.size(result.getOpenedItems())
-//                + " tempOpenedItems: " + GwtNullSafe.size(result.getTemporaryOpenedItems()));
+//                + " openItems: " + NullSafe.size(result.getOpenedItems())
+//                + " tempOpenedItems: " + NullSafe.size(result.getTemporaryOpenedItems()));
 
         fetching = false;
         // Check if the filter settings have changed
@@ -233,6 +234,13 @@ public class ExplorerTreeModel {
 
             // Remember the new tree structure.
             this.currentRootNodes = result.getRootNodes();
+            // update() replaces all rows, which resets the tree's scroll position to the top. If the
+            // currently selected item is about to disappear (e.g. it was just deleted) there will be
+            // nothing to scroll back to, so the view would be left jumped to the top. Remember the
+            // selected item and the row above it now, so we can keep that row in view below.
+            final ExplorerNode previousSelection = NullSafe.get(
+                    explorerTree.getSelectionModel(), MultiSelectionModelImpl::getSelected);
+            final ExplorerNode nodeAboveSelection = explorerTree.getNodeAbove(previousSelection);
             // Update the tree.
             final List<ExplorerNode> rows = update();
 
@@ -251,7 +259,7 @@ public class ExplorerTreeModel {
                 if (nextSelection == null && includeNullSelection) {
                     nextSelection = NULL_SELECTION;
                 }
-                int index = rows.indexOf(nextSelection);
+                final int index = rows.indexOf(nextSelection);
                 if (index == -1) {
                     nextSelection = null;
 
@@ -283,6 +291,17 @@ public class ExplorerTreeModel {
             if (nextSelection != null) {
 //                GWT.log("nextSelection: " + nextSelection);
                 explorerTree.setInitialSelectedItem(nextSelection);
+            } else if (previousSelection != null && !rows.contains(previousSelection)) {
+                // The previously selected item has gone (e.g. it was just deleted). Select the row that
+                // was above it and reveal that, so the view stays where it was rather than jumping to the
+                // top. This reuses the same reveal path as selection follow, which scrolls reliably.
+                final int aboveIndex = rows.indexOf(nodeAboveSelection);
+                if (aboveIndex >= 0) {
+                    explorerTree.setInitialSelectedItem(rows.get(aboveIndex));
+                    // Also move the table's keyboard row here, otherwise the table re-focuses its
+                    // (reset) keyboard row after the data change and scrolls the view back to the top.
+                    explorerTree.setKeyboardSelectedRow(aboveIndex);
+                }
             }
 
             // We do not want the root to always be forced open.
@@ -331,7 +350,7 @@ public class ExplorerTreeModel {
     private void addToRows(final List<ExplorerNode> in,
                            final List<ExplorerNode> rows,
                            final Set<ExplorerNodeKey> openItems) {
-        for (ExplorerNode parent : in) {
+        for (final ExplorerNode parent : in) {
             if (openItems.contains(parent.getUniqueKey())) {
                 final ExplorerNode.Builder builder = parent.copy();
                 if (!parent.hasNodeFlag(NodeFlag.LEAF)) {

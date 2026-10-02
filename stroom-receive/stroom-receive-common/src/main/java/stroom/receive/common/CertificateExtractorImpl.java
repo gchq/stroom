@@ -17,8 +17,10 @@
 package stroom.receive.common;
 
 import stroom.util.cert.CertificateExtractor;
+import stroom.util.cert.DNFormat;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
@@ -27,8 +29,12 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.StringTokenizer;
 
 public class CertificateExtractorImpl implements CertificateExtractor {
 
@@ -46,7 +52,7 @@ public class CertificateExtractorImpl implements CertificateExtractor {
     @Override
     public Optional<String> getCN(final HttpServletRequest request) {
         return getDN(request)
-                .map(CertificateExtractor::extractCNFromDN);
+                .flatMap(this::extractCNFromDN);
     }
 
     @Override
@@ -74,12 +80,50 @@ public class CertificateExtractorImpl implements CertificateExtractor {
         return extractCertificate(request, receiveDataConfig, isRemoteHostTrusted);
     }
 
+    /**
+     * Given a DN and {@link DNFormat} pull out the CN. E.g.
+     * "CN=some.server.co.uk, OU=servers, O=some organisation, C=GB" and {@link DNFormat#LDAP} Would
+     * return "some.server.co.uk"
+     *
+     * @return null or the CN name
+     */
+    @Override
+    public Optional<String> extractCNFromDN(final String dn) {
+        final DNFormat dnFormat = Objects.requireNonNullElse(
+                receiveDataConfigProvider.get().getX509CertificateDnFormat(),
+                ReceiveDataConfig.DEFAULT_X509_CERT_DN_FORMAT);
+        LOGGER.debug("extractCNFromDN dnFormat: {}, DN: '{}'", dnFormat, dn);
+
+        if (dn == null) {
+            return Optional.empty();
+        }
+        final StringTokenizer attributes = new StringTokenizer(dn, dnFormat.getDelimiter());
+
+        if (attributes.hasMoreTokens()) {
+            final Map<String, String> map = new HashMap<>();
+            while (attributes.hasMoreTokens()) {
+                final String token = attributes.nextToken();
+                if (token.contains("=")) {
+                    final String[] parts = token.split("=");
+                    if (parts.length == 2) {
+                        map.put(parts[0].trim().toUpperCase(), parts[1].trim());
+                    }
+                }
+            }
+            final String cn = map.get("CN");
+            LOGGER.debug("extractCNFromDN() - DN: '{}', CN: '{}'", dn, cn);
+            return Optional.ofNullable(cn);
+        }
+        return Optional.empty();
+    }
+
     private Optional<String> extractDNFromRequest(final HttpServletRequest request,
                                                   final ReceiveDataConfig receiveDataConfig,
                                                   final boolean isRemoteHostTrusted) {
         final String x509CertificateDnHeader = receiveDataConfig.getX509CertificateDnHeader();
         final String clientDn = request.getHeader(x509CertificateDnHeader);
-        LOGGER.debug(() -> x509CertificateDnHeader + " = " + clientDn);
+        LOGGER.debug("extractDNFromRequest() - x509CertificateDnHeader '{}', clientDn: '{}'",
+                x509CertificateDnHeader, clientDn);
         Optional<String> optDn = NullSafe.isNonBlankString(clientDn)
                 ? Optional.of(clientDn)
                 : Optional.empty();
@@ -96,21 +140,24 @@ public class CertificateExtractorImpl implements CertificateExtractor {
         final Set<String> allowedCertificateProviders = receiveDataConfig.getAllowedCertificateProviders();
         if (NullSafe.hasItems(allowedCertificateProviders)) {
             final String remoteHost = request.getRemoteHost();
+            String remoteAddr = null;
 
             boolean isTrusted = false;
             if (NullSafe.isNonBlankString(remoteHost)) {
                 isTrusted = allowedCertificateProviders.contains(remoteHost);
             }
             if (!isTrusted) {
-                final String remoteAddr = request.getRemoteAddr();
+                remoteAddr = request.getRemoteAddr();
                 if (NullSafe.isNonBlankString(remoteAddr)) {
                     isTrusted = allowedCertificateProviders.contains(remoteAddr);
                 }
             }
-            LOGGER.debug("isTrusted: {}, remoteHost: {}, remoteAddr: {}, allowedCertificateProviders: {}",
-                    isTrusted, request.getRemoteHost(), request.getRemoteAddr(), allowedCertificateProviders);
+            LOGGER.debug("isRemoteHostTrustedCertProvider() - isTrusted: {}, remoteHost: {}, remoteAddr: {}, " +
+                         "allowedCertificateProviders: {}",
+                    isTrusted, remoteHost, remoteAddr, allowedCertificateProviders);
             return isTrusted;
         } else {
+            LOGGER.debug("isRemoteHostTrustedCertProvider");
             return true;
         }
     }
@@ -134,13 +181,13 @@ public class CertificateExtractorImpl implements CertificateExtractor {
     private void logUntrustedHostWarning(final ServletRequest request,
                                          final ReceiveDataConfig receiveDataConfig,
                                          final String headerKey) {
-        LOGGER.warn("Untrusted host {} ({}) using header {}. The header will be ignored. " +
-                    "If the host should be trusted then add the host/IP to the " +
-                    "configuration property '{}'",
+        LOGGER.warn(() -> LogUtil.message("Untrusted host {} ({}) using header {}. The header will be ignored. " +
+                                          "If the host should be trusted then add the host/IP to the " +
+                                          "configuration property '{}'",
                 request.getRemoteHost(),
                 request.getRemoteAddr(),
                 headerKey,
-                receiveDataConfig.getFullPath(ReceiveDataConfig.PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS));
+                receiveDataConfig.getFullPath(ReceiveDataConfig.PROP_NAME_ALLOWED_CERTIFICATE_PROVIDERS)));
     }
 
     private static Optional<X509Certificate> extractCertificate(final ServletRequest request,
@@ -148,7 +195,7 @@ public class CertificateExtractorImpl implements CertificateExtractor {
         final Object[] certs = (Object[]) request.getAttribute(attributeName);
         return Optional.ofNullable(certs)
                 .flatMap(certs2 -> {
-                    LOGGER.debug(() -> "Found certificate using " + attributeName + " header");
+                    LOGGER.debug("Found certificate using '{}' header", attributeName);
                     return extractCertificate(certs);
                 });
     }
@@ -161,8 +208,8 @@ public class CertificateExtractorImpl implements CertificateExtractor {
      */
     private static Optional<X509Certificate> extractCertificate(final Object[] certs) {
         for (final Object cert : certs) {
-            if (cert instanceof X509Certificate) {
-                return Optional.of((X509Certificate) cert);
+            if (cert instanceof final X509Certificate x509Certificate) {
+                return Optional.of(x509Certificate);
             }
         }
         return Optional.empty();
@@ -177,70 +224,4 @@ public class CertificateExtractorImpl implements CertificateExtractor {
     private static Optional<String> extractDNFromCertificate(final X509Certificate cert) {
         return Optional.ofNullable(cert.getSubjectDN().getName());
     }
-
-    //    /**
-//     * User ID's are embedded in brackets at the end.
-//     */
-//    private static String extractUserIdFromCN(final String cn) {
-//        if (cn == null) {
-//            return null;
-//        }
-//        final int startPos = cn.indexOf('(');
-//        final int endPos = cn.indexOf(')');
-//
-//        if (startPos != -1 && endPos != -1 && startPos < endPos) {
-//            return cn.substring(startPos + 1, endPos);
-//        }
-//        return cn;
-//
-//    }
-//
-//    /**
-//     * User ID's are embedded in brackets at the end.
-//     */
-//    private static String extractUserIdFromDN(final String dn, final Pattern pattern) {
-//        final String normalisedDN = dnToRfc2253(dn);
-//        final Matcher matcher = pattern.matcher(normalisedDN);
-//        if (matcher.find()) {
-//            return matcher.group(1);
-//        }
-//
-//        return null;
-//    }
-//
-//    /**
-//     * Normalise an RFC 2253 Distinguished Name so that it is consistent. Note
-//     * that the values in the fields should not be normalised - they are
-//     * case-sensitive.
-//     *
-//     * @param dn Distinguished Name to normalise. Must be RFC 2253-compliant
-//     * @return The DN in RFC 2253 format, with a consistent case for the field
-//     * names and separation
-//     */
-//    private static String dnToRfc2253(final String dn) {
-//        if (LOGGER.isTraceEnabled()) {
-//            LOGGER.trace("Normalising DN: " + dn);
-//        }
-//
-//        if (dn == null) {
-//            return null;
-//        }
-//
-//        if (dn.equalsIgnoreCase("anonymous")) {
-//            LOGGER.trace("Anonymous is a special case - returning as-is");
-//            return dn;
-//        }
-//
-//        try {
-//            final X500Principal x500 = new X500Principal(dn);
-//            final String normalised = x500.getName();
-//            if (LOGGER.isTraceEnabled()) {
-//                LOGGER.trace("Normalised DN: " + normalised);
-//            }
-//            return normalised;
-//        } catch (final IllegalArgumentException e) {
-//            LOGGER.error("Provided value is not a valid Distinguished Name; it will be returned as-is: " + dn, e);
-//            return dn;
-//        }
-//    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,21 @@
 
 package stroom.search.impl;
 
-import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.index.impl.IndexFieldService;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.LuceneIndexDocCache;
 import stroom.index.impl.LuceneProviderFactory;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneVersionUtil;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.Query;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.IndexField;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
@@ -61,6 +62,7 @@ public class LuceneSearchProvider implements SearchProvider {
     private final LuceneProviderFactory luceneProviderFactory;
     private final IndexFieldService indexFieldService;
     private final IndexFieldCache indexFieldCache;
+    private final DocFinder docFinder;
 
     @Inject
     public LuceneSearchProvider(final IndexStore indexStore,
@@ -72,7 +74,8 @@ public class LuceneSearchProvider implements SearchProvider {
                                 final NodeSearchTaskCreator nodeSearchTaskCreator,
                                 final LuceneProviderFactory luceneProviderFactory,
                                 final IndexFieldService indexFieldService,
-                                final IndexFieldCache indexFieldCache) {
+                                final IndexFieldCache indexFieldCache,
+                                final DocFinder docFinder) {
         this.indexStore = indexStore;
         this.luceneIndexDocCache = luceneIndexDocCache;
         this.securityContext = securityContext;
@@ -83,6 +86,7 @@ public class LuceneSearchProvider implements SearchProvider {
         this.luceneProviderFactory = luceneProviderFactory;
         this.indexFieldService = indexFieldService;
         this.indexFieldCache = indexFieldCache;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -211,6 +215,11 @@ public class LuceneSearchProvider implements SearchProvider {
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         return indexStore.list();
+    }
+
+    @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return docFinder.findByName(getDataSourceType(), name);
     }
 
     @Override

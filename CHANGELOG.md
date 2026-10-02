@@ -13,6 +13,1260 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.14-beta.5] - 2026-09-30
+
+* Feature **#5551** : Display API key expiry date in red when the key is expired or will expire in <30 days. Change the text in brackets to show `(EXPIRED)` when the key has expired.
+
+* Bug : Fix null pointer exception when entering an empty expiry date for an API key.
+
+* Feature : Log warnings when an API is used that has expired or will expire in <30days.
+
+* Bug : Add missing cache invalidation to API Key Cache when API keys are updated/deleted.
+
+* Feature : Change the Credentials Manager Expires column to use formatting consisten with the API keys screen.
+
+* Bug : Fix API authentication on proxy and stroom datafeed. Proxy can now use either the forwarder configured API key or the downstream host configured API key to forward to stroom.
+
+* Bug **#5817** : Change fsync configuration to allow file and directory fsync to be enabled/disabled separately. All fsync props have been changed from a boolean to an enum with values (DISALBED|FILE_ONLY|DIR_ONLY|ENABLED). The proxy config prop `proxyConfig.forwardFileDestinations[*].fsyncEnabled` has changed to `proxyConfig.forwardFileDestinations[*].fsyncMode`. The proxy props `proxyConfig.fsync.(aggregateInputQueue|forwardingInputQueue|preAggregateInputQueue|receiving|zipSplittingInputQueue)` have been renamed to `proxyConfig.fsync.(aggregateInputQueueMode|forwardingInputQueueMode|preAggregateInputQueueMode|receivingMode|zipSplittingInputQueueMode)`. The stroom prop `appConfig.data.store.fsyncEnabled` has been reanamed to `appConfig.data.store.fsyncMode`.
+
+* Bug **#5818** : Add missing `lucene-backward-codecs:10.3.2` runtime dependency.
+
+
+## [v7.14-beta.4] - 2026-09-25
+
+* Bug **#5809** : Change the Admin account bootstrap process to use `tryLock` rather than `lock` to save holding up the other nodes.
+
+* Bug **#5811** : Fix json deserialisation of data feed identities file that was causing `No value type configured for ObjectReader`.
+
+* Bug **#5721** : Fix Git sync failing with `Not in GZIP format` when something between Stroom and the Git server decompresses the response but leaves the `Content-Encoding: gzip` header in place. Stroom now ignores a `Content-Encoding` that the body contradicts, and logs a warning naming the problem.
+
+* Bug **#5801** : Fix Jackson deserialisation of primitives where value is null.
+
+* Bug **#5799** : Add fsync options to Stroom-Proxy so data can be forced to durable storage before receipt is acknowledged and after forwarding. Configured per pipeline phase under `proxyConfig.fsync` and per forward file destination via `fsyncEnabled`.
+
+* Bug **#5804** : Add fsync option to the app to improve data durability.
+
+* Bug **#5773** : Report a clear error when a dense vector rerank score field is queried without its matching rerank value field, rather than failing with a null pointer error.
+
+* Bug **#5800** : Log audit events for node group membership changes and for setting a global config property. Both were silently producing no audit event because the automatic logger could not determine a before or after value.
+
+* Feature **#5775** : Add `dropwizard-json-logging` runtime dependency so that JSON format app/request logging can be used. See https://www.dropwizard.io/en/stable/manual/configuration.html#json-layout for details of the YAML configuration required to enable it. Add new proxy config property `proxyConfig.logStream.useMappedDiagnosticContext` to support structured JSON logging. Add `type` to the `proxyConfig.logStream.metaKeys` default list so the stream type gets logged.
+
+
+## [v7.14-beta.3] - 2026-09-14
+
+* Bug **#5793** : Fix `No enabled forward destinations are configured` error when booting proxy with only an S3 forward destination enabled.
+
+
+## [v7.14-beta.2] - 2026-09-11
+
+* Change all uses of `Math.random()` to instead use `ThreadLocalRandom` instead. Affects `random` xslt/expr funcs, appender output path selection and data/index volume selection.
+
+* Fix the random distribution of `outputPaths` values in `(File|HDFS|Rolling)Appender`. First and last items in the list were getting a lower share than other values.
+
+* Fix NPE if `outputPaths` is null on `(Rolling|Hdfs|File)Appender`.
+
+* Uplift AWS SDK to v2.40.5.
+
+* Feature **#5771** : Traces: store, publish and browse as a first-class document type on a shared fs.
+
+* Feature **#5775** : Add `dropwizard-json-logging` runtime dependency so that JSON format app/request logging can be used. See https://www.dropwizard.io/en/stable/manual/configuration.html#json-layout for details of the YAML configuration required to enable it. Add new proxy config property `proxyConfig.logStream.useMappedDiagnosticContext` to support structured JSON logging. Add `type` to the `proxyConfig.logStream.metaKeys` default list so the stream type gets logged.
+
+* Bug : Fix error handling in stream viewer when data does not exist in S3.
+
+* Feature **#5546** : Add an S3 forwarder to proxy to forward proxy format ZIPs to S3. Add an SQS consumer to Stroom to consume S3 create events and create a meta record for the S3 based file. Add the volume type `S3 v1 (Read only)` for reading data from an S3 store that Stroom only has read access to.
+
+* Feature **#5279** : Add experimental volume type `S3 v2 (Experimental)` that uses framed ZStandard compression. This is work in progress and not for production use.
+
+
+## [v7.14-beta.1] - 2026-09-03
+
+* Feature **#5662** : Add stepping data store to cache stepping data and improve stepping performance.
+
+* Bug **#5683** : Fix processor filters silently skipping a stream that was still being committed when task creation read the max stream id, leaving it permanently unprocessed. Task creation is now bounded by the max stream id seen on the previous poll, which costs up to one poll interval of extra latency before a new stream gets a task and can be turned off with the property `stroom.processor.useMaxMetaIdFromPreviousPoll`.
+
+* Feature **#5690** : Add task creation linear backoff to reduce futile attempts to create tasks for filters with less/no data to process.
+
+* Feature **#5691** : Add task creation budgets per processor profile to ensure all profiles get tasks to process.
+
+* Feature **#5699** : Add a per-task heartbeat job that renews the status time of tasks a node is processing, so live long-running tasks can be told apart from tasks owned by a dead node. Note that for processing tasks the Status Time now shows the time of the last heartbeat.
+
+* Feature **#5699** : Replace the master-only Disown Dead Tasks job with a cluster-locked Processor Task Reaper driven by per-task heartbeats: stale processing tasks are returned to the task queue even when there is no master node, a node that cannot renew its heartbeats terminates its own in-flight tasks to prevent duplicate output, and a task status write that loses its optimistic lock is abandoned instead of forced. The stroom.processor.disownDeadTasksAfter property is replaced by stroom.processor.taskLeaseTimeout. This must not be deployed in the same release as the task heartbeat change - every node must already be heart-beating before the reaper replaces the node-contact check, or long-running tasks on not-yet-upgraded nodes will be falsely reaped.
+
+* Feature **#5699** : Add the per node processor task availability summary and eligible filter computation that let a worker node work out for itself which processor filters it is allowed to process and which of them have tasks waiting, in a single query rather than one per filter. Not yet used to claim tasks. Adds the stroom.processor.taskAvailabilityInterval property.
+
+* Feature **#5699** : Restoring a logically deleted processor filter, e.g. by importing a filter over one that was deleted, now replaces it with a new filter that takes over its UUID and records the deleted filter as its parent, instead of resetting the deleted filter's tracker and reusing it. This keeps a processor filter ID meaning one fixed body of work, so that the completed tasks of the old filter still refer to a tracker that reflects them, and adds the processor_filter.parent_filter_id column. Note that restoring a filter that still has active tasks no longer fails.
+
+* Feature **#5699** : Add an experimental mode, stroom.processor.claimTasksOnWorker, **off by default**, in which each worker node finds and claims its own processor tasks directly from the database rather than being fed by the task queue held in memory on the master node. It is not yet proven in production, so leave it off unless you have been asked to trial it; with it off Stroom behaves as before, using the master's task queue. A worker knows which filters its own processing profiles allow it to run, so it no longer has to be guessed at on its behalf, and task assignment no longer depends on there being a master node. Tasks are claimed with SKIP LOCKED so that nodes claiming at the same time get different tasks, oldest first. A new ProcessorTaskClaiming system info entry gathers what every node is doing at the moment it is asked, replacing the master only view of the task queue. This must be set the same on every node and changing it is a hard cutover: stop the whole cluster, change the value everywhere, then start it again. Running a mixed cluster is not supported. Tasks left behind by either mode are returned to the created state and reprocessed, so switching either way loses no work, though tasks that were in flight when the cluster stopped wait for stroom.processor.taskLeaseTimeout before another node picks them up. The Processor Task Reaper also returns any tasks left behind by the master's queue to the created state once this mode is on.
+
+* Bug **#5713** : Fix `bitmap-lookup` returning the values of the matched bit positions concatenated with no delimiter. The values are now space delimited as documented.
+
+* Feature **#1890** : Add an optional sixth argument to `bitmap-lookup` to set the delimiter placed between the values of the matched bit positions. Defaults to a single space.
+
+* Bug : DataGen Issues.
+
+* Feature **#5751** : Add `ask-ai()` XSLT and `askAi()` StroomQL functions to ask a named OpenAI model a question and return its answer.
+
+* Feature **#5761** : Add AI summaries to reports.
+
+
+## [v7.13-beta.15] - 2026-09-03
+
+* Feature **#5758** : Track Ask Stroom AI queries in Task Manager so they can be cancelled by an operator.
+
+* Bug **#5766** : Fix scheduled query and table builder analytic rules including the rule's documentation in detections when `Include Rule Documentation` is unticked.
+
+* Bug **#5768** : Fix reports always being sent even when `Send Empty Reports` is unticked and the report has no rows.
+
+* Bug **#5770** : Fix `Use Source Feed If Possible` having no effect, so a streaming rule again writes its detections to the feed the source data came from. The option is ignored, and disabled in the user interface, for rules that are not streaming.
+
+* Feature **#5774** : Add `Level` and `Status` to an Analytic Rule, which are written to every detection the rule produces and are available to notification email templates as `{{ level }}` and `{{ status }}`.
+
+* Refactor **#5774** : Move `Include Rule Documentation` and `Feed For Errors` from the Notifications tab of an Analytic Rule or Report to a new Settings tab, so the Notifications tab holds only notifications.
+
+
+## [v7.13-beta.14] - 2026-09-02
+
+* Bug **#5747** : Fix Stroom AI integration to support redirects.
+
+* Bug **#5749** : Fix Ask Stroom AI so that it can deliver partial results if possible if the user terminates a request or a request fails.
+
+* Bug **#5752** : Persist Ask Stroom AI settings to user preferences.
+
+* Bug **#5756** : Enable Ask Stroom AI cancel button while query is in progress.
+
+* Bug **#5764** : Add in missing SimpleMail batch module dependency to stop errors when sending email.
+
+
+## [v7.13-beta.13] - 2026-08-27
+
+* Bug : Stop creation of content templates and data retention docs when they are just being fetched.
+
+* Bug : Fix error when trying to edit content templates, data retention rules and data receipt rules.
+
+* Bug **#5738** : Improve the error message produced by the `json-to-xml` XSLT function and the `JSONParser` pipeline element when the JSON is invalid.
+
+* Bug **#5742** : Fix meta DB performance issues.
+
+* Bug **#5745** : Fix meta find query performance.
+
+
+## [v7.13-beta.12] - 2026-08-18
+
+* Bug **#5730** : Fix doc create permission bug.
+
+* Bug **#5732** : Fix locate button enabled state.
+
+
+## [v7.13-beta.11] - 2026-08-17
+
+* Refactor : Change YAML config code back to using the legacy Jackson v2 as this is consistent with the current version of DropWizard.
+
+* Bug : Fix (de)serialisation of enum values in YAML files. Now correctly uses the enum name rather than toString value.
+
+* Bug : IMPORTANT! Rename DB migration scripts from `V07_14...` to `V07_13...` to correctly match the branch. This will break the DB migration when deploying the next release **IF** you have deployed **ANY** 7.13 version that is less than or equal to `v7.13-beta.10`. If you have deployed an earlier 7.13 version, you need to run the following script before running the next Stroom version to update the schema_history tables with the new names: https://raw.githubusercontent.com/gchq/stroom/refs/heads/7.13/scripts/v07_13_migration_script_rename.sql.
+
+* Bug **#5688** : Failed CSV search requests now return sensible error responses.
+
+* Bug **#5688** : Tell CSV search callers whether their results are complete, and add `incremental` and `timeout` query parameters so a slow query can return its full result set rather than silently returning nothing.
+
+* Bug **#5719** : Fix favourites not including folders.
+
+* Bug **#5723** : Fix QuickFilter passing partial text to credentials.
+
+* Bug **#5724** : Fix QuickFilter field qualifier so it only applies to known fields. This allows unquoted date/time text.
+
+* Bug **#5720** : Fix QuickFilter fields for dependencies.
+
+* Bug **#5645** : Change the dashboard/query `xpath()` function to concatenate the values of all matched items, evaluate expressions with XPath 3.1 (Saxon) rather than XPath 1.0, take namespace prefix mappings as a single `'prefix:uri prefix2:uri2'` argument and ignore namespaces altogether when no mappings are supplied. It also adds an optional delimiter argument.
+
+* Bug : Change the dashboard/query `jq()` function to concatenate the values of all matched elements rather than rendering them as a Java list, e.g. `[2, 3]`. It also adds an optional delimiter argument and stops the expression being re-compiled for every row.
+
+* Bug **#5726** : Fix Stroom & Proxy docker images so the SIGTERM from a Docker `stop` is passed through to Dropwizard for a graceful shutdown.
+
+* Bug **#5705** : Log a failure to get a Plan B shard at debug level rather than error as the failure is rethrown and reported by the caller, e.g. to the stream processing error file.
+
+* Bug **#5705** : Stop a Plan B snapshot fetch treating a 304 Not Modified answer from the store node as a fetch failure, which made lookups fail once the snapshot of an unchanged store aged out.
+
+* Bug **#5707** : Fix `lastName` arg on create_account command being used for `firstName`.
+
+* Bug : Change stroom CLI commands to mask the value of arguments for key `password` in the logs.
+
+* Bug **#5706** : Log a failure to send Plan B data to a node at debug level rather than error as the failure is rethrown and reported by the caller, e.g. to the stream processing error file.
+
+* Feature **#5706** : Retry sending Plan B data to a node when the send fails at the transport level, e.g. a DNS lookup failure during a network blip, controlled by `stroom.planb.sendPartAttempts` (default 3) and `stroom.planb.sendPartRetryDelay` (default 10s).
+
+* Dependency : Uplift java in docker images to 25.0.3_9.
+
+* Bug **#4621** : Honour hidden columns when running Reports, and persist the hidden state of a column against Report and Analytic Rule documents so that it survives a save.
+
+* Bug **#5176** : Disable rule execution if no error feed is configured.
+
+* Bug **#5176** : Remove the need to set default feeds and nodes before being able to create rules and reports.
+
+* Bug **#5176** : Validate scheduled executors to ensure an execution node is specified.
+
+* Feature **#5712** : Add an optional `ignoreWarnings` boolean argument to the XSLT functions `stroom:host-name()` and `stroom:host-address()` to suppress the WARN that is logged when a DNS lookup fails.
+
+
+## [v7.13-beta.10] - 2026-08-05
+
+* Bug **#5553** : Fix DocRefInfo cache bug.
+
+* Feature **#5582** : Add proper audit trail to doc history and store snapshots of data changes to allow future restore.
+
+* Task **#5588** : Improve JOOQ code generation to work with Flyway to remove catch 22 issue.
+
+* Feature **#2109** : Add doc dependencies to DB to improve capability.
+
+* Feature **#1556** : Add safe delete feature now we can depend on a reliable dependency discovery service.
+
+* Feature **#4111** : Add confirmation details when deleting a folder.
+
+* Bug **#4073** : Stop explorer scrolling to the top on deleting an item.
+
+* Bug **#5697** : Fix the UI bootstrap never recognising a user authenticated by an edge proxy (e.g. AWS ALB + Cognito, NGINX + oauth2-proxy): `/api/auth/flow/v1/status` now accepts a verified request token, and the new `security.authentication.edgeAuthentication` config block suppresses stroom's own OIDC flow and supports edge-aware logout when the proxy is the relying party.
+
+* Feature **#5697** : Apply CSRF Origin/X-CSRF checks to state-changing requests whose credential was injected by an authenticating edge proxy (previously only session-cookie identities were checked), and reject cross-site browser requests carrying a request token unless they send `X-CSRF: 1`. In-browser clients that attach their own bearer token must now send `X-CSRF: 1` on state-changing requests when `edgeAuthentication.enabled` is set; non-browser automation and inter-node traffic are unaffected.
+
+* Feature **#5697** : Add `security.authentication.openId.authenticationRequestExtraParams` to append provider-specific parameters to the OIDC authentication request, e.g. Google's `access_type: offline` without which Google issues no refresh token and the session cannot outlive the first access token.
+
+* Bug **#5696** : Stop the Plan B merge processor deleting un-merged queued data at startup and stop merge queue consumers churning through the queue when merges are interrupted at shutdown. Data queued for merge now survives a restart and interrupted merges are rerun when the merge job next runs.
+
+* Bug **#5696** : Fix Plan B merges double counting for histograms and metrics on resume.
+
+* Bug **#5696** : Stop Plan B histogram and metric stores double counting when a merge is rerun, e.g. after an interrupted shutdown, a duplicate part delivery or a sender retry. Each part shard now carries an instance UUID and additive stores track per source merge progress, skipping fully merged sources and resuming interrupted merges exactly after their last commit.
+
+* Bug **#5696** : Backport the Plan B filter staging buffer reuse from 7.13 so that a pooled buffer is no longer allocated and abandoned for every value element loaded.
+
+* Bug **#5689** : Fix issue where snapshots were not found.
+
+* Bug **#5692** : Fix `getState()` reporting "No state doc can be found for name: ..." for a Plan B store. The Scylla backed state provider is no longer registered, so it can no longer mask the Plan B provider.
+
+* Bug **#5689** : Stop the Plan B startup cleanup deleting snapshots published by a node that stores shards, and stop a failed snapshot creation being recorded as a success, which could leave a shard that receives no further writes unable to publish a snapshot again.
+
+* Bug **#5689** : Rework the Plan B snapshot serving strategy. Slightly stale snapshot data is now served, bounded by `minTimeToKeepSnapshotEnv`, while a refresh happens in the background. Reads with no servable snapshot block on a fetch when it may succeed, e.g. the first fetch, and fail fast when one has recently failed. A NOT_MODIFIED response now counts as confirmation that data is current rather than being treated as a fetch failure, and the first fetch no longer happens during shard creation.
+
+
+## [v7.13-beta.9] - 2026-07-30
+
+* Bug **#5669** : Fix `HttpClientConfigConverter` not mapping `verifyHostname`, which prevented TLS hostname verification being disabled on HTTP clients.
+
+* Bug **#5671** : Run directory-scanner file ingest as the processing user so that receipt checks requiring a user succeed.
+
+* Feature **#5656** : Add feature to view sessions and revoke them and associated user tokens.
+
+* Bug **#5674** : Fix dirty behaviour on pipeline structure changes.
+
+* Feature **#5675** : Add HTTP and TLS configuration to Git repositories.
+
+* Bug **#5680** : Fix account migration script.
+
+* Bug **#5679** : Fix slow processor task assignment on large clusters. Task queueing now takes account of processing profiles so that tasks no node is allowed to process are not queued, and are released if a profile stops allowing them. Task assignment no longer repeatedly fills the queue when there is nothing to add, and only one request fills the queue at a time while the others wait for it.
+
+* Bug **#5679** : Fix processor task creation not recording errors against the filter tracker, and not stopping when a task creation limit has been reached.
+
+* Bug **#5685** : Fix inability to unset **Max Processing Tasks** on a processor filter.
+
+* Bug **#5678** : Fix processor task retention only using the `stroom.processor.deleteAge` value that was current when the node started. The `Processor Task Retention` job now reads the property on each run, so a change to it takes effect without a node restart.
+
+
+## [v7.13-beta.8] - 2026-07-27
+
+* Feature **#5656** : Add self service account unlocking for the internal identity provider, controlled by the new properties `stroom.security.identity.reactivateInactiveAccountsOnLogin` and `stroom.security.identity.allowLockedAccountPasswordReset`, and rebuild the 'Forgot password' reset page so that an emailed reset link can be completed.
+
+
+## [v7.13-beta.7] - 2026-07-16
+
+* Bug **#5663** : Fix OpenAPI spec for polymorphic types.
+
+* Bug **#5665** : Change the basis for time variable replacement from now() to the meta create time when the stream store uses S3. The S3Appender still used now(). Also fix a bug with use of pipeline scoped objects outside of pipeline scope.
+
+
+## [v7.13-beta.6] - 2026-07-14
+
+* Bug **#5647** : Fix user entered name being ignored when creating a new volume group.
+
+* Bug **#5646** : Fix onChange() behaviour for document edits.
+
+* Feature **#5652** : Support Elasticsearch nested field types in search.
+
+* Feature **#5654** : Support multiple dense_vector fields in Elasticsearch rerank search.
+
+* Bug **#5651** : Fix file uploads bug introduced by CSRF change.
+
+* Bug : Fix type in Data Volume validation message.
+
+* Bug **#5657** : Improve Plan B lookup error handling.
+
+
+## [v7.13-beta.5] - 2026-07-06
+
+* Feature **#5599** : Add XPath to query functions so that users can pull XML apart in Dashboard Tables.
+
+* Feature **#5600** : Add JQ to query functions so that users can pull JSON apart in Dashboard Tables.
+
+* Feature **#5559** : Improve node selection for node groups to allow select all and selection inversion.
+
+* Bug **#5560** : Fix processing schedule list label.
+
+* Feature **#5561** : Add feature to delete individual attachments and messages from AI chat history.
+
+* Feature **#5561** : Add time tooltips to AI chat messages.
+
+* Feature **#5561** : Fix user preferences resetting stroom AI preferences.
+
+* Feature **#5561** : Open and view attachments in the AI chat window.
+
+* Feature **#5561** : Add names to tables so they can be identified by stroom AI.
+
+* Bug **#5548** : Fix PlanB filter XML value bug.
+
+* Bug **#5562** : Add missing tab types to session restore.
+
+* Feature **#5565** : Make vector embedding dimension count configurable.
+
+* Feature **#5616** : Add  XSLT function for computing the similarity of two float vectors.
+
+* Bug **#5617** : Fix tab visibility on resize.
+
+* Bug **#5621** : Support numeric comparators for Elasticsearch float and double fields.
+
+* Dependency **#5624** : Upgrade langchain4j and openai-java libs.
+
+* Feature **#5622** : Change Stroom UI auth flow so redirects are no longer required. Allows Stroom UI to be served from another location with BFF proxy.
+
+* Bug **#5573** : Fix Ask Stroom AI error handling behaviour when requests are too large.
+
+* Bug **#5574** : Fix Ask Stroom AI dock behaviour.
+
+* Feature **#5630** : Make embedding dimensions optional.
+
+* Bug **#5575** : Change ask Stroom AI table page menu item.
+
+* Bug **#5576** : Increase default AI model HTTP timeouts to 10 minutes.
+
+* Bug **#5585** : Fix dashboard tab rename bug.
+
+* Bug **#5577** : Fix bug affecting AI chat model selection.
+
+* Bug **#5601** : Fix bug stopping embedded queries being edited.
+
+* Bug **#5568** : Add analytic rule info to error stream messages.
+
+* Bug **#5636** : Fix expression term quote removal bug.
+
+* Bug **#5640** : Fix CSRF checks.
+
+* Bug **#5596** : Change S3Appender to replace path variables using the current time rather than the stream create time. This is to bring it into line with the FileAppender.
+
+* Bug **#5637** : Fix doc perm issue.
+
+* Bug **#5606** : Fix processor filter RunAs permissions.
+
+* Bug **#5605** : Fix pipeline stepping bug.
+
+
+## [v7.13-beta.4] - 2026-06-26
+
+* Dependency : Uplift AWS SDK to 2.46.7 and hbase-shaded-netty to 4.1.13.
+
+* Dependency : Uplift Dropwizard to 5.0.2.
+
+* Bug : Change the behaviour of JSON deserialisation to not error when a null value is encountered for a primitive type. This is how it used to behave in 7.12. However it now logs an error if a null primitive is encountered, so the corresponding Java class can be fixed to properly support null values.
+
+* Refactor **#5557** : Change config class constructors to correctly handle and default null primitive values on deserialisation from YAML.
+
+* Feature **#5567** : Stop the content index rebuilding on first use after a node reboot. Add config props `stroom.contentIndex.contentIndexDir` (defaults to `content_index`), `stroom.contentIndex.storageType` (one of `TEMP|LOCAL|SHARED`, defaults to `LOCAL`) and `stroom.contentIndex.minRebuildAge` (defaults to `PT1M`). Thus the content index can now be stored locally on each node for better performance or on shared storage. Stroom now eagerly builds the content index on boot if the storage type is `SHARED`.
+
+* Bug **#5579** : Change test collation to utf8mb4_0900_ai_ci.
+
+* Bug **#5558** : Fix processor profiles allowing processing for disabled node groups.
+
+* Bug **#5584** : Change the way the special singleton documents `DataRetentionRules`, `ReceiveDataRuleSet` and `ContentTemplates` are created for the first time. Now uses a cluster lock to ensure only one of each is ever created.
+
+* Bug **#5592** : Fix `Volume Cache` so entries are invalidated when a data volume is changed/deleted. Also fix data volume selection so that the cached map of available volumes is cleared when a volume is changed/deleted/created. Default value for `stroom.data.filesystemVolume.volumeCache.expireAfterAccess` has changed from PT10M to null and `stroom.data.filesystemVolume.volumeCache.expireAfterWrite` has changed from null to PT10M. This is to ensure that cached items are not held indefinitely.
+
+
+## [v7.13-beta.3] - 2026-06-03
+
+* Dependency : Uplift DropWizard to v5.0.1.
+
+* Dependency : Uplift `net.openhft:zero-allocation-hashing` to `2026.0`.
+
+* Dependency : Add Jackson JSON library `3.1.2` in addition to the existing `2.21.2` version. Stroom/Stroom-Proxy are now using v3 with the exception of a few specific areas that need legacy capability only available in v2. v3 is a significant change from v2 with some breaking changes and some differences in behaviour. Special attention should be paid to the output of JSONParser pipeline element to ensure it is behaving as expected.
+
+* Feature **#5515** : Change JSONParser pipeline element to truncate very long strings values. Currently very long string values can result in Out of Memory errors in Stroom. The following configuration properties have been added to the JSONParser element; `stringTruncateLength` (default 10,000) to truncate very long strings, `maxStringLength` (default 100,000,000) to cause a fatal error if a long string is encountered, `maxDepth` (default 500) to limit the depth of deeply nested documents. The JSONParser has also been changed so that the characters of string values are streamed to the downstream pipeline elements rather than reading the whole string into memory. NOTE: It is still possible for downstream XSLT XPATH functions to result in the entire string being read into memory.
+
+* Bug : Fix DocRef hover copy/open links not appearing.
+
+* Bug **#5535** : Fix simple string values not appearing in Pipeline Property table.
+
+* Bug : Fix Null Pointer type bug on Data Receipt Rules screen.
+
+* Refactor : Change json (de)serialisation to not go via a String when dealing only with byte[] data.
+
+* Dependency : Uplift base docker images to `eclipse-temurin:25.0.3_9-jdk-alpine-3.23`.
+
+* Feature **#5303** : Improve Stroom AI to add dockable panel, chat history, attachments, copy, download, chat details etc.
+
+* Feature **#5552** : Add additional S3 properties to S3Appender.
+
+* Bug : Fix typo in query snippet name (`Eval first first value` => `Eval first value`).
+
+* Bug **#5549** : Make jffi extract its native library to the same dir as the LMDB native library file. Add the config prop `providedJffiLibraryPath` to allow for a provided jffi lib.
+
+* Refactor : Improve logging and system info output for Data Feed Keys.
+
+* Feature **#5526** : Add event logging to ask stroom AI.
+
+* Bug **#5544** : Fix DocRef bug.
+
+* Feature **#5183** : Add title to dashboard link function.
+
+* Bug **#5518** : Fix expression editor bug.
+
+* Bug **#5507** : Improve dashboard column filtering.
+
+* Bug **#5516** : Allow event links with only feed USE permission.
+
+* Feature : Add System Info Admin Servlet. Add menu of all admin servlets at `<admin port>/<admin path>/menu`.
+
+* Bug : Fix permission exceptions when getting volume system info.
+
+* Bug **#5532** : Relax Data Feed Identities validation so salt is optional.
+
+* Bug **#5520** : Fix annotation decoration in queries/dashboards not working if the EventId/StreamId columns are not longs.
+
+* Feature : Add config prop `stroom.annotation.eventLinkCacheSizeLimit` (default 1,000,000) to protect Stroom from caching too many annotation to event links. If this limit is exceeded, the query will error.
+
+* Feature : Change the annotation caching to invalidate on a field basis rather than the whole annotation.
+
+* Bug : Fix annotation dash/query columns not updating when status/label/collection names are deleted/modified.
+
+* Bug : Fix annotation decorations in dash/query columns showing deleted annotation entries.
+
+* Bug : Fix annotation Comment and History columns not updating when entries are added/updated/deleted.
+
+* Bug **#5508** : Improve annotation decoration performance.
+
+* Bug : Fix Annotation -> Events screen not refreshing the linked events list when an event link is added/removed.
+
+* Bug : Add missing directories (data_feed_identities, git_repo, lmdb_library, planb, reference_staging_data) as volumes in the docker image.
+
+
+## [v7.13-beta.2] - 2026-04-15
+
+* Build : Fix CI build failure due to missing Docker container prefix.
+
+
+## [v7.13-beta.1] - 2026-04-13
+
+* Feature **#5282** : Add pipeline scheduling.
+
+* Feature **#5346** : Choose which external document changes to save when saving a pipeline.
+
+* Issue **#5366** : Add level and status to rules.
+
+* Feature **#5377** : Embedded pipeline docs.
+
+* Issue **#5366** : Create new doc object DataGen.
+
+* Issue **#5366** : Add Execution tab to DataGen.
+
+* Feature **#5387** : Allow pipeline stepping across multiple streams.
+
+* Issue **#5366** : Implement job scheduling for DataGen.
+
+* Feature **#3103** : Allow multiple dashboard instances.
+
+* Refactor : Refactor the feedKey locking in PreAggregator and make AttributeMapUtil#readKeys() more lenient when reading `.meta `files.
+
+* Dependency : Uplift org.apache.commons:commons-pool2 from 2.12.1 to 2.13.1.
+
+* Dependency : Uplift org.flywaydb:flyway-core from 11.20.0 to 12.0.0.
+
+* Dependency : Uplift org.eclipse.jgit:org.eclipse.jgit from 7.3.0.202506031305-r to 7.5.0.202512021534-r.
+
+* Dependency : Uplift org.apache.solr:solr-solrj from 9.8.0 to 9.10.1.
+
+* Dependency : Uplift swagger from 2.2.41 to 2.2.42.
+
+* Bug : Fix output of the manage_users --listPermissions command.
+
+* Bug : Fix missing arg validation on reset_password CLI command. Obfuscate password in logging.
+
+* Refactor : Remove HBase statistics (may require change to default config).
+
+* Refactor : Remove ScyllaDB based state store.
+
+* Feature : Editing items in the UI now indicates save required only when changes are made.
+
+* Issue **#5366** : Refactor schedulers.
+
+* Feature **#3206** : User tab sessions.
+
+* Issue **#5366** : Refactor schedulers to interface and cleanup.
+
+* Dependency : Uplift gwt from 2.12.2 to 2.13.0.
+
+* Dependency : Uplift co.elastic.clients:elasticsearch-java from 9.2.1 to 9.3.2.
+
+* Build : Uplift gradle-wrapper from 9.3.0 to 9.3.1.
+
+* Dependency : Uplift org.yaml:snakeyaml from 2.2 to 2.6.
+
+* Refactor : Replace NullSafe.requireNonNullElse() with Objects.requireNonNullElse().
+
+* Refactor : Replace NullSafe.requireNonNullElseGet() with Objects.requireNonNullElseGet().
+
+* Issue **#5366** : Fix typo.
+
+* Feature **#5366** : Rebase on master.
+
+* Feature **#5366** : Cleanup.
+
+* Feature **#5366** : Checkstyle.
+
+* Feature **#5232** : Add standard annotation comments. MIGRATION: Any comments previously configured in standardComments property will need to saved as annotation comments.
+
+* Feature **#5366** : Change icon for DataGen.
+
+* Feature **#5366** : Add feed name to rule detection.
+
+* Feature : Improve the ProgressMonitor task creation logging output to included counts of errored and skipped filters. Change task creation to re-test filter enabled/deleted state just prior to creating tasks. Add validation to ProcessorConfig to enforce a minimum value of `1` on some properties.
+
+* Feature **#5366** : Fix DataGen destination feed not firing dirty event.
+
+* Feature **#5366** : Checkstyle.
+
+* Bug **#5503** : Fix search rerank LLM processing and add debug logging.
+
+* Dependency : Uplift docker images to `eclipse-temurin:25.0.2_10-jdk-alpine-3.23`. Change Java docker build to use 25.0.2. Change ERD build to use a fixed docker image.
+
+* Bug **#5484** : Fix stream browser Retention column and Info pane showing wrong retention period/rule.
+
+* Feature **#5490** : Add rerank capability to dense vector search.
+
+* Feature **#5492** : Change Git Repo folder colour as red looked like an error.
+
+* Bug **#5486** : Fix SQL to physically delete annotations.
+
+* Bug **#5488** : Fix `forwardFileDestinations[n].atomicMoveEnabled` property not being used.
+
+* Feature **#5480** : Group some annotation history items and make them expandable.
+
+* Bug **#5485** : Fix Plan B snapshot race condition bug.
+
+* Bug **#5495** : Fix query column order bug.
+
+* Bug **#5495** : Add option to reset query table customisation.
+
+* Feature **#5161** : Make dashboard tab menu available from settings icon.
+
+
+## [v7.12-beta.1] - 2026-03-24
+
+* Feature **#5427** : Change the Data Feed Key authentication mechanism to support authentication by X509 certificate DN. Add a new allowed type of `CERTIFICATE_IDENTITY` to `.receive.enabledAuthenticationTypes`. Rename property `.receive.dataFeedKeysDir` to  `.receive.dataFeedIdentitiesDir` and change the structure of the files in it, all files will have to be replaced. Rename property `.receive.dataFeedKeyOwnerMetaKey` to `.receive.dataFeedOwnerMetaKey`. Change the default value of `.receive.dataFeedIdentitiesDir` from `data_feed_keys` to `data_feed_identities`.
+
+* Feature **#5442** : Add more configuration options to `stroom.autoContentCreation` to improve the explorer structure and permissions of the generated content. Add properties `additionalGroupParentGroupName`, `destinationExplorerSubPathTemplate` and `groupParentGroupName`. All have sensible defaults.
+
+* Feature **#5473** : Add `JSON_LINES` to the base list of data formats in the `.data.meta.dataFormats` property.
+
+
+## [v7.11.6] - 2026-03-24
+
+* Bug **#5471** : Fix bug in INFO logging output (the count of remaining shards) when flushing/deleting index shards.
+
+
+## [v7.11.5] - 2026-03-23
+
+* Bug **#5466** : Fix asynchronous code that was causing thread deadlocks on machines with a low number of cores (e.g. <= 2). This bug was caused by a change to the JVM.
+
+
+## [v7.11.4] - 2026-03-13
+
+* Feature **#5455** : Add DictionaryAppender to pipelines as an optional pipeline destination.
+
+* Bug **#5449** : Change the asynchronous behaviour in the data feed keys directory watcher.
+
+
+## [v7.11.3] - 2026-03-12
+
+* Bug **#5449** : Fix concurrency and exception handling Data Feed Key dir watcher (AbstractDirChangeMonitor).
+
+
+## [v7.11.2] - 2026-03-11
+
+* Bug **#5445** : Revert cache in PipelineDataCacheImpl to be keyed by PipelineDoc.
+
+* Bug **#5444** : Initialise pipelineStructurePresenter when opening in stepping mode.
+
+
+## [v7.11.1] - 2026-03-10
+
+* Bug **#5434** : Fix dense vector token limit to be 1024 for Lucene indexing.
+
+* Bug **#5413** : Fix column value selection.
+
+* Bug **#5275** : Add option to XMLWriter to prevent char 0 disabling output escaping.
+
+
+## [v7.11.0] - 2026-03-04
+
+* Bug : Change proxy event store to close its appenders on app shutdown.
+
+* Bug : Fix missing docker managed volues for proxy `zip_file_ingest` and `zip_file_ingest_failed` directories.
+
+* Bug : Fix NPE in downstreamHostConfig ctor if there is no hostname, which is a possibility.
+
+* Bug : Fix incorrect path for /datafeed in the ProxyWelcomeServlet response.
+
+* Bug : Move the `/queues` proxy endpoint from the app port to the admin port.
+
+* Bug **#5424** : Change the `receiptCheckMode` `RECEIVE_ALL` to no longer check for the existence of the feed. Add the `receiptCheckMode` `FEED_EXISTENCE` to perform a feed existence check.
+
+* Bug : Fix `subPathTemplate.enabled` defaulting to `false` if subPathTemplate has been set in the yaml, but enabled has not.
+
+* Bug : Fix bug in proxy which will throw an error if subPathTemplate contains repeated vars, e.g. `${year}/${year}-${month}`.
+
+
+## [v7.11-beta.25] - 2026-02-13
+
+* Bug **#5392** : Fix PlanB segfault.
+
+
+## [v7.11-beta.24] - 2026-02-12
+
+* Bug **#5391** : Fix folder DocRef NPE.
+
+* Bug **#5392** : Fix PlanB segfault.
+
+* Bug **#5300** : Fix path `millis` parameter.
+
+
+## [v7.11-beta.23] - 2026-02-09
+
+* Feature **#5313** : Allow users to prevent empty reports from being sent on a per report basis.
+
+
+## [v7.11-beta.22] - 2026-02-07
+
+* Feature **#5314** : Add `rowCount`, `fileType` (EXCEL|CSV|TSV), `fileName` to the templating context when generating email reports.
+
+* Feature **#5313** : Allow users to prevent empty reports from being sent on a per report basis.
+
+* Feature : Add enabled/disabled styling to table rows in the Report screens.
+
+* Feature : Add column header tool tips to tables in the Report screens.
+
+* Feature : Change the Report > Notifications _Max_ column to be right aligned.
+
+* Feature : Add red/green sytling to the Report > Notifications _Status_ column (Complete/Error).
+
+* Bug : Fix Reports not respecting the start date during execution. It was executing from the last tracker time rather than from the start date, if the start date is later.
+
+
+## [v7.11-beta.21] - 2026-02-04
+
+* Bug **#5384** : Improvements to annotations database code.
+
+
+## [v7.11-beta.20] - 2026-01-28
+
+* Bug **#5360** : Fix NPE when annotation data retention fires change events.
+
+* Bug **#5361** : Fix invalid SQL error when annotation data retention runs.
+
+* Bug : Fix 'Data source already in use' errors when using annotations.
+
+* Bug : Add missing cluster lock protection for annotation data retention job.
+
+* Bug **#5359** : Fix 'Data source already in use' errors in the _Data Delete_ job.
+
+* Bug **#5185** : Fix dashboard maximise NPE.
+
+* Bug **#5370** : Hide rule notification doc checkbox on reports as it is not applicable.
+
+* Bug **#5311** : Fix documentation markdown edit bug.
+
+* Bug **#5234** : Fix spaces in `createAnnotation()` function link text.
+
+* Bug **#5364** : Change PlanB snapshots to prevent closure when in use.
+
+
+## [v7.11-beta.19] - 2026-01-14
+
+* Issue **#5355** : Fix HttpClient being closed by cache while in use.
+
+
+## [v7.11-beta.18] - 2026-01-13
+
+* Issue **#5303** : Add debug to index dense vector retrieval.
+
+* Issue **#5344** : Fix credential manager UI.
+
+* Issue **#5342** : Fix issue querying Plan B shards where some stores have been deleted.
+
+* Issue **#5351** : Make SSH key and known host configuration clearer.
+
+* Issue **#5353** : Fix keystore config issue.
+
+
+## [v7.11-beta.17] - 2026-01-08
+
+* Issue **#5282** : Processor task creation now supports feed dependencies to delay processing until reference data is available.
+
+* Issue **#5339** : Fix NPE thrown when adding vises to dashboards.
+
+* Issue **#5337** : Fix analytic doc serialisation.
+
+
+## [v7.11-beta.16] - 2026-01-08
+
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+
+## [v7.11-beta.15] - 2026-01-07
+
+* Issue **#4124** : Fix NodeResultSerialiser and add node name to errors.
+
+* Issue **#5256** : Add option to omit documentation from rule detection.
+
+* Issue **#5309** : Add long support to pathway values.
+
+* Remove static imports except in test classes.
+
+* Uplift base docker images to eclipse-temurin:25.0.1_8-jdk-alpine-3.23.
+
+* Uplift dependency com.hubspot.jinjava:jinjava from 2.7.2 to 2.8.2.
+
+* Uplift dependency swagger-* from 2.2.38 to 2.2.41.
+
+* Uplift com.sun.xml.bind:jaxb-impl from 4.0.5 to 4.0.6.
+
+* Uplift lanchain4j dependencies from 1.8.0-beta15 to 1.10.0-beta18 and 1.8.0 to 1.10.0.
+
+* Issue **#5303** : Make AI HTTP connection configurable.
+
+* Issue **#5303** : Make AI HTTP SSL certificate stores configurable.
+
+* Issue **#5303** : Add KNN dense vector support to Lucene indexes.
+
+* Issue **#5303** : Pass only visible columns to the Ask Stroom AI service.
+
+* Issue **#5317** : Pathways now load current state to not endlessly output mutations.
+
+* Issue **#4123** : New pipeline stepping mode.
+
+* Issue **#5100** : Fix selection filters auto quoting parameter replacements.
+
+* Issue **#5318** : Fix Plan B session condensation.
+
+* Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
+
+* Issue **#5281** : Fix behaviour of query expression IN condition.
+
+
+## [v7.11-beta.14] - 2025-12-10
+
+* Issue **#5290** : Plan B trace store now requires data to conform to Plan B trace schema.
+
+* Fix build issue causing Stroom to not boot.
+
+
+## [v7.11-beta.13] - 2025-12-09
+
+* Issue **#5304** : Fix error when unzipping the stroom-app-all jar file. This problem was also leading to AV scan alerts.
+
+
+## [v7.11-beta.12] - 2025-12-03
+
+* Fix Files list on Stream Info pane so that you can copy each file path individually.
+
+* Uplift Gradle to v9.2.1.
+
+* Issue **#5297** : Fix missing execute permissions and incorrect file dates in stroom and stroom-proxy distribution ZIP files.
+
+
+## [v7.11-beta.11] - 2025-12-02
+
+* Uplift docker image JDK to `eclipse-temurin:25_36-jdk-alpine-3.22`.
+
+* Issue **#5259** : Fix PlanB Val.toString() NPE.
+
+* Bumps org.quartz-scheduler:quartz from 2.5.0-rc1 to 2.5.1.
+
+* Bumps org.eclipse.transformer:org.eclipse.transformer.cli from 0.5.0 to 1.0.0.
+
+* Issue **#5288** : Fix config defaults for `ForwardHttpPostConfig` and `HttpClientConfiguration`.
+
+* Issue **#5291** : Fix explorer item sort order.
+
+* Issue **#5152** : Fix position of the Clear icon on the Quick Filter.
+
+* Make the Quick Filter Help button hide the help popup if it is visible.
+
+* Add the same Quick Filter help popup as used on the explorer QF to the QFs on Dashboard table columns, Query help and Expression Term editors.
+
+* Issue **#5293** : Fix pipeline element type and name display.
+
+* Issue **#5229** : Change the default main method for the stroom-headless jar to be Headless rather than Cli. Fix errors when running stroom-headless.
+
+
+## [v7.11-beta.10] - 2025-11-20
+
+* Issue **#5257** : Upgrade Lucene to 10.3.1.
+
+* Issue **#5263** : Add copy for selected rows.
+
+* Remove default value for `feedStatus.url` in the proxy config yaml as downstream host should now be used instead.
+
+
+## [v7.11-beta.9] - 2025-11-19
+
+* Issue **#5192** : Support Elasticsearch kNN search on dense_vector fields.
+
+* Issue **#5124** : Change cluster lock `tryLock` to use the database record locks rather than the inter-node lock handler.
+
+* Issue **#5254** : Fix document NPE.
+
+* Issue **#5250** : Add a new property `stroom.security.identity.autoCreateAdminAccountOnBoot` to control auto-creation of the default administrator account `admin` when stroom is running with an identity provider type of `INTERNAL_IDP` or `TEST_CREDENTIALS`. Enabling this property will create the `admin` account and stroom user. It will create the group `Administrators`, grant the app permission `Administrator` to it and add the `admin` user to the group. The auto-creation of the admin account/user was erroneously removed in a previous version of stroom.
+
+* Change default for `.receive.enabledAuthenticationTypes` to `[CERTIFICATE,TOKEN]` and add `.receive.authenticationRequired` to the default docker config yml files for both stroom and proxy.
+
+
+## [v7.11-beta.8] - 2025-11-10
+
+* Issue **#5218** : When `autoContentCreation` is enabled, don't attempt to find a content template if the `Feed` header has been provided and the feed exists.
+
+* Issue **#5244** : Fix proxy throwing an error when attempting to do a feed status check.
+
+* Issue **#5186** : Remove error logging for expected Plan B snapshot checking behaviour.
+
+* Issue **#5220** : Fix duplicate check column list change confirm dialog not showing if the duplicate check store is on a remote node.
+
+* Issue **#5126** : Improve Plan B null handling.
+
+* Issue **#5225** : Fix NPE on DocRef.
+
+* Issue **#5237** : Fix Plan B lookup no content error.
+
+
+## [v7.11-beta.7] - 2025-10-20
+
+* Issue **#656** : Allow table filters to use dictionaries.
+
+* Issue **#672** : Dashboards will only auto refresh when selected.
+
+* Issue **#5149** : Fix context menus not appearing on dashboard tables.
+
+* Issue **#2029** : Add OS memory stats to the node status stats.
+
+* Uplift dependency java-jwt 4.4.0 => 4.5.0.
+
+* Uplift org.apache.commons:commons-csv from 1.10.0 to 1.14.1.
+
+* Uplift dependency org.apache.commons:commons-pool2 from 2.12.0 to 2.12.1.
+
+* Issue **#3799** : Search for tags in Find In Content.
+
+* Issue **#3335** : Preserve escape chars not preceding delimiters.
+
+* Bumps jooq from 3.20.5 to 3.20.8.
+
+* Bumps com.mysql:mysql-connector-j from 9.2.0 to 9.4.0.
+
+* Bumps flyway from 11.9.1 to 11.14.0.
+
+* Issue **#1429** : Protect against large file ingests.
+
+* Add a proxy zip file ingest mechanism to proxy. Add property branch `proxyConfig.dirScanner` to the config.
+
+* Issue **#5175** : Fix zip handling.
+
+* Fix config validation not being run on config branches that are items in a list, e.g. `forwardHttpDestinations`.
+
+* Remove `NotNull` validation condition on `forwardHttpDestinations[n].apiKey` as proxy may use OAuth tokens to authenticate with the downstream destination.
+
+* Issue **#5175** : Add warning messages to stroom and proxy `/datafeed` to warn if a zip is received that contains paths that would unzip outside of a target directory. Only a warning as the paths in a zip sent to `/datafeed` are not used by stroom/proxy.
+
+* Uplift all the content packs that are included in the docker and zip distributions.
+
+* Issue **#5191** : Fix UI NPE.
+
+* Issue **#5189** : Change how the proxy directory queues are initialised. Now on initialisation, the min/max ids take into account incomplete paths, so if the largest path is `1/900` then the max id will be taken to be `900999`. When proxy is getting the next item off the queue it will delete any incomplete paths it finds en-route to the next valid item.
+
+* Issue **#5126** : Fix Plan B condense.
+
+* Issue **#5200** : Fix problem of duplicate check store failing to open due to its directory being deleted.
+
+* Issue **#5201** : Clear out the duplicate check store if the column names are changed. Add a confirm dialog to the Analytic Rule doc save action, to get the user to confirm that all dup check data will be deleted when there is a change to the derived/explicit dup check columns.
+
+* Issue **#5198** : Increase the maximum limit for `top()` to 10,000.
+
+* Issue **#5117** : Send Plan B data to all enabled target nodes regardless of active status.
+
+* Issue **#5146** : Fix use of not equals in annotation queries.
+
+* Issue **#5145** : Expand all now affects favourites.
+
+* Issue **#5109** : Fix pipeline migration.
+
+* Issue **#5147** : Fix proxy omitting allowed headers (e.g. 'Feed') if the case does not match that in the allowed set.
+
+* Issue **#5148** : Allow annotation users to edit labels.
+
+
+## [v7.11-beta.6] - 2025-09-23
+
+* Issue **#4121** : Add rename option for pipeline elements.
+
+* Issue **#2374** : Add pipeline element descriptions.
+
+* Issue **#4099** : Add InRange function.
+
+* Issue **#2374** : Add description is now editable for pipeline elements.
+
+* Issue **#268** : Add not contains and not exists filters to pipeline stepping.
+
+* Issue **#844** : Add functions for hostname and hostaddress.
+
+* Issue **#4579** : Add table name/id to conditional formatting exceptions.
+
+* Issue **#4124** : Show severity of search error messages.
+
+* Issue **#4369** : Add new rerun scheduled execution icon.
+
+* Issue **#3207** : Add maxStringFieldLength table setting.
+
+* Issue **#1249** : Dashboard links can open in the same tab.
+
+* Issue **#1304** : Copy dashboard components between dashboards.
+
+* Issue **#4614** : Fix StroomQL highlight.
+
+* Issue **#2145** : New add-meta xslt function.
+
+* Issue **#370** : Perform schema validation on save.
+
+* Issue **#397** : Copy user permissions.
+
+* Issue **#5088** : Add table column filter dashboard component.
+
+* Issue **#2571** : Show Tasks for processor filter.
+
+* Issue **#4177** : Add stream id links.
+
+* Issue **#5137** : Fix how proxy adds HTTP headers when sending downstream. It now only adds received meta entries to the headers if they are on an allow list. This list is made up of a hard coded base list `accountId, accountName, classification, component, contextEncoding, contextFormat, encoding, environment, feed, format, guid, schema, schemaVersion, system, type` and is supplemented by the new config property `forwardHeadersAdditionalAllowSet` in the `forwardHttpDestinations` items.
+
+* Issue **#5135** : Fix proxy multi part gzip handling.
+
+* Uplift JDK to 21.0.8_9 in docker images and sdkmanrc.
+
+* Issue **#5130** : Fix raw size meta bug.
+
+* Issue **#5132** : Fix missing session when AWS ALB does the code flow.
+
+* Fix the OpenID code flow to stop the session being lost after redirection back to the initiating URL.
+
+* Issue **#5101** : Fix select-all filtering when doing a reprocess of everything in a folder. It no longer tries to re-process deleted items streams.
+
+* Issue **#5086** : Improve stream error handling.
+
+* Change the resource store to not rely on sessions. Resources are now linked to a user.
+
+* Issue **#5114** : Improve handling of loss of connection to IDP.
+
+* Change the way security filter decides whether to authenticate or not, e.g. how it determines what is a static resource that does not need authentication.
+
+* Issue **#5115** : Use correct  header during proxy forward requests.
+
+* Issue **#5121** : Proxy aggregation now keeps only common headers in aggregated data.
+
+* Fix exception handling of DistributedTaskFetcher so it will restart after failure.
+
+* Issue **#5127** : Maintain case for proxy meta attributes when logging.
+
+* Issue **#5091** : Stop reference data loads failing if there are no entries in the stream.
+
+* Add `ReceiptId` to the INFO message on data receipt.
+
+* Issue **#5095** : Lock the cluster to perform pipeline migration to prevent other nodes clashing.
+
+* Issue **#5099** : Fix Plan B session key serialisation.
+
+* Issue **#5090** : Fix Plan B getVal() serialisation.
+
+* Issue **#5106** : Fix ref loads with XML values where the `<value>` element name is not in lower case.
+
+* Issue **#5042** : Allow the import of processor filters when the existing processor filter is in a logically deleted state. Add validation to the import confirm dialog to ensure the parent doc is selected when a processor filter is selected.
+
+* Change DocRef Info Cache to evict entries on document creation to stop stroom saying that a document doesn't exist after import.
+
+* Issue **#5077** : Fix bug in user full name templating where it is always re-using the first value, i.e. setting every user to have the full name of the first user to log in.
+
+* Issue **#5047** : Replace the property `stroom.security.authentication.openid.validateAudience` with `stroom.security.authentication.openid.allowedAudiences` (defaults to empty) and `stroom.security.authentication.openid.audienceClaimRequired` (defaults to false). If the IDP is known to provide the `aud` claim (often populated with the `clientId`) then set `allowedAudiences` to contain that value and set `audienceClaimRequired` to `true`.
+
+* Issue **#5068** : Add the config prop `stroom.security.authentication.openId.fullNameClaimTemplate` to allow the user's full name to be formed from a template containing a mixture of static text and claim variables, e.g. `${firstName} ${lastName}`. Unknown variables are replaced with an empty string. Default is `${name}`.
+
+* Issue **#5066** : Change template syntax of `openid.publicKeyUriPattern` prop from positional variables (`{}`) to named variables (`${awsRegion}`). Default value has changed to `https://public-keys.auth.elb.${awsRegion}.amazonaws.com/${keyId}`. If this prop has been explicitly set, its value will need to be changed to named variables.
+
+* Issue **#5073** : Trim the unique identity, display name and full name values for a user to ensure no leading/trailing spaces are stored. Includes DB migration `V07_10_00_005__trim_user_identities.sql` that trims existing values in the `name`, `display_name` and `full_name` columns of the `stroom_user` table.
+
+
+## [v7.11-beta.5] - 2025-08-14
+
+* Issue **#2279** : Drag and drop tabs.
+
+* Issue **#2584** : Close all tabs to right/left.
+
+* Issue **#5013** : Add row data to annotations.
+
+* Issue **#3049** : Check for full/inactive/closed index volumes.
+
+* Issue **#4070** : Show column information on hover tip.
+
+* Issue **#3815** : Add selected tab colour property.
+
+* Issue **#4790** : Add copy option for property names.
+
+* Issue **#4121** : Add rename option for pipeline elements.
+
+* Issue **#2823** : Add `autoImport` servlet to simplify importing content.
+
+* Issue **#5013** : Add data to existing annotations.
+
+* Issue **#5013** : Add links to other annotations and allow comments to make references to events and other annotations.
+
+* Issue **#2374** : Add pipeline element descriptions.
+
+* Issue **#2374** : Add description is now editable for pipeline elements.
+
+* Issue **#4048** : Add query csv API.
+
+* Issue **#5064** : Fix ref data store discovery.
+
+* Issue **#5065** : Make public key URI configurable.
+
+* Issue **#5046** : Stop feeds being auto-created when there is no content template match.
+
+* Issue **#5062** : Fix permissions issue loading scheduled executors.
+
+* Allow clientSecret to be null/empty for mTLS auth.
+
+
+## [v7.11-beta.4] - 2025-07-29
+
+* Change the proxy config properties `forwardUrl`, `livenessCheckUrl`, `apiKeyVerificationUrl` and `feedStatusUrl` to be empty by default and to allow them to be populated with either just a path or a full URL. `downstreamHost` config will be used to provide the host details if these properties are empty or only contain a path. Added the property `livenessCheckEnabled` to `forwardHttpDestinations` to control whether the forward destination liveness is checked (defaults to true).
+
+
+## [v7.11-beta.3] - 2025-07-21
+
+* Issue **#5028** : Add build info metrics `buildVersion`, `buildDate` and `upTime`.
+
+* Add admin port servlets for Prometheus to scrape metrics from stroom and proxy. Servlet is available as `http://host:<admin port>/(stroom|proxy)Admin/prometheusMetrics`.
+
+* Issue **#4735** : Add expand/collapse to result tables.
+
+* Issue **#5013** : Allow annotation status update without requery.
+
+* Issue **#5022** : Fix weird spinner behaviour.
+
+* Issue **#259** : Maximise dashboard panes.
+
+* Issue **#5027** : Allow users to choose run as user for processing.
+
+* Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
+
+* Issue **#4943** : Fix annotation creation to set provided assigned and status.
+
+* Issue **#5016** : Fix sort state visibility on query table.
+
+* Issue **#5034** : Fix query field help refresh.
+
+* Issue **#5016** : Fix sort state visibility on query table.
+
+* Issue **#5017** : Fix stuck spinner copying embedded query.
+
+* Issue **#4974** : Fix Plan B condense job.
+
+* Issue **#5030** : Add new property `.receive.x509CertificateDnFormat` to stroom and proxy to allow extraction of CNs from DNs in legacy `OPEN_SSL` format. The new property defaults to `LDAP`, which means no change to behaviour if left as is.
+
+* Issue **#5025** : Fix parsing of hyperlinks in dashboard cells.
+
+* Add in validation of the Conditional Formatting custom style colours to ensure the user can only enter valid colours and nothing else.
+
+* Replace incorrect uses of `appendHtmlConstant` with SafeHtmlTemplate.
+
+* Issue **#5012** : Fix errors when trying to use `lookup()` with a Context stream.
+
+* Fix bug in reference data loading when the reference data value is XML that includes an element called `<value>`.
+
+* Fix behaviour in reference data loading of XML values where attributes with no explicit namespace would be given the unnamed namespace of the parent `referenceData` document, i.e. `<ci:data xmlns="reference-data:2" name="name" value="001" />`.
+
+
+## [v7.11-beta.2] - 2025-07-04
+
+* Issue **#3874** : Add copy context menu to tables.
+
+* Issue **#5016** : Fix sort state visibility on query table.
+
+* Issue **#5017** : Fix stuck spinner copying embedded query.
+
+* Fix NPE when proxy tries to fetch the receipt rules from downstream.
+
+
+## [v7.11-beta.1] - 2025-07-02
+
+* Add the Receive Data Rules screen to the Administration menu which requires the `Manage Data Receipt Rules` app permission. Add the following new config properties to the `receive` branch: `obfuscatedFields`, `obfuscationHashAlgorithm`, `receiptCheckMode` and `receiptRulesInitialFields`. Remove the property `receiptPolicyUuid`. Add the proxy config property `contentSync.receiveDataRulesUrl`.
+
+* The proxy config property `feedStatus.enabled` has been replaced by `receive.receiptCheckMode` which takes values `FEED_STATUS`, `RECEIPT_POLICY` or `NONE`.
+
+* In the proxy config, the named Jersey clients CONTENT_SYNC and FEED_STATUS have been removed and replaced with DOWNSTREAM.
+
+
+## [v7.10-beta.6] - 2025-06-26
+
+* Issue **#5007** : Add ceilingTime() and floorTime().
+
+* Issue **#4977** : Limit user visibility in annotations.
+
+* Issue **#4976** : Exclude deleted annotations.
+
+
+## [v7.10-beta.5] - 2025-06-25
+
+* Issue **#5002** : Fix Plan B env staying open after error.
+
+* Issue **#5003** : Fix query date time formatting.
+
+* Issue **#4974** : Improve logging.
+
+
+## [v7.10-beta.4] - 2025-06-23
+
+* Issue **#3083** : Allow data() table function to show the Info pane.
+
+* Issue **#4959** : Remove terms with field `Status` from re-process filter expressions.
+
+* Issue **#4974** : NPE debug.
+
+* Issue **#4965** : Add dashboard screen to show current selection parameters.
+
+* Issue **#4943** : Fix annotation creation to set provided assigned and status.
+
+* Issue **#4496** : Add parse-dateTime xslt function.
+
+* Issue **#4496** : Add format-dateTime xslt function.
+
+* Issue **#4983** : Upgrade Flyway to work with newer version of MySQL.
+
+* Issue **#3122** : Make date/time rounding functions time zone sensitive.
+
+* Issue **#4984** : Add debug for Plan B tagged keys.
+
+* Issue **#4969** : Add a checkbox to Content Templates edit screen to make it copy (and re-map) any xslt/textConverter docs in the inherited pipeline.
+
+* Issue **#4991** : Add Plan B schema validation to ensure stores remain compatible especially when merging parts.
+
+* Issue **#4854** : Maintain scrollbar position on datagrid.
+
+* Issue **#4726** : Get meta for parent stream.
+
+* Fix primitive value conversion of query field types.
+
+* Issue **#4940** : Fix duplicate store error log.
+
+* Issue **#4941** : Fix annotation data retention.
+
+* Issue **#4968** : Improve Plan B file receipt.
+
+* Issue **#4956** : Add error handling to duplicate check deletion.
+
+* Issue **#4967** : Fix SQL deadlock.
+
+
+## [v7.9-beta.12] - 2025-05-07
+
+* Fix compile issues.
+
+
+## [v7.9-beta.11] - 2025-05-07
+
+* Issue **#4929** : Improve Plan B merge performance.
+
+* Uplift the stroom/proxy docker base images to 21.0.7_6-jdk-alpine from 21.0.5_11-jdk-alpine.
+
+* Issue **#4934** : Change the audit logging for dashboard queries to log the column names. It now logs one event for each table attached to the query.
+
+* Fix field/function completions not being offered in the dashboard column expression editor.
+
+* Fix OIDC code flow. Session wasn't being created so user was repeatedly redirected back to the IDP.
+
+* Issue **#4892** : Prevent disabled users from authenticating.
+
+* Issue **#4925** : Fix UI IndexOutOfBoundsException.
+
+* Issue **#4926** : Fix UI NPE.
+
+* Issue **#4893** : Fix text editor context menu styling.
+
+* Issue **#4916** : Fix query results download so it doesn't require VIEW on the View. It now only needs USE on the View.
+
+* Fix permissions checking when executing a Query. It no longer requires VIEW permission on the extraction pipeline, just USE.
+
+
+## [v7.9-beta.10] - 2025-04-29
+
+* Issue **#4875** : Fix select *.
+
+* Issue **#3928** : Add merge filter for deeply nested data.
+
+* Issue **#4211** : Prevent stream status in processing filters.
+
+* Issue **#4927** : Fix TOKEN data feed auth when DATA_FEED_KEY is enabled.
+
+* Issue **#4863** : Stop errors being logged on proxy shutdown.
+
+* Issue **#4879** : Proxy - Improve concurrency protection when closing aggregates.
+
+* Issue **#4889** : Fix stream downloads resulting in HTTP error 404.
+
+* Proxy - Change the way zip receipt works to speed up client requests and to reduce cpu/io load caused by de-compressing/compressing the zip entries. Change the zip splitting to be asynchronous from the initial receipt, so the client doesn't have to wait for it to happen.
+
+* Issue **#4914** : Fix Plan B condense bug.
+
+* Issue **#4915** : Fix Plan B interrupt exception.
+
+* Rationalise the handling/setting of meta attributes between proxy and stroom to ensure common receipt handling. Also change proxy and stroom to set/append ReceiptId, ReceiptIdPath, ReceivedTime, ReceivedTimeHistory and ReceivedPath attributes within zip meta entries.
+
+* Proxy - Fix receipt of un-compressed data not recording the data size in bytes.
+
+* Issue **#4856** : Fix dashboard permissions tab title.
+
+
+## [v7.9-beta.9] - 2025-04-14
+
+* Issue **#4862** : Add select * to StroomQL.
+
+* Annotations 2.0.
+
+* Issue **#4855** : Fix Plan B session state range.
+
+* Improve log message when proxy HTTP forwarding fails. Now includes the time taken and the bytes sent.
+
+* Issue **#4858** : Fix Plan B query field error.
+
+* Issue **#4859** : Fix query on open for embedded queries.
+
+* Issue **#4861** : Allow embedded queries to have a set page size.
+
+* Issue **#4748** : Add user group icon to API key page.
+
+* Issue **#4806** : Add filter/group/sort indicators to hidden field menu items.
+
+
 ## [v7.9-beta.8] - 2025-04-09
 
 * Uplift BCrypt lib to 0.4.3.
@@ -759,7 +2013,7 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 
 ## [v7.5-beta.2] - 2024-06-17
 
-* Issue **#4278** : Make document deletion also delete the permission records for that document. Also run migration `V07_04_00_005__Orphaned_Doc_Perms` which will delete all document permissions (in table `doc_permission`) for docs that are not a folder, not the System doc, are not a valid doc (i.e. in the `doc` table) and are not a pipeline filter. Deleted document permission records will first be copied to a backup table `doc_permission_backup_V07_04_00_005`. 
+* Issue **#4278** : Make document deletion also delete the permission records for that document. Also run migration `V07_04_00_005__Orphaned_Doc_Perms` which will delete all document permissions (in table `doc_permission`) for docs that are not a folder, not the System doc, are not a valid doc (i.e. in the `doc` table) and are not a pipeline filter. Deleted document permission records will first be copied to a backup table `doc_permission_backup_V07_04_00_005`.
 
 * Change document Copy and Move to check that the user has Owner permission (or admin) on the document being copied/moved if the permissions mode is None, Destination or Combined. This is because those modes will change the permissions which is something only an Owner/admin can do.
 
@@ -1378,7 +2632,71 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.9-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.14-beta.5...HEAD
+[v7.14-beta.5]: https://github.com/gchq/stroom/compare/v7.14-beta.4...v7.14-beta.5
+[v7.14-beta.4]: https://github.com/gchq/stroom/compare/v7.14-beta.3...v7.14-beta.4
+[v7.14-beta.3]: https://github.com/gchq/stroom/compare/v7.14-beta.2...v7.14-beta.3
+[v7.14-beta.2]: https://github.com/gchq/stroom/compare/v7.14-beta.1...v7.14-beta.2
+[v7.14-beta.1]: https://github.com/gchq/stroom/compare/v7.13-beta.15...v7.14-beta.1
+[v7.13-beta.16]: https://github.com/gchq/stroom/compare/v7.13-beta.15...v7.13-beta.16
+[v7.13-beta.15]: https://github.com/gchq/stroom/compare/v7.13-beta.14...v7.13-beta.15
+[v7.13-beta.14]: https://github.com/gchq/stroom/compare/v7.13-beta.13...v7.13-beta.14
+[v7.13-beta.13]: https://github.com/gchq/stroom/compare/v7.13-beta.12...v7.13-beta.13
+[v7.13-beta.12]: https://github.com/gchq/stroom/compare/v7.13-beta.11...v7.13-beta.12
+[v7.13-beta.11]: https://github.com/gchq/stroom/compare/v7.13-beta.10...v7.13-beta.11
+[v7.13-beta.10]: https://github.com/gchq/stroom/compare/v7.13-beta.9...v7.13-beta.10
+[v7.13-beta.9]: https://github.com/gchq/stroom/compare/v7.13-beta.8...v7.13-beta.9
+[v7.13-beta.8]: https://github.com/gchq/stroom/compare/v7.13-beta.7...v7.13-beta.8
+[v7.13-beta.7]: https://github.com/gchq/stroom/compare/v7.13-beta.6...v7.13-beta.7
+[v7.13-beta.6]: https://github.com/gchq/stroom/compare/v7.13-beta.5...v7.13-beta.6
+[v7.13-beta.5]: https://github.com/gchq/stroom/compare/v7.13-beta.4...v7.13-beta.5
+[v7.13-beta.4]: https://github.com/gchq/stroom/compare/v7.13-beta.3...v7.13-beta.4
+[v7.13-beta.3]: https://github.com/gchq/stroom/compare/v7.13-beta.2...v7.13-beta.3
+[v7.13-beta.2]: https://github.com/gchq/stroom/compare/v7.13-beta.1...v7.13-beta.2
+[v7.13-beta.1]: https://github.com/gchq/stroom/compare/v7.12-beta.1...v7.13-beta.1
+[v7.12-beta.1]: https://github.com/gchq/stroom/compare/v7.11.6...v7.12-beta.1
+[v7.11.6]: https://github.com/gchq/stroom/compare/v7.11.5...v7.11.6
+[v7.11.5]: https://github.com/gchq/stroom/compare/v7.11.4...v7.11.5
+[v7.11.4]: https://github.com/gchq/stroom/compare/v7.11.3...v7.11.4
+[v7.11.3]: https://github.com/gchq/stroom/compare/v7.11.2...v7.11.3
+[v7.11.2]: https://github.com/gchq/stroom/compare/v7.11.1...v7.11.2
+[v7.11.1]: https://github.com/gchq/stroom/compare/v7.11.0...v7.11.1
+[v7.11.0]: https://github.com/gchq/stroom/compare/v7.11-beta.25...v7.11.0
+[v7.11-beta.25]: https://github.com/gchq/stroom/compare/v7.11-beta.24...v7.11-beta.25
+[v7.11-beta.24]: https://github.com/gchq/stroom/compare/v7.11-beta.23...v7.11-beta.24
+[v7.11-beta.23]: https://github.com/gchq/stroom/compare/v7.11-beta.22...v7.11-beta.23
+[v7.11-beta.22]: https://github.com/gchq/stroom/compare/v7.11-beta.21...v7.11-beta.22
+[v7.11-beta.21]: https://github.com/gchq/stroom/compare/v7.11-beta.20...v7.11-beta.21
+[v7.11-beta.20]: https://github.com/gchq/stroom/compare/v7.11-beta.19...v7.11-beta.20
+[v7.11-beta.19]: https://github.com/gchq/stroom/compare/v7.11-beta.18...v7.11-beta.19
+[v7.11-beta.18]: https://github.com/gchq/stroom/compare/v7.11-beta.17...v7.11-beta.18
+[v7.11-beta.17]: https://github.com/gchq/stroom/compare/v7.11-beta.16...v7.11-beta.17
+[v7.11-beta.16]: https://github.com/gchq/stroom/compare/v7.11-beta.15...v7.11-beta.16
+[v7.11-beta.15]: https://github.com/gchq/stroom/compare/v7.11-beta.14...v7.11-beta.15
+[v7.11-beta.14]: https://github.com/gchq/stroom/compare/v7.11-beta.13...v7.11-beta.14
+[v7.11-beta.13]: https://github.com/gchq/stroom/compare/v7.11-beta.12...v7.11-beta.13
+[v7.11-beta.12]: https://github.com/gchq/stroom/compare/v7.11-beta.11...v7.11-beta.12
+[v7.11-beta.11]: https://github.com/gchq/stroom/compare/v7.11-beta.10...v7.11-beta.11
+[v7.11-beta.10]: https://github.com/gchq/stroom/compare/v7.11-beta.9...v7.11-beta.10
+[v7.11-beta.9]: https://github.com/gchq/stroom/compare/v7.11-beta.8...v7.11-beta.9
+[v7.11-beta.8]: https://github.com/gchq/stroom/compare/v7.11-beta.7...v7.11-beta.8
+[v7.11-beta.7]: https://github.com/gchq/stroom/compare/v7.11-beta.6...v7.11-beta.7
+[v7.11-beta.6]: https://github.com/gchq/stroom/compare/v7.11-beta.5...v7.11-beta.6
+[v7.11-beta.5]: https://github.com/gchq/stroom/compare/v7.11-beta.4...v7.11-beta.5
+[v7.11-beta.4]: https://github.com/gchq/stroom/compare/v7.11-beta.3...v7.11-beta.4
+[v7.11-beta.3]: https://github.com/gchq/stroom/compare/v7.11-beta.2...v7.11-beta.3
+[v7.11-beta.2]: https://github.com/gchq/stroom/compare/v7.11-beta.1...v7.11-beta.2
+[v7.11-beta.1]: https://github.com/gchq/stroom/compare/v7.10-beta.6...v7.11-beta.1
+[v7.10-beta.6]: https://github.com/gchq/stroom/compare/v7.10-beta.5...v7.10-beta.6
+[v7.10-beta.5]: https://github.com/gchq/stroom/compare/v7.10-beta.4...v7.10-beta.5
+[v7.10-beta.4]: https://github.com/gchq/stroom/compare/v7.10-beta.3...v7.10-beta.4
+[v7.10-beta.3]: https://github.com/gchq/stroom/compare/v7.10-beta.2...v7.10-beta.3
+[v7.10-beta.2]: https://github.com/gchq/stroom/compare/v7.10-beta.1...v7.10-beta.2
+[v7.10-beta.1]: https://github.com/gchq/stroom/compare/v7.9-beta.12...v7.10-beta.1
+[v7.9-beta.12]: https://github.com/gchq/stroom/compare/v7.9-beta.11...v7.9-beta.12
+[v7.9-beta.11]: https://github.com/gchq/stroom/compare/v7.9-beta.10...v7.9-beta.11
+[v7.9-beta.10]: https://github.com/gchq/stroom/compare/v7.9-beta.9...v7.9-beta.10
+[v7.9-beta.9]: https://github.com/gchq/stroom/compare/v7.9-beta.8...v7.9-beta.9
 [v7.9-beta.8]: https://github.com/gchq/stroom/compare/v7.9-beta.7...v7.9-beta.8
 [v7.9-beta.7]: https://github.com/gchq/stroom/compare/v7.9-beta.6...v7.9-beta.7
 [v7.9-beta.6]: https://github.com/gchq/stroom/compare/v7.9-beta.5...v7.9-beta.6
@@ -1387,17 +2705,3 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 [v7.9-beta.3]: https://github.com/gchq/stroom/compare/v7.9-beta.2...v7.9-beta.3
 [v7.9-beta.2]: https://github.com/gchq/stroom/compare/v7.9-beta.1...v7.9-beta.2
 [v7.9-beta.1]: https://github.com/gchq/stroom/compare/v7.8-beta.14...v7.9-beta.1
-[v7.8-beta.14]: https://github.com/gchq/stroom/compare/v7.8-beta.13...v7.8-beta.14
-[v7.8-beta.13]: https://github.com/gchq/stroom/compare/v7.8-beta.12...v7.8-beta.13
-[v7.8-beta.12]: https://github.com/gchq/stroom/compare/v7.8-beta.11...v7.8-beta.12
-[v7.8-beta.11]: https://github.com/gchq/stroom/compare/v7.8-beta.10...v7.8-beta.11
-[v7.8-beta.10]: https://github.com/gchq/stroom/compare/v7.8-planb-beta.9...v7.8-beta.10
-[v7.8-planb-beta.9]: https://github.com/gchq/stroom/compare/v7.8-beta.8...v7.8-planb-beta.9
-[v7.8-beta.8]: https://github.com/gchq/stroom/compare/v7.8-beta.7...v7.8-beta.8
-[v7.8-beta.7]: https://github.com/gchq/stroom/compare/v7.8-beta.6...v7.8-beta.7
-[v7.8-beta.6]: https://github.com/gchq/stroom/compare/v7.8-beta.5...v7.8-beta.6
-[v7.8-beta.5]: https://github.com/gchq/stroom/compare/v7.8-beta.4...v7.8-beta.5
-[v7.8-beta.4]: https://github.com/gchq/stroom/compare/v7.8-beta.3...v7.8-beta.4
-[v7.8-beta.3]: https://github.com/gchq/stroom/compare/v7.8-beta.2...v7.8-beta.3
-[v7.8-beta.2]: https://github.com/gchq/stroom/compare/v7.8-beta.1...v7.8-beta.2
-[v7.8-beta.1]: https://github.com/gchq/stroom/compare/v7.8-reporting.5...v7.8-beta.1

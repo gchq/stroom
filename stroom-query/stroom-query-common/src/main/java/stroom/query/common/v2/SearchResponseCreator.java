@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,18 +16,22 @@
 
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.QueryKey;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.ResultRequest.ResultStyle;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
+
+import jakarta.inject.Provider;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -36,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 public class SearchResponseCreator {
@@ -49,6 +54,7 @@ public class SearchResponseCreator {
     private final ExpressionContext expressionContext;
     private final MapDataStoreFactory mapDataStoreFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final Provider<Executor> executorProvider;
 
     private final Map<String, ResultCreator> cachedResultCreators = new HashMap<>();
 
@@ -59,12 +65,14 @@ public class SearchResponseCreator {
                                  final ResultStore store,
                                  final ExpressionContext expressionContext,
                                  final MapDataStoreFactory mapDataStoreFactory,
-                                 final ExpressionPredicateFactory expressionPredicateFactory) {
+                                 final ExpressionPredicateFactory expressionPredicateFactory,
+                                 final Provider<Executor> executorProvider) {
         this.sizesProvider = sizesProvider;
         this.store = Objects.requireNonNull(store);
         this.expressionContext = expressionContext;
         this.mapDataStoreFactory = mapDataStoreFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.executorProvider = executorProvider;
     }
 
     /**
@@ -77,10 +85,10 @@ public class SearchResponseCreator {
         Objects.requireNonNull(store);
         Objects.requireNonNull(throwable);
 
-        final List<String> errors = new ArrayList<>();
+        final List<ErrorMessage> errors = new ArrayList<>();
 
         LOGGER.debug(throwable::getMessage, throwable);
-        errors.add(ExceptionStringUtil.getMessage(throwable));
+        errors.add(new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(throwable)));
 
         if (store.getErrors() != null) {
             errors.addAll(store.getErrors());
@@ -89,8 +97,9 @@ public class SearchResponseCreator {
                 queryKey,
                 null,
                 null,
-                errors,
-                false);
+                null,
+                false,
+                errors);
     }
 
     /**
@@ -142,7 +151,7 @@ public class SearchResponseCreator {
                             new RuntimeException(SearchResponse.TIMEOUT_MESSAGE + effectiveTimeout));
                 }
 
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 LOGGER.trace(e::getMessage, e);
                 // Keep interrupting this thread.
                 Thread.currentThread().interrupt();
@@ -177,14 +186,15 @@ public class SearchResponseCreator {
                 results = null;
             }
 
-            final List<String> errors = buildCompoundErrorList(store, results);
+            final List<ErrorMessage> errors = buildCompoundErrorList(store, results);
 
             final SearchResponse searchResponse = new SearchResponse(
                     searchRequest.getKey(),
                     store.getHighlights(),
                     results,
-                    errors,
-                    complete);
+                    null,
+                    complete,
+                    errors);
 
             if (complete) {
                 SearchDebugUtil.writeRequest(searchRequest, false);
@@ -205,8 +215,8 @@ public class SearchResponseCreator {
         }
     }
 
-    private List<String> buildCompoundErrorList(final ResultStore store, final List<Result> results) {
-        final List<String> errors = new ArrayList<>();
+    private List<ErrorMessage> buildCompoundErrorList(final ResultStore store, final List<Result> results) {
+        final List<ErrorMessage> errors = new ArrayList<>();
 
         if (store.getErrors() != null) {
             errors.addAll(store.getErrors());
@@ -214,7 +224,7 @@ public class SearchResponseCreator {
 
         if (results != null) {
             errors.addAll(results.stream()
-                    .map(Result::getErrors)
+                    .map(Result::getErrorMessages)
                     .filter(Objects::nonNull)
                     .flatMap(Collection::stream)
                     .toList());
@@ -226,7 +236,7 @@ public class SearchResponseCreator {
     }
 
     private Duration getEffectiveTimeout(final SearchRequest searchRequest) {
-        Duration requestedTimeout = searchRequest.getTimeout() == null
+        final Duration requestedTimeout = searchRequest.getTimeout() == null
                 ? null
                 : Duration.ofMillis(searchRequest.getTimeout());
         if (requestedTimeout != null) {
@@ -244,7 +254,7 @@ public class SearchResponseCreator {
                                     final Map<String, ResultCreator> resultCreatorMap) {
 
         // Provide results if this search is incremental or the search is complete.
-        List<Result> results = new ArrayList<>(searchRequest.getResultRequests().size());
+        final List<Result> results = new ArrayList<>(searchRequest.getResultRequests().size());
         // Copy the requested portion of the result cache into the result.
         for (final ResultRequest resultRequest : searchRequest.getResultRequests()) {
             final ResultCreator resultCreator = resultCreatorMap.get(resultRequest.getComponentId());
@@ -296,7 +306,7 @@ public class SearchResponseCreator {
                                                   final ResultRequest resultRequest,
                                                   final boolean cacheLastResult) {
         return cachedResultCreators.computeIfAbsent(componentId, k -> {
-            ResultCreator resultCreator;
+            final ResultCreator resultCreator;
             try {
                 if (ResultStyle.TABLE.equals(resultRequest.getResultStyle())) {
                     final FormatterFactory formatterFactory = new FormatterFactory(searchRequest.getDateTimeSettings());
@@ -315,7 +325,8 @@ public class SearchResponseCreator {
                             null,
                             expressionPredicateFactory,
                             sizesProvider.getDefaultMaxResultsSizes(),
-                            cacheLastResult);
+                            cacheLastResult,
+                            executorProvider);
                     resultCreator = new VisResultCreator(flatResultCreator);
 
                 } else if (ResultStyle.QL_VIS.equals(resultRequest.getResultStyle())) {
@@ -328,7 +339,8 @@ public class SearchResponseCreator {
                             null,
                             expressionPredicateFactory,
                             sizesProvider.getDefaultMaxResultsSizes(),
-                            cacheLastResult);
+                            cacheLastResult,
+                            executorProvider);
                     resultCreator = new QLVisResultCreator(flatResultCreator, resultRequest
                             .getMappings()
                             .getLast()
@@ -344,7 +356,8 @@ public class SearchResponseCreator {
                             null,
                             expressionPredicateFactory,
                             sizesProvider.getDefaultMaxResultsSizes(),
-                            cacheLastResult);
+                            cacheLastResult,
+                            executorProvider);
                 }
             } catch (final RuntimeException e) {
                 throw new RuntimeException(e.getMessage());

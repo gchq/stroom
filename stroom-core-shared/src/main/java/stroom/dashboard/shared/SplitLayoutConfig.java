@@ -16,75 +16,45 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.RandomId;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlElements;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"preferredSize", "dimension", "children"})
 @JsonInclude(Include.NON_NULL)
-@XmlRootElement(name = "splitLayout")
-@XmlType(name = "SplitLayoutConfig", propOrder = {"preferredSize", "dimension", "children"})
-public class SplitLayoutConfig extends LayoutConfig {
+public final class SplitLayoutConfig extends LayoutConfig {
 
-    @JsonIgnore
-    private final String id;
     /**
      * The preferred size of this layout in width, height.
      */
-    @XmlElement(name = "preferredSize")
     @JsonProperty("preferredSize")
-    private Size preferredSize;
-    @XmlElement(name = "dimension")
+    private final Size preferredSize;
     @JsonProperty("dimension")
     private final int dimension;
-    @XmlElementWrapper(name = "children")
-    @XmlElements({
-            @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
-            @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
     @JsonProperty("children")
-    private List<LayoutConfig> children;
+    private final List<LayoutConfig> children;
 
     public SplitLayoutConfig(final int dimension) {
-        this(new Size(), dimension, null);
-    }
-
-    public SplitLayoutConfig(final Size preferredSize, final int dimension) {
-        this(preferredSize, dimension, null);
+        this(new Size(0, 0), dimension, null);
     }
 
     @JsonCreator
     public SplitLayoutConfig(@JsonProperty("preferredSize") final Size preferredSize,
-                             @JsonProperty("dimension") final int dimension,
+                             @JsonProperty("dimension") final Integer dimension,
                              @JsonProperty("children") final List<LayoutConfig> children) {
-        id = "SplitLayoutConfig_" + RandomId.createId(10);
         this.preferredSize = preferredSize;
-        this.dimension = dimension;
+        this.dimension = Objects.requireNonNullElse(dimension, 0);
         this.children = children;
     }
 
     @Override
     public Size getPreferredSize() {
         return preferredSize;
-    }
-
-    public void setPreferredSize(final Size preferredSize) {
-        this.preferredSize = preferredSize;
     }
 
     public int getDimension() {
@@ -95,61 +65,29 @@ public class SplitLayoutConfig extends LayoutConfig {
         return children;
     }
 
-    public LayoutConfig get(final int index) {
-        if (children != null) {
-            final LayoutConfig child = children.get(index);
-            if (child != null) {
-                child.setParent(this);
-                return child;
-            }
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
         }
-        return null;
+        final SplitLayoutConfig that = (SplitLayoutConfig) o;
+        return dimension == that.dimension &&
+               Objects.equals(preferredSize, that.preferredSize) &&
+               Objects.equals(children, that.children);
     }
 
-    public void add(final LayoutConfig child) {
-        if (children == null) {
-            children = new ArrayList<>();
-        }
-        children.add(child);
-        child.setParent(this);
-    }
-
-    public void add(final int index, final LayoutConfig child) {
-        if (children == null) {
-            children = new ArrayList<>();
-        }
-        if (index <= children.size()) {
-            children.add(index, child);
-        } else {
-            children.add(child);
-        }
-        child.setParent(this);
-    }
-
-    public void remove(final LayoutConfig child) {
-        if (children != null) {
-            children.remove(child);
-            child.setParent(null);
-        }
-    }
-
-    public int indexOf(final LayoutConfig child) {
-        if (children != null) {
-            return children.indexOf(child);
-        }
-        return -1;
-    }
-
-    public int count() {
-        if (children == null) {
-            return 0;
-        }
-        return children.size();
+    @Override
+    public int hashCode() {
+        return Objects.hash(preferredSize, dimension, children);
     }
 
     @Override
     public String toString() {
-        return id;
+        return "SplitLayoutConfig{" +
+               "preferredSize=" + preferredSize +
+               ", dimension=" + dimension +
+               ", children=" + children +
+               '}';
     }
 
     @Override
@@ -170,7 +108,7 @@ public class SplitLayoutConfig extends LayoutConfig {
         }
 
         private Builder(final SplitLayoutConfig splitLayoutConfig) {
-            this.preferredSize = splitLayoutConfig.preferredSize;
+            super(splitLayoutConfig);
             this.dimension = splitLayoutConfig.dimension;
             this.children = splitLayoutConfig.children;
         }

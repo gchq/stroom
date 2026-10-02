@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ class Source extends StroomExtensionFunctionCall {
         endElement(contentHandler, "source");
         contentHandler.endDocument();
 
-        Sequence sequence = builder.getCurrentRoot();
+        final Sequence sequence = builder.getCurrentRoot();
 
         // Reset the builder, detaching it from the constructed
         // document.

@@ -1,4 +1,22 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.api;
+
+import stroom.util.shared.string.CIKey;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -16,7 +34,23 @@ import java.util.stream.Collectors;
  */
 class CIStringHashMap implements Map<String, String> {
 
-    private final HashMap<CIString, String> map = new HashMap<>();
+    private final Map<CIString, String> map;
+
+    public CIStringHashMap() {
+        map = new HashMap<>();
+    }
+
+    public CIStringHashMap(final int initialCapacity) {
+        map = new HashMap<>(initialCapacity);
+    }
+
+    public CIStringHashMap(final CIStringHashMap ciStringHashMap) {
+        if (ciStringHashMap == null || ciStringHashMap.isEmpty()) {
+            map = new HashMap<>();
+        } else {
+            map = new HashMap<>(ciStringHashMap.map);
+        }
+    }
 
     @Override
     public void clear() {
@@ -33,14 +67,42 @@ class CIStringHashMap implements Map<String, String> {
         return map.containsValue(value);
     }
 
+    /**
+     * Get the value corresponding to the key.
+     * If the value is non-null then it will be already trimmed
+     * as all values are trimmed on entry into the map.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return The trimmed value or null.
+     */
     @Override
     public String get(final Object key) {
         return map.get(new CIString((String) key));
     }
 
+    /**
+     * Get the value corresponding to the key.
+     * If the value is non-null then it will be already trimmed
+     * as all values are trimmed on entry into the map.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return The trimmed value or null.
+     */
+    public String get(final CIKey key) {
+        return map.get(new CIString(key));
+    }
+
+    /**
+     * Get the value corresponding to the key.
+     * If the value is non-null then it will be already trimmed
+     * as all values are trimmed on entry into the map.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return The trimmed value from the map or defaultVal
+     */
     @Override
-    public String getOrDefault(Object key, String defaultVal) {
-        String val = map.get(new CIString((String) key));
+    public String getOrDefault(final Object key, final String defaultVal) {
+        final String val = map.get(new CIString((String) key));
         return val == null
                 ? defaultVal
                 : val;
@@ -119,6 +181,16 @@ class CIStringHashMap implements Map<String, String> {
         return map.toString();
     }
 
+    /**
+     * @return A {@link Map} that maps the lower-case key to the key in its original case (whatever that
+     * may be).
+     */
+    public Map<String, String> getKeyMap() {
+        return map.keySet()
+                .stream()
+                .collect(Collectors.toMap(CIString::getLowerKey, CIString::getKey));
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -163,8 +235,38 @@ class CIStringHashMap implements Map<String, String> {
             this.lowerKey = this.key.toLowerCase(Locale.ENGLISH);
         }
 
+        /**
+         * A stop-gap until {@link AttributeMap} is replaced with a CiKey based map.
+         * Saves the duplicate lower-casing if we already know the lower case.
+         */
+        CIString(final CIKey ciKey) {
+            if (ciKey.isBlank()) {
+                this.key = "";
+                this.lowerKey = "";
+            } else {
+                final String ciKeyStr = ciKey.get();
+                if (needsTrimming(ciKeyStr)) {
+                    this.key = ciKeyStr.trim();
+                    this.lowerKey = this.key.toLowerCase(Locale.ENGLISH);
+                } else {
+                    this.key = ciKeyStr;
+                    this.lowerKey = ciKey.getAsLowerCase();
+                }
+            }
+        }
+
+        private static boolean needsTrimming(final String str) {
+            final boolean startsWithSpace = Character.isWhitespace(str.charAt(0));
+            final boolean endsWithSpace = Character.isWhitespace(str.charAt(str.length() - 1));
+            return startsWithSpace || endsWithSpace;
+        }
+
         public String getKey() {
             return key;
+        }
+
+        public String getLowerKey() {
+            return lowerKey;
         }
 
         @Override

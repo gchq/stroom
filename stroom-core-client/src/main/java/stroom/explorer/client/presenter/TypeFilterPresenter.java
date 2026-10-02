@@ -95,7 +95,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
         cellTable.addColumn(getTickBoxColumn());
         cellTable.setSkipRowHoverCheck(true);
 
-        MySingleSelectionModel<DocumentType> selectionModel = new MySingleSelectionModel<>();
+        final MySingleSelectionModel<DocumentType> selectionModel = new MySingleSelectionModel<>();
         typeFilterSelectionEventManager = new TypeFilterSelectionEventManager(cellTable);
         cellTable.setSelectionModel(selectionModel, typeFilterSelectionEventManager);
 
@@ -201,7 +201,7 @@ public class TypeFilterPresenter extends MyPresenterWidget<TypeFilterView>
 
     private void refreshView() {
         // We want to add in the 'All/none' DocumentType, at the top.
-        List<DocumentType> selectableTypes = new ArrayList<>(visibleTypes);
+        final List<DocumentType> selectableTypes = new ArrayList<>(visibleTypes);
         selectableTypes.add(0, SELECT_ALL_OR_NONE_DOCUMENT_TYPE);
 
         // To refresh the view we need to set the row data again.

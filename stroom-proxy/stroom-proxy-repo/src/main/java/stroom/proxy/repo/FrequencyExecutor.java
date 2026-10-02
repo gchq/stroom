@@ -1,6 +1,23 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.repo;
 
 import stroom.util.concurrent.UncheckedInterruptedException;
+import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -43,7 +60,9 @@ public class FrequencyExecutor implements Managed {
             try {
                 runnableSupplier.get().run();
             } catch (final UncheckedInterruptedException e) {
-                LOGGER.debug(e::getMessage, e);
+                // Swallow the exception to keep the scheduled executor running
+                LOGGER.debug("Frequency executor interrupted '{}' task: {}",
+                        threadNamePrefix, LogUtil.exceptionMessage(e), e);
             } catch (final RuntimeException e) {
                 // Swallow the exception to keep the scheduled executor running
                 LOGGER.error("Error running frequency executor '{}' task: {}",
@@ -56,8 +75,11 @@ public class FrequencyExecutor implements Managed {
 
     @Override
     public void stop() {
-        LOGGER.debug("Stopping frequency executor '{}', frequency: {}", threadNamePrefix, frequency);
+        LOGGER.info("Stopping frequency executor '{}', frequency: {}", threadNamePrefix, frequency);
+        final DurationTimer timer = DurationTimer.start();
         executorService.shutdownNow();
+        LOGGER.debug("Stopped frequency executor '{}', frequency: {}, duration: {}",
+                threadNamePrefix, frequency, timer);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public class V07_06_00_300__processor_filter_pre_migration_checks extends BaseJa
 
     @Override
     public void migrate(final Context context) throws Exception {
-        boolean error = false;
+        final boolean error = false;
 
 
         // NOT SURE IF WE NEED PRE MIG CHECKS BUT WE COULD DETECT PFs WITHOUT OWNER OR WITH MULTIPLE OWNERS????

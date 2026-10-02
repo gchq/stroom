@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata;
@@ -68,7 +67,7 @@ public class RefDataLoaderHolder {
             //only fetch the version once per pipeline process
             return pipelineDocRefToVersionCache.computeIfAbsent(pipelineReference.getPipeline(), docRef ->
                     pipelineStore.readDocument(pipelineReference.getPipeline()).getVersion());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "pipelineReference not found in store {}", pipelineReference), e);
         }

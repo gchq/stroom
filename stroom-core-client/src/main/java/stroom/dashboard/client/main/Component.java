@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.shared.ComponentConfig;
@@ -27,9 +28,9 @@ import com.gwtplatform.mvp.client.Layer;
 
 public interface Component extends TabData, Layer, HasDisplayValue {
 
-    Components getComponents();
+    DashboardContext getDashboardContext();
 
-    void setComponents(Components components);
+    void setDashboardContext(DashboardContext dashboardContext);
 
     ComponentType getComponentType();
 
@@ -54,9 +55,9 @@ public interface Component extends TabData, Layer, HasDisplayValue {
      */
     void setTabLayout(TabLayout tabLayout);
 
-    TabConfig getTabConfig();
+    MutableTabConfig getTabConfig();
 
-    void setTabConfig(TabConfig tabConfig);
+    void setTabConfig(MutableTabConfig tabConfig);
 
     void onClose();
 
@@ -68,7 +69,9 @@ public interface Component extends TabData, Layer, HasDisplayValue {
 
     ComponentConfig write();
 
-    void setDashboardContext(DashboardContext dashboardContext);
-
     void setDesignMode(boolean designMode);
+
+    default void onContentTabVisible(final boolean visible) {
+
+    }
 }

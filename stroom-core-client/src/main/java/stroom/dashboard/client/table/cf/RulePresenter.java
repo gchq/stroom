@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.table.cf;
 
-import stroom.query.api.v2.ConditionalFormattingRule;
-import stroom.query.api.v2.ConditionalFormattingStyle;
-import stroom.query.api.v2.ConditionalFormattingType;
-import stroom.query.api.v2.CustomConditionalFormattingStyle;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.TextAttributes;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.ConditionalFormattingStyle;
+import stroom.query.api.ConditionalFormattingType;
+import stroom.query.api.CustomConditionalFormattingStyle;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.TextAttributes;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.util.shared.RandomId;
 

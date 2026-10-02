@@ -39,25 +39,25 @@ public class CustomDateBox extends DateBox implements HasLongValue {
     }
 
     @Override
-    public void setLongValue(Long date) {
+    public void setLongValue(final Long date) {
         setValue(toDateFromLong(date));
     }
 
-    private Long toLongFromDate(Date date) {
+    private Long toLongFromDate(final Date date) {
         if (date == null) {
             return null;
         }
         return date.getTime();
     }
 
-    private Date toDateFromLong(Long date) {
+    private Date toDateFromLong(final Long date) {
         if (date == null) {
             return null;
         }
         return new Date(date.longValue());
     }
 
-    public void setLongValue(Long date, final boolean fireEvents) {
+    public void setLongValue(final Long date, final boolean fireEvents) {
         setValue(toDateFromLong(date), fireEvents);
     }
 
@@ -117,7 +117,7 @@ public class CustomDateBox extends DateBox implements HasLongValue {
                     date = dateTimeFormat.parse(dateText);
                     lastDate = date;
                 }
-            } catch (IllegalArgumentException exception) {
+            } catch (final IllegalArgumentException exception) {
                 if (reportError) {
                     dateBox.addStyleName(DATE_BOX_FORMAT_ERROR);
                 }

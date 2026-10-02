@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import stroom.util.shared.AbstractBuilder;
 import stroom.util.shared.ModelStringUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -23,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
 
 /**
  * State of a volume.
@@ -33,39 +36,36 @@ public class FsVolumeState {
     public static final String ENTITY_TYPE = "VolumeState";
 
     @JsonProperty
-    private int id;
+    private final int id;
     @JsonProperty
-    private int version;
+    private final int version;
     @JsonProperty
-    private Long bytesUsed;
+    private final Long bytesUsed;
     @JsonProperty
-    private Long bytesFree;
+    private final Long bytesFree;
     @JsonProperty
-    private Long bytesTotal;
+    private final Long bytesTotal;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
 
     public static FsVolumeState create(final long bytesUsed, final long bytesTotal) {
-        final FsVolumeState state = new FsVolumeState();
-        state.setBytesUsed(bytesUsed);
-        state.setBytesFree(bytesTotal - bytesUsed);
-        state.setBytesTotal(bytesTotal);
-        state.setUpdateTimeMs(System.currentTimeMillis());
-        return state;
-    }
-
-    public FsVolumeState() {
+        return builder()
+                .bytesUsed(bytesUsed)
+                .bytesFree(bytesTotal - bytesUsed)
+                .bytesTotal(bytesTotal)
+                .updateTimeMs(System.currentTimeMillis())
+                .build();
     }
 
     @JsonCreator
-    public FsVolumeState(@JsonProperty("id") final int id,
-                         @JsonProperty("version") final int version,
+    public FsVolumeState(@JsonProperty("id") final Integer id,
+                         @JsonProperty("version") final Integer version,
                          @JsonProperty("bytesUsed") final Long bytesUsed,
                          @JsonProperty("bytesFree") final Long bytesFree,
                          @JsonProperty("bytesTotal") final Long bytesTotal,
                          @JsonProperty("updateTimeMs") final Long updateTimeMs) {
-        this.id = id;
-        this.version = version;
+        this.id = Objects.requireNonNullElse(id, 0);
+        this.version = Objects.requireNonNullElse(version, 0);
         this.bytesUsed = bytesUsed;
         this.bytesFree = bytesFree;
         this.bytesTotal = bytesTotal;
@@ -76,24 +76,12 @@ public class FsVolumeState {
         return id;
     }
 
-    public void setId(final int id) {
-        this.id = id;
-    }
-
     public int getVersion() {
         return version;
     }
 
-    public void setVersion(final int version) {
-        this.version = version;
-    }
-
     public Long getBytesUsed() {
         return bytesUsed;
-    }
-
-    public void setBytesUsed(final Long bytesUsed) {
-        this.bytesUsed = bytesUsed;
     }
 
     /**
@@ -103,24 +91,12 @@ public class FsVolumeState {
         return bytesFree;
     }
 
-    public void setBytesFree(final Long bytesFree) {
-        this.bytesFree = bytesFree;
-    }
-
     public Long getBytesTotal() {
         return bytesTotal;
     }
 
-    public void setBytesTotal(final Long bytesTotal) {
-        this.bytesTotal = bytesTotal;
-    }
-
     public Long getUpdateTimeMs() {
         return updateTimeMs;
-    }
-
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
     }
 
     @JsonIgnore
@@ -154,7 +130,103 @@ public class FsVolumeState {
             sb.append(percentUsed);
             sb.append("%");
         }
-
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final FsVolumeState that = (FsVolumeState) o;
+        return id == that.id && version == that.version && Objects.equals(bytesUsed,
+                that.bytesUsed) && Objects.equals(bytesFree, that.bytesFree) && Objects.equals(
+                bytesTotal,
+                that.bytesTotal) && Objects.equals(updateTimeMs, that.updateTimeMs);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, version, bytesUsed, bytesFree, bytesTotal, updateTimeMs);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static class Builder extends AbstractBuilder<FsVolumeState, Builder> {
+
+        private int id;
+        private int version;
+        private Long bytesUsed;
+        private Long bytesFree;
+        private Long bytesTotal;
+        private Long updateTimeMs;
+
+        private Builder() {
+        }
+
+        private Builder(final FsVolumeState fsVolumeState) {
+            this.id = fsVolumeState.id;
+            this.version = fsVolumeState.version;
+            this.bytesUsed = fsVolumeState.bytesUsed;
+            this.bytesFree = fsVolumeState.bytesFree;
+            this.bytesTotal = fsVolumeState.bytesTotal;
+            this.updateTimeMs = fsVolumeState.updateTimeMs;
+        }
+
+        public Builder id(final int id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final int version) {
+            this.version = version;
+            return self();
+        }
+
+        public Builder bytesUsed(final Long bytesUsed) {
+            this.bytesUsed = bytesUsed;
+            return self();
+        }
+
+        public Builder bytesFree(final Long bytesFree) {
+            this.bytesFree = bytesFree;
+            return self();
+        }
+
+        public Builder bytesTotal(final Long bytesTotal) {
+            this.bytesTotal = bytesTotal;
+            return self();
+        }
+
+        public Builder updateTimeMs(final Long updateTimeMs) {
+            this.updateTimeMs = updateTimeMs;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public FsVolumeState build() {
+            return new FsVolumeState(
+                    id,
+                    version,
+                    bytesUsed,
+                    bytesFree,
+                    bytesTotal,
+                    updateTimeMs);
+        }
     }
 }

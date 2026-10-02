@@ -36,7 +36,7 @@ class Put extends StroomExtensionFunctionCall {
     }
 
     @Override
-    protected Sequence call(String functionName, XPathContext context, Sequence[] arguments) {
+    protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         try {
             final String key = getSafeString(functionName, context, arguments, 0);
             final String value = getSafeString(functionName, context, arguments, 1);

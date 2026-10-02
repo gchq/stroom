@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,11 +65,8 @@ class VolumeCreatorForTesting implements VolumeCreator {
     }
 
     private IndexVolume createVolume(final Path tempDir, final String path, final String nodeName) {
-        final IndexVolume vol = new IndexVolume();
         final String p = tempDir.resolve(path).toAbsolutePath().toString();
-        vol.setPath(p);
-        vol.setNodeName(nodeName);
-        return vol;
+        return IndexVolume.builder().path(p).nodeName(nodeName).build();
     }
 
     @Override
@@ -82,7 +79,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
                 boolean found = false;
                 for (final IndexVolume existingVolume : existingVolumes) {
                     if (existingVolume.getNodeName().equals(volume.getNodeName())
-                            && existingVolume.getPath().equals(volume.getPath())) {
+                        && existingVolume.getPath().equals(volume.getPath())) {
                         found = true;
                         break;
                     }

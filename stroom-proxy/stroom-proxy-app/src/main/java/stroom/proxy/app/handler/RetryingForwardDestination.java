@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DataDirProvider;
@@ -7,6 +23,7 @@ import stroom.proxy.repo.store.FileStores;
 import stroom.util.concurrent.ThreadUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.io.PathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,7 +61,7 @@ public class RetryingForwardDestination implements ForwardDestination {
     /**
      * File to hold the log of all forwarding errors from all forward attempts for this {@link FileGroup}
      */
-    private static final String ERROR_LOG_FILENAME = "error.log";
+    static final String ERROR_LOG_FILENAME = "error.log";
     /**
      * Holds the state relating to retries. Held in binary form.
      */
@@ -72,7 +89,8 @@ public class RetryingForwardDestination implements ForwardDestination {
                                       final PathCreator pathCreator,
                                       final DirQueueFactory dirQueueFactory,
                                       final ProxyServices proxyServices,
-                                      final FileStores fileStores) {
+                                      final FileStores fileStores,
+                                      final FsyncMode fsyncMode) {
 
         this.forwardQueueConfig = Objects.requireNonNull(forwardQueueConfig);
         this.delegateDestination = Objects.requireNonNull(delegateDestination);
@@ -82,17 +100,20 @@ public class RetryingForwardDestination implements ForwardDestination {
         this.destinationName = Objects.requireNonNull(delegateDestination.getName());
         final String safeDirName = DirUtil.makeSafeName(destinationName);
         final Path forwardingDir = dataDirProvider.get()
-                .resolve(DirNames.FORWARDING).resolve(safeDirName);
+                .resolve(DirNames.FORWARDING)
+                .resolve(safeDirName);
         DirUtil.ensureDirExists(forwardingDir);
 
         forwardQueue = dirQueueFactory.create(
                 forwardingDir.resolve("01_forward"),
                 FORWARD_ORDER,
-                "forward - " + destinationName);
+                "forward - " + destinationName,
+                fsyncMode);
         retryQueue = dirQueueFactory.create(
                 forwardingDir.resolve("02_retry"),
                 RETRY_ORDER,
-                "retry - " + destinationName);
+                "retry - " + destinationName,
+                fsyncMode);
 
         final DirQueueTransfer forwarding = new DirQueueTransfer(
                 forwardQueue::next, this::forwardDir);
@@ -109,7 +130,7 @@ public class RetryingForwardDestination implements ForwardDestination {
 
         // Create failure destination.
         failureDestination = setupFailureDestination(
-                forwardQueueConfig, pathCreator, forwardingDir);
+                forwardQueueConfig, pathCreator, forwardingDir, fsyncMode);
         delayForwardingFunc = createForwardDelayFunc(forwardQueueConfig);
 
         if (delegateDestination.hasLivenessCheck()) {
@@ -159,7 +180,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                     break;
                 }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Swallow as this is only for testing
             LOGGER.error("Error while delaying the forward: {}", LogUtil.exceptionMessage(e), e);
         }
@@ -171,7 +192,7 @@ public class RetryingForwardDestination implements ForwardDestination {
         try {
             isLive = delegateDestination.performLivenessCheck();
             LOGGER.debug("'{}' - isLive: {}", destinationName, isLive);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Error performing liveness check", e);
             isLive = false;
             msg = e.getMessage();
@@ -219,13 +240,13 @@ public class RetryingForwardDestination implements ForwardDestination {
         // Now pass it directly to the delegate destination with no queuing/retrying
         try {
             delegateDestination.add(sourceDir);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(
                     "Error sending '" + FileUtil.getCanonicalPath(sourceDir)
                     + "' to " + getDestinationType() + " forward destination '"
                     + destinationName + "' "
                     + LogUtil.exceptionMessage(getCause(e))
-                    + (e instanceof ForwardException fe
+                    + (e instanceof final ForwardException fe
                             ? " Feed: '" + fe.getFeedName() + "'. HTTP code: " + fe.getHttpResponseCode() + ". "
                             : "")
                     + " Will not retry, moving to failure destination "
@@ -263,18 +284,26 @@ public class RetryingForwardDestination implements ForwardDestination {
 
     private ForwardFileDestination setupFailureDestination(final ForwardQueueConfig forwardQueueConfig,
                                                            final PathCreator simplePathCreator,
-                                                           final Path forwardingDir) {
+                                                           final Path forwardingDir,
+                                                           final FsyncMode fsyncMode) {
         final ForwardFileDestination failureDestination;
         final Path failureDir = forwardingDir.resolve("03_failure");
         final PathTemplateConfig errorSubPathTemplate = forwardQueueConfig.getErrorSubPathTemplate();
         DirUtil.ensureDirExists(failureDir);
+        // Use atomic move here as the failure dir is within the proxy data dirs, rather
+        // than on the forward dest.
+        // For the same reason this uses the queue level fsync setting rather than the
+        // destination's own one: 03_failure is proxy internal state that sits alongside
+        // 01_forward and 02_retry, not something written to the external destination.
         failureDestination = new ForwardFileDestinationImpl(
                 failureDir,
                 destinationName + " (failures)",
                 errorSubPathTemplate,
                 null,
                 null,
-                simplePathCreator);
+                simplePathCreator,
+                true,
+                fsyncMode);
         fileStores.add(FORWARD_ORDER, "forward - " + destinationName + " - failure", failureDir);
         return failureDestination;
     }
@@ -294,7 +323,7 @@ public class RetryingForwardDestination implements ForwardDestination {
 
                 // Have to assume we can retry
                 boolean canRetry = true;
-                if (e instanceof ForwardException forwardException) {
+                if (e instanceof final ForwardException forwardException) {
                     canRetry = forwardException.isRecoverable();
                 }
                 final int attempts;
@@ -337,8 +366,8 @@ public class RetryingForwardDestination implements ForwardDestination {
                         + "' to " + getDestinationType() + " forward destination '"
                         + destinationName + "' "
                         + "(attempts: " + attempts + ", retryAge: " + retryAge + "): "
-                        + LogUtil.exceptionMessage(getCause(e)) + ". "
-                        + (e instanceof ForwardException fe
+                        + e.getMessage() + ". "
+                        + (e instanceof final ForwardException fe
                                 ? "Feed: '" + fe.getFeedName() + "'. HTTP code: " + fe.getHttpResponseCode() + ". "
                                 : "")
                         + "(Enable DEBUG for stack trace.) ";
@@ -372,7 +401,7 @@ public class RetryingForwardDestination implements ForwardDestination {
             final Path retryStateFile = getRetryStateFile(dir);
             try {
                 FileUtil.deleteFile(retryStateFile);
-            } catch (Exception e2) {
+            } catch (final Exception e2) {
                 // Only deleting as it is no longer needed. The error.log file contains info about each attempt
                 // and retry.state is binary. Thus, we don't really care if we can't delete it.
                 LOGGER.debug("Unable to delete retry state file {}: {}",
@@ -385,7 +414,7 @@ public class RetryingForwardDestination implements ForwardDestination {
             LOGGER.debug(() -> msgSupplier.get()
                                + " Will not retry, moving to failure destination "
                                + failureDestination.getStoreDir(), e);
-        } catch (Exception e3) {
+        } catch (final Exception e3) {
             LOGGER.error("Error moving '{}' to {}", dir, failureDestination, e3);
         }
     }
@@ -451,7 +480,7 @@ public class RetryingForwardDestination implements ForwardDestination {
             final long sleepMs = Math.min(ONE_SECOND_IN_MS, delay);
             try {
                 Thread.sleep(sleepMs);
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
                 LOGGER.debug("Interpreted during sleep");
                 break;
@@ -465,7 +494,7 @@ public class RetryingForwardDestination implements ForwardDestination {
     }
 
     private Throwable getCause(final Throwable e) {
-        return e instanceof ForwardException forwardException
+        return e instanceof final ForwardException forwardException
                && forwardException.getCause() != null
                 ? forwardException.getCause()
                 : e;
@@ -496,7 +525,7 @@ public class RetryingForwardDestination implements ForwardDestination {
             try {
                 final byte[] bytes = Files.readAllBytes(retryStateFile);
                 return RetryState.deserialise(bytes);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.error(() ->
                         LogUtil.message("Error reading retry file {}: {}", LogUtil.exceptionMessage(e), e));
                 return null;
@@ -519,8 +548,8 @@ public class RetryingForwardDestination implements ForwardDestination {
         final Path retryStateFile = getRetryStateFile(dir);
         RetryState updatedRetryState;
         if (Files.isRegularFile(retryStateFile)) {
-            try (RandomAccessFile reader = new RandomAccessFile(retryStateFile.toFile(), "rwd");
-                    FileChannel channel = reader.getChannel()) {
+            try (final RandomAccessFile reader = new RandomAccessFile(retryStateFile.toFile(), "rwd");
+                    final FileChannel channel = reader.getChannel()) {
                 final ByteBuffer byteBuffer = ByteBuffer.allocate(RetryState.TOTAL_BYTES);
                 // First read the existing value
                 channel.read(byteBuffer);
@@ -540,7 +569,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                     throw new IllegalStateException(LogUtil.message("Unexpected writeCount {}, expecting {}",
                             writeCount, RetryState.TOTAL_BYTES));
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.error("'{}' - Error updating retry file '{}'. " +
                              "Retry state cannot be updated so this directory will be " +
                              "retried indefinitely. Error: {}",
@@ -560,7 +589,7 @@ public class RetryingForwardDestination implements ForwardDestination {
                             updatedRetryState.serialise(),
                             StandardOpenOption.CREATE_NEW,
                             StandardOpenOption.WRITE);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.error(e::getMessage, e);
                 }
             }

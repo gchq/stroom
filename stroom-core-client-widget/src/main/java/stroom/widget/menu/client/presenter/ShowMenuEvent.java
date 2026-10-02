@@ -1,6 +1,21 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.menu.client.presenter;
 
-import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -13,6 +28,7 @@ import com.google.gwt.event.shared.HasHandlers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ShowMenuEvent
         extends GwtEvent<ShowMenuEvent.Handler> {
@@ -81,7 +97,7 @@ public class ShowMenuEvent
     }
 
     @Override
-    protected void dispatch(Handler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onShow(this);
     }
 
@@ -164,7 +180,7 @@ public class ShowMenuEvent
             return this;
         }
 
-        public void fire(HasHandlers hasHandlers) {
+        public void fire(final HasHandlers hasHandlers) {
             Element[] elements = null;
             if (!autoHidePartners.isEmpty()) {
                 elements = autoHidePartners.toArray(new Element[0]);
@@ -176,7 +192,7 @@ public class ShowMenuEvent
                     showHandler,
                     hideHandler,
                     elements,
-                    NullSafe.requireNonNullElse(allowCloseOnMoveLeft, false)));
+                    Objects.requireNonNullElse(allowCloseOnMoveLeft, false)));
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package stroom.search.solr.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.datasource.api.v2.FieldType;
+import stroom.query.api.datasource.FieldType;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;

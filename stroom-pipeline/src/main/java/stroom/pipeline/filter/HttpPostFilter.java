@@ -40,6 +40,7 @@ import org.xml.sax.SAXException;
 
 @Deprecated // This is pretty limited in what it can do. HttpAppender is much better and more configurable
 @ConfigurableElement(type = "HttpPostFilter",
+        displayValue = "HTTP Post Filter",
         category = PipelineElementType.Category.FILTER,
         description = """
                 This element is deprecated, you should instead use the much more flexible \
@@ -72,7 +73,7 @@ public class HttpPostFilter extends AbstractSamplingFilter {
     @Override
     public void endDocument() throws SAXException {
         super.endDocument();
-        String xml = getOutput();
+        final String xml = getOutput();
 
         final String deprecatedMsg = LogUtil.message("{} is deprecated. Use {} instead.",
                 HttpPostFilter.class.getSimpleName(),
@@ -86,7 +87,7 @@ public class HttpPostFilter extends AbstractSamplingFilter {
         } else {
             try {
                 final Client client = jerseyClientFactory.getNamedClient(JerseyClientName.HTTP_POST_FILTER);
-                try (Response response = client
+                try (final Response response = client
                         .target(receivingApiUrl)
                         .request()
                         .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)

@@ -55,7 +55,7 @@ public class Period extends Range<Long> {
         super(from.toEpochMilli(), to.toEpochMilli());
     }
 
-    public static final Period clone(Period period) {
+    public static final Period clone(final Period period) {
         if (period == null) {
             return null;
         }
@@ -81,7 +81,7 @@ public class Period extends Range<Long> {
      * Create a period just covering 1 ms.
      */
     public static final Period createNullPeriod() {
-        Period period = new Period();
+        final Period period = new Period();
         period.setMatchNull(true);
         return period;
     }
@@ -101,8 +101,8 @@ public class Period extends Range<Long> {
             throw new RuntimeException("Cannot double unbounded period.");
         }
 
-        long duration = getTo() - getFrom();
-        long half = duration / 2;
+        final long duration = getTo() - getFrom();
+        final long half = duration / 2;
         return new Period(getFrom() - half, getTo() + half);
     }
 
@@ -111,22 +111,22 @@ public class Period extends Range<Long> {
      */
     public Long getHoursInPeriod() {
         if (isBounded()) {
-            long duration = getTo() - getFrom();
+            final long duration = getTo() - getFrom();
             return duration / MS_IN_HOUR;
         }
         return null;
     }
 
-    public int getPrecision(int pointsRequired) {
+    public int getPrecision(final int pointsRequired) {
         if (!isBounded()) {
             return 0;
         }
         if (pointsRequired == 0) {
             return 0;
         }
-        long duration = getTo() - getFrom();
+        final long duration = getTo() - getFrom();
 
-        long scale = duration / pointsRequired;
+        final long scale = duration / pointsRequired;
 
         return (int) Math.log10(scale);
     }
@@ -136,8 +136,8 @@ public class Period extends Range<Long> {
      */
     public Long getDaysInPeriod() {
         if (isBounded()) {
-            long duration = getTo() - getFrom();
-            long days = (duration / MS_IN_DAY);
+            final long duration = getTo() - getFrom();
+            final long days = (duration / MS_IN_DAY);
             return days;
 
         }
@@ -164,7 +164,7 @@ public class Period extends Range<Long> {
     /**
      * Inclusive
      */
-    public void setFromMs(Long from) {
+    public void setFromMs(final Long from) {
         super.setFrom(from);
     }
 
@@ -188,7 +188,7 @@ public class Period extends Range<Long> {
     /**
      * Exclusive
      */
-    public void setToMs(Long to) {
+    public void setToMs(final Long to) {
         super.setTo(to);
     }
 
@@ -203,11 +203,11 @@ public class Period extends Range<Long> {
                 Instant.ofEpochMilli(getFrom()), Instant.ofEpochMilli(getTo()));
 
         long durationMs = getTo() - getFrom();
-        int totalHours = (int) (durationMs / MS_IN_HOUR);
+        final int totalHours = (int) (durationMs / MS_IN_HOUR);
         durationMs = durationMs - (totalHours * MS_IN_HOUR);
 
-        int hours;
-        int days;
+        final int hours;
+        final int days;
         if (totalHours > 24) {
             hours = totalHours % 24;
             days = totalHours / 24;
@@ -216,9 +216,9 @@ public class Period extends Range<Long> {
             days = 0;
         }
 
-        int minutes = (int) (durationMs / MS_IN_MINUTE);
+        final int minutes = (int) (durationMs / MS_IN_MINUTE);
         durationMs = durationMs - (minutes * MS_IN_MINUTE);
-        int seconds = (int) (durationMs / MS_IN_SECOND);
+        final int seconds = (int) (durationMs / MS_IN_SECOND);
         durationMs = durationMs - (seconds * MS_IN_SECOND);
 
         final StringBuilder sb = new StringBuilder();
@@ -252,7 +252,7 @@ public class Period extends Range<Long> {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
         builder.append("[");
         builder.append("From: ");
         if (getFrom() == null) {

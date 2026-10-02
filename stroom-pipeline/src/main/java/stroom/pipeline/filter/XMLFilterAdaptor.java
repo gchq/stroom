@@ -18,6 +18,7 @@ package stroom.pipeline.filter;
 
 import stroom.pipeline.factory.Processor;
 import stroom.task.api.Terminator;
+import stroom.util.shared.ElementId;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
@@ -95,12 +96,12 @@ public class XMLFilterAdaptor implements XMLFilter {
     }
 
     @Override
-    public String getElementId() {
+    public ElementId getElementId() {
         return null;
     }
 
     @Override
-    public void setElementId(final String elementId) {
+    public void setElementId(final ElementId elementId) {
     }
 
     @Override

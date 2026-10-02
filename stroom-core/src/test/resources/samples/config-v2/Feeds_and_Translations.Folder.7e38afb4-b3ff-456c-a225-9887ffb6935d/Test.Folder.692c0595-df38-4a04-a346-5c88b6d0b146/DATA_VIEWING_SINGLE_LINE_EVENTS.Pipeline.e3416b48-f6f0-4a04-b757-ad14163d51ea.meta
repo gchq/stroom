@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "e3416b48-f6f0-4a04-b757-ad14163d51ea",
+  "name" : "DATA_VIEWING_SINGLE_LINE-EVENTS",
+  "version" : "84cc152e-e140-4ea9-a1cb-ef8469c48e69",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "d7c55950-7427-48ab-a1b6-11bc7b449dfd",
+    "name" : "Event Data (Text)"
+  }
+}

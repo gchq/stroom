@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
  * <p>
  * Useful as a case-insensitive cache key that retains the case of the
  * original string at the cost of wrapping it in another object. Also
- * useful for case insensitive comparisons of common strings.
+ * useful for case-insensitive comparisons of common strings.
  * </p>
  * <p>
  * See {@link CIKeys} for common {@link CIKey} instances.
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 @JsonPropertyOrder(alphabetic = true)
 public class CIKey implements Comparable<CIKey> {
 
-    public static final CIKey NULL_STRING = new CIKey(null);
+    //    public static final CIKey NULL_STRING = new CIKey(null);
     public static final CIKey EMPTY_STRING = new CIKey("");
 
     // Compare on the lower case form of the key. CIKey may be null and lowerKey may be null
@@ -61,15 +61,22 @@ public class CIKey implements Comparable<CIKey> {
             Comparator.nullsFirst(String::compareTo)));
 
     @JsonProperty
-//    @JsonValue // No need to serialise the CIKey wrapper, just the key
+    // RestyGWT doesn't understand @JsonValue, so we can't (de)serialise to/from a simple string
+    // like we do for StroomDuration, what a pain :-(
+    //@JsonValue // No need to serialise the CIKey wrapper, just the key
     private final String key;
 
     @JsonIgnore
     private final transient String lowerKey;
 
+    @JsonIgnore
+    private transient int hash = 0;
+    @JsonIgnore
+    private transient boolean hashIsZero = false;
+
     @JsonCreator
     private CIKey(@JsonProperty("key") final String key) {
-        this.key = key;
+        this.key = Objects.requireNonNull(key);
         this.lowerKey = toLowerCase(key);
     }
 
@@ -80,33 +87,44 @@ public class CIKey implements Comparable<CIKey> {
      * @param lowerKey The key converted to lower-case
      */
     CIKey(final String key, final String lowerKey) {
-        this.key = key;
-        this.lowerKey = lowerKey;
+        this.key = Objects.requireNonNull(key);
+        this.lowerKey = Objects.requireNonNull(lowerKey);
     }
 
     /**
      * Create a {@link CIKey} for an unknown, upper or mixed case key, e.g. "FOO", or "Foo".
-     * If key is known to be all lower case then use {@link CIKey#ofLowerCase(String)}.
+     * If key is known to definitely be all lower case then use {@link CIKey#ofLowerCase(String)} for
+     * a slight performance gain.
      * If key is a common key this method will return an existing {@link CIKey} instance
      * else it will create a new instance.
+     * If the key is likely to not be a common key then use {@link CIKey#ofDynamicKey(String)} to
+     * save the map lookup.
      * <p>
      * The returned {@link CIKey} will wrap key with no change of case and no trimming.
      * </p>
      * <p>
-     * Is null safe.
+     * Is null safe. If key is null, returns null.
      * </p>
      */
     public static CIKey of(final String key) {
         if (key == null) {
-            return NULL_STRING;
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
             // See if we have a common key that matches exactly with the one requested.
             // Case-sensitive here because CIKey should wrap the exact case passed in.
-            return NullSafe.requireNonNullElseGet(
-                    CIKeys.getCommonKey(key),
-                    () -> new CIKey(key));
+            CIKey ciKey = CIKeys.getCommonKey(key);
+            if (ciKey == null) {
+                // Minor optimisation to save on the cost of doing toLowerCase() if we don't have to
+                if (containsUpperCaseChar(key)) {
+                    ciKey = new CIKey(key);
+                } else {
+                    // All lower
+                    ciKey = new CIKey(key, key);
+                }
+            }
+            return ciKey;
         }
     }
 
@@ -115,7 +133,7 @@ public class CIKey implements Comparable<CIKey> {
      */
     public static CIKey trimmed(final String key) {
         if (key == null) {
-            return NULL_STRING;
+            return EMPTY_STRING;
         } else {
             final String trimmed = key.trim();
             return CIKey.of(trimmed);
@@ -128,31 +146,47 @@ public class CIKey implements Comparable<CIKey> {
      * If key is all lower case then user {@link CIKey#ofLowerCase(String)}.
      * If key is a common key this method will return an existing {@link CIKey} instance
      * else it will create a new instance.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey of(final String key, final String lowerKey) {
-        if (key == null) {
-            return NULL_STRING;
+        if ((key == null && lowerKey != null)
+            || (key != null && lowerKey == null)) {
+            throw new IllegalArgumentException("One is null, other is not - '" + key + "', '" + lowerKey + "'");
+        } else if (key == null) {
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
             // See if we have a common key that matches exactly with the one requested.
             // Case-sensitive here because CIKey should wrap the exact case passed in.
-            return NullSafe.requireNonNullElseGet(
-                    CIKeys.getCommonKey(key),
-                    () -> new CIKey(key, lowerKey));
+            return Objects.requireNonNullElseGet(CIKeys.getCommonKey(key),
+                    () -> {
+                        checkNoUpperCaseChars(lowerKey);
+                        if (key.equalsIgnoreCase(lowerKey)) {
+                            return new CIKey(key, lowerKey);
+                        } else {
+                            throw new IllegalArgumentException(
+                                    "Not the same key (ignoring case)- '" + key + "', '" + lowerKey + "'");
+                        }
+                    });
         }
     }
 
     /**
      * Create a {@link CIKey} for key, providing a map of known {@link CIKey}s keyed
      * on their key value.
-     * Will fall back on {@link CIKeys#commonKeys()} if not found in knownKeys.
+     * Will fall back on {@link CIKeys#getCommonKey(String)} ()} if not found in knownKeys.
      * Allows callers to hold their own local set of known {@link CIKey}s to save
      * re-creating them each time.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey of(final String key, final Map<String, CIKey> knownKeys) {
         if (key == null) {
-            return NULL_STRING;
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
@@ -163,7 +197,13 @@ public class CIKey implements Comparable<CIKey> {
             if (ciKey == null) {
                 ciKey = CIKeys.getCommonKey(key);
                 if (ciKey == null) {
-                    ciKey = new CIKey(key);
+                    // Minor optimisation to save on the cost of doing toLowerCase() if we don't have to
+                    if (containsUpperCaseChar(key)) {
+                        ciKey = new CIKey(key);
+                    } else {
+                        // All lower
+                        ciKey = new CIKey(key, key);
+                    }
                 }
             }
             return ciKey;
@@ -174,34 +214,72 @@ public class CIKey implements Comparable<CIKey> {
      * Create a {@link CIKey} for an all lower case key, e.g. "foo".
      * This is a minor optimisation to avoid a call to toLowerCase as the
      * key is already in lower-case.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey ofLowerCase(final String lowerKey) {
         if (lowerKey == null) {
-            return NULL_STRING;
+            return null;
         } else if (lowerKey.isEmpty()) {
             return EMPTY_STRING;
         } else {
             // See if we have a common key that matches exactly with the one requested.
             // Case-sensitive here because CIKey should wrap the exact case passed in.
-            return NullSafe.requireNonNullElseGet(
-                    CIKeys.getCommonKey(lowerKey),
-                    () -> new CIKey(lowerKey, lowerKey));
+            // If an upper/mixed case string is passed in then we may return a common
+            // CIKey for it (if known). Even though the arg is not lower case, the CiKey
+            // would be correct. This saves the case check.
+            CIKey ciKey = CIKeys.getCommonKey(lowerKey);
+            if (ciKey == null) {
+                // Make sure lowerKey is actually lowercase
+                checkNoUpperCaseChars(lowerKey);
+                ciKey = new CIKey(lowerKey, lowerKey);
+            }
+            return ciKey;
         }
     }
 
     /**
-     * Create a {@link CIKey} for a key that is known NOT to be in {@link CIKey}s map
+     * Will throw if any char is upper-case.
+     */
+    private static void checkNoUpperCaseChars(final String str) {
+        final int len = str.length();
+        for (int i = 0; i < len; i++) {
+            if (Character.isUpperCase(str.charAt(i))) {
+                throw new IllegalArgumentException("str '" + str + "' is not all lowercase");
+            }
+        }
+    }
+
+    private static boolean containsUpperCaseChar(final String str) {
+        final int len = str.length();
+        for (int i = 0; i < len; i++) {
+            if (Character.isUpperCase(str.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Create a {@link CIKey} for a key that is assumed NOT to be in {@link CIKey}s map
      * of common keys and is a key that will not be added to the map of common keys in future.
      * This is a minor optimisation that saves a map lookup if the key is known
      * to probably not be in the map.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey ofDynamicKey(final String dynamicKey) {
         if (dynamicKey == null) {
-            return NULL_STRING;
+            return null;
         } else if (dynamicKey.isEmpty()) {
             return EMPTY_STRING;
         } else {
-            return new CIKey(dynamicKey);
+            return containsUpperCaseChar(dynamicKey)
+                    ? new CIKey(dynamicKey)
+                    // Upper or mixed
+                    : new CIKey(dynamicKey, dynamicKey); // All lower
         }
     }
 
@@ -210,10 +288,18 @@ public class CIKey implements Comparable<CIKey> {
      * Only use this for commonly used static {@link CIKey} instances
      * as if the key is not already held in the map of common {@link CIKey}s
      * then it will be added.
+     * <p>
+     * The returned {@link CIKey} with either be an existing interned one
+     * or a new instance that will be held for use in future calls or calls
+     * to {@link CIKey#of(String)}.
+     * </p>
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey internStaticKey(final String key) {
         if (key == null) {
-            return NULL_STRING;
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
@@ -226,17 +312,37 @@ public class CIKey implements Comparable<CIKey> {
      * {@link CIKey} else return ciKey. Use this if you don't care about the case of the
      * wrapped string, e.g. if key is 'FOO', you could get back a {@link CIKey} that wraps
      * 'foo', 'FOO', 'Foo', etc.
+     * <p>
+     * Is null safe. If key is null, returns null.
+     * </p>
      */
     public static CIKey ofIgnoringCase(final String key) {
         if (key == null) {
-            return NULL_STRING;
+            return null;
         } else if (key.isEmpty()) {
             return EMPTY_STRING;
         } else {
-            final String lowerKey = toLowerCase(key);
-            return NullSafe.requireNonNullElseGet(
-                    CIKeys.getCommonKeyByLowerCase(lowerKey),
-                    () -> CIKey.ofLowerCase(lowerKey));
+            // This assumes that doing the optimistic hashmap lookups is
+            // faster than lower-casing the key.
+            // First assume it matches the case exactly
+            CIKey ciKey = CIKeys.getCommonKey(key);
+            if (ciKey == null) {
+                // If the first char is lower case then there is a good chance key is
+                // all lower case
+                final char firstChar = key.charAt(0);
+                if (Character.isLowerCase(firstChar)) {
+                    // Now assume it is ALL lower-case
+                    ciKey = CIKeys.getCommonKeyByLowerCase(key);
+                }
+                if (ciKey == null) {
+                    final String lowerKey = toLowerCase(key);
+                    ciKey = CIKeys.getCommonKeyByLowerCase(lowerKey);
+                    if (ciKey == null) {
+                        CIKey.ofLowerCase(lowerKey);
+                    }
+                }
+            }
+            return ciKey;
         }
     }
 
@@ -288,10 +394,20 @@ public class CIKey implements Comparable<CIKey> {
 
     @Override
     public int hashCode() {
-        // String lazily caches its hashcode so no need for us to do it too
-        return lowerKey != null
-                ? lowerKey.hashCode()
-                : 0;
+        // Lazy hashCode caching as this is used as a map key.
+        // Borrows pattern from String.hashCode()
+        // Hash on the lowerKey to make it case-insensitive
+        int h = hash;
+        if (h == 0 && !hashIsZero) {
+            // Hash on lower key only so we get a case in-sensitive match
+            h = lowerKey.hashCode();
+            if (h == 0) {
+                hashIsZero = true;
+            } else {
+                hash = h;
+            }
+        }
+        return h;
     }
 
     @Override
@@ -301,13 +417,11 @@ public class CIKey implements Comparable<CIKey> {
 
     @Override
     public int compareTo(final CIKey o) {
-//        Objects.requireNonNull(o);
         return COMPARATOR.compare(this, o);
     }
 
     /**
-     * Returns true if the string this {@link CIKey} wraps contains subString
-     * ignoring case.
+     * Returns true if the string this {@link CIKey} wraps contains subString ignoring case.
      * If subString is all lower case, use {@link CIKey#containsLowerCase(String)} instead.
      */
     public boolean containsIgnoreCase(final String subString) {
@@ -319,11 +433,11 @@ public class CIKey implements Comparable<CIKey> {
     }
 
     /**
-     * Returns true if the string this {@link CIKey} wraps contains (ignoring case) lowerSubString.
+     * Returns true if the string this {@link CIKey} wraps contains lowerSubString.
      * {@code lowerSubString} MUST be all lower case.
      * <p>
      * This method is a slight optimisation to avoid having to lower-case the input if it
-     * is know to already be lower-case.
+     * is known to already be lower-case.
      * </p>
      * If lowerSubString is mixed or upper case, use {@link CIKey#containsIgnoreCase(String)} instead.
      */
@@ -332,7 +446,49 @@ public class CIKey implements Comparable<CIKey> {
         if (lowerKey == null) {
             return false;
         }
-        return lowerKey.contains(toLowerCase(lowerSubString));
+        return lowerKey.contains(lowerSubString);
+    }
+
+    /**
+     * Returns true if the string this {@link CIKey} wraps starts with prefix ignoring case.
+     * If prefix is all lower case, use {@link CIKey#startsWithLowerCase(String)} instead.
+     */
+    public boolean startsWithIgnoreCase(final String prefix) {
+        Objects.requireNonNull(prefix);
+        if (lowerKey == null) {
+            return false;
+        }
+        return lowerKey.startsWith(toLowerCase(prefix));
+    }
+
+    /**
+     * Returns true if the string this {@link CIKey} wraps starts with lowerPrefix.
+     * {@code lowerPrefix} MUST be all lower case.
+     * <p>
+     * This method is a slight optimisation to avoid having to lower-case the input if it
+     * is known to already be lower-case.
+     * </p>
+     * If lowerSubString is mixed or upper case, use {@link CIKey#containsIgnoreCase(String)} instead.
+     */
+    public boolean startsWithLowerCase(final String lowerPrefix) {
+        Objects.requireNonNull(lowerPrefix);
+        if (lowerKey == null) {
+            return false;
+        }
+        return lowerKey.startsWith(lowerPrefix);
+    }
+
+    /**
+     * Performs a substring on the wrapped string.
+     * The wrapped case is maintained.
+     */
+    public CIKey substring(final int beginIndex) {
+        if (key == null) {
+            return null;
+        } else {
+            final String newKey = key.substring(beginIndex);
+            return CIKey.of(newKey);
+        }
     }
 
     /**
@@ -356,13 +512,26 @@ public class CIKey implements Comparable<CIKey> {
         return ciKey == null || ciKey.key == null;
     }
 
-    public boolean isEmpty(final CIKey ciKey) {
+    public static boolean isEmpty(final CIKey ciKey) {
         return ciKey.key == null || ciKey.key.isEmpty();
+    }
+
+    public static boolean isBlank(final CIKey ciKey) {
+        return ciKey.key == null || ciKey.key.isBlank();
+    }
+
+    public static boolean isNonBlank(final CIKey ciKey) {
+        return ciKey.key != null && !ciKey.key.isBlank();
     }
 
     @JsonIgnore
     public boolean isEmpty() {
         return key == null || key.isEmpty();
+    }
+
+    @JsonIgnore
+    public boolean isBlank() {
+        return key == null || key.isBlank();
     }
 
     /**
@@ -389,7 +558,15 @@ public class CIKey implements Comparable<CIKey> {
                 .collect(Collectors.toList());
     }
 
+    @JsonIgnore
     public static Set<CIKey> setOf(final String... keys) {
+        return NullSafe.stream(keys)
+                .map(CIKey::of)
+                .collect(Collectors.toSet());
+    }
+
+    @JsonIgnore
+    public static Set<CIKey> setOf(final Set<String> keys) {
         return NullSafe.stream(keys)
                 .map(CIKey::of)
                 .collect(Collectors.toSet());
@@ -398,14 +575,14 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> Map<CIKey, V> mapOf(String k1, V v1) {
+    public static <V> Map<CIKey, V> mapOf(final String k1, final V v1) {
         return Map.of(CIKey.of(k1), v1);
     }
 
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> Map<CIKey, V> mapOf(String k1, V v1, String k2, V v2) {
+    public static <V> Map<CIKey, V> mapOf(final String k1, final V v1, final String k2, final V v2) {
         return Map.of(
                 CIKey.of(k1), v1,
                 CIKey.of(k2), v2);
@@ -414,9 +591,9 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> Map<CIKey, V> mapOf(String k1, V v1,
-                                          String k2, V v2,
-                                          String k3, V v3) {
+    public static <V> Map<CIKey, V> mapOf(final String k1, final V v1,
+                                          final String k2, final V v2,
+                                          final String k3, final V v3) {
         return Map.of(
                 CIKey.of(k1), v1,
                 CIKey.of(k2), v2,
@@ -426,10 +603,10 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> Map<CIKey, V> mapOf(String k1, V v1,
-                                          String k2, V v2,
-                                          String k3, V v3,
-                                          String k4, V v4) {
+    public static <V> Map<CIKey, V> mapOf(final String k1, final V v1,
+                                          final String k2, final V v2,
+                                          final String k3, final V v3,
+                                          final String k4, final V v4) {
         return Map.of(
                 CIKey.of(k1), v1,
                 CIKey.of(k2), v2,
@@ -440,11 +617,11 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> Map<CIKey, V> mapOf(String k1, V v1,
-                                          String k2, V v2,
-                                          String k3, V v3,
-                                          String k4, V v4,
-                                          String k5, V v5) {
+    public static <V> Map<CIKey, V> mapOf(final String k1, final V v1,
+                                          final String k2, final V v2,
+                                          final String k3, final V v3,
+                                          final String k4, final V v4,
+                                          final String k5, final V v5) {
         return Map.of(
                 CIKey.of(k1), v1,
                 CIKey.of(k2), v2,
@@ -456,12 +633,12 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> Map<CIKey, V> mapOf(String k1, V v1,
-                                          String k2, V v2,
-                                          String k3, V v3,
-                                          String k4, V v4,
-                                          String k5, V v5,
-                                          String k6, V v6) {
+    public static <V> Map<CIKey, V> mapOf(final String k1, final V v1,
+                                          final String k2, final V v2,
+                                          final String k3, final V v3,
+                                          final String k4, final V v4,
+                                          final String k5, final V v5,
+                                          final String k6, final V v6) {
         return Map.of(
                 CIKey.of(k1), v1,
                 CIKey.of(k2), v2,
@@ -474,13 +651,13 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> Map<CIKey, V> mapOf(String k1, V v1,
-                                          String k2, V v2,
-                                          String k3, V v3,
-                                          String k4, V v4,
-                                          String k5, V v5,
-                                          String k6, V v6,
-                                          String k7, V v7) {
+    public static <V> Map<CIKey, V> mapOf(final String k1, final V v1,
+                                          final String k2, final V v2,
+                                          final String k3, final V v3,
+                                          final String k4, final V v4,
+                                          final String k5, final V v5,
+                                          final String k6, final V v6,
+                                          final String k7, final V v7) {
         return Map.of(
                 CIKey.of(k1), v1,
                 CIKey.of(k2), v2,
@@ -494,14 +671,14 @@ public class CIKey implements Comparable<CIKey> {
     /**
      * Create a {@link CIKey} keyed map
      */
-    public static <V> Map<CIKey, V> mapOf(String k1, V v1,
-                                          String k2, V v2,
-                                          String k3, V v3,
-                                          String k4, V v4,
-                                          String k5, V v5,
-                                          String k6, V v6,
-                                          String k7, V v7,
-                                          String k8, V v8) {
+    public static <V> Map<CIKey, V> mapOf(final String k1, final V v1,
+                                          final String k2, final V v2,
+                                          final String k3, final V v3,
+                                          final String k4, final V v4,
+                                          final String k5, final V v5,
+                                          final String k6, final V v6,
+                                          final String k7, final V v7,
+                                          final String k8, final V v8) {
         return Map.of(
                 CIKey.of(k1), v1,
                 CIKey.of(k2), v2,
@@ -527,7 +704,7 @@ public class CIKey implements Comparable<CIKey> {
 
     /**
      * Convert a {@link String} keyed map into a {@link CIKey} keyed map.
-     * Accepts nulls and never returns a null.
+     * Accepts null keys, but not null values, and never returns a null.
      */
     public static <V> Map<CIKey, V> mapOf(final Map<String, ? extends V> map) {
         return NullSafe.map(map)
@@ -539,6 +716,13 @@ public class CIKey implements Comparable<CIKey> {
                         Entry::getValue));
     }
 
+    /**
+     * Converts the passed {@link CIKey} keyed map into a simple {@link String} keyed map, using the
+     * case of the {@link CIKey}.
+     * Does not support null keys.
+     *
+     * @return A non-null map.
+     */
     public static <V> Map<String, V> convertToStringMap(final Map<CIKey, ? extends V> map) {
         return NullSafe.map(map)
                 .entrySet()
@@ -548,6 +732,13 @@ public class CIKey implements Comparable<CIKey> {
                         Entry::getValue));
     }
 
+    /**
+     * Converts the passed {@link CIKey} keyed map into a simple {@link String} keyed map, using the
+     * lower-case value of the {@link CIKey}.
+     * Does not support null keys.
+     *
+     * @return A non-null map.
+     */
     public static <V> Map<String, V> convertToLowerCaseStringMap(final Map<CIKey, ? extends V> map) {
         return NullSafe.map(map)
                 .entrySet()
@@ -585,7 +776,7 @@ public class CIKey implements Comparable<CIKey> {
      * True if str is equal to the string wrapped by ciKey, ignoring case.
      */
     public static boolean equalsIgnoreCase(final String str, final CIKey ciKey) {
-        final String lowerKey = ciKey.lowerKey;
+        final String lowerKey = NullSafe.get(ciKey, CIKey::getAsLowerCase);
         if (lowerKey == null && str == null) {
             return true;
         } else {
@@ -593,10 +784,51 @@ public class CIKey implements Comparable<CIKey> {
         }
     }
 
+//    /**
+//     * If ciKey is null or wraps a null String, throw a {@link NullPointerException},
+//     * else return ciKey.
+//     */
+//    public static CIKey requireNonNullString(final CIKey ciKey) {
+//        if (ciKey == null) {
+//            throw new NullPointerException("ciKey is null");
+//        } else if (ciKey.key == null) {
+//            throw new NullPointerException("ciKey wraps a null");
+//        } else {
+//            return ciKey;
+//        }
+//    }
+//
+//    /**
+//     * If ciKey is non-null and does not wrap a null string return it, else
+//     * return other, which must also be non-null and not wrap a null string.
+//     */
+//    public static CIKey requireNonNullStringElse(final CIKey ciKey, CIKey other) {
+//        if (CIKey.isNull(ciKey)) {
+//            return CIKey.requireNonNullString(other);
+//        } else {
+//            return ciKey;
+//        }
+//    }
+//
+//    /**
+//     * If ciKey is non-null and does not wrap a null string return it, else
+//     * return the value supplied by supplier, which must also be non-null and not wrap a null string.
+//     */
+//    public static CIKey requireNonNullStringElseGet(final CIKey ciKey, Supplier<CIKey> supplier) {
+//        if (CIKey.isNull(ciKey)) {
+//            final CIKey other = Objects.requireNonNull(supplier, "supplier").get();
+//            return CIKey.requireNonNullString(other);
+//        } else {
+//            return ciKey;
+//        }
+//    }
+
     /**
      * Method so we have a consistent way of doing it, in the unlikely event it changes.
      */
     static String toLowerCase(final String str) {
-        return NullSafe.get(str, s -> s.toLowerCase(Locale.ENGLISH));
+        return str != null
+                ? str.toLowerCase(Locale.ENGLISH)
+                : null;
     }
 }

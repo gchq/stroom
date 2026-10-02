@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.job.impl;
 
 import stroom.event.logging.api.DocumentEventLog;
@@ -47,11 +63,11 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
     private final Map<String, DocumentEventLog> documentEventLogMap = new HashMap<>();
 
     private static JobNode buildJobNode(final int id, final int version, final String node) {
-        JobNode jobNode = new JobNode();
-        jobNode.setId(id);
-        jobNode.setVersion(version);
-        jobNode.setNodeName(node);
-        return jobNode;
+        return JobNode.builder()
+                .id(id)
+                .version(version)
+                .nodeName(node)
+                .build();
     }
 
     private static final int BASE_PORT = 7020;
@@ -260,13 +276,13 @@ class TestJobNodeResourceImpl extends AbstractMultiNodeResourceTest<JobNodeResou
                 .then(invocation -> {
                     final JobNode input = invocation.getArgument(0);
 
-                    final JobNode output = buildJobNode(
-                            input.getId(), input.getVersion() + 1, input.getNodeName());
-                    output.setTaskLimit(input.getTaskLimit());
-                    output.setSchedule(input.getSchedule());
-                    output.setEnabled(input.isEnabled());
-
-                    return output;
+                    return buildJobNode(
+                            input.getId(), input.getVersion() + 1, input.getNodeName())
+                            .copy()
+                            .taskLimit(input.getTaskLimit())
+                            .schedule(input.getSchedule())
+                            .enabled(input.isEnabled())
+                            .build();
                 });
 
         jobNodeServiceMap.put(node.getNodeName(), jobNodeService);

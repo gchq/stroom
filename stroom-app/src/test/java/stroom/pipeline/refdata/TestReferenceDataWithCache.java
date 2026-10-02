@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata;
@@ -47,6 +46,7 @@ import stroom.pipeline.shared.data.PipelineReference;
 import stroom.security.api.SecurityContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Range;
@@ -69,6 +69,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceDataWithCache.class);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(50);
     private static final String TEST_PIPELINE_1 = "TEST_PIPELINE_1";
     private static final String TEST_PIPELINE_2 = "TEST_PIPELINE_2";
     public static final String DUMMY_FEED = "DUMMY_FEED";
@@ -102,6 +103,15 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
 
     @BeforeEach
     void setup() {
+        // The feed specific store and staging store envs are created lazily on first use,
+        // reading the config at that point, so this mapper takes effect for every env this
+        // test creates. The production defaults are 50GiB/10GiB.
+        setConfigValueMapper(ReferenceDataConfig.class, config -> config
+                .withLmdbConfig(config.getLmdbConfig()
+                        .withMaxStoreSize(DB_MAX_SIZE))
+                .withStagingLmdbConfig(config.getStagingLmdbConfig()
+                        .withMaxStoreSize(DB_MAX_SIZE)));
+
         refDataStore = refDataStoreFactory.getOffHeapStore();
     }
 
@@ -184,9 +194,9 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         });
     }
 
-    private RefStreamDefinition getRefStreamDefinition(DocRef pipelineRef, long streamId) {
-        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-        String version = pipelineDoc.getVersion();
+    private RefStreamDefinition getRefStreamDefinition(final DocRef pipelineRef, final long streamId) {
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        final String version = pipelineDoc.getVersion();
         return new RefStreamDefinition(pipelineRef, version, streamId);
     }
 
@@ -194,14 +204,14 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                          final List<EffectiveMeta> effectiveMetas,
                          final String[] mapNames) {
         EffectiveMeta effectiveStream = effectiveMetas.get(0);
-        RefStreamDefinition refStreamDefinition1 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
+        final RefStreamDefinition refStreamDefinition1 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition1,
                 effectiveStream.getEffectiveMs(),
                 refDataLoader -> {
                     refDataLoader.initialise(false);
                     for (final String mapName : mapNames) {
-                        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition1, mapName);
+                        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition1, mapName);
                         doLoaderPut(refDataLoader, mapDefinition, "user1", StringValue.of("1111"));
                         doLoaderPut(refDataLoader, mapDefinition, "user2", StringValue.of("2222"));
                     }
@@ -209,14 +219,14 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 });
 
         effectiveStream = effectiveMetas.get(1);
-        RefStreamDefinition refStreamDefinition2 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
+        final RefStreamDefinition refStreamDefinition2 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition2,
                 effectiveStream.getEffectiveMs(),
                 refDataLoader -> {
                     refDataLoader.initialise(false);
                     for (final String mapName : mapNames) {
-                        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition2, mapName);
+                        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition2, mapName);
                         doLoaderPut(refDataLoader, mapDefinition, "user1", StringValue.of("A1111"));
                         doLoaderPut(refDataLoader, mapDefinition, "user2", StringValue.of("A2222"));
                     }
@@ -224,14 +234,14 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 });
 
         effectiveStream = effectiveMetas.get(2);
-        RefStreamDefinition refStreamDefinition3 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
+        final RefStreamDefinition refStreamDefinition3 = getRefStreamDefinition(pipelineRef, effectiveStream.getId());
 
         refDataStore.doWithLoaderUnlessComplete(refStreamDefinition3,
                 effectiveStream.getEffectiveMs(),
                 refDataLoader -> {
                     refDataLoader.initialise(false);
                     for (final String mapName : mapNames) {
-                        MapDefinition mapDefinition = new MapDefinition(refStreamDefinition3, mapName);
+                        final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition3, mapName);
                         doLoaderPut(refDataLoader, mapDefinition, "user1", StringValue.of("B1111"));
                         doLoaderPut(refDataLoader, mapDefinition, "user2", StringValue.of("B2222"));
                     }
@@ -261,7 +271,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 .isNull();
     }
 
-    private String addSuffix(final String str, int id) {
+    private String addSuffix(final String str, final int id) {
         return str + id;
     }
 
@@ -280,7 +290,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             pipelineReferences.add(pipelineReference);
 
 
-            EffectiveMeta effectiveStream = buildEffectiveMeta(createMeta(feedRef.getName()).getId(), 0L);
+            final EffectiveMeta effectiveStream = buildEffectiveMeta(createMeta(feedRef.getName()).getId(), 0L);
             final EffectiveMetaSet streamSet = EffectiveMetaSet.singleton(effectiveStream);
 
             try (final CacheManager cacheManager = new CacheManagerImpl()) {
@@ -297,7 +307,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 final ReferenceData referenceData = referenceDataProvider.get();
                 referenceData.setEffectiveStreamCache(effectiveStreamCache);
 
-                RefStreamDefinition refStreamDefinition = getRefStreamDefinition(pipelineRef,
+                final RefStreamDefinition refStreamDefinition = getRefStreamDefinition(pipelineRef,
                         effectiveStream.getId());
 
                 refDataStore.doWithLoaderUnlessComplete(refStreamDefinition,
@@ -393,7 +403,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
         if (result.getRefDataValueProxy() == null) {
             return null;
         }
-        RefDataValue refDataValue = result.getRefDataValueProxy()
+        final RefDataValue refDataValue = result.getRefDataValueProxy()
                 .flatMap(RefDataValueProxy::supplyValue)
                 .orElse(null);
         if (refDataValue == null) {
@@ -445,7 +455,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             } else {
                 throw new RuntimeException("Unexpected type " + refDataValue.getClass().getSimpleName());
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error writing value: {}", e.getMessage()), e);
         }
     }

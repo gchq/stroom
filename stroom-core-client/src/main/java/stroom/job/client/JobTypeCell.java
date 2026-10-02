@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,15 +44,18 @@ public class JobTypeCell extends AbstractInputCell<JobType, JobType> {
     }
 
     @Override
-    protected void onEnterKeyDown(Context context, Element parent, JobType value, NativeEvent event,
-                                  ValueUpdater<JobType> valueUpdater) {
+    protected void onEnterKeyDown(final Context context,
+                                  final Element parent,
+                                  final JobType value,
+                                  final NativeEvent event,
+                                  final ValueUpdater<JobType> valueUpdater) {
         if (valueUpdater != null) {
             valueUpdater.update(value);
         }
     }
 
     @Override
-    public void render(Context context, JobType value, SafeHtmlBuilder sb) {
+    public void render(final Context context, final JobType value, final SafeHtmlBuilder sb) {
         if (value != null) {
             if (JobType.CRON.equals(value) || JobType.FREQUENCY.equals(value)) {
                 sb.appendHtmlConstant(button);

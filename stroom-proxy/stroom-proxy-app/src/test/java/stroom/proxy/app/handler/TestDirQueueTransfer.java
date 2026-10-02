@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
@@ -39,7 +55,7 @@ class TestDirQueueTransfer {
     private DirQueue destQueue;
 
     @BeforeEach
-    void setUp(@TempDir Path baseDir) {
+    void setUp(@TempDir final Path baseDir) {
         this.baseDir = baseDir;
         this.intputDir = FileUtil.ensureDirExists(baseDir.resolve("input"));
         this.sourceQueueDir = FileUtil.ensureDirExists(baseDir.resolve("sourceQueue"));
@@ -105,7 +121,7 @@ class TestDirQueueTransfer {
 
         try {
             dirQueueTransfer.run();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Swallow error: {}", e.getMessage());
         }
 
@@ -164,7 +180,7 @@ class TestDirQueueTransfer {
                 final AttributeMap attributeMap = new AttributeMap(attrs);
                 AttributeMapUtil.write(attributeMap, meta);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new UncheckedIOException(e);
         }
         return sourceDir;

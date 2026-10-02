@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package stroom.security.shared;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.UserRef;
@@ -46,7 +46,7 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
                                                @JsonProperty("expression") final ExpressionOperator expression,
                                                @JsonProperty("docRef") final DocRef docRef,
                                                @JsonProperty("userRef") final UserRef userRef,
-                                               @JsonProperty("showLevel") PermissionShowLevel showLevel) {
+                                               @JsonProperty("showLevel") final PermissionShowLevel showLevel) {
         super(pageRequest, sortList, expression);
         this.docRef = docRef;
         this.userRef = userRef;
@@ -66,7 +66,7 @@ public class FetchDocumentUserPermissionsRequest extends ExpressionCriteria {
     }
 
     public static class Builder
-            extends ExpressionCriteria.AbstractBuilder<FetchDocumentUserPermissionsRequest, Builder> {
+            extends ExpressionCriteriaBuilder<FetchDocumentUserPermissionsRequest, Builder> {
 
         private DocRef docRef;
         private UserRef userRef;

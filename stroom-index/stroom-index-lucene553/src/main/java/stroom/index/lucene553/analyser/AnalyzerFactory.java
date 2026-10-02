@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.index.lucene553.analyser;
 
-import stroom.datasource.api.v2.AnalyzerType;
+import stroom.query.api.datasource.AnalyzerType;
 
 import org.apache.lucene553.analysis.Analyzer;
 import org.apache.lucene553.analysis.core.StopAnalyzer;

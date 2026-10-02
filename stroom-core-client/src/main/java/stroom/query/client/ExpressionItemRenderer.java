@@ -39,10 +39,10 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
     private final OperatorEditor operatorEditor;
     private final TermEditor termEditor;
     private final List<ExpressionItemBox> boxes = new ArrayList<>();
-    private Item editingItem;
     private SelectionModel<Item> selectionModel;
 
-    public ExpressionItemRenderer(final FlowPanel panel, final OperatorEditor operatorEditor,
+    public ExpressionItemRenderer(final FlowPanel panel,
+                                  final OperatorEditor operatorEditor,
                                   final TermEditor termEditor) {
         this.panel = panel;
 
@@ -56,10 +56,6 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
         Item editing = null;
         if (selectionModel != null && selectionModel instanceof MySingleSelectionModel<?>) {
             editing = ((MySingleSelectionModel<Item>) selectionModel).getSelectedObject();
-        }
-        if (editing == null || !editing.equals(editingItem)) {
-            // Stop editing previous item.
-            stopEditing();
         }
 
         final double height = 25;
@@ -78,15 +74,10 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
 
         if (editing != null) {
             if (editing.equals(item)) {
-                if (editingItem == null) {
-                    if (item instanceof Operator) {
-                        final Operator operator = (Operator) item;
-                        operatorEditor.startEdit(operator);
-                    } else if (item instanceof Term) {
-                        final Term term = (Term) item;
-                        termEditor.startEdit(term);
-                    }
-                    editingItem = editing;
+                if (item instanceof final Operator operator) {
+                    operatorEditor.startEdit(operator);
+                } else if (item instanceof final Term term) {
+                    termEditor.startEdit(term);
                 }
 
                 if (item instanceof Operator) {
@@ -96,7 +87,8 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
                 }
             }
         } else {
-            stopEditing();
+            operatorEditor.removeFromParent();
+            termEditor.removeFromParent();
         }
 
         if (widget == null) {
@@ -115,19 +107,6 @@ public final class ExpressionItemRenderer implements CellRenderer2<Item>, NodeEx
 
         box.setInnerWidget(widget);
         box.setSelected(selected);
-    }
-
-    private void stopEditing() {
-        if (editingItem != null) {
-            if (editingItem instanceof Operator) {
-                operatorEditor.endEdit();
-                operatorEditor.removeFromParent();
-            } else if (editingItem instanceof Term) {
-                termEditor.endEdit();
-                termEditor.removeFromParent();
-            }
-        }
-        editingItem = null;
     }
 
     @Override

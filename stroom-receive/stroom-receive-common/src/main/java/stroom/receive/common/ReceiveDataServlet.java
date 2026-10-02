@@ -32,10 +32,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.Enumeration;
 import java.util.Set;
 
 /**
+ * <p>
+ * The /datafeed servlet.
+ * </p>
  * <p>
  * Servlet that streams files to disk based on meta input arguments.
  * </p>
@@ -104,7 +108,11 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
         } catch (final RuntimeException e) {
             final StroomStreamException stroomStreamException =
                     StroomStreamException.create(e,
-                            AttributeMapUtil.create(request, certificateExtractor));
+                            AttributeMapUtil.create(
+                                    request,
+                                    certificateExtractor,
+                                    Instant.now(),
+                                    null));
             stroomStreamException.sendErrorResponse(response);
         }
     }
@@ -129,7 +137,7 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
         final Enumeration<String> headers = request.getHeaderNames();
         while (headers.hasMoreElements()) {
-            String header = headers.nextElement();
+            final String header = headers.nextElement();
             trace.append("request.getHeader('");
             trace.append(header);
             trace.append("')='");
@@ -139,7 +147,7 @@ public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
         final Enumeration<String> attributes = request.getAttributeNames();
         while (attributes.hasMoreElements()) {
-            String attr = attributes.nextElement();
+            final String attr = attributes.nextElement();
             trace.append("request.getAttribute('");
             trace.append(attr);
             trace.append("')='");

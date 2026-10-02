@@ -49,6 +49,10 @@ public class LogoutEvent extends GwtEvent<LogoutEvent.LogoutHandler> {
         handler.onLogout(this);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface LogoutHandler extends EventHandler {
 
         void onLogout(LogoutEvent event);

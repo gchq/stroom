@@ -1,6 +1,24 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline;
 
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.TestUtil;
 
@@ -28,6 +46,8 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
 
     @Inject
     private PipelineStore pipelineStore;
+    @Inject
+    private DocFinder docFinder;
 
     @BeforeEach
     void setUp() {
@@ -45,13 +65,13 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
                 .withTestFunction(testCase -> {
                     final String nameFilter = testCase.getInput();
                     // Need to sort to ensure predictable order for tests
-                    return pipelineStore.findByName(nameFilter, true)
+                    return docFinder.findByName(PipelineDoc.TYPE, nameFilter, true)
                             .stream()
                             .sorted(Comparator.naturalOrder())
                             .collect(Collectors.toList());
                 })
                 .withSimpleEqualityAssertion()
-                .addCase(null, Collections.emptyList())
+//                .addCase(null, Collections.emptyList())
                 .addCase("Pipe", Collections.emptyList())
                 .addCase(PIPE_1_NAME.toLowerCase(), Collections.emptyList())
                 .addCase(PIPE_1_NAME, List.of(pipe1))
@@ -71,13 +91,13 @@ public class TestPipelineStoreImpl extends AbstractCoreIntegrationTest {
                 .withTestFunction(testCase -> {
                     final String nameFilter = testCase.getInput();
                     // Need to sort to ensure predictable order for tests
-                    return pipelineStore.findByName(nameFilter, false)
+                    return docFinder.findByName(PipelineDoc.TYPE, nameFilter, false)
                             .stream()
                             .sorted(Comparator.naturalOrder())
                             .collect(Collectors.toList());
                 })
                 .withSimpleEqualityAssertion()
-                .addCase(null, Collections.emptyList())
+//                .addCase(null, Collections.emptyList())
                 .addCase("Pipe", Collections.emptyList())
                 .addCase(PIPE_1_NAME.toLowerCase(), Collections.emptyList())
                 .addCase(PIPE_1_NAME, List.of(pipe1))

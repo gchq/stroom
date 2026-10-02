@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,9 @@
 
 package stroom.importexport.impl;
 
-import stroom.docref.DocRef;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.importexport.api.ContentService;
 import stroom.importexport.api.ExportSummary;
-import stroom.importexport.shared.Dependency;
-import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportConfigResponse;
 import stroom.importexport.shared.ImportSettings.ImportMode;
@@ -33,12 +30,12 @@ import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.ResultPage;
 
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
@@ -48,7 +45,6 @@ import jakarta.inject.Singleton;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,7 +57,6 @@ class ContentServiceImpl implements ContentService {
 
     private final ImportExportService importExportService;
     private final ResourceStore resourceStore;
-    private final DependencyService dependencyService;
     private final SecurityContext securityContext;
     private final Provider<ExportConfig> exportConfigProvider;
 
@@ -69,11 +64,9 @@ class ContentServiceImpl implements ContentService {
     ContentServiceImpl(final ImportExportService importExportService,
                        final Provider<ExportConfig> exportConfigProvider,
                        final ResourceStore resourceStore,
-                       final DependencyService dependencyService,
                        final SecurityContext securityContext) {
         this.importExportService = importExportService;
         this.resourceStore = resourceStore;
-        this.dependencyService = dependencyService;
         this.securityContext = securityContext;
         this.exportConfigProvider = exportConfigProvider;
     }
@@ -113,6 +106,18 @@ class ContentServiceImpl implements ContentService {
         });
     }
 
+    @Override
+    public void abortImport(final ResourceKey resourceKey) {
+        if (resourceKey != null) {
+            try {
+                resourceStore.deleteTempFile(resourceKey);
+            } catch (final Exception e) {
+                // Just log and swallow as it is only a temp file
+                LOGGER.error("Unable to delete resourceKey {}: {}", resourceKey, LogUtil.exceptionMessage(e), e);
+            }
+        }
+    }
+
 //    @Override
 //    public List<ImportState> confirmImport(final ResourceKey resourceKey,
 //                                           final ImportSettings importSettings,
@@ -142,16 +147,6 @@ class ContentServiceImpl implements ContentService {
 
             return new ResourceGeneration(resourceKey, messageList);
         });
-    }
-
-    @Override
-    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
-        return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
-    }
-
-    @Override
-    public Map<DocRef, Set<DocRef>> fetchBrokenDependencies() {
-        return dependencyService.getBrokenDependencies();
     }
 
     @Override

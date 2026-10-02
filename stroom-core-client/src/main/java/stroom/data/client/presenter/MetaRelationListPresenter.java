@@ -27,8 +27,8 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
@@ -76,6 +76,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 expressionValidator,
                 false
         );
+        setTableName("Related Streams");
     }
 
     public void setSelectedStream(final MetaRow metaRow,
@@ -205,8 +206,6 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 "Retention",
                 DataRetentionFields.RETENTION_AGE_FIELD,
                 ColumnSizeConstants.SMALL_COL);
-
-        addEndColumn();
     }
 
     private Expander buildExpander(final MetaRow row) {

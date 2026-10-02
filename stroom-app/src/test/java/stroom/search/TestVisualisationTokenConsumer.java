@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package stroom.search;
 
 import stroom.dictionary.api.DictionaryStore;
-import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexStore;
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.SearchRequest;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
@@ -27,7 +27,7 @@ import stroom.search.impl.EventSearchTaskHandler;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.impl.ExecutorProviderImpl;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -58,21 +58,21 @@ public class TestVisualisationTokenConsumer extends AbstractCoreIntegrationTest 
     @Inject
     private ExpressionContextFactory expressionContextFactory;
     @Inject
-    private ContentImportService contentImportService;
+    private ContentStoreTestSetup contentStoreTestSetup;
 
 
     @BeforeEach
     void setup() {
         if (!doneSetup) {
             commonIndexingTestHelper.setup();
-            contentImportService.importVisualisations();
+            contentStoreTestSetup.installVisualisations();
             doneSetup = true;
         }
     }
 
     @Test
     void testVis() {
-        String queryString = """
+        final String queryString = """
                 from "Test index"
                 eval EventTime = roundDay(EventTime)
                 eval count = count()

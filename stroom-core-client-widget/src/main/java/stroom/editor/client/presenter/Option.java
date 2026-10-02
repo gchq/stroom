@@ -16,8 +16,10 @@
 
 package stroom.editor.client.presenter;
 
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
+
 import com.google.gwt.safehtml.shared.SafeHtml;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 
 public class Option {
 
@@ -98,22 +100,26 @@ public class Option {
     }
 
     public SafeHtml getText() {
-        if (on) {
-            return new SafeHtmlBuilder()
-                    .appendEscaped(text)
-                    .appendHtmlConstant(" (<span class=\"editor-menu-option-on\">ON</span>)")
-                    .toSafeHtml();
-        } else {
-            return new SafeHtmlBuilder()
-                    .appendEscaped(text)
-                    .appendHtmlConstant(" (<span class=\"editor-menu-option-off\">OFF</span>)")
-                    .toSafeHtml();
-        }
+        final String value = on
+                ? "ON"
+                : "OFF";
+        final String classNameSuffix = value.toLowerCase();
+        final String className = "editor-menu-option-" + classNameSuffix;
+        return HtmlBuilder.builder()
+                .append(text)
+                .append(" (")
+                .span(spanBuilder -> spanBuilder.append(value), Attribute.className(className))
+                .append(")")
+                .toSafeHtml();
     }
 
     public boolean isOnAndAvailable() {
         return available && on;
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface ChangeHandler {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ public class ResultPage<T> implements Serializable {
                 }
 
                 final PageResponse pageResponse = new PageResponse(
-                        offset,
+                        (long) offset,
                         limited.size(),
                         (long) fullList.size(),
                         true);
@@ -260,7 +260,7 @@ public class ResultPage<T> implements Serializable {
                                 new PageResponse(
                                         pageRequest != null
                                                 ? pageRequest.getOffset()
-                                                : 0,
+                                                : 0L,
                                         accumulator.size(),
                                         counter,
                                         true));
@@ -326,16 +326,46 @@ public class ResultPage<T> implements Serializable {
         return values.isEmpty();
     }
 
+    public boolean hasItems() {
+        return !values.isEmpty();
+    }
+
     /**
      * @return the first item or null if the list is empty
      */
     @JsonIgnore
     public T getFirst() {
         if (!values.isEmpty()) {
+            //noinspection SequencedCollectionMethodCanBeUsed // Not in GWT
             return values.get(0);
         } else {
             return null;
         }
+    }
+
+    @JsonIgnore
+    public T getLast() {
+        if (!values.isEmpty()) {
+            return values.get(values.size() - 1);
+        } else {
+            return null;
+        }
+    }
+
+    public boolean isFirst(final T row) {
+        final T firstRow = getFirst();
+        if (firstRow == null) {
+            return false;
+        }
+        return firstRow.equals(row);
+    }
+
+    public boolean isLast(final T row) {
+        final T lastRow = getLast();
+        if (lastRow == null) {
+            return false;
+        }
+        return lastRow.equals(row);
     }
 
     @JsonIgnore

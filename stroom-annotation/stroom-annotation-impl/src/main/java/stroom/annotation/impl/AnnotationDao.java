@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,40 +17,83 @@
 package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.AnnotationIdentity;
+import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
-import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.annotation.shared.SetStatusRequest;
+import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 
 public interface AnnotationDao {
 
-    Annotation get(long annotationId);
+    Optional<Long> getId(DocRef docRef);
 
-    AnnotationDetail getDetail(long annotationId);
+    long getIdOrThrow(DocRef docRef);
 
-    List<Annotation> getAnnotationsForEvents(long streamId, long eventId);
+    ResultPage<Annotation> findAnnotations(FindAnnotationRequest request, Predicate<Annotation> vierwPredicate);
 
-    AnnotationDetail createEntry(CreateEntryRequest request, UserRef currentUser);
+    List<AnnotationIdentity> idListToDocRefs(Collection<Long> idList);
 
-    List<EventId> getLinkedEvents(Long annotationId);
+    Optional<Annotation> getAnnotationById(long id);
 
-    List<EventId> link(UserRef currentUser, EventLink eventLink);
+    Optional<Annotation> getAnnotationByDocRef(DocRef annotationRef);
 
-    List<EventId> unlink(EventLink eventLink, UserRef currentUser);
+    Collection<AnnotationIdentity> getAnnotationIdsForEvent(EventId eventId);
 
-    Integer setStatus(SetStatusRequest request, UserRef currentUser);
+    Collection<AnnotationValues> getAnnotationValues(Collection<AnnotationIdentity> idList,
+                                                     Set<QueryField> requiredAnnotationFields);
 
-    Integer setAssignedTo(SetAssignedToRequest request, UserRef currentUser);
+    Annotation createAnnotation(CreateAnnotationRequest request, UserRef currentUser);
 
-    void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
+    boolean change(SingleAnnotationChangeRequest request, UserRef currentUser);
+
+    List<AnnotationEntry> getAnnotationEntries(DocRef annotationRef);
+
+    List<EventId> getLinkedEvents(DocRef annotationRef);
+
+    List<Long> getLinkedAnnotations(DocRef annotationRef);
+
+    void search(ExpressionCriteria criteria,
+                FieldIndex fieldIndex,
+                ValuesConsumer consumer,
+                Predicate<String> uuidPredicate);
 
     List<Annotation> fetchByAssignedUser(final String userUuid);
+
+    boolean logicalDelete(DocRef annotationRef, UserRef currentUser);
+
+    /**
+     * Mark annotations deleted if they have not been updated within their specified retention time.
+     *
+     * @return
+     */
+    List<AnnotationIdentity> markDeletedByDataRetention();
+
+    /**
+     * Physically delete annotations that have been marked as deleted since before the provided age.
+     *
+     * @param age Anything older than this age will be deleted.
+     * @return
+     */
+    List<AnnotationIdentity> physicallyDelete(Instant age);
+
+    AnnotationEntry fetchAnnotationEntry(DocRef annotationRef, UserRef currentUser, long entryId);
+
+    boolean changeAnnotationEntry(DocRef annotationRef, UserRef currentUser, long entryId, String data);
+
+    boolean logicalDeleteEntry(DocRef annotationRef, UserRef currentUser, long entryId);
 }

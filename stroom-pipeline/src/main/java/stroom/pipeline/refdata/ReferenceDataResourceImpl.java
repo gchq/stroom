@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata;
 
 import stroom.event.logging.api.StroomEventLoggingService;
@@ -83,10 +99,10 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     @Override
     public boolean purgeByAge(final String purgeAge, final String nodeName) {
-        StroomDuration purgeAgeDuration;
+        final StroomDuration purgeAgeDuration;
         try {
             purgeAgeDuration = StroomDuration.parse(purgeAge);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalArgumentException(LogUtil.message(
                     "Can't parse purgeAge [{}]", purgeAge), e);
         }
@@ -113,7 +129,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                         referenceDataServiceProvider.get()
                                 .purge(purgeAgeDuration, nodeName);
                         return true;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Failed to purgeAge " + purgeAge, e);
                         throw e;
                     }
@@ -130,10 +146,10 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                                     final String nodeName) {
         Objects.requireNonNull(feedName);
 
-        StroomDuration purgeAgeDuration;
+        final StroomDuration purgeAgeDuration;
         try {
             purgeAgeDuration = StroomDuration.parse(purgeAge);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new IllegalArgumentException(LogUtil.message(
                     "Can't parse purgeAge [{}]", purgeAge), e);
         }
@@ -160,7 +176,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                         referenceDataServiceProvider.get()
                                 .purge(feedName, purgeAgeDuration, nodeName);
                         return true;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Failed to purgeAge " + purgeAge, e);
                         throw e;
                     }
@@ -243,7 +259,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
                         referenceDataServiceProvider.get()
                                 .purge(refStreamId, nodeName);
                         return true;
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Failed to purge stream " + refStreamId, e);
                         throw e;
                     }
@@ -259,7 +275,7 @@ public class ReferenceDataResourceImpl implements ReferenceDataResource {
         try {
             referenceDataServiceProvider.get()
                     .clearBufferPool(nodeName);
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             LOGGER.error("Failed to clear buffer pool", e);
             throw e;
         }

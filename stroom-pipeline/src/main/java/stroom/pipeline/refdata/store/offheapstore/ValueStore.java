@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore;
@@ -86,8 +85,8 @@ public class ValueStore {
 
     public Optional<RefDataValue> get(final Txn<ByteBuffer> txn,
                                       final ValueStoreKey valueStoreKey) {
-        try (PooledByteBuffer pooledKeyBuffer = valueStoreDb.getPooledKeyBuffer()) {
-            ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+        try (final PooledByteBuffer pooledKeyBuffer = valueStoreDb.getPooledKeyBuffer()) {
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
             valueStoreDb.serializeKey(keyBuffer, valueStoreKey);
             return get(txn, keyBuffer);
         }
@@ -107,7 +106,7 @@ public class ValueStore {
 
         final Byte optTypeId = valueStoreMetaDb.getTypeId(txn, valueStoreKeyBuffer);
         if (optTypeId != null) {
-            Optional<RefDataValue> optRefDataValue = valueStoreDb.get(txn, valueStoreKeyBuffer, optTypeId);
+            final Optional<RefDataValue> optRefDataValue = valueStoreDb.get(txn, valueStoreKeyBuffer, optTypeId);
             if (optRefDataValue.isEmpty()) {
                 throw new RuntimeException("Value should have associated meta record, data likely corrupt");
             }
@@ -126,8 +125,8 @@ public class ValueStore {
 
     public OptionalInt getReferenceCount(final Txn<ByteBuffer> txn,
                                          final ValueStoreKey valueStoreKey) {
-        try (PooledByteBuffer pooledKeyBuffer = valueStoreDb.getPooledKeyBuffer()) {
-            ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
+        try (final PooledByteBuffer pooledKeyBuffer = valueStoreDb.getPooledKeyBuffer()) {
+            final ByteBuffer keyBuffer = pooledKeyBuffer.getByteBuffer();
             valueStoreDb.serializeKey(keyBuffer, valueStoreKey);
             return valueStoreMetaDb.getReferenceCount(txn, keyBuffer);
         }
@@ -155,7 +154,7 @@ public class ValueStore {
                 ((writeTxn2, keyBuffer) -> {
                     try {
                         valueStoreDb.delete(writeTxn2, keyBuffer);
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message(
                                 "Error deleting value entry for value key: {}",
                                 ByteBufferUtils.byteBufferInfo(keyBuffer), e));

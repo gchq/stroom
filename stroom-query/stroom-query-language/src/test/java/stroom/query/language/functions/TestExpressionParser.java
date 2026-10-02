@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.query.language.functions;
 
-import stroom.query.language.token.TokenException;
+import stroom.query.api.token.TokenException;
 
 import io.vavr.Tuple;
 import org.assertj.core.api.Assertions;
@@ -1303,7 +1303,7 @@ class TestExpressionParser extends AbstractExpressionParserTest {
             final Supplier<ChildData> childDataSupplier =
                     createChildDataSupplier(List.of(storedValues, storedValues));
 
-            Val out = gen.eval(storedValues, childDataSupplier);
+            final Val out = gen.eval(storedValues, childDataSupplier);
             ValAssertions.valLong(2).actual(out);
         });
     }
@@ -1940,10 +1940,11 @@ class TestExpressionParser extends AbstractExpressionParserTest {
 
     @Test
     void testBadFunction() {
-        Assertions.assertThatThrownBy(() -> {
-                    compute("foo(1)", out -> {
-                    });
-                })
+        Assertions.assertThatThrownBy(
+                        () -> {
+                            compute("foo(1)", out -> {
+                            });
+                        })
                 .isInstanceOf(TokenException.class)
                 .hasMessageContainingAll("Unknown function", "foo");
     }

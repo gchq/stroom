@@ -1,16 +1,33 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.client.presenter;
 
+import stroom.annotation.shared.AnnotationDecorationFields;
 import stroom.dashboard.client.main.UniqueUtil;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.item.client.SelectionItem;
 import stroom.item.client.SelectionListModel;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.Column.Builder;
-import stroom.query.api.v2.Format;
-import stroom.query.api.v2.ParamSubstituteUtil;
+import stroom.query.api.Column;
+import stroom.query.api.Column.Builder;
+import stroom.query.api.Format;
+import stroom.query.api.ParamUtil;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.client.DataSourceClient;
 import stroom.query.client.presenter.DynamicColumnSelectionListModel.ColumnSelectionItem;
 import stroom.security.client.api.ClientSecurityContext;
@@ -28,7 +45,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -104,6 +120,7 @@ public class DynamicColumnSelectionListModel
                                                           final PageRequest pageRequest,
                                                           final ResultPage<QueryField> response) {
         final ResultPage<ColumnSelectionItem> counts = getCounts(filter, pageRequest);
+        final ResultPage<ColumnSelectionItem> custom = getCustom(filter, pageRequest);
         final ResultPage<ColumnSelectionItem> annotations = getAnnotations(filter, pageRequest);
 
         ResultPage<ColumnSelectionItem> resultPage = null;
@@ -112,11 +129,15 @@ public class DynamicColumnSelectionListModel
             add(filter, new ColumnSelectionItem(
                     null,
                     "Annotations",
-                    annotations.size() > 0), builder);
+                    !annotations.isEmpty()), builder);
             add(filter, new ColumnSelectionItem(
                     null,
                     "Counts",
-                    counts.size() > 0), builder);
+                    !counts.isEmpty()), builder);
+            add(filter, new ColumnSelectionItem(
+                    null,
+                    "Custom",
+                    !custom.isEmpty()), builder);
             add(filter, new ColumnSelectionItem(
                     null,
                     "Data Source",
@@ -125,6 +146,10 @@ public class DynamicColumnSelectionListModel
             resultPage = builder.build();
         } else if ("Counts.".equals(parentPath)) {
             resultPage = counts;
+        } else if ("Custom.".equals(parentPath)) {
+            resultPage = custom;
+//        } else if ("Annotation Links.".equals(parentPath)) {
+//            resultPage = annotationLinks;
         } else if ("Annotations.".equals(parentPath)) {
             resultPage = annotations;
         } else if ("Data Source.".equals(parentPath)) {
@@ -139,7 +164,7 @@ public class DynamicColumnSelectionListModel
         if (resultPage == null || resultPage.getValues().isEmpty()) {
             resultPage = new ResultPage<>(Collections.singletonList(
                     new ColumnSelectionItem(null, NONE_TITLE, false)),
-                    new PageResponse(0, 1, 1L, true));
+                    new PageResponse(0L, 1, 1L, true));
         }
 
         return resultPage;
@@ -162,6 +187,12 @@ public class DynamicColumnSelectionListModel
                 .expression("countGroups()")
                 .build();
         add(filter, ColumnSelectionItem.create(countGroups), builder);
+        return builder.build();
+    }
+
+    private ResultPage<ColumnSelectionItem> getCustom(final String filter,
+                                                      final PageRequest pageRequest) {
+        final ExactResultPageBuilder<ColumnSelectionItem> builder = new ExactResultPageBuilder<>(pageRequest);
         final Column custom = Column.builder()
                 .id(UniqueUtil.generateUUID())
                 .name("Custom")
@@ -179,7 +210,7 @@ public class DynamicColumnSelectionListModel
             if ("Index".equals(dataSourceRef.getType()) ||
                 "SolrIndex".equals(dataSourceRef.getType()) ||
                 "ElasticIndex".equals(dataSourceRef.getType())) {
-                AnnotationFields.FIELDS.forEach(field -> {
+                AnnotationDecorationFields.DECORATION_FIELDS.forEach(field -> {
                     final ColumnSelectionItem columnSelectionItem = ColumnSelectionItem.create(field);
                     add(filter, columnSelectionItem, builder);
                 });
@@ -204,6 +235,10 @@ public class DynamicColumnSelectionListModel
 
     public void setDataSourceRef(final DocRef dataSourceRef) {
         this.dataSourceRef = dataSourceRef;
+    }
+
+    public DocRef getDataSourceRef() {
+        return dataSourceRef;
     }
 
     @Override
@@ -284,33 +319,17 @@ public class DynamicColumnSelectionListModel
 
         private static String buildAnnotationFieldExpression(final FieldType fieldType,
                                                              final String indexFieldName) {
-            String fieldParam = ParamSubstituteUtil.makeParam(indexFieldName);
-            if (FieldType.DATE.equals(fieldType)) {
-                fieldParam = "formatDate(" + fieldParam + ")";
-            }
-
-            final List<String> params = new ArrayList<>();
-            params.add(fieldParam);
-            addFieldIfPresent(params, "annotation:Id");
-            addFieldIfPresent(params, "StreamId");
-            addFieldIfPresent(params, "EventId");
-
-            final String argsStr = String.join(", ", params);
-            return "annotation(" + argsStr + ")";
+            return ParamUtil.create(indexFieldName);
         }
 
-        private static void addFieldIfPresent(final List<String> params,
-                                              final String fieldName) {
-            params.add(ParamSubstituteUtil.makeParam(fieldName));
-        }
-
-        private static Column convertFieldInfo(final QueryField fieldInfo) {
-            final String indexFieldName = fieldInfo.getFldName();
+        private static Column convertFieldInfo(final QueryField queryField) {
+            final String indexFieldName = queryField.getFldName();
             final Builder columnBuilder = Column.builder();
             columnBuilder.id(UniqueUtil.generateUUID());
             columnBuilder.name(indexFieldName);
+            columnBuilder.format(Format.GENERAL);
 
-            final FieldType fieldType = fieldInfo.getFldType();
+            final FieldType fieldType = queryField.getFldType();
             if (fieldType != null) {
                 switch (fieldType) {
                     case DATE:
@@ -329,16 +348,16 @@ public class DynamicColumnSelectionListModel
                 }
             }
 
-            final String expression;
-            if (indexFieldName.startsWith("annotation:")) {
-                // Turn 'annotation:.*' fields into annotation links that make use of either the special
-                // eventId/streamId fields (so event results can link back to annotations) OR
-                // the annotation:Id field so Annotations datasource results can link back.
-                expression = buildAnnotationFieldExpression(fieldInfo.getFldType(), indexFieldName);
-                columnBuilder.expression(expression);
-            } else {
-                expression = ParamSubstituteUtil.makeParam(indexFieldName);
-                columnBuilder.expression(expression);
+            columnBuilder.expression(ParamUtil.create(indexFieldName));
+
+            // Make annotation column names more readable.
+            if (indexFieldName.startsWith(AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX)) {
+                String columnName = indexFieldName.substring(
+                        AnnotationDecorationFields.ANNOTATION_FIELD_PREFIX.length());
+                columnName = columnName.replaceAll("([A-Z])", " $1");
+                columnName = columnName.replaceAll("Uuid", "UUID");
+                columnName = "Annotation " + columnName.trim();
+                columnBuilder.name(columnName);
             }
 
             return columnBuilder.build();

@@ -1,7 +1,25 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.util.client;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
+
+import java.util.function.Predicate;
 
 public class ElementUtil {
 
@@ -26,6 +44,25 @@ public class ElementUtil {
                     final Node node = element.getChildNodes().getItem(i);
                     if (Element.is(node)) {
                         final Element child = findChild(Element.as(node), className);
+                        if (child != null) {
+                            return child;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Element findChild(final Element element, final Predicate<Element> predicate) {
+        if (element != null) {
+            if (predicate.test(element)) {
+                return element;
+            } else if (element.getChildNodes() != null) {
+                for (int i = 0; i < element.getChildNodes().getLength(); i++) {
+                    final Node node = element.getChildNodes().getItem(i);
+                    if (Element.is(node)) {
+                        final Element child = findChild(Element.as(node), predicate);
                         if (child != null) {
                             return child;
                         }
@@ -71,6 +108,31 @@ public class ElementUtil {
         return null;
     }
 
+    public static Element findParent(final Element element,
+                                     final Predicate<Element> predicate,
+                                     final int maxDepth) {
+        return findParent(element, predicate, 0, maxDepth);
+    }
+
+    private static Element findParent(final Element element,
+                                      final Predicate<Element> predicate,
+                                      final int depth,
+                                      final int maxDepth) {
+        if (element == null) {
+            return null;
+        }
+
+        if (predicate.test(element)) {
+            return element;
+        }
+
+        if (depth < maxDepth) {
+            return findParent(element.getParentElement(), predicate, depth + 1, maxDepth);
+        }
+
+        return null;
+    }
+
     public static String getClassName(final Element el) {
         if (el == null) {
             return null;
@@ -88,7 +150,7 @@ public class ElementUtil {
         return el.getAttribute("class");
     }
 
-    public static Rect getClientRect(Element el) {
+    public static Rect getClientRect(final Element el) {
         final double windowScrollY = getWindowScrollY();
         final double windowScrollX = getWindowScrollX();
         final double top = windowScrollY + getBoundingClientRectTop(el);
@@ -119,19 +181,19 @@ public class ElementUtil {
                 right);
     }
 
-    public static double getClientLeft(Element el) {
+    public static double getClientLeft(final Element el) {
         return getWindowScrollX() + getBoundingClientRectLeft(el);
     }
 
-    public static double getClientRight(Element el) {
+    public static double getClientRight(final Element el) {
         return getWindowScrollX() + getBoundingClientRectRight(el);
     }
 
-    public static double getClientTop(Element el) {
+    public static double getClientTop(final Element el) {
         return getWindowScrollY() + getBoundingClientRectTop(el);
     }
 
-    public static double getClientBottom(Element el) {
+    public static double getClientBottom(final Element el) {
         return getWindowScrollY() + getBoundingClientRectBottom(el);
     }
 
@@ -208,7 +270,7 @@ public class ElementUtil {
     }-*/;
 
     public static native void scrollIntoViewNearest(Element el) /*-{
-        el.scrollIntoView({behaviour: "smooth", block: "nearest", inline: "nearest"});
+        el.scrollIntoView({behavior: "smooth", block: "nearest", inline: "nearest"});
     }-*/;
 
     public static native void scrollIntoViewVertical(Element elem) /*-{

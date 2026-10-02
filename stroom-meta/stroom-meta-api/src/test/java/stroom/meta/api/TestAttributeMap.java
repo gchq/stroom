@@ -1,8 +1,25 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.api;
 
 import stroom.test.common.TestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.string.CIKey;
 
 import io.vavr.Tuple;
 import org.junit.jupiter.api.DynamicTest;
@@ -21,15 +38,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestAttributeMap {
 
+    private static final Pattern UUID_PATTERN = Pattern.compile(
+            "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$");
+
     @Test
     void testSimple() {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("person", "person1");
 
         assertThat(attributeMap.get("person")).isEqualTo("person1");
@@ -44,7 +65,7 @@ class TestAttributeMap {
 
         assertThat(attributeMap.keySet()).isEqualTo(new HashSet<>(Collections.singletonList("PERSON")));
 
-        AttributeMap attributeMap2 = new AttributeMap();
+        final AttributeMap attributeMap2 = new AttributeMap();
         attributeMap2.put("persOn", "person3");
         attributeMap2.put("persOn1", "person4");
 
@@ -55,7 +76,7 @@ class TestAttributeMap {
 
     @Test
     void testRemove() {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("a", "a1");
         attributeMap.put("B", "b1");
 
@@ -66,7 +87,7 @@ class TestAttributeMap {
 
     @Test
     void testReadWrite() throws IOException {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(AttributeMapUtil.DEFAULT_CHARSET), attributeMap);
         assertThat(attributeMap.get("a")).isEqualTo("1");
         assertThat(attributeMap.get("b")).isEqualTo("2");
@@ -78,7 +99,7 @@ class TestAttributeMap {
 
     @Test
     void testtoString() throws IOException {
-        AttributeMap attributeMap = new AttributeMap();
+        final AttributeMap attributeMap = new AttributeMap();
         AttributeMapUtil.read("b:2\na:1\nz\n".getBytes(AttributeMapUtil.DEFAULT_CHARSET), attributeMap);
 
         // AttributeMap's are used in log output and so check that they do output
@@ -89,7 +110,7 @@ class TestAttributeMap {
 
     @Test
     void testTrim() {
-        AttributeMap attributeMap = AttributeMap.builder()
+        final AttributeMap attributeMap = AttributeMap.builder()
                 .put(" person ", "person1")
                 .put("PERSON", "person2")
                 .put("FOOBAR", "1")
@@ -103,7 +124,7 @@ class TestAttributeMap {
 
     @Test
     void testWriteMultiLineValues() throws IOException {
-        AttributeMap attributeMap = AttributeMap.builder()
+        final AttributeMap attributeMap = AttributeMap.builder()
                 .put("foo", "123")
                 .put("files", "/some/path/file1,/some/path/file2,/some/path/file3")
                 .put("bar", "456")
@@ -120,7 +141,7 @@ class TestAttributeMap {
 
     @Test
     void testPutCollection() throws IOException {
-        AttributeMap attributeMap = AttributeMap.builder()
+        final AttributeMap attributeMap = AttributeMap.builder()
                 .put("foo", "123")
                 .putCollection("files", List.of(
                         "/some/path/file1",
@@ -140,7 +161,7 @@ class TestAttributeMap {
 
     @Test
     void testGetAsCollection() throws IOException {
-        AttributeMap attributeMap = AttributeMap.builder()
+        final AttributeMap attributeMap = AttributeMap.builder()
                 .put("foo", "123")
                 .putCollection("files", List.of(
                         "/some/path/file1",
@@ -259,7 +280,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(String.class)
                 .withTestFunction(testCase -> {
-                    var attrMap = testCase.getInput()._1;
+                    final AttributeMap attrMap = testCase.getInput()._1;
                     return attrMap.get(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -287,7 +308,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    var attrMap = testCase.getInput()._1;
+                    final AttributeMap attrMap = testCase.getInput()._1;
                     return attrMap.containsKey(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -317,7 +338,7 @@ class TestAttributeMap {
                 .withInputTypes(AttributeMap.class, String.class)
                 .withOutputType(boolean.class)
                 .withTestFunction(testCase -> {
-                    var attrMap = testCase.getInput()._1;
+                    final AttributeMap attrMap = testCase.getInput()._1;
                     return attrMap.containsValue(testCase.getInput()._2);
                 })
                 .withSimpleEqualityAssertion()
@@ -527,23 +548,30 @@ class TestAttributeMap {
     }
 
     @Test
-    void testAppendItem_present() {
+    void testAppendItemIfDifferent_present() {
         final String key = "foo";
         final String item1 = "1";
         final String item2 = "2";
 
         final AttributeMap attributeMap = new AttributeMap();
 
-        final String val1 = attributeMap.appendItem(key, item1);
+        final String val1 = attributeMap.appendItemIfDifferent(key, item1);
         assertThat(val1)
                 .isEqualTo(null);
         assertThat(attributeMap.get(key))
                 .isEqualTo(item1);
 
-        final String val2 = attributeMap.appendItem(key, item2);
+        final String val2 = attributeMap.appendItemIfDifferent(key, item2);
 
         assertThat(val2)
                 .isEqualTo(item1);
+        assertThat(attributeMap.get(key))
+                .isEqualTo(item1 + AttributeMap.VALUE_DELIMITER + item2);
+
+        // Append same thing again
+        final String val3 = attributeMap.appendItemIfDifferent(key, item2);
+        assertThat(val3)
+                .isEqualTo(item1 + AttributeMap.VALUE_DELIMITER + item2);
         assertThat(attributeMap.get(key))
                 .isEqualTo(item1 + AttributeMap.VALUE_DELIMITER + item2);
     }
@@ -667,5 +695,38 @@ class TestAttributeMap {
                 .isEqualTo("value(initial)");
         assertThat(callCount)
                 .hasValue(0);
+    }
+
+    @Test
+    void testUUid() {
+        final AttributeMap attributeMap = new AttributeMap();
+        final String val1 = attributeMap.putRandomUuidIfAbsent("foo");
+        assertThat(val1)
+                .matches(UUID_PATTERN);
+        assertThat(attributeMap.get("foo"))
+                .isEqualTo(val1);
+        final String val2 = attributeMap.putRandomUuidIfAbsent("foo");
+        assertThat(val2)
+                .isEqualTo(val1);
+        assertThat(attributeMap.get("foo"))
+                .isEqualTo(val1);
+    }
+
+    @TestFactory
+    Stream<DynamicTest> testCiKey() {
+        final AttributeMap attributeMap = new AttributeMap();
+        attributeMap.put(" feed ", "100");
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(CIKey.class)
+                .withOutputType(String.class)
+                .withSingleArgTestFunction(attributeMap::get)
+                .withSimpleEqualityAssertion()
+                .addCase(CIKey.ofDynamicKey("foo"), null)
+                .addCase(CIKey.ofDynamicKey("feed"), "100")
+                .addCase(CIKey.ofDynamicKey(" feed"), "100")
+                .addCase(CIKey.ofDynamicKey("feed "), "100")
+                .addCase(CIKey.ofDynamicKey(" feed "), "100")
+                .addCase(CIKey.ofDynamicKey("FEED"), "100")
+                .build();
     }
 }

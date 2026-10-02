@@ -1,0 +1,44 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "jsonParser",
+      "type" : "JSONParser"
+    }, {
+      "id" : "bomRemovalFilterInput",
+      "type" : "BOMRemovalFilterInput"
+    } ],
+    "remove" : [ {
+      "id" : "combinedParser",
+      "type" : "CombinedParser"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "translationFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "80a11c1e-bb53-489a-86ce-c96f4efd962b",
+          "name" : "TEST_CHARSETS"
+        }
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "jsonParser",
+      "to" : "readRecordCountFilter"
+    }, {
+      "from" : "Source",
+      "to" : "bomRemovalFilterInput"
+    }, {
+      "from" : "bomRemovalFilterInput",
+      "to" : "jsonParser"
+    } ],
+    "remove" : [ {
+      "from" : "Source",
+      "to" : "combinedParser"
+    } ]
+  }
+}

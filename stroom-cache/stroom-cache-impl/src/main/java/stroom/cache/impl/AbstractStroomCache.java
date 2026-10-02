@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.cache.impl;
 
 import stroom.cache.api.StroomCache;
@@ -24,7 +40,6 @@ import com.github.benmanes.caffeine.cache.stats.ConcurrentStatsCounter;
 import com.github.benmanes.caffeine.cache.stats.StatsCounter;
 import io.dropwizard.metrics.caffeine3.MetricsStatsCounter;
 import jakarta.inject.Provider;
-import org.checkerframework.checker.index.qual.NonNegative;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -38,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -162,6 +178,11 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         }
     }
 
+    /**
+     * When cache config is changed a new cache is built and wrapped in a new {@link CacheHolder}.
+     * The cacheHolder reference is then swapped over.
+     * All access to the cache must be via this method.
+     */
     protected Cache<K, V> getCache() {
         return cacheHolder.getCache();
     }
@@ -224,6 +245,10 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         return Optional.ofNullable(getCache().getIfPresent(key));
     }
 
+    @Override
+    public V compute(final K key, final BiFunction<K, V, V> remappingFunction) {
+        return getCache().asMap().compute(key, remappingFunction);
+    }
 
     @Override
     public boolean containsKey(final K key) {
@@ -330,7 +355,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         // Local copy in case rebuild is called
         final CacheHolder<K, V> localCacheHolder = this.cacheHolder;
         final Cache<K, V> cache = localCacheHolder.getCache();
-        map.put("Entries", String.valueOf(cache.estimatedSize()));
+        map.put(CacheInfo.ENTRIES_CACHE_INFO_KEY, String.valueOf(cache.estimatedSize()));
         // The lock covers cacheBuilder too
         addEntries(map, getCacheBuilder().toString());
         addEntries(map, cache.stats().toString());
@@ -375,7 +400,7 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
                 final String[] kv = pair.split("=");
                 if (kv.length == 2) {
                     String key = kv[0].replaceAll("\\W", "");
-                    String value = kv[1].replaceAll("\\D", "");
+                    final String value = kv[1].replaceAll("\\D", "");
                     if (!key.isEmpty()) {
                         final char[] chars = key.toCharArray();
                         chars[0] = Character.toUpperCase(chars[0]);
@@ -437,31 +462,31 @@ abstract class AbstractStroomCache<K, V> implements StroomCache<K, V> {
         }
 
         @Override
-        public void recordHits(@NonNegative final int count) {
+        public void recordHits(final int count) {
             concurrentStatsCounter.recordHits(count);
             metricsStatsCounter.recordHits(count);
         }
 
         @Override
-        public void recordMisses(@NonNegative final int count) {
+        public void recordMisses(final int count) {
             concurrentStatsCounter.recordMisses(count);
             metricsStatsCounter.recordMisses(count);
         }
 
         @Override
-        public void recordLoadSuccess(@NonNegative final long loadTime) {
+        public void recordLoadSuccess(final long loadTime) {
             concurrentStatsCounter.recordLoadSuccess(loadTime);
             metricsStatsCounter.recordLoadSuccess(loadTime);
         }
 
         @Override
-        public void recordLoadFailure(@NonNegative final long loadTime) {
+        public void recordLoadFailure(final long loadTime) {
             concurrentStatsCounter.recordLoadFailure(loadTime);
             metricsStatsCounter.recordLoadFailure(loadTime);
         }
 
         @Override
-        public void recordEviction(@NonNegative final int weight, final RemovalCause cause) {
+        public void recordEviction(final int weight, final RemovalCause cause) {
             concurrentStatsCounter.recordEviction(weight, cause);
             metricsStatsCounter.recordEviction(weight, cause);
         }

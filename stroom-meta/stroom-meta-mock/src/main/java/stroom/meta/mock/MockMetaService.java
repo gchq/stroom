@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SimpleMeta;
 import stroom.meta.shared.Status;
+import stroom.processor.shared.FeedDependency;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.NullSafe;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Singleton
@@ -80,15 +82,30 @@ public class MockMetaService implements MetaService, Clearable {
     private long currentId;
 
     @Override
-    public Long getMaxId() {
+    public Optional<Long> getMaxId() {
         if (currentId == 0) {
-            return null;
+            return Optional.empty();
         }
-        return currentId;
+        return Optional.of(currentId);
+    }
+
+    @Override
+    public Optional<Long> getMaxId(final long minId, final long maxCreateTimeMs) {
+        return metaMap.values()
+                .stream()
+                .filter(meta -> meta.getId() >= minId
+                                && meta.getCreateMs() <= maxCreateTimeMs)
+                .map(Meta::getId)
+                .max(Long::compare);
     }
 
     @Override
     public Meta create(final MetaProperties properties) {
+        return create(properties, null);
+    }
+
+    @Override
+    public Meta create(final MetaProperties properties, final Status status) {
         feeds.add(properties.getFeedName());
         types.add(properties.getTypeName());
 
@@ -100,7 +117,7 @@ public class MockMetaService implements MetaService, Clearable {
         builder.createMs(properties.getCreateMs());
         builder.effectiveMs(properties.getEffectiveMs());
         builder.statusMs(properties.getStatusMs());
-        builder.status(Status.LOCKED);
+        builder.status(Objects.requireNonNullElse(status, Status.LOCKED));
 
         currentId++;
         builder.id(currentId);
@@ -148,6 +165,11 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public int updateStatus(final FindMetaCriteria criteria, final Status currentStatus, final Status newStatus) {
         return 0;
+    }
+
+    @Override
+    public AttributeMap getAttributes(final Meta meta) {
+        return new AttributeMap();
     }
 
     @Override
@@ -418,5 +440,10 @@ public class MockMetaService implements MetaService, Clearable {
     @Override
     public Set<Long> exists(final Set<Long> ids) {
         return Collections.emptySet();
+    }
+
+    @Override
+    public Instant getFeedDependencyEffectiveTime(final List<FeedDependency> feedDependencies) {
+        return null;
     }
 }

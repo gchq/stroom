@@ -19,11 +19,12 @@ package stroom.pipeline.factory;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.api.Terminator;
+import stroom.util.shared.ElementId;
 
 public abstract class AbstractElement implements Element {
 
     private Terminator terminator = Terminator.DEFAULT;
-    private String elementId;
+    private ElementId elementId;
 
     @Override
     public void startProcessing() {
@@ -42,12 +43,12 @@ public abstract class AbstractElement implements Element {
     }
 
     @Override
-    public String getElementId() {
+    public ElementId getElementId() {
         return elementId;
     }
 
     @Override
-    public void setElementId(final String elementId) {
+    public void setElementId(final ElementId elementId) {
         this.elementId = elementId;
     }
 

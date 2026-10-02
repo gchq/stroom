@@ -17,8 +17,9 @@
 package stroom.dashboard.impl;
 
 import stroom.dashboard.shared.DashboardSearchResponse;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.Result;
+import stroom.query.api.SearchResponse;
+import stroom.util.shared.ErrorMessage;
 
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +30,7 @@ public class SearchResponseMapper {
 //    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SearchResponseMapper.class);
 
     public DashboardSearchResponse mapResponse(final String node,
-                                               final stroom.query.api.v2.SearchResponse searchResponse) {
+                                               final stroom.query.api.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
         }
@@ -39,7 +40,7 @@ public class SearchResponseMapper {
             highlights = new HashSet<>(searchResponse.getHighlights());
         }
 
-        List<Result> results = searchResponse.getResults();
+        final List<Result> results = searchResponse.getResults();
 
 //        List<Result> results = null;
 //        if (searchResponse.getResults() != null) {
@@ -49,12 +50,12 @@ public class SearchResponseMapper {
 //            }
 //        }
 
-        List<String> errors = searchResponse.getErrors();
-        if (errors != null) {
+        List<ErrorMessage> errorMessages = searchResponse.getErrorMessages();
+        if (errorMessages != null) {
             // Remove timeout message as this is expected to occur for non-incremental dashboard searches.
-            errors = errors
+            errorMessages = errorMessages
                     .stream()
-                    .filter(error -> !error.startsWith(SearchResponse.TIMEOUT_MESSAGE))
+                    .filter(error -> !error.getMessage().startsWith(SearchResponse.TIMEOUT_MESSAGE))
                     .toList();
         }
 
@@ -62,10 +63,11 @@ public class SearchResponseMapper {
                 node,
                 searchResponse.getKey(),
                 highlights,
-                errors,
+                null,
                 null,
                 searchResponse.complete(),
-                results);
+                results,
+                errorMessages);
     }
 
 //    private Result mapResult(final Result result) {
@@ -80,10 +82,10 @@ public class SearchResponseMapper {
 //        return result;
 //    }
 //
-//    private List<Field> mapFields(final List<stroom.query.api.v2.Field> fields) {
+//    private List<Field> mapFields(final List<stroom.query.api.Field> fields) {
 //        final List<Field> copy = new ArrayList<>();
 //        if (fields != null) {
-//            for (final stroom.query.api.v2.Field field : fields) {
+//            for (final stroom.query.api.Field field : fields) {
 //                final Field item = Field.builder()
 //                        .id(field.getId())
 //                        .name(field.getName())
@@ -99,10 +101,10 @@ public class SearchResponseMapper {
 //        return copy;
 //    }
 //
-//    private List<Row> mapRows(final List<stroom.query.api.v2.Row> rows) {
+//    private List<Row> mapRows(final List<stroom.query.api.Row> rows) {
 //        final List<Row> copy = new ArrayList<>();
 //        if (rows != null) {
-//            for (final stroom.query.api.v2.Row row : rows) {
+//            for (final stroom.query.api.Row row : rows) {
 //                final Row item = new Row(row.getGroupKey(), row.getValues(), row.getDepth());
 //                copy.add(item);
 //            }
@@ -114,14 +116,14 @@ public class SearchResponseMapper {
 //        String json = null;
 //        List<String> errors = result.getErrors();
 //        try {
-//            final List<stroom.query.api.v2.Field> fields = result.getStructure();
+//            final List<stroom.query.api.Field> fields = result.getStructure();
 //            if (fields != null && result.getValues() != null) {
 //                int valueOffset = 0;
 //
 //                final Map<Integer, List<String>> typeMap = new HashMap<>();
 //                final Map<Integer, List<String>> sortDirectionMap = new HashMap<>();
 //                int maxDepth = 0;
-//                for (final stroom.query.api.v2.Field field : fields) {
+//                for (final stroom.query.api.Field field : fields) {
 //                    // Ignore key and depth fields.
 //                    if (field.getName() != null && field.getName().startsWith(":")) {
 //                        valueOffset++;

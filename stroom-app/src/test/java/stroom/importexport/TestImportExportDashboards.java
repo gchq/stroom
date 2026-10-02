@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -42,19 +42,19 @@ import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.resource.api.ResourceStore;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.util.shared.ResourceKey;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -66,8 +66,6 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
     @Inject
     private ImportExportService importExportService;
-    @Inject
-    private ResourceStore resourceStore;
     @Inject
     private PipelineStore pipelineStore;
     @Inject
@@ -86,6 +84,13 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
     private ExplorerService explorerService;
     @Inject
     private ExplorerNodeService explorerNodeService;
+
+    @TempDir
+    private Path tempDir;
+
+    private Path createTempFile(final String filename) {
+        return tempDir.resolve(filename);
+    }
 
     @Test
     void testComplete() {
@@ -135,8 +140,10 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                     "Test Script",
                     folder2,
                     null);
-            ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef());
-            script.setData("Test Data");
+            final ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef())
+                    .copy()
+                    .data("Test Data")
+                    .build();
             scriptStore.writeDocument(script);
             assertThat(scriptStore.list().size()).isEqualTo(1);
 
@@ -145,8 +152,10 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                     "Test Vis",
                     folder2,
                     null);
-            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef());
-            vis.setScriptRef(scriptNode.getDocRef());
+            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef())
+                    .copy()
+                    .scriptRef(scriptNode.getDocRef())
+                    .build();
             visualisationStore.writeDocument(vis);
             assertThat(visualisationStore.list().size()).isEqualTo(1);
         }
@@ -224,16 +233,15 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         components.add(visualisation);
 
         // Create dashboard.
-        final DashboardConfig dashboardData = new DashboardConfig();
-        dashboardData.setComponents(components);
+        final DashboardConfig dashboardConfig = DashboardConfig.builder().components(components).build();
 
         final ExplorerNode dashboardNode = explorerService.create(
                 DashboardDoc.TYPE,
                 "Test Dashboard",
                 folder1,
                 null);
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef());
-        dashboard.setDashboardConfig(dashboardData);
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef())
+                .copy().dashboardConfig(dashboardConfig).build();
         dashboard = dashboardStore.writeDocument(dashboard);
         assertThat(dashboardStore.list().size()).isEqualTo(1);
 
@@ -243,7 +251,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final int startDictionarySize = dictionaryStore.list().size();
         final int startDashboardSize = dashboardStore.list().size();
 
-        final ResourceKey file = resourceStore.createTempFile("Export.zip");
+        final Path file = createTempFile("Export.zip");
         final Set<DocRef> docRefs = new HashSet<>();
         docRefs.add(folder1.getDocRef());
         if (!skipVisExport) {
@@ -254,11 +262,11 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         }
 
         // Export all
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(file));
+        importExportService.exportConfig(docRefs, file);
 
-        final ResourceKey exportConfig = resourceStore.createTempFile("ExportPlain.zip");
+        final Path exportConfigFile = createTempFile("ExportPlain.zip");
 
-        importExportService.exportConfig(docRefs, resourceStore.getTempFile(exportConfig));
+        importExportService.exportConfig(docRefs, exportConfigFile);
 
         if (!update) {
             // Delete everything.
@@ -267,14 +275,14 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
 
         // Import All
         final List<ImportState> confirmations = importExportService.importConfig(
-                resourceStore.getTempFile(file),
+                file,
                 ImportSettings.createConfirmation(),
                 new ArrayList<>());
         for (final ImportState confirmation : confirmations) {
             confirmation.setAction(true);
         }
         importExportService.importConfig(
-                resourceStore.getTempFile(file),
+                file,
                 ImportSettings.actionConfirmation(),
                 confirmations);
 
@@ -316,7 +324,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         }
     }
 
-    private <T extends Doc> T first(final DocumentStore<T> store) {
+    private <T extends AbstractDoc> T first(final DocumentStore<T> store) {
         final Set<DocRef> set = store.listDocuments();
         if (set != null && !set.isEmpty()) {
             return store.readDocument(set.iterator().next());

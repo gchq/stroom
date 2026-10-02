@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.guice;
 
 import stroom.util.logging.LogUtil;
@@ -39,7 +55,7 @@ public class BenchmarkProxyConfigProvidersModule {
     @Benchmark
     @BenchmarkMode(Mode.Throughput)
     @Measurement(iterations = 1)
-    public void benchProviderMethod1(ExecutionPlan plan) {
+    public void benchProviderMethod1(final ExecutionPlan plan) {
         final MyPojo myPojo = plan.provider.get();
         if (!"foo".equals(myPojo.value)) {
             throw new RuntimeException(LogUtil.message("Invalid value"));
@@ -56,7 +72,7 @@ public class BenchmarkProxyConfigProvidersModule {
 
         @Setup(Level.Invocation)
         public void setUp() {
-            AbstractModule module;
+            final AbstractModule module;
             if (methodNo == 1) {
                 // Config instances are looked up in a hashmap
                 module = new MyModule1();
@@ -78,7 +94,7 @@ public class BenchmarkProxyConfigProvidersModule {
                 final Injector injector = Guice.createInjector(module);
 
                 if (methodNo == 2) {
-                    ConfigSetter configSetter = injector.getInstance(ConfigSetter.class);
+                    final ConfigSetter configSetter = injector.getInstance(ConfigSetter.class);
                     configSetter.setMyConfig(new MyPojo("foo"));
                 }
                 provider = injector.getProvider(MyPojo.class);
@@ -137,7 +153,7 @@ public class BenchmarkProxyConfigProvidersModule {
             Objects.requireNonNull(config, "No config instance found for class " + clazz.getName());
             try {
                 return clazz.cast(config);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message(
                         "Error casting config object to {}, found {}",
                         clazz.getName(),

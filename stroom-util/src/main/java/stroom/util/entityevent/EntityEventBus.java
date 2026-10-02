@@ -18,5 +18,29 @@ package stroom.util.entityevent;
 
 public interface EntityEventBus {
 
+    EntityEventBus NO_OP_EVENT_BUS = new NoOpEntityEventBus();
+
     void fire(EntityEvent event);
+
+    void fire(EntityEventBatch events);
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * {@link EntityEventBus} that just swallows events.
+     */
+    class NoOpEntityEventBus implements EntityEventBus {
+
+        @Override
+        public void fire(final EntityEvent event) {
+            // no-op
+        }
+
+        @Override
+        public void fire(final EntityEventBatch events) {
+            // no-op
+        }
+    }
 }

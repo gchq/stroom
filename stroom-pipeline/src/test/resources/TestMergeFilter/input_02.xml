@@ -1,0 +1,19 @@
+<?xml version="1.1" encoding="UTF-8" ?>
+<Organisation>
+    <Internal>
+        <Employees>
+            <Employee>
+                <string>001</string>
+                <string>ABC Corp</string>
+            </Employee>
+            <Employee>
+                <string>002</string>
+                <string>XYZ Company</string>
+            </Employee>
+            <Employee>
+                <string>003</string>
+                <string>Smith Enterprises</string>
+            </Employee>
+        </Employees>
+    </Internal>
+</Organisation>

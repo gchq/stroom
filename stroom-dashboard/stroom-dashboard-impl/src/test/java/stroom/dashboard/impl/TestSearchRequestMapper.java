@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.impl;
@@ -22,9 +21,9 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.Query;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.SearchRequest;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,7 +43,7 @@ class TestSearchRequestMapper {
     @InjectMocks
     private SearchRequestMapper searchRequestMapper;
 
-    private static void verify_Search_to_Query_mapping(Search search, Query query) {
+    private static void verify_Search_to_Query_mapping(final Search search, final Query query) {
         assertThat(search.getDataSourceRef())
                 .isEqualTo(query.getDataSource());
         assertThat(search.getExpression())
@@ -57,8 +56,8 @@ class TestSearchRequestMapper {
     }
 
     private static void verify_ComponentResultRequest_to_ResultRequest_mappings(
-            List<ComponentResultRequest> componentResultRequests,
-            List<ResultRequest> resultRequests) {
+            final List<ComponentResultRequest> componentResultRequests,
+            final List<ResultRequest> resultRequests) {
 
         assertThat(componentResultRequests.size())
                 .isEqualTo(resultRequests.size());
@@ -74,8 +73,8 @@ class TestSearchRequestMapper {
         assertThat(optional.get().getFetch())
                 .isEqualTo(resultRequests.get(0).getFetch());
 
-        TableResultRequest tableResultRequest = ((TableResultRequest) optional.get());
-        ResultRequest resultRequest = resultRequests.get(0);
+        final TableResultRequest tableResultRequest = ((TableResultRequest) optional.get());
+        final ResultRequest resultRequest = resultRequests.get(0);
         assertThat(tableResultRequest.getRequestedRange().getOffset())
                 .isEqualTo(resultRequest.getRequestedRange().getOffset());
         assertThat(tableResultRequest.getRequestedRange().getLength())
@@ -89,10 +88,10 @@ class TestSearchRequestMapper {
     @Test
     void testSearchRequestMapper() {
         // Given
-        DashboardSearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
+        final DashboardSearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
 
         // When
-        SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(dashboardSearchRequest);
+        final SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(dashboardSearchRequest);
 
         // Then
         verify_Search_to_Query_mapping(

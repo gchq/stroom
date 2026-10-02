@@ -17,6 +17,7 @@
 package stroom.node.impl;
 
 import stroom.node.api.NodeInfo;
+import stroom.node.impl.db.jooq.tables.Node;
 import stroom.pipeline.refdata.store.offheapstore.DelegatingRefDataOffHeapStore;
 import stroom.pipeline.refdata.store.offheapstore.RefDataOffHeapStore;
 import stroom.pipeline.state.RecordCountService;
@@ -83,13 +84,13 @@ class NodeStatusServiceUtil {
     /**
      * Read the stats from a line.
      */
-    static CPUStats createLinuxStats(String lines) {
+    static CPUStats createLinuxStats(final String lines) {
         if (lines == null) {
             return null;
         }
-        Pattern pattern = Pattern.compile("[0-9]+");
+        final Pattern pattern = Pattern.compile("[0-9]+");
         Matcher matcher = pattern.matcher(lines);
-        CPUStats statLine = new CPUStats();
+        final CPUStats statLine = new CPUStats();
         matcher.find();
         statLine.user = Long.valueOf(matcher.group());
         matcher.find();
@@ -105,7 +106,7 @@ class NodeStatusServiceUtil {
         matcher.find();
         statLine.softirq = Long.valueOf(matcher.group());
 
-        int btimeStart = lines.indexOf("btime");
+        final int btimeStart = lines.indexOf("btime");
         matcher = pattern.matcher(lines.substring(btimeStart));
         matcher.find();
 
@@ -136,7 +137,7 @@ class NodeStatusServiceUtil {
     }
 
     public List<InternalStatisticEvent> buildNodeStatus() {
-        List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
+        final List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
 
         final SortedMap<String, String> tags = ImmutableSortedMap.of(
                 TAG_NODE, nodeInfo.getThisNodeName());
@@ -195,6 +196,13 @@ class NodeStatusServiceUtil {
                 .ifPresent(bufferPoolMXBean -> {
                     statAdder.accept("Mapped Buffers Used", bufferPoolMXBean.getMemoryUsed());
                 });
+
+        if (ManagementFactory.getOperatingSystemMXBean() instanceof
+                final com.sun.management.OperatingSystemMXBean operatingSystem) {
+            statAdder.accept("OS Committed Virtual Memory", operatingSystem.getCommittedVirtualMemorySize());
+            statAdder.accept("OS Free Memory Size", operatingSystem.getFreeMemorySize());
+            statAdder.accept("OS Free Swap Space", operatingSystem.getFreeSwapSpaceSize());
+        }
     }
 
     private void buildRefDataStats(final List<InternalStatisticEvent> statisticEventList,
@@ -212,7 +220,7 @@ class NodeStatusServiceUtil {
                 try {
                     LOGGER.debug("Capturing ref store stats for feed: {}", feedName);
                     buildRefDataStats(feedSpecificStore, statisticEventList, allTags, nowEpochMs);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.error("Error getting stats from ref store with feedName: {}", feedName, e);
                 }
             });
@@ -282,7 +290,7 @@ class NodeStatusServiceUtil {
 
     private void buildCpuStatEvents(final List<InternalStatisticEvent> statisticEventList,
                                     final SortedMap<String, String> tags) {
-        long now;
+        final long now;
         // Get the current CPU stats.
         final CPUStats cpuStats = createLinuxStats(readSystemStatsInfo());
 
@@ -373,7 +381,7 @@ class NodeStatusServiceUtil {
         public Long softirq;
 
         CPUStats subtract(final CPUStats cpuStats) {
-            CPUStats rtn = new CPUStats();
+            final CPUStats rtn = new CPUStats();
             rtn.user = this.user - cpuStats.user;
             rtn.nice = this.nice - cpuStats.nice;
             rtn.system = this.system - cpuStats.system;

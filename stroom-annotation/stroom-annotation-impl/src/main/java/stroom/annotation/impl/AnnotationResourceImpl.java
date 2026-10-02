@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,138 +16,301 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.shared.AnnotationDetail;
+import stroom.annotation.shared.AbstractAnnotationChange;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
-import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.ChangeAnnotationEntryRequest;
+import stroom.annotation.shared.CreateAnnotationRequest;
+import stroom.annotation.shared.CreateAnnotationTagRequest;
+import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
-import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.annotation.shared.SetStatusRequest;
+import stroom.annotation.shared.FetchAnnotationEntryRequest;
+import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.MultiAnnotationChangeRequest;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
 
+import event.logging.Query;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class AnnotationResourceImpl implements AnnotationResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationResourceImpl.class);
 
-    private final Provider<AnnotationService> annotationService;
+    private final Provider<AnnotationService> annotationServiceProvider;
     private final Provider<DocumentEventLog> documentEventLog;
-    private final Provider<AnnotationConfig> annotationConfig;
-    private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
 
     @Inject
-    AnnotationResourceImpl(final Provider<AnnotationService> annotationService,
-                           final Provider<DocumentEventLog> documentEventLog,
-                           final Provider<AnnotationConfig> annotationConfig,
-                           final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider) {
-        this.annotationService = annotationService;
+    AnnotationResourceImpl(final Provider<AnnotationService> annotationServiceProvider,
+                           final Provider<DocumentEventLog> documentEventLog) {
+        this.annotationServiceProvider = annotationServiceProvider;
         this.documentEventLog = documentEventLog;
-        this.annotationConfig = annotationConfig;
-        this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
     }
 
     @Override
-    public AnnotationDetail get(final Long annotationId) {
-        AnnotationDetail annotationDetail = null;
-
-//        if (annotationId != null) {
-        LOGGER.info(() -> "Getting annotation " + annotationId);
+    public ResultPage<Annotation> findAnnotations(final FindAnnotationRequest request) {
+        LOGGER.debug("Finding annotations {}", request);
+        final ResultPage<Annotation> result;
         try {
-            annotationDetail = annotationService.get().getDetail(annotationId);
-            if (annotationDetail != null) {
-                documentEventLog.get().view(annotationDetail, null);
+            result = annotationServiceProvider.get().findAnnotations(request);
+            if (result != null) {
+                documentEventLog.get().search(
+                        "Find Annotations",
+                        Query.builder().withRaw(request.getFilter()).build(),
+                        "Annotation",
+                        result.getPageResponse(),
+                        null);
+            }
+        } catch (final RuntimeException e) {
+            documentEventLog.get().search(
+                    "Find Annotations",
+                    Query.builder().withRaw(request.getFilter()).build(),
+                    "Annotation",
+                    null,
+                    e);
+            throw e;
+        }
+        return result;
+    }
+
+    @Override
+    public Annotation getAnnotationById(final Long annotationId) {
+        LOGGER.debug("Getting annotation {}", annotationId);
+        final Annotation annotation;
+        try {
+            annotation = annotationServiceProvider.get().getAnnotationById(annotationId).orElse(null);
+            if (annotation != null) {
+                documentEventLog.get().view(annotation, null);
             }
         } catch (final RuntimeException e) {
             documentEventLog.get().view("Annotation " + annotationId, e);
             throw e;
         }
-//        } else {
-//            LOGGER.info(() -> "Getting annotation " + streamId + ":" + eventId);
-//            try {
-//                annotationDetail = annotationService.getDetail(streamId, eventId);
-//                if (annotationDetail != null) {
-//                    documentEventLog.view(annotationDetail, null);
-//                }
-//            } catch (final RuntimeException e) {
-//                documentEventLog.view("Annotation " + streamId + ":" + eventId, e);
-//            }
-//        }
+        return annotation;
+    }
 
-        return annotationDetail;
+//    @Override
+//    public Annotation getAnnotationByRef(final DocRef annotationRef) {
+//        LOGGER.info(() -> "Getting annotation " + annotationRef);
+//        final Annotation annotation;
+//        try {
+//            annotation = annotationServiceProvider.get().getAnnotationByRef(annotationRef).orElse(null);
+//            if (annotation != null) {
+//                documentEventLog.get().view(annotation, null);
+//            }
+//        } catch (final RuntimeException e) {
+//            documentEventLog.get().view("Annotation " + annotationRef, e);
+//            throw e;
+//        }
+//        return annotation;
+//    }
+
+    @Override
+    public List<AnnotationEntry> getAnnotationEntries(final DocRef annotationRef) {
+        return annotationServiceProvider.get().getAnnotationEntries(annotationRef);
     }
 
     @Override
-    public AnnotationDetail createEntry(final CreateEntryRequest request) {
-        AnnotationDetail annotationDetail = null;
-
-        LOGGER.info(() -> "Creating annotation entry " + request.getAnnotation());
+    public Annotation createAnnotation(final CreateAnnotationRequest request) {
+        final Annotation annotation;
+        LOGGER.debug("Creating annotation {}", request);
         try {
-            annotationDetail = annotationService.get().createEntry(request);
-            documentEventLog.get().create(annotationDetail, null);
+            annotation = annotationServiceProvider.get().createAnnotation(request);
+            documentEventLog.get().create(annotation, null);
         } catch (final RuntimeException e) {
-            documentEventLog.get().create("Annotation entry " + request.getAnnotation(), e);
+            documentEventLog.get().create("Annotation", e);
+            throw e;
+        }
+        return annotation;
+    }
+
+    @Override
+    public Boolean change(final SingleAnnotationChangeRequest request) {
+        Annotation before = null;
+        Annotation after = null;
+        final boolean success;
+
+        final AnnotationService annotationService = annotationServiceProvider.get();
+        final DocRef annotationRef = request.getAnnotationRef();
+        LOGGER.debug("Changing annotation (single) {}", annotationRef);
+        try {
+            before = annotationService.getAnnotationByRef(annotationRef)
+                    .orElse(null);
+            if (before == null) {
+                throw new RuntimeException("Unable to find annotation");
+            }
+            final long id = Objects.requireNonNull(before.getId());
+            success = annotationService.change(request.withAnnotationId(id));
+            if (success) {
+                after = annotationService.getAnnotationByRef(annotationRef)
+                        .orElse(null);
+            }
+            documentEventLog.get().update(before, after, null);
+        } catch (final RuntimeException e) {
+            documentEventLog.get().update(before == null
+                    ? request.getAnnotationRef()
+                    : before, after, e);
             throw e;
         }
 
-        return annotationDetail;
+        return success;
     }
 
     @Override
-    public List<String> getStatus(final String filter) {
-        return filterValues(annotationConfig.get().getStatusValues(), filter);
+    public Integer batchChange(final MultiAnnotationChangeRequest request) {
+        int count = 0;
+        final AnnotationService annotationService = annotationServiceProvider.get();
+        final AbstractAnnotationChange change = request.getChange();
+        for (final long id : request.getAnnotationIdList()) {
+            Annotation before = null;
+            Annotation after = null;
+            LOGGER.debug("Changing annotation (batch) {}", id);
+            try {
+                before = annotationService.getAnnotationById(id).orElse(null);
+                if (before == null) {
+                    throw new RuntimeException("Unable to find annotation");
+                }
+
+                final DocRef docRef = before.asDocRef();
+                final SingleAnnotationChangeRequest singleRequest = new SingleAnnotationChangeRequest(
+                        docRef,
+                        id,
+                        change);
+                final boolean success = annotationService.change(singleRequest);
+                if (success) {
+                    after = annotationService.getAnnotationByRef(docRef).orElse(null);
+                    count++;
+                }
+                documentEventLog.get().update(before, after, null);
+            } catch (final RuntimeException e) {
+                documentEventLog.get().update(before == null
+                        ? id
+                        : before, after, e);
+                throw e;
+            }
+        }
+        return count;
+    }
+
+//    @AutoLogged(OperationType.UNLOGGED)
+//    @Override
+//    public List<AnnotationTag> getStatusValues(final String filter) {
+//        return annotationService.get().getStatus(filter);
+//    }
+
+//    @AutoLogged(OperationType.UNLOGGED)
+//    @Override
+//    public SimpleDuration getDefaultRetentionPeriod() {
+//        return annotationService.get().getDefaultRetentionPeriod();
+//    }
+
+    @Override
+    public List<EventId> getLinkedEvents(final DocRef annotationRef) {
+        return annotationServiceProvider.get().getLinkedEvents(annotationRef);
     }
 
     @Override
-    public List<String> getComment(final String filter) {
-        return filterValues(annotationConfig.get().getStandardComments(), filter);
+    public Boolean deleteAnnotation(final DocRef annotationRef) {
+        final AnnotationService annotationService = annotationServiceProvider.get();
+        final Boolean success;
+        LOGGER.debug("deleteAnnotation() - annotationRef: {}", annotationRef);
+        try {
+            success = annotationService.deleteAnnotation(annotationRef);
+            documentEventLog.get().delete(annotationRef, null);
+        } catch (final RuntimeException e) {
+            documentEventLog.get().delete(annotationRef, e);
+            throw e;
+        }
+        return success;
+    }
+
+
+    @Override
+    public AnnotationTag createAnnotationTag(final CreateAnnotationTagRequest request) {
+        return annotationServiceProvider.get().createAnnotationTag(request);
     }
 
     @Override
-    public List<EventId> getLinkedEvents(final Long annotationId) {
-        return annotationService.get().getLinkedEvents(annotationId);
+    public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
+        return annotationServiceProvider.get().updateAnnotationTag(annotationTag);
     }
 
     @Override
-    public List<EventId> link(final EventLink eventLink) {
-        return annotationService.get().link(eventLink);
+    public Boolean deleteAnnotationTag(final AnnotationTag annotationTag) {
+        return annotationServiceProvider.get().deleteAnnotationTag(annotationTag);
+    }
+
+//    @Override
+//    public AnnotationTag fetchAnnotationGroupByName(final String name) {
+//        return annotationService.get().fetchAnnotationGroupByName(name);
+//    }
+
+    @Override
+    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
+        return annotationServiceProvider.get().findAnnotationTags(request);
     }
 
     @Override
-    public List<EventId> unlink(final EventLink eventLink) {
-        return annotationService.get().unlink(eventLink);
+    public AnnotationEntry fetchAnnotationEntry(final FetchAnnotationEntryRequest request) {
+        return annotationServiceProvider.get().fetchAnnotationEntry(request);
     }
 
     @Override
-    public Integer setStatus(final SetStatusRequest request) {
-        return annotationService.get().setStatus(request);
+    public Boolean changeAnnotationEntry(final ChangeAnnotationEntryRequest request) {
+        final AnnotationService annotationService = annotationServiceProvider.get();
+        final DocRef annotationRef = request.getAnnotationIdentity().asDocRef();
+        AnnotationEntry before = AnnotationEntry.builder()
+                .id(request.getAnnotationEntryId())
+                .build();
+        AnnotationEntry after = null;
+        LOGGER.debug("Changing annotation entry {}", request);
+        try {
+            before = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
+                    annotationRef,
+                    request.getAnnotationEntryId()));
+            final Boolean success = annotationService.changeAnnotationEntry(request);
+            after = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
+                    annotationRef,
+                    request.getAnnotationEntryId()));
+            documentEventLog.get().update(before, after, null);
+            return success;
+        } catch (final RuntimeException e) {
+            documentEventLog.get().update(before, after, e);
+            throw e;
+        }
     }
 
     @Override
-    public Integer setAssignedTo(final SetAssignedToRequest request) {
-        return annotationService.get().setAssignedTo(request);
-    }
-
-    private List<String> filterValues(final List<String> allValues, final String quickFilterInput) {
-        if (allValues == null || allValues.isEmpty()) {
-            return allValues;
-        } else {
-            return expressionPredicateFactoryProvider.get()
-                    .filterAndSortStream(allValues.stream(),
-                            quickFilterInput,
-                            Optional.of(Comparator.naturalOrder()))
-                    .toList();
+    public Boolean deleteAnnotationEntry(final DeleteAnnotationEntryRequest request) {
+        final AnnotationService annotationService = annotationServiceProvider.get();
+        AnnotationEntry before = AnnotationEntry.builder()
+                .id(request.getAnnotationEntryId())
+                .build();
+        LOGGER.debug("deleteAnnotationEntry() - request: {}", request);
+        try {
+            before = annotationService.fetchAnnotationEntry(new FetchAnnotationEntryRequest(
+                    request.getAnnotationIdentity().asDocRef(),
+                    request.getAnnotationEntryId()));
+            final Boolean success = annotationServiceProvider.get().deleteAnnotationEntry(request);
+            documentEventLog.get().delete(before, null);
+            return success;
+        } catch (final RuntimeException e) {
+            documentEventLog.get().delete(before, e);
+            throw e;
         }
     }
 }

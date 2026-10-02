@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.ResultRequest.Fetch;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
@@ -35,7 +36,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
         @JsonSubTypes.Type(value = VisResultRequest.class, name = "vis")
 })
 @JsonInclude(Include.NON_NULL)
-public abstract class ComponentResultRequest {
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "table", schema = TableResultRequest.class),
+                @DiscriminatorMapping(value = "vis", schema = VisResultRequest.class)})
+public abstract sealed class ComponentResultRequest permits TableResultRequest, VisResultRequest {
 
     @Schema(description = "The ID of the component that will receive the results corresponding to this ResultRequest",
             required = true)
@@ -62,8 +68,8 @@ public abstract class ComponentResultRequest {
     @Override
     public String toString() {
         return "ComponentResultRequest{" +
-                "componentId='" + componentId + '\'' +
-                ", fetch=" + fetch +
-                '}';
+               "componentId='" + componentId + '\'' +
+               ", fetch=" + fetch +
+               '}';
     }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -10,23 +26,41 @@ import java.util.Objects;
 
 @JsonPropertyOrder({
         "maxStoreSize",
-        "overwrite"
+        "synchroniseMerge",
+        "overwrite",
+        "retention",
+        "snapshotSettings",
+        "keySchema",
+        "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public class StateSettings extends AbstractPlanBSettings {
+public final class StateSettings
+        extends AbstractHttpStoreSettings {
 
     @JsonProperty
-    private final Boolean overwrite;
+    private final StateKeySchema keySchema;
+    @JsonProperty
+    private final StateValueSchema valueSchema;
 
     @JsonCreator
     public StateSettings(@JsonProperty("maxStoreSize") final Long maxStoreSize,
-                         @JsonProperty("overwrite") final Boolean overwrite) {
-        super(maxStoreSize);
-        this.overwrite = overwrite;
+                         @JsonProperty("synchroniseMerge") final Boolean synchroniseMerge,
+                         @JsonProperty("overwrite") final Boolean overwrite,
+                         @JsonProperty("retention") final RetentionSettings retention,
+                         @JsonProperty("snapshotSettings") final SnapshotSettings snapshotSettings,
+                         @JsonProperty("keySchema") final StateKeySchema keySchema,
+                         @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
+        super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
+        this.keySchema = Objects.requireNonNullElse(keySchema, new StateKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
-    public Boolean getOverwrite() {
-        return overwrite;
+    public StateKeySchema getKeySchema() {
+        return keySchema;
+    }
+
+    public StateValueSchema getValueSchema() {
+        return valueSchema;
     }
 
     @Override
@@ -41,43 +75,47 @@ public class StateSettings extends AbstractPlanBSettings {
             return false;
         }
         final StateSettings that = (StateSettings) o;
-        return Objects.equals(overwrite, that.overwrite);
+        return Objects.equals(keySchema, that.keySchema) &&
+               Objects.equals(valueSchema, that.valueSchema);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), overwrite);
+        return Objects.hash(super.hashCode(), keySchema, valueSchema);
     }
 
     @Override
     public String toString() {
         return "StateSettings{" +
-               "overwrite=" + overwrite +
+               super.toString() +
+               ", keySchema=" + keySchema +
+               ", valueSchema=" + valueSchema +
                '}';
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
+    public static class Builder extends AbstractHttpBuilder<StateSettings, Builder> {
 
-    public Builder copy() {
-        return new Builder(this);
-    }
-
-    public static class Builder extends AbstractBuilder<StateSettings, Builder> {
-
-        protected Boolean overwrite;
+        private StateKeySchema keySchema;
+        private StateValueSchema valueSchema;
 
         public Builder() {
         }
 
         public Builder(final StateSettings settings) {
             super(settings);
-            this.overwrite = settings.overwrite;
+            if (settings != null) {
+                this.keySchema = settings.keySchema;
+                this.valueSchema = settings.valueSchema;
+            }
         }
 
-        public Builder overwrite(final Boolean overwrite) {
-            this.overwrite = overwrite;
+        public Builder keySchema(final StateKeySchema keySchema) {
+            this.keySchema = keySchema;
+            return self();
+        }
+
+        public Builder valueSchema(final StateValueSchema valueSchema) {
+            this.valueSchema = valueSchema;
             return self();
         }
 
@@ -90,7 +128,12 @@ public class StateSettings extends AbstractPlanBSettings {
         public StateSettings build() {
             return new StateSettings(
                     maxStoreSize,
-                    overwrite);
+                    synchroniseMerge,
+                    overwrite,
+                    retention,
+                    snapshotSettings,
+                    keySchema,
+                    valueSchema);
         }
     }
 }

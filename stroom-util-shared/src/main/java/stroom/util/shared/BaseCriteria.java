@@ -63,14 +63,14 @@ public abstract class BaseCriteria {
         return pageRequest;
     }
 
-    protected Set<Long> clone(Set<Long> set) {
+    protected Set<Long> clone(final Set<Long> set) {
         if (set == null) {
             return null;
         }
         return new HashSet<>(set);
     }
 
-    protected void copyFrom(BaseCriteria other) {
+    protected void copyFrom(final BaseCriteria other) {
         if (other != null) {
             if (other.pageRequest == null) {
                 this.pageRequest = null;
@@ -164,17 +164,17 @@ public abstract class BaseCriteria {
     // --------------------------------------------------------------------------------
 
 
-    public abstract static class AbstractBuilder<T extends BaseCriteria, B extends AbstractBuilder<T, B>>
-            extends BaseBuilder<T, B> {
+    public abstract static class BaseCriteriaBuilder<T extends BaseCriteria, B extends BaseCriteriaBuilder<T, B>>
+            extends AbstractBuilder<T, B> {
 
         protected PageRequest pageRequest;
         protected List<CriteriaFieldSort> sortList;
 
-        protected AbstractBuilder() {
+        protected BaseCriteriaBuilder() {
 
         }
 
-        protected AbstractBuilder(final T criteria) {
+        protected BaseCriteriaBuilder(final T criteria) {
             if (criteria.getPageRequest() != null) {
                 pageRequest = new PageRequest(
                         criteria.getPageRequest().getOffset(),

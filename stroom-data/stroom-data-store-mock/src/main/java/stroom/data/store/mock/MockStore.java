@@ -16,6 +16,8 @@
 
 package stroom.data.store.mock;
 
+import stroom.aws.s3.shared.S3Location;
+import stroom.data.store.api.AttributeMapFactory;
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.OutputStreamProvider;
@@ -23,16 +25,16 @@ import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
-import stroom.data.store.impl.fs.InputStreamProviderImpl;
-import stroom.data.store.impl.fs.InternalSource;
-import stroom.data.store.impl.fs.InternalStreamTypeNames;
-import stroom.data.store.impl.fs.InternalTarget;
 import stroom.data.store.impl.fs.OutputStreamProviderImpl;
 import stroom.data.store.impl.fs.RASegmentInputStream;
-import stroom.data.store.impl.fs.SegmentInputStreamProvider;
-import stroom.data.store.impl.fs.SegmentInputStreamProviderFactory;
-import stroom.data.store.impl.fs.SegmentOutputStreamProvider;
-import stroom.data.store.impl.fs.SegmentOutputStreamProviderFactory;
+import stroom.data.store.impl.fs.standard.InputStreamProviderImpl;
+import stroom.data.store.impl.fs.standard.InternalSource;
+import stroom.data.store.impl.fs.standard.InternalStreamTypeNames;
+import stroom.data.store.impl.fs.standard.InternalTarget;
+import stroom.data.store.impl.fs.standard.SegmentInputStreamProvider;
+import stroom.data.store.impl.fs.standard.SegmentInputStreamProviderFactory;
+import stroom.data.store.impl.fs.standard.SegmentOutputStreamProvider;
+import stroom.data.store.impl.fs.standard.SegmentOutputStreamProviderFactory;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
@@ -44,6 +46,7 @@ import stroom.util.shared.Clearable;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.NullMarked;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -56,7 +59,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-public class MockStore implements Store, Clearable {
+public class MockStore implements Store, Clearable, AttributeMapFactory {
 
     /**
      * Our stream data.
@@ -92,12 +95,19 @@ public class MockStore implements Store, Clearable {
     }
 
     @Override
-    public void deleteTarget(final Target target) {
+    public void logicallyDeleteTarget(final Target target) {
         final long streamId = target.getMeta().getId();
         openOutputStream.remove(streamId);
+        // TODO should this be deleting the file data?
         fileData.remove(streamId);
-        ((MockTarget) target).delete();
+        target.logicallyDelete();
     }
+
+//    @Override
+//    public void physicallyDelete(final Collection<Long> metaIds) {
+//        NullSafe.stream(metaIds)
+//                .forEach(fileData::remove);
+//    }
 
     @Override
     public Source openSource(final long streamId) throws DataException {
@@ -147,6 +157,13 @@ public class MockStore implements Store, Clearable {
         return new MockTarget(meta);
     }
 
+    @NullMarked
+    @Override
+    public void addExistingS3Source(final MetaProperties metaProperties, final S3Location s3Location)
+            throws DataException {
+
+    }
+
     public Meta getLastMeta() {
         return lastMeta;
     }
@@ -183,6 +200,20 @@ public class MockStore implements Store, Clearable {
         return sb.toString();
     }
 
+    @Override
+    public Map<String, String> getAttributes(final long metaId) {
+        return Map.of();
+    }
+
+    @Override
+    public AttributeMap getAttributeMapForPart(final long streamId, final long partNo) {
+        return new AttributeMap();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
     private static class SeekableByteArrayInputStream extends ByteArrayInputStream implements SeekableInputStream {
 
         SeekableByteArrayInputStream(final byte[] bytes) {
@@ -205,6 +236,10 @@ public class MockStore implements Store, Clearable {
         }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class MockTarget implements InternalTarget, SegmentOutputStreamProviderFactory {
 
         private final Meta meta;
@@ -213,7 +248,7 @@ public class MockStore implements Store, Clearable {
         private final String streamTypeName;
         private final AttributeMap attributeMap = new AttributeMap();
         private final Map<String, MockTarget> childMap = new HashMap<>();
-        private final HashMap<String, SegmentOutputStreamProvider> outputStreamMap = new HashMap<>(10);
+        private final Map<String, SegmentOutputStreamProvider> outputStreamMap = new HashMap<>(10);
         private ByteArrayOutputStream outputStream = null;
         private long index;
         private Target parent;
@@ -303,7 +338,8 @@ public class MockStore implements Store, Clearable {
             }
         }
 
-        public void delete() {
+        @Override
+        public void logicallyDelete() {
             if (deleted) {
                 throw new DataException("Target already deleted");
             }
@@ -372,9 +408,9 @@ public class MockStore implements Store, Clearable {
 //        }
 
 
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
         // START INTERNAL TARGET
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
 
         /**
          * Gets the output stream for this stream target.
@@ -398,9 +434,9 @@ public class MockStore implements Store, Clearable {
             return null;
         }
 
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
         // END INTERNAL TARGET
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
 
 //        MockStreamTarget add(final String streamTypeName) {
 //            final Map<String, ByteArrayOutputStream> typeMap = getOpenOutputStream().get(meta.getId());
@@ -414,10 +450,14 @@ public class MockStore implements Store, Clearable {
 //        }
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private class MockSource implements InternalSource, SegmentInputStreamProviderFactory {
 
         private final Map<String, MockSource> childMap = new HashMap<>();
-        private final HashMap<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
+        private final Map<String, SegmentInputStreamProvider> inputStreamMap = new HashMap<>(10);
         private final String streamType;
         private final Source parent;
         private AttributeMap attributeMap;
@@ -478,9 +518,9 @@ public class MockStore implements Store, Clearable {
             }
         }
 
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
         // START INTERNAL SOURCE
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
         @Override
         public InputStream getInputStream() {
             if (inputStream == null) {
@@ -505,9 +545,9 @@ public class MockStore implements Store, Clearable {
             return null;
         }
 
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
         // END INTERNAL SOURCE
-        /////////////////////////////////
+        // ---------------------------------------------------------------------
 
         @Override
         public SegmentInputStreamProvider getSegmentInputStreamProvider(final String streamTypeName) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public final class StreamFactory {
         // Private constructor.
     }
 
-    public static Long getReferenceEffectiveTime(final Map<String, String> argsMap, boolean doDefault) {
+    public static Long getReferenceEffectiveTime(final Map<String, String> argsMap, final boolean doDefault) {
         Long effectiveMs = getSafeMs(argsMap, StandardHeaderArguments.EFFECTIVE_TIME);
         if (effectiveMs != null) {
             return effectiveMs;
@@ -49,22 +49,22 @@ public final class StreamFactory {
         return null;
     }
 
-    public static Long getReceivedTime(final Map<String, String> argsMap, boolean doDefault) {
-        Long receivedTimeMs = getSafeMs(argsMap, StandardHeaderArguments.RECEIVED_TIME);
-        if (receivedTimeMs != null) {
-            return receivedTimeMs;
-        }
-        if (doDefault) {
-            return System.currentTimeMillis();
-        }
-        return null;
-    }
+//    public static Long getReceivedTime(final Map<String, String> argsMap, boolean doDefault) {
+//        Long receivedTimeMs = getSafeMs(argsMap, StandardHeaderArguments.RECEIVED_TIME);
+//        if (receivedTimeMs != null) {
+//            return receivedTimeMs;
+//        }
+//        if (doDefault) {
+//            return System.currentTimeMillis();
+//        }
+//        return null;
+//    }
 
     /**
      * Helper to avoid null pointers
      */
     private static Long getSafeMs(final Map<String, String> argsMap, final String key) {
-        String value = argsMap.get(key);
+        final String value = argsMap.get(key);
         if (value != null) {
             try {
                 return DateUtil.parseNormalDateTimeString(value);

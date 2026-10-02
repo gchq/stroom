@@ -19,12 +19,14 @@ package stroom.importexport.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent;
 import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyType;
 import stroom.importexport.client.presenter.DependenciesTabPresenter;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -43,8 +45,9 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
     public DependenciesPlugin(final EventBus eventBus,
                               final ContentManager eventManager,
                               final Provider<DependenciesTabPresenter> presenterProvider,
-                              final ClientSecurityContext securityContext) {
-        super(eventBus, eventManager, presenterProvider, securityContext);
+                              final ClientSecurityContext securityContext,
+                              final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -82,5 +85,10 @@ public class DependenciesPlugin extends MonitoringPlugin<DependenciesTabPresente
     @Override
     protected Action getOpenAction() {
         return Action.GOTO_DEPENDENCIES;
+    }
+
+    @Override
+    public String getType() {
+        return DependenciesTabPresenter.TAB_TYPE;
     }
 }

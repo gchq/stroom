@@ -120,7 +120,7 @@ public class ContentPackImport {
             try (final DirectoryStream<Path> stream = Files.newDirectoryStream(contentPacksDir, "*.zip")) {
                 stream.forEach(file -> {
                     try {
-                        boolean result = importContentPack(contentPacksDir, file);
+                        final boolean result = importContentPack(contentPacksDir, file);
                         if (result) {
                             successCounter.incrementAndGet();
                         } else {
@@ -143,7 +143,7 @@ public class ContentPackImport {
         LOGGER.info("ContentPackImport finished");
     }
 
-    private boolean importContentPack(Path parentPath, Path contentPack) {
+    private boolean importContentPack(final Path parentPath, final Path contentPack) {
         LOGGER.info("Starting import of content pack '{}'", FileUtil.getCanonicalPath(contentPack));
 
         try {
@@ -165,8 +165,8 @@ public class ContentPackImport {
         return true;
     }
 
-    private void moveFile(Path contentPack, Path destDir) {
-        Path destPath = destDir.resolve(contentPack.getFileName());
+    private void moveFile(final Path contentPack, final Path destDir) {
+        final Path destPath = destDir.resolve(contentPack.getFileName());
         try {
             //make sure the directory exists
             Files.createDirectories(destDir);

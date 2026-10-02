@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 
 package stroom.statistics.impl.sql.search;
 
-import stroom.datasource.api.v2.ConditionSet;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchTaskProgress;
+import stroom.docstore.api.DocFinder;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchTaskProgress;
+import stroom.query.api.datasource.ConditionSet;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
@@ -39,6 +40,7 @@ import stroom.statistics.impl.sql.entity.StatisticStoreStore;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.task.api.TaskContextFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskProgress;
@@ -53,6 +55,7 @@ import jakarta.inject.Inject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
@@ -75,6 +78,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     private final ResultStoreFactory resultStoreFactory;
     private final Statistics statistics;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+    private final DocFinder docFinder;
 
     @Inject
     public SqlStatisticSearchProvider(final StatisticStoreStore statisticStoreStore,
@@ -88,7 +92,8 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                                       final CoprocessorsFactory coprocessorsFactory,
                                       final ResultStoreFactory resultStoreFactory,
                                       final Statistics statistics,
-                                      final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
+                                      final FieldInfoResultPageFactory fieldInfoResultPageFactory,
+                                      final DocFinder docFinder) {
         this.statisticStoreStore = statisticStoreStore;
         this.statisticStoreCache = statisticStoreCache;
         this.statisticsSearchService = statisticsSearchService;
@@ -99,6 +104,7 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         this.resultStoreFactory = resultStoreFactory;
         this.statistics = statistics;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -152,18 +158,21 @@ public class SqlStatisticSearchProvider implements SearchProvider {
                 .build());
 
         // one field per tag
-        if (entity.getConfig() != null) {
-            for (final StatisticField statisticField : entity.getStatisticFields()) {
-                // TODO currently only EQUALS is supported, but need to add
-                // support for more conditions like CONTAINS
-                fields.add(QueryField
-                        .builder()
-                        .fldName(statisticField.getFieldName())
-                        .fldType(FieldType.TEXT)
-                        .conditionSet(ConditionSet.STAT_TEXT)
-                        .queryable(true)
-                        .build());
-            }
+        final List<StatisticField> statisticFields = NullSafe.getOrElse(
+                entity,
+                StatisticStoreDoc::getConfig,
+                StatisticsDataSourceData::getFields,
+                Collections.emptyList());
+        for (final StatisticField statisticField : statisticFields) {
+            // TODO currently only EQUALS is supported, but need to add
+            // support for more conditions like CONTAINS
+            fields.add(QueryField
+                    .builder()
+                    .fldName(statisticField.getFieldName())
+                    .fldType(FieldType.TEXT)
+                    .conditionSet(ConditionSet.STAT_TEXT)
+                    .queryable(true)
+                    .build());
         }
 
         fields.add(QueryField.createLong(StatisticStoreDoc.FIELD_NAME_COUNT, false));
@@ -287,14 +296,14 @@ public class SqlStatisticSearchProvider implements SearchProvider {
         return resultStore;
     }
 
-    private Sizes extractValues(String value) {
+    private Sizes extractValues(final String value) {
         if (value != null) {
             try {
                 return Sizes.create(Arrays.stream(value.split(","))
                         .map(String::trim)
                         .map(Long::valueOf)
                         .collect(Collectors.toList()));
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.warn(e.getMessage());
             }
         }
@@ -304,6 +313,11 @@ public class SqlStatisticSearchProvider implements SearchProvider {
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         return statisticStoreStore.list();
+    }
+
+    @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return docFinder.findByName(getDataSourceType(), name);
     }
 
     @Override

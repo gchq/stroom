@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.functions;
 
 import stroom.util.logging.LambdaLogger;
@@ -129,7 +145,7 @@ public class ValDurationUtil {
     }
 
     private static ValErr exceptionToValErr(final Exception e) {
-        if (e instanceof DateTimeParseException dtpe) {
+        if (e instanceof final DateTimeParseException dtpe) {
             String msg = e.getMessage().stripTrailing();
             msg = msg.endsWith(".")
                     ? e.getMessage()
@@ -158,9 +174,9 @@ public class ValDurationUtil {
             }
             // Not ISO 8601 so have a go with our ModelStringUtil format
             return ModelStringUtil.parseDurationString(value);
-        } catch (DateTimeParseException e) {
+        } catch (final DateTimeParseException e) {
             throw e;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new DateTimeParseException(PARSE_ERROR_MESSAGE, value, 0);
         }
     }

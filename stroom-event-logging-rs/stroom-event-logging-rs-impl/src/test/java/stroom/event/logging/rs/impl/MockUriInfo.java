@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class MockUriInfo implements UriInfo {
 
     private String uuid;
 
-    public void setId(Integer id) {
+    public void setId(final Integer id) {
         this.id = id;
     }
 
@@ -92,7 +92,7 @@ public class MockUriInfo implements UriInfo {
 
     @Override
     public MultivaluedMap<String, String> getPathParameters() {
-        MultivaluedMap<String, String> pathParameterMap = new MultivaluedHashMap<>();
+        final MultivaluedMap<String, String> pathParameterMap = new MultivaluedHashMap<>();
 
         if (id != null) {
             pathParameterMap.putSingle("id", id.toString());

@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store;
@@ -34,9 +33,6 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class MapDefinition {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MapDefinition.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(MapDefinition.class);
-
     @JsonProperty
     private final RefStreamDefinition refStreamDefinition;
     @JsonProperty
@@ -55,7 +51,7 @@ public class MapDefinition {
     public MapDefinition(final RefStreamDefinition refStreamDefinition) {
         this.refStreamDefinition = refStreamDefinition;
         this.mapName = null;
-        // pre compute the hash
+        // pre-compute the hash
         this.hashCode = buildHashCode();
     }
 
@@ -89,7 +85,7 @@ public class MapDefinition {
         }
         final MapDefinition that = (MapDefinition) o;
         return Objects.equals(refStreamDefinition, that.refStreamDefinition) &&
-                Objects.equals(mapName, that.mapName);
+               Objects.equals(mapName, that.mapName);
     }
 
     @Override
@@ -104,11 +100,11 @@ public class MapDefinition {
     @Override
     public String toString() {
         return "MapDefinition{" +
-                "pipelineDocRef=" + refStreamDefinition.getPipelineDocRef() +
-                ", pipelineVer=" + refStreamDefinition.getPipelineVersion() +
-                ", streamId=" + refStreamDefinition.getStreamId() +
-                ", partIndex=" + refStreamDefinition.getPartIndex() +
-                ", mapName='" + mapName + '\'' +
-                '}';
+               "pipelineDocRef=" + refStreamDefinition.getPipelineDocRef() +
+               ", pipelineVer=" + refStreamDefinition.getPipelineVersion() +
+               ", streamId=" + refStreamDefinition.getStreamId() +
+               ", partIndex=" + refStreamDefinition.getPartIndex() +
+               ", mapName='" + mapName + '\'' +
+               '}';
     }
 }

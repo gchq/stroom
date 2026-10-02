@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,10 +36,10 @@ public class FindInContentResult {
     @JsonCreator
     public FindInContentResult(@JsonProperty("docContentMatch") final DocContentMatch docContentMatch,
                                @JsonProperty("path") final String path,
-                               @JsonProperty("isFavourite") final boolean isFavourite) {
+                               @JsonProperty("isFavourite") final Boolean isFavourite) {
         this.docContentMatch = docContentMatch;
         this.path = path;
-        this.isFavourite = isFavourite;
+        this.isFavourite = Objects.requireNonNullElse(isFavourite, false);
     }
 
     public DocContentMatch getDocContentMatch() {

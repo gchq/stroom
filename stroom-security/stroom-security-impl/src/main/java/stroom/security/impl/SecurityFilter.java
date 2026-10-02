@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,19 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.exception.AuthenticationException;
 import stroom.security.common.impl.UserIdentitySessionUtil;
-import stroom.security.openid.api.OpenId;
+import stroom.util.authentication.HasExpiry;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.net.UrlUtils;
+import stroom.util.servlet.SessionUtil;
+import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.AuthenticationBypassChecker;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -41,11 +44,12 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletMapping;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.core.Response;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -57,27 +61,31 @@ class SecurityFilter implements Filter {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
 
-    private static final Set<String> STATIC_RESOURCE_EXTENSIONS = Set.of(
-            ".js", ".js.map", ".css", ".css.map", ".htm", ".html", ".json", ".png",
-            ".jpg", ".gif", ".ico", ".svg", ".ttf", ".woff", ".woff2");
-
-    private static final String SIGN_IN_URL_PATH = ResourcePaths.buildServletPath(ResourcePaths.SIGN_IN_PATH);
-
-    private final UriFactory uriFactory;
     private final SecurityContext securityContext;
     private final OpenIdManager openIdManager;
     private final AuthenticationBypassChecker authenticationBypassChecker;
+    private final Provider<UriFactory> uriFactoryProvider;
+    private final Provider<AuthenticationConfig> authenticationConfigProvider;
+
+    private static final String CSRF_HEADER = "X-CSRF";
+    private static final String CSRF_EXPECTED_VALUE = "1";
+    private static final String ORIGIN_HEADER = "Origin";
+    private static final String REFERER_HEADER = "Referer";
+    private static final String SEC_FETCH_SITE_HEADER = "Sec-Fetch-Site";
+    private static final String SEC_FETCH_SITE_CROSS_SITE = "cross-site";
 
     @Inject
     SecurityFilter(
-            final UriFactory uriFactory,
             final SecurityContext securityContext,
             final OpenIdManager openIdManager,
-            final AuthenticationBypassChecker authenticationBypassChecker) {
-        this.uriFactory = uriFactory;
+            final AuthenticationBypassChecker authenticationBypassChecker,
+            final Provider<UriFactory> uriFactoryProvider,
+            final Provider<AuthenticationConfig> authenticationConfigProvider) {
         this.securityContext = securityContext;
         this.openIdManager = openIdManager;
         this.authenticationBypassChecker = authenticationBypassChecker;
+        this.uriFactoryProvider = uriFactoryProvider;
+        this.authenticationConfigProvider = authenticationConfigProvider;
     }
 
     @Override
@@ -103,7 +111,7 @@ class SecurityFilter implements Filter {
 
         try {
             filter(httpServletRequest, httpServletResponse, chain);
-        } catch (AuthenticationException e) {
+        } catch (final AuthenticationException e) {
             // Return a sensible HTTP code for auth failures
             httpServletResponse.sendError(HttpServletResponse.SC_UNAUTHORIZED, e.getMessage());
         }
@@ -115,10 +123,13 @@ class SecurityFilter implements Filter {
             throws IOException, ServletException {
 
         LOGGER.debug(() ->
-                LogUtil.message("Filtering request uri: {}, servletPath: {}, servletName: {}",
+                LogUtil.message("Filtering request uri: {}, servletPath: {}, servletName: {}, " +
+                                "session: {}, getQueryString: '{}'",
                         request.getRequestURI(),
                         request.getServletPath(),
-                        NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName)));
+                        NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName),
+                        SessionUtil.getSessionId(request),
+                        request.getQueryString()));
 
         // Log the request for debug purposes.
         RequestLog.log(request);
@@ -127,96 +138,87 @@ class SecurityFilter implements Filter {
         final String fullPath = request.getRequestURI();
         final String servletName = NullSafe.get(request.getHttpServletMapping(), HttpServletMapping::getServletName);
 
-        if (request.getMethod().equalsIgnoreCase(HttpMethod.OPTIONS)) {
+        if (HttpMethod.OPTIONS.equalsIgnoreCase(request.getMethod())) {
             // We need to allow CORS preflight requests
             LOGGER.debug("Passing on OPTIONS request to next filter, servletName: {}, fullPath: {}, servletPath: {}",
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
-        } else if (isStaticResource(fullPath, servletPath)) {
-            LOGGER.debug("Static content, servletName: {}, fullPath: {}, servletPath: {}",
-                    servletName, fullPath, servletPath);
+        } else if (isStaticResource(fullPath, servletPath, servletName)) {
             chain.doFilter(request, response);
+        } else if (shouldBypassAuthentication(request, fullPath, servletPath, servletName)) {
+            LOGGER.debug("Running as proc user for unauthenticated resource, servletName: {}, " +
+                         "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
+            // A state-changing unauthenticated request still gets an Origin check, so a cross-site page
+            // cannot drive a victim's browser into, for example, logging them into an attacker's account
+            // (login CSRF) or triggering reset emails. Only the Origin check applies here, not the X-CSRF
+            // header: server-to-server callers (an OIDC relying party at the token endpoint, stroom-proxy)
+            // send no Origin and so pass, whereas a cross-site browser always sends a foreign Origin and is
+            // rejected. Safe methods (GET/HEAD/OPTIONS) and requests with no Origin/Referer pass through.
+            if (!isOriginValid(request)) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+            // Some paths don't need authentication. If that is the case then proceed as proc user.
+            securityContext.asProcessingUser(() ->
+                    process(request, response, chain));
         } else {
-            LOGGER.debug(() -> LogUtil.message("Session ID {}, request URI {}",
-                    Optional.ofNullable(request.getSession(false))
-                            .map(HttpSession::getId)
-                            .orElse("-"),
-                    request.getRequestURI() + Optional.ofNullable(request.getQueryString())
-                            .map(str -> "/" + str)
-                            .orElse("")));
+            // First see if a previous call has placed a userIdentity in session
+            Optional<UserIdentity> optSessionIdentity = UserIdentitySessionUtil.getUserFromSession(
+                    SessionUtil.getExistingSession(request));
+            logUserIdentityToDebug(optSessionIdentity, fullPath, servletPath, "from session");
 
-            Optional<UserIdentity> optUserIdentity;
+            // Check if the underlying claims/token have expired. The expiry time of some impls
+            // may get refreshed over time, so we may never hit it. When code flow is handled by
+            // AWS ALB we will expire, so will just get the latest token from headers which the
+            // ALB will be refreshing.
+            optSessionIdentity = optSessionIdentity.map(userIdentity -> {
+                if (userIdentity instanceof final HasExpiry hasExpiry) {
+                    if (hasExpiry.hasExpired()) {
+                        LOGGER.info("UserIdentity {} obtained from session has expired, expiry: {}. " +
+                                    "Will attempt to re-authenticate using headers or will initiate code-flow.",
+                                userIdentityToString(userIdentity), hasExpiry.getExpireTime());
+                        // Clear the identity, so we have to re-acquire it from headers or code flow
+                        return null;
+                    } else {
+                        LOGGER.debug(() -> LogUtil.message("UserIdentity {} obtained from session expires in {}",
+                                userIdentityToString(userIdentity), hasExpiry.getTimeTilExpired()));
+                    }
+                }
+                return userIdentity;
+            });
 
-            // Api requests that are not from the front-end should have a token.
-            // Also request from an AWS ALB will have an ALB signed token containing the claims
-            // Need to do this first, so we get a fresh token from AWS ALB rather than using a stale
-            // one from session.
-            optUserIdentity = openIdManager.loginWithRequestToken(request);
-            if (LOGGER.isDebugEnabled()) {
-                logUserIdentityToDebug(
-                        optUserIdentity, fullPath, "after trying to login with request token");
+            // Track what kind of credential proved the identity, for the CSRF classification below.
+            Optional<AuthenticatedCredential> optCredential = optSessionIdentity
+                    .map(identity -> new AuthenticatedCredential(identity, CredentialSource.SESSION));
+
+            // API requests that are not from the front-end should have a token.
+            // Also requests from an AWS ALB will have an ALB signed token containing the claims
+            if (optCredential.isEmpty()) {
+                optCredential = openIdManager.loginWithRequestCredential(request);
+                logUserIdentityToDebug(optCredential.map(AuthenticatedCredential::identity),
+                        fullPath, servletPath, "from request token");
             }
 
-            // If no user from header token, see if we have one in session already.
-            optUserIdentity = openIdManager.getOrSetSessionUser(request, optUserIdentity);
-            if (LOGGER.isDebugEnabled()) {
-                logUserIdentityToDebug(optUserIdentity, fullPath, "from session");
-            }
+            if (optCredential.isPresent()) {
+                final AuthenticatedCredential credential = optCredential.get();
 
-            if (optUserIdentity.isPresent()) {
-                final UserIdentity userIdentity = optUserIdentity.get();
-                LOGGER.debug(() -> LogUtil.message("Setting user in session, user: {} {}, path: {}",
-                        userIdentity.getClass().getSimpleName(),
-                        userIdentity,
-                        fullPath));
-                // Set the identity in session if we have a session and cookie
-                UserIdentitySessionUtil.set(request, userIdentity);
+                // Now we have the session make note of the user-agent for logging and sessionListServlet duties
+                UserAgentSessionUtil.setUserAgentInSession(request);
+
+                if (!isCsrfSafe(request, credential.source())) {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    return;
+                }
 
                 // Now handle the request as this user
-                securityContext.asUser(userIdentity, () ->
+                securityContext.asUser(credential.identity(), () ->
                         process(request, response, chain));
-
-            } else if (shouldBypassAuthentication(request, fullPath, servletPath, servletName)) {
-                LOGGER.debug("Running as proc user for unauthenticated servletName: {}, " +
-                             "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
-                // Some paths don't need authentication. If that is the case then proceed as proc user.
-                securityContext.asProcessingUser(() ->
-                        process(request, response, chain));
-
-            } else if (isApiRequest(servletPath)) {
+            } else {
                 // If we couldn't log in with a token or couldn't get a token then error as this is an API call
                 // or no login flow is possible/expected.
                 LOGGER.debug("No user identity so responding with UNAUTHORIZED for servletName: {}, " +
                              "fullPath: {}, servletPath: {}", servletName, fullPath, servletPath);
                 response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
-
-            } else {
-                // No identity found and not an unauthenticated servlet/api so assume it is
-                // a UI request. Thus instigate an OpenID authentication flow
-                try {
-                    final String postAuthRedirectUri = getPostAuthRedirectUri(request);
-
-                    final String code = UrlUtils.getLastParam(request, OpenId.CODE);
-                    final String stateId = UrlUtils.getLastParam(request, OpenId.STATE);
-                    final String redirectUri = openIdManager.redirect(request, code, stateId, postAuthRedirectUri);
-                    LOGGER.debug("Code flow UI request so redirecting to IDP, " +
-                                 "redirectUri: {}, postAuthRedirectUri: {}, path: {}",
-                            redirectUri, postAuthRedirectUri, fullPath);
-
-                    // HTTP 1.1.
-                    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-                    // HTTP 1.0.
-                    response.setHeader("Pragma", "no-cache");
-                    // Proxies.
-                    response.setHeader("Expires", "0");
-
-                    response.setStatus(HttpServletResponse.SC_TEMPORARY_REDIRECT);
-                    response.setHeader("Location", redirectUri);
-
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                    throw e;
-                }
             }
         }
     }
@@ -224,60 +226,46 @@ class SecurityFilter implements Filter {
     @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
     private void logUserIdentityToDebug(final Optional<UserIdentity> optUserIdentity,
                                         final String fullPath,
+                                        final String servletName,
                                         final String msg) {
-        LOGGER.debug("User identity ({}): {} path: {}",
+        LOGGER.debug(() -> LogUtil.message("User identity ({}): {}, fullPath: {}, servletName: {}",
                 msg,
-                optUserIdentity.map(
-                                identity -> {
-                                    final String id = identity.getDisplayName() != null
-                                            ? identity.getSubjectId() + " (" + identity.getDisplayName() + ")"
-                                            : identity.getSubjectId();
-                                    return LogUtil.message("'{}' {}",
-                                            id,
-                                            identity.getClass().getSimpleName());
-                                })
+                optUserIdentity.map(this::userIdentityToString)
                         .orElse("<empty>"),
-                fullPath);
+                fullPath,
+                servletName));
     }
 
-    private String getPostAuthRedirectUri(final HttpServletRequest request) {
-        // We have a new request, so we're going to redirect with an AuthenticationRequest.
-        // Get the redirect URL for the auth service from the current request.
-        final String originalPath = request.getRequestURI() + Optional.ofNullable(request.getQueryString())
-                .map(queryStr -> "?" + queryStr)
-                .orElse("");
-
-        // Dropwiz is likely sat behind Nginx with requests reverse proxied to it,
-        // so we need to append just the path/query part to the public URI defined in config
-        // rather than using the full url of the request
-        return uriFactory.publicUri(originalPath).toString();
+    private String userIdentityToString(final UserIdentity userIdentity) {
+        if (userIdentity == null) {
+            return "";
+        } else {
+            final String id = userIdentity.getDisplayName() != null
+                    ? userIdentity.subjectId() + " (" + userIdentity.getDisplayName() + ")"
+                    : userIdentity.subjectId();
+            return LogUtil.message("'{}' {}",
+                    id,
+                    userIdentity.getClass().getSimpleName());
+        }
     }
 
-    private boolean isStaticResource(final String fullPath, final String servletPath) {
+
+    private boolean isStaticResource(final String fullPath,
+                                     final String servletPath,
+                                     final String servletName) {
         // Test for internal IdP sign in request.
-        if (servletPath.startsWith(SIGN_IN_URL_PATH)) {
+        if (ResourcePaths.UI_SERVLET_NAME.equals(servletName)
+            || ResourcePaths.SIGN_IN_SERVLET_NAME.equals(servletName)
+            || ResourcePaths.STROOM_SERVLET_NAME.equals(servletName)
+            // The password reset page is for users who cannot sign in, so like the sign in page it
+            // must be served without authenticating first.
+            || ResourcePaths.RESET_PASSWORD_SERVLET_NAME.equals(servletName)) {
+            LOGGER.debug("Unauthenticated static content, servletName: {}, fullPath: {}, servletPath: {}",
+                    servletName, fullPath, servletPath);
             return true;
+        } else {
+            return false;
         }
-
-        int index = fullPath.lastIndexOf(".");
-        if (index > 0) {
-            String extension = fullPath.substring(index).toLowerCase();
-            if (STATIC_RESOURCE_EXTENSIONS.contains(extension)) {
-                return true;
-            } else {
-                // Handle stuff like .css.map
-                index = fullPath.lastIndexOf(".", index - 1);
-                if (index > 0) {
-                    extension = fullPath.substring(index).toLowerCase();
-                    return STATIC_RESOURCE_EXTENSIONS.contains(extension);
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isApiRequest(String servletPath) {
-        return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
     private boolean shouldBypassAuthentication(final HttpServletRequest servletRequest,
@@ -290,18 +278,218 @@ class SecurityFilter implements Filter {
         } else {
             shouldBypass = authenticationBypassChecker.isUnauthenticated(servletName, servletPath, fullPath);
         }
-
-        if (LOGGER.isDebugEnabled()) {
-            if (shouldBypass) {
-                LOGGER.debug("Bypassing authentication for servletName: {}, fullPath: {}, servletPath: {}",
-                        NullSafe.get(
-                                servletRequest.getHttpServletMapping(),
-                                HttpServletMapping::getServletName),
-                        fullPath,
-                        servletPath);
-            }
-        }
         return shouldBypass;
+    }
+
+    /**
+     * CSRF protection for state-changing requests carrying an 'ambient' credential - one the
+     * victim's browser (or an intermediary acting on the browser's ambient cookies) attaches
+     * without the initiating page's involvement:
+     * <ul>
+     *     <li>a session cookie - the classic case;</li>
+     *     <li>a request token injected by an authenticating edge proxy (an AWS ALB's
+     *     {@code x-amzn-oidc-data}, or an IDP token relayed as a bearer credential by e.g.
+     *     oauth2-proxy). The proxy derives it from <i>its</i> session cookie, which the browser
+     *     attaches to cross-site requests all by itself - so by the time it reaches stroom, an
+     *     ambient credential has been relabelled as a deliberate-looking one. This is why
+     *     "Bearer tokens are not automatically attached" stops being true behind an edge RP.</li>
+     * </ul>
+     * API keys and the internal cluster token are never ambient: no proxy can mint them and a
+     * browser cannot be induced to attach them cross-site. A bearer token attached deliberately by
+     * a non-browser client is not ambient either - which is why the edge case below also requires
+     * browser provenance. In particular, inter-node calls relay the user's token in the
+     * Authorization header ({@code AbstractUserIdentityFactory.getAuthHeaders}) with no
+     * browser-only headers, and must not be challenged.
+     * <p>
+     * Ambient credentials get two independent, complementary defences for defence in depth:
+     * <ol>
+     *     <li>Same-origin verification via the Origin/Referer header (works for both XHR and
+     *     native form posts, and covers requests the header check can't).</li>
+     *     <li>A custom X-CSRF header that browsers forbid cross-origin scripts from setting.</li>
+     * </ol>
+     * Each check logs its own specific rejection reason.
+     *
+     * @return False if the request must be rejected as a suspected CSRF.
+     */
+    // Pkg private for testing
+    boolean isCsrfSafe(final HttpServletRequest request, final CredentialSource source) {
+        final boolean credentialIsAmbient =
+                CredentialSource.SESSION.equals(source)
+                || (CredentialSource.REQUEST_TOKEN.equals(source)
+                    && isEdgeAuthenticationEnabled()
+                    && hasBrowserProvenance(request));
+
+        if (credentialIsAmbient) {
+            return isOriginValid(request) && isCsrfValid(request);
+        }
+
+        // Safety net for an authenticating edge proxy nobody declared in config: cross-origin
+        // scripts cannot attach an Authorization header (the CORS preflight forbids it) and forms
+        // cannot at all, so a request token on a request whose fetch metadata says the browser
+        // made it cross-site can only have been injected by an intermediary - i.e. the credential
+        // is ambient whatever the configuration says. The X-CSRF header (which cross-site pages
+        // equally cannot set) remains the escape hatch for legitimate cross-site tooling.
+        if (CredentialSource.REQUEST_TOKEN.equals(source)
+            && authenticationConfigProvider.get().getCsrfConfig().isProtectBrowserOriginatedRequests()
+            && SEC_FETCH_SITE_CROSS_SITE.equals(request.getHeader(SEC_FETCH_SITE_HEADER))) {
+            // isCsrfValid is true for safe methods, so only unsafe methods can be rejected here.
+            return isCsrfValid(request);
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether the browser itself issued this request. Browsers send {@code Origin} on all
+     * cross-origin unsafe requests (an {@code Origin: null} literal still counts as presence) and
+     * {@code Sec-Fetch-*} metadata on everything modern; page content cannot suppress either.
+     * Machine clients - inter-node calls, stroom-proxy, scripts - send none of them.
+     */
+    private static boolean hasBrowserProvenance(final HttpServletRequest request) {
+        return request.getHeader(ORIGIN_HEADER) != null
+               || request.getHeader(REFERER_HEADER) != null
+               || request.getHeader(SEC_FETCH_SITE_HEADER) != null;
+    }
+
+    private boolean isEdgeAuthenticationEnabled() {
+        return authenticationConfigProvider.get().getEdgeAuthenticationConfig().isEnabled();
+    }
+
+    /**
+     * Check for the presence of a custom CSRF header on state-changing requests.
+     * Browsers prevent cross-site scripts from adding custom headers to requests,
+     * so the presence of this header proves the request originated from same-origin
+     * JavaScript code (our UI), not from a cross-site form submission or link.
+     */
+    boolean isCsrfValid(final HttpServletRequest request) {
+        // GET, OPTIONS, and HEAD are safe methods — no CSRF check needed
+        if (isSafeMethod(request)) {
+            return true;
+        }
+        // For state-changing methods (POST, PUT, DELETE, PATCH), require the header
+        if (CSRF_EXPECTED_VALUE.equals(request.getHeader(CSRF_HEADER))) {
+            return true;
+        }
+        LOGGER.warn("Rejecting request due to missing CSRF header: {} {}",
+                request.getMethod(), request.getRequestURI());
+        return false;
+    }
+
+    /**
+     * Verify that a state-changing request originated from one of our own known origins.
+     * <p>
+     * The {@code Origin} header (falling back to {@code Referer}) is set by the browser and
+     * cannot be spoofed by cross-site JavaScript, so comparing it against the configured
+     * public/UI URIs proves the request came from our own front-end. Unlike the custom-header
+     * check, this also covers native HTML form posts. If neither header is present we fall back
+     * to the {@link #isCsrfValid(HttpServletRequest)} header check (applied separately).
+     */
+    boolean isOriginValid(final HttpServletRequest request) {
+        // GET, OPTIONS, and HEAD are safe methods — no CSRF check needed
+        if (isSafeMethod(request)) {
+            return true;
+        }
+
+        // Prefer the Origin header, falling back to Referer. Both are browser-controlled.
+        String originHeader = request.getHeader(ORIGIN_HEADER);
+        if (isBlankOrNullLiteral(originHeader)) {
+            originHeader = request.getHeader(REFERER_HEADER);
+        }
+
+        // No Origin or Referer to check against, so rely on the X-CSRF header check instead.
+        if (isBlankOrNullLiteral(originHeader)) {
+            return true;
+        }
+
+        final String requestOrigin = UrlUtils.toOrigin(originHeader);
+        final Set<String> allowedOrigins = getAllowedOrigins(request);
+        if (requestOrigin != null && allowedOrigins.contains(requestOrigin)) {
+            return true;
+        }
+
+        LOGGER.warn("Rejecting request due to invalid Origin '{}' (header value: '{}', allowed: {}): {} {}",
+                requestOrigin, originHeader, allowedOrigins, request.getMethod(), request.getRequestURI());
+        return false;
+    }
+
+    private boolean isSafeMethod(final HttpServletRequest request) {
+        final String method = request.getMethod();
+        return HttpMethod.GET.equalsIgnoreCase(method)
+               || HttpMethod.OPTIONS.equalsIgnoreCase(method)
+               || HttpMethod.HEAD.equalsIgnoreCase(method);
+    }
+
+    /**
+     * The set of origins ({@code scheme://host:port}) that we consider to be our own front-end.
+     * <p>
+     * Includes:
+     * <ul>
+     *   <li>The host the browser actually connected to (from {@code X-Forwarded-Host}/{@code Host}).
+     *       A legitimate same-origin request always has an Origin equal to this, whereas a
+     *       cross-site attacker's Origin never does, so this alone is a valid CSRF check and
+     *       avoids any dependency on the public URI being configured correctly.</li>
+     *   <li>The configured public URI and UI URI, which cover split UI/API deployments where the
+     *       UI is served from a different origin than the API (the UI URI falls back to the public
+     *       URI, which falls back to the node URI, when not configured).</li>
+     * </ul>
+     */
+    private Set<String> getAllowedOrigins(final HttpServletRequest request) {
+        final Set<String> origins = new HashSet<>();
+
+        // The origin the browser connected to, honouring a reverse proxy if present.
+        final String requestHostOrigin = getRequestHostOrigin(request);
+        if (requestHostOrigin != null) {
+            origins.add(requestHostOrigin);
+        }
+
+        final UriFactory uriFactory = uriFactoryProvider.get();
+        addOrigin(origins, uriFactory.publicUri("/"));
+        addOrigin(origins, uriFactory.uiUri("/"));
+        return origins;
+    }
+
+    /**
+     * Derive the origin string for the host the browser connected to, preferring the
+     * {@code X-Forwarded-*} headers set by a reverse proxy (e.g. NGINX) over the raw
+     * {@code Host}/connector values.
+     */
+    private String getRequestHostOrigin(final HttpServletRequest request) {
+        String scheme = request.getHeader("X-Forwarded-Proto");
+        if (isBlankOrNullLiteral(scheme)) {
+            scheme = request.getScheme();
+        }
+
+        String host = request.getHeader("X-Forwarded-Host");
+        if (isBlankOrNullLiteral(host)) {
+            host = request.getHeader("Host");
+        }
+        if (isBlankOrNullLiteral(host)) {
+            host = request.getServerName() + ":" + request.getServerPort();
+        }
+
+        if (isBlankOrNullLiteral(scheme) || isBlankOrNullLiteral(host)) {
+            return null;
+        }
+        // A comma-separated X-Forwarded-Host lists the closest proxy last; use the first (client) entry.
+        final int commaIndex = host.indexOf(',');
+        if (commaIndex != -1) {
+            host = host.substring(0, commaIndex).trim();
+        }
+        return UrlUtils.toOrigin(scheme + "://" + host);
+    }
+
+    private void addOrigin(final Set<String> origins, final URI uri) {
+        final String origin = UrlUtils.toOrigin(uri);
+        if (origin != null) {
+            origins.add(origin);
+        }
+    }
+
+    private static boolean isBlankOrNullLiteral(final String value) {
+        // NullSafe.isBlankString already treats a null reference (and whitespace) as blank. The
+        // additional check is for the literal string "null", i.e. the opaque Origin that browsers
+        // send from sandboxed contexts, which we want to treat as absent.
+        return NullSafe.isBlankString(value) || "null".equals(value);
     }
 
     private void process(final HttpServletRequest request,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class Dictionaries {
                         .map(matchResult -> createCompletionValue(matchResult.item(), matchResult.score()))
                         .forEach(resultList::add);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error adding visualisation completions: {}", e.getMessage(), e);
         }
     }
@@ -226,12 +226,12 @@ public class Dictionaries {
 //                ? "\"" + doc.getName() + "\""
 //                : doc.getName();
 //        final VisSettings visSettings = JsonUtil.readValue(doc.getSettings(), VisSettings.class);
-//        final Tab dataTab = GwtNullSafe.stream(visSettings.getTabs())
+//        final Tab dataTab = NullSafe.stream(visSettings.getTabs())
 //                .filter(tab -> "data".equalsIgnoreCase(tab.getName()))
 //                .findFirst()
 //                .orElse(null);
-//        final List<Control> dataControls = GwtNullSafe.asList(
-//                GwtNullSafe.get(dataTab, Tab::getControls));
+//        final List<Control> dataControls = NullSafe.asList(
+//                NullSafe.get(dataTab, Tab::getControls));
 //
 //        StringBuilder sb = new StringBuilder(visName)
 //                .append("(");
@@ -267,7 +267,7 @@ public class Dictionaries {
 //                        .appendKVRow("Type:", doc.getType())
 //                        .appendKVRow("UUID:", doc.getUuid())));
 //
-//        GwtNullSafe.consume(doc.getDescription(), detail::append);
+//        NullSafe.consume(doc.getDescription(), detail::append);
 //
 //        return detail.build();
 //    }

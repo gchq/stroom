@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.bytebuffer.impl6;
 
 import stroom.bytebuffer.ByteBufferPool;
@@ -67,7 +83,7 @@ import java.util.stream.Collectors;
  * This impl uses {@link ArrayBlockingQueue}
  */
 @Singleton
-public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBufferPool {
+public class ByteBufferPoolImpl6 implements ByteBufferFactory, ByteBufferPool {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ByteBufferPoolImpl6.class);
 
@@ -125,7 +141,7 @@ public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBuffer
         final List<String> msgs = new ArrayList<>(sizesCount);
         for (int i = 0; i < sizesCount; i++) {
 
-            int bufferCapacity = (int) Math.pow(10, i);
+            final int bufferCapacity = (int) Math.pow(10, i);
             final Integer configuredCount = pooledByteBufferCounts.getOrDefault(
                     bufferCapacity,
                     DEFAULT_MAX_BUFFERS_PER_QUEUE);
@@ -135,9 +151,7 @@ public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBuffer
             // ArrayBlockingQueue seems to be marginally faster than a LinkedBlockingQueue
             // If the configuredCount is 0 it means we will allocate on demand so no need to hold the queue/counter
             pooledBufferQueues[i] = configuredCount > 1
-                    ? new PooledByteBufferQueue(
-                    configuredCount,
-                    bufferCapacity)
+                    ? new PooledByteBufferQueue(configuredCount, bufferCapacity)
                     : null;
         }
 
@@ -156,22 +170,20 @@ public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBuffer
      * @param n The number to test
      * @return True if n is a power of ten, e.g. if n==10
      */
-    static boolean isPowerOf10(int n) {
+    static boolean isPowerOf10(final int n) {
         return switch (n) {
-            case 1:
-            case 10:
-            case 100:
-            case 1_000:
-            case 10_000:
-            case 100_000:
-            case 1_000_000:
-            case 10_000_000:
-            case 100_000_000:
-            case 1_000_000_000:
-                yield true;
-                // fall-through (Comment to tell checkstyle we want to fall through cases)
-            default:
-                yield false;
+            case 1,
+                 10,
+                 100,
+                 1_000,
+                 10_000,
+                 100_000,
+                 1_000_000,
+                 10_000_000,
+                 100_000_000,
+                 1_000_000_000 -> true;
+            // fall-through (Comment to tell checkstyle we want to fall through cases)
+            default -> false;
         };
     }
 
@@ -182,7 +194,7 @@ public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBuffer
 
     private PooledByteBuffer getPooledBufferByMinCapacity(final int minCapacity) {
         final int offset = getOffset(minCapacity);
-        PooledByteBuffer buffer;
+        final PooledByteBuffer buffer;
         if (isUnPooled(offset)) {
             buffer = getUnPooledBuffer(minCapacity);
         } else {
@@ -195,7 +207,7 @@ public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBuffer
     @Override
     public ByteBuffer acquire(final int minCapacity) {
         final int offset = getOffset(minCapacity);
-        ByteBuffer buffer;
+        final ByteBuffer buffer;
         if (isUnPooled(offset)) {
             // Too big a buffer to pool so just create one that will have to be destroyed and not put in the pool
             buffer = ByteBuffer.allocateDirect(minCapacity);
@@ -209,7 +221,7 @@ public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBuffer
     @Override
     public void release(final ByteBuffer byteBuffer) {
         if (byteBuffer != null && byteBuffer.isDirect()) {
-            final int offset = getOffset(byteBuffer.capacity());
+            final int offset = getOffset(byteBuffer);
             if (isUnPooled(offset)) {
                 ByteBufferSupport.unmap(byteBuffer);
             } else {
@@ -283,13 +295,13 @@ public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBuffer
         }
 
         LOGGER.info("Cleared the following buffers from the pool (buffer size:number cleared) - " +
-                String.join(", ", msgs));
+                    String.join(", ", msgs));
     }
 
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
                     .addDetail("Total buffers in pool", getCurrentPoolSize());
 
             final SortedMap<Integer, Map<String, Integer>> offsetMapOfInfoMaps = new TreeMap<>();
@@ -331,20 +343,42 @@ public class ByteBufferPoolImpl6 extends ByteBufferFactory implements ByteBuffer
                 builder
                         .addDetail("Pooled buffers (grouped by buffer capacity)", offsetMapOfInfoMaps)
                         .addDetail("Overall total size (bytes)", overallTotalSizeBytes);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error getting capacity counts", e);
                 builder.addDetail("Buffer capacity counts", "Error getting counts");
             }
 
             return builder.build();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();
         }
     }
 
-    private int getOffset(final int minCapacity) {
+    /**
+     * The switch approach seems to be a lot quicker than {@link Math#log10(double)}
+     * <strong>IF</strong> we expect the values to be exactly a power of 10, which they ought to be
+     * for buffers coming back to the pool (because we created them with power of ten sizes).
+     */
+    private static int getOffset(final ByteBuffer byteBuffer) {
+        final int capacity = byteBuffer.capacity();
+        return switch (capacity) {
+            case 1 -> 0;
+            case 10 -> 1;
+            case 100 -> 2;
+            case 1_000 -> 3;
+            case 10_000 -> 4;
+            case 100_000 -> 5;
+            case 1_000_000 -> 6;
+            case 10_000_000 -> 7;
+            case 100_000_000 -> 8;
+            case 1_000_000_000 -> 9;
+            default -> (int) Math.ceil(Math.log10(capacity));
+        };
+    }
+
+    private static int getOffset(final int minCapacity) {
         if (minCapacity <= 10) {
             // Optimisation for ints/longs
             return minCapacity <= 1

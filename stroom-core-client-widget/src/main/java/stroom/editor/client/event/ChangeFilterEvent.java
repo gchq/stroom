@@ -39,7 +39,7 @@ public class ChangeFilterEvent extends GwtEvent<ChangeFilterEvent.ChangeFilterHa
     }
 
     @Override
-    protected void dispatch(ChangeFilterHandler handler) {
+    protected void dispatch(final ChangeFilterHandler handler) {
         handler.onShowFilter(this);
     }
 

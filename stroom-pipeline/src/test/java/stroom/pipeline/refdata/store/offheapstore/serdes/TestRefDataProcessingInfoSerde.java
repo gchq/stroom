@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -52,15 +51,15 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void testUpdateState() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
         doByteBufferModificationTest(
@@ -74,15 +73,15 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void testUpdateLastAccessedTime() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
-                1,
-                123,
-                1,
+                1L,
+                123L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         doByteBufferModificationTest(
@@ -95,15 +94,15 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void testUpdateLastAccessedTimeAndState() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS, structureVersion, refStreamFeatures, mapInfoList);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
-                1,
-                123,
-                1,
+                1L,
+                123L,
+                1L,
                 ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
         doByteBufferModificationTest(
@@ -118,13 +117,13 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void wasAccessedAfter() {
 
-        RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
+        final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,
                 ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
-        ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
+        final ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
 
         doAccessTest(refDataProcessingInfo.getLastAccessedTimeEpochMs(), valueBuffer, false);
         doAccessTest(refDataProcessingInfo.getLastAccessedTimeEpochMs() - 1, valueBuffer, true);
@@ -132,26 +131,26 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     }
 
     private void doAccessTest(final long timeUnderTestMs, final ByteBuffer valueBuffer, final boolean expectedResult) {
-        ByteBuffer timeBuffer = ByteBuffer.allocate(Long.BYTES);
+        final ByteBuffer timeBuffer = ByteBuffer.allocate(Long.BYTES);
         timeBuffer.putLong(timeUnderTestMs);
         timeBuffer.flip();
-        boolean result = RefDataProcessingInfoSerde.wasAccessedAfter(valueBuffer, timeBuffer);
+        final boolean result = RefDataProcessingInfoSerde.wasAccessedAfter(valueBuffer, timeBuffer);
         assertThat(result).isEqualTo(expectedResult);
     }
 
     @Test
     void testExtractProcessingState() {
 
-        for (ProcessingState processingState : ProcessingState.values()) {
-            RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
+        for (final ProcessingState processingState : ProcessingState.values()) {
+            final RefDataProcessingInfo refDataProcessingInfo = new RefDataProcessingInfo(
                     0L,
                     1000L,
                     100L,
                     processingState, structureVersion, refStreamFeatures, mapInfoList);
 
-            ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
+            final ByteBuffer valueBuffer = serialize(refDataProcessingInfo);
 
-            ProcessingState foundProcessingState = RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
+            final ProcessingState foundProcessingState = RefDataProcessingInfoSerde.extractProcessingState(valueBuffer);
 
             assertThat(foundProcessingState).isEqualTo(processingState);
         }
@@ -160,19 +159,19 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
 
     @Test
     void testCreateProcessingStatePredicate() {
-        RefDataProcessingInfo refDataProcessingInfo1 = new RefDataProcessingInfo(
+        final RefDataProcessingInfo refDataProcessingInfo1 = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,
                 ProcessingState.COMPLETE, structureVersion, refStreamFeatures, mapInfoList);
 
-        RefDataProcessingInfo refDataProcessingInfo2 = new RefDataProcessingInfo(
+        final RefDataProcessingInfo refDataProcessingInfo2 = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,
                 ProcessingState.FAILED, structureVersion, refStreamFeatures, mapInfoList);
 
-        RefDataProcessingInfo refDataProcessingInfo3 = new RefDataProcessingInfo(
+        final RefDataProcessingInfo refDataProcessingInfo3 = new RefDataProcessingInfo(
                 0L,
                 1000L,
                 100L,

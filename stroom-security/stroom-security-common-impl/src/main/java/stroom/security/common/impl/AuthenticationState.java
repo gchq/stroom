@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
 import stroom.security.openid.api.OpenId;
@@ -28,20 +44,27 @@ public class AuthenticationState {
     private final String redirectUri;
     private final String nonce;
     private final boolean prompt;
+    private final String codeVerifier;
 
     public AuthenticationState(final String id,
                                final String url,
+                               final String redirectUri,
                                final String nonce,
-                               final boolean prompt) {
+                               final boolean prompt,
+                               final String codeVerifier) {
         this.id = id;
         this.url = url;
         this.nonce = nonce;
         this.prompt = prompt;
+        this.codeVerifier = codeVerifier;
 
         // Make sure the initiating URI doesn't contain any reserved OIDC params.
         this.initiatingUri = createInitiatingUri(url);
-        // Create a simple redirect URI.
-        this.redirectUri = createRedirectUri(url);
+        // The redirect_uri sent to the IDP is a single fixed value (the application's public root),
+        // not derived from the initiating request. This keeps it exact-registerable at the IDP and,
+        // for the internal IDP, exactly matchable. The initiating URI above still carries the real
+        // destination to return the user to after authentication.
+        this.redirectUri = redirectUri;
     }
 
     /**
@@ -87,6 +110,17 @@ public class AuthenticationState {
     }
 
     /**
+     * The PKCE (RFC 7636) {@code code_verifier} for this flow. Its S256 challenge is sent on the
+     * authorization request and the verifier itself when the code is redeemed, proving the party
+     * redeeming the code is the one that began the flow.
+     *
+     * @return The code verifier string.
+     */
+    public String getCodeVerifier() {
+        return codeVerifier;
+    }
+
+    /**
      * Determine if the next auth call should force a prompt.
      *
      * @return True if the next auth call should force a prompt.
@@ -98,13 +132,13 @@ public class AuthenticationState {
     @Override
     public String toString() {
         return "AuthenticationState{" +
-                "id='" + id + '\'' +
-                ", url='" + url + '\'' +
-                ", initiatingUri='" + initiatingUri + '\'' +
-                ", redirectUri='" + redirectUri + '\'' +
-                ", nonce='" + nonce + '\'' +
-                ", prompt=" + prompt +
-                '}';
+               "id='" + id + '\'' +
+               ", url='" + url + '\'' +
+               ", initiatingUri='" + initiatingUri + '\'' +
+               ", redirectUri='" + redirectUri + '\'' +
+               ", nonce='" + nonce + '\'' +
+               ", prompt=" + prompt +
+               '}';
     }
 
     private static String createInitiatingUri(final String url) {
@@ -124,12 +158,6 @@ public class AuthenticationState {
         // parameters.
         RESERVED_PARAMS.forEach(param -> uriBuilder.replaceQueryParam(param, new Object[0]));
 
-        return uriBuilder.build().toString();
-    }
-
-    private static String createRedirectUri(final String url) {
-        final UriBuilder uriBuilder = UriBuilder.fromUri(url);
-        uriBuilder.replaceQuery("");
         return uriBuilder.build().toString();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ class TestStroomStreamException {
         assertThatThrownBy(() -> {
             try {
                 throw StroomStreamException.create(stroomStreamException, attributeMap);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.info("msg: {}", e.getMessage());
                 throw e;
             }
@@ -90,7 +90,7 @@ class TestStroomStreamException {
         assertThatThrownBy(() -> {
             try {
                 throw StroomStreamException.create(stroomStreamException, attributeMap);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.info("msg: {}", e.getMessage());
                 throw e;
             }
@@ -158,11 +158,11 @@ class TestStroomStreamException {
                           final StroomStatusCode stroomStatusCode,
                           final AttributeMap attributeMap,
                           final String msg) {
-        AtomicReference<String> msgRef = new AtomicReference<>();
+        final AtomicReference<String> msgRef = new AtomicReference<>();
         assertThatThrownBy(() -> {
             try {
                 throw StroomStreamException.create(exception, attributeMap);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.info("msg: {}", e.getMessage());
                 msgRef.set(e.getMessage());
                 throw e;

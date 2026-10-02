@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
@@ -32,12 +31,12 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.LuceneIndexDoc;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
@@ -67,7 +66,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public class IndexShardPresenter
-        extends DocumentEditPresenter<PagerView, LuceneIndexDoc>
+        extends DocPresenter<PagerView, LuceneIndexDoc>
         implements Refreshable {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
@@ -75,7 +74,7 @@ public class IndexShardPresenter
     private final MyDataGrid<IndexShard> dataGrid;
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final ClientSecurityContext securityContext;
     private final DateTimeFormatter dateTimeFormatter;
     private RestDataProvider<IndexShard, ResultPage<IndexShard>> dataProvider;
@@ -95,17 +94,18 @@ public class IndexShardPresenter
                                final PagerView view,
                                final TooltipPresenter tooltipPresenter,
                                final RestFactory restFactory,
-                               final NodeManager nodeManager,
+                               final NodeClient nodeClient,
                                final ClientSecurityContext securityContext,
                                final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Index Shards");
         view.setDataWidget(dataGrid);
 
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.securityContext = securityContext;
         this.dateTimeFormatter = dateTimeFormatter;
 
@@ -174,7 +174,6 @@ public class IndexShardPresenter
 //        addCommitDurationColumn();
 //        addCommitCountColumn();
         addVersionColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addSelectedColumn() {
@@ -394,7 +393,7 @@ public class IndexShardPresenter
     }
 
     private Set<Long> getResultStreamIdSet() {
-        final HashSet<Long> rtn = new HashSet<>();
+        final Set<Long> rtn = new HashSet<>();
         if (resultList != null) {
             for (final IndexShard e : resultList.getValues()) {
                 rtn.add(e.getId());
@@ -438,6 +437,7 @@ public class IndexShardPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
+        dataGrid.setTableName("Index '" + docRef.getName() + "' Shards");
         this.readOnly = readOnly;
         enableButtons();
 
@@ -541,7 +541,7 @@ public class IndexShardPresenter
 
     private void doFlush() {
         delayedUpdate.reset();
-        nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
+        nodeClient.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
                     .create(INDEX_RESOURCE)
                     .method(res -> res.flushIndexShards(nodeName, selectionCriteria))
@@ -558,7 +558,7 @@ public class IndexShardPresenter
 
     private void doDelete() {
         delayedUpdate.reset();
-        nodeManager.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
+        nodeClient.listEnabledNodes(nodeNames -> nodeNames.forEach(nodeName -> {
             restFactory
                     .create(INDEX_RESOURCE)
                     .method(res -> res.deleteIndexShards(nodeName, selectionCriteria))

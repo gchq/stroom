@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.proxy.app.handler.LocalByteBuffer;
@@ -22,6 +38,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
 
+/**
+ * Helper class for posting data to /datafeed on a proxy
+ */
 public class PostDataHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PostDataHelper.class);
@@ -82,7 +101,7 @@ public class PostDataHelper {
                         final String environment,
                         final Map<String, String> extraHeaders,
                         final String data) {
-        int status;
+        final int status;
         try {
             final Builder builder = client.target(url)
                     .request()
@@ -96,7 +115,7 @@ public class PostDataHelper {
             final String dataId = getDataId();
             final String payload = dataId + "-" + data;
             LOGGER.info("Sending POST request to {}, with payload '{}'", url, payload);
-            try (Response response = builder.post(Entity.text(payload))) {
+            try (final Response response = builder.post(Entity.text(payload))) {
                 postToProxyCount.increment();
                 status = consumeResponse(response);
             }
@@ -122,7 +141,7 @@ public class PostDataHelper {
                            final Map<String, String> extraHeaders,
                            final String data,
                            final int entryCount) {
-        int status;
+        final int status;
         try {
             final Builder builder = client.target(url)
                     .request()
@@ -146,7 +165,7 @@ public class PostDataHelper {
                 }
             }
 
-            try (Response response = builder.post(
+            try (final Response response = builder.post(
                     Entity.entity(outputStream.toByteArray(), MediaType.APPLICATION_JSON_TYPE))) {
                 postToProxyCount.increment();
                 status = consumeResponse(response);
@@ -164,7 +183,7 @@ public class PostDataHelper {
         UniqueId receiptId = null;
         try {
             receiptId = UniqueId.parse(responseText);
-        } catch (Exception ignored) {
+        } catch (final Exception ignored) {
             // Ignore
         }
         LOGGER.info("datafeed response ({}):\n{}", status, responseText);

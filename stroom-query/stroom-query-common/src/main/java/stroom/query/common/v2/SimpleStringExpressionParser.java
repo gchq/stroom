@@ -1,17 +1,33 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.language.token.AbstractToken;
-import stroom.query.language.token.KeywordGroup;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.token.AbstractToken;
+import stroom.query.api.token.KeywordGroup;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenGroup;
+import stroom.query.api.token.TokenType;
 import stroom.query.language.token.StructureBuilder;
-import stroom.query.language.token.Token;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenGroup;
-import stroom.query.language.token.TokenType;
 import stroom.query.language.token.Tokeniser;
 import stroom.util.shared.NullSafe;
 
@@ -25,10 +41,9 @@ import java.util.stream.Stream;
 
 public class SimpleStringExpressionParser {
 
-    // Add all supported conditions and sort them by longest operator string first so we can match longest prefixes
+    // Add all supported conditions and sort them by longest operator string first, so we can match longest prefixes
     // first.
-    private static final List<Condition> SUPPORTED_CONDITIONS = Stream
-            .of(
+    private static final List<Condition> SUPPORTED_CONDITIONS = Stream.of(
                     Condition.CONTAINS,
                     Condition.EQUALS,
                     Condition.STARTS_WITH,
@@ -44,7 +59,7 @@ public class SimpleStringExpressionParser {
                     Condition.STARTS_WITH_CASE_SENSITIVE,
                     Condition.ENDS_WITH_CASE_SENSITIVE,
                     Condition.MATCHES_REGEX_CASE_SENSITIVE)
-            .sorted(Comparator.comparingInt(c -> -c.getOperator().length()))
+            .sorted(Comparator.comparingInt((Condition c) -> c.getOperator().length()).reversed())
             .toList();
 
     public static Optional<ExpressionOperator> create(final FieldProvider fieldProvider,
@@ -53,7 +68,7 @@ public class SimpleStringExpressionParser {
             return Optional.empty();
         }
 
-        char[] chars = string.toCharArray();
+        final char[] chars = string.toCharArray();
         final Token unknown = new Token(TokenType.UNKNOWN, chars, 0, chars.length - 1);
 
         // Tag quoted strings and comments.
@@ -255,7 +270,6 @@ public class SimpleStringExpressionParser {
             Condition condition = null;
             boolean charsAnywhere = false;
             boolean not = false;
-            String fieldName = "";
             String fieldValue = "";
             List<String> fields = fieldProvider.getDefaultFields();
 
@@ -263,23 +277,22 @@ public class SimpleStringExpressionParser {
             if (TokenType.STRING.equals(token.getTokenType())) {
                 fieldValue = token.getUnescapedText();
 
-                // Get the field prefix.
+                // A ':' only introduces a field qualifier if the text preceding it actually names
+                // a field. Otherwise it is an ordinary value character, so values such as '12:30',
+                // '2000-01-01T00:00:00.000Z' and 'http://example.com' are literals and need no
+                // quoting or escaping. This keeps ':' consistent with every other special
+                // character handled below, all of which are only significant at the start of the
+                // value; ':' was previously the sole exception, being matched anywhere in it.
                 final String fieldPrefix = getFieldPrefix(fieldValue);
-                fieldValue = fieldValue.substring(fieldPrefix.length());
-
-                fieldName = fieldPrefix;
-                // Remove field prefix delimiter.
-                if (fieldName.endsWith(":")) {
-                    fieldName = fieldName.substring(0, fieldName.length() - 1);
-                }
-
-                // Resolve all fields.
-                if (!fieldName.isEmpty()) {
-                    final Optional<String> qualifiedField = fieldProvider.getQualifiedField(fieldName);
-                    if (!qualifiedField.isEmpty()) {
+                if (!fieldPrefix.isEmpty()) {
+                    // Drop the trailing field prefix delimiter.
+                    final String candidateField = fieldPrefix.substring(0, fieldPrefix.length() - 1);
+                    final Optional<String> qualifiedField = candidateField.isEmpty()
+                            ? Optional.empty()
+                            : fieldProvider.getQualifiedField(candidateField);
+                    if (qualifiedField.isPresent()) {
                         fields = Collections.singletonList(qualifiedField.get());
-                    } else {
-                        throw new RuntimeException("Unknown field: " + fieldName);
+                        fieldValue = fieldValue.substring(fieldPrefix.length());
                     }
                 }
 
@@ -290,7 +303,7 @@ public class SimpleStringExpressionParser {
                 }
 
                 // Resolve condition.
-                for (Condition c : SUPPORTED_CONDITIONS) {
+                for (final Condition c : SUPPORTED_CONDITIONS) {
                     final String operator = c.getOperator();
                     if (fieldValue.startsWith(operator)) {
                         condition = c;
@@ -323,7 +336,7 @@ public class SimpleStringExpressionParser {
             // If this is a chars anywhere condition then we need to alter the value so that we can use a regex for
             // chars anywhere matching.
             if (charsAnywhere) {
-                char[] chars = fieldValue.toCharArray();
+                final char[] chars = fieldValue.toCharArray();
                 final StringBuilder sb = new StringBuilder();
                 for (final char c : chars) {
                     if (sb.length() > 0) {
@@ -347,7 +360,7 @@ public class SimpleStringExpressionParser {
                 if (not) {
                     final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.NOT);
                     addTerms(fields, condition, fieldValue, builder);
-                    ExpressionOperator notOperator = builder.build();
+                    final ExpressionOperator notOperator = builder.build();
                     if (notOperator.hasChildren()) {
                         parent.addOperator(notOperator);
                     }
@@ -384,7 +397,7 @@ public class SimpleStringExpressionParser {
     }
 
     private static String getFieldPrefix(final String string) {
-        char[] chars = string.toCharArray();
+        final char[] chars = string.toCharArray();
         final StringBuilder sb = new StringBuilder();
         boolean escape = false;
         for (final char c : chars) {
@@ -404,6 +417,10 @@ public class SimpleStringExpressionParser {
         }
         return "";
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface FieldProvider {
 

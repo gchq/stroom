@@ -244,7 +244,7 @@ public abstract class AbstractParser extends AbstractElement implements TakesInp
             charsetName = inputSource.getEncoding();
         }
 
-        InputSource internalInputSource;
+        final InputSource internalInputSource;
 
         // If the input source is not raw bytes then assume that the user has
         // added the appropriate readers to the byte

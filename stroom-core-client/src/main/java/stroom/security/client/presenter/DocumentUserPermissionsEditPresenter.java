@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,15 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.AnnotationChangeEvent;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationTag;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.FindResult;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.client.presenter.DocumentUserPermissionsEditPresenter.DocumentUserPermissionsEditView;
 import stroom.security.shared.AbstractDocumentPermissionsChange;
 import stroom.security.shared.BulkDocumentPermissionChangeRequest;
@@ -31,6 +34,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.DocumentUserPermissionsReport;
+import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -56,6 +60,7 @@ public class DocumentUserPermissionsEditPresenter
 
     private final DocPermissionRestClient docPermissionClient;
     private final ExplorerClient explorerClient;
+    private final PermissionChangeClient permissionChangeClient;
     private final Provider<DocumentUserCreatePermissionsEditPresenter>
             documentUserCreatePermissionsEditPresenterProvider;
 
@@ -67,11 +72,13 @@ public class DocumentUserPermissionsEditPresenter
                                                 final DocumentUserPermissionsEditView view,
                                                 final DocPermissionRestClient docPermissionClient,
                                                 final ExplorerClient explorerClient,
+                                                final PermissionChangeClient permissionChangeClient,
                                                 final Provider<DocumentUserCreatePermissionsEditPresenter>
                                                         documentUserCreatePermissionsEditPresenterProvider) {
         super(eventBus, view);
         this.docPermissionClient = docPermissionClient;
         this.explorerClient = explorerClient;
+        this.permissionChangeClient = permissionChangeClient;
         this.documentUserCreatePermissionsEditPresenterProvider = documentUserCreatePermissionsEditPresenterProvider;
         getView().setUiHandlers(this);
     }
@@ -114,16 +121,32 @@ public class DocumentUserPermissionsEditPresenter
                           final Runnable onClose) {
         final AbstractDocumentPermissionsChange change = createChange();
 
-        final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
-        builder.addDocRefTerm(DocumentPermissionFields.DOCUMENT, Condition.IS_DOC_REF, relatedDoc);
-        final ExpressionOperator expression = builder.build();
+        if (permissionChangeClient.handlesType(relatedDoc.getType())) {
+            final SingleDocumentPermissionChangeRequest request =
+                    new SingleDocumentPermissionChangeRequest(relatedDoc, change);
+            permissionChangeClient.changeDocumentPermissions(request, success -> {
 
-        final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
-                expression, change);
-        explorerClient.changeDocumentPermissions(request, response -> {
-            onClose.run();
-            event.hide();
-        }, this);
+                if (success &&
+                    (Annotation.TYPE.equals(relatedDoc.getType())
+                     || AnnotationTag.TYPE.equals(relatedDoc.getType()))) {
+                    AnnotationChangeEvent.fire(this, null);
+                }
+                onClose.run();
+                event.hide();
+            }, this);
+
+        } else {
+            final ExpressionOperator.Builder builder = ExpressionOperator.builder().op(Op.OR);
+            builder.addDocRefTerm(DocumentPermissionFields.DOCUMENT, Condition.IS_DOC_REF, relatedDoc);
+            final ExpressionOperator expression = builder.build();
+
+            final BulkDocumentPermissionChangeRequest request = new BulkDocumentPermissionChangeRequest(
+                    expression, change);
+            explorerClient.changeDocumentPermissions(request, response -> {
+                onClose.run();
+                event.hide();
+            }, this);
+        }
     }
 
     @Override

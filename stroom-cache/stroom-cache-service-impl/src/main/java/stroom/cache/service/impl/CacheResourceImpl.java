@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -62,24 +63,27 @@ class CacheResourceImpl implements CacheResource {
     private final Provider<WebTargetFactory> webTargetFactory;
     private final Provider<CacheManagerService> cacheManagerService;
     private final Provider<TaskContextFactory> taskContextFactory;
+    private final Provider<Executor> executorProvider;
 
     @Inject
     CacheResourceImpl(final Provider<NodeService> nodeService,
                       final Provider<NodeInfo> nodeInfo,
                       final Provider<WebTargetFactory> webTargetFactory,
                       final Provider<CacheManagerService> cacheManagerService,
-                      final Provider<TaskContextFactory> taskContextFactory) {
+                      final Provider<TaskContextFactory> taskContextFactory,
+                      final Provider<Executor> executorProvider) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.webTargetFactory = webTargetFactory;
         this.cacheManagerService = cacheManagerService;
         this.taskContextFactory = taskContextFactory;
+        this.executorProvider = executorProvider;
     }
 
     @Override
     @AutoLogged(OperationType.VIEW)
     public CacheNamesResponse list(final String nodeName) {
-        CacheNamesResponse result;
+        final CacheNamesResponse result;
 
         // If this is the node that was contacted then just return our local info.
         if (NodeCallUtil.shouldExecuteLocally(nodeInfo.get(), nodeName)) {
@@ -90,7 +94,7 @@ class CacheResourceImpl implements CacheResource {
             try {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
-                try (Response response = webTarget
+                try (final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get()) {
                     if (response.getStatus() != 200) {
@@ -101,7 +105,7 @@ class CacheResourceImpl implements CacheResource {
                 if (result == null) {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
@@ -125,8 +129,8 @@ class CacheResourceImpl implements CacheResource {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
-                CacheInfoResponse result;
-                try (Response response = webTarget
+                final CacheInfoResponse result;
+                try (final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .get()) {
                     if (response.getStatus() != 200) {
@@ -138,7 +142,7 @@ class CacheResourceImpl implements CacheResource {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
                 cacheInfoList = result.getValues();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }
@@ -188,7 +192,7 @@ class CacheResourceImpl implements CacheResource {
                                                         clearCache(cacheName, nodeName));
 
                                 return CompletableFuture
-                                        .supplyAsync(supplier)
+                                        .supplyAsync(supplier, executorProvider.get())
                                         .exceptionally(throwable -> {
                                             failedNodes.add(nodeName);
                                             exception.set(throwable);
@@ -235,7 +239,7 @@ class CacheResourceImpl implements CacheResource {
                 WebTarget webTarget = webTargetFactory.get().create(url);
                 webTarget = UriBuilderUtil.addParam(webTarget, "cacheName", cacheName);
                 webTarget = UriBuilderUtil.addParam(webTarget, "nodeName", nodeName);
-                try (Response response = webTarget
+                try (final Response response = webTarget
                         .request(MediaType.APPLICATION_JSON)
                         .delete()) {
                     if (response.getStatus() != 200) {
@@ -243,7 +247,7 @@ class CacheResourceImpl implements CacheResource {
                     }
                     result = response.readEntity(Long.class);
                 }
-            } catch (Throwable e) {
+            } catch (final Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
         }

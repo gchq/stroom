@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.script;
@@ -38,16 +37,16 @@ class TestScriptStoreImpl extends AbstractCoreIntegrationTest {
     @Test
     void testUTF8Resource() {
         final String data = "var π = Math.PI, τ = 2 * π, halfπ = π / 2, ε = 1e-6, ε2 = ε * ε, " +
-                "d3_radians = π / 180, d3_degrees = 180 / π;";
+                            "d3_radians = π / 180, d3_degrees = 180 / π;";
 
         final DocRef docRef = scriptStore.createDocument("test");
-        final ScriptDoc script = scriptStore.readDocument(docRef);
-        script.setData(data);
+        final ScriptDoc script = scriptStore.readDocument(docRef)
+                .copy().data(data).build();
         scriptStore.writeDocument(script);
         final ScriptDoc loaded = scriptStore.readDocument(docRef);
 
         assertThat(loaded.getData()).isEqualTo(data);
-        List<ScriptDoc> linkedScripts = scriptStore.fetchLinkedScripts(docRef, null);
+        final List<ScriptDoc> linkedScripts = scriptStore.fetchLinkedScripts(docRef, null);
         assertThat(linkedScripts).hasSize(1);
     }
 }

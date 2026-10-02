@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,58 @@
 package stroom.query.language.functions;
 
 
-import stroom.query.language.token.Param;
 import stroom.util.time.StroomDuration;
+
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.Objects;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = ValNumber.class, name = "number"),
+        @JsonSubTypes.Type(value = ValString.class, name = "string"),
+        @JsonSubTypes.Type(value = ValErr.class, name = "err"),
+        @JsonSubTypes.Type(value = ValNull.class, name = "null"),
+        @JsonSubTypes.Type(value = ValBoolean.class, name = "boolean"),
+        @JsonSubTypes.Type(value = ValXml.class, name = "xml"),
+        @JsonSubTypes.Type(value = ValByte.class, name = "byte"),
+        @JsonSubTypes.Type(value = ValShort.class, name = "short"),
+        @JsonSubTypes.Type(value = ValInteger.class, name = "integer"),
+        @JsonSubTypes.Type(value = ValLong.class, name = "long"),
+        @JsonSubTypes.Type(value = ValFloat.class, name = "float"),
+        @JsonSubTypes.Type(value = ValDouble.class, name = "double"),
+        @JsonSubTypes.Type(value = ValDate.class, name = "date"),
+        @JsonSubTypes.Type(value = ValDuration.class, name = "duration")
+})
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "number", schema = ValNumber.class),
+                @DiscriminatorMapping(value = "string", schema = ValString.class),
+                @DiscriminatorMapping(value = "err", schema = ValErr.class),
+                @DiscriminatorMapping(value = "null", schema = ValNull.class),
+                @DiscriminatorMapping(value = "boolean", schema = ValBoolean.class),
+                @DiscriminatorMapping(value = "xml", schema = ValXml.class),
+                @DiscriminatorMapping(value = "byte", schema = ValByte.class),
+                @DiscriminatorMapping(value = "short", schema = ValShort.class),
+                @DiscriminatorMapping(value = "integer", schema = ValInteger.class),
+                @DiscriminatorMapping(value = "long", schema = ValLong.class),
+                @DiscriminatorMapping(value = "float", schema = ValFloat.class),
+                @DiscriminatorMapping(value = "double", schema = ValDouble.class),
+                @DiscriminatorMapping(value = "date", schema = ValDate.class),
+                @DiscriminatorMapping(value = "duration", schema = ValDuration.class)})
 public sealed interface Val
         extends Param, Appendable, Comparable<Val>
-        permits ValNumber, ValString, ValErr, ValNull, ValBoolean {
+        permits ValNumber, ValString, ValErr, ValNull, ValBoolean, ValXml {
 
     Val[] EMPTY_VALUES = new Val[0];
     double FLOATING_POINT_EQUALITY_TOLERANCE = 0.00001;
@@ -95,8 +136,6 @@ public sealed interface Val
      */
     Comparator<Val> getDefaultComparator(final boolean isCaseSensitive);
 
-    // TODO rename of( to arrayOf( to make it a bit more clear you are getting an array back
-    //  Best done on master as it affects a lot of files
     static Val[] of(final Val... values) {
         return values;
     }
@@ -185,23 +224,23 @@ public sealed interface Val
     static Val create(final Object object) {
         return switch (object) {
             case null -> ValNull.INSTANCE;
-            case Boolean val -> ValBoolean.create(val);
-            case Double val -> ValDouble.create(val);
-            case Duration val -> ValDuration.create(val.toMillis());
-            case Float val -> ValFloat.create(val);
-            case Instant val -> ValDate.create(val.toEpochMilli());
-            case Integer val -> ValInteger.create(val);
-            case Long val -> ValLong.create(val);
-            case String val -> ValString.create(val);
-            case StroomDuration val -> ValDuration.create(val.toMillis());
-            case Throwable val -> ValErr.create(val.getMessage());
-            case Val val -> val;
+            case final Boolean val -> ValBoolean.create(val);
+            case final Double val -> ValDouble.create(val);
+            case final Duration val -> ValDuration.create(val.toMillis());
+            case final Float val -> ValFloat.create(val);
+            case final Instant val -> ValDate.create(val.toEpochMilli());
+            case final Integer val -> ValInteger.create(val);
+            case final Long val -> ValLong.create(val);
+            case final String val -> ValString.create(val);
+            case final StroomDuration val -> ValDuration.create(val.toMillis());
+            case final Throwable val -> ValErr.create(val.getMessage());
+            case final Val val -> val;
             default -> throw new UnsupportedOperationException("Unsupported type " + object.getClass());
         };
     }
 
     @Override
-    default int compareTo(Val other) {
+    default int compareTo(final Val other) {
         return ValComparators.GENERIC_CASE_INSENSITIVE_COMPARATOR.compare(this, other);
     }
 }

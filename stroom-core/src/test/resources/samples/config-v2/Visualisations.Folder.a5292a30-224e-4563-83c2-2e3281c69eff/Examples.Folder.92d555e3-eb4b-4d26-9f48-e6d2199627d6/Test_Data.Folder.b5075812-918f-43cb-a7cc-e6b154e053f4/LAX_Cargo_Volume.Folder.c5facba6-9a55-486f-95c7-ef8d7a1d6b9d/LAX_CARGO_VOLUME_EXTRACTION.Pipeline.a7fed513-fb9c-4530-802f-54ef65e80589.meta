@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "a7fed513-fb9c-4530-802f-54ef65e80589",
+  "name" : "LAX_CARGO_VOLUME-EXTRACTION",
+  "version" : "d3a3d3f1-b98d-47df-9d08-94e58022aeda",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "3d9d60e9-61c2-4c88-a57b-7bc584dd970e",
+    "name" : "Search Extraction"
+  }
+}

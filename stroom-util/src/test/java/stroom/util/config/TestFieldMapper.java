@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.config;
 
 import org.junit.jupiter.api.Test;
@@ -10,10 +26,10 @@ class TestFieldMapper {
 
     @Test
     void testSimple() {
-        MyObject original = new MyObject();
+        final MyObject original = new MyObject();
         original.setString("Original");
 
-        MyObject copy = new MyObject();
+        final MyObject copy = new MyObject();
         copy.setString("Copy");
         FieldMapper.copy(original, copy);
 
@@ -61,10 +77,10 @@ class TestFieldMapper {
 
     @Test
     void testNullSource() {
-        MyObject original = new MyObject();
+        final MyObject original = new MyObject();
         original.setString(null);
 
-        MyObject copy = new MyObject();
+        final MyObject copy = new MyObject();
         copy.setString("copy");
         FieldMapper.copy(original, copy);
 
@@ -76,10 +92,10 @@ class TestFieldMapper {
 
     @Test
     void testNullSourceNoCopy() {
-        MyObject original = new MyObject();
+        final MyObject original = new MyObject();
         original.setString(null);
 
-        MyObject copy = new MyObject();
+        final MyObject copy = new MyObject();
         copy.setString("copy");
         FieldMapper.copyNonNulls(original, copy);
 
@@ -93,10 +109,10 @@ class TestFieldMapper {
 
     @Test
     void testNullDest() {
-        MyObject original = new MyObject();
+        final MyObject original = new MyObject();
         original.setString("NotNull");
 
-        MyObject copy = new MyObject();
+        final MyObject copy = new MyObject();
         copy.setString(null);
         FieldMapper.copy(original, copy);
 
@@ -118,7 +134,7 @@ class TestFieldMapper {
         final MyParent parent2 = new MyParent();
         parent2.setMyInt(99);
         parent2.setMyString("changed");
-        MyChild child3 = new MyChild();
+        final MyChild child3 = new MyChild();
         child3.setMyInt(999);
         child3.setMyString("changed child");
         parent2.setChild(child3);

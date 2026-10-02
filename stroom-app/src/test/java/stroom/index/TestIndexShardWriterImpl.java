@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.FieldType;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexDocument;
@@ -40,6 +37,8 @@ import stroom.index.shared.IndexVolume;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.LuceneIndexField;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.language.functions.ValInteger;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.FieldValue;
@@ -268,8 +267,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         Files.setPosixFilePermissions(tempDir, Set.of(PosixFilePermission.OWNER_READ));
         final ResultPage<IndexVolume> resultPage = indexVolumeDao.find(new ExpressionCriteria());
         resultPage.forEach(indexVolume -> {
-            indexVolume.setPath(tempDir + indexVolume.getPath());
-            indexVolumeDao.update(indexVolume);
+            indexVolumeDao.update(indexVolume.copy().path(tempDir + indexVolume.getPath()).build());
         });
 
         // Do some work.

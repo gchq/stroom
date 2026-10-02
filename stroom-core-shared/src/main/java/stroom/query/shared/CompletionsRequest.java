@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
@@ -31,6 +32,8 @@ public class CompletionsRequest {
 
     @JsonProperty
     private final DocRef dataSourceRef;
+    @JsonProperty
+    private final TextType textType;
     @JsonProperty
     private final String text;
     @JsonProperty
@@ -46,21 +49,24 @@ public class CompletionsRequest {
 
 
     /**
+     * @param textType
      * @param includedTypes  Set to false to exclude datasources and structure items.
      * @param maxCompletions
      */
     @JsonCreator
     public CompletionsRequest(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
+                              @JsonProperty("textType") final TextType textType,
                               @JsonProperty("text") final String text,
-                              @JsonProperty("row") final int row,
-                              @JsonProperty("column") final int column,
+                              @JsonProperty("row") final Integer row,
+                              @JsonProperty("column") final Integer column,
                               @JsonProperty("pattern") final String pattern,
                               @JsonProperty("includedTypes") final Set<QueryHelpType> includedTypes,
                               @JsonProperty("maxCompletions") final Integer maxCompletions) {
         this.dataSourceRef = dataSourceRef;
+        this.textType = textType;
         this.text = text;
-        this.row = row;
-        this.column = column;
+        this.row = Objects.requireNonNullElse(row, 0);
+        this.column = Objects.requireNonNullElse(column, 0);
         this.pattern = pattern;
         this.includedTypes = includedTypes;
         this.maxCompletions = maxCompletions;
@@ -68,6 +74,10 @@ public class CompletionsRequest {
 
     public DocRef getDataSourceRef() {
         return dataSourceRef;
+    }
+
+    public TextType getTextType() {
+        return textType;
     }
 
     public String getText() {
@@ -105,13 +115,34 @@ public class CompletionsRequest {
     @Override
     public String toString() {
         return "CompletionsRequest{" +
-                "dataSourceRef=" + dataSourceRef +
-                ", text='" + text + '\'' +
-                ", row=" + row +
-                ", column=" + column +
-                ", pattern='" + pattern + '\'' +
-                ", includedTypes=" + includedTypes +
-                ", maxCompletions=" + maxCompletions +
-                '}';
+               "dataSourceRef=" + dataSourceRef +
+               ", textType=" + textType +
+               ", text='" + text + '\'' +
+               ", row=" + row +
+               ", column=" + column +
+               ", pattern='" + pattern + '\'' +
+               ", includedTypes=" + includedTypes +
+               ", maxCompletions=" + maxCompletions +
+               '}';
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public enum TextType {
+        /**
+         * A full StroomQL statement, e.g.
+         * <p>
+         * from MyDatasource
+         * select ${field}
+         * </p>
+         */
+        STROOM_QUERY_LANGUAGE,
+        /**
+         * An expression such as '{@code concat(${StreamId},':',${EventId})}'.
+         */
+        EXPRESSION,
+        ;
     }
 }

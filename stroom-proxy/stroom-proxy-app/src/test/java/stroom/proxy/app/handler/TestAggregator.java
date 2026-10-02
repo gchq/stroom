@@ -1,10 +1,28 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.data.zip.StroomZipFileType;
 import stroom.proxy.app.DataDirProvider;
-import stroom.proxy.repo.FeedKey;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 import stroom.util.zip.ZipUtil;
 
 import org.junit.jupiter.api.Disabled;
@@ -25,18 +43,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(MockitoExtension.class)
 public class TestAggregator extends StroomUnitTest {
 
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestAggregator.class);
+
+    private static final FeedKey FEED_KEY = FeedKey.of("test-feed", "test-type");
+
     @Test
     void testSimple() throws IOException {
         final int inputZipCount = 10;
         final int entryCountPerZip = 1;
-        test(entryCountPerZip, inputZipCount);
+        test(entryCountPerZip, inputZipCount, 2);
     }
 
     @Test
     void testSimple2() throws IOException {
         final int inputZipCount = 1;
         final int entryCountPerZip = 3;
-        test(entryCountPerZip, inputZipCount);
+        test(entryCountPerZip, inputZipCount, 2);
     }
 
     @Disabled
@@ -44,28 +66,31 @@ public class TestAggregator extends StroomUnitTest {
     void testPerformance() throws IOException {
         final int inputZipCount = 100;
         final int entryCountPerZip = 100;
-        test(entryCountPerZip, inputZipCount);
+        test(entryCountPerZip, inputZipCount, 500);
     }
 
     private void test(final int entryCountPerZip,
-                      final int inputZipCount) throws IOException {
+                      final int inputZipCount,
+                      final int dataLines) throws IOException {
         final Path dataDir = Files.createTempDirectory("repo");
         final DataDirProvider dataDirProvider = () -> dataDir;
         final CleanupDirQueue cleanupDirQueue = new CleanupDirQueue(dataDirProvider);
         final AtomicInteger aggregateCount = new AtomicInteger();
         final Aggregator aggregator = new Aggregator(
                 cleanupDirQueue,
-                dataDirProvider);
+                dataDirProvider,
+                new FsyncConfig());
         aggregator.setDestination(aggregatorDir -> {
             try {
                 aggregateCount.getAndIncrement();
                 final FileGroup fileGroup = new FileGroup(aggregatorDir);
                 final List<String> actualList = ZipUtil.pathList(fileGroup.getZip());
                 final List<String> expectedList = createExpectedList(entryCountPerZip * inputZipCount);
-                assertThat(actualList).isEqualTo(expectedList);
+                assertThat(actualList)
+                        .isEqualTo(expectedList);
 
-                // In normal use the supplied dir would be moved ready for new a new aggregate to be created so simulate
-                // by deleting it.
+                // In normal use the supplied dir would be moved ready for new a new
+                // aggregate to be created so simulate by deleting it.
                 FileUtil.deleteDir(aggregatorDir);
             } catch (final IOException e) {
                 throw new UncheckedIOException(e);
@@ -78,10 +103,13 @@ public class TestAggregator extends StroomUnitTest {
         for (int i = 0; i < inputZipCount; i++) {
             final Path dir = numberedDirProvider.get();
             final FileGroup fileGroup = new FileGroup(dir);
-            TestDataUtil.writeFileGroup(fileGroup, entryCountPerZip, new FeedKey("test-feed", "test-type"));
+            TestDataUtil.writeFileGroup(fileGroup, dataLines, entryCountPerZip, FEED_KEY);
         }
 
-        aggregator.addDir(path);
+        LOGGER.logDurationIfDebugEnabled(() -> {
+            aggregator.addDir(path);
+        }, "addDir");
+
         assertThat(aggregateCount.get()).isEqualTo(1);
     }
 

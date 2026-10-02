@@ -1,9 +1,28 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.importexport.impl;
 
+import stroom.docref.DocRef;
+import stroom.docstore.api.DocDependencyService;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
+import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.api.ContentService;
@@ -47,7 +66,7 @@ import jakarta.inject.Provider;
 
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -56,20 +75,26 @@ public class ContentResourceImpl implements ContentResource {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ContentResourceImpl.class);
 
-    final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
-    final Provider<ContentService> contentServiceProvider;
-    final Provider<ExplorerNodeService> explorerNodeServiceProvider;
-    final Provider<SecurityContext> securityContextProvider;
+    private final Provider<StroomEventLoggingService> eventLoggingServiceProvider;
+    private final Provider<ContentService> contentServiceProvider;
+    private final Provider<ExplorerNodeService> explorerNodeServiceProvider;
+    private final Provider<SecurityContext> securityContextProvider;
+    private final Provider<DocDependencyService> docDependencyServiceProvider;
+    private final Provider<ExplorerDecorator> explorerDecoratorProvider;
 
     @Inject
     ContentResourceImpl(final Provider<StroomEventLoggingService> eventLoggingServiceProvider,
                         final Provider<ContentService> contentServiceProvider,
                         final Provider<ExplorerNodeService> explorerNodeServiceProvider,
-                        final Provider<SecurityContext> securityContextProvider) {
+                        final Provider<SecurityContext> securityContextProvider,
+                        final Provider<DocDependencyService> docDependencyServiceProvider,
+                        final Provider<ExplorerDecorator> explorerDecoratorProvider) {
         this.eventLoggingServiceProvider = eventLoggingServiceProvider;
         this.contentServiceProvider = contentServiceProvider;
         this.explorerNodeServiceProvider = explorerNodeServiceProvider;
         this.securityContextProvider = securityContextProvider;
+        this.docDependencyServiceProvider = docDependencyServiceProvider;
+        this.explorerDecoratorProvider = explorerDecoratorProvider;
     }
 
     @Override
@@ -103,13 +128,19 @@ public class ContentResourceImpl implements ContentResource {
             } else {
                 return responseSupplier.get();
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error(LogUtil.message("Error importing content with key: {}, name: {}, error: {}",
                     NullSafe.get(request.getResourceKey(), ResourceKey::getKey),
                     NullSafe.get(request.getResourceKey(), ResourceKey::getName),
                     e.getMessage()), e);
             throw new RuntimeException(e);
         }
+    }
+
+    @AutoLogged(OperationType.UNLOGGED) // This is a tidy up operation so no need to log it
+    @Override
+    public void abortImport(final ResourceKey resourceKey) {
+        contentServiceProvider.get().abortImport(resourceKey);
     }
 
     private ImportEventAction buildImportEventAction(final ImportConfigRequest importConfigRequest) {
@@ -216,8 +247,8 @@ public class ContentResourceImpl implements ContentResource {
                         .withQuery(buildRawQuery(criteria.getPartialName()))
                         .build())
                 .withComplexLoggedResult(searchEventAction -> {
-                    final ResultPage<Dependency> result = contentServiceProvider.get()
-                            .fetchDependencies(criteria);
+                    final ResultPage<Dependency> result = docDependencyServiceProvider.get()
+                            .fetchDependencies(criteria, getPseudoRefUuids());
 
                     final SearchEventAction newSearchEventAction = searchEventAction.newCopyBuilder()
                             .withQuery(buildRawQuery(criteria.getPartialName()))
@@ -230,13 +261,28 @@ public class ContentResourceImpl implements ContentResource {
                 .getResultAndLog();
     }
 
+    /**
+     * UUIDs of the pseudo-refs used to decorate the explorer tree (e.g. Searchable / Annotation
+     * data sources). They live outside the doc table, so without this a dependency on one would be
+     * reported as missing. Resolved here rather than in the service because only this module can
+     * see the explorer API, matching how {@code ExplorerTreeModel} does it for broken deps.
+     */
+    private Set<String> getPseudoRefUuids() {
+        return explorerDecoratorProvider.get()
+                .list()
+                .stream()
+                .map(DocRef::getUuid)
+                .collect(Collectors.toSet());
+    }
+
     private Query buildRawQuery(final String userInput) {
         return Strings.isNullOrEmpty(userInput)
                 ? new Query()
                 : Query.builder()
                         .withRaw("Activity matches \""
-                                 + Objects.requireNonNullElse(userInput, "")
+                                 + userInput
                                  + "\"")
                         .build();
     }
+
 }

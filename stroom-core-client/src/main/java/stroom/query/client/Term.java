@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package stroom.query.client;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionTerm.Condition;
 
 public final class Term extends Item {
 
@@ -40,10 +40,6 @@ public final class Term extends Item {
 
     public void setCondition(final Condition condition) {
         this.condition = condition;
-        // CONTAINS only supported for legacy content, not for use in UI
-        if (Condition.CONTAINS.equals(this.condition)) {
-            this.condition = Condition.EQUALS;
-        }
     }
 
     public String getValue() {
@@ -58,7 +54,7 @@ public final class Term extends Item {
         return docRef;
     }
 
-    public void setDocRef(DocRef docRef) {
+    public void setDocRef(final DocRef docRef) {
         this.docRef = docRef;
     }
 

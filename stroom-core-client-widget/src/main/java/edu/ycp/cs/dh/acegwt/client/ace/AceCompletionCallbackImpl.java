@@ -33,14 +33,14 @@ class AceCompletionCallbackImpl implements AceCompletionCallback {
 
     private final JavaScriptObject jsCallback;
 
-    public AceCompletionCallbackImpl(JavaScriptObject jsCallback) {
+    public AceCompletionCallbackImpl(final JavaScriptObject jsCallback) {
         this.jsCallback = jsCallback;
     }
 
     @Override
-    public void invokeWithCompletions(AceCompletion[] proposals) {
-        JsArray<JavaScriptObject> jsProposals = JavaScriptObject.createArray().cast();
-        for (AceCompletion proposal : proposals) {
+    public void invokeWithCompletions(final AceCompletion[] proposals) {
+        final JsArray<JavaScriptObject> jsProposals = JavaScriptObject.createArray().cast();
+        for (final AceCompletion proposal : proposals) {
             jsProposals.push(proposal.toJsObject());
         }
         doInvokeWithCompletions(jsProposals);

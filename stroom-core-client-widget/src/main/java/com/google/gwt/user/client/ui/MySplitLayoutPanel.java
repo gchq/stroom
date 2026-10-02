@@ -261,7 +261,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
     }
 
     @Override
-    public void setWidgetHidden(Widget widget, boolean hidden) {
+    public void setWidgetHidden(final Widget widget, final boolean hidden) {
         super.setWidgetHidden(widget, hidden);
         // If we are hiding a widget then we also need to hide its splitter else you get an
         // orphaned splitter appearing
@@ -488,7 +488,7 @@ public class MySplitLayoutPanel extends DockLayoutPanel {
                             // Reach the max for this split so don't resize anymore
                             allowResize = false;
                         }
-                    } else if (newVSplit > currVSplit && index == 0){
+                    } else if (newVSplit > currVSplit && index == 0) {
                         // Top split moving down
 
                         // Not the last split (from top) so need to make sure our split does not

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.reader;
 
 import stroom.util.xml.XMLUtil;
@@ -14,8 +30,8 @@ public class TestInvalidCharFilterReader {
 
     @Test
     void test() throws IOException {
-        char[] good = {'v', 'a', 'l', 'u', 'e'};
-        char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
+        final char[] good = {'v', 'a', 'l', 'u', 'e'};
+        final char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
 
         final Params goodParms = new Params(new String(good), new String(good));
         final Params badParms = new Params(new String(bad), new String(bad));
@@ -33,8 +49,8 @@ public class TestInvalidCharFilterReader {
 
     @Test
     void test2() throws IOException {
-        char[] good = {'v', 'a', 'l', 'u', 'e'};
-        char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
+        final char[] good = {'v', 'a', 'l', 'u', 'e'};
+        final char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
 
         final Params goodParms = new Params(new String(good), new String(good));
         final Params badParms = new Params(new String(bad), new String(bad));

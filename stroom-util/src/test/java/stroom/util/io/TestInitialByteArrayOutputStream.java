@@ -27,7 +27,7 @@ class TestInitialByteArrayOutputStream {
 
     @Test
     void testReuse() throws IOException {
-        byte[] reuseBuffer = new byte[2];
+        final byte[] reuseBuffer = new byte[2];
 
         InitialByteArrayOutputStream initialByteArrayOutputStream = null;
         try {

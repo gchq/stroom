@@ -16,9 +16,6 @@
 
 package stroom.index;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.FieldType;
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexFields;
@@ -37,8 +34,12 @@ import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.FeedHolder;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.FieldType;
+import stroom.query.api.datasource.IndexField;
 import stroom.search.extraction.FieldValue;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -60,7 +61,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestIndexingFilter extends AbstractProcessIntegrationTest {
 
-    private static final String PIPELINE = "TestIndexingFilter/TestIndexingFilter.Pipeline.data.xml";
+    private static final String PIPELINE = "TestIndexingFilter/TestIndexingFilter.Pipeline.json";
 
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
@@ -209,8 +210,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         return pipelineScopeRunnable.scopeResult(() -> {
             // Setup the index.
             final DocRef indexRef = indexStore.createDocument("Test index");
-            LuceneIndexDoc index = indexStore.readDocument(indexRef);
-            index.setFields(indexFields);
+            LuceneIndexDoc index = indexStore.readDocument(indexRef).copy().fields(indexFields).build();
             index = indexStore.writeDocument(index);
 
             // Setup the error handler.
@@ -220,10 +220,12 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
             // Create the pipeline.
             final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-            pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty("indexingFilter",
+            PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
+            builder.addProperty(PipelineDataUtil.createProperty("indexingFilter",
                     "index",
                     indexRef));
+            pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

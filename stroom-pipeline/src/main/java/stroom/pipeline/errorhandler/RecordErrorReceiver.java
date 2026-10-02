@@ -18,6 +18,7 @@ package stroom.pipeline.errorhandler;
 
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.ErrorType;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
@@ -50,7 +51,7 @@ public class RecordErrorReceiver implements ErrorReceiver, ErrorStatistics {
     @Override
     public void log(final Severity severity,
                     final Location location,
-                    final String elementId,
+                    final ElementId elementId,
                     final String message,
                     final ErrorType errorType,
                     final Throwable e) {

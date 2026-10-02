@@ -25,8 +25,8 @@ import java.io.LineNumberReader;
  */
 public class LineSum {
 
-    public static void main(String[] args) throws IOException {
-        LineNumberReader lineNumberReader = new LineNumberReader(
+    public static void main(final String[] args) throws IOException {
+        final LineNumberReader lineNumberReader = new LineNumberReader(
                 new InputStreamReader(System.in, StreamUtil.DEFAULT_CHARSET));
 
         String line;

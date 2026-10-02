@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.importexport.impl;
 
 import java.io.BufferedWriter;
@@ -56,18 +72,18 @@ public final class PropertiesSerialiser {
      * Converts unicodes to encoded &#92;uxxxx and escapes
      * special characters with a preceding slash
      */
-    private static String saveConvert(String theString,
-                                      boolean escapeSpace,
-                                      boolean escapeUnicode) {
-        int len = theString.length();
+    private static String saveConvert(final String theString,
+                                      final boolean escapeSpace,
+                                      final boolean escapeUnicode) {
+        final int len = theString.length();
         int bufLen = len * 2;
         if (bufLen < 0) {
             bufLen = Integer.MAX_VALUE;
         }
-        StringBuffer outBuffer = new StringBuffer(bufLen);
+        final StringBuffer outBuffer = new StringBuffer(bufLen);
 
         for (int x = 0; x < len; x++) {
-            char aChar = theString.charAt(x);
+            final char aChar = theString.charAt(x);
             // Handle common case first, selecting largest block that
             // avoids the specials below
             if ((aChar > 61) && (aChar < 127)) {
@@ -130,7 +146,7 @@ public final class PropertiesSerialiser {
      *
      * @param nibble the nibble to convert.
      */
-    private static char toHex(int nibble) {
+    private static char toHex(final int nibble) {
         return hexDigit[(nibble & 0xF)];
     }
 

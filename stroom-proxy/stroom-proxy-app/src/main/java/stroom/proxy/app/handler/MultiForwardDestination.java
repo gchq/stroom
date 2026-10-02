@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.util.logging.LambdaLogger;
@@ -28,9 +44,9 @@ final class MultiForwardDestination implements ForwardDestination {
     private final CleanupDirQueue cleanupDirQueue;
 
     MultiForwardDestination(
-            List<ForwardDestination> destinations,
-            NumberedDirProvider copiesDirProvider,
-            CleanupDirQueue cleanupDirQueue) {
+            final List<ForwardDestination> destinations,
+            final NumberedDirProvider copiesDirProvider,
+            final CleanupDirQueue cleanupDirQueue) {
 
         if (NullSafe.size(destinations) < 2) {
             throw new IllegalArgumentException(LogUtil.message(
@@ -63,12 +79,12 @@ final class MultiForwardDestination implements ForwardDestination {
                     destination.add(copyDir);
                     // Null the destinationCopy as it has been moved and doesn't need to be cleaned up
                     destinationCopies.set(i, null);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.debug("Error adding '{}' to destination {}: {}",
                             copyDir, destination.asString(), LogUtil.exceptionMessage(e), e);
                     exceptions.add(new RuntimeException(LogUtil.message(
                             "Error adding {} to destination {}",
-                            copyDir, destination.asString())));
+                            copyDir, destination.asString()), e));
                 }
             }
             if (exceptions.isEmpty()) {

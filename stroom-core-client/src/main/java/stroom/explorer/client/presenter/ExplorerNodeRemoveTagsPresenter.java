@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.explorer.client.presenter;
@@ -81,7 +80,7 @@ public class ExplorerNodeRemoveTagsPresenter
     @ProxyEvent
     @Override
     public void onCreate(final ShowRemoveNodeTagsDialogEvent event) {
-//        GWT.log("onCreate: " + GwtNullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
+//        GWT.log("onCreate: " + NullSafe.get(event.getExplorerNode(), ExplorerNode::toString));
         explorerNodes = NullSafe.list(event.getExplorerNodes());
         if (NullSafe.isEmptyCollection(explorerNodes)) {
             AlertEvent.fireError(this, "No explorer nodes supplied", null);

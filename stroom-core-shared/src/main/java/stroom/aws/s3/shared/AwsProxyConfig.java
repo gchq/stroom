@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.aws.s3.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,13 +41,13 @@ public class AwsProxyConfig {
 
     @JsonCreator
     public AwsProxyConfig(@JsonProperty("host") final String host,
-                          @JsonProperty("port") final int port,
+                          @JsonProperty("port") final Integer port,
                           @JsonProperty("scheme") final String scheme,
                           @JsonProperty("username") final String username,
                           @JsonProperty("password") final String password,
                           @JsonProperty("useSystemPropertyValues") final Boolean useSystemPropertyValues) {
         this.host = host;
-        this.port = port;
+        this.port = Objects.requireNonNullElse(port, 0);
         this.scheme = scheme;
         this.username = username;
         this.password = password;
@@ -79,9 +95,12 @@ public class AwsProxyConfig {
             return false;
         }
         final AwsProxyConfig that = (AwsProxyConfig) o;
-        return port == that.port && Objects.equals(host, that.host) && Objects.equals(scheme,
-                that.scheme) && Objects.equals(username, that.username) && Objects.equals(password,
-                that.password) && Objects.equals(useSystemPropertyValues, that.useSystemPropertyValues);
+        return port == that.port
+               && Objects.equals(host, that.host)
+               && Objects.equals(scheme, that.scheme)
+               && Objects.equals(username, that.username)
+               && Objects.equals(password, that.password)
+               && Objects.equals(useSystemPropertyValues, that.useSystemPropertyValues);
     }
 
     @Override
@@ -92,14 +111,18 @@ public class AwsProxyConfig {
     @Override
     public String toString() {
         return "AwsProxyConfig{" +
-                "host='" + host + '\'' +
-                ", port=" + port +
-                ", scheme='" + scheme + '\'' +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", useSystemPropertyValues=" + useSystemPropertyValues +
-                '}';
+               "host='" + host + '\'' +
+               ", port=" + port +
+               ", scheme='" + scheme + '\'' +
+               ", username='" + username + '\'' +
+               ", password='" + password + '\'' +
+               ", useSystemPropertyValues=" + useSystemPropertyValues +
+               '}';
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Builder {
 

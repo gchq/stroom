@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.client.presenter;
 
 import stroom.data.client.presenter.ColumnSizeConstants;
@@ -8,7 +24,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.shared.FindUserDependenciesCriteria;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
@@ -60,7 +76,8 @@ public class UserDependenciesListPresenter
         this.restFactory = restFactory;
         this.pagerView = pagerView;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("User Dependencies");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -121,7 +138,7 @@ public class UserDependenciesListPresenter
 
                 if (userRef != null) {
                     // TODO fix fields
-                    ExpressionOperator expression = QuickFilterExpressionParser
+                    final ExpressionOperator expression = QuickFilterExpressionParser
                             .parse(filter, UserFields.DEFAULT_FIELDS, UserFields.ALL_FIELDS_MAP);
                     criteriaBuilder.sortList(CriteriaUtil.createSortList(dataGrid.getColumnSortList()));
 
@@ -158,12 +175,12 @@ public class UserDependenciesListPresenter
 //                DataGridUtil.svgPresetColumnBuilder(
 //                                false,
 //                                (UserDependency row) -> {
-//                                    final String documentType = GwtNullSafe.get(
+//                                    final String documentType = NullSafe.get(
 //                                            row,
 //                                            UserDependency::getDocRef,
 //                                            DocRef::getType);
 //                                    if (documentType != null) {
-//                                        return GwtNullSafe.get(documentTypes.getDocumentType(documentType),
+//                                        return NullSafe.get(documentTypes.getDocumentType(documentType),
 //                                                DocumentType::getIcon,
 //                                                svg -> new Preset(svg, documentType, true));
 //                                    } else {
@@ -201,7 +218,5 @@ public class UserDependenciesListPresenter
                         .withToolTip("The details of the dependency.")
                         .build(),
                 700);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 }

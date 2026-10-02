@@ -1,20 +1,46 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.global.impl;
 
+import stroom.annotation.impl.AnnotationState;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ConfigTarget;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
+import stroom.config.global.shared.SetConfigValueRequest;
+import stroom.docref.DocRef;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.mock.MockStroomEventLoggingService;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.query.common.v2.ExpressionPredicateFactory;
+import stroom.receive.common.ReceiveDataConfig;
+import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.StroomOpenIdConfig;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
+import stroom.ui.config.shared.AbstractAnalyticUiDefaultConfig;
+import stroom.ui.config.shared.AnalyticUiDefaultConfig;
 import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -51,17 +77,20 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
     public static final ConfigProperty CONFIG_PROPERTY_3;
 
     static {
-        ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("a.property"));
-        configProperty.setYamlOverrideValue("a string");
-        CONFIG_PROPERTY_1 = configProperty;
+        CONFIG_PROPERTY_1 = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.property"))
+                .yamlOverrideValue("a string")
+                .build();
 
-        configProperty = new ConfigProperty(PropertyPath.fromPathString("some.other.property"));
-        configProperty.setYamlOverrideValue("123");
-        CONFIG_PROPERTY_2 = configProperty;
+        CONFIG_PROPERTY_2 = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("some.other.property"))
+                .yamlOverrideValue("123")
+                .build();
 
-        configProperty = new ConfigProperty(PropertyPath.fromPathString("and.another.property"));
-        configProperty.setYamlOverrideValue("true");
-        CONFIG_PROPERTY_3 = configProperty;
+        CONFIG_PROPERTY_3 = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("and.another.property"))
+                .yamlOverrideValue("true")
+                .build();
     }
 
     private static final ListConfigResponse FULL_PROP_LIST = new ListConfigResponse(
@@ -80,7 +109,12 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final String subPath = GlobalConfigResource.PROPERTIES_SUB_PATH;
 
-        final ListConfigResponse expectedResponse = FULL_PROP_LIST;
+        final ListConfigResponse expectedResponse = new ListConfigResponse(
+                List.of(
+                        CONFIG_PROPERTY_1.copy().yamlOverrideValue("node1").build(),
+                        CONFIG_PROPERTY_2.copy().yamlOverrideValue("node1").build(),
+                        CONFIG_PROPERTY_3.copy().yamlOverrideValue("node1").build()),
+                "node1a");
 
         doPostTest(subPath,
                 new GlobalConfigCriteria(),
@@ -97,8 +131,10 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final String subPath = GlobalConfigResource.PROPERTIES_SUB_PATH;
 
-        final ConfigProperty configProperty = new ConfigProperty(CONFIG_PROPERTY_2.getName());
-        configProperty.setYamlOverrideValue("node1");
+        final ConfigProperty configProperty = ConfigProperty.builder()
+                .name(CONFIG_PROPERTY_2.getName())
+                .yamlOverrideValue("node1")
+                .build();
 
         final ListConfigResponse expectedResponse = new ListConfigResponse(List.of(
                 configProperty
@@ -168,6 +204,82 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .hasSize(0);
     }
 
+    /**
+     * The value arrives as a {@link DocRef} so that the server, not the client, decides how it is stored. What
+     * matters here is that the request is routed to the right config object and property name.
+     */
+    @Test
+    void setConfigValue_docRef() {
+        initNodes();
+
+        final DocRef feed = DocRef.builder()
+                .type("Feed")
+                .uuid("87c3e7f2-27a5-4a63-9dcb-6b2a9e4e9d0f")
+                .name("MY_ERROR_FEED")
+                .build();
+
+        doPostTest(
+                GlobalConfigResource.SET_CONFIG_VALUE_SUB_PATH,
+                SetConfigValueRequest.docRef(ConfigTarget.ANALYTIC_UI_DEFAULT,
+                        AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_ERROR_FEED, feed),
+                Boolean.class,
+                true);
+
+        verify(globalConfigServiceMap.get("node1"), times(1))
+                .setDocRef(
+                        Mockito.any(AnalyticUiDefaultConfig.class),
+                        eq(AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_ERROR_FEED),
+                        eq(feed));
+    }
+
+    /**
+     * Reports have their own set of defaults, so the report properties must not be written to the analytic config.
+     */
+    @Test
+    void setConfigValue_reportUsesReportConfig() {
+        initNodes();
+
+        final DocRef feed = DocRef.builder()
+                .type("Feed")
+                .uuid("1f0f4a2c-7f31-4d0e-9a8e-2b7cf0f5a111")
+                .name("MY_DESTINATION_FEED")
+                .build();
+
+        doPostTest(
+                GlobalConfigResource.SET_CONFIG_VALUE_SUB_PATH,
+                SetConfigValueRequest.docRef(ConfigTarget.REPORT_UI_DEFAULT,
+                        AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_DESTINATION_FEED, feed),
+                Boolean.class,
+                true);
+
+        verify(globalConfigServiceMap.get("node1"), times(1))
+                .setDocRef(
+                        Mockito.any(ReportUiDefaultConfig.class),
+                        eq(AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_DESTINATION_FEED),
+                        eq(feed));
+    }
+
+    /**
+     * The node is a plain string rather than a doc ref, so it takes the other branch.
+     */
+    @Test
+    void setConfigValue_string() {
+        initNodes();
+
+        doPostTest(
+                GlobalConfigResource.SET_CONFIG_VALUE_SUB_PATH,
+                SetConfigValueRequest.string(ConfigTarget.ANALYTIC_UI_DEFAULT,
+                        AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_NODE, "node1"),
+                Boolean.class,
+                true);
+
+        verify(globalConfigServiceMap.get("node1"), times(1))
+                .setString(
+                        Mockito.any(AnalyticUiDefaultConfig.class),
+                        eq(AbstractAnalyticUiDefaultConfig.PROP_NAME_DEFAULT_NODE),
+                        eq("node1"));
+    }
+
     @Test
     void getPropertyByName() {
         initNodes();
@@ -176,7 +288,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 GlobalConfigResource.PROPERTIES_SUB_PATH,
                 "some.other.property");
 
-        final ConfigProperty expectedResponse = CONFIG_PROPERTY_2;
+        final ConfigProperty expectedResponse = CONFIG_PROPERTY_2.copy().yamlOverrideValue("node1").build();
 
         final ConfigProperty listConfigResponse = doGetTest(
                 subPath,
@@ -244,11 +356,15 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final String subPath = "";
 
-        ConfigProperty newConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        final ConfigProperty newConfigProperty = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.new.config.prop"))
+                .build();
 
-        ConfigProperty expectedConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
-        expectedConfigProperty.setId(1);
-        expectedConfigProperty.setVersion(1);
+        final ConfigProperty expectedConfigProperty = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.new.config.prop"))
+                .id(1)
+                .version(1)
+                .build();
 
         final ConfigProperty createdConfigProperty = doPostTest(
                 subPath,
@@ -263,13 +379,17 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         initNodes();
 
-        ConfigProperty existingConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
-        existingConfigProperty.setId(1);
-        existingConfigProperty.setVersion(1);
+        final ConfigProperty existingConfigProperty = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.new.config.prop"))
+                .id(1)
+                .version(1)
+                .build();
 
-        ConfigProperty expectedConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
-        expectedConfigProperty.setId(1);
-        expectedConfigProperty.setVersion(2);
+        final ConfigProperty expectedConfigProperty = ConfigProperty.builder()
+                .name(PropertyPath.fromPathString("a.new.config.prop"))
+                .id(1)
+                .version(2)
+                .build();
 
         final String subPath = ResourcePaths.buildPath(
                 GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
@@ -287,8 +407,8 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
     void fetchExtendedUiConfig() {
         initNodes();
 
-        String subPath = GlobalConfigResource.FETCH_EXTENDED_UI_CONFIG_SUB_PATH;
-        ExtendedUiConfig expectedResponse = new ExtendedUiConfig();
+        final String subPath = GlobalConfigResource.FETCH_EXTENDED_UI_CONFIG_SUB_PATH;
+        final ExtendedUiConfig expectedResponse = new ExtendedUiConfig();
 
         final ExtendedUiConfig response = doGetTest(
                 subPath,
@@ -316,7 +436,7 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 .thenAnswer(invocation -> {
                     System.out.println("list called");
                     try {
-                        GlobalConfigCriteria criteria = invocation.getArgument(0);
+                        final GlobalConfigCriteria criteria = invocation.getArgument(0);
                         final ExpressionPredicateFactory expressionPredicateFactory = new ExpressionPredicateFactory();
 
                         Stream<ConfigProperty> stream = FULL_PROP_LIST.stream();
@@ -327,11 +447,12 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                                 GlobalConfigService.VALUE_FUNCTION_FACTORIES,
                                 Optional.empty());
                         final List<ConfigProperty> list = stream
-                                .peek(configProperty -> configProperty.setYamlOverrideValue(node.getNodeName()))
+                                .map(configProperty ->
+                                        configProperty.copy().yamlOverrideValue(node.getNodeName()).build())
                                 .toList();
 
                         return new ListConfigResponse(list, "node1a");
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         e.printStackTrace(System.err);
                         throw e;
                     }
@@ -339,23 +460,23 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         when(globalConfigService.fetch(Mockito.any()))
                 .thenAnswer(invocation -> {
-                    PropertyPath propertyPath = invocation.getArgument(0);
+                    final PropertyPath propertyPath = invocation.getArgument(0);
                     return FULL_PROP_LIST.stream()
-                            .peek(configProperty -> {
-                                configProperty.setYamlOverrideValue(node.getNodeName());
-                            })
+                            .map(configProperty ->
+                                    configProperty.copy().yamlOverrideValue(node.getNodeName()).build())
                             .filter(configProperty -> configProperty.getName().equals(propertyPath))
                             .findFirst();
                 });
 
-        when(globalConfigService.update(Mockito.any()))
+        when(globalConfigService.update((ConfigProperty) Mockito.any()))
                 .thenAnswer(invocation -> {
-                    ConfigProperty configProperty = invocation.getArgument(0);
-                    configProperty.setId(1);
-                    configProperty.setVersion(configProperty.getVersion() == null
-                            ? 1
-                            : configProperty.getVersion() + 1);
-                    return configProperty;
+                    final ConfigProperty configProperty = invocation.getArgument(0);
+                    return configProperty.copy()
+                            .id(1)
+                            .version(configProperty.getVersion() == null
+                                    ? 1
+                                    : configProperty.getVersion() + 1)
+                            .build();
                 });
 
         globalConfigServiceMap.put(node.getNodeName(), globalConfigService);
@@ -396,13 +517,18 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         return new GlobalConfigResourceImpl(
                 () -> stroomEventLoggingService,
+                () -> Mockito.mock(DocumentEventLog.class),
                 () -> globalConfigService,
                 () -> nodeService,
                 UiConfig::new,
-                null,
                 () -> nodeInfo,
                 StroomOpenIdConfig::new,
                 ExplorerConfig::new,
-                AuthenticationConfig::new);
+                AuthenticationConfig::new,
+                StroomReceiptPolicyConfig::new,
+                ReceiveDataConfig::new,
+                AnnotationState::new,
+                AnalyticUiDefaultConfig::new,
+                ReportUiDefaultConfig::new);
     }
 }

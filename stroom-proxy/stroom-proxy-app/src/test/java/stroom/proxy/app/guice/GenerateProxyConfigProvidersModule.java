@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ProxyConfig;
@@ -69,7 +85,7 @@ public class GenerateProxyConfigProvidersModule {
                 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             """;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(final String[] args) throws IOException {
 //        final ConfigMapper configMapper = new ConfigMapper();
         final Set<String> simpleNames = new HashSet<>();
         final Map<String, List<String>> simpleNameToFullNamesMap = new HashMap<>();
@@ -236,7 +252,7 @@ public class GenerateProxyConfigProvidersModule {
     }
 
     private static void updateFile(final String content) {
-        Path pwd = Paths.get(".")
+        final Path pwd = Paths.get(".")
                 .toAbsolutePath()
                 .normalize();
 
@@ -258,7 +274,7 @@ public class GenerateProxyConfigProvidersModule {
             LOGGER.info("Writing file " + moduleFile.toAbsolutePath());
             Files.writeString(moduleFile, content);
 
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error reading content of " + moduleFile);
         }
     }

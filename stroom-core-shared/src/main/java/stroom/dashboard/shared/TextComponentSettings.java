@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.query.api.v2.ColumnRef;
+import stroom.query.api.ColumnRef;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -43,7 +43,7 @@ import java.util.Objects;
         "modelVersion"
 })
 @JsonInclude(Include.NON_NULL)
-public class TextComponentSettings implements ComponentSettings {
+public final class TextComponentSettings implements ComponentSettings {
 
     @JsonProperty("tableId")
     private final String tableId;
@@ -80,8 +80,8 @@ public class TextComponentSettings implements ComponentSettings {
                                  @JsonProperty("lineToField") final ColumnRef lineToField,
                                  @JsonProperty("colToField") final ColumnRef colToField,
                                  @JsonProperty("pipeline") final DocRef pipeline,
-                                 @JsonProperty("showAsHtml") final boolean showAsHtml,
-                                 @JsonProperty("showStepping") final boolean showStepping,
+                                 @JsonProperty("showAsHtml") final Boolean showAsHtml,
+                                 @JsonProperty("showStepping") final Boolean showStepping,
                                  @JsonProperty("modelVersion") final String modelVersion) {
         this.tableId = tableId;
         this.streamIdField = streamIdField;
@@ -92,8 +92,8 @@ public class TextComponentSettings implements ComponentSettings {
         this.lineToField = lineToField;
         this.colToField = colToField;
         this.pipeline = pipeline;
-        this.showAsHtml = showAsHtml;
-        this.showStepping = showStepping;
+        this.showAsHtml = Objects.requireNonNullElse(showAsHtml, false);
+        this.showStepping = Objects.requireNonNullElse(showStepping, false);
         this.modelVersion = modelVersion;
     }
 
@@ -196,18 +196,33 @@ public class TextComponentSettings implements ComponentSettings {
             return false;
         }
         final TextComponentSettings that = (TextComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = showAsHtml == that.showAsHtml;
+//        final boolean b2 = showStepping == that.showStepping;
+//        final boolean b3 = Objects.equals(tableId, that.tableId);
+//        final boolean b4 = Objects.equals(streamIdField, that.streamIdField);
+//        final boolean b5 = Objects.equals(partNoField, that.partNoField);
+//        final boolean b6 = Objects.equals(recordNoField, that.recordNoField);
+//        final boolean b7 = Objects.equals(lineFromField, that.lineFromField);
+//        final boolean b8 = Objects.equals(colFromField, that.colFromField);
+//        final boolean b9 = Objects.equals(lineToField, that.lineToField);
+//        final boolean b10 = Objects.equals(colToField, that.colToField);
+//        final boolean b11 = Objects.equals(pipeline, that.pipeline);
+//        final boolean b12 = Objects.equals(modelVersion, that.modelVersion);
+
         return showAsHtml == that.showAsHtml &&
-                showStepping == that.showStepping &&
-                Objects.equals(tableId, that.tableId) &&
-                Objects.equals(streamIdField, that.streamIdField) &&
-                Objects.equals(partNoField, that.partNoField) &&
-                Objects.equals(recordNoField, that.recordNoField) &&
-                Objects.equals(lineFromField, that.lineFromField) &&
-                Objects.equals(colFromField, that.colFromField) &&
-                Objects.equals(lineToField, that.lineToField) &&
-                Objects.equals(colToField, that.colToField) &&
-                Objects.equals(pipeline, that.pipeline) &&
-                Objects.equals(modelVersion, that.modelVersion);
+               showStepping == that.showStepping &&
+               Objects.equals(tableId, that.tableId) &&
+               Objects.equals(streamIdField, that.streamIdField) &&
+               Objects.equals(partNoField, that.partNoField) &&
+               Objects.equals(recordNoField, that.recordNoField) &&
+               Objects.equals(lineFromField, that.lineFromField) &&
+               Objects.equals(colFromField, that.colFromField) &&
+               Objects.equals(lineToField, that.lineToField) &&
+               Objects.equals(colToField, that.colToField) &&
+               Objects.equals(pipeline, that.pipeline) &&
+               Objects.equals(modelVersion, that.modelVersion);
     }
 
     @Override
@@ -229,19 +244,19 @@ public class TextComponentSettings implements ComponentSettings {
     @Override
     public String toString() {
         return "TextComponentSettings{" +
-                "tableId='" + tableId + '\'' +
-                ", streamIdField=" + streamIdField +
-                ", partNoField=" + partNoField +
-                ", recordNoField=" + recordNoField +
-                ", lineFromField=" + lineFromField +
-                ", colFromField=" + colFromField +
-                ", lineToField=" + lineToField +
-                ", colToField=" + colToField +
-                ", pipeline=" + pipeline +
-                ", showAsHtml=" + showAsHtml +
-                ", showStepping=" + showStepping +
-                ", modelVersion='" + modelVersion + '\'' +
-                '}';
+               "tableId='" + tableId + '\'' +
+               ", streamIdField=" + streamIdField +
+               ", partNoField=" + partNoField +
+               ", recordNoField=" + recordNoField +
+               ", lineFromField=" + lineFromField +
+               ", colFromField=" + colFromField +
+               ", lineToField=" + lineToField +
+               ", colToField=" + colToField +
+               ", pipeline=" + pipeline +
+               ", showAsHtml=" + showAsHtml +
+               ", showStepping=" + showStepping +
+               ", modelVersion='" + modelVersion + '\'' +
+               '}';
     }
 
     public static Builder builder() {

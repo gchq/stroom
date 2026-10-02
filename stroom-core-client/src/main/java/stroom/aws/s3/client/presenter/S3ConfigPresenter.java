@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.aws.s3.client.presenter;
@@ -25,7 +24,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -43,7 +42,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
-public class S3ConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView, S3ConfigDoc> {
+public class S3ConfigPresenter extends DocTabPresenter<LinkTabPanelView, S3ConfigDoc> {
 
     private static final S3ConfigResource S3_CONFIG_RESOURCE = GWT.create(S3ConfigResource.class);
     private static final TabData CONFIG = new TabDataImpl("Config");
@@ -77,8 +76,8 @@ public class S3ConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
                 editorPresenter.setMode(AceEditorMode.PROPERTIES);
-                registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
-                registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+                registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
+                registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
                 return editorPresenter;
             }
 
@@ -97,8 +96,7 @@ public class S3ConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView
 
             @Override
             public S3ConfigDoc onWrite(final EditorPresenter presenter, final S3ConfigDoc document) {
-                document.setData(presenter.getText());
-                return document;
+                return document.copy().data(presenter.getText()).build();
             }
         });
         addTab(DOCUMENTATION, new MarkdownTabProvider<S3ConfigDoc>(eventBus, markdownEditPresenterProvider) {
@@ -114,8 +112,7 @@ public class S3ConfigPresenter extends DocumentEditTabPresenter<LinkTabPanelView
             @Override
             public S3ConfigDoc onWrite(final MarkdownEditPresenter presenter,
                                        final S3ConfigDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

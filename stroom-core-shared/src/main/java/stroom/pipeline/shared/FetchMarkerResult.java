@@ -20,6 +20,7 @@ import stroom.pipeline.shared.FetchDataRequest.DisplayMode;
 import stroom.util.shared.Count;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,7 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class FetchMarkerResult extends AbstractFetchDataResult {
+public final class FetchMarkerResult extends AbstractFetchDataResult {
 
     public static final int MAX_MARKERS = 100;
     public static final int MAX_TOTAL_MARKERS = 1000;
@@ -63,10 +64,26 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
         if (!DisplayMode.MARKER.equals(displayMode)) {
             throw new IllegalArgumentException(
                     "Invalid displayMode " + displayMode + ". " +
-                            "FetchMarkerResult should only ever have a display mode of MARKER");
+                    "FetchMarkerResult should only ever have a display mode of MARKER");
         }
 
         this.markers = markers;
+    }
+
+    @SerialisationTestConstructor
+    private FetchMarkerResult() {
+        this(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                DisplayMode.MARKER,
+                null);
     }
 
     public List<Marker> getMarkers() {

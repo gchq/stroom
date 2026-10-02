@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,18 +18,23 @@ package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.data.PipelinePropertyValue;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * This entity is used to persist pipeline configuration.
@@ -61,24 +66,20 @@ import java.util.Objects;
         "parentPipeline",
         "pipelineData"})
 @JsonInclude(Include.NON_NULL)
-public class PipelineDoc extends Doc {
+public class PipelineDoc extends AbstractDoc {
 
     public static final String TYPE = "Pipeline";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.PIPELINE_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private DocRef parentPipeline;
+    private final DocRef parentPipeline;
     @JsonProperty
-    private PipelineData pipelineData;
-
-    public PipelineDoc() {
-    }
+    private final PipelineData pipelineData;
 
     @JsonCreator
-    public PipelineDoc(@JsonProperty("type") final String type,
-                       @JsonProperty("uuid") final String uuid,
+    public PipelineDoc(@JsonProperty("uuid") final String uuid,
                        @JsonProperty("name") final String name,
                        @JsonProperty("version") final String version,
                        @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -88,7 +89,7 @@ public class PipelineDoc extends Doc {
                        @JsonProperty("description") final String description,
                        @JsonProperty("parentPipeline") final DocRef parentPipeline,
                        @JsonProperty("pipelineData") final PipelineData pipelineData) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.parentPipeline = parentPipeline;
         this.pipelineData = pipelineData;
@@ -114,24 +115,27 @@ public class PipelineDoc extends Doc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public DocRef getParentPipeline() {
         return parentPipeline;
-    }
-
-    public void setParentPipeline(final DocRef parentPipeline) {
-        this.parentPipeline = parentPipeline;
     }
 
     public PipelineData getPipelineData() {
         return pipelineData;
     }
 
-    public void setPipelineData(final PipelineData pipelineData) {
-        this.pipelineData = pipelineData;
+    @JsonIgnore
+    public List<DocRef> getPropertyDocRefs() {
+        if (pipelineData != null && pipelineData.getProperties() != null &&
+            pipelineData.getProperties().getAdd() != null) {
+            return pipelineData.getProperties().getAdd().stream()
+                    .map(PipelineProperty::getValue)
+                    .filter(Objects::nonNull)
+                    .map(PipelinePropertyValue::getEntity)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        }
+
+        return List.of();
     }
 
     @Override
@@ -153,7 +157,70 @@ public class PipelineDoc extends Doc {
 
     @Override
     public int hashCode() {
-
         return Objects.hash(super.hashCode(), description, parentPipeline, pipelineData);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder
+            extends AbstractBuilder<PipelineDoc, Builder> {
+
+        private String description;
+        private DocRef parentPipeline;
+        private PipelineData pipelineData;
+
+        private Builder() {
+        }
+
+        private Builder(final PipelineDoc pipelineDoc) {
+            super(pipelineDoc);
+            this.description = pipelineDoc.description;
+            this.parentPipeline = pipelineDoc.parentPipeline;
+            this.pipelineData = pipelineDoc.pipelineData;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder parentPipeline(final DocRef parentPipeline) {
+            this.parentPipeline = parentPipeline;
+            return self();
+        }
+
+        public Builder pipelineData(final PipelineData pipelineData) {
+            this.pipelineData = pipelineData;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public PipelineDoc build() {
+            return new PipelineDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    parentPipeline,
+                    pipelineData);
+        }
     }
 }

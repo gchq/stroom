@@ -16,12 +16,12 @@
 
 package stroom.index.impl;
 
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
 import stroom.index.shared.UpdateField;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.util.shared.ResultPage;
 

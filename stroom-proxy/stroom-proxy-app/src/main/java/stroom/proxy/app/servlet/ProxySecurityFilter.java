@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,10 @@
 
 package stroom.proxy.app.servlet;
 
-import stroom.proxy.app.ContentSyncConfig;
-import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.event.EventResource;
-import stroom.proxy.app.handler.FeedStatusConfig;
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -58,29 +55,22 @@ public class ProxySecurityFilter implements Filter {
     private static final String IGNORE_URI_REGEX = "ignoreUri";
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
+    private static final String EVENT_RESOURCE_PATH = ResourcePaths.buildAuthenticatedApiPath(
+            EventResource.BASE_RESOURCE_PATH);
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProxySecurityFilter.class);
 
-    private final Provider<ContentSyncConfig> contentSyncConfigProvider;
-    private final Provider<FeedStatusConfig> feedStatusConfigProvider;
-    private final Provider<ProxyConfig> proxyConfigProvider;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
+    private final Provider<CommonSecurityContext> securityContextProvider;
     private final UserIdentityFactory userIdentityFactory;
     private final AuthenticationBypassChecker authenticationBypassChecker;
 
     private Pattern pattern = null;
 
     @Inject
-    public ProxySecurityFilter(final Provider<ContentSyncConfig> contentSyncConfigProvider,
-                               final Provider<FeedStatusConfig> feedStatusConfigProvider,
-                               final Provider<ProxyConfig> proxyConfigProvider,
-                               final DefaultOpenIdCredentials defaultOpenIdCredentials,
+    public ProxySecurityFilter(final Provider<CommonSecurityContext> securityContextProvider,
                                final UserIdentityFactory userIdentityFactory,
                                final AuthenticationBypassChecker authenticationBypassChecker) {
-        this.contentSyncConfigProvider = contentSyncConfigProvider;
-        this.feedStatusConfigProvider = feedStatusConfigProvider;
-        this.proxyConfigProvider = proxyConfigProvider;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
+        this.securityContextProvider = securityContextProvider;
         this.userIdentityFactory = userIdentityFactory;
         this.authenticationBypassChecker = authenticationBypassChecker;
     }
@@ -153,10 +143,8 @@ public class ProxySecurityFilter implements Filter {
                     servletName, fullPath, servletPath);
             chain.doFilter(request, response);
         } else {
-            final boolean isApiRequest = fullPath.contains(ResourcePaths.API_ROOT_PATH);
-
-            if (isApiRequest) {
-                if (fullPath.contains(EventResource.BASE_RESOURCE_PATH)) {
+            if (isApiRequest(servletPath)) {
+                if (isEventResourceRequest(fullPath)) {
                     // Allow all event requests through as security is applied elsewhere.
                     chain.doFilter(request, response);
                 } else {
@@ -166,8 +154,9 @@ public class ProxySecurityFilter implements Filter {
                     if (optUserIdentity.isPresent()) {
                         LOGGER.debug("Authenticated request to fullPath: {}, servletPath: {}, userIdentity: {}",
                                 fullPath, servletPath, optUserIdentity.get());
-                        chain.doFilter(request, response);
 
+                        securityContextProvider.get().asUser(optUserIdentity.get(), () ->
+                                process(request, response, chain));
                     } else {
                         LOGGER.debug("Unauthorised request to fullPath: {}, servletPath: {}", fullPath, servletPath);
                         response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
@@ -179,37 +168,6 @@ public class ProxySecurityFilter implements Filter {
         }
     }
 
-//    private String getConfiguredApiKey(final String requestUri) {
-//        // TODO it could be argued that we should have a single API key to use for all of these resources.
-//        final String apiKey;
-//        final ProxyConfig proxyConfig = proxyConfigProvider.get();
-//        if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
-//            final FeedStatusConfig feedStatusConfig = feedStatusConfigProvider.get();
-//            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(feedStatusConfig.getApiKey())) {
-//                LOGGER.info("Authenticating using default API key. For production use, set up an API key in Stroom!");
-//                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
-//            } else {
-//                apiKey = feedStatusConfig.getApiKey();
-//            }
-//        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH
-//        + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
-//            final ContentSyncConfig contentSyncConfig = contentSyncConfigProvider.get();
-//            if (proxyConfig.isUseDefaultOpenIdCredentials() && Strings.isNullOrEmpty(contentSyncConfig.getApiKey())) {
-//                LOGGER.info("Using default authentication token, should only be used in test/demo environments.");
-//                apiKey = Objects.requireNonNull(defaultOpenIdCredentials.getApiKey());
-//            } else {
-//                apiKey = contentSyncConfig.getApiKey();
-//            }
-//        } else {
-//            throw new RuntimeException(LogUtil.message(
-//                    "Unable to determine which config to get API key from for requestURI {}", requestUri));
-//        }
-//        if (apiKey == null || apiKey.isEmpty()) {
-//            throw new RuntimeException(LogUtil.message(
-//                    "API key is empty, requestURI {}", requestUri));
-//        }
-//        return apiKey;
-//    }
 
     private boolean ignoreUri(final String uri) {
         return pattern != null && pattern.matcher(uri).matches();
@@ -256,5 +214,23 @@ public class ProxySecurityFilter implements Filter {
 
     @Override
     public void destroy() {
+    }
+
+    private boolean isApiRequest(final String servletPath) {
+        return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
+    }
+
+    private boolean isEventResourceRequest(final String fullPath) {
+        return fullPath.startsWith(EVENT_RESOURCE_PATH);
+    }
+
+    private void process(final HttpServletRequest request,
+                         final HttpServletResponse response,
+                         final FilterChain chain) {
+        try {
+            chain.doFilter(request, response);
+        } catch (final IOException | ServletException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

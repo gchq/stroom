@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common;
 
 import stroom.test.common.DirectorySnapshot.Snapshot;
@@ -20,7 +36,7 @@ class TestDirectorySnapshot {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDirectorySnapshot.class);
 
     @Test
-    void test(@TempDir Path path) throws IOException {
+    void test(@TempDir final Path path) throws IOException {
         createFile(path.resolve("file=_a0"));
         createFile(path.resolve("a1/file=_a1"));
         createFile(path.resolve("a1/a2/file_a2"));
@@ -42,7 +58,7 @@ class TestDirectorySnapshot {
                 .isEqualTo(snapshot1);
     }
 
-    private static void createFile(Path file) throws IOException {
+    private static void createFile(final Path file) throws IOException {
         Files.createDirectories(file.getParent());
         Files.writeString(file, "This is " + file, StandardOpenOption.CREATE);
     }

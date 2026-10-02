@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.query.language.token.Param;
 
 import java.text.ParseException;
 import java.util.function.Supplier;
@@ -56,7 +55,7 @@ class Contains extends AbstractManyChildFunction {
 
         // See if this is a static computation.
         simple = true;
-        for (Param param : params) {
+        for (final Param param : params) {
             if (!(param instanceof Val)) {
                 simple = false;
                 break;

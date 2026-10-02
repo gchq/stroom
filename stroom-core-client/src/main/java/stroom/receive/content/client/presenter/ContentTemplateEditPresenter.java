@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.content.client.presenter;
@@ -20,9 +19,10 @@ package stroom.receive.content.client.presenter;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.item.client.SelectionBox;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.receive.content.client.presenter.ContentTemplateEditPresenter.ContentTemplateEditView;
 import stroom.receive.content.shared.ContentTemplate;
@@ -30,7 +30,6 @@ import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.TemplateType;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
@@ -38,6 +37,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public class ContentTemplateEditPresenter
         extends MyPresenterWidget<ContentTemplateEditView>
@@ -50,7 +51,6 @@ public class ContentTemplateEditPresenter
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel;
     private final DocSelectionBoxPresenter pipelineSelectionPresenter;
     private ContentTemplate originalTemplate;
-
 
     @Inject
     public ContentTemplateEditPresenter(final EventBus eventBus,
@@ -86,7 +86,9 @@ public class ContentTemplateEditPresenter
 
     @Override
     protected void onBind() {
-
+        registerHandler(getView().getTemplateTypeSelectionBox().addValueChangeHandler(event -> {
+            getView().setTemplateType(event.getValue());
+        }));
     }
 
     @Override
@@ -97,14 +99,14 @@ public class ContentTemplateEditPresenter
     void read(final ContentTemplate contentTemplate) {
         this.originalTemplate = contentTemplate;
         getView().setName(contentTemplate.getName());
-        editExpressionPresenter.read(NullSafe.requireNonNullElseGet(
-                contentTemplate.getExpression(),
+        editExpressionPresenter.read(Objects.requireNonNullElseGet(contentTemplate.getExpression(),
                 () -> ExpressionOperator.builder().build()));
 
         final ContentTemplateEditView view = getView();
         view.setName(contentTemplate.getName());
         view.setDescription(contentTemplate.getDescription());
         view.setTemplateType(contentTemplate.getTemplateType());
+        view.setCopyDependencies(contentTemplate.isCopyElementDependencies());
         view.setProcessorPriority(contentTemplate.getProcessorPriority());
         view.setProcessorMaxConcurrent(contentTemplate.getProcessorMaxConcurrent());
         pipelineSelectionPresenter.setSelectedEntityReference(contentTemplate.getPipeline(), true);
@@ -117,6 +119,7 @@ public class ContentTemplateEditPresenter
                 .withName(view.getName())
                 .withDescription(view.getDescription())
                 .withTemplateType(view.getTemplateType())
+                .withCopyElementDependencies(view.isCopyDependencies())
                 .withPipeline(pipelineSelectionPresenter.getSelectedEntityReference())
                 .withExpression(expression)
                 .withProcessorPriority(view.getProcessorPriority())
@@ -148,9 +151,15 @@ public class ContentTemplateEditPresenter
 
         void setDescription(String description);
 
+        SelectionBox<TemplateType> getTemplateTypeSelectionBox();
+
         TemplateType getTemplateType();
 
         void setTemplateType(final TemplateType templateType);
+
+        boolean isCopyDependencies();
+
+        void setCopyDependencies(final boolean copyDependencies);
 
         void setPipelineSelector(final View view);
 

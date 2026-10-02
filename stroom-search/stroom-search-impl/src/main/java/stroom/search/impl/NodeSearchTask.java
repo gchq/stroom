@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package stroom.search.impl;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequestSource;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.task.shared.TaskId;
 

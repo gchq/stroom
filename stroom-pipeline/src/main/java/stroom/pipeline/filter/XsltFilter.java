@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.filter;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.PoolItem;
@@ -105,7 +104,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     private final PipelineContext pipelineContext;
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
-    private final DocFinder<XsltDoc> docFinder;
+    private final PipelineDocFinder<XsltDoc> pipelineDocFinder;
 
     private ErrorListener errorListener;
 
@@ -119,6 +118,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      */
     private PoolItem<StoredXsltExecutable> poolItem;
     private XsltExecutable xsltExecutable;
+    private TemplatesImpl cachedTemplates;
     private TransformerHandler handler;
     private Locator locator;
     private boolean xsltRequired = false;
@@ -140,7 +140,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                       final PathCreator pathCreator,
                       final Provider<FeedHolder> feedHolder,
                       final Provider<PipelineHolder> pipelineHolder,
-                      final DocRefInfoService docRefInfoService) {
+                      final DocFinder docFinder) {
         this.xsltPool = xsltPool;
         this.errorReceiverProxy = errorReceiverProxy;
         this.xsltStore = xsltStore;
@@ -150,7 +150,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
         this.feedHolder = feedHolder;
         this.pipelineHolder = pipelineHolder;
 
-        this.docFinder = new DocFinder<>(XsltDoc.TYPE, pathCreator, xsltStore, docRefInfoService);
+        this.pipelineDocFinder = new PipelineDocFinder<>(XsltDoc.TYPE, pathCreator, docFinder);
     }
 
     @Override
@@ -159,7 +159,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
             errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
             maxElementCount = xsltConfig.getMaxElements();
 
-            final XsltDoc xslt = loadXsltDoc();
+            XsltDoc xslt = loadXsltDoc();
 
             // If we have found XSLT then get a template.
             if (xslt != null) {
@@ -167,7 +167,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                 // want to add them to the newly loaded XSLT.
 
                 if (injectedCode != null) {
-                    xslt.setData(injectedCode);
+                    xslt = xslt.copy().data(injectedCode).build();
                     usePool = false;
                 }
 
@@ -202,6 +202,9 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                         final String msg = sb.toString();
                         throw ProcessException.create(msg);
                     }
+
+                    // Cache the TemplatesImpl so we don't recreate it per document.
+                    cachedTemplates = new TemplatesImpl(xsltExecutable);
                 }
             }
 
@@ -262,8 +265,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 //                configuration.setLineNumbering(!pipelineContext.isStepping());
 
                 // Create a handler to receive all SAX events.
-                final TemplatesImpl templates = new TemplatesImpl(xsltExecutable);
-                final TransformerImpl transformer = (TransformerImpl) templates.newTransformer();
+                final TransformerImpl transformer = (TransformerImpl) cachedTemplates.newTransformer();
                 transformer.setErrorListener(errorListener);
                 configureMessageListener(transformer);
 
@@ -338,7 +340,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
                     TransformerImpl::getUnderlyingXsltTransformer,
                     xsltTransformer ->
                             xsltTransformer.setMessageListener(this::onXsltMessage));
-        } catch (Exception e) {
+        } catch (final Exception e) {
             // Just log and swallow as the message listener is not critical
             LOGGER.error("Error configuring XSLT message listener: " + e.getMessage(), e);
         }
@@ -356,7 +358,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
      * <pre>{@code <xsl:message><info>my message</info></xsl:message>}</pre>
      * Setting {@code terminate} trumps any severity set.
      */
-    private void onXsltMessage(XdmNode content, boolean terminate, SourceLocator locator) {
+    private void onXsltMessage(final XdmNode content, final boolean terminate, final SourceLocator locator) {
 
         boolean foundMsg = false;
         String msg = "";
@@ -636,7 +638,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
     }
 
     @PipelineProperty(description = "The XSLT to use.", displayPriority = 1)
-    @PipelinePropertyDocRef(types = XsltDoc.TYPE)
+    @PipelinePropertyDocRef(types = XsltDoc.TYPE, canEmbed = true)
     public void setXslt(final DocRef xsltRef) {
         this.xsltRef = xsltRef;
     }
@@ -720,7 +722,7 @@ public class XsltFilter extends AbstractXMLFilter implements SupportsCodeInjecti
 
     @Override
     public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
-        return docFinder.findDoc(
+        return pipelineDocFinder.findDoc(
                 xsltRef,
                 xsltNamePattern,
                 feedName,

@@ -39,6 +39,8 @@ public @interface ConfigurableElement {
 
     String type();
 
+    String displayValue() default "";
+
     Category category() default Category.INTERNAL;
 
     String[] roles();

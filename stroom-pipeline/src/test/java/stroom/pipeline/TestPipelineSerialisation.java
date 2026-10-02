@@ -18,46 +18,45 @@ package stroom.pipeline;
 
 
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
+import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.xml.XMLMarshallerUtil;
+import stroom.util.json.JsonUtil;
 
-import jakarta.xml.bind.JAXBContext;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPipelineSerialisation {
 
-    private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
+    private static final PipelineElementType ELEM_TYPE = new PipelineElementType(
+            "TestElement",
+            "Test Element",
+            null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
 
     @Test
     void testEmpty() {
-        final JAXBContext jaxbContext = PipelineSerialiser.getJAXBContext();
-        final PipelineData pipelineData = new PipelineData();
-        final String string = XMLMarshallerUtil.marshal(jaxbContext,
-                XMLMarshallerUtil.removeEmptyCollections(pipelineData));
-        assertThat("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
-                "<pipeline/>").isEqualTo(string.trim());
+        final PipelineData pipelineData = new PipelineDataBuilder().build();
+        final String string = JsonUtil.writeValueAsString(pipelineData);
+        assertThat(string.trim()).isEqualTo("{ }");
     }
 
     @Test
     void testElements() {
-        final JAXBContext jaxbContext = PipelineSerialiser.getJAXBContext();
-        final PipelineData pipelineData = new PipelineData();
-        pipelineData.addElement(ELEM_TYPE, "test1");
-        final String string = XMLMarshallerUtil.marshal(jaxbContext,
-                XMLMarshallerUtil.removeEmptyCollections(pipelineData));
-        assertThat("<?xml version=\"1.1\" encoding=\"UTF-8\"?>\n" +
-                "<pipeline>\n" +
-                "   <elements>\n" +
-                "      <add>\n" +
-                "         <element>\n" +
-                "            <id>test1</id>\n" +
-                "            <type>TestElement</type>\n" +
-                "         </element>\n" +
-                "      </add>\n" +
-                "   </elements>\n" +
-                "</pipeline>").isEqualTo(string.trim());
+        final PipelineData pipelineData = new PipelineDataBuilder()
+                .addElement(new PipelineElement("test1", ELEM_TYPE.getType(), "test1Name", null))
+                .build();
+        final String string = JsonUtil.writeValueAsString(pipelineData);
+        assertThat(string.trim()).isEqualTo("""
+                {
+                  "elements" : {
+                    "add" : [ {
+                      "id" : "test1",
+                      "type" : "TestElement",
+                      "name" : "test1Name"
+                    } ]
+                  }
+                }""");
     }
 }

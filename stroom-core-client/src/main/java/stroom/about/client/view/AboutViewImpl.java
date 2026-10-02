@@ -58,7 +58,7 @@ public class AboutViewImpl extends ViewImpl implements AboutPresenter.AboutView 
     }
 
     @Override
-    public void setHTML(String h) {
+    public void setHTML(final String h) {
         html.getElement().setInnerHTML(h);
     }
 

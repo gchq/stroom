@@ -77,7 +77,7 @@ public class ConfirmEvent extends CommonAlertEvent<ConfirmEvent.Handler> {
     }
 
     @Override
-    protected void dispatch(Handler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onConfirm(this);
     }
 

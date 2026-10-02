@@ -25,17 +25,17 @@ public class WrappedAttributes implements Attributes {
         return atts;
     }
 
-    public void setAtts(Attributes atts) {
+    public void setAtts(final Attributes atts) {
         this.atts = atts;
     }
 
     @Override
-    public int getIndex(String uri, String localName) {
+    public int getIndex(final String uri, final String localName) {
         return atts.getIndex(uri, localName);
     }
 
     @Override
-    public int getIndex(String qName) {
+    public int getIndex(final String qName) {
         return atts.getIndex(qName);
     }
 
@@ -45,47 +45,47 @@ public class WrappedAttributes implements Attributes {
     }
 
     @Override
-    public String getLocalName(int index) {
+    public String getLocalName(final int index) {
         return atts.getLocalName(index);
     }
 
     @Override
-    public String getQName(int index) {
+    public String getQName(final int index) {
         return atts.getQName(index);
     }
 
     @Override
-    public String getType(int index) {
+    public String getType(final int index) {
         return atts.getType(index);
     }
 
     @Override
-    public String getType(String uri, String localName) {
+    public String getType(final String uri, final String localName) {
         return atts.getType(uri, localName);
     }
 
     @Override
-    public String getType(String qName) {
+    public String getType(final String qName) {
         return atts.getType(qName);
     }
 
     @Override
-    public String getURI(int index) {
+    public String getURI(final int index) {
         return atts.getURI(index);
     }
 
     @Override
-    public String getValue(int index) {
+    public String getValue(final int index) {
         return atts.getValue(index);
     }
 
     @Override
-    public String getValue(String uri, String localName) {
+    public String getValue(final String uri, final String localName) {
         return atts.getValue(uri, localName);
     }
 
     @Override
-    public String getValue(String qName) {
+    public String getValue(final String qName) {
         return atts.getValue(qName);
     }
 }

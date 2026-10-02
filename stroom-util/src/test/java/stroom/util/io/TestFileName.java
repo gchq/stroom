@@ -17,21 +17,33 @@
 package stroom.util.io;
 
 
-import org.junit.jupiter.api.Test;
+import stroom.test.common.TestUtil;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import com.google.inject.TypeLiteral;
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+
+import java.util.stream.Stream;
 
 class TestFileName {
 
-    @Test
-    void testSimple() {
-        assertThat(FileName.parse("001.dat").getBaseName()).isEqualTo("001");
-        assertThat(FileName.parse("001.dat").getExtension()).isEqualTo("dat");
-        assertThat(FileName.parse("001.001.dat").getBaseName()).isEqualTo("001.001");
-        assertThat(FileName.parse("001.001.dat").getExtension()).isEqualTo("dat");
-        assertThat(FileName.parse("001").getBaseName()).isEqualTo("001");
-        assertThat(FileName.parse("001").getExtension()).isEqualTo("");
-        assertThat(FileName.parse(".dat").getBaseName()).isEqualTo("");
-        assertThat(FileName.parse(".dat").getExtension()).isEqualTo("dat");
+    @TestFactory
+    Stream<DynamicTest> test() {
+        return TestUtil.buildDynamicTestStream()
+                .withInputType(String.class)
+                .withWrappedOutputType(new TypeLiteral<Tuple2<String, String>>() {
+                })
+                .withTestFunction(testCase -> {
+                    final FileName fileName = FileName.parse(testCase.getInput());
+                    return Tuple.of(fileName.getBaseName(), fileName.getExtension());
+                })
+                .withSimpleEqualityAssertion()
+                .addCase("001.dat", Tuple.of("001", "dat"))
+                .addCase("001.001.dat", Tuple.of("001.001", "dat"))
+                .addCase("001", Tuple.of("001", ""))
+                .addCase(".dat", Tuple.of("", "dat"))
+                .build();
     }
 }

@@ -21,7 +21,7 @@ import java.util.Map;
 
 public final class LuceneVersionUtil {
 
-    public static final LuceneVersion CURRENT_LUCENE_VERSION = LuceneVersion.LUCENE_9_8_0;
+    public static final LuceneVersion CURRENT_LUCENE_VERSION = LuceneVersion.LUCENE_10_3_1;
 
     private static final Map<String, LuceneVersion> VERSION_MAP = new HashMap<>();
 

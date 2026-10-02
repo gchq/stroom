@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline;
 
 import stroom.util.xml.FatalErrorListener;
@@ -22,7 +38,7 @@ class TestXmlWriter {
     void testUnicodeHandling() throws Exception {
         final StringBuilder sb = new StringBuilder();
         for (int i = '\u0001'; i <= '\uffff'; i++) {
-            char c = (char) i;
+            final char c = (char) i;
             if (!UTF16CharacterSet.isSurrogate(c)) {
                 sb.append(c);
             }
@@ -34,7 +50,7 @@ class TestXmlWriter {
         attributes.addAttribute("", "att", "att", "string", text);
 
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        final TransformerHandler th = XMLUtil.createTransformerHandler(new FatalErrorListener(), true);
+        final TransformerHandler th = XMLUtil.createTransformerHandler(new FatalErrorListener(), true, true);
         th.setResult(new StreamResult(baos));
 
         th.startDocument();

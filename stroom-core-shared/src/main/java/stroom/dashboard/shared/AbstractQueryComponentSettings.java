@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,27 +26,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public abstract class AbstractQueryComponentSettings implements ComponentSettings, HasSelectionQuery {
+public abstract class AbstractQueryComponentSettings implements HasSelectionQuery {
 
     @JsonProperty
     private final Automate automate;
     @JsonProperty
     private final List<ComponentSelectionHandler> selectionHandlers;
-    @JsonProperty
-    private final QueryKey lastQueryKey;
-    @JsonProperty
-    private final String lastQueryNode;
 
     @SuppressWarnings("checkstyle:LineLength")
     @JsonCreator
     public AbstractQueryComponentSettings(@JsonProperty("automate") final Automate automate,
-                                          @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
-                                          @JsonProperty("lastQueryKey") final QueryKey lastQueryKey,
-                                          @JsonProperty("lastQueryNode") final String lastQueryNode) {
+                                          @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
         this.automate = automate;
         this.selectionHandlers = selectionHandlers;
-        this.lastQueryKey = lastQueryKey;
-        this.lastQueryNode = lastQueryNode;
     }
 
     public Automate getAutomate() {
@@ -65,14 +56,6 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
         return selectionHandlers;
     }
 
-    public QueryKey getLastQueryKey() {
-        return lastQueryKey;
-    }
-
-    public String getLastQueryNode() {
-        return lastQueryNode;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -82,15 +65,18 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
             return false;
         }
         final AbstractQueryComponentSettings that = (AbstractQueryComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(automate, that.automate);
+//        final boolean b2 = Objects.equals(selectionHandlers, that.selectionHandlers);
+
         return Objects.equals(automate, that.automate) &&
-               Objects.equals(selectionHandlers, that.selectionHandlers) &&
-               Objects.equals(lastQueryKey, that.lastQueryKey) &&
-               Objects.equals(lastQueryNode, that.lastQueryNode);
+               Objects.equals(selectionHandlers, that.selectionHandlers);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(automate, selectionHandlers, lastQueryKey, lastQueryNode);
+        return Objects.hash(automate, selectionHandlers);
     }
 
     @Override
@@ -98,8 +84,6 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
         return "AbstractQueryComponentSettings{" +
                "automate=" + automate +
                ", selectionHandlers=" + selectionHandlers +
-               ", lastQueryKey=" + lastQueryKey +
-               ", lastQueryNode='" + lastQueryNode + '\'' +
                '}';
     }
 
@@ -113,8 +97,6 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
 
         Automate automate;
         List<ComponentSelectionHandler> selectionQuery;
-        QueryKey lastQueryKey;
-        String lastQueryNode;
 
         AbstractBuilder() {
         }
@@ -126,8 +108,6 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
             this.selectionQuery = settings.selectionHandlers == null
                     ? null
                     : new ArrayList<>(settings.selectionHandlers);
-            this.lastQueryKey = settings.lastQueryKey;
-            this.lastQueryNode = settings.lastQueryNode;
         }
 
         public B automate(final Automate automate) {
@@ -138,16 +118,6 @@ public abstract class AbstractQueryComponentSettings implements ComponentSetting
         @Override
         public B selectionQuery(final List<ComponentSelectionHandler> selectionQuery) {
             this.selectionQuery = selectionQuery;
-            return self();
-        }
-
-        public B lastQueryKey(final QueryKey lastQueryKey) {
-            this.lastQueryKey = lastQueryKey;
-            return self();
-        }
-
-        public B lastQueryNode(final String lastQueryNode) {
-            this.lastQueryNode = lastQueryNode;
             return self();
         }
     }

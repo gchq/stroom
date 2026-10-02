@@ -54,7 +54,7 @@ public class DataAttributes implements Attributes {
     }
 
     @Override
-    public int getIndex(String uri, String localName) {
+    public int getIndex(final String uri, final String localName) {
         if (localName.equals("name")) {
             if (type == Type.NAME_VALUE || type == Type.NAME_ONLY) {
                 return 0;
@@ -71,7 +71,7 @@ public class DataAttributes implements Attributes {
     }
 
     @Override
-    public int getIndex(String qName) {
+    public int getIndex(final String qName) {
         return getIndex(null, qName);
     }
 
@@ -81,47 +81,47 @@ public class DataAttributes implements Attributes {
     }
 
     @Override
-    public String getLocalName(int index) {
+    public String getLocalName(final int index) {
         return names[index];
     }
 
     @Override
-    public String getQName(int index) {
+    public String getQName(final int index) {
         return getLocalName(index);
     }
 
     @Override
-    public String getType(int index) {
+    public String getType(final int index) {
         return STRING;
     }
 
     @Override
-    public String getType(String uri, String localName) {
+    public String getType(final String uri, final String localName) {
         return STRING;
     }
 
     @Override
-    public String getType(String qName) {
+    public String getType(final String qName) {
         return STRING;
     }
 
     @Override
-    public String getURI(int index) {
+    public String getURI(final int index) {
         return BLANK;
     }
 
     @Override
-    public String getValue(int index) {
+    public String getValue(final int index) {
         return atts[index];
     }
 
     @Override
-    public String getValue(String uri, String localName) {
+    public String getValue(final String uri, final String localName) {
         return getValue(getIndex(localName));
     }
 
     @Override
-    public String getValue(String qName) {
+    public String getValue(final String qName) {
         return getValue(getIndex(qName));
     }
 

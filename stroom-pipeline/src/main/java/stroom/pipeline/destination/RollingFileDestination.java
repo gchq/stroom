@@ -112,7 +112,7 @@ public class RollingFileDestination extends RollingDestination {
 
     private OutputStream createInnerOutputStream() {
         try {
-            OutputStream fileOutputStream = Files.newOutputStream(
+            final OutputStream fileOutputStream = Files.newOutputStream(
                     file,
                     StandardOpenOption.CREATE,
                     StandardOpenOption.WRITE,
@@ -125,9 +125,9 @@ public class RollingFileDestination extends RollingDestination {
     }
 
     @Override
-    protected void afterRoll(Consumer<Throwable> exceptionConsumer) {
-        boolean success = false;
+    protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
 
+        // TODO change to use TemplateCache
         String destFileName = rolledFileName;
         destFileName = pathCreator.replaceTimeVars(destFileName);
         destFileName = pathCreator.replaceUUIDVars(destFileName);
@@ -140,11 +140,12 @@ public class RollingFileDestination extends RollingDestination {
         }
 
         // Create source path.
-        Path source = file;
+        final Path source = file;
 
         // Create destination path.
         Path dest = destFile;
 
+        boolean success = false;
         // If we have got valid paths for source and dest then attempt move.
         if (source != null) {
             if (Files.isRegularFile(dest)) {

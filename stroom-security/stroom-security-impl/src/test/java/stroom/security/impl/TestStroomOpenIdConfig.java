@@ -1,18 +1,34 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl;
 
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.test.common.AbstractValidatorTest;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,16 +39,13 @@ class TestStroomOpenIdConfig extends AbstractValidatorTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestStroomOpenIdConfig.class);
 
     @TestFactory
-    Stream<DynamicTest> testSerDeSer() throws JsonProcessingException {
-
-        final ObjectMapper objectMapper = new ObjectMapper()
-                .enable(SerializationFeature.INDENT_OUTPUT);
+    Stream<DynamicTest> testSerDeSer() {
 
         final Map<IdpType, IdpType> typesMaps = new HashMap<>();
         for (final IdpType idpType : IdpType.values()) {
             typesMaps.put(idpType, idpType);
         }
-        typesMaps.put(null, null);
+        typesMaps.put(null, IdpType.INTERNAL_IDP);
 
         return typesMaps.entrySet()
                 .stream()
@@ -43,7 +56,7 @@ class TestStroomOpenIdConfig extends AbstractValidatorTest {
                     return DynamicTest.dynamicTest(
                             NullSafe.toStringOrElse(input, "null"),
                             () -> {
-                                doTest(objectMapper, entry.getKey(), expectedOutput);
+                                doTest(JsonUtil.getMapper(), entry.getKey(), expectedOutput);
                             });
                 });
     }
@@ -51,39 +64,51 @@ class TestStroomOpenIdConfig extends AbstractValidatorTest {
     private void doTest(final ObjectMapper objectMapper,
                         final IdpType inputType,
                         final IdpType expectedType) {
-        try {
-            LOGGER.info("idpType: {}", inputType);
+        LOGGER.info("idpType: {}", inputType);
 
-            final StroomOpenIdConfig stroomOpenIdConfig = new StroomOpenIdConfig()
-                    .withIdentityProviderType(inputType);
+        final StroomOpenIdConfig stroomOpenIdConfig = new StroomOpenIdConfig()
+                .withIdentityProviderType(inputType);
 
-            Assertions.assertThat(stroomOpenIdConfig.getIdentityProviderType())
-                    .isEqualTo(expectedType);
+        Assertions.assertThat(stroomOpenIdConfig.getIdentityProviderType())
+                .isEqualTo(expectedType);
 
-            final String json = objectMapper.writeValueAsString(stroomOpenIdConfig);
+        final String json = objectMapper.writeValueAsString(stroomOpenIdConfig);
 
-            LOGGER.info("json\n{}", json);
+        LOGGER.info("json\n{}", json);
 
-            final AbstractOpenIdConfig abstractOpenIdConfig2 = objectMapper.readValue(json, StroomOpenIdConfig.class);
+        final AbstractOpenIdConfig abstractOpenIdConfig2 = objectMapper.readValue(json, StroomOpenIdConfig.class);
 
-            Assertions.assertThat(abstractOpenIdConfig2)
-                    .isEqualTo(stroomOpenIdConfig);
+        Assertions.assertThat(abstractOpenIdConfig2)
+                .isEqualTo(stroomOpenIdConfig);
 
-            // Use lower case enum values to make sure we can de-ser them
-            final String json2 = inputType != null
-                    ? json.replace(
-                    inputType.name().toUpperCase(),
-                    inputType.name().toLowerCase())
-                    : json;
+        // Use lower case enum values to make sure we can de-ser them
+        final String json2 = inputType != null
+                ? json.replace(
+                inputType.name().toUpperCase(),
+                inputType.name().toLowerCase())
+                : json;
 
-            LOGGER.info("json2\n{}", json2);
+        LOGGER.info("json2\n{}", json2);
 
-            final AbstractOpenIdConfig abstractOpenIdConfig3 = objectMapper.readValue(json2, StroomOpenIdConfig.class);
+        final AbstractOpenIdConfig abstractOpenIdConfig3 = objectMapper.readValue(json2, StroomOpenIdConfig.class);
 
-            Assertions.assertThat(abstractOpenIdConfig3)
-                    .isEqualTo(stroomOpenIdConfig);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        Assertions.assertThat(abstractOpenIdConfig3)
+                .isEqualTo(stroomOpenIdConfig);
+    }
+
+    @Test
+    void externalModeRequiresSomethingToValidateAudienceAgainst() {
+        // Fail closed: audience validation (on by default) must not be silently no-op'd because there is
+        // nothing to validate against. A default (internal) config is fine.
+        Assertions.assertThat(new StroomOpenIdConfig().isAudienceValidationConfigured()).isTrue();
+
+        // External + validateAudience (default true) + no allowedAudiences + no clientId -> misconfigured.
+        final StroomOpenIdConfig badConfig = new StroomOpenIdConfig()
+                .withIdentityProviderType(IdpType.EXTERNAL_IDP);
+        Assertions.assertThat(badConfig.isAudienceValidationConfigured()).isFalse();
+
+        // And the constraint fires through the validator (the @ValidationMethod is inherited from the base).
+        Assertions.assertThat(validate(badConfig))
+                .anyMatch(violation -> violation.getMessage().contains("allowedAudiences or clientId"));
     }
 }

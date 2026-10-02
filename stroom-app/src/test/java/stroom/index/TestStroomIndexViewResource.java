@@ -1,21 +1,36 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index;
 
 import stroom.app.App;
 import stroom.config.app.Config;
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
 import stroom.index.shared.IndexResource;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.ResourcePaths;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -65,9 +80,9 @@ class TestStroomIndexViewResource {
                         .build())
                 .build();
 
-        List<ResultRequest> resultRequestList = new ArrayList<>();
+        final List<ResultRequest> resultRequestList = new ArrayList<>();
         final DateTimeSettings dateTimeSettings = DateTimeSettings.builder().build();
-        SearchRequest searchRequest = new SearchRequest(
+        final SearchRequest searchRequest = new SearchRequest(
                 null,
                 queryKey,
                 query,
@@ -83,19 +98,19 @@ class TestStroomIndexViewResource {
     @Test
     void testSavedFromFile() throws IOException {
         // Given
-        String searchRequestJson = new String(Files.readAllBytes(Paths.get(
+        final String searchRequestJson = new String(Files.readAllBytes(Paths.get(
                 "src/test/resources/searchRequest.json")));
-        SearchRequest searchRequest = JsonUtil.readValue(searchRequestJson, SearchRequest.class);
-        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
+        final SearchRequest searchRequest = JsonUtil.readValue(searchRequestJson, SearchRequest.class);
+        final Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
 
         // When
-        Response response = client
+        final Response response = client
                 .target(SEARCH_TARGET)
                 .request()
                 .header("Authorization", "Bearer " + jwtToken)
                 .accept(MediaType.APPLICATION_XML, MediaType.APPLICATION_JSON)
                 .post(Entity.json(searchRequest));
-        SearchResponse searchResponse = response.readEntity(SearchResponse.class);
+        final SearchResponse searchResponse = response.readEntity(SearchResponse.class);
 
         // Then
         assertThat(response.getStatus()).isEqualTo(Response.Status.OK.getStatusCode());
@@ -108,13 +123,13 @@ class TestStroomIndexViewResource {
     // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes
     // ages to run no tests
     @Test
-    void test() throws JsonProcessingException {
+    void test() {
         // Given
-        SearchRequest searchRequest = getSearchRequest();
+        final SearchRequest searchRequest = getSearchRequest();
 
         // When
-        Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
-        Response response = client
+        final Client client = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
+        final Response response = client
                 .target(SEARCH_TARGET)
                 .request()
                 .header("Authorization", "Bearer " + jwtToken)

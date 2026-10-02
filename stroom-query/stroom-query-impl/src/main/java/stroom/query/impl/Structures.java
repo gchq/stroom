@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.query.impl;
 
-import stroom.query.language.token.TokenType;
+import stroom.query.api.token.TokenType;
 import stroom.query.shared.CompletionItem;
 import stroom.query.shared.CompletionSnippet;
 import stroom.query.shared.CompletionsRequest;
@@ -368,7 +368,7 @@ class Structures {
                         .map(row -> createCompletionValue(row, INITIAL_SCORE))
                         .forEach(resultList::add);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error adding structure completions: {}", e.getMessage(), e);
         }
     }

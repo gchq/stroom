@@ -33,7 +33,7 @@ public class InitialByteArrayOutputStream extends OutputStream {
     private GetBufferByteArrayOutputStream postBuffer;
 
     @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
-    public InitialByteArrayOutputStream(byte[] initialBuffer) {
+    public InitialByteArrayOutputStream(final byte[] initialBuffer) {
         preBuffer = initialBuffer;
     }
 
@@ -46,7 +46,7 @@ public class InitialByteArrayOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(int b) throws IOException {
+    public void write(final int b) throws IOException {
         checkPreBufferSize(1);
 
         if (postBuffer != null) {
@@ -58,7 +58,7 @@ public class InitialByteArrayOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(byte[] b) throws IOException {
+    public void write(final byte[] b) throws IOException {
         checkPreBufferSize(b.length);
 
         if (postBuffer != null) {
@@ -71,7 +71,7 @@ public class InitialByteArrayOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(byte[] b, int off, int len) throws IOException {
+    public void write(final byte[] b, final int off, final int len) throws IOException {
         checkPreBufferSize(len);
 
         if (postBuffer != null) {
@@ -82,7 +82,7 @@ public class InitialByteArrayOutputStream extends OutputStream {
         }
     }
 
-    private void checkPreBufferSize(int add) {
+    private void checkPreBufferSize(final int add) {
         // Not using a post buffer
         if (postBuffer == null) {
             // Exceeded our initial buffer?
@@ -100,7 +100,7 @@ public class InitialByteArrayOutputStream extends OutputStream {
         private final int bufferPos;
 
         @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
-        public BufferPos(byte[] buffer, int bufferPos) {
+        public BufferPos(final byte[] buffer, final int bufferPos) {
             this.buffer = buffer;
             this.bufferPos = bufferPos;
         }

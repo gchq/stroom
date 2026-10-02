@@ -16,12 +16,11 @@
 
 package stroom.processor.impl;
 
-
 import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
-import stroom.meta.impl.db.MetaDaoImpl;
+import stroom.meta.impl.dao.MetaDaoImpl;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.Status;
@@ -29,9 +28,9 @@ import stroom.node.api.NodeInfo;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
 import stroom.task.shared.TaskId;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;

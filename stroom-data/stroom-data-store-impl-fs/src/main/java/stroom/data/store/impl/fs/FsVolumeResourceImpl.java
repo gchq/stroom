@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import stroom.util.shared.ResultPage;
 import event.logging.Query;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+import jakarta.ws.rs.NotFoundException;
 
 @AutoLogged(OperationType.MANUALLY_LOGGED)
 class FsVolumeResourceImpl implements FsVolumeResource {
@@ -80,7 +81,7 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
     @Override
     public FsVolume create(final FsVolume volume) {
-        FsVolume result;
+        final FsVolume result;
 
         try {
             result = volumeServiceProvider.get().create(volume);
@@ -95,14 +96,16 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
     @Override
     public FsVolume fetch(final Integer id) {
-        FsVolume result;
+        final FsVolume result;
 
         try {
             result = volumeServiceProvider.get().fetch(id);
             documentEventLogProvider.get().view(result, null);
         } catch (final RuntimeException e) {
-            final FsVolume fsVolume = new FsVolume();
-            fsVolume.setId(id);
+            final FsVolume fsVolume = FsVolume
+                    .builder()
+                    .id(id)
+                    .build();
             documentEventLogProvider.get().view(fsVolume, e);
             throw e;
         }
@@ -137,11 +140,15 @@ class FsVolumeResourceImpl implements FsVolumeResource {
 
     @Override
     public Boolean delete(final Integer id) {
-        final FsVolume fsVolume = new FsVolume();
-        fsVolume.setId(id);
+        final FsVolumeService fsVolumeService = volumeServiceProvider.get();
+        // Fetch the existing object for logging
+        final FsVolume fsVolume = fsVolumeService.fetch(id);
+        if (fsVolume == null) {
+            throw new NotFoundException("FsVolume with id " + id + " not found");
+        }
 
         try {
-            volumeServiceProvider.get().delete(id);
+            fsVolumeService.delete(id);
             documentEventLogProvider.get().delete(fsVolume, null);
         } catch (final RuntimeException e) {
             documentEventLogProvider.get().delete(fsVolume, e);

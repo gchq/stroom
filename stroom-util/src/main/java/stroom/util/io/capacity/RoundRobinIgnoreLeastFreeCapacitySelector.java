@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class RoundRobinIgnoreLeastFreeCapacitySelector extends AbstractSelector 
         for (int i = 0; i < list.size(); i++) {
             final OptionalLong optFreeCapacity = list.get(i).getCapacityInfo().getFreeCapacityBytes();
             if (optFreeCapacity.isPresent()) {
-                long freeCapacity = optFreeCapacity.getAsLong();
+                final long freeCapacity = optFreeCapacity.getAsLong();
                 if (freeCapacity < lowestFreeCapacity) {
                     lowestFreeCapacity = freeCapacity;
                     lowestFreeCapacityIdxs = List.of(i);

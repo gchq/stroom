@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,57 +16,37 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.WeekFields;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = RoundWeek.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.ROUND_SUB_CATEGORY,
-        commonReturnType = ValLong.class,
-        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
+        commonSubCategories = AbstractRoundDateTime.ROUND_SUB_CATEGORY,
+        commonReturnType = ValDate.class,
+        commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
                 description = "Rounds the supplied time up or down to the nearest start of a week.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                        description = "The time to round.",
                         argType = Val.class)))
-class RoundWeek extends RoundDate {
+class RoundWeek extends AbstractRoundDateTime {
 
     static final String NAME = "roundWeek";
 
-    private final ZoneId zoneId;
-
     public RoundWeek(final ExpressionContext expressionContext, final String name) {
-        super(name);
-        zoneId = AbstractTimeFunction.getZoneId(expressionContext.getDateTimeSettings());
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return new Calc(zoneId);
-    }
-
-    static class Calc extends RoundDateCalculator {
-
-        private final ZoneId zoneId;
-
-        public Calc(final ZoneId zoneId) {
-            this.zoneId = zoneId;
-        }
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.with(WeekFields.ISO.getFirstDayOfWeek())
-                    .truncatedTo(ChronoUnit.DAYS);
-            if (dateTime.isAfter(result.plusDays(3).plusHours(12))) {
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            ZonedDateTime result = FloorWeek.floor(zonedDateTime);
+            if (zonedDateTime.isAfter(result.plusDays(3).plusHours(12))) {
                 result = result.plusWeeks(1);
             }
             return result;
-        }
+        };
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.explorer.impl;
@@ -23,8 +22,10 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.AdvancedDocumentFindRequest;
 import stroom.explorer.shared.AdvancedDocumentFindWithPermissionsRequest;
 import stroom.explorer.shared.BulkActionResult;
+import stroom.explorer.shared.DeleteConfirmation;
 import stroom.explorer.shared.DocContentHighlights;
 import stroom.explorer.shared.DocumentFindRequest;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource.TagFetchMode;
 import stroom.explorer.shared.FetchExplorerNodeResult;
@@ -61,14 +62,14 @@ class MockExplorerService implements ExplorerService {
 
     @Override
     public ExplorerNode ensureFolderPath(final DocPath docPath, final PermissionInheritance permissionInheritance) {
-        return null;
+        return ExplorerConstants.SYSTEM_NODE;
     }
 
     @Override
     public ExplorerNode ensureFolderPath(final DocPath docPath,
                                          final ExplorerNode baseNode,
                                          final PermissionInheritance permissionInheritance) {
-        return null;
+        return ExplorerConstants.SYSTEM_NODE;
     }
 
     @Override
@@ -110,6 +111,11 @@ class MockExplorerService implements ExplorerService {
     @Override
     public BulkActionResult delete(final List<ExplorerNode> explorerNodes) {
         return null;
+    }
+
+    @Override
+    public DeleteConfirmation getDeleteConfirmation(final List<DocRef> docRefs) {
+        return DeleteConfirmation.EMPTY;
     }
 
     @Override
@@ -180,4 +186,5 @@ class MockExplorerService implements ExplorerService {
     public String nodeTagsToString(final Set<String> tags) {
         return null;
     }
+
 }

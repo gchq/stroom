@@ -1,0 +1,19 @@
+{
+  "type" : "Pathways",
+  "uuid" : "621c14b2-7b4b-4983-9cf2-d97e3d6ac02b",
+  "name" : "Stroom Pathways",
+  "version" : "195b0314-38e9-4620-b0ac-ea3816416f6b",
+  "temporalOrderingTolerance" : {
+    "time" : 0,
+    "timeUnit" : "NANOSECONDS"
+  },
+  "allowPathwayCreation" : true,
+  "allowPathwayMutation" : true,
+  "allowConstraintCreation" : true,
+  "allowConstraintMutation" : true,
+  "infoFeed" : {
+    "type" : "Feed",
+    "uuid" : "75508400-4acc-4001-865e-bef635fdd185",
+    "name" : "STROOM_PATHWAYS-INFO"
+  }
+}

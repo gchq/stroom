@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.lmdb.serde;
@@ -23,7 +22,7 @@ public class IntegerSerde implements Serde<Integer> {
 
     @Override
     public Integer deserialize(final ByteBuffer byteBuffer) {
-        Integer val = byteBuffer.getInt();
+        final Integer val = byteBuffer.getInt();
         byteBuffer.flip();
         return val;
     }
@@ -35,14 +34,14 @@ public class IntegerSerde implements Serde<Integer> {
     }
 
     public void increment(final ByteBuffer byteBuffer) {
-        int val = byteBuffer.getInt();
+        final int val = byteBuffer.getInt();
         byteBuffer.flip();
         byteBuffer.putInt(val + 1);
         byteBuffer.flip();
     }
 
     public void decrement(final ByteBuffer byteBuffer) {
-        int val = byteBuffer.getInt();
+        final int val = byteBuffer.getInt();
         byteBuffer.flip();
         byteBuffer.putInt(val - 1);
         byteBuffer.flip();

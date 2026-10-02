@@ -188,7 +188,7 @@ class TestXmlFormatter {
         testFile(name, true);
     }
 
-    private void testFile(final String name, boolean removeLineBreaks) {
+    private void testFile(final String name, final boolean removeLineBreaks) {
         // Get the testing directory.
         final Path testDataDir = StroomCoreClientTestFileUtil.getTestResourcesDir();
         final Path testDir = testDataDir.resolve("TestXmlFormatter");

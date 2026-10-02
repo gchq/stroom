@@ -1,14 +1,30 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResult;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TimeFilter;
+import stroom.query.api.Column;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResult;
+import stroom.query.api.TableSettings;
+import stroom.query.api.TimeFilter;
 import stroom.query.language.functions.Val;
 import stroom.query.test.util.MockitoExtension;
 import stroom.util.concurrent.ThreadUtil;
@@ -19,6 +35,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import jakarta.inject.Provider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +47,8 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -45,6 +64,8 @@ class TestSearchResponseCreator {
     private ResultStore mockStore;
     @Mock
     private SizesProvider sizesProvider;
+    @Mock
+    private Provider<Executor> mockExecutorProvider;
 
     @BeforeEach
     void setup() {
@@ -69,8 +90,8 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
-        Duration actualDuration = timedResult.getDuration();
+        final SearchResponse searchResponse = timedResult.getResult();
+        final Duration actualDuration = timedResult.getDuration();
 
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
@@ -80,17 +101,20 @@ class TestSearchResponseCreator {
                 actualDuration,
                 TOLERANCE);
 
-        assertThat(searchResponse.getErrors()).hasSize(1);
-        assertThat(searchResponse.getErrors().getFirst()).containsIgnoringCase("timed out");
+        assertThat(searchResponse.getErrorMessages()).hasSize(1);
+        assertThat(searchResponse.getErrorMessages().getFirst().getMessage()).containsIgnoringCase("timed out");
     }
 
     private SearchResponseCreator createSearchResponseCreator(final SearchRequest searchRequest) {
+        Mockito.when(mockExecutorProvider.get())
+                .thenReturn(Executors.newCachedThreadPool());
         return new SearchResponseCreator(
                 sizesProvider,
                 mockStore,
                 new ExpressionContextFactory().createContext(searchRequest),
                 new MapDataStoreFactory(SearchResultStoreConfig::new),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                mockExecutorProvider);
     }
 
     @Test
@@ -105,8 +129,8 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
-        Duration actualDuration = timedResult.getDuration();
+        final SearchResponse searchResponse = timedResult.getResult();
+        final Duration actualDuration = timedResult.getDuration();
 
         assertResponseWithData(searchResponse);
 
@@ -119,11 +143,11 @@ class TestSearchResponseCreator {
 
     @Test
     void create_nonIncremental_completesBeforeTimeout() {
-        Duration clientTimeout = Duration.ofMillis(5_000);
+        final Duration clientTimeout = Duration.ofMillis(5_000);
 
         //store initially not complete
         Mockito.when(mockStore.isComplete()).thenReturn(false);
-        long sleepTime = 200L;
+        final long sleepTime = 200L;
         makeSearchStateAfter(sleepTime, true);
 
         final SearchRequest searchRequest = getSearchRequest(false, clientTimeout.toMillis());
@@ -133,8 +157,8 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
-        Duration actualDuration = timedResult.getDuration();
+        final SearchResponse searchResponse = timedResult.getResult();
+        final Duration actualDuration = timedResult.getDuration();
 
         assertResponseWithData(searchResponse);
 
@@ -163,8 +187,8 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
-        Duration actualDuration = timedResult.getDuration();
+        final SearchResponse searchResponse = timedResult.getResult();
+        final Duration actualDuration = timedResult.getDuration();
 
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).isNullOrEmpty();
@@ -174,12 +198,12 @@ class TestSearchResponseCreator {
                 actualDuration,
                 TOLERANCE);
 
-        assertThat(searchResponse.getErrors()).isNullOrEmpty();
+        assertThat(searchResponse.getErrorMessages()).isNullOrEmpty();
     }
 
     @Test
     void create_incremental_timesOutWithDataThenCompletes() {
-        Duration clientTimeout = Duration.ofMillis(500);
+        final Duration clientTimeout = Duration.ofMillis(500);
 
         //store is immediately complete to replicate a synchronous store
         Mockito.when(mockStore.isComplete()).thenReturn(false);
@@ -192,7 +216,7 @@ class TestSearchResponseCreator {
                 searchResponseCreator.create(searchRequest,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest)));
 
-        SearchResponse searchResponse = timedResult.getResult();
+        final SearchResponse searchResponse = timedResult.getResult();
         Duration actualDuration = timedResult.getDuration();
 
         assertResponseWithData(searchResponse);
@@ -205,16 +229,16 @@ class TestSearchResponseCreator {
 
         //Now the search request is sent again but this time the data will be available and the search complete
         //so should return immediately
-        long sleepTime = 200L;
+        final long sleepTime = 200L;
         makeSearchStateAfter(sleepTime, true);
 
-        SearchRequest searchRequest2 = getSearchRequest(true, clientTimeout.toMillis());
+        final SearchRequest searchRequest2 = getSearchRequest(true, clientTimeout.toMillis());
 
         timedResult = DurationTimer.measure(() ->
                 searchResponseCreator.create(searchRequest2,
                         searchResponseCreator.makeDefaultResultCreators(searchRequest2)));
 
-        SearchResponse searchResponse2 = timedResult.getResult();
+        final SearchResponse searchResponse2 = timedResult.getResult();
         actualDuration = timedResult.getDuration();
 
         assertResponseWithData(searchResponse2);
@@ -244,7 +268,7 @@ class TestSearchResponseCreator {
     }
 
     private SearchRequest getSearchRequest(final boolean isIncremental, final Long timeout) {
-        String key = UUID.randomUUID().toString();
+        final String key = UUID.randomUUID().toString();
         return SearchRequest.builder()
                 .key(key)
                 .addResultRequests(ResultRequest.builder()
@@ -292,6 +316,16 @@ class TestSearchResponseCreator {
             public Val getValue(final int index) {
                 return null;
             }
+
+            @Override
+            public int size() {
+                return 0;
+            }
+
+            @Override
+            public Val[] toArray() {
+                return Val.EMPTY_VALUES;
+            }
         };
 
         final CompletionState completionState = new CompletionStateImpl();
@@ -307,17 +341,19 @@ class TestSearchResponseCreator {
             }
 
             @Override
-            public <R> void fetch(final List<Column> columns,
-                                  final OffsetRange range,
-                                  final OpenGroups openGroups,
-                                  final TimeFilter timeFilter,
-                                  final ItemMapper<R> mapper,
-                                  final Consumer<R> resultConsumer,
-                                  final Consumer<Long> totalRowCountConsumer) {
-                resultConsumer.accept(mapper.create(item));
-                if (totalRowCountConsumer != null) {
-                    totalRowCountConsumer.accept(1L);
-                }
+            public void fetch(final List<Column> columns,
+                              final OffsetRange range,
+                              final OpenGroups openGroups,
+                              final TimeFilter timeFilter,
+                              final ItemMapper mapper,
+                              final Consumer<Item> resultConsumer,
+                              final Consumer<Long> totalRowCountConsumer) {
+                mapper.create(item).forEach(i -> {
+                    resultConsumer.accept(i);
+                    if (totalRowCountConsumer != null) {
+                        totalRowCountConsumer.accept(1L);
+                    }
+                });
             }
 
             @Override
@@ -360,7 +396,7 @@ class TestSearchResponseCreator {
         assertThat(searchResponse).isNotNull();
         assertThat(searchResponse.getResults()).hasSize(1);
         assertThat(searchResponse.getResults().getFirst()).isInstanceOf(TableResult.class);
-        TableResult tableResult = (TableResult) searchResponse.getResults().getFirst();
+        final TableResult tableResult = (TableResult) searchResponse.getResults().getFirst();
         assertThat(tableResult.getTotalResults()).isEqualTo(1);
     }
 
@@ -368,13 +404,13 @@ class TestSearchResponseCreator {
                                          final Duration actualDuration,
                                          final Duration tolerance) {
         LOGGER.info(() -> "Expected: " +
-                expectedDuration +
-                ", actual: " +
-                actualDuration +
-                ", tolerance: " +
-                tolerance +
-                ", diff " +
-                expectedDuration.minus(actualDuration).abs());
+                          expectedDuration +
+                          ", actual: " +
+                          actualDuration +
+                          ", tolerance: " +
+                          tolerance +
+                          ", diff " +
+                          expectedDuration.minus(actualDuration).abs());
 
         assertThat(actualDuration).isGreaterThanOrEqualTo(expectedDuration);
         assertThat(actualDuration).isLessThanOrEqualTo(expectedDuration.plus(tolerance));

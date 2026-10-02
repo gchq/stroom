@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.content.client.view;
@@ -21,6 +20,8 @@ import stroom.item.client.SelectionBox;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.receive.content.client.presenter.ContentTemplateEditPresenter.ContentTemplateEditView;
 import stroom.receive.content.shared.TemplateType;
+import stroom.widget.form.client.FormGroup;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -49,6 +50,10 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     TextArea description;
     @UiField
     SelectionBox<TemplateType> templateTypeSelectionBox;
+    @UiField
+    FormGroup copyDependenciesFormGroup;
+    @UiField
+    CustomCheckBox copyDependenciesCheckBox;
     @UiField
     SimplePanel pipeline;
     @UiField
@@ -123,13 +128,41 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     }
 
     @Override
+    public SelectionBox<TemplateType> getTemplateTypeSelectionBox() {
+        return templateTypeSelectionBox;
+    }
+
+    @Override
     public TemplateType getTemplateType() {
         return templateTypeSelectionBox.getValue();
     }
 
     @Override
+    public boolean isCopyDependencies() {
+        return copyDependenciesCheckBox.getValue();
+    }
+
+    @Override
+    public void setCopyDependencies(final boolean copyDependencies) {
+        copyDependenciesCheckBox.setValue(copyDependencies);
+    }
+
+    @Override
     public void setTemplateType(final TemplateType templateType) {
         templateTypeSelectionBox.setValue(templateType);
+        updateCopyDependenciesCheckBox(templateType);
+    }
+
+    private void updateCopyDependenciesCheckBox(final TemplateType templateType) {
+        final boolean isEnabled;
+        if (templateType == TemplateType.INHERIT_PIPELINE) {
+            isEnabled = true;
+        } else {
+            isEnabled = false;
+            copyDependenciesCheckBox.setValue(false);
+        }
+        copyDependenciesCheckBox.setEnabled(isEnabled);
+        copyDependenciesFormGroup.setDisabled(!isEnabled);
     }
 
     @Override
@@ -146,7 +179,7 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     }
 
     @Override
-    public void setProcessorPriority(int value) {
+    public void setProcessorPriority(final int value) {
         processorPriority.setValue(value);
     }
 
@@ -156,7 +189,7 @@ public class ContentTemplateEditViewImpl extends ViewImpl implements ContentTemp
     }
 
     @Override
-    public void setProcessorMaxConcurrent(int value) {
+    public void setProcessorMaxConcurrent(final int value) {
         processorMaxConcurrent.setValue(value);
     }
 

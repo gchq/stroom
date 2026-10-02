@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,26 +16,66 @@
 
 package stroom.annotation.impl;
 
-import stroom.annotation.api.AnnotationCreator;
-import stroom.annotation.api.AnnotationFields;
-import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.AbstractAnnotationChange;
+import stroom.annotation.shared.AbstractAnnotationChange.HasAnnotationTag;
+import stroom.annotation.shared.AddAnnotationTable;
+import stroom.annotation.shared.AddTag;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.AnnotationCreator;
+import stroom.annotation.shared.AnnotationDecorationFields;
+import stroom.annotation.shared.AnnotationEntry;
+import stroom.annotation.shared.AnnotationEntryType;
+import stroom.annotation.shared.AnnotationFields;
+import stroom.annotation.shared.AnnotationIdentity;
+import stroom.annotation.shared.AnnotationTag;
+import stroom.annotation.shared.AnnotationTagType;
+import stroom.annotation.shared.ChangeAnnotationEntryRequest;
+import stroom.annotation.shared.ChangeAssignedTo;
+import stroom.annotation.shared.ChangeComment;
+import stroom.annotation.shared.ChangeDescription;
+import stroom.annotation.shared.ChangeRetentionPeriod;
+import stroom.annotation.shared.ChangeSubject;
+import stroom.annotation.shared.ChangeTitle;
+import stroom.annotation.shared.CreateAnnotationRequest;
+import stroom.annotation.shared.CreateAnnotationTagRequest;
+import stroom.annotation.shared.DeleteAnnotationEntryRequest;
 import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
-import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.annotation.shared.SetStatusRequest;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
+import stroom.annotation.shared.FetchAnnotationEntryRequest;
+import stroom.annotation.shared.FindAnnotationRequest;
+import stroom.annotation.shared.LinkAnnotations;
+import stroom.annotation.shared.LinkEvents;
+import stroom.annotation.shared.RemoveTag;
+import stroom.annotation.shared.SetTag;
+import stroom.annotation.shared.SingleAnnotationChangeRequest;
+import stroom.annotation.shared.UnlinkAnnotations;
+import stroom.annotation.shared.UnlinkEvents;
+import stroom.cluster.lock.api.ClusterLockService;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.ParamKeys;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
+import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserGroupsService;
 import stroom.security.shared.AppPermission;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBatch;
+import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventData;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasUserDependencies;
 import stroom.util.shared.NullSafe;
@@ -43,40 +83,124 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
+import stroom.util.time.StroomDuration;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import org.jspecify.annotations.Nullable;
 
+import java.time.Instant;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Predicate;
 
 public class AnnotationService implements Searchable, AnnotationCreator, HasUserDependencies {
 
-    private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Annotations", "Annotations", "Annotations");
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationService.class);
+
+    public static final String ANNOTATION_RETENTION_JOB_NAME = "Annotation Retention";
+    private static final String LOCK_NAME = "ANNOTATION_RETENTION";
+    public static final int RETENTION_EVENTS_BATCH_SIZE = 5_000;
 
     private final AnnotationDao annotationDao;
+    private final AnnotationTagDao annotationTagDao;
     private final SecurityContext securityContext;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+    private final Provider<DocumentPermissionService> documentPermissionServiceProvider;
+    private final Provider<AnnotationConfig> annotationConfigProvider;
+    private final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider;
+    private final Provider<UserGroupsService> userGroupsServiceProvider;
+    private final EntityEventBus entityEventBus;
+    private final ClusterLockService clusterLockService;
 
     @Inject
     AnnotationService(final AnnotationDao annotationDao,
+                      final AnnotationTagDao annotationTagDao,
                       final SecurityContext securityContext,
-                      final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
+                      final FieldInfoResultPageFactory fieldInfoResultPageFactory,
+                      final Provider<DocumentPermissionService> documentPermissionServiceProvider,
+                      final Provider<AnnotationConfig> annotationConfigProvider,
+                      final Provider<ExpressionPredicateFactory> expressionPredicateFactoryProvider,
+                      final Provider<UserGroupsService> userGroupsServiceProvider,
+                      final EntityEventBus entityEventBus, final ClusterLockService clusterLockService) {
         this.annotationDao = annotationDao;
+        this.annotationTagDao = annotationTagDao;
         this.securityContext = securityContext;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+        this.documentPermissionServiceProvider = documentPermissionServiceProvider;
+        this.annotationConfigProvider = annotationConfigProvider;
+        this.expressionPredicateFactoryProvider = expressionPredicateFactoryProvider;
+        this.userGroupsServiceProvider = userGroupsServiceProvider;
+        this.entityEventBus = entityEventBus;
+        this.clusterLockService = clusterLockService;
+    }
+
+    public ResultPage<Annotation> findAnnotations(final FindAnnotationRequest request) {
+        checkAppPermission();
+
+        final DocumentPermission permission;
+        if (DocumentPermission.EDIT.equals(request.getRequiredPermission())) {
+            permission = DocumentPermission.EDIT;
+        } else {
+            permission = DocumentPermission.VIEW;
+        }
+
+        return annotationDao.findAnnotations(request, annotation ->
+                securityContext.hasDocumentPermission(annotation.asDocRef(), permission));
+    }
+
+    public Optional<Annotation> getAnnotationByRef(final DocRef annotationRef) {
+        checkAppPermission();
+        checkViewPermission(annotationRef);
+        return annotationDao.getAnnotationByDocRef(annotationRef);
+    }
+
+    public List<AnnotationEntry> getAnnotationEntries(final DocRef annotationRef) {
+        checkAppPermission();
+        checkViewPermission(annotationRef);
+        return annotationDao.getAnnotationEntries(annotationRef);
+    }
+
+    public Optional<Annotation> getAnnotationById(final long id) {
+        final Optional<Annotation> optionalAnnotation = annotationDao.getAnnotationById(id);
+        return optionalAnnotation.filter(annotation ->
+                securityContext.hasDocumentPermission(annotation.asDocRef(), DocumentPermission.VIEW));
+    }
+
+    public Collection<AnnotationIdentity> getAnnotationIdListForEvent(final EventId eventId) {
+        return annotationDao.getAnnotationIdsForEvent(eventId);
+    }
+
+    public Collection<AnnotationValues> getAnnotationValues(final Collection<AnnotationIdentity> idList,
+                                                            final Set<QueryField> requiredAnnotationFields) {
+        return LOGGER.logDurationIfTraceEnabled(() -> {
+            // Filter the annotations by user permission.
+            final Collection<AnnotationIdentity> filtered = idList.stream()
+                    .filter(annotationIdentity ->
+                            securityContext.hasDocumentPermission(annotationIdentity.asDocRef(),
+                                    DocumentPermission.VIEW))
+                    .toList();
+
+            // Get annotation values from the cache or DB if required.
+            return annotationDao.getAnnotationValues(filtered, requiredAnnotationFields);
+        }, collection ->
+                LogUtil.message("getAnnotationValues() - count: {}", collection.size()));
     }
 
     @Override
     public String getDataSourceType() {
-        return ANNOTATIONS_PSEUDO_DOC_REF.getType();
+        return AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.getType();
     }
 
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         if (securityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
-            return Collections.singletonList(ANNOTATIONS_PSEUDO_DOC_REF);
+            return Collections.singletonList(AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF);
         }
         return Collections.emptyList();
     }
@@ -88,7 +212,7 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
 
     @Override
     public ResultPage<QueryField> getFieldInfo(final FindFieldCriteria criteria) {
-        if (!ANNOTATIONS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
+        if (!AnnotationFields.ANNOTATIONS_PSEUDO_DOC_REF.equals(criteria.getDataSourceRef())) {
             return ResultPage.empty();
         }
         return fieldInfoResultPageFactory.create(criteria, AnnotationFields.FIELDS);
@@ -102,12 +226,14 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
     @Override
     public void search(final ExpressionCriteria criteria,
                        final FieldIndex fieldIndex,
-                       final ValuesConsumer consumer) {
-        checkPermission();
+                       final DateTimeSettings dateTimeSettings,
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
+        checkAppPermission();
 
         final ExpressionFilter expressionFilter = ExpressionFilter.builder()
                 .addReplacementFilter(
-                        AnnotationFields.CURRENT_USER_FUNCTION,
+                        ParamKeys.CURRENT_USER,
                         securityContext.getUserRef().toDisplayString())
                 .build();
 
@@ -115,49 +241,149 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
         expression = expressionFilter.copy(expression);
         criteria.setExpression(expression);
 
-        annotationDao.search(criteria, fieldIndex, consumer);
+        final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
+        annotationDao.search(criteria, fieldIndex, valuesConsumer, viewPermissionPredicate);
+    }
+
+    private Predicate<String> getViewPermissionPredicate() {
+        if (securityContext.isAdmin()) {
+            return ignored -> true;
+        }
+        return uuid -> securityContext
+                .hasDocumentPermission(new DocRef(Annotation.TYPE, uuid), DocumentPermission.VIEW);
     }
 
     private UserRef getCurrentUser() {
         return securityContext.getUserRef();
     }
 
-    AnnotationDetail getDetail(Long annotationId) {
-        checkPermission();
-        return annotationDao.getDetail(annotationId);
+    private void checkViewPermission(final DocRef annotationRef) {
+        if (annotationRef == null) {
+            throw new RuntimeException("Annotation not found");
+        }
+        if (!securityContext.hasDocumentPermission(annotationRef,
+                DocumentPermission.VIEW)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to read this annotation");
+        }
     }
 
-    public AnnotationDetail createEntry(final CreateEntryRequest request) {
-        checkPermission();
-        return annotationDao.createEntry(request, getCurrentUser());
+    private void checkEditPermission(final DocRef annotationRef) {
+        if (annotationRef == null) {
+            throw new RuntimeException("Annotation not found");
+        }
+        if (!securityContext.hasDocumentPermission(annotationRef,
+                DocumentPermission.EDIT)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this annotation");
+        }
     }
 
-    List<EventId> getLinkedEvents(final Long annotationId) {
-        checkPermission();
-        return annotationDao.getLinkedEvents(annotationId);
+    private void checkDeletePermission(final DocRef annotationRef) {
+        if (annotationRef == null) {
+            throw new RuntimeException("Annotation not found");
+        }
+        if (!securityContext.hasDocumentPermission(annotationRef,
+                DocumentPermission.DELETE)) {
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to delete this annotation");
+        }
     }
 
-    List<EventId> link(final EventLink eventLink) {
-        checkPermission();
-        return annotationDao.link(getCurrentUser(), eventLink);
+    @Override
+    public Annotation createAnnotation(final CreateAnnotationRequest request) {
+        // Treat use permission as read so that users can link events even if they only have use permission.
+        return securityContext.useAsReadResult(() -> {
+            checkAppPermission();
+
+            // Create the annotation.
+            final Annotation annotation = annotationDao.createAnnotation(request, getCurrentUser());
+            final DocRef docRef = annotation.asDocRef();
+            final UserRef userRef = securityContext.getUserRef();
+
+            securityContext.asProcessingUser(() -> {
+                // Create permissions.
+                final DocumentPermissionService documentPermissionService = documentPermissionServiceProvider.get();
+
+                // Add owner permission.
+                documentPermissionService.setPermission(docRef, userRef, DocumentPermission.OWNER);
+
+                // Add ownership perms to parent groups.
+                final Set<UserRef> parentGroups = userGroupsServiceProvider.get().getGroups(userRef);
+                if (NullSafe.hasItems(parentGroups)) {
+                    parentGroups.forEach(group ->
+                            documentPermissionService.setPermission(docRef, group, DocumentPermission.OWNER));
+                }
+            });
+
+            fireEntityEvent(EntityAction.CREATE, annotation.asDocRef(), annotation.getId());
+            return annotation;
+        });
     }
 
-    List<EventId> unlink(final EventLink eventLink) {
-        checkPermission();
-        return annotationDao.unlink(eventLink, getCurrentUser());
+    public boolean change(final SingleAnnotationChangeRequest request) {
+        // Treat use permission as read so that users can link events even if they only have use permission.
+        return securityContext.useAsReadResult(() -> {
+            Objects.requireNonNull(request);
+            checkAppPermission();
+            checkEditPermission(request.getAnnotationRef());
+            final AbstractAnnotationChange change = request.getChange();
+            final boolean result = annotationDao.change(request, getCurrentUser());
+            final DocRef annotationRef = request.getAnnotationRef();
+            final long annotationId = Objects.requireNonNullElseGet(
+                    request.getAnnotationId(),
+                    () -> getIdOrThrow(annotationRef));
+
+            switch (change) {
+                case final LinkEvents ignored -> LOGGER.debug("change() - Skipping linkEvents, handled by DAO");
+                case final UnlinkEvents ignored -> LOGGER.debug("change() - Skipping unlinkEvents, handled by DAO");
+                default -> createEntityEvent(change, EntityAction.UPDATE, annotationRef, annotationId)
+                        .ifPresent(entityEventBus::fire);
+            }
+            return result;
+        });
     }
 
-    Integer setStatus(SetStatusRequest request) {
-        checkPermission();
-        return annotationDao.setStatus(request, getCurrentUser());
+    private long getIdOrThrow(final DocRef annotationRef) {
+        Objects.requireNonNull(annotationRef);
+        return annotationDao.getIdOrThrow(annotationRef);
     }
 
-    Integer setAssignedTo(SetAssignedToRequest request) {
-        checkPermission();
-        return annotationDao.setAssignedTo(request, getCurrentUser());
+//    public Integer batchChange(final MultiAnnotationChangeRequest request) {
+//        final List<AnnotationIdentity> annotationIdentities = getRefsForEdit(request.getAnnotationIdList());
+//
+//        for (final AnnotationIdentity annotationIdentity : annotationIdentities) {
+//            final SingleAnnotationChangeRequest singleAnnotationChangeRequest = new SingleAnnotationChangeRequest(
+//                    annotationIdentity, request.getChange());
+//            annotationDao.change(singleAnnotationChangeRequest, getCurrentUser());
+//        }
+//
+//        if (!annotationIdentities.isEmpty()) {
+//            final AbstractAnnotationChange change = request.getChange();
+//            if (change instanceof UnlinkEvents || change instanceof LinkEvents) {
+//                LOGGER.debug("batchChange() - Skipping linkEvents/unlinkEvents, handled by DAO");
+//            } else {
+//                fireUpdateEvents(change, annotationIdentities);
+//            }
+//        }
+//        return annotationIdentities.size();
+//    }
+//
+//    private List<AnnotationIdentity> getRefsForEdit(final List<Long> annotationIdList) {
+//        checkAppPermission();
+//        final List<AnnotationIdentity> annotationIdentities = annotationDao.idListToDocRefs(annotationIdList);
+//        annotationIdentities.forEach(annotationIdentity ->
+//                checkEditPermission(annotationIdentity.asDocRef()));
+//        return annotationIdentities;
+//    }
+
+    List<EventId> getLinkedEvents(final DocRef annotationRef) {
+        checkAppPermission();
+        checkViewPermission(annotationRef);
+        return annotationDao.getLinkedEvents(annotationRef);
     }
 
-    private void checkPermission() {
+    private void checkAppPermission() {
         if (!securityContext.hasAppPermission(AppPermission.ANNOTATIONS)) {
             throw new PermissionException(
                     securityContext.getUserRef(),
@@ -181,12 +407,293 @@ public class AnnotationService implements Searchable, AnnotationCreator, HasUser
                 .map(annotation -> {
                     final String details = LogUtil.message(
                             "Annotation with title '{}' and subject '{}' is assigned to the user.",
-                            annotation.getTitle(),
+                            annotation.getName(),
                             annotation.getSubject());
                     return new UserDependency(
                             userRef,
                             details);
                 })
                 .toList();
+    }
+
+    public Boolean deleteAnnotation(final DocRef annotationRef) {
+        Objects.requireNonNull(annotationRef);
+        checkAppPermission();
+        checkDeletePermission(annotationRef);
+
+        documentPermissionServiceProvider.get()
+                .removeAllDocumentPermissions(annotationRef);
+        final long id = annotationDao.getIdOrThrow(annotationRef);
+        final Boolean result = annotationDao.logicalDelete(annotationRef, securityContext.getUserRef());
+        fireEntityEvent(EntityAction.DELETE, annotationRef, id);
+        return result;
+    }
+
+    private List<String> filterValues(final List<String> allValues, final String quickFilterInput) {
+        if (allValues == null || allValues.isEmpty()) {
+            return allValues;
+        } else {
+            return expressionPredicateFactoryProvider.get()
+                    .filterAndSortStream(allValues.stream(),
+                            quickFilterInput,
+                            Optional.of(Comparator.naturalOrder()))
+                    .toList();
+        }
+    }
+
+    public void performDataRetention() {
+        performDataRetention(RETENTION_EVENTS_BATCH_SIZE);
+    }
+
+    void performDataRetention(final int batchSize) {
+        LOGGER.debug("performDataRetention() - batchSize = {}", batchSize);
+
+        clusterLockService.tryLock(LOCK_NAME, () -> {
+            // First mark annotations as deleted if they haven't been updated since their data retention time.
+            final List<AnnotationIdentity> logicallyDeletedIds = annotationDao.markDeletedByDataRetention();
+
+            if (NullSafe.hasItems(logicallyDeletedIds)) {
+                fireEntityDeleteEvents(logicallyDeletedIds, batchSize);
+            }
+
+            // Now delete items that have been deleted longer than the max deletion age.
+            final StroomDuration physicalDeleteAge = annotationConfigProvider.get().getPhysicalDeleteAge();
+            final Instant age = Instant.now().minus(physicalDeleteAge);
+            final List<AnnotationIdentity> physicallyDeletedIds = annotationDao.physicallyDelete(age);
+            if (NullSafe.hasItems(physicallyDeletedIds)) {
+                fireEntityDeleteEvents(physicallyDeletedIds, batchSize);
+            }
+            LOGGER.info(() -> LogUtil.message(
+                    "Annotation data retention - logically deleted count: {}, physically deleted count: {}",
+                    logicallyDeletedIds.size(), physicallyDeletedIds.size()));
+        });
+    }
+
+    private void fireEntityDeleteEvents(final List<AnnotationIdentity> annotationIdentities,
+                                        final int batchSize) {
+        // Limit the size of the event batches so we are not sending massive requests
+        final int count = annotationIdentities.size();
+        int fromIdxInc = 0;
+        while (true) {
+            final int remaining = count - fromIdxInc;
+            if (remaining == 0 || fromIdxInc > count) {
+                break;
+            }
+            final int thisBatchSize = Math.min(batchSize, remaining);
+            final int toIdxExc = fromIdxInc + thisBatchSize;
+            final List<AnnotationIdentity> batchIds = annotationIdentities.subList(fromIdxInc, toIdxExc);
+            final int finalFromIdxInc = fromIdxInc;
+            LOGGER.debug(() -> LogUtil.message(
+                    "fireEntityChangeEvents() - fromIdxInc: {}, toIdxExc: {}, ids: {}, batchIds: {}, docRefs: {}",
+                    finalFromIdxInc, toIdxExc, annotationIdentities.size(), batchIds.size(), batchIds.size()));
+            fireDeleteEvents(batchIds);
+            fromIdxInc += batchSize;
+        }
+    }
+
+    public AnnotationTag createAnnotationTag(final CreateAnnotationTagRequest request) {
+        checkAppPermission();
+        return annotationTagDao.createAnnotationTag(request);
+    }
+
+    public AnnotationTag updateAnnotationTag(final AnnotationTag annotationTag) {
+        checkAppPermission();
+        final AnnotationTag annotationTag2 = annotationTagDao.updateAnnotationTag(annotationTag);
+        final String fieldName = getFieldNameFromTagType(annotationTag.getType());
+        entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
+                EntityAction.UPDATE,
+                Set.of(fieldName)));
+
+        return annotationTag2;
+    }
+
+    public Boolean deleteAnnotationTag(final AnnotationTag annotationTag) {
+        Objects.requireNonNull(annotationTag);
+        checkAppPermission();
+        final Boolean didDelete = annotationTagDao.deleteAnnotationTag(annotationTag);
+
+        final String fieldName = getFieldNameFromTagType(annotationTag.getType());
+        entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
+                EntityAction.DELETE,
+                Set.of(fieldName)));
+        return didDelete;
+    }
+
+    private static @Nullable String getFieldNameFromTagType(final AnnotationTagType tagType) {
+        return switch (tagType) {
+            case LABEL -> AnnotationDecorationFields.ANNOTATION_LABEL;
+            case STATUS -> AnnotationDecorationFields.ANNOTATION_STATUS;
+            case COLLECTION -> AnnotationDecorationFields.ANNOTATION_COLLECTION;
+            // Comment tags are a set of standard comment for use in annotation entries, so
+            // not a decoration column in their own right.
+            case COMMENT -> null;
+        };
+    }
+
+    public ResultPage<AnnotationTag> findAnnotationTags(final ExpressionCriteria request) {
+        checkAppPermission();
+        final Predicate<String> viewPermissionPredicate = getViewPermissionPredicate();
+        return annotationTagDao.findAnnotationTags(request, viewPermissionPredicate);
+    }
+
+    public AnnotationEntry fetchAnnotationEntry(final FetchAnnotationEntryRequest request) {
+        checkAppPermission();
+        checkViewPermission(request.getAnnotationRef());
+        return annotationDao.fetchAnnotationEntry(
+                request.getAnnotationRef(),
+                securityContext.getUserRef(),
+                request.getAnnotationEntryId());
+    }
+
+    public Boolean changeAnnotationEntry(final ChangeAnnotationEntryRequest request) {
+        checkAppPermission();
+        final DocRef annotationRef = request.getAnnotationIdentity().asDocRef();
+        checkEditPermission(annotationRef);
+        final boolean didDelete = annotationDao.changeAnnotationEntry(
+                annotationRef,
+                securityContext.getUserRef(),
+                request.getAnnotationEntryId(),
+                request.getData());
+
+        final Set<String> fieldNames = getFieldNamesForEntityEvent(request.getAnnotationEntryType());
+        if (NullSafe.hasItems(fieldNames)) {
+            entityEventBus.fire(AnnotationFieldsEntityEventData.createSingleAnnotationEvent(
+                    EntityAction.UPDATE,
+                    request.getAnnotationIdentity(),
+                    fieldNames));
+        }
+        return didDelete;
+    }
+
+    private Set<String> getFieldNamesForEntityEvent(final AnnotationEntryType annotationEntryType) {
+
+        // Only expecting COMMENT changes at the moment
+        return switch (annotationEntryType) {
+            case TITLE -> Set.of(AnnotationDecorationFields.ANNOTATION_TITLE);
+            case SUBJECT -> Set.of(AnnotationDecorationFields.ANNOTATION_SUBJECT);
+            case STATUS -> Set.of(AnnotationDecorationFields.ANNOTATION_STATUS);
+            case ASSIGNED -> Set.of(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO);
+            case COMMENT -> Set.of(
+                    AnnotationDecorationFields.ANNOTATION_COMMENT,
+                    AnnotationDecorationFields.ANNOTATION_HISTORY);
+            case DESCRIPTION -> Set.of(AnnotationDecorationFields.ANNOTATION_DESCRIPTION);
+            case ADD_TO_COLLECTION,
+                 REMOVE_FROM_COLLECTION -> Set.of(AnnotationDecorationFields.ANNOTATION_COLLECTION);
+            case ADD_LABEL,
+                 REMOVE_LABEL -> Set.of(AnnotationDecorationFields.ANNOTATION_LABEL);
+            case LINK_EVENT,
+                 UNLINK_EVENT,
+                 RETENTION_PERIOD,
+                 ADD_TABLE_DATA,
+                 LINK_ANNOTATION,
+                 UNLINK_ANNOTATION,
+                 DELETE -> Set.of();
+        };
+    }
+
+    public Boolean deleteAnnotationEntry(final DeleteAnnotationEntryRequest request) {
+        checkAppPermission();
+        final DocRef annotationRef = request.getAnnotationIdentity().asDocRef();
+        checkDeletePermission(annotationRef);
+        final boolean didDelete = annotationDao.logicalDeleteEntry(
+                annotationRef,
+                securityContext.getUserRef(),
+                request.getAnnotationEntryId());
+
+        final Set<String> fieldNames = getFieldNamesForEntityEvent(request.getAnnotationEntryType());
+        if (NullSafe.hasItems(fieldNames)) {
+            entityEventBus.fire(AnnotationFieldsEntityEventData.createSingleAnnotationEvent(
+                    EntityAction.DELETE,
+                    request.getAnnotationIdentity(),
+                    fieldNames));
+        }
+        return didDelete;
+    }
+
+
+    private Optional<EntityEvent> createEntityEvent(final AbstractAnnotationChange change,
+                                                    final EntityAction entityAction,
+                                                    final DocRef annotationRef,
+                                                    final long id) {
+        Objects.requireNonNull(change);
+        Objects.requireNonNull(entityAction);
+        Objects.requireNonNull(annotationRef);
+        // Null means no change needed, empty set means treat the whole anno as changed
+        final Set<String> fieldNames = switch (change) {
+            case final ChangeTitle ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_TITLE);
+            case final ChangeSubject ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_SUBJECT);
+            case final AddTag addTag -> getChangedFieldNames(addTag);
+            case final RemoveTag removeTag -> getChangedFieldNames(removeTag);
+            case final SetTag setTag -> getChangedFieldNames(setTag);
+            case final ChangeAssignedTo ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_ASSIGNED_TO);
+            // History is a history of old comments, so any comment change impacts the comment and history fields
+            case final ChangeComment ignored -> Set.of(
+                    AnnotationDecorationFields.ANNOTATION_COMMENT,
+                    AnnotationDecorationFields.ANNOTATION_HISTORY);
+            case final ChangeDescription ignored -> Set.of(AnnotationDecorationFields.ANNOTATION_DESCRIPTION);
+            case final ChangeRetentionPeriod ignored -> null;
+            case final LinkEvents ignored -> null;
+            case final UnlinkEvents ignored -> null;
+            case final LinkAnnotations ignored -> null;
+            case final UnlinkAnnotations ignored -> null;
+            case final AddAnnotationTable ignored -> null;
+        };
+
+        if (fieldNames != null) {
+            final EntityEventData entityEventData;
+            if (fieldNames.isEmpty()) {
+                entityEventData = new AnnotationIdEntityEventData(id);
+            } else {
+                entityEventData = new AnnotationFieldsEntityEventData(id, fieldNames);
+            }
+            return Optional.of(new EntityEvent(annotationRef, null, entityAction, entityEventData));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    private static Set<String> getChangedFieldNames(final HasAnnotationTag change) {
+        Objects.requireNonNull(change);
+        final AnnotationTagType tagType = NullSafe.get(change.getTag(), AnnotationTag::getType);
+        final String fieldName = getFieldNameFromTagType(tagType);
+        return NullSafe.asSet(fieldName);
+    }
+
+    private void fireUpdateEvents(final AbstractAnnotationChange change,
+                                  final List<AnnotationIdentity> annotationIdentities) {
+        final List<EntityEvent> events = NullSafe.stream(annotationIdentities)
+                .filter(Objects::nonNull)
+                .map(annotationIdentity ->
+                        createEntityEvent(
+                                change,
+                                EntityAction.UPDATE,
+                                annotationIdentity.asDocRef(),
+                                annotationIdentity.getId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+        if (NullSafe.hasItems(events)) {
+            final EntityEventBatch entityEventBatch = new EntityEventBatch(events, true);
+            entityEventBus.fire(entityEventBatch);
+        }
+    }
+
+    private void fireEntityEvent(final EntityAction entityAction, final DocRef annotationRef, final long id) {
+        EntityEvent.fire(
+                entityEventBus,
+                Objects.requireNonNull(annotationRef),
+                null,
+                Objects.requireNonNull(entityAction),
+                new AnnotationIdEntityEventData(id));
+    }
+
+    private void fireDeleteEvents(final List<AnnotationIdentity> annotationIdentities) {
+        final List<EntityEvent> events = NullSafe.stream(annotationIdentities)
+                .filter(Objects::nonNull)
+                .map(annotationIdentity ->
+                        AnnotationIdEntityEventData.createEntityEvent(EntityAction.DELETE, annotationIdentity))
+                .toList();
+        final EntityEventBatch entityEventBatch = new EntityEventBatch(events, true);
+        entityEventBus.fire(entityEventBatch);
     }
 }

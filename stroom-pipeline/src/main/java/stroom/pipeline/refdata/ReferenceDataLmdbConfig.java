@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata;
 
 import stroom.lmdb.LmdbConfig;
@@ -42,15 +58,17 @@ public class ReferenceDataLmdbConfig extends AbstractConfig implements LmdbConfi
     @SuppressWarnings("unused")
     @JsonCreator
     public ReferenceDataLmdbConfig(@JsonProperty("localDir") final String localDir,
-                                   @JsonProperty("maxReaders") final int maxReaders,
+                                   @JsonProperty("maxReaders") final Integer maxReaders,
                                    @JsonProperty("maxStoreSize") final ByteSize maxStoreSize,
                                    @JsonProperty("readAheadEnabled") final Boolean isReadAheadEnabled,
                                    @JsonProperty("readerBlockedByWriter") final Boolean isReaderBlockedByWriter) {
         this.localDir = localDir;
-        this.maxReaders = maxReaders;
+        this.maxReaders = Objects.requireNonNullElse(maxReaders, DEFAULT_MAX_READERS);
         this.maxStoreSize = maxStoreSize;
-        this.isReadAheadEnabled = Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);
-        this.isReaderBlockedByWriter = Objects.requireNonNullElse(
+        this.isReadAheadEnabled =
+                Objects.requireNonNullElse(isReadAheadEnabled, DEFAULT_IS_READ_AHEAD_ENABLED);
+        this.isReaderBlockedByWriter =
+                Objects.requireNonNullElse(
                 isReaderBlockedByWriter, DEFAULT_IS_READER_BLOCKED_BY_WRITER);
     }
 

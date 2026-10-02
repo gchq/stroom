@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.index.impl;
 
 import stroom.index.shared.LuceneIndexDoc;
@@ -31,8 +47,8 @@ public class TimePartitionFactory {
                 : Math.max(1, index.getPartitionSize());
 
         LocalDate dateFrom = Instant.ofEpochMilli(timeMs).atZone(UTC).toLocalDate();
-        LocalDate dateTo;
-        String label;
+        final LocalDate dateTo;
+        final String label;
 
         if (PartitionBy.YEAR.equals(partitionBy)) {
             // Truncate to first day of the year.
@@ -85,10 +101,10 @@ public class TimePartitionFactory {
     }
 
     private LocalDate roundDown(final LocalDate dateTime, final TemporalUnit temporalUnit, final int size) {
-        LocalDate epoch = LocalDate.ofEpochDay(0);
-        long count = temporalUnit.between(epoch, dateTime);
-        long round = count / size * size;
-        long diff = round - count;
+        final LocalDate epoch = LocalDate.ofEpochDay(0);
+        final long count = temporalUnit.between(epoch, dateTime);
+        final long round = count / size * size;
+        final long diff = round - count;
         return dateTime.plus(diff, temporalUnit);
     }
 }

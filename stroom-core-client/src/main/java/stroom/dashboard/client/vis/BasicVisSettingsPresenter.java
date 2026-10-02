@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.client.JSONUtil;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -104,10 +104,9 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     private void updateFieldNames(final Component component) {
         fieldNames = new ArrayList<>();
-        if (component instanceof TablePresenter) {
-            final TablePresenter tablePresenter = (TablePresenter) component;
+        if (component instanceof final TablePresenter tablePresenter) {
             final List<Column> columns = tablePresenter.getTableComponentSettings().getColumns();
-            if (columns != null && columns.size() > 0) {
+            if (columns != null && !columns.isEmpty()) {
                 for (final Column column : columns) {
                     if (!fieldNames.contains(column.getName())) {
                         fieldNames.add(column.getName());
@@ -184,11 +183,12 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
-        final List<Component> list = getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
+        final List<Component> list = getDashboardContext()
+                .getComponents().getSortedComponentsByType(TablePresenter.TYPE.getId());
         getView().setTableList(list);
 
         final VisComponentSettings settings = (VisComponentSettings) componentConfig.getSettings();
-        getView().setTable(getComponents().get(settings.getTableId()));
+        getView().setTable(getDashboardContext().getComponents().get(settings.getTableId()));
         updateFieldNames(getView().getTable());
 
         dynamicSettings = JSONUtil.getObject(JSONUtil.parse(settings.getJson()));
@@ -208,7 +208,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        ComponentConfig result = super.write(componentConfig);
+        final ComponentConfig result = super.write(componentConfig);
         final VisComponentSettings oldSettings = (VisComponentSettings) result.getSettings();
         final VisComponentSettings newSettings = writeSettings(oldSettings);
         return result.copy().settings(newSettings).build();

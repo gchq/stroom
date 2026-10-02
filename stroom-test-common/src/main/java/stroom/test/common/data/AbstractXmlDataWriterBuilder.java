@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common.data;
 
 import stroom.util.shared.NullSafe;
@@ -37,7 +53,7 @@ public abstract class AbstractXmlDataWriterBuilder {
         final String recordFormatStr = buildRecordFormatString(fields);
 
         return dataRecord -> {
-            String[] valuesArr = new String[dataRecord.values().size()];
+            final String[] valuesArr = new String[dataRecord.values().size()];
             dataRecord.values().toArray(valuesArr);
             return String.format(recordFormatStr, (Object[]) valuesArr);
         };

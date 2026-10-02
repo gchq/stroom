@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.metrics;
 
 import stroom.util.logging.LambdaLogger;
@@ -92,16 +108,16 @@ public class MetricsUtil {
         // what flavour of metric is being registered
         return switch (metric) {
             case null -> null;
-            case MetricRegistry ignored -> MetricRegistry.class.getSimpleName();
-            case Histogram ignored -> Histogram.class.getSimpleName();
-            case Counter ignored -> Counter.class.getSimpleName();
-            case Meter ignored -> Meter.class.getSimpleName();
-            case Timer ignored -> Timer.class.getSimpleName();
-            case RatioGauge ignored -> RatioGauge.class.getSimpleName();
-            case CachedGauge<?> ignored -> CachedGauge.class.getSimpleName();
-            case DerivativeGauge<?, ?> ignored -> DerivativeGauge.class.getSimpleName();
-            case Gauge<?> ignored -> Gauge.class.getSimpleName();
-            case MetricSet ignored -> MetricSet.class.getSimpleName();
+            case final MetricRegistry ignored -> MetricRegistry.class.getSimpleName();
+            case final Histogram ignored -> Histogram.class.getSimpleName();
+            case final Counter ignored -> Counter.class.getSimpleName();
+            case final Meter ignored -> Meter.class.getSimpleName();
+            case final Timer ignored -> Timer.class.getSimpleName();
+            case final RatioGauge ignored -> RatioGauge.class.getSimpleName();
+            case final CachedGauge<?> ignored -> CachedGauge.class.getSimpleName();
+            case final DerivativeGauge<?, ?> ignored -> DerivativeGauge.class.getSimpleName();
+            case final Gauge<?> ignored -> Gauge.class.getSimpleName();
+            case final MetricSet ignored -> MetricSet.class.getSimpleName();
             default -> metric.getClass().getSimpleName();
         };
     }

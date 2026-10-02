@@ -1,9 +1,25 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.content.shared;
 
 import stroom.docref.DocRef;
 import stroom.processor.shared.ProcessorFilter;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.util.shared.NullSafe;
+import stroom.query.api.ExpressionOperator;
+import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -29,6 +45,8 @@ public class ContentTemplate {
     @JsonProperty
     private final TemplateType templateType;
     @JsonProperty
+    private final boolean copyElementDependencies;
+    @JsonProperty
     private final DocRef pipeline;
     @JsonProperty
     private final String name;
@@ -40,37 +58,52 @@ public class ContentTemplate {
     private final int processorMaxConcurrent;
 
     @JsonCreator
-    public ContentTemplate(@JsonProperty("enabled") final boolean enabled,
-                           @JsonProperty("templateNumber") final int templateNumber,
+    public ContentTemplate(@JsonProperty("enabled") final Boolean enabled,
+                           @JsonProperty("templateNumber") final Integer templateNumber,
                            @JsonProperty("expression") final ExpressionOperator expression,
                            @JsonProperty("templateType") final TemplateType templateType,
+                           @JsonProperty("copyElementDependencies") final Boolean copyElementDependencies,
                            @JsonProperty("pipeline") final DocRef pipeline,
                            @JsonProperty("name") final String name,
                            @JsonProperty("description") final String description,
-                           @JsonProperty("processorPriority") final int processorPriority,
-                           @JsonProperty("processorMaxConcurrent") final int processorMaxConcurrent) {
-
-        if (templateNumber < 1) {
+                           @JsonProperty("processorPriority") final Integer processorPriority,
+                           @JsonProperty("processorMaxConcurrent") final Integer processorMaxConcurrent) {
+        this.templateNumber = Objects.requireNonNullElse(templateNumber, 0);
+        this.processorPriority = Objects.requireNonNullElse(processorPriority, 0);
+        this.processorMaxConcurrent = Objects.requireNonNullElse(processorMaxConcurrent, 0);
+        if (this.templateNumber < 1) {
             throw new IllegalArgumentException(
-                    "Invalid templateNumber " + templateNumber + ". Must be >= 1.");
+                    "Invalid templateNumber " + this.templateNumber + ". Must be >= 1.");
         }
-        if (processorPriority < 0) {
+        if (this.processorPriority < 0) {
             throw new IllegalArgumentException("processorPriority must be >= 0");
         }
-        if (processorMaxConcurrent < 0) {
+        if (this.processorMaxConcurrent < 0) {
             throw new IllegalArgumentException("processorMaxConcurrent must be >= 0");
         }
-        this.enabled = enabled;
-        this.templateNumber = templateNumber;
-        this.expression = NullSafe.requireNonNullElseGet(
-                expression,
+        this.enabled = Objects.requireNonNullElse(enabled, true);
+        this.expression = Objects.requireNonNullElseGet(expression,
                 () -> ExpressionOperator.builder().build());
-        this.templateType = NullSafe.requireNonNullElse(templateType, DEFAULT_TEMPLATE_TYPE);
+        this.templateType = Objects.requireNonNullElse(templateType, DEFAULT_TEMPLATE_TYPE);
+        this.copyElementDependencies = Objects.requireNonNullElse(copyElementDependencies, false);
+
+        if (this.copyElementDependencies && templateType == TemplateType.PROCESSOR_FILTER) {
+            throw new IllegalArgumentException("copyElementDependencies cannot be set to true if templateType is "
+                                               + TemplateType.PROCESSOR_FILTER);
+        }
+
         this.pipeline = Objects.requireNonNull(pipeline);
         this.name = name;
         this.description = description;
-        this.processorPriority = processorPriority;
-        this.processorMaxConcurrent = processorMaxConcurrent;
+    }
+
+    @SerialisationTestConstructor
+    private ContentTemplate() {
+        this(ContentTemplate.builder()
+                .withExpression(ExpressionOperator.builder().build())
+                .withTemplateNumber(1)
+                .withPipeline(new DocRef("test", "test"))
+                .withTemplateType(TemplateType.INHERIT_PIPELINE));
     }
 
     private ContentTemplate(final Builder builder) {
@@ -78,6 +111,7 @@ public class ContentTemplate {
         templateNumber = builder.templateNumber;
         expression = builder.expression;
         templateType = builder.templateType;
+        copyElementDependencies = builder.copyElementDependencies;
         pipeline = builder.pipeline;
         name = builder.name;
         description = builder.description;
@@ -90,11 +124,12 @@ public class ContentTemplate {
     }
 
     public static Builder copy(final ContentTemplate copy) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.enabled = copy.isEnabled();
         builder.templateNumber = copy.getTemplateNumber();
         builder.expression = copy.getExpression();
         builder.templateType = copy.getTemplateType();
+        builder.copyElementDependencies = copy.isCopyElementDependencies();
         builder.pipeline = copy.getPipeline();
         builder.name = copy.getName();
         builder.description = copy.getDescription();
@@ -133,6 +168,10 @@ public class ContentTemplate {
      */
     public TemplateType getTemplateType() {
         return templateType;
+    }
+
+    public boolean isCopyElementDependencies() {
+        return copyElementDependencies;
     }
 
     /**
@@ -174,6 +213,7 @@ public class ContentTemplate {
                && processorMaxConcurrent == that.processorMaxConcurrent
                && Objects.equals(expression, that.expression)
                && templateType == that.templateType
+               && copyElementDependencies == that.copyElementDependencies
                && Objects.equals(pipeline, that.pipeline)
                && Objects.equals(name, that.name)
                && Objects.equals(description, that.description);
@@ -185,6 +225,7 @@ public class ContentTemplate {
                 templateNumber,
                 expression,
                 templateType,
+                copyElementDependencies,
                 pipeline,
                 name,
                 description,
@@ -199,6 +240,7 @@ public class ContentTemplate {
                ", templateNumber=" + templateNumber +
                ", expression=" + expression +
                ", templateType=" + templateType +
+               ", copyElementDependencies=" + copyElementDependencies +
                ", pipeline=" + pipeline +
                ", name='" + name + '\'' +
                ", description='" + description + '\'' +
@@ -219,6 +261,7 @@ public class ContentTemplate {
                         templateNumber,
                         expression,
                         templateType,
+                        copyElementDependencies,
                         pipeline,
                         name,
                         description,
@@ -238,6 +281,7 @@ public class ContentTemplate {
                         templateNumber,
                         expression,
                         templateType,
+                        copyElementDependencies,
                         pipeline,
                         name,
                         description,
@@ -259,6 +303,7 @@ public class ContentTemplate {
         private int templateNumber;
         private ExpressionOperator expression;
         private TemplateType templateType;
+        private boolean copyElementDependencies;
         private DocRef pipeline;
         private String name;
         private String description;
@@ -289,6 +334,11 @@ public class ContentTemplate {
 
         public Builder withTemplateType(final TemplateType templateType) {
             this.templateType = templateType;
+            return this;
+        }
+
+        public Builder withCopyElementDependencies(final boolean copyElementDependencies) {
+            this.copyElementDependencies = copyElementDependencies;
             return this;
         }
 

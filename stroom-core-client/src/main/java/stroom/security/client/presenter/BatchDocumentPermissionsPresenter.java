@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.explorer.client.presenter.DocumentListPresenter;
 import stroom.explorer.client.presenter.FindDocResultListHandler;
 import stroom.explorer.shared.FindResult;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
 import stroom.security.shared.QuickFilterExpressionParser;
@@ -55,6 +55,8 @@ import java.util.Set;
 public class BatchDocumentPermissionsPresenter
         extends ContentTabPresenter<QuickFilterPageView>
         implements QuickFilterUiHandlers {
+
+    public static final String TAB_TYPE = "DocumentPermissions";
 
     private final Provider<ExpressionPresenter> docFilterPresenterProvider;
     private final DocumentListPresenter documentListPresenter;
@@ -271,7 +273,7 @@ public class BatchDocumentPermissionsPresenter
 
     @Override
     public String getType() {
-        return "DocumentPermissions";
+        return TAB_TYPE;
     }
 
     public interface BatchDocumentPermissionsView extends View {

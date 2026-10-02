@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.app;
 
 import stroom.util.io.DiffUtil;
@@ -50,10 +66,10 @@ class TestStroomYamlUtil {
         final Consumer<List<String>> diffLinesConsumer = diffLines -> {
             LOGGER.error(
                     "\n  Differences exist between the expected serialised form of AppConfig and the actual. " +
-                            "\n  If the difference is what you would expect based on the changes you have made to " +
-                            "the config model " +
-                            "\n  then run the main() method in GenerateExpectedYaml to re-generate the " +
-                            "expected yaml\n{}",
+                    "\n  If the difference is what you would expect based on the changes you have made to " +
+                    "the config model " +
+                    "\n  then run the main() method in GenerateExpectedYaml to re-generate the " +
+                    "expected yaml\n{}",
                     String.join("\n", diffLines));
 
             LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);
@@ -101,7 +117,7 @@ class TestStroomYamlUtil {
 
     static String getYamlFromJavaModel() throws IOException {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        AppConfig appConfig = new AppConfig();
+        final AppConfig appConfig = new AppConfig();
         StroomYamlUtil.writeConfig(appConfig, byteArrayOutputStream);
         return byteArrayOutputStream.toString();
     }
@@ -118,7 +134,7 @@ class TestStroomYamlUtil {
 
 
 //    @Test
-//    void testAppConfigMerge() throws JsonProcessingException {
+//    void testAppConfigMerge()  {
 //
 //        doYamlMergeTest("""
 //                        """,
@@ -126,15 +142,14 @@ class TestStroomYamlUtil {
 //                AppConfig::new,
 //                (defaultPojo, mergedPojo) -> {
 //                    // can't do equality test as not many of the classes implement
-////                    assertThat(mergedPojo)
-////                            .isEqualTo(defaultPojo);
+
+    /// /                    assertThat(mergedPojo)
+    /// /                            .isEqualTo(defaultPojo);
 //                });
 //    }
-
-
     private static AppConfig loadYamlFile(final String filename) throws FileNotFoundException {
         LOGGER.info("1");
-        Path path = getStroomAppFile(filename);
+        final Path path = getStroomAppFile(filename);
         LOGGER.info("2");
 
         try {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
     @Override
     public ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria) {
-        ResultPage<StoredQuery> result;
+        final ResultPage<StoredQuery> result;
         final And.Builder<Void> andBuilder = And.builder();
 
         addCriteria(andBuilder, "Favorite", criteria::getFavourite);
@@ -105,13 +105,13 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
     @Override
     public StoredQuery create(final StoredQuery storedQuery) {
-        StoredQuery result;
+        final StoredQuery result;
 
         try {
             result = storedQueryServiceProvider.get().create(storedQuery);
             documentEventLogProvider.get().create(result, null);
         } catch (final RuntimeException e) {
-            documentEventLogProvider.get().create(new StoredQuery(), e);
+            documentEventLogProvider.get().create(StoredQuery.builder().build(), e);
             throw e;
         }
 
@@ -120,7 +120,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
     @Override
     public StoredQuery fetch(final StoredQuery storedQuery) {
-        StoredQuery result;
+        final StoredQuery result;
         try {
             result = storedQueryServiceProvider.get().fetch(storedQuery.getId());
             documentEventLogProvider.get().view(result, null);
@@ -134,7 +134,7 @@ class StoredQueryResourceImpl implements StoredQueryResource {
 
     @Override
     public StoredQuery update(final StoredQuery storedQuery) {
-        StoredQuery result;
+        final StoredQuery result;
         StoredQuery before = null;
 
         try {

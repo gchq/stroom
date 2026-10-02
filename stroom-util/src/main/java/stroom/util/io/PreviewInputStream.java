@@ -31,7 +31,7 @@ public class PreviewInputStream extends InputStream {
     }
 
     public int read() throws IOException {
-        int b;
+        final int b;
         if (buffer == null) {
             b = inputStream.read();
         } else {
@@ -55,7 +55,7 @@ public class PreviewInputStream extends InputStream {
 
         } else {
             // Calculate the number of bytes left in the buffer.
-            int bytesLeft = bufLength - bufOffset;
+            final int bytesLeft = bufLength - bufOffset;
 
             if (bytesLeft <= 0) {
                 buffer = null;
@@ -79,14 +79,14 @@ public class PreviewInputStream extends InputStream {
         return length;
     }
 
-    public long skip(long len) throws IOException {
+    public long skip(final long len) throws IOException {
         long length = len;
         if (buffer == null) {
             // There is no buffer so skip the input stream.
             length = inputStream.skip(length);
         } else {
             // Calculate the number of bytes left in the buffer.
-            int bytesLeft = bufLength - bufOffset;
+            final int bytesLeft = bufLength - bufOffset;
 
             if (bytesLeft <= 0) {
                 buffer = null;
@@ -96,7 +96,7 @@ public class PreviewInputStream extends InputStream {
                 length = inputStream.skip(length);
             } else {
                 bufOffset += length;
-                long rem = length - bytesLeft;
+                final long rem = length - bytesLeft;
                 if (rem > 0) {
                     buffer = null;
                     length = inputStream.skip(rem) + bytesLeft;
@@ -108,14 +108,14 @@ public class PreviewInputStream extends InputStream {
     }
 
     public int available() throws IOException {
-        int bytesLeft = bufLength - bufOffset;
+        final int bytesLeft = bufLength - bufOffset;
         if (bytesLeft <= 0) {
             return inputStream.available();
         }
         return bytesLeft;
     }
 
-    public void mark(int howMuch) {
+    public void mark(final int howMuch) {
         throw new UnsupportedOperationException("Mark is not supported");
     }
 
@@ -139,7 +139,7 @@ public class PreviewInputStream extends InputStream {
         int off = 0;
         int len = 0;
         int rem = limit;
-        byte[] b = new byte[limit];
+        final byte[] b = new byte[limit];
         while ((len = read(b, off, rem)) != -1 && rem > 0) {
             off += len;
             rem -= len;
@@ -148,7 +148,7 @@ public class PreviewInputStream extends InputStream {
         if (off == limit) {
             buffer = b;
         } else {
-            byte[] tmp = new byte[off];
+            final byte[] tmp = new byte[off];
             System.arraycopy(b, 0, tmp, 0, tmp.length);
             buffer = tmp;
         }

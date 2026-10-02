@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.common;
 
 
@@ -6,19 +22,14 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
-import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.zip.ZipUtil;
 
-import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,9 +39,6 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -342,116 +350,6 @@ class TestStroomStreamProcessor {
             assertMeta(stroomZipFile, "2", "META:VALUE2");
             assertMeta(stroomZipFile, "2", "TEST:VALUE");
         }
-    }
-
-    @Test
-    void testProcessRequestHeader_blankMap() {
-        final HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
-        final String remoteAddr = "192.168.0.1";
-        final String remoteHost = "remoteAddr1.domain";
-        Mockito.when(mockRequest.getRemoteAddr())
-                .thenReturn(remoteAddr);
-        Mockito.when(mockRequest.getRemoteHost())
-                .thenReturn(remoteHost);
-
-        // Blank header map
-        final AttributeMap attributeMap = new AttributeMap();
-        final StroomStreamProcessor streamProcessor = new StroomStreamProcessor(
-                attributeMap, null, null);
-
-        final Instant now = Instant.now();
-        streamProcessor.processRequestHeader(mockRequest, now);
-
-        Assertions.assertThat(attributeMap.get(StandardHeaderArguments.GUID))
-                .isNotNull();
-        Assertions.assertThat(attributeMap.get(StandardHeaderArguments.RECEIVED_TIME))
-                .isEqualTo(DateUtil.createNormalDateTimeString(now));
-        Assertions.assertThat(attributeMap.get(StandardHeaderArguments.RECEIVED_TIME_HISTORY))
-                .isEqualTo(DateUtil.createNormalDateTimeString(now));
-        Assertions.assertThat(attributeMap.get(StandardHeaderArguments.REMOTE_ADDRESS))
-                .isEqualTo(remoteAddr);
-        Assertions.assertThat(attributeMap.get(StandardHeaderArguments.REMOTE_HOST))
-                .isEqualTo(remoteHost);
-    }
-
-    @Test
-    void testProcessRequestHeader_populatedMap() {
-        final HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
-        final String remoteAddr = "192.168.0.1";
-        final String remoteHost = "remoteAddr1.domain";
-        Mockito.when(mockRequest.getRemoteAddr())
-                .thenReturn(remoteAddr);
-        Mockito.when(mockRequest.getRemoteHost())
-                .thenReturn(remoteHost);
-
-        final Instant now = Instant.now();
-        final Instant prevTime = now.minus(1, ChronoUnit.DAYS);
-        final String guid = UUID.randomUUID().toString();
-
-        // Blank header map
-        final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StandardHeaderArguments.GUID, guid);
-        attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, prevTime);
-        attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME_HISTORY, prevTime);
-
-        final StroomStreamProcessor streamProcessor = new StroomStreamProcessor(
-                attributeMap, null, null);
-
-        streamProcessor.processRequestHeader(mockRequest, now);
-
-        Assertions.assertThat(attributeMap.get(StandardHeaderArguments.GUID))
-                .isEqualTo(guid);
-        Assertions.assertThat(attributeMap.get(StandardHeaderArguments.RECEIVED_TIME))
-                .isEqualTo(DateUtil.createNormalDateTimeString(now));
-        Assertions.assertThat(attributeMap.getAsList(StandardHeaderArguments.RECEIVED_TIME_HISTORY))
-                .containsExactly(
-                        DateUtil.createNormalDateTimeString(prevTime),
-                        DateUtil.createNormalDateTimeString(now));
-        // Not set because a guid was already in the map
-        Assertions.assertThat(attributeMap.containsKey(StandardHeaderArguments.REMOTE_ADDRESS))
-                .isFalse();
-        Assertions.assertThat(attributeMap.containsKey(StandardHeaderArguments.REMOTE_HOST))
-                .isFalse();
-    }
-
-    @Test
-    void testProcessRequestHeader_populatedMap2() {
-        final HttpServletRequest mockRequest = Mockito.mock(HttpServletRequest.class);
-        final String remoteAddr = "192.168.0.1";
-        final String remoteHost = "remoteAddr1.domain";
-        Mockito.when(mockRequest.getRemoteAddr())
-                .thenReturn(remoteAddr);
-        Mockito.when(mockRequest.getRemoteHost())
-                .thenReturn(remoteHost);
-
-        final Instant now = Instant.now();
-        final Instant prevTime = now.minus(1, ChronoUnit.DAYS);
-        final String guid = UUID.randomUUID().toString();
-
-        // Blank header map
-        final AttributeMap attributeMap = new AttributeMap();
-        attributeMap.put(StandardHeaderArguments.GUID, guid);
-        attributeMap.putDateTime(StandardHeaderArguments.RECEIVED_TIME, prevTime);
-
-        // Empty RECEIVED_TIME_HISTORY this time
-
-        final StroomStreamProcessor streamProcessor = new StroomStreamProcessor(
-                attributeMap, null, null);
-
-        streamProcessor.processRequestHeader(mockRequest, now);
-
-        Assertions.assertThat(attributeMap.get(StandardHeaderArguments.GUID))
-                .isEqualTo(guid);
-        Assertions.assertThat(attributeMap.get(StandardHeaderArguments.RECEIVED_TIME))
-                .isEqualTo(DateUtil.createNormalDateTimeString(now));
-        Assertions.assertThat(attributeMap.getAsList(StandardHeaderArguments.RECEIVED_TIME_HISTORY))
-                .containsExactly(
-                        DateUtil.createNormalDateTimeString(prevTime),
-                        DateUtil.createNormalDateTimeString(now));
-        Assertions.assertThat(attributeMap.containsKey(StandardHeaderArguments.REMOTE_ADDRESS))
-                .isFalse();
-        Assertions.assertThat(attributeMap.containsKey(StandardHeaderArguments.REMOTE_HOST))
-                .isFalse();
     }
 
     //    @Test

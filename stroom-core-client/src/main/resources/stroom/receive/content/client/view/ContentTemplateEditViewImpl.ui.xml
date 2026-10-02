@@ -3,13 +3,14 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:v="urn:import:stroom.widget.valuespinner.client">
+             xmlns:v="urn:import:stroom.widget.valuespinner.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form">
         <form:FormGroup
                 identity="contentTemplateName"
                 label="Template Name"
                 helpText="The name of this template.">
-                <g:TextBox ui:field="name" addStyleNames="w-100"/>
+            <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <form:FormGroup
@@ -25,14 +26,28 @@
             <form:HelpHTML>
                 <p>Defines type of content that will be created from the template pipeline.</p>
                 <ul>
-                    <li><strong>PROCESSOR_FILTER</strong>
-                        - A new Processor Filter will be created in the selected pipeline.</li>
-                    <li><strong>INHERIT_PIPELINE</strong>
-                    - A new Pipeline (and associated Processor Filter) will be created that inherits
-                        from the selected pipeline.</li>
+                    <li>
+                        <strong>PROCESSOR_FILTER</strong>
+                        - A new Processor Filter will be created in the selected pipeline.
+                    </li>
+                    <li>
+                        <strong>INHERIT_PIPELINE</strong>
+                        - A new Pipeline (and associated Processor Filter) will be created that inherits
+                        from the selected pipeline.
+                    </li>
                 </ul>
             </form:HelpHTML>
             <i:SelectionBox ui:field="templateTypeSelectionBox" addStyleNames="w-100"/>
+        </form:FormGroup>
+
+        <form:FormGroup
+                ui:field="copyDependenciesFormGroup"
+                identity="contentTemplateCopyDependencies"
+                label="Copy Pipeline Element Dependencies"
+                helpText="If Template Type is INHERIT_PIPELINE then this option allows you to copy any entities set
+               within the properties of the pipeline being inherited from. It will not copy entities referenced on
+                any ancestor pipelines.">
+            <tickbox:CustomCheckBox ui:field="copyDependenciesCheckBox" addStyleNames="allow-focus"/>
         </form:FormGroup>
 
         <form:FormGroup

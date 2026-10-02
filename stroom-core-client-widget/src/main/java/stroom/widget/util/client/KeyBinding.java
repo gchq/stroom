@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.util.client;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -81,6 +97,7 @@ public class KeyBinding {
 
         // Binds for Going To a single instance screen. Sort these by 2nd key
         addGotoKeySequence(Action.GOTO_APP_PERMS, KeyCodes.KEY_A);
+        addGotoKeySequence(Action.GOTO_ANNOTATIONS, KeyCodes.KEY_B);
         addGotoKeySequence(Action.GOTO_CACHES, KeyCodes.KEY_C);
         addGotoKeySequence(Action.GOTO_DEPENDENCIES, KeyCodes.KEY_D);
         addGotoKeySequence(Action.GOTO_EXPLORER_TREE, KeyCodes.KEY_E);
@@ -95,9 +112,12 @@ public class KeyBinding {
         addGotoKeySequence(Action.GOTO_USER_GROUPS, KeyCodes.KEY_G);
         addGotoKeySequence(Action.GOTO_USER_PREFERENCES, KeyCodes.KEY_U);
         addGotoKeySequence(Action.GOTO_FS_VOLUMES, KeyCodes.KEY_V);
+        addGotoKeySequence(Action.GOTO_USER_ACCESS, KeyCodes.KEY_W);
         addGotoKeySequence(Action.GOTO_USER_ACCOUNTS, KeyCodes.KEY_X);
+        addGotoKeySequence(Action.GOTO_SIGNING_KEYS, KeyCodes.KEY_Y);
 
         // Binds for creating a document. Sort these by 2nd key
+        addCreateDocKeySequence(Action.CREATE_ANNOTATION, KeyCodes.KEY_A);
         addCreateDocKeySequence(Action.CREATE_ELASTIC_INDEX, KeyCodes.KEY_C);
         addCreateDocKeySequence(Action.CREATE_DASHBOARD, KeyCodes.KEY_D);
         addCreateDocKeySequence(Action.CREATE_FEED, KeyCodes.KEY_E);
@@ -233,7 +253,7 @@ public class KeyBinding {
                 isInput = isTextBox(element, tagName)
                           || "TEXTAREA".equalsIgnoreCase(tagName);
 
-//                final String className = GwtNullSafe.string(element.getClassName());
+//                final String className = NullSafe.string(element.getClassName());
 //                final String type = element.getAttribute("type");
 //                GWT.log("className: " + className + " tagName: " + element.getTagName()
 //                        + " type: " + type + " shouldCheck: " + shouldCheck);
@@ -334,7 +354,7 @@ public class KeyBinding {
     static void add(final Action action,
                     final boolean ctrl,
                     final int... keyCode) {
-        for (int code : keyCode) {
+        for (final int code : keyCode) {
             add(action, Shortcut.builder()
                     .ctrl(ctrl)
                     .keyCode(code)
@@ -343,7 +363,7 @@ public class KeyBinding {
     }
 
     static void add(final Action action, final int... keyCode) {
-        for (int code : keyCode) {
+        for (final int code : keyCode) {
             add(action, Shortcut.builder()
                     .keyCode(code)
                     .build());
@@ -516,11 +536,13 @@ public class KeyBinding {
         SETTINGS,
 
         // GOTO key sequences
+        GOTO_ANNOTATIONS,
         GOTO_PROPERTIES,
         GOTO_API_KEYS,
+        GOTO_SIGNING_KEYS,
         GOTO_CACHES,
         GOTO_DATA_RETENTION,
-        GOTO_CONTENT_TEMPALTES,
+        GOTO_CONTENT_TEMPLATES,
         GOTO_DEPENDENCIES,
         GOTO_JOBS,
         GOTO_NODES,
@@ -531,6 +553,7 @@ public class KeyBinding {
         GOTO_APP_PERMS,
         GOTO_DOC_PERMS,
         GOTO_INDEX_VOLUMES,
+        GOTO_USER_ACCESS,
         GOTO_USER_ACCOUNTS,
         GOTO_USER_PROFILE,
         GOTO_USERS,
@@ -539,6 +562,7 @@ public class KeyBinding {
         GOTO_USER_PERMISSION_REPORT,
 
         // Create Doc key sequences
+        CREATE_ANNOTATION, // A
         CREATE_ELASTIC_INDEX, // C
         CREATE_DASHBOARD, // D
         CREATE_FEED, // E

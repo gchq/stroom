@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package stroom.ui.config.shared;
 
-import stroom.expression.api.UserTimeZone;
-import stroom.expression.api.UserTimeZone.Use;
-import stroom.util.shared.NullSafe;
+import stroom.ai.shared.AskStroomAiConfig;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.UserTimeZone.Use;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -83,6 +83,9 @@ public class UserPreferences {
     @JsonProperty
     private final Boolean hideConditionalStyles;
 
+    @JsonProperty
+    private final AskStroomAiConfig askStroomAiConfig;
+
     @JsonCreator
     public UserPreferences(@JsonProperty("theme") final String theme,
                            @JsonProperty("editorTheme") final String editorTheme,
@@ -94,20 +97,22 @@ public class UserPreferences {
                            @JsonProperty("dateTimePattern") final String dateTimePattern,
                            @JsonProperty("timeZone") final UserTimeZone timeZone,
                            @JsonProperty("enableTransparency") final Boolean enableTransparency,
-                           @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles) {
+                           @JsonProperty("hideConditionalStyles") final Boolean hideConditionalStyles,
+                           @JsonProperty("askStroomAiConfig") final AskStroomAiConfig askStroomAiConfig) {
         this.theme = theme;
         this.editorTheme = editorTheme;
-        this.editorKeyBindings = NullSafe.requireNonNullElse(
+        this.editorKeyBindings = Objects.requireNonNullElse(
                 editorKeyBindings, DEFAULT_EDITOR_KEY_BINDINGS);
-        this.editorLiveAutoCompletion = NullSafe.requireNonNullElse(
+        this.editorLiveAutoCompletion = Objects.requireNonNullElse(
                 editorLiveAutoCompletion, DEFAULT_EDITOR_LIVE_AUTO_COMPLETION);
         this.density = density;
         this.font = font;
         this.fontSize = fontSize;
         this.dateTimePattern = dateTimePattern;
         this.timeZone = timeZone;
-        this.enableTransparency = NullSafe.requireNonNullElse(enableTransparency, true);
+        this.enableTransparency = Objects.requireNonNullElse(enableTransparency, true);
         this.hideConditionalStyles = hideConditionalStyles;
+        this.askStroomAiConfig = askStroomAiConfig;
     }
 
     public String getTheme() {
@@ -154,6 +159,10 @@ public class UserPreferences {
         return hideConditionalStyles;
     }
 
+    public AskStroomAiConfig getAskStroomAiConfig() {
+        return askStroomAiConfig;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -173,7 +182,8 @@ public class UserPreferences {
                Objects.equals(dateTimePattern, that.dateTimePattern) &&
                Objects.equals(timeZone, that.timeZone) &&
                Objects.equals(enableTransparency, that.enableTransparency) &&
-               Objects.equals(hideConditionalStyles, that.hideConditionalStyles);
+               Objects.equals(hideConditionalStyles, that.hideConditionalStyles) &&
+               Objects.equals(askStroomAiConfig, that.askStroomAiConfig);
     }
 
     @Override
@@ -205,6 +215,7 @@ public class UserPreferences {
                ", timeZone=" + timeZone +
                ", enableTransparency=" + enableTransparency +
                ", hideConditionalStyles=" + hideConditionalStyles +
+               ", askStroomAiConfig='" + askStroomAiConfig + '\'' +
                '}';
     }
 
@@ -273,6 +284,7 @@ public class UserPreferences {
         private UserTimeZone timeZone;
         private Boolean enableTransparency;
         private Boolean hideConditionalStyles;
+        private AskStroomAiConfig askStroomAiConfig;
 
         private Builder() {
             theme = DEFAULT_THEME_NAME;
@@ -285,6 +297,7 @@ public class UserPreferences {
             dateTimePattern = DEFAULT_DATE_TIME_PATTERN;
             timeZone = UserTimeZone.builder().use(Use.UTC).build();
             enableTransparency = true;
+            askStroomAiConfig = new AskStroomAiConfig();
         }
 
         private Builder(final UserPreferences userPreferences) {
@@ -299,6 +312,7 @@ public class UserPreferences {
             this.timeZone = userPreferences.timeZone;
             this.enableTransparency = userPreferences.enableTransparency;
             this.hideConditionalStyles = userPreferences.hideConditionalStyles;
+            this.askStroomAiConfig = userPreferences.askStroomAiConfig;
         }
 
         public Builder theme(final String theme) {
@@ -356,6 +370,11 @@ public class UserPreferences {
             return this;
         }
 
+        public Builder askStroomAiConfig(final AskStroomAiConfig askStroomAiConfig) {
+            this.askStroomAiConfig = askStroomAiConfig;
+            return this;
+        }
+
         public UserPreferences build() {
             return new UserPreferences(
                     theme,
@@ -368,7 +387,8 @@ public class UserPreferences {
                     dateTimePattern,
                     timeZone,
                     enableTransparency,
-                    hideConditionalStyles);
+                    hideConditionalStyles,
+                    askStroomAiConfig);
         }
     }
 

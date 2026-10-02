@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.statistics.impl;
 
 import stroom.docref.DocRef;
@@ -44,7 +60,7 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
         try {
             final InternalStatisticsConfig internalStatisticsConfig = internalStatisticsConfigProvider.get();
             // Group the events by service and docref
-            Map<InternalStatisticsService, Map<DocRef, List<InternalStatisticEvent>>> serviceToEventsMapMap =
+            final Map<InternalStatisticsService, Map<DocRef, List<InternalStatisticEvent>>> serviceToEventsMapMap =
                     statisticEvents.stream()
                             .flatMap(event ->
                                     internalStatisticsConfig.getEnabledDocRefs(event.getKey())
@@ -77,7 +93,7 @@ class MultiServiceInternalStatisticsReceiver implements InternalStatisticsReceiv
     }
 
     private InternalStatisticsService getServiceForType(final String type) {
-        InternalStatisticsService service = docRefTypeToServiceMap.get(type);
+        final InternalStatisticsService service = docRefTypeToServiceMap.get(type);
         if (service == null) {
             LOGGER.warn("No InternalStatisticsService for type {}", type);
         }

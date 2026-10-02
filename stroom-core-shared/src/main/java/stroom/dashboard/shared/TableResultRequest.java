@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,10 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.ResultRequest.Fetch;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.GroupSelection;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.ResultRequest.Fetch;
+import stroom.query.api.TableSettings;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -36,9 +36,10 @@ import java.util.Set;
         "tableName",
         "tableSettings",
         "requestedRange",
-        "openGroups"})
+        "openGroups",
+        "groupSelection"})
 @JsonInclude(Include.NON_NULL)
-public class TableResultRequest extends ComponentResultRequest {
+public final class TableResultRequest extends ComponentResultRequest {
 
     @JsonProperty
     private final String tableName;
@@ -46,8 +47,14 @@ public class TableResultRequest extends ComponentResultRequest {
     private final TableSettings tableSettings;
     @JsonProperty
     private final OffsetRange requestedRange;
+    /**
+     * @deprecated Use {@link GroupSelection#openGroups} instead.
+     */
     @JsonProperty
+    @Deprecated
     private final Set<String> openGroups;
+    @JsonProperty
+    private final GroupSelection groupSelection;
 
     @JsonCreator
     public TableResultRequest(@JsonProperty("componentId") final String componentId,
@@ -55,12 +62,15 @@ public class TableResultRequest extends ComponentResultRequest {
                               @JsonProperty("tableName") final String tableName,
                               @JsonProperty("tableSettings") final TableSettings tableSettings,
                               @JsonProperty("requestedRange") final OffsetRange requestedRange,
-                              @JsonProperty("openGroups") final Set<String> openGroups) {
+                              @JsonProperty("openGroups") final Set<String> openGroups,
+                              @JsonProperty("groupSelection") final GroupSelection groupSelection) {
         super(componentId, fetch);
         this.tableName = tableName;
         this.tableSettings = tableSettings;
         this.requestedRange = requestedRange;
         this.openGroups = openGroups;
+        this.groupSelection = groupSelection == null ?
+                GroupSelection.builder().openGroups(openGroups).build() : groupSelection;
     }
 
     public static Builder builder() {
@@ -83,8 +93,8 @@ public class TableResultRequest extends ComponentResultRequest {
         return openGroups;
     }
 
-    public boolean isGroupOpen(final String group) {
-        return openGroups != null && openGroups.contains(group);
+    public GroupSelection getGroupSelection() {
+        return groupSelection;
     }
 
     @Override
@@ -97,9 +107,10 @@ public class TableResultRequest extends ComponentResultRequest {
         }
         final TableResultRequest that = (TableResultRequest) o;
         return Objects.equals(tableName, that.tableName) &&
-                Objects.equals(tableSettings, that.tableSettings) &&
-                Objects.equals(requestedRange, that.requestedRange) &&
-                Objects.equals(openGroups, that.openGroups);
+               Objects.equals(tableSettings, that.tableSettings) &&
+               Objects.equals(requestedRange, that.requestedRange) &&
+               Objects.equals(openGroups, that.openGroups) &&
+               Objects.equals(groupSelection, that.groupSelection);
     }
 
     @Override
@@ -108,7 +119,8 @@ public class TableResultRequest extends ComponentResultRequest {
                 tableName,
                 tableSettings,
                 requestedRange,
-                openGroups);
+                openGroups,
+                groupSelection);
     }
 
     @Override
@@ -118,6 +130,7 @@ public class TableResultRequest extends ComponentResultRequest {
                 ",tableSettings=" + tableSettings +
                 ", requestedRange=" + requestedRange +
                 ", openGroups=" + openGroups +
+                ", groupSelection=" + groupSelection +
                 '}';
     }
 
@@ -133,6 +146,7 @@ public class TableResultRequest extends ComponentResultRequest {
         private TableSettings tableSettings;
         private OffsetRange requestedRange = OffsetRange.ZERO_100;
         private Set<String> openGroups;
+        private GroupSelection groupSelection = new GroupSelection();
 
         private Builder() {
         }
@@ -144,6 +158,7 @@ public class TableResultRequest extends ComponentResultRequest {
             this.tableSettings = tableResultRequest.tableSettings;
             this.requestedRange = tableResultRequest.requestedRange;
             this.openGroups = tableResultRequest.openGroups;
+            this.groupSelection = tableResultRequest.groupSelection;
         }
 
         public Builder componentId(final String componentId) {
@@ -176,17 +191,8 @@ public class TableResultRequest extends ComponentResultRequest {
             return this;
         }
 
-        public Builder openGroup(final String group, final boolean open) {
-            if (openGroups == null) {
-                openGroups = new HashSet<>();
-            }
-
-            if (open) {
-                openGroups.add(group);
-            } else {
-                openGroups.remove(group);
-            }
-
+        public Builder groupSelection(final GroupSelection groupSelection) {
+            this.groupSelection = groupSelection;
             return this;
         }
 
@@ -197,7 +203,8 @@ public class TableResultRequest extends ComponentResultRequest {
                     tableName,
                     tableSettings,
                     requestedRange,
-                    openGroups);
+                    openGroups,
+                    groupSelection);
         }
     }
 }

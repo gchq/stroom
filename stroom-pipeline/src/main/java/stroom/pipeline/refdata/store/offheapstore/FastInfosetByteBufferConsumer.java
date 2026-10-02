@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
@@ -21,7 +37,8 @@ public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferCons
 
     private final SAXDocumentParser saxDocumentParser;
 
-    public FastInfosetByteBufferConsumer(final Receiver receiver, final PipelineConfiguration pipelineConfiguration) {
+    public FastInfosetByteBufferConsumer(final Receiver receiver,
+                                         final PipelineConfiguration pipelineConfiguration) {
 
         final FastInfosetContentHandler fastInfosetContentHandler = new FastInfosetContentHandler();
         fastInfosetContentHandler.setPipelineConfiguration(pipelineConfiguration);
@@ -32,20 +49,22 @@ public class FastInfosetByteBufferConsumer implements RefDataValueByteBufferCons
     }
 
     @Override
-    public void consumeBytes(final Receiver receiver, final ByteBuffer byteBuffer) {
+    public void consumeBytes(final ByteBuffer byteBuffer) {
         LOGGER.trace("consumeBytes()");
-        final ByteBufferInputStream inputStream = new ByteBufferInputStream(byteBuffer);
-        try {
+        try (final ByteBufferInputStream inputStream = new ByteBufferInputStream(byteBuffer)) {
             // do the parsing which will output to the tinyBuilder
             saxDocumentParser.parse(inputStream);
-        } catch (IOException | FastInfosetException | SAXException e) {
-            throw new RuntimeException("Error parsing fastinfoset bytes, "
-                    + ByteBufferUtils.byteBufferInfo(inputStream.getByteBuffer()) + " "
-                    + e.getMessage(), e);
+        } catch (final IOException | FastInfosetException | SAXException e) {
+            throw new RuntimeException("Error parsing fastInfoset bytes, "
+                                       + ByteBufferUtils.byteBufferInfo(byteBuffer) + " "
+                                       + e.getMessage(), e);
         }
-
         saxDocumentParser.reset();
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class Factory implements RefDataValueByteBufferConsumer.Factory {
 

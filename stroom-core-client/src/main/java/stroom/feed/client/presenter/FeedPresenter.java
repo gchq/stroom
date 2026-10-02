@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.feed.client.presenter;
@@ -21,8 +20,8 @@ import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -38,15 +37,13 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, FeedDoc> {
+public class FeedPresenter extends DocTabPresenter<LinkTabPanelView, FeedDoc> {
 
     private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData DATA = new TabDataImpl("Data");
     private static final TabData TASKS = new TabDataImpl("Active Tasks");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
-
-    private MetaPresenter metaPresenter;
 
     @Inject
     public FeedPresenter(final EventBus eventBus,
@@ -65,8 +62,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
             addTab(DATA, new AbstractTabProvider<FeedDoc, MetaPresenter>(eventBus) {
                 @Override
                 protected MetaPresenter createPresenter() {
-                    metaPresenter = metaPresenterProvider.get();
-                    return metaPresenter;
+                    return metaPresenterProvider.get();
                 }
 
                 @Override
@@ -75,6 +71,13 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
                                    final FeedDoc document,
                                    final boolean readOnly) {
                     presenter.read(docRef, document, readOnly);
+                    // Refresh any displayed data so it reflects the (now-saved) feed settings, e.g. a
+                    // changed encoding. onRead runs on initial load and after each save (with the saved
+                    // doc, so the server has the new encoding); refreshData() is a no-op unless a stream
+                    // is currently displayed. This was previously in onWrite, which ran on every dirty
+                    // check - many times per edit, for all settings fields, and before the change was
+                    // persisted (so the re-fetch used the pre-save encoding).
+                    presenter.refreshData();
                 }
             });
             selectedTab = DATA;
@@ -97,7 +100,7 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
             });
         }
 
-        addTab(SETTINGS, new DocumentEditTabProvider<>(settingsPresenterProvider::get));
+        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<FeedDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -111,25 +114,12 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
             @Override
             public FeedDoc onWrite(final MarkdownEditPresenter presenter,
                                    final FeedDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
 
         selectTab(selectedTab);
-    }
-
-    @Override
-    protected FeedDoc onWrite(FeedDoc doc) {
-        final FeedDoc modified = super.onWrite(doc);
-
-        // Something has changed, e.g. the encoding so refresh the meta presenter to reflect it
-        if (metaPresenter != null) {
-            metaPresenter.refreshData();
-        }
-
-        return modified;
     }
 
     @Override
@@ -146,16 +136,4 @@ public class FeedPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Fe
     protected TabData getDocumentationTab() {
         return DOCUMENTATION;
     }
-
-    //    @Override
-//    public boolean handleKeyAction(final Action action) {
-//        if (Action.DOCUMENTATION == action) {
-//            selectTab(DOCUMENTATION);
-//            return true;
-//        } else if (Action.SETTINGS == action) {
-//            selectTab(SETTINGS);
-//            return true;
-//        }
-//        return false;
-//    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.nio.file.Paths;
 final class ProjectPathUtil {
 
     static Path resolveDir(final String projectDir) {
-        Path root = Paths.get(".").toAbsolutePath().normalize();
+        final Path root = Paths.get(".").toAbsolutePath().normalize();
         Path dir = root.resolve(projectDir);
         if (!Files.isDirectory(dir)) {
             dir = root.getParent().resolve(projectDir);

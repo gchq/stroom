@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dropwizard.common;
 
 import stroom.util.logging.LambdaLogger;
@@ -43,7 +59,7 @@ public class DropWizardMetrics {
     }
 
 //    private void registerMetricConsumers(final Set<HasMetrics> hasMetricsSet) {
-//        for (final HasMetrics hasMetrics : GwtNullSafe.set(hasMetricsSet)) {
+//        for (final HasMetrics hasMetrics : NullSafe.set(hasMetricsSet)) {
 //            // Allow HasMetrics to tell us about metrics
 //            hasMetrics.registerAdditionalMetricConsumer(additionalMetric -> {
 //
@@ -73,7 +89,7 @@ public class DropWizardMetrics {
                 .sorted(Comparator.comparing(MetricsUtil.NamedMetric::name, String::compareToIgnoreCase))
                 .toList();
 
-        int maxNameLength = namedMetrics.stream()
+        final int maxNameLength = namedMetrics.stream()
                 .mapToInt(namedMetric -> namedMetric.name().length())
                 .max()
                 .orElse(0);
@@ -118,10 +134,10 @@ public class DropWizardMetrics {
             return null;
         } else {
             return switch (metric) {
-                case Histogram val -> Histogram.class.getSimpleName();
-                case Counter val -> Counter.class.getSimpleName();
-                case Metered val -> Metered.class.getSimpleName();
-                case Gauge<?> val -> Gauge.class.getSimpleName();
+                case final Histogram val -> Histogram.class.getSimpleName();
+                case final Counter val -> Counter.class.getSimpleName();
+                case final Metered val -> Metered.class.getSimpleName();
+                case final Gauge<?> val -> Gauge.class.getSimpleName();
                 default -> metric.getClass().getSimpleName();
             };
         }

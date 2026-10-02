@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.lmdb.serde;
@@ -44,7 +43,7 @@ public interface Serializer<T> {
         final ByteBuffer byteBuffer = Objects.requireNonNull(byteBufferSupplier.get());
         try {
             serialize(byteBuffer, object);
-        } catch (BufferOverflowException boe) {
+        } catch (final BufferOverflowException boe) {
             throw new RuntimeException(LogUtil.message("Buffer {} too small for value {}",
                     ByteBufferUtils.byteBufferInfo(byteBuffer),
                     object));

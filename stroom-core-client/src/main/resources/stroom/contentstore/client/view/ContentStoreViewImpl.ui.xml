@@ -1,0 +1,16 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+>
+    <g:SimplePanel styleName="max">
+
+        <g:ThinSplitLayoutPanel styleName="max">
+            <g:north size="400">
+                <g:SimplePanel ui:field="contentPackList" styleName="max dashboard-panel"/>
+            </g:north>
+            <g:center>
+                <g:SimplePanel ui:field="contentPackDetails" styleName="max dashboard-panel contentstore-scroll-y"/>
+            </g:center>
+        </g:ThinSplitLayoutPanel>
+    </g:SimplePanel>
+</ui:UiBinder>

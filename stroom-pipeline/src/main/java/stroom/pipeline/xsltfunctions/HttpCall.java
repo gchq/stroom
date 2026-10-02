@@ -1,7 +1,25 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.xsltfunctions;
 
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.StreamUtil;
+import stroom.util.jersey.HttpClientProvider;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -46,8 +64,8 @@ class HttpCall extends StroomExtensionFunctionCall {
     private final CommonHttpClient commonHttpClient;
 
     @Inject
-    HttpCall(final HttpClientCache httpClientCache) {
-        commonHttpClient = new CommonHttpClient(httpClientCache);
+    HttpCall(final HttpClientProviderCache httpClientProviderCache) {
+        commonHttpClient = new CommonHttpClient(httpClientProviderCache);
     }
 
     @Override
@@ -65,8 +83,8 @@ class HttpCall extends StroomExtensionFunctionCall {
             log(context, Severity.WARNING, "No URL specified for HTTP call", null);
 
         } else {
-            try {
-                final HttpClient httpClient = commonHttpClient.createClient(clientConfigStr);
+            try (final HttpClientProvider httpClientProvider = commonHttpClient.createClientProvider(clientConfigStr)) {
+                final HttpClient httpClient = httpClientProvider.get();
                 sequence = execute(url, headers, mediaType, data, httpClient, response ->
                         createSequence(context, response));
 
@@ -76,7 +94,7 @@ class HttpCall extends StroomExtensionFunctionCall {
                 log(context, Severity.ERROR, msg, e);
                 try {
                     sequence = createError(context, msg);
-                } catch (SAXException ex) {
+                } catch (final SAXException ex) {
                     LOGGER.trace(msg, e);
                     log(context, Severity.ERROR, msg, e);
                 }
@@ -101,7 +119,7 @@ class HttpCall extends StroomExtensionFunctionCall {
                   final String mediaType,
                   final String data,
                   final HttpClient httpClient,
-                  HttpClientResponseHandler<T> responseHandler) {
+                  final HttpClientResponseHandler<T> responseHandler) {
         LOGGER.debug(() -> "Creating request builder");
         final HttpPost httpPost = new HttpPost(url);
 
@@ -113,7 +131,7 @@ class HttpCall extends StroomExtensionFunctionCall {
         if (headers != null && !headers.isEmpty()) {
             final String[] parts = headers.split(HEADER_DELIMITER);
             for (final String part : parts) {
-                int index = part.indexOf(HEADER_KV_DELIMITER);
+                final int index = part.indexOf(HEADER_KV_DELIMITER);
                 if (index > 0) {
                     final String key = part.substring(0, index).trim();
                     final String value = part.substring(index + HEADER_KV_DELIMITER.length()).trim();
@@ -173,7 +191,7 @@ class HttpCall extends StroomExtensionFunctionCall {
             endElement(contentHandler, "response");
             contentHandler.endDocument();
 
-            Sequence sequence = builder.getCurrentRoot();
+            final Sequence sequence = builder.getCurrentRoot();
 
             // Reset the builder, detaching it from the constructed
             // document.
@@ -198,7 +216,7 @@ class HttpCall extends StroomExtensionFunctionCall {
         data(contentHandler, "error", message);
         contentHandler.endDocument();
 
-        Sequence sequence = builder.getCurrentRoot();
+        final Sequence sequence = builder.getCurrentRoot();
 
         // Reset the builder, detaching it from the constructed
         // document.

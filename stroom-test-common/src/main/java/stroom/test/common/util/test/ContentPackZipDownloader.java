@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common.util.test;
 
 import stroom.content.ContentPack;
@@ -8,7 +24,6 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LogUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -16,6 +31,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -61,7 +77,7 @@ public class ContentPackZipDownloader {
             LOGGER.info("Copying from " + downloadFile + " to " + importFile);
             try {
                 StreamUtil.copyFile(downloadFile, importFile);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(LogUtil.message("Error copying {} to {}: {}",
                         downloadFile, importFile, e.getMessage()), e);
             }
@@ -73,7 +89,7 @@ public class ContentPackZipDownloader {
     private static void ensureDirectoryExists(final Path contentPackDownloadDir) {
         try {
             Files.createDirectories(contentPackDownloadDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error ensuring {} exists: {}",
                     contentPackDownloadDir, e.getMessage()), e);
         }
@@ -89,18 +105,18 @@ public class ContentPackZipDownloader {
                 contentPackImportDir.toAbsolutePath());
         try {
             Files.createDirectories(contentPackDownloadDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.error("Error ensuring {} exists: {}", contentPackDownloadDir.toAbsolutePath(), e.getMessage(), e);
         }
 
         try {
             Files.createDirectories(contentPackImportDir);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.error("Error ensuring {} exists: {}", contentPackImportDir.toAbsolutePath(), e.getMessage(), e);
         }
 
         try {
-            final ObjectMapper mapper = JsonUtil.getMapper();
+            final JsonMapper mapper = JsonUtil.getMapper();
             final ContentPackZipCollection contentPacks = mapper.readValue(
                     contentPacksDefinition.toFile(),
                     ContentPackZipCollection.class);
@@ -139,7 +155,7 @@ public class ContentPackZipDownloader {
         final Path parent = lockFilePath.getParent();
         try {
             Files.createDirectories(lockFilePath.getParent());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error creating lockFilePath parent dir " + parent);
         }
 
@@ -176,7 +192,7 @@ public class ContentPackZipDownloader {
                     try {
                         // Create the .complete file so other jvms know the git clone is good to use
                         FileUtil.touch(completedFilePath);
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         throw new RuntimeException(LogUtil.message(
                                 "Error creating file {} - {}", completedFilePath, LogUtil.exceptionMessage(e), e));
                     }
@@ -250,7 +266,7 @@ public class ContentPackZipDownloader {
     private static URL getUrl(final ContentPackZip contentPackZip) {
         try {
             return new URL(contentPackZip.getUrl());
-        } catch (MalformedURLException e) {
+        } catch (final MalformedURLException e) {
             throw new RuntimeException("Url " +
                                        contentPackZip.getUrl() +
                                        " for content pack " +
@@ -271,8 +287,8 @@ public class ContentPackZipDownloader {
         return destDir.resolve(filename + ".lock");
     }
 
-    private static boolean isRedirected(Map<String, List<String>> header) {
-        for (String hv : header.get(null)) {
+    private static boolean isRedirected(final Map<String, List<String>> header) {
+        for (final String hv : header.get(null)) {
             if (hv.contains(" 301 ")
                 || hv.contains(" 302 ")) {
                 return true;
@@ -298,7 +314,7 @@ public class ContentPackZipDownloader {
                     // concurrent tests don't overwrite the file.
                     try {
                         Files.move(tempFile, destFilename);
-                    } catch (FileAlreadyExistsException e) {
+                    } catch (final FileAlreadyExistsException e) {
                         // Don't see why we should get here as the methods are synchronized
                         LOGGER.warn("Unable to move {} to {} as file already exists, ignoring the error.",
                                 tempFile.toAbsolutePath().normalize(),

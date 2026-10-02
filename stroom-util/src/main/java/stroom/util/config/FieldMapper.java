@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.Prop;
@@ -99,7 +115,7 @@ public class FieldMapper {
         LOGGER.trace("copy called for {}", source.getClass().getSimpleName());
         try {
             final Map<String, Prop> properties = PropertyUtil.getProperties(source);
-            for (Prop prop : properties.values()) {
+            for (final Prop prop : properties.values()) {
                 LOGGER.trace("Examining prop {} of type {}",
                         prop.getName(), prop.getValueClass().getSimpleName());
 
@@ -154,10 +170,10 @@ public class FieldMapper {
                     }
                 }
             }
-        } catch (InvocationTargetException
-                | IllegalAccessException
-                | NoSuchMethodException
-                | InstantiationException e) {
+        } catch (final InvocationTargetException
+                       | IllegalAccessException
+                       | NoSuchMethodException
+                       | InstantiationException e) {
             throw new RuntimeException(LogUtil.message("Error copying fields from [{}] to [{}]", source, dest), e);
         }
     }
@@ -201,7 +217,7 @@ public class FieldMapper {
         }
     }
 
-    private static boolean isOptionPresent(final CopyOption copyOption, CopyOption... copyOptions) {
+    private static boolean isOptionPresent(final CopyOption copyOption, final CopyOption... copyOptions) {
         return Arrays.asList(copyOptions).contains(copyOption);
     }
 }

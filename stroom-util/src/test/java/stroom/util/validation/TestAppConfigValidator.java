@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.validation;
 
 import stroom.test.common.util.test.TestingHomeAndTempProvidersModule;
@@ -34,7 +50,7 @@ public class TestAppConfigValidator {
     private AppConfigValidator appConfigValidator;
 
     @BeforeEach
-    void beforeEach(@TempDir Path tempDir) {
+    void beforeEach(@TempDir final Path tempDir) {
         final Injector injector = Guice.createInjector(
                 new TestingHomeAndTempProvidersModule(tempDir),
                 new ValidationModule());
@@ -44,9 +60,9 @@ public class TestAppConfigValidator {
     @Test
     void testMyPojo_good() {
 
-        var myPojo = new MyPojoErrors();
+        final MyPojoErrors myPojo = new MyPojoErrors();
 
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) ->
@@ -64,7 +80,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        var myPojo = new MyPojoErrors();
+        final MyPojoErrors myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -75,7 +91,7 @@ public class TestAppConfigValidator {
         myPojo.getChild().setCronValue("xxxxxxxxxxxxx");
         myPojo.getChild().setIntValue(0);
 
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validateRecursively(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -92,7 +108,7 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        var myPojo = new MyPojoErrors();
+        final MyPojoErrors myPojo = new MyPojoErrors();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
@@ -103,7 +119,7 @@ public class TestAppConfigValidator {
         myPojo.getChild().setCronValue("xxxxxxxxxxxxx");
         myPojo.getChild().setIntValue(0);
 
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -120,13 +136,13 @@ public class TestAppConfigValidator {
 //        final Injector injector = Guice.createInjector(new ValidationModule());
 //        injector.injectMembers(this);
 
-        var myPojo = new MyPojoWarnings();
+        final MyPojoWarnings myPojo = new MyPojoWarnings();
         myPojo.setBooleanValue(false);
         myPojo.setRegexValue("(((");
         myPojo.setCronValue("xxxxxxxxxxxxx");
         myPojo.setIntValue(0);
 
-        ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
+        final ConfigValidator.Result<AbstractConfig> result = appConfigValidator.validate(myPojo);
 
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -147,6 +163,10 @@ public class TestAppConfigValidator {
         Assertions.assertThat(result.getErrorCount())
                 .isEqualTo(1);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MyPojoErrors extends AbstractConfig {
 
@@ -220,12 +240,16 @@ public class TestAppConfigValidator {
         @Override
         public String toString() {
             return "MyPojo{" +
-                    "booleanValue=" + booleanValue +
-                    ", regexValue='" + regexValue + '\'' +
-                    ", intValue=" + intValue +
-                    '}';
+                   "booleanValue=" + booleanValue +
+                   ", regexValue='" + regexValue + '\'' +
+                   ", intValue=" + intValue +
+                   '}';
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class MyPojoWarnings extends AbstractConfig {
 
@@ -286,12 +310,15 @@ public class TestAppConfigValidator {
         @Override
         public String toString() {
             return "MyPojo{" +
-                    "booleanValue=" + booleanValue +
-                    ", regexValue='" + regexValue + '\'' +
-                    ", intValue=" + intValue +
-                    '}';
+                   "booleanValue=" + booleanValue +
+                   ", regexValue='" + regexValue + '\'' +
+                   ", intValue=" + intValue +
+                   '}';
         }
     }
+
+
+    // --------------------------------------------------------------------------------
 
 
     public static class NoddyPojo {
@@ -307,6 +334,10 @@ public class TestAppConfigValidator {
             this.value = value;
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public static class NoddyPojoWithValidationMethod extends AbstractConfig {
 

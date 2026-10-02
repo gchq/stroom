@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public final class AppPermissionsViewImpl
     }
 
     @Override
-    public void setAppUserPermissionListView(View view) {
+    public void setAppUserPermissionListView(final View view) {
         appUserPermissionsList.setWidget(view.asWidget());
     }
 

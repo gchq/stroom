@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store;
@@ -88,7 +87,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
                 successfulMapDefinition = mapDefinition;
             }
             return value;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error supplying value for key [{}], {}: {}",
                     key, mapDefinition, e.getMessage()), e);
@@ -111,7 +110,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
                 successfulMapDefinition = mapDefinition;
             }
             return wasFound;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message(
                     "Error consuming ref data value bytes for key [{}], {}: {}",
                     key, mapDefinition, e.getMessage()), e);
@@ -133,7 +132,7 @@ public class SingleRefDataValueProxy implements RefDataValueProxy {
                 successfulMapDefinition = mapDefinition;
             }
             return wasFound;
-        } catch (XPathException e) {
+        } catch (final XPathException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error consuming reference data value for key [{}], {}: {}",
                     key, mapDefinition, e.getMessage()), e);

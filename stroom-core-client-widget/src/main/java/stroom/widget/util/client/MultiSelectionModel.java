@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.widget.util.client;
 
+import stroom.util.shared.NullSafe;
+
 import com.google.gwt.event.shared.HandlerRegistration;
 
 import java.util.List;
@@ -30,6 +32,18 @@ public interface MultiSelectionModel<T> {
      * Get a list of all selected items.
      */
     List<T> getSelectedItems();
+
+    /**
+     * @return True if there are selected items
+     */
+    default boolean hasSelectedItems() {
+        return NullSafe.hasItems(getSelectedItems());
+    }
+
+    /**
+     * Set a list of all selected items.
+     */
+    void setSelectedItems(List<T> selectedItems);
 
     /**
      * Gets the number of selected items

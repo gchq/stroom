@@ -33,6 +33,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -68,7 +69,7 @@ public final class ErrorDataFeedClient {
 
     public static void main(final String[] args) throws Exception {
         try (final CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            final HashMap<String, String> argsMap = new HashMap<>();
+            final Map<String, String> argsMap = new HashMap<>();
             for (int i = 0; i < args.length; i++) {
                 final String[] split = args[i].split("=");
                 if (split.length > 1) {

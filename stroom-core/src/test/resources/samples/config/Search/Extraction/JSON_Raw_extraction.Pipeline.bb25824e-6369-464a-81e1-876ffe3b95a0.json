@@ -1,0 +1,40 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "xPathExtractionOutputFilter",
+      "type" : "XPathExtractionOutputFilter"
+    } ],
+    "remove" : [ {
+      "id" : "searchResultOutputFilter",
+      "type" : "SearchResultOutputFilter"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "xsltFilter",
+      "name" : "xslt"
+    }, {
+      "element" : "xPathExtractionOutputFilter",
+      "name" : "createJson",
+      "value" : {
+        "boolean" : true
+      }
+    }, {
+      "element" : "xPathExtractionOutputFilter",
+      "name" : "multipleValueDelimiter",
+      "value" : {
+        "string" : "|"
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "xsltFilter",
+      "to" : "xPathExtractionOutputFilter"
+    } ],
+    "remove" : [ {
+      "from" : "xsltFilter",
+      "to" : "searchResultOutputFilter"
+    } ]
+  }
+}

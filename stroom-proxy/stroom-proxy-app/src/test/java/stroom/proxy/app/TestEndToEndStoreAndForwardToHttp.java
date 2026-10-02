@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.proxy.repo.AggregatorConfig;
@@ -24,7 +40,7 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
         return ProxyConfig.builder()
                 .securityConfig(new ProxySecurityConfig(ProxyAuthenticationConfig.builder()
                         .openIdConfig(new ProxyOpenIdConfig()
-                                .withIdentityProviderType(IdpType.TEST_CREDENTIALS))
+                                .withIdentityProviderType(IdpType.NO_IDP))
                         .build()))
                 .proxyId("TestProxy")
                 .pathConfig(createProxyPathConfig())
@@ -35,6 +51,7 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
                         .build())
                 .addForwardHttpDestination(MockHttpDestination.createForwardHttpPostConfig(false))
                 .feedStatusConfig(MockHttpDestination.createFeedStatusConfig())
+                .downstreamHostConfig(MockHttpDestination.createDownstreamHostConfig())
                 .receiveDataConfig(ReceiveDataConfig.builder()
                         .withAuthenticationRequired(false)
                         .build())
@@ -53,8 +70,8 @@ public class TestEndToEndStoreAndForwardToHttp extends AbstractEndToEndTest {
 
         // Two feeds each send 4, agg max items of 3 so two batches each
         final PostDataHelper postDataHelper = createPostDataHelper();
-        int reqPerFeed = 16;
-        int reqCount = reqPerFeed * 2;
+        final int reqPerFeed = 16;
+        final int reqCount = reqPerFeed * 2;
         for (int i = 0; i < reqPerFeed; i++) {
             postDataHelper.sendFeed1TestData();
             postDataHelper.sendFeed2TestData();

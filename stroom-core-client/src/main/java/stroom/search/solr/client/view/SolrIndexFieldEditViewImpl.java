@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package stroom.search.solr.client.view;
 
-import stroom.datasource.api.v2.FieldType;
 import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
+import stroom.query.api.datasource.FieldType;
 import stroom.search.solr.client.presenter.SolrIndexFieldEditPresenter.SolrIndexFieldEditView;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.util.config;
 
 
-import stroom.util.json.JsonUtil;
+import stroom.util.json.JsonV2Util;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -62,6 +61,8 @@ import java.util.stream.Collectors;
 public final class PropertyUtil {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PropertyUtil.class);
+    // TODO Use legacy v2 jackson as introspect() is not a thing in v3
+    private static final ObjectMapper OBJECT_MAPPER = createV2ObjectMapper();
 
     private PropertyUtil() {
         // Utility class.
@@ -99,7 +100,7 @@ public final class PropertyUtil {
                     final Object childValue;
                     try {
                         childValue = prop.getValueFromConfigObject();
-                    } catch (Exception e) {
+                    } catch (final Exception e) {
                         LOGGER.error("Error getting value for prop {}, object {}", prop, object, e);
                         throw e;
                     }
@@ -113,6 +114,13 @@ public final class PropertyUtil {
                     } else if (childValue instanceof Collection<?>) {
                         // We don't want to recurse into collection types
                         LOGGER.trace(() -> LogUtil.message("{}Ignoring Collection value of type {}",
+                                indent + "  ",
+                                childValue.getClass().getSimpleName()));
+                    } else if (childValue instanceof Map<?, ?>) {
+                        // Maps are leaf values just like Collections (e.g. a Map<String, String>
+                        // config prop) - recursing into the JDK map class would fail on its
+                        // private internals.
+                        LOGGER.trace(() -> LogUtil.message("{}Ignoring Map value of type {}",
                                 indent + "  ",
                                 childValue.getClass().getSimpleName()));
                     } else {
@@ -171,9 +179,7 @@ public final class PropertyUtil {
 //                .collect(Collectors.toMap(Entry::getKey, Entry::getValue));
 //    }
     public static Map<String, Prop> getProperties(final Object object) {
-        final ObjectMapper objectMapper = JsonUtil.getMapper();
-        ;
-        return getProperties(objectMapper, object);
+        return getProperties(OBJECT_MAPPER, object);
     }
 
     public static <T> Map<String, Prop> getProperties(final ObjectMapper objectMapper, final T object) {
@@ -219,8 +225,7 @@ public final class PropertyUtil {
      * Builds a map of property name to {@link Prop} object that provides access to the getter/setter.
      * Only includes public properties, not package private
      */
-    public static <T> ObjectInfo<T> getObjectInfo(final ObjectMapper objectMapper,
-                                                  final String name,
+    public static <T> ObjectInfo<T> getObjectInfo(final String name,
                                                   final T object) {
         Objects.requireNonNull(object);
         LOGGER.trace("getProperties called for {}", object);
@@ -228,9 +233,8 @@ public final class PropertyUtil {
 
         final Class<T> clazz = (Class<T>) object.getClass();
 
-        final JavaType userType = objectMapper.getTypeFactory().constructType(object.getClass());
-        final BeanDescription beanDescription =
-                objectMapper.getSerializationConfig().introspect(userType);
+        final JavaType userType = OBJECT_MAPPER.getTypeFactory().constructType(object.getClass());
+        final BeanDescription beanDescription = OBJECT_MAPPER.getSerializationConfig().introspect(userType);
 
         final List<BeanPropertyDefinition> props = beanDescription.findProperties();
         final Set<String> propNames = props.stream()
@@ -309,12 +313,11 @@ public final class PropertyUtil {
     }
 
     public static <T> T copyObject(final T source) {
-        final ObjectMapper objectMapper = JsonUtil.getMapper();
-        final TokenBuffer tb = new TokenBuffer(objectMapper, false); // or one of factory methods
+        final TokenBuffer tb = new TokenBuffer(OBJECT_MAPPER, false); // or one of factory methods
         try {
-            objectMapper.writeValue(tb, source);
-            return (T) objectMapper.readValue(tb.asParser(), source.getClass());
-        } catch (IOException e) {
+            OBJECT_MAPPER.writeValue(tb, source);
+            return (T) OBJECT_MAPPER.readValue(tb.asParser(), source.getClass());
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error copying object {}: {}", source, e.getMessage()), e);
         }
     }
@@ -376,7 +379,7 @@ public final class PropertyUtil {
                 .collect(Collectors.toList());
     }
 
-    public static Class<?> getDataType(Class<?> clazz) {
+    public static Class<?> getDataType(final Class<?> clazz) {
         if (clazz.isPrimitive()) {
             return clazz;
         }
@@ -388,11 +391,11 @@ public final class PropertyUtil {
         return clazz;
     }
 
-    public static Class<?> getDataType(Type type) {
+    public static Class<?> getDataType(final Type type) {
         if (type instanceof Class) {
             return getDataType((Class<?>) type);
         } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
+            final ParameterizedType pt = (ParameterizedType) type;
             return getDataType(pt.getRawType());
         } else {
             throw new RuntimeException(LogUtil.message("Unexpected type of type {}",
@@ -400,12 +403,12 @@ public final class PropertyUtil {
         }
     }
 
-    public static List<Type> getGenericTypes(Type type) {
+    public static List<Type> getGenericTypes(final Type type) {
         if (type instanceof Class) {
             return Collections.emptyList();
         } else if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) type;
-            Type[] specificTypes = pt.getActualTypeArguments();
+            final ParameterizedType pt = (ParameterizedType) type;
+            final Type[] specificTypes = pt.getActualTypeArguments();
 
             return Arrays.asList(specificTypes);
         } else {
@@ -503,6 +506,11 @@ public final class PropertyUtil {
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_CAMEL, name);
     }
 
+    private static ObjectMapper createV2ObjectMapper() {
+        final ObjectMapper mapper = JsonV2Util.getMapper();
+        return mapper;
+    }
+
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -568,10 +576,10 @@ public final class PropertyUtil {
                     throw new RuntimeException("Missing @JsonCreator constructor for class " + objectClass.getName());
                 }
                 return constructor.newInstance(args);
-            } catch (InvocationTargetException
-                     | IllegalAccessException
-                     | InstantiationException
-                     | IllegalArgumentException e) {
+            } catch (final InvocationTargetException
+                           | IllegalAccessException
+                           | InstantiationException
+                           | IllegalArgumentException e) {
                 throw new RuntimeException(
                         LogUtil.message("Error creating new instance of {} with args {}. Message: {}",
                                 objectClass.getName(),
@@ -732,7 +740,7 @@ public final class PropertyUtil {
         public Object getValueFromConfigObject() {
             try {
                 return getter.invoke(parentObject);
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (final IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error getting value for prop {}", name), e);
             }
         }
@@ -740,7 +748,7 @@ public final class PropertyUtil {
         public Object getValueFromConfigObject(final Object obj) {
             try {
                 return getter.invoke(obj);
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (final IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error getting value for prop {}", name), e);
             }
         }
@@ -750,7 +758,7 @@ public final class PropertyUtil {
                 if (setter != null) {
                     setter.invoke(parentObject, newValue);
                 }
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (final IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error setting value for prop {}", name), e);
             }
         }
@@ -758,7 +766,7 @@ public final class PropertyUtil {
         public void setValueOnConfigObject(final Object parentObject, final Object newValue) {
             try {
                 setter.invoke(parentObject, newValue);
-            } catch (IllegalAccessException | InvocationTargetException e) {
+            } catch (final IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(LogUtil.message("Error setting value for prop {} on {}",
                         name, parentObject), e);
             }
@@ -801,5 +809,4 @@ public final class PropertyUtil {
             return Objects.hash(name, parentObject, getter, setter);
         }
     }
-
 }

@@ -16,11 +16,9 @@
 
 package stroom.annotation.pipeline;
 
-import stroom.annotation.api.AnnotationCreator;
-import stroom.annotation.shared.Annotation;
-import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.AnnotationCreator;
+import stroom.annotation.shared.CreateAnnotationRequest;
 import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.StringEntryValue;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
@@ -94,7 +92,7 @@ class AnnotationWriter extends AbstractXMLFilter {
     private final CharBuffer content = new CharBuffer();
     private Locator locator;
 
-    private Annotation currentAnnotation = new Annotation();
+    private CreateAnnotationRequest.Builder currentRequest = CreateAnnotationRequest.builder();
     private String lastEventId = null;
     private String lastStreamId = null;
 
@@ -139,36 +137,34 @@ class AnnotationWriter extends AbstractXMLFilter {
                 long streamId = 0;
                 try {
                     streamId = Long.parseLong(lastStreamId);
-                } catch (NumberFormatException ex) {
+                } catch (final NumberFormatException ex) {
                     log(Severity.ERROR, "StreamId must be a long integer.  Got " + lastStreamId, null);
                 }
                 if (streamId > 0) {
                     try {
-                        long eventId = Long.parseLong(lastEventId);
+                        final long eventId = Long.parseLong(lastEventId);
 
                         currentEventIds.add(new EventId(streamId, eventId));
-                    } catch (NumberFormatException ex) {
+                    } catch (final NumberFormatException ex) {
                         log(Severity.ERROR, "EventId must be a long integer.  Got " + lastEventId, null);
                     }
                 }
             }
         } else if (ANNOTATION_TAG.equals(localName)) {
+            currentRequest.linkedEvents(currentEventIds);
+            final CreateAnnotationRequest request = currentRequest.build();
             try {
-                annotationCreator.createEntry(new CreateEntryRequest(
-                        currentAnnotation,
-                        Annotation.COMMENT,
-                        (StringEntryValue) null,
-                        currentEventIds));
+                annotationCreator.createAnnotation(request);
 
             } catch (final RuntimeException e) {
-                log(Severity.ERROR, "Unable to create annotation " + currentAnnotation.getSubject(), e);
+                log(Severity.ERROR, "Unable to create annotation " + request.getTitle(), e);
             }
-            currentAnnotation = new Annotation();
+            currentRequest = CreateAnnotationRequest.builder();
             currentEventIds = new ArrayList<>();
         } else if (TITLE_TAG.equals(localName)) {
-            currentAnnotation.setTitle(content.toString());
+            currentRequest.title(content.toString());
         } else if (DESCRIPTION_TAG.equals(localName)) {
-            currentAnnotation.setSubject(content.toString());
+            currentRequest.subject(content.toString());
         } else if (EVENTID_TAG.equals(localName)) {
             lastEventId = content.toString();
         } else if (STREAMID_TAG.equals(localName)) {
@@ -180,7 +176,7 @@ class AnnotationWriter extends AbstractXMLFilter {
     }
 
     @Override
-    public void characters(char[] ch, int start, int length) throws SAXException {
+    public void characters(final char[] ch, final int start, final int length) throws SAXException {
         content.append(ch, start, length);
         super.characters(ch, start, length);
     }

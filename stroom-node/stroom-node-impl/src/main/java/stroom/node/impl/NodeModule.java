@@ -18,14 +18,19 @@ package stroom.node.impl;
 
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.ScheduledJobsBinder;
+import stroom.node.api.NodeGroupCache;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.Node;
+import stroom.node.shared.NodeGroup;
+import stroom.node.shared.NodeGroupResource;
 import stroom.node.shared.NodeResource;
 import stroom.pipeline.writer.ExtendedPathCreator;
 import stroom.util.RunnableWrapper;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.Clearable;
 import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
@@ -38,22 +43,31 @@ public class NodeModule extends AbstractModule {
         bind(NodeInfo.class).to(NodeInfoImpl.class);
         bind(NodeService.class).to(NodeServiceImpl.class);
         bind(NodeResource.class).to(NodeResourceImpl.class);
+        bind(NodeGroupService.class).to(NodeGroupServiceImpl.class);
+        bind(NodeGroupResource.class).to(NodeGroupResourceImpl.class);
         bind(PathCreator.class).to(ExtendedPathCreator.class);
+        bind(NodeGroupCache.class).to(NodeGroupCacheImpl.class);
 
         RestResourcesBinder.create(binder())
-                .bind(NodeResourceImpl.class);
+                .bind(NodeResourceImpl.class)
+                .bind(NodeGroupResourceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(NodeGroupCacheImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
-                .bind(Node.class, NodeObjectInfoProvider.class);
+                .bind(Node.class, NodeObjectInfoProvider.class)
+                .bind(NodeGroup.class, NodeGroupObjectInfoProvider.class);
 
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(JavaHeapHistogramStatistics.class, jobBuilder -> jobBuilder
                         .name("Java Heap Histogram Statistics")
                         .description("Generate Java heap map histogram and record statistic events " +
-                                "for the entries. CAUTION: this will pause the JVM, only enable this if you " +
-                                "understand the consequences!")
+                                     "for the entries. CAUTION: this will pause the JVM, only enable this if you " +
+                                     "understand the consequences!")
                         .cronSchedule(CronExpressions.EVERY_HOUR.getExpression())
+                        .enabledOnBootstrap(false) // Not needed in a test environment
                         .enabled(false))
                 .bindJobTo(NodeStatus.class, jobBuilder -> jobBuilder
                         .name("Node Status")

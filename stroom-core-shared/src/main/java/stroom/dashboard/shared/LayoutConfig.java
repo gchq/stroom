@@ -16,17 +16,11 @@
 
 package stroom.dashboard.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlSeeAlso;
-import jakarta.xml.bind.annotation.XmlType;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "LayoutConfig")
-@XmlSeeAlso({SplitLayoutConfig.class, TabLayoutConfig.class})
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "type"
@@ -35,28 +29,27 @@ import jakarta.xml.bind.annotation.XmlType;
         @JsonSubTypes.Type(value = SplitLayoutConfig.class, name = "splitLayout"),
         @JsonSubTypes.Type(value = TabLayoutConfig.class, name = "tabLayout")
 })
-public abstract class LayoutConfig {
-
-    @JsonIgnore
-    private transient SplitLayoutConfig parent;
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "splitLayout", schema = SplitLayoutConfig.class),
+                @DiscriminatorMapping(value = "tabLayout", schema = TabLayoutConfig.class)})
+public abstract sealed class LayoutConfig permits SplitLayoutConfig, TabLayoutConfig {
 
     public abstract Size getPreferredSize();
-
-    @JsonIgnore
-    public SplitLayoutConfig getParent() {
-        return parent;
-    }
-
-    @JsonIgnore
-    public void setParent(final SplitLayoutConfig parent) {
-        this.parent = parent;
-    }
 
     public abstract AbstractBuilder<?, ?> copy();
 
     public abstract static class AbstractBuilder<T extends LayoutConfig, B extends AbstractBuilder<T, ?>> {
 
         protected Size preferredSize;
+
+        public AbstractBuilder() {
+        }
+
+        public AbstractBuilder(final LayoutConfig layoutConfig) {
+            this.preferredSize = layoutConfig.getPreferredSize();
+        }
 
         public B preferredSize(final Size preferredSize) {
             this.preferredSize = preferredSize;

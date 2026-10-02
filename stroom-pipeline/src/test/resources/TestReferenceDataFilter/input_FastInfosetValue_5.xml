@@ -26,6 +26,7 @@
             <Location>
                 <Room>room11</Room>
                 <Desk>desk11</Desk>
+                <Value>value11</Value>
             </Location>
         </value>
     </reference>

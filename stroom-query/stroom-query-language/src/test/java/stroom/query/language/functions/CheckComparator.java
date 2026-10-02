@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.functions;
 
 import java.util.ArrayList;
@@ -19,7 +35,7 @@ class CheckComparator {
              * @param o2
              */
             @Override
-            public void pair(T o1, T o2) {
+            public void pair(final T o1, final T o2) {
                 final int diff = comparator.compare(o1, o2);
                 if (diff < 0) {
                     checkConsistency(objectMapSmallerOnes, o1, o2);
@@ -34,7 +50,7 @@ class CheckComparator {
         });
     }
 
-    private static <T> void checkConsistency(final Map<T, List<T>> objectMapSmallerOnes, T o1, T o2) {
+    private static <T> void checkConsistency(final Map<T, List<T>> objectMapSmallerOnes, final T o1, final T o2) {
         final List<T> smallerThan = objectMapSmallerOnes.get(o1);
 
         if (smallerThan != null) {
@@ -48,7 +64,7 @@ class CheckComparator {
         }
     }
 
-    private static <K, V> List<V> getListSafely(Map<K, List<V>> keyMapValues, K key) {
+    private static <K, V> List<V> getListSafely(final Map<K, List<V>> keyMapValues, final K key) {
         List<V> values = keyMapValues.get(key);
 
         if (values == null) {
@@ -69,8 +85,8 @@ class CheckComparator {
     /**
      * Iterates through each distinct unordered pair formed by the elements of a given iterator
      */
-    private static <T> void iterateDistinctPairs(final Iterator<T> it, IPairIteratorCallback<T> callback) {
-        List<T> list = new ArrayList<>();
+    private static <T> void iterateDistinctPairs(final Iterator<T> it, final IPairIteratorCallback<T> callback) {
+        final List<T> list = new ArrayList<>();
         while (it.hasNext()) {
             list.add(it.next());
         }

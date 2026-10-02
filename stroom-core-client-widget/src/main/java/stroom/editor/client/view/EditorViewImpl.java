@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class EditorViewImpl
         final List<Annotation> annotations = new ArrayList<>();
 
         if (indicators != null) {
-            for (Integer lineNumber : indicators.getLineNumbers()) {
+            for (final Integer lineNumber : indicators.getLineNumbers()) {
                 final Indicator indicator = indicators.getIndicator(lineNumber);
 
                 for (final Entry<Severity, Set<StoredError>> entry : indicator.getErrorMap().entrySet()) {
@@ -182,7 +182,7 @@ public class EditorViewImpl
 //                                    + " msg: " + error.getMessage());
 
                         final Severity severity = error.getSeverity();
-                        AceAnnotationType annotationType;
+                        final AceAnnotationType annotationType;
                         switch (severity) {
                             case INFO:
                                 annotationType = AceAnnotationType.INFO;

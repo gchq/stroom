@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.bytebuffer.impl6.SimpleByteBufferFactory;
+import stroom.query.api.Column;
+import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -50,9 +51,9 @@ public class TestValueSerialisation {
         final CompiledColumn[] compiledColumnArray = compiledColumns.getCompiledColumns();
         final ValueReferenceIndex valueReferenceIndex = compiledColumns.getValueReferenceIndex();
         final CompiledDepths compiledDepths = new CompiledDepths(compiledColumnArray, false);
-        KeyFactoryConfigImpl keyFactoryConfig =
+        final KeyFactoryConfigImpl keyFactoryConfig =
                 new KeyFactoryConfigImpl(SourceType.DASHBOARD_UI, compiledColumnArray, compiledDepths);
-        final ByteBufferFactory byteBufferFactory = new ByteBufferFactory();
+        final ByteBufferFactory byteBufferFactory = new SimpleByteBufferFactory();
         final DataWriterFactory writerFactory =
                 new DataWriterFactory(errorConsumer, 1000);
         final KeyFactory keyFactory = KeyFactoryFactory.create(keyFactoryConfig, compiledDepths);

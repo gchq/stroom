@@ -23,22 +23,29 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBatch;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventKey;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Consumer;
 
 @Singleton
 class EntityEventBusImpl implements EntityEventBus {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EntityEventBusImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EntityEventBusImpl.class);
 
     private final Executor executor;
     private final TaskContextFactory taskContextFactory;
@@ -70,9 +77,67 @@ class EntityEventBusImpl implements EntityEventBus {
 
     @Override
     public void fire(final EntityEvent event) {
-        if (started) {
+        LOGGER.debug("fire() - event: {}", event);
+        if (event != null) {
             fireGlobally(event);
         }
+    }
+
+    @Override
+    public void fire(final EntityEventBatch events) {
+        LOGGER.debug("fire() - events: {}", events);
+        if (events != null && events.hasItems()) {
+            fireGlobally(events);
+        }
+    }
+
+    /**
+     * Fires the entity change to all nodes in the cluster.
+     */
+    private void fireGlobally(final EntityEventBatch events) {
+        Objects.requireNonNull(events);
+
+        securityContext.asProcessingUser(() -> {
+            try {
+                // Make sure there are some handlers that care about this event.
+                final Map<EntityEventKey, EntityEventBatch> groupedBatches = events.groupedByKey();
+                final List<EntityEvent> remoteEvents = new ArrayList<>();
+
+                groupedBatches.forEach((entityEventKey, entityEventBatch) -> {
+                    boolean handlerExists = entityEventHandler.handlerExists(entityEventKey);
+                    if (!handlerExists) {
+                        // Look for handlers that cater for all types.
+                        handlerExists = entityEventHandler.handlerExists(
+                                EntityEventKey.wileCardedType(entityEventKey.action()));
+                    }
+
+                    // If there are registered handlers then go ahead and fire the event.
+                    if (handlerExists) {
+                        // Force a local update so that changes are immediately reflected
+                        // for the current user.
+                        entityEventHandler.fireLocally(entityEventBatch);
+                        if (started) {
+                            // We have a handler, so need to include this event in the ones we send
+                            // to the other nodes
+                            remoteEvents.addAll(entityEventBatch.getEntityEvents());
+                        }
+                    }
+                });
+
+                // We only want to make one rest call, rather than one per key
+                if (!remoteEvents.isEmpty()) {
+                    final boolean isHomogeneousBatch = groupedBatches.size() <= 1;
+                    final EntityEventBatch entityEventBatch = new EntityEventBatch(remoteEvents, isHomogeneousBatch);
+
+                    // Dispatch the entity event to all nodes in the cluster.
+                    final Runnable runnable = taskContextFactory.context("Fire Entity Event Batch Globally",
+                            taskContext -> fireRemote(entityEventBatch, taskContext));
+                    CompletableFuture.runAsync(runnable, executor);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
     }
 
     /**
@@ -82,12 +147,11 @@ class EntityEventBusImpl implements EntityEventBus {
         securityContext.asProcessingUser(() -> {
             try {
                 // Make sure there are some handlers that care about this event.
-                boolean handlerExists = entityEventHandler.handlerExists(event, event.getDocRef().getType());
+                boolean handlerExists = entityEventHandler.handlerExists(event);
                 if (!handlerExists) {
                     // Look for handlers that cater for all types.
                     handlerExists = entityEventHandler.handlerExists(
-                            event,
-                            EntityEvent.TYPE_WILDCARD);
+                            EntityEventKey.wileCardedType(event.getAction()));
                 }
 
                 // If there are registered handlers then go ahead and fire the event.
@@ -111,6 +175,18 @@ class EntityEventBusImpl implements EntityEventBus {
 
     private void fireRemote(final EntityEvent entityEvent,
                             final TaskContext parentTaskContext) {
+        fireRemote(parentTaskContext, targetNode ->
+                entityEventResource.fireEvent(targetNode, entityEvent));
+    }
+
+    private void fireRemote(final EntityEventBatch entityEventBatch,
+                            final TaskContext parentTaskContext) {
+        fireRemote(parentTaskContext, targetNode ->
+                entityEventResource.fireEvents(targetNode, entityEventBatch));
+    }
+
+    private void fireRemote(final TaskContext parentTaskContext,
+                            final Consumer<String> targetNodeConsumer) {
         try {
             final TargetNodeSetFactory targetNodeSetFactory = targetNodeSetFactoryProvider.get();
 
@@ -122,20 +198,21 @@ class EntityEventBusImpl implements EntityEventBus {
 
             // Only send the event to remote nodes and not this one.
             CompletableFuture.allOf(targetNodes
-                    .stream()
-                    .filter(targetNode -> !targetNode.equals(sourceNode))
-                    .map(targetNode -> {
-                        // Send the entity event asynchronously.
-                        final Runnable runnable = taskContextFactory.childContext(
-                                parentTaskContext,
-                                "Fire Entity Event To " + targetNode, taskContext ->
-                                        entityEventResource.fireEvent(targetNode, entityEvent)
-                        );
-                        return CompletableFuture.runAsync(runnable, executor);
-                    }).toArray(CompletableFuture[]::new)).join();
+                            .stream()
+                            .filter(targetNode -> !targetNode.equals(sourceNode))
+                            .map(targetNode -> {
+                                // Send the entity event asynchronously.
+                                final Runnable runnable = taskContextFactory.childContext(
+                                        parentTaskContext,
+                                        "Fire Entity Event Batch To " + targetNode,
+                                        ignored ->
+                                                targetNodeConsumer.accept(targetNode));
+                                return CompletableFuture.runAsync(runnable, executor);
+                            }).toArray(CompletableFuture[]::new))
+                    .join();
         } catch (final NullClusterStateException | NodeNotFoundException e) {
-            LOGGER.warn(e.getMessage());
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.warn(e::getMessage);
+            LOGGER.debug(e::getMessage, e);
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }

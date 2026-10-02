@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql.search;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -417,7 +417,7 @@ public class Functions {
                         final NamedSignature namedSig = new NamedSignature(completionName, queryHelpSig);
                         completionItems.add(createCompletionSnippet(namedSig, INITIAL_SCORE));
                     }
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     throw new RuntimeException("Error converting FunctionDef " + functionDef.name(), e);
                 }
             }
@@ -467,7 +467,7 @@ public class Functions {
                         .limit(maxCompletions)
                         .forEach(resultList::add);
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.error("Error adding function completions: {}", e.getMessage(), e);
         }
     }
@@ -497,7 +497,7 @@ public class Functions {
 
     private boolean addArgsBlockToInfo(final QueryHelpFunctionSignature signature,
                                        final DetailBuilder htmlBuilder) {
-        AtomicBoolean addedContent = new AtomicBoolean(false);
+        final AtomicBoolean addedContent = new AtomicBoolean(false);
         addedContent.set(!signature.getArgs().isEmpty());
 
         htmlBuilder.elem("div", "queryHelpDetail-table", div ->
@@ -609,9 +609,12 @@ public class Functions {
             }
 
             final UiConfig uiConfig = uiConfigProvider.get();
-            if (uiConfig.getHelpUrl() != null && uiConfig.getHelpSubPathStroomQueryLanguage() != null) {
+            // The expressions sub path, not the Stroom Query Language one - a function's help lives on a
+            // page per function category under the expressions section. The Stroom Query Language page is
+            // where the language's keywords are documented, which is what Structures links to.
+            if (uiConfig.getHelpUrl() != null && uiConfig.getHelpSubPathExpressions() != null) {
                 addHelpLinkToInfo(signature, uiConfig.getHelpUrl() +
-                                             uiConfig.getHelpSubPathStroomQueryLanguage(), detail);
+                                             uiConfig.getHelpSubPathExpressions(), detail);
             }
         }
         return detail.build();

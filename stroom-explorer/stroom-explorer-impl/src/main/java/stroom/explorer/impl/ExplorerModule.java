@@ -23,6 +23,7 @@ import stroom.explorer.api.ExplorerNodePermissionsService;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerFields;
+import stroom.explorer.shared.TabSessionResource;
 import stroom.suggestions.api.SuggestionsQueryHandler;
 import stroom.suggestions.api.SuggestionsServiceBinder;
 import stroom.util.entityevent.EntityEvent;
@@ -35,7 +36,6 @@ public class ExplorerModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new DocRefInfoModule());
         bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);
         bind(ExplorerNodePermissionsService.class).to(ExplorerNodePermissionsServiceImpl.class);
         bind(ExplorerSession.class).to(ExplorerSessionImpl.class);
@@ -44,6 +44,8 @@ public class ExplorerModule extends AbstractModule {
         bind(ExplorerDecorator.class).to(ExplorerDecoratorImpl.class);
         bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);
         bind(CollectionService.class).to(ExplorerServiceImpl.class);
+        bind(TabSessionResource.class).to(TabSessionResourceImpl.class);
+        bind(TabSessionService.class).to(TabSessionServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(FolderExplorerActionHandler.class)
@@ -53,7 +55,10 @@ public class ExplorerModule extends AbstractModule {
                 .addBinding(ExplorerTreeModel.class);
 
         RestResourcesBinder.create(binder())
-                .bind(ExplorerResourceImpl.class);
+                .bind(ExplorerResourceImpl.class)
+                .bind(TabSessionResourceImpl.class);
+        RestResourcesBinder.create(binder())
+                .bind(PermissionChangeResourceImpl.class);
 
         SuggestionsServiceBinder.create(binder())
                 .bind(ExplorerFields.EXPLORER_TYPE, ExplorerServiceImpl.class);

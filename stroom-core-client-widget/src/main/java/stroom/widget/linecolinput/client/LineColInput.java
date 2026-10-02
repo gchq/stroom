@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public class LineColInput extends Composite {
         regExp = RegExp.compile("^[0-9]+(:[0-9]+)?$");
     }
 
-    private static void onKeyPress(KeyPressEvent event) {
+    private static void onKeyPress(final KeyPressEvent event) {
         // only allow numbers, colon, tab, backspace, del and arrow keys
         if (!Character.isDigit(event.getCharCode())
                 && event.getCharCode() != ':'
@@ -96,7 +96,7 @@ public class LineColInput extends Composite {
     }
 
     public void setValue(final Integer lineNo, final Integer colNo) {
-        StringBuilder sb = new StringBuilder();
+        final StringBuilder sb = new StringBuilder();
         if (lineNo == null) {
             // no value
         } else {

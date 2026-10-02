@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.api.current;
 
 import java.lang.reflect.Method;
@@ -48,9 +64,9 @@ public class ClassPhotographer {
                 .forEach(typeToAnalyse -> takePortraitOf(typeToAnalyse, portrait, basePackage));
     }
 
-    private static List<String> flattenPortrait(Map<Class<?>, List<String>> portraitMap) {
+    private static List<String> flattenPortrait(final Map<Class<?>, List<String>> portraitMap) {
         final List<String> flattenedPortrait = new ArrayList<>();
-        for (Class<?> key : portraitMap.keySet()) {
+        for (final Class<?> key : portraitMap.keySet()) {
             flattenedPortrait.addAll(portraitMap.get(key).stream()
                     .map(method -> String.format("%s - %s", key.toString(), method))
                     .collect(Collectors.toList()));
@@ -61,8 +77,8 @@ public class ClassPhotographer {
     /**
      * Looks at a method and gets any return or parameter types that match the basePackage.
      */
-    private static List<Class<?>> getClassesForRecursion(String basePackage, Method method) {
-        List<Class<?>> classesForRecursion = new ArrayList<>();
+    private static List<Class<?>> getClassesForRecursion(final String basePackage, final Method method) {
+        final List<Class<?>> classesForRecursion = new ArrayList<>();
 
         // Check regular return types
         if (method.getReturnType().toString().contains(basePackage)) {
@@ -70,7 +86,7 @@ public class ClassPhotographer {
         } else {
             // Check for memory return types
             if (method.getGenericReturnType() instanceof ParameterizedType) {
-                ParameterizedType type = (ParameterizedType) method.getGenericReturnType();
+                final ParameterizedType type = (ParameterizedType) method.getGenericReturnType();
                 Arrays.stream(type.getActualTypeArguments())
                         .filter(actualType -> actualType.getTypeName().contains(basePackage))
                         .forEach(actualType -> classesForRecursion.add((Class<?>) actualType));

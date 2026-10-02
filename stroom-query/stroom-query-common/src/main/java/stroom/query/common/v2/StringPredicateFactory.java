@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.util.ConsoleColour;
@@ -36,6 +52,11 @@ public class StringPredicateFactory {
     // be easier
     private static final Pattern CAMEL_CASE_PATTERN = Pattern.compile(
             "^([A-Z]+)?[a-z0-9]+(?:(?:\\d)|(?:[A-Z0-9]+[a-z0-9]+))*(?:[A-Z]+)?$");
+
+    // camelCase detection is only meaningful for a single word-group token (the parts between separators),
+    // which are short in practice. Bounding the length that CAMEL_CASE_PATTERN is applied to keeps its work
+    // linear and removes any chance of pathological backtracking on a long hostile token.
+    private static final int MAX_CAMEL_CASE_TOKEN_LENGTH = 100;
 
     // Matches positions in (C|c)amelCase to split into individual words
     // Doesn't cope with abbreviations at the beginning/middle of the string,
@@ -197,12 +218,12 @@ public class StringPredicateFactory {
 
     public static Predicate<String> toLoggingPredicate(final Predicate<String> predicate) {
         return str -> {
-            boolean result = predicate.test(str);
+            final boolean result = predicate.test(str);
             final ConsoleColour colour = result
                     ? ConsoleColour.GREEN
                     : ConsoleColour.RED;
 
-            String msg = ConsoleColour.colourise(LogUtil.message("String under test [{}], result: {}",
+            final String msg = ConsoleColour.colourise(LogUtil.message("String under test [{}], result: {}",
                     str, result), colour);
             LOGGER.trace(msg);
             return result;
@@ -346,7 +367,7 @@ public class StringPredicateFactory {
                 final Pattern usersPattern = Pattern.compile(strippedUserInput, Pattern.CASE_INSENSITIVE);
                 return str ->
                         calculateMatchInfo(usersPattern, str);
-            } catch (PatternSyntaxException e) {
+            } catch (final PatternSyntaxException e) {
                 // This is likely as the user may have not finished typing the regex
                 return str -> MatchInfo.noMatchInfo();
             }
@@ -500,10 +521,10 @@ public class StringPredicateFactory {
 
     public static Predicate<String> createRegexPredicate(final String userInput) {
         LOGGER.trace("Creating regex predicate for {}", userInput);
-        Pattern pattern;
+        final Pattern pattern;
         try {
             pattern = Pattern.compile(userInput, Pattern.CASE_INSENSITIVE);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.trace(() ->
                     LogUtil.message("Invalid pattern {}, due to {}", userInput, e.getMessage()));
             // Bad pattern, can't really raise an exception as the user may have just mis-typed
@@ -514,7 +535,7 @@ public class StringPredicateFactory {
         final Predicate<String> predicate;
         try {
             predicate = pattern.asPredicate();
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.trace(() ->
                     LogUtil.message("Error converting pattern {} to predicate, due to {}", userInput, e.getMessage()));
             return str -> false;
@@ -560,7 +581,7 @@ public class StringPredicateFactory {
     }
 
     private static String cleanStringForWordBoundaryMatching(final String str) {
-        if (CAMEL_CASE_PATTERN.matcher(str).matches()) {
+        if (str.length() <= MAX_CAMEL_CASE_TOKEN_LENGTH && CAMEL_CASE_PATTERN.matcher(str).matches()) {
             LOGGER.trace("str [{}] is (C|c)amelCase", str);
 
             // replace stuff like SQLScript with "SQL Script"
@@ -599,7 +620,7 @@ public class StringPredicateFactory {
         final StringBuilder patternBuilder = new StringBuilder();
         char lastChr = 0;
         for (int i = 0; i < userInput.length(); i++) {
-            char chr = userInput.charAt(i);
+            final char chr = userInput.charAt(i);
 
             if (Character.isUpperCase(chr)
                 || (Character.isDigit(chr) && Character.isLetter(lastChr))) {
@@ -648,7 +669,7 @@ public class StringPredicateFactory {
 
         final StringBuilder patternBuilder = new StringBuilder();
         for (int i = 0; i < userInput.length(); i++) {
-            char chr = userInput.charAt(i);
+            final char chr = userInput.charAt(i);
 
             if (Character.isUpperCase(chr)) {
                 if (i == 0) {
@@ -694,7 +715,7 @@ public class StringPredicateFactory {
         final StringBuilder patternBuilder = new StringBuilder();
         for (int i = 0; i < lowerCaseInput.length(); i++) {
             patternBuilder.append(".*?"); // no-greedy match all
-            char chr = lowerCaseInput.charAt(i);
+            final char chr = lowerCaseInput.charAt(i);
             if (Character.isLetterOrDigit(chr)) {
                 patternBuilder.append(chr);
             } else {
@@ -715,7 +736,7 @@ public class StringPredicateFactory {
         for (int i = 0; i < inputLen; i++) {
 //            patternBuilder.append(".*?"); // no-greedy match all
 
-            char chr = lowerCaseInput.charAt(i);
+            final char chr = lowerCaseInput.charAt(i);
             if (Character.isLetterOrDigit(chr)) {
                 patternBuilder.append(chr);
             } else {
@@ -745,7 +766,7 @@ public class StringPredicateFactory {
         final StringBuilder patternBuilder = new StringBuilder();
         for (int i = 0; i < userInput.length(); i++) {
 
-            char chr = userInput.charAt(i);
+            final char chr = userInput.charAt(i);
             if (chr == '*') {
                 patternBuilder.append(".*?"); // no-greedy match all
             } else if (Character.isLetterOrDigit(chr)) {
@@ -838,7 +859,7 @@ public class StringPredicateFactory {
             // ignore the non-matching one.
 
             if (matchInfo1.hasMatchInfo() && matchInfo2.hasMatchInfo()) {
-                int compareResult = matchInfo1.compareTo(matchInfo2);
+                final int compareResult = matchInfo1.compareTo(matchInfo2);
                 if (compareResult < 0) {
                     return matchInfo1;
                 } else if (compareResult > 0) {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.elastic.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -17,9 +33,14 @@ import java.util.Objects;
         "useAuthentication",
         "apiKeyId",
         "apiKeySecret",
-        "socketTimeoutMillis"})
+        "connectionTimeoutMillis",
+        "responseTimeoutMillis"})
 @JsonInclude(Include.NON_NULL)
 public class ElasticConnectionConfig implements Serializable {
+
+    private static final boolean DEFAULT_USE_AUTHENTICATION = false;
+    private static final int DEFAULT_CONNECTION_TIMEOUT_MILLIS = 3000;
+    private static final int DEFAULT_RESPONSE_TIMEOUT_MILLIS = 0;
 
     @JsonProperty
     private List<String> connectionUrls = new ArrayList<>();
@@ -31,7 +52,7 @@ public class ElasticConnectionConfig implements Serializable {
     private String caCertificate;
 
     @JsonProperty
-    private boolean useAuthentication = false;
+    private boolean useAuthentication = DEFAULT_USE_AUTHENTICATION;
 
     @JsonProperty
     private String apiKeyId;
@@ -40,11 +61,17 @@ public class ElasticConnectionConfig implements Serializable {
     private String apiKeySecret;
 
     /**
-     * Socket timeout duration. Any Elasticsearch requests are expected to complete within this interval,
-     * else the request is aborted and an `Error` is reported.
+     * Amount of time to wait when connecting to Elasticsearch
      */
     @JsonProperty
-    private int socketTimeoutMillis = -1;
+    private int connectionTimeoutMillis = DEFAULT_CONNECTION_TIMEOUT_MILLIS;
+
+    /**
+     * Amount of time to allow for Elasticsearch requests to complete.
+     * If this interval is exceeded, the request is aborted and an `Error` stream is created.
+     */
+    @JsonProperty
+    private int responseTimeoutMillis = DEFAULT_RESPONSE_TIMEOUT_MILLIS;
 
     public ElasticConnectionConfig() {
     }
@@ -52,16 +79,21 @@ public class ElasticConnectionConfig implements Serializable {
     @JsonCreator
     public ElasticConnectionConfig(@JsonProperty("connectionUrls") final List<String> connectionUrls,
                                    @JsonProperty("caCertificate") final String caCertificate,
-                                   @JsonProperty("useAuthentication") final boolean useAuthentication,
+                                   @JsonProperty("useAuthentication") final Boolean useAuthentication,
                                    @JsonProperty("apiKeyId") final String apiKeyId,
                                    @JsonProperty("apiKeySecret") final String apiKeySecret,
-                                   @JsonProperty("socketTimeoutMillis") final int socketTimeoutMillis) {
+                                   @JsonProperty("connectionTimeoutMillis") final Integer connectionTimeoutMillis,
+                                   @JsonProperty("responseTimeoutMillis") final Integer responseTimeoutMillis) {
         this.connectionUrls = connectionUrls;
         this.caCertificate = caCertificate;
-        this.useAuthentication = useAuthentication;
+        this.useAuthentication =
+                Objects.requireNonNullElse(useAuthentication, DEFAULT_USE_AUTHENTICATION);
         this.apiKeyId = apiKeyId;
         this.apiKeySecret = apiKeySecret;
-        this.socketTimeoutMillis = socketTimeoutMillis;
+        this.connectionTimeoutMillis =
+                Objects.requireNonNullElse(connectionTimeoutMillis, DEFAULT_CONNECTION_TIMEOUT_MILLIS);
+        this.responseTimeoutMillis =
+                Objects.requireNonNullElse(responseTimeoutMillis, DEFAULT_RESPONSE_TIMEOUT_MILLIS);
     }
 
     public List<String> getConnectionUrls() {
@@ -104,12 +136,20 @@ public class ElasticConnectionConfig implements Serializable {
         this.apiKeySecret = apiKeySecret;
     }
 
-    public int getSocketTimeoutMillis() {
-        return socketTimeoutMillis;
+    public int getConnectionTimeoutMillis() {
+        return connectionTimeoutMillis;
     }
 
-    public void setSocketTimeoutMillis(final int socketTimeoutMillis) {
-        this.socketTimeoutMillis = socketTimeoutMillis;
+    public void setConnectionTimeoutMillis(final int connectionTimeoutMillis) {
+        this.connectionTimeoutMillis = connectionTimeoutMillis;
+    }
+
+    public int getResponseTimeoutMillis() {
+        return responseTimeoutMillis;
+    }
+
+    public void setResponseTimeoutMillis(final int responseTimeoutMillis) {
+        this.responseTimeoutMillis = responseTimeoutMillis;
     }
 
     @Override
@@ -122,11 +162,12 @@ public class ElasticConnectionConfig implements Serializable {
         }
         final ElasticConnectionConfig that = (ElasticConnectionConfig) obj;
         return Objects.equals(connectionUrls, that.connectionUrls) &&
-                Objects.equals(caCertificate, that.caCertificate) &&
-                Objects.equals(useAuthentication, that.useAuthentication) &&
-                Objects.equals(apiKeyId, that.apiKeyId) &&
-                Objects.equals(apiKeySecret, that.apiKeySecret) &&
-                Objects.equals(socketTimeoutMillis, that.socketTimeoutMillis);
+               Objects.equals(caCertificate, that.caCertificate) &&
+               Objects.equals(useAuthentication, that.useAuthentication) &&
+               Objects.equals(apiKeyId, that.apiKeyId) &&
+               Objects.equals(apiKeySecret, that.apiKeySecret) &&
+               Objects.equals(connectionTimeoutMillis, that.connectionTimeoutMillis) &&
+               Objects.equals(responseTimeoutMillis, that.responseTimeoutMillis);
     }
 
     @Override
@@ -137,12 +178,13 @@ public class ElasticConnectionConfig implements Serializable {
     @Override
     public String toString() {
         return "ElasticConnectionConfig{" +
-                "connectionUrls='" + String.join(",", connectionUrls) + '\'' +
-                ", caCertPath='" + caCertificate + '\'' +
-                ", useAuthentication=" + useAuthentication +
-                ", apiKeyId='" + apiKeyId + '\'' +
-                ", apiKeySecret='<redacted>'" +
-                ", socketTimeoutMillis=" + socketTimeoutMillis +
-                '}';
+               "connectionUrls='" + String.join(",", connectionUrls) + '\'' +
+               ", caCertPath='" + caCertificate + '\'' +
+               ", useAuthentication=" + useAuthentication +
+               ", apiKeyId='" + apiKeyId + '\'' +
+               ", apiKeySecret='<redacted>'" +
+               ", connectionTimeoutMillis=" + connectionTimeoutMillis +
+               ", responseTimeoutMillis=" + responseTimeoutMillis +
+               '}';
     }
 }

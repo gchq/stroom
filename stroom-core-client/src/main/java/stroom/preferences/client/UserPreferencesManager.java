@@ -1,17 +1,32 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.preferences.client;
 
 import stroom.config.global.shared.UserPreferencesResource;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
-import stroom.expression.api.UserTimeZone;
-import stroom.expression.api.UserTimeZone.Use;
+import stroom.query.api.UserTimeZone;
+import stroom.query.api.UserTimeZone.Use;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.AceEditorTheme;
 import stroom.ui.config.shared.Theme;
 import stroom.ui.config.shared.ThemeCssUtil;
 import stroom.ui.config.shared.ThemeType;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.util.shared.NullSafe;
 import stroom.widget.datepicker.client.ClientTimeZone;
 import stroom.widget.util.client.ClientStringUtil;
 
@@ -88,7 +103,7 @@ public class UserPreferencesManager {
         applyUserPreferences(this.currentPreferences, userPreferences);
 
         final Element element = RootPanel.getBodyElement().getParentElement();
-        String className = getCurrentPreferenceClasses();
+        final String className = getCurrentPreferenceClasses();
         element.setClassName(className);
 
         ClientTimeZone.setTimeZone(getTimeZone(currentUserPreferences));
@@ -126,8 +141,8 @@ public class UserPreferencesManager {
      */
     private String getPosixOffset(final UserTimeZone userTimeZone) {
 
-        final int hours = NullSafe.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
-        int minutes = NullSafe.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
+        final int hours = Objects.requireNonNullElse(userTimeZone.getOffsetHours(), 0);
+        int minutes = Objects.requireNonNullElse(userTimeZone.getOffsetMinutes(), 0);
 
         // FIXME:  Browsers don't support minute offsets so disable this for now.
         minutes = 0;
@@ -174,7 +189,7 @@ public class UserPreferencesManager {
     }
 
     public boolean isHideConditionalStyles() {
-        return NullSafe.requireNonNullElse(currentUserPreferences.getHideConditionalStyles(), false);
+        return Objects.requireNonNullElse(currentUserPreferences.getHideConditionalStyles(), false);
     }
 
     public List<String> getThemes() {

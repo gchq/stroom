@@ -1,8 +1,24 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app;
 
 import stroom.app.guice.BootStrapModule;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
+import stroom.cluster.lock.impl.dao.ClusterLockConfig;
+import stroom.cluster.lock.impl.db.ClusterLockDbConfig;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.common.AbstractDbConfig;
@@ -193,7 +209,7 @@ public class BootstrapUtil {
                 NodeConfig::getNodeName,
                 "UNKNOWN NODE");
 
-        try (Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
+        try (final Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
             // Need read committed so that once we have acquired the lock we can see changes
             // committed by other nodes.
             conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
@@ -251,7 +267,7 @@ public class BootstrapUtil {
                         // including doing all the flyway migrations
                         try {
                             output = work.get();
-                        } catch (Exception e) {
+                        } catch (final Exception e) {
                             final String msg = LogUtil.message(
                                     "Error upgrading stroom to {}: {}", buildVersion, e.getMessage(), e);
                             LOGGER.error(msg);
@@ -282,7 +298,7 @@ public class BootstrapUtil {
                 return output;
             });
             LOGGER.debug("Closed connection");
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             throw new RuntimeException("Error obtaining bootstrap lock: " + e.getMessage(), e);
         }
 
@@ -417,7 +433,7 @@ public class BootstrapUtil {
                 LOGGER.info("Waited {} to acquire bootstrap lock",
                         Duration.between(startTime, Instant.now()));
                 acquiredLock = true;
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // If the node that gets the lock has to run lengthy db= migrations it is almost certain
                 // that we will get a lock timeout error so need to handle that and keep trying to get the lock
                 if (e.getCause() != null
@@ -514,7 +530,7 @@ public class BootstrapUtil {
                     connection.commit();
                 }
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException("Error ensuring table "
                                        + BUILD_VERSION_TABLE_NAME + ": "
                                        + e.getMessage(), e);

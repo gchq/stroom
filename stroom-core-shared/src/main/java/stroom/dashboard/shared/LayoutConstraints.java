@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -15,21 +31,19 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class LayoutConstraints {
 
+    private static final boolean DEFAULT_FIT_WIDTH = false;
+    private static final boolean DEFAULT_FIT_HEIGHT = false;
+
     @JsonProperty
     private final boolean fitWidth;
     @JsonProperty
     private final boolean fitHeight;
 
-    public LayoutConstraints() {
-        fitWidth = true;
-        fitHeight = true;
-    }
-
     @JsonCreator
-    public LayoutConstraints(@JsonProperty("fitWidth") final boolean fitWidth,
-                             @JsonProperty("fitHeight") final boolean fitHeight) {
-        this.fitWidth = fitWidth;
-        this.fitHeight = fitHeight;
+    public LayoutConstraints(@JsonProperty("fitWidth") final Boolean fitWidth,
+                             @JsonProperty("fitHeight") final Boolean fitHeight) {
+        this.fitWidth = Objects.requireNonNullElse(fitWidth, DEFAULT_FIT_WIDTH);
+        this.fitHeight = Objects.requireNonNullElse(fitHeight, DEFAULT_FIT_HEIGHT);
     }
 
     public boolean isFitWidth() {
@@ -49,11 +63,25 @@ public class LayoutConstraints {
             return false;
         }
         final LayoutConstraints that = (LayoutConstraints) o;
-        return fitWidth == that.fitWidth && fitHeight == that.fitHeight;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = fitWidth == that.fitWidth;
+//        final boolean b2 = fitHeight == that.fitHeight;
+
+        return fitWidth == that.fitWidth &&
+               fitHeight == that.fitHeight;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(fitWidth, fitHeight);
+    }
+
+    @Override
+    public String toString() {
+        return "LayoutConstraints{" +
+               "fitWidth=" + fitWidth +
+               ", fitHeight=" + fitHeight +
+               '}';
     }
 }

@@ -68,7 +68,10 @@ public class ConfigFilter extends AbstractXMLFilter {
     }
 
     @Override
-    public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
+    public void startElement(final String uri,
+                             final String localName,
+                             final String qName,
+                             final Attributes atts) throws SAXException {
         if (localName.equals(XML_ELEMENT_DATA_SPLITTER)) {
             inRoot = true;
             if (parentDeque.peek().getNodeType() == NodeType.ROOT) {
@@ -149,7 +152,7 @@ public class ConfigFilter extends AbstractXMLFilter {
     }
 
     @Override
-    public void endElement(String uri, String localName, String qName) throws SAXException {
+    public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (localName.equals(XML_ELEMENT_DATA_SPLITTER)) {
             inRoot = false;
         } else {
@@ -230,7 +233,7 @@ public class ConfigFilter extends AbstractXMLFilter {
                     val.add(Integer.parseInt(str));
                 } catch (final NumberFormatException e) {
                     throw new SAXException("Value for " + XML_ATTRIBUTE_ONLY_MATCH + " \"" + string
-                            + "\" is not a valid comma separated list of numbers");
+                                           + "\" is not a valid comma separated list of numbers");
                 }
             }
 

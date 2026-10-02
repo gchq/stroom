@@ -18,10 +18,10 @@ package stroom.searchable.impl;
 
 import stroom.event.logging.rs.api.AutoLogged;
 import stroom.event.logging.rs.api.AutoLogged.OperationType;
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchResponse;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.TerminateDecorator;
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.reader;
 
 import stroom.bytebuffer.ByteArrayUtils;
@@ -52,7 +68,7 @@ class TestReaderRecorder {
             inputBuffer.clear();
 
             while (!charDecoded && loopCnt++ < 10) {
-                byte b = myByteBuffer.getByte(byteOffset++);
+                final byte b = myByteBuffer.getByte(byteOffset++);
                 LOGGER.info("byteOffset: {}, byte: {}",
                         byteOffset,
                         ByteArrayUtils.byteArrayToString(new byte[]{b}));
@@ -74,10 +90,10 @@ class TestReaderRecorder {
                 // for any non ascii chars.
                 if (!coderResult.isMalformed()) {
                     charDecoded = true;
-                    char decodedChar = outputBuffer.array()[0];
+                    final char decodedChar = outputBuffer.array()[0];
                     outputStringBuilder.append(decodedChar);
 
-                    int decodedCharByteSize = String.valueOf(decodedChar).getBytes(charset).length;
+                    final int decodedCharByteSize = String.valueOf(decodedChar).getBytes(charset).length;
 
                     LOGGER.info("Char {} ({}), byteCnt: {}",
                             decodedChar,

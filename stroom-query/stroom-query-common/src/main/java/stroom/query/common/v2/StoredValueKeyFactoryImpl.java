@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class StoredValueKeyFactoryImpl implements StoredValueKeyFactory {
                               final ValHasher valHasher) {
         this.compiledDepths = compiledDepths;
         this.valHasher = valHasher;
-        Generator[][] groupGenerators;
+        final Generator[][] groupGenerators;
         Generator timeGenerator = null;
 
         final boolean[][] groupIndicesByDepth = compiledDepths.getGroupIndicesByDepth();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private boolean enabled = true;
     private DocRef value = null;
     private String errorMsg = null;
+    private String itemType = null;
     // The perms required on any selected docRef or nodes in the picker
     private Set<DocumentPermission> requiredPermissions = null;
 
@@ -82,6 +83,17 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     @Override
     public void focus() {
         getView().focus();
+    }
+
+    /**
+     * Call this if the selection box contains more than one {@link DocRef} type,
+     * e.g. all data source types. Value should be singular and in
+     * sentence case, e.g. 'Data Source'.
+     *
+     * @param itemType
+     */
+    public void setItemType(final String itemType) {
+        this.itemType = itemType;
     }
 
     public void setQuickFilter(final String filterInput) {
@@ -182,8 +194,9 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
             // so decorate it to ensure we have the right name
             restFactory
                     .create(EXPLORER_RESOURCE)
-                    .method(res ->
-                            res.decorate(DecorateRequest.createWithPermCheck(docRef, getRequiredPermissions())))
+                    .method(resource ->
+                            resource.decorate(DecorateRequest.createWithPermCheck(
+                                    docRef, getRequiredPermissions())))
                     .onSuccess(decoratedDocRef -> {
                         if (decoratedDocRef != null) {
                             explorerPopupPresenter.setSelectedEntityReference(decoratedDocRef);
@@ -221,23 +234,21 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
         NullSafe.run(onDocRefNotFound);
     }
 
-    public static String buildNotFoundMessage(final DocRef docRef) {
+    public String buildNotFoundMessage(final DocRef docRef) {
         if (docRef != null) {
-            final String type = docRef.getType();
+            final String type = Objects.requireNonNullElseGet(this.itemType, () ->
+                    Objects.requireNonNullElse(docRef.getType(), "Document"));
             final String uuid = docRef.getUuid();
             final String displayName = NullSafe.getOrElse(
                     docRef.getName(),
                     name -> "'" + name + "' (" + uuid + ")",
                     uuid);
-            final String prefix = type != null
-                    ? type
-                    : "Document";
 
-            return prefix +
-                    " " +
-                    displayName +
-                    " doesn't exist or you do not have permission to view it.\n" +
-                    "Select a different Extraction Pipeline or speak to your administrator.";
+            return type +
+                   " " +
+                   displayName +
+                   " doesn't exist or you do not have permission to view it.\n" +
+                   "Select a different " + type.toLowerCase() + " or speak to your administrator.";
         } else {
             return null;
         }

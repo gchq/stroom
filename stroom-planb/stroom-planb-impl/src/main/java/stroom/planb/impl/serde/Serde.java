@@ -1,0 +1,53 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.planb.impl.serde;
+
+import stroom.planb.impl.dao.LmdbWriter;
+import stroom.planb.impl.dao.PlanBEnv;
+import stroom.planb.impl.dao.UsedLookupsRecorder;
+
+import org.lmdbjava.Txn;
+
+import java.nio.ByteBuffer;
+import java.util.function.Consumer;
+
+public interface Serde<T> {
+
+    UsedLookupsRecorder USED_LOOKUPS_RECORDER = new UsedLookupsRecorder() {
+        @Override
+        public void recordUsed(final LmdbWriter writer, final ByteBuffer byteBuffer) {
+
+        }
+
+        @Override
+        public void deleteUnused(final Txn<ByteBuffer> readTxn, final LmdbWriter writer) {
+
+        }
+    };
+
+    void write(Txn<ByteBuffer> txn, T value, Consumer<ByteBuffer> consumer);
+
+    T read(Txn<ByteBuffer> txn, ByteBuffer byteBuffer);
+
+    default boolean usesLookup(final ByteBuffer byteBuffer) {
+        return false;
+    }
+
+    default UsedLookupsRecorder getUsedLookupsRecorder(final PlanBEnv env) {
+        return USED_LOOKUPS_RECORDER;
+    }
+}

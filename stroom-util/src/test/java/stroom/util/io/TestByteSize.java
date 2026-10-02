@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.io;
 
 import stroom.util.json.JsonUtil;
@@ -51,7 +67,7 @@ class TestByteSize {
                           final Function<Long, ByteSize> func,
                           final String expected,
                           final long expectedMultiplier) {
-        ByteSize byteSize = func.apply(input);
+        final ByteSize byteSize = func.apply(input);
 
         assertThat(byteSize.getValueAsStr()).isEqualTo(expected);
         assertThat(byteSize.getBytes()).isEqualTo(input * expectedMultiplier);
@@ -60,14 +76,14 @@ class TestByteSize {
     @Test
     void ofBytes_bad() {
         Assertions.assertThatThrownBy(() -> {
-            long input = -1;
+            final long input = -1;
             ByteSize.ofBytes(input);
         }).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void zero() {
-        ByteSize byteSize = ByteSize.ZERO;
+        final ByteSize byteSize = ByteSize.ZERO;
         assertThat(byteSize.getBytes()).isEqualTo(0);
         assertThat(byteSize.isZero()).isTrue();
         assertThat(byteSize.isNonZero()).isFalse();
@@ -91,7 +107,7 @@ class TestByteSize {
         for (final String value : values) {
             LOGGER.info("Testing value {}, expected {}", value, expectedBytes);
 
-            ByteSize byteSize = ByteSize.parse(value);
+            final ByteSize byteSize = ByteSize.parse(value);
             assertThat(byteSize.getBytes()).isEqualTo(expectedBytes);
             assertThat(byteSize.getValueAsStr()).isEqualTo(value);
             assertThat(byteSize.isZero()).isFalse();

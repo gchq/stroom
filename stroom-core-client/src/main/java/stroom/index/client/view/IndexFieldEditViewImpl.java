@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,28 @@
 
 package stroom.index.client.view;
 
-import stroom.datasource.api.v2.AnalyzerType;
-import stroom.datasource.api.v2.FieldType;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.LuceneFieldTypes;
 import stroom.item.client.SelectionBox;
+import stroom.query.api.datasource.AnalyzerType;
+import stroom.query.api.datasource.FieldType;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditView {
+public class IndexFieldEditViewImpl
+        extends ViewWithUiHandlers<ChangeUiHandlers>
+        implements IndexFieldEditView {
 
     private final Widget widget;
     @UiField
@@ -47,6 +54,8 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
     SelectionBox<AnalyzerType> analyser;
     @UiField
     CustomCheckBox caseSensitive;
+    @UiField
+    SimplePanel denseVectorOptions;
 
     @Inject
     public IndexFieldEditViewImpl(final Binder binder) {
@@ -134,6 +143,23 @@ public class IndexFieldEditViewImpl extends ViewImpl implements IndexFieldEditVi
     @Override
     public void setCaseSensitive(final boolean caseSensitive) {
         this.caseSensitive.setValue(caseSensitive);
+    }
+
+    @Override
+    public void setDenseVectorOptions(final View view) {
+        this.denseVectorOptions.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setDenseVectorOptionsVisible(final boolean visible) {
+        this.denseVectorOptions.setVisible(visible);
+    }
+
+    @UiHandler("type")
+    public void onChange(final ValueChangeEvent<?> event) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().onChange();
+        }
     }
 
     public interface Binder extends UiBinder<Widget, IndexFieldEditViewImpl> {

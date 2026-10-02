@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.customdatebox.client;
 
 import stroom.item.client.EventBinder;
@@ -10,9 +26,10 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.HasValue;
 
-public class DurationPicker extends Composite implements HasValue<SimpleDuration> {
+public class DurationPicker extends Composite implements HasValue<SimpleDuration>, Focus {
 
     private final ValueSpinner time;
     private final SelectionBox<TimeUnit> timeUnit;
@@ -45,6 +62,22 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         flowPanel.add(time);
         flowPanel.add(timeUnit);
         initWidget(flowPanel);
+    }
+
+    public void smallTimeMode() {
+        time.setMin(0);
+        time.setMax(1000000);
+        timeUnit.clear();
+        timeUnit.addItem(TimeUnit.NANOSECONDS);
+        timeUnit.addItem(TimeUnit.MILLISECONDS);
+        timeUnit.addItem(TimeUnit.SECONDS);
+        timeUnit.addItem(TimeUnit.MINUTES);
+        timeUnit.addItem(TimeUnit.HOURS);
+    }
+
+    @Override
+    public void focus() {
+        time.focus();
     }
 
     @Override
@@ -83,5 +116,10 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
     public com.google.gwt.event.shared.HandlerRegistration addValueChangeHandler(
             final ValueChangeHandler<SimpleDuration> handler) {
         return addHandler(handler, ValueChangeEvent.getType());
+    }
+
+    public void setEnabled(final boolean enabled) {
+        time.setEnabled(enabled);
+        timeUnit.setEnabled(enabled);
     }
 }

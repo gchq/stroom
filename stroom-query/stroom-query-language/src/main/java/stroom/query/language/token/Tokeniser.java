@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,12 @@
 
 package stroom.query.language.token;
 
-import stroom.query.language.token.QuotedStringToken.Builder;
+import stroom.query.api.token.ParamToken;
+import stroom.query.api.token.QuotedStringToken;
+import stroom.query.api.token.QuotedStringToken.Builder;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,7 +50,7 @@ public class Tokeniser {
             throw new TokenException(null, "Empty query");
         }
 
-        char[] chars = string.toCharArray();
+        final char[] chars = string.toCharArray();
         final Token unknown = new Token(TokenType.UNKNOWN, chars, 0, chars.length - 1);
         tokens = Collections.singletonList(unknown);
 
@@ -62,7 +67,7 @@ public class Tokeniser {
 
         // Treat NOT/AND/OR as keywords if they are in an expression to make sure they aren't treated as functions,
         // e.g. not().
-        List<Token> replaced = new ArrayList<>();
+        final List<Token> replaced = new ArrayList<>();
         TokenType currentKeyword = null;
         for (final Token token : tokens) {
             if (TokenType.ALL_KEYWORDS.contains(token.getTokenType())) {
@@ -364,7 +369,7 @@ public class Tokeniser {
         return out;
     }
 
-    private static boolean testChars(Token token, char[] test, int pos) {
+    private static boolean testChars(final Token token, final char[] test, final int pos) {
         if (pos + test.length - 1 > token.getEnd()) {
             return false;
         }

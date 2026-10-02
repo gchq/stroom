@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.bytebuffer;
@@ -26,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -72,7 +72,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
 
     private static final int MAX_BYTES_IN_POOL = 500 * 1024;
 
-    private final TreeMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
+    private final NavigableMap<Key, ByteBuffer> bufferMap = new TreeMap<>();
 
 //    private final ConcurrentMap<Integer, AtomicInteger> requestsMap = new ConcurrentHashMap<>();
 //    private final AtomicInteger getCount = new AtomicInteger();
@@ -160,9 +160,10 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
 //            }
 //            // Not certain we need to zero the buffer if clear is called as any users of it
 //            // should be immediately writing to part of it and setting the limit/pos
-////            for (int i = buffer.position(); i < buffer.limit(); i++) {
-////                buffer.put((byte)0);
-////            }
+
+    /// /            for (int i = buffer.position(); i < buffer.limit(); i++) {
+    /// /                buffer.put((byte)0);
+    /// /            }
 //            buffer.clear();
 //
 //            try {
@@ -180,8 +181,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
 //            releaseCount.incrementAndGet();
 //        }
 //    }
-
-    private synchronized void release(ByteBuffer buffer) {
+    private synchronized void release(final ByteBuffer buffer) {
         if (buffer != null && buffer.isDirect()) {
             for (int i = buffer.position(); i < buffer.limit(); i++) {
                 buffer.put((byte) 0);
@@ -201,7 +201,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
                     // unlikely that we'll loop even once, unless the system clock has a
                     // poor granularity.
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 // if a buffer is not released back to the pool then it is not the end of the world
                 // is we can just create more as required.
                 throw new RuntimeException("Error releasing buffer back to the pool", e);
@@ -224,7 +224,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
      * must not be used outside of the work lambda.
      */
     @Override
-    public <T> T getWithBuffer(final int minCapacity, Function<ByteBuffer, T> work) {
+    public <T> T getWithBuffer(final int minCapacity, final Function<ByteBuffer, T> work) {
         ByteBuffer buffer = null;
         try {
             buffer = getBuffer(minCapacity);
@@ -241,7 +241,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
      * must not be used outside of the work lambda.
      */
     @Override
-    public void doWithBuffer(final int minCapacity, Consumer<ByteBuffer> work) {
+    public void doWithBuffer(final int minCapacity, final Consumer<ByteBuffer> work) {
         ByteBuffer buffer = null;
         try {
             buffer = getBuffer(minCapacity);
@@ -281,8 +281,8 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
     @Override
     public String toString() {
         return "ByteBufferPool{" +
-                "bufferMap=" + bufferMap +
-                '}';
+               "bufferMap=" + bufferMap +
+               '}';
     }
 
     @Override
@@ -298,7 +298,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
                     .addDetail("Size", getCurrentPoolSize());
 //                    .withDetail("Largest buffer", largestBufferInPool.get());
 
@@ -313,7 +313,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
                         .collect(HasHealthCheck.buildTreeMapCollector(Map.Entry::getKey, Map.Entry::getValue));
 
                 builder.addDetail("Buffer capacity counts", capacityCountsMap);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error getting capacity counts", e);
                 builder.addDetail("Buffer capacity counts", "Error getting counts");
             }
@@ -326,7 +326,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
 //            }
 
             return builder.build();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();
@@ -338,13 +338,13 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
         private final int capacity;
         private final long insertionTime;
 
-        Key(int capacity, long insertionTime) {
+        Key(final int capacity, final long insertionTime) {
             this.capacity = capacity;
             this.insertionTime = insertionTime;
         }
 
         @Override
-        public int compareTo(Key other) {
+        public int compareTo(final Key other) {
             // This method is called many millions of times, hence no use of (Integer|Long).compareTo
             if (capacity < other.capacity) {
                 return -1;
@@ -371,7 +371,7 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
             }
             final Key key = (Key) o;
             return capacity == key.capacity &&
-                    insertionTime == key.insertionTime;
+                   insertionTime == key.insertionTime;
         }
 
         @Override
@@ -383,9 +383,9 @@ public class ByteBufferPoolImpl3 implements ByteBufferPool {
         @Override
         public String toString() {
             return "Key{" +
-                    "capacity=" + capacity +
-                    ", insertionTime=" + insertionTime +
-                    '}';
+                   "capacity=" + capacity +
+                   ", insertionTime=" + insertionTime +
+                   '}';
         }
     }
 }

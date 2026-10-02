@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.extraction;
 
 import stroom.search.extraction.StreamEventMap.EventSet;
@@ -32,12 +48,12 @@ class TestStreamEventMap {
         final List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         // Start a producer.
-        CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
+        final CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
             for (int i = 0; i < TOTAL_EVENTS; i++) {
-                int streamId = (int) (Math.random() * 10);
+                final int streamId = (int) (Math.random() * 10);
                 try {
                     streamEventMap.put(new Event(streamId, i, null));
-                } catch (CompleteException e) {
+                } catch (final CompleteException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -48,7 +64,7 @@ class TestStreamEventMap {
         // Start 5 consumers
         final AtomicInteger total = new AtomicInteger();
         for (int i = 0; i < 5; i++) {
-            CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
+            final CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
                 try {
                     while (true) {
                         final EventSet eventSet = streamEventMap.take();
@@ -81,11 +97,11 @@ class TestStreamEventMap {
 
         // Start a consumer.
         for (int i = 0; i < count; i++) {
-            CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
+            final CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
                 try {
                     aboutToTakeLatch.countDown();
                     final EventSet eventSet = streamEventMap.take();
-                } catch (CompleteException e) {
+                } catch (final CompleteException e) {
                     LOGGER.debug("Completed");
                     didComplete.set(true);
                 }
@@ -115,11 +131,11 @@ class TestStreamEventMap {
 
         // Start a consumer.
         for (int i = 0; i < count; i++) {
-            CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
+            final CompletableFuture<Void> consumer = CompletableFuture.runAsync(() -> {
                 try {
                     aboutToTakeLatch.countDown();
                     final EventSet eventSet = streamEventMap.take();
-                } catch (CompleteException e) {
+                } catch (final CompleteException e) {
                     LOGGER.debug("Completed");
                     didComplete.set(true);
                 }
@@ -154,19 +170,19 @@ class TestStreamEventMap {
         // This should pick up the complete item so will complete the queue and release all putters.
         try {
             streamEventMap.take();
-        } catch (CompleteException e) {
+        } catch (final CompleteException e) {
             LOGGER.debug("Completed on take");
         }
 
         // Start the producers, none of which should block as the map is completed already
         for (int i = 0; i < count; i++) {
-            CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
+            final CompletableFuture<Void> producer = CompletableFuture.runAsync(() -> {
                 try {
                     aboutToPutLatch.countDown();
-                    int streamId = (int) (Math.random() * 10);
-                    int eventId = (int) (Math.random() * 10);
+                    final int streamId = (int) (Math.random() * 10);
+                    final int eventId = (int) (Math.random() * 10);
                     streamEventMap.put(new Event(streamId, eventId, null));
-                } catch (CompleteException e) {
+                } catch (final CompleteException e) {
                     LOGGER.debug("Completed on put");
                     didComplete.set(true);
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.ExpressionOperator;
 import stroom.security.client.UsersAndGroupsPlugin;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUsersAndGroupsScreenEvent;
@@ -96,12 +96,14 @@ public class AppUserPermissionsListPresenter
         this.uiConfigCache = uiConfigCache;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>();
-        selectionModel = new MultiSelectionModelImpl<>(dataGrid);
-        DataGridSelectionEventManager<AppUserPermissions> selectionEventManager = new DataGridSelectionEventManager<>(
-                dataGrid,
-                selectionModel,
-                false);
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("User Permissions");
+        selectionModel = new MultiSelectionModelImpl<>();
+        final DataGridSelectionEventManager<AppUserPermissions> selectionEventManager =
+                new DataGridSelectionEventManager<>(
+                        dataGrid,
+                        selectionModel,
+                        false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
 
@@ -268,7 +270,8 @@ public class AppUserPermissionsListPresenter
                                                 appUsrPerms.getUserRef(),
                                                 isExternalIdp(),
                                                 UserScreen.allExcept(UserScreen.APP_PERMISSIONS),
-                                                this),
+                                                this,
+                                                null),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();
@@ -277,15 +280,13 @@ public class AppUserPermissionsListPresenter
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private static SafeHtml buildPermissionsCellValue(final AppUserPermissions appUserPermissions) {
         final DescriptionBuilder sb = new DescriptionBuilder();
         boolean notEmpty = false;
         boolean lastIsInherited = false;
-        SafeHtml delimiter = new SafeHtmlBuilder()
+        final SafeHtml delimiter = new SafeHtmlBuilder()
                 .append(SafeHtmlUtil.ENSP)
                 .appendEscaped("|")
                 .append(SafeHtmlUtil.ENSP)
@@ -315,7 +316,7 @@ public class AppUserPermissionsListPresenter
     }
 
     private Function<AppUserPermissions, CommandLink> buildOpenAppPermissionsCommandLink() {
-        return (AppUserPermissions appUserPermissions) -> {
+        return (final AppUserPermissions appUserPermissions) -> {
             final UserRef userRef = NullSafe.get(appUserPermissions, AppUserPermissions::getUserRef);
             if (userRef != null) {
                 final String displayName = userRef.getDisplayName();

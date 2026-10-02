@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -74,7 +74,7 @@ public final class KVMapUtil {
                     } else {
                         final String text = sb.toString();
 
-                        int index = text.lastIndexOf(' ');
+                        final int index = text.lastIndexOf(' ');
                         if (index != -1) {
                             if (key != null && key.length() > 0) {
                                 final String value = text.substring(0, index).trim();
@@ -106,7 +106,7 @@ public final class KVMapUtil {
         final StringBuilder sb = new StringBuilder();
 
         int paramStart = -1;
-        char[] chars = value.toCharArray();
+        final char[] chars = value.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             switch (chars[i]) {
                 case '$':

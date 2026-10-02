@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package stroom.search.solr.search;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;

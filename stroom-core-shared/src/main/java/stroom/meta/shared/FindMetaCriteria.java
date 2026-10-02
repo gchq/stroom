@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package stroom.meta.shared;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
 import stroom.util.shared.Copyable;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
@@ -47,9 +47,9 @@ public class FindMetaCriteria extends ExpressionCriteria implements Copyable<Fin
     public FindMetaCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
                             @JsonProperty("expression") final ExpressionOperator expression,
-                            @JsonProperty("fetchRelationships") final boolean fetchRelationships) {
+                            @JsonProperty("fetchRelationships") final Boolean fetchRelationships) {
         super(pageRequest, sortList, expression);
-        this.fetchRelationships = fetchRelationships;
+        this.fetchRelationships = Objects.requireNonNullElse(fetchRelationships, false);
     }
 
     public static FindMetaCriteria unlocked() {

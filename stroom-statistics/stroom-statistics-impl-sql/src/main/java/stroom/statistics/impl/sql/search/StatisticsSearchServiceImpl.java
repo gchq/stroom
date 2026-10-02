@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,6 @@ import stroom.util.shared.NullSafe;
 
 import com.google.common.base.Preconditions;
 import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -64,8 +62,7 @@ import java.util.stream.Collectors;
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
 
     private static final String KEY_TABLE_ALIAS = "K";
     private static final String VALUE_TABLE_ALIAS = "V";
@@ -107,11 +104,12 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
         final RollUpBitMask result;
 
-        if (rolledUpTagsFound.size() > 0) {
+        if (!rolledUpTagsFound.isEmpty()) {
             final List<Integer> rollUpTagPositionList = new ArrayList<>();
-
+            final Map<String, Integer> fieldPositionMap =
+                    StatisticStoreDocUtil.createFieldPositionMap(statisticsDataSource);
             for (final String tag : rolledUpTagsFound) {
-                final Integer position = statisticsDataSource.getPositionInFieldList(tag);
+                final Integer position = fieldPositionMap.get(tag);
                 if (position == null) {
                     throw new RuntimeException(String.format("No field position found for tag %s", tag));
                 }
@@ -140,7 +138,8 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             optSql.ifPresent(sql -> {
                 // build a mapper function to convert a resultSet row into a String[] based on the fields
                 // required by all coprocessors
-                Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(fieldIndex, statisticStoreEntity);
+                final Function<ResultSet, Val[]> resultSetMapper = buildResultSetMapper(
+                        fieldIndex, statisticStoreEntity);
 
                 // the query will not be executed until somebody subscribes to the flowable
                 getFlowableQueryResults(taskContext, sql, resultSetMapper, valuesConsumer);
@@ -167,7 +166,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             }
 
             //now add in all the dynamic tag field mappings
-            statisticStoreEntity.getFieldNames().forEach(tagField ->
+            StatisticStoreDocUtil.getFieldNames(statisticStoreEntity).forEach(tagField ->
                     fieldToColumnsMap.computeIfAbsent(tagField, k -> new ArrayList<>())
                             .add(KEY_TABLE_ALIAS + "." + SQLStatisticNames.NAME));
 
@@ -210,10 +209,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
         final String statNameWithMask = statisticStoreEntity.getName() + rollUpBitMask.asHexString();
 
-        SqlBuilder sql = new SqlBuilder();
+        final SqlBuilder sql = new SqlBuilder();
         sql.append("SELECT ");
 
-        String selectColsStr = String.join(", ", getSelectColumns(statisticStoreEntity, fieldIndex));
+        final String selectColsStr = String.join(", ", getSelectColumns(statisticStoreEntity, fieldIndex));
         if (NullSafe.isNonBlankString(selectColsStr)) {
             sql.append(selectColsStr);
 
@@ -268,12 +267,15 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             final FieldIndex fieldIndex,
             final StatisticStoreDoc statisticStoreEntity) {
 
-        LAMBDA_LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
+        LOGGER.debug(() -> String.format("Building mapper for fieldIndexMap %s, entity %s",
                 fieldIndex, statisticStoreEntity.getUuid()));
+
+        final Map<String, Integer> fieldPositionMap =
+                StatisticStoreDocUtil.createFieldPositionMap(statisticStoreEntity);
 
         // construct a list of field extractors that can populate the appropriate bit of the data arr
         // when given a resultSet row
-        List<ValueExtractor> valueExtractors = fieldIndex.stream()
+        final List<ValueExtractor> valueExtractors = fieldIndex.stream()
                 .map(entry -> {
                     final int idx = entry.getValue();
                     final String fieldName = entry.getKey();
@@ -294,7 +296,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         } else {
                             throw new RuntimeException(String.format("Unexpected type %s", statisticType));
                         }
-                    } else if (statisticStoreEntity.getFieldNames().contains(fieldName)) {
+                    } else if (fieldPositionMap.containsKey(fieldName)) {
                         // this is a tag field so need to extract the tags/values from the NAME col.
                         // We only want to do this extraction once so we cache the values
                         extractor = buildTagFieldValueExtractor(fieldName, idx);
@@ -302,7 +304,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         extractor = null;
 //                        throw new RuntimeException(String.format("Unexpected fieldName %s", fieldName));
                     }
-                    LAMBDA_LOGGER.debug(() ->
+                    LOGGER.debug(() ->
                             String.format("Adding extraction function for field %s, idx %s", fieldName, idx));
                     return extractor;
                 })
@@ -318,7 +320,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 if (rs.isClosed()) {
                     throw new RuntimeException("ResultSet is closed");
                 }
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 throw new RuntimeException("Error testing closed state of resultSet", e);
             }
             //the data array we are populating
@@ -333,10 +335,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 }
             });
 
-            LAMBDA_LOGGER.trace(() -> {
+            LOGGER.trace(() -> {
                 try {
                     return String.format("Mapped resultSet row %s to %s", rs.getRow(), Arrays.toString(data));
-                } catch (SQLException e) {
+                } catch (final SQLException e) {
                     throw new RuntimeException(String.format("Error getting current row number: %s", e.getMessage()),
                             e);
                 }
@@ -354,7 +356,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             final long precisionMs;
             try {
                 precisionMs = (long) Math.pow(10, rs.getInt(SQLStatisticNames.PRECISION));
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 throw new RuntimeException("Error extracting precision field", e);
             }
             arr[idx] = ValDuration.create(precisionMs);
@@ -371,7 +373,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             try {
                 aggregatedValue = rs.getDouble(SQLStatisticNames.VALUE);
                 count = rs.getLong(SQLStatisticNames.COUNT);
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 throw new RuntimeException("Error extracting count and value fields", e);
             }
 
@@ -412,7 +414,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private Val getResultSetLong(final ResultSet resultSet, final String column) {
         try {
             return ValLong.create(resultSet.getLong(column));
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             throw new RuntimeException(String.format("Error extracting field %s", column), e);
         }
     }
@@ -420,7 +422,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private Val getResultSetDateMs(final ResultSet resultSet, final String column) {
         try {
             return ValDate.create(resultSet.getLong(column));
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             throw new RuntimeException(String.format("Error extracting field %s", column), e);
         }
     }
@@ -428,7 +430,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private Val getResultSetString(final ResultSet resultSet, final String column) {
         try {
             return ValString.create(resultSet.getString(column));
-        } catch (SQLException e) {
+        } catch (final SQLException e) {
             throw new RuntimeException(String.format("Error extracting field %s", column), e);
         }
     }
@@ -454,11 +456,11 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                 preparedStatement.setFetchSize(fetchSize);
 
                 PreparedStatementUtil.setArguments(preparedStatement, sql.getArgs());
-                LAMBDA_LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement));
+                LOGGER.debug(() -> String.format("Created preparedStatement %s", preparedStatement));
 
                 final String message = String.format("Executing query %s", sql);
                 taskContext.info(() -> message);
-                LAMBDA_LOGGER.debug(() -> message);
+                LOGGER.debug(() -> message);
 
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -477,12 +479,12 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                         LOGGER.debug("End of resultSet, calling onComplete");
                     }
 
-                } catch (SQLException e) {
+                } catch (final SQLException e) {
                     throw new RuntimeException(String.format("Error executing query %s, %s",
                             preparedStatement, e.getMessage()), e);
                 }
 
-            } catch (SQLException e) {
+            } catch (final SQLException e) {
                 throw new RuntimeException(String.format("Error preparing statement for sql [%s]", sql), e);
             }
 
@@ -510,7 +512,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
             // stat name will be at pos 0 so start at 1
             for (int i = 1; i < tokens.length; i++) {
                 final String tag = tokens[i++];
-                String value = tokens[i];
+                final String value = tokens[i];
                 if (value.equals(SQLStatisticConstants.NULL_VALUE_STRING)) {
                     statisticTags.put(tag, ValNull.INSTANCE);
                 } else {

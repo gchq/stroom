@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,16 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -43,6 +46,9 @@ import java.util.stream.Stream;
  * </p>
  */
 public class NullSafe {
+
+    private static final Predicate<?> ALWAYS_TRUE_PREDICATE = ignored -> true;
+    private static final Predicate<?> ALWAYS_FALSE_PREDICATE = ignored -> false;
 
     private NullSafe() {
     }
@@ -58,7 +64,7 @@ public class NullSafe {
         if (val1 == null) {
             return false;
         } else {
-            final T2 val2 = getter.apply(val1);
+            final T2 val2 = Objects.requireNonNull(getter).apply(val1);
             return Objects.equals(val2, other);
         }
     }
@@ -76,11 +82,11 @@ public class NullSafe {
         if (val1 == null) {
             return false;
         } else {
-            final T2 val2 = getter1.apply(val1);
+            final T2 val2 = Objects.requireNonNull(getter1).apply(val1);
             if (val2 == null) {
                 return false;
             } else {
-                final T3 val3 = getter2.apply(val2);
+                final T3 val3 = Objects.requireNonNull(getter2).apply(val2);
                 return Objects.equals(val3, other);
             }
         }
@@ -111,6 +117,41 @@ public class NullSafe {
     }
 
     /**
+     * Test if the properties (accessed using the same getters for both) of two
+     * objects of the same class are equal in a null safe way.
+     *
+     * @return True if val1 and val2 are both null or if the results of applying all {@code getters}
+     * to va1 and val2 are all equal.
+     */
+    public static <T, R> boolean equalProperties(final T val1,
+                                                 final T val2,
+                                                 final List<Function<T, R>> getters) {
+        if (val1 == null && val2 == null) {
+            return true;
+        } else if (val1 != null && val2 == null) {
+            return false;
+        } else if (val1 == null) {
+            return false;
+        } else {
+            Objects.requireNonNull(getters);
+            if (isEmptyCollection(getters)) {
+                throw new IllegalArgumentException("No getters provided");
+            }
+            boolean areEqual = true;
+            for (final Function<T, R> getter : getters) {
+                final R result1 = getter.apply(val1);
+                final R result2 = getter.apply(val2);
+
+                areEqual = Objects.equals(result1, result2);
+                if (!areEqual) {
+                    break;
+                }
+            }
+            return areEqual;
+        }
+    }
+
+    /**
      * @return True if all values in the array are null or the array itself is null
      */
     public static <T> boolean allNull(final T... vals) {
@@ -131,13 +172,31 @@ public class NullSafe {
     /**
      * @return True if the array itself is non-null and all values in the array are non-null
      */
-    public static <T> boolean allNonNull(final T... vals) {
+    public static boolean allNonNull(final Object... vals) {
         if (vals == null) {
             return false;
         } else {
             boolean allNonNull = true;
-            for (final T val : vals) {
+            for (final Object val : vals) {
                 if (val == null) {
+                    allNonNull = false;
+                    break;
+                }
+            }
+            return allNonNull;
+        }
+    }
+
+    /**
+     * @return True if the array itself is non-null and all values in the array are non-null
+     */
+    public static boolean allNonNull(final Supplier<Object>... valueSuppliers) {
+        if (valueSuppliers == null) {
+            return false;
+        } else {
+            boolean allNonNull = true;
+            for (final Supplier<Object> supplier : valueSuppliers) {
+                if (supplier == null || supplier.get() == null) {
                     allNonNull = false;
                     break;
                 }
@@ -169,8 +228,19 @@ public class NullSafe {
         if (list == null || list.isEmpty()) {
             return null;
         } else {
-            // GWT can't do getFirst()
+            //noinspection SequencedCollectionMethodCanBeUsed   // GWT can't do getFirst()
             return list.get(0);
+        }
+    }
+
+    /**
+     * @return The first item in the collection or null if collection is null or empty.
+     */
+    public static <T> T first(final Collection<T> list) {
+        if (list == null || list.isEmpty()) {
+            return null;
+        } else {
+            return list.iterator().next();
         }
     }
 
@@ -181,7 +251,7 @@ public class NullSafe {
         if (list == null || list.isEmpty()) {
             return null;
         } else {
-            // GWT can't do getLast()
+            //noinspection SequencedCollectionMethodCanBeUsed   // GWT can't do getLast()
             return list.get(list.size() - 1);
         }
     }
@@ -207,7 +277,7 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                        ? Optional.of(val2)
+                   ? Optional.of(val2)
                         : Optional.empty());
     }
 
@@ -218,9 +288,9 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                        ? Optional.of(val2)
+                   ? Optional.of(val2)
                         : (val3 != null
-                                ? Optional.of(val3)
+                           ? Optional.of(val3)
                                 : Optional.empty()));
     }
 
@@ -234,11 +304,11 @@ public class NullSafe {
         return val1 != null
                 ? Optional.of(val1)
                 : (val2 != null
-                        ? Optional.of(val2)
+                   ? Optional.of(val2)
                         : (val3 != null
-                                ? Optional.of(val3)
+                           ? Optional.of(val3)
                                 : (val4 != null
-                                        ? Optional.of(val4)
+                                   ? Optional.of(val4)
                                         : Optional.empty())));
     }
 
@@ -315,6 +385,19 @@ public class NullSafe {
     }
 
     /**
+     * Maps str using mapper if str is not null/empty.
+     *
+     * @return The mapped value or null if str is null/empty.
+     */
+    public static <T> T mapNonEmptyString(final String str, final Function<String, T> mapper) {
+        if (isNonEmptyString(str)) {
+            return Objects.requireNonNull(mapper).apply(str);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * @return str if it is not null/empty/blank, else other.
      */
     public static String nonBlankStringElse(final String str, final String other) {
@@ -358,6 +441,19 @@ public class NullSafe {
         }
     }
 
+    /**
+     * Maps str using mapper if str is not null/empty/blank.
+     *
+     * @return The mapped value or null if str is null/empty/blank.
+     */
+    public static <T> T mapNonBlankString(final String str, final Function<String, T> mapper) {
+        if (isNonBlankString(str)) {
+            return Objects.requireNonNull(mapper).apply(str);
+        } else {
+            return null;
+        }
+    }
+
     public static Optional<String> nonBlank(final String str) {
         if (isBlankString(str)) {
             return Optional.empty();
@@ -372,6 +468,12 @@ public class NullSafe {
     public static String trim(final String str) {
         return str != null
                 ? str.trim()
+                : "";
+    }
+
+    public static String subString(final String str, final int beginIndex, final int endIndex) {
+        return str != null
+                ? str.substring(beginIndex, endIndex)
                 : "";
     }
 
@@ -428,6 +530,7 @@ public class NullSafe {
     public static boolean contains(final String str, final String subStr) {
         return str != null
                && subStr != null
+               && !str.isEmpty()
                && str.contains(subStr);
     }
 
@@ -462,6 +565,13 @@ public class NullSafe {
      */
     public static <T> boolean isEmptyCollection(final Collection<T> collection) {
         return collection == null || collection.isEmpty();
+    }
+
+    /**
+     * @return True if the collection is null or empty
+     */
+    public static <T> boolean isEmptyResultPage(final ResultPage<T> resultPage) {
+        return resultPage == null || resultPage.isEmpty();
     }
 
     /**
@@ -532,6 +642,13 @@ public class NullSafe {
     /**
      * @return True if the collection is non-null and not empty
      */
+    public static <T> boolean hasItems(final ResultPage<T> resultPage) {
+        return resultPage != null && !resultPage.isEmpty();
+    }
+
+    /**
+     * @return True if the collection is non-null and not empty
+     */
     public static <T> boolean hasItems(final T[] items) {
         return items != null && items.length > 0;
     }
@@ -549,6 +666,15 @@ public class NullSafe {
     public static <T> int size(final Collection<T> collection) {
         return collection != null
                 ? collection.size()
+                : 0;
+    }
+
+    /**
+     * @return The size of the collection or zero if null.
+     */
+    public static <T> int size(final ResultPage<T> resultPage) {
+        return resultPage != null
+                ? resultPage.size()
                 : 0;
     }
 
@@ -633,6 +759,17 @@ public class NullSafe {
     }
 
     /**
+     * Returns a {@link Stream<Entry>} of entries if non-null else returns an empty {@link Stream<Entry>}
+     */
+    public static <K, V> Stream<Entry<K, V>> streamEntries(final Map<K, V> map) {
+        if (map == null || map.isEmpty()) {
+            return Stream.empty();
+        } else {
+            return map.entrySet().stream();
+        }
+    }
+
+    /**
      * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
      * item in the iterable. If iterable or consumer are null it is a no-op.
      */
@@ -643,6 +780,30 @@ public class NullSafe {
                     consumer.accept(item);
                 }
             }
+        }
+    }
+
+    /**
+     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
+     * item in the iterable. If iterable or consumer are null it is a no-op.
+     */
+    public static <T> void forEach(final T[] items, final Consumer<? super T> consumer) {
+        if (items != null && consumer != null) {
+            for (final T item : items) {
+                if (item != null) {
+                    consumer.accept(item);
+                }
+            }
+        }
+    }
+
+    /**
+     * Equivalent to {@link Iterable#forEach(Consumer)}, except consumer is only called for each non-null
+     * item in the iterable. If iterable or consumer are null it is a no-op.
+     */
+    public static <K, V> void forEach(final Map<K, V> map, final BiConsumer<? super K, ? super V> consumer) {
+        if (map != null && !map.isEmpty() && consumer != null) {
+            map.forEach(consumer);
         }
     }
 
@@ -674,10 +835,21 @@ public class NullSafe {
      * @return A non-null unmodifiable set of items.
      */
     public static <T> Set<T> asSet(final T... items) {
-        //noinspection Java9CollectionFactory
         return items == null || items.length == 0
                 ? Collections.emptySet()
-                : Collections.unmodifiableSet(new HashSet<>(Arrays.asList(items)));
+                : Set.of(items);
+    }
+
+    /**
+     * Returns the passed collection items as a non-null set.
+     * Does not support null items.
+     *
+     * @return A non-null unmodifiable set of items.
+     */
+    public static <T> Set<T> asSet(final Collection<T> collection) {
+        return collection == null || collection.isEmpty()
+                ? Collections.emptySet()
+                : Set.copyOf(collection);
     }
 
     /**
@@ -695,6 +867,48 @@ public class NullSafe {
     public static <L extends List<T>, T> List<T> unmodifiableList(final L list) {
         return list != null
                 ? Collections.unmodifiableList(list)
+                : Collections.emptyList();
+    }
+
+    /**
+     * Sorts the passed collection using natural order and returns the sorted collection
+     * as a list.
+     */
+    public static <C extends Collection<T>, T> List<T> sort(final C collection) {
+        return collection != null
+                ? collection.stream()
+                .sorted()
+                .collect(Collectors.toList())
+                : Collections.emptyList();
+    }
+
+    /**
+     * Returns a list containing only the non-null items from list.
+     * If list is null, an empty list will be returned.
+     *
+     * @return An immutable list containing no null values.
+     */
+    public static <L extends List<T>, T> List<T> removeNulls(final L list) {
+        if (list == null || list.stream().allMatch(Objects::isNull)) {
+            return Collections.emptyList();
+        } else if (list.stream().allMatch(Objects::nonNull)) {
+            return Collections.unmodifiableList(list);
+        } else {
+            return list.stream()
+                    .filter(Objects::nonNull)
+                    .toList();
+        }
+    }
+
+    /**
+     * Returns an unmodifiable view of a new {@link ArrayList} instance that has been populated with the
+     * contents of list in a null-safe way.
+     * Allows null list elements.
+     */
+    public static <L extends List<T>, T> List<T> copyOf(final L list) {
+        //noinspection Java9CollectionFactory // List.copyOf will NPE for null elements
+        return NullSafe.hasItems(list)
+                ? Collections.unmodifiableList(new ArrayList<>(list))
                 : Collections.emptyList();
     }
 
@@ -746,6 +960,24 @@ public class NullSafe {
     }
 
     /**
+     * Returns a set containing only the non-null items from set.
+     * If set is null, an empty set will be returned.
+     *
+     * @return An immutable set containing no null values.
+     */
+    public static <S extends Set<T>, T> Set<T> removeNulls(final S set) {
+        if (set == null || set.stream().allMatch(Objects::isNull)) {
+            return Collections.emptySet();
+        } else if (set.stream().allMatch(Objects::nonNull)) {
+            return Collections.unmodifiableSet(set);
+        } else {
+            return set.stream()
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toUnmodifiableSet());
+        }
+    }
+
+    /**
      * Returns a non-null {@link EnumSet} containing the items in set.
      * If set is not itself an {@link EnumSet} then the items will be copied into
      * a new {@link EnumSet}.
@@ -753,25 +985,49 @@ public class NullSafe {
      * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}
      * @return A non-null {@link EnumSet}.
      */
-    public static <S extends Set<T>, T extends Enum<T>> Set<T> enumSet(final Class<T> type,
-                                                                       final S set) {
-        if (set instanceof EnumSet<?>) {
-            return set;
-        } else if (set == null || set.isEmpty()) {
-            return EnumSet.noneOf(type);
+    public static <S extends Collection<T>, T extends Enum<T>> Set<T> unmodifialbeEnumSet(
+            final Class<T> type,
+            final S collection) {
+        if (collection == null || collection.isEmpty()) {
+            return Collections.emptySet();
+        } else if (collection instanceof final EnumSet<?> enumSet) {
+            // Saves the copyOf
+            //noinspection unchecked
+            return Collections.unmodifiableSet((EnumSet<T>) enumSet);
+        } else if (collection.size() == 1) {
+            return Collections.singleton(collection.iterator().next());
         } else {
             // Make sure we get back an EnumSet as they are faster and more memory efficient
-            return EnumSet.copyOf(set);
+            return Collections.unmodifiableSet(EnumSet.copyOf(collection));
         }
     }
 
     /**
-     * Returns a non-null {@link EnumSet} containing all non-null items.
+     * Returns a non-null {@link EnumSet} containing the items in set.
+     * If set is not itself an {@link EnumSet} then the items will be copied into
+     * a new {@link EnumSet}.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <S extends Collection<T>, T extends Enum<T>> Set<T> mutableEnumSet(
+            final Class<T> type,
+            final S collection) {
+        if (collection == null || collection.isEmpty()) {
+            return EnumSet.noneOf(type);
+        } else {
+            // Make sure we get back an EnumSet as they are faster and more memory efficient
+            return EnumSet.copyOf(collection);
+        }
+    }
+
+    /**
+     * Returns a non-null mutable {@link EnumSet} containing all non-null items.
      *
      * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}.
      * @return A non-null {@link EnumSet}.
      */
-    public static <T extends Enum<T>> Set<T> enumSetOf(final Class<T> type, final T... items) {
+    public static <T extends Enum<T>> Set<T> mutableEnumSetOf(final Class<T> type, final T... items) {
         final EnumSet<T> enumSet = EnumSet.noneOf(type);
         if (items != null) {
             for (final T item : items) {
@@ -781,6 +1037,24 @@ public class NullSafe {
             }
         }
         return enumSet;
+    }
+
+    /**
+     * Returns a non-null mutable {@link EnumSet} containing all non-null items.
+     *
+     * @param type The class of the {@link Enum} for use when constructing an empty {@link EnumSet}.
+     * @return A non-null {@link EnumSet}.
+     */
+    public static <T extends Enum<T>> Set<T> unmodifiableEnumSetOf(final Class<T> type, final T... items) {
+        final EnumSet<T> enumSet = EnumSet.noneOf(type);
+        if (items != null) {
+            for (final T item : items) {
+                if (item != null) {
+                    enumSet.add(item);
+                }
+            }
+        }
+        return Collections.unmodifiableSet(enumSet);
     }
 
     /**
@@ -822,15 +1096,6 @@ public class NullSafe {
                 : "";
     }
 
-//    /**
-//     * Returns the passed stroomDuration if it is non-null else returns a ZERO {@link StroomDuration}
-//     */
-//    public static StroomDuration duration(final StroomDuration stroomDuration) {
-//        return stroomDuration != null
-//                ? stroomDuration
-//                : StroomDuration.ZERO;
-//    }
-
     /**
      * Returns the passed duration if it is non-null else returns a ZERO {@link SimpleDuration}
      */
@@ -839,16 +1104,6 @@ public class NullSafe {
                 ? duration
                 : SimpleDuration.ZERO;
     }
-
-//    /**
-//     * Returns the passed duration if it is non-null else returns a ZERO {@link Duration}
-//     */
-//    public static Duration duration(final Duration duration) {
-//        return duration != null
-//                ? duration
-//                : Duration.ZERO;
-
-//    }
 
     /**
      * Apply getter to value if value is non-null.
@@ -934,14 +1189,14 @@ public class NullSafe {
     public static <T1, R> R getOrElse(final T1 value,
                                       final Function<T1, R> getter,
                                       final R other) {
-        return requireNonNullElse(get(value, getter), other);
+        return Objects.requireNonNullElse(get(value, getter), other);
     }
 
     public static <T1, T2, R> R getOrElse(final T1 value,
                                           final Function<T1, T2> getter1,
                                           final Function<T2, R> getter2,
                                           final R other) {
-        return requireNonNullElse(get(value, getter1, getter2), other);
+        return Objects.requireNonNullElse(get(value, getter1, getter2), other);
     }
 
     public static <T1, T2, T3, R> R getOrElse(final T1 value,
@@ -949,7 +1204,7 @@ public class NullSafe {
                                               final Function<T2, T3> getter2,
                                               final Function<T3, R> getter3,
                                               final R other) {
-        return requireNonNullElse(get(value, getter1, getter2, getter3), other);
+        return Objects.requireNonNullElse(get(value, getter1, getter2, getter3), other);
     }
 
     public static <T1, T2, T3, T4, R> R getOrElse(final T1 value,
@@ -958,7 +1213,7 @@ public class NullSafe {
                                                   final Function<T3, T4> getter3,
                                                   final Function<T4, R> getter4,
                                                   final R other) {
-        return requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
+        return Objects.requireNonNullElse(get(value, getter1, getter2, getter3, getter4), other);
     }
 
     public static <T1> String toStringOrElse(final T1 value,
@@ -977,14 +1232,14 @@ public class NullSafe {
     public static <T1, R> R getOrElseGet(final T1 value,
                                          final Function<T1, R> getter,
                                          final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter), otherSupplier);
     }
 
     public static <T1, T2, R> R getOrElseGet(final T1 value,
                                              final Function<T1, T2> getter1,
                                              final Function<T2, R> getter2,
                                              final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter1, getter2), otherSupplier);
     }
 
     public static <T1, T2, T3, R> R getOrElseGet(final T1 value,
@@ -992,7 +1247,7 @@ public class NullSafe {
                                                  final Function<T2, T3> getter2,
                                                  final Function<T3, R> getter3,
                                                  final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3), otherSupplier);
     }
 
     public static <T1, T2, T3, T4, R> R getOrElseGet(final T1 value,
@@ -1001,7 +1256,7 @@ public class NullSafe {
                                                      final Function<T3, T4> getter3,
                                                      final Function<T4, R> getter4,
                                                      final Supplier<R> otherSupplier) {
-        return requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
+        return Objects.requireNonNullElseGet(get(value, getter1, getter2, getter3, getter4), otherSupplier);
     }
 
     /**
@@ -1213,7 +1468,7 @@ public class NullSafe {
     /**
      * Allows you to test a value without worrying if the value is null, e.g.
      * <pre><code>
-     *    boolean hasValues = GwtNullSafe.test(myList, list -> !list.isEmpty());
+     *    boolean hasValues = NullSafe.test(myList, list -> !list.isEmpty());
      * </code></pre>
      *
      * @return false if value is null
@@ -1233,7 +1488,7 @@ public class NullSafe {
     /**
      * Allows you to test some property of a value without worrying if the value is null, e.g.
      * <pre><code>
-     *    boolean hasValues = GwtNullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
+     *    boolean hasValues = NullSafe.test(myObject, MyObject::getItems, list -> !list.isEmpty());
      * </code></pre>
      *
      * @return false if value is null or the getter returns null,
@@ -1258,7 +1513,7 @@ public class NullSafe {
      * Allows you to test some property of a value without worrying if the value is null, e.g.
      * <pre><code>
      *    List<Sting> list = null;
-     *    boolean hasValues = GwtNullSafe.test(list, list -> list.size > 0);
+     *    boolean hasValues = NullSafe.test(list, list -> list.size > 0);
      * </code></pre>
      *
      * @return false if value is null, else return the value of the predicate when applied
@@ -1572,6 +1827,21 @@ public class NullSafe {
     }
 
     /**
+     * If value is null or empty an {@link IllegalArgumentException} will be thrown with a message
+     * supplied by messageSupplier.
+     *
+     * @param value           THe string to test.
+     * @param messageSupplier The supplier of the exception message.
+     * @return The supplied string if not empty.
+     */
+    public static String requireNonEmtpyString(final String value, final Supplier<String> messageSupplier) {
+        if (isEmptyString(value)) {
+            throw new IllegalArgumentException(Objects.requireNonNull(messageSupplier).get());
+        }
+        return value;
+    }
+
+    /**
      * Require that both {@code value} is non-null and the result of applying {@code getter} to
      * {@code value} is non-null. Throws an {@link NullPointerException} otherwise.
      *
@@ -1583,7 +1853,7 @@ public class NullSafe {
         if (value == null) {
             throw new NullPointerException(buildNullValueMsg("value", messageSupplier));
         } else {
-            R result = Objects.requireNonNull(getter, "Null getter")
+            final R result = Objects.requireNonNull(getter, "Null getter")
                     .apply(value);
             if (result == null) {
                 throw new NullPointerException(buildNullGetterResultMsg(0, messageSupplier));
@@ -1624,23 +1894,71 @@ public class NullSafe {
     }
 
     /**
-     * GWT currently doesn't emulate requireNonNullElse
+     * If value is null or empty an {@link IllegalArgumentException} will be thrown.
+     *
+     * @param value THe string to test.
+     * @return The supplied string if not empty.
      */
-    public static <T> T requireNonNullElse(T obj, T other) {
-        return (obj != null)
-                ? obj
-                : Objects.requireNonNull(other, "other");
+    public static String requireNonEmptyString(final String value) {
+        return requireNonEmptyString(value, null);
     }
 
     /**
-     * GWT currently doesn't emulate requireNonNullElse
+     * If value is null or empty an {@link IllegalArgumentException} will be thrown with a message
+     * supplied by messageSupplier.
+     *
+     * @param value           THe string to test.
+     * @param messageSupplier The supplier of the exception message.
+     * @return The supplied string if not empty.
      */
-    public static <T> T requireNonNullElseGet(T obj, Supplier<? extends T> supplier) {
-        return (obj != null)
-                ? obj
-                : Objects.requireNonNull(
-                        Objects.requireNonNull(supplier, "supplier").get(),
-                        "supplier.get()");
+    public static String requireNonEmptyString(final String value, final Supplier<String> messageSupplier) {
+        if (isEmptyString(value)) {
+            final String msg = NullSafe.getOrElse(messageSupplier, Supplier::get, "Non-empty string required");
+            throw new IllegalArgumentException(msg);
+        } else {
+            return value;
+        }
+    }
+
+    /**
+     * If value is null, empty or blank an {@link IllegalArgumentException} will be thrown.
+     *
+     * @param value THe string to test.
+     * @return The supplied string if not blank.
+     */
+    public static String requireNonBlankString(final String value) {
+        return requireNonBlankString(value, null);
+    }
+
+    /**
+     * If value is null, empty or blank an {@link IllegalArgumentException} will be thrown with a message
+     * supplied by messageSupplier.
+     *
+     * @param value           THe string to test.
+     * @param messageSupplier The supplier of the exception message.
+     * @return The supplied string if not blank.
+     */
+    public static String requireNonBlankString(final String value, final Supplier<String> messageSupplier) {
+        if (isBlankString(value)) {
+            final String msg = NullSafe.getOrElse(messageSupplier, Supplier::get, "Non-blank string required");
+            throw new IllegalArgumentException(msg);
+        } else {
+            return value;
+        }
+    }
+
+    /**
+     * If predicate is non-null return it, else return a Predicate that always returns defaultOutcome.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Predicate<T> predicate(final Predicate<T> predicate, final boolean defaultOutcome) {
+        return predicate != null
+                ? predicate
+                : (defaultOutcome
+                   ? (Predicate<T>) ALWAYS_TRUE_PREDICATE
+                        : (Predicate<T>) ALWAYS_FALSE_PREDICATE);
+//        return requireNonNullElseGet(predicate, () -> ignored -> defaultOutcome);
+
     }
 
     private static String buildNullValueMsg(final String variableName,

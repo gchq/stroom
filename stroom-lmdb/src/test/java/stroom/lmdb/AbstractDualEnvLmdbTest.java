@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.lmdb;
 
 import stroom.test.common.util.test.StroomUnitTest;
@@ -28,7 +44,11 @@ import java.util.stream.Stream;
 public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractDualEnvLmdbTest.class);
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(2_000);
+    // As AbstractLmdbDbTest, and it matters more here because this base class opens two envs per
+    // test. Not measured directly: the only subclass, TestLmdbPerformance, is entirely @Disabled, so
+    // nothing in CI exercises these values. It overrides getMaxSizeBytes() for its own manual runs.
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(1);
+    private static final int MAX_DB_COUNT = 6;
 
     protected LmdbEnv lmdbEnv1 = null;
     protected LmdbEnv lmdbEnv2 = null;
@@ -48,26 +68,35 @@ public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
 
     @AfterEach
     final void teardown() throws IOException {
-        teardown(dbDir1, lmdbEnv1);
-        lmdbEnv1 = null;
-        teardown(dbDir2, lmdbEnv2);
-        lmdbEnv2 = null;
+        // try/finally so a failure tearing down env1 cannot leave env2 open (and its dir
+        // undeleted) for the rest of the JVM.
+        try {
+            teardown(dbDir1, lmdbEnv1);
+        } finally {
+            lmdbEnv1 = null;
+            try {
+                teardown(dbDir2, lmdbEnv2);
+            } finally {
+                lmdbEnv2 = null;
+            }
+        }
     }
 
     final void teardown(final Path dbDir, final LmdbEnv lmdbEnv) throws IOException {
         if (lmdbEnv != null) {
             lmdbEnv.close();
         }
-        if (Files.isDirectory(dbDir)) {
+        // Null check as createEnvs() may have failed before assigning the dir
+        if (dbDir != null && Files.isDirectory(dbDir)) {
             try (final Stream<Path> fileStream = Files.list(dbDir)) {
                 fileStream
                         .filter(path -> path.endsWith("data.mdb"))
                         .forEach(path -> {
                             try {
-                                long fileSizeBytes = Files.size(path);
+                                final long fileSizeBytes = Files.size(path);
                                 LOGGER.info("LMDB file size: {}",
                                         ModelStringUtil.formatIECByteSizeString(fileSizeBytes));
-                            } catch (IOException e) {
+                            } catch (final IOException e) {
                                 throw new RuntimeException(e);
                             }
                         });
@@ -95,7 +124,7 @@ public abstract class AbstractDualEnvLmdbTest extends StroomUnitTest {
                 new LmdbLibrary(pathCreator, tempDirProvider, LmdbLibraryConfig::new))
                 .builder(dbDir)
                 .withMapSize(getMaxSizeBytes())
-                .withMaxDbCount(10)
+                .withMaxDbCount(MAX_DB_COUNT)
                 .withEnvFlags(envFlags)
                 .makeWritersBlockReaders()
                 .build();

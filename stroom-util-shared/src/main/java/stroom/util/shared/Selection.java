@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,9 +50,9 @@ public class Selection<T> implements Iterable<T>, Copyable<Selection<T>>, Matche
     }
 
     @JsonCreator
-    public Selection(@JsonProperty("matchAll") final boolean matchAll,
+    public Selection(@JsonProperty("matchAll") final Boolean matchAll,
                      @JsonProperty("set") final Set<T> set) {
-        this.matchAll = matchAll;
+        this.matchAll = Objects.requireNonNullElse(matchAll, false);
         this.set = set;
     }
 

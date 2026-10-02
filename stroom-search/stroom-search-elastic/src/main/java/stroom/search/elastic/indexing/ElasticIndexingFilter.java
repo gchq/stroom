@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,17 +61,19 @@ import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.transport.rest5_client.low_level.ResponseException;
 import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
+import co.elastic.clients.util.NamedValue;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
-import org.elasticsearch.client.ResponseException;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.json.JsonFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -145,6 +147,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private int currentDocPropertyCount = 0;
     private boolean inOuterArray = false;
     private int currentDepth = 0;
+    private int maxNestedElementDepth;
     private JsonGenerator jsonGenerator;
     private int currentRetry;
 
@@ -215,7 +218,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             populateIndexNameVariableNames();
 
-        } catch (IOException e) {
+            // Cache config value to avoid Provider lookup on every element.
+            maxNestedElementDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
+
+        } catch (final Exception e) {
             fatalError("Failed to initialise JsonGenerator", e);
         } finally {
             super.startProcessing();
@@ -280,7 +286,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         if (currentDepth == 1) {
                             enterDocumentRoot();
                         }
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         fatalError("Invalid start of object", e);
                     }
                     break;
@@ -289,7 +295,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                         incrementDepth();
                         writeFieldName();
                         jsonGenerator.writeStartArray();
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         fatalError("Invalid start of array", e);
                     }
                     break;
@@ -306,12 +312,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     private void incrementDepth() {
-        final int maxDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
-
         currentDepth++;
 
-        if (currentDepth > maxDepth) {
-            fatalError("Maximum nested element depth of " + maxDepth + " exceeded", new RuntimeException());
+        if (currentDepth > maxNestedElementDepth) {
+            fatalError("Maximum nested element depth of " + maxNestedElementDepth + " exceeded",
+                    new RuntimeException());
         }
     }
 
@@ -338,7 +343,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             // We have closed out an outer `map`, so queue the document for indexing
                             processDocument();
                         }
-                    } catch (IOException e) {
+                    } catch (final Exception e) {
                         fatalError("Invalid end of object", e);
                     }
                     break;
@@ -346,7 +351,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     try {
                         currentDepth--;
                         jsonGenerator.writeEndArray();
-                    } catch (IOException e) {
+                    } catch (final Exception e) {
                         fatalError("Invalid end of array", e);
                     }
                     break;
@@ -361,7 +366,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             }
                             storeIndexNameVariableValue(value);
                         }
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         fatalError("Invalid string value '" + value + "' for property '" +
                                    currentDocFieldName + "'", e);
                     }
@@ -377,7 +382,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             }
                             storeIndexNameVariableValue(value);
                         }
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         fatalError("Invalid boolean value '" + value + "' for property '" +
                                    currentDocFieldName + "'", e);
                     }
@@ -390,7 +395,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             currentDocPropertyCount++;
                         }
                         storeIndexNameVariableValue("");
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         fatalError("Invalid null value for property '" + currentDocFieldName + "'", e);
                     }
                     break;
@@ -405,7 +410,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             }
                             storeIndexNameVariableValue(value);
                         }
-                    } catch (IOException e) {
+                    } catch (final IOException e) {
                         fatalError("Invalid number value '" + value + "' for property '" +
                                    currentDocFieldName + "'", e);
                     }
@@ -430,9 +435,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
             if (!value.isEmpty() && indexNameVariables.contains(currentDocFieldName)) {
                 currentDocIndexNameVariables.put(currentDocFieldName, value);
             }
-        } catch (IllegalArgumentException e) {
+        } catch (final IllegalArgumentException e) {
             fatalError("Index variable '" + currentDocFieldName + "' specified more than once in document", e);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             fatalError("Unexpected error parsing index name variable value", e);
         }
     }
@@ -455,7 +460,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private boolean writeFieldName() throws IOException {
         if (currentDocFieldName != null) {
-            jsonGenerator.writeFieldName(currentDocFieldName);
+            jsonGenerator.writeName(currentDocFieldName);
             return true;
         } else {
             return false;
@@ -490,9 +495,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     indexDocuments();
                 }
             }
-        } catch (IOException e) {
+        } catch (final JacksonException e) {
             fatalError("Failed to flush JSON to stream", e);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             fatalError(e.getMessage(), e);
         } finally {
             clearDocument();
@@ -539,7 +544,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     LOGGER.info("Deleted {} documents matching StreamId: {} from index: {}, took {} seconds",
                             deleteResponse.deleted(), streamId, indexName, tookSeconds);
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 fatalError("Failed to purge documents for StreamId: " + streamId, e);
                 return false;
             }
@@ -555,7 +560,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         final String indicesAggregationKey = "indices";
         final String indexNameSourceKey = "index_name";
 
-        final Map<String, CompositeAggregationSource> compositeAggregationSource = Map.of(
+        final NamedValue<CompositeAggregationSource> compositeAggregationSource = NamedValue.of(
                 indexNameSourceKey,
                 CompositeAggregationSource.of(source -> source
                         .terms(t -> t.field(ElasticIndexConstants.INDEX_NAME))
@@ -565,11 +570,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         // Create a composite aggregation to collect all the unique indices that we need to issue delete requests
         // against
         try {
-            List<String> allIndexNames = new ArrayList<>();
+            final List<String> allIndexNames = new ArrayList<>();
             Map<String, FieldValue> afterKey = null;
             int bucketSize = -1;
             while (bucketSize != 0) {
-                TermQuery query = TermQuery.of(m -> m
+                final TermQuery query = TermQuery.of(m -> m
                         .field(ElasticIndexConstants.STREAM_ID)
                         .value(streamId)
                 );
@@ -589,7 +594,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 );
 
                 if (response.aggregations() != null && !response.aggregations().isEmpty()) {
-                    CompositeAggregate compositeAgg = response.aggregations()
+                    final CompositeAggregate compositeAgg = response.aggregations()
                             .get(indicesAggregationKey)
                             .composite();
 
@@ -605,7 +610,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                 }
             }
             return allIndexNames;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             fatalError("Failed to list indices for reindex purge. StreamId: " + streamId + ". " +
                        "Base name: '" + indexName + "'", e);
             return null;
@@ -653,7 +658,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                         final BulkResponse response = elasticClient.bulk(bulkRequestBuilder.build());
                         if (response.errors()) {
-                            boolean overloaded = response.items().stream()
+                            final boolean overloaded = response.items().stream()
                                     .anyMatch(item -> item.status() == ES_TOO_MANY_REQUESTS_STATUS);
                             if (overloaded) {
                                 // Failure was due to Elasticsearch being overloaded, so retry after a delay
@@ -673,21 +678,21 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                                     metaHolder.getMeta().getId(), elasticCluster.getName(), response.took() / 1000,
                                     retryMessage);
                         }
-                    } catch (ElasticsearchOverloadedException e) {
+                    } catch (final ElasticsearchOverloadedException e) {
                         handleElasticsearchOverloadedException(e);
-                    } catch (ElasticsearchException e) {
+                    } catch (final ElasticsearchException e) {
                         if (e.status() == ES_TOO_MANY_REQUESTS_STATUS) {
                             handleElasticsearchOverloadedException(e);
                         } else {
                             handleElasticsearchException(e);
                         }
-                    } catch (ResponseException e) {
-                        if (e.getResponse().getStatusLine().getStatusCode() == ES_TOO_MANY_REQUESTS_STATUS) {
+                    } catch (final ResponseException e) {
+                        if (e.getResponse().getStatusCode() == ES_TOO_MANY_REQUESTS_STATUS) {
                             handleElasticsearchOverloadedException(e);
                         } else {
                             handleElasticsearchException(e);
                         }
-                    } catch (RuntimeException | IOException e) {
+                    } catch (final RuntimeException | IOException e) {
                         fatalError(e.getMessage() != null
                                 ? e.getMessage().substring(0,
                                 Math.min(ES_MAX_EXCEPTION_CHARS, e.getMessage().length()))
@@ -732,7 +737,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
                 LOGGER.info("Deleted {} documents from failed bulk indexing request for stream {}, pipeline '{}'",
                         deleteOperations.size(), metaHolder.getMeta().getId(), pipelineName);
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 LOGGER.warn("Error occurred when deleting documents indexed during a failed bulk request. " +
                             "Stream: {}, pipeline: '{}'", metaHolder.getMeta().getId(), pipelineName, e);
             }
@@ -760,7 +765,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             "Retrying in {} milliseconds (retries: {})", pipelineName, metaHolder.getMeta().getId(),
                         sleepDurationMs, currentRetry);
                 Thread.sleep(sleepDurationMs);
-            } catch (InterruptedException ex) {
+            } catch (final InterruptedException ex) {
                 Thread.currentThread().interrupt();
                 fatalError("Indexing terminated after " + currentRetry + " retries: " + errorDetailMsg, ex);
             }
@@ -788,6 +793,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * index name.
      */
     private String formatIndexName() {
+        if (indexNameVariables.isEmpty()) {
+            return indexName;
+        }
         final Matcher indexNameVariableMatcher = INDEX_NAME_VALUE_PATTERN.matcher(indexName);
         return indexNameVariableMatcher.replaceAll(matchResult -> {
             final String fieldNameMatch = matchResult.group();

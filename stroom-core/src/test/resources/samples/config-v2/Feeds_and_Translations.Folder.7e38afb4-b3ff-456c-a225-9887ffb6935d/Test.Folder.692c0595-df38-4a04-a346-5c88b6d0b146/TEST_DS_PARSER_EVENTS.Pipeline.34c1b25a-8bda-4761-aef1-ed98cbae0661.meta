@@ -1,0 +1,6 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "34c1b25a-8bda-4761-aef1-ed98cbae0661",
+  "name" : "TEST_DS_PARSER-EVENTS",
+  "version" : "3167ead6-192d-4016-9c03-98281c9613a2"
+}

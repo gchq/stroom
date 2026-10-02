@@ -1,4 +1,23 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.exception;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
 
 @FunctionalInterface
 public interface ThrowingRunnable<E extends Throwable> {
@@ -9,14 +28,33 @@ public interface ThrowingRunnable<E extends Throwable> {
      * Wraps a runnable that throws a checked exception with a catch block that will wrap
      * any thrown exception with a {@link RuntimeException}, thus making it unchecked and
      * usable in a lambda.
+     * If the exception thrown is an {@link IOException} it will wrap it in an
+     * {@link UncheckedIOException} instead.
      */
-    static <E extends Throwable> Runnable unchecked(ThrowingRunnable<E> runnable) {
+    static <E extends Throwable> Runnable unchecked(final ThrowingRunnable<E> runnable) {
         return () -> {
             try {
                 runnable.run();
-            } catch (Throwable e) {
-                throw new RuntimeException(e);
+            } catch (final Throwable e) {
+                switch (e) {
+                    case final IOException ioe -> throw new UncheckedIOException(ioe);
+                    case final RuntimeException re -> {
+                        // Don't wrap it if it is a RuntimeException
+                        throw re;
+                    }
+                    default -> throw new RuntimeException(e);
+                }
             }
         };
+    }
+
+    /**
+     * Run the passed {@link Runnable} that throws a checked exception.
+     * Any {@link Throwable} will be caught and wrapped into either a {@link RuntimeException}
+     * of {@link UncheckedIOException} then re-thrown.
+     */
+    static <E extends Throwable> void run(final ThrowingRunnable<E> runnable) {
+        unchecked(runnable)
+                .run();
     }
 }

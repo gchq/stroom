@@ -56,10 +56,10 @@ public class CustomCalendarModel extends CalendarModel {
         setToFirstDayOfMonth(currentMonth);
 
         // Finding day of week names
-        Date date = new Date();
+        final Date date = new Date();
         for (int i = 1; i <= 7; i++) {
             date.setDate(i);
-            int dayOfWeek = date.getDay();
+            final int dayOfWeek = date.getDay();
             dayOfWeekNames[dayOfWeek] = getDayOfWeekFormatter().format(date);
         }
 
@@ -77,7 +77,7 @@ public class CustomCalendarModel extends CalendarModel {
      * specified.
      */
     // GWT requires Date
-    public static void setToFirstDayOfMonth(Date date) {
+    public static void setToFirstDayOfMonth(final Date date) {
         resetTime(date);
         date.setDate(1);
     }
@@ -86,7 +86,7 @@ public class CustomCalendarModel extends CalendarModel {
      * Resets the date to have no time modifiers.
      */
     // GWT requires Date
-    private static void resetTime(Date date) {
+    private static void resetTime(final Date date) {
         long msec = date.getTime();
         msec = (msec / 1000) * 1000;
         date.setTime(msec);
@@ -113,7 +113,7 @@ public class CustomCalendarModel extends CalendarModel {
      * @param date the date
      * @return the formated day of month
      */
-    public String formatDayOfMonth(Date date) {
+    public String formatDayOfMonth(final Date date) {
         return dayOfMonthNames[date.getDate()];
     }
 
@@ -123,7 +123,7 @@ public class CustomCalendarModel extends CalendarModel {
      * @param dayInWeek the day in week to format
      * @return the formatted day in week
      */
-    public String formatDayOfWeek(int dayInWeek) {
+    public String formatDayOfWeek(final int dayInWeek) {
         return dayOfWeekNames[dayInWeek];
     }
 
@@ -133,15 +133,15 @@ public class CustomCalendarModel extends CalendarModel {
      * @return the first day
      */
     public Date getCurrentFirstDayOfFirstWeek() {
-        int wkDayOfMonth1st = currentMonth.getDay();
-        int start = CalendarUtil.getStartingDayOfWeek();
+        final int wkDayOfMonth1st = currentMonth.getDay();
+        final int start = CalendarUtil.getStartingDayOfWeek();
         if (wkDayOfMonth1st == start) {
             // Always return a copy to allow SimpleCalendarView to adjust first
             // display date
             return new Date(currentMonth.getTime());
         } else {
-            Date d = new Date(currentMonth.getTime());
-            int offset = wkDayOfMonth1st - start > 0
+            final Date d = new Date(currentMonth.getTime());
+            final int offset = wkDayOfMonth1st - start > 0
                     ? wkDayOfMonth1st - start
                     : DAYS_IN_WEEK - (start - wkDayOfMonth1st);
             CalendarUtil.addDaysToDate(d, -offset);
@@ -164,7 +164,7 @@ public class CustomCalendarModel extends CalendarModel {
      *
      * @param currentDate the currently specified date
      */
-    public void setCurrentMonth(Date currentDate) {
+    public void setCurrentMonth(final Date currentDate) {
         this.currentMonth.setYear(currentDate.getYear());
         this.currentMonth.setMonth(currentDate.getMonth());
     }
@@ -175,7 +175,7 @@ public class CustomCalendarModel extends CalendarModel {
      * @param date the date
      * @return date
      */
-    public boolean isInCurrentMonth(Date date) {
+    public boolean isInCurrentMonth(final Date date) {
         return currentMonth.getMonth() == date.getMonth();
     }
 
@@ -185,7 +185,7 @@ public class CustomCalendarModel extends CalendarModel {
      *
      * @param deltaMonths - number of months to be added to the current date
      */
-    public void shiftCurrentMonth(int deltaMonths) {
+    public void shiftCurrentMonth(final int deltaMonths) {
         CalendarUtil.addMonthsToDate(currentMonth, deltaMonths);
         refresh();
     }

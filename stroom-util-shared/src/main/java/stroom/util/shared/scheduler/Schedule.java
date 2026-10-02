@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -24,7 +40,11 @@ public class Schedule {
     public Schedule(@JsonProperty("type") final ScheduleType type,
                     @JsonProperty("expression") final String expression) {
         this.type = type;
-        this.expression = expression;
+        if (type == ScheduleType.INSTANT) {
+            this.expression = "";
+        } else {
+            this.expression = expression;
+        }
     }
 
     public ScheduleType getType() {
@@ -45,7 +65,7 @@ public class Schedule {
         }
         final Schedule schedule = (Schedule) o;
         return type == schedule.type &&
-                Objects.equals(expression, schedule.expression);
+               Objects.equals(expression, schedule.expression);
     }
 
     @Override
@@ -59,7 +79,7 @@ public class Schedule {
         if (type != null) {
             sb.append(type.getDisplayValue());
         }
-        if ((ScheduleType.FREQUENCY.equals(type) || ScheduleType.CRON.equals(type)) && expression != null) {
+        if (expression != null) {
             sb.append(" ");
             sb.append(expression);
         }

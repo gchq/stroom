@@ -82,7 +82,7 @@ public class ValAssertions {
      * @param expectedSubStrings sub-strings that are expected to appear in the error message in any order.
      */
     public static ValAssertion valErrContainsIgnoreCase(final String... expectedSubStrings) {
-        return (Val actual) -> {
+        return (final Val actual) -> {
             Assertions.assertThat(actual)
                     .isInstanceOf(ValErr.class);
 

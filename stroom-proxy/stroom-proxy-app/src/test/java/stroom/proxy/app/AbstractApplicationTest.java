@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app;
 
 import stroom.test.common.TestResourceLocks;
@@ -91,7 +107,7 @@ public abstract class AbstractApplicationTest {
         final Path temp;
         try {
             temp = Files.createTempDirectory("stroom-proxy");
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error creating temp dir"), e);
         }
 
@@ -214,10 +230,10 @@ public abstract class AbstractApplicationTest {
                         Jackson.newObjectMapper(),
                         "dw");
 
-        Config config;
+        final Config config;
         try {
             config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
-        } catch (ConfigurationException | IOException e) {
+        } catch (final ConfigurationException | IOException e) {
             throw new RuntimeException(LogUtil.message("Error parsing configuration from file {}",
                     configFile.toAbsolutePath()), e);
         }
@@ -226,7 +242,7 @@ public abstract class AbstractApplicationTest {
     }
 
     private static Config loadYamlFile(final String filename) {
-        Path path = getStroomProxyAppFile(filename);
+        final Path path = getStroomProxyAppFile(filename);
 
         return readConfig(path);
     }

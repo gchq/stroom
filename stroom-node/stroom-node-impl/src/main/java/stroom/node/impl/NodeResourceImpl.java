@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ import jakarta.ws.rs.client.SyncInvoker;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -87,7 +87,7 @@ class NodeResourceImpl implements NodeResource {
     @Override
     @AutoLogged(OperationType.UNLOGGED) // Too noisy and of little value
     public List<String> listAllNodes() {
-        FetchNodeStatusResponse response = find();
+        final FetchNodeStatusResponse response = find();
         if (response != null && response.getValues() != null) {
             return response.getValues()
                     .stream()
@@ -206,7 +206,7 @@ class NodeResourceImpl implements NodeResource {
             }
 
             clusterNodeInfo.setPing(System.currentTimeMillis() - now);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             clusterNodeInfo = new ClusterNodeInfo();
             clusterNodeInfo.setNodeName(nodeName);
             clusterNodeInfo.setEndpointUrl(null);
@@ -237,7 +237,7 @@ class NodeResourceImpl implements NodeResource {
                             // we have incurred within this method.
                             System.currentTimeMillis() - now,
                     SyncInvoker::get);
-        } catch (WebApplicationException e) {
+        } catch (final WebApplicationException e) {
             throw new RuntimeException("Unable to connect to node '" + nodeName + "': "
                                        + e.getMessage());
         }
@@ -256,19 +256,19 @@ class NodeResourceImpl implements NodeResource {
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public boolean setPriority(final String nodeName, final Integer priority) {
-        modifyNode(nodeName, node -> node.setPriority(priority));
+        modifyNode(nodeName, node -> node.copy().priority(priority).build());
         return true;
     }
 
     @Override
     @AutoLogged(OperationType.MANUALLY_LOGGED)
     public boolean setEnabled(final String nodeName, final Boolean enabled) {
-        modifyNode(nodeName, node -> node.setEnabled(enabled));
+        modifyNode(nodeName, node -> node.copy().enabled(enabled).build());
         return true;
     }
 
     private void modifyNode(final String nodeName,
-                            final Consumer<Node> mutation) {
+                            final Function<Node, Node> mutation) {
         Node node = null;
         Node before = null;
         Node after = null;
@@ -282,7 +282,7 @@ class NodeResourceImpl implements NodeResource {
             if (node == null) {
                 throw new RuntimeException("Unknown node: " + nodeName);
             }
-            mutation.accept(node);
+            node = mutation.apply(node);
             after = nodeService.update(node);
 
             documentEventLog.update(before, after, null);

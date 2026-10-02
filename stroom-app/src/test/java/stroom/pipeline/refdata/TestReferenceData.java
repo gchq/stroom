@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata;
@@ -53,7 +52,6 @@ import stroom.task.api.TaskContextFactory;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.date.DateUtil;
 import stroom.util.io.ByteSize;
-import stroom.util.io.FileUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Range;
@@ -63,11 +61,9 @@ import io.vavr.Tuple3;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.lmdbjava.Env;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -75,9 +71,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -93,7 +86,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
 
-    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(5);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(50);
 
     private static final String USER_1 = "user1";
     private static final String USER_2 = "user2";
@@ -108,9 +101,6 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     private static final String IP_TO_LOC_MAP_NAME = "IP_TO_LOC_MAP_NAME";
     public static final String DUMMY_FEED = "DUMMY_FEED";
     public static final String DUMMY_TYPE = "DummyType";
-
-    private Env<ByteBuffer> lmdbEnv = null;
-    private Path dbDir = null;
 
     @Mock
     private DocumentPermissionCache mockDocumentPermissionCache;
@@ -127,7 +117,6 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineSerialiser pipelineSerialiser;
 
-    private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private RefDataStore refDataStore;
 
     @SuppressWarnings("unused")
@@ -154,37 +143,20 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     private TaskContextFactory taskContextFactory;
 
     @BeforeEach
-    void setup() throws IOException {
+    void setup() {
+        // The feed specific store and staging store envs are created lazily on first use,
+        // reading the config at that point, so this mapper takes effect for every env this
+        // test creates. The production defaults are 50GiB/10GiB.
+        setConfigValueMapper(ReferenceDataConfig.class, config -> config
+                .withLmdbConfig(config.getLmdbConfig()
+                        .withMaxStoreSize(DB_MAX_SIZE))
+                .withStagingLmdbConfig(config.getStagingLmdbConfig()
+                        .withMaxStoreSize(DB_MAX_SIZE)));
 
-        dbDir = Files.createTempDirectory("stroom");
-        LOGGER.debug("Creating LMDB environment with maxSize: {}, dbDir {}",
-                getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
-
-        lmdbEnv = Env.create()
-                .setMapSize(getMaxSizeBytes().getBytes())
-                .setMaxDbs(10)
-                .open(dbDir.toFile());
-
-        LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
-
-        referenceDataConfig.getLmdbConfig().setLocalDir(getDbDir().toAbsolutePath().toString());
-
-        setDbMaxSizeProperty(DB_MAX_SIZE);
         refDataStore = refDataStoreFactory.getOffHeapStore();
 
         Mockito.when(mockDocumentPermissionCache.canUseDocument(Mockito.any()))
                 .thenReturn(true);
-    }
-
-    @AfterEach
-    void teardown() {
-        if (lmdbEnv != null) {
-            lmdbEnv.close();
-        }
-        lmdbEnv = null;
-        if (Files.isDirectory(dbDir)) {
-            FileUtil.deleteDir(dbDir);
-        }
     }
 
     @Test
@@ -217,7 +189,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 effectiveMetasByFeed.put(feedName, streamSet);
             }
 
-            try (CacheManager cacheManager = new CacheManagerImpl()) {
+            try (final CacheManager cacheManager = new CacheManagerImpl()) {
 
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                         cacheManager, null, null, null, ReferenceDataConfig::new) {
@@ -241,10 +213,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
-                        null,
                         null);
 
-                Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
+                final Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
                 // Add multiple reference data items to prove that looping over maps works.
                 addUserDataToMockReferenceDataLoader(
@@ -261,9 +232,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
                 // set up the mock loader to load the appropriate data when triggered by a lookup call
                 Mockito.doAnswer(invocation -> {
-                    RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
+                    final RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
 
-                    Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
+                    final Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
                     action.run();
                     return null;
                 }).when(mockReferenceDataLoader).load(Mockito.any(RefStreamDefinition.class));
@@ -322,7 +293,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
             final EffectiveMetaSet streamSetAll = EffectiveMetaSet.of(stream1, stream2, stream3);
 
-            try (CacheManager cacheManager = new CacheManagerImpl()) {
+            try (final CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                         cacheManager, null, null, null, ReferenceDataConfig::new) {
 
@@ -345,10 +316,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
-                        null,
                         null);
 
-                Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
+                final Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
                 // Add multiple reference data items to prove that looping over maps works.
                 addUserDataToMockReferenceDataLoader(
@@ -365,9 +335,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 // set up the mock loader to load the appropriate data when triggered by a lookup call
                 Mockito.doAnswer(
                                 invocation -> {
-                                    RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
+                                    final RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
 
-                                    Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
+                                    final Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
                                     action.run();
                                     return null;
                                 }).when(mockReferenceDataLoader)
@@ -404,9 +374,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                                       final List<String> mapNames,
                                                       final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
 
-        for (EffectiveMeta effectiveStream : effectiveStreams) {
+        for (final EffectiveMeta effectiveStream : effectiveStreams) {
 
-            RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+            final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                     pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getId());
 
 
@@ -415,8 +385,8 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         refStreamDefinition, effectiveStream.getEffectiveMs(), refDataLoader -> {
 
                             refDataLoader.initialise(false);
-                            for (String mapName : mapNames) {
-                                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+                            for (final String mapName : mapNames) {
+                                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
                                 doLoaderPut(refDataLoader,
                                         mapDefinition,
                                         USER_1,
@@ -437,9 +407,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                                           final List<Tuple3<String, String, String>> mapKeyValueTuples,
                                                           final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
 
-        for (EffectiveMeta effectiveStream : effectiveStreams) {
+        for (final EffectiveMeta effectiveStream : effectiveStreams) {
 
-            RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+            final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                     pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getId());
 
 
@@ -448,11 +418,11 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         refStreamDefinition, effectiveStream.getEffectiveMs(), refDataLoader -> {
 
                             refDataLoader.initialise(false);
-                            for (Tuple3<String, String, String> mapKeyValueTuple : mapKeyValueTuples) {
-                                String mapName = mapKeyValueTuple._1();
-                                String key = mapKeyValueTuple._2();
-                                String value = mapKeyValueTuple._3();
-                                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+                            for (final Tuple3<String, String, String> mapKeyValueTuple : mapKeyValueTuples) {
+                                final String mapName = mapKeyValueTuple._1();
+                                final String key = mapKeyValueTuple._2();
+                                final String value = mapKeyValueTuple._3();
+                                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
                                 doLoaderPut(refDataLoader, mapDefinition, key, StringValue.of(value));
                             }
                             refDataLoader.completeProcessing();
@@ -467,9 +437,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
             final List<Tuple3<String, Range<Long>, String>> mapRangeValueTuples,
             final Map<RefStreamDefinition, Runnable> mockLoaderActions) {
 
-        for (EffectiveMeta effectiveStream : effectiveStreams) {
+        for (final EffectiveMeta effectiveStream : effectiveStreams) {
 
-            RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
+            final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                     pipelineRef, pipelineStore.readDocument(pipelineRef).getVersion(), effectiveStream.getId());
 
 
@@ -478,11 +448,11 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         refStreamDefinition, effectiveStream.getEffectiveMs(), refDataLoader -> {
 
                             refDataLoader.initialise(false);
-                            for (Tuple3<String, Range<Long>, String> mapKeyValueTuple : mapRangeValueTuples) {
-                                String mapName = mapKeyValueTuple._1();
-                                Range<Long> range = mapKeyValueTuple._2();
-                                String value = mapKeyValueTuple._3();
-                                MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
+                            for (final Tuple3<String, Range<Long>, String> mapKeyValueTuple : mapRangeValueTuples) {
+                                final String mapName = mapKeyValueTuple._1();
+                                final Range<Long> range = mapKeyValueTuple._2();
+                                final String value = mapKeyValueTuple._3();
+                                final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, mapName);
                                 doLoaderPut(refDataLoader, mapDefinition, range, StringValue.of(value));
                             }
                             refDataLoader.completeProcessing();
@@ -491,7 +461,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         }
     }
 
-    private StringValue buildValue(MapDefinition mapDefinition, String value) {
+    private StringValue buildValue(final MapDefinition mapDefinition, final String value) {
         return StringValue.of(
                 mapDefinition.getRefStreamDefinition().getPipelineDocRef().getUuid() + "|" +
                 mapDefinition.getRefStreamDefinition().getStreamId() + "|" +
@@ -504,7 +474,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                            final List<PipelineReference> pipelineReferences,
                            final String mapName,
                            final List<EffectiveMeta> effectiveMetas) {
-        String expectedValuePart = VALUE_1;
+        final String expectedValuePart = VALUE_1;
 
         Optional<String> optFoundValue;
 
@@ -539,7 +509,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                 final String expectedValuePart) {
         assertThat(optFoundValue)
                 .isNotEmpty();
-        String[] parts = optFoundValue.get()
+        final String[] parts = optFoundValue.get()
                 .split("\\|");
         assertThat(parts)
                 .hasSize(4);
@@ -555,8 +525,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     void testNestedMaps() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_V1");
-            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref);
-            feedDoc.setReference(true);
+            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref).copy().reference(true).build();
             feedStore.writeDocument(feedDoc);
 
             final DocRef pipelineRef = pipelineStore.createDocument("12345");
@@ -569,7 +538,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                     .add(createMeta(feed1Ref.getName()).getId(), 0L)
                     .build();
 
-            try (CacheManager cacheManager = new CacheManagerImpl()) {
+            try (final CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
                         null,
@@ -593,10 +562,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
-                        null,
                         null);
 
-                Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
+                final Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
                 // Add multiple reference data items to prove that looping over maps works.
                 addKeyValueDataToMockReferenceDataLoader(
@@ -609,9 +577,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         mockLoaderActionsMap);
 
                 Mockito.doAnswer(invocation -> {
-                    RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
+                    final RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
 
-                    Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
+                    final Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
                     action.run();
                     return null;
                 }).when(mockReferenceDataLoader).load(Mockito.any(RefStreamDefinition.class));
@@ -639,8 +607,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     void testRange() {
         pipelineScopeRunnable.scopeRunnable(() -> {
             final DocRef feed1Ref = feedStore.createDocument("TEST_FEED_V1");
-            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref);
-            feedDoc.setReference(true);
+            final FeedDoc feedDoc = feedStore.readDocument(feed1Ref).copy().reference(true).build();
             feedStore.writeDocument(feedDoc);
 
             final DocRef pipelineRef = pipelineStore.createDocument("12345");
@@ -653,7 +620,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                     .add(createMeta(feed1Ref.getName()).getId(), 0L)
                     .build();
 
-            try (CacheManager cacheManager = new CacheManagerImpl()) {
+            try (final CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager,
                         null,
                         null,
@@ -677,10 +644,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
-                        null,
                         null);
 
-                Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
+                final Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
 
                 // Add multiple reference data items to prove that looping over maps works.
                 addRangeValueDataToMockReferenceDataLoader(
@@ -694,9 +660,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         mockLoaderActionsMap);
 
                 Mockito.doAnswer(invocation -> {
-                    RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
+                    final RefStreamDefinition refStreamDefinition = invocation.getArgument(0);
 
-                    Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
+                    final Runnable action = mockLoaderActionsMap.get(refStreamDefinition);
                     action.run();
                     return null;
                 }).when(mockReferenceDataLoader).load(Mockito.any(RefStreamDefinition.class));
@@ -736,7 +702,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                                     final String mapName,
                                     final String key) {
         LOGGER.debug("Looking up {}, {}, {}", time, mapName, key);
-        Optional<String> optValue = lookup(referenceData,
+        final Optional<String> optValue = lookup(referenceData,
                 pipelineReferences,
                 DateUtil.parseNormalDateTimeString(time),
                 mapName,
@@ -765,19 +731,6 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         } else {
             return Optional.empty();
         }
-    }
-
-    private void setDbMaxSizeProperty(final ByteSize size) {
-        referenceDataConfig = referenceDataConfig.withLmdbConfig(referenceDataConfig.getLmdbConfig()
-                .withMaxStoreSize(size));
-    }
-
-    private Path getDbDir() {
-        return dbDir;
-    }
-
-    private ByteSize getMaxSizeBytes() {
-        return DB_MAX_SIZE;
     }
 
     private EffectiveMeta buildEffectiveMeta(final long id, final String effectiveTimeStr) {
@@ -822,7 +775,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
             } else {
                 throw new RuntimeException("Unexpected type " + refDataValue.getClass().getSimpleName());
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error writing value: {}", e.getMessage()), e);
         }
     }

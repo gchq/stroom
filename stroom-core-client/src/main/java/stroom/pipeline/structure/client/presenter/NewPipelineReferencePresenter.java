@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.planb.shared.PlanBDoc;
 import stroom.security.shared.DocumentPermission;
-import stroom.state.shared.StateDoc;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 
@@ -40,6 +39,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
+
 public class NewPipelineReferencePresenter
         extends MyPresenterWidget<NewPipelineReferencePresenter.NewPipelineReferenceView>
         implements Focus {
@@ -51,8 +52,8 @@ public class NewPipelineReferencePresenter
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private final SelectionBox<String> dataTypeWidget;
-    private boolean dirty;
     private boolean initialised;
+    private PipelineReference currentPipelineReference;
 
     @Inject
     public NewPipelineReferencePresenter(final EventBus eventBus,
@@ -68,7 +69,7 @@ public class NewPipelineReferencePresenter
         this.uiConfigCache = uiConfigCache;
 
         // TODO : @66 FIX TEMPORARY ABUSE OF PIPELINE REF
-        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE, StateDoc.TYPE, PlanBDoc.TYPE);
+        pipelinePresenter.setIncludedTypes(PipelineDoc.TYPE, PlanBDoc.TYPE);
         pipelinePresenter.setRequiredPermissions(DocumentPermission.USE);
 
         feedPresenter.setIncludedTypes(FeedDoc.TYPE);
@@ -91,6 +92,8 @@ public class NewPipelineReferencePresenter
     }
 
     public void read(final PipelineReference pipelineReference) {
+        this.currentPipelineReference = pipelineReference;
+
         // Filter the pipeline picker by tags, if configured
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
@@ -110,38 +113,39 @@ public class NewPipelineReferencePresenter
         pipelinePresenter.addDataSelectionHandler(event -> {
             if (initialised) {
                 final DocRef selection = pipelinePresenter.getSelectedEntityReference();
-                if ((pipelineReference.getPipeline() == null && selection != null)
-                        || (pipelineReference.getPipeline() != null
-                        && !pipelineReference.getPipeline().equals(selection))) {
-                    setDirty(true);
+                if (!Objects.equals(pipelineReference.getPipeline(), selection)) {
+                    onChange();
                 }
             }
         });
         feedPresenter.addDataSelectionHandler(event -> {
             if (initialised) {
                 final DocRef selection = feedPresenter.getSelectedEntityReference();
-                if ((pipelineReference.getFeed() == null && selection != null)
-                        || (pipelineReference.getFeed() != null && !pipelineReference.getFeed().equals(selection))) {
-                    setDirty(true);
+                if (!Objects.equals(pipelineReference.getFeed(), selection)) {
+                    onChange();
                 }
             }
         });
         dataTypeWidget.addValueChangeHandler(event -> {
             if (initialised) {
                 final String selection = dataTypeWidget.getValue();
-                if ((pipelineReference.getStreamType() == null && selection != null)
-                        || (pipelineReference.getStreamType() != null
-                        && !pipelineReference.getStreamType().equals(selection))) {
-                    setDirty(true);
+                if (!Objects.equals(pipelineReference.getStreamType(), selection)) {
+                    onChange();
                 }
             }
         });
     }
 
-    public void write(final PipelineReference pipelineReference) {
-        pipelineReference.setPipeline(pipelinePresenter.getSelectedEntityReference());
-        pipelineReference.setFeed(feedPresenter.getSelectedEntityReference());
-        pipelineReference.setStreamType(dataTypeWidget.getValue());
+    private void onChange() {
+
+    }
+
+    public PipelineReference write() {
+        return new PipelineReference.Builder(currentPipelineReference)
+                .pipeline(pipelinePresenter.getSelectedEntityReference())
+                .feed(feedPresenter.getSelectedEntityReference())
+                .streamType(dataTypeWidget.getValue())
+                .build();
     }
 
     private void updateDataTypes(final String selectedDataType) {
@@ -163,14 +167,6 @@ public class NewPipelineReferencePresenter
                 })
                 .taskMonitorFactory(this)
                 .exec();
-    }
-
-    public boolean isDirty() {
-        return dirty;
-    }
-
-    private void setDirty(final boolean dirty) {
-        this.dirty = dirty;
     }
 
     public interface NewPipelineReferenceView extends View {

@@ -1,19 +1,17 @@
 /*
+ * Copyright 2020 Crown Copyright
  *
- *   Copyright 2017 Crown Copyright
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package stroom.security.identity.token;
@@ -30,6 +28,7 @@ import org.jose4j.jwt.NumericDate;
 import org.jose4j.lang.JoseException;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public class TokenBuilder {
 
@@ -41,46 +40,69 @@ public class TokenBuilder {
 
     private String subject;
     private String nonce;
-    private String state;
     private PublicJsonWebKey publicJsonWebKey;
     private String clientId;
+    private String type;
+    private Long authTime;
+    private String scope;
 
-    public TokenBuilder subject(String subject) {
+    public TokenBuilder subject(final String subject) {
         this.subject = subject;
         return this;
     }
 
-    public TokenBuilder clientId(String clientId) {
+    /**
+     * The JOSE {@code typ} header value. Set {@link OpenId#TOKEN_TYPE__ACCESS} to mark the token as an
+     * access token that may authenticate requests; leave unset for tokens (id, refresh) that may not.
+     */
+    public TokenBuilder type(final String type) {
+        this.type = type;
+        return this;
+    }
+
+    public TokenBuilder clientId(final String clientId) {
         this.clientId = clientId;
         return this;
     }
 
-    public TokenBuilder issuer(String issuer) {
+    public TokenBuilder issuer(final String issuer) {
         this.issuer = issuer;
         return this;
     }
 
-    public TokenBuilder privateVerificationKey(PublicJsonWebKey publicJsonWebKey) {
+    public TokenBuilder privateVerificationKey(final PublicJsonWebKey publicJsonWebKey) {
         this.publicJsonWebKey = publicJsonWebKey;
         return this;
     }
 
-    public TokenBuilder nonce(String nonce) {
+    public TokenBuilder nonce(final String nonce) {
         this.nonce = nonce;
         return this;
     }
 
-    public TokenBuilder state(String state) {
-        this.state = state;
+    /**
+     * The time the end-user authenticated, as seconds since the epoch, see {@link OpenId#CLAIM__AUTH_TIME}.
+     * An id token claim.
+     */
+    public TokenBuilder authTime(final Long authTime) {
+        this.authTime = authTime;
         return this;
     }
 
-    public TokenBuilder algorithm(String algorithm) {
+    /**
+     * The scope granted to an access token, see {@link OpenId#SCOPE}.
+     */
+    public TokenBuilder scope(final String scope) {
+        this.scope = scope;
+        return this;
+    }
+
+    public TokenBuilder algorithm(final String algorithm) {
         this.algorithm = algorithm;
         return this;
     }
 
-    public TokenBuilder expirationTime(Instant expirationTime) {
+    public TokenBuilder expirationTime(final Instant expirationTime) {
         this.expirationTime = expirationTime;
         return this;
     }
@@ -89,26 +111,58 @@ public class TokenBuilder {
         return this.expirationTime;
     }
 
-    public String build() {
+    /**
+     * Mint the token.
+     *
+     * @return the serialised JWT plus its {@code jti} and expiry. The {@code jti} is returned rather than
+     * discarded because it is the key the token inventory and the revocation denylist are built on - a token
+     * whose id was never captured cannot be revoked.
+     */
+    public MintedToken build() {
         final JwtClaims claims = new JwtClaims();
+        long expiresMs = 0L;
         if (expirationTime != null) {
-            claims.setExpirationTime(NumericDate.fromSeconds(expirationTime.getEpochSecond()));
+            // exp has second granularity, so record exactly the value the token carries rather than the
+            // original instant - otherwise an inventory row and its token would disagree about expiry.
+            final long expiresSeconds = expirationTime.getEpochSecond();
+            claims.setExpirationTime(NumericDate.fromSeconds(expiresSeconds));
+            expiresMs = expiresSeconds * 1000L;
         }
         claims.setSubject(subject);
         claims.setIssuer(issuer);
         claims.setAudience(clientId);
+        // A unique id per token, giving each token a distinct identity for logging, correlation and
+        // revocation. Generated here rather than by claims.setGeneratedJwtId() so that the value can be
+        // returned to the caller and persisted; jose4j offers no way to read back what it generated.
+        final String jti = UUID.randomUUID().toString();
+        claims.setJwtId(jti);
+        if (clientId != null) {
+            // The authorized party - the client the token was issued to. Providers such as Keycloak
+            // set this on both id and access tokens.
+            claims.setClaim(OpenId.CLAIM__AUTHORIZED_PARTY, clientId);
+        }
+        if (OpenId.TOKEN_TYPE__ACCESS.equals(type) && clientId != null) {
+            // RFC 9068 identifies the client of an access token with the client_id claim.
+            claims.setClaim(OpenId.CLIENT_ID, clientId);
+        }
         if (nonce != null) {
             claims.setClaim(OpenId.NONCE, nonce);
         }
-        if (state != null) {
-            claims.setClaim(OpenId.STATE, state);
+        if (authTime != null) {
+            claims.setClaim(OpenId.CLAIM__AUTH_TIME, authTime);
+        }
+        if (scope != null) {
+            claims.setClaim(OpenId.SCOPE, scope);
         }
 
-        JsonWebSignature jws = new JsonWebSignature();
+        final JsonWebSignature jws = new JsonWebSignature();
         jws.setPayload(claims.toJson());
         jws.setAlgorithmHeaderValue(this.algorithm);
         jws.setKey(this.publicJsonWebKey.getPrivateKey());
         jws.setDoKeyValidation(true);
+        if (type != null) {
+            jws.setHeader("typ", type);
+        }
 
         // TODO need to pass this in as it may not be the default one
         if (publicJsonWebKey.getKeyId() != null && !publicJsonWebKey.getKeyId().isEmpty()) {
@@ -117,8 +171,8 @@ public class TokenBuilder {
         }
 
         try {
-            return jws.getCompactSerialization();
-        } catch (JoseException e) {
+            return new MintedToken(jws.getCompactSerialization(), jti, expiresMs);
+        } catch (final JoseException e) {
             throw new RuntimeException(e);
         }
     }

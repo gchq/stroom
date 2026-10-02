@@ -1,0 +1,42 @@
+{
+  "properties" : {
+    "add" : [ {
+      "element" : "combinedParser",
+      "name" : "textConverter",
+      "value" : {
+        "entity" : {
+          "type" : "TextConverter",
+          "uuid" : "7e4452ed-bf26-4187-b849-e3e721780cba",
+          "name" : "CSV_WITH_HEADER"
+        }
+      }
+    }, {
+      "element" : "translationFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "7e890661-3ed3-4903-b0c7-95eb62a8aa9d",
+          "name" : "ZIP_TEST-DATA_SPLITTER-EVENTS"
+        }
+      }
+    } ]
+  },
+  "pipelineReferences" : {
+    "add" : [ {
+      "element" : "translationFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "5099b649-9992-4335-abba-ebe30a86f374",
+        "name" : "ZIP_TEST-DATA_SPLITTER-CONTEXT"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "cb305f67-a460-40f2-a9bb-d855010e2922",
+        "name" : "ZIP_TEST-DATA_SPLITTER-EVENTS"
+      },
+      "streamType" : "Context"
+    } ]
+  }
+}

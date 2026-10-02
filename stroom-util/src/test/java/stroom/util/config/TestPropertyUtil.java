@@ -1,8 +1,23 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.config;
 
 import stroom.util.config.PropertyUtil.ObjectInfo;
 import stroom.util.config.annotations.ReadOnly;
-import stroom.util.json.JsonUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonCreator.Mode;
@@ -51,7 +66,7 @@ class TestPropertyUtil {
         final ImmutablePojo immutablePojo = new ImmutablePojo();
 
         final ObjectInfo<ImmutablePojo> objectInfo = PropertyUtil.getObjectInfo(
-                JsonUtil.getMapper(), "stroom", immutablePojo);
+                "stroom", immutablePojo);
 
         assertThat(objectInfo.getName())
                 .isEqualTo("stroom");
@@ -73,7 +88,7 @@ class TestPropertyUtil {
     @Test
     void getProperties_fieldProps() {
 
-        AnnosOnFields annosOnFields = new AnnosOnFields();
+        final AnnosOnFields annosOnFields = new AnnosOnFields();
         annosOnFields.setIncludedField("yes");
         annosOnFields.setReadOnlyField("cheese");
         annosOnFields.setIgnoredField("No");
@@ -103,7 +118,7 @@ class TestPropertyUtil {
                 annosOnFields::getReadOnlyField,
                 String.class);
 
-        PropertyUtil.Prop includedFieldProp = propMap.get("includedField");
+        final PropertyUtil.Prop includedFieldProp = propMap.get("includedField");
         Assertions.assertThat(includedFieldProp.hasFieldAnnotation(JsonProperty.class))
                 .isTrue();
         Assertions.assertThat(includedFieldProp.hasFieldAnnotation(JsonPropertyDescription.class))
@@ -119,7 +134,7 @@ class TestPropertyUtil {
         Assertions.assertThat(includedFieldProp.hasAnnotation(JsonPropertyDescription.class))
                 .isTrue();
 
-        PropertyUtil.Prop readOnlyFieldProp = propMap.get("readOnlyField");
+        final PropertyUtil.Prop readOnlyFieldProp = propMap.get("readOnlyField");
         Assertions.assertThat(includedFieldProp.hasFieldAnnotation(JsonProperty.class))
                 .isTrue();
         Assertions.assertThat(includedFieldProp.hasFieldAnnotation(JsonPropertyDescription.class))
@@ -206,7 +221,7 @@ class TestPropertyUtil {
                           final Object newValue,
                           final Supplier<Object> newValueSupplier,
                           final Class<?> clazz) {
-        PropertyUtil.Prop booleanProp = propMap.get(name);
+        final PropertyUtil.Prop booleanProp = propMap.get(name);
         assertThat(booleanProp.getValueFromConfigObject())
                 .isEqualTo(expectedValue);
         booleanProp.setValueOnConfigObject(newValue);

@@ -18,8 +18,9 @@ package stroom.planb.client.view;
 
 import stroom.item.client.SelectionBox;
 import stroom.planb.client.presenter.PlanBSettingsPresenter.PlanBSettingsView;
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.planb.client.presenter.StateTypeChangeUiHandlers;
 import stroom.planb.shared.StateType;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -32,11 +33,13 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class PlanBSettingsViewImpl
-        extends ViewWithUiHandlers<PlanBSettingsUiHandlers>
+        extends ViewWithUiHandlers<StateTypeChangeUiHandlers>
         implements PlanBSettingsView {
 
     private final Widget widget;
 
+    @UiField
+    FormGroup stateTypeGroup;
     @UiField
     SelectionBox<StateType> stateType;
     @UiField
@@ -51,6 +54,8 @@ public class PlanBSettingsViewImpl
         stateType.addItem(StateType.TEMPORAL_STATE);
         stateType.addItem(StateType.TEMPORAL_RANGED_STATE);
         stateType.addItem(StateType.SESSION);
+        stateType.addItem(StateType.HISTOGRAM);
+        stateType.addItem(StateType.METRIC);
         stateType.setValue(StateType.TEMPORAL_STATE);
     }
 
@@ -70,6 +75,11 @@ public class PlanBSettingsViewImpl
     }
 
     @Override
+    public void setStateTypeVisible(final boolean visible) {
+        stateTypeGroup.setVisible(visible);
+    }
+
+    @Override
     public void setSettingsView(final View view) {
         settings.setWidget(view.asWidget());
     }
@@ -82,6 +92,7 @@ public class PlanBSettingsViewImpl
     @UiHandler("stateType")
     public void onStateType(final ValueChangeEvent<StateType> event) {
         getUiHandlers().onChange();
+        getUiHandlers().onStateTypeChange();
     }
 
     public interface Binder extends UiBinder<Widget, PlanBSettingsViewImpl> {

@@ -23,9 +23,11 @@ public interface PipelineStructureUiHandlers extends UiHandlers {
 
     void onAdd(ClickEvent event);
 
-    void onRestore(ClickEvent event);
-
     void onRemove(ClickEvent event);
+
+    void onEdit(ClickEvent event);
+
+    void onRestore(ClickEvent event);
 
     void setAdvancedMode(boolean advancedMode);
 

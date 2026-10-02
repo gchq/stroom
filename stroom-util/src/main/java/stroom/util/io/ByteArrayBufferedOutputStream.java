@@ -25,7 +25,7 @@ import java.io.OutputStream;
 public class ByteArrayBufferedOutputStream extends BufferedOutputStream {
 
     @SuppressWarnings({"EI_EXPOSE_REP", "EI_EXPOSE_REP2"})
-    public ByteArrayBufferedOutputStream(OutputStream outputStream, byte[] buffer) {
+    public ByteArrayBufferedOutputStream(final OutputStream outputStream, final byte[] buffer) {
         super(outputStream, 1);
         this.buf = buffer;
     }

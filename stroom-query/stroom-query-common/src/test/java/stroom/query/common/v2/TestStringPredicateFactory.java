@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import org.assertj.core.api.Assertions;
@@ -20,7 +36,7 @@ class TestStringPredicateFactory {
 
     @TestFactory
     List<DynamicTest> fuzzyMatcherTestFactory() {
-        List<DynamicTest> tests = new ArrayList<>();
+        final List<DynamicTest> tests = new ArrayList<>();
 
         // Each test is run in normal ("foorbar") and negated form ("!foorbar")
         tests.addAll(List.of(
@@ -301,7 +317,7 @@ class TestStringPredicateFactory {
 
     @TestFactory
     List<DynamicTest> comparatorTestFactory() {
-        List<DynamicTest> tests = new ArrayList<>();
+        final List<DynamicTest> tests = new ArrayList<>();
 
         tests.addAll(List.of(
 

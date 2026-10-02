@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.collections;
 
 import java.util.ArrayList;
@@ -25,7 +41,7 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
      * @param <T>            type of items in the stream
      * @return a stream of batches taken sequentially from the original stream
      */
-    public static <T> Stream<List<T>> batchedStreamOf(Stream<T> originalStream, int batchSize) {
+    public static <T> Stream<List<T>> batchedStreamOf(final Stream<T> originalStream, final int batchSize) {
         return asStream(new BatchingIterator<>(originalStream.iterator(), batchSize));
     }
 
@@ -38,11 +54,11 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
      * @param <T>                type of items in the stream
      * @return a stream of batches taken sequentially from the original stream
      */
-    public static <T> Stream<List<T>> batchedStreamOf(Collection<T> originalCollection, int batchSize) {
+    public static <T> Stream<List<T>> batchedStreamOf(final Collection<T> originalCollection, final int batchSize) {
         return asStream(new BatchingIterator<>(originalCollection.iterator(), batchSize));
     }
 
-    private static <T> Stream<T> asStream(Iterator<T> iterator) {
+    private static <T> Stream<T> asStream(final Iterator<T> iterator) {
         return StreamSupport.stream(
                 Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false);
     }
@@ -51,7 +67,7 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
     private List<T> currentBatch;
     private final Iterator<T> sourceIterator;
 
-    private BatchingIterator(Iterator<T> sourceIterator, int batchSize) {
+    private BatchingIterator(final Iterator<T> sourceIterator, final int batchSize) {
         this.batchSize = batchSize;
         this.sourceIterator = sourceIterator;
     }

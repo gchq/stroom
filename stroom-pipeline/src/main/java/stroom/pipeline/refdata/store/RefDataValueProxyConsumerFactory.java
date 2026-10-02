@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store;
@@ -53,7 +52,7 @@ public class RefDataValueProxyConsumerFactory {
 
     public RefDataValueProxyConsumer getConsumer(final RefDataStore.StorageType storageType) {
 
-        RefDataValueProxyConsumer refDataValueProxyConsumer;
+        final RefDataValueProxyConsumer refDataValueProxyConsumer;
         if (storageType.equals(RefDataStore.StorageType.OFF_HEAP)) {
             if (offHeapRefDataValueProxyConsumer == null) {
                 offHeapRefDataValueProxyConsumer = offHeapRefDataValueProxyConsumerFactory.create(
@@ -73,10 +72,13 @@ public class RefDataValueProxyConsumerFactory {
         return refDataValueProxyConsumer;
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     public interface Factory {
 
         RefDataValueProxyConsumerFactory create(final Receiver receiver,
                                                 final PipelineConfiguration pipelineConfiguration);
     }
-
 }

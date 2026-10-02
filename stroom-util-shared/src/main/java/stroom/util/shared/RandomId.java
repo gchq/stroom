@@ -26,6 +26,7 @@ public class RandomId {
     public static String createId(final int len) {
         final char[] id = new char[len];
         for (int i = 0; i < len; i++) {
+            // Can't user ThreadLocalRandom as GWT doesn't emulate it
             final int index = (int) (Math.random() * CHARS.length);
             id[i] = CHARS[index];
         }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.global.impl;
 
 import stroom.config.app.AppConfig;
@@ -64,14 +80,14 @@ public class AppConfigMonitor extends AbstractFileChangeMonitor implements Manag
                     configMapper.updateConfigFromYaml(newAppConfig);
 
                     LOGGER.info("Completed updating application config from file.");
-                } catch (Throwable e) {
+                } catch (final Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad
                     // The admins can fix the problem and let it have another go.
                     LOGGER.error("Error updating runtime configuration from file {}",
                             configFile.toAbsolutePath().normalize(), e);
                 }
             }
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             // Swallow error as we don't want to break the app because the file is bad.
             LOGGER.error("Error parsing configuration from file {}",
                     configFile.toAbsolutePath().normalize(), e);

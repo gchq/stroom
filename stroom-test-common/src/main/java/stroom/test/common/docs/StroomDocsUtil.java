@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common.docs;
 
 import stroom.test.common.ProjectPathUtil;
@@ -133,7 +149,7 @@ public class StroomDocsUtil {
                 LOGGER.debug("File content not changed for file {}", file);
                 return false;
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message("Error reading file '{}': {}",
                     file.toAbsolutePath().normalize(),
                     LogUtil.exceptionMessage(e)));
@@ -154,13 +170,18 @@ public class StroomDocsUtil {
         }
     }
 
+    public static Path resolveStroomDocsFile(final Path subPath) {
+        return StroomDocsUtil.resolveStroomDocsFile(subPath, true);
+    }
+
     /**
      * @param subPath A path to a file in the stroom-docs repo that is relative to the
      *                stroom-docs repo root.
-     * @return An absolute path to the file which has been tested to see if it exists and
-     * is a regular file.
+     *                If checkExists is true, the file will be tested to see if it exists
+     *                and is a regular file.
+     * @return An absolute path to the file.
      */
-    public static Path resolveStroomDocsFile(final Path subPath) {
+    public static Path resolveStroomDocsFile(final Path subPath, final boolean checkExists) {
         final String stroomDocsRepoDirStr = System.getProperty(STROOM_DOCS_REPO_DIR_PROP_KEY);
         final Path stroomDocsRepoDir;
 
@@ -182,15 +203,17 @@ public class StroomDocsUtil {
 
         final Path file = stroomDocsRepoDir.resolve(subPath).toAbsolutePath().normalize();
 
-        if (!Files.isRegularFile(file)) {
-            throw new RuntimeException(LogUtil.message("stroom-docs file '{}' does not exist",
-                    stroomDocsRepoDir.toAbsolutePath().normalize()));
+        if (checkExists) {
+            if (!Files.isRegularFile(file)) {
+                throw new RuntimeException(LogUtil.message("stroom-docs file '{}' does not exist",
+                        stroomDocsRepoDir.toAbsolutePath().normalize()));
+            }
         }
         return file;
     }
 
     public static void doWithClassScanResult(final Consumer<ScanResult> scanResultConsumer) {
-        try (ScanResult scanResult =
+        try (final ScanResult scanResult =
                 new ClassGraph()
                         .enableAllInfo()             // Scan classes, methods, fields, annotations
                         .acceptPackages(STROOM_PACKAGE_NAME)  // Scan com.xyz and subpkgs (omit to scan all packages)

@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 #Exit script on first error
 set -e
 
@@ -24,11 +40,13 @@ STROOM_LOCAL_CONF_FILE_NAME=local.yml
 STROOM_LOCAL_2_CONF_FILE_NAME=local2.yml
 STROOM_LOCAL_3_CONF_FILE_NAME=local3.yml
 PROXY_LOCAL_CONF_FILE_NAME=proxy-local.yml
+PROXY_REMOTE_CONF_FILE_NAME=proxy-remote.yml
 
 STROOM_LOCAL_CONF_FILE=${SCRIPT_DIR}/${STROOM_LOCAL_CONF_FILE_NAME}
 STROOM_LOCAL_2_CONF_FILE=${SCRIPT_DIR}/${STROOM_LOCAL_2_CONF_FILE_NAME}
 STROOM_LOCAL_3_CONF_FILE=${SCRIPT_DIR}/${STROOM_LOCAL_3_CONF_FILE_NAME}
 PROXY_LOCAL_CONF_FILE=${SCRIPT_DIR}/${PROXY_LOCAL_CONF_FILE_NAME}
+PROXY_REMOTE_CONF_FILE=${SCRIPT_DIR}/${PROXY_REMOTE_CONF_FILE_NAME}
 
 set_ip_address(){
   if [ "$(uname)" == "Darwin" ]; then
@@ -58,7 +76,7 @@ set_ip_address(){
 
 check_source_exists() {
   local source="$1"; shift
-  
+
   if [ ! -f "${source}" ]; then
     echo -e "${RED}Source file ${GREEN}${source}${RED}" \
       "does not exist${NC}"
@@ -119,6 +137,20 @@ create_local_file() {
     > "${dest}"
 }
 
+replace_in_file() {
+  local file="$1"; shift
+  local str="$1"; shift
+  local replacement="$1"; shift
+
+  echo -e "Changing port ${GREEN}${str}${NC} to ${GREEN}${replacement}${NC}" \
+    "in file ${GREEN}${source}${NC}"
+
+  sed \
+    -i \
+    -e "s/${str}/${replacement}/g" \
+    "${file}"
+}
+
 diff_against_backup() {
   local file="$1"; shift
   local backup_file
@@ -149,6 +181,7 @@ main(){
   backup_current_local_file "${STROOM_LOCAL_2_CONF_FILE}"
   backup_current_local_file "${STROOM_LOCAL_3_CONF_FILE}"
   backup_current_local_file "${PROXY_LOCAL_CONF_FILE}"
+  backup_current_local_file "${PROXY_REMOTE_CONF_FILE}"
 
   create_local_file "${STROOM_SOURCE_CONF_FILE}" "${STROOM_LOCAL_CONF_FILE}"
 
@@ -157,11 +190,21 @@ main(){
   make_local3_file
 
   create_local_file "${PROXY_SOURCE_CONF_FILE}" "${PROXY_LOCAL_CONF_FILE}"
+  create_local_file "${PROXY_SOURCE_CONF_FILE}" "${PROXY_REMOTE_CONF_FILE}"
+
+  # Change the app+admin server ports
+  replace_in_file "${PROXY_REMOTE_CONF_FILE}" 8090 9090
+  replace_in_file "${PROXY_REMOTE_CONF_FILE}" 8091 9091
+  # Change the ports on the downstream urls
+  replace_in_file "${PROXY_REMOTE_CONF_FILE}" 8080 8090
+  # Change the home/tmp paths
+  replace_in_file "${PROXY_REMOTE_CONF_FILE}" stroom-proxy-local stroom-proxy-remote
 
   diff_against_backup "${STROOM_LOCAL_CONF_FILE}"
   diff_against_backup "${STROOM_LOCAL_2_CONF_FILE}"
   diff_against_backup "${STROOM_LOCAL_3_CONF_FILE}"
   diff_against_backup "${PROXY_LOCAL_CONF_FILE}"
+  diff_against_backup "${PROXY_REMOTE_CONF_FILE}"
 
   exit 0
 }

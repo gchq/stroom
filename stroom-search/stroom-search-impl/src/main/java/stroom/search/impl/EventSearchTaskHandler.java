@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 
 package stroom.search.impl;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Query;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.Query;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
 import stroom.query.common.v2.DataStoreSettings;
@@ -31,6 +31,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ErrorMessage;
 
 import jakarta.inject.Inject;
 
@@ -125,7 +126,9 @@ public class EventSearchTaskHandler {
                     if (eventCoprocessor.getErrorConsumer().hasErrors()) {
                         final String errors = String.join("\n", eventCoprocessor
                                 .getErrorConsumer()
-                                .getErrors());
+                                .getErrorMessages().stream()
+                                .map(ErrorMessage::getMessage)
+                                .toList());
                         LOGGER.debug(errors);
                         throwable = new RuntimeException(errors);
                     }

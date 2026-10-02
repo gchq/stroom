@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline;
@@ -52,7 +51,7 @@ class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
             LOGGER.error("Unable to get pipeline description!", e);
         }
 
-        OtherObject.Builder builder = OtherObject.builder()
+        final OtherObject.Builder builder = OtherObject.builder()
                 .withType(pipelineDoc.getType())
                 .withName(pipelineDoc.getName())
                 .withId(pipelineDoc.getUuid())
@@ -73,12 +72,12 @@ class PipelineDocObjectInfoProvider implements ObjectInfoProvider {
 
 
         try {
-            final String xml = pipelineServiceProvider.get().fetchPipelineXml(
+            final String xml = pipelineServiceProvider.get().fetchPipelineJson(
                     new DocRef(PipelineDoc.TYPE, pipelineDoc.getUuid()));
             if (xml != null) {
                 builder.addData(Data.builder().withName("Structure").withValue(xml).build());
             }
-        } catch (Exception ex) {
+        } catch (final Exception ex) {
             //Ignore this error
         }
 

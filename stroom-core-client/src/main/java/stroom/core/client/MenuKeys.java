@@ -25,6 +25,7 @@ public class MenuKeys {
     public static final MenuKey MAIN_MENU = new MenuKey("Main Menu");
     public static final MenuKey NAVIGATION_MENU = new MenuKey("Navigation Menu");
     public static final MenuKey ADMINISTRATION_MENU = new MenuKey("Administration Menu");
+    public static final MenuKey ANNOTATION_MENU = new MenuKey("Annotation Menu");
     public static final MenuKey TOOLS_MENU = new MenuKey("Tools Menu");
     public static final MenuKey SECURITY_MENU = new MenuKey("Security Menu");
     public static final MenuKey MONITORING_MENU = new MenuKey("Monitoring Menu");
@@ -39,6 +40,17 @@ public class MenuKeys {
                         .text("Administration")
                         .menuItems(menuItems)
                         .menuKey(MenuKeys.ADMINISTRATION_MENU)
+                        .build());
+    }
+
+    public static void addAnnotationMenu(final MenuItems menuItems) {
+        menuItems.addMenuItem(
+                MenuKeys.MAIN_MENU,
+                new KeyedParentMenuItem.Builder()
+                        .priority(1)
+                        .text("Annotations")
+                        .menuItems(menuItems)
+                        .menuKey(MenuKeys.ANNOTATION_MENU)
                         .build());
     }
 

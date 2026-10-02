@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.job.impl;
@@ -22,7 +21,6 @@ import stroom.job.api.ScheduledJob;
 import stroom.job.shared.Job;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.AuditUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
 
@@ -33,9 +31,11 @@ import jakarta.inject.Singleton;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Singleton
 class JobService {
@@ -77,21 +77,21 @@ class JobService {
             final Optional<Job> before = fetch(job.getId());
 
             // We always want to update a job instance even if we have a stale version.
-            before.ifPresent(j -> job.setVersion(j.getVersion()));
+            final Integer version = before.map(Job::getVersion).orElse(job.getVersion());
 
-            AuditUtil.stamp(securityContext, job);
-            final Job after = jobDao.update(job);
+            final Job after = jobDao.update(job.copy().version(version).stampAudit(securityContext).build());
             return decorate(after);
         });
     }
 
     ResultPage<Job> find(final FindJobCriteria findJobCriteria) {
-        final ResultPage<Job> results = securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION,
+        ResultPage<Job> results = securityContext.secureResult(AppPermission.MANAGE_JOBS_PERMISSION,
                 () -> jobDao.find(findJobCriteria));
-        results.getValues().forEach(this::decorate);
+        final List<Job> list = results.getValues().stream().map(this::decorate).collect(Collectors.toList());
+        results = new ResultPage<>(list, results.getPageResponse());
 
         if (!findJobCriteria.getSortList().isEmpty()) {
-            final CriteriaFieldSort sort = findJobCriteria.getSortList().get(0);
+            final CriteriaFieldSort sort = findJobCriteria.getSortList().getFirst();
             if (sort.getId().equals(FindJobCriteria.FIELD_ADVANCED)) {
                 results.getValues().sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
             }
@@ -105,9 +105,10 @@ class JobService {
     }
 
     Job decorate(final Job job) {
-        job.setDescription(jobDescriptionMap.get(job.getName()));
-        job.setAdvanced(jobAdvancedSet.contains(job.getName()));
-        return job;
+        return job.copy()
+                .description(jobDescriptionMap.get(job.getName()))
+                .advanced(jobAdvancedSet.contains(job.getName()))
+                .build();
     }
 
     int setJobsEnabledForNode(final String nodeName,

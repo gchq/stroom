@@ -1,0 +1,62 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "combinedParser",
+      "type" : "CombinedParser"
+    }, {
+      "id" : "splitFilter",
+      "type" : "SplitFilter"
+    }, {
+      "id" : "idEnrichmentFilter",
+      "type" : "IdEnrichmentFilter"
+    }, {
+      "id" : "xsltFilter",
+      "type" : "XSLTFilter"
+    }, {
+      "id" : "schemaFilter",
+      "type" : "SchemaFilter"
+    }, {
+      "id" : "searchResultOutputFilter",
+      "type" : "DynamicSearchResultOutputFilter"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "splitFilter",
+      "name" : "splitDepth",
+      "value" : {
+        "integer" : 1
+      }
+    }, {
+      "element" : "splitFilter",
+      "name" : "splitCount",
+      "value" : {
+        "integer" : 100
+      }
+    }, {
+      "element" : "schemaFilter",
+      "name" : "schemaGroup",
+      "value" : {
+        "string" : "INDEX_DOCUMENTS"
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "combinedParser",
+      "to" : "splitFilter"
+    }, {
+      "from" : "splitFilter",
+      "to" : "idEnrichmentFilter"
+    }, {
+      "from" : "idEnrichmentFilter",
+      "to" : "xsltFilter"
+    }, {
+      "from" : "xsltFilter",
+      "to" : "schemaFilter"
+    }, {
+      "from" : "schemaFilter",
+      "to" : "searchResultOutputFilter"
+    } ]
+  }
+}

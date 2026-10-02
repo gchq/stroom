@@ -1,0 +1,10 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+>
+    <g:FlowPanel styleName="max default-min-sizes dock-container-vertical overflow-hidden">
+        <g:FlowPanel ui:field="selectionList" styleName="max form-control-border form-control-background">
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>
+

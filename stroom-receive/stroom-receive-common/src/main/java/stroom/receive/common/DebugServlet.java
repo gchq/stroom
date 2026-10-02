@@ -40,7 +40,8 @@ public class DebugServlet extends HttpServlet implements IsServlet {
             ResourcePaths.addLegacyUnauthenticatedServletPrefix(PATH_PART));
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doPost(final HttpServletRequest req,
+                          final HttpServletResponse resp) throws ServletException, IOException {
         DebugServletUtil.doPost(req, resp);
     }
 

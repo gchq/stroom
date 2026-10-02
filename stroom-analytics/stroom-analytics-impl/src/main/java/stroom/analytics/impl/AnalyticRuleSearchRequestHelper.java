@@ -1,12 +1,28 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
@@ -33,11 +49,11 @@ public class AnalyticRuleSearchRequestHelper {
     public SearchRequest create(final AbstractAnalyticRuleDoc doc) {
         try {
             // Map the rule query
-            Query sampleQuery = Query.builder().build();
+            final Query sampleQuery = Query.builder().build();
             final QueryKey queryKey = new QueryKey(doc.getUuid() +
                                                    " - " +
                                                    doc.getName());
-            SearchRequest sampleRequest = new SearchRequest(
+            final SearchRequest sampleRequest = new SearchRequest(
                     SearchRequestSource.builder().sourceType(SourceType.TABLE_BUILDER_ANALYTIC).build(),
                     queryKey,
                     sampleQuery,

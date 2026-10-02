@@ -1,7 +1,24 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.filter.XMLFilter;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
@@ -68,6 +85,9 @@ public class DetectionWriter implements DetectionConsumer {
     private static final String STROOM = "stroom";
     private static final String STREAM_ID = "streamId";
     private static final String EVENT_ID = "eventId";
+    private static final String LEVEL = "level";
+    private static final String STATUS = "status";
+    private static final String FEED_NAME = "feedName";
 
 
     private final ErrorReceiverProxy errorReceiverProxy;
@@ -104,7 +124,7 @@ public class DetectionWriter implements DetectionConsumer {
     private void logError(final String message, final Exception e) {
         LOGGER.error(message, e);
         errorReceiverProxy.log(Severity.ERROR, null,
-                getClass().getSimpleName(), message, e);
+                new ElementId(getClass().getSimpleName()), message, e);
     }
 
     @Override
@@ -137,6 +157,9 @@ public class DetectionWriter implements DetectionConsumer {
             writeOptionalDataElement(EFFECTIVE_EXECUTION_TIME, detection.getEffectiveExecutionTime());
             writeValues(detection.getValues());
             writeLinkedEvents(detection.getLinkedEvents());
+            writeOptionalDataElement(LEVEL, detection.getLevel());
+            writeOptionalDataElement(STATUS, detection.getStatus());
+            writeOptionalDataElement(FEED_NAME, detection.getFeedName());
             writeEndElement(DETECTION);
 
         } catch (final SAXException e) {
@@ -144,7 +167,7 @@ public class DetectionWriter implements DetectionConsumer {
         }
     }
 
-    private void writeValues(List<DetectionValue> values) throws SAXException {
+    private void writeValues(final List<DetectionValue> values) throws SAXException {
         if (NullSafe.hasItems(values)) {
             for (final DetectionValue value : values) {
                 writeValue(value);

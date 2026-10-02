@@ -1,5 +1,21 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 buildscript {
-    ext.jooqVer = '3.18.7'
+    ext.jooqVer = '3.20.10'
     repositories {
         mavenLocal()
         mavenCentral()
@@ -17,7 +33,7 @@ buildscript {
         //classpath 'org.glassfish.jaxb:jaxb-runtime:2.3.1'
 
         // Needed for parsing local.yml to get the jdbcUrl
-        classpath 'org.yaml:snakeyaml:2.2'
+        classpath 'org.yaml:snakeyaml:2.6'
     }
     // This was borrowed from
     // https://github.com/etiennestuder/gradle-jooq-plugin/blob/main/example/specify_jooq_config_xml_schema_version/build.gradle
@@ -31,34 +47,25 @@ buildscript {
 }
 
 plugins {
-    alias(libs.plugins.java.library)
+    alias libs.plugins.java.library
 
     // Plugin for downloading content from the 'net
-    alias(libs.plugins.download) apply false
+    alias libs.plugins.download apply false
 
     // Plugin for producing a tree of task dependencies, run task 'taskTree'
-    alias(libs.plugins.task.tree) apply true
+    alias libs.plugins.task.tree apply true
 
-    alias(libs.plugins.shadow) apply false
+    alias libs.plugins.shadow apply false
 
-    alias(libs.plugins.jooq) apply false
+    alias libs.plugins.jooq apply false
 
-    alias(libs.plugins.flyway) apply false
-
-//    alias(libs.plugins.jdeps)
-
-//    id 'org.javamodularity.moduleplugin' apply false
-
-//    id 'ca.cutterslade.analyze'
-
-//    id 'nebula.lint'
-
-//    id 'com.vanniktech.dependency.graph.generator'
+    alias libs.plugins.flyway apply false
 }
 
 apply plugin: 'de.undercouch.download'
 
-ext.javaLanguageVersion = 21
+ext.javaLanguageVersion = 25
+
 // Adoptium also covers Temurin
 ext.javaVendor = JvmVendorSpec.ADOPTIUM
 
@@ -184,10 +191,17 @@ subprojects {
 //    }
 
     // This bit makes all sub projects have access to the BOMs for the dependency versions
-    dependencies {
-        implementation platform(libs.dropwizard.dependencies)
-        implementation platform(libs.dropwizard.bom)
-        implementation platform(libs.aws.bom)
+    // Don't add them for the lucene shaded jar
+    if (project.name != "lucene553-shaded") {
+        dependencies {
+            implementation platform(libs.dropwizard.dependencies)
+            implementation platform(libs.dropwizard.bom)
+            implementation platform(libs.aws.bom)
+            implementation platform(libs.jackson.bom)
+            implementation platform(libs.jackson2.bom)
+
+            testImplementation platform(libs.junit.bom)
+        }
     }
 
     //println project.getConfigurations().getByName("implementation").getAllDependencies()
@@ -264,6 +278,16 @@ subprojects {
     test {
         useJUnitPlatform()
 
+        // Gradle forks the test JVMs, so a -D on the gradle command line reaches the daemon and
+        // stops there. Forward the ones measurement tests use to scale or enable themselves, e.g.
+        // -DtestFilterCount for TestProcessorTaskQueryPlans and -DrunProcessorBenchmark for
+        // TestProcessorTaskDispatchBenchmark. Deliberately a narrow prefix rather than the whole
+        // system property set, which would make test runs depend on whatever the daemon happens
+        // to have been started with.
+        systemProperties System.properties.findAll { key, value ->
+            key.startsWith("test") || key.startsWith("bench") || key.startsWith("run")
+        }
+
         // set heap size for the test JVM(s)
 //        minHeapSize = "128m"
 //        maxHeapSize = "8G"
@@ -274,40 +298,51 @@ subprojects {
         maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
         // maxParallelForks = Runtime.runtime.availableProcessors() ?: 1
 
-        beforeSuite { descriptor ->
-            if (descriptor?.className?.trim())
-                println "Executing test class ${descriptor.className}"
-        }
+        // Capture the report output location here (where 'reports' is in scope on the
+        // Test task) so the TestListener below can reference it. Inside the anonymous
+        // TestListener class 'reports' is not resolvable.
+        def junitXmlOutputLocation = reports.junitXml.outputLocation
 
-        beforeTest { descriptor ->
-            if (descriptor.className == "stroom.search.impl.TestSearchResultCreation") {
-                println "  Executing test ${descriptor.className}.${descriptor.name}"
+        addTestListener(new TestListener() {
+            @Override
+            void beforeSuite(TestDescriptor descriptor) {
+                if (descriptor?.className?.trim())
+                    println "Executing test class ${descriptor.className}"
             }
-        }
 
-        // Report duration of tests that take over 1s
-        afterTest { descriptor, result ->
-            def durationSecs = (result.endTime - result.startTime) / 1000
-            if (durationSecs > 1) {
-                println "  Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
+            @Override
+            void beforeTest(TestDescriptor descriptor) {
+                if (descriptor.className == "stroom.search.impl.TestSearchResultCreation") {
+                    println "  Executing test ${descriptor.className}.${descriptor.name}"
+                }
             }
-        }
+
+            // Report duration of tests that take over 1s
+            @Override
+            void afterTest(TestDescriptor descriptor, TestResult result) {
+                def durationSecs = (result.endTime - result.startTime) / 1000
+                if (durationSecs > 1) {
+                    println "  Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
+                }
+            }
+
+            @Override
+            void afterSuite(TestDescriptor descriptor, TestResult result) {
+                if (descriptor != null
+                        && descriptor.className != null
+                        && result.resultType.toString() == "FAILURE") {
+
+                    // test class failed so add its project info and test report file to a global list for
+                    // processing at the end of the build
+                    def reportFileName = "${junitXmlOutputLocation.get().asFile}/TEST-${descriptor.className}.xml"
+                    def reportFile = file(reportFileName)
+                    def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
+                    failedTestReportFiles.add(pair)
+                }
+            }
+        })
 
         reports.html.outputLocation = file("${reporting.baseDirectory.getAsFile().get()}/${name}")
-
-        afterSuite { descriptor, result ->
-            if (descriptor != null
-                    && descriptor.className != null
-                    && result.resultType.toString() == "FAILURE") {
-
-                // test class failed so add its project info and test report file to a global list for
-                // processing at the end of the build
-                def reportFileName = "${reports.junitXml.outputLocation}/TEST-${descriptor.className}.xml"
-                def reportFile = file(reportFileName)
-                def pair = new Tuple2("${project.name} ${descriptor.name}", reportFile)
-                failedTestReportFiles.add(pair)
-            }
-        }
 
         // Use full logging for test exceptions so we can see where the failure occurred
         testLogging {
@@ -493,7 +528,7 @@ subprojects {
     checkstyle {
         ignoreFailures = false
         showViolations = true
-        toolVersion = "10.4"
+        toolVersion = "14.1.0"
     }
 
     // These work in tandem with the suppression.xml
@@ -727,14 +762,6 @@ tasks.register('dependenciesPng') {
 ////dependsOn clearContentPackImportDir
 //dependsOn clearContentPackDownloadDir
 //}
-
-// Accept the T&Cs for publishing build scans
-if (hasProperty('buildScan')) {
-    buildScan {
-        termsOfServiceUrl = 'https://gradle.com/terms-of-service'
-        termsOfServiceAgree = 'yes'
-    }
-}
 
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorPlugin
 //import com.vanniktech.dependency.graph.generator.DependencyGraphGeneratorExtension.Generator

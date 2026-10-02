@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.bytebuffer;
 
 import stroom.test.common.TestUtil;
@@ -268,7 +284,7 @@ class TestByteBufferPoolImpl4 {
                                   final int expectedPoolSize) {
         final ByteBufferPool byteBufferPool = new ByteBufferPoolImpl4(() -> byteBufferPoolConfig);
 
-        PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(50);
+        final PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(50);
 
         assertThat(pooledByteBuffer.getByteBuffer().capacity())
                 .isEqualTo(expectedBufferCapacity);
@@ -284,7 +300,7 @@ class TestByteBufferPoolImpl4 {
         if (byteBufferPoolConfig.getPooledByteBufferCounts() != null
                 && !byteBufferPoolConfig.getPooledByteBufferCounts().isEmpty()) {
 
-            int largestNonZeroOffset = byteBufferPoolConfig.getPooledByteBufferCounts().entrySet()
+            final int largestNonZeroOffset = byteBufferPoolConfig.getPooledByteBufferCounts().entrySet()
                     .stream()
                     .filter(entry -> entry.getValue() > 0)
                     .mapToInt(entry -> (int) Math.log10(entry.getKey()))
@@ -294,8 +310,8 @@ class TestByteBufferPoolImpl4 {
             // get a pooled buffer for each of the entries in the config unless thay have
             // a val of zero (i.e. unPooled)
             for (int i = 0; i <= largestNonZeroOffset; i++) {
-                int requiredSize = (int) Math.pow(10, i);
-                PooledByteBuffer pooledByteBuffer2 = byteBufferPool.getPooledByteBuffer(requiredSize);
+                final int requiredSize = (int) Math.pow(10, i);
+                final PooledByteBuffer pooledByteBuffer2 = byteBufferPool.getPooledByteBuffer(requiredSize);
                 final ByteBuffer byteBuffer = pooledByteBuffer2.getByteBuffer();
                 assertThat(byteBuffer)
                         .isNotNull();
@@ -306,7 +322,7 @@ class TestByteBufferPoolImpl4 {
 
             // Should have at least one buffer due to the getPooledByteBuffer call above
             // +1 to convert from offset to count
-            int expectedPooledBufferCount = Math.max(1, largestNonZeroOffset + 1);
+            final int expectedPooledBufferCount = Math.max(1, largestNonZeroOffset + 1);
 
             assertThat(byteBufferPool.getCurrentPoolSize())
                     .isEqualTo(expectedPooledBufferCount);

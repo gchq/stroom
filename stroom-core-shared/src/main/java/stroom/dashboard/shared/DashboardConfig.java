@@ -16,24 +16,17 @@
 
 package stroom.dashboard.shared;
 
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.TimeRange;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlElements;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.List;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({
         "parameters",
         "timeRange",
@@ -45,53 +38,32 @@ import java.util.List;
         "modelVersion"
 })
 @JsonInclude(Include.NON_NULL)
-@XmlRootElement(name = "dashboard")
-@XmlType(name = "DashboardConfig", propOrder = {
-        "parameters",
-        "timeRange",
-        "components",
-        "layout",
-        "layoutConstraints",
-        "preferredSize",
-        "designMode",
-        "modelVersion"
-})
 public class DashboardConfig {
 
-    @XmlElement(name = "parameters")
     @JsonProperty("parameters")
-    private String parameters;
-    @XmlElement(name = "timeRange")
+    private final String parameters;
     @JsonProperty("timeRange")
-    private TimeRange timeRange;
-    @XmlElementWrapper(name = "components")
-    @XmlElements({@XmlElement(name = "component", type = ComponentConfig.class)})
+    private final TimeRange timeRange;
     @JsonProperty("components")
-    private List<ComponentConfig> components;
-    @XmlElements({
-            @XmlElement(name = "splitLayout", type = SplitLayoutConfig.class),
-            @XmlElement(name = "tabLayout", type = TabLayoutConfig.class)})
+    private final List<ComponentConfig> components;
     @JsonProperty("layout")
-    private LayoutConfig layout;
+    private final LayoutConfig layout;
     @JsonProperty("layoutConstraints")
-    private LayoutConstraints layoutConstraints;
+    private final LayoutConstraints layoutConstraints;
     @JsonProperty("preferredSize")
-    private Size preferredSize;
+    private final Size preferredSize;
     @JsonProperty("designMode")
-    private Boolean designMode;
+    private final Boolean designMode;
     @JsonProperty("modelVersion")
-    private String modelVersion;
-
-    public DashboardConfig() {
-    }
+    private final String modelVersion;
 
     @JsonCreator
     public DashboardConfig(@JsonProperty("parameters") final String parameters,
                            @JsonProperty("timeRange") final TimeRange timeRange,
                            @JsonProperty("components") final List<ComponentConfig> components,
                            @JsonProperty("layout") final LayoutConfig layout,
-                           @JsonProperty("layoutConstraints") LayoutConstraints layoutConstraints,
-                           @JsonProperty("preferredSize") Size preferredSize,
+                           @JsonProperty("layoutConstraints") final LayoutConstraints layoutConstraints,
+                           @JsonProperty("preferredSize") final Size preferredSize,
                            @JsonProperty("designMode") final Boolean designMode,
                            @JsonProperty("modelVersion") final String modelVersion) {
         this.parameters = parameters;
@@ -109,64 +81,170 @@ public class DashboardConfig {
         return parameters;
     }
 
-    @Deprecated
-    public void setParameters(String parameters) {
-        this.parameters = parameters;
-    }
-
     public TimeRange getTimeRange() {
         return timeRange;
-    }
-
-    public void setTimeRange(final TimeRange timeRange) {
-        this.timeRange = timeRange;
     }
 
     public List<ComponentConfig> getComponents() {
         return components;
     }
 
-    public void setComponents(final List<ComponentConfig> components) {
-        this.components = components;
-    }
-
     public LayoutConfig getLayout() {
         return layout;
-    }
-
-    public void setLayout(final LayoutConfig layout) {
-        this.layout = layout;
     }
 
     public LayoutConstraints getLayoutConstraints() {
         return layoutConstraints;
     }
 
-    public void setLayoutConstraints(final LayoutConstraints layoutConstraints) {
-        this.layoutConstraints = layoutConstraints;
-    }
-
     public Size getPreferredSize() {
         return preferredSize;
-    }
-
-    public void setPreferredSize(final Size preferredSize) {
-        this.preferredSize = preferredSize;
     }
 
     public Boolean getDesignMode() {
         return designMode;
     }
 
-    public void setDesignMode(final Boolean designMode) {
-        this.designMode = designMode;
-    }
-
     public String getModelVersion() {
         return modelVersion;
     }
 
-    public void setModelVersion(final String modelVersion) {
-        this.modelVersion = modelVersion;
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final DashboardConfig that = (DashboardConfig) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 =  Objects.equals(parameters, that.parameters);
+//        final boolean b2 = Objects.equals(timeRange, that.timeRange);
+//        final boolean b3 = Objects.equals(components, that.components);
+//        final boolean b4 = Objects.equals(layout, that.layout);
+//        final boolean b5 = Objects.equals(layoutConstraints, that.layoutConstraints);
+//        final boolean b6 = Objects.equals(preferredSize, that.preferredSize);
+//        final boolean b7 = Objects.equals(designMode, that.designMode);
+//        final boolean b8 = Objects.equals(modelVersion, that.modelVersion);
+
+        return Objects.equals(parameters, that.parameters) &&
+               Objects.equals(timeRange, that.timeRange) &&
+               Objects.equals(components, that.components) &&
+               Objects.equals(layout, that.layout) &&
+               Objects.equals(layoutConstraints, that.layoutConstraints) &&
+               Objects.equals(preferredSize, that.preferredSize) &&
+               Objects.equals(designMode, that.designMode) &&
+               Objects.equals(modelVersion, that.modelVersion);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parameters,
+                timeRange,
+                components,
+                layout,
+                layoutConstraints,
+                preferredSize,
+                designMode,
+                modelVersion);
+    }
+
+    @Override
+    public String toString() {
+        return "DashboardConfig{" +
+               "parameters='" + parameters + '\'' +
+               ", timeRange=" + timeRange +
+               ", components=" + components +
+               ", layout=" + layout +
+               ", layoutConstraints=" + layoutConstraints +
+               ", preferredSize=" + preferredSize +
+               ", designMode=" + designMode +
+               ", modelVersion='" + modelVersion + '\'' +
+               '}';
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static final class Builder {
+
+        private String parameters;
+        private TimeRange timeRange;
+        private List<ComponentConfig> components;
+        private LayoutConfig layout;
+        private LayoutConstraints layoutConstraints;
+        private Size preferredSize;
+        private Boolean designMode;
+        private String modelVersion;
+
+        private Builder() {
+        }
+
+        private Builder(final DashboardConfig dashboardConfig) {
+            this.parameters = dashboardConfig.parameters;
+            this.timeRange = dashboardConfig.timeRange;
+            this.components = dashboardConfig.components;
+            this.layout = dashboardConfig.layout;
+            this.layoutConstraints = dashboardConfig.layoutConstraints;
+            this.preferredSize = dashboardConfig.preferredSize;
+            this.designMode = dashboardConfig.designMode;
+            this.modelVersion = dashboardConfig.modelVersion;
+        }
+
+        public Builder parameters(final String parameters) {
+            this.parameters = parameters;
+            return this;
+        }
+
+        public Builder timeRange(final TimeRange timeRange) {
+            this.timeRange = timeRange;
+            return this;
+        }
+
+        public Builder components(final List<ComponentConfig> components) {
+            this.components = components;
+            return this;
+        }
+
+        public Builder layout(final LayoutConfig layout) {
+            this.layout = layout;
+            return this;
+        }
+
+        public Builder layoutConstraints(final LayoutConstraints layoutConstraints) {
+            this.layoutConstraints = layoutConstraints;
+            return this;
+        }
+
+        public Builder preferredSize(final Size preferredSize) {
+            this.preferredSize = preferredSize;
+            return this;
+        }
+
+        public Builder designMode(final Boolean designMode) {
+            this.designMode = designMode;
+            return this;
+        }
+
+        public Builder modelVersion(final String modelVersion) {
+            this.modelVersion = modelVersion;
+            return this;
+        }
+
+        public DashboardConfig build() {
+            return new DashboardConfig(
+                    parameters,
+                    timeRange,
+                    components,
+                    layout,
+                    layoutConstraints,
+                    preferredSize,
+                    designMode,
+                    modelVersion);
+        }
     }
 }

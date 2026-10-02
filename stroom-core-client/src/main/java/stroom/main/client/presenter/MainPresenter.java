@@ -16,9 +16,14 @@
 
 package stroom.main.client.presenter;
 
+import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.content.client.event.RefreshCurrentContentTabEvent;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.CorePresenter;
+import stroom.data.client.event.ShowAskStroomAiEvent;
+import stroom.main.client.event.DockEvent;
+import stroom.main.client.view.MainToolbar;
+import stroom.main.client.view.Spinner;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
@@ -32,12 +37,11 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.event.MaximiseEvent;
 import stroom.widget.util.client.DoubleClickTester;
 import stroom.widget.util.client.GlobalKeyHandler;
+import stroom.widget.util.client.Size;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.shared.GwtEvent.Type;
@@ -46,7 +50,6 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ContentSlot;
@@ -69,6 +72,7 @@ public class MainPresenter
     private boolean click;
     private final MenuItems menuItems;
     private int taskCount;
+    private boolean showingAi;
 
     @Inject
     public MainPresenter(final EventBus eventBus,
@@ -79,7 +83,7 @@ public class MainPresenter
                          final GlobalKeyHandler globalKeyHandler) {
         super(eventBus, view, proxy);
         this.menuItems = menuItems;
-        view.setUiHandlers(this);
+        view.getMainToolBar().setMainUiHandlers(this);
 
         // Handle key presses
         RootPanel.get().addDomHandler(globalKeyHandler::onKeyDown, KeyDownEvent.getType());
@@ -105,12 +109,13 @@ public class MainPresenter
                     }
                     if (uiConfig.getTheme() != null) {
                         getView().setBorderStyle(uiConfig.getTheme().getPageBorder());
+                        getView().setSelectedTabColour(uiConfig.getTheme().getSelectedTabColour());
                     }
                     getView().setBanner(uiConfig.getMaintenanceMessage());
                 }
         ));
 
-        registerHandler(view.getSpinner().addClickHandler(event -> {
+        registerHandler(view.getMainToolBar().getSpinner().addClickHandler(event -> {
             if (click) {
                 click = false;
                 OpenUserTaskManagerEvent.fire(MainPresenter.this);
@@ -133,6 +138,21 @@ public class MainPresenter
             }
         }));
         addRegisteredHandler(MaximiseEvent.getType(), event -> view.maximise(event.getView()));
+        addRegisteredHandler(DockEvent.getType(), event -> {
+            final DockEvent.DockAction action = event.getAction();
+            if (action == DockEvent.DockAction.DOCK) {
+                getView().dock(
+                        event.getPresenter().getView().asWidget(),
+                        event.getDockBehaviour().getDockLocation(),
+                        event.getSize());
+            } else {
+                getView().undock();
+            }
+        });
+        registerHandler(eventBus.addHandler(ShowAskStroomAiEvent.getType(), event -> {
+            showingAi = event.isShow();
+            getView().getMainToolBar().getShowAi().setState(showingAi);
+        }));
 
         refreshTimer = new Timer() {
             @Override
@@ -152,13 +172,16 @@ public class MainPresenter
 
         // Always try and start spinner even if it might be spinning
         // already.
-        final SpinnerDisplay spinner = getView().getSpinner();
-        if (spinner != null) {
-            if (taskCount > 0) {
-                spinner.start();
-            } else if (taskCount == 0) {
-                // Only stop spinner if we are no longer executing any tasks.
-                spinner.stop();
+        final MainToolbar mainToolbar = getView().getMainToolBar();
+        if (mainToolbar != null) {
+            final Spinner spinner = mainToolbar.getSpinner();
+            if (spinner != null) {
+                if (taskCount > 0) {
+                    spinner.start();
+                } else if (taskCount == 0) {
+                    // Only stop spinner if we are no longer executing any tasks.
+                    spinner.stop();
+                }
             }
         }
     }
@@ -179,7 +202,7 @@ public class MainPresenter
         // Tell all plugins to add new menu items.
         BeforeRevealMenubarEvent.fire(this, menuItems);
         final List<Item> items = menuItems.getMenuItems(MenuKeys.MAIN_MENU);
-        if (items != null && items.size() > 0) {
+        if (items != null && !items.isEmpty()) {
             ShowMenuEvent
                     .builder()
                     .items(items)
@@ -187,6 +210,11 @@ public class MainPresenter
                     .addAutoHidePartner(autoHidePartner)
                     .fire(this);
         }
+    }
+
+    @Override
+    public void showAi(final NativeEvent event, final Element target) {
+        ShowAskStroomAiEvent.fire(this, !showingAi);
     }
 
     private void startAutoRefresh() {
@@ -216,25 +244,22 @@ public class MainPresenter
     // --------------------------------------------------------------------------------
 
 
-    public interface MainView extends View, HasUiHandlers<MainUiHandlers> {
+    public interface MainView extends View {
 
-        SpinnerDisplay getSpinner();
+        MainToolbar getMainToolBar();
 
         void maximise(View view);
 
         void setBorderStyle(String style);
 
         void setBanner(String text);
-    }
 
+        void setSelectedTabColour(String colour);
 
-    // --------------------------------------------------------------------------------
+        void dock(com.google.gwt.user.client.ui.Widget widget,
+                  DockLocation dockLocation,
+                  Size size);
 
-
-    public interface SpinnerDisplay extends HasClickHandlers, HasDoubleClickHandlers {
-
-        void start();
-
-        void stop();
+        void undock();
     }
 }

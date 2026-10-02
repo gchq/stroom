@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.query.language.token.Param;
 
 import java.text.ParseException;
 import java.util.function.Supplier;
@@ -83,7 +82,7 @@ class Substring extends AbstractFunction {
                     gen = new StaticValueFunction(ValString.EMPTY).createGenerator();
                 } else {
                     int start = startPos.intValue();
-                    int end = endPos.intValue();
+                    final int end = endPos.intValue();
 
                     if (start < 0) {
                         start = 0;
@@ -102,11 +101,11 @@ class Substring extends AbstractFunction {
     }
 
     private Function parsePosParam(final Param param, final String paramPos) throws ParseException {
-        Function function;
+        final Function function;
         if (param instanceof Function) {
             function = (Function) param;
         } else {
-            Integer pos = ((Val) param).toInteger();
+            final Integer pos = ((Val) param).toInteger();
             if (pos == null) {
                 throw new ParseException("Number expected as " + paramPos + " argument of '" + name + "' function", 0);
             }
@@ -185,8 +184,8 @@ class Substring extends AbstractFunction {
                 return ValErr.INSTANCE;
             }
 
-            int start = startPos;
-            int end = endPos;
+            final int start = startPos;
+            final int end = endPos;
 
             if (start < 0 || end < start || start >= value.length()) {
                 return ValString.EMPTY;

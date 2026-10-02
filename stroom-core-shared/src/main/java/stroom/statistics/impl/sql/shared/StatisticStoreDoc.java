@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,17 @@ package stroom.statistics.impl.sql.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 @Description(
         "Defines a logical statistic store used to hold statistical data of a particular type and " +
@@ -65,7 +60,7 @@ import java.util.Set;
         "enabled",
         "config"})
 @JsonInclude(Include.NON_NULL)
-public class StatisticStoreDoc extends Doc implements StatisticStore {
+public class StatisticStoreDoc extends AbstractDoc implements StatisticStore {
 
     public static final String TYPE = "StatisticStore";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.STATISTIC_STORE_DOCUMENT_TYPE;
@@ -76,30 +71,23 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     public static final String FIELD_NAME_COUNT = "Statistic Count";
     public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
 
-    private static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
+    private static final long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
 
     @JsonProperty("description")
-    private String description;
+    private final String description;
     @JsonProperty("statisticType")
-    private StatisticType statisticType;
+    private final StatisticType statisticType;
     @JsonProperty("rollUpType")
-    private StatisticRollUpType rollUpType;
+    private final StatisticRollUpType rollUpType;
     @JsonProperty("precision")
-    private Long precision;
+    private final Long precision;
     @JsonProperty("enabled")
-    private Boolean enabled;
+    private final Boolean enabled;
     @JsonProperty("config")
-    private StatisticsDataSourceData config;
-
-    public StatisticStoreDoc() {
-        this.statisticType = StatisticType.COUNT;
-        this.rollUpType = StatisticRollUpType.NONE;
-        this.precision = DEFAULT_PRECISION;
-    }
+    private final StatisticsDataSourceData config;
 
     @JsonCreator
-    public StatisticStoreDoc(@JsonProperty("type") final String type,
-                             @JsonProperty("uuid") final String uuid,
+    public StatisticStoreDoc(@JsonProperty("uuid") final String uuid,
                              @JsonProperty("name") final String name,
                              @JsonProperty("version") final String version,
                              @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -112,23 +100,13 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
                              @JsonProperty("precision") final Long precision,
                              @JsonProperty("enabled") final Boolean enabled,
                              @JsonProperty("config") final StatisticsDataSourceData config) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.statisticType = statisticType;
-        this.rollUpType = rollUpType;
-        this.precision = precision;
+        this.statisticType = Objects.requireNonNullElse(statisticType, StatisticType.COUNT);
+        this.rollUpType = Objects.requireNonNullElse(rollUpType, StatisticRollUpType.NONE);
+        this.precision = Objects.requireNonNullElse(precision, DEFAULT_PRECISION);
         this.enabled = enabled;
         this.config = config;
-
-        if (this.statisticType == null) {
-            this.statisticType = StatisticType.COUNT;
-        }
-        if (this.rollUpType == null) {
-            this.rollUpType = StatisticRollUpType.NONE;
-        }
-        if (this.precision == null) {
-            this.precision = DEFAULT_PRECISION;
-        }
     }
 
     /**
@@ -151,125 +129,24 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public StatisticType getStatisticType() {
         return statisticType;
-    }
-
-    public void setStatisticType(final StatisticType statisticType) {
-        this.statisticType = statisticType;
     }
 
     public StatisticRollUpType getRollUpType() {
         return rollUpType;
     }
 
-    public void setRollUpType(final StatisticRollUpType rollUpType) {
-        this.rollUpType = rollUpType;
-    }
-
     public Long getPrecision() {
         return precision;
-    }
-
-    public void setPrecision(final Long precision) {
-        this.precision = precision;
     }
 
     public Boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(final Boolean enabled) {
-        this.enabled = enabled;
-    }
-
     public StatisticsDataSourceData getConfig() {
         return config;
-    }
-
-    public void setConfig(final StatisticsDataSourceData config) {
-        this.config = config;
-    }
-
-    public boolean isValidField(final String fieldName) {
-        if (config == null) {
-            return false;
-        } else if (config.getFields() == null) {
-            return false;
-        } else if (config.getFields().size() == 0) {
-            return false;
-        } else {
-            return config.getFields().contains(new StatisticField(fieldName));
-        }
-    }
-
-    public boolean isRollUpCombinationSupported(final Set<String> rolledUpFieldNames) {
-        if (rolledUpFieldNames == null || rolledUpFieldNames.isEmpty()) {
-            return true;
-        }
-
-        if (getRollUpType().equals(StatisticRollUpType.NONE)) {
-            return false;
-        }
-
-        if (getRollUpType().equals(StatisticRollUpType.ALL)) {
-            return true;
-        }
-
-        // rolledUpFieldNames not empty if we get here
-
-        if (config == null) {
-            throw new RuntimeException("isRollUpCombinationSupported called with non-empty list but data source " +
-                                       "has no statistic fields or custom roll up masks");
-        }
-
-        return config.isRollUpCombinationSupported(rolledUpFieldNames);
-    }
-
-    public Integer getPositionInFieldList(final String fieldName) {
-        return config.getFieldPositionInList(fieldName);
-    }
-
-    @JsonIgnore
-    public List<String> getFieldNames() {
-        if (config != null) {
-            final List<String> fieldNames = new ArrayList<>();
-            for (final StatisticField statisticField : config.getFields()) {
-                fieldNames.add(statisticField.getFieldName());
-            }
-            return fieldNames;
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    @JsonIgnore
-    public int getStatisticFieldCount() {
-        return config == null
-                ? 0
-                : config.getFields().size();
-    }
-
-    @JsonIgnore
-    public List<StatisticField> getStatisticFields() {
-        if (config != null) {
-            return config.getFields();
-        } else {
-            return Collections.emptyList();
-        }
-    }
-
-    @JsonIgnore
-    public Set<CustomRollUpMask> getCustomRollUpMasks() {
-        if (config != null) {
-            return config.getCustomRollUpMasks();
-        } else {
-            return Collections.emptySet();
-        }
     }
 
     @Override
@@ -295,5 +172,89 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, statisticType, rollUpType, precision, enabled, config);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractBuilder<StatisticStoreDoc, Builder> {
+
+        private String description;
+        private StatisticType statisticType = StatisticType.COUNT;
+        private StatisticRollUpType rollUpType = StatisticRollUpType.NONE;
+        private Long precision = DEFAULT_PRECISION;
+        private Boolean enabled;
+        private StatisticsDataSourceData config;
+
+        private Builder() {
+        }
+
+        private Builder(final StatisticStoreDoc elasticIndexDoc) {
+            super(elasticIndexDoc);
+            this.description = elasticIndexDoc.description;
+            this.statisticType = elasticIndexDoc.statisticType;
+            this.rollUpType = elasticIndexDoc.rollUpType;
+            this.precision = elasticIndexDoc.precision;
+            this.enabled = elasticIndexDoc.enabled;
+            this.config = elasticIndexDoc.config;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder statisticType(final StatisticType statisticType) {
+            this.statisticType = statisticType;
+            return self();
+        }
+
+        public Builder rollUpType(final StatisticRollUpType rollUpType) {
+            this.rollUpType = rollUpType;
+            return self();
+        }
+
+        public Builder precision(final Long precision) {
+            this.precision = precision;
+            return self();
+        }
+
+        public Builder enabled(final Boolean enabled) {
+            this.enabled = enabled;
+            return self();
+        }
+
+        public Builder config(final StatisticsDataSourceData config) {
+            this.config = config;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public StatisticStoreDoc build() {
+            return new StatisticStoreDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    statisticType,
+                    rollUpType,
+                    precision,
+                    enabled,
+                    config);
+        }
     }
 }

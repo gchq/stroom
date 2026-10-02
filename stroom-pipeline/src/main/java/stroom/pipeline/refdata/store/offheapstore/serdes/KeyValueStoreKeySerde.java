@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -37,9 +36,6 @@ import java.util.Objects;
 
 public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreKeySerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreKeySerde.class);
-
     private static final int UID_OFFSET = 0;
     private static final int KEY_OFFSET = UID_OFFSET + UID.UID_ARRAY_LENGTH;
 
@@ -49,8 +45,8 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
         // This advances the position to aftet the UID
         final UID uid = UIDSerde.getUid(byteBuffer);
 
-        try (Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
-            String key = input.readString();
+        try (final Input input = new Input(new ByteBufferInputStream(byteBuffer))) {
+            final String key = input.readString();
             byteBuffer.flip();
             return new KeyValueStoreKey(uid, key);
         }
@@ -64,7 +60,7 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
         byteBuffer.put(uidBuffer);
         uidBuffer.rewind();
 
-        try (Output output = new Output(new ByteBufferOutputStream(byteBuffer))) {
+        try (final Output output = new Output(new ByteBufferOutputStream(byteBuffer))) {
             output.writeString(keyValueStoreKey.getKey());
         }
         byteBuffer.flip();
@@ -73,7 +69,7 @@ public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
 
     public void serializeWithoutKeyPart(final ByteBuffer byteBuffer, final KeyValueStoreKey key) {
 
-        int startPos = byteBuffer.position();
+        final int startPos = byteBuffer.position();
 
         serialize(byteBuffer, key);
 

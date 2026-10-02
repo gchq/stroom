@@ -25,6 +25,7 @@ import stroom.pipeline.filter.SafeXMLFilter;
 import stroom.pipeline.filter.XMLFilterContentHandlerAdaptor;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
@@ -73,7 +74,7 @@ public class Sanitiser {
             final TransformerHandler th = XMLUtil.createTransformerHandler(true);
             th.setResult(new StreamResult(writer));
 
-            SAXParser parser;
+            final SAXParser parser;
             try {
                 parser = PARSER_FACTORY.newSAXParser();
             } catch (final ParserConfigurationException e) {
@@ -87,7 +88,8 @@ public class Sanitiser {
 
             final XMLReader xmlReader = parser.getXMLReader();
             xmlReader.setContentHandler(filter);
-            xmlReader.setErrorHandler(new ErrorHandlerAdaptor("XMLReader", locationFactory, new FatalErrorReceiver()));
+            xmlReader.setErrorHandler(new ErrorHandlerAdaptor(
+                    new ElementId("XMLReader"), locationFactory, new FatalErrorReceiver()));
             xmlReader.parse(new InputSource(reader));
 
         } catch (final RuntimeException e) {

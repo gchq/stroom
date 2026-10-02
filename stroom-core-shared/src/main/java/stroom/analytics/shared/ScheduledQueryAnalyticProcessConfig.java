@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
@@ -14,7 +30,7 @@ import java.util.Objects;
 @Deprecated
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
-public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
+public final class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @JsonProperty
     private final boolean enabled;
@@ -33,14 +49,14 @@ public class ScheduledQueryAnalyticProcessConfig extends AnalyticProcessConfig {
 
     @SuppressWarnings({"unused", "checkstyle:LineLength"})
     @JsonCreator
-    public ScheduledQueryAnalyticProcessConfig(@JsonProperty("enabled") final boolean enabled,
+    public ScheduledQueryAnalyticProcessConfig(@JsonProperty("enabled") final Boolean enabled,
                                                @JsonProperty("node") final String node,
                                                @JsonProperty("errorFeed") final DocRef errorFeed,
                                                @JsonProperty("minEventTimeMs") final Long minEventTimeMs,
                                                @JsonProperty("maxEventTimeMs") final Long maxEventTimeMs,
                                                @JsonProperty("timeToWaitForData") final SimpleDuration timeToWaitForData,
                                                @JsonProperty("queryFrequency") final SimpleDuration queryFrequency) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.node = node;
         this.errorFeed = errorFeed;
         this.minEventTimeMs = minEventTimeMs;

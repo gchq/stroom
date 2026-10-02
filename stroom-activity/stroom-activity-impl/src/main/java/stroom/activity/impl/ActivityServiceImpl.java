@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import stroom.activity.api.ActivityService;
 import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
-import stroom.expression.api.DateTimeSettings;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
 import stroom.query.common.v2.FieldProviderImpl;
@@ -28,7 +27,6 @@ import stroom.query.common.v2.SimpleStringExpressionParser.FieldProvider;
 import stroom.query.common.v2.ValueFunctionFactoriesImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -72,12 +70,7 @@ public class ActivityServiceImpl implements ActivityService {
     public Activity create() {
         return securityContext.secureResult(() -> {
             final UserRef userRef = securityContext.getUserRef();
-
-            final Activity activity = Activity.create();
-            activity.setUserRef(userRef);
-
-            AuditUtil.stamp(securityContext, activity);
-
+            final Activity activity = Activity.builder().userRef(userRef).stampAudit(securityContext).build();
             return dao.create(activity);
         });
     }
@@ -102,9 +95,7 @@ public class ActivityServiceImpl implements ActivityService {
             if (!securityContext.getUserRef().equals(activity.getUserRef())) {
                 throw new EntityServiceException("Attempt to update another persons activity");
             }
-
-            AuditUtil.stamp(securityContext, activity);
-            return dao.update(activity);
+            return dao.update(activity.copy().stampAudit(securityContext).build());
         });
     }
 
@@ -154,7 +145,7 @@ public class ActivityServiceImpl implements ActivityService {
                 filteredActivities = expressionPredicateFactory.filterAndSortStream(
                                 allActivities.stream(),
                                 filter, fieldProvider, valueFunctionFactories,
-                                Optional.of(Comparator.comparingInt((Activity activity) -> activity.getId())))
+                                Optional.of(Comparator.comparingInt(Activity::getId)))
                         .toList();
             } else {
                 filteredActivities = allActivities;
@@ -198,7 +189,7 @@ public class ActivityServiceImpl implements ActivityService {
     private List<Activity> getAllUserActivities() {
         // Only find activities for this user
         final UserRef userRef = securityContext.getUserRef();
-        FindActivityCriteria criteria = new FindActivityCriteria();
+        final FindActivityCriteria criteria = new FindActivityCriteria();
         criteria.setUserRef(userRef);
         LOGGER.debug(() -> LogUtil.message("find({}, {})", criteria.getFilter(), criteria.getUserRef()));
         return dao.find(criteria);
@@ -207,7 +198,7 @@ public class ActivityServiceImpl implements ActivityService {
     @Override
     public ActivityValidationResult validate(final Activity activity) {
         boolean valid = true;
-        List<String> messages = new ArrayList<>();
+        final List<String> messages = new ArrayList<>();
 
         final Activity.ActivityDetails activityDetails = activity.getDetails();
         for (final Activity.Prop prop : activityDetails.getProperties()) {
@@ -216,7 +207,7 @@ public class ActivityServiceImpl implements ActivityService {
                 if (value == null) {
                     value = "";
                 }
-                Pattern pattern;
+                final Pattern pattern;
                 try {
                     pattern = Pattern.compile(prop.getValidation(), Pattern.DOTALL);
                     if (!pattern.matcher(value).matches()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.query.api.v2.Result;
-import stroom.query.api.v2.ResultRequest.Fetch;
+import stroom.query.api.Result;
+import stroom.query.api.ResultRequest.Fetch;
 
 public interface ResultComponent {
 

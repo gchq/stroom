@@ -18,6 +18,9 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineProperty;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
@@ -33,12 +36,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class PipelineElementBox extends Box<PipelineElement> {
 
     private static final String BASE_CLASS = "pipelineElementBox";
     private static final String SELECTED_CLASS = BASE_CLASS + "-backgroundSelected";
     private static final String HOTSPOT_CLASS = BASE_CLASS + "-hotspot";
+    private static final String DISABLED_CLASS = BASE_CLASS + "-disabled";
     private static final String SEVERITY_INFO_CLASS = BASE_CLASS + "-severityInfo";
     private static final String SEVERITY_WARN_CLASS = BASE_CLASS + "-severityWarn";
     private static final String SEVERITY_ERROR_CLASS = BASE_CLASS + "-severityError";
@@ -54,18 +59,28 @@ public class PipelineElementBox extends Box<PipelineElement> {
         severityNameToClassMap.put(Severity.FATAL_ERROR.name(), SEVERITY_FATAL_ERROR_CLASS);
     }
 
-    private final PipelineElement pipelineElement;
+    private final PipelineModel pipelineModel;
+    private PipelineElement pipelineElement;
     private final Widget filterIcon;
+    private final Label label;
 
-    public PipelineElementBox(final PipelineElement pipelineElement, final SvgImage icon) {
+    public PipelineElementBox(final PipelineModel pipelineModel,
+                              final PipelineElement pipelineElement,
+                              final SvgImage icon) {
 //        GWT.log("Creating pipe element " + pipelineElement.getId());
+        this.pipelineModel = pipelineModel;
         this.pipelineElement = pipelineElement;
 
         final FlowPanel background = new FlowPanel();
         background.setStyleName(BASE_CLASS + "-background");
 
-        final Label label = new Label(pipelineElement.getId(), false);
+        final String labelText = pipelineElement.getDisplayName();
+        label = new Label(labelText, false);
         label.addStyleName(BASE_CLASS + "-label");
+
+        label.getElement().setAttribute("title", pipelineElement.getDescription() != null
+                ? pipelineElement.getDescription()
+                : "");
 
         if (icon != null) {
             final SimplePanel image = new SimplePanel();
@@ -78,6 +93,28 @@ public class PipelineElementBox extends Box<PipelineElement> {
         }
 
         background.add(label);
+
+        final Optional<PipelineProperty> embeddedProperty = pipelineModel.getProperties(pipelineElement).stream()
+                .filter(Objects::nonNull)
+                .filter(p -> p.getValue() != null && p.getValue().getEntity() != null &&
+                        p.getValue().isEmbedded())
+                .findAny();
+
+        if (embeddedProperty.isPresent()) {
+            final SimplePanel embeddedIcon = new SimplePanel();
+            if (pipelineModel.getPipelineLayer().getPipelineData().getProperties() != null &&
+                pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd() != null &&
+                pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd().contains(
+                        embeddedProperty.get())) {
+                SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.CODE, "svgIcon",
+                        BASE_CLASS + " icon-colour__blue");
+
+            } else {
+                SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.EXPLORER, "svgIcon",
+                        BASE_CLASS + " icon-colour__blue");
+            }
+            background.add(embeddedIcon);
+        }
 
         filterIcon = new SimplePanel();
         SvgImageUtil.setSvgAsInnerHtml(
@@ -102,9 +139,13 @@ public class PipelineElementBox extends Box<PipelineElement> {
         toggleClass(HOTSPOT_CLASS, show);
     }
 
+    public void setDisabled(final boolean disabled) {
+        toggleClass(DISABLED_CLASS, disabled);
+    }
+
     private void updateFilterState() {
 
-        if (pipelineElement != null && pipelineElement.hasActiveFilters()) {
+        if (pipelineElement != null && pipelineModel != null && pipelineModel.hasActiveFilters(pipelineElement)) {
             filterIcon.addStyleName(BASE_CLASS + "-filterOn");
             filterIcon.removeStyleName(BASE_CLASS + "-filterOff");
             filterIcon.setTitle(buildFilterIconTitle());
@@ -116,55 +157,66 @@ public class PipelineElementBox extends Box<PipelineElement> {
     }
 
     private String buildFilterIconTitle() {
-        return NullSafe.get(
-                pipelineElement,
-                PipelineElement::getSteppingFilterSettings,
-                filterSettings -> {
-                    final Severity skipToSeverity = filterSettings.getSkipToSeverity();
-                    final OutputState skipToOutput = filterSettings.getSkipToOutput();
-                    final List<XPathFilter> xPathFilters = NullSafe.list(filterSettings.getFilters());
-                    if (skipToSeverity != null || skipToOutput != null || !xPathFilters.isEmpty()) {
-                        final StringBuilder sb = new StringBuilder();
-                        sb.append("Has active stepping filters:");
+        if (pipelineElement == null || pipelineModel == null || pipelineModel.getStepFilterMap() == null) {
+            return null;
+        }
 
-                        if (skipToSeverity != null) {
-                            sb.append("\n  ")
-                                    .append(BULLET)
-                                    .append(" Jump to ")
-                                    .append(skipToSeverity);
-                        }
+        final SteppingFilterSettings settings = pipelineModel.getStepFilterMap().get(pipelineElement.getId());
+        if (settings == null) {
+            return null;
+        }
 
-                        if (skipToOutput != null) {
-                            final String outputStateStr = OutputState.EMPTY.equals(skipToOutput)
-                                    ? "empty"
-                                    : "non-empty";
+        final Severity skipToSeverity = settings.getSkipToSeverity();
+        final OutputState skipToOutput = settings.getSkipToOutput();
+        final List<XPathFilter> xPathFilters = NullSafe.list(settings.getFilters());
+        if (skipToSeverity != null || skipToOutput != null || !xPathFilters.isEmpty()) {
+            final StringBuilder sb = new StringBuilder();
+            sb.append("Has active stepping filters:");
 
-                            sb.append("\n  ")
-                                    .append(BULLET)
-                                    .append(" Jump to ")
-                                    .append(outputStateStr)
-                                    .append(" output");
-                        }
-                        final int xPathFilterCount = xPathFilters.size();
-                        if (xPathFilterCount == 1) {
-                            sb.append("\n  ")
-                                    .append(BULLET)
-                                    .append(" XPath filter");
-                        } else if (xPathFilterCount > 1) {
-                            sb.append("\n  ")
-                                    .append(BULLET)
-                                    .append(" ")
-                                    .append(xPathFilterCount)
-                                    .append(" XPath filters");
-                        }
-                        return sb.toString();
-                    } else {
-                        return null;
-                    }
-                });
+            if (skipToSeverity != null) {
+                sb.append("\n  ")
+                        .append(BULLET)
+                        .append(" Jump to ")
+                        .append(skipToSeverity);
+            }
+
+            if (skipToOutput != null) {
+                final String outputStateStr = OutputState.EMPTY.equals(skipToOutput)
+                        ? "empty"
+                        : "non-empty";
+
+                sb.append("\n  ")
+                        .append(BULLET)
+                        .append(" Jump to ")
+                        .append(outputStateStr)
+                        .append(" output");
+            }
+            final int xPathFilterCount = xPathFilters.size();
+            if (xPathFilterCount == 1) {
+                sb.append("\n  ")
+                        .append(BULLET)
+                        .append(" XPath filter");
+            } else if (xPathFilterCount > 1) {
+                sb.append("\n  ")
+                        .append(BULLET)
+                        .append(" ")
+                        .append(xPathFilterCount)
+                        .append(" XPath filters");
+            }
+            return sb.toString();
+        }
+
+        return null;
     }
 
-    public void refresh() {
+    public void refresh(final PipelineElement pipelineElement) {
+        this.pipelineElement = pipelineElement;
+        label.setText(pipelineElement.getName() != null
+                ? pipelineElement.getName()
+                : pipelineElement.getId());
+        label.getElement().setAttribute("title", pipelineElement.getDescription() != null
+                ? pipelineElement.getDescription()
+                : "");
         updateFilterState();
     }
 
@@ -205,7 +257,7 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     private void setSeverityHoverTip(final Severity severity) {
         final String namePart = pipelineElement.getType()
-                + " '" + pipelineElement.getId() + "'";
+                                + " '" + pipelineElement.getId() + "'";
         if (severity == null) {
             getElement().setTitle(namePart);
         } else {

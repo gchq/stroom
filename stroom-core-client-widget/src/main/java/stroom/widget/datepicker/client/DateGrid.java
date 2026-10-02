@@ -1,4 +1,20 @@
 /*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -55,7 +71,7 @@ public class DateGrid extends Grid {
         cellList.add(cell);
     }
 
-    public DateCell getCell(int i) {
+    public DateCell getCell(final int i) {
         return cellList.get(i);
     }
 
@@ -64,7 +80,7 @@ public class DateGrid extends Grid {
     }
 
     @Override
-    public void onBrowserEvent(Event event) {
+    public void onBrowserEvent(final Event event) {
         if (event.getTypeInt() == Event.ONKEYDOWN) {
             navigate(event.getKeyCode());
 
@@ -105,10 +121,10 @@ public class DateGrid extends Grid {
         setKeyboardSelectedCell(cellList.indexOf(cell));
     }
 
-    public final void setSelected(DateCell cell) {
+    public final void setSelected(final DateCell cell) {
         setKeyboardSelectedCell(cell);
 
-        DateCell last = selectedCell;
+        final DateCell last = selectedCell;
         selectedCell = cell;
 
         if (last != null) {
@@ -119,11 +135,11 @@ public class DateGrid extends Grid {
         }
     }
 
-    boolean isActive(DateCell cell) {
+    boolean isActive(final DateCell cell) {
         return cell != null && cell.isEnabled();
     }
 
-    public void navigate(int keyCode) {
+    public void navigate(final int keyCode) {
         switch (keyCode) {
             case KeyCodes.KEY_UP: {
                 if (keyboardSelectionIndex >= 7) {

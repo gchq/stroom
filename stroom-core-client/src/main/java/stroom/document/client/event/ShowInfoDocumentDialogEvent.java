@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,16 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.document.client.event;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
+import stroom.docstore.shared.DocAuditEntry;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNodeInfo;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.ResultPage;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -65,8 +65,8 @@ public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialog
         return NullSafe.get(explorerNodeInfo, ExplorerNodeInfo::getExplorerNode, ExplorerNode::getDocRef);
     }
 
-    public DocRefInfo getDocRefInfo() {
-        return explorerNodeInfo.getDocRefInfo();
+    public ResultPage<DocAuditEntry> getAuditEntries() {
+        return explorerNodeInfo.getAuditEntries();
     }
 
     public ExplorerNode getExplorerNode() {

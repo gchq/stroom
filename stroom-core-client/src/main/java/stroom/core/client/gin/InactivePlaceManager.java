@@ -27,26 +27,26 @@ import java.util.List;
 public class InactivePlaceManager implements PlaceManager {
 
     @Override
-    public void fireEvent(GwtEvent<?> event) {
+    public void fireEvent(final GwtEvent<?> event) {
     }
 
     @Override
-    public String buildHistoryToken(PlaceRequest request) {
+    public String buildHistoryToken(final PlaceRequest request) {
         return null;
     }
 
     @Override
-    public String buildRelativeHistoryToken(int level) {
+    public String buildRelativeHistoryToken(final int level) {
         return null;
     }
 
     @Override
-    public String buildRelativeHistoryToken(PlaceRequest request) {
+    public String buildRelativeHistoryToken(final PlaceRequest request) {
         return null;
     }
 
     @Override
-    public String buildRelativeHistoryToken(PlaceRequest request, int level) {
+    public String buildRelativeHistoryToken(final PlaceRequest request, final int level) {
         return null;
     }
 
@@ -61,11 +61,11 @@ public class InactivePlaceManager implements PlaceManager {
     }
 
     @Override
-    public void getTitle(int index, SetPlaceTitleHandler handler) throws IndexOutOfBoundsException {
+    public void getTitle(final int index, final SetPlaceTitleHandler handler) throws IndexOutOfBoundsException {
     }
 
     @Override
-    public void getCurrentTitle(SetPlaceTitleHandler handler) {
+    public void getCurrentTitle(final SetPlaceTitleHandler handler) {
     }
 
     @Override
@@ -83,7 +83,7 @@ public class InactivePlaceManager implements PlaceManager {
     }
 
     @Override
-    public void updateHistory(PlaceRequest request, boolean updateBrowserUrl) {
+    public void updateHistory(final PlaceRequest request, final boolean updateBrowserUrl) {
     }
 
     @Override
@@ -95,39 +95,39 @@ public class InactivePlaceManager implements PlaceManager {
     }
 
     @Override
-    public void revealErrorPlace(String invalidHistoryToken) {
+    public void revealErrorPlace(final String invalidHistoryToken) {
     }
 
     @Override
-    public void revealUnauthorizedPlace(String unauthorizedHistoryToken) {
+    public void revealUnauthorizedPlace(final String unauthorizedHistoryToken) {
     }
 
     @Override
-    public void setOnLeaveConfirmation(String question) {
+    public void setOnLeaveConfirmation(final String question) {
     }
 
     @Override
-    public void revealPlace(PlaceRequest request) {
+    public void revealPlace(final PlaceRequest request) {
     }
 
     @Override
-    public void revealPlace(PlaceRequest request, boolean updateBrowserUrl) {
+    public void revealPlace(final PlaceRequest request, final boolean updateBrowserUrl) {
     }
 
     @Override
-    public void revealPlaceHierarchy(List<PlaceRequest> placeRequestHierarchy) {
+    public void revealPlaceHierarchy(final List<PlaceRequest> placeRequestHierarchy) {
     }
 
     @Override
-    public void revealRelativePlace(int level) {
+    public void revealRelativePlace(final int level) {
     }
 
     @Override
-    public void revealRelativePlace(PlaceRequest request) {
+    public void revealRelativePlace(final PlaceRequest request) {
     }
 
     @Override
-    public void revealRelativePlace(PlaceRequest request, int level) {
+    public void revealRelativePlace(final PlaceRequest request, final int level) {
     }
 
     @Override

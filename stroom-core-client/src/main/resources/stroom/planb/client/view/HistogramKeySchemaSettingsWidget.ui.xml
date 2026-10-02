@@ -1,0 +1,21 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:i="urn:import:stroom.item.client">
+    <g:FlowPanel styleName="max form">
+        <form:FormGroup label="Key Type"
+                        helpText="Choose the data type to use for the key.">
+            <i:SelectionBox ui:field="keyType" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Hash Length"
+                        helpText="When using a hashing key type how long should the hash be?">
+            <i:SelectionBox ui:field="hashLength" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <form:FormGroup label="Temporal Resolution"
+                        helpText="The temporal resolution of histogram data points?">
+            <i:SelectionBox ui:field="temporalResolution" addStyleNames="allow-focus"/>
+        </form:FormGroup>
+        <g:SimplePanel ui:field="timeZone" addStyleNames="form-group"/>
+    </g:FlowPanel>
+</ui:UiBinder>

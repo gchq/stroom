@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -25,110 +25,56 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlTransient;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.Objects;
 
-/**
- * <p>
- * Java class for Element complex type.
- * <p>
- * <p>
- * The following schema fragment specifies the expected content contained within
- * this class.
- * <p>
- * <pre>
- * &lt;complexType name="Element">
- *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
- *       &lt;sequence>
- *         &lt;element name="id" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *         &lt;element name="type" type="{http://www.w3.org/2001/XMLSchema}string"/>
- *       &lt;/sequence>
- *     &lt;/restriction>
- *   &lt;/complexContent>
- * &lt;/complexType>
- * </pre>
- */
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "Element", propOrder = {"id", "type"})
 @JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder({"elementType", "source", "id", "type"})
+@JsonPropertyOrder({"id", "type", "name", "description"})
 public class PipelineElement implements Comparable<PipelineElement> {
 
-    @XmlTransient
-    @JsonProperty
-    private PipelineElementType elementType;
-
-    @XmlElement(required = true)
     @JsonProperty
     private String id;
-    @XmlElement(required = true)
     @JsonProperty
     private String type;
+    @JsonProperty
+    private String name;
+    @JsonProperty
+    private String description;
 
-    // Only used in the UI to filter stepping. Not persisted.
-    @XmlTransient
-    @JsonIgnore
-    private SteppingFilterSettings steppingFilterSettings = null;
-
-    public PipelineElement() {
-    }
-
-    public PipelineElement(final String id, final String type) {
-        this.id = id;
-        this.type = type;
+    public PipelineElement(final String id,
+                           final String type) {
+        this(id, type, null, null);
     }
 
     @JsonCreator
-    public PipelineElement(@JsonProperty("elementType") final PipelineElementType elementType,
-                           @JsonProperty("id") final String id,
-                           @JsonProperty("type") final String type) {
-        this.elementType = elementType;
+    public PipelineElement(
+            @JsonProperty("id") final String id,
+            @JsonProperty("type") final String type,
+            @JsonProperty("name") final String name,
+            @JsonProperty("description") final String description) {
         this.id = id;
         this.type = type;
+        this.name = name;
+        this.description = description;
     }
 
-    public PipelineElementType getElementType() {
-        return elementType;
-    }
-
-    public void setElementType(final PipelineElementType elementType) {
-        this.elementType = elementType;
+    public PipelineElement() {
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(final String value) {
-        this.id = value;
-    }
-
     public String getType() {
         return type;
     }
 
-    public void setType(final String value) {
-        this.type = value;
+    public String getName() {
+        return name;
     }
 
-    @JsonIgnore
-    public void setSteppingFilterSettings(final SteppingFilterSettings steppingFilterSettings) {
-        this.steppingFilterSettings = steppingFilterSettings;
-    }
-
-    @JsonIgnore
-    public SteppingFilterSettings getSteppingFilterSettings() {
-        return steppingFilterSettings;
-    }
-
-    public boolean hasActiveFilters() {
-        return NullSafe.test(steppingFilterSettings, SteppingFilterSettings::hasActiveFilters);
+    public String getDescription() {
+        return description;
     }
 
     @Override
@@ -136,6 +82,16 @@ public class PipelineElement implements Comparable<PipelineElement> {
         return id.compareTo(o.id);
     }
 
+    /**
+     * Elements are equal if they identify the same node in the pipeline graph, i.e. they have the
+     * same id and type. Name and description are deliberately excluded: elements are used as map
+     * keys and lookup values throughout the client (child/parent maps, tree selection, the canonical
+     * {@code PipelineModel.SOURCE_ELEMENT} constant), all of which must keep matching an element
+     * whose name or description has since been edited.
+     * <p>
+     * Use {@link #contentEquals(PipelineElement, PipelineElement)} to test whether two elements hold
+     * the same values, e.g. when deciding if a document has unsaved changes.
+     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -146,12 +102,38 @@ public class PipelineElement implements Comparable<PipelineElement> {
         }
         final PipelineElement that = (PipelineElement) o;
         return id.equals(that.id) &&
-                type.equals(that.type);
+               type.equals(that.type);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(id, type);
+    }
+
+    /**
+     * Tests whether two elements hold the same values, including name and description, unlike
+     * {@link #equals(Object)} which tests identity within the pipeline graph.
+     */
+    public static boolean contentEquals(final PipelineElement element, final PipelineElement other) {
+        if (element == other) {
+            return true;
+        }
+        if (element == null || other == null) {
+            return false;
+        }
+        return Objects.equals(element.id, other.id) &&
+               Objects.equals(element.type, other.type) &&
+               Objects.equals(element.name, other.name) &&
+               Objects.equals(element.description, other.description);
+    }
+
+    /**
+     * @see #contentEquals(PipelineElement, PipelineElement)
+     */
+    public static int contentHashCode(final PipelineElement element) {
+        return element == null
+                ? 0
+                : Objects.hash(element.id, element.type, element.name, element.description);
     }
 
     @Override
@@ -161,10 +143,49 @@ public class PipelineElement implements Comparable<PipelineElement> {
 
     /**
      * E.g.
-     * <pre>{@code CombinedParser 'myCombinedParser'}</pre>
+     * <pre>{@code 'myCombinedParser'}</pre>
      */
     @JsonIgnore
     public String getDisplayName() {
-        return type + " '" + id + "'";
+        return !NullSafe.isBlankString(name)
+                ? name
+                : id;
+    }
+
+    @JsonIgnore
+    public ElementId getElementId() {
+        return new ElementId(id, name);
+    }
+
+    public static class Builder {
+
+        private String id;
+        private String type;
+        private String name;
+        private String description;
+
+        public Builder id(final String id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder type(final String type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder name(final String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return this;
+        }
+
+        public PipelineElement build() {
+            return new PipelineElement(id, type, name, description);
+        }
     }
 }

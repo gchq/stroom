@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.extraction;
 
 import stroom.data.store.api.DataException;
@@ -9,9 +25,11 @@ import stroom.pipeline.PipelineStore;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
 import stroom.query.common.v2.Coprocessors;
+import stroom.query.common.v2.RerankScoringFilter;
+import stroom.query.common.v2.RerankScoringFilterFactory;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
 import stroom.query.language.functions.FieldIndex;
@@ -33,10 +51,13 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import jakarta.inject.Provider;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,7 +82,6 @@ public class ExtractionDecorator {
     private final TaskContextFactory taskContextFactory;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final SecurityContext securityContext;
-    private final AnnotationsDecoratorFactory receiverDecoratorFactory;
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final PipelineDataCache pipelineDataCache;
@@ -69,11 +89,13 @@ public class ExtractionDecorator {
     private final Provider<QueryInfoHolder> queryInfoHolderProvider;
     private final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider;
     private final QueryKey queryKey;
+    private final RerankScoringFilterFactory rerankScoringFilterFactory;
 
     private final Map<DocRef, PipelineData> pipelineDataMap = new ConcurrentHashMap<>();
     private final StreamEventMap streamEventMap;
     private final StoredDataQueue storedDataQueue;
     private final Map<DocRef, Receiver> receivers;
+    private final List<RerankScoringFilter> rerankScoringFilterList = new ArrayList<>();
 
     private DocRef dataSource;
 
@@ -83,21 +105,20 @@ public class ExtractionDecorator {
                         final TaskContextFactory taskContextFactory,
                         final PipelineScopeRunnable pipelineScopeRunnable,
                         final SecurityContext securityContext,
-                        final AnnotationsDecoratorFactory receiverDecoratorFactory,
                         final MetaService metaService,
                         final PipelineStore pipelineStore,
                         final PipelineDataCache pipelineDataCache,
                         final Provider<ExtractionTaskHandler> handlerProvider,
                         final Provider<QueryInfoHolder> queryInfoHolderProvider,
                         final Provider<FieldListConsumerHolder> fieldListConsumerHolderProvider,
-                        final QueryKey queryKey) {
+                        final QueryKey queryKey,
+                        final RerankScoringFilterFactory rerankScoringFilterFactory) {
         this.fieldValueExtractorFactory = fieldValueExtractorFactory;
         this.extractionConfig = extractionConfig;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
         this.securityContext = securityContext;
-        this.receiverDecoratorFactory = receiverDecoratorFactory;
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.pipelineDataCache = pipelineDataCache;
@@ -105,6 +126,7 @@ public class ExtractionDecorator {
         this.queryInfoHolderProvider = queryInfoHolderProvider;
         this.fieldListConsumerHolderProvider = fieldListConsumerHolderProvider;
         this.queryKey = queryKey;
+        this.rerankScoringFilterFactory = rerankScoringFilterFactory;
 
         // Create a queue to receive values and store them for asynchronous processing.
         streamEventMap = new StreamEventMap(extractionConfig.getMaxStreamEventMapSize());
@@ -126,16 +148,27 @@ public class ExtractionDecorator {
             final FieldIndex fieldIndex = coprocessors.getFieldIndex();
 
             // Create a receiver that will send data to all coprocessors.
-            ValuesConsumer valuesConsumer;
+            final ValuesConsumer valuesConsumer;
             if (coprocessorSet.size() == 1) {
                 valuesConsumer = coprocessorSet.iterator().next();
             } else {
                 valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.accept(values));
             }
 
-            // Decorate result with annotations.
-            valuesConsumer = receiverDecoratorFactory.create(valuesConsumer, fieldIndex, query);
-            receivers.put(docRef, new Receiver(fieldIndex, valuesConsumer));
+            // Insert rerank scoring filter.
+            final Optional<RerankScoringFilter> optionalRerankScoringFilter = rerankScoringFilterFactory.create(
+                    query.getDataSource(),
+                    query.getExpression(),
+                    fieldIndex,
+                    valuesConsumer,
+                    coprocessors.getErrorConsumer());
+            optionalRerankScoringFilter.ifPresent(rerankScoringFilterList::add);
+            final ValuesConsumer consumer = optionalRerankScoringFilter
+                    .map(rerankScoringFilter -> (ValuesConsumer) rerankScoringFilter)
+                    .orElse(valuesConsumer);
+
+            // Add the receiver.
+            receivers.put(docRef, new Receiver(fieldIndex, consumer));
         });
 
         // Set the delay to use for extraction of each stream.
@@ -180,16 +213,16 @@ public class ExtractionDecorator {
                             } else {
                                 // Poll for the next set of values.
                                 // When we get null we are done.
-                                Val[] values = storedDataQueue.take();
+                                final Val[] values = storedDataQueue.take();
                                 if (values == null) {
                                     done = true;
                                 } else {
                                     try {
                                         info(taskContext, () ->
                                                 "Creating extraction tasks - stored data queue size: " +
-                                                        storedDataQueue.size() +
-                                                        " stream event map size: " +
-                                                        streamEventMap.size());
+                                                storedDataQueue.size() +
+                                                " stream event map size: " +
+                                                streamEventMap.size());
 
                                         // If we have some values then map them.
                                         SearchProgressLog.increment(queryKey,
@@ -260,7 +293,19 @@ public class ExtractionDecorator {
             futures[i] = CompletableFuture.runAsync(() ->
                     extractData(parentContext, queryKey, extractionCount, errorConsumer), executor);
         }
-        return CompletableFuture.allOf(futures);
+
+        // If we are not reranking then just deliver a completable future to cover extraction processes.
+        if (rerankScoringFilterList.isEmpty()) {
+            return CompletableFuture.allOf(futures);
+        }
+
+        // If we are doing rerank scoring then ensure a final scoring is done after completion.
+        return CompletableFuture.runAsync(() -> {
+            // Wait for all extractions to complete before stopping rerank.
+            CompletableFuture.allOf(futures).join();
+            // Stop rerank.
+            rerankScoringFilterList.forEach(RerankScoringFilter::close);
+        }, executor);
     }
 
     private void extractData(final TaskContext parentContext,
@@ -318,7 +363,7 @@ public class ExtractionDecorator {
         // Sort events if we are performing extraction.
         final long[] eventIds;
         if (receivers.size() > 1 ||
-                (receivers.size() == 1 && receivers.keySet().iterator().next() != null)) {
+            (receivers.size() == 1 && receivers.keySet().iterator().next() != null)) {
             eventIds = events.stream().mapToLong(Event::getEventId).sorted().toArray();
         } else {
             eventIds = null;
@@ -410,7 +455,7 @@ public class ExtractionDecorator {
                 // Something went wrong extracting data from this stream.
                 final ExtractionException extractionException =
                         new ExtractionException("Unable to extract data from stream source with id: " +
-                                streamId + " - " + e.getMessage(), e);
+                                                streamId + " - " + e.getMessage(), e);
                 errorConsumer.add(extractionException);
             }
         }
@@ -424,7 +469,8 @@ public class ExtractionDecorator {
             }
 
             // Get the translation that will be used to display results.
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            final PipelineDoc pipelineDoc = securityContext.useAsReadResult(() ->
+                    pipelineStore.readDocument(pipelineRef));
             if (pipelineDoc == null) {
                 throw new ExtractionException("Unable to find result pipeline: " + pipelineRef);
             }

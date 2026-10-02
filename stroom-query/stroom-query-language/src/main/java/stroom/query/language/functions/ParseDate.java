@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@ package stroom.query.language.functions;
 
 import stroom.query.language.functions.FormatterCache.Mode;
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.query.language.token.Param;
 import stroom.util.shared.NullSafe;
 
 import java.text.ParseException;
@@ -31,7 +30,7 @@ import java.util.function.Supplier;
 @FunctionDef(
         name = ParseDate.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonReturnType = ValLong.class,
+        commonReturnType = ValDate.class,
         commonReturnDescription = "The date as number of milliseconds since the epoch.",
         signatures = {
                 @FunctionSignature(

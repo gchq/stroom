@@ -1,7 +1,23 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.core.meta;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
 import stroom.index.shared.IndexShardFields;
 import stroom.index.shared.LuceneIndexDoc;
@@ -17,13 +33,15 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.Suggestions;
 import stroom.security.api.SecurityContext;
 import stroom.suggestions.api.SuggestionsService;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
+import stroom.util.shared.NullSafe;
 
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.constraints.NotNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +54,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,9 +69,10 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
     private final FeedStore feedStore;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final TaskContextFactory taskContextFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final Executor executor;
 
     // This may need changing if we have suggestions that are not for the stream store data source
     private final Map<String, Function<String, List<String>>> metaFieldNameToFunctionMap = Map.of(
@@ -81,16 +101,18 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
                                     final SecurityContext securityContext,
                                     final FeedStore feedStore,
                                     final TaskContextFactory taskContextFactory,
-                                    final DocRefInfoService docRefInfoService,
+                                    final DocFinder docFinder,
                                     final SuggestionsService suggestionsService,
-                                    final ExpressionPredicateFactory expressionPredicateFactory) {
+                                    final ExpressionPredicateFactory expressionPredicateFactory,
+                                    final ExecutorProvider executorProvider) {
         this.metaService = metaService;
         this.pipelineStore = pipelineStore;
         this.securityContext = securityContext;
         this.feedStore = feedStore;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.taskContextFactory = taskContextFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.executor = executorProvider.get();
     }
 
     @Override
@@ -170,7 +192,7 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
         final CompletableFuture<Set<String>> metaFeedsFuture = CompletableFuture.supplyAsync(
                 taskContextFactory.contextResult(
                         "Get meta feed names",
-                        taskContext -> metaService.getFeeds()));
+                        taskContext -> metaService.getFeeds()), executor);
 
         final CompletableFuture<List<String>> docFeedsFuture = CompletableFuture.supplyAsync(
                 taskContextFactory.contextResult(
@@ -179,25 +201,27 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
                                 feedStore.list()
                                         .stream()
                                         .map(DocRef::getName)
-                                        .collect(Collectors.toList())));
+                                        .collect(Collectors.toList())), executor);
 
         try {
             // Make async calls to get the two lists then combine
             return expressionPredicateFactory.filterAndSortStream(
-                            metaFeedsFuture.thenCombine(docFeedsFuture, (metaFeedNames, docFeedNames) -> Stream
-                                            .concat(metaFeedNames.stream(), docFeedNames.stream())
-                                            .parallel()
-                                            .distinct())
+                            metaFeedsFuture.thenCombine(
+                                            docFeedsFuture,
+                                            (metaFeedNames, docFeedNames) ->
+                                                    Stream.concat(metaFeedNames.stream(), docFeedNames.stream())
+                                                            .parallel()
+                                                            .distinct())
                                     .get(),
                             userInput,
                             Optional.of(Comparator.naturalOrder()))
                     .limit(LIMIT)
                     .toList();
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
             Thread.currentThread().interrupt();
             LOGGER.error("Thread interrupted", e);
             return Collections.emptyList();
-        } catch (ExecutionException e) {
+        } catch (final ExecutionException e) {
             throw new RuntimeException("Error getting feed name suggestions: " + e.getMessage(), e);
         }
     }
@@ -212,8 +236,13 @@ public class MetaSuggestionsQueryHandlerImpl implements MetaSuggestionsQueryHand
 
     private List<String> getNonUniqueDocRefNames(final String docRefType,
                                                  final String userInput) {
-        return expressionPredicateFactory.filterAndSortStream(docRefInfoService
-                                .findByType(docRefType)
+        String nameFilter = "*";
+        if (NullSafe.isNonBlankString(userInput)) {
+            nameFilter = userInput + "*";
+        }
+        final List<DocRef> docRefs = docFinder.findByName(docRefType, nameFilter, true);
+
+        return expressionPredicateFactory.filterAndSortStream(docRefs
                                 .stream()
                                 .map(DocRef::getName),
                         userInput,

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.job.impl;
 
 import stroom.cluster.impl.MockClusterNodeManager;
@@ -59,9 +75,23 @@ class TestDistributedTaskFetcher extends StroomUnitTest {
             final String jobName = "MY_DISTRIBUTED_JOB";
             final String nodeName = "NODE_NAME";
             final String frequency = "10s";
-            final Job job = new Job(1, true, jobName, false);
-            final JobNode jobNode =
-                    new JobNode(1, nodeName, job, 100, JobType.DISTRIBUTED, frequency, true);
+            final Job job = Job
+                    .builder()
+                    .id(1)
+                    .enabled(true)
+                    .description(jobName)
+                    .advanced(false)
+                    .build();
+            final JobNode jobNode = JobNode
+                    .builder()
+                    .id(1)
+                    .nodeName(nodeName)
+                    .job(job)
+                    .taskLimit(100)
+                    .jobType(JobType.DISTRIBUTED)
+                    .schedule(frequency)
+                    .enabled(true)
+                    .build();
             final JobNodeTracker jobNodeTracker = new JobNodeTracker(jobNode);
             final SimpleScheduleExec scheduler = new SimpleScheduleExec(new FrequencyTrigger(frequency));
             final JobNodeTrackerCache jobNodeTrackerCache = () -> new JobNodeTrackers() {

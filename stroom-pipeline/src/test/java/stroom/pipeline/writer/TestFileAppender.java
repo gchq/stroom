@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ class TestFileAppender extends StroomUnitTest {
     private static final byte[] data = "__data__".getBytes(StandardCharsets.UTF_8);
 
     @Test
-    void testZip(@TempDir Path tempDir) throws IOException {
+    void testZip(@TempDir final Path tempDir) throws IOException {
         final FileAppender provider = createZipAppender(tempDir);
 
         provider.startProcessing();
@@ -82,7 +82,7 @@ class TestFileAppender extends StroomUnitTest {
     }
 
     @Test
-    void testGZip(@TempDir Path tempDir) throws IOException, CompressorException {
+    void testGZip(@TempDir final Path tempDir) throws IOException, CompressorException {
         final FileAppender provider = createGZipAppender(tempDir);
 
         provider.startProcessing();

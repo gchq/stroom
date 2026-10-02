@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -38,9 +37,6 @@ import java.util.Objects;
  */
 public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
-
     public static final int UID_OFFSET = 0;
     public static final int RANGE_FROM_OFFSET = UID_OFFSET + UID.UID_ARRAY_LENGTH;
     public static final int RANGE_TO_OFFSET = RANGE_FROM_OFFSET + Long.BYTES;
@@ -62,8 +58,8 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
         // advance the position now we have a dup of the UID portion
         byteBuffer.position(byteBuffer.position() + UID.UID_ARRAY_LENGTH);
 
-        long rangeFromInc = byteBuffer.getLong();
-        long rangeToExc = byteBuffer.getLong();
+        final long rangeFromInc = byteBuffer.getLong();
+        final long rangeToExc = byteBuffer.getLong();
         byteBuffer.flip();
 
         return new RangeStoreKey(mapUid, new Range<>(rangeFromInc, rangeToExc));
@@ -93,7 +89,7 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
 //        uidPartBuffer.limit(UID.UID_ARRAY_LENGTH);
 
         if (ByteBufferUtils.containsPrefix(byteBuffer, mapDefinitionUid.getBackingBuffer())) {
-            long rangeFromInc = byteBuffer.getLong(RANGE_FROM_OFFSET);
+            final long rangeFromInc = byteBuffer.getLong(RANGE_FROM_OFFSET);
 
             if (key >= rangeFromInc) {
                 final long rangeToExc = byteBuffer.getLong(RANGE_TO_OFFSET);

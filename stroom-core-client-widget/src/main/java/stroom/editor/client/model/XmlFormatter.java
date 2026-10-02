@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,7 +325,7 @@ public class XmlFormatter {
         // Find the start bracket.
         int start = -1;
         for (int i = pos; i < arr.length && start == -1; i++) {
-            char c = arr[i];
+            final char c = arr[i];
             if (c == '<') {
                 start = i;
             }
@@ -334,7 +334,7 @@ public class XmlFormatter {
         // Find the element type.
         boolean inAttValue = false;
         for (int i = start; i < arr.length; i++) {
-            char c = arr[i];
+            final char c = arr[i];
 
             if (!isWhitespace(c)) {
                 sb.append(c);
@@ -386,7 +386,7 @@ public class XmlFormatter {
     private char back(final int len) {
         int index = pos - len;
         while (index >= 0) {
-            char c = arr[index];
+            final char c = arr[index];
             if (isWhitespace(c)) {
                 index--;
             } else {
@@ -410,7 +410,7 @@ public class XmlFormatter {
     private char forward(final int len) {
         int index = pos + len;
         while (index < arr.length) {
-            char c = arr[index];
+            final char c = arr[index];
             if (isWhitespace(c)) {
                 index++;
             } else {

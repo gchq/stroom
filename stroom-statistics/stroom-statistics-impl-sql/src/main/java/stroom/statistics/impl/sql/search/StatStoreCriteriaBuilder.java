@@ -1,11 +1,27 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.statistics.impl.sql.search;
 
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionItem;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
-import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionItem;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.common.v2.DateExpressionParser;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
@@ -57,7 +73,8 @@ public class StatStoreCriteriaBuilder {
         // ensure the value field is not used in the query terms
         if (contains(expression, StatisticStoreDoc.FIELD_NAME_VALUE)) {
             throw RestUtil.badRequest("Search queries containing the field '"
-                    + StatisticStoreDoc.FIELD_NAME_VALUE + "' are not supported.  Please remove it from the query");
+                                      + StatisticStoreDoc.FIELD_NAME_VALUE +
+                                      "' are not supported.  Please remove it from the query");
         }
 
         // if we have got here then we have a single BETWEEN date term, so parse
@@ -86,10 +103,11 @@ public class StatStoreCriteriaBuilder {
                 throw RestUtil.badRequest(
                         "Query contains rolled up terms but the Statistic Data Source does not support any roll-ups");
             } else if (dataSource.getRollUpType().equals(StatisticRollUpType.CUSTOM)) {
-                if (!dataSource.isRollUpCombinationSupported(rolledUpFieldNames)) {
+                if (!StatisticStoreDocUtil.isRollUpCombinationSupported(dataSource, rolledUpFieldNames)) {
                     throw RestUtil.badRequest(String.format("The query contains a combination of rolled up " +
-                            "fields %s that is not in the list of custom roll-ups for the statistic data " +
-                            "source", rolledUpFieldNames));
+                                                            "fields %s that is not in the list of custom roll-ups " +
+                                                            "for the statistic data " +
+                                                            "source", rolledUpFieldNames));
                 }
             }
         }

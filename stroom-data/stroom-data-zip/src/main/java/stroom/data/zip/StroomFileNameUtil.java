@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.zip;
 
 import stroom.meta.api.AttributeMap;
@@ -36,8 +52,12 @@ public final class StroomFileNameUtil {
 
     public static String getIdPath(final long id) {
         final String idString = StringIdUtil.idToString(id);
-        final String path = idToPathId(idString) + PATH_SEPARATOR + idString;
-        return clean(path);
+        // idString is zero-padded digits so needs no cleaning; just avoid a leading separator when there is
+        // no pathId prefix (ids < 1000).
+        final String pathId = idToPathId(idString);
+        return pathId.isEmpty()
+                ? idString
+                : pathId + PATH_SEPARATOR + idString;
     }
 
     public static String idToPathId(final String id) {
@@ -59,12 +79,19 @@ public final class StroomFileNameUtil {
      * @param path The path to clean.
      * @return A cleaned path.
      */
-    private static String clean(String path) {
+    private static String clean(final String path) {
         final StringBuilder sb = new StringBuilder();
         final String[] parts = path.split(PATH_SEPARATOR_STRING);
         for (final String part : parts) {
             if (part.length() > 0) {
-                sb.append(cleanPart(part));
+                String cleaned = cleanPart(part);
+                // '.'/'..' are pure-traversal segments (cleanPart's allow-list permits '.'); neutralise them so
+                // the cleaned path cannot escape upward once resolved, as substituted values (e.g. feed or
+                // stream type names) may be user-supplied.
+                if (".".equals(cleaned) || "..".equals(cleaned)) {
+                    cleaned = String.valueOf(INVALID_CHAR_REPLACEMENT);
+                }
+                sb.append(cleaned);
                 sb.append("/");
             }
         }
@@ -80,7 +107,7 @@ public final class StroomFileNameUtil {
      * @param part The part of the path to clean.
      * @return A cleaned path part.
      */
-    private static String cleanPart(String part) {
+    private static String cleanPart(final String part) {
         final char[] in = part.toCharArray();
         final char[] out = new char[in.length];
         int outIndex = 0;
@@ -139,13 +166,13 @@ public final class StroomFileNameUtil {
             }
         }
 
-        // Clean the path.
+        // Clean the path (also neutralises '.'/'..' traversal parts from user-supplied substituted values).
         path = clean(path);
 
         // Append file extensions.
         if (fileExtensions != null) {
             final StringBuilder sb = new StringBuilder(path);
-            for (String extension : fileExtensions) {
+            for (final String extension : fileExtensions) {
                 if (extension != null) {
                     sb.append(extension);
                 }

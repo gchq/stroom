@@ -17,7 +17,7 @@
 package stroom.data.retention.shared;
 
 import stroom.docref.DocRef;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeGroup;
 import stroom.svg.shared.SvgImage;
@@ -29,10 +29,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 
 import java.util.List;
 import java.util.Objects;
@@ -49,10 +45,7 @@ import java.util.stream.Collectors;
         "updateUser",
         "rules"})
 @JsonInclude(Include.NON_NULL)
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
-@XmlRootElement(name = "dataRetentionPolicy")
-public class DataRetentionRules extends Doc {
+public class DataRetentionRules extends AbstractDoc {
 
     public static final String TYPE = "DataRetentionRules";
     public static final DocumentType DOCUMENT_TYPE = new DocumentType(
@@ -62,18 +55,10 @@ public class DataRetentionRules extends Doc {
             SvgImage.DOCUMENT_RECEIVE_DATA_RULE_SET);
 
     @JsonProperty
-    private List<DataRetentionRule> rules;
-
-    public DataRetentionRules() {
-    }
-
-    public DataRetentionRules(final List<DataRetentionRule> rules) {
-        this.rules = rules;
-    }
+    private final List<DataRetentionRule> rules;
 
     @JsonCreator
-    public DataRetentionRules(@JsonProperty("type") final String type,
-                              @JsonProperty("uuid") final String uuid,
+    public DataRetentionRules(@JsonProperty("uuid") final String uuid,
                               @JsonProperty("name") final String name,
                               @JsonProperty("version") final String version,
                               @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -81,7 +66,7 @@ public class DataRetentionRules extends Doc {
                               @JsonProperty("createUser") final String createUser,
                               @JsonProperty("updateUser") final String updateUser,
                               @JsonProperty("rules") final List<DataRetentionRule> rules) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.rules = rules;
     }
 
@@ -112,10 +97,6 @@ public class DataRetentionRules extends Doc {
                 .collect(Collectors.toList());
     }
 
-    public void setRules(final List<DataRetentionRule> rules) {
-        this.rules = rules;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -134,6 +115,54 @@ public class DataRetentionRules extends Doc {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), rules);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder
+            extends AbstractBuilder<DataRetentionRules, Builder> {
+
+        private List<DataRetentionRule> rules;
+
+        private Builder() {
+        }
+
+        private Builder(final DataRetentionRules dataRetentionRules) {
+            super(dataRetentionRules);
+            this.rules = dataRetentionRules.rules;
+        }
+
+        public Builder rules(final List<DataRetentionRule> rules) {
+            this.rules = rules;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public DataRetentionRules build() {
+            return new DataRetentionRules(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    rules);
+        }
     }
 }
 

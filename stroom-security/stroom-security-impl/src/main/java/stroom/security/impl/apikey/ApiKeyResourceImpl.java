@@ -1,22 +1,42 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.impl.apikey;
 
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.security.api.exception.AuthenticationException;
 import stroom.security.shared.ApiKeyResource;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
+import stroom.security.shared.VerifyApiKeyRequest;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.StringUtil;
+import stroom.util.shared.UserDesc;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 
 import java.util.Collection;
+import java.util.Objects;
 
 @AutoLogged()
 public class ApiKeyResourceImpl implements ApiKeyResource {
@@ -54,8 +74,8 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
             if (!didDelete) {
                 throw new RuntimeException("No API Key found with ID " + id);
             }
-            return didDelete;
-        } catch (Exception e) {
+            return true;
+        } catch (final Exception e) {
             LOGGER.debug(() -> LogUtil.message("Error deleting API key with ID {}: {}",
                     id, LogUtil.exceptionMessage(e)));
             throw e;
@@ -81,5 +101,23 @@ public class ApiKeyResourceImpl implements ApiKeyResource {
     @Override
     public ResultPage<HashedApiKey> find(final FindApiKeyCriteria criteria) {
         return apiKeyServiceProvider.get().find(criteria);
+    }
+
+    @Override
+    public UserDesc verifyApiKey(final VerifyApiKeyRequest request) {
+        LOGGER.debug("verifyApiKey() - request: {}", request);
+        Objects.requireNonNull(request);
+        // Null return is mapped to 204 status
+        UserDesc userDesc = null;
+        try {
+            userDesc = apiKeyServiceProvider.get().verifyApiKey(request)
+                    .orElse(null);
+        } catch (final AuthenticationException e) {
+            // Swallow an authentication exception as we just want to return null
+            LOGGER.debug("verifyApiKey() - request: {}, e: {} (TRACE for stacktrace)", request, e.getMessage());
+            LOGGER.trace("verifyApiKey() - request: {}, e: {}", request, e.getMessage(), e);
+        }
+        LOGGER.debug("verifyApiKey() - Returning userDesc: {}, request: {}", userDesc, request);
+        return userDesc;
     }
 }

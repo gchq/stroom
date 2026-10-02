@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.client;
 
 import stroom.core.client.ContentManager;
 import stroom.data.client.presenter.DataPreviewTabPresenter;
+import stroom.data.client.presenter.DataViewType;
 import stroom.pipeline.shared.SourceLocation;
 
 import com.google.inject.Inject;
@@ -47,12 +47,14 @@ public class DataPreviewTabPlugin extends AbstractTabPresenterPlugin<DataPreview
      * 4. This method will open the source and show it in the content pane.
      */
     public Optional<DataPreviewTabPresenter> open(final SourceLocation sourceLocation,
+                                                  final DataViewType initDataViewType,
                                                   final boolean forceOpen) {
 
         return super.openTabPresenter(
                 forceOpen,
                 new DataPreviewKey(sourceLocation),
                 dataPreviewTabPresenter -> {
+                    dataPreviewTabPresenter.setInitDataViewType(initDataViewType);
                     dataPreviewTabPresenter.setSourceLocation(sourceLocation);
                 });
 

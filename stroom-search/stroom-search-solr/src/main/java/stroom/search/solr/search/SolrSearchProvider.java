@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 
 package stroom.search.solr.search;
 
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexField;
-import stroom.datasource.api.v2.QueryField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.SearchRequest;
+import stroom.docstore.api.DocFinder;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.Query;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.IndexField;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorsFactory;
 import stroom.query.common.v2.CoprocessorsImpl;
@@ -73,6 +74,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     private final SolrSearchExecutor solrSearchExecutor;
     private final IndexFieldCache indexFieldCache;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
+    private final DocFinder docFinder;
 
     @Inject
     public SolrSearchProvider(final WordListProvider wordListProvider,
@@ -83,7 +85,8 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
                               final SecurityContext securityContext,
                               final SolrSearchExecutor solrSearchExecutor,
                               final IndexFieldCache indexFieldCache,
-                              final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
+                              final FieldInfoResultPageFactory fieldInfoResultPageFactory,
+                              final DocFinder docFinder) {
         this.wordListProvider = wordListProvider;
         this.searchConfig = searchConfig;
         this.coprocessorsFactory = coprocessorsFactory;
@@ -93,6 +96,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
         this.solrSearchExecutor = solrSearchExecutor;
         this.indexFieldCache = indexFieldCache;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -151,7 +155,7 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     public Optional<QueryField> getTimeField(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final SolrIndexDoc index = solrIndexStore.readDocument(docRef);
-            QueryField timeField = null;
+            final QueryField timeField = null;
             if (index.getTimeField() != null && !index.getTimeField().isBlank()) {
                 return Optional.of(QueryField.createDate(index.getTimeField()));
             }
@@ -241,6 +245,11 @@ public class SolrSearchProvider implements SearchProvider, IndexFieldProvider {
     @Override
     public List<DocRef> getDataSourceDocRefs() {
         return solrIndexStore.list();
+    }
+
+    @Override
+    public List<DocRef> findDataSourceByName(final String name) {
+        return docFinder.findByName(getDataSourceType(), name);
     }
 
     @Override

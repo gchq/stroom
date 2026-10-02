@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,9 @@ import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.Param;
+import stroom.query.api.TimeRange;
+import stroom.query.shared.QueryTablePreferences;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,14 +31,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
 
 @Description(
-        "Defines an analytic rule which can be run to alert on events meeting a criteria.\n" +
-        "The criteria is defined using a StroomQL query.\n" +
-        "The analytic can be processed in different ways:\n\n" +
-        "* Streaming\n" +
-        "* Table Builder\n" +
-        "* Scheduled Query")
+    """
+    Defines an analytic rule which can be run to alert on events meeting a criteria.
+    The criteria is defined using a StroomQL query.
+    The analytic can be processed in different ways:
+    * Streaming
+    * Table Builder
+    * Scheduled Query
+    """)
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
@@ -45,13 +49,31 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
     public static final String TYPE = "AnalyticRule";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANALYTIC_RULE_DOCUMENT_TYPE;
 
-    public AnalyticRuleDoc() {
-    }
+    private static final boolean INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE = true;
+
+    /**
+     * The includeRuleDocumentation field determines whether a rule's documentation
+     * will be included in any detections that it produces.
+     */
+    @JsonProperty
+    private final boolean includeRuleDocumentation;
+
+    /**
+     * A rule's level denotes its severity.
+     * A high level rule detection should be prioritised over a low level rule detection.
+     */
+    @JsonProperty
+    private final AnalyticRuleLevel level;
+
+    /**
+     * A rule's status denotes how reliable it is.
+     */
+    @JsonProperty
+    private final AnalyticRuleStatus status;
 
     @SuppressWarnings("checkstyle:linelength")
     @JsonCreator
-    public AnalyticRuleDoc(@JsonProperty("type") final String type,
-                           @JsonProperty("uuid") final String uuid,
+    public AnalyticRuleDoc(@JsonProperty("uuid") final String uuid,
                            @JsonProperty("name") final String name,
                            @JsonProperty("version") final String version,
                            @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -63,16 +85,19 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                            @JsonProperty("parameters") final List<Param> parameters,
                            @JsonProperty("timeRange") final TimeRange timeRange,
                            @JsonProperty("query") final String query,
-                           @JsonProperty("analyticProcessType") AnalyticProcessType analyticProcessType,
+                           @JsonProperty("analyticProcessType") final AnalyticProcessType analyticProcessType,
                            @JsonProperty("analyticProcessConfig") final AnalyticProcessConfig analyticProcessConfig,
                            @Deprecated @JsonProperty("analyticNotificationConfig") final NotificationConfig analyticNotificationConfig,
                            @JsonProperty("notifications") final List<NotificationConfig> notifications,
                            @JsonProperty("errorFeed") final DocRef errorFeed,
-                           @JsonProperty("rememberNotifications") final boolean rememberNotifications,
-                           @JsonProperty("suppressDuplicateNotifications") final boolean suppressDuplicateNotifications,
-                           @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig) {
-        super(type,
-                uuid,
+                           @JsonProperty("rememberNotifications") final Boolean rememberNotifications,
+                           @JsonProperty("suppressDuplicateNotifications") final Boolean suppressDuplicateNotifications,
+                           @JsonProperty("duplicateNotificationConfig") final DuplicateNotificationConfig duplicateNotificationConfig,
+                           @JsonProperty("queryTablePreferences") final QueryTablePreferences queryTablePreferences,
+                           @JsonProperty("includeRuleDocumentation") final Boolean includeRuleDocumentation,
+                           @JsonProperty("level") final AnalyticRuleLevel level,
+                           @JsonProperty("status") final AnalyticRuleStatus status) {
+        super(TYPE, uuid,
                 name,
                 version,
                 createTimeMs,
@@ -91,24 +116,99 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                 errorFeed,
                 rememberNotifications,
                 suppressDuplicateNotifications,
-                duplicateNotificationConfig);
+                duplicateNotificationConfig,
+                queryTablePreferences);
+        this.includeRuleDocumentation = includeRuleDocumentation == null
+                ? INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE
+                : includeRuleDocumentation;
+        this.level = level;
+        this.status = status;
     }
 
-    public static Builder builder() {
-        return new Builder();
+    public boolean isIncludeRuleDocumentation() {
+        return includeRuleDocumentation;
+    }
+
+    public AnalyticRuleLevel getLevel() {
+        return level;
+    }
+
+    public AnalyticRuleStatus getStatus() {
+        return status;
+    }
+
+    /**
+     * @return A new builder for creating a {@link DocRef} for this document's type.
+     */
+    public static DocRef.TypedBuilder buildDocRef() {
+        return DocRef.builder(TYPE);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        final AnalyticRuleDoc that = (AnalyticRuleDoc) o;
+        return includeRuleDocumentation == that.includeRuleDocumentation &&
+               level == that.level &&
+               status == that.status;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), includeRuleDocumentation, level, status);
+    }
+
+    @Override
+    public String toString() {
+        return "AnalyticRuleDoc{" +
+               "includeRuleDocumentation=" + includeRuleDocumentation +
+               ", level=" + level +
+               ", status=" + status +
+               '}';
     }
 
     public Builder copy() {
         return new Builder(this);
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public static class Builder extends AbstractAnalyticRuleDocBuilder<AnalyticRuleDoc, Builder> {
+
+        boolean includeRuleDocumentation = INCLUDE_RULE_DOCUMENTATION_DEFAULT_VALUE;
+        AnalyticRuleLevel level;
+        AnalyticRuleStatus status;
 
         public Builder() {
         }
 
         public Builder(final AnalyticRuleDoc doc) {
             super(doc);
+            this.includeRuleDocumentation = doc.includeRuleDocumentation;
+            this.level = doc.level;
+            this.status = doc.status;
+        }
+
+        public Builder includeRuleDocumentation(final boolean includeRuleDocumentation) {
+            this.includeRuleDocumentation = includeRuleDocumentation;
+            return self();
+        }
+
+        public Builder level(final AnalyticRuleLevel level) {
+            this.level = level;
+            return self();
+        }
+
+        public Builder status(final AnalyticRuleStatus status) {
+            this.status = status;
+            return self();
         }
 
         @Override
@@ -119,7 +219,6 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
         @Override
         public AnalyticRuleDoc build() {
             return new AnalyticRuleDoc(
-                    type,
                     uuid,
                     name,
                     version,
@@ -139,7 +238,11 @@ public class AnalyticRuleDoc extends AbstractAnalyticRuleDoc {
                     errorFeed,
                     false,
                     false,
-                    duplicateNotificationConfig);
+                    duplicateNotificationConfig,
+                    queryTablePreferences,
+                    includeRuleDocumentation,
+                    level,
+                    status);
         }
     }
 }

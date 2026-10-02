@@ -1,13 +1,30 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.bytebuffer.impl6.ByteBufferFactory;
+import stroom.dictionary.api.WordListProvider;
 import stroom.lmdb.LmdbConfig;
 import stroom.lmdb2.LmdbEnv;
 import stroom.lmdb2.LmdbEnvDir;
 import stroom.lmdb2.LmdbEnvDirFactory;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.TableSettings;
+import stroom.query.api.QueryKey;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.TableSettings;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -46,6 +63,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
     private final MapDataStoreFactory mapDataStoreFactory;
     private final ByteBufferFactory bufferFactory;
     private final ExpressionPredicateFactory expressionPredicateFactory;
+    private final AnnotationMapperFactory annotationMapperFactory;
+    private final WordListProvider wordListProvider;
 
     @Inject
     public LmdbDataStoreFactory(final LmdbEnvDirFactory lmdbEnvDirFactory,
@@ -54,13 +73,17 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                                 final Provider<Executor> executorProvider,
                                 final MapDataStoreFactory mapDataStoreFactory,
                                 final ByteBufferFactory bufferFactory,
-                                final ExpressionPredicateFactory expressionPredicateFactory) {
+                                final ExpressionPredicateFactory expressionPredicateFactory,
+                                final AnnotationMapperFactory annotationMapperFactory,
+                                final WordListProvider wordListProvider) {
         this.lmdbEnvDirFactory = lmdbEnvDirFactory;
         this.resultStoreConfigProvider = resultStoreConfigProvider;
         this.executorProvider = executorProvider;
         this.mapDataStoreFactory = mapDataStoreFactory;
         this.bufferFactory = bufferFactory;
         this.expressionPredicateFactory = expressionPredicateFactory;
+        this.annotationMapperFactory = annotationMapperFactory;
+        this.wordListProvider = wordListProvider;
 
         // This config prop requires restart, so we can hold on to it
         this.searchResultStoreDir = getLocalDir(resultStoreConfigProvider.get(), pathCreator);
@@ -79,7 +102,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                             final FieldIndex fieldIndex,
                             final Map<String, String> paramMap,
                             final DataStoreSettings dataStoreSettings,
-                            final ErrorConsumer errorConsumer) {
+                            final ErrorConsumer errorConsumer,
+                            final Provider<Executor> executorProvider) {
 
         final SearchResultStoreConfig resultStoreConfig = resultStoreConfigProvider.get();
         if (!resultStoreConfig.isOffHeapResults()) {
@@ -95,7 +119,8 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     fieldIndex,
                     paramMap,
                     dataStoreSettings,
-                    errorConsumer);
+                    errorConsumer,
+                    executorProvider);
 
         } else {
             final String subDirectory = queryKey + "_" + componentId + "_" + UUID.randomUUID();
@@ -124,7 +149,9 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                     executorProvider,
                     errorConsumer,
                     bufferFactory,
-                    expressionPredicateFactory);
+                    expressionPredicateFactory,
+                    annotationMapperFactory,
+                    wordListProvider);
         }
     }
 
@@ -191,7 +218,7 @@ public class LmdbDataStoreFactory implements DataStoreFactory {
                         return FileVisitResult.CONTINUE;
                     }
                 });
-            } catch (IOException | RuntimeException e) {
+            } catch (final IOException | RuntimeException e) {
                 LOGGER.error("Error calculating disk usage for path {}",
                         searchResultStoreDir.normalize(), e);
                 // Return -1 to indicate a failure

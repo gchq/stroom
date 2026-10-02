@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter.PipelineTreeView;
 import stroom.pipeline.structure.client.presenter.PipelineTreeUiHandlers;
 import stroom.pipeline.structure.client.presenter.StructureValidationUtil;
@@ -38,20 +39,26 @@ import java.util.Map;
 public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandlers> implements PipelineTreeView {
 
     private final PipelineTreePanel treePanel;
+    private final PipelineTreePanel subTreePanel;
     private final DraggableTreePanel<PipelineElement> layoutPanel;
     private SelectionModel<PipelineElement> selectionModel;
     private boolean allowNullSelection = true;
+    private PipelineModel pipelineModel;
 
     @Inject
-    public PipelineTreeViewImpl(final PipelineElementBoxFactory pipelineElementBoxFactory) {
-        treePanel = new PipelineTreePanel(pipelineElementBoxFactory);
-        final PipelineTreePanel subTreePanel = new PipelineTreePanel(pipelineElementBoxFactory);
+    public PipelineTreeViewImpl() {
+        treePanel = new PipelineTreePanel();
+        subTreePanel = new PipelineTreePanel();
 
-        layoutPanel = new DraggableTreePanel<PipelineElement>(treePanel, subTreePanel) {
+        layoutPanel = new DraggableTreePanel<>(treePanel, subTreePanel) {
             @Override
             protected boolean isValidTarget(final PipelineElement parent, final PipelineElement child) {
-                final PipelineElementType parentType = parent.getElementType();
-                final PipelineElementType childType = child.getElementType();
+                final PipelineElementType parentType = pipelineModel.getElementType(parent);
+                final PipelineElementType childType = pipelineModel.getElementType(child);
+                if (parentType == null || childType == null) {
+                    return false;
+                }
+
                 int childCount = 0;
 
                 final List<PipelineElement> children = treePanel.getTree().getChildren(parent);
@@ -78,6 +85,13 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
         };
         layoutPanel.setWidth("100%");
         layoutPanel.setHeight("100%");
+    }
+
+    @Override
+    public void setPipelineModel(final PipelineModel pipelineModel) {
+        this.pipelineModel = pipelineModel;
+        treePanel.setPipelineModel(pipelineModel);
+        subTreePanel.setPipelineModel(pipelineModel);
     }
 
     @Override
@@ -124,6 +138,11 @@ public class PipelineTreeViewImpl extends ViewWithUiHandlers<PipelineTreeUiHandl
     @Override
     public int getTreeHeight() {
         return treePanel.getTreeHeight();
+    }
+
+    @Override
+    public void setDisabledElements(final List<PipelineElement> disabledElements) {
+        treePanel.setDisabledElements(disabledElements);
     }
 
     @Override

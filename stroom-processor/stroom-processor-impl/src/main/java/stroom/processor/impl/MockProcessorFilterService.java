@@ -1,9 +1,26 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.impl.db.migration.legacyqd.QueryData;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
@@ -40,26 +57,27 @@ public class MockProcessorFilterService implements ProcessorFilterService {
 
     @Override
     public ProcessorFilter create(final CreateProcessFilterRequest request) {
-        ProcessorFilter filter = new ProcessorFilter();
-        filter.setPipelineUuid(request.getPipeline().getUuid());
-        filter.setQueryData(request.getQueryData());
-        filter.setPriority(request.getPriority());
-        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        filter.setEnabled(request.isEnabled());
-        filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, filter);
-        Processor processor = processorService.create(
+        final ProcessorFilter.Builder builder = ProcessorFilter.builder()
+                .pipelineUuid(request.getPipeline().getUuid())
+                .queryData(request.getQueryData())
+                .priority(request.getPriority())
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .profileName(request.getProfileName())
+                .enabled(request.isEnabled())
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, builder);
+        final Processor processor = processorService.create(
                 request.getProcessorType(),
                 request.getPipeline(),
                 request.isEnabled());
-
-        filter.setProcessor(processor);
-        return dao.create(filter);
+        builder.processor(processor);
+        return dao.create(builder.build());
     }
 
-    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
-        filter.setRunAsUser(NullSafe.getOrElse(request,
+    private void setRunAs(final CreateProcessFilterRequest request,
+                          final ProcessorFilter.Builder filter) {
+        filter.runAsUser(NullSafe.getOrElse(request,
                 CreateProcessFilterRequest::getRunAsUser,
                 securityContext.getUserRef()));
     }
@@ -73,16 +91,17 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     @Override
     public ProcessorFilter create(final Processor processor,
                                   final CreateProcessFilterRequest request) {
-        ProcessorFilter filter = new ProcessorFilter();
-        filter.setProcessor(processor);
-        filter.setQueryData(request.getQueryData());
-        filter.setPriority(request.getPriority());
-        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        filter.setEnabled(request.isEnabled());
-        filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, filter);
-        return dao.create(filter);
+        final ProcessorFilter.Builder builder = ProcessorFilter.builder()
+                .processor(processor)
+                .queryData(request.getQueryData())
+                .priority(request.getPriority())
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .profileName(request.getProfileName())
+                .enabled(request.isEnabled())
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, builder);
+        return dao.create(builder.build());
     }
 
     @Override
@@ -91,29 +110,31 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
-    public ProcessorFilter importFilter(final Processor processor,
+    public ProcessorFilter importFilter(final ProcessorFilter existingProcessorFilter,
+                                        final Processor processor,
                                         final DocRef processorFilterDocRef,
                                         final CreateProcessFilterRequest request) {
-        ProcessorFilter filter = new ProcessorFilter();
-        filter.setProcessor(processor);
-        filter.setQueryData(request.getQueryData());
-        filter.setPriority(request.getPriority());
-        filter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        filter.setUuid(processorFilterDocRef.getUuid());
-        filter.setEnabled(request.isEnabled());
-        filter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        filter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, filter);
-        return dao.create(filter);
+        final ProcessorFilter.Builder builder = ProcessorFilter.builder()
+                .processor(processor)
+                .queryData(request.getQueryData())
+                .priority(request.getPriority())
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .profileName(request.getProfileName())
+                .uuid(processorFilterDocRef.getUuid())
+                .enabled(request.isEnabled())
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
+        setRunAs(request, builder);
+        return dao.create(builder.build());
     }
 
     @Override
-    public ResultPage<ProcessorFilter> find(ExpressionCriteria criteria) {
+    public ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria) {
         return dao.find(criteria);
     }
 
     @Override
-    public ResultPage<ProcessorListRow> find(FetchProcessorRequest request) {
+    public ResultPage<ProcessorListRow> find(final FetchProcessorRequest request) {
         return null;
     }
 
@@ -123,46 +144,53 @@ public class MockProcessorFilterService implements ProcessorFilterService {
     }
 
     @Override
-    public ResultPage<ProcessorFilter> find(DocRef pipelineDocRef) {
+    public ResultPage<ProcessorFilter> find(final DocRef pipelineDocRef) {
         return null;
     }
 
     @Override
-    public void setPriority(Integer id, Integer priority) {
+    public void setPriority(final Integer id, final Integer priority) {
     }
 
     @Override
-    public void setMaxProcessingTasks(Integer id, Integer maxProcessingTasks) {
+    public void setMaxProcessingTasks(final Integer id, final Integer maxProcessingTasks) {
     }
 
     @Override
-    public void setEnabled(Integer id, Boolean enabled) {
+    public void setEnabled(final Integer id, final Boolean enabled) {
 
     }
 
     @Override
-    public ProcessorFilter create(ProcessorFilter processorFilter) {
+    public ProcessorFilter create(final ProcessorFilter processorFilter) {
         return dao.create(processorFilter);
     }
 
     @Override
-    public Optional<ProcessorFilter> fetch(int id) {
+    public Optional<ProcessorFilter> fetch(final int id) {
         return dao.fetch(id);
     }
 
     @Override
-    public ProcessorFilter update(ProcessorFilter processorFilter) {
+    public ProcessorFilter update(final ProcessorFilter processorFilter) {
         return dao.update(processorFilter);
     }
 
     @Override
-    public boolean delete(int id) {
+    public boolean delete(final int id) {
         return dao.delete(id);
     }
 
     @Override
     public Optional<String> getPipelineName(final ProcessorType processorType, final String uuid) {
         return Optional.empty();
+    }
+
+    @Override
+    public ProcessorFilter restore(final DocRef processorFilterDocRef) {
+        final ProcessorFilter processorFilter = dao.fetchByUuid(processorFilterDocRef.getUuid())
+                .orElseThrow();
+        return dao.restoreProcessorFilter(processorFilter);
     }
 
     @Override

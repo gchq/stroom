@@ -1,14 +1,31 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.hyperlink.client;
 
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.ShowAnnotationEvent;
-import stroom.annotation.shared.Annotation;
+import stroom.annotation.client.CreateAnnotationEvent;
+import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
 import stroom.core.client.event.CloseContentEvent;
 import stroom.data.client.presenter.DataViewType;
 import stroom.data.client.presenter.DisplayMode;
 import stroom.data.client.presenter.ShowDataEvent;
+import stroom.document.client.event.CloseSelectedDocumentEvent;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
@@ -71,11 +88,11 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             final Hyperlink hyperlink = event.getHyperlink();
             nativeConsoleLog("HyperlinkEvent: " + hyperlink.getHref());
 
-            String href = hyperlink.getHref();
+            final String href = hyperlink.getHref();
             String type = hyperlink.getType();
             String customTitle = null;
             if (type != null) {
-                int index = type.indexOf("|");
+                final int index = type.indexOf("|");
                 if (index != -1) {
                     customTitle = type.substring(index + 1);
                     type = type.substring(0, index);
@@ -94,7 +111,14 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
             if (hyperlinkType != null) {
                 switch (hyperlinkType) {
                     case DASHBOARD: {
-                        ShowDashboardEvent.fire(this, href);
+                        final HyperlinkTargetType target = hyperlink.getTargetType();
+                        if (HyperlinkTargetType.SELF.equals(target)) {
+                            CloseSelectedDocumentEvent.fire(this,
+                                    () -> ShowDashboardEvent.fire(this, event.getContext(), href),
+                                    false);
+                        } else {
+                            ShowDashboardEvent.fire(this, event.getContext(), href);
+                        }
                         break;
                     }
                     case TAB: {
@@ -134,32 +158,45 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     private void openAnnotation(final String href) {
         final Long annotationId = getLongParam(href, "annotationId");
-        final Long streamId = getLongParam(href.toLowerCase(Locale.ROOT), "streamId".toLowerCase(Locale.ROOT));
-        final Long eventId = getLongParam(href.toLowerCase(Locale.ROOT), "eventId".toLowerCase(Locale.ROOT));
-        final String eventIdList = getParam(href, "eventIdList");
-        final String title = getParam(href, "title");
-        final String subject = getParam(href, "subject");
-        final String status = getParam(href, "status");
-        final String assignedTo = getParam(href, "assignedTo");
-        final String comment = getParam(href, "comment");
+        if (annotationId != null) {
+            EditAnnotationEvent.fire(this, annotationId);
 
-        // assignedTo is a display name so have to convert it back to a unique username
-        final Annotation annotation = new Annotation();
-        annotation.setId(annotationId);
-        annotation.setTitle(title);
-        annotation.setSubject(subject);
-        annotation.setStatus(status);
-        if (assignedTo != null) {
-            annotation.setAssignedTo(UserRef.builder().uuid(assignedTo).build());
-        }
-        annotation.setComment(comment);
+        } else {
+            final Long streamId = getLongParam(href.toLowerCase(Locale.ROOT), "streamId".toLowerCase(Locale.ROOT));
+            final Long eventId = getLongParam(href.toLowerCase(Locale.ROOT), "eventId".toLowerCase(Locale.ROOT));
+            final String eventIdList = getParam(href, "eventIdList");
+            String title = getParam(href, "title");
+            final String subject = getParam(href, "subject");
+            final String status = getParam(href, "status");
+            final String assignedTo = getParam(href, "assignedTo");
+            final String comment = getParam(href, "comment");
 
-        final List<EventId> linkedEvents = new ArrayList<>();
-        if (streamId != null && eventId != null) {
-            linkedEvents.add(new EventId(streamId, eventId));
+            title = title == null
+                    ? "New Annotation"
+                    : title;
+
+            final List<EventId> linkedEvents = new ArrayList<>();
+            if (streamId != null && eventId != null) {
+                linkedEvents.add(new EventId(streamId, eventId));
+            }
+            EventId.parseList(eventIdList, linkedEvents);
+
+            UserRef initialAssignTo = null;
+            if (assignedTo != null) {
+                initialAssignTo = UserRef.builder().uuid(assignedTo).build();
+            }
+
+            CreateAnnotationEvent.fire(
+                    this,
+                    title,
+                    subject,
+                    status,
+                    initialAssignTo,
+                    comment,
+                    null,
+                    linkedEvents,
+                    null);
         }
-        EventId.parseList(eventIdList, linkedEvents);
-        ShowAnnotationEvent.fire(this, annotation, linkedEvents);
     }
 
     private void openData(final String href) {
@@ -296,7 +333,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     }
 
     private long getParam(final String href, final String paramName, final long def) {
-        String value = getParam(href, paramName);
+        final String value = getParam(href, paramName);
         if (value == null || value.length() == 0) {
             return def;
         }
@@ -304,7 +341,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     }
 
     private Long getLongParam(final String href, final String paramName) {
-        String value = getParam(href, paramName);
+        final String value = getParam(href, paramName);
         if (value == null || value.length() == 0) {
             return null;
         }
@@ -316,7 +353,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
         int start = href.indexOf(paramName + "=");
         if (start != -1) {
             start = start + (paramName + "=").length();
-            int end = href.indexOf("&", start);
+            final int end = href.indexOf("&", start);
             if (end == -1) {
                 value = href.substring(start);
             } else {

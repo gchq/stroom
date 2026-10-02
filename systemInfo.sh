@@ -1,7 +1,23 @@
 #!/bin/bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 ######################################################################################
-# 
+#
 # Script to fetch a list of the System Info names so that you can
 # select one of the names to then fetch the named System Info
 #
@@ -29,7 +45,7 @@ error_exit() {
 debug_value() {
   local name="$1"; shift
   local value="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${name}: [${value}]${NC}" >&2
   fi
@@ -37,7 +53,7 @@ debug_value() {
 
 debug() {
   local str="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${str}${NC}" >&2
   fi
@@ -118,7 +134,7 @@ query_multiple_hosts() {
   local host_list="$1"; shift
   local info_path="$1"; shift
   debug_value "host_list" "${host_list}"
-  
+
   # TODO validate host_list to ensure it only contains [a-zA-Z.0-9\-] as
   # we are about to pass it to bash -c
 
@@ -168,7 +184,7 @@ query_multiple_hosts() {
 
   if [ "${IS_DEBUG}" = true ]; then
     for file in "${temp_dir}"/*.json; do
-      echo 
+      echo
       echo -e "${DGREY}DEBUG ${file} contents:${NC}"
       echo -e "${DGREY}-START------------------------------------------------------${NC}"
       local file_content
@@ -334,12 +350,11 @@ main() {
     fi
     api_token="${TOKEN}"
   else
-    # Hard coded token that works with the hard coded default open id creds
-    # for use in dev only. Expires on 2030-08-18T13:53:50.000Z
-    if [[ "${is_silent}" = false ]]; then
-      echo -e "${GREEN}Using hard coded token, export ${BLUE}\${TOKEN}${GREEN} to override.${NC}"
-    fi
-    local api_token='eyJhbGciOiJSUzI1NiIsImtpZCI6ImYzNzQyZTBlLWQ2ZTQtNDZlYS04MmM0LTBmZGE0MjE5ZTk5MiJ9.eyJleHAiOjIzMDIxMDc3NzksInN1YiI6ImRlZmF1bHQtdGVzdC1vbmx5LWFwaS1rZXktdXNlciIsImlzcyI6ImRlZmF1bHQtdGVzdC1vbmx5LWlzc3VlciIsImF1ZCI6IkJ5VXVYUEVVQndxVmZBbTladHI5SzEyTmhxV3lNRnoxVG1YU2xXeVAuY2xpZW50LWlkLmFwcHMuc3Ryb29tLWlkcCJ9.pvP3ojlYnbjpRdvuRcj7R9gbTgb-pirCDwGwPTWrDa4MTb30IS0DRNi6wdBL6K4FQJVwOwkRsc3xBIhF2cRAxLgZ1qWr7Zeh0bGB25y1womshnDvFQQFsl6vM-taxSRXrZ2b8by7KbDu9-PitxIaLssD9ZDe9hoi5vZlWlVUe6CI3EfUCQGcyqbVPrkwPpWg_tQa6Mvx7UxUf_GslYt6YVibF8FVelM5ISVZEZRM8GRUTeoKZGSySiFR18CzUn7XsRpffEtmwpo8JuEoOprvgPk-n8y6nQfZnPCdr45bthTi4tzARPTCLaK0XUiiAP58_LfaeldjMhSdYnefgT3gXg'
+    # There is no built-in token. Export ${TOKEN} with an API key (or, if the insecure test credential
+    # is enabled in your dev environment, the STROOM_INSECURE_TEST_CREDENTIAL value) and re-run.
+    echo -e "${GREEN}No token supplied. Export ${BLUE}\${TOKEN}${GREEN} (an API key, or your" \
+      "STROOM_INSECURE_TEST_CREDENTIAL value) and re-run.${NC}" >&2
+    exit 1
   fi
 
   local default_port="8080"

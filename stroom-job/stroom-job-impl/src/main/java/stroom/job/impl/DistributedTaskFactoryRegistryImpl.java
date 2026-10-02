@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class DistributedTaskFactoryRegistryImpl implements DistributedTaskFactoryRegist
     @Inject
     DistributedTaskFactoryRegistryImpl(final Set<DistributedTaskFactory> distributedTaskFactories) {
         for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
-            DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(
+            final DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(
                     DistributedTaskFactoryDescription.class);
             final String jobName = annotation.jobName();
 

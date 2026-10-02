@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,56 +16,68 @@
 
 package stroom.query.impl;
 
-import stroom.dashboard.impl.GenericComparator;
+import stroom.dashboard.impl.ColumnValueComparator;
+import stroom.dashboard.impl.ColumnValueSelectionPredicateFactory;
 import stroom.dashboard.impl.SampleGenerator;
 import stroom.dashboard.impl.SearchResponseMapper;
 import stroom.dashboard.impl.download.DelimitedTarget;
 import stroom.dashboard.impl.download.ExcelTarget;
+import stroom.dashboard.impl.download.MarkdownTarget;
 import stroom.dashboard.impl.download.SearchResultWriter;
 import stroom.dashboard.impl.logging.SearchEventLog;
+import stroom.dashboard.shared.ColumnValue;
 import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
-import stroom.expression.api.DateTimeSettings;
 import stroom.node.api.NodeInfo;
-import stroom.query.api.v2.Column;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionUtil;
-import stroom.query.api.v2.OffsetRange;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
-import stroom.query.api.v2.ResultRequest.ResultStyle;
-import stroom.query.api.v2.SearchRequest;
-import stroom.query.api.v2.SearchResponse;
-import stroom.query.api.v2.TableResultBuilder;
-import stroom.query.api.v2.TableSettings;
-import stroom.query.api.v2.TimeFilter;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.Column;
+import stroom.query.api.ConditionalFormattingRule;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.OffsetRange;
+import stroom.query.api.Param;
+import stroom.query.api.Query;
+import stroom.query.api.QueryKey;
+import stroom.query.api.QueryNodeResolver;
+import stroom.query.api.ResultRequest;
+import stroom.query.api.ResultRequest.ResultStyle;
+import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchResponse;
+import stroom.query.api.TableResultBuilder;
+import stroom.query.api.TableSettings;
+import stroom.query.api.TimeFilter;
+import stroom.query.api.TimeRange;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
+import stroom.query.api.datasource.QueryFieldProvider;
+import stroom.query.api.token.Token;
+import stroom.query.api.token.TokenException;
+import stroom.query.api.token.TokenType;
+import stroom.query.common.v2.ConditionalFormattingMapper.RuleAndMatcher;
 import stroom.query.common.v2.DataSourceProviderRegistry;
 import stroom.query.common.v2.DataStore;
 import stroom.query.common.v2.ExpressionContextFactory;
 import stroom.query.common.v2.ExpressionPredicateFactory;
-import stroom.query.common.v2.Key;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
+import stroom.query.common.v2.Item;
+import stroom.query.common.v2.OpenGroups;
 import stroom.query.common.v2.OpenGroupsImpl;
 import stroom.query.common.v2.ResultCreator;
 import stroom.query.common.v2.ResultStoreManager;
 import stroom.query.common.v2.ResultStoreManager.RequestAndStore;
+import stroom.query.common.v2.RowUtil;
 import stroom.query.common.v2.TableResultCreator;
 import stroom.query.common.v2.ValPredicateFactory;
 import stroom.query.common.v2.format.FormatterFactory;
 import stroom.query.language.SearchRequestFactory;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.Val;
-import stroom.query.language.token.Token;
-import stroom.query.language.token.TokenException;
-import stroom.query.language.token.TokenType;
+import stroom.query.language.functions.Values;
 import stroom.query.language.token.Tokeniser;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QueryColumnValuesRequest;
@@ -73,7 +85,7 @@ import stroom.query.shared.QueryContext;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryHelpType;
 import stroom.query.shared.QuerySearchRequest;
-import stroom.query.shared.QueryTablePreferences;
+import stroom.query.shared.QueryTablePreferencesUtil;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -86,10 +98,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 import stroom.util.string.ExceptionStringUtil;
 import stroom.util.string.StringUtil;
 
@@ -121,9 +135,10 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @AutoLogged
-class QueryServiceImpl implements QueryService {
+class QueryServiceImpl implements QueryService, QueryFieldProvider {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(QueryServiceImpl.class);
 
@@ -148,6 +163,7 @@ class QueryServiceImpl implements QueryService {
     private final ResourceStore resourceStore;
     private final ExpressionPredicateFactory expressionPredicateFactory;
     private final ValPredicateFactory valPredicateFactory;
+    private final QueryNodeResolver queryNodeResolver;
 
     @Inject
     QueryServiceImpl(final QueryStore queryStore,
@@ -164,7 +180,8 @@ class QueryServiceImpl implements QueryService {
                      final ExpressionContextFactory expressionContextFactory,
                      final ResourceStore resourceStore,
                      final ExpressionPredicateFactory expressionPredicateFactory,
-                     final ValPredicateFactory valPredicateFactory) {
+                     final ValPredicateFactory valPredicateFactory,
+                     final QueryNodeResolver queryNodeResolver) {
         this.queryStore = queryStore;
         this.documentResourceHelper = documentResourceHelper;
         this.searchEventLog = searchEventLog;
@@ -180,6 +197,7 @@ class QueryServiceImpl implements QueryService {
         this.resourceStore = resourceStore;
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.valPredicateFactory = valPredicateFactory;
+        this.queryNodeResolver = queryNodeResolver;
     }
 
     @Override
@@ -224,7 +242,7 @@ class QueryServiceImpl implements QueryService {
         return securityContext.secureResult(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             final QuerySearchRequest searchRequest = request.getSearchRequest();
             final QueryKey queryKey = searchRequest.getQueryKey();
-            ResourceKey resourceKey;
+            final ResourceKey resourceKey;
             long totalRowCount = 0;
             final SearchRequest mappedRequest = mapRequest(searchRequest);
 
@@ -260,10 +278,10 @@ class QueryServiceImpl implements QueryService {
                         case CSV -> new DelimitedTarget(outputStream, ",");
                         case TSV -> new DelimitedTarget(outputStream, "\t");
                         case EXCEL -> new ExcelTarget(outputStream, dateTimeSettings);
+                        case MARKDOWN -> new MarkdownTarget(outputStream);
                     };
 
                     // Write delimited file.
-
                     try {
                         target.start();
 
@@ -277,7 +295,8 @@ class QueryServiceImpl implements QueryService {
                                         sampleGenerator,
                                         target);
                                 final TableResultCreator tableResultCreator =
-                                        new TableResultCreator(formatterFactory, expressionPredicateFactory) {
+                                        new TableResultCreator(formatterFactory,
+                                                expressionPredicateFactory) {
                                             @Override
                                             public TableResultBuilder createTableResultBuilder() {
                                                 return searchResultWriter;
@@ -328,7 +347,8 @@ class QueryServiceImpl implements QueryService {
                 throw new EntityServiceException("No query is active");
             }
 
-            final DateTimeSettings dateTimeSettings = searchRequest.getQueryContext().getDateTimeSettings();
+            final QueryContext queryContext = searchRequest.getQueryContext();
+            final DateTimeSettings dateTimeSettings = queryContext.getDateTimeSettings();
             final List<ResultRequest> resultRequests = mappedRequest
                     .getResultRequests()
                     .stream()
@@ -340,9 +360,9 @@ class QueryServiceImpl implements QueryService {
             }
 
             final Set<String> dedupe = new HashSet<>();
-            final TrimmedSortedList<String> list = new TrimmedSortedList<>(
-                    request.getPageRequest(),
-                    new GenericComparator());
+            final ColumnValueComparator comparator = new ColumnValueComparator();
+            final TrimmedSortedList<ColumnValue> list = new TrimmedSortedList<>(
+                    request.getPageRequest(), comparator);
             for (final ResultRequest resultRequest : resultRequests) {
                 try {
                     final RequestAndStore requestAndStore = searchResponseCreatorManager
@@ -352,34 +372,62 @@ class QueryServiceImpl implements QueryService {
                             .getData(resultRequest.getComponentId());
 
                     final TimeFilter timeFilter = null;
+//                    if (mappedRequest.getQuery() != null && mappedRequest.getQuery().getTimeRange() != null) {
+//                        timeFilter = DateExpressionParser.getTimeFilter(
+//                                mappedRequest.getQuery().getTimeRange(),
+//                                mappedRequest.getDateTimeSettings());
+//                    }
+
                     final Predicate<Val> predicate = valPredicateFactory.createValPredicate(
                             request.getColumn(),
                             request.getFilter(),
                             dateTimeSettings);
 
-                    final Set<Key> openGroups = dataStore.getKeyFactory().decodeSet(resultRequest.getOpenGroups());
+                    final OpenGroups openGroups = OpenGroupsImpl.fromGroupSelection(
+                            resultRequest.getGroupSelection(), dataStore.getKeyFactory());
 
-                    final int index = dataStore
+                    final List<String> columnIdList = dataStore
                             .getColumns()
                             .stream()
                             .map(Column::getId)
-                            .toList()
+                            .toList();
+                    final int primaryColumnIndex = columnIdList
                             .indexOf(request.getColumn().getId());
-                    if (index != -1) {
+                    if (primaryColumnIndex != -1) {
+                        // Get rules.
+                        final List<RuleAndMatcher> ruleAndMatchers = getRules(
+                                request.getColumn(),
+                                dateTimeSettings,
+                                request.getConditionalFormattingRules());
+
+                        final Predicate<Item> columnValueSelectionPredicate = ColumnValueSelectionPredicateFactory
+                                .create(columnIdList, request.getSelections(), primaryColumnIndex);
+
                         dataStore.fetch(
                                 dataStore.getColumns(),
                                 OffsetRange.UNBOUNDED,
-                                new OpenGroupsImpl(openGroups),
+                                openGroups,
                                 timeFilter,
                                 item -> {
-                                    final Val val = item.getValue(index);
-                                    if (predicate.test(val)) {
-                                        final String string = val.toString();
-                                        if (string != null && dedupe.add(string)) {
-                                            list.add(string);
+                                    final Val val = item.getValue(primaryColumnIndex);
+                                    if (predicate.test(val) && columnValueSelectionPredicate.test(item)) {
+                                        final Optional<RuleAndMatcher> matchingRule = ruleAndMatchers
+                                                .stream()
+                                                .filter(ruleAndMatcher ->
+                                                        ruleAndMatcher.matcher().test(Values.of(val)))
+                                                .findFirst();
+
+                                        final String value = val.toString();
+                                        if (value != null && dedupe.add(value)) {
+                                            final ColumnValue columnValue = new ColumnValue(value,
+                                                    matchingRule
+                                                            .map(RuleAndMatcher::rule)
+                                                            .map(ConditionalFormattingRule::getId)
+                                                            .orElse(null));
+                                            list.add(columnValue);
                                         }
                                     }
-                                    return null;
+                                    return Stream.empty();
                                 },
                                 row -> {
 
@@ -394,12 +442,46 @@ class QueryServiceImpl implements QueryService {
                 }
             }
 
-            final ResultPage<String> resultPage = list.getResultPage();
+            final ResultPage<ColumnValue> resultPage = list.getResultPage();
             return new ColumnValues(resultPage.getValues(), resultPage.getPageResponse());
         } catch (final Exception e) {
             LOGGER.debug(e::getMessage, e);
             throw e;
         }
+    }
+
+    private List<RuleAndMatcher> getRules(final Column column,
+                                          final DateTimeSettings dateTimeSettings,
+                                          final List<ConditionalFormattingRule> rules) {
+        final List<ConditionalFormattingRule> activeRules = NullSafe.list(rules)
+                .stream()
+                .filter(ConditionalFormattingRule::isEnabled)
+                .toList();
+        final List<RuleAndMatcher> ruleAndMatchers = new ArrayList<>();
+        if (!activeRules.isEmpty()) {
+            final ValueFunctionFactories<Values> queryFieldIndex = RowUtil
+                    .createColumnNameValExtractor(Collections.singletonList(column));
+            for (final ConditionalFormattingRule rule : activeRules) {
+                try {
+                    final Optional<Predicate<Values>> optionalValuesPredicate =
+                            expressionPredicateFactory.createOptional(
+                                    rule.getExpression(),
+                                    queryFieldIndex,
+                                    dateTimeSettings);
+                    final Predicate<Values> conditionalFormattingPredicate =
+                            optionalValuesPredicate.orElse(t -> true);
+                    ruleAndMatchers.add(new RuleAndMatcher(rule, conditionalFormattingPredicate));
+                } catch (final RuntimeException e) {
+                    throw new RuntimeException("Error evaluating conditional formatting rule: " +
+                                               rule.getExpression() +
+                                               " (" +
+                                               e.getMessage() +
+                                               ")", e);
+                }
+            }
+        }
+
+        return ruleAndMatchers;
     }
 
     private String getResultsFilename(final DownloadQueryResultsRequest request) {
@@ -466,7 +548,7 @@ class QueryServiceImpl implements QueryService {
                             "Dashboard Search",
                             TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> {
-                                DashboardSearchResponse searchResponse;
+                                final DashboardSearchResponse searchResponse;
                                 try {
                                     taskContext.info(() -> "Polling for new search results");
                                     httpServletRequestHolder.set(httpServletRequest);
@@ -521,7 +603,7 @@ class QueryServiceImpl implements QueryService {
         SearchRequest mappedRequest = searchRequestFactory.create(query, sampleRequest, expressionContext);
 
         // Mutate expression with selection expression.
-        Query qry = mappedRequest.getQuery();
+        final Query qry = mappedRequest.getQuery();
         ExpressionOperator expression = qry.getExpression();
         expression = ExpressionUtil.combine(
                 expression,
@@ -537,11 +619,12 @@ class QueryServiceImpl implements QueryService {
         // Fix table result requests.
         final List<ResultRequest> resultRequests = mappedRequest.getResultRequests();
         if (resultRequests != null) {
-            List<ResultRequest> modifiedResultRequests = new ArrayList<>();
+            final List<ResultRequest> modifiedResultRequests = new ArrayList<>();
             for (final ResultRequest resultRequest : resultRequests) {
 
                 // Modify result request to apply additional UI table preferences.
-                ResultRequest modified = addTablePreferences(resultRequest, searchRequest.getQueryTablePreferences());
+                ResultRequest modified = QueryTablePreferencesUtil.applyTablePreferences(
+                        resultRequest, searchRequest.getQueryTablePreferences());
 
                 // The vis needs all the data, rather than just a page worth
                 OffsetRange range = modified.getRequestedRange();
@@ -552,7 +635,7 @@ class QueryServiceImpl implements QueryService {
                 // Modify result request to open grouped rows and change result display range.
                 modified = modified
                         .copy()
-                        .openGroups(searchRequest.getOpenGroups())
+                        .groupSelection(searchRequest.getGroupSelection())
                         .requestedRange(range)
                         .build();
 
@@ -566,69 +649,18 @@ class QueryServiceImpl implements QueryService {
         return mappedRequest;
     }
 
-    private ResultRequest addTablePreferences(final ResultRequest resultRequest,
-                                              final QueryTablePreferences queryTablePreferences) {
-        if (queryTablePreferences != null) {
-            final Map<String, Column> prefs = NullSafe.list(queryTablePreferences.getColumns())
-                    .stream()
-                    .collect(Collectors.toMap(Column::getId, c -> c));
-
-            if (!resultRequest.getMappings().isEmpty()) {
-                final TableSettings tableSettings = resultRequest.getMappings().getFirst();
-                final TableSettings.Builder builder = tableSettings.copy();
-
-                final List<Column> modifiedColumns = new ArrayList<>();
-                for (final Column column : tableSettings.getColumns()) {
-                    Column.Builder columnBuilder = column.copy();
-                    final Column pref = prefs.get(column.getId());
-                    if (pref != null) {
-                        columnBuilder.filter(pref.getFilter());
-                        columnBuilder.columnFilter(pref.getColumnFilter());
-                        columnBuilder.columnValueSelection(pref.getColumnValueSelection());
-                        columnBuilder.width(pref.getWidth());
-                        columnBuilder.format(pref.getFormat());
-                        if (pref.getSort() != null) {
-                            columnBuilder.sort(pref.getSort());
-                        }
-                    }
-                    modifiedColumns.add(columnBuilder.build());
-                }
-
-                builder.columns(modifiedColumns);
-                builder.applyValueFilters(queryTablePreferences.applyValueFilters());
-
-                // Combine row filters.
-                if (tableSettings.getAggregateFilter() == null) {
-                    builder.aggregateFilter(queryTablePreferences.getSelectionFilter());
-                } else if (queryTablePreferences.getSelectionFilter() != null) {
-                    builder.aggregateFilter(ExpressionOperator
-                            .builder()
-                            .addOperators(tableSettings.getAggregateFilter(),
-                                    queryTablePreferences.getSelectionFilter())
-                            .build());
-                }
-
-                builder.conditionalFormattingRules(queryTablePreferences.getConditionalFormattingRules());
-                final List<TableSettings> mappings = new ArrayList<>(resultRequest.getMappings().size());
-                mappings.add(builder.build());
-                mappings.addAll(resultRequest.getMappings().subList(1, resultRequest.getMappings().size()));
-
-                return resultRequest.copy().mappings(mappings).build();
-            }
-        }
-        return resultRequest;
-    }
-
     private DashboardSearchResponse processRequest(final QuerySearchRequest searchRequest) {
         LOGGER.trace(() -> "processRequest() " + searchRequest);
         DashboardSearchResponse result = null;
 
-        QueryKey queryKey = searchRequest.getQueryKey();
+        final QueryKey queryKey = searchRequest.getQueryKey();
         final String query = searchRequest.getQuery();
+        Exception exception = null;
+        SearchRequest mappedRequest = null;
 
         if (query != null) {
             try {
-                final SearchRequest mappedRequest = mapRequest(searchRequest);
+                mappedRequest = mapRequest(searchRequest);
                 LOGGER.debug("searchRequest:\n{}\nmappedRequest:\n{}", searchRequest, mappedRequest);
 
                 // Perform the search or update results.
@@ -642,63 +674,52 @@ class QueryServiceImpl implements QueryService {
                     // Add this search to the history so the user can get back to this
                     // search again.
                     storeSearchHistory(searchRequest);
-
-                    // Log this search request for the current user.
-                    searchEventLog.search(
-                            "StroomQL Search",
-                            searchRequest.getQuery(),
-                            mappedRequest.getQuery().getDataSource(),
-                            mappedRequest.getQuery().getExpression(),
-                            searchRequest.getQueryContext().getQueryInfo(),
-                            searchRequest.getQueryContext().getParams(),
-                            null);
                 }
-
             } catch (final TokenException e) {
+                exception = e;
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
-
-                if (queryKey == null) {
-                    searchEventLog.search(
-                            "StroomQL Search",
-                            searchRequest.getQuery(),
-                            null,
-                            null,
-                            searchRequest.getQueryContext().getQueryInfo(),
-                            searchRequest.getQueryContext().getParams(),
-                            e);
-                }
 
                 result = new DashboardSearchResponse(
                         nodeInfo.getThisNodeName(),
                         queryKey,
                         null,
-                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        null,
                         TokenExceptionUtil.toTokenError(e),
                         true,
-                        null);
+                        null,
+                        Collections.singletonList(new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e))));
 
             } catch (final RuntimeException e) {
+                exception = e;
                 LOGGER.debug(() -> "Error processing search " + searchRequest, e);
-
-                if (queryKey == null) {
-                    searchEventLog.search(
-                            "StroomQL Search",
-                            searchRequest.getQuery(),
-                            null,
-                            null,
-                            searchRequest.getQueryContext().getQueryInfo(),
-                            searchRequest.getQueryContext().getParams(),
-                            e);
-                }
 
                 result = new DashboardSearchResponse(
                         nodeInfo.getThisNodeName(),
                         queryKey,
                         null,
-                        Collections.singletonList(ExceptionStringUtil.getMessage(e)),
+                        null,
                         null,
                         true,
-                        null);
+                        null,
+                        Collections.singletonList(new ErrorMessage(Severity.ERROR, ExceptionStringUtil.getMessage(e))));
+            } finally {
+                if (queryKey == null) {
+                    searchEventLog.search(
+                            searchRequest.getQueryKey(),
+                            NullSafe.get(
+                                    searchRequest,
+                                    QuerySearchRequest::getSearchRequestSource,
+                                    SearchRequestSource::getComponentId),
+                            "StroomQL Search",
+                            searchRequest.getQuery(),
+                            NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getDataSource),
+                            NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getExpression),
+                            NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getTimeRange),
+                            searchRequest.getQueryContext().getQueryInfo(),
+                            searchRequest.getQueryContext().getParams(),
+                            NullSafe.get(result, DashboardSearchResponse::getResults),
+                            exception);
+                }
             }
         }
 
@@ -761,7 +782,9 @@ class QueryServiceImpl implements QueryService {
     }
 
     @Override
-    public ContextualQueryHelp getQueryHelpContext(final String query, final int row, final int col) {
+    public ContextualQueryHelp getQueryHelpContext(final String query,
+                                                   final int row,
+                                                   final int col) {
         return securityContext.useAsReadResult(() -> {
             if (NullSafe.isBlankString(query) || (row == 0 && col == 0)) {
                 return EMPTY_QUERY_CONTEXT;
@@ -808,7 +831,6 @@ class QueryServiceImpl implements QueryService {
                 lastKeywordSequence.add(tokenType);
 
                 LOGGER.debug("""
-
                                 token: {}
                                 endIdx: {}
                                 lastKeyword: {}
@@ -870,6 +892,9 @@ class QueryServiceImpl implements QueryService {
                         // 'from xxx '
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
                         : QueryHelpType.NO_TYPES;
+                case WHERE -> count > 2
+                        ? EnumSet.of(QueryHelpType.QUERYABLE_FIELD, QueryHelpType.FUNCTION, QueryHelpType.STRUCTURE)
+                        : EnumSet.of(QueryHelpType.QUERYABLE_FIELD);
                 case LIMIT -> count > 3
                         // LIMIT only allows numbers/strings
                         ? EnumSet.of(QueryHelpType.STRUCTURE)
@@ -1041,5 +1066,22 @@ class QueryServiceImpl implements QueryService {
     public Optional<String> fetchDocumentation(final DocRef docRef) {
         return securityContext.useAsReadResult(() ->
                 dataSourceProviderRegistry.fetchDocumentation(docRef));
+    }
+
+    @Override
+    public String getBestNode(final String nodeName, final QuerySearchRequest request) {
+        if (nodeName == null || nodeName.equals("null")) {
+            if (queryNodeResolver == null) {
+                return null;
+            }
+            try {
+                final SearchRequest mappedRequest = mapRequest(request);
+                final DocRef docRef = NullSafe.get(mappedRequest, SearchRequest::getQuery, Query::getDataSource);
+                return queryNodeResolver.getNode(docRef);
+            } catch (final RuntimeException e) {
+                return null;
+            }
+        }
+        return nodeName;
     }
 }

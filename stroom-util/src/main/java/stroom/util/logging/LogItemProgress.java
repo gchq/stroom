@@ -40,7 +40,7 @@ public class LogItemProgress implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
         builder.append(pos);
         builder.append("/");
         builder.append(size);

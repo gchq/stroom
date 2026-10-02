@@ -1,15 +1,33 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dictionary.impl;
 
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.docstore.shared.DocDataType;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.string.EncodingUtil;
 
 import jakarta.inject.Inject;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class DictionarySerialiser implements DocumentSerialiser2<DictionaryDoc> {
 
@@ -23,23 +41,21 @@ public class DictionarySerialiser implements DocumentSerialiser2<DictionaryDoc> 
     }
 
     @Override
-    public DictionaryDoc read(final Map<String, byte[]> data) throws IOException {
-        final DictionaryDoc document = delegate.read(data);
-        document.setData(EncodingUtil.asString(data.get(TEXT)));
-        return document;
+    public DictionaryDoc read(final ImportExportDocument importExportDocument) throws IOException {
+        return delegate.read(importExportDocument)
+                .copy()
+                .data(EncodingUtil.asString(importExportDocument.getExtAssetData(TEXT)))
+                .build();
     }
 
     @Override
-    public Map<String, byte[]> write(final DictionaryDoc document) throws IOException {
+    public ImportExportDocument write(final DictionaryDoc document) throws IOException {
         final String text = document.getData();
-        document.setData(null);
-
-        final Map<String, byte[]> data = delegate.write(document);
+        final ImportExportDocument data = delegate.write(document.copy().data(null).build());
         if (text != null) {
-            data.put(TEXT, EncodingUtil.asBytes(text));
-            document.setData(text);
+            data.addExtAsset(
+                    new ByteArrayImportExportAsset(TEXT, DocDataType.TEXT, EncodingUtil.asBytes(text)));
         }
-
         return data;
     }
 }

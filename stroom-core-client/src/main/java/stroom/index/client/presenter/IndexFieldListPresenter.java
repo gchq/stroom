@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.client.presenter;
@@ -21,23 +20,21 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.IndexFieldFields;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.index.shared.AddField;
 import stroom.index.shared.DeleteField;
 import stroom.index.shared.IndexFieldImpl;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.LuceneIndexDoc;
 import stroom.index.shared.UpdateField;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.IndexFieldFields;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ResultPage;
@@ -57,7 +54,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class IndexFieldListPresenter
-        extends DocumentEditPresenter<QuickFilterPageView, LuceneIndexDoc>
+        extends DocPresenter<QuickFilterPageView, LuceneIndexDoc>
         implements QuickFilterUiHandlers {
 
     private static final IndexResource INDEX_RESOURCE = GWT.create(IndexResource.class);
@@ -88,7 +85,8 @@ public class IndexFieldListPresenter
         view.setDataView(pagerView);
         view.setUiHandlers(this);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Index Fields");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         pagerView.setDataWidget(dataGrid);
 
@@ -175,7 +173,6 @@ public class IndexFieldListPresenter
         addTermVectorColumn();
         addAnalyzerColumn();
         addCaseSensitiveColumn();
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addNameColumn() {
@@ -261,7 +258,6 @@ public class IndexFieldListPresenter
                             selectionModel.setSelected(indexField);
                             refresh();
                             e.hide();
-                            DirtyEvent.fire(IndexFieldListPresenter.this, true);
                         })
                         .onFailure(new DefaultErrorHandler(this, e::reset))
                         .taskMonitorFactory(pagerView)
@@ -290,7 +286,6 @@ public class IndexFieldListPresenter
                                     selectionModel.setSelected(indexField);
                                     refresh();
                                     e.hide();
-                                    DirtyEvent.fire(IndexFieldListPresenter.this, true);
                                 })
                                 .onFailure(new DefaultErrorHandler(this, e::reset))
                                 .taskMonitorFactory(pagerView)
@@ -322,7 +317,6 @@ public class IndexFieldListPresenter
                                 .onSuccess(response -> {
                                     selectionModel.clear();
                                     refresh();
-                                    DirtyEvent.fire(IndexFieldListPresenter.this, true);
                                 })
                                 .taskMonitorFactory(pagerView)
                                 .exec();
@@ -334,6 +328,7 @@ public class IndexFieldListPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final LuceneIndexDoc document, final boolean readOnly) {
+        dataGrid.setTableName("Index '" + docRef.getName() + "' Fields");
         this.docRef = docRef;
         this.readOnly = readOnly;
         enableButtons();

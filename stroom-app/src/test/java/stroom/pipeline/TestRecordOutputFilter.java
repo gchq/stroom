@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterDoc.TextConverterType;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.RecordCount;
 import stroom.pipeline.textconverter.TextConverterStore;
@@ -89,7 +90,7 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         final DocRef textConverterRef = createTextConverter(dir + "TestRecordOutputFilter.ds3.xml",
                 "TestRecordOutputFilter", TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(dir + "TestRecordOutputFilter.xsl", "TestRecordOutputFilter");
-        final DocRef pipelineRef = createPipeline(dir + "TestRecordOutputFilter Pipeline.xml", textConverterRef,
+        final DocRef pipelineRef = createPipeline(dir + "TestRecordOutputFilter Pipeline.json", textConverterRef,
                 filteredXSLT);
         test(pipelineRef,
                 dir,
@@ -105,7 +106,7 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         final DocRef textConverterRef = createTextConverter(dir + "TestRecordOutputFilter.ds3.xml",
                 "TestRecordOutputFilter", TextConverterType.DATA_SPLITTER);
         final DocRef filteredXSLT = createXSLT(dir + "TestRecordOutputFilter.xsl", "TestRecordOutputFilter");
-        final DocRef pipelineRef = createPipeline(dir + "TestRecordOutputFilter Pipeline.xml", textConverterRef,
+        final DocRef pipelineRef = createPipeline(dir + "TestRecordOutputFilter Pipeline.json", textConverterRef,
                 filteredXSLT);
         test(pipelineRef,
                 dir,
@@ -121,29 +122,34 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         // Load the pipeline config.
         final String data = StroomPipelineTestFileUtil.getString(pipelineFile);
         final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+        final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
 
         if (textConverterRef != null) {
-            pipelineDoc.getPipelineData().addProperty(
+            builder.addProperty(
                     PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME, "textConverter", textConverterRef));
         }
         if (xsltRef != null) {
-            pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
+            builder.addProperty(
+                    PipelineDataUtil.createProperty("translationFilter", "xslt", xsltRef));
         }
 
+        pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
         pipelineStore.writeDocument(pipelineDoc);
         return pipelineRef;
     }
 
-    private DocRef createTextConverter(final String textConverterFile, final String name,
+    private DocRef createTextConverter(final String textConverterFile,
+                                       final String name,
                                        final TextConverterType textConverterType) {
         // Create a record for the TextConverter.
         final InputStream textConverterInputStream = StroomPipelineTestFileUtil.getInputStream(textConverterFile);
         final DocRef docRef = textConverterStore.createDocument(name);
-        final TextConverterDoc doc = textConverterStore.readDocument(docRef);
-        doc.setConverterType(textConverterType);
-        doc.setData(StreamUtil.streamToString(textConverterInputStream));
+        final TextConverterDoc doc = textConverterStore.readDocument(docRef)
+                .copy()
+                .converterType(textConverterType)
+                .data(StreamUtil.streamToString(textConverterInputStream))
+                .build();
         textConverterStore.writeDocument(doc);
         return docRef;
     }
@@ -152,8 +158,8 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
         // Create a record for the XSLT.
         final InputStream xsltInputStream = StroomPipelineTestFileUtil.getInputStream(xsltPath);
         final DocRef docRef = xsltStore.createDocument(name);
-        final XsltDoc doc = xsltStore.readDocument(docRef);
-        doc.setData(StreamUtil.streamToString(xsltInputStream));
+        final XsltDoc doc = xsltStore.readDocument(docRef)
+                .copy().data(StreamUtil.streamToString(xsltInputStream)).build();
         xsltStore.writeDocument(doc);
         return docRef;
     }
@@ -188,7 +194,7 @@ class TestRecordOutputFilter extends AbstractProcessIntegrationTest {
                 final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(dir);
                 assertThat(Files.isDirectory(inputDir)).as("Can't find input dir").isTrue();
 
-                List<Path> inputFiles = new ArrayList<>();
+                final List<Path> inputFiles = new ArrayList<>();
                 try (final DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, inputStem + "*.in")) {
                     stream.forEach(inputFiles::add);
                 }

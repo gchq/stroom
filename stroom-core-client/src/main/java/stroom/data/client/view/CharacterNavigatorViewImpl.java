@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,7 +206,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     private String getLongValueForLabel(final Count<Long> value, final int increment) {
         // Increment allows for switching from zero to one based
         if (value != null && value.getCount() != null) {
-            String str = numberFormatter.format(value.getCount() + increment);
+            final String str = numberFormatter.format(value.getCount() + increment);
             if (value.isExact()) {
                 return str;
             } else {

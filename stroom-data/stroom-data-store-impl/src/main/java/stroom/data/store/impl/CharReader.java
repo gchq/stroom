@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.store.impl;
 
 import stroom.pipeline.reader.ByteStreamDecoder;
@@ -79,7 +95,7 @@ public class CharReader {
                 } else {
                     return null;
                 }
-            } catch (IOException e) {
+            } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         };
@@ -125,7 +141,7 @@ public class CharReader {
                 LOGGER.info("BOM charset [{}] differs from encoding [{}], using [{}]",
                         bomCharsetName, encoding, bomCharsetName);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.warn("Error getting charset from BOM, {}", e.getMessage(), e);
         }
         return Charset.forName(Objects.requireNonNullElse(bomCharsetName, encoding));
@@ -186,7 +202,7 @@ public class CharReader {
     public Optional<ByteOrderMark> getByteOrderMark() {
         try {
             return Optional.ofNullable(bomInputStream.getBOM());
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException("Error determining if input stream has a BOM: " + e.getMessage(), e);
         }
     }

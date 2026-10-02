@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.query.api.v2.DestroyReason;
-import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.api.DestroyReason;
+import stroom.query.api.ResultStoreInfo;
+import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -69,7 +68,8 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
         this.resultStoreModel = resultStoreModel;
         this.resultStoreSettingsPresenter = resultStoreSettingsPresenter;
 
-        final MyDataGrid<ResultStoreInfo> dataGrid = new MyDataGrid<>();
+        final MyDataGrid<ResultStoreInfo> dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Result Stores");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
@@ -133,8 +133,6 @@ public class ResultStoreListPresenter extends MyPresenterWidget<PagerView> {
                 return Boolean.toString(resultStoreInfo.isComplete());
             }
         }, "Complete", ColumnSizeConstants.SMALL_COL);
-
-        dataGrid.addEndColumn(new EndColumn<>());
 
         dataProvider =
                 new RestDataProvider<ResultStoreInfo, ResultPage<ResultStoreInfo>>(getEventBus()) {

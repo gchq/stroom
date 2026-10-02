@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.util.string;
 
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
@@ -26,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,6 +38,11 @@ import java.util.stream.Stream;
  * use only so can contain java regex goodness.
  */
 public class StringUtil {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StringUtil.class);
+
+    public static int MAX_LONG_DIGITS = Long.toString(Long.MAX_VALUE).length();
+    public static int MAX_INTEGER_DIGITS = Integer.toString(Integer.MAX_VALUE).length();
 
     // Split on one or more unix/windows/dos line ends
     private static final Pattern LINE_SPLIT_PATTERN = Pattern.compile("(\r?\n)");
@@ -59,6 +67,17 @@ public class StringUtil {
                     str.toUpperCase()
             ))
             .collect(Collectors.toSet());
+
+    private static final String[] PAD_ARRAY = new String[MAX_LONG_DIGITS];
+
+    static {
+        final StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < PAD_ARRAY.length; i++) {
+            PAD_ARRAY[i] = stringBuilder.toString();
+            stringBuilder.append("0");
+        }
+    }
+
 
     private StringUtil() {
     }
@@ -135,6 +154,30 @@ public class StringUtil {
         return stringBuilder.toString();
     }
 
+    /**
+     * Escapes the characters that are significant in HTML text and double-quoted attribute values so that a
+     * value written into an HTML page cannot be interpreted as markup. Returns an empty string for a null
+     * input.
+     */
+    public static String escapeHtml(final String value) {
+        if (value == null) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            final char c = value.charAt(i);
+            switch (c) {
+                case '&' -> sb.append("&amp;");
+                case '<' -> sb.append("&lt;");
+                case '>' -> sb.append("&gt;");
+                case '"' -> sb.append("&quot;");
+                case '\'' -> sb.append("&#x27;");
+                default -> sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+
     public static String ensureFullStop(final String str) {
         if (str == null) {
             return "";
@@ -164,7 +207,7 @@ public class StringUtil {
         Objects.requireNonNull(str);
         try {
             int idx = 0;
-            int rowNum = rowIdx + 1;
+            final int rowNum = rowIdx + 1;
             // All lines up to the one we want
             final List<String> lines = str.lines()
                     .limit(rowNum)
@@ -208,7 +251,7 @@ public class StringUtil {
                 }
                 return idx;
             }
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw e;
         }
     }
@@ -265,7 +308,7 @@ public class StringUtil {
             boolean seenNonDelimiterChar = false;
             boolean hasChanged = false;
             int outputIdx = -1;
-            int startIdxInc = 0;
+            final int startIdxInc = 0;
             for (final char chr : charArray) {
                 if (chr == delimiter) {
                     if (!lastCharWasDelimiter && seenNonDelimiterChar) {
@@ -300,6 +343,225 @@ public class StringUtil {
             } else {
                 return new String(outputArray, 0, endIdxInc - startIdxInc + 1);
             }
+        }
+    }
+
+    public static String getZeroPadding(final int padLen) {
+        if (padLen < 0 || padLen > MAX_LONG_DIGITS) {
+            throw new IllegalArgumentException("padLen must be >=0 and <= " + MAX_LONG_DIGITS);
+        }
+        return PAD_ARRAY[padLen];
+    }
+
+    /**
+     * Zero pads positive longs to 19 digits to support up to {@link Long#MAX_VALUE}.
+     *
+     * @param val The long to pad
+     * @return val padded to 19 digits.
+     */
+    public static String zeroPad(final long val) {
+        return zeroPad(val, MAX_LONG_DIGITS);
+    }
+
+    /**
+     * Zero pads positive longs to length digits
+     *
+     * @param val The long to pad
+     * @return val padded to 19 digits.
+     */
+    public static String zeroPad(final long val, final int length) {
+        if (val < 0) {
+            throw new IllegalArgumentException("Negative values are not supported");
+        }
+        if (length < 0 || length > MAX_LONG_DIGITS) {
+            throw new IllegalArgumentException("length must be >=0 and <= " + MAX_LONG_DIGITS);
+        }
+        String valStr = String.valueOf(val);
+        final int valLen = valStr.length();
+        final int padLen = length - valLen;
+        if (padLen > 0) {
+            valStr = PAD_ARRAY[padLen] + valStr;
+        }
+        return valStr;
+    }
+
+    /**
+     * Pads positive integers to 10 digits to support up to {@link Integer#MAX_VALUE}.
+     *
+     * @param val The long to pad
+     * @return val padded to 10 digits.
+     */
+    public static String zeroPad(final int val) {
+        return zeroPad(val, MAX_INTEGER_DIGITS);
+    }
+
+    public static String zeroPad(final int val, final int length) {
+        if (val < 0) {
+            throw new IllegalArgumentException("Negative values are not supported");
+        }
+        if (length < 0 || length > MAX_INTEGER_DIGITS) {
+            throw new IllegalArgumentException("length must be >=0 and <= " + MAX_INTEGER_DIGITS);
+        }
+
+        String valStr = String.valueOf(val);
+        final int valLen = valStr.length();
+        final int padLen = length - valLen;
+        if (padLen > 0) {
+            valStr = PAD_ARRAY[padLen] + valStr;
+        }
+        return valStr;
+    }
+
+    /**
+     * Remove padding from the string, e.g. '000099' => 99
+     *
+     * @return The de-padded value, 0 if blank/null or -1 if not a number.
+     */
+    public static long dePadLong(final String paddedVal) {
+        if (NullSafe.isBlankString(paddedVal)) {
+            return -1L;
+        } else {
+            final int len = paddedVal.length();
+            int startIdx = 0;
+            while (startIdx < len) {
+                if (paddedVal.charAt(startIdx) == '0') {
+                    startIdx++;
+                } else {
+                    break;
+                }
+            }
+            final String dePaddedId = paddedVal.substring(startIdx);
+            if (dePaddedId.isBlank()) {
+                return 0L;
+            } else {
+                try {
+                    return Long.parseLong(dePaddedId);
+                } catch (final NumberFormatException e) {
+                    LOGGER.debug("Unable to convert '{}' to a long", dePaddedId, e);
+                    return -1;
+                }
+            }
+        }
+    }
+
+    /**
+     * Remove padding from the string, e.g. '000099' => 99
+     *
+     * @return The de-padded value, 0 if blank/null or -1 if not a number.
+     */
+    public static int dePadInteger(final String paddedVal) {
+        if (NullSafe.isBlankString(paddedVal)) {
+            return -1;
+        } else {
+            final int len = paddedVal.length();
+            int startIdx = 0;
+            while (startIdx < len) {
+                if (paddedVal.charAt(startIdx) == '0') {
+                    startIdx++;
+                } else {
+                    break;
+                }
+            }
+            final String dePaddedId = paddedVal.substring(startIdx);
+            if (dePaddedId.isBlank()) {
+                return 0;
+            } else {
+                try {
+                    return Integer.parseInt(dePaddedId);
+                } catch (final NumberFormatException e) {
+                    LOGGER.debug("Unable to convert '{}' to an integer", dePaddedId, e);
+                    return -1;
+                }
+            }
+        }
+    }
+
+    /**
+     * Much faster than using string length.
+     * Positive values only.
+     *
+     * @return The number of digits in value, e.g. returns 1 for value 1, 2 for 99, etc.
+     */
+    public static int getDigitCount(final long value) {
+        if (value < 0) {
+            throw new IllegalArgumentException("Positive values only, value: " + value);
+        }
+        if (value < 10_000_000_000L) { // 1 to 10 digits
+            if (value < 100_000L) { // 1 to 5 digits
+                if (value < 100L) {
+                    if (value < 10L) {
+                        return 1;
+                    } else {
+                        return 2;
+                    }
+                } else {
+                    if (value < 1_000L) {
+                        return 3;
+                    } else if (value < 10_000L) {
+                        return 4;
+                    } else {
+                        return 5;
+                    }
+                }
+            } else { // 6 to 10 digits
+                if (value < 10_000_000L) {
+                    if (value < 1_000_000L) {
+                        return 6;
+                    } else {
+                        return 7;
+                    }
+                } else {
+                    if (value < 100_000_000L) {
+                        return 8;
+                    } else if (value < 1_000_000_000L) {
+                        return 9;
+                    } else {
+                        return 10;
+                    }
+                }
+            }
+        } else { // 11 to 19 digits
+            if (value < 100_000_000_000_000L) { // 11 to 14 digits
+                if (value < 1_000_000_000_000L) {
+                    if (value < 100_000_000_000L) {
+                        return 11;
+                    } else {
+                        return 12;
+                    }
+                } else {
+                    if (value < 10_000_000_000_000L) {
+                        return 13;
+                    } else {
+                        return 14;
+                    }
+                }
+            } else { // 15 to 19 digits
+                if (value < 10_000_000_000_000_000L) {
+                    if (value < 1_000_000_000_000_000L) {
+                        return 15;
+                    } else {
+                        return 16;
+                    }
+                } else {
+                    if (value < 100_000_000_000_000_000L) {
+                        return 17;
+                    } else if (value < 1_000_000_000_000_000_000L) {
+                        return 18;
+                    } else {
+                        return 19;
+                    }
+                }
+            }
+        }
+    }
+
+    public static String removeBlankLines(final String str) {
+        if (NullSafe.isBlankString(str)) {
+            return "";
+        } else {
+            return str.lines()
+                    .filter(Predicate.not(String::isBlank))
+                    .collect(Collectors.joining("\n"));
         }
     }
 }

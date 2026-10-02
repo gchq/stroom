@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 package stroom.dashboard.client.table;
 
 import stroom.dashboard.client.table.FormatPresenter.FormatView;
-import stroom.expression.api.UserTimeZone.Use;
 import stroom.item.client.SelectionBox;
-import stroom.query.api.v2.Format.Type;
+import stroom.query.api.Format.Type;
+import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,23 +12,23 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.api;
 
+import stroom.aws.s3.shared.S3Location;
 import stroom.meta.api.MetaProperties;
+
+import org.jspecify.annotations.NullMarked;
 
 /**
  * <p>
  * API to the data store.
  * </p>
  * <p>
- * <p>
  * The store abstracts a repository of large files keyed by some meta
  * data.
  * </p>
- * <p>
  * <p>
  * When you read or write to a stream the file is locked. You must close the
  * stream to unlock the file.
@@ -36,7 +36,9 @@ import stroom.meta.api.MetaProperties;
  */
 public interface Store {
 
-    Target openTarget(MetaProperties metaProperties) throws DataException;
+    default Target openTarget(final MetaProperties metaProperties) throws DataException {
+        return openTarget(metaProperties, null);
+    }
 
     /**
      * <p>
@@ -49,12 +51,29 @@ public interface Store {
 
     /**
      * <p>
-     * Delete a open stream.
+     * Adds a source of data to the store that already exists on S3 storage.
+     * </p>
+     *
+     * @param metaProperties The properties of the data.
+     * @param s3Location     The location of the data file in S3.
+     */
+    @NullMarked
+    void addExistingS3Source(MetaProperties metaProperties,
+                             S3Location s3Location) throws DataException;
+
+    /**
+     * <p>
+     * Logically delete a open stream.
      * </p>
      *
      * @return items deleted
      */
-    void deleteTarget(Target target);
+    void logicallyDeleteTarget(Target target);
+
+//    /**
+//     * Physically delete all data associated with the passed meta IDs.
+//     */
+//    void physicallyDelete(final Collection<Long> metaIds);
 
     /**
      * <p>
@@ -66,7 +85,9 @@ public interface Store {
      * @throws DataException in case of a IO error or stream volume not visible or non
      *                       existent.
      */
-    Source openSource(long streamId) throws DataException;
+    default Source openSource(final long streamId) throws DataException {
+        return openSource(streamId, false);
+    }
 
     /**
      * <p>
@@ -84,4 +105,10 @@ public interface Store {
      * @throws DataException Could be thrown if no volume
      */
     Source openSource(long streamId, boolean anyStatus) throws DataException;
+
+
+    // --------------------------------------------------------------------------------
+
+
 }
+

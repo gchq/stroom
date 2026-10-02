@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class BasicTableSettingsPresenter
     }
 
     private void setQueryId(final String queryId) {
-        getView().setQuery(getComponents().get(queryId));
+        getView().setQuery(getDashboardContext().getComponents().get(queryId));
     }
 
     private boolean extractValues() {
@@ -151,11 +151,34 @@ public class BasicTableSettingsPresenter
         getView().setShowDetail(showDetail);
     }
 
+    private Integer getMaxStringFieldLength() {
+        return getView().getMaxStringFieldLength();
+    }
+
+    private boolean getOverrideMaxStringFieldLength() {
+        return getView().isOverrideMaxStringFieldLength();
+    }
+
+    private void setMaxStringFieldLength(final Integer maxStringFieldLength) {
+        getView().setMaxStringFieldLength(maxStringFieldLength);
+    }
+
+    private void setOverrideMaxStringFieldLength(final boolean overrideMaxStringFieldLength) {
+        getView().setOverrideMaxStringFieldLength(overrideMaxStringFieldLength);
+        getView().enableMaxStringFieldLength(overrideMaxStringFieldLength);
+    }
+
+    @Override
+    public void onOverrideMaxStringFieldLength(final boolean overrideMaxStringFieldLength) {
+        getView().enableMaxStringFieldLength(overrideMaxStringFieldLength);
+    }
+
     @Override
     public void read(final ComponentConfig componentConfig) {
         super.read(componentConfig);
 
-        final List<Component> list = getComponents().getSortedComponentsByType(QueryPresenter.TYPE.getId());
+        final List<Component> list = getDashboardContext()
+                .getComponents().getSortedComponentsByType(QueryPresenter.TYPE.getId());
         setQueryList(list);
 
         final TableComponentSettings settings = (TableComponentSettings) componentConfig.getSettings();
@@ -168,12 +191,15 @@ public class BasicTableSettingsPresenter
                 ? settings.getPageSize()
                 : 100);
 
+        setOverrideMaxStringFieldLength(settings.overrideMaxStringFieldLength());
+        setMaxStringFieldLength(settings.getMaxStringFieldLength() == null ? 1000 : settings.getMaxStringFieldLength());
+
         setShowDetail(settings.showDetail());
     }
 
     @Override
     public ComponentConfig write(final ComponentConfig componentConfig) {
-        ComponentConfig result = super.write(componentConfig);
+        final ComponentConfig result = super.write(componentConfig);
         final TableComponentSettings oldSettings = (TableComponentSettings) result.getSettings();
         final TableComponentSettings newSettings = writeSettings(oldSettings);
         return result.copy().settings(newSettings).build();
@@ -189,6 +215,8 @@ public class BasicTableSettingsPresenter
                 .maxResults(toList(getMaxResults()))
                 .pageSize(getPageSize())
                 .showDetail(showDetail())
+                .maxStringFieldLength(getMaxStringFieldLength())
+                .overrideMaxStringFieldLength(getOverrideMaxStringFieldLength())
                 .build();
     }
 
@@ -203,13 +231,18 @@ public class BasicTableSettingsPresenter
 
         // Need to compare extractionPipeline including name in case it has been renamed after decoration
         final boolean equal = Objects.equals(oldSettings.getQueryId(), newSettings.getQueryId()) &&
-                Objects.equals(oldSettings.extractValues(), newSettings.extractValues()) &&
-                Objects.equals(oldSettings.useDefaultExtractionPipeline(),
-                        newSettings.useDefaultExtractionPipeline()) &&
-                Objects.equals(oldSettings.getExtractionPipeline(), newSettings.getExtractionPipeline()) &&
-                Objects.equals(oldSettings.getMaxResults(), newSettings.getMaxResults()) &&
-                Objects.equals(oldSettings.getPageSize(), newSettings.getPageSize()) &&
-                Objects.equals(oldSettings.getShowDetail(), newSettings.getShowDetail());
+                              Objects.equals(oldSettings.extractValues(), newSettings.extractValues()) &&
+                              Objects.equals(oldSettings.useDefaultExtractionPipeline(),
+                                      newSettings.useDefaultExtractionPipeline()) &&
+                              Objects.equals(oldSettings.getExtractionPipeline(),
+                                      newSettings.getExtractionPipeline()) &&
+                              Objects.equals(oldSettings.getMaxResults(), newSettings.getMaxResults()) &&
+                              Objects.equals(oldSettings.getPageSize(), newSettings.getPageSize()) &&
+                              Objects.equals(oldSettings.getShowDetail(), newSettings.getShowDetail()) &&
+                              Objects.equals(oldSettings.getMaxStringFieldLength(),
+                                      newSettings.getMaxStringFieldLength()) &&
+                              Objects.equals(oldSettings.getOverrideMaxStringFieldLength(),
+                                      newSettings.getOverrideMaxStringFieldLength());
 
         return !equal;
     }
@@ -279,5 +312,15 @@ public class BasicTableSettingsPresenter
         boolean isShowDetail();
 
         void setShowDetail(boolean showDetail);
+
+        void setMaxStringFieldLength(Integer maxStringFieldLength);
+
+        Integer getMaxStringFieldLength();
+
+        void setOverrideMaxStringFieldLength(boolean overrideMaxStringFieldLength);
+
+        void enableMaxStringFieldLength(boolean enable);
+
+        boolean isOverrideMaxStringFieldLength();
     }
 }

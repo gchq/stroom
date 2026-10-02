@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,46 +16,37 @@
 
 package stroom.query.language.functions;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 
 @SuppressWarnings("unused") //Used by FunctionFactory
 @FunctionDef(
         name = RoundMonth.NAME,
         commonCategory = FunctionCategory.DATE,
-        commonSubCategories = RoundDate.ROUND_SUB_CATEGORY,
-        commonReturnType = ValLong.class,
-        commonReturnDescription = "The time as milliseconds since the epoch (1st Jan 1970).",
+        commonSubCategories = AbstractRoundDateTime.ROUND_SUB_CATEGORY,
+        commonReturnType = ValDate.class,
+        commonReturnDescription = "The result date and time.",
         signatures = @FunctionSignature(
                 description = "Rounds the supplied time up or down to the nearest start of a month.",
                 args = @FunctionArg(
                         name = "time",
-                        description = "The time to round in milliseconds since the epoch or as a string " +
-                                "formatted using the default date format.",
+                        description = "The time to round.",
                         argType = Val.class)))
-class RoundMonth extends RoundDate {
+class RoundMonth extends AbstractRoundDateTime {
 
     static final String NAME = "roundMonth";
-    private static final Calc CALC = new Calc();
 
-    public RoundMonth(final String name) {
-        super(name);
+    public RoundMonth(final ExpressionContext expressionContext, final String name) {
+        super(expressionContext, name);
     }
 
     @Override
-    protected RoundCalculator getCalculator() {
-        return CALC;
-    }
-
-    static class Calc extends RoundDateCalculator {
-
-
-        @Override
-        protected LocalDateTime adjust(final LocalDateTime dateTime) {
-            LocalDateTime result = dateTime.toLocalDate().withDayOfMonth(1).atStartOfDay();
-            if (dateTime.isAfter(result.plusDays(15))) {
+    protected DateTimeAdjuster getAdjuster() {
+        return zonedDateTime -> {
+            ZonedDateTime result = FloorMonth.floor(zonedDateTime);
+            if (zonedDateTime.isAfter(result.plusDays(15))) {
                 result = result.plusMonths(1);
             }
             return result;
-        }
+        };
     }
 }

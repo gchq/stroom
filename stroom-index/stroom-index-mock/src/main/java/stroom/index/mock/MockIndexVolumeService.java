@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index.mock;
@@ -36,7 +35,7 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume create(IndexVolume indexVolume) {
+    public IndexVolume create(final IndexVolume indexVolume) {
         return null;
     }
 
@@ -46,12 +45,12 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume update(IndexVolume indexVolume) {
+    public IndexVolume update(final IndexVolume indexVolume) {
         return null;
     }
 
     @Override
-    public Boolean delete(int id) {
+    public Boolean delete(final int id) {
         return true;
     }
 

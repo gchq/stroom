@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package stroom.query.client.presenter;
 
 import stroom.dashboard.client.table.FilterCell;
 import stroom.dashboard.client.table.FilterCellManager;
-import stroom.query.api.v2.Column;
+import stroom.query.api.Column;
 
 import com.google.gwt.cell.client.CompositeCell;
 import com.google.gwt.cell.client.HasCell;

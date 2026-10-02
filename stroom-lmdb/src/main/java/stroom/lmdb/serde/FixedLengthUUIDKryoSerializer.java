@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.lmdb.serde;
@@ -39,7 +38,7 @@ public class FixedLengthUUIDKryoSerializer extends Serializer<String> {
         UUID uuid = null;
         try {
             uuid = UUID.fromString(uuidStr);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("uuidStr [{}] is not a valid UUID", uuidStr), e);
         }
         output.writeLong(uuid.getMostSignificantBits());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.WrapperView;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.DocSelectionPopup;
@@ -44,7 +44,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
-        implements HasDocumentRead<DictionaryDoc>, HasDocumentWrite<DictionaryDoc>, HasDirtyHandlers {
+        implements HasDocumentRead<DictionaryDoc>, HasDocumentWrite<DictionaryDoc>, HasChangeHandlers {
 
     private final DocRefListPresenter docRefListPresenter;
     private final Provider<DocSelectionPopup> dictionarySelection;
@@ -68,6 +68,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
 
         addButton = docRefListPresenter.getView().addButton(SvgPresets.ADD);
         removeButton = docRefListPresenter.getView().addButton(SvgPresets.DELETE);
+        docRefListPresenter.initTableColumns("Document Name", true);
 
         enableButtons();
     }
@@ -89,7 +90,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         chooser.show(docRef -> {
             if (docRef != null && !docRef.equals(currentDoc) && !imports.contains(docRef)) {
                 imports.add(docRef);
-                DirtyEvent.fire(DictionaryListPresenter.this, true);
+                ChangeEvent.fire(DictionaryListPresenter.this);
                 refresh();
             }
         });
@@ -110,7 +111,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
                         if (result) {
                             imports.removeAll(selected);
                             selectionModel.clear();
-                            DirtyEvent.fire(DictionaryListPresenter.this, true);
+                            ChangeEvent.fire(DictionaryListPresenter.this);
                             refresh();
                         }
                     });
@@ -123,6 +124,9 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         enableButtons();
 
         currentDoc = docRef;
+        if (docRef != null && docRef.getName() != null) {
+            docRefListPresenter.setTableName("Dictionary '" + docRef.getName() + "' Imports");
+        }
         imports = new ArrayList<>();
         if (document != null) {
             if (document.getImports() != null) {
@@ -134,14 +138,15 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
 
     @Override
     public DictionaryDoc write(final DictionaryDoc document) {
+        final DictionaryDoc.Builder builder = document.copy();
         if (imports.isEmpty()) {
-            document.setImports(null);
+            builder.imports(null);
         } else {
-            document.setImports(imports);
+            builder.imports(imports);
             // Select first item
             docRefListPresenter.getSelectionModel().setSelected(imports.get(0));
         }
-        return document;
+        return builder.build();
     }
 
     public void registerDictionarySelectionHandler(final Consumer<DocRef> docRefConsumer) {
@@ -149,7 +154,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
             final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
             registerHandler(selectionModel.addSelectionHandler(event -> {
                 if (!event.getSelectionType().isDoubleSelect()
-                        && !event.getSelectionType().isMultiSelect()) {
+                    && !event.getSelectionType().isMultiSelect()) {
                     if (selectionModel.getSelectedCount() == 1) {
                         docRefConsumer.accept(selectionModel.getSelected());
                     }
@@ -177,7 +182,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 }

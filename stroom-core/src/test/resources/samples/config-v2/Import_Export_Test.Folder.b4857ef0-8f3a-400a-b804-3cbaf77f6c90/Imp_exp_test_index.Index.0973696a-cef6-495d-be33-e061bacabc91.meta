@@ -1,0 +1,28 @@
+{
+  "type" : "Index",
+  "uuid" : "0973696a-cef6-495d-be33-e061bacabc91",
+  "name" : "Imp_exp_test_index",
+  "version" : "28cd4b03-d018-44bd-a89f-936a14ffa83a",
+  "maxDocsPerShard" : 1000000000,
+  "partitionBy" : "MONTH",
+  "partitionSize" : 1,
+  "shardsPerPartition" : 1,
+  "fields" : [ {
+    "fldName" : "New Field 0",
+    "fldType" : "LONG",
+    "analyzerType" : "STANDARD",
+    "indexed" : true,
+    "stored" : true,
+    "termPositions" : true,
+    "caseSensitive" : true
+  }, {
+    "fldName" : "New Field 1",
+    "fldType" : "ID",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : true,
+    "termPositions" : false,
+    "caseSensitive" : false
+  } ],
+  "volumeGroupName" : "Default Volume Group"
+}

@@ -1,0 +1,8 @@
+{
+  "type" : "Visualisation",
+  "uuid" : "f6313d81-4b0b-4a83-b91e-bd3646d4d5f3",
+  "name" : "Imp_exp_test_visualisation",
+  "version" : "a47abee9-becb-4b02-9851-c8f8bbb92568",
+  "description" : "My description",
+  "functionName" : "myFunc"
+}

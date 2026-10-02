@@ -1,12 +1,31 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.app.guice;
 
+import stroom.app.HttpClientProviderCacheImpl;
 import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
+import stroom.security.openid.api.ClusterToken;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.jersey.HttpClientProviderCache;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.jersey.WebTargetFactory;
@@ -35,7 +54,7 @@ public class JerseyModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(JerseyClientFactory.class).to(JerseyClientFactoryImpl.class);
-
+        bind(HttpClientProviderCache.class).to(HttpClientProviderCacheImpl.class);
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(NodeCallExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)
@@ -86,12 +105,16 @@ public class JerseyModule extends AbstractModule {
                     final UserIdentity userIdentity = securityContext.getUserIdentity();
 
                     final UserIdentityFactory userIdentityFactory = userIdentityFactoryProvider.get();
-                    if (!userIdentityFactory.isServiceUser(userIdentity)) {
-                        // We are running as a user who is not the service/proc user so need to put their
-                        // identity in the headers. We can't use the human user identity as they may have
-                        // an AWS token that we can't refresh.
-                        builder.header(UserIdentityFactory.RUN_AS_USER_HEADER, securityContext.getUserRef().getUuid());
-                    }
+                    // Always name the effective caller in the run-as header: a human user's uuid, or the
+                    // processing-user sentinel for a genuine system/background call. The receiver requires
+                    // this header on a cluster token, so an accidental omission fails closed rather than
+                    // silently escalating to the processing user. (We can't use the human's own token as
+                    // they may have an AWS token that we can't refresh, so we always authenticate the node
+                    // as the proc user below and downscope via this header.)
+                    final String runAsUser = userIdentityFactory.isServiceUser(userIdentity)
+                            ? ClusterToken.PROCESSING_USER_SUBJECT
+                            : securityContext.getUserRef().getUuid();
+                    builder.header(UserIdentityFactory.RUN_AS_USER_HEADER, runAsUser);
                     // Always authenticate as the proc user
                     final Map<String, String> authHeaders = userIdentityFactory.getServiceUserAuthHeaders();
 

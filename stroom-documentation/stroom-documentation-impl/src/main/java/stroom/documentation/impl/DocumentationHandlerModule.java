@@ -16,12 +16,8 @@
 
 package stroom.documentation.impl;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.documentation.shared.DocumentationDoc;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -30,15 +26,8 @@ public class DocumentationHandlerModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(DocumentationStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(DocumentationStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(DocumentationStoreImpl.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(DocumentationDoc.TYPE, DocumentationStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(DocumentationDoc.TYPE, DocumentationStore.class, DocumentationStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(DocumentationResourceImpl.class);

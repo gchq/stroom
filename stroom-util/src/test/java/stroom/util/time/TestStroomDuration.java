@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.time;
 
 import stroom.util.json.JsonUtil;
@@ -90,11 +106,11 @@ class TestStroomDuration {
     }
 
     void doParseTest(final String modelStringUtilInput, final String isoInput, final Duration expectedDuration) {
-        StroomDuration stroomDuration = StroomDuration.parse(modelStringUtilInput);
+        final StroomDuration stroomDuration = StroomDuration.parse(modelStringUtilInput);
         assertThat(stroomDuration.getDuration()).isEqualTo(expectedDuration);
         assertThat(stroomDuration.getValueAsStr()).isEqualTo(modelStringUtilInput);
 
-        StroomDuration stroomDuration2 = StroomDuration.parse(isoInput);
+        final StroomDuration stroomDuration2 = StroomDuration.parse(isoInput);
         assertThat(stroomDuration2.getDuration()).isEqualTo(expectedDuration);
         assertThat(stroomDuration2.getValueAsStr()).isEqualTo(isoInput);
 

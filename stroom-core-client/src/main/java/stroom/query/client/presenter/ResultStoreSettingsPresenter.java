@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.query.api.v2.LifespanInfo;
-import stroom.query.api.v2.ResultStoreInfo;
+import stroom.query.api.LifespanInfo;
+import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
 import stroom.query.shared.UpdateStoreRequest;
 import stroom.widget.popup.client.event.ShowPopupEvent;

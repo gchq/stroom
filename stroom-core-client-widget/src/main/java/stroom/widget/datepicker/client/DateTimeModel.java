@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.datepicker.client;
 
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
@@ -59,7 +75,7 @@ public class DateTimeModel {
         currentMonth = getFirstDayOfMonth(UTCDate.create());
     }
 
-    public static UTCDate getFirstDayOfMonth(UTCDate date) {
+    public static UTCDate getFirstDayOfMonth(final UTCDate date) {
         return UTCDate.create(
                 date.getFullYear(),
                 date.getMonth(),
@@ -76,7 +92,7 @@ public class DateTimeModel {
      * @param date the date
      * @return the formated day of month
      */
-    public String formatDayOfMonth(UTCDate date) {
+    public String formatDayOfMonth(final UTCDate date) {
         return dayOfMonthNames[date.getDate()];
     }
 
@@ -86,7 +102,7 @@ public class DateTimeModel {
      * @param dayInWeek the day in week to format
      * @return the formatted day in week
      */
-    public String formatDayOfWeek(int dayInWeek) {
+    public String formatDayOfWeek(final int dayInWeek) {
         return dayOfWeekNames[dayInWeek];
     }
 
@@ -96,7 +112,7 @@ public class DateTimeModel {
      * @param month A number from 0 (for January) to 11 (for December) identifying the month wanted.
      * @return the formatted month
      */
-    public String formatMonth(int month) {
+    public String formatMonth(final int month) {
         return monthOfYearNames[month];
     }
 
@@ -115,7 +131,7 @@ public class DateTimeModel {
             return copy;
         } else {
 
-            int offset = wkDayOfMonth1st - start > 0
+            final int offset = wkDayOfMonth1st - start > 0
                     ? wkDayOfMonth1st - start
                     : DAYS_IN_WEEK - (start - wkDayOfMonth1st);
             CalendarUtil.addDaysToDate(copy, -offset);
@@ -139,7 +155,7 @@ public class DateTimeModel {
      * @param date the date
      * @return date
      */
-    public boolean isInCurrentMonth(UTCDate date) {
+    public boolean isInCurrentMonth(final UTCDate date) {
         return currentMonth.getMonth() == date.getMonth();
     }
 
@@ -148,7 +164,7 @@ public class DateTimeModel {
      *
      * @param currentDate the currently specified date
      */
-    public void setCurrentMonth(UTCDate currentDate) {
+    public void setCurrentMonth(final UTCDate currentDate) {
         this.currentMonth.setFullYear(currentDate.getFullYear());
         this.currentMonth.setMonth(currentDate.getMonth());
     }
@@ -159,7 +175,7 @@ public class DateTimeModel {
      *
      * @param deltaMonths - number of months to be added to the current date
      */
-    public void shiftCurrentMonth(int deltaMonths) {
+    public void shiftCurrentMonth(final int deltaMonths) {
         CalendarUtil.addMonthsToDate(currentMonth, deltaMonths);
 //        refresh();
     }
@@ -276,8 +292,8 @@ public class DateTimeModel {
 
     public long getOffsetMillis(final UTCDate value) {
         final String offsetString = getOffsetString(value);
-        int hours = ClientStringUtil.getInt(offsetString.substring(1, 3));
-        int minutes = ClientStringUtil.getInt(offsetString.substring(3, 5));
+        final int hours = ClientStringUtil.getInt(offsetString.substring(1, 3));
+        final int minutes = ClientStringUtil.getInt(offsetString.substring(3, 5));
         long millis = (hours * MILLIS_IN_HOUR) + (minutes * MILLIS_IN_MINUTE);
         if (offsetString.charAt(0) == '-') {
             millis = millis * -1;

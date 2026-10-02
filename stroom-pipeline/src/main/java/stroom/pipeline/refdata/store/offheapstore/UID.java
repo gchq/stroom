@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore;
@@ -71,7 +70,7 @@ public class UID implements Comparable<UID> {
     public static UID of(final ByteBuffer byteBuffer, final int... byteValues) {
         Preconditions.checkArgument(byteValues.length == UID_ARRAY_LENGTH);
         for (int i = 0; i < UID_ARRAY_LENGTH; i++) {
-            byte b = (byte) byteValues[i];
+            final byte b = (byte) byteValues[i];
             byteBuffer.put(b);
         }
         byteBuffer.flip();
@@ -140,7 +139,7 @@ public class UID implements Comparable<UID> {
     public static void incrementUid(final ByteBuffer byteBuffer) {
         try {
             UNSIGNED_BYTES.increment(byteBuffer, 0);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error incrementing UID. Current value {}. {}",
                     UNSIGNED_BYTES.get(byteBuffer, byteBuffer.position()),
                     e.getMessage()), e);
@@ -163,7 +162,7 @@ public class UID implements Comparable<UID> {
         try {
             // Increment the uid in place in the copy
             UNSIGNED_BYTES.increment(otherBuffer);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error writing next UID. Current value {}. {}",
                     UNSIGNED_BYTES.get(this.byteBuffer, this.byteBuffer.position()),
                     e.getMessage()), e);

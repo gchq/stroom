@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.statistics.impl.sql;
 
 import stroom.db.util.DbUtil;
@@ -40,7 +56,7 @@ public class GenerateStatValSourceRows {
     }
 
     public static void main(final String[] args) throws SQLException {
-        Injector injector = Guice.createInjector(
+        final Injector injector = Guice.createInjector(
                 new DbTestModule(),
                 new CoreTestModule());
 
@@ -53,7 +69,7 @@ public class GenerateStatValSourceRows {
         try (final Connection connection = statisticsDbConnProvider.getConnection()) {
             LOGGER.info("Clearing SQL_STAT_VAL_SRC");
             final PreparedStatement stmt = connection.prepareStatement("delete from SQL_STAT_VAL_SRC");
-            int count = stmt.executeUpdate();
+            final int count = stmt.executeUpdate();
             LOGGER.info("Deleted {} rows", count);
         }
 
@@ -62,7 +78,7 @@ public class GenerateStatValSourceRows {
         final Instant nowIsh = Instant.now()
                 .truncatedTo(ChronoUnit.MINUTES);
 
-        SQLStatisticAggregateMap statisticAggregateMap = new SQLStatisticAggregateMap();
+        final SQLStatisticAggregateMap statisticAggregateMap = new SQLStatisticAggregateMap();
 
         Instant startTime = nowIsh;
         startTime = generateEvents(startTime, Duration.ofHours(1), Duration.ofSeconds(30), statisticAggregateMap);
@@ -83,7 +99,7 @@ public class GenerateStatValSourceRows {
                                    final Duration interval,
                                    final SQLStatisticAggregateMap statisticAggregateMap) {
 
-        long iterations = totalDuration.dividedBy(interval);
+        final long iterations = totalDuration.dividedBy(interval);
 
         LongStream.rangeClosed(0, iterations)
                 .boxed()
@@ -92,7 +108,7 @@ public class GenerateStatValSourceRows {
                 .forEach(event -> {
                     try {
                         statisticAggregateMap.addRolledUpEvent(event, 1000);
-                    } catch (StatisticsEventValidationException e) {
+                    } catch (final StatisticsEventValidationException e) {
                         throw new RuntimeException(e);
                     }
                 });

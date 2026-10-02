@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
 
 package stroom.index.lucene553;
 
-import stroom.datasource.api.v2.IndexField;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.expression.api.DateTimeSettings;
 import stroom.index.impl.IndexShardSearchConfig;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.LuceneShardSearcher;
 import stroom.index.lucene553.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.index.shared.IndexShard;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.QueryKey;
+import stroom.query.api.datasource.IndexField;
 import stroom.query.common.v2.IndexFieldCache;
 import stroom.query.common.v2.SearchProgressLog;
 import stroom.query.common.v2.SearchProgressLog.SearchPhase;
@@ -101,7 +101,7 @@ class Lucene553ShardSearcher implements LuceneShardSearcher {
                 dictionaryStore,
                 maxBooleanClauseCount,
                 dateTimeSettings);
-        SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(expression);
+        final SearchExpressionQuery searchExpressionQuery = searchExpressionQueryBuilder.buildQuery(expression);
         query = searchExpressionQuery.getQuery();
 
         // Make sure the query was created successfully.

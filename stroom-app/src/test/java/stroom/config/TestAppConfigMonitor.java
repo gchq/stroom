@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config;
 
 import stroom.config.app.AppConfig;
@@ -154,8 +170,8 @@ class TestAppConfigMonitor {
         grepFile(yamlFile);
 
         // Now keep checking if the appConfig has been updated, or we timeout
-        Instant startTime = Instant.now();
-        Instant timeOutTime = startTime.plusSeconds(10);
+        final Instant startTime = Instant.now();
+        final Instant timeOutTime = startTime.plusSeconds(10);
         LOGGER.info("Waiting for config object to be updated by AppConfigMonitor");
         // AppConfigMonitor waits 2s after detecting the change before it actually updates the object
         // so need to allow for that
@@ -176,13 +192,13 @@ class TestAppConfigMonitor {
 
     private void grepFile(final Path file) {
         try {
-            String str = YAML_KEY_PATTERN.matcher(Files.readString(file))
+            final String str = YAML_KEY_PATTERN.matcher(Files.readString(file))
                     .results()
                     .findFirst()
                     .orElseThrow()
                     .group(0);
             LOGGER.info("Found str [{}] in file {}", str, file);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(e);
         }
     }

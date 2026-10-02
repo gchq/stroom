@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,15 @@
 
 package stroom.search.elastic.search;
 
+import stroom.ai.api.AiService;
+import stroom.ai.api.OpenAIModelStore;
+import stroom.docref.DocRef;
+import stroom.openai.shared.OpenAIModelDoc;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.common.v2.Coprocessors;
 import stroom.query.common.v2.ResultStore;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
-import stroom.query.language.functions.ValBoolean;
-import stroom.query.language.functions.ValDouble;
-import stroom.query.language.functions.ValInteger;
-import stroom.query.language.functions.ValLong;
 import stroom.query.language.functions.ValString;
 import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
@@ -32,6 +33,7 @@ import stroom.search.elastic.ElasticClusterStore;
 import stroom.search.elastic.shared.ElasticClusterDoc;
 import stroom.search.elastic.shared.ElasticConnectionConfig;
 import stroom.search.elastic.shared.ElasticIndexDoc;
+import stroom.search.elastic.shared.ElasticIndexField;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
@@ -42,12 +44,12 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SlicedScroll;
 import co.elastic.clients.elasticsearch._types.Time;
 import co.elastic.clients.elasticsearch._types.query_dsl.FieldAndFormat;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.ScrollResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -55,54 +57,76 @@ import co.elastic.clients.elasticsearch.core.search.Highlight;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.SourceConfig;
 import co.elastic.clients.json.JsonData;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import dev.langchain4j.data.document.Metadata;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.scoring.ScoringModel;
+import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.content.ContentMetadata;
+import dev.langchain4j.rag.content.aggregator.ReRankingContentAggregator;
+import dev.langchain4j.rag.query.Query;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
-import jakarta.json.JsonArray;
 import jakarta.json.JsonNumber;
+import jakarta.json.JsonObject;
 import jakarta.json.JsonString;
 import jakarta.json.JsonValue;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class ElasticSearchTaskHandler {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ElasticSearchTaskHandler.class);
+    private static final Pattern RERANK_VECTOR_FIELD_NAME_PATTERN = Pattern.compile("^(.+)\\.[^.]+$");
+    private static final char FIELD_PATH_SEPARATOR = '.';
     public static final ThreadPool SCROLL_REQUEST_THREAD_POOL =
             new ThreadPoolImpl("Elasticsearch Scroll Request");
 
     private final Provider<ElasticSearchConfig> elasticSearchConfigProvider;
+    private final Provider<AiService> aiServiceProvider;
     private final ElasticClientCache elasticClientCache;
     private final ElasticClusterStore elasticClusterStore;
+    private final OpenAIModelStore openAIModelStore;
     private final ExecutorProvider executorProvider;
     private final TaskContextFactory taskContextFactory;
 
     @Inject
     ElasticSearchTaskHandler(final Provider<ElasticSearchConfig> elasticSearchConfigProvider,
+                             final Provider<AiService> aiServiceProvider,
                              final ElasticClientCache elasticClientCache,
                              final ElasticClusterStore elasticClusterStore,
+                             final OpenAIModelStore openAIModelStore,
                              final ExecutorProvider executorProvider,
                              final TaskContextFactory taskContextFactory) {
         this.elasticSearchConfigProvider = elasticSearchConfigProvider;
+        this.aiServiceProvider = aiServiceProvider;
         this.elasticClientCache = elasticClientCache;
         this.elasticClusterStore = elasticClusterStore;
+        this.openAIModelStore = openAIModelStore;
         this.executorProvider = executorProvider;
         this.taskContextFactory = taskContextFactory;
     }
 
     public void search(final TaskContext taskContext,
                        final ElasticIndexDoc elasticIndex,
-                       final Query queryBuilder,
+                       final ElasticQueryParams queryBuilder,
                        final Highlight highlightBuilder,
                        final Coprocessors coprocessors,
                        final ResultStore resultStore,
@@ -114,11 +138,17 @@ public class ElasticSearchTaskHandler {
             taskContext.info(() -> LogUtil.message("Searching Elasticsearch index {}", elasticIndex.getName()));
 
             final ElasticClusterDoc elasticCluster = elasticClusterStore.readDocument(elasticIndex.getClusterRef());
+            final DocRef rerankModelRef = elasticIndex.getRerankModelRef();
+            final OpenAIModelDoc rerankModel = rerankModelRef != null
+                    ?
+                    openAIModelStore.readDocument(rerankModelRef)
+                    : null;
             final ElasticConnectionConfig connectionConfig = elasticCluster.getConnection();
 
             final CompletableFuture<Void> searchFuture = executeSearch(
                     taskContext,
                     elasticIndex,
+                    rerankModel,
                     queryBuilder,
                     highlightBuilder,
                     coprocessors,
@@ -142,7 +172,8 @@ public class ElasticSearchTaskHandler {
 
     private CompletableFuture<Void> executeSearch(final TaskContext parentContext,
                                                   final ElasticIndexDoc elasticIndex,
-                                                  final Query queryBuilder,
+                                                  final OpenAIModelDoc rerankModel,
+                                                  final ElasticQueryParams queryParams,
                                                   final Highlight highlightBuilder,
                                                   final Coprocessors coprocessors,
                                                   final ResultStore resultStore,
@@ -164,7 +195,8 @@ public class ElasticSearchTaskHandler {
                             TerminateHandlerFactory.NOOP_FACTORY,
                             taskContext -> searchSlice(
                                     elasticIndex,
-                                    queryBuilder,
+                                    rerankModel,
+                                    queryParams,
                                     highlightBuilder,
                                     coprocessors,
                                     resultStore,
@@ -189,7 +221,8 @@ public class ElasticSearchTaskHandler {
     }
 
     private void searchSlice(final ElasticIndexDoc elasticIndex,
-                             final Query queryBuilder,
+                             final OpenAIModelDoc rerankModel,
+                             final ElasticQueryParams queryParams,
                              final Highlight highlightBuilder,
                              final Coprocessors coprocessors,
                              final ResultStore resultStore,
@@ -204,24 +237,12 @@ public class ElasticSearchTaskHandler {
             final Time scrollTime = Time.of(t -> t.time(String.format("%ds", scrollSeconds)));
             final SearchRequest.Builder searchRequestBuilder = new SearchRequest.Builder()
                     .index(elasticIndex.getIndexName())
-                    .query(queryBuilder)
+                    .query(queryParams.getQuery())
                     .size(elasticIndex.getSearchScrollSize())
                     .scroll(scrollTime)
                     .source(SourceConfig.of(sc -> sc
                             .fetch(false)
                     ));
-
-            if (elasticSearchConfigProvider.get().getHighlight()) {
-                searchRequestBuilder.highlight(highlightBuilder);
-            }
-
-            // Limit the returned fields to what the values consumers require
-            final FieldIndex fieldIndex = coprocessors.getFieldIndex();
-            final String[] fieldNames = coprocessors.getFieldIndex().getFields();
-            searchRequestBuilder.fields(Arrays.stream(fieldNames)
-                    .map(fieldName -> FieldAndFormat.of(f -> f.field(fieldName)))
-                    .toList()
-            );
 
             // Number of slices needs to be > 1 else an exception is raised
             if (elasticIndex.getSearchSlices() > 1) {
@@ -231,9 +252,45 @@ public class ElasticSearchTaskHandler {
                 ));
             }
 
-            SearchResponse<ObjectNode> searchResponse = elasticClient.search(searchRequestBuilder.build(),
+            // Add highlights
+            if (elasticSearchConfigProvider.get().getHighlight()) {
+                searchRequestBuilder.highlight(highlightBuilder);
+            }
+
+            final FieldIndex fieldIndex = coprocessors.getFieldIndex();
+            final Set<String> fieldNames = new HashSet<>(Arrays.stream(fieldIndex.getFields()).toList());
+
+            // Insert fields representing the rerank score, if enabled
+            final Set<String> rerankScoreFieldNames = new HashSet<>();
+            if (rerankModel != null) {
+                // Limit the returned fields to what the values consumers require, plus any knn query text fields.
+                // These need to be added, as the original text field values are needed for computing relevance scores.
+                for (final String vectorFieldName : queryParams.getKnnFieldQueries().keySet()) {
+                    final String textFieldName = getSuffixedFieldName(vectorFieldName,
+                            elasticIndex.getRerankTextFieldSuffix());
+                    final String scoreFieldName = getSuffixedFieldName(vectorFieldName,
+                            elasticIndex.getRerankScoreFieldSuffix());
+                    if (Objects.requireNonNullElse(elasticIndex.getRerankScoreMinimum(), 0F) > 0F &&
+                        !fieldNames.contains(scoreFieldName)) {
+                        throw new UnsupportedOperationException(
+                                "Missing rerank score field '" + scoreFieldName + "' in values consumer. " +
+                                "Either add the field or remove the rerank score cutoff in index settings.");
+                    }
+                    fieldNames.add(textFieldName);
+                    fieldIndex.create(scoreFieldName);
+                    rerankScoreFieldNames.add(scoreFieldName);
+                }
+            }
+
+            searchRequestBuilder.fields(fieldNames.stream().toList().stream()
+                    .map(fieldName -> FieldAndFormat.of(f -> f.field(fieldName)))
+                    .toList()
+            );
+
+            final SearchResponse<ObjectNode> searchResponse = elasticClient.search(
+                    searchRequestBuilder.build(),
                     ObjectNode.class);
-            String scrollId = searchResponse.scrollId();
+            final String scrollId = searchResponse.scrollId();
 
             // Retrieve the initial result batch
             List<Hit<ObjectNode>> searchHits = searchResponse.hits().hits();
@@ -242,7 +299,8 @@ public class ElasticSearchTaskHandler {
             // Continue requesting results until we have all results
             while (!taskContext.isTerminated() && !searchHits.isEmpty()) {
                 totalHitCount += searchHits.size();
-                processResultBatch(fieldIndex, resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
+                processResultBatch(fieldIndex, rerankScoreFieldNames, elasticIndex, queryParams, rerankModel,
+                        resultStore, valuesConsumer, errorConsumer, hitCount, searchHits);
 
                 final long totalHits = totalHitCount;
                 taskContext.info(() -> LogUtil.message("Processed {} hits", totalHits));
@@ -276,13 +334,36 @@ public class ElasticSearchTaskHandler {
      * Receive a batch of search hits and send each one to the values consumer
      */
     private void processResultBatch(final FieldIndex fieldIndex,
+                                    final Set<String> rerankScoreFieldNames,
+                                    final ElasticIndexDoc elasticIndex,
+                                    final ElasticQueryParams queryParams,
+                                    final OpenAIModelDoc rerankModel,
                                     final ResultStore resultStore,
                                     final ValuesConsumer valuesConsumer,
                                     final ErrorConsumer errorConsumer,
                                     final AtomicLong hitCount,
                                     final List<Hit<ObjectNode>> searchHits) {
         try {
+            // Map rerank fields to document IDs to relevance scores, to determine whether each reranked hit
+            // meets the relevance score threshold.
+            final Map<String, Map<String, Double>> fieldToDocIdScores = new HashMap<>();
+            final boolean performRerank = rerankModel != null && !queryParams.getKnnFieldQueries().isEmpty();
+            if (performRerank) {
+                for (final String fieldName : rerankScoreFieldNames) {
+                    final Map<String, Double> docIdToScoreMap = fieldToDocIdScores
+                            .computeIfAbsent(fieldName, k -> new HashMap<>());
+                    rerankSearchHits(elasticIndex, queryParams, rerankModel, searchHits, fieldName, docIdToScoreMap);
+                }
+            }
+
             for (final Hit<ObjectNode> searchHit : searchHits) {
+                // Determine whether to include the search hit based on dense vector relevance score cutoff.
+                // If at least one field meets the cutoff, include the search hit.
+                if (performRerank && fieldToDocIdScores.values().stream()
+                        .noneMatch(content -> content.containsKey(searchHit.id()))) {
+                    continue;
+                }
+
                 hitCount.incrementAndGet();
 
                 // Add highlights
@@ -294,34 +375,31 @@ public class ElasticSearchTaskHandler {
 
                 final Map<String, JsonData> mapSearchHit = searchHit.fields();
                 Val[] values = null;
-
                 for (final String fieldName : fieldIndex.getFields()) {
                     final Integer insertAt = fieldIndex.getPos(fieldName);
-                    Object fieldValue = getFieldValue(mapSearchHit, fieldName);
+
+                    final Object fieldValue;
+                    if (rerankScoreFieldNames.contains(fieldName)) {
+                        // If this is a rerank score field, obtain the score from the rerank content map and insert
+                        // into the values returned to the consumer.
+                        fieldValue = fieldToDocIdScores.get(fieldName).get(searchHit.id());
+                    } else {
+                        fieldValue = getFieldValue(mapSearchHit, fieldName);
+                    }
 
                     if (fieldValue != null) {
                         if (values == null) {
                             values = new Val[fieldIndex.size()];
                         }
 
-                        if (fieldValue instanceof Long) {
-                            // TODO Need to handle date fields as ValDate, assuming they come in as longs,
-                            //  but we need the field type from somewhere
-                            values[insertAt] = ValLong.create((Long) fieldValue);
-                        } else if (fieldValue instanceof Integer) {
-                            values[insertAt] = ValInteger.create((Integer) fieldValue);
-                        } else if (fieldValue instanceof Double) {
-                            values[insertAt] = ValDouble.create((Double) fieldValue);
-                        } else if (fieldValue instanceof Float) {
-                            values[insertAt] = ValDouble.create((Float) fieldValue);
-                        } else if (fieldValue instanceof Boolean) {
-                            values[insertAt] = ValBoolean.create((Boolean) fieldValue);
-                        } else if (fieldValue instanceof ArrayList) {
-                            values[insertAt] = ValString.create(((ArrayList<?>) fieldValue).stream()
+                        if (fieldValue instanceof final Collection<?> collectionValue) {
+                            // Multivalued fields (including values gathered from across nested objects) are
+                            // flattened to a single, comma-delimited string.
+                            values[insertAt] = ValString.create(collectionValue.stream()
                                     .map(Object::toString)
                                     .collect(Collectors.joining(", ")));
                         } else {
-                            values[insertAt] = ValString.create(fieldValue.toString());
+                            values[insertAt] = Val.create(fieldValue);
                         }
                     }
                 }
@@ -338,21 +416,279 @@ public class ElasticSearchTaskHandler {
     }
 
     /**
-     * Locate the value of the doc field by its full path
+     * Build a map containing dense vector fields to their corresponding original text fields, using a period (.)
+     * to determine the base name. Then ensure each of these text fields exist in the field mapping.
+     */
+    private void rerankSearchHits(final ElasticIndexDoc elasticIndex,
+                                  final ElasticQueryParams queryParams,
+                                  final OpenAIModelDoc rerankModel,
+                                  final List<Hit<ObjectNode>> searchHits,
+                                  final String scoreFieldName,
+                                  final Map<String, Double> docIdToScoreMap) {
+        for (final ElasticIndexField field : elasticIndex.getFields()) {
+            if (FieldType.DENSE_VECTOR.equals(field.getFldType())) {
+                final String vectorFieldName = field.getFldName();
+                final String textFieldName = getSuffixedFieldName(vectorFieldName,
+                        elasticIndex.getRerankTextFieldSuffix());
+                final String scoreFieldBaseName = getFieldBaseName(scoreFieldName);
+                final String vectorFieldBaseName = getFieldBaseName(vectorFieldName);
+                if (Objects.equals(scoreFieldBaseName, vectorFieldBaseName)) {
+                    final boolean textFieldExists = elasticIndex.getFields().stream()
+                            .anyMatch(f -> f.getFldName().equals(textFieldName));
+                    if (textFieldExists) {
+                        rerankForField(vectorFieldName, textFieldName, elasticIndex, queryParams, rerankModel,
+                                searchHits, docIdToScoreMap);
+                    } else {
+                        throw new IllegalArgumentException("Text field `" + textFieldName + "` for rerank scoring " +
+                                                           "was not found");
+                    }
+                }
+            }
+        }
+    }
+
+    private String getFieldBaseName(final String fieldName) {
+        final Matcher matcher = RERANK_VECTOR_FIELD_NAME_PATTERN.matcher(fieldName);
+        if (matcher.matches()) {
+            return matcher.group(1);
+        }
+
+        return null;
+    }
+
+    private String getSuffixedFieldName(final String fieldName, final String targetSuffix) {
+        final String baseName = getFieldBaseName(fieldName);
+        if (baseName != null) {
+            return baseName + targetSuffix;
+        }
+
+        return null;
+    }
+
+    /**
+     * Uses the configured LLM to generate relevance scores for the specified dense_vector field, against the user's
+     * query.
+     */
+    private void rerankForField(final String vectorFieldName,
+                                final String textFieldName,
+                                final ElasticIndexDoc elasticIndex,
+                                final ElasticQueryParams queryParams,
+                                final OpenAIModelDoc rerankModel,
+                                final List<Hit<ObjectNode>> searchHits,
+                                final Map<String, Double> docIdToScoreMap) {
+        final ScoringModel scoringModel = aiServiceProvider.get().getJinaScoringModel(rerankModel);
+        final int maxContextWindowTokens = rerankModel.getMaxContextWindowTokens();
+        final ReRankingContentAggregator rerankAggregator = ReRankingContentAggregator.builder()
+                .scoringModel(scoringModel)
+                .minScore(elasticIndex.getRerankScoreMinimum().doubleValue())
+                .build();
+
+        final Map<Query, Collection<List<Content>>> queryContentMap = new HashMap<>();
+        final String knnQueryTerm = queryParams.getKnnFieldQueries().get(vectorFieldName);
+        final List<Content> fieldValues = new ArrayList<>();
+
+        if (knnQueryTerm != null) {
+            for (final Hit<ObjectNode> searchHit : searchHits) {
+                // The reranker source text may itself live inside a nested object, so resolve it using the
+                // same nested-aware extraction used for result values rather than a flat map lookup.
+                final Object rawFieldValue = getFieldValue(searchHit.fields(), textFieldName);
+                if (rawFieldValue != null && searchHit.id() != null) {
+                    try {
+                        String fieldValue = firstStringValue(rawFieldValue);
+                        if (fieldValue == null) {
+                            continue;
+                        }
+                        if (maxContextWindowTokens > 0) {
+                            // Model context window limit is specified, so truncate the field value to fit
+                            final int charLimit = Math.min(fieldValue.length(), maxContextWindowTokens);
+                            fieldValue = fieldValue.substring(0, charLimit);
+                        }
+                        fieldValues.add(Content.from(
+                                TextSegment.from(fieldValue, Metadata.from("id", searchHit.id()))));
+                    } catch (final Exception e) {
+                        throw new RuntimeException("Failed to parse value '" + rawFieldValue + "' for field " +
+                                                   textFieldName, e);
+                    }
+                }
+            }
+
+            queryContentMap.put(Query.from(knnQueryTerm), List.of(fieldValues));
+        }
+
+        final List<Content> rankedContent = rerankAggregator.aggregate(queryContentMap);
+        for (final Content content : rankedContent) {
+            final Double score = (Double) content.metadata().get(ContentMetadata.RERANKED_SCORE);
+            docIdToScoreMap.put(content.textSegment().metadata().getString("id"), score);
+        }
+    }
+
+    /**
+     * Resolves the value of a field by its full (dot-delimited) path from a single search hit's
+     * {@code fields} response.
+     * <p>
+     * Elasticsearch returns non-nested fields flat, keyed by their full path (e.g.
+     * {@code {"user.name": ["Alice"]}}). Fields that live inside a {@code nested} object are instead
+     * grouped by the nested object they belong to, with the sub-field keys expressed relative to the
+     * nesting path. For a doubly-nested field {@code a.b.c} this looks like:
+     * <pre>
+     *   {
+     *     "a": [
+     *       { "b": [ { "c": ["value"] } ] }
+     *     ]
+     *   }
+     * </pre>
+     * This method handles both shapes, descending through an arbitrary number of nesting levels and
+     * flattening the values collected across sibling nested objects.
+     *
+     * @return {@code null} if the field is absent, a single native value, or a {@link List} of native
+     * values when the field (or the nested objects it spans) yields more than one value.
      */
     private Object getFieldValue(final Map<String, JsonData> searchHitMap, final String fieldName) {
-        if (fieldName == null || !searchHitMap.containsKey(fieldName)) {
+        if (fieldName == null || searchHitMap == null || searchHitMap.isEmpty()) {
             return null;
         }
 
-        JsonArray docField = searchHitMap.get(fieldName).toJson().asJsonArray();
-        if (docField.size() > 1) {
-            return docField.stream()
-                    .map(this::jsonValueToNative)
-                    .toList();
-        } else {
-            return jsonValueToNative(docField.get(0));
+        // Fast path: the field was returned flat (not nested), matching the original behaviour and
+        // avoiding any conversion for the common, non-nested case.
+        final JsonData directField = searchHitMap.get(fieldName);
+        if (directField != null) {
+            final List<Object> values = new ArrayList<>();
+            addLeafValues(directField.toJson(), values);
+            return toFieldResult(values);
         }
+
+        // Nested field: values are grouped under the enclosing nested object(s). Build a JSON view of
+        // the top-level fields and descend, splitting the path at each nested boundary.
+        final Map<String, JsonValue> fields = new HashMap<>(searchHitMap.size());
+        searchHitMap.forEach((key, data) -> fields.put(key, data.toJson()));
+
+        final List<Object> values = new ArrayList<>();
+        collectFieldValues(fields, fieldName, values);
+        return toFieldResult(values);
+    }
+
+    /**
+     * Recursively collects the native values for {@code fieldPath} from a map of fields that is either
+     * the top-level hit fields or the contents of a single nested object.
+     */
+    private void collectFieldValues(final Map<String, JsonValue> fields,
+                                    final String fieldPath,
+                                    final List<Object> out) {
+        if (fields == null || fieldPath == null) {
+            return;
+        }
+
+        // The field may be present directly at this level, either because it is a plain (non-nested)
+        // sub-field or because we have reached the leaf of a nested path.
+        final JsonValue direct = fields.get(fieldPath);
+        if (direct != null) {
+            addLeafValues(direct, out);
+            return;
+        }
+
+        // Otherwise the field is grouped inside a nested object. Find the longest ancestor path that is
+        // present as an array of objects, then recurse into each object with the remaining relative path.
+        final int splitAt = findNestedSplit(fields, fieldPath);
+        if (splitAt < 0) {
+            return;
+        }
+
+        final String nestedPath = fieldPath.substring(0, splitAt);
+        final String remainder = fieldPath.substring(splitAt + 1);
+        final JsonValue container = fields.get(nestedPath);
+        for (final JsonValue element : container.asJsonArray()) {
+            if (element.getValueType() == JsonValue.ValueType.OBJECT) {
+                // A JsonObject is a Map<String, JsonValue>, so it can be descended into directly.
+                final JsonObject nestedObject = element.asJsonObject();
+                collectFieldValues(nestedObject, remainder, out);
+            }
+        }
+    }
+
+    /**
+     * Finds the index of the {@code '.'} at which {@code fieldPath} should be split into a nested
+     * container path and a relative remainder. Prefixes are tested longest-first so that nested
+     * containers whose relative name spans plain-object segments (e.g. {@code b.c}) are preferred over
+     * shorter matches.
+     *
+     * @return the split index, or {@code -1} if no nested container prefix is present
+     */
+    private int findNestedSplit(final Map<String, JsonValue> fields, final String fieldPath) {
+        int idx = fieldPath.lastIndexOf(FIELD_PATH_SEPARATOR);
+        while (idx > 0) {
+            final String prefix = fieldPath.substring(0, idx);
+            if (isArrayOfObjects(fields.get(prefix))) {
+                return idx;
+            }
+            idx = fieldPath.lastIndexOf(FIELD_PATH_SEPARATOR, idx - 1);
+        }
+        return -1;
+    }
+
+    /**
+     * @return true if the value is a non-empty array containing at least one object (the shape used by
+     * Elasticsearch to group the values of a {@code nested} field).
+     */
+    private boolean isArrayOfObjects(final JsonValue value) {
+        if (value == null || value.getValueType() != JsonValue.ValueType.ARRAY) {
+            return false;
+        }
+        return value.asJsonArray().stream()
+                .anyMatch(element -> element.getValueType() == JsonValue.ValueType.OBJECT);
+    }
+
+    /**
+     * Adds the native representation of a leaf field's value(s) to {@code out}. Elasticsearch always
+     * returns field values as an array, but this also tolerates a bare scalar defensively.
+     */
+    private void addLeafValues(final JsonValue value, final List<Object> out) {
+        if (value == null) {
+            return;
+        }
+
+        if (value.getValueType() == JsonValue.ValueType.ARRAY) {
+            for (final JsonValue element : value.asJsonArray()) {
+                final Object nativeValue = jsonValueToNative(element);
+                if (nativeValue != null) {
+                    out.add(nativeValue);
+                }
+            }
+        } else {
+            final Object nativeValue = jsonValueToNative(value);
+            if (nativeValue != null) {
+                out.add(nativeValue);
+            }
+        }
+    }
+
+    /**
+     * Collapses the collected values into the shape expected by the caller: {@code null} for no values,
+     * the single value, or the list itself for multiple values.
+     */
+    private Object toFieldResult(final List<Object> values) {
+        if (values.isEmpty()) {
+            return null;
+        } else if (values.size() == 1) {
+            return values.getFirst();
+        } else {
+            return values;
+        }
+    }
+
+    /**
+     * Returns the first value of a resolved field as a String, whether the field yielded a single value
+     * or a list of values.
+     */
+    private String firstStringValue(final Object fieldValue) {
+        if (fieldValue == null) {
+            return null;
+        }
+        if (fieldValue instanceof final Collection<?> collection) {
+            return collection.isEmpty()
+                    ? null
+                    : String.valueOf(collection.iterator().next());
+        }
+        return String.valueOf(fieldValue);
     }
 
     private Object jsonValueToNative(final JsonValue jsonValue) {

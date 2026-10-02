@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 ROOT_DIR=/stroom
 BIND_MOUNT_CONFIG_FILE="${ROOT_DIR}/config/config.yml"
 FALLBACK_CONFIG_FILE="${ROOT_DIR}/config_fallback/config.yml"
@@ -31,8 +47,11 @@ main() {
 
   # All args passed to this script are the command and its optional args,
   # e.g. 'server', 'migrate', 'reset_password -u joe -p pword'
+
+  # Called via exec so we replave this shell process with java to ensure
+  # a SIGTERM from a docker stop reaches java for a graceful shutdown
   #shellcheck disable=2086
-  java \
+  exec java \
     ${java_opts} \
     -jar stroom-app-all.jar \
     "$@" \

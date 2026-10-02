@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.functions;
 
 
@@ -65,7 +81,7 @@ class TestComparator {
     void test2() {
         List<Val> candidateList = null;
 
-        boolean done = false;
+        final boolean done = false;
         for (int round = 0; round < 10 && !done; round++) {
             boolean error = false;
             List<Val> list = null;
@@ -118,19 +134,19 @@ class TestComparator {
             boolean exit = false;
             while (!exit) {
                 final List<Val> originalList = list;
-                List<Val> lower = list.subList(0, list.size() - 1);
-                List<Val> upper = list.subList(1, list.size());
+                final List<Val> lower = list.subList(0, list.size() - 1);
+                final List<Val> upper = list.subList(1, list.size());
 
                 // Sort each
                 try {
                     new ArrayList<>(lower).sort(COMPARATOR);
                     try {
                         new ArrayList<>(upper).sort(COMPARATOR);
-                    } catch (IllegalArgumentException e) {
+                    } catch (final IllegalArgumentException e) {
 //                        System.out.println("Error in upper: size=" + upper.size());
                         list = upper;
                     }
-                } catch (IllegalArgumentException e) {
+                } catch (final IllegalArgumentException e) {
 //                    System.out.println("Error in lower: size=" + lower.size());
                     list = lower;
                 }
@@ -168,9 +184,9 @@ class TestComparator {
         candidateList.sort(COMPARATOR);
     }
 
-    private void printList(List<Val> list) {
+    private void printList(final List<Val> list) {
         System.out.println("FOUND CANDIDATE LIST (SIZE=" + list.size() + ")\n");
-        for (Val val : list) {
+        for (final Val val : list) {
             if (val == null) {
                 System.out.println("NULL");
             } else {
@@ -235,15 +251,15 @@ class TestComparator {
             boolean exit = false;
             while (!exit) {
                 final List<Val> originalList = list;
-                List<Val> lower = new ArrayList<>(list);
-                int index = (int) (Math.random() * lower.size());
+                final List<Val> lower = new ArrayList<>(list);
+                final int index = (int) (Math.random() * lower.size());
                 System.out.println("Removing: " + index);
                 lower.remove(index);
 
                 // Sort each
                 try {
                     lower.sort(COMPARATOR);
-                } catch (IllegalArgumentException e) {
+                } catch (final IllegalArgumentException e) {
                     System.out.println("Error in lower: size=" + lower.size());
                     list = lower;
                 }
@@ -254,7 +270,7 @@ class TestComparator {
 
                 if (list.size() < 100) {
                     System.out.println("FOUND CANDIDATE LIST:\n");
-                    for (Val val : list) {
+                    for (final Val val : list) {
                         if (val == null) {
                             System.out.println("NULL");
                         } else {

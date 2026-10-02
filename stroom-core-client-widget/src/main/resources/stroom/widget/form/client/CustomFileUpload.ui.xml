@@ -1,0 +1,10 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client">
+    <g:FlowPanel styleName="customFileUpload">
+        <b:Button ui:field="chooseFile" text="Choose File" addStyleNames="allow-focus Button--contained-primary"/>
+        <g:Label ui:field="fileName"/>
+        <g:FileUpload ui:field="fileUpload" addStyleNames="stroom-control wide-control" name="fileUpload"/>
+    </g:FlowPanel>
+</ui:UiBinder>

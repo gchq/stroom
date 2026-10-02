@@ -1,8 +1,25 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.NullSafe;
+import stroom.gitrepo.shared.GitRepoDoc;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 public final class ExplorerConstants {
@@ -25,6 +42,12 @@ public final class ExplorerConstants {
             .docRef(FAVOURITES_DOC_REF)
             .rootNodeUuid(FAVOURITES_DOC_REF.getUuid())
             .build();
+    public static final ArrayList<String> FOLDER_LIKE = new ArrayList<>();
+
+    static {
+        FOLDER_LIKE.add("Folder");
+        FOLDER_LIKE.add("GitRepo");
+    }
 
     private ExplorerConstants() {
     }
@@ -59,8 +82,8 @@ public final class ExplorerConstants {
 
     public static boolean isFavouritesNode(final String type,
                                            final String uuid) {
-        return Objects.equals(SYSTEM_NODE.getType(), type)
-               && Objects.equals(SYSTEM_NODE.getUuid(), uuid);
+        return Objects.equals(FAVOURITES_NODE.getType(), type)
+               && Objects.equals(FAVOURITES_NODE.getUuid(), uuid);
     }
 
     /**
@@ -76,25 +99,39 @@ public final class ExplorerConstants {
     }
 
     /**
-     * Tests whether a node is a folder
+     * Tests whether a node is a folder.
+     * The node is a folder if its type is FOLDER_TYPE or
+     * GitDocRepo.TYPE.
      */
     public static boolean isFolder(final ExplorerNode node) {
-        return NullSafe.test(node,
-                ExplorerNode::getDocRef,
-                docRef -> FOLDER_TYPE.equals(docRef.getType()));
+        if (node == null) {
+            return false;
+        } else {
+            final DocRef docRef = node.getDocRef();
+            if (docRef == null) {
+                return false;
+            } else {
+                final String type = docRef.getType();
+                return type.equals(FOLDER_TYPE)
+                       || type.equals(GitRepoDoc.TYPE);
+            }
+        }
     }
 
     /**
      * Tests whether a {@link DocRef} is a folder
      */
     public static boolean isFolder(final DocRef docRef) {
-        return docRef != null && FOLDER_TYPE.equals(docRef.getType());
+        return docRef != null && (FOLDER_TYPE.equals(docRef.getType())
+                                  || GitRepoDoc.TYPE.equals(docRef.getType()));
     }
 
     /**
      * Tests whether a {@link DocRef} is a folder or the system node
      */
     public static boolean isFolderOrSystem(final DocRef docRef) {
-        return docRef != null && (FOLDER_TYPE.equals(docRef.getType()) || Objects.equals(SYSTEM_DOC_REF, docRef));
+        return docRef != null && (FOLDER_TYPE.equals(docRef.getType())
+                                  || GitRepoDoc.TYPE.equals(docRef.getType())
+                                  || Objects.equals(SYSTEM_DOC_REF, docRef));
     }
 }

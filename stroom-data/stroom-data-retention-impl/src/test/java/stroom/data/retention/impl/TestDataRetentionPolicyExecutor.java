@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.retention.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
@@ -5,14 +21,15 @@ import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContextFactory;
 import stroom.util.shared.time.TimeUnit;
@@ -42,6 +59,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -81,7 +100,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 2;
+        final int expectedPeriodCount = 2;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -120,7 +139,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 3;
+        final int expectedPeriodCount = 3;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -173,7 +192,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 3;
+        final int expectedPeriodCount = 3;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -231,7 +250,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 3;
+        final int expectedPeriodCount = 3;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -292,7 +311,7 @@ class TestDataRetentionPolicyExecutor {
 
         final Instant now = Instant.now();
 
-        int trackerAgeDays = 90;
+        final int trackerAgeDays = 90;
         // Tracker is 90days old so should be ignored for periods:
         // 1month ago => 10days ago
         // 2months ago => 1months ago
@@ -304,7 +323,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 4;
+        final int expectedPeriodCount = 4;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -367,7 +386,7 @@ class TestDataRetentionPolicyExecutor {
                 .atStartOfDay()
                 .toInstant(ZoneOffset.UTC);
 
-        int trackerAgeDays = 1;
+        final int trackerAgeDays = 1;
         // Tracker is 90days old so should be ignored for periods:
         // 1month ago => 10days ago
         // 2months ago => 1months ago
@@ -381,7 +400,7 @@ class TestDataRetentionPolicyExecutor {
         trackers = trackers.stream()
                 .filter(tracker ->
                         !(tracker.getRuleAge().toLowerCase().contains("1 month")
-                                || tracker.getRuleAge().toLowerCase().contains("1 year")))
+                          || tracker.getRuleAge().toLowerCase().contains("1 year")))
                 .collect(Collectors.toList());
 
         Assertions.assertThat(trackers)
@@ -392,7 +411,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 4;
+        final int expectedPeriodCount = 4;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -469,12 +488,12 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 1;
+        final int expectedPeriodCount = 1;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
         // The method call number
-        int callNo = 0;
+        final int callNo = 0;
 
         // -------------------------------------------------
 
@@ -500,7 +519,7 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 2;
+        final int expectedPeriodCount = 2;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
@@ -537,12 +556,12 @@ class TestDataRetentionPolicyExecutor {
         final List<List<DataRetentionRuleAction>> allRuleActions = ruleExpressionsCaptor.getAllValues();
         final List<TimePeriod> allPeriods = periodCaptor.getAllValues();
 
-        int expectedPeriodCount = 1;
+        final int expectedPeriodCount = 1;
         assertThat(allPeriods).hasSize(expectedPeriodCount);
         assertThat(allRuleActions).hasSize(expectedPeriodCount);
 
         // The method call number
-        int callNo = 0;
+        final int callNo = 0;
 
         // -------------------------------------------------
 
@@ -571,10 +590,21 @@ class TestDataRetentionPolicyExecutor {
     }
 
     private DataRetentionPolicyExecutor createExecutor(final List<DataRetentionRule> rules) {
+        final DataRetentionRules dataRetentionRules = buildRules(rules);
+        final DataRetentionRulesProvider dataRetentionRulesProvider = new DataRetentionRulesProvider() {
+            @Override
+            public DataRetentionRules getOrCreate() {
+                return dataRetentionRules;
+            }
+
+            @Override
+            public Optional<DataRetentionRules> get() {
+                return Optional.of(dataRetentionRules);
+            }
+        };
         return new DataRetentionPolicyExecutor(
                 clusterLockService,
-                () -> buildRules(rules),
-                dataRetentionConfig,
+                dataRetentionRulesProvider,
                 metaService,
                 taskContextFactory);
     }
@@ -632,10 +662,13 @@ class TestDataRetentionPolicyExecutor {
                 .containsExactlyElementsOf(expectedRuleOutcomes);
     }
 
-    private DataRetentionRules buildRules(List<DataRetentionRule> rules) {
-        final DataRetentionRules dataRetentionRules = new DataRetentionRules(rules);
-        dataRetentionRules.setVersion(RULES_VERSION);
-        return dataRetentionRules;
+    private DataRetentionRules buildRules(final List<DataRetentionRule> rules) {
+        return DataRetentionRules
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .version(RULES_VERSION)
+                .rules(rules)
+                .build();
     }
 
     private DataRetentionRule buildRule(final int ruleNo,

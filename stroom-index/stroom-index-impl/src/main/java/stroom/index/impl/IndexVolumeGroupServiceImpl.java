@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
 import stroom.security.shared.AppPermission;
-import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
@@ -106,9 +105,11 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     @Override
     public IndexVolumeGroup getOrCreate(final String name) {
         ensureDefaultVolumes();
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        indexVolumeGroup.setName(name);
-        AuditUtil.stamp(securityContext, indexVolumeGroup);
+        final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
+                .builder()
+                .name(name)
+                .stampAudit(securityContext)
+                .build();
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
@@ -118,10 +119,12 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     @Override
     public IndexVolumeGroup create() {
         ensureDefaultVolumes();
-        final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
-        var newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
-        indexVolumeGroup.setName(newName);
-        AuditUtil.stamp(securityContext, indexVolumeGroup);
+        final String newName = NextNameGenerator.getNextName(indexVolumeGroupDao.getNames(), "New group");
+        final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
+                .builder()
+                .name(newName)
+                .stampAudit(securityContext)
+                .build();
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeGroupDao.getOrCreate(indexVolumeGroup));
         fireChange(EntityAction.CREATE);
@@ -131,9 +134,8 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     @Override
     public IndexVolumeGroup update(final IndexVolumeGroup indexVolumeGroup) {
         ensureDefaultVolumes();
-        AuditUtil.stamp(securityContext, indexVolumeGroup);
         final IndexVolumeGroup result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeGroupDao.update(indexVolumeGroup));
+                () -> indexVolumeGroupDao.update(indexVolumeGroup.copy().stampAudit(securityContext).build()));
         fireChange(EntityAction.UPDATE);
         return result;
     }
@@ -152,11 +154,12 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
     }
 
     @Override
-    public void delete(int id) {
+    public void delete(final int id) {
         securityContext.secure(AppPermission.MANAGE_VOLUMES_PERMISSION,
                 () -> {
                     //TODO Transaction?
-                    var indexVolumesInGroup = indexVolumeDao.getAll().stream()
+                    final List<IndexVolume> indexVolumesInGroup = indexVolumeDao.getAll()
+                            .stream()
                             .filter(indexVolume ->
                                     indexVolume.getIndexVolumeGroupId().equals(id))
                             .toList();
@@ -187,11 +190,10 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                     final boolean isEnabled = volumeConfig.isCreateDefaultIndexVolumesOnStart();
                     if (isEnabled) {
                         if (volumeConfig.getDefaultIndexVolumeGroupName() != null) {
-                            final IndexVolumeGroup indexVolumeGroup = new IndexVolumeGroup();
                             final UserIdentity processingUserIdentity = userIdentityFactory.getServiceUserIdentity();
                             final String groupName = volumeConfig.getDefaultIndexVolumeGroupName();
-                            indexVolumeGroup.setName(groupName);
-                            AuditUtil.stamp(processingUserIdentity, indexVolumeGroup);
+                            final IndexVolumeGroup indexVolumeGroup = IndexVolumeGroup
+                                    .builder().name(groupName).stampAudit(processingUserIdentity).build();
 
                             LOGGER.info("Creating default index volume group [{}]", groupName);
                             final IndexVolumeGroup newGroup = indexVolumeGroupDao.getOrCreate(indexVolumeGroup);
@@ -209,7 +211,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                                         .anyMatch(name -> name.equals(nodeName));
                                 if (!exists) {
                                     final List<String> paths = volumeConfig.getDefaultIndexVolumeGroupPaths();
-                                    for (String path : paths) {
+                                    for (final String path : paths) {
                                         final Path resolvedPath = pathCreator.toAppPath(path);
 
                                         LOGGER.info("Creating index volume with path {}",
@@ -218,24 +220,25 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
                                         final OptionalLong byteLimitOption = getDefaultVolumeLimit(
                                                 resolvedPath.toString());
 
-                                        final IndexVolume indexVolume = new IndexVolume();
-                                        indexVolume.setIndexVolumeGroupId(newGroup.getId());
-                                        indexVolume.setBytesLimit(byteLimitOption.orElse(0L));
-                                        indexVolume.setNodeName(nodeName);
-                                        indexVolume.setPath(resolvedPath.toString());
-                                        AuditUtil.stamp(processingUserIdentity, indexVolume);
-
+                                        final IndexVolume indexVolume = IndexVolume
+                                                .builder()
+                                                .indexVolumeGroupId(newGroup.getId())
+                                                .bytesLimit(byteLimitOption.orElse(0L))
+                                                .nodeName(nodeName)
+                                                .path(resolvedPath.toString())
+                                                .stampAudit(processingUserIdentity)
+                                                .build();
                                         indexVolumeDao.create(indexVolume);
                                     }
                                 }
                             } else {
                                 LOGGER.warn(() -> "Unable to create default index volume group. " +
-                                        "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
-                                        "and defaultVolumeGroupLimit must all be defined.");
+                                                  "Properties defaultVolumeGroupPaths defaultVolumeGroupNodes " +
+                                                  "and defaultVolumeGroupLimit must all be defined.");
                             }
                         } else {
                             LOGGER.warn(() -> "Unable to create default index " +
-                                    "Property defaultVolumeGroupName must be defined.");
+                                              "Property defaultVolumeGroupName must be defined.");
                         }
                     } else {
                         LOGGER.info(() -> "Creation of default index group is currently disabled");
@@ -254,7 +257,7 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
         try {
             final File parentDir = new File(path);
             parentDir.mkdirs();
-            long totalBytes = Files.getFileStore(Path.of(path)).getTotalSpace();
+            final long totalBytes = Files.getFileStore(Path.of(path)).getTotalSpace();
             // set an arbitrary limit of 90% of the filesystem total size to ensure we don't fill up the
             // filesystem.  Limit can be configured from within stroom.
             // Should be noted that although if you have multiple volumes on a filesystem the limit will apply
@@ -263,9 +266,9 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService, Cle
             // this.updateVolumeState()
             return OptionalLong.of(
                     (long) (totalBytes * volumeConfigProvider.get().getDefaultIndexVolumeFilesystemUtilisation()));
-        } catch (IOException e) {
+        } catch (final IOException e) {
             LOGGER.warn(() -> LogUtil.message("Unable to determine the total space on the filesystem for path: {}." +
-                            " Please manually set limit for index volume. {}",
+                                              " Please manually set limit for index volume. {}",
                     FileUtil.getCanonicalPath(Path.of(path)), e.getMessage()));
             return OptionalLong.empty();
         }

@@ -1,7 +1,22 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.global.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.entity.client.presenter.TreeRowHandler;
@@ -37,7 +52,8 @@ public class ConfigPropertyClusterValuesListPresenter
                                                     final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>(1000);
+        dataGrid = new MyDataGrid<>(this, 1000);
+        dataGrid.setTableName("Cluster Property Values");
         dataGrid.setMultiLine(true);
         view.setDataWidget(dataGrid);
 
@@ -52,13 +68,13 @@ public class ConfigPropertyClusterValuesListPresenter
 
     // For DEV testing only, when you don't have two nodes
     private Map<String, Set<String>> makeDemoData() {
-        Supplier<String> junkTextSupplier = () ->
+        final Supplier<String> junkTextSupplier = () ->
                 IntStream.rangeClosed(1, 5)
                         .boxed()
                         .map(i -> this.getClass().getCanonicalName())
                         .collect(Collectors.joining(" "));
 
-        Map<String, Set<String>> demoMap = new HashMap<>();
+        final Map<String, Set<String>> demoMap = new HashMap<>();
         IntStream.rangeClosed(1, 9)
                 .forEach(i -> {
                     demoMap.put("value " + i + junkTextSupplier.get(), IntStream.rangeClosed(i * 10, (i * 10) + 9)
@@ -100,7 +116,6 @@ public class ConfigPropertyClusterValuesListPresenter
         dataGrid.addResizableColumn(buildNodeCountColumn(), "Count", 50);
         dataGrid.addResizableColumn(buildBasicColumn(ClusterValuesRow::getSource), "Source", 75);
         dataGrid.addResizableColumn(buildBasicColumn(ClusterValuesRow::getNodeName), "Node", 250);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private Column<ClusterValuesRow, String> buildNodeCountColumn() {

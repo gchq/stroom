@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -57,8 +56,8 @@ class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinit
 
     @Test
     void serialize_nullMapName_verifySerialisedForm() {
-        RefStreamDefinitionSerde refStreamDefinitionSerde = new RefStreamDefinitionSerde();
-        MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
+        final RefStreamDefinitionSerde refStreamDefinitionSerde = new RefStreamDefinitionSerde();
+        final MapDefinitionSerde mapDefinitionSerde = new MapDefinitionSerde();
 
         final RefStreamDefinition refStreamDefinition = new RefStreamDefinition(
                 UUID.randomUUID().toString(),
@@ -66,16 +65,16 @@ class TestMapDefinitionSerde extends AbstractSerdeTest<MapDefinition, MapDefinit
                 123456L);
         final MapDefinition mapDefinition = new MapDefinition(refStreamDefinition, null);
 
-        ByteBuffer refStreamDefBuffer = ByteBuffer.allocate(60);
+        final ByteBuffer refStreamDefBuffer = ByteBuffer.allocate(60);
         refStreamDefinitionSerde.serialize(refStreamDefBuffer, refStreamDefinition);
 
-        ByteBuffer mapDefBuffer = ByteBuffer.allocate(60);
+        final ByteBuffer mapDefBuffer = ByteBuffer.allocate(60);
         mapDefinitionSerde.serialize(mapDefBuffer, mapDefinition);
 
         assertThat(refStreamDefBuffer).isEqualTo(mapDefBuffer);
 
         final MapDefinition mapDefinition2 = new MapDefinition(refStreamDefinition, "myMapName");
-        ByteBuffer mapDefBuffer2 = ByteBuffer.allocate(60);
+        final ByteBuffer mapDefBuffer2 = ByteBuffer.allocate(60);
         mapDefinitionSerde.serialize(mapDefBuffer2, mapDefinition2);
 
         assertThat(mapDefBuffer2.remaining()).isGreaterThan(mapDefBuffer.remaining());

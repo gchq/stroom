@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package stroom.query.client.view;
 
-import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.query.api.v2.TimeRange;
+import stroom.query.api.ExpressionTerm.Condition;
+import stroom.query.api.TimeRange;
 import stroom.widget.customdatebox.client.MyDateBox;
 
 import com.google.gwt.core.client.GWT;
@@ -50,22 +50,22 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         widget = binder.createAndBindUi(this);
 
         final FlowPanel recent = createPanel("Relative");
-        for (final TimeRange timeRange : TimeRanges.RELATIVE_RANGES) {
+        for (final TimeRange timeRange : stroom.query.api.TimeRanges.RELATIVE_RANGES) {
             recent.add(createLabel(timeRange));
         }
 
         final FlowPanel present = createPanel("Present");
-        for (final TimeRange timeRange : TimeRanges.PRESENT_RANGES) {
+        for (final TimeRange timeRange : stroom.query.api.TimeRanges.PRESENT_RANGES) {
             present.add(createLabel(timeRange));
         }
 
         final FlowPanel past = createPanel("Past");
-        for (final TimeRange timeRange : TimeRanges.PAST_RANGES) {
+        for (final TimeRange timeRange : stroom.query.api.TimeRanges.PAST_RANGES) {
             past.add(createLabel(timeRange));
         }
 
         final FlowPanel other = createPanel("All");
-        other.add(createLabel(TimeRanges.ALL_TIME));
+        other.add(createLabel(stroom.query.api.TimeRanges.ALL_TIME));
 
         final FlowPanel quickSettingsPanel = new FlowPanel();
         quickSettingsPanel.setStyleName("timeRange-quickSettings");
@@ -92,18 +92,9 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
         final String from = normalise(timeFrom.getValue());
         final String to = normalise(timeTo.getValue());
 
-        String name = TimeRanges.ALL_TIME.getName();
-        if (from != null && to != null) {
-            name = "Between " + from + " and " + to;
-        } else if (from != null) {
-            name = "After " + from;
-        } else if (to != null) {
-            name = "Before " + to;
-        }
-
-        final TimeRange range = new TimeRange(name, Condition.BETWEEN, from, to);
+        final TimeRange range = new TimeRange(null, Condition.BETWEEN, from, to);
         // See if this is a quick select range.
-        for (final TimeRange timeRange : TimeRanges.ALL_RANGES) {
+        for (final TimeRange timeRange : stroom.query.api.TimeRanges.ALL_RANGES) {
             if (timeRange.equals(range)) {
                 return timeRange;
             }
@@ -136,7 +127,7 @@ public class TimeRangePopup implements HasValue<TimeRange>, Focus {
     }
 
     private String normalise(final String string) {
-        if (string != null && string.trim().length() > 0) {
+        if (string != null && !string.trim().isEmpty()) {
             return string.trim();
         }
         return null;

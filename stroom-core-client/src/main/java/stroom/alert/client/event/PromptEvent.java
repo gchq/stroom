@@ -51,7 +51,7 @@ public class PromptEvent extends GwtEvent<PromptEvent.Handler> {
     }
 
     @Override
-    protected void dispatch(Handler handler) {
+    protected void dispatch(final Handler handler) {
         handler.onPrompt(this);
     }
 

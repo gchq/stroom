@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.DefaultErrorHandler;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.security.shared.FindUserContext;
 import stroom.security.shared.FindUserCriteria;
+import stroom.security.shared.GetUserRequest;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserRefResource;
@@ -77,10 +79,13 @@ public class UserRefPopupPresenter
     private UserRef initialSelection;
     private ExpressionTerm additionalTerm;
     private String filter;
+    private FindUserContext context = FindUserContext.RUN_AS;
 
     private Consumer<UserRef> selectionChangeConsumer = e -> {
 
     };
+
+    private Consumer<UserRef> userConsumer = userRef -> {};
 
     @Inject
     public UserRefPopupPresenter(final EventBus eventBus,
@@ -92,7 +97,8 @@ public class UserRefPopupPresenter
         this.pagerView = pagerView;
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Users");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -151,8 +157,6 @@ public class UserRefPopupPresenter
                         .withToolTip("The full name of the user. Groups do not have a full name.")
                         .build(),
                 350);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     @Override
@@ -172,6 +176,10 @@ public class UserRefPopupPresenter
         this.selectionChangeConsumer = selectionChangeConsumer;
     }
 
+    public void setUserConsumer(final Consumer<UserRef> userConsumer) {
+        this.userConsumer = userConsumer;
+    }
+
     @Override
     public void onFilterChange(final String text) {
         filter = text;
@@ -184,11 +192,15 @@ public class UserRefPopupPresenter
         refresh();
     }
 
-    public void show(final Consumer<UserRef> userConsumer) {
-        show("Select User Or Group", userConsumer);
+    public void show(final String caption) {
+        show(caption, userConsumer);
     }
 
-    public void show(final String caption, final Consumer<UserRef> userConsumer) {
+    public void show(final Consumer<UserRef> consumer) {
+        show("Select User Or Group", consumer);
+    }
+
+    public void show(final String caption, final Consumer<UserRef> consumer) {
         initialSelection = getSelected();
         refresh();
 
@@ -202,7 +214,7 @@ public class UserRefPopupPresenter
                     if (e.isOk()) {
                         final UserRef selected = getSelected();
                         selectionChangeConsumer.accept(selected);
-                        userConsumer.accept(selected);
+                        consumer.accept(selected);
                         e.hide();
                     } else {
                         selectionChangeConsumer.accept(initialSelection);
@@ -224,9 +236,10 @@ public class UserRefPopupPresenter
         if (userRef == null || userRef.getUuid() == null) {
             consumer.accept(userRef);
         } else {
+            final GetUserRequest request = new GetUserRequest(userRef.getUuid(), context);
             restFactory
                     .create(RESOURCE)
-                    .method(res -> res.getUserByUuid(userRef.getUuid()))
+                    .method(res -> res.getUserByUuid(request))
                     .onSuccess(consumer)
                     .onFailure(new DefaultErrorHandler(this, () -> consumer.accept(userRef)))
                     .taskMonitorFactory(pagerView)
@@ -270,7 +283,8 @@ public class UserRefPopupPresenter
         this.additionalTerm = additionalTerm;
     }
 
-    public void showActiveUsersOnly(final boolean activeUsersOnly) {
-        criteriaBuilder.activeUsersOnly(activeUsersOnly);
+    public void setContext(final FindUserContext context) {
+        this.context = context;
+        criteriaBuilder.context(context);
     }
 }

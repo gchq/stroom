@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client;
@@ -31,11 +30,11 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.hyperlink.client.ShowDashboardEvent;
-import stroom.query.api.v2.ResultStoreInfo;
-import stroom.query.api.v2.SearchRequestSource;
-import stroom.query.api.v2.SearchRequestSource.SourceType;
+import stroom.query.api.ResultStoreInfo;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.api.SearchRequestSource.SourceType;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
@@ -73,7 +72,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
         this.restFactory = restFactory;
 
         registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(),
-                event -> openParameterisedDashboard(event.getHref())));
+                event -> openParameterisedDashboard(event.getContext(), event.getHref())));
         registerHandler(eventBus.addHandler(ReopenResultStoreEvent.getType(),
                 event -> reopen(event.getResultStoreInfo())));
     }
@@ -82,26 +81,30 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
+                                     final boolean selectDefaultTab,
                                      final CommonDocLinkTab selectedLinkTab,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, taskMonitorFactory);
+        return super.open(docRef, forceOpen, fullScreen, selectDefaultTab, selectedLinkTab, callbackOnOpen, duplicate,
+                taskMonitorFactory);
     }
 
-    private void openParameterisedDashboard(final String href) {
+    private void openParameterisedDashboard(final Object context, final String href) {
         final Map<String, String> map = buildListParamMap(href);
         final String title = map.get("title");
         String uuid = map.get("uuid");
         final String params = map.get("params");
         final boolean queryOnOpen = !Boolean.FALSE.toString().equalsIgnoreCase(map.get("queryOnOpen"));
 
-        if (uuid == null || uuid.trim().length() == 0) {
+        if (uuid == null || uuid.trim().isEmpty()) {
             uuid = currentUuid;
         }
 
-        if (uuid == null || uuid.trim().length() == 0) {
+        if (uuid == null || uuid.trim().isEmpty()) {
             AlertEvent.fireError(this, "No dashboard UUID has been provided for link", null);
         } else {
             final DocRef docRef = new DocRef(DashboardDoc.TYPE, uuid);
@@ -109,6 +112,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
             // If the item isn't already open but we are forcing it open then,
             // create a new presenter and register it as open.
             final DashboardSuperPresenter presenter = dashboardSuperPresenterProvider.get();
+            presenter.setParentContext(context);
             presenter.setParamsFromLink(params);
             presenter.setCustomTitle(title);
             presenter.setQueryOnOpen(queryOnOpen);
@@ -128,20 +132,19 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                     presenter,
                     closeHandler,
                     presenter,
-                    false,
                     new DefaultTaskMonitorFactory(this));
         }
     }
 
-    private Map<String, String> buildListParamMap(String queryString) {
+    private Map<String, String> buildListParamMap(final String queryString) {
         final Map<String, String> out = new HashMap<>();
         if (queryString != null && queryString.length() > 1) {
-            String qs = queryString.substring(1);
+            final String qs = queryString.substring(1);
 
-            for (String kvPair : qs.split("&")) {
-                String[] kv = kvPair.split("=", 2);
+            for (final String kvPair : qs.split("&")) {
+                final String[] kv = kvPair.split("=", 2);
 
-                String key = kv[0];
+                final String key = kv[0];
                 if (key.isEmpty()) {
                     continue;
                 }
@@ -184,7 +187,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                         presenter,
                         closeHandler,
                         presenter,
-                        false,
                         new DefaultTaskMonitorFactory(this));
             }
         }
@@ -192,7 +194,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return dashboardSuperPresenterProvider.get();
     }
 

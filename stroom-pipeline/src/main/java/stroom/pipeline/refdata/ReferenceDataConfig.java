@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata;
 
 import stroom.pipeline.refdata.store.RefDataStoreModule.RefDataPurge;
@@ -21,6 +37,9 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
 
     public static final boolean DEFAULT_AUTO_PURGE_ENABLED = true;
     public static final boolean DEFAULT_COMPACT_AFTER_PURGE_ENABLED = false;
+    private static final int DEFAULT_MAX_PUTS_BEFORE_COMMIT = 200_000;
+    private static final int DEFAULT_MAX_PURGE_DELETES_BEFORE_COMMIT = 200_000;
+    private static final int DEFAULT_LOADING_LOCK_STRIPES = 2048;
 
     private final int maxPutsBeforeCommit;
     private final int maxPurgeDeletesBeforeCommit;
@@ -34,13 +53,13 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     private final CacheConfig metaIdToRefStoreCache;
 
     public ReferenceDataConfig() {
-        maxPutsBeforeCommit = 200_000;
-        maxPurgeDeletesBeforeCommit = 200_000;
+        maxPutsBeforeCommit = DEFAULT_MAX_PUTS_BEFORE_COMMIT;
+        maxPurgeDeletesBeforeCommit = DEFAULT_MAX_PURGE_DELETES_BEFORE_COMMIT;
         purgeAge = StroomDuration.ofDays(30);
         autoPurgeEnabled = DEFAULT_AUTO_PURGE_ENABLED;
         compactAfterPurgeEnabled = DEFAULT_COMPACT_AFTER_PURGE_ENABLED;
 //        maxCombinedStoreSize = ByteSize.ZERO;
-        loadingLockStripes = 2048;
+        loadingLockStripes = DEFAULT_LOADING_LOCK_STRIPES;
         lmdbConfig = new ReferenceDataLmdbConfig();
         stagingLmdbConfig = new ReferenceDataStagingLmdbConfig();
 
@@ -57,23 +76,25 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     }
 
     @JsonCreator
-    public ReferenceDataConfig(@JsonProperty("maxPutsBeforeCommit") final int maxPutsBeforeCommit,
-                               @JsonProperty("maxPurgeDeletesBeforeCommit") final int maxPurgeDeletesBeforeCommit,
+    public ReferenceDataConfig(@JsonProperty("maxPutsBeforeCommit") final Integer maxPutsBeforeCommit,
+                               @JsonProperty("maxPurgeDeletesBeforeCommit") final Integer maxPurgeDeletesBeforeCommit,
                                @JsonProperty("purgeAge") final StroomDuration purgeAge,
                                @JsonProperty("autoPurgeEnabled") final Boolean autoPurgeEnabled,
                                @JsonProperty("compactAfterPurgeEnabled") final Boolean compactAfterPurgeEnabled,
-                               @JsonProperty("loadingLockStripes") final int loadingLockStripes,
+                               @JsonProperty("loadingLockStripes") final Integer loadingLockStripes,
                                @JsonProperty("lmdb") final ReferenceDataLmdbConfig lmdbConfig,
                                @JsonProperty("stagingLmdb") final ReferenceDataStagingLmdbConfig stagingLmdbConfig,
                                @JsonProperty("effectiveStreamCache") final CacheConfig effectiveStreamCache,
                                @JsonProperty("metaIdToRefStoreCache") final CacheConfig metaIdToRefStoreCache) {
-        this.maxPutsBeforeCommit = maxPutsBeforeCommit;
-        this.maxPurgeDeletesBeforeCommit = maxPurgeDeletesBeforeCommit;
+        this.maxPutsBeforeCommit = Objects.requireNonNullElse(maxPutsBeforeCommit, DEFAULT_MAX_PUTS_BEFORE_COMMIT);
+        this.maxPurgeDeletesBeforeCommit =
+                Objects.requireNonNullElse(maxPurgeDeletesBeforeCommit, DEFAULT_MAX_PURGE_DELETES_BEFORE_COMMIT);
         this.purgeAge = purgeAge;
         this.autoPurgeEnabled = Objects.requireNonNullElse(autoPurgeEnabled, DEFAULT_AUTO_PURGE_ENABLED);
         this.compactAfterPurgeEnabled = Objects.requireNonNullElse(
                 compactAfterPurgeEnabled, DEFAULT_COMPACT_AFTER_PURGE_ENABLED);
-        this.loadingLockStripes = loadingLockStripes;
+        this.loadingLockStripes =
+                Objects.requireNonNullElse(loadingLockStripes, DEFAULT_LOADING_LOCK_STRIPES);
         this.lmdbConfig = lmdbConfig;
         this.stagingLmdbConfig = stagingLmdbConfig;
         this.effectiveStreamCache = effectiveStreamCache;
@@ -152,6 +173,20 @@ public class ReferenceDataConfig extends AbstractConfig implements IsStroomConfi
     }
 
     public ReferenceDataConfig withLmdbConfig(final ReferenceDataLmdbConfig lmdbConfig) {
+        return new ReferenceDataConfig(
+                maxPutsBeforeCommit,
+                maxPurgeDeletesBeforeCommit,
+                purgeAge,
+                autoPurgeEnabled,
+                compactAfterPurgeEnabled,
+                loadingLockStripes,
+                lmdbConfig,
+                stagingLmdbConfig,
+                effectiveStreamCache,
+                metaIdToRefStoreCache);
+    }
+
+    public ReferenceDataConfig withStagingLmdbConfig(final ReferenceDataStagingLmdbConfig stagingLmdbConfig) {
         return new ReferenceDataConfig(
                 maxPutsBeforeCommit,
                 maxPurgeDeletesBeforeCommit,

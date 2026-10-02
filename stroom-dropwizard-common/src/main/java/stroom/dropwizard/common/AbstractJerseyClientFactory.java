@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.dropwizard.common;
 
 import stroom.util.config.PropertyUtil;
@@ -82,7 +98,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                             modifyConfig(jerseyClientName, jerseyClientConfig);
 
                             configMap.put(jerseyClientName, jerseyClientConfig);
-                        } catch (IllegalArgumentException e) {
+                        } catch (final IllegalArgumentException e) {
                             throw new RuntimeException(LogUtil.message(
                                     "Unknown jerseyClient name '{}' in configuration. Expecting one of {}",
                                     name.toUpperCase(), JerseyClientName.values()), e);
@@ -214,7 +230,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                     .using(jerseyClientConfiguration)
                     .build(dropWizardName)
                     .register(DefaultLoggingFilter.createWithDefaults());
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw new RuntimeException(LogUtil.message("Error building jersey client for '{}': {}",
                     jerseyClientName, e.getMessage()), e);
         }
@@ -260,7 +276,7 @@ public abstract class AbstractJerseyClientFactory implements JerseyClientFactory
                 // Our hard coded sensible default (may be same as above)
                 final Object stroomDefaultValue = getPropValue(prop, stroomDefaultConfig);
                 // Value from yaml
-                Object actualValue = getPropValue(prop, actualConfig);
+                final Object actualValue = getPropValue(prop, actualConfig);
                 LOGGER.debug("Prop: {}.{}\nVanilla: {}\nStroom Default: {}\nActual: {}",
                         prefix, propName, vanillaValue, stroomDefaultValue, actualValue);
 

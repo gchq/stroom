@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.dashboard.impl;
 
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.SearchRequest;
 import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
@@ -32,12 +32,13 @@ class TestSearchRequestSerialisation {
     @Test
     void testJsonSearchRequestSerialisation() {
         // Given
-        SearchRequest searchRequest = SearchRequestTestData.apiSearchRequest();
+        final SearchRequest searchRequest = SearchRequestTestData.apiSearchRequest();
 
         // When
-        String serialisedSearchRequest = JsonUtil.writeValueAsString(searchRequest);
-        SearchRequest deserialisedSearchRequest = JsonUtil.readValue(serialisedSearchRequest, SearchRequest.class);
-        String reSerialisedSearchRequest = JsonUtil.writeValueAsString(deserialisedSearchRequest);
+        final String serialisedSearchRequest = JsonUtil.writeValueAsString(searchRequest);
+        final SearchRequest deserialisedSearchRequest = JsonUtil.readValue(
+                serialisedSearchRequest, SearchRequest.class);
+        final String reSerialisedSearchRequest = JsonUtil.writeValueAsString(deserialisedSearchRequest);
 
         // Then
         assertThat(searchRequest).isEqualTo(deserialisedSearchRequest);

@@ -54,7 +54,7 @@ public abstract class FileSystemTestUtil {
     public static Path getContentPackDownloadsDir() {
         try {
             Files.createDirectories(CONTENT_PACK_DOWNLOADS_DIR);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error ensuring directory {}",
                     CONTENT_PACK_DOWNLOADS_DIR.toAbsolutePath()), e);
@@ -69,7 +69,7 @@ public abstract class FileSystemTestUtil {
     public static Path getExplodedContentPacksDir() {
         try {
             Files.createDirectories(EXPLODED_DIR);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new RuntimeException(LogUtil.message(
                     "Error ensuring directory {}",
                     EXPLODED_DIR.toAbsolutePath()), e);

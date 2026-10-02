@@ -48,7 +48,7 @@ public class ElasticIndexFieldListViewImpl extends ViewImpl implements ElasticIn
     }
 
     @Override
-    public void setDataGridView(View view) {
+    public void setDataGridView(final View view) {
         dataGrid.setWidget(view.asWidget());
     }
 

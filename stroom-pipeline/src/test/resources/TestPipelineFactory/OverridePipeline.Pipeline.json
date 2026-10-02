@@ -1,0 +1,32 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "xmlWriter",
+      "type" : "XMLWriter"
+    }, {
+      "id" : "fileAppender2",
+      "type" : "FileAppender"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "splitFilter",
+      "name" : "splitCount",
+      "value" : {
+        "integer" : 400
+      }
+    }, {
+      "element" : "fileAppender2",
+      "name" : "outputPaths",
+      "value" : {
+        "string" : "${stroom.temp}/xml/output1,${stroom.temp}/xml/output2"
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "writeRecordCountFilter",
+      "to" : "xmlWriter"
+    } ]
+  }
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.security.identity.account;
 
 import stroom.security.api.HasJwt;
 import stroom.security.api.UserIdentity;
+import stroom.security.openid.api.ClusterToken;
 import stroom.util.authentication.HasRefreshable;
 import stroom.util.authentication.PerishableItem;
 import stroom.util.authentication.RefreshableItem;
@@ -28,8 +29,8 @@ import java.util.function.Supplier;
 
 public class InternalIdpProcessingUserIdentity implements HasRefreshable, UserIdentity, HasJwt {
 
-    // The subject of the processing user identity
-    public static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
+    // The subject of the processing user identity (canonical value shared with the cluster-token verifier).
+    public static final String INTERNAL_PROCESSING_USER = ClusterToken.PROCESSING_USER_SUBJECT;
 
     private final RefreshableItem<String> refreshableJws;
 
@@ -39,7 +40,7 @@ public class InternalIdpProcessingUserIdentity implements HasRefreshable, UserId
     }
 
     @Override
-    public String getSubjectId() {
+    public String subjectId() {
         return INTERNAL_PROCESSING_USER;
     }
 
@@ -57,17 +58,17 @@ public class InternalIdpProcessingUserIdentity implements HasRefreshable, UserId
             return false;
         }
         final InternalIdpProcessingUserIdentity that = (InternalIdpProcessingUserIdentity) o;
-        return Objects.equals(getSubjectId(), that.getSubjectId());
+        return Objects.equals(subjectId(), that.subjectId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getSubjectId());
+        return Objects.hash(subjectId());
     }
 
     @Override
     public String toString() {
-        return getSubjectId();
+        return subjectId();
     }
 
     @Override

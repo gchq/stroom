@@ -25,7 +25,7 @@ class TestAtomicSequence {
 
     @Test
     void testSimple() {
-        AtomicSequence atomicSequence = new AtomicSequence(3);
+        final AtomicSequence atomicSequence = new AtomicSequence(3);
         assertThat(atomicSequence.next()).isEqualTo(0);
         assertThat(atomicSequence.next()).isEqualTo(1);
         assertThat(atomicSequence.next()).isEqualTo(2);
@@ -34,7 +34,7 @@ class TestAtomicSequence {
 
     @Test
     void testCallLimit1() {
-        AtomicSequence atomicSequence = new AtomicSequence(1);
+        final AtomicSequence atomicSequence = new AtomicSequence(1);
         assertThat(atomicSequence.next()).isEqualTo(0);
         assertThat(atomicSequence.next()).isEqualTo(0);
         assertThat(atomicSequence.next()).isEqualTo(0);
@@ -44,7 +44,7 @@ class TestAtomicSequence {
 
     @Test
     void testCallLimit2() {
-        AtomicSequence atomicSequence = new AtomicSequence();
+        final AtomicSequence atomicSequence = new AtomicSequence();
         assertThat(atomicSequence.next(2)).isEqualTo(0);
         assertThat(atomicSequence.next(2)).isEqualTo(1);
         assertThat(atomicSequence.next(2)).isEqualTo(0);
@@ -54,7 +54,7 @@ class TestAtomicSequence {
 
     @Test
     void testCallLimit3() {
-        AtomicSequence atomicSequence = new AtomicSequence(3);
+        final AtomicSequence atomicSequence = new AtomicSequence(3);
         assertThat(atomicSequence.next()).isEqualTo(0);
         assertThat(atomicSequence.next()).isEqualTo(1);
         assertThat(atomicSequence.next()).isEqualTo(2);

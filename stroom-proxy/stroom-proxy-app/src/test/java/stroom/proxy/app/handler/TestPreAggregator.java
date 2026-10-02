@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.data.zip.StroomZipFileType;
@@ -5,7 +21,7 @@ import stroom.proxy.app.DataDirProvider;
 import stroom.proxy.app.ProxyConfig;
 import stroom.proxy.app.handler.PreAggregator.Part;
 import stroom.proxy.repo.AggregatorConfig;
-import stroom.proxy.repo.FeedKey;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.proxy.repo.ProxyServices;
 import stroom.test.common.MockMetrics;
 import stroom.test.common.TestUtil;
@@ -14,6 +30,7 @@ import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.FeedKey;
 import stroom.util.time.StroomDuration;
 import stroom.util.zip.ZipUtil;
 
@@ -41,6 +58,7 @@ public class TestPreAggregator extends StroomUnitTest {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestPreAggregator.class);
 
     private static final int MAX_ITEMS_PER_AGGREGATE = 3;
+    public static final FeedKey FEED_KEY = FeedKey.of("test-feed", "test-type");
 
     @Mock
     private ProxyServices proxyServices;
@@ -151,7 +169,9 @@ public class TestPreAggregator extends StroomUnitTest {
                 cleanupDirQueue,
                 dataDirProvider,
                 proxyServices,
-                proxyConfig::getAggregatorConfig, new MockMetrics());
+                proxyConfig::getAggregatorConfig,
+                new MockMetrics(),
+                FeedKeyInterner.create());
 
         final AtomicInteger aggregateCount = new AtomicInteger();
         preAggregator.setDestination(preAggregateDir -> {
@@ -191,7 +211,7 @@ public class TestPreAggregator extends StroomUnitTest {
         for (int i = 0; i < inputZipCount; i++) {
             final Path dir = numberedDirProvider.get();
             final FileGroup fileGroup = new FileGroup(dir);
-            TestDataUtil.writeFileGroup(fileGroup, entryCountPerZip, new FeedKey("test-feed", "test-type"));
+            TestDataUtil.writeFileGroup(fileGroup, 1, entryCountPerZip, FEED_KEY);
             preAggregator.addDir(dir);
         }
 

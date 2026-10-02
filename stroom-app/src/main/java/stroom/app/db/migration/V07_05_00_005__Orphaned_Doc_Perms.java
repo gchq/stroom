@@ -110,8 +110,8 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
     }
 
     private void doMigration(final Set<String> validDocUuids, final DurationTimer timer) {
-        AtomicInteger totalOrphanedDocCnt = new AtomicInteger(0);
-        AtomicInteger totalDeleteCount = new AtomicInteger(0);
+        final AtomicInteger totalOrphanedDocCnt = new AtomicInteger(0);
+        final AtomicInteger totalDeleteCount = new AtomicInteger(0);
 
         // This tbl may be 100s of thousands of rows (hopefully a lot less after aggregation) so do it batch wise.
         // We can't just do all this in one bit of sql as we can't be sure each module is in the same DB as they are
@@ -136,7 +136,7 @@ public class V07_05_00_005__Orphaned_Doc_Perms extends AbstractCrossModuleJavaDb
                         prepStmt.setLong(2, BATCH_SIZE);
                         int rowsFoundInBatch = 0;
                         final Set<String> orphanedDocUuids = new HashSet<>();
-                        try (ResultSet resultSet = prepStmt.executeQuery()) {
+                        try (final ResultSet resultSet = prepStmt.executeQuery()) {
                             while (resultSet.next()) {
                                 rowsFoundInBatch++;
                                 final String docUuid = resultSet.getString("doc_uuid");

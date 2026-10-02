@@ -1,12 +1,26 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
-import stroom.analytics.rule.impl.AnalyticRuleStore;
-import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.SearchRequest;
+import stroom.query.api.SearchRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.entityevent.EntityAction;
@@ -72,9 +86,9 @@ public class StreamingAnalyticCache implements Clearable, EntityEvent.Handler {
                 LOGGER.debug("Loading streaming analytic: {}", analyticRuleRef);
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
                 LOGGER.info(() -> "Loading rule");
-                final AbstractAnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRuleRef);
+                final AnalyticRuleDoc analyticRuleDoc = analyticRuleStore.readDocument(analyticRuleRef);
 
-                ViewDoc viewDoc;
+                final ViewDoc viewDoc;
 
                 // Try and get view.
                 final String ruleIdentity = RuleUtil.getRuleIdentity(analyticRuleDoc);

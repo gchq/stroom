@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.search.impl;
 
-import stroom.query.api.v2.QueryKey;
+import stroom.query.api.QueryKey;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValString;
 import stroom.search.extraction.Event;
@@ -159,7 +159,7 @@ class TestQueues {
                         try {
                             queue.put(new Event(1, id,
                                     Val.of(ValString.create("test"), ValString.create("test"))));
-                        } catch (CompleteException e) {
+                        } catch (final CompleteException e) {
                             throw new RuntimeException(e);
                         }
                     }

@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,7 +17,6 @@
 package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.StoredValues;
-import stroom.query.language.token.Param;
 
 import java.util.function.Supplier;
 
@@ -83,7 +82,7 @@ abstract class AbstractEqualityFunction extends AbstractManyChildFunction {
             final Val[] values = new Val[childGenerators.length];
 
             for (int i = 0; i < childGenerators.length; i++) {
-                Val val;
+                final Val val;
                 try {
                     val = childGenerators[i].eval(storedValues, childDataSupplier);
                 } catch (final RuntimeException e) {

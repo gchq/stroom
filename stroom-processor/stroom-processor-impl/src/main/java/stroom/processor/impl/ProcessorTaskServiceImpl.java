@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,21 @@
 
 package stroom.processor.impl;
 
-
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskFields;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.query.common.v2.FieldInfoResultPageFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.ValuesConsumer;
+import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
@@ -49,17 +50,17 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     private static final AppPermission PERMISSION = AppPermission.MANAGE_PROCESSORS_PERMISSION;
 
     private final ProcessorTaskDao processorTaskDao;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final SecurityContext securityContext;
     private final FieldInfoResultPageFactory fieldInfoResultPageFactory;
 
     @Inject
     ProcessorTaskServiceImpl(final ProcessorTaskDao processorTaskDao,
-                             final DocRefInfoService docRefInfoService,
+                             final DocFinder docFinder,
                              final SecurityContext securityContext,
                              final FieldInfoResultPageFactory fieldInfoResultPageFactory) {
         this.processorTaskDao = processorTaskDao;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.securityContext = securityContext;
         this.fieldInfoResultPageFactory = fieldInfoResultPageFactory;
     }
@@ -68,13 +69,20 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         return securityContext.secureResult(PERMISSION, () -> {
             final ResultPage<ProcessorTask> resultPage = processorTaskDao.find(criteria);
-            resultPage.getValues().forEach(processorTask -> {
-                final DocRef docRef = new DocRef(PipelineDoc.TYPE,
-                        processorTask.getProcessorFilter().getPipelineUuid());
-                final Optional<String> name = docRefInfoService.name(docRef);
-                processorTask.getProcessorFilter().setPipelineName(name.orElse(null));
-            });
-            return resultPage;
+            final List<ProcessorTask> values = resultPage
+                    .getValues()
+                    .stream()
+                    .map(task -> {
+                        final DocRef docRef = new DocRef(PipelineDoc.TYPE, task.getProcessorFilter().getPipelineUuid());
+                        final Optional<String> name = docFinder.getName(docRef);
+                        return task.copy()
+                                .processorFilter(task.getProcessorFilter().copy()
+                                        .pipelineName(name.orElse(null))
+                                        .build())
+                                .build();
+                    })
+                    .toList();
+            return new ResultPage<>(values, resultPage.getPageResponse());
         });
     }
 
@@ -85,9 +93,13 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     }
 
     @Override
-    public void search(final ExpressionCriteria criteria, final FieldIndex fieldIndex, final ValuesConsumer consumer) {
+    public void search(final ExpressionCriteria criteria,
+                       final FieldIndex fieldIndex,
+                       final DateTimeSettings dateTimeSettings,
+                       final ValuesConsumer valuesConsumer,
+                       final ErrorConsumer errorConsumer) {
         securityContext.secure(PERMISSION, () ->
-                processorTaskDao.search(criteria, fieldIndex, consumer));
+                processorTaskDao.search(criteria, fieldIndex, valuesConsumer));
     }
 
     @Override

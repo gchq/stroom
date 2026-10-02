@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.zip;
 
 import stroom.meta.api.AttributeMap;
@@ -11,7 +27,7 @@ import java.util.List;
 
 class PathCreator {
 
-    static String replaceTimeVars(String path) {
+    static String replaceTimeVars(final String path) {
         // Replace some of the path elements with system variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
         return replaceTimeVars(path, dateTime);
@@ -77,7 +93,7 @@ class PathCreator {
         if (attributeMap != null) {
             final String[] vars = findVars(result);
             for (final String var : vars) {
-                String value = attributeMap.get(var);
+                final String value = attributeMap.get(var);
                 if (value != null) {
                     result = replace(result, var, value);
                 }

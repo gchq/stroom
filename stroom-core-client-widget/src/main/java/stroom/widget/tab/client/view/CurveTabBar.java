@@ -21,37 +21,29 @@ import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent.Handler;
 import stroom.widget.tab.client.presenter.TabData;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
 
-public class CurveTabBar extends AbstractTabBar implements HasShowTabMenuHandlers {
-
-    private final Element element;
+public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandlers {
 
     public CurveTabBar() {
-        element = DOM.createDiv();
-        element.setClassName("curveTabBar");
-
-        setElement(element);
+        getElement().setClassName("curveTabBar");
     }
 
     @Override
     protected void onAttach() {
         super.onAttach();
-        GlobalResizeObserver.addListener(element, e -> onResize());
+        GlobalResizeObserver.addListener(getElement(), e -> onResize());
     }
 
     @Override
     protected void onDetach() {
-        GlobalResizeObserver.removeListener(element);
+        GlobalResizeObserver.removeListener(getElement());
         super.onDetach();
     }
 
     @Override
-    protected AbstractTab createTab(final TabData tabData) {
-        return new CurveTab(
-                tabData.getIcon(),
+    protected AbstractTab createDraggableTab(final TabData tabData) {
+        return new CurveTab(tabData.getIcon(),
                 tabData.getIconColour(),
                 tabData.getLabel(),
                 tabData.getTooltip().orElse(null),
@@ -61,11 +53,6 @@ public class CurveTabBar extends AbstractTabBar implements HasShowTabMenuHandler
     @Override
     protected AbstractTabSelector createTabSelector() {
         return new CurveTabSelector();
-    }
-
-    @Override
-    protected int getTabGap() {
-        return 0;
     }
 
     @Override

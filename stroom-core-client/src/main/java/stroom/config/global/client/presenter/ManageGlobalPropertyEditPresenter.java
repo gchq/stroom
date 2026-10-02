@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.config.global.client.presenter;
@@ -24,7 +23,7 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;
 import stroom.dispatch.client.RestError;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
@@ -73,7 +72,7 @@ public final class ManageGlobalPropertyEditPresenter
     private static final String UNKNOWN_MSG = "[Unknown]";
 
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final Set<String> unreachableNodes = new HashSet<>();
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
@@ -103,14 +102,14 @@ public final class ManageGlobalPropertyEditPresenter
             final EventBus eventBus,
             final GlobalPropertyEditView view,
             final RestFactory restFactory,
-            final NodeManager nodeManager,
+            final NodeClient nodeClient,
             final ClientSecurityContext securityContext,
             final UiConfigCache clientPropertyCache,
             final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider) {
 
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
         this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
@@ -122,7 +121,7 @@ public final class ManageGlobalPropertyEditPresenter
         this.dataTypeHelpButton = view.addDataTypeHelpIcon(SvgPresets.HELP);
 
         this.effectiveValueWarningsButton.setVisible(false);
-        this.effectiveValueWarningsButton.setVisible(false);
+        this.effectiveValueInfoButton.setVisible(false);
         this.dataTypeHelpButton.setVisible(true);
 
         view.setUiHandlers(this);
@@ -130,7 +129,7 @@ public final class ManageGlobalPropertyEditPresenter
 
     @Override
     protected void onBind() {
-        ClickHandler iconClickHandler = event -> {
+        final ClickHandler iconClickHandler = event -> {
             if (MouseUtil.isPrimary(event)) {
                 onOpenClusterValues();
             }
@@ -200,7 +199,7 @@ public final class ManageGlobalPropertyEditPresenter
             effectiveValueWarningsButton.setVisible(false);
         } else {
             if (uniqueEffectiveValuesCount > 1 || uniqueSourcesCount > 1 || didAnyNodesError()) {
-                String msg;
+                final String msg;
 
                 if (didAnyNodesError()) {
                     msg = "Error fetching values from all nodes in the cluster";
@@ -265,7 +264,7 @@ public final class ManageGlobalPropertyEditPresenter
     private void refreshYamlOverrideForAllNodes() {
         // For each node fire off a request to get the yaml override for that node
         unreachableNodes.clear();
-        nodeManager.listEnabledNodes(
+        nodeClient.listEnabledNodes(
                 nodeNames -> nodeNames.forEach(this::refreshYamlOverrideForNode),
                 throwable -> showError(throwable, "Error getting list of all nodes", null),
                 this);
@@ -399,7 +398,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void setUiSourceText() {
-        String text;
+        final String text;
 //        if (didAnyNodesError()) {
 //            text = NODES_UNAVAILABLE_MSG;
 //        } else
@@ -413,7 +412,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void setUiEffectiveValueText() {
-        String text;
+        final String text;
 //        if (didAnyNodesError()) {
 //            text = NODES_UNAVAILABLE_MSG;
 //        } else
@@ -453,7 +452,7 @@ public final class ManageGlobalPropertyEditPresenter
     private void write(final HidePopupRequestEvent event) {
         refreshValuesOnChange();
 
-        ConfigProperty configPropertyToSave = getEntity();
+        final ConfigProperty configPropertyToSave = getEntity();
 
 
         if (configPropertyToSave.getId() == null) {
@@ -501,9 +500,9 @@ public final class ManageGlobalPropertyEditPresenter
     private void refreshValuesOnChange() {
         if (getView().getUseOverride()) {
             final String value = getView().getDatabaseValue().getText();
-            getEntity().setDatabaseOverrideValue(OverrideValue.with(value.trim()));
+            setEntity(getEntity().copy().databaseOverrideValue(OverrideValue.with(value.trim())).build());
         } else {
-            getEntity().setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+            setEntity(getEntity().copy().databaseOverrideValue(OverrideValue.unSet(String.class)).build());
 
             // Don't clear the db override field on screen in case they unticked
             // by accident
@@ -542,7 +541,7 @@ public final class ManageGlobalPropertyEditPresenter
             if (result != null) {
                 final String helpUrl = result.getHelpUrlProperties();
                 if (helpUrl != null && helpUrl.trim().length() > 0) {
-                    String url = helpUrl + formatAnchor(anchor);
+                    final String url = helpUrl + formatAnchor(anchor);
                     Window.open(url, "_blank", "");
                 } else {
                     AlertEvent.fireError(
@@ -554,7 +553,7 @@ public final class ManageGlobalPropertyEditPresenter
         }, this);
     }
 
-    protected String formatAnchor(String name) {
+    protected String formatAnchor(final String name) {
         return "#" + name.replace(' ', '-').toLowerCase();
     }
 

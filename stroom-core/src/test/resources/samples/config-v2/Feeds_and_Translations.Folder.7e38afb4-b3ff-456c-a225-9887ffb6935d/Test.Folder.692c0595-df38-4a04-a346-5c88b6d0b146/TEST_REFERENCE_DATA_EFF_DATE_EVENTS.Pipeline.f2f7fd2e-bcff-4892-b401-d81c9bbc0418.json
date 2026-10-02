@@ -1,0 +1,87 @@
+{
+  "properties" : {
+    "add" : [ {
+      "element" : "translationFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "f688ac51-6bfd-4841-a4e9-7d63693c1b04",
+          "name" : "TEST_REFERENCE_DATA_EFF_DATE-EVENTS"
+        }
+      }
+    }, {
+      "element" : "schemaFilter",
+      "name" : "schemaGroup",
+      "value" : {
+        "string" : "RECORDS"
+      }
+    }, {
+      "element" : "streamAppender",
+      "name" : "streamType",
+      "value" : {
+        "string" : "Records"
+      }
+    } ]
+  },
+  "pipelineReferences" : {
+    "add" : [ {
+      "element" : "translationFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "da1c7351-086f-493b-866a-b42dbe990700",
+        "name" : "Reference Loader"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "0cac3edd-a3b1-4111-aadf-71f385470ae9",
+        "name" : "USER_TO_EFF_DATE-REFERENCE"
+      },
+      "streamType" : "Reference"
+    } ],
+    "remove" : [ {
+      "element" : "translationFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "da1c7351-086f-493b-866a-b42dbe990700",
+        "name" : "Reference Loader"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "d865a073-9c21-442f-be53-efa385cb7aa2",
+        "name" : "BITMAP-REFERENCE"
+      },
+      "streamType" : "Reference"
+    }, {
+      "element" : "translationFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "da1c7351-086f-493b-866a-b42dbe990700",
+        "name" : "Reference Loader"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "60f9f51d-e5d6-41f5-86b9-ae866b8c9fa3",
+        "name" : "FILENO_TO_LOCATION-REFERENCE"
+      },
+      "streamType" : "Reference"
+    }, {
+      "element" : "translationFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "da1c7351-086f-493b-866a-b42dbe990700",
+        "name" : "Reference Loader"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "0ece027a-87a2-42c6-a6dd-e05adce6703b",
+        "name" : "IP_RANGE_TO_LOCATION-REFERENCE"
+      },
+      "streamType" : "Reference"
+    } ]
+  }
+}

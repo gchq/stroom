@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore;
@@ -31,9 +30,9 @@ class TestRefDataProcessingInfo {
     @Test
     void testProcessingStateFromBytes() {
 
-        for (ProcessingState state : ProcessingState.values()) {
-            byte id = state.getId();
-            ProcessingState outputState = ProcessingState.fromByte(id);
+        for (final ProcessingState state : ProcessingState.values()) {
+            final byte id = state.getId();
+            final ProcessingState outputState = ProcessingState.fromByte(id);
             assertThat(outputState).isEqualTo(state);
         }
     }

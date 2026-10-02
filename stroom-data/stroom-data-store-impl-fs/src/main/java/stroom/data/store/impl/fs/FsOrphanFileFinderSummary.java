@@ -1,11 +1,29 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.store.impl.fs;
 
-import stroom.data.store.impl.fs.FsPathHelper.DecodedPath;
+import stroom.data.store.impl.fs.standard.FsPathHelper;
+import stroom.data.store.impl.fs.standard.FsPathHelper.DecodedPath;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.AsciiTable;
 import stroom.util.logging.AsciiTable.Column;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.string.ExceptionStringUtil;
 
 import java.io.IOException;
@@ -33,7 +51,7 @@ public class FsOrphanFileFinderSummary {
         DecodedPath decodedPath;
         try {
             decodedPath = FsPathHelper.decodedPath(path);
-        } catch (Exception e) {
+        } catch (final Exception e) {
             LOGGER.debug("Unable to decode path {}", path, e);
             handleBadPath(path);
             decodedPath = null;
@@ -59,7 +77,7 @@ public class FsOrphanFileFinderSummary {
                     } else {
                         message = "Non-empty directory";
                     }
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     LOGGER.debug("Error checking contents of {}", path, e);
                     message = "Directory with unknown contents" + ExceptionStringUtil.getMessage(e);
                 }
@@ -73,7 +91,7 @@ public class FsOrphanFileFinderSummary {
     @Override
     public String toString() {
         final StringBuilder summary = new StringBuilder();
-        if (summaryMap.size() > 0) {
+        if (NullSafe.hasEntries(summaryMap)) {
             summary.append("Summary:\n");
 
             final List<Entry<SummaryLine, AtomicLong>> sortedEntries = summaryMap.entrySet()
@@ -86,13 +104,18 @@ public class FsOrphanFileFinderSummary {
 
             summary.append("\n");
             summary.append(AsciiTable.builder(sortedEntries)
-                    .withColumn(Column.of("Type", entry2 -> entry2.getKey().getType()))
-                    .withColumn(Column.of("File/Directory", entry2 -> entry2.getKey().isDirectory
-                            ? "Dir"
-                            : "File"))
-                    .withColumn(Column.of("Feed (if present)", entry2 -> entry2.getKey().getFeed()))
-                    .withColumn(Column.of("Date", entry2 -> entry2.getKey().getDate()))
-                    .withColumn(Column.integer("Orphan Count", entry2 -> entry2.getValue().get()))
+                    .withColumn(Column.of("Type",
+                            entry2 -> entry2.getKey().getType()))
+                    .withColumn(Column.of("File/Directory",
+                            entry2 -> entry2.getKey().isDirectory
+                                    ? "Dir"
+                                    : "File"))
+                    .withColumn(Column.of("Feed (if present)",
+                            entry2 -> entry2.getKey().getFeed()))
+                    .withColumn(Column.of("Date",
+                            entry2 -> entry2.getKey().getDate()))
+                    .withColumn(Column.integer("Orphan Count",
+                            entry2 -> entry2.getValue().get()))
                     .build());
             summary.append("\n");
         }
@@ -127,7 +150,7 @@ public class FsOrphanFileFinderSummary {
         private final LocalDate date;
         private final boolean isDirectory;
 
-        public SummaryLine(DecodedPath decodedPath) {
+        public SummaryLine(final DecodedPath decodedPath) {
             this.type = decodedPath.getTypeName();
             this.feed = Objects.requireNonNullElse(decodedPath.getFeedName(), "");
             this.date = decodedPath.getDate();

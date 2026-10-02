@@ -2,7 +2,6 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:l="urn:import:stroom.item.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form AnalyticEmailDestinationViewImpl">
         <form:FormGroup identity="analyticEmailDestinationEmailAddress"

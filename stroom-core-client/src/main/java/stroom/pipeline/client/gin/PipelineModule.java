@@ -21,13 +21,15 @@ import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.pipeline.client.PipelinePlugin;
 import stroom.pipeline.client.TextConverterPlugin;
 import stroom.pipeline.client.XsltPlugin;
+import stroom.pipeline.client.presenter.DocRefSelectionPresenter;
+import stroom.pipeline.client.presenter.DocRefSelectionPresenter.DocRefSelectionView;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.client.presenter.TextConverterPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter;
 import stroom.pipeline.client.presenter.TextConverterSettingsPresenter.TextConverterSettingsView;
 import stroom.pipeline.client.presenter.XsltPresenter;
+import stroom.pipeline.client.view.DocRefSelectionViewImpl;
 import stroom.pipeline.client.view.TextConverterSettingsViewImpl;
-import stroom.pipeline.stepping.client.PipelineSteppingPlugin;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter;
@@ -66,13 +68,29 @@ import stroom.pipeline.structure.client.view.PipelineStructureViewImpl;
 import stroom.pipeline.structure.client.view.PipelineTreeViewImpl;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
+import stroom.processor.client.presenter.EditFeedDependencyPresenter;
+import stroom.processor.client.presenter.EditFeedDependencyPresenter.EditFeedDependencyView;
+import stroom.processor.client.presenter.FeedDependencyPresenter;
+import stroom.processor.client.presenter.FeedDependencyPresenter.FeedDependencyView;
 import stroom.processor.client.presenter.ProcessorEditPresenter;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.client.presenter.ProcessorPresenter.ProcessorView;
+import stroom.processor.client.presenter.ProcessorProfileEditPresenter;
+import stroom.processor.client.presenter.ProcessorProfileEditPresenter.ProcessorProfileEditView;
+import stroom.processor.client.presenter.ProfilePeriodEditPresenter;
+import stroom.processor.client.presenter.ProfilePeriodEditPresenter.ProfilePeriodEditView;
 import stroom.processor.client.view.BatchProcessorFilterEditViewImpl;
+import stroom.processor.client.view.EditFeedDependencyViewImpl;
+import stroom.processor.client.view.FeedDependencyViewImpl;
 import stroom.processor.client.view.ProcessorEditViewImpl;
+import stroom.processor.client.view.ProcessorProfileEditViewImpl;
 import stroom.processor.client.view.ProcessorViewImpl;
+import stroom.processor.client.view.ProfilePeriodEditViewImpl;
+import stroom.processor.task.client.ProcessorTaskPlugin;
+import stroom.processor.task.client.presenter.ProcessorTaskPresenter;
+import stroom.processor.task.client.presenter.ProcessorTaskPresenter.ProcessorTaskView;
+import stroom.processor.task.client.view.ProcessorTaskViewImpl;
 
 import com.google.inject.Singleton;
 
@@ -89,7 +107,6 @@ public class PipelineModule extends PluginModule {
         bind(XsltPresenter.class);
 
         bindPlugin(PipelinePlugin.class);
-        bindPlugin(PipelineSteppingPlugin.class);
         bind(PipelinePresenter.class);
         bindPresenterWidget(
                 StepLocationLinkPresenter.class,
@@ -101,6 +118,8 @@ public class PipelineModule extends PluginModule {
         bindPresenterWidget(PipelineTreePresenter.class, PipelineTreeView.class, PipelineTreeViewImpl.class);
         bindPresenterWidget(PipelineStructurePresenter.class, PipelineStructureView.class,
                 PipelineStructureViewImpl.class);
+
+        bindPresenterWidget(DocRefSelectionPresenter.class, DocRefSelectionView.class, DocRefSelectionViewImpl.class);
 
         bindPresenterWidget(NewElementPresenter.class, NewElementView.class, NewElementViewImpl.class);
         bindPresenterWidget(NewPropertyPresenter.class, NewPropertyView.class, NewPropertyViewImpl.class);
@@ -121,6 +140,26 @@ public class PipelineModule extends PluginModule {
                 BatchProcessorFilterEditPresenter.class,
                 BatchProcessorFilterEditView.class,
                 BatchProcessorFilterEditViewImpl.class);
+        bindPresenterWidget(
+                FeedDependencyPresenter.class,
+                FeedDependencyView.class,
+                FeedDependencyViewImpl.class);
+        bindPresenterWidget(
+                EditFeedDependencyPresenter.class,
+                EditFeedDependencyView.class,
+                EditFeedDependencyViewImpl.class);
+        bindPresenterWidget(
+                ProcessorProfileEditPresenter.class,
+                ProcessorProfileEditView.class,
+                ProcessorProfileEditViewImpl.class);
+        bindPresenterWidget(
+                ProfilePeriodEditPresenter.class,
+                ProfilePeriodEditView.class,
+                ProfilePeriodEditViewImpl.class);
+
+        bindPlugin(ProcessorTaskPlugin.class);
+        bindPresenterWidget(ProcessorTaskPresenter.class, ProcessorTaskView.class,
+                ProcessorTaskViewImpl.class);
 
         bind(EditorMenuPresenter.class).in(Singleton.class);
     }

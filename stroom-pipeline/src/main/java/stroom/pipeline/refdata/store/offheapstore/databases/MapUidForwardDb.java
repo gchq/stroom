@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
@@ -78,14 +77,14 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
 
         Optional<UID> optMatchedMapUid = Optional.empty();
         final MapDefinition mapDefinitionWithNoMapName = new MapDefinition(refStreamDefinition);
-        try (PooledByteBuffer pooledStartKeyIncBuffer = getPooledKeyBuffer()) {
-            ByteBuffer startKeyIncBuffer = pooledStartKeyIncBuffer.getByteBuffer();
+        try (final PooledByteBuffer pooledStartKeyIncBuffer = getPooledKeyBuffer()) {
+            final ByteBuffer startKeyIncBuffer = pooledStartKeyIncBuffer.getByteBuffer();
 
             getKeySerde().serialize(startKeyIncBuffer, mapDefinitionWithNoMapName);
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(readTxn, keyRange)) {
+            try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(readTxn, keyRange)) {
                 for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
 
                     // our startKeyIncBuffer contains only the refStreamDefinition part
@@ -117,14 +116,14 @@ public class MapUidForwardDb extends AbstractLmdbDb<MapDefinition, UID> {
         final List<MapDefinition> mapDefinitions = new ArrayList<>();
         final MapDefinition mapDefinitionWithNoMapName = new MapDefinition(refStreamDefinition);
 
-        try (PooledByteBuffer pooledStartKeyIncBuffer = getPooledKeyBuffer()) {
+        try (final PooledByteBuffer pooledStartKeyIncBuffer = getPooledKeyBuffer()) {
             final ByteBuffer startKeyIncBuffer = pooledStartKeyIncBuffer.getByteBuffer();
 
             getKeySerde().serialize(startKeyIncBuffer, mapDefinitionWithNoMapName);
 
             final KeyRange<ByteBuffer> keyRange = KeyRange.atLeast(startKeyIncBuffer);
 
-            try (CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(readTxn, keyRange)) {
+            try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(readTxn, keyRange)) {
                 for (final CursorIterable.KeyVal<ByteBuffer> keyVal : cursorIterable) {
 
                     // our startKeyIncBuffer contains only the refStreamDefinition part

@@ -34,12 +34,12 @@ public class AceCompletionSnippetSegmentLiteral implements AceCompletionSnippetS
      *
      * @param literalText The literal text that makes up part of the snippet. This does not need to be escaped, escaping will be handled automatically.
      */
-    public AceCompletionSnippetSegmentLiteral(String literalText) {
+    public AceCompletionSnippetSegmentLiteral(final String literalText) {
         this.literalText = literalText;
     }
 
     @Override
-    public String getPreparedText(int tabstopNumber) {
+    public String getPreparedText(final int tabstopNumber) {
         final String escapedText = literalText.replace("\\", "\\\\").replace("$", "\\$");
         return escapedText;
     }

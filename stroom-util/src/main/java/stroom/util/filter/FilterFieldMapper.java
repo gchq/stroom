@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.filter;
 
 import stroom.util.shared.filter.FilterFieldDefinition;
@@ -45,7 +61,7 @@ public class FilterFieldMapper<T_ROW> {
         final Function<T_ROW, String> valueExtractor = row -> {
             final String result;
             if (row != null) {
-                T_FIELD fieldVal = function1.apply(row);
+                final T_FIELD fieldVal = function1.apply(row);
                 if (fieldVal != null) {
                     result = function2.apply(fieldVal);
                 } else {
@@ -73,9 +89,9 @@ public class FilterFieldMapper<T_ROW> {
         final Function<T_ROW, String> valueExtractor = row -> {
             final String result;
             if (row != null) {
-                T_FIELD fieldVal = function1.apply(row);
+                final T_FIELD fieldVal = function1.apply(row);
                 if (fieldVal != null) {
-                    T_SUB_FIELD subFieldVal = function2.apply(fieldVal);
+                    final T_SUB_FIELD subFieldVal = function2.apply(fieldVal);
                     if (subFieldVal != null) {
                         return function3.apply(subFieldVal);
                     } else {
@@ -99,7 +115,7 @@ public class FilterFieldMapper<T_ROW> {
     public String extractFieldValue(final T_ROW row) {
         // Useful is unit tests, VERY noisy with lots of data
         if (LOGGER.isTraceEnabled()) {
-            String val = valueExtractor.apply(row);
+            final String val = valueExtractor.apply(row);
             LOGGER.trace("Extracted [{}] from field {} in [{}]", val, fieldDefinition, row);
             return val;
         } else {

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.language.functions;
 
 import stroom.query.language.functions.ref.CountReference;
@@ -114,9 +130,11 @@ public class TestValueReferenceIndex {
 
     private void testWriteRead(final ValueReferenceIndex valueReferenceIndex, final StoredValues storedValues) {
         final ByteBuffer byteBuffer1 = write(valueReferenceIndex, storedValues);
-        StoredValues storedValues2 = valueReferenceIndex.read(new KryoDataReader(new ByteBufferInput(byteBuffer1)));
+        final StoredValues storedValues2 = valueReferenceIndex.read(
+                new KryoDataReader(new ByteBufferInput(byteBuffer1)));
         final ByteBuffer byteBuffer2 = write(valueReferenceIndex, storedValues2);
-        StoredValues storedValues3 = valueReferenceIndex.read(new KryoDataReader(new ByteBufferInput(byteBuffer2)));
+        final StoredValues storedValues3 = valueReferenceIndex.read(
+                new KryoDataReader(new ByteBufferInput(byteBuffer2)));
     }
 
     private ByteBuffer write(final ValueReferenceIndex valueReferenceIndex, final StoredValues storedValues) {

@@ -384,7 +384,7 @@ public class DS3Parser extends AbstractParser {
             Match recoveryMatch = null;
             try {
                 recoveryMatch = expression.match();
-            } catch (ComplexRegexException e) {
+            } catch (final ComplexRegexException e) {
                 handleComplexRegexException(e, expression);
             } catch (final RuntimeException e) {
                 handleRuntimeException(e, expression);
@@ -678,7 +678,7 @@ public class DS3Parser extends AbstractParser {
             final Runnable command = () -> {
                 final ExecutionProfilerTopN top10 = new ExecutionProfilerTopN(root, 10);
                 // No point logging if we have no executions
-                long totalExecutionTime = top10.getTopN().stream()
+                final long totalExecutionTime = top10.getTopN().stream()
                         .mapToLong(ExecutionProfiler::getTotalExecutionTime)
                         .sum();
 
@@ -717,7 +717,7 @@ public class DS3Parser extends AbstractParser {
         errorHandlerAdaptor.log(severity, reader, message, t);
     }
 
-    private void handleRuntimeException(final RuntimeException e, Expression expression) {
+    private void handleRuntimeException(final RuntimeException e, final Expression expression) {
         messageBuffer.clear();
         messageBuffer.append("Expression '")
                 .append(expression.getDebugId())
@@ -730,7 +730,7 @@ public class DS3Parser extends AbstractParser {
         LOGGER.error(message, e);
     }
 
-    private void handleComplexRegexException(final ComplexRegexException e, Expression expression) {
+    private void handleComplexRegexException(final ComplexRegexException e, final Expression expression) {
         messageBuffer.clear();
         messageBuffer.append("Regex Expression '")
                 .append(expression.getDebugId())

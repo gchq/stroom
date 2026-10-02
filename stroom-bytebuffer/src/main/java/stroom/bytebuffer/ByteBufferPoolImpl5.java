@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.bytebuffer;
 
 import stroom.util.HasHealthCheck;
@@ -93,7 +109,7 @@ public class ByteBufferPoolImpl5 implements ByteBufferPool {
         final Queue<ByteBuffer> byteBufferQueue = getByteBufferQueue(offset);
         final Semaphore semaphore = getSemaphore(offset);
 
-        boolean havePermit = semaphore.tryAcquire();
+        final boolean havePermit = semaphore.tryAcquire();
         ByteBuffer buffer;
 
         if (havePermit) {
@@ -115,7 +131,7 @@ public class ByteBufferPoolImpl5 implements ByteBufferPool {
                 semaphore.acquire();
                 // Now we have a permit we can safely get a buffer from the queue
                 buffer = byteBufferQueue.poll();
-            } catch (InterruptedException e) {
+            } catch (final InterruptedException e) {
                 LOGGER.error("Thread interrupted", e);
                 Thread.currentThread().interrupt();
             }
@@ -209,7 +225,7 @@ public class ByteBufferPoolImpl5 implements ByteBufferPool {
     @Override
     public SystemInfoResult getSystemInfo() {
         try {
-            SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
+            final SystemInfoResult.Builder builder = SystemInfoResult.builder(this)
                     .addDetail("Size", getCurrentPoolSize());
 
             SortedMap<Integer, Long> capacityCountsMap = null;
@@ -222,13 +238,13 @@ public class ByteBufferPoolImpl5 implements ByteBufferPool {
                         .collect(HasHealthCheck.buildTreeMapCollector(Map.Entry::getKey, Map.Entry::getValue));
 
                 builder.addDetail("Buffer capacity counts", capacityCountsMap);
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error getting capacity counts", e);
                 builder.addDetail("Buffer capacity counts", "Error getting counts");
             }
 
             return builder.build();
-        } catch (RuntimeException e) {
+        } catch (final RuntimeException e) {
             return SystemInfoResult.builder(this)
                     .addError(e)
                     .build();
@@ -242,7 +258,7 @@ public class ByteBufferPoolImpl5 implements ByteBufferPool {
         ByteBuffer byteBuffer = null;
 
         while (true) {
-            int currBufferCount = bufferCounter.get();
+            final int currBufferCount = bufferCounter.get();
             if (currBufferCount < maxBufferCount) {
                 if (bufferCounter.compareAndSet(currBufferCount, currBufferCount + 1)) {
                     // Succeeded in incrementing the count so we can create one

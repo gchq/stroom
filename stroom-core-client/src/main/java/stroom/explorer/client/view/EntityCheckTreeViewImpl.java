@@ -42,7 +42,7 @@ public class EntityCheckTreeViewImpl extends ViewImpl implements EntityCheckTree
     }
 
     @Override
-    public void setCellTree(Widget cellTree) {
+    public void setCellTree(final Widget cellTree) {
         panel.setWidget(cellTree);
     }
 

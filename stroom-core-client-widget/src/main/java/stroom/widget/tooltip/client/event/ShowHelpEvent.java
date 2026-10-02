@@ -1,7 +1,22 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.tooltip.client.event;
 
 import stroom.event.client.StaticEventBus;
-import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
 import stroom.widget.tooltip.client.event.ShowHelpEvent.Handler;
@@ -12,6 +27,8 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+
+import java.util.Objects;
 
 public class ShowHelpEvent extends GwtEvent<Handler> {
 
@@ -24,12 +41,12 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
     private ShowHelpEvent(final Element element,
                           final PopupPosition popupPosition,
                           final SafeHtml content) {
-        this.popupPosition = NullSafe.requireNonNullElseGet(popupPosition, () -> {
-            Rect relativeRect = new Rect(element);
+        this.popupPosition = Objects.requireNonNullElseGet(popupPosition, () -> {
+            final Rect relativeRect = new Rect(element);
             return new PopupPosition(relativeRect, PopupLocation.RIGHT);
         });
         this.element = element;
-        this.content = NullSafe.requireNonNullElse(content, SafeHtmlUtils.EMPTY_SAFE_HTML);
+        this.content = Objects.requireNonNullElse(content, SafeHtmlUtils.EMPTY_SAFE_HTML);
     }
 
     private ShowHelpEvent(final Builder builder) {
@@ -44,7 +61,7 @@ public class ShowHelpEvent extends GwtEvent<Handler> {
     }
 
     public static Builder builder(final Element element) {
-        Builder builder = new Builder();
+        final Builder builder = new Builder();
         builder.element = element;
         return builder;
     }

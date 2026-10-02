@@ -18,7 +18,7 @@ package stroom.core.tools;
 
 public class AuditSqlTool {
 
-    static void outTable(String table) {
+    static void outTable(final String table) {
         System.out.println("alter table " + table + " add `CRT_MS` bigint(20) NOT NULL;");
         System.out.println("alter table " + table + " add `CRT_USER` varchar(255) default NULL;");
         System.out.println("alter table " + table + " add `UPD_MS` bigint(20) NOT NULL;");
@@ -27,7 +27,7 @@ public class AuditSqlTool {
         System.out.println("update " + table + " set UPD_MS = " + System.currentTimeMillis() + ";");
     }
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         outTable("search_index_shard");
     }
 }

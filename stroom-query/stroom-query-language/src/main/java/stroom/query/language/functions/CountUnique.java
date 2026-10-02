@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package stroom.query.language.functions;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.query.language.functions.ref.ValListReference;
 import stroom.query.language.functions.ref.ValueReferenceIndex;
-import stroom.query.language.token.Param;
 
 import java.text.ParseException;
 import java.util.List;
@@ -31,23 +30,13 @@ import java.util.function.Supplier;
         commonCategory = FunctionCategory.AGGREGATE,
         commonReturnType = ValInteger.class,
         commonReturnDescription = "The number of unique values",
-        signatures = {
-                @FunctionSignature(
-                        category = FunctionCategory.AGGREGATE,
-                        description = "Determines the number of unique values across all grouped records.",
-                        args = @FunctionArg(
-                                name = "values",
-                                description = "Grouped field or the result of another function",
-                                argType = Val.class)),
-                @FunctionSignature(
-                        category = FunctionCategory.MATHEMATICS,
-                        description = "Determines the number of unique values in the provided arguments",
-                        args = @FunctionArg(
-                                name = "arg",
-                                description = "Field, the result of another function or a constant.",
-                                argType = Val.class,
-                                isVarargs = true,
-                                minVarargsCount = 2))})
+        signatures = @FunctionSignature(
+                category = FunctionCategory.AGGREGATE,
+                description = "Determines the number of unique values across all grouped records.",
+                args = @FunctionArg(
+                        name = "values",
+                        description = "Grouped field or the result of another function",
+                        argType = Val.class)))
 class CountUnique extends AbstractFunction implements AggregateFunction {
 
     static final String NAME = "countUnique";

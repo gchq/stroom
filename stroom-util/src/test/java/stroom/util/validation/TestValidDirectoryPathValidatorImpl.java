@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.validation;
 
 import stroom.util.io.SimplePathCreator;
@@ -34,17 +50,18 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath(ensureExistence = true)
     @Test
-    public void testIsValid_ensureExists_notExists(@TempDir Path tempDir) throws NoSuchMethodException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_ensureExists_notExists(@TempDir final Path tempDir) throws NoSuchMethodException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
 
         final ValidDirectoryPath validDirectoryPathAnno = TestValidDirectoryPathValidatorImpl.class.getMethod(
-                methodName, Path.class)
+                        methodName, Path.class)
                 .getAnnotation(ValidDirectoryPath.class);
 
         validDirectoryPathValidator.initialize(validDirectoryPathAnno);
@@ -61,11 +78,14 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath(ensureExistence = true)
     @Test
-    public void testIsValid_ensureExists_dirExists(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_ensureExists_dirExists(@TempDir final Path tempDir)
+            throws NoSuchMethodException, IOException {
+
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -89,11 +109,12 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath()
     @Test
-    public void testIsValid_dirExists(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_dirExists(@TempDir final Path tempDir) throws NoSuchMethodException, IOException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -118,11 +139,14 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath(ensureExistence = true)
     @Test
-    public void testIsValid_ensureExists_isFile(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_ensureExists_isFile(@TempDir final Path tempDir)
+            throws NoSuchMethodException, IOException {
+
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -160,11 +184,12 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath()
     @Test
-    public void testIsValid_isFile(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_isFile(@TempDir final Path tempDir) throws NoSuchMethodException, IOException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -202,11 +227,12 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath()
     @Test
-    public void testIsValid_nullDir(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_nullDir(@TempDir final Path tempDir) throws NoSuchMethodException, IOException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();
@@ -230,11 +256,12 @@ class TestValidDirectoryPathValidatorImpl {
 
     @ValidDirectoryPath()
     @Test
-    public void testIsValid_blankDir(@TempDir Path tempDir) throws NoSuchMethodException, IOException {
-        ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
+    public void testIsValid_blankDir(@TempDir final Path tempDir) throws NoSuchMethodException, IOException {
+        final ValidDirectoryPathValidatorImpl validDirectoryPathValidator = new ValidDirectoryPathValidatorImpl(
                 new SimplePathCreator(() -> tempDir, () -> tempDir));
 
-        final String methodName = new Object() {}
+        final String methodName = new Object() {
+        }
                 .getClass()
                 .getEnclosingMethod()
                 .getName();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,7 @@ public class DataRetentionPresenter
 
             // Get the current state of the rules saved or dirty
             final DataRetentionRules currentRules = retentionPolicyPresenter.getPolicy();
-            int currentPolicyHash = currentRules.hashCode();
+            final int currentPolicyHash = currentRules.hashCode();
             if (lastPolicyHash == null || currentPolicyHash != lastPolicyHash) {
                 lastPolicyHash = currentPolicyHash;
                 // Rules have changed, so any current data is invalid
@@ -161,11 +161,9 @@ public class DataRetentionPresenter
 
     @Override
     public String getLabel() {
-
         if (isDirty()) {
             return "* " + TAB_LABEL;
         }
-
         return TAB_LABEL;
     }
 

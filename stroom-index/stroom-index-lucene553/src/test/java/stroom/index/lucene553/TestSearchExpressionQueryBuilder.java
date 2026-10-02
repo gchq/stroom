@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,15 @@
 
 package stroom.index.lucene553;
 
-import stroom.datasource.api.v2.AnalyzerType;
 import stroom.dictionary.api.WordListProvider;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.WordList;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefDecorator;
-import stroom.expression.api.DateTimeSettings;
 import stroom.index.shared.LuceneIndexField;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.datasource.AnalyzerType;
 import stroom.query.common.v2.MockIndexFieldCache;
 
 import org.junit.jupiter.api.Test;
@@ -47,7 +46,7 @@ public class TestSearchExpressionQueryBuilder {
         test(AnalyzerType.KEYWORD);
     }
 
-    private void test(AnalyzerType analyzerType) {
+    private void test(final AnalyzerType analyzerType) {
 //        final DocRef dictionaryRef = dictionaryStore.createDocument("test");
 //        DictionaryDoc dictionaryDoc = dictionaryStore.readDocument(dictionaryRef);
 //        dictionaryDoc.setData("1\n2\n3\n4");
@@ -77,8 +76,7 @@ public class TestSearchExpressionQueryBuilder {
             }
 
             @Override
-            public WordList getCombinedWordList(final DocRef dictionaryRef,
-                                                final DocRefDecorator docRefDecorator) {
+            public WordList getCombinedWordList(final DocRef dictionaryRef) {
                 return WordList.builder(true)
                         .addWord("1", dictionaryRef)
                         .addWord("2", dictionaryRef)

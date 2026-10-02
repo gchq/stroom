@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.identity.token;
 
 import stroom.security.openid.api.JsonWebKeyFactory;
@@ -24,9 +40,9 @@ public class JwkFactoryImpl implements JsonWebKeyFactory {
     @Override
     public PublicJsonWebKey createPublicKey() {
         // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
-        String jwkId = UUID.randomUUID().toString();
+        final String jwkId = UUID.randomUUID().toString();
         try {
-            RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(BITS);
+            final RsaJsonWebKey jwk = RsaJwkGenerator.generateJwk(BITS);
             LOGGER.info("Generating RSA key pair for JSON Web Tokens with ID: {}", jwkId);
 
             jwk.setKeyId(jwkId);
@@ -34,7 +50,7 @@ public class JwkFactoryImpl implements JsonWebKeyFactory {
             jwk.setAlgorithm(AlgorithmIdentifiers.RSA_USING_SHA256);
             LOGGER.info("keyId: {}", jwk.getKeyId());
             return jwk;
-        } catch (JoseException e) {
+        } catch (final JoseException e) {
             throw new RuntimeException(LogUtil.message("Error generating JWK of {} bits", BITS), e);
         }
     }
@@ -48,9 +64,13 @@ public class JwkFactoryImpl implements JsonWebKeyFactory {
     public PublicJsonWebKey fromJson(final String json) {
         try {
             return RsaJsonWebKey.Factory.newPublicJwk(json);
-        } catch (JoseException e) {
-            LOGGER.error("Unable to create RsaJsonWebKey from json:\n{}", json, e);
-            throw new RuntimeException(e);
+        } catch (final JoseException e) {
+            // The JSON must never appear in the message, the log, or anything derived from them. asJson()
+            // serialises with INCLUDE_PRIVATE, so this string *is* the RSA private key that signs every token -
+            // writing it out on a parse failure would move the key from the database into a log file, which is
+            // typically aggregated and far less protected. Callers add which key row failed, which is what an
+            // operator actually needs.
+            throw new RuntimeException("Unable to read a JSON Web Key from its stored JSON", e);
         }
     }
 }

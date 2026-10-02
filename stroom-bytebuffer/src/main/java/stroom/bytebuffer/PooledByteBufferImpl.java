@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.bytebuffer;
@@ -107,7 +106,7 @@ class PooledByteBufferImpl implements PooledByteBuffer {
             if (byteBuffer != null && byteBuffer.isDirect()) {
                 try {
                     ByteBufferSupport.unmap(byteBuffer);
-                } catch (Exception e) {
+                } catch (final Exception e) {
                     LOGGER.error("Error releasing direct byte buffer", e);
                 }
             }

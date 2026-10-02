@@ -17,7 +17,6 @@
 package stroom.index;
 
 
-import stroom.datasource.api.v2.AnalyzerType;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexDocument;
 import stroom.index.impl.IndexFields;
@@ -38,9 +37,11 @@ import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.data.PipelineDataBuilder;
 import stroom.pipeline.shared.data.PipelineDataUtil;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.xslt.XsltStore;
+import stroom.query.api.datasource.AnalyzerType;
 import stroom.search.extraction.FieldValue;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractProcessIntegrationTest;
@@ -65,7 +66,7 @@ import static org.mockito.Mockito.when;
 
 class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
-    private static final String PIPELINE = "TestIndexingPipeline/TestIndexingPipeline.Pipeline.data.xml";
+    private static final String PIPELINE = "TestIndexingPipeline/TestIndexingPipeline.Pipeline.json";
     private static final String SAMPLE_INDEX_INPUT = "TestIndexingPipeline/TestIndexes.out";
 
     private static final String SAMPLE_INDEX_XSLT = "TestIndexingPipeline/Indexes.xsl";
@@ -100,8 +101,10 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         pipelineScopeRunnable.scopeRunnable(() -> {
             // Setup the XSLT.
             final DocRef xsltRef = xsltStore.createDocument("Indexing XSLT");
-            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
-            xsltDoc.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
+            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef)
+                    .copy()
+                    .data(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)))
+                    .build();
             xsltStore.writeDocument(xsltDoc);
 
             final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
@@ -117,8 +120,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
             // Setup the target index
             final DocRef indexRef = indexStore.createDocument("Test index");
-            LuceneIndexDoc index = indexStore.readDocument(indexRef);
-            index.setFields(indexFields);
+            LuceneIndexDoc index = indexStore.readDocument(indexRef).copy().fields(indexFields).build();
             index = indexStore.writeDocument(index);
 
             errorReceiverProvider.get().setErrorReceiver(new FatalErrorReceiver());
@@ -133,15 +135,17 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             // Create the pipeline.
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore,
                     StroomPipelineTestFileUtil.getString(PIPELINE));
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
-            pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
-            pipelineDoc.getPipelineData()
-                    .addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
+            PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            PipelineData pipelineData = pipelineDoc.getPipelineData();
+            final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
+            builder.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
+            builder.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
+            pipelineData = builder.build();
+            pipelineDoc = pipelineDoc.copy().pipelineData(pipelineData).build();
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.
-            final PipelineData pipelineData = pipelineDataCache.get(pipelineDoc);
+            pipelineData = pipelineDataCache.get(pipelineDoc);
             final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, new SimpleTaskContext());
 
             final InputStream inputStream = StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_INPUT);

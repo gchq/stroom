@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.refdata.store.offheapstore;
 
 import stroom.bytebuffer.ByteBufferUtils;
@@ -168,7 +184,7 @@ public class OffHeapStagingStore implements AutoCloseable {
                     throw new RuntimeException(LogUtil.message("Unsuccessful putOutcome {} putting entry to {}",
                             putOutcome, stagingDb.getDbName()));
                 }
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 throw new RuntimeException(LogUtil.message("""
                                 Error putting entry to staging store (db: {}): {}
                                 keyBuffer: {},
@@ -236,7 +252,7 @@ public class OffHeapStagingStore implements AutoCloseable {
         return Optional.ofNullable(refDataEntryType);
     }
 
-    public void logAllContents(Consumer<String> logEntryConsumer) {
+    public void logAllContents(final Consumer<String> logEntryConsumer) {
         Stream.of(keyValueStagingDb, rangeValueStagingDb)
                 .forEach(lmdbDb ->
                         lmdbDb.logDatabaseContents(logEntryConsumer));
@@ -315,7 +331,7 @@ public class OffHeapStagingStore implements AutoCloseable {
         if (autoCloseable != null) {
             try {
                 autoCloseable.close();
-            } catch (Exception e) {
+            } catch (final Exception e) {
                 LOGGER.error("Error closing {}: {}", name, e.getMessage(), e);
             }
         } else {

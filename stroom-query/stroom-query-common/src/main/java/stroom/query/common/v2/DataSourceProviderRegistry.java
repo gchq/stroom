@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 
 package stroom.query.common.v2;
 
-import stroom.datasource.api.v2.DataSourceProvider;
-import stroom.datasource.api.v2.FindFieldCriteria;
-import stroom.datasource.api.v2.QueryField;
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.DataSourceProvider;
+import stroom.query.api.datasource.FindFieldCriteria;
+import stroom.query.api.datasource.QueryField;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
@@ -27,6 +27,7 @@ import stroom.util.shared.ResultPage;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -96,5 +97,23 @@ public class DataSourceProviderRegistry {
                 .map(DataSourceProvider::getDataSourceDocRefs)
                 .flatMap(List::stream)
                 .toList();
+    }
+
+    public Optional<DocRef> findDataSourceByUuid(final String uuid) {
+        for (final DataSourceProvider provider : dataSourceProviders.values()) {
+            final Optional<DocRef> result = provider.findDataSourceByUuid(uuid);
+            if (result.isPresent()) {
+                return result;
+            }
+        }
+        return Optional.empty();
+    }
+
+    public List<DocRef> findDataSourceByName(final String name) {
+        final List<DocRef> results = new ArrayList<>();
+        for (final DataSourceProvider provider : dataSourceProviders.values()) {
+            results.addAll(provider.findDataSourceByName(name));
+        }
+        return results;
     }
 }

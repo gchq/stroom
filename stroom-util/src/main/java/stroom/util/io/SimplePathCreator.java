@@ -25,8 +25,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.LongSupplier;
@@ -34,9 +37,9 @@ import java.util.function.Supplier;
 
 public class SimplePathCreator implements PathCreator {
 
-    private static final String STROOM_TEMP = "stroom.temp";
-    private static final String STROOM_HOME = "stroom.home";
-    private static final String[] NON_ENV_VARS = {
+    public static final String STROOM_TEMP = "stroom.temp";
+    public static final String STROOM_HOME = "stroom.home";
+    public static final String[] NON_ENV_VARS = {
             "feed",
             "pipeline",
             "sourceId",
@@ -73,7 +76,7 @@ public class SimplePathCreator implements PathCreator {
     }
 
     @Override
-    public String replaceTimeVars(String path) {
+    public String replaceTimeVars(final String path) {
         // Replace some of the path elements with time variables.
         final ZonedDateTime dateTime = ZonedDateTime.now(ZoneOffset.UTC);
         return replaceTimeVars(path, dateTime);
@@ -88,7 +91,7 @@ public class SimplePathCreator implements PathCreator {
         path = replace(path, "hour", dateTime::getHour, 2);
         path = replace(path, "minute", dateTime::getMinute, 2);
         path = replace(path, "second", dateTime::getSecond, 2);
-        path = replace(path, "millis", () -> dateTime.toInstant().toEpochMilli(), 3);
+        path = replace(path, "millis", () -> dateTime.getLong(ChronoField.MILLI_OF_SECOND), 3);
         path = replace(path, "ms", () -> dateTime.toInstant().toEpochMilli(), 0);
 
         return path;
@@ -114,12 +117,7 @@ public class SimplePathCreator implements PathCreator {
 
     @Override
     public Path toAppPath(String pathString) {
-        if (pathString == null) {
-            pathString = "";
-        } else {
-            pathString = pathString.trim();
-        }
-
+        pathString = NullSafe.trim(pathString);
         pathString = replaceSystemProperties(pathString);
         return toAbsolutePath(pathString);
     }
@@ -195,31 +193,46 @@ public class SimplePathCreator implements PathCreator {
 
     @Override
     public String replace(final String path,
-                          final String type,
+                          final String var,
                           final LongSupplier replacementSupplier,
                           final int pad) {
 
         //convert the long supplier into a string supplier to prevent the
         //evaluation of the long supplier
-        Supplier<String> stringReplacementSupplier = () -> {
+        final Supplier<String> stringReplacementSupplier = () -> {
             String value = String.valueOf(replacementSupplier.getAsLong());
             if (pad > 0) {
                 value = Strings.padStart(value, pad, '0');
             }
             return value;
         };
-        return replace(path, type, stringReplacementSupplier);
+        return replace(path, var, stringReplacementSupplier);
+    }
+
+    public String replace(final String path,
+                          final Map<String, Supplier<String>> varToReplacementSupplierMap) {
+        if (NullSafe.isNonBlankString(path)) {
+            String output = path;
+            for (final Entry<String, Supplier<String>> entry : varToReplacementSupplierMap.entrySet()) {
+                output = replace(output, entry.getKey(), entry.getValue());
+            }
+            return output;
+        } else {
+            return path;
+        }
     }
 
     @Override
-    public String replace(final String path,
-                          final String type,
+    public String replace(final String str,
+                          final String var,
                           final Supplier<String> replacementSupplier) {
-        String newPath = path;
-        final String param = "${" + type + "}";
+        String newPath = str;
+        final String param = "${" + var + "}";
         int start = newPath.indexOf(param);
         while (start != -1) {
             final int end = start + param.length();
+            // Could consider re-using the replacement value to save calling the supplier
+            // multiple times if the var is used >1 time.
             newPath = newPath.substring(0, start) + replacementSupplier.get() + newPath.substring(end);
             start = newPath.indexOf(param, start);
         }
@@ -237,7 +250,7 @@ public class SimplePathCreator implements PathCreator {
     }
 
     @Override
-    public String replaceContextVars(String path) {
+    public String replaceContextVars(final String path) {
         return path;
     }
 
