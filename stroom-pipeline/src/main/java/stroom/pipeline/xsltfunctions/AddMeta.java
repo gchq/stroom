@@ -24,6 +24,30 @@ import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 
+@XsltFunctionDef(
+        name = AddMeta.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Adds a metadata key and value to the output destination. Blank keys are ignored.
+                """,
+        commonReturnType = XsltDataType.EMPTY_SEQUENCE,
+        commonReturnDescription = "An empty sequence.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "key",
+                                        description = "The metadata key to write.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "value",
+                                        description = "The metadata value to write.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class AddMeta extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "add-meta";

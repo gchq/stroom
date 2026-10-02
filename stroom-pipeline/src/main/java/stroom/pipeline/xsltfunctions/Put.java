@@ -24,6 +24,31 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 
+@XsltFunctionDef(
+        name = Put.FUNCTION_NAME,
+        helpAnchor = "put-and-get",
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Stores a string under a key for retrieval by `get()` during the current pipeline process.
+                """,
+        commonReturnType = XsltDataType.EMPTY_SEQUENCE,
+        commonReturnDescription = "An empty sequence.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "key",
+                                        description = "The key under which to store the value.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "value",
+                                        description = "The value to store.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class Put extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "put";

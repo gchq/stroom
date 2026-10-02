@@ -25,6 +25,26 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = Get.FUNCTION_NAME,
+        helpAnchor = "put-and-get",
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Reads a value stored under a key by `put()` during the current pipeline process.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The stored value, or an empty sequence if the key is absent.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "key",
+                                        description = "The key used when storing the value.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class Get extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "get";

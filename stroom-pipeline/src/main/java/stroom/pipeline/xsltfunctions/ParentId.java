@@ -26,6 +26,19 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = ParentId.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the parent stream ID of the current input stream.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The parent stream ID, if one exists.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class ParentId extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "parent-id";

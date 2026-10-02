@@ -31,6 +31,25 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Optional;
 
+@XsltFunctionDef(
+        name = ParentForId.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the parent stream ID of the specified input stream.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The parent stream ID, if one exists.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "streamId",
+                                        description = "The ID of the input stream.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class ParentForId extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "parent-for-id";

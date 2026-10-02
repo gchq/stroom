@@ -34,7 +34,29 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@XsltFunctionDef(
+        name = Dictionary.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the contents of a Dictionary document for use during translation. The dictionary may be
+                identified by name or UUID.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The dictionary contents, if the document is found.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "name",
+                                        description = "The name or UUID of the Dictionary document.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class Dictionary extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "dictionary";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Dictionary.class);
 

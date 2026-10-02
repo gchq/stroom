@@ -25,7 +25,22 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = PartNo.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the current part number within a multipart input stream, counting from `1`.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The current part number.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class PartNo extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "part-no";
 
     private final MetaHolder metaHolder;
 

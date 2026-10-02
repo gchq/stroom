@@ -32,6 +32,25 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@XsltFunctionDef(
+        name = CidrToNumericIPRange.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.NETWORK,
+        commonDescription = """
+                Converts a CIDR range to an array containing the numeric start and end IP addresses.
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "An array containing the start and end addresses as numeric strings.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "cidr",
+                                        description = "The CIDR range to convert, for example `192.168.1.0/24`.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class CidrToNumericIPRange extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "cidr-to-numeric-ip-range";
@@ -54,6 +73,7 @@ class CidrToNumericIPRange extends StroomExtensionFunctionCall {
                 final long networkAddress = IpAddressUtil.toNumericIpAddress(cidrAddress) & subnetMask;
                 final long broadcastAddress = networkAddress | (~subnetMask);
 
+                // TODO can we return immutable lists, e.g. List.of(...) ?
                 return new SimpleArrayItem(new ArrayList<>(Arrays.asList(
                         StringValue.makeStringValue(Long.toString(networkAddress)),
                         StringValue.makeStringValue(Long.toString(broadcastAddress)))));
