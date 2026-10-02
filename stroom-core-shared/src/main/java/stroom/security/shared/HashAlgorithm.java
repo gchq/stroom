@@ -28,7 +28,6 @@ public enum HashAlgorithm implements HasDisplayValue, HasPrimitiveValue {
     BCRYPT("BCrypt", 2),
     ARGON_2("Argon2", 3),
     SHA2_512("SHA2-512", 4),
-    BCRYPT_LEGACY("BCrypt", 5),
     ;
 
     /**

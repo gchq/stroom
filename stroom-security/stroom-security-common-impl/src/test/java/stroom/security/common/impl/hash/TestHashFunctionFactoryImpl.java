@@ -20,18 +20,13 @@ import stroom.security.api.HashFunction;
 import stroom.security.shared.HashAlgorithm;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.string.StringUtil;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
-import org.mindrot.jbcrypt.BCrypt;
 
-import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,7 +63,7 @@ class TestHashFunctionFactoryImpl {
 
         // Salt is encoded in the hash with bcrypt, so bad salt is ignored
         final String saltForVerify;
-        if (hashAlgorithm == HashAlgorithm.BCRYPT_LEGACY || hashAlgorithm == HashAlgorithm.BCRYPT) {
+        if (hashAlgorithm == HashAlgorithm.BCRYPT) {
             saltForVerify = null;
         } else {
             saltForVerify = salt;
@@ -83,78 +78,77 @@ class TestHashFunctionFactoryImpl {
                 .isFalse();
     }
 
-    @Test
-    void testLegacy() {
-        final HashFunctionFactoryImpl hashFunctionFactory = new HashFunctionFactoryImpl();
-        final HashFunction bcryptHasher = hashFunctionFactory.getHashFunction(HashAlgorithm.BCRYPT);
-        final HashFunction bcryptLegacyHasher = hashFunctionFactory.getHashFunction(HashAlgorithm.BCRYPT_LEGACY);
-        final Random random = new Random();
-        final int minLen = 60;
-        final int maxLen = 130;
-        final int minRounds = 4;
-        final int maxRounds = 15;
-        final int maxInputLen = 72;
-        final SecureRandom secureRandom = new SecureRandom();
-
-        for (int i = 0; i < 20; i++) {
-            final int len = minLen + random.nextInt(maxLen - minLen);
-            final String input = StringUtil.createRandomCode(secureRandom, len);
-            // We are not using multibyte chars so can truncate by char
-            final String inputTruncated = input.length() > maxInputLen
-                    ? input.substring(0, maxInputLen)
-                    : input;
-            final int saltRounds = minRounds + random.nextInt(maxRounds - minRounds);
-
-            assertThat(inputTruncated.length())
-                    .isLessThanOrEqualTo(maxInputLen);
-            assertThat(inputTruncated.getBytes(StandardCharsets.UTF_8).length)
-                    .isLessThanOrEqualTo(maxInputLen);
-
-            try {
-                final String salt = BCrypt.gensalt(saltRounds, secureRandom);
-                final String hash1a = bcryptLegacyHasher.hash(input, salt);
-                final String hash1b = bcryptLegacyHasher.hash(inputTruncated, salt);
-                assertThat(hash1b)
-                        .isEqualTo(hash1a);
-
-                final String hash2a = bcryptHasher.hash(input, salt);
-                final String hash2b = bcryptHasher.hash(inputTruncated, salt);
-                assertThat(hash2b)
-                        .isEqualTo(hash2a);
-                LOGGER.info("""
-                        Iteration: {}, len: {}, saltRounds: {}
-                        input:   {}
-                        hash1a:  {}
-                        hash1b:  {}
-                        hash2a:  {}
-                        hash2b:  {}
-                        """, i, len, saltRounds, input, hash1a, hash1b, hash2a, hash2b);
-
-                boolean isValid = bcryptLegacyHasher.verify(input, hash1a);
-                assertThat(isValid)
-                        .isTrue();
-                isValid = bcryptLegacyHasher.verify(input, hash1b);
-                assertThat(isValid)
-                        .isTrue();
-                // Use new hasher to verify a hash from the legacy hasher
-                isValid = bcryptHasher.verify(input, hash1a);
-                assertThat(isValid)
-                        .isTrue();
-            } catch (final Exception e) {
-                LOGGER.error("Iteration: {}, len: {}, saltRounds: {} - {}", i, len, saltRounds, e.getMessage());
-                throw e;
-            }
-        }
-    }
+//    @Test
+//    void testLegacy() {
+//        final HashFunctionFactoryImpl hashFunctionFactory = new HashFunctionFactoryImpl();
+//        final HashFunction bcryptHasher = hashFunctionFactory.getHashFunction(HashAlgorithm.BCRYPT);
+//        final HashFunction bcryptLegacyHasher = hashFunctionFactory.getHashFunction(HashAlgorithm.BCRYPT_LEGACY);
+//        final Random random = new Random();
+//        final int minLen = 60;
+//        final int maxLen = 130;
+//        final int minRounds = 4;
+//        final int maxRounds = 15;
+//        final int maxInputLen = 72;
+//        final SecureRandom secureRandom = new SecureRandom();
+//
+//        for (int i = 0; i < 20; i++) {
+//            final int len = minLen + random.nextInt(maxLen - minLen);
+//            final String input = StringUtil.createRandomCode(secureRandom, len);
+//            // We are not using multibyte chars so can truncate by char
+//            final String inputTruncated = input.length() > maxInputLen
+//                    ? input.substring(0, maxInputLen)
+//                    : input;
+//            final int saltRounds = minRounds + random.nextInt(maxRounds - minRounds);
+//
+//            assertThat(inputTruncated.length())
+//                    .isLessThanOrEqualTo(maxInputLen);
+//            assertThat(inputTruncated.getBytes(StandardCharsets.UTF_8).length)
+//                    .isLessThanOrEqualTo(maxInputLen);
+//
+//            try {
+//                final String salt = BCrypt.gensalt(saltRounds, secureRandom);
+//                final String hash1a = bcryptLegacyHasher.hash(input, salt);
+//                final String hash1b = bcryptLegacyHasher.hash(inputTruncated, salt);
+//                assertThat(hash1b)
+//                        .isEqualTo(hash1a);
+//
+//                final String hash2a = bcryptHasher.hash(input, salt);
+//                final String hash2b = bcryptHasher.hash(inputTruncated, salt);
+//                assertThat(hash2b)
+//                        .isEqualTo(hash2a);
+//                LOGGER.info("""
+//                        Iteration: {}, len: {}, saltRounds: {}
+//                        input:   {}
+//                        hash1a:  {}
+//                        hash1b:  {}
+//                        hash2a:  {}
+//                        hash2b:  {}
+//                        """, i, len, saltRounds, input, hash1a, hash1b, hash2a, hash2b);
+//
+//                boolean isValid = bcryptLegacyHasher.verify(input, hash1a);
+//                assertThat(isValid)
+//                        .isTrue();
+//                isValid = bcryptLegacyHasher.verify(input, hash1b);
+//                assertThat(isValid)
+//                        .isTrue();
+//                // Use new hasher to verify a hash from the legacy hasher
+//                isValid = bcryptHasher.verify(input, hash1a);
+//                assertThat(isValid)
+//                        .isTrue();
+//            } catch (final Exception e) {
+//                LOGGER.error("Iteration: {}, len: {}, saltRounds: {} - {}", i, len, saltRounds, e.getMessage());
+//                throw e;
+//            }
+//        }
+//    }
 
     @SuppressWarnings("checkstyle:LineLength")
     @Test
     void testLegacyBcryptHashes() {
-        final List<HashAlgorithm> hashAlgorithms = List.of(
-                HashAlgorithm.BCRYPT,
-                HashAlgorithm.BCRYPT_LEGACY);
+        final List<HashAlgorithm> hashAlgorithms = List.of(HashAlgorithm.BCRYPT);
 
-        // A set of inputs with their hashes (produced by JBcrypt to the old $2a$ hash spec)
+        // A set of inputs with their hashes (produced by JBcrypt that we used to use for BCrypt)
+        // THis makes sure we can deal with hashes produced by out old lib
         final List<InputAndHash> inputsAndHashes = List.of(
                 new InputAndHash(
                         "sdk_p9FXn5WhHJEufxPuDMVjHn8XCozenx5qkcNRagRUwbMqVjByFwoMPfPFFeynLjRFfwYMsH47XE93TfEs6oMoSrPBKHiG9H7XSr5hWas9cNKXNCdSLayAZL8q9gAn3K51",
@@ -182,6 +176,7 @@ class TestHashFunctionFactoryImpl {
                 HashAlgorithm.BCRYPT);
 
         // A set of inputs with their hashes (produced by CyberChef to the newer $2b$ spec)
+        // THis makes sure we can deal with hashes produced by other implementations
         final List<InputAndHash> inputsAndHashes = List.of(
                 new InputAndHash(
                         "sdk_p9FXn5WhHJEufxPuDMVjHn8XCozenx5qkcNRagRUwbMqVjByFwoMPfPFFeynLjRFfwYMsH47XE93TfEs6oMoSrPBKHiG9H7XSr5hWas9cNKXNCdSLayAZL8q9gAn3K51",

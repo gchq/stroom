@@ -21,7 +21,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Singleton;
-import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.security.SecureRandom;
 import java.util.Objects;
@@ -30,12 +30,13 @@ import java.util.Objects;
 public class BCryptDataFeedKeyHasher implements DataFeedKeyHasher {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BCryptDataFeedKeyHasher.class);
+    public static final int SALT_LOG_ROUNDS = 10;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Override
     public String generateSalt() {
-        final String salt = BCrypt.gensalt(10, secureRandom);
+        final String salt = BCrypt.gensalt(SALT_LOG_ROUNDS, secureRandom);
         LOGGER.debug("generateSalt() - salt: '{}'", salt);
         return salt;
     }
@@ -50,7 +51,7 @@ public class BCryptDataFeedKeyHasher implements DataFeedKeyHasher {
 
     @Override
     public HashOutput hash(final String dataFeedKey) {
-        final String generatedSalt = BCrypt.gensalt(10, secureRandom);
+        final String generatedSalt = BCrypt.gensalt(SALT_LOG_ROUNDS, secureRandom);
         final String hash = BCrypt.hashpw(Objects.requireNonNull(dataFeedKey), generatedSalt);
         final HashOutput hashOutput = new HashOutput(hash, generatedSalt);
         LOGGER.debug("hash() - generatedSalt: '{}', hash: '{}', dataFeedKey: '{}'", generatedSalt, hash, dataFeedKey);

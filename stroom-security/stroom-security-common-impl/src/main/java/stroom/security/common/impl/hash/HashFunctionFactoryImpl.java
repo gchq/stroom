@@ -39,7 +39,6 @@ public class HashFunctionFactoryImpl implements HashFunctionFactory {
         final List<HashFunction> hashFunctions = List.of(
                 new ShaThree256Hasher(secureRandom),
                 new ShaTwo256Hasher(secureRandom),
-                new BCryptHasherLegacy(),
                 new BCryptHasher(),
                 new Argon2Hasher(secureRandom),
                 new ShaTwo512Hasher(secureRandom));
