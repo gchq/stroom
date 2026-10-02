@@ -129,9 +129,8 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
         // This should ensure batching is exercised, including partial batches
         final int batchSize = Math.max(1, ENTRIES_PER_MAP_DEF / 2) - 1;
         LOGGER.debug("Using batchSize {}", batchSize);
-        referenceDataConfig = new ReferenceDataConfig()
+        referenceDataConfig = ReferenceDataConfig.builder()
                 .withLmdbConfig(new ReferenceDataLmdbConfig()
-//                        .withLocalDir(dbDir.toAbsolutePath().toString())
                         .withLocalDir(getCurrentTestDir().toAbsolutePath().toString())
                         // Without this each env gets the production default map size of 50GiB, and
                         // these tests open several envs per test (legacy store + feed stores).
@@ -141,7 +140,9 @@ public abstract class AbstractRefDataOffHeapStoreTest extends StroomUnitTest {
                 .withStagingLmdbConfig(new ReferenceDataStagingLmdbConfig()
                         .withMaxStoreSize(ByteSize.ofMebibytes(50)))
                 .withMaxPutsBeforeCommit(batchSize)
-                .withMaxPurgeDeletesBeforeCommit(batchSize);
+                .withMaxPurgeDeletesBeforeCommit(batchSize)
+                .withCompactAfterPurgeEnabled(true)
+                .build();
 
         refDataStoreTestModule = new RefDataStoreTestModule(
                 this::getReferenceDataConfig,

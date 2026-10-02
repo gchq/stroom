@@ -104,12 +104,14 @@ public abstract class AbstractLmdbDb<K, V>
     private final Serde<K> keySerde;
     private final Serde<V> valueSerde;
     private final String dbName;
-    private final Dbi<ByteBuffer> lmdbDbi;
+    private final DbiFlags[] dbiFlags;
     private final LmdbEnv lmdbEnvironment;
     private final ByteBufferPool byteBufferPool;
 
     private final int keyBufferCapacity;
     private final int valueBufferCapacity;
+
+    private final DbiProxy lmdbDbi;
 
     /**
      * @param lmdbEnvironment The LMDB {@link Env} to add this DB to.
@@ -129,8 +131,9 @@ public abstract class AbstractLmdbDb<K, V>
         this.keySerde = keySerde;
         this.valueSerde = valueSerde;
         this.dbName = dbName;
+        this.dbiFlags = dbiFlags;
         this.lmdbEnvironment = lmdbEnvironment;
-        this.lmdbDbi = lmdbEnvironment.openDbi(dbName, dbiFlags);
+        this.lmdbDbi = openDbi();
         this.byteBufferPool = byteBufferPool;
 
         final int keySerdeCapacity = keySerde.getBufferCapacity();
@@ -143,6 +146,10 @@ public abstract class AbstractLmdbDb<K, V>
         }
         this.keyBufferCapacity = Math.min(envMaxKeySize, keySerdeCapacity);
         this.valueBufferCapacity = valueSerde.getBufferCapacity();
+    }
+
+    private DbiProxy openDbi() {
+        return lmdbEnvironment.openDbi(dbName, dbiFlags);
     }
 
     private static Dbi<ByteBuffer> openDbi(final Env<ByteBuffer> env,
@@ -164,7 +171,7 @@ public abstract class AbstractLmdbDb<K, V>
         return dbName;
     }
 
-    public Dbi<ByteBuffer> getLmdbDbi() {
+    public DbiProxy getLmdbDbi() {
         return lmdbDbi;
     }
 
@@ -415,7 +422,7 @@ public abstract class AbstractLmdbDb<K, V>
                                       final KeyRange<ByteBuffer> keyRange,
                                       final Function<Stream<CursorIterable.KeyVal<ByteBuffer>>, T> streamFunction) {
 
-        try (final CursorIterable<ByteBuffer> cursorIterable = getLmdbDbi().iterate(txn, keyRange)) {
+        try (final CursorIterable<ByteBuffer> cursorIterable = lmdbDbi.iterate(txn, keyRange)) {
             final Stream<CursorIterable.KeyVal<ByteBuffer>> stream =
                     StreamSupport.stream(cursorIterable.spliterator(), false);
 
@@ -923,7 +930,7 @@ public abstract class AbstractLmdbDb<K, V>
     public void logDatabaseContents(final Txn<ByteBuffer> txn, final Consumer<String> logEntryConsumer) {
         LmdbUtils.logDatabaseContents(
                 lmdbEnvironment,
-                lmdbDbi,
+                lmdbDbi.getDbi(),
                 txn,
                 keyBuffer -> deserializeKey(keyBuffer).toString(),
                 valueBuffer -> deserializeValue(valueBuffer).toString(),
@@ -946,7 +953,7 @@ public abstract class AbstractLmdbDb<K, V>
     public void logDatabaseContents(final Consumer<String> logEntryConsumer) {
         LmdbUtils.logDatabaseContents(
                 lmdbEnvironment,
-                lmdbDbi,
+                lmdbDbi.getDbi(),
                 byteBuffer -> keySerde.deserialize(byteBuffer).toString(),
                 byteBuffer -> valueSerde.deserialize(byteBuffer).toString(),
                 logEntryConsumer);
@@ -961,7 +968,7 @@ public abstract class AbstractLmdbDb<K, V>
     public void logRawDatabaseContents(final Txn<ByteBuffer> txn, final Consumer<String> logEntryConsumer) {
         LmdbUtils.logRawDatabaseContents(
                 lmdbEnvironment,
-                lmdbDbi,
+                lmdbDbi.getDbi(),
                 txn,
                 logEntryConsumer);
     }
@@ -982,7 +989,7 @@ public abstract class AbstractLmdbDb<K, V>
     public void logRawDatabaseContents(final Consumer<String> logEntryConsumer) {
         LmdbUtils.logRawDatabaseContents(
                 lmdbEnvironment,
-                lmdbDbi,
+                lmdbDbi.getDbi(),
                 logEntryConsumer);
     }
 
