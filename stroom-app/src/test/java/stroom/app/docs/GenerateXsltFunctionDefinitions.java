@@ -16,9 +16,9 @@ import stroom.util.shared.NullSafe;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ScanResult;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -48,7 +48,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
     private static final String INDEX_DATA_FILENAME = "_index.json";
     private static final String INDEX_DOC_FILENAME = "_index.md";
 
-    private final ObjectMapper objectMapper;
+    private final JsonMapper objectMapper;
 
     @GeneratesDocumentation
     public static void main(String[] args) {
@@ -129,7 +129,6 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
     private int checkDocPage(final XsltFunctionCategoryIndex index) {
         try {
-            int errorCount = 0;
             // Check the _index.md file contains a link for each func with the appropriate category
             final Path indexDocFilePath = buildDocsFilePath(INDEX_DOC_FILENAME);
             if (!Files.isRegularFile(indexDocFilePath)) {
@@ -156,6 +155,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                         index.category,
                         String.join("\n", stringsToFind));
             }
+            int errorCount = 0;
             errorCount += stringsToFind.size();
 
             // Check the appropriate category file (e.g. conversion.md) contains a shortcode

@@ -176,10 +176,6 @@ public class StroomDocsUtil {
         }
     }
 
-    public static Path resolveStroomDocsFile(final Path subPath) {
-        return StroomDocsUtil.resolveStroomDocsFile(subPath, true);
-    }
-
     /**
      * @param subPath A path to a file in the stroom-docs repo that is relative to the
      *                stroom-docs repo root.
