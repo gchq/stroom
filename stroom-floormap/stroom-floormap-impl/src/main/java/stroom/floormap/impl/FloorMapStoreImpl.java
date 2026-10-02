@@ -42,9 +42,8 @@ import java.util.Set;
 /// Singleton implementation of [FloorMapStore] built on [AbstractDocumentStore],
 /// which handles the standard document CRUD, import/export and dependency delegation.
 ///
-/// This class adds floor-map specific behaviour: it materialises newly created documents as a
-/// processing user, copies the document when duplicating, and remaps the facts/events store
-/// references it depends on.
+/// This class adds floor-map specific behaviour: it copies the document when duplicating, and
+/// remaps the facts/events store references it depends on.
 ///
 /// Documents of this type can own uploaded assets (images used as fact graphics and map
 /// backgrounds), held by the `stroom.document.asset` subsystem in its own table keyed on the
@@ -63,7 +62,6 @@ import java.util.Set;
 @Singleton
 class FloorMapStoreImpl extends AbstractDocumentStore<FloorMapDoc> implements FloorMapStore {
 
-    private final SecurityContext securityContext;
     private final DocumentAssetService documentAssetService;
 
     @Inject
@@ -77,21 +75,7 @@ class FloorMapStoreImpl extends AbstractDocumentStore<FloorMapDoc> implements Fl
                 FloorMapDoc.TYPE,
                 FloorMapDoc::builder,
                 FloorMapDoc::copy);
-        this.securityContext = securityContext;
         this.documentAssetService = documentAssetService;
-    }
-
-    @Override
-    public DocRef createDocument(final String name) {
-        final DocRef docRef = getStore().createDocument(name);
-
-        // Read and write as a processing user to ensure we are allowed as documents do not have permissions added to
-        // them until after they are created in the store.
-        securityContext.asProcessingUser(() -> {
-            final FloorMapDoc floorMapDoc = getStore().readDocument(docRef);
-            getStore().writeDocument(floorMapDoc);
-        });
-        return docRef;
     }
 
     @Override
