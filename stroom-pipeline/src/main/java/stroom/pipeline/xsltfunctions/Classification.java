@@ -26,7 +26,22 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = Classification.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the display classification of the feed for the data being processed.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The feed's display classification, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class Classification extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "classification";
 
     private final FeedHolder feedHolder;
     private final FeedProperties feedProperties;

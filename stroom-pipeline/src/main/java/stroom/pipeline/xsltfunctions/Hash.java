@@ -30,7 +30,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 @XsltFunctionDef(
-        name = "hash",
+        name = Hash.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.CONVERSION,
         commonDescription = "Generates a hash of the passed value.",
         commonReturnType = XsltDataType.STRING,

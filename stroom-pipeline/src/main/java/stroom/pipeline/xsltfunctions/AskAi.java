@@ -40,6 +40,38 @@ import java.util.Optional;
  * The model is asked once per call, so a pipeline that calls this for every record will make a request per
  * record. Repeated identical questions are served from a cache, see {@code AiConfig.chatResponseCache}.
  */
+@XsltFunctionDef(
+        name = AskAi.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.OTHER,
+        commonSubCategories = {"AI"},
+        commonDescription = """
+                Asks a configured chat model a question and returns its reply. The model is resolved by name or UUID;
+                each call sends a request unless an identical response is cached.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The model's reply, or an empty sequence if the model or message is unavailable.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "model",
+                                        description = "The name or UUID of the chat model.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "message",
+                                        description = "The message to send to the model.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "systemPrompt",
+                                        description = "Optional instructions for the model.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                )
+                        }
+                )
+        })
 class AskAi extends StroomExtensionFunctionCall {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskAi.class);

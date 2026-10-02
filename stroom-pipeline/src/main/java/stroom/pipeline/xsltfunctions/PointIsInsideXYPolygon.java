@@ -27,7 +27,45 @@ import net.sf.saxon.value.NumericValue;
 import java.util.ArrayList;
 import java.util.List;
 
+@XsltFunctionDef(
+        name = PointIsInsideXYPolygon.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.OTHER,
+        commonSubCategories = {"Maths", "Geometry"},
+        commonDescription = """
+                Tests whether a point is inside a polygon. The X and Y coordinate sequences must correspond, contain at
+                least three points and list the vertices in order.
+                """,
+        commonReturnType = XsltDataType.BOOLEAN,
+        commonReturnDescription = "`true` if the point is inside the polygon; otherwise `false`.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "xPos",
+                                        description = "The point's X coordinate.",
+                                        argType = XsltDataType.DECIMAL
+                                ),
+                                @XsltFunctionArg(
+                                        name = "yPos",
+                                        description = "The point's Y coordinate.",
+                                        argType = XsltDataType.DECIMAL
+                                ),
+                                @XsltFunctionArg(
+                                        name = "xPolyData",
+                                        description = "The polygon's X coordinates, in vertex order.",
+                                        argType = XsltDataType.SEQUENCE
+                                ),
+                                @XsltFunctionArg(
+                                        name = "yPolyData",
+                                        description = "The corresponding Y coordinates, in vertex order.",
+                                        argType = XsltDataType.SEQUENCE
+                                )
+                        }
+                )
+        })
 class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "pointIsInsideXYPolygon";
 
     static final String DELIMITER = ",";
 

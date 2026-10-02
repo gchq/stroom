@@ -29,7 +29,29 @@ import net.sf.saxon.value.StringValue;
 
 import java.util.Map;
 
+@XsltFunctionDef(
+        name = MetaAttribute.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Reads one attribute from the current stream's manifest. This opens the stream's source, unlike `meta()`
+                which reads metadata for the current part.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The manifest attribute value, or an empty sequence if the key is absent.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "key",
+                                        description = "The manifest attribute key to read.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 public class MetaAttribute extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "meta-attribute";
 
     private final MetaHolder metaHolder;
     private final DataService dataService;

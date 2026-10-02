@@ -31,6 +31,37 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@XsltFunctionDef(
+        name = SplitDocument.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.OTHER,
+        commonSubCategories = {"AI"},
+        commonDescription = """
+                Splits text into overlapping segments for language-model tokenisation. The segment and overlap sizes are
+                estimated token counts.
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "An array of text segments, or an empty array if splitting fails.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "doc",
+                                        description = "The document text to split.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "segmentSize",
+                                        description = "The target segment size in estimated tokens.",
+                                        argType = XsltDataType.DECIMAL
+                                ),
+                                @XsltFunctionArg(
+                                        name = "overlapSize",
+                                        description = "The overlap between adjacent segments in estimated tokens.",
+                                        argType = XsltDataType.DECIMAL
+                                )
+                        }
+                )
+        })
 class SplitDocument extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "split-document";

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,21 +26,23 @@ public class TestXsltFunctions {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestXsltFunctions.class);
 
     @Test
-    void findClassesWithNoAnnotation() {
+    void allFunctionClassesHaveAnnotations() {
         StroomDocsUtil.doWithClassScanResult(scanResult -> {
-            final long count = streamFunctionClasses(scanResult)
+            final AtomicInteger count = new AtomicInteger();
+
+            streamFunctionClasses(scanResult)
                     .filter(classInfo -> !classInfo.hasAnnotation(XsltFunctionDef.class))
-                    .peek(classInfo -> {
+                    .forEach(classInfo -> {
                         final Class<?> clazz = classInfo.loadClass();
-                        LOGGER.error("XSLT Function {} is missing annotation {}. Please add it",
+                        LOGGER.error("XSLT Function {} is missing annotation {}. " +
+                                     "It's time to write some documentation.",
                                 clazz.getName(),
                                 XsltFunctionDef.class.getName());
-                    })
-                    .count();
+                        count.incrementAndGet();
+                    });
 
-            // TODO un-comment once all the annotations are added
-//            assertThat(count)
-//                    .isZero();
+            assertThat(count)
+                    .hasValue(0);
         });
     }
 
@@ -47,9 +50,10 @@ public class TestXsltFunctions {
     void checkFunctionAnnotations() {
         StroomDocsUtil.doWithClassScanResult(scanResult -> {
             final Map<String, Class<?>> nameToClassMap = new HashMap<>();
-            final long count = streamFunctionClasses(scanResult)
+            final AtomicInteger count = new AtomicInteger();
+            streamFunctionClasses(scanResult)
                     .filter(classInfo -> classInfo.hasAnnotation(XsltFunctionDef.class))
-                    .peek(classInfo -> {
+                    .forEach(classInfo -> {
                         final Class<?> clazz = classInfo.loadClass();
                         final XsltFunctionDef anno = clazz.getAnnotation(XsltFunctionDef.class);
                         final String funcName = anno.name();
@@ -71,8 +75,8 @@ public class TestXsltFunctions {
                                     "Function name '{}' used by at least two different classes {} and {}",
                                     prevVal.getName(), clazz.getName());
                         }
-                    })
-                    .count();
+                        count.incrementAndGet();
+                    });
             LOGGER.info("Found {} annotated XSLT functions", count);
         });
     }

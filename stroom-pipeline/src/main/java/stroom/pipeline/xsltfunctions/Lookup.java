@@ -34,6 +34,52 @@ import net.sf.saxon.trans.XPathException;
 
 import java.time.Instant;
 
+@XsltFunctionDef(
+        name = Lookup.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Looks up a key in reference or context data and returns the matching string or XML. A map path separated
+                by `/` performs chained lookups; numeric keys can also match reference-data ranges.
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "The matching value or XML nodes, or an empty sequence if no value is found.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "map",
+                                        description = "The reference data map name, or `/`-separated map path.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "key",
+                                        description = "The lookup key.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "time",
+                                        description = "The effective time in `yyyy-MM-dd'T'HH:mm:ss.SSSXX` " +
+                                                "format. Omit to use " +
+                                        "the stream's receive time.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                ),
+                                @XsltFunctionArg(
+                                        name = "ignoreWarnings",
+                                        description = "Suppress warnings for failed lookups when `true`.",
+                                        argType = XsltDataType.BOOLEAN,
+                                        isOptional = true
+                                ),
+                                @XsltFunctionArg(
+                                        name = "trace",
+                                        description = "Output additional trace information as `INFO` messages " +
+                                                "when `true`.",
+                                        argType = XsltDataType.BOOLEAN,
+                                        isOptional = true
+                                )
+                        }
+                )
+        })
 class Lookup extends AbstractLookup {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Lookup.class);

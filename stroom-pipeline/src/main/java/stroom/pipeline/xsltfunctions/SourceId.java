@@ -26,7 +26,24 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = SourceId.FUNCTION_NAME,
+        aliases = {SourceId.FUNCTION_NAME_STREAM_ID},
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the ID of the current input stream. `stream-id()` is an alias retained for compatibility.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The current input stream ID, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class SourceId extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "source-id";
+    public static final String FUNCTION_NAME_STREAM_ID = "stream-id";
 
     private final MetaHolder metaHolder;
 

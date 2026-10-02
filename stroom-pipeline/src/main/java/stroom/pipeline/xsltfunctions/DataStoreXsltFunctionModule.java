@@ -105,7 +105,7 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         PartNoFunction(final Provider<PartNo> functionCallProvider) {
             super(
-                    "part-no",
+                    PartNo.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -119,7 +119,7 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         SourceIdFunction(final Provider<SourceId> functionCallProvider) {
             super(
-                    "source-id",
+                    SourceId.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -133,7 +133,7 @@ public class DataStoreXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         StreamIdFunction(final Provider<SourceId> functionCallProvider) {
             super(
-                    "stream-id",
+                    SourceId.FUNCTION_NAME_STREAM_ID,
                     0,
                     0,
                     new SequenceType[]{},

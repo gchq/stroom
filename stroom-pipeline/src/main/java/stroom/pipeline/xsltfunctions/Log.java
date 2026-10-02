@@ -23,6 +23,32 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 
+@XsltFunctionDef(
+        name = Log.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Writes a message to the processing log. `ERROR` and `FATAL` messages can cause a `RecordOutputFilter` to
+                omit the record.
+                """,
+        commonReturnType = XsltDataType.EMPTY_SEQUENCE,
+        commonReturnDescription = "An empty sequence.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "severity",
+                                        description = "The message severity, such as `INFO`, `WARN`, `ERROR` or " +
+                                                "`FATAL`.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "message",
+                                        description = "The message to write.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class Log extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "log";

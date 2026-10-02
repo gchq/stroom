@@ -30,6 +30,32 @@ import org.xml.sax.SAXException;
 import java.util.Map;
 import java.util.Set;
 
+@XsltFunctionDef(
+        name = Manifest.FUNCTION_NAME_NO_ARGS,
+        aliases = Manifest.FUNCTION_NAME_FOR_ID,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the manifest attributes of a stream as an XML document in the `stroom-meta` namespace.
+                The document has a `manifest` root element and a `string` element for each attribute,
+                with its name in the `key` attribute. The attributes are ordered by name.
+
+                If the stream cannot be read, an empty `manifest` element is returned.
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "An XML document containing the stream's manifest attributes.",
+        signatures = {
+                @XsltFunctionSignature(
+                        description = "`manifest()` reads the manifest of the current stream.",
+                        args = {}),
+                @XsltFunctionSignature(
+                        description = "`manifest-for-id()` reads the manifest of the specified stream.",
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "streamId",
+                                        description = "The ID of the stream whose manifest is required.",
+                                        argType = XsltDataType.STRING)
+                        })
+        })
 public class Manifest extends StroomExtensionMetaFunctionCall {
 
     private final DataService dataService;

@@ -30,7 +30,36 @@ import org.xml.sax.SAXException;
 import java.io.UncheckedIOException;
 import java.util.Set;
 
+@XsltFunctionDef(
+        name = MetaStream.FUNCTION_NAME_NO_ARGS,
+        aliases = MetaStream.FUNCTION_NAME_FOR_ID,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns a stream part's metadata as an XML document in the `stroom-meta` namespace.
+                The document has a `meta-stream` root element and a `string` element for each metadata entry,
+                with its name in the `key` attribute. The entries are ordered by name.
 
+                If the stream part cannot be read, an empty `meta-stream` element is returned.
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "An XML document containing the stream part's metadata.",
+        signatures = {
+                @XsltFunctionSignature(
+                        description = "`meta-stream()` reads the current stream part's metadata.",
+                        args = {}),
+                @XsltFunctionSignature(
+                        description = "`meta-stream-for-id()` reads the specified stream part's metadata.",
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "streamId",
+                                        description = "The ID of the stream containing the part.",
+                                        argType = XsltDataType.STRING),
+                                @XsltFunctionArg(
+                                        name = "partNo",
+                                        description = "The part number within the stream, starting at `1`.",
+                                        argType = XsltDataType.INTEGER)
+                        })
+        })
 public class MetaStream extends StroomExtensionMetaFunctionCall {
 
     private final AttributeMapFactory attributeMapFactory;

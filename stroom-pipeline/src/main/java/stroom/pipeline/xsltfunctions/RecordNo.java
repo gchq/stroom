@@ -23,7 +23,22 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+@XsltFunctionDef(
+        name = RecordNo.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the current record number within the current stream part, counting from `1`.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The current record number, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class RecordNo extends AbstractLocationFunction {
+
+    public static final String FUNCTION_NAME = "record-no";
 
     @Inject
     RecordNo(final LocationHolder locationHolder) {
