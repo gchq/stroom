@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -18,7 +34,8 @@ import java.util.Objects;
         "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public final class MetricSettings extends AbstractPlanBSettings {
+public final class MetricSettings
+        extends AbstractHttpStoreSettings {
 
     @JsonProperty
     private final MetricKeySchema keySchema;
@@ -34,8 +51,8 @@ public final class MetricSettings extends AbstractPlanBSettings {
                           @JsonProperty("keySchema") final MetricKeySchema keySchema,
                           @JsonProperty("valueSchema") final MetricValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = keySchema;
-        this.valueSchema = valueSchema;
+        this.keySchema = Objects.requireNonNullElse(keySchema, new MetricKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new MetricValueSchema.Builder().build());
     }
 
     public MetricKeySchema getKeySchema() {
@@ -69,13 +86,14 @@ public final class MetricSettings extends AbstractPlanBSettings {
 
     @Override
     public String toString() {
-        return "RangedStateSettings{" +
-               "keySchema=" + keySchema +
+        return "MetricSettings{" +
+               super.toString() +
+               ", keySchema=" + keySchema +
                ", valueSchema=" + valueSchema +
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<MetricSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<MetricSettings, Builder> {
 
         private MetricKeySchema keySchema;
         private MetricValueSchema valueSchema;
@@ -85,8 +103,10 @@ public final class MetricSettings extends AbstractPlanBSettings {
 
         public Builder(final MetricSettings settings) {
             super(settings);
-            this.keySchema = settings.keySchema;
-            this.valueSchema = settings.valueSchema;
+            if (settings != null) {
+                this.keySchema = settings.keySchema;
+                this.valueSchema = settings.valueSchema;
+            }
         }
 
         public Builder keySchema(final MetricKeySchema keySchema) {

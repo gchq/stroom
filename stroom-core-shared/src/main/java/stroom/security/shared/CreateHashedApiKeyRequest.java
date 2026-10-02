@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.shared;
 
 import stroom.util.shared.SerialisationTestConstructor;
@@ -33,13 +49,13 @@ public class CreateHashedApiKeyRequest {
                                      @JsonProperty("expireTimeMs") final Long expireTimeMs,
                                      @JsonProperty("name") final String name,
                                      @JsonProperty("comments") final String comments,
-                                     @JsonProperty("enabled") final boolean enabled,
+                                     @JsonProperty("enabled") final Boolean enabled,
                                      @JsonProperty("hashAlgorithm") final HashAlgorithm hashAlgorithm) {
         this.owner = Objects.requireNonNull(owner);
         this.expireTimeMs = expireTimeMs;
         this.name = Objects.requireNonNull(name);
         this.comments = comments;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
     }
 

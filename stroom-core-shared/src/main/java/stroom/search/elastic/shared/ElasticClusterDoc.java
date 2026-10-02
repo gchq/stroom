@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,11 @@ package stroom.search.elastic.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -46,44 +45,31 @@ import java.util.Objects;
         "description",
         "connection"})
 @JsonInclude(Include.NON_NULL)
-public class ElasticClusterDoc extends Doc {
+public class ElasticClusterDoc extends AbstractDoc {
 
     public static final String TYPE = "ElasticCluster";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ELASTIC_CLUSTER_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
 
     @JsonProperty
-    private ElasticConnectionConfig connection;
-
-    public ElasticClusterDoc() {
-        this.connection = new ElasticConnectionConfig();
-    }
+    private final ElasticConnectionConfig connection;
 
     @JsonCreator
-    public ElasticClusterDoc(@JsonProperty("type") final String type,
-                             @JsonProperty("uuid") final String uuid,
-                             @JsonProperty("name") final String name,
-                             @JsonProperty("version") final String version,
-                             @JsonProperty("createTimeMs") final Long createTimeMs,
-                             @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                             @JsonProperty("createUser") final String createUser,
-                             @JsonProperty("updateUser") final String updateUser,
-                             @JsonProperty("description") final String description,
-                             @JsonProperty("connection") final ElasticConnectionConfig connection) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+    public ElasticClusterDoc(
+            @JsonProperty("uuid") final String uuid,
+            @JsonProperty("name") final String name,
+            @JsonProperty("version") final String version,
+            @JsonProperty("createTimeMs") final Long createTimeMs,
+            @JsonProperty("updateTimeMs") final Long updateTimeMs,
+            @JsonProperty("createUser") final String createUser,
+            @JsonProperty("updateUser") final String updateUser,
+            @JsonProperty("description") final String description,
+            @JsonProperty("connection") final ElasticConnectionConfig connection) {
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.connection = connection;
-    }
-
-    /**
-     * @return A new {@link DocRef} for this document's type with the supplied uuid.
-     */
-    public static DocRef getDocRef(final String uuid) {
-        return DocRef.builder(TYPE)
-                .uuid(uuid)
-                .build();
     }
 
     /**
@@ -97,22 +83,8 @@ public class ElasticClusterDoc extends Doc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public ElasticConnectionConfig getConnection() {
         return connection;
-    }
-
-    public void setConnection(final ElasticConnectionConfig connection) {
-        this.connection = connection;
-    }
-
-    @JsonIgnore
-    @Override
-    public final String getType() {
-        return TYPE;
     }
 
     @Override
@@ -142,5 +114,57 @@ public class ElasticClusterDoc extends Doc {
                "description='" + description + '\'' +
                ", connectionConfig=" + connection +
                '}';
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractBuilder<ElasticClusterDoc, Builder> {
+
+        private String description;
+        private ElasticConnectionConfig connection = new ElasticConnectionConfig();
+
+        private Builder() {
+        }
+
+        private Builder(final ElasticClusterDoc elasticClusterDoc) {
+            super(elasticClusterDoc);
+            this.description = elasticClusterDoc.description;
+            this.connection = elasticClusterDoc.connection;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder connection(final ElasticConnectionConfig connection) {
+            this.connection = connection;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public ElasticClusterDoc build() {
+            return new ElasticClusterDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    connection);
+        }
     }
 }

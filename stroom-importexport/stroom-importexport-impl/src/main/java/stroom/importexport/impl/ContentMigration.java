@@ -18,6 +18,7 @@ package stroom.importexport.impl;
 
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+import stroom.util.io.PathSegmentUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -226,6 +227,10 @@ public class ContentMigration {
     }
 
     private String createFilePrefix(final String name, final String type, final String uuid) {
-        return ImportExportFileNameUtil.toSafeFileName(name, 100) + "." + type + "." + uuid;
+        // type and uuid come from untrusted content and become part of a file name, so strip anything that
+        // could escape the segment (e.g. '/', '\', '..').
+        return ImportExportFileNameUtil.toSafeFileName(name, 100)
+                + "." + PathSegmentUtil.cleanSegment(type)
+                + "." + PathSegmentUtil.cleanSegment(uuid);
     }
 }

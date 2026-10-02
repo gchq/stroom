@@ -21,6 +21,8 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.DoubleValue;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 @XsltFunctionDef(
         name = Random.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.VALUE,
@@ -38,7 +40,7 @@ class Random extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         try {
-            return new DoubleValue(Math.random());
+            return new DoubleValue(ThreadLocalRandom.current().nextDouble());
         } catch (final RuntimeException e) {
             final StringBuilder sb = new StringBuilder();
             sb.append(e.getMessage());

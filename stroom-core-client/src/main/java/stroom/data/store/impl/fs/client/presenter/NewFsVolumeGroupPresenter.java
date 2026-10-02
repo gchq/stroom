@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.impl.fs.client.presenter;
@@ -23,6 +22,7 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -71,14 +71,14 @@ public class NewFsVolumeGroupPresenter
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        final String name = getView().getName().trim();
-                        if (name.length() == 0) {
+                        final String name = NullSafe.trim(getView().getName());
+                        if (name.isEmpty()) {
                             AlertEvent.fireError(
                                     NewFsVolumeGroupPresenter.this,
                                     "You must provide a name",
                                     e::reset);
                         } else {
-                            checkVolumeGroupName(name, e);
+                            checkAndCreateVolumeGroup(name, e);
                         }
                     } else {
                         e.hide();
@@ -87,7 +87,7 @@ public class NewFsVolumeGroupPresenter
                 .fire();
     }
 
-    private void checkVolumeGroupName(final String name, final HidePopupRequestEvent e) {
+    private void checkAndCreateVolumeGroup(final String name, final HidePopupRequestEvent e) {
         restFactory
                 .create(FS_VOLUME_GROUP_RESOURCE)
                 .method(res -> res.fetchByName(name))
@@ -96,8 +96,8 @@ public class NewFsVolumeGroupPresenter
                         AlertEvent.fireError(
                                 NewFsVolumeGroupPresenter.this,
                                 "Group name '"
-                                        + name
-                                        + "' is already in use by another group.",
+                                + name
+                                + "' is already in use by another group.",
                                 e::reset);
                     } else {
                         createVolumeGroup(name, e);

@@ -27,6 +27,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Set;
@@ -40,6 +42,11 @@ import java.util.Set;
         @JsonSubTypes.Type(value = FetchMarkerResult.class, name = "marker")
 })
 @JsonInclude(Include.NON_NULL)
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "data", schema = FetchDataResult.class),
+                @DiscriminatorMapping(value = "marker", schema = FetchMarkerResult.class)})
 public abstract sealed class AbstractFetchDataResult permits FetchDataResult, FetchMarkerResult {
 
     @JsonProperty

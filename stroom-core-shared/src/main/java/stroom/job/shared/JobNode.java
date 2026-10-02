@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,8 @@
 package stroom.job.shared;
 
 
-import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.AuditInfoBuilder;
+import stroom.util.shared.HasAuditInfoGetters;
 import stroom.util.shared.HasIntegerId;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.NullSafe;
@@ -31,54 +32,35 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
+import java.util.function.Function;
 
 @JsonInclude(Include.NON_NULL)
-public class JobNode implements HasAuditInfo, HasIntegerId {
+public class JobNode implements HasAuditInfoGetters, HasIntegerId {
 
     @JsonProperty
-    private Integer id;
+    private final Integer id;
     @JsonProperty
-    private Integer version;
+    private final Integer version;
     @JsonProperty
-    private Long createTimeMs;
+    private final Long createTimeMs;
     @JsonProperty
-    private String createUser;
+    private final String createUser;
     @JsonProperty
-    private Long updateTimeMs;
+    private final Long updateTimeMs;
     @JsonProperty
-    private String updateUser;
+    private final String updateUser;
     @JsonProperty
-    private Job job;
+    private final Job job;
     @JsonProperty
-    private JobType jobType;
+    private final JobType jobType;
     @JsonProperty
-    private String nodeName;
+    private final String nodeName;
     @JsonProperty
-    private Integer taskLimit;
+    private final Integer taskLimit;
     @JsonProperty
-    private String schedule;
+    private final String schedule;
     @JsonProperty
-    private boolean enabled;
-
-    public JobNode() {
-        taskLimit = 20;
-    }
-
-    public JobNode(final Integer id,
-                   final String nodeName,
-                   final Job job,
-                   final int taskLimit,
-                   final JobType jobType,
-                   final String schedule,
-                   final boolean enabled) {
-        this.id = id;
-        this.nodeName = nodeName;
-        this.job = job;
-        this.taskLimit = taskLimit;
-        this.jobType = jobType;
-        this.schedule = schedule;
-        this.enabled = enabled;
-    }
+    private final boolean enabled;
 
     @JsonCreator
     public JobNode(@JsonProperty("id") final Integer id,
@@ -92,7 +74,7 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
                    @JsonProperty("nodeName") final String nodeName,
                    @JsonProperty("taskLimit") final Integer taskLimit,
                    @JsonProperty("schedule") final String schedule,
-                   @JsonProperty("enabled") final boolean enabled) {
+                   @JsonProperty("enabled") final Boolean enabled) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -104,7 +86,7 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         this.nodeName = nodeName;
         this.taskLimit = taskLimit;
         this.schedule = schedule;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
     }
 
     @Override
@@ -112,16 +94,8 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -129,17 +103,9 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         return createTimeMs;
     }
 
-    public void setCreateTimeMs(final Long createTimeMs) {
-        this.createTimeMs = createTimeMs;
-    }
-
     @Override
     public String getCreateUser() {
         return createUser;
-    }
-
-    public void setCreateUser(final String createUser) {
-        this.createUser = createUser;
     }
 
     @Override
@@ -147,25 +113,13 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         return updateTimeMs;
     }
 
-    public void setUpdateTimeMs(final Long updateTimeMs) {
-        this.updateTimeMs = updateTimeMs;
-    }
-
     @Override
     public String getUpdateUser() {
         return updateUser;
     }
 
-    public void setUpdateUser(final String updateUser) {
-        this.updateUser = updateUser;
-    }
-
     public Job getJob() {
         return job;
-    }
-
-    public void setJob(final Job job) {
-        this.job = job;
     }
 
     /**
@@ -182,40 +136,34 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
         return jobType;
     }
 
-    public void setJobType(final JobType jobType) {
-        this.jobType = jobType;
-    }
-
     public String getNodeName() {
         return nodeName;
-    }
-
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
     }
 
     public int getTaskLimit() {
         return taskLimit;
     }
 
-    public void setTaskLimit(final int taskLimit) {
-        this.taskLimit = taskLimit;
-    }
-
     public String getSchedule() {
         return schedule;
-    }
-
-    public void setSchedule(final String schedule) {
-        this.schedule = schedule;
     }
 
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(final boolean enabled) {
-        this.enabled = enabled;
+    /**
+     * @return The state of the {@link Job} and {@link JobNode},
+     * e.g. ENABLED:DISABLED
+     */
+    @JsonIgnore
+    public String getCombinedStateAsString() {
+        final Function<Boolean, String> enableStateFunc = isEnabled -> isEnabled
+                ? "ENABLED"
+                : "DISABLED";
+        return enableStateFunc.apply(job.isEnabled())
+               + ":"
+               + enableStateFunc.apply(enabled);
     }
 
     @Override
@@ -251,6 +199,110 @@ public class JobNode implements HasAuditInfo, HasIntegerId {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    public static final class Builder extends AuditInfoBuilder<JobNode, Builder> {
+
+        private Integer id;
+        private Integer version;
+        private Job job;
+        private JobType jobType;
+        private String nodeName;
+        private Integer taskLimit = 20;
+        private String schedule;
+        private boolean enabled;
+
+        private Builder() {
+        }
+
+        private Builder(final JobNode jobNode) {
+            this.id = jobNode.id;
+            this.version = jobNode.version;
+            this.createTimeMs = jobNode.createTimeMs;
+            this.createUser = jobNode.createUser;
+            this.updateTimeMs = jobNode.updateTimeMs;
+            this.updateUser = jobNode.updateUser;
+            this.job = jobNode.job;
+            this.jobType = jobNode.jobType;
+            this.nodeName = jobNode.nodeName;
+            this.taskLimit = jobNode.taskLimit;
+            this.schedule = jobNode.schedule;
+            this.enabled = jobNode.enabled;
+        }
+
+        public Builder id(final Integer id) {
+            this.id = id;
+            return self();
+        }
+
+        public Builder version(final Integer version) {
+            this.version = version;
+            return self();
+        }
+
+        public Builder job(final Job job) {
+            this.job = job;
+            return self();
+        }
+
+        public Builder jobType(final JobType jobType) {
+            this.jobType = jobType;
+            return self();
+        }
+
+        public Builder nodeName(final String nodeName) {
+            this.nodeName = nodeName;
+            return self();
+        }
+
+        public Builder taskLimit(final Integer taskLimit) {
+            this.taskLimit = taskLimit;
+            return self();
+        }
+
+        public Builder schedule(final String schedule) {
+            this.schedule = schedule;
+            return self();
+        }
+
+        public Builder enabled(final boolean enabled) {
+            this.enabled = enabled;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        @Override
+        public JobNode build() {
+            return new JobNode(
+                    id,
+                    version,
+                    createTimeMs,
+                    createUser,
+                    updateTimeMs,
+                    updateUser,
+                    job,
+                    jobType,
+                    nodeName,
+                    taskLimit,
+                    schedule,
+                    enabled);
+        }
     }
 
 

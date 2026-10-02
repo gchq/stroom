@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.impl;
 
 import stroom.data.retention.api.DataRetentionRuleAction;
@@ -21,13 +37,33 @@ import stroom.util.time.TimePeriod;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface MetaDao {
 
-    Long getMaxId();
+    /**
+     * Get the current maximum id of any data.
+     *
+     * @return The maximum id of any data item or an empty optional if there is no data.
+     */
+    Optional<Long> getMaxId();
+
+    /**
+     * Get the current maximum id of any data with an id greater than or equal to the supplied id and a create
+     * time less than or equal to the supplied time.
+     *
+     * @param minId           The lowest id to consider. Bounding the search matters because the database finds
+     *                        the maximum id by working back down from the highest id there is, so without a
+     *                        lower bound it reads the whole table when nothing matches.
+     * @param maxCreateTimeMs The latest create time to consider.
+     * @return The maximum id of any matching data item or an empty optional if there is none.
+     */
+    Optional<Long> getMaxId(long minId, long maxCreateTimeMs);
 
     Meta create(MetaProperties metaProperties);
+
+    Meta create(MetaProperties metaProperties, Status status);
 
     void search(ExpressionCriteria criteria, FieldIndex fieldIndex, ValuesConsumer consumer);
 

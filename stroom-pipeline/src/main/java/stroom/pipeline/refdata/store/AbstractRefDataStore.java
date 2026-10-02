@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store;
@@ -24,8 +23,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import com.google.common.util.concurrent.Striped;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -35,8 +32,7 @@ import java.util.stream.Collectors;
 
 public abstract class AbstractRefDataStore implements RefDataStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRefDataStore.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AbstractRefDataStore.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractRefDataStore.class);
 
     @Override
     public RefDataValueProxy getValueProxy(final MapDefinition mapDefinition, final String key) {
@@ -107,10 +103,10 @@ public abstract class AbstractRefDataStore implements RefDataStore {
                 result = true;
             }
         } catch (final TaskTerminatedException e) {
-            LAMBDA_LOGGER.debug(() -> "Task terminated: " + e.getMessage());
+            LOGGER.debug(() -> "Task terminated: " + e.getMessage());
             throw e;
         } catch (final UncheckedInterruptedException e) {
-            LAMBDA_LOGGER.debug(() -> "Interrupted: " + e.getMessage());
+            LOGGER.debug(() -> "Interrupted: " + e.getMessage());
             throw new TaskTerminatedException();
         } catch (final Exception e) {
             String msg = e.getMessage();
@@ -133,7 +129,7 @@ public abstract class AbstractRefDataStore implements RefDataStore {
 
         final Lock lock = refStreamDefStripedReentrantLock.get(refStreamDefinition);
 
-        LAMBDA_LOGGER.logDurationIfDebugEnabled(
+        LOGGER.logDurationIfDebugEnabled(
                 () -> {
                     try {
                         LOGGER.debug("Acquiring lock for {}", refStreamDefinition);

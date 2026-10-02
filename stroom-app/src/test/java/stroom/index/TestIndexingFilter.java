@@ -210,8 +210,7 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         return pipelineScopeRunnable.scopeResult(() -> {
             // Setup the index.
             final DocRef indexRef = indexStore.createDocument("Test index");
-            LuceneIndexDoc index = indexStore.readDocument(indexRef);
-            index.setFields(indexFields);
+            LuceneIndexDoc index = indexStore.readDocument(indexRef).copy().fields(indexFields).build();
             index = indexStore.writeDocument(index);
 
             // Setup the error handler.
@@ -221,12 +220,12 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
             // Create the pipeline.
             final String data = StroomPipelineTestFileUtil.getString(PIPELINE);
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore, data);
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineDoc.getPipelineData());
             builder.addProperty(PipelineDataUtil.createProperty("indexingFilter",
                     "index",
                     indexRef));
-            pipelineDoc.setPipelineData(builder.build());
+            pipelineDoc = pipelineDoc.copy().pipelineData(builder.build()).build();
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

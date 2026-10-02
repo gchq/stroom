@@ -26,5 +26,6 @@
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="caseSensitive" identity="indexFieldCaseSensitive" label="Case Sensitive"/>
         </form:FormGroup>
+        <g:SimplePanel ui:field="denseVectorOptions"/>
     </g:FlowPanel>
 </ui:UiBinder> 

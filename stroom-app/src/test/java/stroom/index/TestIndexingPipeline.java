@@ -101,8 +101,10 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
         pipelineScopeRunnable.scopeRunnable(() -> {
             // Setup the XSLT.
             final DocRef xsltRef = xsltStore.createDocument("Indexing XSLT");
-            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
-            xsltDoc.setData(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)));
+            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef)
+                    .copy()
+                    .data(StreamUtil.streamToString(StroomPipelineTestFileUtil.getInputStream(SAMPLE_INDEX_XSLT)))
+                    .build();
             xsltStore.writeDocument(xsltDoc);
 
             final List<LuceneIndexField> indexFields = IndexFields.createStreamIndexFields();
@@ -118,8 +120,7 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
 
             // Setup the target index
             final DocRef indexRef = indexStore.createDocument("Test index");
-            LuceneIndexDoc index = indexStore.readDocument(indexRef);
-            index.setFields(indexFields);
+            LuceneIndexDoc index = indexStore.readDocument(indexRef).copy().fields(indexFields).build();
             index = indexStore.writeDocument(index);
 
             errorReceiverProvider.get().setErrorReceiver(new FatalErrorReceiver());
@@ -134,13 +135,13 @@ class TestIndexingPipeline extends AbstractProcessIntegrationTest {
             // Create the pipeline.
             final DocRef pipelineRef = PipelineTestUtil.createTestPipeline(pipelineStore,
                     StroomPipelineTestFileUtil.getString(PIPELINE));
-            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+            PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
             PipelineData pipelineData = pipelineDoc.getPipelineData();
             final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
             builder.addProperty(PipelineDataUtil.createProperty("xsltFilter", "xslt", xsltRef));
             builder.addProperty(PipelineDataUtil.createProperty("indexingFilter", "index", indexRef));
             pipelineData = builder.build();
-            pipelineDoc.setPipelineData(pipelineData);
+            pipelineDoc = pipelineDoc.copy().pipelineData(pipelineData).build();
             pipelineStore.writeDocument(pipelineDoc);
 
             // Create the parser.

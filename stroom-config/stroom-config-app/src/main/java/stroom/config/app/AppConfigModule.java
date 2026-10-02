@@ -1,39 +1,53 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.app;
 
-import stroom.activity.impl.db.ActivityConfig;
-import stroom.activity.impl.db.ActivityConfig.ActivityDbConfig;
+import stroom.activity.impl.dao.ActivityConfig;
+import stroom.activity.impl.db.ActivityDbConfig;
 import stroom.annotation.impl.AnnotationConfig;
-import stroom.annotation.impl.AnnotationConfig.AnnotationDBConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.lock.impl.db.ClusterLockConfig.ClusterLockDbConfig;
-import stroom.config.app.PropertyServiceConfig.PropertyServiceDbConfig;
+import stroom.annotation.impl.db.AnnotationDBConfig;
+import stroom.cluster.lock.impl.dao.ClusterLockConfig;
+import stroom.cluster.lock.impl.db.ClusterLockDbConfig;
 import stroom.config.common.CommonDbConfig;
+import stroom.config.global.impl.db.PropertyServiceDbConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
-import stroom.data.store.impl.fs.DataStoreServiceConfig.DataStoreServiceDbConfig;
-import stroom.docstore.impl.db.DocStoreConfig;
-import stroom.docstore.impl.db.DocStoreConfig.DocStoreDbConfig;
+import stroom.data.store.impl.fs.db.DataStoreServiceDbConfig;
+import stroom.docstore.impl.DocStoreConfig;
+import stroom.docstore.impl.db.DocStoreDbConfig;
 import stroom.explorer.impl.ExplorerConfig;
-import stroom.explorer.impl.ExplorerConfig.ExplorerDbConfig;
-import stroom.gitrepo.api.GitRepoConfig;
-import stroom.gitrepo.impl.GitRepoConfigImpl;
+import stroom.explorer.impl.db.ExplorerDbConfig;
 import stroom.index.impl.IndexConfig;
-import stroom.index.impl.IndexConfig.IndexDbConfig;
+import stroom.index.impl.db.IndexDbConfig;
 import stroom.job.impl.JobSystemConfig;
-import stroom.job.impl.JobSystemConfig.JobSystemDbConfig;
+import stroom.job.impl.db.JobSystemDbConfig;
 import stroom.meta.impl.MetaServiceConfig;
-import stroom.meta.impl.MetaServiceConfig.MetaServiceDbConfig;
+import stroom.meta.impl.db.MetaServiceDbConfig;
 import stroom.node.impl.NodeConfig;
-import stroom.node.impl.NodeConfig.NodeDbConfig;
+import stroom.node.impl.db.NodeDbConfig;
 import stroom.processor.impl.ProcessorConfig;
-import stroom.processor.impl.ProcessorConfig.ProcessorDbConfig;
+import stroom.processor.impl.db.ProcessorDbConfig;
 import stroom.security.identity.config.IdentityConfig;
-import stroom.security.identity.config.IdentityConfig.IdentityDbConfig;
+import stroom.security.identity.db.IdentityDbConfig;
 import stroom.security.impl.AuthorisationConfig;
-import stroom.security.impl.AuthorisationConfig.AuthorisationDbConfig;
+import stroom.security.impl.db.AuthorisationDbConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
-import stroom.statistics.impl.sql.SQLStatisticsConfig.SQLStatisticsDbConfig;
+import stroom.statistics.impl.sql.SQLStatisticsDbConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
-import stroom.storedquery.impl.StoredQueryConfig.StoredQueryDbConfig;
+import stroom.storedquery.impl.db.StoredQueryDbConfig;
 import stroom.util.config.ConfigLocation;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StroomPathConfig;
@@ -149,12 +163,6 @@ public class AppConfigModule extends AbstractModule {
                                 AppConfig::getExplorerConfig,
                                 ExplorerConfig::getDbConfig)
                         .orElseGet(ExplorerDbConfig::new));
-
-        bind(GitRepoConfig.class)
-                .toInstance(NullSafe.getAsOptional(
-                                bootStrapConfig,
-                                AppConfig::getGitRepoConfig)
-                        .orElseGet(GitRepoConfigImpl::new));
 
         bind(IdentityDbConfig.class)
                 .toInstance(NullSafe.getAsOptional(

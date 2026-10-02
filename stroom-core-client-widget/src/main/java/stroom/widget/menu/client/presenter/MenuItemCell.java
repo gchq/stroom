@@ -21,6 +21,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.Templates;
 
 import com.google.gwt.cell.client.AbstractCell;
 import com.google.gwt.core.client.GWT;
@@ -65,25 +66,13 @@ public class MenuItemCell extends AbstractCell<Item> {
 
     public static class SeparatorAppearance implements Appearance<Separator> {
 
-        private static final Template TEMPLATE = GWT.create(Template.class);
-
         public SeparatorAppearance() {
         }
 
         @Override
         public void render(final MenuItemCell cell, final Context context, final Separator value,
                            final SafeHtmlBuilder sb) {
-            sb.append(TEMPLATE.separator("menuItem-separator"));
-        }
-
-
-        // --------------------------------------------------------------------------------
-
-
-        public interface Template extends SafeHtmlTemplates {
-
-            @Template("<div class=\"{0}\"></div>")
-            SafeHtml separator(String className);
+            sb.append(Templates.div("menuItem-separator"));
         }
     }
 
@@ -93,26 +82,14 @@ public class MenuItemCell extends AbstractCell<Item> {
 
     public static class GroupHeadingAppearance implements Appearance<GroupHeading> {
 
-        private static final Template TEMPLATE = GWT.create(Template.class);
-
         public GroupHeadingAppearance() {
         }
 
         @Override
         public void render(final MenuItemCell cell, final Context context, final GroupHeading value,
                            final SafeHtmlBuilder sb) {
-            sb.append(TEMPLATE.groupHeading("menuItem-groupHeading",
+            sb.append(Templates.div("menuItem-groupHeading",
                     SafeHtmlUtils.fromTrustedString(value.getGroupName())));
-        }
-
-
-        // --------------------------------------------------------------------------------
-
-
-        public interface Template extends SafeHtmlTemplates {
-
-            @Template("<div class=\"{0}\">{1}</div>")
-            SafeHtml groupHeading(String className, SafeHtml groupName);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,14 +57,14 @@ public final class ListInputComponentSettings implements ComponentSettings {
                                       @JsonProperty("value") final String value,
                                       @JsonProperty("values") final List<String> values,
                                       @JsonProperty("dictionary") final DocRef dictionary,
-                                      @JsonProperty("useDictionary") final boolean useDictionary,
-                                      @JsonProperty("allowTextEntry") final boolean allowTextEntry) {
+                                      @JsonProperty("useDictionary") final Boolean useDictionary,
+                                      @JsonProperty("allowTextEntry") final Boolean allowTextEntry) {
         this.key = key;
         this.value = value;
         this.values = values;
         this.dictionary = dictionary;
-        this.useDictionary = useDictionary;
-        this.allowTextEntry = allowTextEntry;
+        this.useDictionary = Objects.requireNonNullElse(useDictionary, false);
+        this.allowTextEntry = Objects.requireNonNullElse(allowTextEntry, false);
     }
 
     public String getKey() {

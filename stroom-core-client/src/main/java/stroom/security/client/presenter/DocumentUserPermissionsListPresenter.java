@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,8 @@ public class DocumentUserPermissionsListPresenter
         this.securityContext = securityContext;
         documentTypeCache.fetch(this::setupColumns, this);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Document User Permissions");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
@@ -267,7 +268,7 @@ public class DocumentUserPermissionsListPresenter
                         .build(),
                 160);
 
-        if (DocumentTypes.isFolder(docRef)) {
+        if (docRef != null && DocumentTypes.isFolder(docRef)) {
             final int docTypeCount = documentTypes.getTypes().size();
 
             // Explicit doc create types
@@ -292,8 +293,6 @@ public class DocumentUserPermissionsListPresenter
                             .build(),
                     400);
         }
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private boolean isUserEnabled(final DocumentUserPermissions documentUserPermissions) {

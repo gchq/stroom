@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.shared;
 
 import stroom.docref.DocRef;
@@ -47,6 +63,7 @@ public class MetaFields {
 
     public static final QueryField STATUS = QueryField.createText("Status");
     public static final QueryField TYPE = QueryField.createText("Type");
+    public static final QueryField READ_ONLY = QueryField.createBoolean("Read Only");
 
     // Id's
     public static final QueryField ID = QueryField.createId("Id");
@@ -71,10 +88,15 @@ public class MetaFields {
     public static final QueryField FILE_SIZE = QueryField.createLong("File Size");
     public static final QueryField RAW_SIZE = QueryField.createLong("Raw Size");
 
+    public static final QueryField SEGMENTATION_TYPE = QueryField.createText("Segmentation Type");
+    public static final QueryField CHILD_TYPES = QueryField.createText("Child Types");
+    public static final QueryField ZSTD_DICTIONARY_UUID = QueryField.createText("Zstd Dictionary UUID");
+
     // Parent fields.
     public static final QueryField PARENT_ID = QueryField.createId("Parent Id");
     public static final QueryField PARENT_STATUS = QueryField.createText("Parent Status");
     public static final QueryField PARENT_CREATE_TIME = QueryField.createDate("Parent Create Time");
+    public static final QueryField PARENT_EFFECTIVE_TIME = QueryField.createDate("Parent Effective Time");
     public static final QueryField PARENT_FEED = QueryField.createDocRefByUniqueName("Feed", FIELD_PARENT_FEED);
 
     static {
@@ -84,6 +106,7 @@ public class MetaFields {
         FIELDS.add(PIPELINE_NAME);
         FIELDS.add(STATUS);
         FIELDS.add(TYPE);
+        FIELDS.add(READ_ONLY);
 
         // Id's
         FIELDS.add(ID);
@@ -112,8 +135,11 @@ public class MetaFields {
         EXTENDED_FIELDS.add(REC_FATAL);
 
         // Sizes
+        EXTENDED_FIELDS.add(CHILD_TYPES);
         EXTENDED_FIELDS.add(FILE_SIZE);
         EXTENDED_FIELDS.add(RAW_SIZE);
+        EXTENDED_FIELDS.add(SEGMENTATION_TYPE);
+        EXTENDED_FIELDS.add(ZSTD_DICTIONARY_UUID);
 
         ALL_FIELDS.addAll(FIELDS);
         ALL_FIELDS.addAll(EXTENDED_FIELDS);

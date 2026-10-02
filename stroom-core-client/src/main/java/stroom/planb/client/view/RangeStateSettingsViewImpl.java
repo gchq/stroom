@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.planb.client.view;
 
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.client.presenter.RangeStateSettingsPresenter.RangeStateSettingsView;
 import stroom.planb.shared.RangeKeySchema;
 import stroom.planb.shared.RetentionSettings;
@@ -30,7 +30,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class RangeStateSettingsViewImpl
-        extends ViewWithUiHandlers<PlanBSettingsUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements RangeStateSettingsView {
 
     private final Widget widget;
@@ -72,7 +72,7 @@ public class RangeStateSettingsViewImpl
     }
 
     @Override
-    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
         snapshotSettingsWidget.setUiHandlers(uiHandlers);

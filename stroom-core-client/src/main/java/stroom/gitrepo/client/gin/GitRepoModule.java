@@ -18,9 +18,12 @@ package stroom.gitrepo.client.gin;
 
 import stroom.core.client.gin.PluginModule;
 import stroom.gitrepo.client.GitRepoPlugin;
+import stroom.gitrepo.client.presenter.GitRepoCommitDialogPresenter;
+import stroom.gitrepo.client.presenter.GitRepoCommitDialogPresenter.GitRepoCommitDialogView;
 import stroom.gitrepo.client.presenter.GitRepoPresenter;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
+import stroom.gitrepo.client.view.GitRepoCommitDialogViewImpl;
 import stroom.gitrepo.client.view.GitRepoSettingsViewImpl;
 
 public class GitRepoModule extends PluginModule {
@@ -30,5 +33,10 @@ public class GitRepoModule extends PluginModule {
         bindPlugin(GitRepoPlugin.class);
         bind(GitRepoPresenter.class);
         bindPresenterWidget(GitRepoSettingsPresenter.class, GitRepoSettingsView.class, GitRepoSettingsViewImpl.class);
+
+        // Tie up the commit message dialog
+        bindPresenterWidget(GitRepoCommitDialogPresenter.class,
+                GitRepoCommitDialogView.class,
+                GitRepoCommitDialogViewImpl.class);
     }
 }

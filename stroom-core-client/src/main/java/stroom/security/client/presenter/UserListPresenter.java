@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ public class UserListPresenter
     private Set<UserScreen> validUserScreensForActionMenu = UserScreen.all();
     @SuppressWarnings({"unused", "FieldCanBeLocal"}) // Used in commented debug
     private String name = this.getClass().getSimpleName();
+    private Function<UserRef, UserRefPopupPresenter> copyPermissionsPopupFunction;
 
     @Inject
     public UserListPresenter(final EventBus eventBus,
@@ -102,7 +103,8 @@ public class UserListPresenter
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Users");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -135,9 +137,11 @@ public class UserListPresenter
 //                        .enabledWhen(this::isJobNodeEnabled)
                             .withFieldUpdater((final int index, final User user, final TickBoxState value) -> {
                                 if (user != null) {
-                                    user.setEnabled(value.toBoolean());
                                     restFactory.create(USER_RESOURCE)
-                                            .method(userResource -> userResource.update(user))
+                                            .method(userResource -> userResource.update(user
+                                                    .copy()
+                                                    .enabled(value.toBoolean())
+                                                    .build()))
                                             .onSuccess(UserAndGroupHelper.createAfterChangeConsumer(
                                                     this))
                                             .taskMonitorFactory(this)
@@ -148,7 +152,7 @@ public class UserListPresenter
                             .build(),
                     DataGridUtil.headingBuilder("Enabled")
                             .withToolTip("The enabled state of the user. A disabled user effectively has no " +
-                                         "permissions and cannot login.")
+                                         "permissions and cannot sign in.")
                             .build(),
                     ColumnSizeConstants.ENABLED_COL);
 
@@ -285,9 +289,9 @@ public class UserListPresenter
                                 (User user) -> UserAndGroupHelper.buildUserActionMenu(
                                         NullSafe.get(user, User::asRef),
                                         isExternalIdp(),
-                                        NullSafe.requireNonNullElseGet(
-                                                validUserScreensForActionMenu, UserScreen::all),
-                                        this),
+                                        Objects.requireNonNullElseGet(validUserScreensForActionMenu, UserScreen::all),
+                                        this,
+                                        copyPermissionsPopupFunction),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();
@@ -297,8 +301,6 @@ public class UserListPresenter
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private boolean isExternalIdp() {
@@ -478,6 +480,11 @@ public class UserListPresenter
 
     public void setResultPageConsumer(final Consumer<ResultPage<User>> resultPageConsumer) {
         this.resultPageConsumer = resultPageConsumer;
+    }
+
+    public void setCopyPermissionsPopupFunction(
+            final Function<UserRef, UserRefPopupPresenter> copyPermissionsPopupFunction) {
+        this.copyPermissionsPopupFunction = copyPermissionsPopupFunction;
     }
 
     /**

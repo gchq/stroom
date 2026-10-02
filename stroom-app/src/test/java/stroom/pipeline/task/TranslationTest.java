@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.task;
@@ -24,6 +23,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.docref.DocRef;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportExportSerializer;
@@ -37,6 +37,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SharedStepData;
@@ -47,7 +48,6 @@ import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.impl.ProcessorTaskTestHelper;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorTask;
-import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionOperator.Op;
@@ -58,20 +58,21 @@ import stroom.receive.common.StreamTargetStreamHandlers;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
-import stroom.test.ContentImportService;
+import stroom.test.ContentStoreTestSetup;
 import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.DiffUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Indicators;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -95,7 +96,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TranslationTest.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TranslationTest.class);
 
     @Inject
     private ProcessorTaskTestHelper processorTaskTestHelper;
@@ -114,11 +115,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     @Inject
     private ImportExportSerializer importExportSerializer;
     @Inject
-    private ContentImportService contentImportService;
+    private ContentStoreTestSetup contentStoreTestSetup;
     @Inject
     private CommonTranslationTestHelper commonTranslationTestHelper;
     @Inject
     private StreamTargetStreamHandlers streamHandlers;
+    @Inject
+    private DocFinder docFinder;
 
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
@@ -143,7 +146,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private void assertNoExceptions(final List<Exception> exceptions) {
-        if (exceptions.size() > 0) {
+        if (!exceptions.isEmpty()) {
             final StringBuilder sb = new StringBuilder("Test failed with ")
                     .append(exceptions.size())
                     .append(" exceptions:");
@@ -191,9 +194,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final Path samplesDir = getSamplesDir();
         final Path configDir = samplesDir.resolve("config");
 
-        importExportSerializer.read(configDir, null, ImportSettings.auto());
+        importExportSerializer.read(
+                configDir,
+                null,
+                ImportSettings.auto());
 
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
     }
 
     @NotNull
@@ -208,18 +214,18 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                              final boolean compareOutput,
                              final List<Exception> exceptions) {
         // Create a stream processor for each pipeline.
-        final List<DocRef> pipelines = pipelineStore.findByName(name);
+        final List<DocRef> pipelines = docFinder.findByName(PipelineDoc.TYPE, name);
 
         assertThat(pipelines)
                 .hasSize(1);
 
-        final DocRef pipelineRef = pipelines.get(0);
+        final DocRef pipelineRef = pipelines.getFirst();
 
-        final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
+        final List<DocRef> feedRefs = docFinder.findByName(FeedDoc.TYPE, pipelineRef.getName());
 
         FeedDoc feed = null;
-        if (feedRefs.size() > 0) {
-            feed = feedStore.readDocument(feedRefs.get(0));
+        if (!feedRefs.isEmpty()) {
+            feed = feedStore.readDocument(feedRefs.getFirst());
         }
         final FeedDoc feedDoc = feed;
 
@@ -286,61 +292,66 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // Create a stream processor for each pipeline.
         final List<DocRef> pipelines = pipelineStore.list();
         for (final DocRef pipelineRef : pipelines) {
-            final FindMetaCriteria findMetaCriteria =
-                    new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(pipelineRef.getName()));
-            final ResultPage<Meta> metaResultPage = metaService.find(findMetaCriteria);
-            if (metaResultPage.size() == 0) {
-                final List<DocRef> feedRefs = feedStore.findByName(pipelineRef.getName());
+            // Don't run for trace pipelines as they don't produce output.
+            if (!pipelineRef.getName().contains("TRACE")) {
+                final FindMetaCriteria findMetaCriteria =
+                        new FindMetaCriteria(MetaExpressionUtil.createFeedExpression(pipelineRef.getName()));
+                final ResultPage<Meta> metaResultPage = metaService.find(findMetaCriteria);
+                if (metaResultPage.isEmpty()) {
+                    final List<DocRef> feedRefs = docFinder.findByName(FeedDoc.TYPE, pipelineRef.getName());
 
-                FeedDoc feed = null;
-                if (feedRefs.size() > 0) {
-                    feed = feedStore.readDocument(feedRefs.get(0));
-                }
-                final FeedDoc feedDoc = feed;
-
-                if (feedDoc != null && feedDoc.isReference() == reference) {
-                    int priority = 1;
-                    if (feed.isReference()) {
-                        priority++;
+                    FeedDoc feed = null;
+                    if (!feedRefs.isEmpty()) {
+                        feed = feedStore.readDocument(feedRefs.getFirst());
                     }
+                    final FeedDoc feedDoc = feed;
 
-                    final String streamType = feed.isReference()
-                            ? StreamTypeNames.RAW_REFERENCE
-                            : StreamTypeNames.RAW_EVENTS;
-
-                    final QueryData findStreamQueryData = QueryData.builder()
-                            .dataSource(MetaFields.STREAM_STORE_DOC_REF)
-                            .expression(ExpressionOperator.builder()
-                                    .addTextTerm(MetaFields.FEED, ExpressionTerm.Condition.EQUALS, feedDoc.getName())
-                                    .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
-                                    .build())
-                            .build();
-
-                    processorFilterService.create(
-                            CreateProcessFilterRequest
-                                    .builder()
-                                    .pipeline(pipelineRef)
-                                    .queryData(findStreamQueryData)
-                                    .priority(priority)
-                                    .build());
-
-                    // Add data.
-                    final List<Path> files = new ArrayList<>();
-                    addFiles(inputDir, files, feed.getName(), "in");
-                    addFiles(inputDir, files, feed.getName(), "zip");
-                    files.sort(Comparator.naturalOrder());
-                    files.forEach(filePath -> {
-                        // Add and test each file.
-                        final String fileName = filePath.getFileName().toString();
-                        final int index = fileName.lastIndexOf(".");
-                        final String stem = fileName.substring(0, index);
-
-                        try {
-                            test(filePath, feedDoc, outputDir, stem, compareOutput, exceptions);
-                        } catch (final IOException | RuntimeException e) {
-                            fail(e.getMessage());
+                    if (feedDoc != null && feedDoc.isReference() == reference) {
+                        int priority = 1;
+                        if (feed.isReference()) {
+                            priority++;
                         }
-                    });
+
+                        final String streamType = feed.isReference()
+                                ? StreamTypeNames.RAW_REFERENCE
+                                : StreamTypeNames.RAW_EVENTS;
+
+                        final QueryData findStreamQueryData = QueryData.builder()
+                                .dataSource(MetaFields.STREAM_STORE_DOC_REF)
+                                .expression(ExpressionOperator.builder()
+                                        .addTextTerm(MetaFields.FEED,
+                                                ExpressionTerm.Condition.EQUALS,
+                                                feedDoc.getName())
+                                        .addTextTerm(MetaFields.TYPE, ExpressionTerm.Condition.EQUALS, streamType)
+                                        .build())
+                                .build();
+
+                        processorFilterService.create(
+                                CreateProcessFilterRequest
+                                        .builder()
+                                        .pipeline(pipelineRef)
+                                        .queryData(findStreamQueryData)
+                                        .priority(priority)
+                                        .build());
+
+                        // Add data.
+                        final List<Path> files = new ArrayList<>();
+                        addFiles(inputDir, files, feed.getName(), "in");
+                        addFiles(inputDir, files, feed.getName(), "zip");
+                        files.sort(Comparator.naturalOrder());
+                        files.forEach(filePath -> {
+                            // Add and test each file.
+                            final String fileName = filePath.getFileName().toString();
+                            final int index = fileName.lastIndexOf(".");
+                            final String stem = fileName.substring(0, index);
+
+                            try {
+                                test(filePath, feedDoc, outputDir, stem, compareOutput, exceptions);
+                            } catch (final IOException | RuntimeException e) {
+                                fail(e.getMessage());
+                            }
+                        });
+                    }
                 }
             }
         }
@@ -363,13 +374,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                       final String stem,
                       final boolean compareOutput,
                       final List<Exception> exceptions) throws IOException {
-        LOGGER.info("Testing:" +
-                        "\n--------------------------------------------------------------------------------" +
-                        "\ninput:  {}" +
-                        "\nfeed:   {}" +
-                        "\noutput: {}" +
-                        "\nstem:   {}" +
-                        "\n--------------------------------------------------------------------------------",
+        LOGGER.info("""
+                        Testing:
+                        --------------------------------------------------------------------------------
+                        input:  {}
+                        feed:   {}
+                        output: {}
+                        stem:   {}
+                        --------------------------------------------------------------------------------""",
                 inputFile.toAbsolutePath(),
                 feed.getName(),
                 outputDir.toAbsolutePath(),
@@ -535,13 +547,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
      * @return The next task or null if there are currently no more tasks.
      */
     private List<ProcessorTask> getTasks() {
-        ProcessorTaskList processorTasks = processorTaskTestHelper.assignTasks(100);
-        List<ProcessorTask> list = processorTasks.getList();
+        List<ProcessorTask> list = processorTaskTestHelper.assignTasks(100);
         final List<ProcessorTask> dataProcessorTasks = new ArrayList<>(list.size());
-        while (list.size() > 0) {
+        while (!list.isEmpty()) {
             dataProcessorTasks.addAll(list);
-            processorTasks = processorTaskTestHelper.assignTasks(100);
-            list = processorTasks.getList();
+            list = processorTaskTestHelper.assignTasks(100);
         }
 
         return dataProcessorTasks;
@@ -553,14 +563,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         // feedCriteria.setFeedType(FeedType.REFERENCE);
 //        final Optional<FeedDoc> feeds = feedDocCache.get(feedName);
 //        assertThat(feeds.isPresent()).as("No feeds found").isTrue();
-        final List<DocRef> pipelines = pipelineStore.findByName(feedName);
-        assertThat(pipelines != null && pipelines.size() > 0)
+        final List<DocRef> pipelines = docFinder.findByName(PipelineDoc.TYPE, feedName);
+        assertThat(pipelines != null && !pipelines.isEmpty())
                 .as("No pipelines found")
                 .isTrue();
         assertThat(pipelines.size()).as("Expected 1 pipeline")
                 .isEqualTo(1);
 
-        final DocRef pipelineRef = pipelines.get(0);
+        final DocRef pipelineRef = pipelines.getFirst();
 //        final FeedDoc feed = feeds.get();
 
         LOGGER.info("Testing: {}, {}, {}",
@@ -579,7 +589,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
 
         final PipelineStepRequest.Builder requestBuilder = PipelineStepRequest.builder();
-        requestBuilder.pipeline(pipelineRef);
+
+
+        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        requestBuilder.pipelineDoc(pipelineDoc);
         requestBuilder.criteria(findMetaCriteria);
         requestBuilder.timeout(Long.MAX_VALUE);
 
@@ -622,8 +636,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         for (final String elementId : stepData.getElementMap().keySet()) {
             final SharedElementData elementData = stepData.getElementData(elementId);
             assertThat(elementData.getIndicators() != null
-                    && elementData.getIndicators().getMaxSeverity() != null).as(
-                    "Translation stepping has indicators.").isFalse();
+                       && elementData.getIndicators().getMaxSeverity() != null).as(
+                    "Translation stepping has indicators: " + elementData.getIndicators()).isFalse();
 //            assertThat(elementData.getCodeIndicators() != null
 //                    && elementData.getCodeIndicators().getMaxSeverity() != null).as(
 //                    "Translation stepping has code indicators.").isFalse();
@@ -656,7 +670,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
             requestBuilder.stepType(direction);
             final SteppingResult stepResponse = steppingService.step(requestBuilder.build());
 
-            if (stepResponse.getGeneralErrors() != null && stepResponse.getGeneralErrors().size() > 0) {
+            // Carry the session id across steps exactly as the UI does. Without this every step would open
+            // a fresh session and re-sweep the stream, so the scripted sequences below would still pass but
+            // would never exercise serving a step from data an earlier step captured - which is the whole
+            // point of the engine they are the acceptance gate for.
+            requestBuilder.sessionUuid(stepResponse.getSessionUuid());
+
+            if (stepResponse.getGeneralErrors() != null && !stepResponse.getGeneralErrors().isEmpty()) {
                 throw new RuntimeException(stepResponse.getGeneralErrors().iterator().next());
             }
 
@@ -712,12 +732,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 //                        }
 
                         final SharedElementData newElementData = new SharedElementData(
-                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput());
-                        SharedStepData newStepData = newResponse.getStepData();
-                        if (newStepData == null) {
-                            newStepData = new SharedStepData(stepResponse.getStepData().getSourceLocation(),
-                                    new HashMap<>());
-                        }
+                                input, output, indicators, elementData.isFormatInput(), elementData.isFormatOutput(),
+                                elementData.isHasOutput());
+                        final SharedStepData newStepData = NullSafe.getOrElseGet(
+                                newResponse,
+                                SteppingResult::getStepData,
+                                () -> new SharedStepData(stepResponse.getStepData().getSourceLocation(),
+                                        new HashMap<>()));
                         newStepData.getElementMap().put(elementId, newElementData);
                         newResponse = new SteppingResult(
                                 null,
@@ -750,11 +771,11 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
     private long getLatestStreamId() {
         final List<Meta> list = metaService.find(new FindMetaCriteria()).getValues();
-        if (list == null || list.size() == 0) {
+        if (list == null || list.isEmpty()) {
             return 0;
         }
         list.sort(Comparator.comparing(Meta::getId));
-        final Meta latest = list.get(list.size() - 1);
+        final Meta latest = list.getLast();
         return latest.getId();
     }
 
@@ -774,7 +795,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                 LOGGER.error("Differences exist between the expected and actual output");
                 LOGGER.info("\nvimdiff {} {}", expectedFile, actualFile);
                 LOGGER.info("If you are satisfied the actual output is correct then copy " +
-                        "the actual over the expected and re-run.");
+                            "the actual over the expected and re-run.");
                 throw new RuntimeException(LogUtil.message("Files are not the same:\n{}\n{}",
                         FileUtil.getCanonicalPath(actualFile),
                         FileUtil.getCanonicalPath(expectedFile)));

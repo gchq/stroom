@@ -30,6 +30,7 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -69,7 +70,10 @@ public class ImportExportServiceImpl implements ImportExportService {
             // Unzip the zip file.
             ZipUtil.unzip(zipFile, explodeDir);
 
-            importExportSerializer.read(explodeDir, confirmList, importSettings);
+            importExportSerializer.read(
+                    explodeDir,
+                    confirmList,
+                    importSettings);
         } catch (final IOException | RuntimeException e) {
             throw new RuntimeException(e.getMessage(), e);
         } finally {
@@ -89,7 +93,11 @@ public class ImportExportServiceImpl implements ImportExportService {
 
             // Serialize the config in a human readable tree structure.
             final ExportSummary exportSummary = importExportSerializer.write(
-                    explodeDir, docRefs, true);
+                    null,
+                    explodeDir,
+                    docRefs,
+                    Collections.emptySet(),
+                    true);
 
             // Now zip the dir.
             ZipUtil.zip(zipFile, explodeDir);

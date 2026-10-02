@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.data.retention.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
@@ -5,6 +21,7 @@ import stroom.cluster.lock.mock.MockClusterLockService;
 import stroom.data.retention.api.DataRetentionConfig;
 import stroom.data.retention.api.DataRetentionCreationTimeUtil;
 import stroom.data.retention.api.DataRetentionRuleAction;
+import stroom.data.retention.api.DataRetentionRulesProvider;
 import stroom.data.retention.api.DataRetentionTracker;
 import stroom.data.retention.api.RetentionRuleOutcome;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -42,6 +59,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -381,7 +400,7 @@ class TestDataRetentionPolicyExecutor {
         trackers = trackers.stream()
                 .filter(tracker ->
                         !(tracker.getRuleAge().toLowerCase().contains("1 month")
-                                || tracker.getRuleAge().toLowerCase().contains("1 year")))
+                          || tracker.getRuleAge().toLowerCase().contains("1 year")))
                 .collect(Collectors.toList());
 
         Assertions.assertThat(trackers)
@@ -571,10 +590,21 @@ class TestDataRetentionPolicyExecutor {
     }
 
     private DataRetentionPolicyExecutor createExecutor(final List<DataRetentionRule> rules) {
+        final DataRetentionRules dataRetentionRules = buildRules(rules);
+        final DataRetentionRulesProvider dataRetentionRulesProvider = new DataRetentionRulesProvider() {
+            @Override
+            public DataRetentionRules getOrCreate() {
+                return dataRetentionRules;
+            }
+
+            @Override
+            public Optional<DataRetentionRules> get() {
+                return Optional.of(dataRetentionRules);
+            }
+        };
         return new DataRetentionPolicyExecutor(
                 clusterLockService,
-                () -> buildRules(rules),
-                dataRetentionConfig,
+                dataRetentionRulesProvider,
                 metaService,
                 taskContextFactory);
     }
@@ -633,9 +663,12 @@ class TestDataRetentionPolicyExecutor {
     }
 
     private DataRetentionRules buildRules(final List<DataRetentionRule> rules) {
-        final DataRetentionRules dataRetentionRules = new DataRetentionRules(rules);
-        dataRetentionRules.setVersion(RULES_VERSION);
-        return dataRetentionRules;
+        return DataRetentionRules
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .version(RULES_VERSION)
+                .rules(rules)
+                .build();
     }
 
     private DataRetentionRule buildRule(final int ruleNo,

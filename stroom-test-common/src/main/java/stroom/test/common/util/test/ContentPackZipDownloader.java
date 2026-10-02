@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.test.common.util.test;
 
 import stroom.content.ContentPack;
@@ -8,7 +24,6 @@ import stroom.util.json.JsonUtil;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LogUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import org.apache.hc.client5.http.classic.HttpClient;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
@@ -16,6 +31,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -100,7 +116,7 @@ public class ContentPackZipDownloader {
         }
 
         try {
-            final ObjectMapper mapper = JsonUtil.getMapper();
+            final JsonMapper mapper = JsonUtil.getMapper();
             final ContentPackZipCollection contentPacks = mapper.readValue(
                     contentPacksDefinition.toFile(),
                     ContentPackZipCollection.class);

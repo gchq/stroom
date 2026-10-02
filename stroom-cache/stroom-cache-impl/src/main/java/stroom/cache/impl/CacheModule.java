@@ -17,6 +17,7 @@
 package stroom.cache.impl;
 
 import stroom.cache.api.CacheManager;
+import stroom.cache.api.TemplateCache;
 import stroom.util.guice.HasSystemInfoBinder;
 
 import com.google.inject.AbstractModule;
@@ -26,8 +27,10 @@ public class CacheModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(CacheManager.class).to(CacheManagerImpl.class);
+        bind(TemplateCache.class).to(TemplateCacheImpl.class);
 
         HasSystemInfoBinder.create(binder())
                 .bind(CacheManagerImpl.class);
+
     }
 }

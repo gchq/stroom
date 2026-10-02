@@ -34,6 +34,20 @@ public class PipelineProperties extends AbstractAddRemove<PipelineProperty> {
         super(add, remove);
     }
 
+    /**
+     * Properties are keyed by element and name, so their order carries no meaning and lists are
+     * compared ignoring it.
+     */
+    @Override
+    protected boolean listsEqual(final List<PipelineProperty> list, final List<PipelineProperty> other) {
+        return unorderedEquals(list, other, PipelineProperty::equals);
+    }
+
+    @Override
+    protected int listHashCode(final List<PipelineProperty> list) {
+        return unorderedHashCode(list, PipelineProperty::hashCode);
+    }
+
 
     // --------------------------------------------------------------------------------
 

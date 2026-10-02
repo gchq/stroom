@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.api;
 
 import stroom.query.api.UserTimeZone.Use;
@@ -6,17 +22,17 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Objects;
 
-@JsonPropertyOrder(alphabetic = true)
+//@JsonPropertyOrder({"timeZone"})
+//@JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class DateTimeSettings {
 
     @Schema(description = "A date time formatting pattern string conforming to the specification of " +
-            "java.time.format.DateTimeFormatter")
+                          "java.time.format.DateTimeFormatter")
     @JsonProperty
     private final String dateTimePattern;
 
@@ -24,12 +40,13 @@ public class DateTimeSettings {
     private final UserTimeZone timeZone;
 
     @Schema(description = "The local zone id to use when formatting date values in the search results. The " +
-            "value is the string form of a java.time.ZoneId",
+                          "value is the string form of a java.time.ZoneId",
             required = true)
     @JsonProperty
     private final String localZoneId;
 
-    @Schema(description = "The time in milliseconds since epoch to use as the reference time for relative date " +
+    @Schema(description =
+            "The time in milliseconds since epoch to use as the reference time for relative date " +
             "functions like `day()`. Typically this is the current time when the query is executed. If null the " +
             "current time will be assumed.",
             required = true)
@@ -89,9 +106,9 @@ public class DateTimeSettings {
         }
         final DateTimeSettings that = (DateTimeSettings) o;
         return Objects.equals(dateTimePattern, that.dateTimePattern) &&
-                Objects.equals(timeZone, that.timeZone) &&
-                Objects.equals(localZoneId, that.localZoneId) &&
-                Objects.equals(referenceTime, that.referenceTime);
+               Objects.equals(timeZone, that.timeZone) &&
+               Objects.equals(localZoneId, that.localZoneId) &&
+               Objects.equals(referenceTime, that.referenceTime);
     }
 
     @Override
@@ -102,11 +119,11 @@ public class DateTimeSettings {
     @Override
     public String toString() {
         return "DateTimeSettings{" +
-                "dateTimePattern='" + dateTimePattern + '\'' +
-                ", timeZone=" + timeZone +
-                ", localZoneId='" + localZoneId + '\'' +
-                ", referenceTime=" + referenceTime +
-                '}';
+               "dateTimePattern='" + dateTimePattern + '\'' +
+               ", timeZone=" + timeZone +
+               ", localZoneId='" + localZoneId + '\'' +
+               ", referenceTime=" + referenceTime +
+               '}';
     }
 
     public static Builder builder() {

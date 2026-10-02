@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.client;
 
 import stroom.cell.expander.client.ExpanderCell;
@@ -15,15 +31,18 @@ import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CopyTextCell;
 import stroom.data.client.presenter.DocRefCell;
+import stroom.data.client.presenter.FeedRefCell;
+import stroom.data.client.presenter.HasContextMenusCell;
 import stroom.data.client.presenter.UserRefCell;
 import stroom.data.grid.client.ColSpec;
 import stroom.data.grid.client.ColumnBuilder;
-import stroom.data.grid.client.EndColumn;
+import stroom.data.grid.client.HasContextMenus;
 import stroom.data.grid.client.HeadingBuilder;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.docref.DocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.Preset;
+import stroom.util.client.DataGridComparatorFactory.Builder;
 import stroom.util.shared.Expander;
 import stroom.util.shared.GwtUtil;
 import stroom.util.shared.ModelStringUtil;
@@ -191,10 +210,6 @@ public class DataGridUtil {
         };
     }
 
-    public static <T_ROW> Column<T_ROW, String> endColumn() {
-        return new EndColumn<T_ROW>();
-    }
-
 //    public static <T_VIEW extends MyDataGrid<T_ROW>, T_ROW> void addResizableTextColumn(
 //            final T_VIEW view,
 //            final Function<T_ROW, String> cellValueExtractor,
@@ -250,14 +265,6 @@ public class DataGridUtil {
                 svgStatusColumn(statusIconExtractor),
                 "",
                 ColumnSizeConstants.ICON_COL);
-    }
-
-    public static void addEndColumn(final MyDataGrid<?> view) {
-        view.addEndColumn(new EndColumn<>());
-    }
-
-    public static void addEndColumn(final DataGrid<?> view) {
-        view.addColumn(new EndColumn<>());
     }
 
     /**
@@ -504,11 +511,41 @@ public class DataGridUtil {
                                                final MyDataGrid<T_ROW> dataGrid,
                                                final String name,
                                                final Function<T_ROW, DocRef> docRefExtractionFunction) {
+        addDocRefColumn(eventBus, dataGrid, name, docRefExtractionFunction, true);
+    }
+
+    public static <T_ROW> void addDocRefColumn(final EventBus eventBus,
+                                               final MyDataGrid<T_ROW> dataGrid,
+                                               final String name,
+                                               final Function<T_ROW, DocRef> docRefExtractionFunction,
+                                               final boolean hasOpenAndCopy) {
         final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
                 () -> new DocRefCell
                         .Builder<T_ROW>()
                         .eventBus(eventBus)
+                        .hasOpenAndCopy(hasOpenAndCopy)
                         .docRefFunction(docRefExtractionFunction)
+                        .showIcon(true)
+                        .build())
+                .build();
+
+        final ColSpec<T_ROW> colSpec = new ColSpec.Builder<T_ROW>()
+                .column(column)
+                .resizable(true)
+                .name(name)
+                .width(ColumnSizeConstants.BIG_COL)
+                .build();
+        dataGrid.addColumn(colSpec);
+    }
+
+    public static <T_ROW> void addFeedColumn(final EventBus eventBus,
+                                             final MyDataGrid<T_ROW> dataGrid,
+                                             final String name,
+                                             final Function<T_ROW, String> nameExtractionFunction) {
+        final Column<T_ROW, T_ROW> column = new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(Function.identity(),
+                () -> new FeedRefCell.Builder<T_ROW>()
+                        .eventBus(eventBus)
+                        .nameFunction(nameExtractionFunction)
                         .showIcon(true)
                         .build())
                 .build();
@@ -532,8 +569,7 @@ public class DataGridUtil {
     @SuppressWarnings("checkstyle:LineLength")
     public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> docRefColumnBuilder(
             final Function<T_ROW, DocRef> docRefExtractionFunction,
-            final EventBus eventBus,
-            final boolean allowLinkByName) {
+            final EventBus eventBus) {
 
         Objects.requireNonNull(docRefExtractionFunction);
 
@@ -543,7 +579,21 @@ public class DataGridUtil {
                         .Builder<T_ROW>()
                         .eventBus(eventBus)
                         .docRefFunction(docRefExtractionFunction)
-                        .allowLinkByName(allowLinkByName)
+                        .build());
+    }
+
+    public static <T_ROW> ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>> feedRefColumnBuilder(
+            final Function<T_ROW, String> nameExtractionFunction,
+            final EventBus eventBus) {
+
+        Objects.requireNonNull(nameExtractionFunction);
+
+        return new ColumnBuilder<T_ROW, T_ROW, Cell<T_ROW>>(
+                Function.identity(),
+                () -> new FeedRefCell
+                        .Builder<T_ROW>()
+                        .eventBus(eventBus)
+                        .nameFunction(nameExtractionFunction)
                         .build());
     }
 
@@ -572,6 +622,12 @@ public class DataGridUtil {
     public static <T_ROW> ColumnBuilder<T_ROW, SafeHtml, Cell<SafeHtml>> htmlColumnBuilder(
             final Function<T_ROW, SafeHtml> valueExtractor) {
         return new ColumnBuilder<T_ROW, SafeHtml, Cell<SafeHtml>>(valueExtractor, SafeHtmlCell::new);
+    }
+
+    public static <T_ROW> ColumnBuilder<
+            T_ROW, SafeHtml, HasContextMenusCell<SafeHtml>> hasContextMenusColumnBuilder(
+            final Function<T_ROW, SafeHtml> valueExtractor, final HasContextMenus<SafeHtml> hasContextMenus) {
+        return new ColumnBuilder<>(valueExtractor, () -> new HasContextMenusCell<>(hasContextMenus));
     }
 
     public static <T_ROW> ColumnBuilder<T_ROW, Preset, Cell<Preset>> svgPresetColumnBuilder(
@@ -616,5 +672,9 @@ public class DataGridUtil {
             final Function<T_VAL1, Object> valueExtractor2) {
         return (T_ROW row) ->
                 NullSafe.toStringOrElse(row, valueExtractor1, valueExtractor2, "");
+    }
+
+    public static <T> Builder<T> comparatorFactoryBuilder(final DataGrid<T> dataGrid) {
+        return DataGridComparatorFactory.builder(dataGrid);
     }
 }

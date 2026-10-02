@@ -72,7 +72,7 @@ public class Config {
 
     public void write(final Writer writer, final String entityType) throws IOException {
         try {
-            final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance();
+            final SAXTransformerFactory stf = (SAXTransformerFactory) TransformerFactoryFactory.newInstance(true);
             final TransformerHandler th = stf.newTransformerHandler();
             final Transformer transformer = th.getTransformer();
 

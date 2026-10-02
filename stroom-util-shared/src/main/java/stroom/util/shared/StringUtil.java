@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import java.util.Collection;
@@ -50,26 +66,10 @@ public class StringUtil {
      * @return str as is, unless it is empty or blank, in which case return null.
      */
     public static String blankAsNull(final String str) {
-        if (str != null && (str.isEmpty() || isBlank(str))) {
+        if (str != null && (str.isBlank())) {
             return null;
         } else {
             return str;
-        }
-    }
-
-    /**
-     * GWT doesn't support {@link String#isBlank()}
-     *
-     * @return True if str is null, empty or contains only whitespace.
-     */
-    public static boolean isBlank(final String str) {
-        if (str == null) {
-            return true;
-        } else if (str.isEmpty()) {
-            return true;
-        } else {
-            return str.chars()
-                    .allMatch(Character::isWhitespace);
         }
     }
 
@@ -87,7 +87,7 @@ public class StringUtil {
         } else {
             final String trimmedStr = userText.trim();
             if (trimmedStr.startsWith("\"")
-                    && trimmedStr.endsWith("\"")) {
+                && trimmedStr.endsWith("\"")) {
 
                 final int openQuoteIdx = trimmedStr.indexOf("\"");
                 final int endQuoteIdx = trimmedStr.lastIndexOf("\"");
@@ -119,14 +119,14 @@ public class StringUtil {
         } else {
             final String escapedText = storedText.replace("\"", "\\\"");
             if (storedText.startsWith(" ")
-                    || storedText.startsWith("\t")
-                    || storedText.endsWith(" ")
-                    || storedText.endsWith("\t")) {
+                || storedText.startsWith("\t")
+                || storedText.endsWith(" ")
+                || storedText.endsWith("\t")) {
                 // leading/trailing whitespace so dbl quote the whole thing
                 // ' he said "hello" ' => '" he said \"hello\" "'
                 userText = "\""
-                        + escapedText
-                        + "\"";
+                           + escapedText
+                           + "\"";
             } else {
                 userText = escapedText;
             }
@@ -263,5 +263,28 @@ public class StringUtil {
         return bool != null && bool
                 ? "Yes"
                 : "No";
+    }
+
+    public static String formatDouble(final double d) {
+        final double rounded = Math.round(d * 100D) / 100D;
+        final String string = Double.toString(rounded);
+        final int index = string.indexOf(".");
+        if (index == -1) {
+            return string;
+        }
+
+        final char[] chars = string.toCharArray();
+        int end = chars.length - 1;
+        for (; end >= index; end--) {
+            if (chars[end] != '0') {
+                break;
+            }
+        }
+        if (end == index) {
+            return string.substring(0, index);
+        } else if (end < chars.length - 1) {
+            return string.substring(0, end + 1);
+        }
+        return string;
     }
 }

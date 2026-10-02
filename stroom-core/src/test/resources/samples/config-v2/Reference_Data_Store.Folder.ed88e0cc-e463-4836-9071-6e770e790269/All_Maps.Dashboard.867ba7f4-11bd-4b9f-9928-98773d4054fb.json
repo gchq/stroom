@@ -1,0 +1,126 @@
+{
+  "components" : [ {
+    "type" : "table",
+    "id" : "table-IIO1T",
+    "name" : "Table",
+    "settings" : {
+      "type" : "table",
+      "queryId" : "query-JT8D7",
+      "fields" : [ {
+        "id" : "table-IIO1T|YGC1R",
+        "name" : "Map Name",
+        "expression" : "${Map Name}",
+        "format" : {
+          "type" : "GENERAL"
+        },
+        "group" : 0,
+        "width" : 254,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|3PO6J",
+        "name" : "Stream ID",
+        "expression" : "${Stream ID}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "group" : 0,
+        "width" : 102,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|XGYIT",
+        "name" : "Part Number",
+        "expression" : "${Part Number}",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "group" : 0,
+        "width" : 161,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|OGNAJ",
+        "name" : "Effective Time",
+        "expression" : "${Effective Time}",
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "group" : 0,
+        "width" : 190,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|NZBCO",
+        "name" : "Last Accessed Time",
+        "expression" : "max(${Last Accessed Time})",
+        "format" : {
+          "type" : "DATE_TIME"
+        },
+        "width" : 219,
+        "visible" : true,
+        "special" : false
+      }, {
+        "id" : "table-IIO1T|0WKIZ",
+        "name" : "Count",
+        "expression" : "count()",
+        "format" : {
+          "type" : "NUMBER"
+        },
+        "width" : 95,
+        "visible" : true,
+        "special" : false
+      } ],
+      "maxResults" : [ 1000000 ]
+    }
+  }, {
+    "type" : "query",
+    "id" : "query-JT8D7",
+    "name" : "Query",
+    "settings" : {
+      "type" : "query",
+      "dataSource" : {
+        "type" : "Searchable",
+        "uuid" : "Reference Data Store",
+        "name" : "Reference Data Store (This Node Only)"
+      },
+      "expression" : {
+        "type" : "operator"
+      },
+      "automate" : {
+        "open" : true,
+        "refresh" : false,
+        "refreshInterval" : "10s"
+      }
+    }
+  } ],
+  "layout" : {
+    "type" : "splitLayout",
+    "preferredSize" : {
+      "width" : 200,
+      "height" : 200
+    },
+    "dimension" : 1,
+    "children" : [ {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "query-JT8D7"
+      } ],
+      "selected" : 0
+    }, {
+      "type" : "tabLayout",
+      "preferredSize" : {
+        "width" : 200,
+        "height" : 200
+      },
+      "tabs" : [ {
+        "id" : "table-IIO1T"
+      } ],
+      "selected" : 0
+    } ]
+  }
+}

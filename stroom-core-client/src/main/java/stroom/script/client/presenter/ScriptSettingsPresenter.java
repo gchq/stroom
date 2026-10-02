@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.script.client.presenter;
 
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.script.client.presenter.ScriptSettingsPresenter.ScriptSettingsView;
 import stroom.script.shared.ScriptDoc;
 
@@ -27,7 +25,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
-public class ScriptSettingsPresenter extends DocumentEditPresenter<ScriptSettingsView, ScriptDoc> {
+public class ScriptSettingsPresenter extends DocPresenter<ScriptSettingsView, ScriptDoc> {
 
     private final ScriptDependencyListPresenter scriptDependencyListPresenter;
 
@@ -42,8 +40,7 @@ public class ScriptSettingsPresenter extends DocumentEditPresenter<ScriptSetting
 
     @Override
     protected void onBind() {
-        final DirtyHandler dirtyHandler = event -> setDirty(true);
-        registerHandler(scriptDependencyListPresenter.addDirtyHandler(dirtyHandler));
+        registerHandler(scriptDependencyListPresenter.addChangeHandler(this::onChange));
     }
 
     @Override

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.util.ConsoleColour;
@@ -36,6 +52,11 @@ public class StringPredicateFactory {
     // be easier
     private static final Pattern CAMEL_CASE_PATTERN = Pattern.compile(
             "^([A-Z]+)?[a-z0-9]+(?:(?:\\d)|(?:[A-Z0-9]+[a-z0-9]+))*(?:[A-Z]+)?$");
+
+    // camelCase detection is only meaningful for a single word-group token (the parts between separators),
+    // which are short in practice. Bounding the length that CAMEL_CASE_PATTERN is applied to keeps its work
+    // linear and removes any chance of pathological backtracking on a long hostile token.
+    private static final int MAX_CAMEL_CASE_TOKEN_LENGTH = 100;
 
     // Matches positions in (C|c)amelCase to split into individual words
     // Doesn't cope with abbreviations at the beginning/middle of the string,
@@ -560,7 +581,7 @@ public class StringPredicateFactory {
     }
 
     private static String cleanStringForWordBoundaryMatching(final String str) {
-        if (CAMEL_CASE_PATTERN.matcher(str).matches()) {
+        if (str.length() <= MAX_CAMEL_CASE_TOKEN_LENGTH && CAMEL_CASE_PATTERN.matcher(str).matches()) {
             LOGGER.trace("str [{}] is (C|c)amelCase", str);
 
             // replace stuff like SQLScript with "SQL Script"

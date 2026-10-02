@@ -12,15 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.client.presenter;
 
+import stroom.content.client.event.ContentTabSelectionChangeEvent;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -37,13 +37,14 @@ import java.util.Objects;
 import javax.inject.Provider;
 
 public class QueryDocPresenter
-        extends DocumentEditTabPresenter<LinkTabPanelView, QueryDoc> {
+        extends DocTabPresenter<LinkTabPanelView, QueryDoc> {
 
     private static final TabData QUERY = new TabDataImpl("Query");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final DocumentEditTabProvider<QueryDoc> queryDocDocumentEditTabProvider;
+    private final QueryDocEditPresenter queryDocEditPresenter;
+    private final DocTabProvider<QueryDoc> queryDocDocumentEditTabProvider;
     private Runnable saveInterceptor;
 
     @Inject
@@ -54,10 +55,10 @@ public class QueryDocPresenter
                              final DocumentUserPermissionsTabProvider<QueryDoc>
                                      documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        this.queryDocEditPresenter = queryDocEditPresenter;
 
         queryDocEditPresenter.setTaskMonitorFactory(this);
-        queryDocDocumentEditTabProvider = new DocumentEditTabProvider<>(
-                () -> queryDocEditPresenter);
+        queryDocDocumentEditTabProvider = new DocTabProvider<>(() -> queryDocEditPresenter);
 
         addTab(QUERY, queryDocDocumentEditTabProvider);
         addTab(DOCUMENTATION, new MarkdownTabProvider<QueryDoc>(eventBus, markdownEditPresenterProvider) {
@@ -73,8 +74,7 @@ public class QueryDocPresenter
             @Override
             public QueryDoc onWrite(final MarkdownEditPresenter presenter,
                                     final QueryDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
@@ -82,11 +82,18 @@ public class QueryDocPresenter
     }
 
     @Override
+    protected void onBind() {
+        super.onBind();
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e ->
+                queryDocEditPresenter.onContentTabVisible(e.getTabData() == this)));
+    }
+
+    @Override
     public boolean handleKeyAction(final Action action) {
         if (Action.OK == action
             && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
 
-            final DocumentEditPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
+            final DocPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
             if (presenter instanceof QueryDocEditPresenter) {
                 ((QueryDocEditPresenter) presenter).start();
             }
@@ -94,7 +101,7 @@ public class QueryDocPresenter
         } else if (Action.CLOSE == action
                    && Objects.equals(getSelectedTab().getType(), QUERY.getType())) {
 
-            final DocumentEditPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
+            final DocPresenter<?, QueryDoc> presenter = queryDocDocumentEditTabProvider.getPresenter();
             if (presenter instanceof QueryDocEditPresenter) {
                 ((QueryDocEditPresenter) presenter).stop();
             }

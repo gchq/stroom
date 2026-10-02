@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.planb.client;
@@ -24,8 +23,9 @@ import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.planb.client.presenter.PlanBPresenter;
+import stroom.planb.shared.AbstractPlanBSettings;
 import stroom.planb.shared.PlanBDoc;
 import stroom.planb.shared.PlanBDocResource;
 import stroom.security.client.api.ClientSecurityContext;
@@ -62,7 +62,7 @@ public class PlanBPlugin extends DocumentPlugin<PlanBDoc> {
     }
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return editorProvider.get();
     }
 
@@ -103,5 +103,14 @@ public class PlanBPlugin extends DocumentPlugin<PlanBDoc> {
     @Override
     protected DocRef getDocRef(final PlanBDoc document) {
         return DocRefUtil.create(document);
+    }
+
+    /**
+     * Block the save and display a warning if the settings contradict each other, so the user is
+     * told in the browser rather than by a server error.
+     */
+    @Override
+    protected String getPreSaveError(final PlanBDoc doc) {
+        return AbstractPlanBSettings.validationError(doc.getSettings());
     }
 }

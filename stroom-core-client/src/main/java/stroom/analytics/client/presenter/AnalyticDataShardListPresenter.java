@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.client.presenter;
@@ -23,13 +22,12 @@ import stroom.analytics.shared.FindAnalyticDataShardCriteria;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DelayedUpdate;
@@ -62,7 +60,7 @@ public class AnalyticDataShardListPresenter
     private final MyDataGrid<AnalyticDataShard> dataGrid;
     private final MultiSelectionModelImpl<AnalyticDataShard> selectionModel;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final DateTimeFormatter dateTimeFormatter;
     //    private final ButtonView newButton;
 //    private final ButtonView openButton;
@@ -81,14 +79,15 @@ public class AnalyticDataShardListPresenter
     public AnalyticDataShardListPresenter(final EventBus eventBus,
                                           final PagerView view,
                                           final RestFactory restFactory,
-                                          final NodeManager nodeManager,
+                                          final NodeClient nodeClient,
                                           final DateTimeFormatter dateTimeFormatter) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Analytic Data Shards");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
 
@@ -163,7 +162,7 @@ public class AnalyticDataShardListPresenter
                            final Consumer<ResultPage<AnalyticDataShard>> dataConsumer,
                            final RestErrorHandler errorHandler,
                            final TaskMonitorFactory taskMonitorFactory) {
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskMonitorFactory),
                 errorHandler, taskMonitorFactory);
     }
@@ -287,9 +286,6 @@ public class AnalyticDataShardListPresenter
                 return row.getPath();
             }
         }, "Path", 600);
-
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     protected void read(final DocRef docRef) {

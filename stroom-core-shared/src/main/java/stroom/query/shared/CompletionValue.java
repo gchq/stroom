@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -5,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -64,12 +82,12 @@ public final class CompletionValue implements CompletionItem {
     @JsonCreator
     public CompletionValue(@JsonProperty("caption") final String caption,
                            @JsonProperty("value") final String value,
-                           @JsonProperty("score") final int score,
+                           @JsonProperty("score") final Integer score,
                            @JsonProperty("meta") final String meta,
                            @JsonProperty("tooltip") final String tooltip) {
         this.caption = caption;
         this.value = value;
-        this.score = score;
+        this.score = Objects.requireNonNullElse(score, 0);
         this.meta = meta;
         this.tooltip = tooltip;
     }

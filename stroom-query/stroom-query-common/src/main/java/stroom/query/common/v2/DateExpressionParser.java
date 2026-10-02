@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -50,7 +50,10 @@ public class DateExpressionParser {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DateExpressionParser.class);
 
-    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d+[smhdwMy])+");
+    // The inner digit run is possessive (\d++): a duration digit run is always terminated by a unit letter
+    // ([smhdwMy], disjoint from \d), so no backtracking into the digits is ever needed. This avoids O(n^2)
+    // scanning (ReDoS) on a long run of digits with no trailing unit.
+    private static final Pattern DURATION_PATTERN = Pattern.compile("[+\\- ]*(?:\\d++[smhdwMy])+");
     private static final Pattern WHITESPACE = Pattern.compile("\\s");
     private static final ZoneId DEFAULT_TIME_ZONE = ZoneId.of("Z");
 

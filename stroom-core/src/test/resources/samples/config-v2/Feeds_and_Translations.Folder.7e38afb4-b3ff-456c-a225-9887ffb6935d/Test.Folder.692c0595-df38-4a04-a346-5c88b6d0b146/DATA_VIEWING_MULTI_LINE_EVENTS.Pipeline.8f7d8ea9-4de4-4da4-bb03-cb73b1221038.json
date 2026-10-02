@@ -1,0 +1,35 @@
+{
+  "properties" : {
+    "add" : [ {
+      "element" : "dsParser",
+      "name" : "textConverter",
+      "value" : {
+        "entity" : {
+          "type" : "TextConverter",
+          "uuid" : "7e4452ed-bf26-4187-b849-e3e721780cba",
+          "name" : "CSV_WITH_HEADER"
+        }
+      }
+    }, {
+      "element" : "translationFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "7c743105-da56-4416-89e4-e908ccdd4f53",
+          "name" : "DATA_VIEWING_MULTI_LINE-EVENTS"
+        }
+      }
+    }, {
+      "element" : "decorationFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "cf964a2a-4fda-4675-b7f0-de306ec9e93c",
+          "name" : "SOURCE_STREAM_DECORATION"
+        }
+      }
+    } ]
+  }
+}

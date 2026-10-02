@@ -1,32 +1,47 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.xml.bug;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonParser.Feature;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
-
-import java.io.IOException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.core.json.JsonReadFeature;
 
 public class JsonValidator implements ContentHandler {
 
+    private static final JsonFactory JSON_FACTORY;
     private static final String ROW = "row";
 
-    private final JsonFactory jsonFactory;
+    static {
+        JSON_FACTORY = JsonFactory.builder()
+                .configure(JsonReadFeature.ALLOW_JAVA_COMMENTS, false)
+                .configure(JsonReadFeature.ALLOW_YAML_COMMENTS, false)
+                .configure(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES, true)
+                .configure(JsonReadFeature.ALLOW_SINGLE_QUOTES, true)
+                .build();
+    }
+
     private int rowCount;
     private final StringBuilder sb = new StringBuilder();
     private boolean inRow;
     private int errorCount;
-
-    public JsonValidator() {
-        jsonFactory = new JsonFactory();
-        jsonFactory.configure(Feature.ALLOW_COMMENTS, false);
-        jsonFactory.configure(Feature.ALLOW_YAML_COMMENTS, false);
-        jsonFactory.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
-        jsonFactory.configure(Feature.ALLOW_SINGLE_QUOTES, true);
-    }
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts) {
@@ -39,11 +54,13 @@ public class JsonValidator implements ContentHandler {
     public void endElement(final String uri, final String localName, final String qName) {
         if (localName.equalsIgnoreCase(ROW)) {
             try {
-                final JsonParser jp = jsonFactory.createParser(sb.toString());
+                try (final JsonParser jp = JSON_FACTORY.createParser(sb.toString())) {
 
-                while (jp.nextToken() != null) {
+                    //noinspection StatementWithEmptyBody
+                    while (jp.nextToken() != null) {
+                    }
                 }
-            } catch (final IOException e) {
+            } catch (final Exception e) {
                 errorCount++;
                 System.err.println("ERROR PARSING JSON EVENT " + rowCount + " : " + e.getMessage());
             }

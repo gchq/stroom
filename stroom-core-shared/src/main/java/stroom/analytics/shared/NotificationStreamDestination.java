@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
@@ -22,10 +38,10 @@ public final class NotificationStreamDestination extends NotificationDestination
     @JsonCreator
     public NotificationStreamDestination(
             @JsonProperty("destinationFeed") final DocRef destinationFeed,
-            @JsonProperty("useSourceFeedIfPossible") final boolean useSourceFeedIfPossible) {
+            @JsonProperty("useSourceFeedIfPossible") final Boolean useSourceFeedIfPossible) {
 
         this.destinationFeed = destinationFeed;
-        this.useSourceFeedIfPossible = useSourceFeedIfPossible;
+        this.useSourceFeedIfPossible = Objects.requireNonNullElse(useSourceFeedIfPossible, false);
     }
 
     public DocRef getDestinationFeed() {
@@ -34,6 +50,21 @@ public final class NotificationStreamDestination extends NotificationDestination
 
     public boolean isUseSourceFeedIfPossible() {
         return useSourceFeedIfPossible;
+    }
+
+    /**
+     * Whether detections will actually go to the feed the source data came from rather than to the
+     * destination feed.
+     * <p>
+     * Only a streaming rule processes a source stream to take a feed from, so for anything else the option is
+     * ignored and the destination feed is used. Not a getter, so that Jackson leaves it alone.
+     * </p>
+     *
+     * @param analyticProcessType How the owning rule is processed.
+     */
+    public boolean isUsingSourceFeed(final AnalyticProcessType analyticProcessType) {
+        return useSourceFeedIfPossible
+               && AnalyticProcessType.STREAMING.equals(analyticProcessType);
     }
 
     @Override
@@ -46,7 +77,7 @@ public final class NotificationStreamDestination extends NotificationDestination
         }
         final NotificationStreamDestination that = (NotificationStreamDestination) o;
         return Objects.equals(destinationFeed, that.destinationFeed) &&
-                useSourceFeedIfPossible == that.useSourceFeedIfPossible;
+               useSourceFeedIfPossible == that.useSourceFeedIfPossible;
     }
 
     @Override
@@ -57,9 +88,9 @@ public final class NotificationStreamDestination extends NotificationDestination
     @Override
     public String toString() {
         return "AnalyticNotificationStreamDestination{" +
-                ", destinationFeed=" + destinationFeed +
-                ", useSourceFeedIfPossible=" + useSourceFeedIfPossible +
-                '}';
+               ", destinationFeed=" + destinationFeed +
+               ", useSourceFeedIfPossible=" + useSourceFeedIfPossible +
+               '}';
     }
 
     public Builder copy() {

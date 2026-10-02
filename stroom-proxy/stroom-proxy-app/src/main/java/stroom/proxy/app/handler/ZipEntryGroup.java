@@ -1,8 +1,24 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
-import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.FeedKey;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
@@ -19,6 +35,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -131,11 +148,6 @@ public class ZipEntryGroup {
         writer.write("\n");
     }
 
-    public static List<ZipEntryGroup> read(final Path entriesFile) {
-        final FeedKeyInterner interner = FeedKey.createInterner();
-        return read(entriesFile, interner);
-    }
-
     public static List<ZipEntryGroup> read(final Path entriesFile,
                                            final FeedKeyInterner feedKeyInterner) {
         try (final Stream<String> linesStream = Files.lines(entriesFile)) {
@@ -153,7 +165,7 @@ public class ZipEntryGroup {
                                      final FeedKeyInterner feedKeyInterner) {
         final ZipEntryGroup zipEntryGroup = read(line);
         // Use an interned FeedKey to save on mem use
-        feedKeyInterner.consumeInterned(zipEntryGroup.feedKey, zipEntryGroup::setFeedKey);
+        feedKeyInterner.consumeIfNotInterned(zipEntryGroup.feedKey, zipEntryGroup::setFeedKey);
         return zipEntryGroup;
     }
 
@@ -212,9 +224,9 @@ public class ZipEntryGroup {
 
         @JsonCreator
         public Entry(@JsonProperty("name") final String name,
-                     @JsonProperty("uncompressedSize") final long uncompressedSize) {
+                     @JsonProperty("uncompressedSize") final Long uncompressedSize) {
             this.name = name;
-            this.uncompressedSize = uncompressedSize;
+            this.uncompressedSize = Objects.requireNonNullElse(uncompressedSize, 0L);
         }
 
         public String getName() {

@@ -1,9 +1,25 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.client.presenter;
 
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.query.api.DestroyReason;
 import stroom.query.api.FindResultStoreCriteria;
 import stroom.query.api.QueryKey;
@@ -31,7 +47,7 @@ public class ResultStoreModel {
     private final FindResultStoreCriteria criteria = new FindResultStoreCriteria();
 
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     // nodeName => List<ResultStoreInfo>
     private final Map<String, List<ResultStoreInfo>> responseMap = new HashMap<>();
     private final DelayedUpdate delayedUpdate;
@@ -40,9 +56,9 @@ public class ResultStoreModel {
 
     @Inject
     public ResultStoreModel(final RestFactory restFactory,
-                            final NodeManager nodeManager) {
+                            final NodeClient nodeClient) {
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
         delayedUpdate = new DelayedUpdate(this::update);
     }
 
@@ -60,7 +76,7 @@ public class ResultStoreModel {
                             final Consumer<ResultPage<ResultStoreInfo>> dataConsumer,
                             final RestErrorHandler errorHandler,
                             final TaskMonitorFactory taskMonitorFactory) {
-        nodeManager.listAllNodes(
+        nodeClient.listAllNodes(
                 nodeNames -> fetchTasksForNodes(range, dataConsumer, nodeNames, taskMonitorFactory),
                 errorHandler, taskMonitorFactory);
     }

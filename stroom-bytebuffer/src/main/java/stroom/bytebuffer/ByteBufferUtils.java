@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.bytebuffer;
@@ -186,43 +185,33 @@ public class ByteBufferUtils {
     }
 
     public static String byteBufferInfo(final ByteBuffer byteBuffer) {
+        return byteBufferInfo(byteBuffer, true);
+    }
+
+    public static String byteBufferInfo(final ByteBuffer byteBuffer, final boolean decodeToStr) {
         if (byteBuffer == null) {
             return "null";
         }
 
         final String value = byteBufferToHexAll(byteBuffer);
-        return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
-                byteBuffer.capacity(),
-                byteBuffer.position(),
-                byteBuffer.limit(),
-                byteBuffer.remaining(),
-                value,
-                StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
+        if (decodeToStr) {
+            return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}], asStr [{}]",
+                    byteBuffer.capacity(),
+                    byteBuffer.position(),
+                    byteBuffer.limit(),
+                    byteBuffer.remaining(),
+                    value,
+                    StandardCharsets.UTF_8.decode(byteBuffer.duplicate()));
+        } else {
+            return LogUtil.message("Cap: {}, pos: {}, lim: {}, rem: {}, val [{}]",
+                    byteBuffer.capacity(),
+                    byteBuffer.position(),
+                    byteBuffer.limit(),
+                    byteBuffer.remaining(),
+                    value);
+        }
     }
 
-//    public static String byteBufferToAllForms(final ByteBuffer byteBuffer) {
-//        if (byteBuffer == null) {
-//            return "null";
-//        }
-//        return ByteArrayUtils.byteArrayToAllForms(toBytes(byteBuffer));
-//    }
-//
-//    public static int compare(final ByteBuffer left, final ByteBuffer right) {
-//        int cmpResult = stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(
-//                left, left.position(), left.remaining(),
-//                right, right.position(), right.remaining());
-//
-//        LOGGER.trace(() -> LogUtil.message("compare({}, {}) returned {}",
-//                ByteBufferUtils.byteBufferInfo(left),
-//                ByteBufferUtils.byteBufferInfo(right),
-//                cmpResult));
-//        return cmpResult;
-//
-//    }
-
-    public static int compareTo(final ByteBuffer buf1, final int o1, final int l1, final ByteBuffer buf2, final int o2, final int l2) {
-        return stroom.bytebuffer.hbase.ByteBufferUtils.compareTo(buf1, o1, l1, buf2, o2, l2);
-    }
 
     /**
      * Compare two {@link ByteBuffer} objects as if they are longs
@@ -240,9 +229,9 @@ public class ByteBufferUtils {
      * Compare two {@link ByteBuffer} objects as if they are longs
      *
      * @param left     A {@link ByteBuffer} representing a long
-     * @param leftPos  The absolute position of the long in the the left {@link ByteBuffer}
+     * @param leftPos  The absolute position of the long in the left {@link ByteBuffer}
      * @param right    A {@link ByteBuffer} representing a long
-     * @param rightPos The absolute position of the long in the the right {@link ByteBuffer}
+     * @param rightPos The absolute position of the long in the right {@link ByteBuffer}
      * @return The result of the comparison, 0 if identical, <0 if left < right,
      * >0 if left < right
      */
@@ -278,7 +267,7 @@ public class ByteBufferUtils {
                     : right.get(iRight) - leftBytes[i];
         }
 //        final int cmp2 = cmp;
-//        LAMBDA_LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
+//        LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
 //                byteBufferInfo(left), leftPos,
 //                byteBufferInfo(right), rightPos,
 //                cmp2));
@@ -311,21 +300,8 @@ public class ByteBufferUtils {
     }
 
     public static boolean containsPrefix(final ByteBuffer buffer, final ByteBuffer prefixBuffer) {
-        boolean result = true;
-        if (buffer.remaining() < prefixBuffer.remaining()) {
-            result = false;
-        } else {
-            for (int i = 0; i < prefixBuffer.remaining(); i++) {
-                if (prefixBuffer.get(i) != buffer.get(i)) {
-                    result = false;
-                    break;
-                }
-            }
-        }
-//        boolean result2 = result;
-//        LOGGER.trace(() -> LogUtil.message("containsPrefix({} {}) returns {}",
-//                ByteBufferUtils.byteBufferInfo(buffer), ByteBufferUtils.byteBufferInfo(prefixBuffer), result2));
-        return result;
+        final int pos = prefixBuffer.mismatch(buffer);
+        return pos == -1 || pos == prefixBuffer.limit();
     }
 
     public static void copy(final ByteBuffer sourceBuffer, final ByteBuffer destBuffer) {
@@ -388,7 +364,7 @@ public class ByteBufferUtils {
                     : right.get(iRight) - left.get(iLeft);
         }
 //        final int cmp2 = cmp;
-//        LAMBDA_LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
+//        LOGGER.info(() -> LogUtil.message("Comparing {}, {}, {}, {} - {}",
 //                byteBufferInfo(left), leftPos,
 //                byteBufferInfo(right), rightPos,
 //                cmp2));
@@ -476,5 +452,36 @@ public class ByteBufferUtils {
         for (int i = offset; i < offset + length; i++) {
             byteBuffer.put(i, MAX_BYTE_UNSIGNED);
         }
+    }
+
+    /**
+     * Check for byte buffer equality over portions of two buffers. This is generally quicker than slicing as no object
+     * creation is required.
+     *
+     * @param a      Byte buffer 1.
+     * @param aOff   Byte buffer 1 offset.
+     * @param b      Byte buffer 2.
+     * @param bOff   Byte buffer 2 offset.
+     * @param length Length to compare.
+     * @return True if byte buffer portions are equal.
+     */
+    public static boolean equals(final ByteBuffer a,
+                                 final int aOff,
+                                 final ByteBuffer b,
+                                 final int bOff,
+                                 final int length) {
+        if (length > 7) {
+            return a.slice(aOff, length).equals(b.slice(bOff, length));
+        }
+        for (int i = 0; i < length; i++) {
+            if (a.get(aOff + i) != b.get(bOff + i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static void skip(final ByteBuffer byteBuffer, final int len) {
+        byteBuffer.position(byteBuffer.position() + len);
     }
 }

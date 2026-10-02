@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,14 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.table.cf;
 
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.document.client.event.DirtyEvent;
@@ -55,7 +53,8 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                              final PagerView view) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Conditional Formatting Rules");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
@@ -90,8 +89,6 @@ public class RuleListPresenter extends MyPresenterWidget<PagerView> implements H
                 200);
         // Hide.
         addHideColumn();
-
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addEnabledColumn() {

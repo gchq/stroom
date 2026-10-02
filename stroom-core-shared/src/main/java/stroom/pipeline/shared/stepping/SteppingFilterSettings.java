@@ -21,6 +21,7 @@ import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -70,6 +71,34 @@ public class SteppingFilterSettings {
         return skipToSeverity != null
                 || skipToOutput != null
                 || (filters != null && !filters.isEmpty());
+    }
+
+    /**
+     * @return true if this settings has an <em>effectively</em> applied filter: a skip-to-severity /
+     * skip-to-output, or at least one fully-configured XPath filter (match type + path, plus a value when
+     * the match type needs one). Stricter than {@link #hasActiveFilters()}, which is true for any non-empty
+     * (even incompletely-configured) filter list. This is the gate the stepper uses to decide whether a
+     * filter is applied to a record.
+     */
+    @JsonIgnore
+    public boolean isFilterApplied() {
+        if (skipToSeverity != null || skipToOutput != null) {
+            return true;
+        }
+        if (filters != null) {
+            for (final XPathFilter xPathFilter : filters) {
+                if (xPathFilter.getMatchType() != null && xPathFilter.getPath() != null) {
+                    if (xPathFilter.getMatchType().isNeedsValue()) {
+                        if (xPathFilter.getValue() != null && !xPathFilter.getValue().isEmpty()) {
+                            return true;
+                        }
+                    } else {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
         errorListener = new ErrorListenerAdaptor(getElementId(), locationFactory, errorReceiverProxy);
 
         try {
-            this.handler = XMLUtil.createTransformerHandler(errorListener, false);
+            this.handler = XMLUtil.createTransformerHandler(errorListener, false, true);
 
         } catch (final TransformerConfigurationException e) {
             errorReceiverProxy.log(Severity.FATAL_ERROR,
@@ -104,7 +104,11 @@ public abstract class AbstractSamplingFilter extends AbstractXMLFilter {
      */
     @Override
     public void startDocument() throws SAXException {
-        this.outputStream = new ByteArrayOutputStream();
+        if (this.outputStream == null) {
+            this.outputStream = new ByteArrayOutputStream();
+        } else {
+            this.outputStream.reset();
+        }
         handler.setResult(new StreamResult(outputStream));
 
         handler.startDocument();

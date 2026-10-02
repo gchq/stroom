@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore;
@@ -28,15 +27,12 @@ import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.Receiver;
 import net.sf.saxon.event.ReceiverOptions;
 import net.sf.saxon.trans.XPathException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 
 public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StringByteBufferConsumer.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StringByteBufferConsumer.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StringByteBufferConsumer.class);
 
     private final Receiver receiver;
 
@@ -51,12 +47,12 @@ public class StringByteBufferConsumer implements RefDataValueByteBufferConsumer 
         // we should only be consuming string type values
         final String str = StringValueSerde.extractValue(byteBuffer);
 
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("str {}, byteBuffer {}",
+        LOGGER.trace(() -> LogUtil.message("str {}, byteBuffer {}",
                 str, ByteBufferUtils.byteBufferInfo(byteBuffer)));
 
         try {
-            // Not sure why we use WHOLE_TEXT_NODE as we are potentially calling characters() multiple times for a
-            // bitmap lookup. Maybe that is what is adding the space between bitmaplookup values.
+            // For a bitmap lookup characters() is called once per matched bit position; the
+            // space delimiting of those values is done by the receiver.
             receiver.characters(str, RefDataValueProxyConsumer.NULL_LOCATION, ReceiverOptions.WHOLE_TEXT_NODE);
         } catch (final XPathException e) {
             throw new RuntimeException(LogUtil.message("Error passing string {} to receiver", str), e);

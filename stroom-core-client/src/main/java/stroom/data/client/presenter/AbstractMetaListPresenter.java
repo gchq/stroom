@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.data.shared.DataResource;
@@ -35,7 +34,6 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionPopup;
-import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -44,7 +42,10 @@ import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusRequest;
+import stroom.pipeline.client.event.ChangeDataEvent;
+import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.CreateProcessorEvent;
+import stroom.pipeline.client.event.HasChangeDataHandlers;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.CreateProcessFilterRequest;
@@ -60,6 +61,7 @@ import stroom.security.shared.DocumentPermission;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
+import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
@@ -72,9 +74,11 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortList;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
+import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.Collections;
@@ -89,7 +93,7 @@ import javax.inject.Provider;
 
 public abstract class AbstractMetaListPresenter
         extends MyPresenterWidget<PagerView>
-        implements HasDataSelectionHandlers<Selection<Long>>, Refreshable {
+        implements HasDataSelectionHandlers<Selection<Long>>, Refreshable, HasChangeDataHandlers<ResultPage<MetaRow>> {
 
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
     private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
@@ -131,7 +135,8 @@ public abstract class AbstractMetaListPresenter
         this.pipelineSelection = pipelineSelection;
         this.expressionValidator = expressionValidator;
 
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Streams");
         selectionModel = new MultiSelectionModelImpl<>();
         selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
@@ -142,18 +147,36 @@ public abstract class AbstractMetaListPresenter
         addColumns(allowSelectAll);
 
         criteria = new FindMetaCriteria();
-        dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus) {
+        dataProvider = new RestDataProvider<>(eventBus) {
             @Override
             protected void exec(final Range range,
                                 final Consumer<ResultPage<MetaRow>> dataConsumer,
                                 final RestErrorHandler errorHandler) {
                 if (criteria.getExpression() != null) {
                     CriteriaUtil.setRange(criteria, range);
-                    CriteriaUtil.setSortList(criteria, dataGrid.getColumnSortList());
+                    final ColumnSortList columnSortList = dataGrid.getColumnSortList();
+                    final List<CriteriaFieldSort> sortList = CriteriaUtil.createSortList(columnSortList);
+                    // Add the meta id to the sort list otherwise we are never guaranteed rows returned
+                    // in same order. It has to be appended to the list actually sent, AFTER the user's
+                    // own sorts, so that it only ever breaks ties: two rows with an equal Create Time
+                    // would otherwise be free to swap between pages.
+                    // Break the ties in the same direction as the sort we are breaking them for. Either
+                    // direction gives us the total order we need, but an index can only provide rows in its
+                    // own order or the exact reverse of it, so mixing the directions means the database has
+                    // to sort the whole result set to answer what is usually just the first page of it.
+                    if (!CriteriaUtil.hasSortColumn(columnSortList, MetaFields.FIELD_ID)) {
+                        final boolean isDescending = !sortList.isEmpty()
+                                                     && sortList.get(sortList.size() - 1).isDesc();
+                        sortList.add(new CriteriaFieldSort(MetaFields.FIELD_ID, isDescending, false));
+                    }
+                    criteria.setSortList(sortList);
                     restFactory
                             .create(META_RESOURCE)
                             .method(res -> res.findMetaRow(criteria))
-                            .onSuccess(dataConsumer)
+                            .onSuccess(resultSet -> {
+                                dataConsumer.accept(resultSet);
+                                ChangeDataEvent.fire(AbstractMetaListPresenter.this, resultSet);
+                            })
                             .onFailure(errorHandler)
                             .taskMonitorFactory(view)
                             .exec();
@@ -169,9 +192,18 @@ public abstract class AbstractMetaListPresenter
         };
     }
 
+    void setTableName(final String tableName) {
+        dataGrid.setTableName(tableName);
+    }
+
     @Override
     protected void onBind() {
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+    }
+
+    @Override
+    public HandlerRegistration addChangeDataHandler(final ChangeDataHandler<ResultPage<MetaRow>> handler) {
+        return getEventBus().addHandlerToSource(ChangeDataEvent.getType(), this, handler);
     }
 
     protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
@@ -349,12 +381,11 @@ public abstract class AbstractMetaListPresenter
 
     void addFeedColumn() {
         dataGrid.addResizableColumn(
-                DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
+                DataGridUtil.feedRefColumnBuilder((MetaRow metaRow) ->
                                         Optional.ofNullable(metaRow)
                                                 .map(this::getFeed)
                                                 .orElse(null),
-                                getEventBus(),
-                                true)
+                                getEventBus())
                         .withSorting(MetaFields.FEED)
                         .build(),
                 "Feed",
@@ -375,23 +406,13 @@ public abstract class AbstractMetaListPresenter
                 80);
     }
 
-    private DocRef getFeed(final MetaRow metaRow) {
-        if (metaRow.getMeta() != null && metaRow.getMeta().getFeedName() != null) {
-            return new DocRef(
-                    FeedDoc.TYPE,
-                    null,
-                    metaRow.getMeta().getFeedName());
-        }
-        return null;
+    private String getFeed(final MetaRow metaRow) {
+        return NullSafe.get(metaRow, MetaRow::getMeta, Meta::getFeedName);
     }
 
     private DocRef getPipeline(final MetaRow metaRow) {
-        if (metaRow.getMeta().getProcessorUuid() != null) {
-            if (metaRow.getPipeline() != null) {
-                return metaRow.getPipeline();
-            } else {
-                return new DocRef(null, null, null);
-            }
+        if (NullSafe.nonNull(metaRow, MetaRow::getMeta, Meta::getProcessorUuid)) {
+            return metaRow.getPipeline();
         }
         return null;
     }
@@ -399,11 +420,8 @@ public abstract class AbstractMetaListPresenter
     void addPipelineColumn() {
         dataGrid.addResizableColumn(
                 DataGridUtil.docRefColumnBuilder((MetaRow metaRow) ->
-                                        Optional.ofNullable(metaRow)
-                                                .map(this::getPipeline)
-                                                .orElse(null),
-                                getEventBus(),
-                                false)
+                                        NullSafe.get(metaRow, this::getPipeline),
+                                getEventBus())
                         .withSorting(MetaFields.PIPELINE_NAME)
                         .build(),
                 "Pipeline",
@@ -419,7 +437,7 @@ public abstract class AbstractMetaListPresenter
     }
 
     private Set<Long> getResultStreamIdSet() {
-        final HashSet<Long> rtn = new HashSet<>();
+        final Set<Long> rtn = new HashSet<>();
         if (resultPage != null) {
             for (final MetaRow e : resultPage.getValues()) {
                 rtn.add(e.getMeta().getId());
@@ -514,8 +532,21 @@ public abstract class AbstractMetaListPresenter
                 size);
     }
 
-    void addEndColumn() {
-        dataGrid.addEndColumn(new EndColumn<>());
+    /**
+     * Set an expression this client built itself, with no validation round-trip.
+     * <p>
+     * {@link #setExpression} validates because a user-edited filter can be wrong, and the server's
+     * message is the feedback. A seed expression built from a {@link stroom.docref.DocRef} by
+     * {@code MetaExpressionUtil} cannot be wrong, so validating one spends a
+     * {@code POST /expression/v1/validate} on this client's own output before the {@code meta/find}
+     * it was always going to run. {@code ExpressionValidator} already makes exactly this exemption
+     * for {@code ALL_UNLOCKED_EXPRESSION}; this extends it to the rest of the seeds.
+     *
+     * @param onSetExpression Called after the expression has been set on the criteria. Can be null.
+     */
+    public void setSeedExpression(final ExpressionOperator expression, final Runnable onSetExpression) {
+        this.criteria.setExpression(expression);
+        NullSafe.run(onSetExpression);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.security.client.view;
@@ -21,6 +20,7 @@ import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.CreateUserPresenter.CreateType;
 import stroom.security.client.presenter.CreateUserPresenter.CreateUserView;
 import stroom.security.client.presenter.CreateUserUiHandlers;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -41,6 +41,8 @@ public class CreateUserViewImpl
     private final Widget widget;
 
     @UiField
+    FormGroup createTypesFormGroup;
+    @UiField
     SelectionBox<CreateType> createTypes;
     @UiField
     SimplePanel panel;
@@ -57,7 +59,7 @@ public class CreateUserViewImpl
 
     @Override
     public void setCreateTypesVisible(final boolean visible) {
-        createTypes.setVisible(visible);
+        createTypesFormGroup.setVisible(visible);
     }
 
     @Override

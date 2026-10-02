@@ -1,25 +1,37 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docstore.api;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docref.HasFindDocsByName;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.importexport.shared.ImportSettings;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.Message;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-public interface Store<D extends Doc>
-        extends DocumentActionHandler<D>, HasFindDocsByName, ContentIndexable {
-    ////////////////////////////////////////////////////////////////////////
+public interface Store<D extends AbstractDoc>
+        extends DocumentActionHandler<D>, ContentIndexable {
+    // ---------------------------------------------------------------------
     // START OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     DocRef createDocument(String name);
 
@@ -32,25 +44,19 @@ public interface Store<D extends Doc>
 
     void deleteDocument(DocRef docRef);
 
-    DocRefInfo info(DocRef docRef);
-
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF ExplorerActionHandler
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // START OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
-    Map<DocRef, Set<DocRef>> getDependencies(BiConsumer<D, DependencyRemapper> mapper);
+    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings);
 
-    Set<DocRef> getDependencies(DocRef docRef, BiConsumer<D, DependencyRemapper> mapper);
-
-    void remapDependencies(DocRef docRef, Map<DocRef, DocRef> remappings, BiConsumer<D, DependencyRemapper> mapper);
-
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
     // END OF HasDependencies
-    ////////////////////////////////////////////////////////////////////////
+    // ---------------------------------------------------------------------
 
     /**
      * Creates the named document, using the supplied {@link DocumentCreator} to
@@ -63,27 +69,29 @@ public interface Store<D extends Doc>
 
     DocRef importDocument(
             DocRef docRef,
-            Map<String, byte[]> dataMap,
+            ImportExportDocument importExportDocument,
             ImportState importState,
             ImportSettings importSettings);
 
-    Map<String, byte[]> exportDocument(DocRef docRef,
+    ImportExportDocument exportDocument(DocRef docRef,
+                                       boolean omitAuditFields,
+                                       List<Message> messageList);
+
+    ImportExportDocument exportDocument(DocRef docRef,
+                                       boolean omitAuditFields,
                                        List<Message> messageList,
-                                       Function<D, D> filter);
+                                       Function<D, D> function);
 
     /**
      * List all documents of this stores type
      */
     List<DocRef> list();
 
-    // This is only used to migrate pipelines. Do not use!!!
-    @Deprecated
-    void migratePipelines(Function<Map<String, byte[]>, Optional<Map<String, byte[]>>> function);
+    List<DocRef> findDocRefsEmbeddedIn(DocRef parent);
 
-    interface DocumentCreator<D extends Doc> {
+    interface DocumentCreator<D extends AbstractDoc> {
 
-        D create(final String type,
-                 final String uuid,
+        D create(final String uuid,
                  final String name,
                  final String version,
                  final Long createTime,

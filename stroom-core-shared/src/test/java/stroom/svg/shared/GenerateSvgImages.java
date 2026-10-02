@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.svg.shared;
 
 import java.io.File;
@@ -28,6 +44,18 @@ import java.util.stream.Stream;
  *     the same names and relative paths as the source.</li>
  *     <li>Generate {@link SvgImage} enum containing all the SVGs as string values for use
  *     with inline SVGs in HTML.</li>
+ * </ul>
+ * <p>
+ * In addition to generating the modified svg files and the {@link SvgImage} enum, it also produces
+ * {@code colour-swatces.html} and {@code themedIcons.html} and provides command to serve them
+ * with the python simple web server. These contact sheets can be used for checking how icons look
+ * on different backgrounds.
+ * </p>
+ * <ul>
+ * {@code themedIcons.html} - This shows icons against both a light and dark background.
+ * </ul>
+ * <ul>
+ * {@code colour-swatches.html} - This shows icons grouped by their fill colour.
  * </ul>
  */
 public class GenerateSvgImages {
@@ -168,7 +196,7 @@ public class GenerateSvgImages {
 
                         final String enumFieldName = pathToEnumFieldName(relSourcePath);
                         final String className = "svg-image__"
-                                + enumFieldName.toLowerCase().replace('_', '-');
+                                                 + enumFieldName.toLowerCase().replace('_', '-');
                         final boolean isNewName = enumFieldNameSet.add(enumFieldName);
                         if (!isNewName) {
                             System.err.println("Enum field name clash: " + enumFieldName);

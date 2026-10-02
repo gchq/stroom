@@ -24,7 +24,6 @@ import stroom.app.commands.ResetPasswordCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
-import stroom.config.app.SecurityConfig;
 import stroom.config.app.SessionConfig;
 import stroom.config.app.SessionCookieConfig;
 import stroom.config.app.StroomYamlUtil;
@@ -37,10 +36,9 @@ import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.event.logging.rs.api.RestResourceAutoLogger;
-import stroom.security.impl.AuthenticationConfig;
-import stroom.security.openid.api.AbstractOpenIdConfig;
-import stroom.security.openid.api.IdpType;
-import stroom.util.authentication.DefaultOpenIdCredentials;
+import stroom.node.impl.NodeConfig;
+import stroom.security.common.impl.InsecureTestCredentials;
+import stroom.util.BuildInfoProvider;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
@@ -56,12 +54,13 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.SessionUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;
 import stroom.util.validation.ValidationModule;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlFileUtil;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
@@ -73,16 +72,18 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import jakarta.inject.Inject;
+import jakarta.servlet.ServletContext;
 import jakarta.validation.ValidatorFactory;
+import org.eclipse.jetty.ee10.servlet.SessionHandler;
 import org.eclipse.jetty.http.HttpCookie;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.server.session.SessionHandler;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
 
 public class App extends Application<Config> {
 
@@ -106,6 +107,8 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
     @Inject
     private RestResourceAutoLogger resourceAutoLogger;
+    @Inject
+    private BuildInfoProvider buildInfoProvider;
 
     // Injected manually
     private HomeDirProvider homeDirProvider;
@@ -137,7 +140,7 @@ public class App extends Application<Config> {
         //   Please add log4j-core to the classpath. Using SimpleLogger to log to the console...
         System.setProperty("org.jboss.logging.provider", "slf4j");
 
-        final Path yamlConfigFile = YamlUtil.getYamlFileFromArgs(args);
+        final Path yamlConfigFile = YamlFileUtil.getYamlFileFromArgs(args);
         new App(yamlConfigFile).run(args);
     }
 
@@ -150,7 +153,9 @@ public class App extends Application<Config> {
     public void initialize(final Bootstrap<Config> bootstrap) {
 
         // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
-        bootstrap.getObjectMapper().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        // This is currently jackson v2 as that is what DW 5.0.1 uses
+        bootstrap.getObjectMapper()
+                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
         // This allows us to use env var templating and relative (to stroom home) paths in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(StroomYamlUtil.createConfigurationSourceProvider(
@@ -163,10 +168,13 @@ public class App extends Application<Config> {
                 "index.html",
                 ResourcePaths.UI_SERVLET_NAME));
 
+        // Admin servlet for Prometheus to scrape (pull) metrics
+//        bootstrap.addBundle(new PrometheusBundle());
+
         addCliCommands(bootstrap);
 
         // If we want to use jakarta.validation on our rest resources with our own custom validation annotations
-        // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
+        // then we need to set the ValidatorFactory. As our main Guice Injector is not available, yet we need to
         // create one just for the REST validation
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
     }
@@ -249,78 +257,69 @@ public class App extends Application<Config> {
 
         // Add health checks
         healthChecks.register();
-
         // Add filters
         filters.register();
-
         // Add servlets
         servlets.register();
-
         // Add admin port/path servlets. Needs to be called after healthChecks.register()
         adminServlets.register();
-
         // Add session listeners.
         sessionListeners.register();
-
         // Add all injectable rest resources.
         restResources.register();
-
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
 
-        warnAboutDefaultOpenIdCreds(configuration, appInjector);
+        warnAboutInsecureTestCredentials(appInjector);
 
         showNodeInfo(configuration);
     }
 
     private void showNodeInfo(final Config configuration) {
-        LOGGER.info(""
-                    + "\n********************************************************************************"
-                    + "\n  Stroom home:   " + homeDirProvider.get().toAbsolutePath().normalize()
-                    + "\n  Stroom temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
-                    + "\n  Node name:     " + getNodeName(configuration.getYamlAppConfig())
-                    + "\n********************************************************************************");
+        final int parallelism;
+        try (final ForkJoinPool forkJoinPool = ForkJoinPool.commonPool()) {
+            parallelism = forkJoinPool.getParallelism();
+        }
+        final int availableProcessors = Runtime.getRuntime().availableProcessors();
+        final BuildInfo buildInfo = buildInfoProvider.get();
+        LOGGER.info("""
+                        App Info:
+                        ********************************************************************************
+                          Build Version:         {}
+                          Build Time:            {}
+                          Stroom Home:           {}
+                          Stroom Temp:           {}
+                          Node Name:             {}
+                          Available Processors:  {}
+                          FJP Parallelism:       {}
+                        ********************************************************************************""",
+                buildInfo.getBuildVersion(),
+                Instant.ofEpochMilli(buildInfo.getBuildTime()),
+                homeDirProvider.get().toAbsolutePath().normalize(),
+                tempDirProvider.get().toAbsolutePath().normalize(),
+                getNodeName(configuration.getYamlAppConfig()),
+                availableProcessors,
+                parallelism);
     }
 
-    private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
-
-        final boolean areDefaultOpenIdCredsInUse = NullSafe.test(configuration.getYamlAppConfig(),
-                AppConfig::getSecurityConfig,
-                SecurityConfig::getAuthenticationConfig,
-                AuthenticationConfig::getOpenIdConfig,
-                openIdConfig ->
-                        IdpType.TEST_CREDENTIALS.equals(openIdConfig.getIdentityProviderType()));
-
-        if (areDefaultOpenIdCredsInUse) {
-            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
-                    DefaultOpenIdCredentials.class);
-            final String propPath = configuration.getYamlAppConfig()
-                    .getSecurityConfig()
-                    .getAuthenticationConfig()
-                    .getOpenIdConfig()
-                    .getFullPathStr(AbstractOpenIdConfig.PROP_NAME_IDP_TYPE);
-
+    private void warnAboutInsecureTestCredentials(final Injector injector) {
+        final InsecureTestCredentials insecureTestCredentials = injector.getInstance(InsecureTestCredentials.class);
+        if (insecureTestCredentials.isEnabled()) {
             LOGGER.warn("\n" +
                         "\n  -----------------------------------------------------------------------------" +
                         "\n  " +
                         "\n                                        WARNING!" +
                         "\n  " +
-                        "\n   Using default and publicly available Open ID authentication credentials. " +
-                        "\n   This is insecure! These should only be used in test/demo environments. " +
-                        "\n   Set " + propPath + " to INTERNAL_IDP/EXTERNAL_IDP for production environments." +
-                        "\n" +
-                        "\n   " + defaultOpenIdCredentials.getApiKey() +
+                        "\n   The insecure test credential (" + InsecureTestCredentials.SECRET_PROP + ") is " +
+                        "\n   enabled. This is insecure and must only be used in test/demo environments. " +
+                        "\n   Unset " + InsecureTestCredentials.ALLOW_PROP + " in production environments." +
                         "\n  -----------------------------------------------------------------------------" +
                         "\n");
         }
     }
 
     private String getNodeName(final AppConfig appConfig) {
-        return appConfig != null
-                ? (appConfig.getNodeConfig() != null
-                ? appConfig.getNodeConfig().getNodeName()
-                : null)
-                : null;
+        return NullSafe.get(appConfig, AppConfig::getNodeConfig, NodeConfig::getNodeName);
     }
 
     private void validateAppConfig(final Config config, final Path configFile) {
@@ -359,8 +358,9 @@ public class App extends Application<Config> {
         // We need to give our session cookie a name other than JSESSIONID, otherwise it might
         // clash with other services running on the same domain.
         sessionHandler.setSessionCookie(SessionUtil.STROOM_SESSION_COOKIE_NAME);
-        // In case we use URL encoding of the session ID, which we currently don't
-        sessionHandler.setSessionIdPathParameterName(SessionUtil.STROOM_SESSION_COOKIE_NAME);
+        // Keep the session id in the cookie only, never in a URL path parameter. Passing null (rather
+        // than a name) disables the URL path parameter.
+        sessionHandler.setSessionIdPathParameterName(null);
         long maxInactiveIntervalSecs = NullSafe.getOrElse(
                 sessionConfig.getMaxInactiveInterval(),
                 StroomDuration::getDuration,
@@ -386,7 +386,7 @@ public class App extends Application<Config> {
     private void configureSessionCookie(final Environment environment,
                                         final SessionCookieConfig sessionCookieConfig) {
         // Ensure the session cookie that provides JSESSIONID is secure.
-        final ContextHandler.Context context = environment
+        final ServletContext context = environment
                 .getApplicationContext()
                 .getServletContext();
 
@@ -395,7 +395,7 @@ public class App extends Application<Config> {
         servletSessionCookieConfig.setSecure(sessionCookieConfig.isSecure());
         servletSessionCookieConfig.setHttpOnly(sessionCookieConfig.isHttpOnly());
         context.setAttribute(
-                HttpCookie.SAME_SITE_DEFAULT_ATTRIBUTE,
+                HttpCookie.SAME_SITE_ATTRIBUTE,
                 sessionCookieConfig.getSameSite().getAttributeValue());
     }
 

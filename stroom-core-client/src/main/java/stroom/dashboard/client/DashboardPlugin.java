@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client;
@@ -31,7 +30,7 @@ import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.hyperlink.client.ShowDashboardEvent;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.api.SearchRequestSource;
@@ -82,12 +81,16 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     public MyPresenterWidget<?> open(final DocRef docRef,
                                      final boolean forceOpen,
                                      final boolean fullScreen,
+                                     final boolean selectDefaultTab,
                                      final CommonDocLinkTab selectedLinkTab,
+                                     final Consumer<MyPresenterWidget<?>> callbackOnOpen,
+                                     final boolean duplicate,
                                      final TaskMonitorFactory taskMonitorFactory) {
         if (docRef.getType().equals(getType())) {
             currentUuid = docRef.getUuid();
         }
-        return super.open(docRef, forceOpen, fullScreen, selectedLinkTab, taskMonitorFactory);
+        return super.open(docRef, forceOpen, fullScreen, selectDefaultTab, selectedLinkTab, callbackOnOpen, duplicate,
+                taskMonitorFactory);
     }
 
     private void openParameterisedDashboard(final Object context, final String href) {
@@ -129,7 +132,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                     presenter,
                     closeHandler,
                     presenter,
-                    false,
                     new DefaultTaskMonitorFactory(this));
         }
     }
@@ -185,7 +187,6 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
                         presenter,
                         closeHandler,
                         presenter,
-                        false,
                         new DefaultTaskMonitorFactory(this));
             }
         }
@@ -193,7 +194,7 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
 
 
     @Override
-    protected DocumentEditPresenter<?, ?> createEditor() {
+    protected DocPresenter<?, ?> createEditor() {
         return dashboardSuperPresenterProvider.get();
     }
 

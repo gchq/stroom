@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.proxy.app.DataDirProvider;
@@ -15,7 +31,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Singleton
 public class Forwarder {
@@ -30,15 +45,14 @@ public class Forwarder {
                      final Provider<ProxyConfig> proxyConfigProvider,
                      final ForwardFileDestinationFactory forwardFileDestinationFactory,
                      final ForwardHttpPostDestinationFactory forwardHttpPostDestinationFactory,
+                     final ForwardS3DestinationFactory forwardS3DestinationFactory,
                      final CleanupDirQueue cleanupDirQueue) {
         // Find out how many forward destinations are enabled.
         final ProxyConfig proxyConfig = proxyConfigProvider.get();
-        final long enabledForwardCount = Stream
-                .concat(NullSafe.stream(proxyConfig.getForwardHttpDestinations())
-                                .filter(ForwardHttpPostConfig::isEnabled),
-                        NullSafe.stream(proxyConfig.getForwardFileDestinations())
-                                .filter(ForwardFileConfig::isEnabled))
+        final long enabledForwardCount = NullSafe.stream(proxyConfig.getAllForwardDestinations())
+                .filter(ForwarderConfig::isEnabled)
                 .count();
+
         LOGGER.debug("enabledForwardCount: {}", enabledForwardCount);
 
         if (enabledForwardCount == 0) {
@@ -57,7 +71,17 @@ public class Forwarder {
                 .map(forwardFileDestinationFactory::create)
                 .forEach(destinations::add);
 
+        // Add S3 destinations.
+        NullSafe.stream(proxyConfig.getForwardS3Destinations())
+                .filter(ForwardS3Config::isEnabled)
+                .map(forwardS3DestinationFactory::create)
+                .forEach(destinations::add);
+
         final NumberedDirProvider copiesDirProvider = createCopiesDirProvider(dataDirProvider);
+
+        destinations.forEach(destination ->
+                LOGGER.info("Adding {} forward destination '{}'",
+                        destination.getDestinationType(), destination.getDestinationDescription()));
 
         if (destinations.size() == 1) {
             // Most stroom-proxy instances will only have one destination

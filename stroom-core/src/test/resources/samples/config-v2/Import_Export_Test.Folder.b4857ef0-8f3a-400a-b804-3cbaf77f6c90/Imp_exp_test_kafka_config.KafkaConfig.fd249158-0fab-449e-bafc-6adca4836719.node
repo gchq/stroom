@@ -1,0 +1,5 @@
+name=Imp_exp_test_kafka_config
+path=/Import Export Test/Imp_exp_test_kafka_config
+type=KafkaConfig
+uuid=fd249158-0fab-449e-bafc-6adca4836719
+version=V2

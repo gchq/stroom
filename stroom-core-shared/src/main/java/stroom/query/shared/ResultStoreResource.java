@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ public interface ResultStoreResource extends RestResource, DirectRestService {
     String LIST_PATH_PART = "/list";
     String FIND_PATH_PART = "/find";
     String UPDATE_PATH_PART = "/update";
-    String EXISTS_PATH_PART = "/exists";
     String TERMINATE_PATH_PART = "/terminate";
     String DESTROY_PATH_PART = "/destroy";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
@@ -72,14 +71,6 @@ public interface ResultStoreResource extends RestResource, DirectRestService {
     Boolean update(
             @PathParam("nodeName") String nodeName,
             @Parameter(description = "request", required = true) UpdateStoreRequest updateStoreRequest);
-
-    @POST
-    @Path(EXISTS_PATH_PART + NODE_NAME_PATH_PARAM)
-    @Operation(
-            summary = "Determines if the requested result store still exists",
-            operationId = "resultStoreExists")
-    Boolean exists(@PathParam("nodeName") String nodeName,
-                   @Parameter(description = "queryKey", required = true) final QueryKey queryKey);
 
     @POST
     @Path(TERMINATE_PATH_PART + NODE_NAME_PATH_PARAM)

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.guice;
 
 import stroom.proxy.app.ProxyConfig;
@@ -6,7 +22,6 @@ import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.config.annotations.RequiresProxyRestart;
 import stroom.util.exception.ThrowingSupplier;
-import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -15,7 +30,6 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -73,7 +87,6 @@ public class ProxyConfigProvider {
             final AbstractConfig config,
             final Prop parentProp,
             final Map<Class<? extends AbstractConfig>, AbstractConfig> configInstanceMap,
-            final ObjectMapper objectMapper,
             final PropertyPath propertyPath,
             final AtomicInteger changeCounter,
             final boolean logChanges) {
@@ -81,7 +94,7 @@ public class ProxyConfigProvider {
         try {
             final Class<? extends AbstractConfig> clazz = config.getClass();
 
-            final Map<String, Prop> propMap = PropertyUtil.getProperties(objectMapper, config);
+            final Map<String, Prop> propMap = PropertyUtil.getProperties(config);
 
             propMap.forEach((k, prop) -> {
                 final String childPropName = prop.getName();
@@ -100,7 +113,6 @@ public class ProxyConfigProvider {
                                 childValue,
                                 prop,
                                 configInstanceMap,
-                                objectMapper,
                                 childPropPath,
                                 changeCounter,
                                 logChanges);
@@ -234,7 +246,6 @@ public class ProxyConfigProvider {
                 newProxyConfig,
                 null,
                 newInstanceMap,
-                JsonUtil.getMapper(),
                 ProxyConfig.ROOT_PROPERTY_PATH,
                 changeCounter,
                 logChanges);

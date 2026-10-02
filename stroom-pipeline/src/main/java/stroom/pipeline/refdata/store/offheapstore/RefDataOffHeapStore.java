@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore;
@@ -485,7 +484,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     public void purge(final long refStreamId, final long partIndex) {
         final TaskContext taskContext = taskContextFactory.current();
         final Instant startTime = Instant.now();
-        taskContext.info(() -> LogUtil.message("Purging data for reference stream {}:{} in store '{}'",
+        taskContext.info(() -> LogUtil.message("Purging data for reference stream_id={}, part={}, in store '{}'",
                 refStreamId, partIndex, storeName));
 
         final AtomicReference<PurgeCounts> countsRef = new AtomicReference<>(PurgeCounts.zero());
@@ -1074,7 +1073,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             } while (optMapUid.isPresent());
         }
 
-//        LAMBDA_LOGGER.info("Purged data for {} map(s) for {}", cnt, refStreamDefinition);
+//        LOGGER.info("Purged data for {} map(s) for {}", cnt, refStreamDefinition);
         return summaryInfo;
     }
 

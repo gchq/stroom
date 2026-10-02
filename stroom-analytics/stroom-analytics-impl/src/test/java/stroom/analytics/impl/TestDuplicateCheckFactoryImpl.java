@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,16 +33,19 @@ import stroom.lmdb.LmdbLibrary;
 import stroom.lmdb.LmdbLibraryConfig;
 import stroom.lmdb2.LmdbEnvDirFactory;
 import stroom.query.api.Column;
-import stroom.query.api.Row;
 import stroom.query.common.v2.CompiledColumns;
 import stroom.query.common.v2.DuplicateCheckStoreConfig;
+import stroom.query.common.v2.ResultStoreLmdbConfig;
 import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
+import stroom.query.language.functions.Values;
+import stroom.util.io.ByteSize;
 import stroom.util.io.PathCreator;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.PageRequest;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -50,6 +53,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,57 +61,67 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestDuplicateCheckFactoryImpl {
 
     private Path tempDir;
+    private ExecutorService executorService;
 
     @BeforeEach
     void setup(@TempDir final Path tempDir) {
         this.tempDir = tempDir;
+        executorService = Executors.newCachedThreadPool();
+    }
+
+    @AfterEach
+    void tearDown() {
+        // close() awaits the stores' writer threads, so they are finished with their envs before
+        // JUnit deletes the @TempDir the envs live in. The previous provider,
+        // Executors::newCachedThreadPool, created a new never-shut-down pool per store.
+        executorService.close();
     }
 
     @Test
     void test() {
-        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
+        final Values values = Values.of("test");
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
-            assertThat(duplicateCheck.check(row)).isTrue();
+            assertThat(duplicateCheck.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck.check(row)).isFalse();
+                assertThat(duplicateCheck.check(values)).isFalse();
             }
         }
     }
 
     @Test
     void testReload() {
-        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
+        final Values values = Values.of("test");
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, "test")) {
-            assertThat(duplicateCheck.check(row)).isTrue();
+            assertThat(duplicateCheck.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck.check(row)).isFalse();
+                assertThat(duplicateCheck.check(values)).isFalse();
             }
         }
 
         try (final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test")) {
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck2.check(row)).isFalse();
+                assertThat(duplicateCheck2.check(values)).isFalse();
             }
         }
     }
 
     @Test
     void testDifferentAnalytic() {
-        final Row row = Row.builder().groupKey("test").values(List.of("test")).build();
+        final Values values = Values.of("test");
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck1 = createDuplicateCheck(duplicateCheckFactory, "test1")) {
-            assertThat(duplicateCheck1.check(row)).isTrue();
+            assertThat(duplicateCheck1.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck1.check(row)).isFalse();
+                assertThat(duplicateCheck1.check(values)).isFalse();
             }
         }
 
         try (final DuplicateCheck duplicateCheck2 = createDuplicateCheck(duplicateCheckFactory, "test2")) {
-            assertThat(duplicateCheck2.check(row)).isTrue();
+            assertThat(duplicateCheck2.check(values)).isTrue();
             for (int i = 0; i < 10; i++) {
-                assertThat(duplicateCheck2.check(row)).isFalse();
+                assertThat(duplicateCheck2.check(values)).isFalse();
             }
         }
     }
@@ -119,9 +133,9 @@ class TestDuplicateCheckFactoryImpl {
         final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
         try (final DuplicateCheck duplicateCheck = createDuplicateCheck(duplicateCheckFactory, analyticRuleUuid)) {
             for (int i = 0; i < 223; i++) {
-                final Row row = Row.builder().groupKey("test" + i).values(List.of("test" + i)).build();
-                assertThat(duplicateCheck.check(row)).isTrue();
-                assertThat(duplicateCheck.check(row)).isFalse();
+                final Values values = Values.of("test" + i);
+                assertThat(duplicateCheck.check(values)).isTrue();
+                assertThat(duplicateCheck.check(values)).isFalse();
             }
         }
 
@@ -137,6 +151,24 @@ class TestDuplicateCheckFactoryImpl {
         assertThat(rows.getResultPage().getPageResponse().getTotal()).isEqualTo(223);
     }
 
+    @Test
+    void testFetchColumnNames() {
+        final DuplicateCheckFactoryImpl duplicateCheckFactory = createDuplicateCheckFactory();
+        final String analyticRuleUuid = "test";
+        final AnalyticRuleDoc analytic = createAnalytic(analyticRuleUuid);
+        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()))
+                .isEmpty();
+
+        try (final DuplicateCheck ignored = createDuplicateCheck(duplicateCheckFactory, "test")) {
+            assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).orElseThrow())
+                    .containsExactly("test");
+        }
+
+        // Now removed from the pool
+        assertThat(duplicateCheckFactory.fetchColumnNames(analytic.getUuid()).orElseThrow())
+                .containsExactly("test");
+    }
+
     private DuplicateCheckFactoryImpl createDuplicateCheckFactory() {
         final TempDirProvider tempDirProvider = () -> tempDir;
         final PathCreator pathCreator = new SimplePathCreator(() -> tempDir, () -> tempDir);
@@ -145,35 +177,28 @@ class TestDuplicateCheckFactoryImpl {
                 new LmdbLibrary(pathCreator, tempDirProvider, () -> lmdbLibraryConfig), pathCreator);
         final ByteBufferFactory byteBufferFactory = new ByteBufferFactoryImpl();
         final ByteBuffers byteBuffers = new ByteBuffers(byteBufferFactory);
+        // The production default map size is 10GiB per store env; these tests write a few hundred
+        // small rows.
+        final DuplicateCheckStoreConfig duplicateCheckStoreConfig = new DuplicateCheckStoreConfig(
+                ResultStoreLmdbConfig.builder()
+                        .localDir("lmdb/duplicate_check")
+                        .maxStoreSize(ByteSize.ofMebibytes(10))
+                        .build());
         final DuplicateCheckDirs duplicateCheckDirs = new DuplicateCheckDirs(
                 lmdbEnvDirFactory,
-                new DuplicateCheckStoreConfig());
+                duplicateCheckStoreConfig);
         return new DuplicateCheckFactoryImpl(
                 duplicateCheckDirs,
                 byteBufferFactory,
                 byteBuffers,
-                new DuplicateCheckStoreConfig(),
+                duplicateCheckStoreConfig,
                 new DuplicateCheckRowSerde(byteBufferFactory),
-                Executors::newCachedThreadPool);
+                () -> executorService);
     }
 
     private DuplicateCheck createDuplicateCheck(final DuplicateCheckFactoryImpl duplicateCheckFactory,
                                                 final String ruleUUID) {
-        final DuplicateNotificationConfig duplicateNotificationConfig = new DuplicateNotificationConfig(
-                true,
-                true,
-                false,
-                Collections.emptyList());
-
-        final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
-                .uuid(ruleUUID)
-                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
-                .query("test")
-                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-                .notifications(createNotificationConfig())
-                .errorFeed(new DocRef("Feed", "error"))
-                .duplicateNotificationConfig(duplicateNotificationConfig)
-                .build();
+        final AnalyticRuleDoc analyticRuleDoc = createAnalytic(ruleUUID);
 
         final Column column = Column
                 .builder()
@@ -186,6 +211,24 @@ class TestDuplicateCheckFactoryImpl {
         final CompiledColumns compiledColumns = CompiledColumns
                 .create(new ExpressionContext(), columns, fieldIndex, Collections.emptyMap());
         return duplicateCheckFactory.create(analyticRuleDoc, compiledColumns);
+    }
+
+    private AnalyticRuleDoc createAnalytic(final String ruleUuid) {
+        final DuplicateNotificationConfig duplicateNotificationConfig = new DuplicateNotificationConfig(
+                true,
+                true,
+                false,
+                Collections.emptyList());
+
+        return AnalyticRuleDoc.builder()
+                .uuid(ruleUuid)
+                .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
+                .query("test")
+                .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
+                .notifications(createNotificationConfig())
+                .errorFeed(new DocRef("Feed", "error"))
+                .duplicateNotificationConfig(duplicateNotificationConfig)
+                .build();
     }
 
     protected List<NotificationConfig> createNotificationConfig() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,12 @@ import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.UserRef;
 
 import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.Input;
+import jakarta.inject.Provider;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -40,6 +42,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 public class ResultStore {
@@ -52,10 +55,10 @@ public class ResultStore {
     private final CoprocessorsImpl coprocessors;
     private final UserRef userRef;
     private final Instant creationTime;
-    private volatile Instant lastAccessTime;
     private final String nodeName;
-
     private final SearchResponseCreator searchResponseCreator;
+
+    private volatile Instant lastAccessTime;
     private volatile ResultStoreSettings resultStoreSettings;
     private volatile SearchProcess searchProcess;
     private volatile boolean terminate;
@@ -67,20 +70,22 @@ public class ResultStore {
                        final String nodeName,
                        final ResultStoreSettings resultStoreSettings,
                        final MapDataStoreFactory mapDataStoreFactory,
-                       final ExpressionPredicateFactory expressionPredicateFactory) {
+                       final ExpressionPredicateFactory expressionPredicateFactory,
+                       final Provider<Executor> executorProvider) {
         this.searchRequestSource = searchRequestSource;
         this.coprocessors = coprocessors;
         this.userRef = userRef;
         this.creationTime = Instant.now();
-        lastAccessTime = creationTime;
+        this.lastAccessTime = creationTime;
         this.nodeName = nodeName;
         this.resultStoreSettings = resultStoreSettings;
-        searchResponseCreator = new SearchResponseCreator(
+        this.searchResponseCreator = new SearchResponseCreator(
                 sizesProvider,
                 this,
                 coprocessors.getExpressionContext(),
                 mapDataStoreFactory,
-                expressionPredicateFactory);
+                expressionPredicateFactory,
+                executorProvider);
     }
 
     public Map<String, ResultCreator> makeDefaultResultCreators(final SearchRequest searchRequest) {
@@ -172,7 +177,7 @@ public class ResultStore {
     }
 
     private ErrorConsumer getErrorConsumer(final String nodeName) {
-        return errors.computeIfAbsent(nodeName, k -> new ErrorConsumerImpl());
+        return errors.computeIfAbsent(nodeName, ignored -> new ErrorConsumerImpl());
     }
 
     public synchronized void onFailure(final String nodeName,
@@ -186,26 +191,23 @@ public class ResultStore {
         errorConsumer.add(error);
     }
 
-    public List<String> getErrors() {
+    public List<ErrorMessage> getErrors() {
         if (errors.isEmpty() && !coprocessors.getErrorConsumer().hasErrors()) {
             return Collections.emptyList();
         }
 
-        final List<String> err = new ArrayList<>();
+        final List<ErrorMessage> err = new ArrayList<>();
         for (final Entry<String, ErrorConsumer> entry : errors.entrySet()) {
             final String nodeName = entry.getKey();
             final ErrorConsumer errorConsumer = entry.getValue();
-            final List<String> errors = errorConsumer.getErrors();
+            final List<ErrorMessage> errors = errorConsumer.getErrorMessages();
 
-            if (!errors.isEmpty()) {
-                err.add("Node: " + nodeName);
-                for (final String error : errors) {
-                    err.add("\t" + error);
-                }
+            for (final ErrorMessage error : errors) {
+                err.add(new ErrorMessage(error.getSeverity(), error.getMessage(), nodeName));
             }
         }
         // Add any errors from the coprocessors
-        err.addAll(coprocessors.getErrorConsumer().getErrors());
+        err.addAll(coprocessors.getErrorConsumer().getErrorMessages());
 
         return err;
     }

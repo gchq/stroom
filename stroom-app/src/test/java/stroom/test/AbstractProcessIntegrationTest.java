@@ -27,10 +27,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
 
     @Inject
-    private ContentImportService contentImportService;
+    @SuppressWarnings("unused")
+    private ContentStoreTestSetup contentStoreTestSetup;
 
     @BeforeEach
     final void importSchemas() {
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
     }
 }

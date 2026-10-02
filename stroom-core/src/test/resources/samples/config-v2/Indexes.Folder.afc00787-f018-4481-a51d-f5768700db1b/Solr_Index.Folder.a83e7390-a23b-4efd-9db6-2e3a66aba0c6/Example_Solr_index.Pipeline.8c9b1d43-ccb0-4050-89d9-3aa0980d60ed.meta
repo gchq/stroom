@@ -1,0 +1,11 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "8c9b1d43-ccb0-4050-89d9-3aa0980d60ed",
+  "name" : "Example Solr index",
+  "version" : "3ca2ce8b-7c7c-4900-8a16-34444666fae9",
+  "parentPipeline" : {
+    "type" : "Pipeline",
+    "uuid" : "fcef1b20-083e-436c-ab95-47a6ce453435",
+    "name" : "Indexing"
+  }
+}

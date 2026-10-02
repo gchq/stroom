@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -37,9 +36,6 @@ import java.util.Objects;
  * < 4 bytes >< 8 bytes >< 8 bytes >
  */
 public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(RangeStoreKeySerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(RangeStoreKeySerde.class);
 
     public static final int UID_OFFSET = 0;
     public static final int RANGE_FROM_OFFSET = UID_OFFSET + UID.UID_ARRAY_LENGTH;

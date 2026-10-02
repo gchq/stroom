@@ -1,9 +1,26 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline;
 
 import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.pipeline.stepping.store.SteppingConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.IsStroomConfig;
@@ -23,6 +40,7 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
     private final ReferenceDataConfig referenceDataConfig;
     private final XmlSchemaConfig xmlSchemaConfig;
     private final XsltConfig xsltConfig;
+    private final SteppingConfig steppingConfig;
     private final CacheConfig httpClientCache;
     private final CacheConfig pipelineDataCache;
     private final CacheConfig documentPermissionCache;
@@ -33,6 +51,7 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
         referenceDataConfig = new ReferenceDataConfig();
         xmlSchemaConfig = new XmlSchemaConfig();
         xsltConfig = new XsltConfig();
+        steppingConfig = new SteppingConfig();
         httpClientCache = CacheConfig.builder()
                 .maximumSize(1000L)
                 .expireAfterAccess(StroomDuration.ofMinutes(10))
@@ -57,6 +76,7 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
                           @JsonProperty("referenceData") final ReferenceDataConfig referenceDataConfig,
                           @JsonProperty("xmlSchema") final XmlSchemaConfig xmlSchemaConfig,
                           @JsonProperty("xslt") final XsltConfig xsltConfig,
+                          @JsonProperty("stepping") final SteppingConfig steppingConfig,
                           @JsonProperty("httpClientCache") final CacheConfig httpClientCache,
                           @JsonProperty("pipelineDataCache") final CacheConfig pipelineDataCache,
                           @JsonProperty("documentPermissionCache") final CacheConfig documentPermissionCache) {
@@ -65,6 +85,7 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
         this.referenceDataConfig = referenceDataConfig;
         this.xmlSchemaConfig = xmlSchemaConfig;
         this.xsltConfig = xsltConfig;
+        this.steppingConfig = steppingConfig;
         this.httpClientCache = httpClientCache;
         this.pipelineDataCache = pipelineDataCache;
         this.documentPermissionCache = documentPermissionCache;
@@ -93,6 +114,11 @@ public class PipelineConfig extends AbstractConfig implements IsStroomConfig {
     @JsonProperty("xslt")
     public XsltConfig getXsltConfig() {
         return xsltConfig;
+    }
+
+    @JsonProperty("stepping")
+    public SteppingConfig getSteppingConfig() {
+        return steppingConfig;
     }
 
     public CacheConfig getHttpClientCache() {

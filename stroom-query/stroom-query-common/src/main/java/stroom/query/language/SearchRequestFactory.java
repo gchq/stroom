@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
+import stroom.query.api.GroupSelection;
 import stroom.query.api.HoppingWindow;
 import stroom.query.api.IncludeExcludeFilter;
 import stroom.query.api.ParamUtil;
@@ -32,6 +33,7 @@ import stroom.query.api.ResultRequest;
 import stroom.query.api.ResultRequest.Fetch;
 import stroom.query.api.ResultRequest.ResultStyle;
 import stroom.query.api.SearchRequest;
+import stroom.query.api.SearchRequestSource;
 import stroom.query.api.Sort;
 import stroom.query.api.Sort.SortDirection;
 import stroom.query.api.SpecialColumns;
@@ -92,38 +94,42 @@ public class SearchRequestFactory {
     public static final String VIS_COMPONENT_ID = "vis";
 
     private final VisualisationTokenConsumer visualisationTokenConsumer;
-    private final DocResolver docResolver;
+    private final DataSourceResolver dataSourceResolver;
     private final Provider<QueryFieldProvider> queryFieldProviderProvider;
     private final SecurityContext securityContext;
 
     @Inject
     public SearchRequestFactory(final VisualisationTokenConsumer visualisationTokenConsumer,
-                                final DocResolver docResolver,
+                                final DataSourceResolver dataSourceResolver,
                                 final Provider<QueryFieldProvider> queryFieldProviderProvider,
                                 final SecurityContext securityContext) {
         this.visualisationTokenConsumer = visualisationTokenConsumer;
-        this.docResolver = docResolver;
+        this.dataSourceResolver = dataSourceResolver;
         this.queryFieldProviderProvider = queryFieldProviderProvider;
         this.securityContext = securityContext;
     }
 
     public void extractDataSourceOnly(final String string,
                                       final Consumer<DocRef> consumer) {
-        new Builder(visualisationTokenConsumer, docResolver, queryFieldProviderProvider, securityContext)
+        new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
                 .extractDataSourceOnly(string, consumer);
     }
 
     public SearchRequest create(final String string,
                                 final SearchRequest in,
                                 final ExpressionContext expressionContext) {
-        return new Builder(visualisationTokenConsumer, docResolver, queryFieldProviderProvider, securityContext)
+        return new Builder(visualisationTokenConsumer, dataSourceResolver, queryFieldProviderProvider, securityContext)
                 .create(string, in, expressionContext);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class Builder {
 
         private final VisualisationTokenConsumer visualisationTokenConsumer;
-        private final DocResolver docResolver;
+        private final DataSourceResolver dataSourceResolver;
         private final Provider<QueryFieldProvider> queryFieldProviderProvider;
         private final SecurityContext securityContext;
 
@@ -137,11 +143,11 @@ public class SearchRequestFactory {
         private Optional<CompiledWindow> optionalCompiledWindow = Optional.empty();
 
         Builder(final VisualisationTokenConsumer visualisationTokenConsumer,
-                final DocResolver docResolver,
+                final DataSourceResolver dataSourceResolver,
                 final Provider<QueryFieldProvider> queryFieldProviderProvider,
                 final SecurityContext securityContext) {
             this.visualisationTokenConsumer = visualisationTokenConsumer;
-            this.docResolver = docResolver;
+            this.dataSourceResolver = dataSourceResolver;
             this.queryFieldProviderProvider = queryFieldProviderProvider;
             this.securityContext = securityContext;
             this.fieldIndex = new FieldIndex();
@@ -202,8 +208,8 @@ public class SearchRequestFactory {
                 final List<TokenType> consumedTokens = new ArrayList<>();
 
                 // Create result requests.
-                final List<ResultRequest> resultRequests = new ArrayList<>();
-                addTableSettings(childTokens, consumedTokens, resultRequests, queryBuilder);
+                final List<ResultRequest> resultRequests = addTableSettings(
+                        in.getSearchRequestSource(), childTokens, consumedTokens, queryBuilder);
 
                 // Try to make a query.
                 Query query = queryBuilder.build();
@@ -267,7 +273,7 @@ public class SearchRequestFactory {
             }
             final String dataSourceName = dataSourceToken.getUnescapedText();
             final DocRef dataSourceDocRef = securityContext.useAsReadResult(() ->
-                    docResolver.resolveDataSourceRef(dataSourceName));
+                    dataSourceResolver.resolveDataSourceRef(dataSourceName));
 
             consumer.accept(dataSourceDocRef);
 
@@ -437,7 +443,7 @@ public class SearchRequestFactory {
                 final String dictionaryName = dictionaryNameToken.getUnescapedText().trim();
                 final DocRef dictionaryRef;
                 try {
-                    dictionaryRef = docResolver.resolveDocRef("Dictionary", dictionaryName);
+                    dictionaryRef = dataSourceResolver.findDictionaryDoc(dictionaryName);
                 } catch (final RuntimeException e) {
                     throw new TokenException(dictionaryNameToken, e.getMessage());
                 }
@@ -738,10 +744,12 @@ public class SearchRequestFactory {
             return out;
         }
 
-        private void addTableSettings(final List<AbstractToken> tokens,
-                                      final List<TokenType> consumedTokens,
-                                      final List<ResultRequest> resultRequests,
-                                      final Query.Builder queryBuilder) {
+        private List<ResultRequest> addTableSettings(final SearchRequestSource searchRequestSource,
+                                                     final List<AbstractToken> tokens,
+                                                     final List<TokenType> consumedTokens,
+                                                     final Query.Builder queryBuilder) {
+            final List<ResultRequest> resultRequests = new ArrayList<>();
+
             final Map<String, Sort> sortMap = new HashMap<>();
             final Map<String, Integer> groupMap = new HashMap<>();
             final Map<String, IncludeExcludeFilter> filterMap = new HashMap<>();
@@ -857,10 +865,6 @@ public class SearchRequestFactory {
 
             // Ensure StreamId and EventId fields exist if there is no grouping.
             if (groupDepth == 0) {
-                if (!addedFields.contains(SpecialColumns.RESERVED_ID)) {
-                    tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_ID_COLUMN);
-                    addedFields.add(SpecialColumns.RESERVED_ID);
-                }
                 if (!addedFields.contains(SpecialColumns.RESERVED_STREAM_ID)) {
                     tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_STREAM_ID_COLUMN);
                     addedFields.add(SpecialColumns.RESERVED_STREAM_ID);
@@ -868,6 +872,10 @@ public class SearchRequestFactory {
                 if (!addedFields.contains(SpecialColumns.RESERVED_EVENT_ID)) {
                     tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_EVENT_ID_COLUMN);
                     addedFields.add(SpecialColumns.RESERVED_EVENT_ID);
+                }
+                if (!addedFields.contains(SpecialColumns.RESERVED_ANNOTATION_ID)) {
+                    tableSettingsBuilder.addColumns(SpecialColumns.RESERVED_ANNOTATION_ID_COLUMN);
+                    addedFields.add(SpecialColumns.RESERVED_ANNOTATION_ID);
                 }
             }
 
@@ -892,28 +900,30 @@ public class SearchRequestFactory {
                     .extractValues(true)
                     .build();
 
-            final ResultRequest tableResultRequest = new ResultRequest(TABLE_COMPONENT_ID,
-                    Collections.singletonList(tableSettings),
-                    null,
-                    null,
-                    null,
-                    ResultStyle.TABLE,
-                    Fetch.ALL);
+            final ResultRequest tableResultRequest = ResultRequest.builder()
+                    .componentId(TABLE_COMPONENT_ID)
+                    .searchRequestSource(searchRequestSource)
+                    .mappings(Collections.singletonList(tableSettings))
+                    .resultStyle(ResultStyle.TABLE)
+                    .fetch(Fetch.ALL)
+                    .groupSelection(new GroupSelection())
+                    .build();
             resultRequests.add(tableResultRequest);
 
             if (visTableSettings != null) {
                 final List<TableSettings> tableSettingsList = new ArrayList<>();
                 tableSettingsList.add(tableSettings);
                 tableSettingsList.add(visTableSettings);
-                final ResultRequest qlVisResultRequest = new ResultRequest(VIS_COMPONENT_ID,
-                        tableSettingsList,
-                        null,
-                        null,
-                        null,
-                        ResultStyle.QL_VIS,
-                        Fetch.ALL);
+                final ResultRequest qlVisResultRequest = ResultRequest.builder()
+                        .componentId(VIS_COMPONENT_ID)
+                        .mappings(tableSettingsList)
+                        .resultStyle(ResultStyle.QL_VIS)
+                        .fetch(Fetch.ALL)
+                        .groupSelection(new GroupSelection())
+                        .build();
                 resultRequests.add(qlVisResultRequest);
             }
+            return resultRequests;
         }
 
         private void processWindow(final KeywordGroup keywordGroup,

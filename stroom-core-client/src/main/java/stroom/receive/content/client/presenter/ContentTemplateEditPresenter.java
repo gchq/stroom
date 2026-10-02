@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.content.client.presenter;
@@ -31,7 +30,6 @@ import stroom.receive.content.shared.ContentTemplateResource;
 import stroom.receive.content.shared.TemplateType;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Focus;
@@ -39,6 +37,8 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public class ContentTemplateEditPresenter
         extends MyPresenterWidget<ContentTemplateEditView>
@@ -99,8 +99,7 @@ public class ContentTemplateEditPresenter
     void read(final ContentTemplate contentTemplate) {
         this.originalTemplate = contentTemplate;
         getView().setName(contentTemplate.getName());
-        editExpressionPresenter.read(NullSafe.requireNonNullElseGet(
-                contentTemplate.getExpression(),
+        editExpressionPresenter.read(Objects.requireNonNullElseGet(contentTemplate.getExpression(),
                 () -> ExpressionOperator.builder().build()));
 
         final ContentTemplateEditView view = getView();

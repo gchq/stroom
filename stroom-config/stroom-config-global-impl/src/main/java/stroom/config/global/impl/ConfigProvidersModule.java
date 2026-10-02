@@ -1,7 +1,5 @@
 package stroom.config.global.impl;
 
-import stroom.core.receive.AutoContentCreationConfig;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
@@ -20,10 +18,37 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.activity.impl.db.ActivityConfig getActivityConfig(
+    stroom.activity.impl.dao.ActivityConfig getActivityConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.activity.impl.db.ActivityConfig.class);
+                stroom.activity.impl.dao.ActivityConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.ai.impl.AiConfig getAiConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ai.impl.AiConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.ai.shared.AskStroomAiConfig getAskStroomAiConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ai.shared.AskStroomAiConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.ai.shared.TableAnalysisConfig getTableAnalysisConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ai.shared.TableAnalysisConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -83,10 +108,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.cluster.lock.impl.db.ClusterLockConfig getClusterLockConfig(
+    stroom.cluster.lock.impl.dao.ClusterLockConfig getClusterLockConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.cluster.lock.impl.db.ClusterLockConfig.class);
+                stroom.cluster.lock.impl.dao.ClusterLockConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -191,10 +216,55 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.contentindex.ContentIndexConfig getContentIndexConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.contentindex.ContentIndexConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.contentstore.impl.ContentStoreConfig getContentStoreConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.contentstore.impl.ContentStoreConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.core.receive.AutoContentCreationConfig getAutoContentCreationConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.core.receive.AutoContentCreationConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.credentials.impl.CredentialsConfig getCredentialsConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.credentials.impl.CredentialsConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.dashboard.impl.DashboardConfig getDashboardConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.dashboard.impl.DashboardConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.dashboard.impl.visualisation.VisualisationAssetConfig getVisualisationAssetConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.dashboard.impl.visualisation.VisualisationAssetConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -227,10 +297,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.docstore.impl.db.DocStoreConfig getDocStoreConfig(
+    stroom.docstore.impl.DocStoreConfig getDocStoreConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.docstore.impl.db.DocStoreConfig.class);
+                stroom.docstore.impl.DocStoreConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -263,6 +333,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.gitrepo.impl.GitRepoConfig getGitRepoConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.gitrepo.impl.GitRepoConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.importexport.impl.ContentPackImportConfig getContentPackImportConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -285,15 +364,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.index.impl.IndexConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.index.impl.IndexFieldDbConfig getIndexFieldDbConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.index.impl.IndexFieldDbConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -326,6 +396,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.index.impl.db.IndexFieldDbConfig getIndexFieldDbConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.index.impl.db.IndexFieldDbConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.index.impl.selection.VolumeConfig getVolumeConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -349,8 +428,6 @@ public class ConfigProvidersModule extends AbstractModule {
         return configMapper.getConfigObject(
                 stroom.kafka.impl.KafkaConfig.class);
     }
-
-
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
@@ -481,6 +558,15 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.pipeline.stepping.store.SteppingConfig getSteppingConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.pipeline.stepping.store.SteppingConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.planb.impl.PlanBConfig getPlanBConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -526,19 +612,28 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    AutoContentCreationConfig getAutoContentCreationConfig(
+    stroom.receive.common.ReceiveDataConfig getReceiveDataConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                AutoContentCreationConfig.class);
+                stroom.receive.common.ReceiveDataConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.receive.common.ReceiveDataConfig getReceiveDataConfig(
+    stroom.receive.common.S3EventConfig getS3EventConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
-                stroom.receive.common.ReceiveDataConfig.class);
+                stroom.receive.common.S3EventConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.receive.rules.impl.StroomReceiptPolicyConfig getStroomReceiptPolicyConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.receive.rules.impl.StroomReceiptPolicyConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -566,15 +661,6 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.search.elastic.ElasticConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.search.elastic.ElasticRetentionConfig getElasticRetentionConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.search.elastic.ElasticRetentionConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -715,6 +801,33 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.security.impl.CsrfConfig getCsrfConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.impl.CsrfConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.impl.EdgeAuthenticationConfig getEdgeAuthenticationConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.impl.EdgeAuthenticationConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.security.impl.EdgeLogoutConfig getEdgeLogoutConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.security.impl.EdgeLogoutConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.security.impl.StroomOpenIdConfig getStroomOpenIdConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -734,37 +847,10 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.state.impl.StateConfig getStateConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.state.impl.StateConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.statistics.impl.InternalStatisticsConfig getInternalStatisticsConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.statistics.impl.InternalStatisticsConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig getHBaseStatisticsConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.statistics.impl.hbase.internal.KafkaTopicsConfig getKafkaTopicsConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.statistics.impl.hbase.internal.KafkaTopicsConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -911,7 +997,7 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.analytics.impl.SmtpConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
+                        + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -921,7 +1007,7 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.config.common.AbstractDbConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
+                        + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -931,7 +1017,7 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.config.common.ConnectionConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
+                        + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -941,17 +1027,7 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.config.common.ConnectionPoolConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
-    stroom.config.common.UriConfig getUriConfigButThrow(
-            final ConfigMapper configMapper) {
-        throw new UnsupportedOperationException(
-                "stroom.config.common.UriConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
+                        + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -961,7 +1037,7 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.query.common.v2.AbstractResultStoreConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
+                        + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -971,7 +1047,7 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.query.common.v2.ResultStoreLmdbConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
+                        + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -981,7 +1057,7 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.query.common.v2.ResultStoreMapConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
+                        + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -991,7 +1067,17 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.security.identity.config.SmtpConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
+                        + "Inject a config class that uses it or one of its sub-class instead.");
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.util.net.UriConfig getUriConfigButThrow(
+            final ConfigMapper configMapper) {
+        throw new UnsupportedOperationException(
+                "stroom.util.net.UriConfig cannot be injected directly. "
+                        + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -1001,7 +1087,7 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         throw new UnsupportedOperationException(
                 "stroom.util.shared.AbstractConfig cannot be injected directly. "
-                + "Inject a config class that uses it or one of its sub-class instead.");
+                        + "Inject a config class that uses it or one of its sub-class instead.");
     }
 
 }

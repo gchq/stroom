@@ -76,6 +76,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 expressionValidator,
                 false
         );
+        setTableName("Related Streams");
     }
 
     public void setSelectedStream(final MetaRow metaRow,
@@ -205,8 +206,6 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
                 "Retention",
                 DataRetentionFields.RETENTION_AGE_FIELD,
                 ColumnSizeConstants.SMALL_COL);
-
-        addEndColumn();
     }
 
     private Expander buildExpander(final MetaRow row) {

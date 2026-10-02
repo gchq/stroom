@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.impl;
 
 import stroom.processor.impl.ProgressMonitor.FilterProgressMonitor;
@@ -16,15 +32,19 @@ class TestProgressMonitor {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestProgressMonitor.class);
 
-    private static final ProcessorFilter PROCESSOR_FILTER_1 = new ProcessorFilter();
-    private static final ProcessorFilter PROCESSOR_FILTER_2 = new ProcessorFilter();
+    private static final ProcessorFilter PROCESSOR_FILTER_1;
+    private static final ProcessorFilter PROCESSOR_FILTER_2;
 
 
     static {
-        PROCESSOR_FILTER_1.setId(1);
-        PROCESSOR_FILTER_1.setPipelineName("Pipe 1");
-        PROCESSOR_FILTER_2.setId(2);
-        PROCESSOR_FILTER_2.setPipelineName("Pipe 2");
+        PROCESSOR_FILTER_1 = ProcessorFilter.builder()
+                .id(1)
+                .pipelineName("Pipe 1")
+                .build();
+        PROCESSOR_FILTER_2 = ProcessorFilter.builder()
+                .id(2)
+                .pipelineName("Pipe 2")
+                .build();
     }
 
     @Test
@@ -73,7 +93,7 @@ class TestProgressMonitor {
 
         final String str = progressMonitor
                 .getFullReport("SUMMARY",
-                        new QueueProcessTasksState(0, 0),
+                        new QueueProcessTasksState(List.of(), 0, 0),
                         showFilterDetail,
                         showSummaryPhaseDetail,
                         showFilterPhaseDetail);

@@ -24,9 +24,11 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
 import stroom.svg.shared.SvgImage;
+import stroom.util.RandomUtil;
 import stroom.util.io.CompressionUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.PathCreator;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
@@ -88,21 +90,7 @@ public class FileAppender extends AbstractAppender {
     @Override
     protected Output createOutput() throws IOException {
         try {
-            if (outputPaths == null || outputPaths.length == 0) {
-                throw new IOException("No output paths have been set");
-            }
-
-            // Get a path to use.
-            String path;
-            if (outputPaths.length == 1) {
-                path = outputPaths[0];
-            } else {
-                // Choose one of the output paths at random.
-                path = outputPaths[(int) Math.round(Math.random() * (outputPaths.length - 1))];
-            }
-
-            // Replace some of the path elements with system variables.
-            path = pathCreator.replaceAll(path);
+            final String path = getRandomOutputPath();
 
             // Make sure we can create this path.
             final Path file = Paths.get(path);
@@ -147,11 +135,23 @@ public class FileAppender extends AbstractAppender {
         }
     }
 
+    private String getRandomOutputPath() throws IOException {
+        if (NullSafe.isEmptyArray(outputPaths)) {
+            throw new IOException("No output paths have been set");
+        }
+        String path = RandomUtil.getRandomItem(outputPaths);
+
+        // Replace some of the path elements with system variables.
+        path = pathCreator.replaceAll(path);
+
+        return path;
+    }
+
     /**
      * Parses a POSIX-style file permission string like "rwxr--r--"
      */
     private static Set<PosixFilePermission> parsePosixFilePermissions(final String filePermissions) {
-        if (filePermissions == null || filePermissions.isEmpty()) {
+        if (NullSafe.isEmptyString(filePermissions)) {
             return null;
         }
 
@@ -171,7 +171,11 @@ public class FileAppender extends AbstractAppender {
                           "Replacement variables can be used in path strings such as ${feed}.",
             displayPriority = 1)
     public void setOutputPaths(final String outputPaths) {
-        this.outputPaths = outputPaths.split(",");
+        if (NullSafe.isEmptyString(outputPaths)) {
+            this.outputPaths = null;
+        } else {
+            this.outputPaths = outputPaths.split(",");
+        }
     }
 
     @SuppressWarnings("unused")

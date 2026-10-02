@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import stroom.job.shared.JobNodeAndInfo;
 import stroom.job.shared.JobNodeAndInfoListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.node.client.JobNodeListHelper;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.node.client.event.NodeChangeEvent;
 import stroom.node.client.event.OpenNodeEvent;
 import stroom.preferences.client.DateTimeFormatter;
@@ -83,7 +83,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
     private final InlineSvgToggleButton showEnabledToggleBtn;
 
     private final DelayedUpdate redrawDelayedUpdate;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final InlineSvgToggleButton autoRefreshButton;
 
     private boolean autoRefresh;
@@ -95,12 +95,13 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                                 final SchedulePopup schedulePresenter,
                                 final MenuPresenter menuPresenter,
                                 final DateTimeFormatter dateTimeFormatter,
-                                final NodeManager nodeManager) {
+                                final NodeClient nodeClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
 
-        this.dataGrid = new MyDataGrid<>();
+        this.dataGrid = new MyDataGrid<>(this);
+        this.dataGrid.setTableName("Job Nodes");
         this.dataGrid.addDefaultSelectionModel(true);
         this.redrawDelayedUpdate = new DelayedUpdate(REDRAW_TIMER_DELAY_MS, dataGrid::redraw);
         this.selectionModel = dataGrid.addDefaultSelectionModel(true);
@@ -134,7 +135,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
     }
 
     private void refreshNodeStates() {
-        nodeManager.listEnabledNodes(enabledNodeNames -> {
+        nodeClient.listEnabledNodes(enabledNodeNames -> {
             jobNodeListHelper.setEnabledNodeNames(enabledNodeNames);
             // Redraw the grid in case any node states have changed which impacts enabled state of rows.
             // Don't need to refresh as the grid doesn't use the node table
@@ -159,7 +160,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
             }
         }));
 
-        // NodeLisPresenter may change a node
+        // NodeListPresenter may change a node
         registerHandler(getEventBus().addHandler(
                 NodeChangeEvent.getType(), event -> {
                     // We are likely showing all jobs so just refresh
@@ -169,7 +170,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
         // JobListPresenter may change a job
         registerHandler(getEventBus().addHandler(
                 JobChangeEvent.getType(), event -> {
-                    GWT.log("Handling JobChangeEvent " + event);
+//                    GWT.log("Handling JobChangeEvent " + event);
                     final String currentJobName = getJobNameCriteria();
                     final String affectedJobName = NullSafe.get(event, JobChangeEvent::getJob, Job::getName);
                     if (currentJobName != null && Objects.equals(currentJobName, affectedJobName)) {
@@ -309,7 +310,10 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
                         .enabledWhen(jobNodeListHelper::isJobNodeEnabled)
                         .withFieldUpdater((rowIndex, jobNodeAndInfo, value) -> {
                             if (jobNodeAndInfo != null) {
-                                jobNodeAndInfo.getJobNode().setTaskLimit(value.intValue());
+                                jobNodeAndInfo.setJobNode(jobNodeAndInfo.getJobNode()
+                                        .copy()
+                                        .taskLimit(value.intValue())
+                                        .build());
                                 restFactory
                                         .create(JOB_NODE_RESOURCE)
                                         .call(res -> res.setTaskLimit(jobNodeAndInfo.getId(), value.intValue()))
@@ -343,8 +347,6 @@ public class JobNodeListPresenter extends MyPresenterWidget<PagerViewWithHeading
 
         // Action column
         jobNodeListHelper.addActionColumn(dataGrid);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public void read(final Job job) {

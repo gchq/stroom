@@ -23,6 +23,7 @@ import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.reader.FindReplaceFilter.Builder;
 import stroom.pipeline.reader.FindReplaceFilter.SubSequence;
+import stroom.util.shared.ElementId;
 
 import org.junit.jupiter.api.Test;
 
@@ -646,7 +647,7 @@ class TestFindReplaceFilter {
                         .reader(reader)
                         .locationFactory(locationFactory)
                         .errorReceiver(loggingErrorReceiver)
-                        .elementId("findReplaceFilter_" + i)
+                        .elementId(new ElementId("findReplaceFilter_" + i))
                         .build();
             }
 

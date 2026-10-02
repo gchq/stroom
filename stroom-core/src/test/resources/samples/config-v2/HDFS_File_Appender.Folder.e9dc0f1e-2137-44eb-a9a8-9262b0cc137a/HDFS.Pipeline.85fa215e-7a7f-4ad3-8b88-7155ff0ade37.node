@@ -1,0 +1,5 @@
+name=HDFS
+path=/HDFS File Appender/HDFS
+type=Pipeline
+uuid=85fa215e-7a7f-4ad3-8b88-7155ff0ade37
+version=V2

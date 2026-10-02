@@ -17,20 +17,24 @@
 # ~~~ stroom base stage ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Intermediate build stage that is common to stroom and proxy to speed up
-# the build
+# the build. Keep both statements the same between this and stroom-proxy
+# so they can each use the same cached layer.
 
 # The JDK (rather than JRE) is required for the diagnostic tools like
 # jstat/jmap/jcmd/etc.
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:21.0.8_9-jdk-alpine as stroom-base-stage
+FROM eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24@sha256:3fd2d245c4e0eba615fe366a71b8bd25f5db7104f53e4026b24bf508b880bd2a AS stroom-base-stage
 
+# bash and jq are required for Kubernetes lifecycle scripts, which interact with the API
 # curl is required for the docker healthcheck
 # su-exec required for running stroom as not-root user
 # tini required for process control in the entrypoint
 RUN echo "http_proxy: $http_proxy" && \
     echo "https_proxy: $https_proxy" && \
     apk add --no-cache \
+        bash \
+        jq \
         curl \
         su-exec \
         tini
@@ -57,11 +61,13 @@ VOLUME /stroom-proxy/config/
 VOLUME /stroom-proxy/certs/
 VOLUME /stroom-proxy/content/
 VOLUME /stroom-proxy/data/
+VOLUME /stroom-proxy/data_feed_identities/
 VOLUME /stroom-proxy/logs/
 VOLUME /stroom-proxy/failures/
-# sqlite_library mounted as tmpfs not a managed volumne
+VOLUME /stroom-proxy/zip_file_ingest/
+VOLUME /stroom-proxy/zip_file_ingest_failed/
 
-# run entrypoint script inside tini for better unix process handling, 
+# run entrypoint script inside tini for better unix process handling,
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
 
@@ -91,7 +97,10 @@ RUN \
     mkdir -p /stroom-proxy/logs/send && \
     mkdir -p /stroom-proxy/logs/app && \
     mkdir -p /stroom-proxy/data && \
+    mkdir -p /stroom-proxy/data_feed_identities && \
     mkdir -p /stroom-proxy/failures && \
+    mkdir -p /stroom-proxy/zip_file_ingest && \
+    mkdir -p /stroom-proxy/zip_file_ingest_failed && \
     chown -R proxy:proxy /stroom-proxy
 
 # Copy all the fat jars for the application and connectors

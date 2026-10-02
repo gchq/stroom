@@ -1,0 +1,4 @@
+name=OTEL_TRACES_TO_PATHWAYS
+path=Pathways
+type=Pipeline
+uuid=95d1e95a-b588-4da6-ba59-ae15564edcd4

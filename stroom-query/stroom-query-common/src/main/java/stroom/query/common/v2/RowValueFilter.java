@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.common.v2;
@@ -27,9 +26,12 @@ import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.api.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactories;
-import stroom.query.language.functions.Val;
+import stroom.query.common.v2.ExpressionPredicateFactory.ValueFunctionFactory;
+import stroom.query.language.functions.Values;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -48,16 +50,14 @@ public class RowValueFilter {
         return optional.isEmpty();
     }
 
-    public static Optional<Predicate<Val[]>> create(final List<Column> columns,
-                                                    final boolean applyValueFilters,
-                                                    final DateTimeSettings dateTimeSettings,
-                                                    final ExpressionPredicateFactory expressionPredicateFactory) {
+    public static Optional<Predicate<Values>> create(final List<Column> columns,
+                                                     final DateTimeSettings dateTimeSettings,
+                                                     final ExpressionPredicateFactory expressionPredicateFactory) {
         // Create column value filter expression.
-        final Optional<ExpressionOperator> optionalExpressionOperator =
-                create(columns, applyValueFilters);
+        final Optional<ExpressionOperator> optionalExpressionOperator = create(columns);
         return optionalExpressionOperator.flatMap(expressionOperator -> {
             // Create the field position map for the new columns.
-            final ValueFunctionFactories<Val[]> queryFieldIndex = RowUtil.createColumnIdValExtractors(columns);
+            final ValueFunctionFactories<Values> queryFieldIndex = createColumnIdValExtractors(columns);
             return expressionPredicateFactory.createOptional(
                     expressionOperator,
                     queryFieldIndex,
@@ -65,12 +65,21 @@ public class RowValueFilter {
         });
     }
 
-    private static Optional<ExpressionOperator> create(final List<Column> columns,
-                                                       final boolean applyValueFilters) {
+    private static ValueFunctionFactories<Values> createColumnIdValExtractors(final List<Column> newColumns) {
+        // Create the field position map for the new columns.
+        final Map<String, ValueFunctionFactory<Values>> fieldPositionMap = new HashMap<>();
+        for (int i = 0; i < newColumns.size(); i++) {
+            final Column column = newColumns.get(i);
+            fieldPositionMap.put(column.getId(), new ValuesFunctionFactory(column, i));
+        }
+        return fieldPositionMap::get;
+    }
+
+    private static Optional<ExpressionOperator> create(final List<Column> columns) {
         final ExpressionOperator.Builder valueFilterBuilder = ExpressionOperator.builder();
         columns.forEach(column -> {
             final ColumnFilter columnFilter = column.getColumnFilter();
-            if (applyValueFilters && columnFilter != null) {
+            if (columnFilter != null && columnFilter.isEnabled()) {
                 final Optional<ExpressionOperator> operator = SimpleStringExpressionParser.create(
                         new SingleFieldProvider(column.getId()),
                         columnFilter.getFilter());
@@ -79,30 +88,42 @@ public class RowValueFilter {
 
             final ColumnValueSelection columnValueSelection = column.getColumnValueSelection();
             if (columnValueSelection != null && columnValueSelection.isEnabled()) {
-                final List<ExpressionTerm> terms = columnValueSelection
-                        .getValues()
-                        .stream()
-                        .map(value -> ExpressionTerm
-                                .builder()
-                                .field(column.getId())
-                                .condition(Condition.EQUALS)
-                                .value(value)
-                                .build())
-                        .toList();
-
-                ExpressionOperator expressionOperator = ExpressionOperator
-                        .builder()
-                        .op(Op.OR)
-                        .addTerms(terms)
-                        .build();
                 if (columnValueSelection.isInvert()) {
-                    expressionOperator = ExpressionOperator
+                    final List<ExpressionTerm> terms = columnValueSelection
+                            .getValues()
+                            .stream()
+                            .map(value -> ExpressionTerm
+                                    .builder()
+                                    .field(column.getId())
+                                    .condition(Condition.NOT_EQUALS)
+                                    .value(value)
+                                    .build())
+                            .toList();
+                    final ExpressionOperator expressionOperator = ExpressionOperator
                             .builder()
-                            .op(Op.NOT)
-                            .addOperators(expressionOperator)
+                            .op(Op.AND)
+                            .addTerms(terms)
                             .build();
+                    valueFilterBuilder.addOperator(expressionOperator);
+
+                } else {
+                    final List<ExpressionTerm> terms = columnValueSelection
+                            .getValues()
+                            .stream()
+                            .map(value -> ExpressionTerm
+                                    .builder()
+                                    .field(column.getId())
+                                    .condition(Condition.EQUALS)
+                                    .value(value)
+                                    .build())
+                            .toList();
+                    final ExpressionOperator expressionOperator = ExpressionOperator
+                            .builder()
+                            .op(Op.OR)
+                            .addTerms(terms)
+                            .build();
+                    valueFilterBuilder.addOperator(expressionOperator);
                 }
-                valueFilterBuilder.addOperator(expressionOperator);
             }
         });
         final ExpressionOperator valueFilter = valueFilterBuilder.build();

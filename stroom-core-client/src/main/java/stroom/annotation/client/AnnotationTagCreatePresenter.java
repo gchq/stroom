@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.annotation.client;
@@ -25,6 +24,7 @@ import stroom.annotation.shared.CreateAnnotationTagRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -57,9 +57,15 @@ public class AnnotationTagCreatePresenter
     void open(final AnnotationTagType annotationTagType,
               final Consumer<AnnotationTag> consumer) {
         this.annotationTagType = annotationTagType;
+        getView().showTagText(annotationTagType.hasTagText(),
+                annotationTagType.getDisplayValue());
 
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
+        final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG);
+        if (annotationTagType.hasTagText()) {
+            builder.popupSize(PopupSize.resizable(630, 400));
+        }
+        builder
                 .caption("Create New " + annotationTagType.getDisplayValue())
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
@@ -99,7 +105,12 @@ public class AnnotationTagCreatePresenter
     private void createTag(final Consumer<AnnotationTag> consumer,
                            final String name,
                            final HidePopupRequestEvent event) {
-        final CreateAnnotationTagRequest request = new CreateAnnotationTagRequest(annotationTagType, name);
+        final CreateAnnotationTagRequest request = new CreateAnnotationTagRequest(
+                annotationTagType,
+                name,
+                annotationTagType.hasTagText()
+                        ? getView().getTagText()
+                        : null);
         annotationResourceClient.createAnnotationTag(request,
                 r -> {
                     editProvider.get().open(r, "Edit " + r.getName(), consumer);
@@ -115,5 +126,11 @@ public class AnnotationTagCreatePresenter
         String getName();
 
         void setName(String name);
+
+        void showTagText(boolean show, String label);
+
+        String getTagText();
+
+        void setTagText(String comment);
     }
 }

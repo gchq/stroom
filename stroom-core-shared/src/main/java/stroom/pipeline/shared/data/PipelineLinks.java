@@ -34,6 +34,20 @@ public class PipelineLinks extends AbstractAddRemove<PipelineLink> {
         super(add, remove);
     }
 
+    /**
+     * Link order carries no meaning (tree children are sorted when the model is built), so lists are
+     * compared ignoring it.
+     */
+    @Override
+    protected boolean listsEqual(final List<PipelineLink> list, final List<PipelineLink> other) {
+        return unorderedEquals(list, other, PipelineLink::equals);
+    }
+
+    @Override
+    protected int listHashCode(final List<PipelineLink> list) {
+        return unorderedHashCode(list, PipelineLink::hashCode);
+    }
+
 
     // --------------------------------------------------------------------------------
 

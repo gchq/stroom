@@ -16,12 +16,8 @@
 
 package stroom.pipeline.textconverter;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.pipeline.shared.TextConverterDoc;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
 
 import com.google.inject.AbstractModule;
@@ -29,18 +25,8 @@ import com.google.inject.AbstractModule;
 public class TextConverterModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(TextConverterStore.class).to(TextConverterStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(TextConverterStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(TextConverterStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(TextConverterStoreImpl.class);
-
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(TextConverterDoc.TYPE, TextConverterStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(TextConverterDoc.TYPE, TextConverterStore.class, TextConverterStoreImpl.class);
 
         RestResourcesBinder.create(binder())
                 .bind(TextConverterResourceImpl.class);

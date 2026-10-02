@@ -1,4 +1,20 @@
 /*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
  * Copyright 2010 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
@@ -19,28 +35,25 @@ package stroom.dashboard.client.table;
 import stroom.dashboard.client.table.FilterCell.ViewData;
 import stroom.query.api.Column;
 import stroom.query.api.ColumnFilter;
+import stroom.security.client.presenter.ClassNameBuilder;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.ElementUtil;
+import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.HtmlBuilder.Attribute;
 
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.safehtml.client.SafeHtmlTemplates;
-import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 
 public class FilterCell
         extends AbstractInputCell<Column, ViewData> {
-
-    interface Template extends SafeHtmlTemplates {
-
-        @Template("<input type=\"text\" value=\"{0}\"></input>")
-        SafeHtml input(String value);
-    }
 
     /**
      * The {@code ViewData} for this cell.
@@ -138,8 +151,6 @@ public class FilterCell
         }
     }
 
-    private static Template template;
-
     private final FilterCellManager filterCellManager;
 
     /**
@@ -148,9 +159,6 @@ public class FilterCell
     public FilterCell(final FilterCellManager filterCellManager) {
         super(BrowserEvents.CHANGE, BrowserEvents.KEYUP);
         this.filterCellManager = filterCellManager;
-        if (template == null) {
-            template = GWT.create(Template.class);
-        }
     }
 
     @Override
@@ -161,14 +169,15 @@ public class FilterCell
                                final ValueUpdater<Column> valueUpdater) {
         super.onBrowserEvent(context, parent, column, event, valueUpdater);
 
+        final String eventType = event.getType();
+        final Element target = event.getEventTarget().cast();
+
         // Ignore events that don't target the input.
         final InputElement input = getInputElement(parent);
-        final Element target = event.getEventTarget().cast();
         if (!input.isOrHasChild(target)) {
             return;
         }
 
-        final String eventType = event.getType();
         final Object key = context.getKey();
         if (BrowserEvents.CHANGE.equals(eventType)) {
             finishEditing(parent, column, key, valueUpdater);
@@ -197,11 +206,49 @@ public class FilterCell
         final String s = (viewData != null)
                 ? viewData.getCurrentValue()
                 : value;
-        if (s != null) {
-            sb.append(template.input(s));
-        } else {
-            sb.append(template.input(""));
+
+        final ColumnFilter columnFilter = ColumnFilter.fromColumn(column).build();
+
+        final boolean enabled = columnFilter.isEnabled();
+        final String title = enabled
+                ? "Disable Filter"
+                : "Enable Filter";
+        final ClassNameBuilder textClassName = new ClassNameBuilder();
+        textClassName.addClassName("dashboard-table-filter-cell-text");
+        if (!enabled) {
+            textClassName.addClassName("dashboard-table-filter-cell-text-disabled");
         }
+
+        final ClassNameBuilder buttonClassName = new ClassNameBuilder();
+        buttonClassName.addClassName("inline-svg-button");
+        buttonClassName.addClassName("icon-button");
+        buttonClassName.addClassName("dashboard-table-filter-cell-disable-button");
+        if (!enabled) {
+            buttonClassName.addClassName("dashboard-table-filter-cell-disable-button-disabled");
+        }
+
+        final HtmlBuilder html = new HtmlBuilder(sb);
+        html.div(outer -> {
+
+            outer.elem(
+                    SafeHtmlUtils.fromSafeConstant("input"),
+                    new Attribute("type", "text"),
+                    Attribute.className(textClassName.build()),
+                    new Attribute("value", s));
+
+            outer.div(buttons -> {
+                buttons.elem(button -> {
+                    button.div("", Attribute.className("background"));
+                    button.div(div -> {
+                        div.appendTrustedString(SvgImage.DISABLE.getSvg());
+                    }, Attribute.className("svg-image svg-image__process face"));
+                }, SafeHtmlUtils.fromSafeConstant("button"),
+                    new Attribute("type", "button"),
+                    Attribute.className(buttonClassName.build()),
+                    Attribute.title(title));
+            }, Attribute.className("dashboard-table-filter-cell-buttons"));
+
+        }, Attribute.className("dashboard-table-filter-cell"));
     }
 
     @Override
@@ -225,7 +272,8 @@ public class FilterCell
             vd.setLastValue(newValue);
 
             if (filterCellManager != null) {
-                filterCellManager.setValueFilter(column, newValue);
+                final ColumnFilter.Builder builder = ColumnFilter.fromColumn(column);
+                filterCellManager.setColumnFilter(column, builder.filter(newValue).build());
             }
             if (valueUpdater != null) {
                 valueUpdater.update(column);
@@ -238,7 +286,8 @@ public class FilterCell
 
     @Override
     protected InputElement getInputElement(final Element parent) {
-        return super.getInputElement(parent).<InputElement>cast();
+        final Element element = ElementUtil.findChild(parent, e -> e.getTagName().equalsIgnoreCase("input"));
+        return element.cast();
     }
 
     private String getValue(final Column column) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,8 +236,8 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
 
     public String buildNotFoundMessage(final DocRef docRef) {
         if (docRef != null) {
-            final String type = NullSafe.requireNonNullElseGet(this.itemType, () ->
-                    NullSafe.requireNonNullElse(docRef.getType(), "Document"));
+            final String type = Objects.requireNonNullElseGet(this.itemType, () ->
+                    Objects.requireNonNullElse(docRef.getType(), "Document"));
             final String uuid = docRef.getUuid();
             final String displayName = NullSafe.getOrElse(
                     docRef.getName(),

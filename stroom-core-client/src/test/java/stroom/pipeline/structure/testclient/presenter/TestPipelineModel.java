@@ -43,12 +43,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPipelineModel {
 
-    private static final PipelineElementType ELEM_TYPE = new PipelineElementType("TestElement", null,
+    private static final PipelineElementType ELEM_TYPE = new PipelineElementType(
+            "TestElement",
+            "Test Element",
+            null,
             new String[]{PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, null);
     private static final PipelinePropertyType PROP_TYPE1 = PipelinePropertyType.builder()
             .elementType(ELEM_TYPE)
@@ -191,6 +195,7 @@ class TestPipelineModel {
     void testInheritanceRemoveRejoin() {
         final PipelineElementType sourceType = new PipelineElementType(
                 "Source",
+                "Source",
                 null,
                 new String[]{
                         PipelineElementType.ROLE_SOURCE,
@@ -199,6 +204,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_STREAM);
         final PipelineElementType parserType = new PipelineElementType(
                 "CombinedParser",
+                "Combined Parser",
                 Category.PARSER,
                 new String[]{
                         PipelineElementType.ROLE_PARSER,
@@ -210,6 +216,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_TEXT);
         final PipelineElementType xsltType = new PipelineElementType(
                 "XSLTFilter",
+                "XSLT Filter",
                 Category.FILTER,
                 new String[]{
                         PipelineElementType.ROLE_TARGET,
@@ -221,6 +228,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_XSLT);
         final PipelineElementType schemaType = new PipelineElementType(
                 "SchemaFilter",
+                "Schema Filter",
                 Category.FILTER,
                 new String[]{
                         PipelineElementType.ROLE_TARGET,
@@ -230,6 +238,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_XSD);
         final PipelineElementType writerType = new PipelineElementType(
                 "XMLWriter",
+                "XML Writer",
                 Category.WRITER,
                 new String[]{
                         PipelineElementType.ROLE_TARGET,
@@ -240,6 +249,7 @@ class TestPipelineModel {
                 SvgImage.PIPELINE_XML);
         final PipelineElementType appenderType = new PipelineElementType(
                 "StreamAppender",
+                "Stream Appender",
                 Category.DESTINATION,
                 new String[]{
                         PipelineElementType.ROLE_TARGET,
@@ -523,7 +533,7 @@ class TestPipelineModel {
 
         final PipelineElement xsltFilter2 = pipelineModel.addElement(idEnrichmentFilter,
                 createType("XSLTFilter", Category.FILTER),
-                "xsltFilter2");
+                "xsltFilter2", "xsltFilter2", null);
         pipelineModel.moveElement(xsltFilter2, xsltFilter);
 
         pipelineModel.build();
@@ -540,6 +550,181 @@ class TestPipelineModel {
         checkChildren(tree3, source, new PipelineElement[]{xmlParser});
         checkChildren(tree3, xmlParser, new PipelineElement[]{idEnrichmentFilter});
         checkChildren(tree3, idEnrichmentFilter, new PipelineElement[]{xsltFilter, xsltFilter2});
+    }
+
+    // --------------------------------------------------------------------------------
+    // Change detection. The Save button is enabled by comparing the document as loaded with the
+    // document as it would be written, so diff() must differ from the stored data after an edit and
+    // match it when there is none.
+    // --------------------------------------------------------------------------------
+
+    @Test
+    void diffOfAnUnchangedPipelineMatchesTheStoredData() {
+        final PipelineData stored = createPipelineData();
+        final PipelineModel model = createModel(stored);
+
+        assertThat(model.diff()).isEqualTo(stored);
+    }
+
+    @Test
+    void renamingAnElementIsDetected() {
+        final PipelineData stored = createPipelineData();
+        final PipelineModel model = createModel(stored);
+
+        model.renameElement(getElement(model, "test1"), "A new name");
+
+        assertThat(model.diff()).isNotEqualTo(stored);
+    }
+
+    @Test
+    void renamingTheLastElementIsDetected() {
+        // Renaming re-appends the element to the add list, so renaming any other element also
+        // changes the list order. Rename the last one, where content is the only difference.
+        final PipelineData stored = createPipelineData();
+        final PipelineModel model = createModel(stored);
+
+        model.renameElement(getElement(model, "test2"), "A new name");
+
+        assertThat(model.diff()).isNotEqualTo(stored);
+    }
+
+    @Test
+    void changingAnElementDescriptionIsDetected() {
+        final PipelineData stored = createPipelineData();
+        final PipelineModel model = createModel(stored);
+
+        model.changeElementDescription(getElement(model, "test1"), "A new description");
+
+        assertThat(model.diff()).isNotEqualTo(stored);
+    }
+
+    @Test
+    void changingAPropertyIsDetected() {
+        final PipelineData stored = createPipelineData();
+        final PipelineModel model = createModel(stored);
+
+        final PipelineDataBuilder builder = new PipelineDataBuilder(model.getPipelineData());
+        builder.getProperties().getAddList().clear();
+        builder.addProperty("test1", PROP_TYPE1, false);
+        model.update(builder.build());
+
+        assertThat(model.diff()).isNotEqualTo(stored);
+    }
+
+    @Test
+    void changingAReferenceIsDetected() {
+        final PipelineData stored = createPipelineData();
+        final PipelineModel model = createModel(stored);
+
+        final PipelineDataBuilder builder = new PipelineDataBuilder(model.getPipelineData());
+        builder.addPipelineReference(PipelineDataUtil.createReference(
+                "test1",
+                "testProp",
+                new DocRef(PipelineDoc.TYPE, "refPipeline", "refPipeline"),
+                new DocRef(FeedDoc.TYPE, "refFeed", "refFeed"),
+                StreamTypeNames.EVENTS));
+        model.update(builder.build());
+
+        assertThat(model.diff()).isNotEqualTo(stored);
+    }
+
+    @Test
+    void revertingAnEditRestoresEquality() {
+        final PipelineData stored = createPipelineData();
+        final PipelineModel model = createModel(stored);
+        final PipelineElement element = getElement(model, "test1");
+        final String originalName = element.getName();
+
+        model.renameElement(element, "A new name");
+        assertThat(model.diff()).isNotEqualTo(stored);
+
+        model.renameElement(getElement(model, "test1"), originalName);
+        assertThat(model.diff()).isEqualTo(stored);
+    }
+
+    @Test
+    void reorderingElementsIsNotAChange() {
+        final PipelineData stored = createPipelineData();
+        final PipelineModel model = createModel(stored);
+
+        // Rebuild the same content in a different order, as diff() does when it iterates hash based
+        // maps. This must not look like an edit.
+        final PipelineDataBuilder builder = new PipelineDataBuilder();
+        final List<PipelineElement> reversed = new ArrayList<>(stored.getAddedElements());
+        Collections.reverse(reversed);
+        builder.addElements(reversed);
+        builder.addLinks(stored.getAddedLinks());
+        stored.getAddedProperties().forEach(builder::addProperty);
+        model.update(builder.build());
+
+        assertThat(model.diff()).isEqualTo(stored);
+    }
+
+    @Test
+    void eachEditFiresASingleChangeEvent() {
+        final PipelineModel model = createModel(createPipelineData());
+        final AtomicInteger events = new AtomicInteger();
+        model.addChangeDataHandler(event -> events.incrementAndGet());
+
+        model.renameElement(getElement(model, "test1"), "A new name");
+
+        assertThat(events.get()).isEqualTo(1);
+    }
+
+    // --------------------------------------------------------------------------------
+    // Guards for element identity. PipelineElement.equals() only compares id and type so that
+    // elements keep matching after a rename. Widening it would silently break these, tearing down
+    // stepping editors (with unsaved code in them) and emptying the structure tree.
+    // --------------------------------------------------------------------------------
+
+    @Test
+    void elementsAreFoundDespiteNameAndDescriptionChanges() {
+        final PipelineModel model = createModel(createPipelineData());
+
+        assertThat(model.hasElement(new PipelineElement(
+                "test1", ELEM_TYPE.getType(), "Some other name", "Some other description"))).isTrue();
+    }
+
+    @Test
+    void treeChildrenResolveWhenTheSourceElementIsNamed() {
+        final PipelineDataBuilder builder = new PipelineDataBuilder();
+        builder.addElement(PipelineDataUtil.createElement(
+                "Source", "Source", "A named source", "With a description"));
+        builder.addElement(PipelineDataUtil.createElement("test1", ELEM_TYPE.getType(), null, null));
+        builder.addLink("Source", "test1");
+        final PipelineModel model = createModel(builder.build());
+
+        final DefaultTreeForTreeLayout<PipelineElement> tree =
+                new DefaultPipelineTreeBuilder().getTree(model);
+
+        checkChildren(tree, PipelineModel.SOURCE_ELEMENT, new PipelineElement[]{
+                new PipelineElement("test1", ELEM_TYPE.getType())});
+    }
+
+    private PipelineData createPipelineData() {
+        final PipelineDataBuilder builder = new PipelineDataBuilder();
+        builder.addElement(PipelineDataUtil.createElement("Source", "Source", null, null));
+        builder.addElement(PipelineDataUtil.createElement(
+                "test1", ELEM_TYPE.getType(), "Test one", "The first element"));
+        builder.addElement(PipelineDataUtil.createElement("test2", ELEM_TYPE.getType(), "Test two", null));
+        builder.addLink("Source", "test1");
+        builder.addLink("test1", "test2");
+        builder.addProperty("test1", PROP_TYPE1, true);
+        return builder.build();
+    }
+
+    private PipelineModel createModel(final PipelineData pipelineData) {
+        final PipelineModel pipelineModel = new PipelineModel(new PipelineElementTypes(Collections.emptyMap()));
+        pipelineModel.setBaseStack(null);
+        pipelineModel.setPipelineLayer(new PipelineLayer(SINGLE, pipelineData));
+        pipelineModel.build();
+        return pipelineModel;
+    }
+
+    private PipelineElement getElement(final PipelineModel model, final String id) {
+        final PipelineElement element = model.getCombinedData().getElements().get(id);
+        assertThat(element).isNotNull();
+        return element;
     }
 
     private void checkChildren(final DefaultTreeForTreeLayout<PipelineElement> tree,
@@ -596,6 +781,7 @@ class TestPipelineModel {
         }
 
         return new PipelineElementType(
+                type,
                 type,
                 category,
                 roles, null);

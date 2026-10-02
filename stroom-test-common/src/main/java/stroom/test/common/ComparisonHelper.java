@@ -20,12 +20,12 @@ package stroom.test.common;
 import stroom.util.ConsoleColour;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
 import org.assertj.core.util.diff.DiffUtils;
 import org.assertj.core.util.diff.Patch;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -52,7 +52,7 @@ import static org.assertj.core.api.Assertions.fail;
 public final class ComparisonHelper {
 
     public static final String OUTPUT_EXTENSION = ".out";
-    private static final Logger LOGGER = LoggerFactory.getLogger(ComparisonHelper.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ComparisonHelper.class);
 
     private ComparisonHelper() {
         // Hidden constructor as utility class.
@@ -195,9 +195,36 @@ public final class ComparisonHelper {
         final List<Path> inFiles = list(in);
         final List<Path> outFiles = list(out);
 
+        // Tell the tester what went wrong
+        if (outFiles.size() != inFiles.size()) {
+            final List<Path> inFilenames = inFiles.stream().map(Path::getFileName).toList();
+            final List<Path> outFilenames = outFiles.stream().map(Path::getFileName).toList();
+
+            final List<Path> extraFiles = new ArrayList<>(outFilenames);
+            extraFiles.removeAll(inFilenames);
+            final List<Path> missingFiles = new ArrayList<>(inFilenames);
+            missingFiles.removeAll(outFilenames);
+
+            if (!extraFiles.isEmpty()) {
+                LOGGER.error("New files added:\n{}",
+                        extraFiles
+                                .stream()
+                                .map(path -> "    " + path.toString())
+                                .collect(Collectors.joining("\n")));
+            }
+            if (!missingFiles.isEmpty()) {
+                LOGGER.error("Missing files:\n{}",
+                        missingFiles
+                                .stream()
+                                .map(path -> "    " + path.toString())
+                                .collect(Collectors.joining("\n")));
+            }
+        }
+
+        // Do the test
         assertThat(outFiles.size()).as(
                 "Dir " + FileUtil.getCanonicalPath(in) + " does not contain the same number of files as "
-                        + FileUtil.getCanonicalPath(out)).isEqualTo(inFiles.size());
+                + FileUtil.getCanonicalPath(out)).isEqualTo(inFiles.size());
 
         for (final Path inFile : inFiles) {
             Path outFile = null;
@@ -213,11 +240,12 @@ public final class ComparisonHelper {
             // Make sure we found the file.
             assertThat(outFile)
                     .as("Output file not found for: " + FileUtil.getCanonicalPath(inFile)
-                            + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"")
+                        + " in directory \"" + FileUtil.getCanonicalPath(out) + "\"")
                     .isNotNull();
 
-            LOGGER.debug("Comparing \"" + FileUtil.getCanonicalPath(inFile) + "\" and \"" +
-                    FileUtil.getCanonicalPath(outFile) + "\"");
+            LOGGER.debug("Comparing \"{}\" and \"{}\"",
+                    FileUtil.getCanonicalPath(inFile),
+                    FileUtil.getCanonicalPath(outFile));
 
             if (Files.isDirectory(inFile)) {
                 // Make sure files are the same type.
@@ -287,10 +315,10 @@ public final class ComparisonHelper {
             if (!doCompareReaders(reader1, reader2, ignoreWhitespace, xml)) {
                 throw new RuntimeException(LogUtil.message(
                         "Files are not the same: \n" +
-                                "{}\n" +
-                                "{}\n\n" +
-                                "vimdiff {} {}\n" +
-                                "If you are satisfied the differences are valid then you can do\n" + "cp {} {}",
+                        "{}\n" +
+                        "{}\n\n" +
+                        "vimdiff {} {}\n" +
+                        "If you are satisfied the differences are valid then you can do\n" + "cp {} {}",
                         FileUtil.getCanonicalPath(expectedFile),
                         FileUtil.getCanonicalPath(actualFile),
                         FileUtil.getCanonicalPath(expectedFile),

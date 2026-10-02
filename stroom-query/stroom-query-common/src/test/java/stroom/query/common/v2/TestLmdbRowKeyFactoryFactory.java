@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class TestLmdbRowKeyFactoryFactory {
         keyFactory.createChildKeyRange(Key.ROOT_KEY, keyRange -> {
         });
         assertThatThrownBy(() ->
-                keyFactory.createChildKeyRange(Key.ROOT_KEY, new TimeFilter(0, 10), keyRange -> {
+                keyFactory.createChildKeyRange(Key.ROOT_KEY, new TimeFilter(0L, 10L), keyRange -> {
                 }))
                 .isInstanceOf(RuntimeException.class);
 
@@ -126,7 +126,7 @@ public class TestLmdbRowKeyFactoryFactory {
         keyFactory.createChildKeyRange(key, keyRange -> {
         });
         assertThatThrownBy(() ->
-                keyFactory.createChildKeyRange(key, new TimeFilter(0, 10), keyRange -> {
+                keyFactory.createChildKeyRange(key, new TimeFilter(0L, 10L), keyRange -> {
                 }))
                 .isInstanceOf(RuntimeException.class);
     }
@@ -134,13 +134,13 @@ public class TestLmdbRowKeyFactoryFactory {
     private void testTimeGroupedChildKeyRange(final LmdbRowKeyFactory keyFactory) {
         keyFactory.createChildKeyRange(Key.ROOT_KEY, keyRange -> {
         });
-        keyFactory.createChildKeyRange(Key.ROOT_KEY, new TimeFilter(0, 10), keyRange -> {
+        keyFactory.createChildKeyRange(Key.ROOT_KEY, new TimeFilter(0L, 10L), keyRange -> {
         });
 
         final Key key = new Key(10, List.of(new GroupKeyPart(Val.of("one", "two"))));
         keyFactory.createChildKeyRange(key, keyRange -> {
         });
-        keyFactory.createChildKeyRange(key, new TimeFilter(0, 10), keyRange -> {
+        keyFactory.createChildKeyRange(key, new TimeFilter(0L, 10L), keyRange -> {
         });
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.client;
@@ -20,10 +19,12 @@ package stroom.receive.rules.client;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.core.client.presenter.MonitoringPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
 import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
 import stroom.receive.content.shared.ContentTemplates;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.AppPermissionsPresenter;
 import stroom.security.shared.AppPermission;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.MenuItem;
@@ -42,8 +43,9 @@ public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabPr
     public ContentTemplatePlugin(final EventBus eventBus,
                                  final ContentManager eventManager,
                                  final Provider<ContentTemplateTabPresenter> presenterProvider,
-                                 final ClientSecurityContext securityContext) {
-        super(eventBus, eventManager, presenterProvider, securityContext);
+                                 final ClientSecurityContext securityContext,
+                                 final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, securityContext, documentPluginRegistry);
     }
 
     @Override
@@ -62,17 +64,22 @@ public class ContentTemplatePlugin extends MonitoringPlugin<ContentTemplateTabPr
 
     @Override
     protected Action getOpenAction() {
-        return Action.GOTO_CONTENT_TEMPALTES;
+        return Action.GOTO_CONTENT_TEMPLATES;
     }
 
     private MenuItem createContentTemplateMenuItem() {
         return new IconMenuItem.Builder()
-                .priority(51)
+                .priority(55)
                 .icon(ContentTemplates.DOCUMENT_TYPE.getIcon())
                 .text("Content Templates")
                 .action(getOpenAction())
                 .command(this::open)
                 .tooltip("Manage the templated content that will be auto-created on data receipt.")
                 .build();
+    }
+
+    @Override
+    public String getType() {
+        return ContentTemplateTabPresenter.TAB_TYPE;
     }
 }

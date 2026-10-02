@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.bytebuffer;
@@ -123,6 +122,12 @@ public class PooledByteBufferOutputStream extends OutputStream implements AutoCl
 
             getCurrentPooledBuffer().getByteBuffer().put(b, off, len);
         }
+    }
+
+    public void writeLong(final long l) throws IOException {
+        checkWriteableState();
+        checkSizeAndGrow(Long.BYTES);
+        getCurrentPooledBuffer().getByteBuffer().putLong(l);
     }
 
     /**

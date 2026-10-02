@@ -16,6 +16,29 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+  ai:
+    chatResponseCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT10M"
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   analytics:
     db:
       connection:
@@ -82,6 +105,18 @@ appConfig:
       maximumSize: 1000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
+    annotationValCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    annotationValStringCache:
+      expireAfterAccess: "P5D"
+      expireAfterWrite: null
+      maximumSize: 1000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
     createText: "Create Annotation"
     db:
       connection:
@@ -100,14 +135,48 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     defaultRetentionPeriod: "5y"
+    eventLinkCacheSizeLimit: 1000000
     physicalDeleteAge: "P7D"
-    standardComments: []
+  askStroomAi:
+    dockType: "DOCK"
+    dockLocation: "RIGHT"
+    dockSize: 300
+    tableAnalysis:
+      maxTotalRows: 10000
+      maxRowsPerBatch: 1000
+      maxParallelBatches: 4
+      tableQuerySystemPrompt: "    You are a data analysis AI. You will answer user\
+        \ questions     using ONLY the markdown-formatted DATA TABLE records provided.\
+        \     If the records do not contain relevant details, say \"No relevant information.\"\
+        \n"
+      tableQueryUserPrompt: "    CONVERSATION CONTEXT:\n    {{context}}\n\n    USER\
+        \ QUERY:\n    {{query}}\n\n    DATA TABLE:\n    {{table}}\n\n    Provide findings\
+        \ relevant only to these records, in a concise structured format.     Use\
+        \ the conversation context to understand what has been previously discussed.\n"
+      multiSummaryMergePrompt: "    Merge the following summaries into a single unified,\
+        \ concise summary.     Preserve important details, numerical findings, and\
+        \ remove duplicates.\n\n    {{summaries}}\n"
+    chatSystemPrompt: "You are a helpful data analysis assistant within the Stroom\
+      \ data platform. When table data is attached to the conversation, it appears\
+      \ as markdown tables prefixed with [Attached Table: ...] labels identifying\
+      \ the source. Use data from all relevant attached tables to answer the user's\
+      \ questions. If multiple tables are present, cite the source table name in your\
+      \ answer. If you don't have enough information, say so."
+    historySummaryPrompt: "Summarise the following conversation history in 2-3 concise\
+      \ sentences. Preserve key facts, decisions, data findings, and any table names\
+      \ or sources referenced. Do not include greetings or filler."
+    maxHistorySafetyCapMessages: 200
+    attachmentDownloadTimeoutMs: 60000
+    enableDebugDetail: true
   autoContentCreation:
-    additionalGroupTemplate: "grp-${accountid}-sandbox"
+    additionalGroupParentGroupName: "Data Feed Developer"
+    additionalGroupTemplate: "grp-${accountid}-dev"
     createAsSubjectId: "Administrators"
     createAsType: "GROUP"
     destinationExplorerPathTemplate: "/Feeds/${accountid}"
+    destinationExplorerSubPathTemplate: "dev"
     enabled: false
+    groupParentGroupName: "Data Feed Reader"
     groupTemplate: "grp-${accountid}"
     templateMatchFields:
     - "accountid"
@@ -167,11 +236,36 @@ appConfig:
       minimumIdle: 10
       prepStmtCacheSize: 25
       prepStmtCacheSqlLimit: 256
+  contentIndex:
+    contentIndexDir: "content_index"
+    minRebuildAge: "PT1M"
+    storageType: "LOCAL"
   contentPackImport:
     enabled: false
     importAsSubjectId: "Administrators"
     importAsType: "GROUP"
     importDirectory: "content_pack_import"
+  contentStore:
+    urls:
+    - "https://raw.githubusercontent.com/gchq/stroom-content/refs/heads/master/source/content-store.yml"
+  credentials:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
+    keyStoreCachePath: "${stroom.home}/keystores"
   crossModule:
     db:
       connection:
@@ -221,6 +315,12 @@ appConfig:
         Reference: "ref"
         Test Events: "tevt"
         Test Reference: "tref"
+      s3VolumeCache:
+        expireAfterAccess: null
+        expireAfterWrite: "PT10M"
+        maximumSize: 1000
+        refreshAfterWrite: null
+        statisticsMode: "INTERNAL"
       typePathCache:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
@@ -228,30 +328,31 @@ appConfig:
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
       volumeCache:
-        expireAfterAccess: "PT10M"
-        expireAfterWrite: null
+        expireAfterAccess: null
+        expireAfterWrite: "PT10M"
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
       volumeSelector: "RoundRobin"
     meta:
       dataFormats:
+      - "CSV"
+      - "CSV_NO_HEADER"
+      - "FIXED_WIDTH"
       - "FIXED_WIDTH_NO_HEADER"
       - "INI"
-      - "CSV"
       - "JSON"
+      - "JSON_LINES"
+      - "PSV"
+      - "PSV_NO_HEADER"
+      - "SYSLOG"
       - "TEXT"
+      - "TOML"
+      - "TSV"
+      - "TSV_NO_HEADER"
+      - "XML"
       - "XML_FRAGMENT"
       - "YAML"
-      - "PSV_NO_HEADER"
-      - "PSV"
-      - "CSV_NO_HEADER"
-      - "XML"
-      - "TSV"
-      - "SYSLOG"
-      - "TSV_NO_HEADER"
-      - "FIXED_WIDTH"
-      - "TOML"
       db:
         connection:
           jdbcDriverClassName: null
@@ -289,24 +390,24 @@ appConfig:
         statisticsMode: "INTERNAL"
       metaTypes:
       - "Context"
-      - "Raw Reference"
-      - "Events"
-      - "Raw Events"
-      - "Reference"
+      - "Detections"
       - "Error"
+      - "Events"
+      - "Meta Data"
+      - "Raw Events"
+      - "Raw Reference"
+      - "Records"
+      - "Reference"
       - "Test Events"
       - "Test Reference"
-      - "Detections"
-      - "Meta Data"
-      - "Records"
       metaValue:
         addAsync: true
         deleteAge: "P30D"
         deleteBatchSize: 500
         flushBatchSize: 500
       rawMetaTypes:
-      - "Raw Reference"
       - "Raw Events"
+      - "Raw Reference"
     retention:
       deleteBatchSize: 1000
       useQueryOptimisation: true
@@ -333,6 +434,7 @@ appConfig:
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
       fileSystemCleanOldAge: "P1D"
+      fsyncMode: "ENABLED"
   docstore:
     db:
       connection:
@@ -350,6 +452,19 @@ appConfig:
         minimumIdle: 10
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
+    docRefInfoCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    docRefNameCache:
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
+      maximumSize: 1000000
+      refreshAfterWrite: null
+      statisticsMode: "INTERNAL"
+    physicalDeleteAge: "P30D"
   elastic:
     client:
       maxConnections: 30
@@ -370,8 +485,6 @@ appConfig:
       initialRetryBackoffPeriodMs: 1000
       maxNestedElementDepth: 10
       retryCount: 5
-    retention:
-      scrollSize: 10000
     search:
       highlight: true
       scrollDuration: "PT1M"
@@ -396,12 +509,6 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     dependencyWarningsEnabled: false
-    docRefInfoCache:
-      expireAfterAccess: "PT10M"
-      expireAfterWrite: null
-      maximumSize: 1000
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
     suggestedTags:
     - "reference-loader"
     - "dynamic"
@@ -418,6 +525,22 @@ appConfig:
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     unknownClassification: "UNKNOWN CLASSIFICATION"
   gitRepo:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
     localDir: "git_repo"
   haltBootOnConfigValidationFailure: true
   index:
@@ -528,6 +651,7 @@ appConfig:
   lifecycle:
     enabled: true
   lmdbLibrary:
+    providedJffiLibraryPath: null
     providedSystemLibraryPath: null
     systemLibraryExtractDir: "lmdb_library"
   logging:
@@ -559,6 +683,12 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     name: "tba"
+    nodeGroupCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT1H"
+      maximumSize: 1000
+      refreshAfterWrite: "PT10S"
+      statisticsMode: "INTERNAL"
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -594,6 +724,7 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      disableExternalEntities: true
       secureProcessing: true
     pipelineDataCache:
       expireAfterAccess: "PT10M"
@@ -630,6 +761,19 @@ appConfig:
         maxStoreSize: "10G"
         readAheadEnabled: true
         readerBlockedByWriter: false
+    stepping:
+      eagerMaterialisationRecords: 5000
+      filteredScanWindow: 50
+      maxBytesPerStream: 2147483648
+      maxRecordSizeBytes: 104857600
+      maxRecordsPerStream: 1000000
+      maxRetainedFingerprintsPerElement: 3
+      maxSessionIdleTime: "PT10M"
+      maxSweptStreamsPerSession: 10
+      orphanMaxAge: "PT1H"
+      prefetchWindow: 10
+      skeletonSweep: true
+      storeSubDir: "stepping"
     xmlSchema:
       cache:
         expireAfterAccess: "PT10M"
@@ -646,10 +790,25 @@ appConfig:
         statisticsMode: "INTERNAL"
       maxElements: 1000000
   planb:
-    minTimeToKeepEnvOpen: "PT1M"
+    defaultShardCounts:
+      STATE: 16
+      TEMPORAL_STATE: 32
+      RANGED_STATE: 16
+      TEMPORAL_RANGED_STATE: 32
+      SESSION: 32
+      HISTOGRAM: 16
+      METRIC: 16
+      TRACE: 64
+    mergeStatusRetention: "P30D"
+    mergedCheckpointCacheTtl: "PT10M"
+    minTimeToKeepSnapshotEnv: "PT20M"
     minTimeToKeepSnapshots: "PT10M"
+    minTimeToKeepStoreShardEnv: "PT1H"
     nodeList: []
-    path: "${stroom.home}/planb"
+    path: "planb"
+    sendPartAttempts: 3
+    sendPartRetryDelay: "PT10S"
+    shardMergeThreadCount: 4
     snapshotRetryFetchInterval: "PT1M"
     stateDocCache:
       expireAfterAccess: null
@@ -659,6 +818,7 @@ appConfig:
       statisticsMode: "INTERNAL"
   processor:
     assignTasks: true
+    claimTasksOnWorker: false
     createTasksBeyondProcessLimit: true
     databaseMultiInsertMaxBatchSize: 500
     db:
@@ -678,7 +838,6 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     deleteAge: "P1D"
-    disownDeadTasksAfter: "PT10M"
     fillTaskQueue: true
     processorCache:
       expireAfterAccess: "PT10S"
@@ -704,10 +863,21 @@ appConfig:
       maximumSize: 1000
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
+    processorProfileCache:
+      expireAfterAccess: null
+      expireAfterWrite: "PT1H"
+      maximumSize: 1000
+      refreshAfterWrite: "PT10S"
+      statisticsMode: "INTERNAL"
     queueSize: 1000
+    skipEmptyFilterFetchDuration: "PT10S"
     skipNonProducingFiltersDuration: "PT10S"
+    skipNonProducingFiltersMaxDuration: "PT1M"
+    taskAvailabilityInterval: "PT5S"
     taskCreationThreadCount: 5
+    taskLeaseTimeout: "PT10M"
     tasksToCreate: 1000
+    useMaxMetaIdFromPreviousPoll: true
     waitToQueueTasksDuration: "PT10S"
   properties:
     db:
@@ -767,6 +937,49 @@ appConfig:
         prepStmtCacheSize: 25
         prepStmtCacheSqlLimit: 256
     itemsRetention: 100
+  receiptPolicy:
+    obfuscatedFields:
+    - "AccountId"
+    - "AccountName"
+    - "Component"
+    - "Feed"
+    - "ReceivedPath"
+    - "RemoteDN"
+    - "RemoteHost"
+    - "System"
+    - "UploadUserId"
+    - "UploadUsername"
+    - "X-Forwarded-For"
+    obfuscationHashAlgorithm: "SHA2_512"
+    receiptRulesInitialFields:
+      AccountId: "Text"
+      Component: "Text"
+      Compression: "Text"
+      ContextEncoding: "Text"
+      ContextFormat: "Text"
+      EffectiveTime: "Date"
+      Encoding: "Text"
+      Environment: "Text"
+      Feed: "Text"
+      Format: "Text"
+      ReceiptId: "Text"
+      ReceiptIdPath: "Text"
+      ReceivedPath: "Text"
+      ReceivedTime: "Date"
+      ReceivedTimeHistory: "Text"
+      RemoteAddress: "Text"
+      RemoteCertExpiry: "Date"
+      RemoteDN: "Text"
+      RemoteHost: "Text"
+      Schema: "Text"
+      SchemaVersion: "Text"
+      System: "Text"
+      Type: "Text"
+      UploadUserId: "Text"
+      UploadUsername: "Text"
+      X-Forwarded-For: "Text"
+      content-length: "Text"
+      user-agent: "Text"
   receive:
     allowedCertificateProviders: []
     authenticatedDataFeedKeyCache:
@@ -776,10 +989,12 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "DROPWIZARD_METRICS"
     authenticationRequired: true
-    dataFeedKeyOwnerMetaKey: "AccountId"
-    dataFeedKeysDir: "data_feed_keys"
+    dataFeedIdentitiesDir: "data_feed_identities"
+    dataFeedOwnerMetaKey: "AccountId"
     enabledAuthenticationTypes:
+    - "TOKEN"
     - "CERTIFICATE"
+    fallbackReceiveAction: "RECEIVE"
     feedNameGenerationEnabled: false
     feedNameGenerationMandatoryHeaders:
     - "AccountId"
@@ -787,6 +1002,7 @@ appConfig:
     - "Format"
     - "Schema"
     feedNameTemplate: "${accountid}-${component}-${format}-${schema}"
+    maxRequestSize: null
     metaTypes:
     - "Context"
     - "Detections"
@@ -799,7 +1015,10 @@ appConfig:
     - "Reference"
     - "Test Events"
     - "Test Reference"
-    receiptPolicyUuid: null
+    receiptCheckMode: "FEED_STATUS"
+    s3Event:
+      rePollDuration: "PT5M"
+      sqs: null
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
     x509CertificateHeader: "X-SSL-CERT"
@@ -839,12 +1058,6 @@ appConfig:
       offHeapResults: true
       valueQueueSize: 10000
     shard:
-      indexShardSearcherCache:
-        expireAfterAccess: "PT1M"
-        expireAfterWrite: null
-        maximumSize: 2
-        refreshAfterWrite: null
-        statisticsMode: "INTERNAL"
       maxDocIdQueueSize: 1000000
       maxThreadsPerTask: 5
       remoteSearchResultCache:
@@ -867,11 +1080,19 @@ appConfig:
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
+      csrf:
+        protectBrowserOriginatedRequests: true
+      edgeAuthentication:
+        enabled: false
+        logout:
+          cookiesToExpire: []
+          signOutUrl: null
       maxApiKeyExpiryAge: "P365D"
       openId:
         allowedAudiences: []
-        audienceClaimRequired: false
+        audienceClaimRequired: true
         authEndpoint: null
+        authenticationRequestExtraParams: {}
         clientCredentialsScopes:
         - "openid"
         clientId: null
@@ -889,10 +1110,12 @@ appConfig:
         requestScopes:
         - "openid"
         - "email"
+        requiredAccessTokenType: null
         tokenEndpoint: null
         uniqueIdentityClaim: "sub"
         userDisplayNameClaim: "preferred_username"
         validIssuers: []
+        validateAudience: true
       preventLogin: false
     authorisation:
       appPermissionIdCache:
@@ -937,7 +1160,7 @@ appConfig:
         statisticsMode: "INTERNAL"
       userCache:
         expireAfterAccess: "PT30M"
-        expireAfterWrite: null
+        expireAfterWrite: "PT30M"
         maximumSize: 1000
         refreshAfterWrite: null
         statisticsMode: "INTERNAL"
@@ -963,6 +1186,8 @@ appConfig:
       secretEncryptionKey: ""
     identity:
       allowCertificateAuthentication: false
+      allowLockedAccountPasswordReset: false
+      autoCreateAdminAccountOnBoot: false
       certificateCnCaptureGroupIndex: 1
       certificateCnPattern: ".*\\((.*)\\)"
       db:
@@ -982,31 +1207,24 @@ appConfig:
           prepStmtCacheSize: 25
           prepStmtCacheSqlLimit: 256
       email:
-        allowPasswordResets: false
         fromAddress: "noreply@stroom"
         fromName: "Stroom User Accounts"
         passwordResetSubject: "Password reset for Stroom"
         passwordResetText: "A password reset has been requested for this email address.\
           \ Please visit the following URL to reset your password: %s."
-        passwordResetUrl: "/s/resetPassword/?user=%s&token=%s"
         smtp:
           host: "localhost"
           password: null
           port: 2525
           transport: "plain"
           username: null
+      failedLoginLockDuration: "PT30M"
       failedLoginLockThreshold: 3
       openid:
         accessCodeCache:
           expireAfterAccess: "PT10M"
           expireAfterWrite: null
           maximumSize: 1000
-          refreshAfterWrite: null
-          statisticsMode: "INTERNAL"
-        refreshTokenCache:
-          expireAfterAccess: "P1D"
-          expireAfterWrite: null
-          maximumSize: 10000
           refreshAfterWrite: null
           statisticsMode: "INTERNAL"
       passwordPolicy:
@@ -1016,17 +1234,19 @@ appConfig:
         minimumPasswordLength: 8
         minimumPasswordStrength: 3
         neverUsedAccountDeactivationThreshold: "P30D"
-        passwordComplexityRegex: ".*"
         passwordPolicyMessage: "To conform with our Strong Password policy, you are\
-          \ required to use a sufficiently strong password. Password must be more\
-          \ than 8 characters."
+          \ required to use a sufficiently strong password. Password must be at least\
+          \ 8 characters."
         unusedAccountDeactivationThreshold: "P90D"
+      passwordResetRequestCooldown: "PT1M"
+      reactivateInactiveAccountsOnLogin: false
       token:
         accessTokenExpiration: "PT1H"
         algorithm: "RS256"
         defaultApiKeyExpiration: "P365D"
         emailResetTokenExpiration: "PT10M"
         idTokenExpiration: "PT1H"
+        jwkRotationInterval: "P30D"
         jwsIssuer: "stroom"
         refreshTokenExpiration: "P30D"
     webContent:
@@ -1059,47 +1279,15 @@ appConfig:
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
-  state:
-    scyllaDbDocCache:
-      expireAfterAccess: null
-      expireAfterWrite: "PT10M"
-      maximumSize: 100
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
-    sessionCache:
-      expireAfterAccess: "PT1H"
-      expireAfterWrite: null
-      maximumSize: 10
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
-    stateDocCache:
-      expireAfterAccess: null
-      expireAfterWrite: "PT10M"
-      maximumSize: 100
-      refreshAfterWrite: null
-      statisticsMode: "INTERNAL"
   statistics:
-    hbase:
-      docRefType: "StroomStatsStore"
-      eventsPerMessage: 100
-      kafkaConfigUuid: null
-      kafkaTopics:
-        count: "statisticEvents-Count"
-        value: "statisticEvents-Value"
     internal:
       benchmarkCluster:
       - type: "StatisticStore"
         uuid: "946a88c6-a59a-11e6-bdc4-0242ac110002"
         name: "Benchmark-Cluster Test"
-      - type: "StroomStatsStore"
-        uuid: "2503f703-5ce0-4432-b9d4-e3272178f47e"
-        name: "Benchmark-Cluster Test"
       cpu:
       - type: "StatisticStore"
         uuid: "af08c4a7-ee7c-44e4-8f5e-e9c6be280434"
-        name: "CPU"
-      - type: "StroomStatsStore"
-        uuid: "1edfd582-5e60-413a-b91c-151bd544da47"
         name: "CPU"
       enabledStoreTypes:
       - "StatisticStore"
@@ -1107,99 +1295,57 @@ appConfig:
       - type: "StatisticStore"
         uuid: "a9936548-2572-448b-9d5b-8543052c4d92"
         name: "EPS"
-      - type: "StroomStatsStore"
-        uuid: "cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6"
-        name: "EPS"
       heapHistogramBytes:
       - type: "StatisticStore"
         uuid: "934a1600-b456-49bf-9aea-f1e84025febd"
-        name: "Heap Histogram Bytes"
-      - type: "StroomStatsStore"
-        uuid: "b0110ab4-ac25-4b73-b4f6-96f2b50b456a"
         name: "Heap Histogram Bytes"
       heapHistogramInstances:
       - type: "StatisticStore"
         uuid: "e4f243b8-2c70-4d6e-9d5a-16466bf8764f"
         name: "Heap Histogram Instances"
-      - type: "StroomStatsStore"
-        uuid: "bdd933a4-4309-47fd-98f6-1bc2eb555f20"
-        name: "Heap Histogram Instances"
       memory:
       - type: "StatisticStore"
         uuid: "77c09ccb-e251-4ca5-bca0-56a842654397"
-        name: "Memory"
-      - type: "StroomStatsStore"
-        uuid: "d8a7da4f-ef6d-47e0-b16a-af26367a2798"
         name: "Memory"
       metaDataStreamSize:
       - type: "StatisticStore"
         uuid: "946a8814-a59a-11e6-bdc4-0242ac110002"
         name: "Meta Data-Stream Size"
-      - type: "StroomStatsStore"
-        uuid: "3b25d63b-5472-44d0-80e8-8eea94f40f14"
-        name: "Meta Data-Stream Size"
       metaDataStreamsReceived:
       - type: "StatisticStore"
         uuid: "946a87bc-a59a-11e6-bdc4-0242ac110002"
-        name: "Meta Data-Streams Received"
-      - type: "StroomStatsStore"
-        uuid: "5535f493-29ae-4ee6-bba6-735aa3104136"
         name: "Meta Data-Streams Received"
       pipelineStreamProcessor:
       - type: "StatisticStore"
         uuid: "946a80fc-a59a-11e6-bdc4-0242ac110002"
         name: "PipelineStreamProcessor"
-      - type: "StroomStatsStore"
-        uuid: "efd9bad4-0bab-460f-ae98-79e9717deeaf"
-        name: "PipelineStreamProcessor"
       refDataStoreEntryCount:
       - type: "StatisticStore"
         uuid: "f1587262-9cbc-46b4-80eb-51deb011b2c1"
-        name: "Reference Data Store Entry Count"
-      - type: "StroomStatsStore"
-        uuid: "TODO"
         name: "Reference Data Store Entry Count"
       refDataStoreSize:
       - type: "StatisticStore"
         uuid: "e57959bf-0b2d-4008-98a7-ffcae4bbc4bb"
         name: "Reference Data Store Size"
-      - type: "StroomStatsStore"
-        uuid: "TODO"
-        name: "Reference Data Store Size"
       refDataStoreStreamCount:
       - type: "StatisticStore"
         uuid: "0dfd4e00-e068-4667-9c60-d3f6163a6c04"
-        name: "Reference Data Store Stream Count"
-      - type: "StroomStatsStore"
-        uuid: "TODO"
         name: "Reference Data Store Stream Count"
       searchResultsStoreCount:
       - type: "StatisticStore"
         uuid: "35d60e7d-f11a-45c9-981d-16d8ddda081e"
         name: "Search Results Store Count"
-      - type: "StroomStatsStore"
-        uuid: "TODO"
-        name: "Search Results Store Count"
       searchResultsStoreSize:
       - type: "StatisticStore"
         uuid: "de5b831d-3b7e-4bb5-836f-2f438ec30568"
-        name: "Search Results Store Size"
-      - type: "StroomStatsStore"
-        uuid: "TODO"
         name: "Search Results Store Size"
       streamTaskQueueSize:
       - type: "StatisticStore"
         uuid: "946a7f0f-a59a-11e6-bdc4-0242ac110002"
         name: "Stream Task Queue Size"
-      - type: "StroomStatsStore"
-        uuid: "4ce8d6e7-94be-40e1-8294-bf29dd089962"
-        name: "Stream Task Queue Size"
       volumes:
       - type: "StatisticStore"
         uuid: "ac4d8d10-6f75-4946-9708-18b8cb42a5a3"
-        name: "Volumes"
-      - type: "StroomStatsStore"
-        uuid: "60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e"
         name: "Volumes"
     sql:
       dataSourceCache:
@@ -1267,12 +1413,12 @@ appConfig:
     defaultApiKeyHashAlgorithm: "SHA3_256"
     defaultMaxResults: "1000000,100,10,1"
     helpSubPathDocumentation: "/user-guide/content/documentation/"
-    helpSubPathExpressions: "/user-guide/dashboards/expressions/"
+    helpSubPathExpressions: "/reference-section/expressions/"
     helpSubPathJobs: "/reference-section/jobs/"
     helpSubPathProperties: "/user-guide/properties/"
-    helpSubPathQuickFilter: "/user-guide/finding-things/"
-    helpSubPathStroomQueryLanguage: "/user-guide/dashboards/stroom-query-language/"
-    helpUrl: "https://gchq.github.io/stroom-docs/7.5/docs"
+    helpSubPathQuickFilter: "/user-guide/content/finding-things/"
+    helpSubPathStroomQueryLanguage: "/user-guide/search/queries/stroom-query-language/"
+    helpUrl: "https://gchq.github.io/stroom-docs/7.13/docs"
     htmlTitle: "Stroom"
     maxEditorCompletionEntries: 1000
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
@@ -1324,6 +1470,52 @@ appConfig:
     pathPrefix: null
     port: null
     scheme: "https"
+  visualisationAsset:
+    aceEditorModes:
+      css: "CSS"
+      htm: "HTML"
+      html: "HTML"
+      js: "JAVASCRIPT"
+      svg: "XML"
+      txt: "TEXT"
+      xml: "XML"
+    assetCacheDir: "asset_cache"
+    clearAssetCacheOnStartup: false
+    default: "application/octet-stream"
+    defaultAceEditorMode: "TEXT"
+    mimetypes:
+      apng: "image/apng"
+      bmp: "image/bmp"
+      css: "text/css"
+      gif: "image/jpeg"
+      htm: "text/html"
+      html: "text/html"
+      jpeg: "image/jpeg"
+      jpg: "image/jpeg"
+      js: "text/javascript"
+      png: "image/png"
+      svg: "image/svg+xml"
+      tif: "image/tiff"
+      tiff: "image/tiff"
+      txt: "text/plain"
+      webp: "image/webp"
+      xml: "application/xml"
+  visualisationAssetDb:
+    connection:
+      jdbcDriverClassName: null
+      jdbcDriverPassword: null
+      jdbcDriverUrl: null
+      jdbcDriverUsername: null
+    connectionPool:
+      cachePrepStmts: false
+      connectionTimeout: "PT30S"
+      idleTimeout: "PT10M"
+      leakDetectionThreshold: "PT0S"
+      maxLifetime: "PT30M"
+      maxPoolSize: 30
+      minimumIdle: 10
+      prepStmtCacheSize: 25
+      prepStmtCacheSqlLimit: 256
   volumes:
     createDefaultIndexVolumesOnStart: true
     defaultIndexVolumeFilesystemUtilisation: 0.9

@@ -1,0 +1,110 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.datagen.impl;
+
+import stroom.analytics.impl.ExecuteNow;
+import stroom.analytics.impl.ExecuteNowProviderBinder;
+import stroom.analytics.impl.ScheduledExecutorService;
+import stroom.analytics.shared.ExecutionSchedule;
+import stroom.datagen.shared.DataGenDoc;
+import stroom.docstore.api.DocumentStoreBinder;
+import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.job.api.ScheduledJobsBinder;
+import stroom.util.RunnableWrapper;
+import stroom.util.guice.RestResourcesBinder;
+
+import com.google.inject.AbstractModule;
+import jakarta.inject.Inject;
+
+/**
+ * Guice bindings for the data generator: its document store, REST resource, audit logging, and the
+ * scheduled job that runs the generators.
+ * <p>
+ * The "Data Generator" job is bound disabled and marked advanced, since generating data is not
+ * something a normal installation should be doing until an admin asks for it. Scheduling itself is
+ * borrowed from the analytics module, so a data generator is driven by an
+ * {@code ExecutionSchedule} exactly as a scheduled analytic rule is.
+ * </p>
+ */
+public class DataGenModule extends AbstractModule {
+
+    @Override
+    protected void configure() {
+        ScheduledJobsBinder.create(binder())
+                .bindJobTo(ScheduledDataGenExecutorRunnable.class, builder -> builder
+                        .name("Data Generator")
+                        .description("Generate data to be fed into the selected feed.")
+                        .frequencySchedule("10m")
+                        .enabled(false)
+                        .enabledOnBootstrap(false)
+                        .advanced(true));
+
+        DocumentStoreBinder.create(binder())
+                .bind(DataGenDoc.TYPE, DataGenStore.class, DataGenStoreImpl.class);
+
+        // Provide object info to the logging service.
+        ObjectInfoProviderBinder.create(binder())
+                .bind(DataGenDoc.class, DataGenDocObjectInfoProvider.class);
+
+        ExecuteNowProviderBinder.create(binder())
+                .bind(DataGenDoc.TYPE, DataGenExecuteNow.class);
+
+        RestResourcesBinder.create(binder())
+                .bind(DataGenResourceImpl.class);
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Entry point for the scheduled "Data Generator" job: runs every generator that is due.
+     */
+    private static class ScheduledDataGenExecutorRunnable extends RunnableWrapper {
+
+        @Inject
+        ScheduledDataGenExecutorRunnable(final ScheduledExecutorService<DataGenDoc> scheduledExecutorService,
+                                         final ScheduledDataGenExecutable scheduledDataGenExecutor) {
+            super(() -> scheduledExecutorService.exec(scheduledDataGenExecutor));
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * Runs a single generator immediately, on demand, from the Execution tab of the editor.
+     */
+    private static class DataGenExecuteNow implements ExecuteNow {
+
+        private final ScheduledExecutorService<DataGenDoc> scheduledExecutorService;
+        private final ScheduledDataGenExecutable scheduledDataGenExecutable;
+
+        @Inject
+        DataGenExecuteNow(final ScheduledExecutorService<DataGenDoc> scheduledExecutorService,
+                          final ScheduledDataGenExecutable scheduledDataGenExecutable) {
+            this.scheduledExecutorService = scheduledExecutorService;
+            this.scheduledDataGenExecutable = scheduledDataGenExecutable;
+        }
+
+        @Override
+        public void execute(final ExecutionSchedule executionSchedule) {
+            scheduledExecutorService.executeNow(executionSchedule, scheduledDataGenExecutable);
+        }
+    }
+}

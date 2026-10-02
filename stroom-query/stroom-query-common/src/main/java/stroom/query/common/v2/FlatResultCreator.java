@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,12 +36,15 @@ import stroom.query.language.functions.ExpressionContext;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
 import stroom.query.language.functions.ValNull;
+import stroom.query.language.functions.Values;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
+
+import jakarta.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -68,6 +72,7 @@ public class FlatResultCreator implements ResultCreator {
     private final ErrorConsumer errorConsumer = new ErrorConsumerImpl();
     private final Sizes defaultMaxResultsSizes;
     private final boolean cacheLastResult;
+    private final Provider<Executor> executorProvider;
     private FlatResult lastResult;
 
     public FlatResultCreator(final DataStoreFactory dataStoreFactory,
@@ -78,7 +83,8 @@ public class FlatResultCreator implements ResultCreator {
                              final FormatterFactory formatterFactory,
                              final ExpressionPredicateFactory expressionPredicateFactory,
                              final Sizes defaultMaxResultsSizes,
-                             final boolean cacheLastResult) {
+                             final boolean cacheLastResult,
+                             final Provider<Executor> executorProvider) {
         this.dataStoreFactory = dataStoreFactory;
         this.searchRequest = searchRequest;
         this.componentId = componentId;
@@ -88,6 +94,7 @@ public class FlatResultCreator implements ResultCreator {
         this.expressionPredicateFactory = expressionPredicateFactory;
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.cacheLastResult = cacheLastResult;
+        this.executorProvider = executorProvider;
     }
 
     private List<Object> toNodeKey(final Map<Integer, List<Column>> groupColumns, final Key key) {
@@ -187,7 +194,8 @@ public class FlatResultCreator implements ResultCreator {
                                 child,
                                 paramMap,
                                 errorConsumer,
-                                expressionPredicateFactory);
+                                expressionPredicateFactory,
+                                executorProvider);
                         mappedDataStore = mapper.map(mappedDataStore, resultRequest.getTimeFilter());
                     }
 
@@ -316,7 +324,7 @@ public class FlatResultCreator implements ResultCreator {
 
         resultBuilder
                 .componentId(resultRequest.getComponentId())
-                .errors(errorConsumer.getErrors());
+                .errorMessages(errorConsumer.getErrorMessages());
         FlatResult result = resultBuilder.build();
 
         if (cacheLastResult) {
@@ -349,6 +357,10 @@ public class FlatResultCreator implements ResultCreator {
         return val.unwrap();
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     private static class Mapper {
 
         private final DataStoreFactory dataStoreFactory;
@@ -364,6 +376,7 @@ public class FlatResultCreator implements ResultCreator {
         private final ErrorConsumer errorConsumer;
         private final FieldIndex childFieldIndex;
         private final int[] parentFieldIndices;
+        private final Provider<Executor> executorProvider;
 
         Mapper(final DataStoreFactory dataStoreFactory,
                final DataStoreSettings dataStoreSettings,
@@ -375,7 +388,8 @@ public class FlatResultCreator implements ResultCreator {
                final TableSettings child,
                final Map<String, String> paramMap,
                final ErrorConsumer errorConsumer,
-               final ExpressionPredicateFactory expressionPredicateFactory) {
+               final ExpressionPredicateFactory expressionPredicateFactory,
+               final Provider<Executor> executorProvider) {
             this.dataStoreFactory = dataStoreFactory;
             this.dataStoreSettings = dataStoreSettings;
             this.searchRequestSource = searchRequestSource;
@@ -387,6 +401,7 @@ public class FlatResultCreator implements ResultCreator {
             this.child = child;
             this.paramMap = paramMap;
             this.errorConsumer = errorConsumer;
+            this.executorProvider = executorProvider;
 
             // Parent fields are now table column names.
             final FieldIndex parentFieldIndex = new FieldIndex();
@@ -423,12 +438,12 @@ public class FlatResultCreator implements ResultCreator {
                     childFieldIndex,
                     paramMap,
                     dataStoreSettings,
-                    errorConsumer);
+                    errorConsumer,
+                    executorProvider);
 
             // Apply filter to parent.
-            final Optional<Predicate<Val[]>> filter = FilteredRowCreator.createValuesPredicate(
+            final Optional<Predicate<Values>> filter = FilteredMapper.createValuesPredicate(
                     parent.getColumns(),
-                    parent.applyValueFilters(),
                     parent.getAggregateFilter(),
                     dataStore.getDateTimeSettings(),
                     expressionPredicateFactory);
@@ -441,7 +456,7 @@ public class FlatResultCreator implements ResultCreator {
                     parentValues[i] = item.getValue(i);
                 }
 
-                if (predicate.test(parentValues)) {
+                if (predicate.test(Values.of(parentValues))) {
                     final Val[] values = new Val[parentFieldIndices.length];
                     for (int i = 0; i < parentFieldIndices.length; i++) {
                         final int index = parentFieldIndices[i];

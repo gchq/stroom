@@ -18,6 +18,9 @@ package stroom.data.store.mock;
 
 import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.impl.fs.shared.FsVolumeGroup;
+import stroom.data.store.impl.fs.shared.FsVolumeGroupRow;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +38,12 @@ public class MockFsVolumeGroupService implements FsVolumeGroupService {
     }
 
     @Override
-    public FsVolumeGroup create() {
+    public ResultPage<FsVolumeGroupRow> findExtended(final ExpressionCriteria criteria) {
+        return null;
+    }
+
+    @Override
+    public FsVolumeGroup create(final String name) {
         return null;
     }
 
@@ -70,7 +78,7 @@ public class MockFsVolumeGroupService implements FsVolumeGroupService {
     }
 
     @Override
-    public Optional<String> getDefaultVolumeGroup() {
+    public Optional<String> getDefaultVolumeGroupName() {
         return Optional.empty();
     }
 }

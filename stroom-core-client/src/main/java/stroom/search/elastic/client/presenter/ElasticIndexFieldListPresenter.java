@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,16 +12,14 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic.client.presenter;
 
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.search.elastic.client.presenter.ElasticIndexFieldListPresenter.ElasticIndexFieldListView;
 import stroom.search.elastic.shared.ElasticIndexDoc;
@@ -39,7 +37,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<ElasticIndexFieldListView, ElasticIndexDoc> {
+public class ElasticIndexFieldListPresenter extends DocPresenter<ElasticIndexFieldListView, ElasticIndexDoc> {
 
     private final MyDataGrid<ElasticIndexField> dataGrid;
     private final DateTimeFormatter dateTimeFormatter;
@@ -54,7 +52,8 @@ public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<Elasti
         super(eventBus, view);
         this.dateTimeFormatter = dateTimeFormatter;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Elastic Index Fields");
         dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -73,7 +72,6 @@ public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<Elasti
         addStringColumn("Field Type", 150, row -> row.getFldType().getDisplayValue());
         addStringColumn("Native Type", 150, ElasticIndexField::getNativeType);
         addBooleanColumn("Indexed", 100, ElasticIndexField::isIndexed);
-        dataGrid.addEndColumn(new EndColumn<>());
     }
 
     private void addStringColumn(final String name,
@@ -121,6 +119,7 @@ public class ElasticIndexFieldListPresenter extends DocumentEditPresenter<Elasti
 
     @Override
     protected void onRead(final DocRef docRef, final ElasticIndexDoc document, final boolean readOnly) {
+        dataGrid.setTableName("Elastic Index '" + docRef.getName() + "' Fields");
         if (document != null) {
             fields = document.getFields().stream()
                     .sorted(Comparator.comparing(ElasticIndexField::getFldName, String.CASE_INSENSITIVE_ORDER))

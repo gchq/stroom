@@ -16,11 +16,8 @@
 
 package stroom.view.impl;
 
-import stroom.docstore.api.ContentIndexable;
-import stroom.docstore.api.DocumentActionHandlerBinder;
+import stroom.docstore.api.DocumentStoreBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
-import stroom.explorer.api.ExplorerActionHandler;
-import stroom.importexport.api.ImportExportActionHandler;
 import stroom.query.api.datasource.DataSourceProvider;
 import stroom.query.common.v2.IndexFieldProvider;
 import stroom.query.common.v2.SearchProvider;
@@ -35,14 +32,8 @@ public class ViewModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ViewStore.class).to(ViewStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
-                .addBinding(ViewStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(ViewStoreImpl.class);
-        GuiceUtil.buildMultiBinder(binder(), ContentIndexable.class)
-                .addBinding(ViewStoreImpl.class);
+        DocumentStoreBinder.create(binder())
+                .bind(ViewDoc.TYPE, ViewStore.class, ViewStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), DataSourceProvider.class)
                 .addBinding(ViewSearchProvider.class);
@@ -50,9 +41,6 @@ public class ViewModule extends AbstractModule {
                 .addBinding(ViewSearchProvider.class);
         GuiceUtil.buildMultiBinder(binder(), IndexFieldProvider.class)
                 .addBinding(ViewSearchProvider.class);
-
-        DocumentActionHandlerBinder.create(binder())
-                .bind(ViewDoc.TYPE, ViewStoreImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

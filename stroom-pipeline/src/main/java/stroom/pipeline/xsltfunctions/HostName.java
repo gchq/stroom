@@ -26,18 +26,26 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 class HostName extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "host-name";
+
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
         String result = null;
+
+        // Find out if we are going to ignore warnings.
+        final boolean ignoreWarnings = isIgnoreWarnings(functionName, context, arguments, 1);
 
         try {
             final String ip = getSafeString(functionName, context, arguments, 0);
             final InetAddress addr = InetAddress.getByName(ip);
             result = addr.getHostName();
         } catch (final XPathException | UnknownHostException | RuntimeException e) {
-            final StringBuilder sb = new StringBuilder();
-            sb.append(e.getMessage());
-            outputWarning(context, sb, e);
+            if (!ignoreWarnings) {
+                final StringBuilder sb = new StringBuilder();
+                sb.append(e.getMessage());
+                outputWarning(context, sb, e);
+            }
         }
 
         if (result == null) {

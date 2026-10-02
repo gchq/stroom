@@ -1,0 +1,5 @@
+name=Kafka
+path=/Kafka Brokers/Kafka
+type=KafkaConfig
+uuid=7cbf9153-869c-43bb-a316-1c652673e680
+version=V2

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import stroom.statistics.impl.sql.rollup.RolledUpStatisticEvent;
 import stroom.statistics.impl.sql.search.FilterTermsTree;
 import stroom.statistics.impl.sql.search.FindEventCriteria;
 import stroom.statistics.impl.sql.search.StatStoreCriteriaBuilder;
+import stroom.statistics.impl.sql.search.StatisticStoreDocUtil;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
@@ -38,8 +39,8 @@ import jakarta.ws.rs.BadRequestException;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -73,13 +74,17 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         // define all the tag/value perms we expect to get back
         final List<List<StatisticTag>> expectedTagPerms = new ArrayList<>();
-        expectedTagPerms
-                .add(Arrays.asList(new StatisticTag(TAG1_NAME, TAG1_VALUE), new StatisticTag(TAG2_NAME, TAG2_VALUE)));
-        expectedTagPerms.add(
-                Arrays.asList(new StatisticTag(TAG1_NAME, TAG1_VALUE), new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
-        expectedTagPerms.add(
-                Arrays.asList(new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE), new StatisticTag(TAG2_NAME, TAG2_VALUE)));
-        expectedTagPerms.add(Arrays.asList(new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, TAG1_VALUE),
+                new StatisticTag(TAG2_NAME, TAG2_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, TAG1_VALUE),
+                new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
+                new StatisticTag(TAG2_NAME, TAG2_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
                 new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
 
         System.out.println("-------------------------------------------------");
@@ -104,7 +109,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             for (int i = 0; i < event.getTagList().size(); i++) {
                 assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
                 assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
+                           || RollUpBitMask.ROLL_UP_TAG_VALUE
+                                   .equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
     }
@@ -126,15 +132,18 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         final List<List<StatisticTag>> expectedTagPerms = new ArrayList<>();
 
         // nothing rolled up
-        expectedTagPerms
-                .add(Arrays.asList(new StatisticTag(TAG1_NAME, TAG1_VALUE), new StatisticTag(TAG2_NAME, TAG2_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, TAG1_VALUE),
+                new StatisticTag(TAG2_NAME, TAG2_VALUE)));
 
         // tag 2 rolled up
-        expectedTagPerms.add(
-                Arrays.asList(new StatisticTag(TAG1_NAME, TAG1_VALUE), new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, TAG1_VALUE),
+                new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
 
         // tags 1 and 2 rolled up
-        expectedTagPerms.add(Arrays.asList(new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
+        expectedTagPerms.add(List.of(
+                new StatisticTag(TAG1_NAME, ROLLED_UP_VALUE),
                 new StatisticTag(TAG2_NAME, ROLLED_UP_VALUE)));
 
         System.out.println("-------------------------------------------------");
@@ -159,7 +168,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             for (int i = 0; i < event.getTagList().size(); i++) {
                 assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
                 assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
+                           || RollUpBitMask.ROLL_UP_TAG_VALUE
+                                   .equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
     }
@@ -184,7 +194,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             for (int i = 0; i < event.getTagList().size(); i++) {
                 assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
                 assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
+                           || RollUpBitMask.ROLL_UP_TAG_VALUE
+                                   .equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
 
@@ -210,7 +221,8 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             for (int i = 0; i < event.getTagList().size(); i++) {
                 assertThat(eventPerm.getTagList().get(i).getTag()).isEqualTo(event.getTagList().get(i).getTag());
                 assertThat(event.getTagList().get(i).getValue().equals(eventPerm.getTagList().get(i).getValue())
-                        || RollUpBitMask.ROLL_UP_TAG_VALUE.equals(eventPerm.getTagList().get(i).getValue())).isTrue();
+                           || RollUpBitMask.ROLL_UP_TAG_VALUE
+                                   .equals(eventPerm.getTagList().get(i).getValue())).isTrue();
             }
         }
     }
@@ -233,30 +245,37 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
     }
 
     private StatisticStoreDoc buildStatisticDataSource(final StatisticRollUpType statisticRollUpType) {
-        final StatisticStoreDoc statisticsDataSource = new StatisticStoreDoc();
+        final StatisticStoreDoc statisticsDataSource = StatisticStoreDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .build();
 
-        final StatisticsDataSourceData statisticsDataSourceData = new StatisticsDataSourceData();
+        StatisticsDataSourceData statisticsDataSourceData = StatisticsDataSourceData.builder().build();
 
         final List<StatisticField> fields = new ArrayList<>();
 
         fields.add(new StatisticField(TAG1_NAME));
         fields.add(new StatisticField(TAG2_NAME));
 
-        statisticsDataSourceData.setFields(fields);
+        statisticsDataSourceData = statisticsDataSourceData.copy().fields(fields).build();
 
         // add the custom rollup masks, which only come into play if the type is
         // CUSTOM
-        statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(new ArrayList<>())); // no
+        statisticsDataSourceData = StatisticStoreDocUtil.addCustomRollUpMask(statisticsDataSourceData,
+                new CustomRollUpMask(new ArrayList<>())); // no
         // tags
-        statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(0, 1))); // tags
+        statisticsDataSourceData = StatisticStoreDocUtil.addCustomRollUpMask(statisticsDataSourceData,
+                new CustomRollUpMask(List.of(0, 1))); // tags
         // 1&2
-        statisticsDataSourceData.addCustomRollUpMask(new CustomRollUpMask(Arrays.asList(1))); // tag
+        statisticsDataSourceData = StatisticStoreDocUtil.addCustomRollUpMask(statisticsDataSourceData,
+                new CustomRollUpMask(List.of(1))); // tag
         // 2
 
-        statisticsDataSource.setConfig(statisticsDataSourceData);
-        statisticsDataSource.setRollUpType(statisticRollUpType);
-
-        return statisticsDataSource;
+        return statisticsDataSource
+                .copy()
+                .config(statisticsDataSourceData)
+                .rollUpType(statisticRollUpType)
+                .build();
     }
 
     @Test
@@ -269,8 +288,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME,
                     Condition.IN_DICTIONARY, dateTerm);
 
-            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-            dataSource.setName("MyDataSource");
+            final StatisticStoreDoc dataSource = getDoc();
 
             StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(BadRequestException.class);
@@ -289,8 +307,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
+        final StatisticStoreDoc dataSource = getDoc();
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
                 rootOperator.build(),
@@ -317,8 +334,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
 
-            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-            dataSource.setName("MyDataSource");
+            final StatisticStoreDoc dataSource = getDoc();
 
             StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(RuntimeException.class);
@@ -339,11 +355,18 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
             rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
             rootOperator.addTextTerm(QueryField.createText(null), Condition.EQUALS, "xxx");
 
-            final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-            dataSource.setName("MyDataSource");
+            final StatisticStoreDoc dataSource = getDoc();
 
             StatStoreCriteriaBuilder.buildCriteria(dataSource, rootOperator.build(), null);
         }).isInstanceOf(BadRequestException.class);
+    }
+
+    private StatisticStoreDoc getDoc() {
+        return StatisticStoreDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .name("MyDataSource")
+                .build();
     }
 
     @Test
@@ -360,8 +383,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         rootOperator.addTerm(StatisticStoreDoc.FIELD_NAME_DATE_TIME, Condition.BETWEEN, dateTerm);
         rootOperator.addTerm("MyField", Condition.EQUALS, "");
 
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
+        final StatisticStoreDoc dataSource = getDoc();
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
                 rootOperator.build(),
@@ -386,8 +408,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
 
         rootOperator.addTerm("MyField", Condition.EQUALS, "xxx");
 
-        final StatisticStoreDoc dataSource = new StatisticStoreDoc();
-        dataSource.setName("MyDataSource");
+        final StatisticStoreDoc dataSource = getDoc();
 
         final FindEventCriteria criteria = StatStoreCriteriaBuilder.buildCriteria(dataSource,
                 rootOperator.build(),

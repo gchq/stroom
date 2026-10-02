@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,36 @@
 
 package stroom.proxy.app.guice;
 
-import stroom.dictionary.api.DictionaryStore;
 import stroom.dropwizard.common.DropwizardModule;
 import stroom.dropwizard.common.FilteredHealthCheckServlet;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.TokenExceptionMapper;
-import stroom.importexport.api.ImportExportActionHandler;
+import stroom.dropwizard.common.prometheus.AppInfoProvider;
+import stroom.dropwizard.common.prometheus.PrometheusModule;
+import stroom.dropwizard.common.sysinfo.SystemInfoAdminServletModule;
 import stroom.proxy.app.Config;
-import stroom.proxy.app.ContentSyncService;
 import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.ProxyConfigHolder;
 import stroom.proxy.app.ProxyLifecycle;
+import stroom.proxy.app.ReceiveDataRuleSetClient;
 import stroom.proxy.app.event.EventResourceImpl;
 import stroom.proxy.app.handler.ForwarderModule;
+import stroom.proxy.app.handler.RemoteFeedStatusClient;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
+import stroom.proxy.app.handler.RemoteS3EventClient;
+import stroom.proxy.app.metrics.ProxyAppInfoProvider;
+import stroom.proxy.app.security.ProxyApiKeyCheckClient;
 import stroom.proxy.app.servlet.ProxyQueueMonitoringServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
+import stroom.receive.common.DataFeedIdentitiesDirWatcher;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.FeedStatusResourceImpl;
 import stroom.receive.common.FeedStatusResourceV2Impl;
+import stroom.receive.common.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.common.ReceiveDataServlet;
-import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
-import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.security.common.impl.RefreshManager;
 import stroom.util.guice.AdminServletBinder;
 import stroom.util.guice.FilterBinder;
@@ -87,18 +92,23 @@ public class ProxyModule extends AbstractModule {
         bind(MetricRegistry.class).toInstance(environment.metrics());
         bind(HealthCheckRegistry.class).toInstance(environment.healthChecks());
         bind(Metrics.class).to(MetricsImpl.class);
+        bind(AppInfoProvider.class).to(ProxyAppInfoProvider.class);
 
         install(new ProxyConfigModule(proxyConfigHolder));
         install(new ProxyCoreModule());
         install(new DropwizardModule());
         install(new ForwarderModule());
+        install(new PrometheusModule());
+        install(new SystemInfoAdminServletModule());
 
         HasHealthCheckBinder.create(binder())
-                .bind(ContentSyncService.class)
-                .bind(FeedStatusResourceV2Impl.class)
+                .bind(DataFeedIdentitiesDirWatcher.class)
                 .bind(LogLevelInspector.class)
                 .bind(ProxyConfigHealthCheck.class)
-                .bind(RemoteFeedStatusService.class);
+                .bind(ProxyApiKeyCheckClient.class)
+                .bind(ReceiveDataRuleSetClient.class)
+                .bind(RemoteFeedStatusClient.class)
+                .bind(RemoteS3EventClient.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
@@ -107,11 +117,11 @@ public class ProxyModule extends AbstractModule {
         ServletBinder.create(binder())
                 .bind(DebugServlet.class)
                 .bind(ProxyStatusServlet.class)
-                .bind(ProxyQueueMonitoringServlet.class)
                 .bind(ProxyWelcomeServlet.class)
                 .bind(ReceiveDataServlet.class);
 
         AdminServletBinder.create(binder())
+                .bind(ProxyQueueMonitoringServlet.class)
                 .bind(FilteredHealthCheckServlet.class);
 
         RestResourcesBinder.create(binder())
@@ -121,7 +131,6 @@ public class ProxyModule extends AbstractModule {
                 .bind(EventResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
-                .addBinding(ContentSyncService.class)
                 .addBinding(ProxyLifecycle.class)
                 .addBinding(RemoteFeedStatusService.class)
                 .addBinding(RefreshManager.class);
@@ -129,9 +138,5 @@ public class ProxyModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ExceptionMapper.class)
                 .addBinding(PermissionExceptionMapper.class)
                 .addBinding(TokenExceptionMapper.class);
-
-        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-                .addBinding(ReceiveDataRuleSetService.class)
-                .addBinding(DictionaryStore.class);
     }
 }

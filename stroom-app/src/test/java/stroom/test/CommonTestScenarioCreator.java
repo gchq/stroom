@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.test;
@@ -27,6 +26,7 @@ import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexFields;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.LuceneIndexDoc;
+import stroom.index.shared.LuceneIndexDoc.PartitionBy;
 import stroom.index.shared.LuceneIndexField;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
@@ -44,6 +44,7 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -83,9 +84,11 @@ public class CommonTestScenarioCreator {
     }
 
     public void createProcessor(final QueryData queryData) {
-        Processor processor = new Processor();
-        processor.setPipelineUuid(UUID.randomUUID().toString());
-        processor.setEnabled(true);
+        Processor processor = Processor
+                .builder()
+                .pipelineUuid(UUID.randomUUID().toString())
+                .enabled(true)
+                .build();
         processor = streamProcessorService.create(processor);
         processorFilterService.create(processor,
                 CreateProcessFilterRequest
@@ -99,19 +102,19 @@ public class CommonTestScenarioCreator {
         return createIndex(name, createIndexFields(), LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
     }
 
-    public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields) {
-        return createIndex(name, indexFields, LuceneIndexDoc.DEFAULT_MAX_DOCS_PER_SHARD);
-    }
-
     public DocRef createIndex(final String name, final List<LuceneIndexField> indexFields, final int maxDocsPerShard) {
         // Create a test index.
         final DocRef indexRef = indexStore.createDocument(name);
-        final LuceneIndexDoc index = indexStore.readDocument(indexRef);
+        LuceneIndexDoc index = indexStore.readDocument(indexRef);
 
         // Update the index
-        index.setMaxDocsPerShard(maxDocsPerShard);
-        index.setFields(indexFields);
-        index.setVolumeGroupName(VolumeCreator.DEFAULT_VOLUME_GROUP);
+        index = index
+                .copy()
+                .maxDocsPerShard(maxDocsPerShard)
+                .fields(indexFields)
+                .volumeGroupName(VolumeCreator.DEFAULT_VOLUME_GROUP)
+                .partitionBy(PartitionBy.YEAR)
+                .build();
         indexStore.writeDocument(index);
         assertThat(index).isNotNull();
         return indexRef;
@@ -123,14 +126,23 @@ public class CommonTestScenarioCreator {
         return indexFields;
     }
 
+    public Meta createSample2LineRawFile(final String feed,
+                                         final String streamType) {
+        return createSample2LineRawFile(feed, streamType, Instant.now());
+    }
+
     /**
      * @param feed related
      * @return a basic raw file
      */
-    public Meta createSample2LineRawFile(final String feed, final String streamType) {
+    public Meta createSample2LineRawFile(final String feed,
+                                         final String streamType,
+                                         final Instant effectiveTime) {
         final MetaProperties metaProperties = MetaProperties.builder()
                 .feedName(feed)
                 .typeName(streamType)
+                .createMs(effectiveTime.toEpochMilli())
+                .effectiveMs(effectiveTime.toEpochMilli())
                 .build();
         try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, "line1\nline2");
@@ -149,12 +161,12 @@ public class CommonTestScenarioCreator {
                 .build();
 
         final String data = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                + "<Events xpath-default-namespace=\"records:2\" "
-                + "xmlns:stroom=\"stroom\" "
-                + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
-                + "xmlns=\"event-logging:3\" "
-                + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
-                + "Version=\"3.0.0\"/>";
+                            + "<Events xpath-default-namespace=\"records:2\" "
+                            + "xmlns:stroom=\"stroom\" "
+                            + "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
+                            + "xmlns=\"event-logging:3\" "
+                            + "xsi:schemaLocation=\"event-logging:3 file://event-logging-v3.0.0.xsd\" "
+                            + "Version=\"3.0.0\"/>";
 
         try (final Target target = streamStore.openTarget(metaProperties)) {
             TargetUtil.write(target, data);

@@ -20,10 +20,17 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 
+import org.apache.commons.lang3.mutable.MutableLong;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -32,6 +39,8 @@ import java.nio.file.LinkOption;
 import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.FileTime;
@@ -59,6 +68,7 @@ public final class FileUtil {
 
     public static final int MKDIR_RETRY_COUNT = 2;
     public static final int MKDIR_RETRY_SLEEP_MS = 100;
+    private static final int IO_BUFFER_SIZE = 8192;
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FileUtil.class);
 
     private FileUtil() {
@@ -120,6 +130,68 @@ public final class FileUtil {
         } else {
             return false;
         }
+    }
+
+    /**
+     * Attempts to delete any empty directories found while walking the tree starting from rootDir.
+     * Will not delete rootDir.
+     * No exceptions will be thrown. It will only log errors.
+     */
+    public static int deleteEmptyDirs(final Path rootDir) {
+        final MutableLong deleteCount = new MutableLong();
+        try {
+            Files.walkFileTree(rootDir, new SimpleFileVisitor<>() {
+                final Set<Path> dirsWithFiles = new HashSet<>();
+
+                //
+                @Override
+                public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                    // Mark all parent directories as having files
+                    Path parent = file.getParent();
+                    while (parent != null && parent.startsWith(rootDir)) {
+                        dirsWithFiles.add(parent);
+                        parent = parent.getParent();
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(final Path file, final IOException exc) throws IOException {
+                    // Sill an item in the dir even if we can't visit it
+                    // Mark all parent directories as having files
+                    Path parent = file.getParent();
+                    while (parent != null && parent.startsWith(rootDir)) {
+                        dirsWithFiles.add(parent);
+                        parent = parent.getParent();
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+                    if (!Files.isSameFile(rootDir, dir)) {
+                        if (!dirsWithFiles.contains(dir)) {
+                            try {
+                                Files.delete(dir);
+                                deleteCount.increment();
+                            } catch (final DirectoryNotEmptyException e) {
+                                LOGGER.debug("deleteEmptyDirs() - Directory {} is not empty so cannot be deleted.",
+                                        dir);
+                            } catch (final IOException e) {
+                                LOGGER.error("Error while trying to delete directory {} - {}",
+                                        dir, LogUtil.exceptionMessage(e));
+                            }
+                        }
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (final IOException e) {
+            // Swallow
+            LOGGER.error("Error walking directory {} - {}", rootDir, LogUtil.exceptionMessage(e), e);
+        }
+        LOGGER.debug("deleteEmptyDirs() - Deleted {} empty directories", deleteCount);
+        return deleteCount.intValue();
     }
 
     private static void recursiveDelete(final Path path, final AtomicBoolean success) {
@@ -603,4 +675,94 @@ public final class FileUtil {
             }
         }
     }
+
+    /**
+     * Performs a safe write from byte[] to file, so if the system crashes half-way through writing
+     * we don't have a corrupted version of the file.
+     * @param filePath The path to the file we want to create. Must not be null.
+     * @param tmpPrefix The prefix for a temporary file; for example "tmp-". Must not be null.
+     * @param tmpSuffix The suffix for a temporary file; for example ".tmp". Must not be null.
+     * @param data The data to write to the file. Might be null.
+     * @throws IOException If something goes wrong.
+     */
+    public static void saveDataSafely(final Path filePath,
+                                      final String tmpPrefix,
+                                      final String tmpSuffix,
+                                      final byte[] data) throws IOException {
+        Objects.requireNonNull(filePath);
+        Objects.requireNonNull(tmpPrefix);
+        Objects.requireNonNull(tmpSuffix);
+
+        final Path fileDir = filePath.getParent();
+        Files.createDirectories(fileDir);
+        final Path tempFilePath = Files.createTempFile(fileDir,
+                tmpPrefix,
+                tmpSuffix);
+
+        try {
+            try (final FileChannel channel = FileChannel.open(tempFilePath, StandardOpenOption.WRITE)) {
+                final ByteBuffer buffer = ByteBuffer.wrap(data);
+                while (buffer.hasRemaining()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    channel.write(buffer);
+                }
+                channel.force(true);
+            }
+
+            Files.move(tempFilePath,
+                    filePath,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE);
+        } finally {
+            Files.deleteIfExists(tempFilePath);
+        }
+    }
+
+    /**
+     * Performs a safe write from inputStream to file, so if the system crashes half-way through writing
+     * we don't have a corrupted version of the file.
+     * @param tempFilePrefix The prefix for the temporary file we'll create.
+     *                       Needed so temporary files can be cleaned up if necessary.
+     * @param tempFileSuffix The suffix for the temporary file we'll create.
+     *                       Needed so temporary files can be cleaned up if necessary.
+     * @param filePath The path to the file we want to create.
+     * @param dataStream The data to write to the file. Might be null.
+     * @throws IOException If something goes wrong.
+     */
+    public static void saveDataSafely(final Path filePath,
+                                      final String tempFilePrefix,
+                                      final String tempFileSuffix,
+                                      final InputStream dataStream) throws IOException {
+
+        final Path fileDir = filePath.getParent();
+        Files.createDirectories(fileDir);
+        final Path tempFilePath = Files.createTempFile(fileDir,
+                tempFilePrefix,
+                tempFileSuffix);
+
+        try {
+            try (final FileChannel outChannel = FileChannel.open(tempFilePath, StandardOpenOption.WRITE)) {
+                final ReadableByteChannel inChannel = Channels.newChannel(dataStream);
+                final ByteBuffer buffer = ByteBuffer.allocateDirect(IO_BUFFER_SIZE);
+
+                while (inChannel.read(buffer) != -1) {
+                    buffer.flip(); // Prepare buffer for writing
+                    while (buffer.hasRemaining()) {
+                        outChannel.write(buffer);
+                    }
+                    buffer.clear(); // Prepare buffer for reading
+                }
+
+                outChannel.force(true); // Ensure data is on physical disk
+            }
+
+            Files.move(tempFilePath, filePath,
+                    StandardCopyOption.REPLACE_EXISTING,
+                    StandardCopyOption.ATOMIC_MOVE);
+
+        } finally {
+            Files.deleteIfExists(tempFilePath);
+        }
+    }
+
 }

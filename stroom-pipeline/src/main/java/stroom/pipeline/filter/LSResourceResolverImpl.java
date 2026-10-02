@@ -58,7 +58,11 @@ public class LSResourceResolverImpl implements LSResourceResolver {
             return new LSInputImpl(xmlSchema.getData(), systemId, publicId, baseURI);
         }
 
-        return null;
+        // The reference was not found in the schema store. Returning null would let the schema parser resolve
+        // the systemId as an external resource (an XXE / SSRF vector - Stroom's Xerces does not honour the
+        // JAXP ACCESS_EXTERNAL_* restrictions). Every legitimate include/import is served from the store
+        // above, so deny anything else by returning an empty input rather than allowing an off-box fetch.
+        return new LSInputImpl("", systemId, publicId, baseURI);
     }
 
     private XmlSchemaDoc getConstrainedMatch(final String systemId,

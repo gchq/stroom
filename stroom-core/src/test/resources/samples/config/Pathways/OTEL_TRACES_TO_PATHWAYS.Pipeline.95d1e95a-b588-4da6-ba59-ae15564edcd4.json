@@ -1,0 +1,55 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "Source",
+      "type" : "Source"
+    }, {
+      "id" : "D322FBCF-3EEF-4E9A-9B5C-39033CCCF680",
+      "type" : "JSONParser",
+      "name" : "JSON Parser"
+    }, {
+      "id" : "5A81AFC3-052C-41A1-8D98-55F95E530C7B",
+      "type" : "PathwaysFilter",
+      "name" : "Pathways Filter"
+    }, {
+      "id" : "5F053BAF-0887-427A-8D0C-F11A6D937D07",
+      "type" : "XSLTFilter",
+      "name" : "XSLT Filter"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "5F053BAF-0887-427A-8D0C-F11A6D937D07",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "98bb1c9e-1d0e-4116-8673-4126ca11243b",
+          "name" : "TEST_TRACES"
+        }
+      }
+    }, {
+      "element" : "5A81AFC3-052C-41A1-8D98-55F95E530C7B",
+      "name" : "pathways",
+      "value" : {
+        "entity" : {
+          "type" : "Pathways",
+          "uuid" : "621c14b2-7b4b-4983-9cf2-d97e3d6ac02b",
+          "name" : "Stroom Pathways"
+        }
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "Source",
+      "to" : "D322FBCF-3EEF-4E9A-9B5C-39033CCCF680"
+    }, {
+      "from" : "D322FBCF-3EEF-4E9A-9B5C-39033CCCF680",
+      "to" : "5F053BAF-0887-427A-8D0C-F11A6D937D07"
+    }, {
+      "from" : "5F053BAF-0887-427A-8D0C-F11A6D937D07",
+      "to" : "5A81AFC3-052C-41A1-8D98-55F95E530C7B"
+    } ]
+  }
+}

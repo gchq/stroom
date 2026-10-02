@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package stroom.query.client;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
+import stroom.explorer.shared.ExplorerConstants;
 import stroom.item.client.BaseSelectionBox;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.ExpressionTerm.Condition;
@@ -29,9 +30,13 @@ import stroom.query.client.presenter.FieldInfoSelectionItem;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.security.shared.DocumentPermission;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.StringUtil;
 import stroom.util.shared.UserRef;
 import stroom.widget.customdatebox.client.MyDateBox;
+import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -84,7 +89,8 @@ public class TermEditor extends Composite {
     private FieldSelectionListModel fieldSelectionListModel;
 
     public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
-                      final Provider<UserRefSelectionBoxPresenter> userRefProvider) {
+                      final Provider<UserRefSelectionBoxPresenter> userRefProvider,
+                      final UiConfigCache uiConfigCache) {
         final DocSelectionBoxPresenter docRefPresenter = docRefProvider.get();
         docRefPresenter.setRequiredPermissions(DocumentPermission.USE);
         docRefPresenter.getWidget().getElement().getStyle().setMargin(0, Unit.PX);
@@ -92,12 +98,7 @@ public class TermEditor extends Composite {
 
         this.docSelectionBoxPresenter = docRefPresenter;
         this.userRefSelectionBoxPresenter = userRefProvider.get();
-        if (docSelectionBoxPresenter != null) {
-            docRefWidget = docSelectionBoxPresenter.getWidget();
-        } else {
-            docRefWidget = new Label();
-        }
-
+        docRefWidget = docSelectionBoxPresenter.getWidget();
         docRefWidget.addStyleName(ITEM_CLASS_NAME);
         docRefWidget.addStyleName("docRef");
         docRefWidget.setVisible(false);
@@ -112,7 +113,7 @@ public class TermEditor extends Composite {
         userRefWidget.addStyleName("docRef");
         userRefWidget.setVisible(false);
 
-        fieldListBox = createFieldBox();
+        fieldListBox = createFieldBox(uiConfigCache);
         conditionListBox = createConditionBox();
 
         andLabel = createLabel(" and ");
@@ -176,14 +177,11 @@ public class TermEditor extends Composite {
     public void startEdit(final Term term) {
         if (!editing) {
             this.term = term;
-
             read(term);
-
             Scheduler.get().scheduleDeferred(() -> {
                 bind();
                 layout.setVisible(true);
             });
-
             editing = true;
         }
     }
@@ -200,24 +198,42 @@ public class TermEditor extends Composite {
     private void read(final Term term) {
         reading = true;
 
-        // Select the current value.
-        conditionListBox.setValue(null);
-        changeField(null, null, false);
-        fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
-            fieldListBox.setValue(fieldInfo);
-            changeField(fieldInfo, term.getCondition(), false);
-        });
+        // See if the field is the same, if so then do not bother fetching field info from the server.
+        if (term.getField() != null && Objects.equals(
+                NullSafe.get(fieldListBox, BaseSelectionBox::getValue, QueryField::getFldName),
+                term.getField())) {
+            changeField(fieldListBox.getValue(), term.getCondition(), false);
+        } else if (term.getField() == null) {
+            // If the field is null then set the field box to null and update the other controls.
+            fieldListBox.setValue(null);
+            changeField(null, term.getCondition(), false);
+        } else {
+            // If the field is not null then go and fetch the field info and do a full update.
+            fieldListBox.setValue(null);
+            changeField(null, term.getCondition(), false);
+            fieldSelectionListModel.findFieldByName(term.getField(), fieldInfo -> {
+                fieldListBox.setValue(fieldInfo);
+                changeField(fieldInfo, term.getCondition(), false);
+            });
+        }
 
         reading = false;
     }
 
+    public void write() {
+        if (editing) {
+            write(term);
+        }
+    }
+
     private void write(final Term term) {
         final QueryField selectedField = fieldListBox.getValue();
-        if (selectedField != null && conditionListBox.getValue() != null) {
+        final Condition condition = conditionListBox.getValue();
+        if (selectedField != null && condition != null) {
             DocRef docRef = null;
 
             term.setField(selectedField.getFldName());
-            term.setCondition(conditionListBox.getValue());
+            term.setCondition(condition);
 
             final StringBuilder sb = new StringBuilder();
             for (final Widget widget : activeWidgets) {
@@ -273,6 +289,8 @@ public class TermEditor extends Composite {
                 selected = Condition.IS_USER_REF;
             } else if (conditions.contains(Condition.USER_HAS_PERM)) {
                 selected = Condition.USER_HAS_PERM;
+            } else if (conditions.contains(Condition.CONTAINS)) {
+                selected = Condition.CONTAINS;
             } else if (conditions.contains(Condition.EQUALS)) {
                 selected = Condition.EQUALS;
             } else {
@@ -280,105 +298,100 @@ public class TermEditor extends Composite {
             }
         }
 
+        // Make the condition box wider if needed.
+        if (conditions.contains(Condition.MATCHES_REGEX_CASE_SENSITIVE)) {
+            conditionListBox.addStyleName("condition-wide");
+        } else {
+            conditionListBox.removeStyleName("condition-wide");
+        }
+
         conditionListBox.setValue(selected);
+        NullSafe.consume(selected, Condition::getDescription, conditionListBox::setTitle);
         changeCondition(field, selected);
 
-        if (field != null && field.getFldType() != null) {
+        if (NullSafe.nonNull(field, QueryField::getFldType)) {
             fieldTypeLabel.setText(field.getFldType().getShortTypeName());
             fieldTypeLabel.setTitle(field.getFldType().getDescription());
             fieldTypeLabel.setVisible(true);
         } else {
+            fieldTypeLabel.setText("");
+            fieldTypeLabel.setTitle("");
             fieldTypeLabel.setVisible(false);
         }
     }
 
     private List<Condition> getConditions(final QueryField field) {
-        final ConditionSet conditions;
-        if (field != null && field.getConditionSet() != null) {
-            conditions = field.getConditionSet();
-
-        } else {
-            FieldType fieldType = null;
-            if (field != null) {
-                fieldType = field.getFldType();
-            }
-            conditions = ConditionSet.getUiDefaultConditions(fieldType);
-        }
-
+        final ConditionSet conditions = NullSafe.getOrElseGet(
+                field,
+                QueryField::getConditionSet,
+                () -> {
+                    FieldType fieldType = null;
+                    if (field != null) {
+                        fieldType = field.getFldType();
+                    }
+                    return ConditionSet.getUiDefaultConditions(fieldType);
+                }
+        );
         return conditions.getConditionList();
     }
 
     private void changeCondition(final QueryField field,
                                  final Condition condition) {
         final QueryField selectedField = fieldListBox.getValue();
-        FieldType indexFieldType = null;
-        if (selectedField != null && selectedField.getFldType() != null) {
-            indexFieldType = selectedField.getFldType();
-        }
+        final FieldType indexFieldType = NullSafe.get(selectedField, QueryField::getFldType);
 
         if (indexFieldType == null) {
             setActiveWidgets();
-
         } else {
             switch (condition) {
-                case EQUALS:
-                case NOT_EQUALS:
-                case LESS_THAN:
-                case LESS_THAN_OR_EQUAL_TO:
-                case GREATER_THAN:
-                case GREATER_THAN_OR_EQUAL_TO:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateMode();
-                    } else {
-                        enterTextMode();
-                    }
-                    break;
-//                case CONTAINS:
-//                    enterTextMode();
-//                    break;
-                case IN:
-                    enterTextMode();
+                case EQUALS,
+                     NOT_EQUALS,
+                     LESS_THAN,
+                     LESS_THAN_OR_EQUAL_TO,
+                     GREATER_THAN,
+                     GREATER_THAN_OR_EQUAL_TO:
+                    enterTextOrDateMode(indexFieldType);
                     break;
                 case BETWEEN:
-                    if (FieldType.DATE.equals(indexFieldType)) {
-                        enterDateRangeMode();
-                    } else {
-                        enterTextRangeMode();
-                    }
+                    enterTextOrDateRangeMode(indexFieldType);
                     break;
-                case IN_DICTIONARY:
-                case IN_FOLDER:
-                case IS_DOC_REF:
+                case IN_DICTIONARY,
+                     IN_FOLDER,
+                     IS_DOC_REF,
+                     IS_NOT_DOC_REF,
+                     OF_DOC_REF:
                     enterDocRefMode(field, condition);
                     break;
-                case OF_DOC_REF:
-                    enterDocRefMode(field, condition);
-                    break;
-                case IS_USER_REF:
+                case IS_USER_REF,
+                     IS_NOT_USER_REF,
+                     USER_HAS_PERM,
+                     USER_HAS_OWNER,
+                     USER_HAS_DELETE,
+                     USER_HAS_EDIT,
+                     USER_HAS_VIEW,
+                     USER_HAS_USE:
                     enterUserRefMode(field, condition);
                     break;
-                case USER_HAS_PERM:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_OWNER:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_DELETE:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_EDIT:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_VIEW:
-                    enterUserRefMode(field, condition);
-                    break;
-                case USER_HAS_USE:
-                    enterUserRefMode(field, condition);
-                    break;
-                case MATCHES_REGEX:
+                default:
                     enterTextMode();
                     break;
             }
+        }
+    }
+
+    private void enterTextOrDateMode(final FieldType indexFieldType) {
+        if (FieldType.DATE.equals(indexFieldType)) {
+            enterDateMode();
+        } else {
+            enterTextMode();
+        }
+    }
+
+    private void enterTextOrDateRangeMode(final FieldType indexFieldType) {
+        if (FieldType.DATE.equals(indexFieldType)) {
+            enterDateRangeMode();
+        } else {
+            enterTextRangeMode();
         }
     }
 
@@ -410,7 +423,7 @@ public class TermEditor extends Composite {
             if (Condition.IN_DICTIONARY.equals(condition)) {
                 docSelectionBoxPresenter.setIncludedTypes("Dictionary");
             } else if (Condition.IN_FOLDER.equals(condition) || Condition.OF_DOC_REF.equals(condition)) {
-                docSelectionBoxPresenter.setIncludedTypes("Folder");
+                docSelectionBoxPresenter.setIncludedTypes(ExplorerConstants.FOLDER_LIKE);
                 docSelectionBoxPresenter.setAllowFolderSelection(true);
             } else if (FieldType.DOC_REF.equals(field.getFldType())) {
                 if (field.getDocRefType() != null) {
@@ -506,10 +519,6 @@ public class TermEditor extends Composite {
         registerHandler(dateFrom.addValueChangeHandler(e -> fireDirty()));
         registerHandler(dateTo.addValueChangeHandler(e -> fireDirty()));
 
-        registerHandler(date.addValueChangeHandler(event -> fireDirty()));
-        registerHandler(dateFrom.addValueChangeHandler(event -> fireDirty()));
-        registerHandler(dateTo.addValueChangeHandler(event -> fireDirty()));
-
         if (docSelectionBoxPresenter != null) {
             registerHandler(docSelectionBoxPresenter.addDataSelectionHandler(event -> {
                 final DocRef selection = docSelectionBoxPresenter.getSelectedEntityReference();
@@ -518,7 +527,6 @@ public class TermEditor extends Composite {
                     fireDirty();
                 }
             }));
-
         }
 
         registerHandler(fieldListBox.addValueChangeHandler(event -> {
@@ -548,13 +556,17 @@ public class TermEditor extends Composite {
         registrations.add(handlerRegistration);
     }
 
-    private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox() {
+    private BaseSelectionBox<QueryField, FieldInfoSelectionItem> createFieldBox(final UiConfigCache uiConfigCache) {
         final BaseSelectionBox<QueryField, FieldInfoSelectionItem> fieldListBox =
                 new BaseSelectionBox<QueryField, FieldInfoSelectionItem>();
         fieldListBox.addStyleName(ITEM_CLASS_NAME);
         fieldListBox.addStyleName(DROPDOWN_CLASS_NAME);
         fieldListBox.addStyleName("field");
         fieldListBox.addStyleName("termEditor-item");
+        uiConfigCache.get(uiConfig ->
+                NullSafe.consume(uiConfig, ExtendedUiConfig::getHelpUrl, helpUrl ->
+                        fieldListBox.registerPopupTextProvider(() ->
+                                QuickFilterTooltipUtil.createTooltip("Field Filter", helpUrl))));
         return fieldListBox;
     }
 
@@ -602,8 +614,9 @@ public class TermEditor extends Composite {
 
     private void fireDirty() {
         if (!reading) {
+            write(term);
             if (uiHandlers != null) {
-                uiHandlers.fireDirty();
+                uiHandlers.onChange();
             }
         }
     }

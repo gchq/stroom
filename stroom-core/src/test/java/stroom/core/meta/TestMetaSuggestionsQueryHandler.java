@@ -1,8 +1,25 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.core.meta;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.feed.api.FeedStore;
+import stroom.feed.shared.FeedDoc;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
@@ -11,10 +28,14 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.suggestions.api.SuggestionsService;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.SimpleTaskContextFactory;
 import stroom.task.api.TaskContextFactory;
+import stroom.task.shared.ThreadPool;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -24,9 +45,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @ExtendWith(MockitoExtension.class)
 class TestMetaSuggestionsQueryHandler {
+
+    private static ExecutorService executorService;
+    private static ExecutorProvider executorProvider;
 
     @Mock
     private FeedStore feedStore;
@@ -41,10 +68,32 @@ class TestMetaSuggestionsQueryHandler {
     private SuggestionsService suggestionsService;
 
     @Mock
-    private DocRefInfoService docRefInfoService;
+    private DocFinder docFinder;
 
     private final TaskContextFactory taskContextFactory = new SimpleTaskContextFactory();
     private final SecurityContext securityContext = new MockSecurityContext();
+
+    @BeforeAll
+    static void beforeAll() {
+        executorService = Executors.newCachedThreadPool();
+        executorProvider = new ExecutorProvider() {
+
+            @Override
+            public Executor get() {
+                return executorService;
+            }
+
+            @Override
+            public Executor get(final ThreadPool threadPool) {
+                return executorService;
+            }
+        };
+    }
+
+    @AfterAll
+    static void afterAll() {
+        executorService.shutdown();
+    }
 
     @Test
     void testFeedNameSuggestions1() {
@@ -136,8 +185,15 @@ class TestMetaSuggestionsQueryHandler {
 
     private List<String> doFeedNameTest(final Set<String> metaFeedNames, final Set<String> storeFeedNames) {
         final MetaSuggestionsQueryHandlerImpl queryHandler = new MetaSuggestionsQueryHandlerImpl(
-                metaService, pipelineStore, securityContext, feedStore, taskContextFactory, docRefInfoService,
-                suggestionsService, new ExpressionPredicateFactory());
+                metaService,
+                pipelineStore,
+                securityContext,
+                feedStore,
+                taskContextFactory,
+                docFinder,
+                suggestionsService,
+                new ExpressionPredicateFactory(),
+                executorProvider);
 
         final String userInput = "feed";
         final FetchSuggestionsRequest request = new FetchSuggestionsRequest(
@@ -150,7 +206,7 @@ class TestMetaSuggestionsQueryHandler {
 
         Mockito.when(feedStore.list())
                 .thenReturn(storeFeedNames.stream()
-                        .map(name -> DocRef.builder().name(name).build())
+                        .map(name -> DocRef.builder().type(FeedDoc.TYPE).uuid(name).name(name).build())
                         .toList());
 
         return queryHandler.getSuggestions(request).getList();

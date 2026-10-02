@@ -18,6 +18,7 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.shared.data.PipelineElement;
+import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.svg.shared.SvgImage;
@@ -35,12 +36,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class PipelineElementBox extends Box<PipelineElement> {
 
     private static final String BASE_CLASS = "pipelineElementBox";
     private static final String SELECTED_CLASS = BASE_CLASS + "-backgroundSelected";
     private static final String HOTSPOT_CLASS = BASE_CLASS + "-hotspot";
+    private static final String DISABLED_CLASS = BASE_CLASS + "-disabled";
     private static final String SEVERITY_INFO_CLASS = BASE_CLASS + "-severityInfo";
     private static final String SEVERITY_WARN_CLASS = BASE_CLASS + "-severityWarn";
     private static final String SEVERITY_ERROR_CLASS = BASE_CLASS + "-severityError";
@@ -57,8 +60,9 @@ public class PipelineElementBox extends Box<PipelineElement> {
     }
 
     private final PipelineModel pipelineModel;
-    private final PipelineElement pipelineElement;
+    private PipelineElement pipelineElement;
     private final Widget filterIcon;
+    private final Label label;
 
     public PipelineElementBox(final PipelineModel pipelineModel,
                               final PipelineElement pipelineElement,
@@ -70,8 +74,13 @@ public class PipelineElementBox extends Box<PipelineElement> {
         final FlowPanel background = new FlowPanel();
         background.setStyleName(BASE_CLASS + "-background");
 
-        final Label label = new Label(pipelineElement.getId(), false);
+        final String labelText = pipelineElement.getDisplayName();
+        label = new Label(labelText, false);
         label.addStyleName(BASE_CLASS + "-label");
+
+        label.getElement().setAttribute("title", pipelineElement.getDescription() != null
+                ? pipelineElement.getDescription()
+                : "");
 
         if (icon != null) {
             final SimplePanel image = new SimplePanel();
@@ -84,6 +93,28 @@ public class PipelineElementBox extends Box<PipelineElement> {
         }
 
         background.add(label);
+
+        final Optional<PipelineProperty> embeddedProperty = pipelineModel.getProperties(pipelineElement).stream()
+                .filter(Objects::nonNull)
+                .filter(p -> p.getValue() != null && p.getValue().getEntity() != null &&
+                        p.getValue().isEmbedded())
+                .findAny();
+
+        if (embeddedProperty.isPresent()) {
+            final SimplePanel embeddedIcon = new SimplePanel();
+            if (pipelineModel.getPipelineLayer().getPipelineData().getProperties() != null &&
+                pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd() != null &&
+                pipelineModel.getPipelineLayer().getPipelineData().getProperties().getAdd().contains(
+                        embeddedProperty.get())) {
+                SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.CODE, "svgIcon",
+                        BASE_CLASS + " icon-colour__blue");
+
+            } else {
+                SvgImageUtil.setSvgAsInnerHtml(embeddedIcon, SvgImage.EXPLORER, "svgIcon",
+                        BASE_CLASS + " icon-colour__blue");
+            }
+            background.add(embeddedIcon);
+        }
 
         filterIcon = new SimplePanel();
         SvgImageUtil.setSvgAsInnerHtml(
@@ -106,6 +137,10 @@ public class PipelineElementBox extends Box<PipelineElement> {
     @Override
     public void showHotspot(final boolean show) {
         toggleClass(HOTSPOT_CLASS, show);
+    }
+
+    public void setDisabled(final boolean disabled) {
+        toggleClass(DISABLED_CLASS, disabled);
     }
 
     private void updateFilterState() {
@@ -174,7 +209,14 @@ public class PipelineElementBox extends Box<PipelineElement> {
         return null;
     }
 
-    public void refresh() {
+    public void refresh(final PipelineElement pipelineElement) {
+        this.pipelineElement = pipelineElement;
+        label.setText(pipelineElement.getName() != null
+                ? pipelineElement.getName()
+                : pipelineElement.getId());
+        label.getElement().setAttribute("title", pipelineElement.getDescription() != null
+                ? pipelineElement.getDescription()
+                : "");
         updateFilterState();
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,13 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.parser;
 
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.SupportsCodeInjection;
 import stroom.pipeline.cache.DSChooser;
@@ -33,7 +32,7 @@ import stroom.pipeline.errorhandler.StoredErrorReceiver;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
-import stroom.pipeline.filter.DocFinder;
+import stroom.pipeline.filter.PipelineDocFinder;
 import stroom.pipeline.reader.BOMRemovalInputStream;
 import stroom.pipeline.reader.InvalidXmlCharFilter;
 import stroom.pipeline.reader.Xml10Chars;
@@ -69,6 +68,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+@SuppressWarnings("checkstyle:RegexpSingleline")
 @ConfigurableElement(
         type = PipelineElementType.TYPE_COMBINED_PARSER,
         category = Category.PARSER,
@@ -77,7 +77,7 @@ import javax.xml.parsers.SAXParserFactory;
                 flexibility than the source format-specific parsers such as dsParser.
                 It effectively combines a BOMRemovalFilterInput, an InvalidCharFilterReader and Parser (based on \
                 the `type` property.
-
+                
                 {{% warning %}}
                 It is strongly recommended to instead use a combination of Readers and one of the type \
                 specific Parsers.
@@ -105,7 +105,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
     private final TextConverterStore textConverterStore;
     private final Provider<FeedHolder> feedHolder;
     private final Provider<PipelineHolder> pipelineHolder;
-    private final DocFinder<TextConverterDoc> docFinder;
+    private final PipelineDocFinder<TextConverterDoc> pipelineDocFinder;
     private final Provider<LocationHolder> locationHolderProvider;
 
     private String type;
@@ -126,7 +126,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
                           final Provider<FeedHolder> feedHolder,
                           final Provider<PipelineHolder> pipelineHolder,
                           final Provider<LocationHolder> locationHolderProvider,
-                          final DocRefInfoService docRefInfoService) {
+                          final DocFinder docFinder) {
         super(errorReceiverProxy, locationFactory);
         this.parserFactoryPool = parserFactoryPool;
         this.textConverterStore = textConverterStore;
@@ -134,24 +134,21 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         this.pipelineHolder = pipelineHolder;
         this.locationHolderProvider = locationHolderProvider;
 
-        this.docFinder = new DocFinder<>(
+        this.pipelineDocFinder = new PipelineDocFinder<>(
                 TextConverterDoc.TYPE,
                 pathCreator,
-                textConverterStore,
-                docRefInfoService);
+                docFinder);
     }
 
     @Override
     protected XMLReader createReader() throws SAXException {
-        final XMLReader xmlReader = switch (getMode()) {
+        return switch (getMode()) {
             case XML -> createXMLReader();
             case XML_FRAGMENT, DATA_SPLITTER -> createTextConverter();
             case JSON -> createJSONReader();
             case UNKNOWN -> throw ProcessException.create("Unknown parser type '" + type + "'");
             default -> throw ProcessException.create("Unexpected combined parser mode: " + getMode());
         };
-
-        return xmlReader;
     }
 
     public Mode getMode() {
@@ -217,12 +214,12 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
         // TODO: We need to use the cached TextConverter service ideally but
         //  before we do it needs to be aware cluster wide when TextConverter has
         //  been updated.
-        final TextConverterDoc tc = loadTextConverterDoc();
+        TextConverterDoc tc = loadTextConverterDoc();
 
         // If we are in stepping mode and have made code changes then we want to
         // add them to the newly loaded text converter.
         if (injectedCode != null) {
-            tc.setData(injectedCode);
+            tc = tc.copy().data(injectedCode).build();
             usePool = false;
         }
 
@@ -385,7 +382,7 @@ public class CombinedParser extends AbstractParser implements SupportsCodeInject
 
     @Override
     public DocRef findDoc(final String feedName, final String pipelineName, final Consumer<String> errorConsumer) {
-        return docFinder.findDoc(
+        return pipelineDocFinder.findDoc(
                 textConverterRef,
                 namePattern,
                 feedName,

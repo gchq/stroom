@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.meta.api;
 
+import stroom.aws.s3.shared.S3Location;
 import stroom.util.cert.CertificateExtractor;
 import stroom.util.concurrent.UniqueId;
 import stroom.util.date.DateUtil;
@@ -95,7 +96,8 @@ public class AttributeMapUtil {
             .toFormatter(Locale.ENGLISH);
 
     // Delimiter between key and value
-    private static final String HEADER_DELIMITER = ":";
+    private static final char HEADER_DELIMITER_CHAR = ':';
+    private static final String HEADER_DELIMITER = String.valueOf(HEADER_DELIMITER_CHAR);
 
     // Delimiter between attributes
     private static final String ATTRIBUTE_DELIMITER = "\n";
@@ -144,6 +146,11 @@ public class AttributeMapUtil {
     }
 
     public static void addReceiptInfo(final AttributeMap attributeMap,
+                                      final UniqueId receiptId) {
+        addReceiptInfo(attributeMap, Instant.now(), receiptId);
+    }
+
+    public static void addReceiptInfo(final AttributeMap attributeMap,
                                       final Instant receiveTime,
                                       final UniqueId receiptId) {
         // Add ReceiptId and ReceiptIdPath
@@ -158,6 +165,16 @@ public class AttributeMapUtil {
         // Include this host in the ReceivedPath
         attributeMap.appendItemIfDifferent(
                 StandardHeaderArguments.RECEIVED_PATH, HostNameUtil.determineHostName());
+    }
+
+    public static void addS3Location(final AttributeMap attributeMap,
+                                     final S3Location s3Location) {
+        if (NullSafe.allNonNull(attributeMap, s3Location)) {
+            attributeMap.put(S3Location.LOCATION_META_KEY, s3Location.getDisplayValue());
+            attributeMap.put(S3Location.REGION_NAME_META_KEY, s3Location.getRegionName());
+            attributeMap.put(S3Location.BUCKET_NAME_META_KEY, s3Location.getBucketName());
+            attributeMap.put(S3Location.KEY_META_KEY, s3Location.getKey());
+        }
     }
 
     public static AttributeMap create(final InputStream inputStream) throws IOException {
@@ -209,16 +226,26 @@ public class AttributeMapUtil {
      *
      * @param data The {@link String} to extract values from.
      * @param keys The keys to find values for. Assumed to be already trimmed.
+     *             Keys must be distinct ignoring case.
      * @return A list of values using the same indexing as the supplied keys. The length of the
-     * returned list will always match that of the supplied keys list.
+     * returned list will always match that of the supplied keys list. If the key is not
+     * found, the value in the list will be null. If no keys are found the list will contain
+     * null for each key.
      */
     public static List<String> readKeys(final String data,
                                         final List<String> keys) throws IOException {
-        if (NullSafe.hasItems(keys) && NullSafe.isNonBlankString(data)) {
-            // Meta keys come from headers so should be ascii, and thus we don't have to
-            // worry about multibyte 'chars' and other such oddities.
-            try (final Stream<String> linesStream = data.lines()) {
-                return readKeys(keys, linesStream);
+        if (NullSafe.hasItems(keys)) {
+            if (NullSafe.isNonBlankString(data)) {
+                // Meta keys come from headers so should be ascii, and thus we don't have to
+                // worry about multibyte 'chars' and other such oddities.
+                try (final Stream<String> linesStream = data.lines()) {
+                    return readKeys(keys, linesStream);
+                }
+            } else {
+                // Return a list of nulls as there is no data to read entries from
+                return keys.stream()
+                        .map(ignored -> (String) null)
+                        .toList();
             }
         } else {
             return Collections.emptyList();
@@ -231,29 +258,38 @@ public class AttributeMapUtil {
      *
      * @param path The file to extract values from.
      * @param keys The keys to find values for. Assumed to be already trimmed.
+     *             Keys must be distinct ignoring case.
      * @return A list of values using the same indexing as the supplied keys. The length of the
-     * returned list will always match that of the supplied keys list.
+     * returned list will always match that of the supplied keys list. If the key is not
+     * found, the value in the list will be null. If no keys are found the list will contain
+     * null for each key.
      */
     public static List<String> readKeys(final Path path,
                                         final List<String> keys) throws IOException {
         Objects.requireNonNull(path);
-        if (NullSafe.hasItems(keys)) {
-            // Meta keys come from headers so should be ascii, and thus we don't have to
-            // worry about multibyte 'chars' and other such oddities.
-            try (final Stream<String> linesStream = Files.lines(path, DEFAULT_CHARSET)) {
-                return readKeys(keys, linesStream);
-            }
-        } else {
-            return Collections.emptyList();
-        }
+        // readString() then data.lines() seems to be faster than just Files.lines()
+        return readKeys(Files.readString(path, DEFAULT_CHARSET), keys);
     }
 
     private static List<String> readKeys(final List<String> keys,
                                          final Stream<String> linesStream) {
-        final List<String> keysToFind = new ArrayList<>(keys);
-        final List<String> values = new ArrayList<>(keys.size());
-        // Ensure we have a null value in all indexes, in case we don't find the key
-        for (final String ignored : keys) {
+        final int keyCount = keys.size();
+        final List<String> keysToFind = new ArrayList<>(keyCount);
+        final List<String> values = new ArrayList<>(keyCount);
+        for (final String key : keys) {
+            if (NullSafe.isBlankString(key)) {
+                throw new IllegalArgumentException("Keys must not be blank");
+            }
+            final String trimmedKey = key.trim();
+            for (final String existingKey : keysToFind) {
+                if (existingKey.equalsIgnoreCase(trimmedKey)) {
+                    // Forcing this means we don't have to loop over every key on every line
+                    // once keys have been found.
+                    throw new IllegalArgumentException("Keys must be distinct");
+                }
+            }
+            keysToFind.add(trimmedKey);
+            // Ensure we have a null value in all indexes, in case we don't find the key
             values.add(null);
         }
 
@@ -266,25 +302,30 @@ public class AttributeMapUtil {
                     for (int keyIdx = 0; keyIdx < keysToFind.size(); keyIdx++) {
                         final String keyToFind = keysToFind.get(keyIdx);
                         if (NullSafe.isNonBlankString(keyToFind)) {
-                            final boolean foundKey = line.regionMatches(
-                                    true,
-                                    0,
-                                    keyToFind,
-                                    0,
-                                    keyToFind.length());
-                            if (foundKey) {
-                                // Extract the value. Null out keysToFind, so we don't look for
-                                // this key again
-                                keysToFind.set(keyIdx, null);
-                                keysRemaining.decrementAndGet();
-                                final int splitPos = line.indexOf(HEADER_DELIMITER);
-                                final String value;
-                                if (splitPos != -1) {
-                                    value = line.substring(splitPos + 1);
-                                    values.set(keyIdx, value.trim());
+                            final int keyToFindLen = keyToFind.length();
+                            if (line.regionMatches(true, 0, keyToFind, 0, keyToFindLen)) {
+                                final int lineLen = line.length();
+                                String value = null;
+                                boolean found = false;
+                                if (lineLen == keyToFindLen) {
+                                    // keys with null values have no delimiter, no idea why
+                                    found = true;
+                                } else {
+                                    final int delimiterIdx = line.indexOf(HEADER_DELIMITER_CHAR);
+                                    if (delimiterIdx != -1) {
+                                        value = line.substring(delimiterIdx + 1);
+                                        found = true;
+                                    }
                                 }
-                                // break out to look for the next key in keysToFind
-                                break;
+                                if (found) {
+                                    // Extract the value. Null out keysToFind, so we don't look for
+                                    // this key again
+                                    keysToFind.set(keyIdx, null);
+                                    keysRemaining.decrementAndGet();
+                                    values.set(keyIdx, NullSafe.get(value, String::trim));
+                                    // break out to look for the next key in keysToFind
+                                    break;
+                                }
                             }
                         }
                     }
@@ -305,7 +346,7 @@ public class AttributeMapUtil {
             final String attributesStr = Arrays.stream(attributeKeys)
                     .map(key ->
                             getAttributeStr(attributeMap, key))
-                    .filter(Objects::nonNull)
+                    .filter(NullSafe::isNonBlankString)
                     .collect(Collectors.joining(", "));
 
             if (!attributesStr.isBlank()) {

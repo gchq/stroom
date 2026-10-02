@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.query;
@@ -110,13 +109,14 @@ public class QueryFavouritesPresenter
                         .dataSource(currentDataSource)
                         .expression(currentExpression)
                         .build();
-                final StoredQuery queryEntity = new StoredQuery();
-                queryEntity.setQuery(query);
-                queryEntity.setDashboardUuid(currentDashboardUuid);
-                queryEntity.setComponentId(queryPresenter.getId());
-                queryEntity.setName("");
-                queryEntity.setFavourite(true);
-
+                final StoredQuery queryEntity = StoredQuery
+                        .builder()
+                        .query(query)
+                        .dashboardUuid(currentDashboardUuid)
+                        .componentId(queryPresenter.getId())
+                        .name("")
+                        .favourite(true)
+                        .build();
                 namePresenter.show(queryEntity, result -> refresh(false));
             }
         }));

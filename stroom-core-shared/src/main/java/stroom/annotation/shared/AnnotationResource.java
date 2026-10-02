@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package stroom.annotation.shared;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.security.shared.SingleDocumentPermissionChangeRequest;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
@@ -45,19 +44,27 @@ import java.util.List;
 @Consumes(MediaType.APPLICATION_JSON)
 public interface AnnotationResource extends RestResource, DirectRestService {
 
+    @POST
+    @Path("findAnnotations")
+    @Operation(
+            summary = "Finds annotations",
+            operationId = "findAnnotations")
+    ResultPage<Annotation> findAnnotations(@Parameter(description = "request", required = true)
+                                           FindAnnotationRequest request);
+
     @GET
     @Operation(
             summary = "Gets an annotation by id",
             operationId = "getAnnotationById")
     Annotation getAnnotationById(@QueryParam("annotationId") Long annotationId);
 
-    @POST
-    @Path("getAnnotationByRef")
-    @Operation(
-            summary = "Gets an annotation by ref",
-            operationId = "getAnnotationByRef")
-    Annotation getAnnotationByRef(@Parameter(description = "annotationRef", required = true)
-                                  DocRef annotationRef);
+//    @POST
+//    @Path("getAnnotationByRef")
+//    @Operation(
+//            summary = "Gets an annotation by ref",
+//            operationId = "getAnnotationByRef")
+//    Annotation getAnnotationByRef(@Parameter(description = "annotationRef", required = true)
+//                                  DocRef annotationRef);
 
     @POST
     @Path("getAnnotationEntries")
@@ -99,28 +106,12 @@ public interface AnnotationResource extends RestResource, DirectRestService {
     Integer batchChange(@Parameter(description = "request", required = true)
                         MultiAnnotationChangeRequest request);
 
-    @GET
-    @Path("getStandardComments")
-    @Operation(
-            summary = "Gets a list of predefined comments",
-            operationId = "getAnnotationSampleComments")
-    List<String> getStandardComments(@QueryParam("filter") String filter);
-
-
     @POST
     @Path("getLinkedEvents")
     @Operation(
             summary = "Gets a list of events linked to this annotation",
             operationId = "getAnnotationLinkedEvents")
     List<EventId> getLinkedEvents(@Parameter(description = "annotationRef", required = true) DocRef annotationRef);
-
-    @POST
-    @Path("/changeDocumentPermissions")
-    @Operation(
-            summary = "Change document permissions",
-            operationId = "changeDocumentPermissions")
-    Boolean changeDocumentPermissions(
-            @Parameter(description = "request", required = true) SingleDocumentPermissionChangeRequest request);
 
     @POST
     @Path("createAnnotationTag")
@@ -150,4 +141,28 @@ public interface AnnotationResource extends RestResource, DirectRestService {
             operationId = "findAnnotationTags")
     ResultPage<AnnotationTag> findAnnotationTags(
             @Parameter(description = "request", required = true) ExpressionCriteria request);
+
+    @POST
+    @Path("fetchAnnotationEntry")
+    @Operation(
+            summary = "Fetch an annotation entry",
+            operationId = "fetchAnnotationEntry")
+    AnnotationEntry fetchAnnotationEntry(
+            @Parameter(description = "request", required = true) FetchAnnotationEntryRequest request);
+
+    @POST
+    @Path("changeAnnotationEntry")
+    @Operation(
+            summary = "Change an annotation entry",
+            operationId = "changeAnnotationEntry")
+    Boolean changeAnnotationEntry(
+            @Parameter(description = "request", required = true) ChangeAnnotationEntryRequest request);
+
+    @POST
+    @Path("deleteAnnotationEntry")
+    @Operation(
+            summary = "Delete an annotation entry",
+            operationId = "deleteAnnotationEntry")
+    Boolean deleteAnnotationEntry(
+            @Parameter(description = "request", required = true) DeleteAnnotationEntryRequest request);
 }

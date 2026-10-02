@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.receive.content;
 
 import stroom.pipeline.shared.PipelineDoc;
@@ -8,12 +24,13 @@ import stroom.receive.content.shared.ContentTemplates;
 import stroom.receive.content.shared.TemplateType;
 import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -23,36 +40,39 @@ class TestContentTemplates {
     void testSerde() throws IOException {
 
         int templateNumber = 0;
-        final ContentTemplates contentTemplates = new ContentTemplates(List.of(
-                new ContentTemplate(
-                        true,
-                        ++templateNumber,
-                        ExpressionOperator.builder().build(),
-                        TemplateType.PROCESSOR_FILTER,
-                        false,
-                        PipelineDoc.buildDocRef()
-                                .name("MyPipe1")
-                                .uuid("uuid123")
-                                .build(),
-                        null,
-                        null,
-                        ProcessorFilter.DEFAULT_PRIORITY,
-                        ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS),
-                new ContentTemplate(
-                        true,
-                        ++templateNumber,
-                        ExpressionOperator.builder().build(),
-                        TemplateType.INHERIT_PIPELINE,
-                        true,
-                        PipelineDoc.buildDocRef()
-                                .name("MyPipe2")
-                                .uuid("uuid456")
-                                .build(),
-                        null,
-                        null,
-                        ProcessorFilter.DEFAULT_PRIORITY,
-                        ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS)
-        ));
+        final ContentTemplates contentTemplates = ContentTemplates
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .contentTemplates(List.of(
+                        new ContentTemplate(
+                                true,
+                                ++templateNumber,
+                                ExpressionOperator.builder().build(),
+                                TemplateType.PROCESSOR_FILTER,
+                                false,
+                                PipelineDoc.buildDocRef()
+                                        .name("MyPipe1")
+                                        .uuid("uuid123")
+                                        .build(),
+                                null,
+                                null,
+                                ProcessorFilter.DEFAULT_PRIORITY,
+                                ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS),
+                        new ContentTemplate(
+                                true,
+                                ++templateNumber,
+                                ExpressionOperator.builder().build(),
+                                TemplateType.INHERIT_PIPELINE,
+                                true,
+                                PipelineDoc.buildDocRef()
+                                        .name("MyPipe2")
+                                        .uuid("uuid456")
+                                        .build(),
+                                null,
+                                null,
+                                ProcessorFilter.DEFAULT_PRIORITY,
+                                ProcessorFilter.DEFAULT_MAX_PROCESSING_TASKS)
+                )).build();
 
         doSerdeTest(contentTemplates, ContentTemplates.class);
     }
@@ -60,10 +80,7 @@ class TestContentTemplates {
     private <T> void doSerdeTest(final T entity,
                                  final Class<T> clazz) throws IOException {
 
-        final ObjectMapper mapper = JsonUtil.getMapper();
-        assertThat(mapper.canSerialize(entity.getClass()))
-                .isTrue();
-
+        final JsonMapper mapper = JsonUtil.getMapper();
         final String json = mapper.writeValueAsString(entity);
         System.out.println("\n" + json);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,8 @@ import java.util.Set;
 public class BatchDocumentPermissionsPresenter
         extends ContentTabPresenter<QuickFilterPageView>
         implements QuickFilterUiHandlers {
+
+    public static final String TAB_TYPE = "DocumentPermissions";
 
     private final Provider<ExpressionPresenter> docFilterPresenterProvider;
     private final DocumentListPresenter documentListPresenter;
@@ -271,7 +273,7 @@ public class BatchDocumentPermissionsPresenter
 
     @Override
     public String getType() {
-        return "DocumentPermissions";
+        return TAB_TYPE;
     }
 
     public interface BatchDocumentPermissionsView extends View {

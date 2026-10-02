@@ -18,30 +18,30 @@
 # It also contains plantuml for plant uml image generation
 # Using 'openjdk' on Alpine is not fully supported so using Eclipse Temurin JDK to ensure we have a known jdk version
 # See https://github.com/docker-library/docs/blob/master/openjdk/README.md#openjdkversion-alpine
-FROM eclipse-temurin:21.0.7_6-jdk-alpine
+FROM eclipse-temurin:25.0.4.1_1-jdk-alpine-3.24@sha256:3fd2d245c4e0eba615fe366a71b8bd25f5db7104f53e4026b24bf508b880bd2a
 
 # Work from the shared git repo dir
 WORKDIR /builder/shared
 
 # Pass in the uid/gid of the running user so we can use the same user id
-# in the container so that any files created can be read outside the 
+# in the container so that any files created can be read outside the
 # container.
 ARG USER_ID
-ARG GROUP_ID    
+ARG GROUP_ID
 # The gid of the docker group on the host, needed so we can add our
 # non-root user to it to get access to the docker.sock
-ARG DOCKER_GROUP_ID    
+ARG DOCKER_GROUP_ID
 
 # Pass in the abs path to the repo root on the docker host
 # Needed to allow us to mount it in containers we spawn from here.
-ARG HOST_REPO_DIR    
+ARG HOST_REPO_DIR
 
 # The IP/hostname of the docker host so we can comminicate with other containers
 # via the host's address
 # The name DOCKER_HOST is used by docker so don't use that.
 ARG DOCKER_HOST_IP
 
-ARG PLANTUML_VERSION=1.2023.10
+ARG PLANTUML_VERSION=1.2026.8
 
 # Set the user ID into an env var so the entrypoint can see it
 ENV CONTAINER_USER_ID=$USER_ID \

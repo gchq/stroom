@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,35 +21,38 @@ import stroom.analytics.shared.ExecutionScheduleFields;
 import stroom.analytics.shared.ExecutionScheduleRequest;
 import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
-import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
-import stroom.data.grid.client.OrderByColumn;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserFields;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
+import stroom.util.shared.scheduler.Schedule;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.SvgImageUtil;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -58,7 +61,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Optional;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ScheduledProcessListPresenter
@@ -69,7 +73,6 @@ public class ScheduledProcessListPresenter
 
     private final MyDataGrid<ExecutionSchedule> dataGrid;
     private final MultiSelectionModelImpl<ExecutionSchedule> selectionModel;
-    private final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager;
     private RestDataProvider<ExecutionSchedule, ResultPage<ExecutionSchedule>> dataProvider;
     private final RestFactory restFactory;
     private final DateTimeFormatter dateTimeFormatter;
@@ -77,6 +80,7 @@ public class ScheduledProcessListPresenter
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
+    private final Set<String> knownNodeNames = new HashSet<>();
     private ExecutionScheduleRequest request;
     private ScheduledProcessingPresenter scheduledProcessingPresenter;
 
@@ -85,17 +89,24 @@ public class ScheduledProcessListPresenter
                                          final PagerView view,
                                          final RestFactory restFactory,
                                          final DateTimeFormatter dateTimeFormatter,
-                                         final ClientSecurityContext securityContext) {
+                                         final ClientSecurityContext securityContext,
+                                         final NodeClient nodeClient) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
 
-        final CriteriaFieldSort defaultSort = new CriteriaFieldSort(ExecutionScheduleFields.ID, true, true);
+        final CriteriaFieldSort defaultSort = new CriteriaFieldSort(
+                ExecutionScheduleFields.NAME, true, true);
         request = ExecutionScheduleRequest.builder().sortList(Collections.singletonList(defaultSort)).build();
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Scheduled Processes");
         selectionModel = new MultiSelectionModelImpl<>();
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<ExecutionSchedule> selectionEventManager =
+                new DataGridSelectionEventManager<>(
+                        dataGrid,
+                        selectionModel,
+                        false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
 
@@ -105,6 +116,16 @@ public class ScheduledProcessListPresenter
 
         addColumns();
         enableButtons();
+
+        // Used to mark schedules that name a node that no longer exists. A failure to load isn't reported because
+        // this only enriches the display; without it we simply mark nothing.
+        nodeClient.listAllNodes(
+                nodeNames -> {
+                    knownNodeNames.addAll(NullSafe.list(nodeNames));
+                    dataGrid.redraw();
+                },
+                throwable -> knownNodeNames.clear(),
+                view);
     }
 
     @Override
@@ -118,63 +139,52 @@ public class ScheduledProcessListPresenter
                 scheduledProcessingPresenter.edit();
             }
         }));
-        registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
+        registerHandler(dataGrid.addColumnSortHandler(ignored -> refresh()));
     }
 
     private void addColumns() {
-        final Column<ExecutionSchedule, TickBoxState> enabledColumn = new Column<ExecutionSchedule, TickBoxState>(
-                TickBoxCell.create(false, false)) {
-            @Override
-            public TickBoxState getValue(final ExecutionSchedule row) {
-                if (row != null) {
-                    return TickBoxState.fromBoolean(row.isEnabled());
-                }
-                return null;
-            }
-        };
-        enabledColumn.setFieldUpdater((index, row, value) -> {
-            restFactory
-                    .create(EXECUTION_SCHEDULE_RESOURCE)
-                    .method(res -> res.updateExecutionSchedule(row.copy().enabled(value.toBoolean()).build()))
-                    .onSuccess(updated -> refresh())
-                    .taskMonitorFactory(getView())
-                    .exec();
-        });
-        dataGrid.addColumn(enabledColumn, "Enabled", 80);
+        dataGrid.addColumn(
+                DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(ExecutionSchedule::isEnabled))
+                        .withSorting(ExecutionScheduleFields.ENABLED)
+                        .withFieldUpdater((ignored, row, value) ->
+                                updateEnabledState(row, value))
+                        .build(),
+                DataGridUtil.headingBuilder("Enabled")
+                        .withToolTip("Whether this execution schedule is enabled or not.")
+                        .build(),
+                80);
 
         dataGrid.addResizableColumn(
-                new OrderByColumn<ExecutionSchedule, String>(
-                        new TextCell(),
-                        ExecutionScheduleFields.NAME,
-                        false) {
-                    @Override
-                    public String getValue(final ExecutionSchedule row) {
-                        return row.getName();
-                    }
-                }, ExecutionScheduleFields.NAME, ColumnSizeConstants.DATE_COL);
+                DataGridUtil.textColumnBuilder(ExecutionSchedule::getName)
+                        .withSorting(ExecutionScheduleFields.NAME, false)
+                        .enabledWhen(ExecutionSchedule::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder(ExecutionScheduleFields.NAME)
+                        .withToolTip("The name for this execution schedule.")
+                        .build(),
+                200);
 
         dataGrid.addResizableColumn(
-                new OrderByColumn<ExecutionSchedule, String>(
-                        new TextCell(),
-                        ExecutionScheduleFields.NODE_NAME,
-                        false) {
-                    @Override
-                    public String getValue(final ExecutionSchedule row) {
-                        return row.getNodeName();
-                    }
-                }, ExecutionScheduleFields.NODE_NAME, ColumnSizeConstants.MEDIUM_COL);
+                DataGridUtil.htmlColumnBuilder(this::getNodeNameAsSafeHtml)
+                        .withSorting(ExecutionScheduleFields.NODE_NAME, false)
+                        .enabledWhen(ExecutionSchedule::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder(ExecutionScheduleFields.NODE_NAME)
+                        .withToolTip("The name of the node that it will be executed on.")
+                        .build(),
+                ColumnSizeConstants.MEDIUM_COL);
 
         dataGrid.addResizableColumn(
-                new OrderByColumn<ExecutionSchedule, String>(
-                        new TextCell(),
-                        ExecutionScheduleFields.SCHEDULE,
-                        false) {
-                    @Override
-                    public String getValue(final ExecutionSchedule row) {
-                        return row.getSchedule().toString();
-                    }
-                }, ExecutionScheduleFields.SCHEDULE, ColumnSizeConstants.DATE_COL);
-
+                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(
+                                ExecutionSchedule::getSchedule,
+                                Schedule::toString))
+                        .withSorting(ExecutionScheduleFields.SCHEDULE, false)
+                        .enabledWhen(ExecutionSchedule::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder(ExecutionScheduleFields.SCHEDULE)
+                        .withToolTip("The execution schedule.")
+                        .build(),
+                200);
 
         final Column<ExecutionSchedule, ExecutionSchedule> runAsCol = DataGridUtil
                 .userRefColumnBuilder(
@@ -184,56 +194,102 @@ public class ScheduledProcessListPresenter
                         true,
                         DisplayType.AUTO)
                 .withSorting(UserFields.FIELD_DISPLAY_NAME, true)
-                .enabledWhen(executionSchedule ->
-                        Optional.ofNullable(executionSchedule)
-                                .map(ExecutionSchedule::getRunAsUser)
-                                .map(UserRef::isEnabled)
-                                .orElse(true))
+                .enabledWhen(ScheduledProcessListPresenter::areScheduleAndUserEnabled)
                 .build();
-        dataGrid.addResizableColumn(runAsCol,
+        dataGrid.addResizableColumn(
+                runAsCol,
                 DataGridUtil.headingBuilder(ExecutionScheduleFields.RUN_AS_USER)
                         .withToolTip("The processor will run with the same permissions as the Run As User.")
                         .build(),
                 ColumnSizeConstants.USER_DISPLAY_NAME_COL);
 
         dataGrid.addAutoResizableColumn(
-                new OrderByColumn<ExecutionSchedule, String>(
-                        new TextCell(),
-                        ExecutionScheduleFields.BOUNDS,
-                        false) {
-                    @Override
-                    public String getValue(final ExecutionSchedule row) {
-                        final ScheduleBounds bounds = row.getScheduleBounds();
-                        if (bounds != null) {
-                            if (bounds.getStartTimeMs() != null && bounds.getEndTimeMs() != null) {
-                                if (bounds.getStartTimeMs().equals(bounds.getEndTimeMs())) {
-                                    return "On " +
-                                           dateTimeFormatter.format(bounds.getStartTimeMs());
-                                } else {
-                                    return "Between " +
-                                           dateTimeFormatter.format(bounds.getStartTimeMs()) +
-                                           " and " +
-                                           dateTimeFormatter.format(bounds.getEndTimeMs());
-                                }
-                            } else if (bounds.getStartTimeMs() != null) {
-                                return "After " +
-                                       dateTimeFormatter.format(bounds.getStartTimeMs());
-                            } else if (bounds.getEndTimeMs() != null) {
-                                return "Until " +
-                                       dateTimeFormatter.format(bounds.getEndTimeMs());
-                            }
-                        }
-                        return "Unbounded";
-                    }
-                }, ExecutionScheduleFields.BOUNDS, ColumnSizeConstants.MEDIUM_COL);
+                DataGridUtil.textColumnBuilder(this::getBoundsAsString)
+                        .withSorting(ExecutionScheduleFields.BOUNDS, false)
+                        .enabledWhen(ExecutionSchedule::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder(ExecutionScheduleFields.BOUNDS)
+                        .withToolTip("The time bounds for the schedule.")
+                        .build(),
+                ColumnSizeConstants.MEDIUM_COL);
+    }
 
-        dataGrid.addEndColumn(new EndColumn<>());
+    /**
+     * A schedule only ever runs on the node it names, so one naming a node that no longer exists is never picked up
+     * by any node and produces nothing without reporting anything. Mark it so the reason is visible.
+     */
+    private SafeHtml getNodeNameAsSafeHtml(final ExecutionSchedule executionSchedule) {
+        final String nodeName = executionSchedule.getNodeName();
+        final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+        if (nodeName != null) {
+            builder.append(SafeHtmlUtils.fromString(nodeName));
+        }
+
+        // Only mark unknown nodes once we know what the nodes actually are, else every row looks broken while the
+        // node list is still loading or if it failed to load.
+        if (!knownNodeNames.isEmpty() && !knownNodeNames.contains(nodeName)) {
+            builder.append(SvgImageUtil.toSafeHtml(
+                    "Node '" + nodeName + "' no longer exists so this schedule will never run.",
+                    SvgImage.ALERT_SIMPLE,
+                    "svgIcon", "small"));
+        }
+
+        return builder.toSafeHtml();
+    }
+
+    private void updateEnabledState(final ExecutionSchedule row, final TickBoxState value) {
+        restFactory
+                .create(EXECUTION_SCHEDULE_RESOURCE)
+                .method(resource ->
+                        resource.updateExecutionSchedule(row.copy()
+                                .enabled(TickBoxState.getAsBoolean(value))
+                                .build()))
+                .onSuccess(ignored2 ->
+                        refresh())
+                .taskMonitorFactory(getView())
+                .exec();
+    }
+
+    private static Boolean areScheduleAndUserEnabled(final ExecutionSchedule executionSchedule) {
+        if (executionSchedule == null) {
+            return true;
+        } else {
+            final boolean isUserEnabled = NullSafe.test(
+                    executionSchedule,
+                    ExecutionSchedule::getRunAsUser,
+                    userRef -> userRef == null || userRef.isEnabled());
+            return isUserEnabled && executionSchedule.isEnabled();
+        }
+    }
+
+    private String getBoundsAsString(final ExecutionSchedule row) {
+        final ScheduleBounds bounds = row.getScheduleBounds();
+        if (bounds != null) {
+            if (bounds.getStartTimeMs() != null && bounds.getEndTimeMs() != null) {
+                if (bounds.getStartTimeMs().equals(bounds.getEndTimeMs())) {
+                    return "On " +
+                           dateTimeFormatter.format(bounds.getStartTimeMs());
+                } else {
+                    return "Between " +
+                           dateTimeFormatter.format(bounds.getStartTimeMs()) +
+                           " and " +
+                           dateTimeFormatter.format(bounds.getEndTimeMs());
+                }
+            } else if (bounds.getStartTimeMs() != null) {
+                return "After " +
+                       dateTimeFormatter.format(bounds.getStartTimeMs());
+            } else if (bounds.getEndTimeMs() != null) {
+                return "Until " +
+                       dateTimeFormatter.format(bounds.getEndTimeMs());
+            }
+        }
+        return "Unbounded";
     }
 
     private void enableButtons() {
         addButton.setEnabled(true);
-        editButton.setEnabled(selectionModel.getSelectedItems().size() > 0);
-        removeButton.setEnabled(selectionModel.getSelectedItems().size() > 0);
+        editButton.setEnabled(selectionModel.hasSelectedItems());
+        removeButton.setEnabled(selectionModel.hasSelectedItems());
         addButton.setTitle("Add Execution Schedule");
         editButton.setTitle("Edit Execution Schedule");
         removeButton.setTitle("Remove Execution Schedule");
@@ -262,7 +318,17 @@ public class ScheduledProcessListPresenter
                         restFactory
                                 .create(EXECUTION_SCHEDULE_RESOURCE)
                                 .method(res -> res.fetchExecutionSchedule(request))
-                                .onSuccess(dataConsumer)
+                                .onSuccess(results -> {
+                                    dataConsumer.accept(results);
+
+                                    // Select the first item if there are any, so that we populate the history pane
+                                    // to save the user having to click
+                                    if (results != null
+                                        && results.hasItems()
+                                        && selectionModel.getSelected() == null) {
+                                        selectionModel.setSelected(results.getFirst());
+                                    }
+                                })
                                 .onFailure(errorHandler)
                                 .taskMonitorFactory(getView())
                                 .exec();

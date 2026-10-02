@@ -1,0 +1,12 @@
+{
+  "type" : "Script",
+  "uuid" : "2afe73dd-264f-4e07-856a-84f64a8c52fc",
+  "name" : "Imp_exp_test_script_1",
+  "version" : "8d239f48-c844-4205-93b9-09959bfa5b92",
+  "description" : "My Description",
+  "dependencies" : [ {
+    "type" : "Script",
+    "uuid" : "d9eb9052-adc6-41c6-84b5-a9dafb6079f1",
+    "name" : "Imp_exp_test_script_2"
+  } ]
+}

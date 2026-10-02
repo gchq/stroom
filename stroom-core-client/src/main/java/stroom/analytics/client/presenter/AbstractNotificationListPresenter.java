@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,20 +18,21 @@ package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.NotificationConfig;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
-import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.config.global.client.presenter.ListDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridSelectionEventManager;
-import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.docref.HasDisplayValue;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.svg.client.SvgPresets;
+import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -40,9 +41,7 @@ import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -51,11 +50,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocumentEditPresenter<PagerView, D> {
+        extends DocPresenter<PagerView, D> {
 
     private final MyDataGrid<NotificationConfig> dataGrid;
     private final MultiSelectionModelImpl<NotificationConfig> selectionModel;
-    private final DataGridSelectionEventManager<NotificationConfig> selectionEventManager;
     private final ButtonView addButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -64,6 +62,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
     private final ListDataProvider<NotificationConfig> dataProvider;
     final List<NotificationConfig> list = new ArrayList<>();
     private DocRef docRef;
+    private AnalyticProcessType analyticProcessType;
 
     @Inject
     public AbstractNotificationListPresenter(final EventBus eventBus,
@@ -72,9 +71,14 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         super(eventBus, view);
         this.editPresenterProvider = editPresenterProvider;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Notifications");
         selectionModel = new MultiSelectionModelImpl<>();
-        selectionEventManager = new DataGridSelectionEventManager<>(dataGrid, selectionModel, false);
+        final DataGridSelectionEventManager<NotificationConfig> selectionEventManager =
+                new DataGridSelectionEventManager<>(
+                        dataGrid,
+                        selectionModel,
+                        false);
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
         dataProvider = new ListDataProvider<>();
@@ -90,9 +94,9 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     @Override
     protected void onBind() {
-        registerHandler(addButton.addClickHandler(e -> add()));
-        registerHandler(editButton.addClickHandler(e -> edit()));
-        registerHandler(removeButton.addClickHandler(e -> remove()));
+        registerHandler(addButton.addClickHandler(ignored -> add()));
+        registerHandler(editButton.addClickHandler(ignored -> edit()));
+        registerHandler(removeButton.addClickHandler(ignored -> remove()));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
@@ -103,7 +107,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     private void add() {
         final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
-        presenter.read(docRef, NotificationConfig.builder().build());
+        presenter.read(docRef, analyticProcessType, NotificationConfig.builder().build());
         ShowPopupEvent
                 .builder(presenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -113,7 +117,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                     if (e.isOk()) {
                         final NotificationConfig notification = presenter.write();
                         list.add(notification);
-                        setDirty(true);
+                        onChange();
                         refresh();
                     }
                     e.hide();
@@ -125,7 +129,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         final NotificationConfig selected = selectionModel.getSelected();
         if (selected != null) {
             final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
-            presenter.read(docRef, selected);
+            presenter.read(docRef, analyticProcessType, selected);
             ShowPopupEvent
                     .builder(presenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -134,8 +138,8 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                     .onHideRequest(e -> {
                         if (e.isOk()) {
                             final NotificationConfig updated = presenter.write();
-                            replace(updated);
-                            setDirty(true);
+                            replace(selected, updated);
+                            onChange();
                             refresh();
                         }
                         e.hide();
@@ -150,13 +154,13 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                     if (result) {
                         final NotificationConfig selected = selectionModel.getSelected();
                         if (selected != null) {
-                            int index = list.indexOf(selected);
                             list.remove(selected);
-                            setDirty(true);
+                            onChange();
                             refresh();
 
                             // Select next item.
-                            if (list.size() > 0) {
+                            int index = list.indexOf(selected);
+                            if (NullSafe.hasItems(list)) {
                                 index = Math.max(index, 0);
                                 index = Math.min(index, list.size() - 1);
                                 selectionModel.setSelected(list.get(index));
@@ -170,110 +174,141 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     private void addColumns() {
         // Enable notifications
-        final Column<NotificationConfig, TickBoxState> enabledColumn = new Column<NotificationConfig, TickBoxState>(
-                TickBoxCell.create(false, false)) {
-            @Override
-            public TickBoxState getValue(final NotificationConfig row) {
-                return TickBoxState.fromBoolean(row.isEnabled());
-            }
-        };
-        enabledColumn.setFieldUpdater((index, row, value) -> {
-            final NotificationConfig updated = row.copy().enabled(!row.isEnabled()).build();
-            replace(updated);
-            setDirty(true);
-            refresh();
-        });
-        dataGrid.addColumn(enabledColumn, "Enabled", 80);
-        dataGrid.addResizableColumn(
-                new Column<NotificationConfig, String>(new TextCell()) {
-                    @Override
-                    public String getValue(final NotificationConfig row) {
-                        if (row != null) {
-                            return row.getDestinationType().getDisplayValue();
-                        }
-                        return null;
-                    }
-                }, "Type", ColumnSizeConstants.MEDIUM_COL);
+        dataGrid.addColumn(
+                DataGridUtil.updatableTickBoxColumnBuilder(
+                                TickBoxState.createTickBoxFunc(NotificationConfig::isEnabled))
+                        .withFieldUpdater((ignored, row, value) -> {
+                            final NotificationConfig updated = row.copy()
+                                    .enabled(TickBoxState.getAsBoolean(value))
+                                    .build();
+                            replace(row, updated);
+                            onChange();
+                            refresh();
+                        })
+                        .build(),
+                DataGridUtil.headingBuilder("Enabled")
+                        .withToolTip("Whether notifications will be sent to this destination or not.")
+                        .build(),
+                80);
 
         dataGrid.addResizableColumn(
-                new Column<NotificationConfig, String>(new TextCell()) {
-                    @Override
-                    public String getValue(final NotificationConfig row) {
-                        if (row.getDestination() instanceof NotificationStreamDestination) {
-                            final NotificationStreamDestination analyticNotificationStreamDestination =
-                                    (NotificationStreamDestination) row.getDestination();
-                            return NullSafe.get(analyticNotificationStreamDestination.getDestinationFeed(),
-                                    DocRef::getDisplayValue);
-                        } else if (row.getDestination() instanceof NotificationEmailDestination) {
-                            final NotificationEmailDestination notificationEmailDestination =
-                                    (NotificationEmailDestination) row.getDestination();
-                            return notificationEmailDestination.getTo();
-                        }
+                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(
+                                NotificationConfig::getDestinationType,
+                                HasDisplayValue::getDisplayValue))
+                        .enabledWhen(NotificationConfig::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Type")
+                        .withToolTip("The type of notification to perform (Email or Stream).")
+                        .build(),
+                ColumnSizeConstants.MEDIUM_COL);
 
-                        return null;
-                    }
-                }, "Destination", ColumnSizeConstants.BIG_COL);
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(this::getDestinationAsString)
+                        .enabledWhen(NotificationConfig::isEnabled)
+                        .build(),
+                DataGridUtil.headingBuilder("Destination")
+                        .withToolTip("The destination of this notification. Either the Feed for a Stream " +
+                                     "destination, or the recipient for an Email destination.")
+                        .build(),
+                ColumnSizeConstants.BIG_COL);
 
         // Limit notifications
-        final Column<NotificationConfig, TickBoxState> limitColumn = new Column<NotificationConfig, TickBoxState>(
-                TickBoxCell.create(false, false)) {
-            @Override
-            public TickBoxState getValue(final NotificationConfig row) {
-                return TickBoxState.fromBoolean(row.isLimitNotifications());
-            }
-        };
-        limitColumn.setFieldUpdater((index, row, value) -> {
-            final NotificationConfig updated = row.copy().limitNotifications(!row.isLimitNotifications()).build();
-            replace(updated);
-            setDirty(true);
-            refresh();
-        });
-        dataGrid.addColumn(limitColumn, "Limit", 80);
+        dataGrid.addColumn(
+                DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
+                                NotificationConfig::isLimitNotifications))
+                        .enabledWhen(NotificationConfig::isEnabled)
+                        .withFieldUpdater((ignored, row, value) -> {
+                            final NotificationConfig updated = row.copy()
+                                    .limitNotifications(TickBoxState.getAsBoolean(value))
+                                    .build();
+                            replace(row, updated);
+                            onChange();
+                            refresh();
+                        })
+                        .build(),
+                DataGridUtil.headingBuilder("Limit")
+                        .withToolTip("If set, limits the number of notification to the value of " +
+                                     "'Maximum Notifications'.")
+                        .build(),
+                80);
 
         // Max notifications
-        final Column<NotificationConfig, String> maxColumn = new Column<NotificationConfig, String>(
-                new TextCell()) {
-            @Override
-            public String getValue(final NotificationConfig row) {
-                return "" + row.getMaxNotifications();
-            }
-        };
-        dataGrid.addResizableColumn(maxColumn, "Max", ColumnSizeConstants.MEDIUM_COL);
-
-        dataGrid.addEndColumn(new EndColumn<>());
+        dataGrid.addResizableColumn(
+                DataGridUtil.textColumnBuilder(DataGridUtil.toStringFunc(
+                                NotificationConfig::getMaxNotifications,
+                                String::valueOf))
+                        .enabledWhen(NotificationConfig::isEnabled)
+                        .rightAligned()
+                        .build(),
+                DataGridUtil.headingBuilder("Max")
+                        .withToolTip("If 'Limit' is set, limits the number of notification to this value.")
+                        .rightAligned()
+                        .build(),
+                ColumnSizeConstants.MEDIUM_COL);
     }
 
-    private void replace(final NotificationConfig notificationConfig) {
-        final int index = list.indexOf(notificationConfig);
+    private String getDestinationAsString(final NotificationConfig row) {
+        if (row.getDestination() instanceof final NotificationStreamDestination streamDest) {
+            // Say where the detections will actually go, which for a streaming rule using the source feed is
+            // not the destination feed shown against the notification.
+            if (streamDest.isUsingSourceFeed(analyticProcessType)) {
+                return "Source feed";
+            }
+            return NullSafe.get(streamDest.getDestinationFeed(),
+                    DocRef::getDisplayValue);
+        } else if (row.getDestination() instanceof final NotificationEmailDestination emailDest) {
+            return emailDest.getTo();
+        }
+        return null;
+    }
+
+    private void replace(final NotificationConfig oldConfig,
+                         final NotificationConfig newConfig) {
+        final int index = list.indexOf(oldConfig);
         if (index >= 0) {
-            list.remove(notificationConfig);
-            list.add(index, notificationConfig);
+            list.remove(index);
+            list.add(index, newConfig);
         } else {
-            list.add(notificationConfig);
+            list.add(newConfig);
         }
     }
 
     private void enableButtons() {
         addButton.setEnabled(true);
-        editButton.setEnabled(selectionModel.getSelectedItems().size() > 0);
-        removeButton.setEnabled(selectionModel.getSelectedItems().size() > 0);
+        editButton.setEnabled(NullSafe.hasItems(selectionModel.getSelectedItems()));
+        removeButton.setEnabled(NullSafe.hasItems(selectionModel.getSelectedItems()));
         addButton.setTitle("Add Notification");
         editButton.setTitle("Edit Notification");
         removeButton.setTitle("Remove Notification");
     }
 
+    /**
+     * The processing type lives on the Execution tab, so it can change while this tab is open. Whether the
+     * source feed option applies depends on it, so take the new value rather than waiting for the document to
+     * be read again.
+     */
+    public void setAnalyticProcessType(final AnalyticProcessType analyticProcessType) {
+        if (this.analyticProcessType != analyticProcessType) {
+            this.analyticProcessType = analyticProcessType;
+            // The destination column says where detections will go, which this changes. Only worth redrawing
+            // if the grid is already showing, as the first draw will use the new value regardless, and
+            // refresh() would otherwise bind the data display before the tab has ever been opened.
+            if (initialised) {
+                refresh();
+            }
+        }
+    }
+
     @Override
     protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
         this.docRef = docRef;
+        // Deliberately not taking the processing type from the document. This tab is read lazily on first
+        // open, which can be after the type has been changed on the execution tab, so the document would be
+        // stale. The owning presenter tells us instead, see setAnalyticProcessType.
         list.clear();
         if (document.getNotifications() != null) {
             list.addAll(document.getNotifications());
         }
-        refresh();
-    }
-
-    public void clear() {
-        list.clear();
         refresh();
     }
 

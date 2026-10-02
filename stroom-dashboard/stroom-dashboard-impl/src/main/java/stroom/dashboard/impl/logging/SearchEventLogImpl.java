@@ -21,7 +21,7 @@ import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DocFinder;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.event.logging.api.StroomEventLoggingUtil;
 import stroom.query.api.Column;
@@ -33,6 +33,7 @@ import stroom.query.api.QueryKey;
 import stroom.query.api.Result;
 import stroom.query.api.SearchRequest;
 import stroom.query.api.TableResult;
+import stroom.query.api.TimeRange;
 import stroom.query.shared.DownloadQueryResultsRequest;
 import stroom.query.shared.QuerySearchRequest;
 import stroom.security.api.SecurityContext;
@@ -64,15 +65,15 @@ public class SearchEventLogImpl implements SearchEventLog {
 
     private final StroomEventLoggingService eventLoggingService;
     private final SecurityContext securityContext;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
 
     @Inject
     public SearchEventLogImpl(final StroomEventLoggingService eventLoggingService,
                               final SecurityContext securityContext,
-                              final DocRefInfoService docRefInfoService) {
+                              final DocFinder docFinder) {
         this.eventLoggingService = eventLoggingService;
         this.securityContext = securityContext;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
     }
 
     @Override
@@ -82,6 +83,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                        final String rawQuery,
                        final DocRef dataSourceRef,
                        final ExpressionOperator expression,
+                       final TimeRange timeRange,
                        final String queryInfo,
                        final List<Param> params,
                        final List<Result> results,
@@ -110,6 +112,7 @@ public class SearchEventLogImpl implements SearchEventLog {
                             .withDataSources(dataSources)
                             .withQuery(query)
                             .addData(buildDataFromParams(params))
+                            .addData(buildDataFromTimeRange(timeRange))
                             .addData(Data.builder()
                                     .withName("queryComponent")
                                     .withValue(queryComponentId)
@@ -332,6 +335,26 @@ public class SearchEventLogImpl implements SearchEventLog {
         });
     }
 
+    private Iterable<Data> buildDataFromTimeRange(final TimeRange timeRange) {
+        if (timeRange == null) {
+            return Collections.emptyList();
+        }
+        final Builder<Void> builder = Data.builder().withName("timeRange");
+        if (timeRange.getFrom() != null) {
+            builder.addData(Data.builder()
+                    .withName("from")
+                    .withValue(timeRange.getFrom())
+                    .build());
+        }
+        if (timeRange.getTo() != null) {
+            builder.addData(Data.builder()
+                    .withName("to")
+                    .withValue(timeRange.getTo())
+                    .build());
+        }
+        return List.of(builder.build());
+    }
+
     private String getDataSourceString(final DocRef dataSourceRef) {
         final StringBuilder sb = new StringBuilder();
 
@@ -405,8 +428,7 @@ public class SearchEventLogImpl implements SearchEventLog {
         }
 
         try {
-            return docRefInfoService.name(docRef)
-                    .orElse(docRef.getName());
+            return docFinder.getName(docRef).orElse(docRef.getName());
         } catch (final RuntimeException e) {
             // We might not have an explorer handler capable of getting info.
             LOGGER.debug(e.getMessage(), e);

@@ -18,6 +18,7 @@ package stroom.query.client;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.query.api.datasource.FieldType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
@@ -75,6 +76,19 @@ public class AsyncSuggestOracle extends SuggestOracle {
     private void requestSuggestions(final Request request,
                                     final Callback callback,
                                     final int debouncePeriod) {
+        if (field != null && FieldType.BOOLEAN.equals(field.getFldType())) {
+            final String query = request.getQuery() != null ? request.getQuery().trim().toLowerCase() : "";
+            final List<String> list = new ArrayList<>();
+            if ("true".startsWith(query)) {
+                list.add("True");
+            }
+            if ("false".startsWith(query)) {
+                list.add("False");
+            }
+            returnSuggestions(request, callback, list);
+            return;
+        }
+
         if (restFactory != null && dataSource != null) {
             // Debounce requests so we don't spam the backend
             if (requestTimer != null) {

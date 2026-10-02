@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.http;
 
 import stroom.util.shared.AbstractBuilder;
@@ -32,6 +48,17 @@ import java.util.Objects;
 public class HttpClientConfiguration extends AbstractConfig implements IsStroomConfig, IsProxyConfig {
 
     public static final String PROP_NAME_TLS = "tls";
+    public static final StroomDuration DEFAULT_TIMEOUT = StroomDuration.ofMinutes(3);
+    public static final StroomDuration DEFAULT_CONNECTION_TIMEOUT = StroomDuration.ofMinutes(3);
+    public static final StroomDuration DEFAULT_CONNECTION_REQUEST_TIMEOUT = StroomDuration.ofMinutes(3);
+    public static final StroomDuration DEFAULT_TIME_TO_LIVE = StroomDuration.ofHours(1);
+    public static final boolean DEFAULT_COOKIES_ENABLED = false;
+    public static final boolean DEFAULT_FOLLOW_REDIRECTS = true;
+    public static final int DEFAULT_MAX_CONNECTIONS = 1_024;
+    public static final int DEFAULT_MAX_CONNECTIONS_PER_ROUTE = 1_024;
+    public static final StroomDuration DEFAULT_KEEP_ALIVE = StroomDuration.ZERO;
+    public static final int DEFAULT_RETRIES = 0;
+    public static final StroomDuration DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD = StroomDuration.ZERO;
 
     @NotNull
     private final StroomDuration timeout;
@@ -46,6 +73,8 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
     private final StroomDuration timeToLive;
 
     private final boolean cookiesEnabled;
+
+    private final boolean followRedirects;
 
     @Min(1)
     @Max(Integer.MAX_VALUE)
@@ -75,20 +104,20 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
     //    @Valid
     private final HttpTlsConfiguration tlsConfiguration;
 
-
     public HttpClientConfiguration() {
-        timeout = StroomDuration.ofMinutes(3);
-        connectionTimeout = StroomDuration.ofMinutes(3);
-        connectionRequestTimeout = StroomDuration.ofMinutes(3);
-        timeToLive = StroomDuration.ofHours(1);
-        cookiesEnabled = false;
-        maxConnections = 1024;
-        maxConnectionsPerRoute = 1024;
-        keepAlive = StroomDuration.ZERO;
-        retries = 0;
+        timeout = DEFAULT_TIMEOUT;
+        connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+        connectionRequestTimeout = DEFAULT_CONNECTION_REQUEST_TIMEOUT;
+        timeToLive = DEFAULT_TIME_TO_LIVE;
+        cookiesEnabled = DEFAULT_COOKIES_ENABLED;
+        followRedirects = DEFAULT_FOLLOW_REDIRECTS;
+        maxConnections = DEFAULT_MAX_CONNECTIONS;
+        maxConnectionsPerRoute = DEFAULT_MAX_CONNECTIONS_PER_ROUTE;
+        keepAlive = DEFAULT_KEEP_ALIVE;
+        retries = DEFAULT_RETRIES;
         userAgent = null;
         proxyConfiguration = null;
-        validateAfterInactivityPeriod = StroomDuration.ZERO;
+        validateAfterInactivityPeriod = DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD;
         tlsConfiguration = null;
     }
 
@@ -99,36 +128,33 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
             @JsonProperty("connectionTimeout") final StroomDuration connectionTimeout,
             @JsonProperty("connectionRequestTimeout") final StroomDuration connectionRequestTimeout,
             @JsonProperty("timeToLive") final StroomDuration timeToLive,
-            @JsonProperty("cookiesEnabled") final boolean cookiesEnabled,
+            @JsonProperty("cookiesEnabled") final Boolean cookiesEnabled,
+            @JsonProperty("followRedirects") final Boolean followRedirects,
             @JsonProperty("maxConnections") final Integer maxConnections,
             @JsonProperty("maxConnectionsPerRoute") final Integer maxConnectionsPerRoute,
             @JsonProperty("keepAlive") final StroomDuration keepAlive,
-            @JsonProperty("retries") final int retries,
+            @JsonProperty("retries") final Integer retries,
             @JsonProperty("userAgent") final String userAgent,
             @JsonProperty("proxy") final HttpProxyConfiguration proxyConfiguration,
             @JsonProperty("validateAfterInactivityPeriod") final StroomDuration validateAfterInactivityPeriod,
             @Nullable @JsonProperty(PROP_NAME_TLS) final HttpTlsConfiguration tlsConfiguration) {
 
-        this.timeout = Objects
-                .requireNonNullElse(timeout, StroomDuration.ofMillis(500));
-        this.connectionTimeout = Objects
-                .requireNonNullElse(connectionTimeout, StroomDuration.ofMillis(500));
-        this.connectionRequestTimeout = Objects
-                .requireNonNullElse(connectionRequestTimeout, StroomDuration.ofMillis(500));
-        this.timeToLive = Objects
-                .requireNonNullElse(timeToLive, StroomDuration.ofHours(1));
-        this.cookiesEnabled = cookiesEnabled;
-        this.maxConnections = Objects
-                .requireNonNullElse(maxConnections, 1024);
-        this.maxConnectionsPerRoute = Objects
-                .requireNonNullElse(maxConnectionsPerRoute, 1024);
-        this.keepAlive = Objects
-                .requireNonNullElse(keepAlive, StroomDuration.ZERO);
-        this.retries = retries;
+        this.timeout = Objects.requireNonNullElse(timeout, DEFAULT_TIMEOUT);
+        this.connectionTimeout = Objects.requireNonNullElse(connectionTimeout, DEFAULT_CONNECTION_TIMEOUT);
+        this.connectionRequestTimeout = Objects.requireNonNullElse(
+                connectionRequestTimeout, DEFAULT_CONNECTION_REQUEST_TIMEOUT);
+        this.timeToLive = Objects.requireNonNullElse(timeToLive, DEFAULT_TIME_TO_LIVE);
+        this.cookiesEnabled = Objects.requireNonNullElse(cookiesEnabled, DEFAULT_COOKIES_ENABLED);
+        this.followRedirects = Objects.requireNonNullElse(followRedirects, DEFAULT_FOLLOW_REDIRECTS);
+        this.maxConnections = Objects.requireNonNullElse(maxConnections, DEFAULT_MAX_CONNECTIONS);
+        this.maxConnectionsPerRoute = Objects.requireNonNullElse(
+                maxConnectionsPerRoute, DEFAULT_MAX_CONNECTIONS_PER_ROUTE);
+        this.keepAlive = Objects.requireNonNullElse(keepAlive, DEFAULT_KEEP_ALIVE);
+        this.retries = Objects.requireNonNullElse(retries, 0);
         this.userAgent = userAgent;
         this.proxyConfiguration = proxyConfiguration;
-        this.validateAfterInactivityPeriod = Objects
-                .requireNonNullElse(validateAfterInactivityPeriod, StroomDuration.ZERO);
+        this.validateAfterInactivityPeriod = Objects.requireNonNullElse(
+                validateAfterInactivityPeriod, DEFAULT_VALIDATE_AFTER_INACTIVITY_PERIOD);
         this.tlsConfiguration = tlsConfiguration;
     }
 
@@ -184,6 +210,15 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         return cookiesEnabled;
     }
 
+    @JsonPropertyDescription("Whether a redirect response (3xx) is followed. Some endpoints redirect in order " +
+                             "to authenticate, so a request that does not follow redirects will see the redirect " +
+                             "response itself rather than the resource it was after. " +
+                             "Default: true")
+    @JsonProperty
+    public boolean isFollowRedirects() {
+        return followRedirects;
+    }
+
     @JsonProperty
     public int getMaxConnections() {
         return maxConnections;
@@ -226,6 +261,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         }
         final HttpClientConfiguration that = (HttpClientConfiguration) o;
         return cookiesEnabled == that.cookiesEnabled &&
+               followRedirects == that.followRedirects &&
                maxConnections == that.maxConnections &&
                maxConnectionsPerRoute == that.maxConnectionsPerRoute &&
                retries == that.retries &&
@@ -247,6 +283,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
                 connectionRequestTimeout,
                 timeToLive,
                 cookiesEnabled,
+                followRedirects,
                 maxConnections,
                 maxConnectionsPerRoute,
                 keepAlive,
@@ -265,6 +302,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
                ", connectionRequestTimeout=" + connectionRequestTimeout +
                ", timeToLive=" + timeToLive +
                ", cookiesEnabled=" + cookiesEnabled +
+               ", followRedirects=" + followRedirects +
                ", maxConnections=" + maxConnections +
                ", maxConnectionsPerRoute=" + maxConnectionsPerRoute +
                ", keepAlive=" + keepAlive +
@@ -291,6 +329,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
         private StroomDuration connectionRequestTimeout;
         private StroomDuration timeToLive;
         private boolean cookiesEnabled;
+        private boolean followRedirects;
         private int maxConnections;
         private int maxConnectionsPerRoute;
         private StroomDuration keepAlive;
@@ -310,11 +349,13 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
             connectionRequestTimeout = httpClientConfig.connectionRequestTimeout;
             timeToLive = httpClientConfig.timeToLive;
             cookiesEnabled = httpClientConfig.cookiesEnabled;
+            followRedirects = httpClientConfig.followRedirects;
             maxConnections = httpClientConfig.maxConnections;
             maxConnectionsPerRoute = httpClientConfig.maxConnectionsPerRoute;
             keepAlive = httpClientConfig.keepAlive;
             retries = httpClientConfig.retries;
             userAgent = httpClientConfig.userAgent;
+            proxyConfiguration = httpClientConfig.proxyConfiguration;
             validateAfterInactivityPeriod = httpClientConfig.validateAfterInactivityPeriod;
             tlsConfiguration = httpClientConfig.tlsConfiguration;
         }
@@ -341,6 +382,11 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
 
         public Builder cookiesEnabled(final boolean cookiesEnabled) {
             this.cookiesEnabled = cookiesEnabled;
+            return self();
+        }
+
+        public Builder followRedirects(final boolean followRedirects) {
+            this.followRedirects = followRedirects;
             return self();
         }
 
@@ -396,6 +442,7 @@ public class HttpClientConfiguration extends AbstractConfig implements IsStroomC
                     connectionRequestTimeout,
                     timeToLive,
                     cookiesEnabled,
+                    followRedirects,
                     maxConnections,
                     maxConnectionsPerRoute,
                     keepAlive,

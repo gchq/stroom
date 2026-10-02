@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -18,7 +34,8 @@ import java.util.Objects;
         "valueSchema"
 })
 @JsonInclude(Include.NON_NULL)
-public final class RangeStateSettings extends AbstractPlanBSettings {
+public final class RangeStateSettings
+        extends AbstractHttpStoreSettings {
 
     @JsonProperty
     private final RangeKeySchema keySchema;
@@ -34,8 +51,8 @@ public final class RangeStateSettings extends AbstractPlanBSettings {
                               @JsonProperty("keySchema") final RangeKeySchema keySchema,
                               @JsonProperty("valueSchema") final StateValueSchema valueSchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.keySchema = keySchema;
-        this.valueSchema = valueSchema;
+        this.keySchema = Objects.requireNonNullElse(keySchema, new RangeKeySchema.Builder().build());
+        this.valueSchema = Objects.requireNonNullElse(valueSchema, new StateValueSchema.Builder().build());
     }
 
     public RangeKeySchema getKeySchema() {
@@ -70,12 +87,13 @@ public final class RangeStateSettings extends AbstractPlanBSettings {
     @Override
     public String toString() {
         return "RangedStateSettings{" +
-               "keySchema=" + keySchema +
+               super.toString() +
+               ", keySchema=" + keySchema +
                ", valueSchema=" + valueSchema +
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<RangeStateSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<RangeStateSettings, Builder> {
 
         private RangeKeySchema keySchema;
         private StateValueSchema valueSchema;
@@ -85,8 +103,10 @@ public final class RangeStateSettings extends AbstractPlanBSettings {
 
         public Builder(final RangeStateSettings settings) {
             super(settings);
-            this.keySchema = settings.keySchema;
-            this.valueSchema = settings.valueSchema;
+            if (settings != null) {
+                this.keySchema = settings.keySchema;
+                this.valueSchema = settings.valueSchema;
+            }
         }
 
         public Builder keySchema(final RangeKeySchema keySchema) {

@@ -1,5 +1,22 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.config.app;
 
+import stroom.util.json.JsonV2Util;
 import stroom.util.logging.LogUtil;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -89,13 +106,21 @@ public class GenerateExpectedYaml {
     public static List<String> removeDropWizardLines(final String value) {
         return value.lines()
                 .sequential()
-                .dropWhile(line -> !line.startsWith(APP_CONFIG + ":"))
+                .filter(line -> !line.startsWith("---"))
+                .dropWhile(line -> {
+                    final boolean isDropped = !line.startsWith(APP_CONFIG + ":");
+                    if (isDropped) {
+                        LOGGER.debug("Dropping line '{}'", line);
+                    }
+                    return isDropped;
+                })
                 .takeWhile(line -> line.startsWith(APP_CONFIG + ":") || line.startsWith("  "))
                 .collect(Collectors.toList());
     }
 
     static void generateJsonSchema(final Path schemaFile) throws IOException {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        // Need to use legacy v2 jackson as JsonSchemaGenerator lib needs v2
+        final ObjectMapper objectMapper = JsonV2Util.getMapper();
         final JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper);
 
         // If you want to configure it manually:

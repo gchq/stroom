@@ -1,7 +1,24 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.shared;
 
 import stroom.docref.DocRef;
-import stroom.util.shared.BaseCriteria;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.PageRequest;
 
@@ -22,7 +39,7 @@ import java.util.Objects;
         "enabled"
 })
 @JsonInclude(Include.NON_NULL)
-public class ExecutionScheduleRequest extends BaseCriteria {
+public class ExecutionScheduleRequest extends ExpressionCriteria {
 
     @JsonProperty
     private final DocRef ownerDocRef;
@@ -34,10 +51,11 @@ public class ExecutionScheduleRequest extends BaseCriteria {
     @JsonCreator
     public ExecutionScheduleRequest(@JsonProperty("pageRequest") final PageRequest pageRequest,
                                     @JsonProperty("sortList") final List<CriteriaFieldSort> sortList,
+                                    @JsonProperty("expression") final ExpressionOperator expression,
                                     @JsonProperty("ownerDocRef") final DocRef ownerDocRef,
                                     @JsonProperty("nodeName") final String nodeName,
                                     @JsonProperty("enabled") final Boolean enabled) {
-        super(pageRequest, sortList);
+        super(pageRequest, sortList, expression);
         this.ownerDocRef = ownerDocRef;
         this.nodeName = nodeName;
         this.enabled = enabled;
@@ -79,7 +97,10 @@ public class ExecutionScheduleRequest extends BaseCriteria {
     @Override
     public String toString() {
         return "ExecutionScheduleRequest{" +
-               "ownerDocRef=" + ownerDocRef +
+               "pageRequest=" + getPageRequest() +
+               ", sortList=" + getSortList() +
+               ", expression=" + getExpression() +
+               ", ownerDocRef=" + ownerDocRef +
                ", nodeName=" + nodeName +
                ", enabled=" + enabled +
                '}';
@@ -93,10 +114,8 @@ public class ExecutionScheduleRequest extends BaseCriteria {
         return new Builder();
     }
 
-    public static class Builder {
-
-        private PageRequest pageRequest;
-        private List<CriteriaFieldSort> sortList;
+    public static class Builder
+            extends ExpressionCriteriaBuilder<ExecutionScheduleRequest, ExecutionScheduleRequest.Builder> {
         private DocRef ownerDocRef;
         private String nodeName;
         private Boolean enabled;
@@ -105,43 +124,40 @@ public class ExecutionScheduleRequest extends BaseCriteria {
         }
 
         private Builder(final ExecutionScheduleRequest request) {
+            super();
             this.pageRequest = request.getPageRequest();
             this.sortList = request.getSortList();
+            this.expression = request.getExpression();
             this.ownerDocRef = request.ownerDocRef;
             this.nodeName = request.nodeName;
             this.enabled = request.enabled;
         }
 
-
-        public Builder pageRequest(final PageRequest pageRequest) {
-            this.pageRequest = pageRequest;
-            return this;
-        }
-
-        public Builder sortList(final List<CriteriaFieldSort> sortList) {
-            this.sortList = sortList;
+        @Override
+        protected Builder self() {
             return this;
         }
 
         public Builder ownerDocRef(final DocRef ownerDocRef) {
             this.ownerDocRef = ownerDocRef;
-            return this;
+            return self();
         }
 
         public Builder nodeName(final String nodeName) {
             this.nodeName = nodeName;
-            return this;
+            return self();
         }
 
         public Builder enabled(final Boolean enabled) {
             this.enabled = enabled;
-            return this;
+            return self();
         }
 
         public ExecutionScheduleRequest build() {
             return new ExecutionScheduleRequest(
                     pageRequest,
                     sortList,
+                    expression,
                     ownerDocRef,
                     nodeName,
                     enabled);

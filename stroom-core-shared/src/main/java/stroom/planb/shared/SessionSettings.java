@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -18,7 +34,9 @@ import java.util.Objects;
         "keySchema"
 })
 @JsonInclude(Include.NON_NULL)
-public final class SessionSettings extends AbstractPlanBSettings {
+public final class SessionSettings
+        extends AbstractHttpStoreSettings
+        implements HasCondenseSettings {
 
     @JsonProperty
     private final DurationSetting condense;
@@ -34,10 +52,11 @@ public final class SessionSettings extends AbstractPlanBSettings {
                            @JsonProperty("condense") final DurationSetting condense,
                            @JsonProperty("keySchema") final SessionKeySchema keySchema) {
         super(maxStoreSize, synchroniseMerge, overwrite, retention, snapshotSettings);
-        this.condense = condense;
-        this.keySchema = keySchema;
+        this.condense = Objects.requireNonNullElse(condense, new DurationSetting.Builder().build());
+        this.keySchema = Objects.requireNonNullElse(keySchema, new SessionKeySchema.Builder().build());
     }
 
+    @Override
     public DurationSetting getCondense() {
         return condense;
     }
@@ -72,12 +91,13 @@ public final class SessionSettings extends AbstractPlanBSettings {
     @Override
     public String toString() {
         return "SessionSettings{" +
-               "condense=" + condense +
+               super.toString() +
+               ", condense=" + condense +
                ", keySchema=" + keySchema +
                '}';
     }
 
-    public static class Builder extends AbstractBuilder<SessionSettings, Builder> {
+    public static class Builder extends AbstractHttpBuilder<SessionSettings, Builder> {
 
         private DurationSetting condense;
         private SessionKeySchema keySchema;
@@ -87,8 +107,10 @@ public final class SessionSettings extends AbstractPlanBSettings {
 
         public Builder(final SessionSettings settings) {
             super(settings);
-            this.condense = settings.condense;
-            this.keySchema = settings.keySchema;
+            if (settings != null) {
+                this.condense = settings.condense;
+                this.keySchema = settings.keySchema;
+            }
         }
 
         public Builder condense(final DurationSetting condense) {

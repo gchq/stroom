@@ -17,7 +17,6 @@
 package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.shared.data.PipelineElement;
-import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.widget.htree.client.CellRenderer2;
 import stroom.widget.htree.client.treelayout.Bounds;
 import stroom.widget.htree.client.treelayout.Dimension;
@@ -41,7 +40,6 @@ public final class PipelineElementRenderer
     private final PipelineElementBoxFactory pipelineElementBoxFactory;
     private final FlowPanel panel;
     private final List<PipelineElementBox> boxes = new ArrayList<>();
-    private PipelineModel pipelineModel;
 
     // Cache the PipelineElementBox objects so we don't need to keep creating them.
     // This avoids flickr as we can just change their style rather than creating new and adding style.
@@ -90,9 +88,9 @@ public final class PipelineElementRenderer
         } else {
             final PipelineElementBox pipelineElementBox = elementIdToBoxMap.computeIfAbsent(
                     pipelineElement.getId(),
-                    k -> pipelineElementBoxFactory.create(pipelineModel, pipelineElement));
+                    k -> pipelineElementBoxFactory.create(pipelineElement));
             // Refresh any styling on the box based on the PipelineElement state
-            pipelineElementBox.refresh();
+            pipelineElementBox.refresh(pipelineElement);
             return pipelineElementBox;
         }
     }
@@ -107,9 +105,5 @@ public final class PipelineElementRenderer
 
     public void setSelectionModel(final SelectionModel<PipelineElement> selectionModel) {
         this.selectionModel = selectionModel;
-    }
-
-    public void setPipelineModel(final PipelineModel pipelineModel) {
-        this.pipelineModel = pipelineModel;
     }
 }

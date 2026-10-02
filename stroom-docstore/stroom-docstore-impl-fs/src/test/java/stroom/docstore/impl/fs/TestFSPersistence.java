@@ -1,27 +1,41 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docstore.impl.fs;
 
 import stroom.docref.DocRef;
+import stroom.docstore.impl.GenericDoc;
 import stroom.docstore.impl.Persistence;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AuditAction;
+import stroom.docstore.shared.DocDataType;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFSPersistence {
-
-    private static final Charset CHARSET = StandardCharsets.UTF_8;
 
     @Test
     void test() throws IOException {
@@ -34,60 +48,58 @@ class TestFSPersistence {
 
         // Ensure the doc doesn't exist.
         if (persistence.exists(docRef)) {
-            persistence.delete(docRef);
+            persistence.delete(docRef, null);
         }
 
-        final GenericDoc doc = new GenericDoc();
-        doc.setType(docRef.getType());
-        doc.setUuid(docRef.getUuid());
-        doc.setName(docRef.getName());
-        final ObjectMapper mapper = JsonUtil.getNoIndentMapper();
+        GenericDoc doc = GenericDoc
+                .builder()
+                .type(docRef.getType())
+                .uuid(docRef.getUuid())
+                .name(docRef.getName())
+                .build();
+        final JsonMapper mapper = JsonUtil.getNoIndentMapper();
         byte[] bytes = mapper.writeValueAsBytes(doc);
 
         // Create
-        Map<String, byte[]> data = new HashMap<>();
-        data.put("meta", bytes);
-        persistence.write(docRef, false, data);
+        final ImportExportDocument ieDoc = new ImportExportDocument();
+        ieDoc.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
+        persistence.write(docRef, AuditAction.CREATE, null, ieDoc, null, UUID.randomUUID().toString());
 
         // Exists
         assertThat(persistence.exists(docRef)).isTrue();
 
         // Read
-        data = persistence.read(docRef);
-        assertThat(data.get("meta")).isEqualTo(bytes);
+        final ImportExportDocument ieDocRead = persistence.read(docRef);
+        assertThat(ieDocRead.getExtAssetData("meta")).isEqualTo(bytes);
 
         // List
         List<DocRef> refs = persistence.list(docRef.getType());
         assertThat(refs.size()).isEqualTo(1);
-        assertThat(refs.get(0)).isEqualTo(docRef);
-        assertThat(refs.get(0).getType()).isEqualTo(docRef.getType());
-        assertThat(refs.get(0).getUuid()).isEqualTo(docRef.getUuid());
-        assertThat(refs.get(0).getName()).isEqualTo(docRef.getName());
+        assertThat(refs.getFirst()).isEqualTo(docRef);
+        assertThat(refs.getFirst().getType()).isEqualTo(docRef.getType());
+        assertThat(refs.getFirst().getUuid()).isEqualTo(docRef.getUuid());
+        assertThat(refs.getFirst().getName()).isEqualTo(docRef.getName());
 
         // Update
-        doc.setName("New Name");
+        doc = doc.copy().name("New Name").build();
         bytes = mapper.writeValueAsBytes(doc);
-        data = new HashMap<>();
-        data.put("meta", bytes);
-        persistence.write(docRef, true, data);
+        final ImportExportDocument ieDocNewName = new ImportExportDocument();
+        ieDocNewName.addExtAsset(new ByteArrayImportExportAsset("meta", DocDataType.JSON, bytes));
+        persistence.write(docRef, AuditAction.UPDATE, null, ieDocNewName, null, UUID.randomUUID().toString());
 
         // Read
-        data = persistence.read(docRef);
-        assertThat(data.get("meta")).isEqualTo(bytes);
+        final ImportExportDocument ieDocNewNameRead = persistence.read(docRef);
+        assertThat(ieDocNewNameRead.getExtAssetData("meta")).isEqualTo(bytes);
 
         // List
         refs = persistence.list(docRef.getType());
         assertThat(refs.size()).isEqualTo(1);
-        assertThat(refs.get(0)).isEqualTo(docRef);
-        assertThat(refs.get(0).getType()).isEqualTo(docRef.getType());
-        assertThat(refs.get(0).getUuid()).isEqualTo(docRef.getUuid());
-        assertThat(refs.get(0).getName()).isEqualTo("New Name");
+        assertThat(refs.getFirst()).isEqualTo(docRef);
+        assertThat(refs.getFirst().getType()).isEqualTo(docRef.getType());
+        assertThat(refs.getFirst().getUuid()).isEqualTo(docRef.getUuid());
+        assertThat(refs.getFirst().getName()).isEqualTo("New Name");
 
         // Delete
-        persistence.delete(docRef);
-    }
-
-    private static class GenericDoc extends Doc {
-
+        persistence.delete(docRef, null);
     }
 }

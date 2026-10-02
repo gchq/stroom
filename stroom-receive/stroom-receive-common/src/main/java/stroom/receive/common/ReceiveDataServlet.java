@@ -38,6 +38,9 @@ import java.util.Set;
 
 /**
  * <p>
+ * The /datafeed servlet.
+ * </p>
+ * <p>
  * Servlet that streams files to disk based on meta input arguments.
  * </p>
  */

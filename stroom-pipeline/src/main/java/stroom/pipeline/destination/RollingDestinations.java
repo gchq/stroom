@@ -38,7 +38,7 @@ public class RollingDestinations {
 
     private static final int MAX_TRY_COUNT = 1000;
 
-    private static final ConcurrentHashMap<Object, RollingDestination> currentDestinations = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Object, RollingDestination> CURRENT_DESTINATIONS = new ConcurrentHashMap<>();
 
     private final Provider<AppenderConfig> appenderConfigProvider;
     private final TaskContextFactory taskContextFactory;
@@ -70,14 +70,14 @@ public class RollingDestinations {
     private RollingDestination getDestination(final Object key,
                                               final RollingDestinationFactory destinationFactory) throws IOException {
         // Try and get an existing destination for the key or create one if necessary.
-        final RollingDestination destination = currentDestinations.computeIfAbsent(key, k -> {
+        final RollingDestination destination = CURRENT_DESTINATIONS.computeIfAbsent(key, k -> {
             try {
                 final int maxActiveDestinations = appenderConfigProvider.get().getMaxActiveDestinations();
 
                 // Try and cope with too many active destinations.
-                if (currentDestinations.size() > maxActiveDestinations) {
+                if (CURRENT_DESTINATIONS.size() > maxActiveDestinations) {
                     // If the size is still too big then error.
-                    throw ProcessException.create("Too many active destinations: " + currentDestinations.size());
+                    throw ProcessException.create("Too many active destinations: " + CURRENT_DESTINATIONS.size());
                 }
 
                 // Create a new destination.
@@ -135,7 +135,7 @@ public class RollingDestinations {
 
     private void removeDestination(final Object key, final RollingDestination destination) {
         // Only remove the destination if it is the same one that is already in the map.
-        currentDestinations.compute(key, (k, v) -> {
+        CURRENT_DESTINATIONS.compute(key, (k, v) -> {
             if (v == destination) {
                 return null;
             }
@@ -156,7 +156,7 @@ public class RollingDestinations {
         LOGGER.debug("rollAll()");
 
         final Instant currentTime = Instant.now();
-        currentDestinations.forEach(1, (key, destination) -> {
+        CURRENT_DESTINATIONS.forEach(1, (key, destination) -> {
             // We have to do this here as foreach runs multiple threads so each thread needs to run as proc user
             securityContext.asProcessingUser(() -> {
                 // Try and lock this destination as we can't flush or roll it if

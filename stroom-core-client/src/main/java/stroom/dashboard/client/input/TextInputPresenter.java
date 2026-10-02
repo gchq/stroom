@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class TextInputPresenter
     public void onValueChanged(final String value) {
         setSettings(getTextInputSettings().copy().value(value).build());
         ComponentChangeEvent.fire(this, this);
-        setDirty(true);
+        onChange();
     }
 
     @Override

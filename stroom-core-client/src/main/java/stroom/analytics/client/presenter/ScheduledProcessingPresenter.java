@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
@@ -8,7 +24,7 @@ import stroom.analytics.shared.ExecutionScheduleResource;
 import stroom.analytics.shared.ScheduleBounds;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.util.shared.scheduler.CronExpressions;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
@@ -29,7 +45,7 @@ public class ScheduledProcessingPresenter
     private final ScheduledProcessListPresenter scheduledProcessListPresenter;
     private final ScheduledProcessHistoryListPresenter scheduledProcessHistoryListPresenter;
     private final ScheduledProcessEditPresenter scheduledProcessEditPresenter;
-    private DocumentEditPresenter<?, ?> documentEditPresenter;
+    private DocPresenter<?, ?> documentEditPresenter;
     private DocRef ownerDocRef;
 
     @Inject
@@ -61,7 +77,7 @@ public class ScheduledProcessingPresenter
         scheduledProcessListPresenter.read(ownerDocRef);
     }
 
-    public void setDocumentEditPresenter(final DocumentEditPresenter<?, ?> documentEditPresenter) {
+    public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
         this.documentEditPresenter = documentEditPresenter;
         scheduledProcessListPresenter.setScheduledProcessingPresenter(this);
         scheduledProcessHistoryListPresenter.setScheduledProcessingPresenter(this);
@@ -160,8 +176,11 @@ public class ScheduledProcessingPresenter
         }
     }
 
-    public interface ScheduledProcessingView extends View {
 
+    // --------------------------------------------------------------------------------
+
+
+    public interface ScheduledProcessingView extends View {
 
         void setScheduleList(View view);
 

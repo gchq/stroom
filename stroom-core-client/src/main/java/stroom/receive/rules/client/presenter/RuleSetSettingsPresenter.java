@@ -12,27 +12,37 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.receive.rules.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmCallback;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionTerm;
+import stroom.query.api.ExpressionUtil;
+import stroom.query.api.datasource.ConditionSet;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSettingsView;
+import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.receive.rules.shared.RuleAction;
 import stroom.svg.client.SvgPresets;
+import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
+import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.MultiSelectEvent;
+import stroom.widget.util.client.MultiSelectionModel;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -41,16 +51,22 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class RuleSetSettingsPresenter
-        extends DocumentEditPresenter<RuleSetSettingsView, ReceiveDataRules> {
+        extends DocPresenter<RuleSetSettingsView, ReceiveDataRules> {
 
     private final RuleSetListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final Provider<RulePresenter> editRulePresenterProvider;
     private final SimpleFieldSelectionListModel fieldSelectionBoxModel = new SimpleFieldSelectionListModel();
-    private List<ReceiveDataRule> rules;
+    private final UiConfigCache uiConfigCache;
+    private final List<ReceiveDataRule> rules = new ArrayList<>();
+    private FieldListPresenter fieldListPresenter;
 
     private final ButtonView addButton;
     private final ButtonView editButton;
@@ -65,11 +81,13 @@ public class RuleSetSettingsPresenter
                                     final RuleSetSettingsView view,
                                     final RuleSetListPresenter listPresenter,
                                     final ExpressionTreePresenter expressionPresenter,
-                                    final Provider<RulePresenter> editRulePresenterProvider) {
+                                    final Provider<RulePresenter> editRulePresenterProvider,
+                                    final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
+        this.uiConfigCache = uiConfigCache;
 
         getView().setTableView(listPresenter.getView());
         getView().setExpressionView(expressionPresenter.getView());
@@ -77,13 +95,13 @@ public class RuleSetSettingsPresenter
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        addButton = listPresenter.add(SvgPresets.ADD);
-        editButton = listPresenter.add(SvgPresets.EDIT);
-        copyButton = listPresenter.add(SvgPresets.COPY);
-        disableButton = listPresenter.add(SvgPresets.DISABLE);
-        deleteButton = listPresenter.add(SvgPresets.DELETE);
-        moveUpButton = listPresenter.add(SvgPresets.UP);
-        moveDownButton = listPresenter.add(SvgPresets.DOWN);
+        addButton = listPresenter.add(SvgPresets.ADD.title("Add new rule"));
+        editButton = listPresenter.add(SvgPresets.EDIT.title("Edit selected rule"));
+        copyButton = listPresenter.add(SvgPresets.COPY.title("Copy selected rule"));
+        disableButton = listPresenter.add(SvgPresets.DISABLE.title("Disable/enable selected rule"));
+        deleteButton = listPresenter.add(SvgPresets.DELETE.title("Delete selected rule"));
+        moveUpButton = listPresenter.add(SvgPresets.UP.title("Move selected rule up"));
+        moveDownButton = listPresenter.add(SvgPresets.DOWN.title("Move selected rule down"));
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
@@ -105,14 +123,37 @@ public class RuleSetSettingsPresenter
         super.onBind();
     }
 
+//    private void saveRuleButtonClickHandler(final ClickEvent event) {
+//        if (!isReadOnly() && rules != null) {
+//            SaveDocumentEvent.fire(RuleSetSettingsPresenter.this, this);
+//            if (NullSafe.isEmptyCollection(fields)) {
+//                AlertEvent.fireError(
+//                        RuleSetSettingsPresenter.this,
+//                        "You need to create one or more fields before you can add a rule.",
+//                        null,
+//                        null);
+//            } else {
+//                add();
+//            }
+//        }
+//    }
+
     private void addRuleButtonClickHandler(final ClickEvent event) {
-        if (!isReadOnly() && rules != null) {
-            add();
+        if (!isReadOnly()) {
+            if (fieldListPresenter == null || NullSafe.isEmptyCollection(fieldListPresenter.getFields())) {
+                AlertEvent.fireError(
+                        RuleSetSettingsPresenter.this,
+                        "You need to create one or more fields before you can add a rule.",
+                        null,
+                        null);
+            } else {
+                add();
+            }
         }
     }
 
     private void editButtonClickHandler(final ClickEvent event) {
-        if (!isReadOnly() && rules != null) {
+        if (!isReadOnly()) {
             final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
                 edit(selected);
@@ -121,7 +162,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void copyRuleButtonClickHandler(final ClickEvent event) {
-        if (!isReadOnly() && rules != null) {
+        if (!isReadOnly()) {
             final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
                 final ReceiveDataRule newRule = new ReceiveDataRule(
@@ -147,42 +188,45 @@ public class RuleSetSettingsPresenter
     }
 
     private void disableButtonClickHandler(final ClickEvent event) {
-        if (!isReadOnly() && rules != null) {
-            final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
-            if (selected != null) {
-                final ReceiveDataRule newRule = new ReceiveDataRule(
-                        selected.getRuleNumber(),
-                        selected.getCreationTime(),
-                        selected.getName(),
-                        !selected.isEnabled(),
-                        selected.getExpression(),
-                        selected.getAction());
-                final int index = rules.indexOf(selected);
-                rules.remove(index);
-                rules.add(index, newRule);
-                listPresenter.getSelectionModel().setSelected(newRule);
+        if (!isReadOnly()) {
+            final List<ReceiveDataRule> selectedItems = listPresenter.getSelectionModel().getSelectedItems();
+            if (NullSafe.hasItems(selectedItems)) {
+                final List<ReceiveDataRule> newSelection = new ArrayList<>(selectedItems.size());
+                for (final ReceiveDataRule rule : selectedItems) {
+                    final ReceiveDataRule newRule = rule.copy()
+                            .withEnabled(!rule.isEnabled())
+                            .build();
+                    newSelection.add(newRule);
+                    final int index = rules.indexOf(rule);
+                    rules.remove(index);
+                    rules.add(index, newRule);
+                }
+                listPresenter.getSelectionModel().setSelectedItems(newSelection);
                 update();
-                setDirty(true);
+                change();
             }
         }
     }
 
     private void deleteButtonClickHandler(final ClickEvent event) {
-        if (!isReadOnly() && rules != null) {
-            ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
+        if (!isReadOnly()) {
+            final List<ReceiveDataRule> rules = listPresenter.getSelectionModel().getSelectedItems();
+            final String msg = rules.size() > 1
+                    ? "Are you sure you want to delete this rule?"
+                    : "Are you sure you want to delete the selected rules?";
+            ConfirmEvent.fire(this, msg, ok -> {
                 if (ok) {
-                    final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
-                    rules.remove(rule);
+                    this.rules.removeAll(rules);
                     listPresenter.getSelectionModel().clear();
                     update();
-                    setDirty(true);
+                    change();
                 }
             });
         }
     }
 
     private void moveUpButtonClickHandler(final ClickEvent event) {
-        if (!isReadOnly() && rules != null) {
+        if (!isReadOnly()) {
             final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
                 int index = rules.indexOf(rule);
@@ -195,7 +239,7 @@ public class RuleSetSettingsPresenter
     }
 
     private void moveDownButtonClickHandler(final ClickEvent event) {
-        if (!isReadOnly() && rules != null) {
+        if (!isReadOnly()) {
             final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
                 int index = rules.indexOf(rule);
@@ -211,25 +255,23 @@ public class RuleSetSettingsPresenter
         rules.remove(rule);
         rules.add(index, rule);
         update();
-        setDirty(true);
+        change();
 
         // Re-select the rule.
         listPresenter.getSelectionModel().setSelected(rules.get(index));
     }
 
     private void listSelectionHandler(final MultiSelectEvent selectEvent) {
-        if (!isReadOnly()) {
-            final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
-            if (rule != null) {
-                expressionPresenter.read(rule.getExpression());
-                if (selectEvent.getSelectionType().isDoubleSelect()) {
-                    edit(rule);
-                }
-            } else {
-                expressionPresenter.read(null);
+        final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
+        if (rule != null) {
+            expressionPresenter.read(rule.getExpression());
+            if (selectEvent.getSelectionType().isDoubleSelect() && !isReadOnly()) {
+                edit(rule);
             }
-            updateButtons();
+        } else {
+            expressionPresenter.read(null);
         }
+        updateButtons();
     }
 
 
@@ -240,7 +282,7 @@ public class RuleSetSettingsPresenter
                 "",
                 true,
                 ExpressionOperator.builder().build(),
-                RuleAction.RECEIVE);
+                ReceiveAction.RECEIVE);
         final RulePresenter editRulePresenter = editRulePresenterProvider.get();
         editRulePresenter.read(newRule, fieldSelectionBoxModel);
 
@@ -249,7 +291,7 @@ public class RuleSetSettingsPresenter
             rules.add(0, rule);
             update();
             listPresenter.getSelectionModel().setSelected(rule);
-            setDirty(true);
+            change();
         });
     }
 
@@ -268,7 +310,7 @@ public class RuleSetSettingsPresenter
 
             // Only mark the policies as dirty if the rule was actually changed.
             if (!existingRule.equals(rule)) {
-                setDirty(true);
+                change();
             }
         });
     }
@@ -276,82 +318,185 @@ public class RuleSetSettingsPresenter
 
     private void showRulePresenter(final RulePresenter rulePresenter,
                                    final Runnable okHandler) {
-        final PopupSize popupSize = PopupSize.resizable(800, 600);
-        ShowPopupEvent.builder(rulePresenter)
+        final PopupSize popupSize = PopupSize.resizable(1_000, 600);
+        uiConfigCache.get(extendedUiConfig -> ShowPopupEvent
+                .builder(rulePresenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Edit Rule")
                 .onShow(e -> listPresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
-                        okHandler.run();
+                        validateRules(rulePresenter, extendedUiConfig, isConfirmOk -> {
+                            if (isConfirmOk) {
+                                okHandler.run();
+                                e.hide();
+                            } else {
+                                e.reset();
+                            }
+                        });
+                    } else {
+                        e.hide();
                     }
-                    e.hide();
                 })
-                .fire();
+                .fire());
+    }
+
+    private void validateRules(final RulePresenter rulePresenter,
+                               final ExtendedUiConfig extendedUiConfig,
+                               final ConfirmCallback confirmCallback) {
+        final List<ExpressionTerm> unHashableTerms = getUnhashableTermsInExpression(
+                rulePresenter,
+                extendedUiConfig);
+
+        if (unHashableTerms.isEmpty()) {
+            confirmCallback.onResult(true);
+        } else {
+            final HtmlBuilder htmlBuilder = HtmlBuilder.builder()
+                    .para("The following terms have obfuscated fields and conditions " +
+                          "that do not support obfuscation:");
+
+            for (final ExpressionTerm term : unHashableTerms) {
+                htmlBuilder.para(termBuilder -> termBuilder.code(codeBuilder -> codeBuilder
+                                .append(term.getField()))
+                        .append(SafeHtmlUtil.ENSP)
+                        .append(term.getCondition().getDisplayValue())
+                        .append(SafeHtmlUtil.ENSP)
+                        .code(codeBuilder -> codeBuilder.append(term.getValue())));
+            }
+
+            ConfirmEvent.fireWarn(
+                    rulePresenter,
+                    SafeHtmlUtil.toParagraphs(
+                            "This rule contains conditions that are not compatible with obfuscated fields. " +
+                            "Values in the effected terms will not be obfuscated on Stroom-Proxy.\n" +
+                            "Do you wish to continue?"),
+                    htmlBuilder.toSafeHtml(),
+                    confirmCallback);
+        }
+    }
+
+    private List<ExpressionTerm> getUnhashableTermsInExpression(final RulePresenter rulePresenter,
+                                                                final ExtendedUiConfig extendedUiConfig) {
+        final ReceiveDataRule receiveDataRule = rulePresenter.write();
+        final ExpressionOperator expression = receiveDataRule.getExpression();
+        if (expression != null) {
+            final Set<String> obfuscatedFields = extendedUiConfig.getObfuscatedFields();
+            final List<String> fieldsInExpr = ExpressionUtil.fields(expression);
+            if (NullSafe.stream(fieldsInExpr).anyMatch(obfuscatedFields::contains)) {
+                final List<ExpressionTerm> unhashableTerms = new ArrayList<>();
+                // We have obfuscated fields so see if the conditions are ok
+                ExpressionUtil.walkExpressionTree(expression, expressionItem -> {
+                    if (expressionItem instanceof final ExpressionTerm term
+                        && obfuscatedFields.contains(term.getField())
+                        && term.getCondition() != null
+                        && !ConditionSet.OBFUSCATABLE_CONDITIONS.supportsCondition(term.getCondition())) {
+                        unhashableTerms.add(term);
+                    }
+                    return true;
+                });
+                return unhashableTerms;
+            } else {
+                return Collections.emptyList();
+            }
+        } else {
+            return Collections.emptyList();
+        }
     }
 
     @Override
-    protected void onRead(final DocRef docRef, final ReceiveDataRules document, final boolean readOnly) {
+    protected void onRead(final DocRef docRef,
+                          final ReceiveDataRules document,
+                          final boolean readOnly) {
+        fieldSelectionBoxModel.clear();
+        NullSafe.consume(document.getFields(), fieldSelectionBoxModel::addItems);
+        rules.clear();
+        NullSafe.consume(document.getRules(), rules::addAll);
+        listPresenter.getSelectionModel()
+                .clear();
+        update();
         updateButtons();
-
-        if (document != null) {
-            fieldSelectionBoxModel.clear();
-            fieldSelectionBoxModel.addItems(document.getFields());
-            this.rules = document.getRules();
-            listPresenter.getSelectionModel().clear();
-            setDirty(false);
-            update();
-        }
     }
 
     @Override
     protected ReceiveDataRules onWrite(final ReceiveDataRules document) {
-        return document;
+        return document.copy().rules(new ArrayList<>(this.rules)).build();
     }
 
     private void update() {
-        if (rules != null) {
-            // Set rule numbers on all of the rules for display purposes.
-            for (int i = 0; i < rules.size(); i++) {
-                final ReceiveDataRule rule = rules.get(i);
-                final ReceiveDataRule newRule = new ReceiveDataRule(
-                        i + 1,
-                        rule.getCreationTime(),
-                        rule.getName(),
-                        rule.isEnabled(),
-                        rule.getExpression(),
-                        rule.getAction());
-                rules.set(i, newRule);
-            }
-            listPresenter.setData(rules);
+        // Set rule numbers on all of the rules for display purposes.
+        for (int i = 0; i < rules.size(); i++) {
+            final ReceiveDataRule rule = rules.get(i);
+            final ReceiveDataRule newRule = new ReceiveDataRule(
+                    i + 1,
+                    rule.getCreationTime(),
+                    rule.getName(),
+                    rule.isEnabled(),
+                    rule.getExpression(),
+                    rule.getAction());
+            rules.set(i, newRule);
         }
+        listPresenter.setData(rules);
         updateButtons();
     }
 
     private void updateButtons() {
-        final boolean loadedPolicy = rules != null;
-        final ReceiveDataRule selection = listPresenter.getSelectionModel().getSelected();
-        final boolean selected = loadedPolicy && selection != null;
-        int index = -1;
-        if (selected) {
-            index = rules.indexOf(selection);
-        }
+        final MultiSelectionModel<ReceiveDataRule> selectionModel = listPresenter.getSelectionModel();
+        final Boolean areSelectedEnabled;
+        addButton.setEnabled(!isReadOnly());
 
-        if (selection != null && selection.isEnabled()) {
-            disableButton.setTitle("Disable");
+        if (selectionModel.getSelectedCount() == 0) {
+            areSelectedEnabled = null;
+        } else if (selectionModel.getSelectedCount() == 1) {
+            final ReceiveDataRule selection = listPresenter.getSelectionModel().getSelected();
+            final int index = rules.indexOf(selection);
+            areSelectedEnabled = selection.isEnabled();
+            editButton.setEnabled(!isReadOnly());
+            copyButton.setEnabled(!isReadOnly());
+            disableButton.setEnabled(!isReadOnly());
+            deleteButton.setEnabled(!isReadOnly());
+            moveUpButton.setEnabled(!isReadOnly() && index > 0);
+            moveDownButton.setEnabled(!isReadOnly() && index >= 0 && index < rules.size() - 1);
         } else {
-            disableButton.setTitle("Enable");
+            // Multi-select
+            final Set<Boolean> enabledStates = selectionModel.getSelectedItems()
+                    .stream()
+                    .map(ReceiveDataRule::isEnabled)
+                    .collect(Collectors.toSet());
+            areSelectedEnabled = enabledStates.size() == 1
+                    ? enabledStates.iterator().next()
+                    : null;
+
+            editButton.setEnabled(false);
+            copyButton.setEnabled(false);
+            disableButton.setEnabled(!isReadOnly() && enabledStates.size() == 1);
+            deleteButton.setEnabled(!isReadOnly());
+            moveUpButton.setEnabled(false);
+            moveDownButton.setEnabled(false);
         }
 
-        addButton.setEnabled(!isReadOnly() && loadedPolicy);
-        editButton.setEnabled(!isReadOnly() && selected);
-        copyButton.setEnabled(!isReadOnly() && selected);
-        disableButton.setEnabled(!isReadOnly() && selected);
-        deleteButton.setEnabled(!isReadOnly() && selected);
-        moveUpButton.setEnabled(!isReadOnly() && selected && index > 0);
-        moveDownButton.setEnabled(!isReadOnly() && selected && index >= 0 && index < rules.size() - 1);
+        if (areSelectedEnabled != null) {
+            if (areSelectedEnabled) {
+                disableButton.setTitle("Disable selected rules");
+            } else {
+                disableButton.setTitle("Enable selected rules");
+            }
+        } else {
+            disableButton.setTitle("Select one or more rules with the same enabled state to enable/disable them.");
+        }
     }
+
+    private void change() {
+        onChange();
+        updateButtons();
+    }
+
+    public void setFieldListPresenter(final FieldListPresenter fieldListPresenter) {
+        this.fieldListPresenter = fieldListPresenter;
+    }
+
+    // --------------------------------------------------------------------------------
+
 
     public interface RuleSetSettingsView extends View {
 

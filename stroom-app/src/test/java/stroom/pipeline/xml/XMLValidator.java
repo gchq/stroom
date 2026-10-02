@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public class XMLValidator {
                             final DocRef pipelineRef =
                                     PipelineTestUtil.createTestPipeline(pipelineStore,
                                     StroomPipelineTestFileUtil.getString("F2XTestUtil/validation.Pipeline.json"));
-                            final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+                            PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
                             PipelineData pipelineData = pipelineDoc.getPipelineData();
                             final PipelineDataBuilder builder = new PipelineDataBuilder(pipelineData);
 
@@ -109,7 +109,7 @@ public class XMLValidator {
                                             "schemaGroup",
                                             "DATA_SPLITTER"));
                             pipelineData = builder.build();
-                            pipelineDoc.setPipelineData(pipelineData);
+                            pipelineDoc = pipelineDoc.copy().pipelineData(pipelineData).build();
                             pipelineStore.writeDocument(pipelineDoc);
 
                             final Pipeline pipeline = pipelineFactoryProvider.get().create(pipelineData, taskContext1);

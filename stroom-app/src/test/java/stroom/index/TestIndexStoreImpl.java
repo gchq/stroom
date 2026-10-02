@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index;
@@ -53,8 +52,7 @@ class TestIndexStoreImpl extends AbstractCoreIntegrationTest {
         indexFields.add(LuceneIndexField.createDateField("TimeCreated"));
         indexFields.add(LuceneIndexField.createField("User"));
 
-        final LuceneIndexDoc index = indexStore.readDocument(testIndex);
-        index.setFields(indexFields);
+        final LuceneIndexDoc index = indexStore.readDocument(testIndex).copy().fields(indexFields).build();
         indexStore.writeDocument(index);
     }
 

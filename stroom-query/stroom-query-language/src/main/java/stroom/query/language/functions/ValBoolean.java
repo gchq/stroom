@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,8 +36,8 @@ public final class ValBoolean implements Val {
     private final boolean value;
 
     @JsonCreator
-    private ValBoolean(@JsonProperty("value") final boolean value) {
-        this.value = value;
+    private ValBoolean(@JsonProperty("value") final Boolean value) {
+        this.value = Objects.requireNonNullElse(value, false);
     }
 
     public static ValBoolean create(final boolean value) {

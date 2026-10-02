@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016-2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 ext.moduleName = 'stroom.db.util'
 
 dependencies {
@@ -5,28 +21,23 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dictionary:stroom-dictionary-api')
     implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
     implementation project(':stroom-explorer:stroom-collection-api')
-    implementation project(':stroom-explorer:stroom-docrefinfo-api')
     implementation project(':stroom-query:stroom-query-language')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
     implementation libs.dropwizard.metrics.healthchecks
-    implementation libs.dropwizard.metrics.core
-    implementation libs.flyway.core
+    implementation libs.fastutil.core
     implementation libs.flyway.mysql
-    implementation libs.guava
     implementation libs.hikari
     implementation libs.guice
-    implementation libs.jackson.annotations
     implementation libs.jooq
-    implementation libs.slf4j.api
     implementation libs.vavr
 
     testImplementation project(':stroom-test-common')
 
-    testImplementation libs.commons.lang
 
     testImplementation libs.bundles.common.test.implementation
     testRuntimeOnly libs.bundles.common.test.runtime

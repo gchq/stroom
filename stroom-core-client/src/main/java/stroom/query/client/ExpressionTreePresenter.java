@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,9 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     public ExpressionOperator write() {
-        clearSelection();
+        // Write any current editing values.
+        getView().write();
+        // Now get the data from the tree.
         return new ExpressionModel().getExpressionFromTree(tree);
     }
 
@@ -99,6 +101,17 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
     public void addTerm() {
         addNewItem(new Term());
+    }
+
+    public void insertValue(final String value) {
+        if (selectionModel != null) {
+            final Item selectedItem = selectionModel.getSelectedObject();
+            if (selectedItem instanceof final Term term) {
+                term.setValue(value);
+                fireDirty();
+                getView().refresh();
+            }
+        }
     }
 
     public void copy() {
@@ -120,8 +133,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     private void copy(final Item parent, final Item item) {
-        if (item instanceof Operator) {
-            final Operator operator = (Operator) item;
+        getView().endEditing();
+        if (item instanceof final Operator operator) {
             List<Item> children = tree.getChildren(operator);
             if (children != null) {
                 children = new ArrayList<>(children);
@@ -137,8 +150,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
                     copy(newOperator, child);
                 }
             }
-        } else if (item instanceof Term) {
-            final Term term = (Term) item;
+        } else if (item instanceof final Term term) {
             final Term newTerm = new Term();
             newTerm.setField(term.getField());
             newTerm.setCondition(term.getCondition());
@@ -150,6 +162,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     public void disable() {
+        getView().endEditing();
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
@@ -163,6 +176,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     public void delete() {
+        getView().endEditing();
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
@@ -184,7 +198,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         final Item parent = tree.getParent(selectedItem);
         if (parent != null) {
             final List<Item> children = tree.getChildren(parent);
-            if (children == null || children.size() == 0) {
+            if (children == null || children.isEmpty()) {
                 return null;
             }
 
@@ -204,6 +218,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     }
 
     private void addNewItem(final Item item) {
+        getView().endEditing();
         if (selectionModel != null) {
             final Item selected = selectionModel.getSelectedObject();
 
@@ -250,7 +265,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
     public void fireDirty() {
         if (uiHandlers != null) {
-            uiHandlers.fireDirty();
+            uiHandlers.onChange();
         }
     }
 
@@ -286,6 +301,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         void init(RestFactory restFactory,
                   DocRef dataSource,
                   FieldSelectionListModel fieldSelectionListModel);
+
+        void write();
 
         void endEditing();
 

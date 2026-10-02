@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.shared;
 
 import stroom.docref.DocRef;
@@ -20,6 +36,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -47,6 +65,39 @@ import java.util.Set;
         @JsonSubTypes.Type(value = SetAllPermissionsFrom.class, name = "SetAllPermissionsFrom"),
         @JsonSubTypes.Type(value = RemoveAllPermissions.class, name = "RemoveAllPermissions"),
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(
+                        value = "SetPermission",
+                        schema = SetPermission.class),
+                @DiscriminatorMapping(
+                        value = "RemovePermission",
+                        schema = RemovePermission.class),
+                @DiscriminatorMapping(
+                        value = "AddDocumentUserCreatePermission",
+                        schema = AddDocumentUserCreatePermission.class),
+                @DiscriminatorMapping(
+                        value = "RemoveDocumentUserCreatePermission",
+                        schema = RemoveDocumentUserCreatePermission.class),
+                @DiscriminatorMapping(
+                        value = "SetDocumentUserCreatePermissions",
+                        schema = SetDocumentUserCreatePermissions.class),
+                @DiscriminatorMapping(
+                        value = "AddAllDocumentUserCreatePermissions",
+                        schema = AddAllDocumentUserCreatePermissions.class),
+                @DiscriminatorMapping(
+                        value = "RemoveAllDocumentUserCreatePermissions",
+                        schema = RemoveAllDocumentUserCreatePermissions.class),
+                @DiscriminatorMapping(
+                        value = "AddAllPermissionsFrom",
+                        schema = AddAllPermissionsFrom.class),
+                @DiscriminatorMapping(
+                        value = "SetAllPermissionsFrom",
+                        schema = SetAllPermissionsFrom.class),
+                @DiscriminatorMapping(
+                        value = "RemoveAllPermissions",
+                        schema = RemoveAllPermissions.class)})
 public abstract sealed class AbstractDocumentPermissionsChange permits
         SetPermission,
         RemovePermission,

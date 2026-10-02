@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2021 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,8 +95,7 @@ public class PipelineServiceImpl implements PipelineService {
         }
 
         final PipelineData pipelineData = pipelineSerialiser.getPipelineDataFromJson(json);
-        pipelineDoc.setPipelineData(pipelineData);
-        pipelineStore.writeDocument(pipelineDoc);
+        pipelineStore.writeDocument(pipelineDoc.copy().pipelineData(pipelineData).build());
 
         return true;
     }

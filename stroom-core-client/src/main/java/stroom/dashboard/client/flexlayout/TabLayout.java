@@ -18,8 +18,6 @@ package stroom.dashboard.client.flexlayout;
 
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.TabManager;
-import stroom.dashboard.shared.TabConfig;
-import stroom.dashboard.shared.TabLayoutConfig;
 import stroom.item.client.EventBinder;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
@@ -39,9 +37,9 @@ import com.gwtplatform.mvp.client.LayerContainer;
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
 
     private final EventBus eventBus;
+    private final MutableTabLayoutConfig tabLayoutConfig;
     private final FlexLayout flexLayout;
     private final TabManager tabManager;
-    private final TabLayoutConfig tabLayoutConfig;
     private final FlexLayoutChangeHandler changeHandler;
     private final InlineSvgButton settings;
     private final LinkTabBar tabBar;
@@ -54,16 +52,18 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
                 selectTab(selected);
                 final int index = tabBar.getTabs().indexOf(selected);
                 getTabLayoutConfig().setSelected(index);
-                changeHandler.onDirty();
+                changeHandler.onChange();
             }));
             registerHandler(tabBar.addShowMenuHandler(eventBus::fireEvent));
             registerHandler(settings.addDomHandler(event -> {
                 if (MouseUtil.isPrimary(event)) {
                     final TabData selectedTab = tabBar.getSelectedTab();
-                    if (selectedTab instanceof Component) {
-                        final Component component = (Component) selectedTab;
-                        component.showSettings();
-//                    tabManager.showMenu(settings.getElement(), flexLayout, this, component.getTabConfig());
+                    if (selectedTab instanceof final Component component) {
+//                        component.showSettings();
+                        tabManager.showMenu(settings.getElement(),
+                                flexLayout,
+                                TabLayout.this,
+                                component.getTabConfig());
                     }
                 }
             }, ClickEvent.getType()));
@@ -73,11 +73,11 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     public TabLayout(final EventBus eventBus,
                      final FlexLayout flexLayout,
                      final TabManager tabManager,
-                     final TabLayoutConfig tabLayoutConfig,
+                     final MutableTabLayoutConfig tabLayoutConfig,
                      final FlexLayoutChangeHandler changeHandler) {
+        this.eventBus = eventBus;
         this.flexLayout = flexLayout;
         this.tabManager = tabManager;
-        this.eventBus = eventBus;
 
         this.tabLayoutConfig = tabLayoutConfig;
         this.changeHandler = changeHandler;
@@ -134,7 +134,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         eventBinder.unbind();
     }
 
-    public void addTab(final TabConfig tabConfig, final Component component) {
+    public void addTab(final MutableTabConfig tabConfig, final Component component) {
         tabBar.addTab(component);
 
         component.setTabLayout(this);
@@ -179,7 +179,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         return tabBar;
     }
 
-    public TabLayoutConfig getTabLayoutConfig() {
+    public MutableTabLayoutConfig getTabLayoutConfig() {
         return tabLayoutConfig;
     }
 }

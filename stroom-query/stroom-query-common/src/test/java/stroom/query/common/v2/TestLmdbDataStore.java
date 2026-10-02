@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
 
     @AfterEach
     void after() {
-        executorService.shutdown();
+        // Clear the stores before closing the executor. JUnit runs subclass @AfterEach methods
+        // before superclass ones, so without this explicit call the executor close would run
+        // first and, for a test that failed leaving a store unterminated, await that store's
+        // still-polling transfer task forever - turning a test failure into a hang. Clearing
+        // terminates every store's transfer thread, so the close() below then completes, giving
+        // deterministic ordering: transfer threads finished before JUnit deletes the @TempDir.
+        clearCreatedStores();
+        executorService.close();
     }
 
     @Override
@@ -122,13 +129,14 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 () -> executorService,
                 errorConsumer,
                 new ByteBufferFactoryImpl(),
-                new ExpressionPredicateFactory());
+                new ExpressionPredicateFactory(),
+                AnnotationMapperFactory.NO_OP,
+                //TODO: DS
+                null);
     }
 
     @Test
     void testBigValues() {
-        final FormatterFactory formatterFactory = new FormatterFactory(null);
-
         final TableSettings tableSettings = TableSettings.builder()
                 .addColumns(Column.builder()
                         .id("Text")
@@ -171,9 +179,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                     .addMappings(tableSettings)
                     .requestedRange(new OffsetRange(0, 3000))
                     .build();
-            final TableResultCreator tableComponentResultCreator = new TableResultCreator(
-                    formatterFactory,
-                    new ExpressionPredicateFactory());
+            final TableResultCreator tableComponentResultCreator = new TableResultCreator();
             final TableResult searchResult = (TableResult) tableComponentResultCreator.create(
                     dataStore,
                     tableResultRequest);
@@ -379,13 +385,13 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 .build();
 
         final QueryKey queryKey = new QueryKey(UUID.randomUUID().toString());
-        final SearchResultStoreConfig resultStoreConfig = new SearchResultStoreConfig();
+        final SearchResultStoreConfig resultStoreConfig = createResultStoreConfig();
         final DataStoreSettings dataStoreSettings = DataStoreSettings.createAnalyticStoreSettings();
         final SearchRequestSource searchRequestSource = SearchRequestSource
                 .builder()
                 .sourceType(SourceType.TABLE_BUILDER_ANALYTIC)
                 .build();
-        final LmdbDataStore dataStore = (LmdbDataStore)
+        final LmdbDataStore dataStore = record((LmdbDataStore)
                 create(
                         searchRequestSource,
                         queryKey,
@@ -393,7 +399,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         tableSettings,
                         resultStoreConfig,
                         dataStoreSettings,
-                        "reload");
+                        "reload"));
 
         for (int i = 1; i <= 100; i++) {
             for (int j = 1; j <= 100; j++) {
@@ -429,8 +435,9 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
         dataStore.getCompletionState().awaitCompletion();
         dataStore.close();
 
-        // Try and open the datastore again.
-        final LmdbDataStore dataStore2 = (LmdbDataStore)
+        // Try and open the datastore again. Recorded after dataStore, so teardown clears it first
+        // (newest first) - it holds the "reload" env dir open that dataStore's clear() deletes.
+        final LmdbDataStore dataStore2 = record((LmdbDataStore)
                 create(
                         searchRequestSource,
                         queryKey,
@@ -438,7 +445,7 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                         tableSettings,
                         resultStoreConfig,
                         dataStoreSettings,
-                        "reload");
+                        "reload"));
 
         currentDbState = dataStore2.sync();
         assertThat(currentDbState.getStreamId()).isEqualTo(100);
@@ -472,6 +479,8 @@ class TestLmdbDataStore extends AbstractDataStoreTest {
                 tableResultRequest);
         assertThat(searchResult.getResultRange().getLength()).isEqualTo(50);
         assertThat(searchResult.getTotalResults().intValue()).isEqualTo(20000);
+
+        // dataStore2 is recorded, so teardown closes it before the @TempDir is deleted.
     }
 
     @Test

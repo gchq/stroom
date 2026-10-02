@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ public final class ValInteger implements ValNumber {
     private final int value;
 
     @JsonCreator
-    private ValInteger(@JsonProperty("value") final int value) {
-        this.value = value;
+    private ValInteger(@JsonProperty("value") final Integer value) {
+        this.value = Objects.requireNonNullElse(value, 0);
     }
 
     public static ValInteger create(final int value) {

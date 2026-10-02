@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.schedule.client;
 
 import stroom.item.client.EventBinder;
@@ -64,7 +80,7 @@ public class ScheduleBox
         final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
             schedulePresenterProvider.get().validate(schedule, scheduleRestriction, scheduledTimes -> {
-                if (scheduledTimes == null || scheduledTimes.isError()) {
+                if (isEnabled() && (scheduledTimes == null || scheduledTimes.isError())) {
                     textBox.getElement().addClassName("invalid");
                 } else {
                     textBox.getElement().removeClassName("invalid");
@@ -147,6 +163,11 @@ public class ScheduleBox
 
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
+        validate();
+    }
+
+    public boolean isEnabled() {
+        return textBox.isEnabled();
     }
 
     public Schedule getValue() {

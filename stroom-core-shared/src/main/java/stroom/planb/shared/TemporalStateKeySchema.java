@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
@@ -18,7 +34,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class TemporalStateKeySchema extends StateKeySchema {
 
-    public static final TemporalPrecision DEFAULT_TEMPORAL_PRECISION = TemporalPrecision.MILLISECOND;
+    private static final TemporalPrecision DEFAULT_TEMPORAL_PRECISION = TemporalPrecision.MILLISECOND;
 
     @JsonProperty
     private final TemporalPrecision temporalPrecision;
@@ -28,7 +44,7 @@ public class TemporalStateKeySchema extends StateKeySchema {
                                   @JsonProperty("hashLength") final HashLength hashLength,
                                   @JsonProperty("temporalPrecision") final TemporalPrecision temporalPrecision) {
         super(keyType, hashLength);
-        this.temporalPrecision = temporalPrecision;
+        this.temporalPrecision = Objects.requireNonNullElse(temporalPrecision, DEFAULT_TEMPORAL_PRECISION);
     }
 
     public TemporalPrecision getTemporalPrecision() {
@@ -58,23 +74,27 @@ public class TemporalStateKeySchema extends StateKeySchema {
     @Override
     public String toString() {
         return "TemporalStateKeySchema{" +
-               "temporalPrecision=" + temporalPrecision +
+               "keyType=" + keyType +
+               ", hashLength=" + hashLength +
+               ", temporalPrecision=" + temporalPrecision +
                '}';
     }
 
     public static class Builder extends AbstractBuilder<TemporalStateKeySchema, Builder> {
 
-        private KeyType keyType = KeyType.VARIABLE;
-        private HashLength hashLength = HashLength.INTEGER;
+        private KeyType keyType;
+        private HashLength hashLength;
         private TemporalPrecision temporalPrecision;
 
         public Builder() {
         }
 
         public Builder(final TemporalStateKeySchema schema) {
-            this.keyType = schema.keyType;
-            this.hashLength = schema.hashLength;
-            this.temporalPrecision = schema.temporalPrecision;
+            if (schema != null) {
+                this.keyType = schema.keyType;
+                this.hashLength = schema.hashLength;
+                this.temporalPrecision = schema.temporalPrecision;
+            }
         }
 
         public Builder keyType(final KeyType keyType) {
@@ -99,10 +119,7 @@ public class TemporalStateKeySchema extends StateKeySchema {
 
         @Override
         public TemporalStateKeySchema build() {
-            return new TemporalStateKeySchema(
-                    keyType,
-                    hashLength,
-                    temporalPrecision);
+            return new TemporalStateKeySchema(keyType, hashLength, temporalPrecision);
         }
     }
 }

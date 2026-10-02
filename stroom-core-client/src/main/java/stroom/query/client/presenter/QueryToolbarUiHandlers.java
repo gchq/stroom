@@ -24,5 +24,5 @@ public interface QueryToolbarUiHandlers extends UiHandlers {
 
     void onTimeRange(TimeRange timeRange);
 
-    void showWarnings();
+    void showErrors();
 }

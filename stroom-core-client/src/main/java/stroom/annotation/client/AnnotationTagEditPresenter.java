@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.annotation.client;
@@ -65,11 +64,18 @@ public class AnnotationTagEditPresenter
               final Consumer<AnnotationTag> consumer) {
         this.annotationTag = annotationTag;
         getView().setName(annotationTag.getName());
+        getView().showTagText(annotationTag.getType().hasTagText(),
+                annotationTag.getType().getDisplayValue());
+        getView().setTagText(annotationTag.getTagText());
         getView().setStyle(annotationTag.getStyle());
         getView().showStyle(AnnotationTagType.LABEL.equals(annotationTag.getType()));
 
-        ShowPopupEvent.builder(this)
-                .popupType(PopupType.OK_CANCEL_DIALOG)
+        final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(this)
+                .popupType(PopupType.OK_CANCEL_DIALOG);
+        if (annotationTag.getType().hasTagText()) {
+            builder.popupSize(PopupSize.resizable(630, 400));
+        }
+        builder
                 .caption(title)
                 .onShow(e -> getView().focus())
                 .onHideRequest(e -> {
@@ -77,6 +83,9 @@ public class AnnotationTagEditPresenter
                         this.annotationTag = this.annotationTag
                                 .copy()
                                 .name(getView().getName())
+                                .tagText(this.annotationTag.getType().hasTagText()
+                                        ? getView().getTagText()
+                                        : null)
                                 .style(getView().getStyle())
                                 .build();
                         try {
@@ -138,6 +147,12 @@ public class AnnotationTagEditPresenter
         String getName();
 
         void setName(String name);
+
+        void showTagText(boolean show, String label);
+
+        String getTagText();
+
+        void setTagText(String tagText);
 
         void showStyle(boolean show);
 

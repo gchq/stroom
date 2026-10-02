@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,13 @@ class TextConverterResourceImpl implements TextConverterResource {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
         return documentResourceHelperProvider.get().update(textConverterStoreProvider.get(), doc);
+    }
+
+    @Override
+    public TextConverterDoc create(final String name) {
+        final TextConverterStore textConverterStore = textConverterStoreProvider.get();
+        final DocRef docRef = textConverterStore.createDocument(name);
+        return textConverterStore.readDocument(docRef);
     }
 
     private DocRef getDocRef(final String uuid) {

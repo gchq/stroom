@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.api.IndexVolumeGroupService;
+import stroom.index.impl.db.jooq.Stroom;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexVolume;
@@ -38,7 +39,6 @@ import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.AuditUtil;
 import stroom.util.NextNameGenerator;
 import stroom.util.date.DateUtil;
 import stroom.util.entityevent.EntityAction;
@@ -70,10 +70,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -101,7 +101,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexVolumeServiceImpl.class);
 
     static final String ENTITY_TYPE = "INDEX_VOLUME";
-    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, null, null);
+    private static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
     private static final String CACHE_NAME = "Index Volume Selector Cache";
     protected static final String TEMP_FILE_PREFIX = "stroomIdxVolVal";
 
@@ -163,7 +163,11 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
-        return securityContext.secureResult(() -> indexVolumeDao.find(criteria));
+        // Enumerating index volumes (server paths, capacity, usage, state) is a volume-management read, gated
+        // like create/update/delete.
+        return securityContext.secureResult(
+                AppPermission.MANAGE_VOLUMES_PERMISSION,
+                () -> indexVolumeDao.find(criteria));
     }
 
     @Override
@@ -323,29 +327,34 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public IndexVolume create(final IndexVolume indexVolume) {
-        AuditUtil.stamp(securityContext, indexVolume);
-
         final List<String> names = indexVolumeDao.getAll().stream().map(i -> Strings.isNullOrEmpty(i.getNodeName())
                         ? ""
                         : i.getNodeName())
                 .toList();
-        indexVolume.setNodeName(Strings.isNullOrEmpty(indexVolume.getNodeName())
-                ? NextNameGenerator.getNextName(names, "New index volume")
-                : indexVolume.getNodeName());
-        indexVolume.setPath(Strings.isNullOrEmpty(indexVolume.getPath())
-                ? null
-                : indexVolume.getPath());
-        indexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
+
+        final IndexVolume updated = indexVolume
+                .copy()
+                .nodeName(Strings.isNullOrEmpty(indexVolume.getNodeName())
+                        ? NextNameGenerator.getNextName(names, "New index volume")
+                        : indexVolume.getNodeName())
+                .path(Strings.isNullOrEmpty(indexVolume.getPath())
+                        ? null
+                        : indexVolume.getPath())
+                .indexVolumeGroupId(indexVolume.getIndexVolumeGroupId())
+                .stampAudit(securityContext)
+                .build();
 
         final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeDao.create(indexVolume));
+                () -> indexVolumeDao.create(updated));
         fireChange(EntityAction.CREATE);
         return result;
     }
 
     @Override
     public IndexVolume read(final int id) {
-        return securityContext.secureResult(() -> indexVolumeDao.fetch(id).orElse(null));
+        return securityContext.secureResult(
+                AppPermission.MANAGE_VOLUMES_PERMISSION,
+                () -> indexVolumeDao.fetch(id).orElse(null));
     }
 
     @Override
@@ -354,16 +363,18 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                 indexVolumeDao.fetch(indexVolume.getId()).orElse(
                         null));
 
-        loadedIndexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
-        loadedIndexVolume.setPath((indexVolume.getPath()));
-        loadedIndexVolume.setNodeName(indexVolume.getNodeName());
-        loadedIndexVolume.setBytesLimit(indexVolume.getBytesLimit());
-        loadedIndexVolume.setState(indexVolume.getState());
-
-        AuditUtil.stamp(securityContext, loadedIndexVolume);
+        final IndexVolume updated = loadedIndexVolume
+                .copy()
+                .indexVolumeGroupId(indexVolume.getIndexVolumeGroupId())
+                .path((indexVolume.getPath()))
+                .nodeName(indexVolume.getNodeName())
+                .bytesLimit(indexVolume.getBytesLimit())
+                .state(indexVolume.getState())
+                .stampAudit(securityContext)
+                .build();
 
         final IndexVolume result = securityContext.secureResult(AppPermission.MANAGE_VOLUMES_PERMISSION,
-                () -> indexVolumeDao.update(loadedIndexVolume));
+                () -> indexVolumeDao.update(updated));
         fireChange(EntityAction.UPDATE);
         return result;
     }
@@ -413,26 +424,30 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     private IndexVolume updateVolumeState(final IndexVolume volume) {
         final Path path = Paths.get(volume.getPath());
+        final IndexVolume.Builder builder = volume.copy();
 
         // Ensure the path exists
         if (Files.isDirectory(path)) {
             LOGGER.debug(() -> LogUtil.message("updateVolumeState() path exists: {}", path));
-            setSizes(path, volume);
+            setSizes(path, volume, builder);
         } else {
             try {
                 Files.createDirectories(path);
                 LOGGER.debug(() -> LogUtil.message("updateVolumeState() path created: {}", path));
-                setSizes(path, volume);
+                setSizes(path, volume, builder);
             } catch (final IOException e) {
                 LOGGER.error(() -> LogUtil.message("updateVolumeState() path not created: {}", path));
             }
         }
 
-        LOGGER.debug(() -> LogUtil.message("updateVolumeState() exit {}", volume));
-        return volume;
+        final IndexVolume updated = builder.build();
+        LOGGER.debug(() -> LogUtil.message("updateVolumeState() exit {}", updated));
+        return updated;
     }
 
-    private void setSizes(final Path path, final IndexVolume indexVolume) {
+    private void setSizes(final Path path,
+                          final IndexVolume indexVolume,
+                          final IndexVolume.Builder builder) {
         try {
             final FileStore fileStore = Files.getFileStore(path);
             final long osUsableSpace = fileStore.getUsableSpace();
@@ -446,17 +461,18 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
                     .findAny()
                     .orElse(osUsableSpace);
 
-            indexVolume.setUpdateTimeMs(System.currentTimeMillis());
-            indexVolume.setBytesTotal(totalSpace);
-            indexVolume.setBytesFree(freeSpace);
-            indexVolume.setBytesUsed(usedSpace);
+            builder.updateTimeMs(System.currentTimeMillis());
+            builder.bytesTotal(totalSpace);
+            builder.bytesFree(freeSpace);
+            builder.bytesUsed(usedSpace);
+            final IndexVolume updated = builder.build();
 
             indexVolumeDao.updateVolumeState(
-                    indexVolume.getId(),
-                    indexVolume.getUpdateTimeMs(),
-                    indexVolume.getBytesUsed(),
-                    indexVolume.getBytesFree(),
-                    indexVolume.getBytesTotal());
+                    updated.getId(),
+                    updated.getUpdateTimeMs(),
+                    updated.getBytesUsed(),
+                    updated.getBytesFree(),
+                    updated.getBytesTotal());
         } catch (final IOException e) {
             LOGGER.error(e::getMessage, e);
         }
@@ -638,27 +654,30 @@ public class IndexVolumeServiceImpl implements IndexVolumeService, Clearable, En
 
     @Override
     public SystemInfoResult getSystemInfo() {
-        final VolumeMap volumeMap = getCurrentVolumeMap();
+        final VolumeMap volumeMap = securityContext.asProcessingUserResult(this::getCurrentVolumeMap);
 
-        // Need to wrap with optional as Map.ofEntries does not support null values.
-        final var volInfoMap = volumeMap.getGroupNameToVolumesMap()
+        final Map<VolGroupNode, List<Map<String, Object>>> volInfoMap = volumeMap.getGroupNameToVolumesMap()
                 .entrySet()
                 .stream()
                 .collect(Collectors.toMap(
                         Entry::getKey,
                         entry -> entry.getValue()
                                 .stream()
-                                .map(vol -> Map.ofEntries(
-                                        new SimpleEntry<>("path", Optional.ofNullable(vol.getPath())),
-                                        new SimpleEntry<>("limit", Optional.ofNullable(vol.getBytesLimit())),
-                                        new SimpleEntry<>("state", Optional.ofNullable(vol.getState())),
-                                        new SimpleEntry<>("free", Optional.ofNullable(vol.getBytesFree())),
-                                        new SimpleEntry<>("total", Optional.ofNullable(vol.getBytesTotal())),
-                                        new SimpleEntry<>("used", Optional.ofNullable(vol.getBytesUsed())),
-                                        new SimpleEntry<>("dbStateUpdateTime", Optional.ofNullable(NullSafe.get(
-                                                vol,
-                                                IndexVolume::getUpdateTimeMs,
-                                                DateUtil::createNormalDateTimeString)))))
+                                .map(vol -> {
+                                    // Use HashMap so we can cope with null values
+                                    final Map<String, Object> map = new HashMap<>();
+                                    map.put("path", vol.getPath());
+                                    map.put("limit", vol.getBytesLimit());
+                                    map.put("state", vol.getState());
+                                    map.put("free", vol.getBytesFree());
+                                    map.put("total", vol.getBytesTotal());
+                                    map.put("used", vol.getBytesUsed());
+                                    map.put("dbStateUpdateTime", NullSafe.get(
+                                            vol,
+                                            IndexVolume::getUpdateTimeMs,
+                                            DateUtil::createNormalDateTimeString));
+                                    return map;
+                                })
                                 .collect(Collectors.toList())));
 
         return SystemInfoResult.builder(this)

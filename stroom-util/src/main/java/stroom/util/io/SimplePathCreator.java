@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,9 +37,9 @@ import java.util.function.Supplier;
 
 public class SimplePathCreator implements PathCreator {
 
-    private static final String STROOM_TEMP = "stroom.temp";
-    private static final String STROOM_HOME = "stroom.home";
-    private static final String[] NON_ENV_VARS = {
+    public static final String STROOM_TEMP = "stroom.temp";
+    public static final String STROOM_HOME = "stroom.home";
+    public static final String[] NON_ENV_VARS = {
             "feed",
             "pipeline",
             "sourceId",
@@ -90,7 +91,7 @@ public class SimplePathCreator implements PathCreator {
         path = replace(path, "hour", dateTime::getHour, 2);
         path = replace(path, "minute", dateTime::getMinute, 2);
         path = replace(path, "second", dateTime::getSecond, 2);
-        path = replace(path, "millis", () -> dateTime.toInstant().toEpochMilli(), 3);
+        path = replace(path, "millis", () -> dateTime.getLong(ChronoField.MILLI_OF_SECOND), 3);
         path = replace(path, "ms", () -> dateTime.toInstant().toEpochMilli(), 0);
 
         return path;
@@ -116,12 +117,7 @@ public class SimplePathCreator implements PathCreator {
 
     @Override
     public Path toAppPath(String pathString) {
-        if (pathString == null) {
-            pathString = "";
-        } else {
-            pathString = pathString.trim();
-        }
-
+        pathString = NullSafe.trim(pathString);
         pathString = replaceSystemProperties(pathString);
         return toAbsolutePath(pathString);
     }

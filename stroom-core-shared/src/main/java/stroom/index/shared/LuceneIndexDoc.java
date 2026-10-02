@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ package stroom.index.shared;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
@@ -29,12 +29,11 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 @Description(
-        "Lucene Index is the standard built-in index within Stroom and is one of may data sources.\n" +
+        "Lucene Index is the standard built-in index within Stroom and is one of many data sources.\n" +
         "An index is like a catalog in a library and provides a very fast way to access " +
         "documents/records/events when searching using fields that have been indexed.\n" +
         "The index stores the field values and pointers to the document they came from " +
@@ -72,7 +71,7 @@ import java.util.Objects;
         "volumeGroupName",
         "defaultExtractionPipeline"})
 @JsonInclude(Include.NON_NULL)
-public class LuceneIndexDoc extends Doc {
+public class LuceneIndexDoc extends AbstractDoc {
 
     public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
@@ -84,37 +83,28 @@ public class LuceneIndexDoc extends Doc {
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.LUCENE_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private Integer maxDocsPerShard;
+    private final Integer maxDocsPerShard;
     @JsonProperty
-    private PartitionBy partitionBy;
+    private final PartitionBy partitionBy;
     @JsonProperty
-    private Integer partitionSize;
+    private final Integer partitionSize;
     @JsonProperty
-    private Integer shardsPerPartition;
+    private final Integer shardsPerPartition;
     @JsonProperty
-    private Integer retentionDayAge;
+    private final Integer retentionDayAge;
     @JsonProperty
-    private List<LuceneIndexField> fields;
+    private final List<LuceneIndexField> fields;
     @JsonProperty
-    private String timeField;
+    private final String timeField;
     @JsonProperty
-    private String volumeGroupName;
+    private final String volumeGroupName;
     @JsonProperty
-    private DocRef defaultExtractionPipeline;
-
-    public LuceneIndexDoc() {
-        maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
-        partitionBy = DEFAULT_PARTITION_BY;
-        partitionSize = DEFAULT_PARTITION_SIZE;
-        shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
-        timeField = DEFAULT_TIME_FIELD;
-    }
+    private final DocRef defaultExtractionPipeline;
 
     @JsonCreator
-    public LuceneIndexDoc(@JsonProperty("type") final String type,
-                          @JsonProperty("uuid") final String uuid,
+    public LuceneIndexDoc(@JsonProperty("uuid") final String uuid,
                           @JsonProperty("name") final String name,
                           @JsonProperty("version") final String version,
                           @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -131,30 +121,17 @@ public class LuceneIndexDoc extends Doc {
                           @JsonProperty("timeField") final String timeField,
                           @JsonProperty("volumeGroupName") final String volumeGroupName,
                           @JsonProperty("defaultExtractionPipeline") final DocRef defaultExtractionPipeline) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.maxDocsPerShard = maxDocsPerShard;
-        this.partitionBy = partitionBy;
-        this.partitionSize = partitionSize;
-        this.shardsPerPartition = shardsPerPartition;
+        this.maxDocsPerShard = Objects.requireNonNullElse(maxDocsPerShard, DEFAULT_MAX_DOCS_PER_SHARD);
+        this.partitionBy = Objects.requireNonNullElse(partitionBy, DEFAULT_PARTITION_BY);
+        this.partitionSize = Objects.requireNonNullElse(partitionSize, DEFAULT_PARTITION_SIZE);
+        this.shardsPerPartition = Objects.requireNonNullElse(shardsPerPartition, DEFAULT_SHARDS_PER_PARTITION);
         this.retentionDayAge = retentionDayAge;
         this.fields = fields;
         this.timeField = timeField;
         this.volumeGroupName = volumeGroupName;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
-
-        if (this.maxDocsPerShard == null) {
-            this.maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
-        }
-        if (this.partitionBy == null) {
-            this.partitionBy = DEFAULT_PARTITION_BY;
-        }
-        if (this.partitionSize == null) {
-            this.partitionSize = DEFAULT_PARTITION_SIZE;
-        }
-        if (this.shardsPerPartition == null) {
-            this.shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
-        }
     }
 
     /**
@@ -177,83 +154,40 @@ public class LuceneIndexDoc extends Doc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public Integer getMaxDocsPerShard() {
         return maxDocsPerShard;
-    }
-
-    public void setMaxDocsPerShard(final Integer maxDocsPerShard) {
-        this.maxDocsPerShard = maxDocsPerShard;
     }
 
     public PartitionBy getPartitionBy() {
         return partitionBy;
     }
 
-    public void setPartitionBy(final PartitionBy partitionBy) {
-        this.partitionBy = partitionBy;
-    }
-
     public Integer getPartitionSize() {
         return partitionSize;
-    }
-
-    public void setPartitionSize(final Integer partitionSize) {
-        this.partitionSize = partitionSize;
     }
 
     public Integer getShardsPerPartition() {
         return shardsPerPartition;
     }
 
-    public void setShardsPerPartition(final Integer shardsPerPartition) {
-        this.shardsPerPartition = shardsPerPartition;
-    }
-
     public Integer getRetentionDayAge() {
         return retentionDayAge;
     }
 
-    public void setRetentionDayAge(final Integer retentionDayAge) {
-        this.retentionDayAge = retentionDayAge;
-    }
-
     public List<LuceneIndexField> getFields() {
-        if (fields == null) {
-            fields = new ArrayList<>();
-        }
         return fields;
-    }
-
-    public void setFields(final List<LuceneIndexField> fields) {
-        this.fields = fields;
     }
 
     public String getTimeField() {
         return timeField;
     }
 
-    public void setTimeField(final String timeField) {
-        this.timeField = timeField;
-    }
-
     public String getVolumeGroupName() {
         return volumeGroupName;
     }
 
-    public void setVolumeGroupName(final String volumeGroupName) {
-        this.volumeGroupName = volumeGroupName;
-    }
-
     public DocRef getDefaultExtractionPipeline() {
         return defaultExtractionPipeline;
-    }
-
-    public void setDefaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
-        this.defaultExtractionPipeline = defaultExtractionPipeline;
     }
 
     @Override
@@ -311,6 +245,122 @@ public class LuceneIndexDoc extends Doc {
         @Override
         public String getDisplayValue() {
             return displayValue;
+        }
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractBuilder<LuceneIndexDoc, Builder> {
+
+        private String description;
+        private Integer maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+        private PartitionBy partitionBy = DEFAULT_PARTITION_BY;
+        private Integer partitionSize = DEFAULT_PARTITION_SIZE;
+        private Integer shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+        private Integer retentionDayAge;
+        private List<LuceneIndexField> fields;
+        private String timeField = DEFAULT_TIME_FIELD;
+        private String volumeGroupName;
+        private DocRef defaultExtractionPipeline;
+
+        private Builder() {
+        }
+
+        private Builder(final LuceneIndexDoc luceneIndexDoc) {
+            super(luceneIndexDoc);
+            this.description = luceneIndexDoc.description;
+            this.maxDocsPerShard = luceneIndexDoc.maxDocsPerShard;
+            this.partitionBy = luceneIndexDoc.partitionBy;
+            this.partitionSize = luceneIndexDoc.partitionSize;
+            this.shardsPerPartition = luceneIndexDoc.shardsPerPartition;
+            this.retentionDayAge = luceneIndexDoc.retentionDayAge;
+            this.fields = luceneIndexDoc.fields;
+            this.timeField = luceneIndexDoc.timeField;
+            this.volumeGroupName = luceneIndexDoc.volumeGroupName;
+            this.defaultExtractionPipeline = luceneIndexDoc.defaultExtractionPipeline;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder maxDocsPerShard(final Integer maxDocsPerShard) {
+            this.maxDocsPerShard = maxDocsPerShard;
+            return self();
+        }
+
+        public Builder partitionBy(final PartitionBy partitionBy) {
+            this.partitionBy = partitionBy;
+            return self();
+        }
+
+        public Builder partitionSize(final Integer partitionSize) {
+            this.partitionSize = partitionSize;
+            return self();
+        }
+
+        public Builder shardsPerPartition(final Integer shardsPerPartition) {
+            this.shardsPerPartition = shardsPerPartition;
+            return self();
+        }
+
+        public Builder retentionDayAge(final Integer retentionDayAge) {
+            this.retentionDayAge = retentionDayAge;
+            return self();
+        }
+
+        public Builder fields(final List<LuceneIndexField> fields) {
+            this.fields = fields;
+            return self();
+        }
+
+        public Builder timeField(final String timeField) {
+            this.timeField = timeField;
+            return self();
+        }
+
+        public Builder volumeGroupName(final String volumeGroupName) {
+            this.volumeGroupName = volumeGroupName;
+            return self();
+        }
+
+        public Builder defaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
+            this.defaultExtractionPipeline = defaultExtractionPipeline;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public LuceneIndexDoc build() {
+            return new LuceneIndexDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    maxDocsPerShard,
+                    partitionBy,
+                    partitionSize,
+                    shardsPerPartition,
+                    retentionDayAge,
+                    fields,
+                    timeField,
+                    volumeGroupName,
+                    defaultExtractionPipeline);
         }
     }
 }

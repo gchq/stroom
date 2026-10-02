@@ -22,6 +22,7 @@ import stroom.pipeline.errorhandler.ErrorHandlerAdaptor;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.xml.SAXParserFactoryFactory;
 import stroom.util.xml.XMLUtil;
 
@@ -77,8 +78,8 @@ public class UniqueXMLEvents {
             filter.setContentHandler(th);
 
             final LocationFactory locationFactory = new DefaultLocationFactory();
-            final ErrorHandlerAdaptor errorHandler = new ErrorHandlerAdaptor("XMLReader", locationFactory,
-                    new FatalErrorReceiver());
+            final ErrorHandlerAdaptor errorHandler = new ErrorHandlerAdaptor(
+                    new ElementId("XMLReader"), locationFactory, new FatalErrorReceiver());
             final XMLReader xmlReader = parser.getXMLReader();
             xmlReader.setContentHandler(filter);
             xmlReader.setErrorHandler(errorHandler);

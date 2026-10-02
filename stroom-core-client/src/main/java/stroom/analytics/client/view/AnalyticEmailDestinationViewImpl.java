@@ -17,7 +17,7 @@
 package stroom.analytics.client.view;
 
 import stroom.analytics.client.presenter.AnalyticEmailDestinationPresenter.AnalyticEmailDestinationView;
-import stroom.document.client.event.DirtyUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 
@@ -33,7 +33,7 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class AnalyticEmailDestinationViewImpl
-        extends ViewWithUiHandlers<DirtyUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements AnalyticEmailDestinationView {
 
     private final Widget widget;
@@ -113,17 +113,17 @@ public class AnalyticEmailDestinationViewImpl
 
     @UiHandler("to")
     public void onTo(final KeyUpEvent event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("cc")
     public void onCc(final KeyUpEvent event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @UiHandler("bcc")
     public void onBcc(final KeyUpEvent event) {
-        getUiHandlers().onDirty();
+        getUiHandlers().onChange();
     }
 
     @Override

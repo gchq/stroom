@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.docstore.shared;
 
 import stroom.explorer.shared.ExplorerConstants;
@@ -7,10 +23,12 @@ import stroom.util.shared.NullSafe;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class DocumentTypeRegistry {
 
     private static final Map<String, DocumentType> MAP = new HashMap<>();
+    public static final Set<String> DEPRECATED_TYPES = Set.of("StroomStatsStore", "ScyllaDB", "StateStore");
 
     public static final DocumentType SYSTEM_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SYSTEM,
@@ -42,6 +60,11 @@ public class DocumentTypeRegistry {
             "AnalyticRule",
             "Analytic Rule",
             SvgImage.DOCUMENT_ANALYTIC_RULE);
+    public static final DocumentType DATA_GENERATOR_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.SEARCH,
+            "DataGen",
+            "Data Generator",
+            SvgImage.DOCUMENT_DATA_GEN);
     public static final DocumentType ANALYTICS_STORE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.SEARCH,
             "Analytics",
@@ -67,11 +90,6 @@ public class DocumentTypeRegistry {
             "Report",
             "Report",
             SvgImage.DOCUMENT_REPORT);
-    public static final DocumentType STROOM_STATS_STORE_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            "StroomStatsStore",
-            "Stroom-Stats Store",
-            SvgImage.DOCUMENT_STROOM_STATS_STORE);
     public static final DocumentType XML_SCHEMA_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.TRANSFORMATION,
             "XMLSchema",
@@ -87,11 +105,6 @@ public class DocumentTypeRegistry {
             "SolrIndex",
             "Solr Index",
             SvgImage.DOCUMENT_SOLR_INDEX);
-    public static final DocumentType SCYLLA_DB_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.CONFIGURATION,
-            "ScyllaDB",
-            "Scylla DB",
-            SvgImage.DOCUMENT_SCYLLA_DB);
     public static final DocumentType DOCUMENTATION_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             "Documentation",
@@ -107,11 +120,6 @@ public class DocumentTypeRegistry {
             "ElasticIndex",
             "Elastic Index",
             SvgImage.DOCUMENT_ELASTIC_INDEX);
-    public static final DocumentType STATE_STORE_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.INDEXING,
-            "StateStore",
-            "State Store",
-            SvgImage.DOCUMENT_STATE_STORE);
     public static final DocumentType PLAN_B_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.INDEXING,
             "PlanB",
@@ -127,6 +135,11 @@ public class DocumentTypeRegistry {
             "Feed",
             "Feed",
             SvgImage.DOCUMENT_FEED);
+    public static final DocumentType OPENAI_MODEL_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.CONFIGURATION,
+            "OpenAIModel",
+            "OpenAI Model",
+            SvgImage.DOCUMENT_OPEN_AI);
     public static final DocumentType PIPELINE_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.DATA_PROCESSING,
             "Pipeline",
@@ -151,7 +164,7 @@ public class DocumentTypeRegistry {
             DocumentTypeGroup.CONFIGURATION,
             "GitRepo",
             "Git Repo",
-            SvgImage.DOCUMENT_GIT_REPO);
+            SvgImage.DOCUMENT_GIT_REPO_FOLDER);
     public static final DocumentType SCRIPT_DOCUMENT_TYPE = new DocumentType(
             DocumentTypeGroup.CONFIGURATION,
             "Script",
@@ -163,7 +176,7 @@ public class DocumentTypeRegistry {
             "Text Converter",
             SvgImage.DOCUMENT_TEXT_CONVERTER);
     public static final DocumentType VIEW_DOCUMENT_TYPE = new DocumentType(
-            DocumentTypeGroup.SEARCH,
+            DocumentTypeGroup.INDEXING,
             "View",
             "View",
             SvgImage.DOCUMENT_VIEW);
@@ -177,6 +190,17 @@ public class DocumentTypeRegistry {
             "XSLT",
             "XSL Translation",
             SvgImage.DOCUMENT_XSLT);
+    public static final DocumentType PATHWAYS_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "Pathways",
+            "Pathways",
+            SvgImage.DOCUMENT_PATHWAYS);
+
+    public static final DocumentType TRACES_DOCUMENT_TYPE = new DocumentType(
+            DocumentTypeGroup.INDEXING,
+            "Traces",
+            "Traces",
+            SvgImage.DOCUMENT_TRACES);
 
 
     public static final DocumentType DUAL_DOCUMENT_TYPE = new DocumentType(
@@ -234,6 +258,7 @@ public class DocumentTypeRegistry {
     static {
         put(ANALYTICS_STORE_DOCUMENT_TYPE);
         put(ANALYTIC_RULE_DOCUMENT_TYPE);
+        put(DATA_GENERATOR_DOCUMENT_TYPE);
         put(ANNOTATION_DOCUMENT_TYPE);
         put(DASHBOARD_DOCUMENT_TYPE);
         put(DICTIONARY_DOCUMENT_TYPE);
@@ -245,6 +270,7 @@ public class DocumentTypeRegistry {
         put(FOLDER_DOCUMENT_TYPE);
         put(KAFKA_CONFIG_DOCUMENT_TYPE);
         put(LUCENE_DOCUMENT_TYPE);
+        put(OPENAI_MODEL_DOCUMENT_TYPE);
         put(PIPELINE_DOCUMENT_TYPE);
         put(PROCESSOR_DOCUMENT_TYPE);
         put(PROCESSOR_FILTER_DOCUMENT_TYPE);
@@ -254,18 +280,17 @@ public class DocumentTypeRegistry {
         put(S3_CONFIG_DOCUMENT_TYPE);
         put(SCRIPT_DOCUMENT_TYPE);
         put(GIT_REPO_DOCUMENT_TYPE);
-        put(SCYLLA_DB_DOCUMENT_TYPE);
         put(SOLR_INDEX_DOCUMENT_TYPE);
-        put(STATE_STORE_DOCUMENT_TYPE);
         put(PLAN_B_DOCUMENT_TYPE);
         put(STATISTIC_STORE_DOCUMENT_TYPE);
-        put(STROOM_STATS_STORE_DOCUMENT_TYPE);
         put(SYSTEM_DOCUMENT_TYPE);
         put(TEXT_CONVERTER_DOCUMENT_TYPE);
         put(VIEW_DOCUMENT_TYPE);
         put(VISUALISATION_DOCUMENT_TYPE);
         put(XML_SCHEMA_DOCUMENT_TYPE);
         put(XSLT_DOCUMENT_TYPE);
+        put(PATHWAYS_DOCUMENT_TYPE);
+        put(TRACES_DOCUMENT_TYPE);
 
         // Searchables
         put(DUAL_DOCUMENT_TYPE);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.planb.client.view;
 
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.planb.client.presenter.StateSettingsPresenter.StateSettingsView;
 import stroom.planb.shared.RetentionSettings;
 import stroom.planb.shared.SnapshotSettings;
@@ -30,7 +30,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class StateSettingsViewImpl
-        extends ViewWithUiHandlers<PlanBSettingsUiHandlers>
+        extends ViewWithUiHandlers<ChangeUiHandlers>
         implements StateSettingsView {
 
     private final Widget widget;
@@ -72,7 +72,7 @@ public class StateSettingsViewImpl
     }
 
     @Override
-    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         generalSettingsWidget.setUiHandlers(uiHandlers);
         snapshotSettingsWidget.setUiHandlers(uiHandlers);
@@ -164,6 +164,10 @@ public class StateSettingsViewImpl
         stateKeySchemaSettingsWidget.onReadOnly(readOnly);
         stateValueSchemaSettingsWidget.onReadOnly(readOnly);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface Binder extends UiBinder<Widget, StateSettingsViewImpl> {
 

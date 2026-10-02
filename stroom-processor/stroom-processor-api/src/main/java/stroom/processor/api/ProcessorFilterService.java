@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.processor.api;
@@ -65,5 +64,10 @@ public interface ProcessorFilterService
 
     Optional<String> getPipelineName(ProcessorType processorType, String uuid);
 
-    ProcessorFilter restore(DocRef processorFilterDocRef, final boolean resetTracker);
+    /**
+     * Bring a logically deleted filter back into use. The doc ref keeps resolving, but to a new
+     * filter that replaces the deleted one rather than to the deleted one revived - see
+     * {@code ProcessorFilterDao.restoreProcessorFilter}.
+     */
+    ProcessorFilter restore(DocRef processorFilterDocRef);
 }

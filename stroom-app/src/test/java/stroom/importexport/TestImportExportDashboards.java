@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import stroom.dictionary.api.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
@@ -140,8 +140,10 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                     "Test Script",
                     folder2,
                     null);
-            final ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef());
-            script.setData("Test Data");
+            final ScriptDoc script = scriptStore.readDocument(scriptNode.getDocRef())
+                    .copy()
+                    .data("Test Data")
+                    .build();
             scriptStore.writeDocument(script);
             assertThat(scriptStore.list().size()).isEqualTo(1);
 
@@ -150,8 +152,10 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
                     "Test Vis",
                     folder2,
                     null);
-            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef());
-            vis.setScriptRef(scriptNode.getDocRef());
+            final VisualisationDoc vis = visualisationStore.readDocument(visNode.getDocRef())
+                    .copy()
+                    .scriptRef(scriptNode.getDocRef())
+                    .build();
             visualisationStore.writeDocument(vis);
             assertThat(visualisationStore.list().size()).isEqualTo(1);
         }
@@ -229,16 +233,15 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         components.add(visualisation);
 
         // Create dashboard.
-        final DashboardConfig dashboardData = new DashboardConfig();
-        dashboardData.setComponents(components);
+        final DashboardConfig dashboardConfig = DashboardConfig.builder().components(components).build();
 
         final ExplorerNode dashboardNode = explorerService.create(
                 DashboardDoc.TYPE,
                 "Test Dashboard",
                 folder1,
                 null);
-        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef());
-        dashboard.setDashboardConfig(dashboardData);
+        DashboardDoc dashboard = dashboardStore.readDocument(dashboardNode.getDocRef())
+                .copy().dashboardConfig(dashboardConfig).build();
         dashboard = dashboardStore.writeDocument(dashboard);
         assertThat(dashboardStore.list().size()).isEqualTo(1);
 
@@ -321,7 +324,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         }
     }
 
-    private <T extends Doc> T first(final DocumentStore<T> store) {
+    private <T extends AbstractDoc> T first(final DocumentStore<T> store) {
         final Set<DocRef> set = store.listDocuments();
         if (set != null && !set.isEmpty()) {
             return store.readDocument(set.iterator().next());

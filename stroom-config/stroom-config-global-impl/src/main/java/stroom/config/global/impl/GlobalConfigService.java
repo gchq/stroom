@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,18 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.config.global.impl;
 
 
+import stroom.config.global.api.GlobalConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigProperty.SourceType;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.ListConfigResponse;
+import stroom.config.global.shared.OverrideValue;
+import stroom.docref.DocRef;
 import stroom.node.api.NodeInfo;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.common.v2.FieldProviderImpl;
@@ -32,11 +34,11 @@ import stroom.query.common.v2.ValueFunctionFactoriesImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.task.api.TaskContextFactory;
-import stroom.util.AuditUtil;
 import stroom.util.config.AppConfigValidator;
 import stroom.util.config.ConfigValidator.Result;
 import stroom.util.config.PropertyUtil;
 import stroom.util.config.PropertyUtil.ObjectInfo;
+import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -47,9 +49,10 @@ import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.inject.Inject;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -57,7 +60,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
-public class GlobalConfigService {
+public class GlobalConfigService implements GlobalConfig {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
@@ -185,12 +188,8 @@ public class GlobalConfigService {
             // object from global properties which may have a yaml value in it and a different
             // effective value
             return dao.fetch(propertyPath.toString())
-                    .map(configProp ->
-                            configMapper.decorateDbConfigProperty(configProp))
-                    .or(() -> {
-
-                        return configMapper.getGlobalProperty(propertyPath);
-                    });
+                    .map(configMapper::decorateDbConfigProperty)
+                    .or(() -> configMapper.getGlobalProperty(propertyPath));
         });
     }
 
@@ -205,10 +204,9 @@ public class GlobalConfigService {
             // update the global config from the returned db record then return the corresponding
             // object from global properties which may have a yaml value in it and a different
             // effective value
-            final Optional<ConfigProperty> optionalConfigProperty = dao.fetch(id)
+            return dao
+                    .fetch(id)
                     .map(configMapper::decorateDbConfigProperty);
-
-            return optionalConfigProperty;
         });
     }
 
@@ -239,38 +237,40 @@ public class GlobalConfigService {
 
     public ConfigProperty update(final ConfigProperty configProperty) {
         return securityContext.secureResult(AppPermission.MANAGE_PROPERTIES_PERMISSION, () -> {
-
             LOGGER.debug(() -> LogUtil.message(
                     "Saving property [{}] with new database value [{}]",
                     configProperty.getName(), configProperty.getDatabaseOverrideValue()));
 
             // Make sure we can parse the string value,
             // into an object (e.g. if it is a docref, list, map etc)
-            final ConfigProperty persistedConfigProperty;
+            ConfigProperty persistedConfigProperty;
             if (configProperty.hasDatabaseOverride()) {
 
                 // Ensure the value is a valid serialised form and that the de-serialised form
                 // passes javax validation
                 validateConfigProperty(configProperty);
 
-                AuditUtil.stamp(securityContext, configProperty);
+                final ConfigProperty.Builder builder = configProperty.copy();
+                builder.stampAudit(securityContext);
 
+                final ConfigProperty updated = builder.build();
                 if (configProperty.getId() == null) {
                     try {
-                        persistedConfigProperty = dao.create(configProperty);
+                        persistedConfigProperty = dao.create(updated);
                     } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message("Error inserting property {}: {}",
-                                configProperty.getName(), e.getMessage()));
+                                updated.getName(), e.getMessage()));
                     }
                 } else {
                     try {
-                        persistedConfigProperty = dao.update(configProperty);
+                        persistedConfigProperty = dao.update(updated);
                     } catch (final Exception e) {
                         throw new RuntimeException(LogUtil.message("Error updating property {} with id {}: {}",
-                                configProperty.getName(), configProperty.getId(), e.getMessage()));
+                                updated.getName(), updated.getId(), e.getMessage()));
                     }
                 }
             } else {
+                final ConfigProperty.Builder builder = configProperty.copy();
                 if (configProperty.getId() != null) {
                     // getDatabaseValue is unset so we need to remove it from the DB
                     try {
@@ -280,13 +280,13 @@ public class GlobalConfigService {
                                 configProperty.getName(), e.getMessage()));
                     }
                     // this is now orphaned so clear the ID
-                    configProperty.setId(null);
+                    builder.id(null);
                 }
-                persistedConfigProperty = configProperty;
+                persistedConfigProperty = builder.build();
             }
 
             // Update property in the config object tree
-            configMapper.decorateDbConfigProperty(persistedConfigProperty);
+            persistedConfigProperty = configMapper.decorateDbConfigProperty(persistedConfigProperty);
 
             // Having updated a prop make sure the in mem config is correct.
             globalConfigBootstrapService.updateConfigFromDb(false);
@@ -345,14 +345,13 @@ public class GlobalConfigService {
             final StringBuilder stringBuilder = new StringBuilder()
                     .append("Value [").append(effectiveValueStr).append("] ")
                     .append(" for property ")
-                    .append(propertyPath.toString())
+                    .append(propertyPath)
                     .append(" is invalid:");
 
-            validationResult.handleErrors(error -> {
-                stringBuilder
-                        .append("\n")
-                        .append(error.getMessage());
-            });
+            validationResult.handleErrors(error ->
+                    stringBuilder
+                            .append("\n")
+                            .append(error.getMessage()));
             throw new ConfigPropertyValidationException(stringBuilder.toString());
         }
     }
@@ -360,7 +359,7 @@ public class GlobalConfigService {
     private AbstractConfig getInjectableAncestor(final PropertyPath propertyPath) {
 
         PropertyPath curPropertyPath = propertyPath;
-        AbstractConfig ancestorConfig = null;
+        AbstractConfig ancestorConfig;
 
         while (true) {
 
@@ -398,7 +397,6 @@ public class GlobalConfigService {
 
         // Get info about the config class, i.e. ctor, prop names, etc.
         final ObjectInfo<AbstractConfig> objectInfo = PropertyUtil.getObjectInfo(
-                new ObjectMapper(),
                 propertyPath.getParentPropertyName()
                         .orElse(null),
                 config);
@@ -417,5 +415,64 @@ public class GlobalConfigService {
         final AbstractConfig configCopy = objectInfo.createInstance(nameToValueMap::get);
 
         return appConfigValidator.validate(configCopy);
+    }
+
+    @Override
+    public void setDocRef(final AbstractConfig config, final String propertyName, final DocRef value) {
+        setString(config, propertyName, ConfigMapper.convertToString(value));
+    }
+
+    @Override
+    public void setInt(final AbstractConfig config, final String propertyName, final int value) {
+        setString(config, propertyName, ConfigMapper.convertToString(value));
+    }
+
+    @Override
+    public void setString(final AbstractConfig config, final String propertyName, final String value) {
+        Objects.requireNonNull(config, "config not supplied");
+        Objects.requireNonNull(propertyName, "propertyName not supplied");
+        final PropertyPath propertyPath = config.getFullPath(propertyName);
+        final Optional<ConfigProperty> optConfigProperty = fetch(propertyPath);
+        final ConfigProperty configProperty = optConfigProperty.orElseThrow(() ->
+                new RuntimeException("Property not found: " + propertyPath));
+        final String defaultValue = configProperty.getDefaultValue().orElse(null);
+
+        // If the value is the same as the default value then revert to the default value.
+        final ConfigProperty updatedProperty;
+        if (Objects.equals(defaultValue, value)) {
+            updatedProperty = configProperty.copy().databaseOverrideValue(OverrideValue.unSet(null)).build();
+        } else {
+            updatedProperty = configProperty.copy().databaseOverrideValue(value).build();
+        }
+        update(updatedProperty);
+    }
+
+    @Override
+    public void update(final AbstractConfig config) {
+        Objects.requireNonNull(config, "config not supplied");
+        final ObjectInfo<?> objectInfo = configMapper.getObjectInfoMap().get(config.getBasePath());
+        Objects.requireNonNull(objectInfo, "Unexpected Stroom config object");
+        for (final Prop prop : objectInfo.getPropertyMap().values()) {
+            try {
+                final Object value = prop.getGetter().invoke(config);
+                if (value instanceof final AbstractConfig child) {
+                    // Recurse.
+                    update(child);
+                } else if (AbstractConfig.class.isAssignableFrom(prop.getValueClass())) {
+                    // Ignore.
+                } else {
+                    final String name = getNameFromAnnotation(prop);
+                    setString(config, name, ConfigMapper.convertToString(value));
+                }
+            } catch (final InvocationTargetException | IllegalAccessException e) {
+                throw new RuntimeException(e.getMessage(), e);
+            }
+        }
+    }
+
+    private String getNameFromAnnotation(final Prop prop) {
+        return prop.getAnnotation(JsonProperty.class)
+                .map(JsonProperty::value)
+                .orElse(null);
     }
 }

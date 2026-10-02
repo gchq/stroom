@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.config.global.impl;
@@ -41,16 +40,17 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BootStrapConfig;
+import stroom.util.shared.IsAtomicConfig;
 import stroom.util.shared.NotInjectableConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.PropertyPath;
+import stroom.util.shared.time.SimpleDuration;
 import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 import stroom.util.xml.SAXParserSettings;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
@@ -258,11 +258,10 @@ public class ConfigMapper {
                 this::defaultValuePropertyConsumer,
                 false);
 
-        final HashSet<PropertyPath> allPropertyPaths = new HashSet<>(defaultPropertiesMap.keySet());
+        final Set<PropertyPath> allPropertyPaths = new HashSet<>(defaultPropertiesMap.keySet());
 //        throwAwayPropertyMap.clear();
 
         buildObjectInfoMap(
-                JsonUtil.getMapper(),
                 defaultAppConfig,
                 PropertyPath.fromParts("stroom"),
                 objectInfoMap);
@@ -344,6 +343,7 @@ public class ConfigMapper {
     private void updateXmlSecureProcessing() {
         final ParserConfig parserConfig = getConfigObject(ParserConfig.class);
         SAXParserSettings.setSecureProcessingEnabled(parserConfig.isSecureProcessing());
+        SAXParserSettings.setExternalEntitiesDisabled(parserConfig.isDisableExternalEntities());
     }
 
     private synchronized AbstractConfig rebuildObjectInstance(
@@ -506,11 +506,15 @@ public class ConfigMapper {
                     final Optional<String> effectiveValueBefore = globalProp.getEffectiveValue();
                     final SourceType sourceBefore = globalProp.getSource();
 
-                    globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+                    final ConfigProperty.Builder builder = globalProp.copy();
+                    builder.databaseOverrideValue(OverrideValue.unSet(String.class));
                     // Not in the DB so make sure it has no ID, e.g. if the prop is in the db on boot
                     // then get changed back to default val (which removes it from the db) we would hold
                     // an old ID for it, which would break future updates
-                    globalProp.setId(null);
+                    builder.id(null);
+
+                    // Update in map.
+                    globalPropertiesMap.put(entry.getKey(), builder.build());
 
                     final boolean hasChanged = hasEffectiveValueChanged(
                             globalProp.getName(), effectiveValueBefore, sourceBefore);
@@ -575,18 +579,22 @@ public class ConfigMapper {
                 final SourceType sourceBefore = globalConfigProperty.getSource();
 
                 // Update all the DB related values from the passed DB config prop
-                globalConfigProperty.setId(dbConfigProperty.getId());
-                globalConfigProperty.setDatabaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue());
-                globalConfigProperty.setVersion(dbConfigProperty.getVersion());
-                globalConfigProperty.setCreateTimeMs(dbConfigProperty.getCreateTimeMs());
-                globalConfigProperty.setCreateUser(dbConfigProperty.getCreateUser());
-                globalConfigProperty.setUpdateTimeMs(dbConfigProperty.getUpdateTimeMs());
-                globalConfigProperty.setUpdateUser(dbConfigProperty.getUpdateUser());
+                final ConfigProperty updated = globalConfigProperty.copy()
+                        .id(dbConfigProperty.getId())
+                        .databaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue())
+                        .version(dbConfigProperty.getVersion())
+                        .createTimeMs(dbConfigProperty.getCreateTimeMs())
+                        .createUser(dbConfigProperty.getCreateUser())
+                        .updateTimeMs(dbConfigProperty.getUpdateTimeMs())
+                        .updateUser(dbConfigProperty.getUpdateUser())
+                        .build();
+                // Update the map with the new property.
+                globalPropertiesMap.put(fullPath, updated);
 
                 final boolean hasChanged = hasEffectiveValueChanged(
                         fullPath, effectiveValueBefore, sourceBefore);
 
-                return Tuple.of(globalConfigProperty, hasChanged);
+                return Tuple.of(updated, hasChanged);
             } else {
                 throw new UnknownPropertyException(LogUtil.message("No prop object for {}", fullPath));
             }
@@ -671,7 +679,7 @@ public class ConfigMapper {
     private int haveAnyEffectiveValuesChanged(final Map<PropertyPath, Optional<String>> currentEffectiveValues,
                                               final Map<PropertyPath, SourceType> currentSources) {
 
-        final int changeCount = allPropertyPaths.stream()
+        return allPropertyPaths.stream()
                 .mapToInt(propertyPath -> {
 
                     final Optional<String> effectiveValueBefore = currentEffectiveValues
@@ -688,8 +696,6 @@ public class ConfigMapper {
                             : 0;
                 })
                 .sum();
-
-        return changeCount;
     }
 
     private boolean hasEffectiveValueChanged(final PropertyPath fullPath,
@@ -745,10 +751,12 @@ public class ConfigMapper {
 
         // Update yaml override in global property.
         if (Objects.equals(defaultValue, newValue)) {
-            configProperty.setYamlOverrideValue(OverrideValue.unSet(String.class));
+            globalPropertiesMap.put(fullPath,
+                    configProperty.copy().yamlOverrideValue(OverrideValue.unSet(String.class)).build());
         } else {
             final String yamlValueAsStr = getStringValue(yamlProp);
-            configProperty.setYamlOverrideValue(yamlValueAsStr);
+            globalPropertiesMap.put(fullPath,
+                    configProperty.copy().yamlOverrideValue(yamlValueAsStr).build());
         }
     }
 
@@ -759,15 +767,18 @@ public class ConfigMapper {
         final String defaultValueAsStr = getDefaultValue(defaultProp);
 
         // build a new ConfigProperty object from our Prop and our defaults
-        final ConfigProperty configProperty = new ConfigProperty(fullPath, defaultValueAsStr);
+        final ConfigProperty.Builder builder = ConfigProperty
+                .builder()
+                .name(fullPath)
+                .defaultValue(defaultValueAsStr);
         // Add all the meta data for the prop
-        updatePropertyFromConfigAnnotations(configProperty, defaultProp);
+        updatePropertyFromConfigAnnotations(builder, defaultProp);
 
         if (defaultValueAsStr == null) {
             LOGGER.trace("Property {} has no default value", fullPath);
         }
 
-        globalPropertiesMap.put(fullPath, configProperty);
+        globalPropertiesMap.put(fullPath, builder.build());
     }
 
     private static boolean isSupportedPropertyType(final Class<?> type) {
@@ -788,6 +799,7 @@ public class ConfigMapper {
                                     type.equals(boolean.class) ||
                                     type.equals(Character.class) ||
                                     type.equals(char.class) ||
+                                    IsAtomicConfig.class.isAssignableFrom(type) ||
                                     Set.class.isAssignableFrom(type) ||
                                     List.class.isAssignableFrom(type) ||
                                     Map.class.isAssignableFrom(type) ||
@@ -795,27 +807,28 @@ public class ConfigMapper {
                                     Enum.class.isAssignableFrom(type) ||
                                     Path.class.isAssignableFrom(type) ||
                                     StroomDuration.class.isAssignableFrom(type) ||
+                                    SimpleDuration.class.isAssignableFrom(type) ||
                                     ByteSize.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;
     }
 
-    private void updatePropertyFromConfigAnnotations(final ConfigProperty configProperty,
+    private void updatePropertyFromConfigAnnotations(final ConfigProperty.Builder builder,
                                                      final Prop prop) {
         // Editable by default unless found otherwise below
-        configProperty.setEditable(true);
+        builder.editable(true);
 
         prop.getAnnotation(JsonPropertyDescription.class)
                 .ifPresent(jsonPropertyDescription ->
-                        configProperty.setDescription(jsonPropertyDescription.value()));
+                        builder.description(jsonPropertyDescription.value()));
 
         if (prop.hasAnnotation(ReadOnly.class)) {
-            configProperty.setEditable(false);
+            builder.editable(false);
         }
 
         if (prop.hasAnnotation(Password.class)) {
-            configProperty.setPassword(true);
+            builder.password(true);
         }
 
         prop.getAnnotation(RequiresRestart.class)
@@ -823,23 +836,22 @@ public class ConfigMapper {
                     final RequiresRestart.RestartScope scope = requiresRestart.value();
                     switch (scope) {
                         case SYSTEM:
-                            configProperty.setRequireRestart(true);
+                            builder.requireRestart(true);
                             break;
                         case UI:
-                            configProperty.setRequireUiRestart(true);
+                            builder.requireUiRestart(true);
                             break;
                         default:
                             throw new RuntimeException("Should never get here");
                     }
                 });
 
-        configProperty.setDataTypeName(getDataTypeName(prop.getValueType()));
+        builder.dataTypeName(getDataTypeName(prop.getValueType()));
     }
 
     private static String getDataTypeName(final Type type) {
         try {
-            if (type instanceof Class) {
-                final Class<?> valueClass = (Class<?>) type;
+            if (type instanceof final Class<?> valueClass) {
                 final String dataTypeName;
 
                 if (valueClass.equals(int.class)) {
@@ -853,8 +865,7 @@ public class ConfigMapper {
                     dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
                 }
                 return dataTypeName;
-            } else if (type instanceof ParameterizedType) {
-                final ParameterizedType parameterizedType = (ParameterizedType) type;
+            } else if (type instanceof final ParameterizedType parameterizedType) {
                 final String rawTypeName = getDataTypeName(parameterizedType.getRawType());
 
                 if (parameterizedType.getActualTypeArguments() != null) {
@@ -880,7 +891,6 @@ public class ConfigMapper {
                 .orElse(null);
     }
 
-    // pkg private for testing
     static String convertToString(final Object value) {
         final List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
         return convertToString(value, availableDelimiters);
@@ -913,11 +923,21 @@ public class ConfigMapper {
         }
     }
 
+    private static String serialiseToJson(final Object value) {
+        return JsonUtil.writeValueAsString(value, true);
+    }
+
+    private static <T> T deserialiseFromJson(final Class<T> clazz, final String json) {
+        return JsonUtil.readValue(json, clazz);
+    }
+
     private static String convertToString(final Object value,
                                           final List<String> availableDelimiters) {
         if (value != null) {
             if (isSupportedPropertyType(value.getClass())) {
-                if (value instanceof List) {
+                if (value instanceof IsAtomicConfig) {
+                    return serialiseToJson(value);
+                } else if (value instanceof List) {
                     return listToString((List<?>) value, availableDelimiters);
                 } else if (value instanceof Set) {
                     return setToString((Set<?>) value, availableDelimiters);
@@ -1007,6 +1027,8 @@ public class ConfigMapper {
                 return parseBoolean(value);
             } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
                 return value.charAt(0);
+            } else if (IsAtomicConfig.class.isAssignableFrom(type)) {
+                return deserialiseFromJson(IsAtomicConfig.class, value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
                 final Class<?> itemType = getGenericsParam(genericType, 0);
@@ -1028,6 +1050,8 @@ public class ConfigMapper {
                 return Path.of(value);
             } else if (StroomDuration.class.isAssignableFrom(type)) {
                 return StroomDuration.parse(value);
+            } else if (SimpleDuration.class.isAssignableFrom(type)) {
+                return SimpleDuration.parse(value);
             } else if (ByteSize.class.isAssignableFrom(type)) {
                 return ByteSize.parse(value);
             }
@@ -1102,44 +1126,81 @@ public class ConfigMapper {
         }
     }
 
+    private static boolean isAtomicValue(final Collection<?> collection) {
+        if (NullSafe.isEmptyCollection(collection)) {
+            return false;
+        } else {
+            final boolean oneMatches = collection.stream()
+                    .anyMatch(item -> item instanceof IsAtomicConfig);
+
+            if (oneMatches) {
+                final boolean allMatch = collection.stream()
+                        .allMatch(item -> item instanceof IsAtomicConfig);
+                if (allMatch) {
+                    return true;
+                } else {
+                    final Set<String> classNames = collection.stream()
+                            .map(Object::getClass)
+                            .map(Class::getName)
+                            .collect(Collectors.toSet());
+                    throw new RuntimeException("Mixture of classes in collection - " + classNames);
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+
 
     private static String listToString(final List<?> list,
                                        final List<String> availableDelimiters) {
 
+        final String str;
         if (list.isEmpty()) {
-            return "";
+            str = "";
+        } else if (isAtomicValue(list)) {
+            str = serialiseToJson(list);
+        } else {
+            final List<String> strList = list.stream()
+                    .map(ConfigMapper::convertToString)
+                    .collect(Collectors.toList());
+
+            final String allText = String.join("", strList);
+
+            final String delimiter = getDelimiter(allText, availableDelimiters);
+
+            // prefix the delimited form with the delimiter so when we deserialise
+            // we know what the delimiter is
+            str = delimiter + String.join(delimiter, strList);
         }
-        final List<String> strList = list.stream()
-                .map(ConfigMapper::convertToString)
-                .collect(Collectors.toList());
-
-        final String allText = String.join("", strList);
-
-        final String delimiter = getDelimiter(allText, availableDelimiters);
-
-        // prefix the delimited form with the delimiter so when we deserialise
-        // we know what the delimiter is
-        return delimiter + String.join(delimiter, strList);
+        LOGGER.trace("listToString()\n{}\n{}", list, str);
+        return str;
     }
 
     private static String setToString(final Set<?> set,
                                       final List<String> availableDelimiters) {
 
+        final String str;
         if (set.isEmpty()) {
-            return "";
+            str = "";
+        } else if (isAtomicValue(set)) {
+            str = serialiseToJson(set);
+        } else {
+            final List<String> strList = set.stream()
+                    .sorted() // ensure consistent serialisation
+                    .map(ConfigMapper::convertToString)
+                    .collect(Collectors.toList());
+
+            final String allText = String.join("", strList);
+
+            final String delimiter = getDelimiter(allText, availableDelimiters);
+
+            // prefix the delimited form with the delimiter so when we deserialise
+            // we know what the delimiter is
+            str = delimiter + String.join(delimiter, strList);
         }
-        final List<String> strList = set.stream()
-                .sorted() // ensure consistent serialisation
-                .map(ConfigMapper::convertToString)
-                .collect(Collectors.toList());
-
-        final String allText = String.join("", strList);
-
-        final String delimiter = getDelimiter(allText, availableDelimiters);
-
-        // prefix the delimited form with the delimiter so when we deserialise
-        // we know what the delimiter is
-        return delimiter + String.join(delimiter, strList);
+        LOGGER.trace("setToString()\n{}\n{}", set, str);
+        return str;
     }
 
 
@@ -1154,7 +1215,7 @@ public class ConfigMapper {
                     final String value = ConfigMapper.convertToString(entry.getValue());
                     return Map.entry(key, value);
                 })
-                .collect(Collectors.toList());
+                .toList();
 
         // join all strings into one fat string
         final String allText = strEntries.stream()
@@ -1266,7 +1327,7 @@ public class ConfigMapper {
                         final List<String> parts = Splitter.on(keyValueDelimiter)
                                 .splitToList(keyValueStr);
 
-                        if (parts.size() < 1 || parts.size() > 2) {
+                        if (parts.isEmpty() || parts.size() > 2) {
                             throw new RuntimeException(LogUtil.message(
                                     "Too many parts [{}] in value [{}], whole value [{}]",
                                     parts.size(), keyValueStr, serialisedForm));
@@ -1380,7 +1441,6 @@ public class ConfigMapper {
             objectInfoMap = new HashMap<>();
 
             buildObjectInfoMap(
-                    JsonUtil.getMapper(),
                     new AppConfig(),
                     PropertyPath.fromParts("stroom"),
                     objectInfoMap);
@@ -1399,7 +1459,6 @@ public class ConfigMapper {
     }
 
     private static void buildObjectInfoMap(
-            final ObjectMapper objectMapper,
             final AbstractConfig config,
             final PropertyPath path,
             final Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> objectInfoMap) {
@@ -1409,7 +1468,6 @@ public class ConfigMapper {
         config.setBasePath(path);
 
         final ObjectInfo<AbstractConfig> objectInfo = PropertyUtil.getObjectInfo(
-                objectMapper,
                 path.getPropertyName(),
                 config);
 
@@ -1420,7 +1478,7 @@ public class ConfigMapper {
         objectInfoMap.put(path, objectInfo);
 
         objectInfo.getPropertyMap()
-                .forEach((k, prop) -> {
+                .forEach((ignored, prop) -> {
                     final PropertyPath fullPath = path.merge(prop.getName());
 
                     final Class<?> valueType = prop.getValueClass();
@@ -1433,7 +1491,6 @@ public class ConfigMapper {
                         if (childConfigObject != null) {
                             // Recurse into the child
                             buildObjectInfoMap(
-                                    objectMapper,
                                     childConfigObject,
                                     fullPath,
                                     objectInfoMap);
@@ -1528,5 +1585,9 @@ public class ConfigMapper {
         VALIDATE,
         // default the value if null, eg. a null int becomes 0
         DEFAULT
+    }
+
+    public Map<PropertyPath, ObjectInfo<? extends AbstractConfig>> getObjectInfoMap() {
+        return objectInfoMap;
     }
 }

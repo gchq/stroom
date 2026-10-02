@@ -16,11 +16,13 @@
 
 package stroom.event.logging.rs.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import stroom.util.logging.LambdaLogger;
+
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.container.ResourceInfo;
 import jakarta.ws.rs.core.Context;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -32,9 +34,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static stroom.event.logging.rs.impl.RestResourceAutoLoggerImpl.LOGGER;
-
 class RequestEntityCapturingInputStream extends BufferedInputStream {
+
+    // Not sure why this is using the logger from another class
+    private static final LambdaLogger LOGGER = RestResourceAutoLoggerImpl.LOGGER;
 
     private static final int MAX_ENTITY_SIZE = 64 * 1024 * 1024;
     private Object requestEntity;
@@ -43,20 +46,20 @@ class RequestEntityCapturingInputStream extends BufferedInputStream {
 
     public RequestEntityCapturingInputStream(final ResourceInfo resourceInfo,
                                              final InputStream original,
-                                             final ObjectMapper objectMapper,
+                                             final JsonMapper jsonMapper,
                                              final Charset charset) throws IOException {
         super(original);
         this.requestParamClass = findRequestParamClass(resourceInfo);
-        readEntity(objectMapper, charset);
+        readEntity(jsonMapper, charset);
         constructed = true;
     }
 
-    private void readEntity(final ObjectMapper objectMapper, final Charset charset) {
+    private void readEntity(final JsonMapper jsonMapper, final Charset charset) {
 
         if (requestParamClass != null) {
             try {
                 mark(MAX_ENTITY_SIZE + 1);
-                requestEntity = objectMapper.readValue(new InputStreamReader(this, charset), requestParamClass);
+                requestEntity = jsonMapper.readValue(new InputStreamReader(this, charset), requestParamClass);
             } catch (final Exception ex) {
                 //Indicates that this request type cannot be constructed in this way.
                 requestEntity = null;
@@ -96,11 +99,11 @@ class RequestEntityCapturingInputStream extends BufferedInputStream {
         }
         if (suppliedParams.size() > 1) {
             LOGGER.error(() -> "Multiple parameters to resource method " +
-                    resourceInfo.getResourceMethod().getName() +
-                    " on " +
-                    resourceInfo.getResourceClass().getSimpleName());
+                               resourceInfo.getResourceMethod().getName() +
+                               " on " +
+                               resourceInfo.getResourceClass().getSimpleName());
         }
-        return suppliedParams.get(0);
+        return suppliedParams.getFirst();
     }
 
     public Object getRequestEntity() {

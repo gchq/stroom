@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.query.client.presenter;
@@ -27,15 +26,13 @@ import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.analytics.shared.QueryLanguageVersion;
 import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.ReportResource;
-import stroom.analytics.shared.ReportSettings;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.dashboard.client.main.UniqueUtil;
-import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerResource;
@@ -64,7 +61,7 @@ import java.util.function.Consumer;
 import javax.inject.Inject;
 
 public class QueryDocEditPresenter
-        extends DocumentEditPresenter<QueryEditView, QueryDoc>
+        extends DocPresenter<QueryEditView, QueryDoc>
         implements HasToolbar {
 
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
@@ -116,11 +113,7 @@ public class QueryDocEditPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(queryEditPresenter.addDirtyHandler(event -> {
-            if (event.isDirty()) {
-                setDirty(true);
-            }
-        }));
+        registerHandler(queryEditPresenter.addChangeHandler(this::onChange));
         registerHandler(createRuleButton.addClickHandler(event -> createRule()));
         registerHandler(createReportButton.addClickHandler(event -> createReport()));
     }
@@ -129,37 +122,28 @@ public class QueryDocEditPresenter
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
                 final AnalyticUiDefaultConfig analyticUiDefaultConfig = uiConfig.getAnalyticUiDefaultConfig();
-                if (analyticUiDefaultConfig.getDefaultErrorFeed() == null) {
-                    AlertEvent.fireError(this, "No default error feed configured", null);
-                } else if (analyticUiDefaultConfig.getDefaultDestinationFeed() == null) {
-                    AlertEvent.fireError(this, "No default destination feed configured", null);
-                } else if (analyticUiDefaultConfig.getDefaultNode() == null) {
-                    AlertEvent.fireError(this, "No default processing node configured", null);
-                } else {
-                    final String query = queryEditPresenter.getQuery();
-                    final TimeRange timeRange = queryEditPresenter.getTimeRange();
-                    restFactory
-                            .create(QUERY_RESOURCE)
-                            .method(res -> res.validateQuery(query))
-                            .onSuccess(validateExpressionResult -> {
-                                if (!validateExpressionResult.isOk()) {
-                                    AlertEvent.fireError(this,
-                                            validateExpressionResult.getString(),
-                                            null);
-                                } else {
-                                    AnalyticProcessType analyticProcessType = AnalyticProcessType.STREAMING;
-                                    if (validateExpressionResult.isGroupBy()) {
-                                        analyticProcessType = AnalyticProcessType.SCHEDULED_QUERY;
-                                    }
-                                    createRule(analyticUiDefaultConfig, query, timeRange, analyticProcessType);
+                final String query = queryEditPresenter.getQuery();
+                final TimeRange timeRange = queryEditPresenter.getTimeRange();
+                restFactory
+                        .create(QUERY_RESOURCE)
+                        .method(res -> res.validateQuery(query))
+                        .onSuccess(validateExpressionResult -> {
+                            if (!validateExpressionResult.isOk()) {
+                                AlertEvent.fireError(this,
+                                        validateExpressionResult.getString(),
+                                        null);
+                            } else {
+                                AnalyticProcessType analyticProcessType = AnalyticProcessType.STREAMING;
+                                if (validateExpressionResult.isGroupBy()) {
+                                    analyticProcessType = AnalyticProcessType.SCHEDULED_QUERY;
                                 }
-                            })
-                            .onFailure(restError -> {
-                                AlertEvent.fireErrorFromException(this, restError.getException(), null);
-                            })
-                            .taskMonitorFactory(this)
-                            .exec();
-                }
+                                createRule(analyticUiDefaultConfig, query, timeRange, analyticProcessType);
+                            }
+                        })
+                        .onFailure(restError ->
+                                AlertEvent.fireErrorFromException(this, restError.getException(), null))
+                        .taskMonitorFactory(this)
+                        .exec();
             }
         }, this);
     }
@@ -323,84 +307,37 @@ public class QueryDocEditPresenter
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private void createReport() {
         uiConfigCache.get(uiConfig -> {
             if (uiConfig != null) {
                 final ReportUiDefaultConfig analyticUiDefaultConfig = uiConfig.getReportUiDefaultConfig();
-                if (analyticUiDefaultConfig.getDefaultErrorFeed() == null) {
-                    AlertEvent.fireError(this, "No default error feed configured", null);
-                } else if (analyticUiDefaultConfig.getDefaultDestinationFeed() == null) {
-                    AlertEvent.fireError(this, "No default destination feed configured", null);
-                } else if (analyticUiDefaultConfig.getDefaultNode() == null) {
-                    AlertEvent.fireError(this, "No default processing node configured", null);
-                } else {
-                    final String query = queryEditPresenter.getQuery();
-                    final TimeRange timeRange = queryEditPresenter.getTimeRange();
-                    restFactory
-                            .create(QUERY_RESOURCE)
-                            .method(res -> res.validateQuery(query))
-                            .onSuccess(validateExpressionResult -> {
-                                if (!validateExpressionResult.isOk()) {
-                                    AlertEvent.fireError(this,
-                                            validateExpressionResult.getString(),
-                                            null);
-                                } else {
-                                    createReport(analyticUiDefaultConfig, query, timeRange,
-                                            AnalyticProcessType.SCHEDULED_QUERY);
-                                }
-                            })
-                            .onFailure(restError -> {
-                                AlertEvent.fireErrorFromException(this, restError.getException(), null);
-                            })
-                            .taskMonitorFactory(this)
-                            .exec();
-                }
+                final String query = queryEditPresenter.getQuery();
+                final TimeRange timeRange = queryEditPresenter.getTimeRange();
+                restFactory
+                        .create(QUERY_RESOURCE)
+                        .method(res -> res.validateQuery(query))
+                        .onSuccess(validateExpressionResult -> {
+                            if (!validateExpressionResult.isOk()) {
+                                AlertEvent.fireError(this,
+                                        validateExpressionResult.getString(),
+                                        null);
+                            } else {
+                                createReport(analyticUiDefaultConfig, query, timeRange,
+                                        AnalyticProcessType.SCHEDULED_QUERY);
+                            }
+                        })
+                        .onFailure(restError ->
+                                AlertEvent.fireErrorFromException(this, restError.getException(), null))
+                        .taskMonitorFactory(this)
+                        .exec();
             }
         }, this);
     }
 
     private void createReport(final ReportUiDefaultConfig analyticUiDefaultConfig,
-                            final String query,
-                            final TimeRange timeRange,
-                            final AnalyticProcessType analyticProcessType) {
+                              final String query,
+                              final TimeRange timeRange,
+                              final AnalyticProcessType analyticProcessType) {
         final Consumer<ExplorerNode> newDocumentConsumer = newNode -> {
             final DocRef ruleDoc = newNode.getDocRef();
             loadNewReport(ruleDoc, analyticUiDefaultConfig, query, timeRange, analyticProcessType);
@@ -451,17 +388,16 @@ public class QueryDocEditPresenter
     }
 
     private void createDefaultStreamingReport(final DocRef ruleDocRef,
-                                            final ReportDoc doc,
-                                            final AnalyticUiDefaultConfig analyticUiDefaultConfig,
-                                            final String query,
-                                            final TimeRange timeRange) {
+                                              final ReportDoc doc,
+                                              final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                                              final String query,
+                                              final TimeRange timeRange) {
         final ReportDoc updated = doc
                 .copy()
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .timeRange(timeRange)
                 .analyticProcessType(AnalyticProcessType.STREAMING)
-                .reportSettings(ReportSettings.builder().fileType(DownloadSearchResultFileType.EXCEL).build())
                 .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
                 .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
                 .build();
@@ -469,10 +405,10 @@ public class QueryDocEditPresenter
     }
 
     private void createDefaultScheduledReport(final DocRef ruleDocRef,
-                                            final ReportDoc doc,
-                                            final ReportUiDefaultConfig analyticUiDefaultConfig,
-                                            final String query,
-                                            final TimeRange timeRange) {
+                                              final ReportDoc doc,
+                                              final ReportUiDefaultConfig analyticUiDefaultConfig,
+                                              final String query,
+                                              final TimeRange timeRange) {
 //        final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
 //        final ScheduledQueryAnalyticProcessConfig analyticProcessConfig =
 //                ScheduledQueryAnalyticProcessConfig.builder()
@@ -488,7 +424,6 @@ public class QueryDocEditPresenter
                 .query(query)
                 .timeRange(timeRange)
                 .analyticProcessType(AnalyticProcessType.SCHEDULED_QUERY)
-                .reportSettings(ReportSettings.builder().fileType(DownloadSearchResultFileType.EXCEL).build())
 //                .analyticProcessConfig(analyticProcessConfig)
                 .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
                 .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
@@ -497,10 +432,10 @@ public class QueryDocEditPresenter
     }
 
     private void createDefaultTableBuilderReport(final DocRef ruleDocRef,
-                                               final ReportDoc doc,
-                                               final AnalyticUiDefaultConfig analyticUiDefaultConfig,
-                                               final String query,
-                                               final TimeRange timeRange) {
+                                                 final ReportDoc doc,
+                                                 final AnalyticUiDefaultConfig analyticUiDefaultConfig,
+                                                 final String query,
+                                                 final TimeRange timeRange) {
         final SimpleDuration oneHour = SimpleDuration.builder().time(1).timeUnit(TimeUnit.HOURS).build();
         final TableBuilderAnalyticProcessConfig analyticProcessConfig =
                 TableBuilderAnalyticProcessConfig.builder()
@@ -515,7 +450,6 @@ public class QueryDocEditPresenter
                 .query(query)
                 .timeRange(timeRange)
                 .analyticProcessType(AnalyticProcessType.TABLE_BUILDER)
-                .reportSettings(ReportSettings.builder().fileType(DownloadSearchResultFileType.EXCEL).build())
                 .analyticProcessConfig(analyticProcessConfig)
                 .notifications(createDefaultNotificationConfig(analyticUiDefaultConfig))
                 .errorFeed(analyticUiDefaultConfig.getDefaultErrorFeed())
@@ -524,7 +458,7 @@ public class QueryDocEditPresenter
     }
 
     private void updateReport(final DocRef ruleDocRef,
-                            final ReportDoc ruleDoc) {
+                              final ReportDoc ruleDoc) {
         restFactory
                 .create(REPORT_RESOURCE)
                 .method(res -> res.update(ruleDocRef.getUuid(), ruleDoc))
@@ -538,47 +472,6 @@ public class QueryDocEditPresenter
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @Override
     public void onRead(final DocRef docRef, final QueryDoc entity, final boolean readOnly) {
         this.docRef = docRef;
@@ -587,12 +480,18 @@ public class QueryDocEditPresenter
         queryEditPresenter.read(entity.getQueryTablePreferences());
     }
 
+    public void onContentTabVisible(final boolean visible) {
+        queryEditPresenter.onContentTabVisible(visible);
+    }
+
     @Override
     protected QueryDoc onWrite(final QueryDoc entity) {
-        entity.setTimeRange(queryEditPresenter.getTimeRange());
-        entity.setQuery(queryEditPresenter.getQuery());
-        entity.setQueryTablePreferences(queryEditPresenter.write());
-        return entity;
+        return entity
+                .copy()
+                .timeRange(queryEditPresenter.getTimeRange())
+                .query(queryEditPresenter.getQuery())
+                .queryTablePreferences(queryEditPresenter.write())
+                .build();
     }
 
     @Override

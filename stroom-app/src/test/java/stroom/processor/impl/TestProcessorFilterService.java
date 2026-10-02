@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,11 +12,9 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.processor.impl;
-
 
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
@@ -25,7 +23,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.impl.db.QueryDataSerialiser;
+import stroom.processor.impl.dao.QueryDataSerialiser;
 import stroom.processor.shared.CreateProcessFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
@@ -67,7 +65,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 CreateProcessFilterRequest
                         .builder()
                         .pipeline(pipelineRef)
-                        .queryData(new QueryData())
+                        .queryData(QueryData.builder().build())
                         .priority(1)
                         .build());
         assertThat(processorService.find(new ExpressionCriteria()).size())
@@ -79,7 +77,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
                 CreateProcessFilterRequest
                         .builder()
                         .pipeline(pipelineRef)
-                        .queryData(new QueryData())
+                        .queryData(QueryData.builder().build())
                         .build());
         assertThat(processorService.find(new ExpressionCriteria()).size())
                 .isEqualTo(1);
@@ -104,7 +102,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
     }
 
     @Test
-    void testFeedIncludeExclude() throws Exception {
+    void testFeedIncludeExclude() {
         final DocRef pipelineRef = new DocRef(PipelineDoc.TYPE, "12345", "Test Pipeline");
 
         final String feedName1 = "1749655604143_1";

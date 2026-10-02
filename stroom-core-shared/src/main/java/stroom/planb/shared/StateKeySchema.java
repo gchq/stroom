@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.planb.shared;
 
 import stroom.util.shared.AbstractBuilder;
@@ -18,8 +34,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class StateKeySchema {
 
-    public static final KeyType DEFAULT_KEY_TYPE = KeyType.VARIABLE;
-    public static final HashLength DEFAULT_HASH_LENGTH = HashLength.INTEGER;
+    static final KeyType DEFAULT_KEY_TYPE = KeyType.VARIABLE;
+    static final HashLength DEFAULT_HASH_LENGTH = HashLength.INTEGER;
 
     @JsonProperty
     final KeyType keyType;
@@ -31,8 +47,8 @@ public class StateKeySchema {
     @JsonCreator
     public StateKeySchema(@JsonProperty("keyType") final KeyType keyType,
                           @JsonProperty("hashLength") final HashLength hashLength) {
-        this.keyType = keyType;
-        this.hashLength = hashLength;
+        this.keyType = Objects.requireNonNullElse(keyType, DEFAULT_KEY_TYPE);
+        this.hashLength = Objects.requireNonNullElse(hashLength, DEFAULT_HASH_LENGTH);
     }
 
     public KeyType getKeyType() {
@@ -71,15 +87,17 @@ public class StateKeySchema {
 
     public static class Builder extends AbstractBuilder<StateKeySchema, Builder> {
 
-        private KeyType keyType = KeyType.VARIABLE;
-        private HashLength hashLength = HashLength.INTEGER;
+        private KeyType keyType;
+        private HashLength hashLength;
 
         public Builder() {
         }
 
         public Builder(final StateKeySchema schema) {
-            this.keyType = schema.keyType;
-            this.hashLength = schema.hashLength;
+            if (schema != null) {
+                this.keyType = schema.keyType;
+                this.hashLength = schema.hashLength;
+            }
         }
 
         public Builder keyType(final KeyType keyType) {
@@ -99,9 +117,7 @@ public class StateKeySchema {
 
         @Override
         public StateKeySchema build() {
-            return new StateKeySchema(
-                    keyType,
-                    hashLength);
+            return new StateKeySchema(keyType, hashLength);
         }
     }
 }

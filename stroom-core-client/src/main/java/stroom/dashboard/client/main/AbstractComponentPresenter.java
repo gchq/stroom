@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,18 +12,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.dashboard.client.main;
 
+import stroom.dashboard.client.flexlayout.MutableTabConfig;
 import stroom.dashboard.client.flexlayout.TabLayout;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.TabConfig;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -35,14 +34,16 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
+
 public abstract class AbstractComponentPresenter<V extends View>
         extends MyPresenterWidget<V>
-        implements Component, HasDirtyHandlers {
+        implements Component, HasChangeHandlers {
 
     private final Provider<?> settingsPresenterProvider;
     private TabLayout tabLayout;
     private ComponentConfig componentConfig;
-    private TabConfig tabConfig;
+    private MutableTabConfig tabConfig;
     private SettingsPresenter settingsPresenter;
     private DashboardContext dashboardContext;
     protected boolean designMode;
@@ -94,11 +95,19 @@ public abstract class AbstractComponentPresenter<V extends View>
     }
 
     @Override
-    public void setComponentName(final String name) {
-        componentConfig = componentConfig
-                .copy()
-                .name(name)
-                .build();
+    public final void setComponentName(final String name) {
+        final String originalName = componentConfig.getName();
+        if (!Objects.equals(originalName, name)) {
+            componentConfig = componentConfig
+                    .copy()
+                    .name(name)
+                    .build();
+            // Make sure settings presenter has the latest name.
+            if (settingsPresenter != null) {
+                settingsPresenter.read(componentConfig);
+            }
+            changeSettings();
+        }
     }
 
     @Override
@@ -111,11 +120,10 @@ public abstract class AbstractComponentPresenter<V extends View>
             settingsPresenter.setDashboardContext(dashboardContext);
             settingsPresenter.read(componentConfig);
 
-            final PopupSize popupSize = PopupSize.resizable(800, 650);
+            final PopupSize popupSize = PopupSize.resizable(800, 700);
             ShowPopupEvent.builder(settingsPresenter)
                     .popupType(PopupType.OK_CANCEL_DIALOG)
                     .popupSize(popupSize)
-                    .modal(true)
                     .caption("Settings")
                     .onShow(e -> settingsPresenter.focus())
                     .onHideRequest(e -> {
@@ -145,7 +153,7 @@ public abstract class AbstractComponentPresenter<V extends View>
             tabLayout.refresh();
         }
 
-        setDirty(true);
+        onChange();
     }
 
     @Override
@@ -153,10 +161,8 @@ public abstract class AbstractComponentPresenter<V extends View>
         this.tabLayout = tabLayout;
     }
 
-    public void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
@@ -180,17 +186,17 @@ public abstract class AbstractComponentPresenter<V extends View>
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
     @Override
-    public TabConfig getTabConfig() {
+    public MutableTabConfig getTabConfig() {
         return tabConfig;
     }
 
     @Override
-    public void setTabConfig(final TabConfig tabConfig) {
+    public void setTabConfig(final MutableTabConfig tabConfig) {
         this.tabConfig = tabConfig;
     }
 

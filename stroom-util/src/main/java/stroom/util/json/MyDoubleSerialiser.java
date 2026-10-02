@@ -16,17 +16,16 @@
 
 package stroom.util.json;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
 
-import java.io.IOException;
-
-public class MyDoubleSerialiser extends JsonSerializer<Double> {
+public class MyDoubleSerialiser extends ValueSerializer<Double> {
 
     @Override
-    public void serialize(final Double value, final JsonGenerator gen, final SerializerProvider serializers)
-            throws IOException {
+    public void serialize(final Double value, final JsonGenerator gen, final SerializationContext ctxt)
+            throws JacksonException {
         if (value != null) {
             if (value.compareTo((double) value.longValue()) == 0) {
                 gen.writeNumber(value.longValue());

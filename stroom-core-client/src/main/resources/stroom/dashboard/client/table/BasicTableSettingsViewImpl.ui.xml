@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-             xmlns:g="urn:import:com.google.gwt.user.client.ui" xmlns:i="urn:import:stroom.item.client"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:i="urn:import:stroom.item.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
@@ -31,6 +32,12 @@
         </form:FormGroup>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="showDetail" identity="basicTableSettingsShowGroupDetail" label="Show Group Detail"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsOverrideMaxStringFieldLength" >
+            <tickbox:CustomCheckBox ui:field="overrideMaxStringFieldLength" label="Override Maximum String Field Length"/>
+        </form:FormGroup>
+        <form:FormGroup identity="basicTableSettingsMaxStringFieldLength">
+            <valuespinner:ValueSpinner ui:field="maxStringFieldLength" width="200px"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

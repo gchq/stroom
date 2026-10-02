@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,6 +60,11 @@ public final class TextInputComponentSettings implements ComponentSettings {
             return false;
         }
         final TextInputComponentSettings that = (TextInputComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(key, that.key);
+//        final boolean b2 = Objects.equals(value, that.value);
+
         return Objects.equals(key, that.key) &&
                 Objects.equals(value, that.value);
     }

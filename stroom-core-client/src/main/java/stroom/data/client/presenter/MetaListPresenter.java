@@ -109,7 +109,5 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
                 "Retention",
                 DataRetentionFields.RETENTION_AGE_FIELD,
                 ColumnSizeConstants.SMALL_COL);
-
-        addEndColumn();
     }
 }

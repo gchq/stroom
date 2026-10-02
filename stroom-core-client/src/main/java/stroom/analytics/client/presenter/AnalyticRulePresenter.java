@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.client.presenter;
@@ -20,8 +19,8 @@ package stroom.analytics.client.presenter;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
-import stroom.entity.client.presenter.DocumentEditTabProvider;
+import stroom.entity.client.presenter.DocTabPresenter;
+import stroom.entity.client.presenter.DocTabProvider;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -37,9 +36,10 @@ import java.util.Objects;
 import javax.inject.Provider;
 
 public class AnalyticRulePresenter
-        extends DocumentEditTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
+        extends DocTabPresenter<LinkTabPanelView, AnalyticRuleDoc> {
 
     private static final TabData QUERY = new TabDataImpl("Query");
+    private static final TabData SETTINGS = new TabDataImpl("Settings");
     private static final TabData NOTIFICATIONS = new TabDataImpl("Notifications");
     private static final TabData EXECUTION = new TabDataImpl("Execution");
     private static final TabData SHARDS = new TabDataImpl("Shards");
@@ -48,12 +48,14 @@ public class AnalyticRulePresenter
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
     private final AnalyticQueryEditPresenter analyticQueryEditPresenter;
+    private final AnalyticNotificationPresenter analyticNotificationPresenter;
 
     @Inject
     public AnalyticRulePresenter(final EventBus eventBus,
                                  final LinkTabPanelView view,
                                  final AnalyticQueryEditPresenter analyticQueryEditPresenter,
-                                 final Provider<AnalyticNotificationListPresenter> notificationPresenterProvider,
+                                 final Provider<AnalyticSettingsPresenter> settingsPresenterProvider,
+                                 final Provider<AnalyticNotificationPresenter> notificationPresenterProvider,
                                  final Provider<AnalyticProcessingPresenter> processPresenterProvider,
                                  final Provider<AnalyticDataShardsPresenter> analyticDataShardsPresenterProvider,
                                  final Provider<AnalyticDuplicateManagementPresenter>
@@ -64,16 +66,22 @@ public class AnalyticRulePresenter
         super(eventBus, view);
         this.analyticQueryEditPresenter = analyticQueryEditPresenter;
 
+        // Created up front rather than by the tab provider, as the notifications tab has to be told when the
+        // processing type changes on the execution tab, which can happen before the tab is ever opened.
+        // Assigned before the change handler below is registered, as that handler reads it.
+        this.analyticNotificationPresenter = notificationPresenterProvider.get();
+
         final AnalyticProcessingPresenter analyticProcessingPresenter = processPresenterProvider.get();
         analyticProcessingPresenter.setDocumentEditPresenter(this);
         analyticProcessingPresenter.addChangeDataHandler(e ->
                 setRuleType(analyticProcessingPresenter.getView().getProcessingType()));
 
-        addTab(QUERY, new DocumentEditTabProvider<>(() -> analyticQueryEditPresenter));
-        addTab(NOTIFICATIONS, new DocumentEditTabProvider<>(notificationPresenterProvider::get));
-        addTab(EXECUTION, new DocumentEditTabProvider<>(() -> analyticProcessingPresenter));
-        addTab(SHARDS, new DocumentEditTabProvider<>(analyticDataShardsPresenterProvider::get));
-        addTab(DUPLICATE_MANAGEMENT, new DocumentEditTabProvider<>(duplicateManagementPresenterProvider::get));
+        addTab(QUERY, new DocTabProvider<>(() -> analyticQueryEditPresenter));
+        addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
+        addTab(NOTIFICATIONS, new DocTabProvider<>(() -> analyticNotificationPresenter));
+        addTab(EXECUTION, new DocTabProvider<>(() -> analyticProcessingPresenter));
+        addTab(SHARDS, new DocTabProvider<>(analyticDataShardsPresenterProvider::get));
+        addTab(DUPLICATE_MANAGEMENT, new DocTabProvider<>(duplicateManagementPresenterProvider::get));
         addTab(DOCUMENTATION, new MarkdownTabProvider<AnalyticRuleDoc>(eventBus, markdownEditPresenterProvider) {
             @Override
             public void onRead(final MarkdownEditPresenter presenter,
@@ -118,6 +126,9 @@ public class AnalyticRulePresenter
     private void setRuleType(final AnalyticProcessType analyticProcessType) {
         setTabHidden(SHARDS, analyticProcessType != AnalyticProcessType.TABLE_BUILDER);
         setTabHidden(DUPLICATE_MANAGEMENT, analyticProcessType != AnalyticProcessType.SCHEDULED_QUERY);
+        // Some notification settings only apply to one processing type, so the tab has to know about a change
+        // made on the execution tab.
+        analyticNotificationPresenter.setAnalyticProcessType(analyticProcessType);
     }
 
     @Override

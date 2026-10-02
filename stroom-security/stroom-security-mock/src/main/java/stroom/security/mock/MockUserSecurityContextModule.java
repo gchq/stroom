@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.security.mock;
 
+import stroom.security.api.CommonSecurityContext;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.UserDao;
@@ -48,6 +49,11 @@ public class MockUserSecurityContextModule extends AbstractModule {
     }
 
     @Provides
+    public CommonSecurityContext commonSecurityContext(final SecurityContext securityContext) {
+        return securityContext;
+    }
+
+    @Provides
     public SecurityContext securityContext(final UserDao userDao,
                                            final AppPermissionDao appPermissionDao) {
         return new MockSecurityContext() {
@@ -58,12 +64,12 @@ public class MockUserSecurityContextModule extends AbstractModule {
                     final User user = User.builder()
                             .subjectId(ADMINISTRATORS)
                             .uuid(UUID.randomUUID().toString())
+                            .createUser(ADMIN)
+                            .updateUser(ADMIN)
+                            .createTimeMs(System.currentTimeMillis())
+                            .updateTimeMs(System.currentTimeMillis())
                             .group(true)
                             .build();
-                    user.setCreateUser(ADMIN);
-                    user.setUpdateUser(ADMIN);
-                    user.setCreateTimeMs(System.currentTimeMillis());
-                    user.setUpdateTimeMs(System.currentTimeMillis());
                     final User created = userDao.create(user);
                     appPermissionDao.addPermission(created.getUuid(), AppPermission.ADMINISTRATOR);
                     return created;
@@ -74,12 +80,12 @@ public class MockUserSecurityContextModule extends AbstractModule {
                     final User user = User.builder()
                             .subjectId(ADMIN)
                             .uuid(UUID.randomUUID().toString())
+                            .createUser(ADMIN)
+                            .updateUser(ADMIN)
+                            .createTimeMs(System.currentTimeMillis())
+                            .updateTimeMs(System.currentTimeMillis())
                             .group(false)
                             .build();
-                    user.setCreateUser(ADMIN);
-                    user.setUpdateUser(ADMIN);
-                    user.setCreateTimeMs(System.currentTimeMillis());
-                    user.setUpdateTimeMs(System.currentTimeMillis());
                     final User created = userDao.create(user);
                     userDao.addUserToGroup(created.getUuid(), group.getUuid());
                     LOGGER.info(() -> LogUtil.message("Created user with subjectId: {}, UUID: {}",

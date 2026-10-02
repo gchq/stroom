@@ -1,5 +1,25 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.pipeline.legacy;
 
+import stroom.docstore.shared.DocDataType;
+import stroom.importexport.api.ByteArrayImportExportAsset;
+import stroom.importexport.api.ImportExportAsset;
+import stroom.importexport.api.ImportExportDocument;
 import stroom.util.json.JsonUtil;
 import stroom.util.string.EncodingUtil;
 import stroom.util.xml.XMLMarshallerUtil;
@@ -8,8 +28,6 @@ import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 @Deprecated
 public class PipelineDataMigration {
@@ -28,22 +46,30 @@ public class PipelineDataMigration {
         }
     }
 
-    public boolean migrate(final Map<String, byte[]> data) {
+    public boolean migrate(final ImportExportDocument importExportDocument) {
         try {
-            if (data != null) {
-                final String xml = EncodingUtil.asString(data.remove(XML));
-                if (xml != null) {
-                    final PipelineData pipelineData =
-                            XMLMarshallerUtil.unmarshal(jaxbContext, PipelineData.class, xml);
-                    final String json = JsonUtil.writeValueAsString(pipelineData);
-                    final stroom.pipeline.shared.data.PipelineData newData =
-                            JsonUtil.readValue(json, stroom.pipeline.shared.data.PipelineData.class);
-                    final stroom.pipeline.shared.data.PipelineData cleaned =
-                            new stroom.pipeline.shared.data.PipelineDataBuilder(newData).build();
-                    final String cleanedJson = JsonUtil.writeValueAsString(cleaned);
+            if (importExportDocument != null) {
+                final ImportExportAsset xmlAsset = importExportDocument.removeExtAsset(XML);
+                if (xmlAsset != null) {
+                    final byte[] xmlData = xmlAsset.getInputData();
+                    if (xmlData != null) {
+                        final String xml = EncodingUtil.asString(xmlData);
+                        final PipelineData pipelineData =
+                                XMLMarshallerUtil.unmarshal(jaxbContext, PipelineData.class, xml);
+                        final String json = JsonUtil.writeValueAsString(pipelineData);
+                        final stroom.pipeline.shared.data.PipelineData newData =
+                                JsonUtil.readValue(json, stroom.pipeline.shared.data.PipelineData.class);
+                        final stroom.pipeline.shared.data.PipelineData cleaned =
+                                new stroom.pipeline.shared.data.PipelineDataBuilder(newData).build();
+                        final String cleanedJson = JsonUtil.writeValueAsString(cleaned);
 
-                    data.put(JSON, EncodingUtil.asBytes(cleanedJson));
-                    return true;
+                        final ImportExportAsset migratedAsset = new ByteArrayImportExportAsset(
+                                JSON,
+                                DocDataType.JSON,
+                                EncodingUtil.asBytes(cleanedJson));
+                        importExportDocument.addExtAsset(migratedAsset);
+                        return true;
+                    }
                 }
             }
         } catch (final Exception e) {

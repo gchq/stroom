@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @JsonPropertyOrder({
         "queryId",
@@ -43,10 +44,12 @@ import java.util.Objects;
         "conditionalFormattingRules",
         "modelVersion",
         "visSettings",
-        "applyValueFilters"})
+        "applyValueFilters",
+        "maxStringFieldLength",
+        "overrideMaxStringFieldLength"})
 @JsonInclude(Include.NON_NULL)
 @Schema(description = "An object to describe how the query results should be returned, including which fields " +
-        "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
+                      "should be included and what sorting, grouping, filtering, limiting, etc. should be applied")
 public final class TableSettings {
 
     @Schema(description = "TODO")
@@ -82,25 +85,23 @@ public final class TableSettings {
     private final DocRef extractionPipeline;
 
     @Schema(description = "Defines the maximum number of results to return at each grouping level, e.g. '1000,10,1' " +
-            "means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of this field " +
-            "system defaults will apply",
+                          "means 1000 results at group level 0, 10 at level 1 and 1 at level 2. In the absence of " +
+                          "this field system defaults will apply",
             example = "1000,10,1")
     @JsonProperty
     private final List<Long> maxResults;
 
     @Schema(description = "When grouping is used a value of true indicates that the results will include the full " +
-            "detail of any results aggregated into a group as well as their aggregates. A value of false " +
-            "will only include the aggregated values for each group. Defaults to false.")
+                          "detail of any results aggregated into a group as well as their aggregates. A value of " +
+                          "false will only include the aggregated values for each group. Defaults to false.")
     @JsonProperty
     private final Boolean showDetail;
 
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
+    // Set and used by the UI; serialised on the wire, so it must stay in the OpenAPI spec
+    // (previously @Schema(hidden = true), which wrongly dropped it from generated clients).
     @JsonProperty("conditionalFormattingRules")
     private final List<ConditionalFormattingRule> conditionalFormattingRules;
 
-    @Schema(description = "IGNORE: UI use only",
-            hidden = true)
     @JsonProperty("modelVersion")
     @Deprecated
     private String modelVersion;
@@ -108,7 +109,14 @@ public final class TableSettings {
     @JsonProperty("visSettings")
     private final QLVisSettings visSettings;
     @JsonProperty
+    @Deprecated
     private final Boolean applyValueFilters;
+
+    @JsonProperty
+    private final Integer maxStringFieldLength;
+
+    @JsonProperty
+    private final Boolean overrideMaxStringFieldLength;
 
     public TableSettings(
             final String queryId,
@@ -122,9 +130,10 @@ public final class TableSettings {
             final Boolean showDetail,
             final List<ConditionalFormattingRule> conditionalFormattingRules,
             final QLVisSettings visSettings,
-            final Boolean applyValueFilters) {
+            final Boolean applyValueFilters,
+            final Integer maxStringFieldLength,
+            final Boolean overrideMaxStringFieldLength) {
         this.queryId = queryId;
-        this.fields = columns;
         this.window = window;
         this.valueFilter = valueFilter;
         this.aggregateFilter = aggregateFilter;
@@ -134,7 +143,12 @@ public final class TableSettings {
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.visSettings = visSettings;
-        this.applyValueFilters = applyValueFilters;
+        this.applyValueFilters = null;
+        this.maxStringFieldLength = maxStringFieldLength;
+        this.overrideMaxStringFieldLength = overrideMaxStringFieldLength;
+
+        // Migrate column value filter enabled state.
+        this.fields = migrateColumnValueFilters(columns, applyValueFilters);
     }
 
     @SuppressWarnings("checkstyle:LineLength")
@@ -152,9 +166,10 @@ public final class TableSettings {
             @JsonProperty("conditionalFormattingRules") final List<ConditionalFormattingRule> conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion, // deprecated modelVersion.
             @JsonProperty("visSettings") final QLVisSettings visSettings,
-            @JsonProperty("applyValueFilters") final Boolean applyValueFilters) {
+            @JsonProperty("applyValueFilters") final Boolean applyValueFilters,
+            @JsonProperty("maxStringFieldLength") final Integer maxStringFieldLength,
+            @JsonProperty("overrideMaxStringFieldLength") final Boolean overrideMaxStringFieldLength) {
         this.queryId = queryId;
-        this.fields = fields;
         this.window = window;
         this.valueFilter = valueFilter;
         this.aggregateFilter = aggregateFilter;
@@ -165,7 +180,35 @@ public final class TableSettings {
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
         this.visSettings = visSettings;
-        this.applyValueFilters = applyValueFilters;
+        this.applyValueFilters = null;
+        this.maxStringFieldLength = maxStringFieldLength;
+        this.overrideMaxStringFieldLength = overrideMaxStringFieldLength;
+
+        // Migrate column value filter enabled state.
+        this.fields = migrateColumnValueFilters(fields, applyValueFilters);
+    }
+
+    @Deprecated
+    private List<Column> migrateColumnValueFilters(final List<Column> columns,
+                                                   final Boolean applyValueFilters) {
+        List<Column> cols = columns;
+        if (applyValueFilters != null && columns != null) {
+            cols = fields.stream().map(column -> {
+                final ColumnFilter columnFilter = column.getColumnFilter();
+                if (columnFilter == null) {
+                    return column;
+                }
+                return column
+                        .copy()
+                        .columnFilter(ColumnFilter
+                                .builder()
+                                .filter(columnFilter.getFilter())
+                                .enabled(applyValueFilters)
+                                .build())
+                        .build();
+            }).collect(Collectors.toList());
+        }
+        return cols;
     }
 
     public String getQueryId() {
@@ -226,12 +269,21 @@ public final class TableSettings {
         return visSettings;
     }
 
+    @Deprecated
     public Boolean getApplyValueFilters() {
         return applyValueFilters;
     }
 
-    public boolean applyValueFilters() {
-        return applyValueFilters == Boolean.TRUE;
+    public Integer getMaxStringFieldLength() {
+        return maxStringFieldLength;
+    }
+
+    public Boolean getOverrideMaxStringFieldLength() {
+        return overrideMaxStringFieldLength;
+    }
+
+    public boolean overrideMaxStringFieldLength() {
+        return overrideMaxStringFieldLength == Boolean.TRUE;
     }
 
     @Override
@@ -244,18 +296,20 @@ public final class TableSettings {
         }
         final TableSettings that = (TableSettings) o;
         return Objects.equals(queryId, that.queryId) &&
-                Objects.equals(fields, that.fields) &&
-                Objects.equals(window, that.window) &&
-                Objects.equals(valueFilter, that.valueFilter) &&
-                Objects.equals(aggregateFilter, that.aggregateFilter) &&
-                Objects.equals(extractValues, that.extractValues) &&
-                Objects.equals(extractionPipeline, that.extractionPipeline) &&
-                Objects.equals(maxResults, that.maxResults) &&
-                Objects.equals(showDetail, that.showDetail) &&
-                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
-                Objects.equals(modelVersion, that.modelVersion) &&
-                Objects.equals(visSettings, that.visSettings) &&
-                Objects.equals(applyValueFilters, that.applyValueFilters);
+               Objects.equals(fields, that.fields) &&
+               Objects.equals(window, that.window) &&
+               Objects.equals(valueFilter, that.valueFilter) &&
+               Objects.equals(aggregateFilter, that.aggregateFilter) &&
+               Objects.equals(extractValues, that.extractValues) &&
+               Objects.equals(extractionPipeline, that.extractionPipeline) &&
+               Objects.equals(maxResults, that.maxResults) &&
+               Objects.equals(showDetail, that.showDetail) &&
+               Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
+               Objects.equals(modelVersion, that.modelVersion) &&
+               Objects.equals(visSettings, that.visSettings) &&
+               Objects.equals(applyValueFilters, that.applyValueFilters) &&
+               Objects.equals(maxStringFieldLength, that.maxStringFieldLength) &&
+               Objects.equals(overrideMaxStringFieldLength, that.overrideMaxStringFieldLength);
     }
 
     @Override
@@ -273,24 +327,28 @@ public final class TableSettings {
                 conditionalFormattingRules,
                 modelVersion,
                 visSettings,
-                applyValueFilters);
+                applyValueFilters,
+                maxStringFieldLength,
+                overrideMaxStringFieldLength);
     }
 
     @Override
     public String toString() {
         return "TableSettings{" +
-                "queryId='" + queryId + '\'' +
-                ", columns=" + fields +
-                ", window=" + window +
-                ", filter=" + aggregateFilter +
-                ", extractValues=" + extractValues +
-                ", extractionPipeline=" + extractionPipeline +
-                ", maxResults=" + maxResults +
-                ", showDetail=" + showDetail +
-                ", conditionalFormattingRules=" + conditionalFormattingRules +
-                ", visSettings=" + visSettings +
-                ", applyValueFilters='" + applyValueFilters + '\'' +
-                '}';
+               "queryId='" + queryId + '\'' +
+               ", columns=" + fields +
+               ", window=" + window +
+               ", filter=" + aggregateFilter +
+               ", extractValues=" + extractValues +
+               ", extractionPipeline=" + extractionPipeline +
+               ", maxResults=" + maxResults +
+               ", showDetail=" + showDetail +
+               ", conditionalFormattingRules=" + conditionalFormattingRules +
+               ", visSettings=" + visSettings +
+               ", applyValueFilters='" + applyValueFilters + '\'' +
+               ", maxStringFieldLength=" + maxStringFieldLength +
+               ", overrideMaxStringFieldLength=" + overrideMaxStringFieldLength +
+               '}';
     }
 
     public static Builder builder() {
@@ -318,6 +376,8 @@ public final class TableSettings {
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private QLVisSettings visSettings;
         private Boolean applyValueFilters;
+        private Integer maxStringFieldLength;
+        private Boolean overrideMaxStringFieldLength;
 
         private Builder() {
         }
@@ -341,6 +401,8 @@ public final class TableSettings {
                     : new ArrayList<>(tableSettings.getConditionalFormattingRules());
             this.visSettings = tableSettings.visSettings;
             this.applyValueFilters = tableSettings.applyValueFilters;
+            this.maxStringFieldLength = tableSettings.maxStringFieldLength;
+            this.overrideMaxStringFieldLength = tableSettings.overrideMaxStringFieldLength;
         }
 
         /**
@@ -480,8 +542,13 @@ public final class TableSettings {
             return this;
         }
 
-        public Builder applyValueFilters(final Boolean applyValueFilters) {
-            this.applyValueFilters = applyValueFilters;
+        public Builder maxStringFieldLength(final Integer maxStringFieldLength) {
+            this.maxStringFieldLength = maxStringFieldLength;
+            return this;
+        }
+
+        public Builder overrideMaxStringFieldLength(final Boolean overrideMaxStringFieldLength) {
+            this.overrideMaxStringFieldLength = overrideMaxStringFieldLength;
             return this;
         }
 
@@ -498,7 +565,9 @@ public final class TableSettings {
                     showDetail,
                     conditionalFormattingRules,
                     visSettings,
-                    applyValueFilters);
+                    applyValueFilters,
+                    maxStringFieldLength,
+                    overrideMaxStringFieldLength);
         }
     }
 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.solr.search;
 
 import stroom.util.shared.AbstractConfig;
@@ -7,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
 
 
 @JsonPropertyOrder(alphabetic = true)
@@ -31,10 +49,12 @@ public class SolrSearchConfig extends AbstractConfig implements IsStroomConfig {
 
     @SuppressWarnings("unused")
     @JsonCreator
-    public SolrSearchConfig(@JsonProperty("maxStoredDataQueueSize") final int maxStoredDataQueueSize,
-                            @JsonProperty("maxBooleanClauseCount") final int maxBooleanClauseCount) {
-        this.maxStoredDataQueueSize = maxStoredDataQueueSize;
-        this.maxBooleanClauseCount = maxBooleanClauseCount;
+    public SolrSearchConfig(@JsonProperty("maxStoredDataQueueSize") final Integer maxStoredDataQueueSize,
+                            @JsonProperty("maxBooleanClauseCount") final Integer maxBooleanClauseCount) {
+        this.maxStoredDataQueueSize =
+                Objects.requireNonNullElse(maxStoredDataQueueSize, DEFAULT_MAX_STORED_DATA_QUEUE_SIZE);
+        this.maxBooleanClauseCount =
+                Objects.requireNonNullElse(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index " +

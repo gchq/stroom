@@ -22,16 +22,15 @@ import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 
-import com.google.inject.Inject;
-
 public class PipelineElementBoxFactory {
 
-    @Inject
-    public PipelineElementBoxFactory() {
+    private final PipelineModel pipelineModel;
+
+    public PipelineElementBoxFactory(final PipelineModel pipelineModel) {
+        this.pipelineModel = pipelineModel;
     }
 
-    public PipelineElementBox create(final PipelineModel pipelineModel,
-                                     final PipelineElement pipelineElement) {
+    public PipelineElementBox create(final PipelineElement pipelineElement) {
         final SvgImage icon = NullSafe.get(pipelineModel.getElementType(pipelineElement), PipelineElementType::getIcon);
         return new PipelineElementBox(pipelineModel, pipelineElement, icon);
     }

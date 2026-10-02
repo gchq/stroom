@@ -1,4 +1,20 @@
 #!/usr/bin/env bash
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 set -euo pipefail
 IFS=$'\n\t'
 
@@ -31,7 +47,7 @@ run_db_migration() {
   echo -e "${GREEN}Running database migration${NC}"
 
   # DB is in a sibling container so need to force it to use the IP instead of localhost
-  export STROOM_JDBC_DRIVER_URL="jdbc:mysql://${host_ip}:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+  export STROOM_JDBC_DRIVER_URL="jdbc:mysql://${host_ip}:3307/${MYSQL_DB:-stroom}?useUnicode=yes&characterEncoding=UTF-8"
   java \
     -jar \
     ./stroom-app/build/libs/stroom-app-all.jar \
@@ -101,7 +117,7 @@ main() {
 
   echo -e "${GREEN}Running image ${BLUE}${image_tag}${NC}"
 
-  # For this to work stroom-all-dbs must be running in docker and 
+  # For this to work stroom-all-dbs must be running in docker and
   # the migration must have been run to populate it with the tables
 
   # The image will dump the puml to stdout

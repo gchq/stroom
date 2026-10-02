@@ -1,0 +1,50 @@
+{
+  "elements" : {
+    "add" : [ {
+      "id" : "Source",
+      "type" : "Source"
+    }, {
+      "id" : "streamAppender1",
+      "type" : "StreamAppender"
+    }, {
+      "id" : "streamAppender2",
+      "type" : "StreamAppender"
+    }, {
+      "id" : "streamAppender3",
+      "type" : "StreamAppender"
+    } ]
+  },
+  "properties" : {
+    "add" : [ {
+      "element" : "streamAppender1",
+      "name" : "streamType",
+      "value" : {
+        "string" : "Test Events"
+      }
+    }, {
+      "element" : "streamAppender2",
+      "name" : "streamType",
+      "value" : {
+        "string" : "Test Events"
+      }
+    }, {
+      "element" : "streamAppender3",
+      "name" : "streamType",
+      "value" : {
+        "string" : "Test Events"
+      }
+    } ]
+  },
+  "links" : {
+    "add" : [ {
+      "from" : "Source",
+      "to" : "streamAppender1"
+    }, {
+      "from" : "Source",
+      "to" : "streamAppender2"
+    }, {
+      "from" : "Source",
+      "to" : "streamAppender3"
+    } ]
+  }
+}

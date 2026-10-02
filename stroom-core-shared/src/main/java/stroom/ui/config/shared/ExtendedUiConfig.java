@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,10 @@
 
 package stroom.ui.config.shared;
 
+import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.security.shared.HashAlgorithm;
 import stroom.util.shared.NotInjectableConfig;
+import stroom.util.shared.collection.GwtCollectionUtil;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -39,6 +41,8 @@ import java.util.Set;
 @JsonInclude(Include.NON_NULL)
 public class ExtendedUiConfig {
 
+    private static final long DEFAULT_MAX_API_KEY_EXPIRY_AGE_MS = 365L * 24 * 60 * 60 * 1_000;
+
     @JsonProperty
     @JsonPropertyDescription("Whether authentication is provided by an external Open ID Connect identity " +
                              "provider or not")
@@ -58,25 +62,63 @@ public class ExtendedUiConfig {
     @JsonPropertyDescription("The maximum expiry age for new API keys in millis. Defaults to 365 days.")
     private final long maxApiKeyExpiryAgeMs;
 
+    @JsonProperty
+    @JsonPropertyDescription("The set of fields used in data receipt policy checking whose values are obfuscated " +
+                             "when sent to a proxy.")
+    private final Set<String> obfuscatedFields;
+
+    @JsonProperty
+    @JsonPropertyDescription(
+            "The type of check performed on received data.")
+    private final ReceiptCheckMode receiptCheckMode;
+
+    @JsonProperty
+    @JsonPropertyDescription(
+            "The last time an annotation was updated.")
+    private final long lastAnnotationChangeTime;
 
     public ExtendedUiConfig() {
         this.externalIdentityProvider = false;
         this.uiConfig = new UiConfig();
         this.dependencyWarningsEnabled = false;
-        this.maxApiKeyExpiryAgeMs = 365L * 24 * 60 * 60 * 1_000;
+        this.maxApiKeyExpiryAgeMs = DEFAULT_MAX_API_KEY_EXPIRY_AGE_MS;
+        // This set of values comes from
+        // stroom.receive.rules.impl.StroomReceiptPolicyConfig.DEFAULT_OBFUSCATED_FIELDS,
+        // and it MUST be in alphabetic order.
+        this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(
+                "AccountId",
+                "AccountName",
+                "Component",
+                "Feed",
+                "ReceivedPath",
+                "RemoteDN",
+                "RemoteHost",
+                "System",
+                "UploadUsername",
+                "UploadUserId",
+                "X-Forwarded-For");
+        this.receiptCheckMode = ReceiptCheckMode.getDefault();
+        this.lastAnnotationChangeTime = 0;
     }
 
     @JsonCreator
     public ExtendedUiConfig(
             @JsonProperty("uiConfig") final UiConfig uiConfig,
-            @JsonProperty("externalIdentityProvider") final boolean externalIdentityProvider,
-            @JsonProperty("dependencyWarningsEnabled") final boolean dependencyWarningsEnabled,
-            @JsonProperty("maxApiKeyExpiryAgeMs") final long maxApiKeyExpiryAgeMs) {
+            @JsonProperty("externalIdentityProvider") final Boolean externalIdentityProvider,
+            @JsonProperty("dependencyWarningsEnabled") final Boolean dependencyWarningsEnabled,
+            @JsonProperty("maxApiKeyExpiryAgeMs") final Long maxApiKeyExpiryAgeMs,
+            @JsonProperty("obfuscatedFields") final Set<String> obfuscatedFields,
+            @JsonProperty("receiptCheckMode") final ReceiptCheckMode receiptCheckMode,
+            @JsonProperty("lastAnnotationChangeTime") final Long lastAnnotationChangeTime) {
 
         this.uiConfig = uiConfig;
-        this.externalIdentityProvider = externalIdentityProvider;
-        this.dependencyWarningsEnabled = dependencyWarningsEnabled;
-        this.maxApiKeyExpiryAgeMs = maxApiKeyExpiryAgeMs;
+        this.externalIdentityProvider = Objects.requireNonNullElse(externalIdentityProvider, false);
+        this.dependencyWarningsEnabled = Objects.requireNonNullElse(dependencyWarningsEnabled, false);
+        this.maxApiKeyExpiryAgeMs = Objects.requireNonNullElse(maxApiKeyExpiryAgeMs, DEFAULT_MAX_API_KEY_EXPIRY_AGE_MS);
+        // Ensures serialisation tests work
+        this.obfuscatedFields = GwtCollectionUtil.asUnmodifiabledConsistentOrderSet(obfuscatedFields);
+        this.receiptCheckMode = Objects.requireNonNullElse(receiptCheckMode, ReceiptCheckMode.getDefault());
+        this.lastAnnotationChangeTime = Objects.requireNonNullElse(lastAnnotationChangeTime, 0L);
     }
 
     public UiConfig getUiConfig() {
@@ -257,6 +299,18 @@ public class ExtendedUiConfig {
         return maxApiKeyExpiryAgeMs;
     }
 
+    public Set<String> getObfuscatedFields() {
+        return obfuscatedFields;
+    }
+
+    public ReceiptCheckMode getReceiptCheckMode() {
+        return receiptCheckMode;
+    }
+
+    public long getLastAnnotationChangeTime() {
+        return lastAnnotationChangeTime;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -266,13 +320,24 @@ public class ExtendedUiConfig {
             return false;
         }
         final ExtendedUiConfig that = (ExtendedUiConfig) o;
-        return externalIdentityProvider == that.externalIdentityProvider && Objects.equals(uiConfig,
-                that.uiConfig);
+        return externalIdentityProvider == that.externalIdentityProvider
+               && dependencyWarningsEnabled == that.dependencyWarningsEnabled
+               && maxApiKeyExpiryAgeMs == that.maxApiKeyExpiryAgeMs
+               && Objects.equals(uiConfig, that.uiConfig)
+               && Objects.equals(obfuscatedFields, that.obfuscatedFields)
+               && Objects.equals(receiptCheckMode, that.receiptCheckMode)
+               && Objects.equals(lastAnnotationChangeTime, that.lastAnnotationChangeTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uiConfig, externalIdentityProvider);
+        return Objects.hash(uiConfig,
+                externalIdentityProvider,
+                dependencyWarningsEnabled,
+                maxApiKeyExpiryAgeMs,
+                obfuscatedFields,
+                receiptCheckMode,
+                lastAnnotationChangeTime);
     }
 
     @Override
@@ -280,6 +345,11 @@ public class ExtendedUiConfig {
         return "ExtendedUiConfig{" +
                "uiConfig=" + uiConfig +
                ", externalIdentityProvider=" + externalIdentityProvider +
+               ", dependencyWarningsEnabled=" + dependencyWarningsEnabled +
+               ", maxApiKeyExpiryAgeMs=" + maxApiKeyExpiryAgeMs +
+               ", obfuscatedFields=" + obfuscatedFields +
+               ", receiptCheckMode=" + receiptCheckMode +
+               ", lastAnnotationChangeTime=" + lastAnnotationChangeTime +
                '}';
     }
 }

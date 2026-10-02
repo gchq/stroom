@@ -6,5 +6,8 @@
         <form:FormGroup identity="annotationTagName" label="Name">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
+        <form:FormGroup ui:field="tagTextGroup" identity="annotationTagText" addStyleNames="annotationTag-tagTextGroup">
+            <g:TextArea ui:field="tagText" addStyleNames="w-100"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

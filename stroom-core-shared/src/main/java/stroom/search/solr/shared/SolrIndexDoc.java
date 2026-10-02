@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,12 @@ package stroom.search.solr.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.query.api.ExpressionOperator;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -63,7 +62,7 @@ import java.util.Objects;
         "retentionExpression"
 })
 @JsonInclude(Include.NON_NULL)
-public class SolrIndexDoc extends Doc {
+public class SolrIndexDoc extends AbstractDoc {
 
     public static final String TYPE = "SolrIndex";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.SOLR_INDEX_DOCUMENT_TYPE;
@@ -71,40 +70,29 @@ public class SolrIndexDoc extends Doc {
     private static final String DEFAULT_TIME_FIELD = "EventTime";
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String collection;
+    private final String collection;
     @JsonProperty
-    private SolrConnectionConfig solrConnectionConfig;
+    private final SolrConnectionConfig solrConnectionConfig;
 
     @JsonProperty
-    private List<SolrIndexField> fields;
+    private final List<SolrIndexField> fields;
     @JsonProperty
-    private String timeField;
+    private final String timeField;
 
     @JsonProperty
-    private DocRef defaultExtractionPipeline;
+    private final DocRef defaultExtractionPipeline;
     @JsonProperty
-    private List<SolrIndexField> deletedFields;
+    private final List<SolrIndexField> deletedFields;
     @JsonProperty
-    private SolrSynchState solrSynchState;
+    private final SolrSynchState solrSynchState;
 
     @JsonProperty
-    private ExpressionOperator retentionExpression;
-
-    public SolrIndexDoc() {
-        solrConnectionConfig = new SolrConnectionConfig();
-
-        fields = new ArrayList<>();
-        // Always add standard id fields for now.
-        fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
-        fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
-        timeField = DEFAULT_TIME_FIELD;
-    }
+    private final ExpressionOperator retentionExpression;
 
     @JsonCreator
-    public SolrIndexDoc(@JsonProperty("type") final String type,
-                        @JsonProperty("uuid") final String uuid,
+    public SolrIndexDoc(@JsonProperty("uuid") final String uuid,
                         @JsonProperty("name") final String name,
                         @JsonProperty("version") final String version,
                         @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -120,26 +108,28 @@ public class SolrIndexDoc extends Doc {
                         @JsonProperty("deletedFields") final List<SolrIndexField> deletedFields,
                         @JsonProperty("solrSynchState") final SolrSynchState solrSynchState,
                         @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
-        this.collection = collection;
-        this.solrConnectionConfig = solrConnectionConfig;
-        this.fields = fields;
+        if (collection == null || collection.trim().length() == 0) {
+            this.collection = null;
+        } else {
+            this.collection = collection;
+        }
+        this.solrConnectionConfig = Objects.requireNonNullElse(
+                solrConnectionConfig,
+                SolrConnectionConfig.builder().build());
+        this.fields = Objects.requireNonNullElseGet(fields, () -> {
+            final List<SolrIndexField> list = new ArrayList<>();
+            // Always add standard id fields for now.
+            list.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
+            list.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+            return list;
+        });
         this.timeField = timeField;
         this.defaultExtractionPipeline = defaultExtractionPipeline;
         this.deletedFields = deletedFields;
         this.solrSynchState = solrSynchState;
         this.retentionExpression = retentionExpression;
-
-        if (this.solrConnectionConfig == null) {
-            this.solrConnectionConfig = new SolrConnectionConfig();
-        }
-        if (this.fields == null) {
-            this.fields = new ArrayList<>();
-            // Always add standard id fields for now.
-            this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
-            this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
-        }
     }
 
     /**
@@ -162,80 +152,36 @@ public class SolrIndexDoc extends Doc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getCollection() {
-        if (collection == null || collection.trim().length() == 0) {
-            return null;
-        }
         return collection;
-    }
-
-    public void setCollection(final String collection) {
-        this.collection = collection;
     }
 
     public SolrConnectionConfig getSolrConnectionConfig() {
         return solrConnectionConfig;
     }
 
-    public void setSolrConnectionConfig(final SolrConnectionConfig solrConnectionConfig) {
-        this.solrConnectionConfig = solrConnectionConfig;
-    }
-
     public List<SolrIndexField> getFields() {
         return fields;
-    }
-
-    public void setFields(final List<SolrIndexField> fields) {
-        this.fields = fields;
     }
 
     public String getTimeField() {
         return timeField;
     }
 
-    public void setTimeField(final String timeField) {
-        this.timeField = timeField;
-    }
-
     public DocRef getDefaultExtractionPipeline() {
         return defaultExtractionPipeline;
-    }
-
-    public void setDefaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
-        this.defaultExtractionPipeline = defaultExtractionPipeline;
     }
 
     public List<SolrIndexField> getDeletedFields() {
         return deletedFields;
     }
 
-    public void setDeletedFields(final List<SolrIndexField> deletedFields) {
-        this.deletedFields = deletedFields;
-    }
-
     public SolrSynchState getSolrSynchState() {
         return solrSynchState;
     }
 
-    public void setSolrSynchState(final SolrSynchState solrSynchState) {
-        this.solrSynchState = solrSynchState;
-    }
-
     public ExpressionOperator getRetentionExpression() {
         return retentionExpression;
-    }
-
-    public void setRetentionExpression(final ExpressionOperator retentionExpression) {
-        this.retentionExpression = retentionExpression;
-    }
-
-    @JsonIgnore
-    public final String getType() {
-        return TYPE;
     }
 
     @Override
@@ -279,5 +225,116 @@ public class SolrIndexDoc extends Doc {
                ", timeField=" + timeField +
                ", defaultExtractionPipeline=" + defaultExtractionPipeline +
                '}';
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractBuilder<SolrIndexDoc, Builder> {
+
+        private String description;
+        private String collection;
+        private SolrConnectionConfig solrConnectionConfig = SolrConnectionConfig.builder().build();
+        private List<SolrIndexField> fields = new ArrayList<>();
+        private String timeField = DEFAULT_TIME_FIELD;
+        private DocRef defaultExtractionPipeline;
+        private List<SolrIndexField> deletedFields;
+        private SolrSynchState solrSynchState;
+        private ExpressionOperator retentionExpression;
+
+        private Builder() {
+            // Always add standard id fields for now.
+            fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
+            fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+        }
+
+        private Builder(final SolrIndexDoc solrIndexDoc) {
+            super(solrIndexDoc);
+            this.description = solrIndexDoc.description;
+            this.collection = solrIndexDoc.collection;
+            this.solrConnectionConfig = solrIndexDoc.solrConnectionConfig;
+            this.fields = solrIndexDoc.fields;
+            this.timeField = solrIndexDoc.timeField;
+            this.defaultExtractionPipeline = solrIndexDoc.defaultExtractionPipeline;
+            this.deletedFields = solrIndexDoc.deletedFields;
+            this.solrSynchState = solrIndexDoc.solrSynchState;
+            this.retentionExpression = solrIndexDoc.retentionExpression;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder collection(final String collection) {
+            this.collection = collection;
+            return self();
+        }
+
+        public Builder solrConnectionConfig(final SolrConnectionConfig solrConnectionConfig) {
+            this.solrConnectionConfig = solrConnectionConfig;
+            return self();
+        }
+
+        public Builder fields(final List<SolrIndexField> fields) {
+            this.fields = fields;
+            return self();
+        }
+
+        public Builder timeField(final String timeField) {
+            this.timeField = timeField;
+            return self();
+        }
+
+        public Builder defaultExtractionPipeline(final DocRef defaultExtractionPipeline) {
+            this.defaultExtractionPipeline = defaultExtractionPipeline;
+            return self();
+        }
+
+        public Builder deletedFields(final List<SolrIndexField> deletedFields) {
+            this.deletedFields = deletedFields;
+            return self();
+        }
+
+        public Builder solrSynchState(final SolrSynchState solrSynchState) {
+            this.solrSynchState = solrSynchState;
+            return self();
+        }
+
+        public Builder retentionExpression(final ExpressionOperator retentionExpression) {
+            this.retentionExpression = retentionExpression;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public SolrIndexDoc build() {
+            return new SolrIndexDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    collection,
+                    solrConnectionConfig,
+                    fields,
+                    timeField,
+                    defaultExtractionPipeline,
+                    deletedFields,
+                    solrSynchState,
+                    retentionExpression);
+        }
     }
 }

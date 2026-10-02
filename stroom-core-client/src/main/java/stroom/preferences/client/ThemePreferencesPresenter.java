@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,18 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.preferences.client;
 
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.preferences.client.ThemePreferencesPresenter.ThemePreferencesView;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -34,10 +32,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class ThemePreferencesPresenter
         extends MyPresenterWidget<ThemePreferencesView>
-        implements DirtyUiHandlers, HasDirtyHandlers {
+        implements ChangeUiHandlers, HasChangeHandlers {
 
     private final UserPreferencesManager userPreferencesManager;
 
@@ -52,16 +51,8 @@ public final class ThemePreferencesPresenter
     }
 
     @Override
-    public void onDirty() {
-        DirtyEvent.fire(this, true);
-
-//        UserPreferences after = write();
-//
-//        userPreferencesManager.setCurrentPreferences(after);
-//
-//        GWT.log("theme: " + userPreferencesManager.getCurrentPreferences().getTheme()
-//                + " editorTheme: " + userPreferencesManager.getCurrentPreferences().getEditorTheme());
-//        triggerThemeChange(userPreferencesManager.getCurrentPreferences());
+    public void onChange() {
+        ChangeEvent.fire(this);
     }
 //
 //    private void triggerThemeChange(final CurrentPreferences currentPreferences) {
@@ -79,9 +70,9 @@ public final class ThemePreferencesPresenter
         getView().setFont(userPreferences.getFont());
         getView().setFontSize(userPreferences.getFontSize());
         getView().setEnableTransparency(
-                NullSafe.requireNonNullElse(userPreferences.getEnableTransparency(), true));
+                Objects.requireNonNullElse(userPreferences.getEnableTransparency(), true));
         getView().setHideConditionalStyles(
-                NullSafe.requireNonNullElse(userPreferences.getHideConditionalStyles(), false));
+                Objects.requireNonNullElse(userPreferences.getHideConditionalStyles(), false));
     }
 
     public void write(final UserPreferences.Builder builder) {
@@ -95,15 +86,15 @@ public final class ThemePreferencesPresenter
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    public interface ThemePreferencesView extends View, Focus, HasUiHandlers<DirtyUiHandlers> {
+    public interface ThemePreferencesView extends View, Focus, HasUiHandlers<ChangeUiHandlers> {
 
         String getTheme();
 

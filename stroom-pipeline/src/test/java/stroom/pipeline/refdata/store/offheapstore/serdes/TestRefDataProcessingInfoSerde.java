@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -52,15 +51,15 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void testUpdateState() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.COMPLETE);
 
         doByteBufferModificationTest(
@@ -74,15 +73,15 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void testUpdateLastAccessedTime() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
-                1,
-                123,
-                1,
+                1L,
+                123L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
         doByteBufferModificationTest(
@@ -95,15 +94,15 @@ class TestRefDataProcessingInfoSerde extends AbstractSerdeTest<RefDataProcessing
     @Test
     void testUpdateLastAccessedTimeAndState() {
         final RefDataProcessingInfo input = new RefDataProcessingInfo(
-                1,
-                1,
-                1,
+                1L,
+                1L,
+                1L,
                 ProcessingState.LOAD_IN_PROGRESS);
 
         final RefDataProcessingInfo expectedOutput = new RefDataProcessingInfo(
-                1,
-                123,
-                1,
+                1L,
+                123L,
+                1L,
                 ProcessingState.COMPLETE);
 
         doByteBufferModificationTest(

@@ -34,6 +34,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A {@link Cell} used to render a drop-down list.
@@ -42,7 +43,7 @@ public class ItemCell<V extends HasDisplayValue> extends AbstractInputCell<V, V>
 
     private static Template template;
     private final List<V> options;
-    private final HashMap<V, Integer> indexForOption = new HashMap<>();
+    private final Map<V, Integer> indexForOption = new HashMap<>();
 
     /**
      * Construct a new {@link SelectionCell} with the specified options.

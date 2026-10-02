@@ -22,54 +22,50 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"width", "height"})
 @JsonInclude(Include.NON_NULL)
 public class Size {
 
     @JsonProperty("width")
-    private int width;
+    private final int width;
     @JsonProperty("height")
-    private int height;
-
-    public Size() {
-    }
+    private final int height;
 
     @JsonCreator
-    public Size(@JsonProperty("width") final int width,
-                @JsonProperty("height") final int height) {
-        this.width = width;
-        this.height = height;
+    public Size(@JsonProperty("width") final Integer width,
+                @JsonProperty("height") final Integer height) {
+        this.width = Objects.requireNonNullElse(width, 0);
+        this.height = Objects.requireNonNullElse(height, 0);
     }
 
     public int getWidth() {
         return width;
     }
 
-    public void setWidth(final int width) {
-        this.width = width;
-    }
-
     public int getHeight() {
         return height;
     }
 
-    public void setHeight(final int height) {
-        this.height = height;
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final Size size = (Size) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = width == size.width;
+//        final boolean b2 = height == size.height;
+
+        return width == size.width &&
+               height == size.height;
     }
 
-    public void set(final int dimension, final int size) {
-        if (dimension == 0) {
-            width = size;
-        } else {
-            height = size;
-        }
-    }
-
-    public int get(final int dimension) {
-        if (dimension == 0) {
-            return width;
-        }
-        return height;
+    @Override
+    public int hashCode() {
+        return Objects.hash(width, height);
     }
 
     @Override

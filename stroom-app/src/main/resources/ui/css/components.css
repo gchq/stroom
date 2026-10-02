@@ -422,6 +422,7 @@
 .userRefLinkOpen,
 .docRefLinkCopy,
 .docRefLinkOpen,
+.docRefLinkInsert,
 .commandLinkOpen {
     cursor: pointer;
 }
@@ -552,7 +553,7 @@
 
 .curveTabLayoutViewImpl-tabBarOuter {
     height: 33px;
-    margin-right: 62px;
+    margin-right: 95px;
     flex-grow: 1;
 }
 
@@ -1028,6 +1029,27 @@
     float: left;
 }
 
+.inline-label-icon {
+   display: flex;
+   align-items: center;
+   overflow: hidden;
+   gap: 5px;
+}
+
+.inline-label-icon > .gwt-Label {
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   width: auto;
+}
+
+.copyNameIcon {
+}
+
+.copyNameIcon svg {
+    color: var(--text-color);
+}
+
 .globalPropertyEditViewImpl-textArea {
     width: 100%;
     height: 100px;
@@ -1093,6 +1115,12 @@
 
 .editExpressionViewImpl-expressionTree {
     padding-left: 5px;
+}
+
+/* Docked AI panel styles */
+.mainViewImpl-outerSplitPanel {
+    width: 100%;
+    height: 100%;
 }
 
 .columnFunctionEditorViewImpl {
@@ -1242,28 +1270,38 @@
 
 
 
+.mainViewImpl-contentWrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
 .mainViewImpl-contentPanel {
     width: 100%;
     height: 100%;
     overflow: hidden;
 }
 
-.mainViewImpl-menu {
+.mainToolbar {
     position: absolute;
     top: 0;
-    right: 2px;
+    right: 0px;
+    z-index: 1;
+    padding: 1px;
+    display: flex;
+    gap: 0px;
+    align-items: center;
+}
+
+.mainViewImpl-menu {
     width: 32px;
     height: 32px;
-    z-index: 1;
 }
 
 .mainViewImpl-spinner {
-    position: absolute;
-    top: 5px;
-    right: 36px;
     width: 22px;
     height: 22px;
-    z-index: 1;
 }
 
 .userTaskManagerViewImpl-layout {
@@ -1605,7 +1643,6 @@ button.main-menu svg {
 
     display: flex;
     align-items: center;
-    height: 33px;
     justify-content: center;
 }
 
@@ -1849,6 +1886,7 @@ button.main-menu svg {
     width: 16px;
     height: 16px;
     /* margin-bottom: 0.6em; */
+    color: var(--navigation-icon-button__color);
 }
 
 .form-heading {
@@ -1932,6 +1970,10 @@ button.main-menu svg {
     font-weight: bold;
     font-size: 125%;
     padding-bottom: 0.3em;
+}
+
+.infoTable td {
+    vertical-align: middle;
 }
 
 /* Make headers after the first add padding before */
@@ -2066,22 +2108,44 @@ button.main-menu svg {
     color: var(--text-color--disabled) ;
 }
 
+.messageContainer {
+    padding: 10px 0px
+}
+
 .listContainer {
     overflow: auto;
 }
 
-.find-topBar {
-    position: relative;
+.FindViewImpl {
+    gap: var(--control__gap--vertical);
 }
 
-.find-topBar .gwt-TextArea {
+.FindViewImpl--dialog {
+
+}
+
+.FindViewImpl-top {
+    position: relative;
+    padding: var(--control__padding--vertical) var(--control__padding--horizontal) 0 var(--control__padding--horizontal);
+}
+
+.FindViewImpl--dialog .FindViewImpl-top {
+    padding: 0;
+}
+
+.FindViewImpl-top .gwt-TextArea {
     /* Single line */
     height: 2.1rem;
 }
 
-.find-topBar .gwt-TextArea.multiLine {
+.FindViewImpl-top .gwt-TextArea.multiLine {
     /* Multi line */
     height: 6.3rem;
+}
+
+.FindViewImpl-bottom {
+    position: relative;
+    overflow: hidden;
 }
 
 .find-buttons {
@@ -2099,13 +2163,32 @@ button.main-menu svg {
     table-layout: fixed;
 }
 
+.FindCellTable tr:nth-child(even) {
+    background-color: var(--row__background-color--even);
+}
+.FindCellTable tr:nth-child(odd) {
+    background-color: var(--row__background-color--odd);
+}
+.FindCellTable tr:nth-child(even):hover,
+.FindCellTable tr:nth-child(odd):hover {
+    background-color: var(--row__background-color--hovered);
+}
+.FindCellTable tr:nth-child(even).cellTableSelectedRow,
+.FindCellTable tr:nth-child(odd).cellTableSelectedRow {
+	background-color: var(--row__background-color--selected);
+	color: var(--row__text-color--selected);
+}
+.FindCellTable tr:nth-child(even).cellTableSelectedRow:hover,
+.FindCellTable tr:nth-child(odd).cellTableSelectedRow:hover {
+    background-color: var(--row__background-color--selected--hovered);
+}
+
 .findCell {
 }
 
 .findCell-row {
 	display: flex;
 	flex-direction: column;
-	margin-bottom: 0.5em;
 }
 
 .findCell-main {
@@ -2188,6 +2271,7 @@ button.main-menu svg {
     padding: .1rem;
 }
 
+.findCell-tags,
 .findCell-path {
     display: flex;
     font-size: .7rem;
@@ -2316,6 +2400,7 @@ button.main-menu svg {
 
 .duration-picker {
     display: flex;
+    width: 200px;
 }
 
 .editNodeTagsAllTagsFrmGrp,
@@ -2443,10 +2528,6 @@ button.main-menu svg {
 }
 
 .ColumnValuesFilterViewImpl {
-    min-width: 200px;
-    max-width: 600px;
-    min-height: 200px;
-    max-height: 600px;
     display: flex;
     flex-direction: column;
     gap: var(--control__padding--vertical);
@@ -2465,7 +2546,7 @@ button.main-menu svg {
 }
 
 .ColumnValuesFilterViewImpl .listContainer {
-    height: 300px;
+    /*height: 300px;*/
 }
 
 .columnValueCell {
@@ -2478,6 +2559,7 @@ button.main-menu svg {
 
 .columnValueCell-text {
 	white-space: nowrap;
+	min-width: 200px;
 }
 
 .durationSetting {
@@ -2488,8 +2570,115 @@ button.main-menu svg {
     position: absolute;
 }
 
+/* ==== Content store CSS ==== */
+.contentstore-details {
+    display: flex;
+}
+/** Allows things to scroll in y-direction */
+.contentstore-scroll-y {
+    overflow-y: auto;
+}
+/* Details title */
+.contentstore-details .contentstore-details-heading {
+    font-size: 120%;
+    font-weight: bold;
+}
+.contentstore-details .contentstore-details-markdown {
+    height: 300px;
+}
+/* Set the SVG to 100x100px */
+.contentstore-details-icon {
+    padding: 15px;
+    width: 130px;
+}
+.contentstore-details-icon svg {
+    height: 100px;
+    width: 100px;
+}
+/* Padding in details table */
+.contentstore-details .contentstore-details-table th, .contentstore-details .contentstore-details-table td {
+    padding: 5px;
+}
+/* Overall width of details table */
+.contentstore-details .contentstore-details-vertical {
+    width: 100%;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+/* The box that the markdown is displayed in, based on .form-control-border */
+.contentstore-details .markdown {
+    padding: 5px;
+    height: 300px;
+    overflow: auto;
+}
+/* contentstore Markdown - make it a bit smaller */
+.contentstore-details .markdown h1 {
+    font-size: 1.3em;
+}
+/* Buttons formatting */
+.contentstore-buttons {
+    display: flex;
+    gap: var(--control__gap--horizontal);
+}
+
+/* GitRepo stuff */
+/* Commit message dialog */
+.gitrepo-commit-message-dialog textarea {
+    width: 100%;
+    height: 220px;
+    resize: none;
+}
+.gitrepo-credentials-dialog input {
+    width: 100%;
+}
+/* Settings form */
+.gitrepo-settings-form button.Button {
+    width: 400px;
+}
+.gitrepo-settings-form input[type="text"] {
+    width: 400px;
+}
+.gitrepo-settings-form #credentials-group {
+    width: 400px;
+}
+.gitrepo-settings-form #credentials-group .SelectionBox {
+    width: 280px;
+}
+.gitrepo-settings-form button.credentials-button {
+    width: 120px;
+}
+
+/* Credentials Manager */
+/* Text area needs to be big enough to display certificates */
+.credentials-details-dialog textarea {
+    width: 650px;
+    height: 150px;
+}
+/* Width of access token and passphrase */
+.credentials-details-dialog .wide-control {
+    width: 650px;
+}
+
+/* Background and border on table */
+.credentials-manager-dialog {
+    display: flex;
+    flex-direction: column;
+}
+.credentials-manager-dialog .credentials-manager {
+    background-color: var(--control__background-color);
+    border: solid 1px var(--control__border-color);
+    border-radius: .25rem;
+}
+
+/* --- */
 .multiChooser td {
     vertical-align: middle;
+}
+
+.multiChooser .tickBox {
+    cursor: pointer;
 }
 
 .lozengeOuter {
@@ -2497,11 +2686,13 @@ button.main-menu svg {
 }
 
 .lozenge {
-    padding: 2px 10px;
+    padding: 1px 8px;
     border: 1px solid rgba(0,0,0,.2);
     border-radius: 10rem;
     display: inline-block;
     border-color: var(--text-color);
+    cursor: pointer;
+    font-weight: 600;
 }
 
 .stroom-theme-dark .lozenge {
@@ -2521,3 +2712,134 @@ button.main-menu svg {
     padding-bottom: 0.3em;
 }
 
+
+
+
+.table-filter-outer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    overflow: auto;
+    flex-direction: column;
+    padding: 5px;
+    gap: 10px;
+}
+
+.table-filter-label {
+    color: var(--heading-color);
+    font-weight: bold;
+    font-size: 125%;
+    padding: 2px 5px;
+}
+
+.table-filter-panel {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    flex-basis: 0;
+    min-height: 200px;
+    overflow: hidden;
+}
+
+.table-filter-outer .ColumnValuesFilterViewImpl {
+    gap: 0;
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.popupContent .ColumnValuesFilterViewImpl {
+    width: 400px;
+    height: 400px;
+}
+
+.ColumnValuesFilterViewImpl .cellTableOddRow {
+    background-color: var(--row__background-color--odd);
+}
+
+.ColumnValuesFilterViewImpl .cellTableEvenRow {
+    background-color: var(--row__background-color--even);
+}
+
+.ColumnValuesFilterViewImpl .cellTableOddRow:hover,
+.ColumnValuesFilterViewImpl .cellTableEvenRow:hover {
+    background-color: var(--row__background-color--hovered);
+}
+
+.customFileUpload {
+    display: flex;
+    align-items: center;
+    gap: var(--control__gap--horizontal);
+}
+
+.dataGridWidget .dashboard-table-filter-cell {
+    display: none;
+    position: relative;
+    width: 100%;
+}
+
+.dataGridWidget.showValueFilters .dashboard-table-filter-cell {
+    display: block;
+}
+
+.dataGridWidget .dashboard-table-filter-cell-text {
+    padding-right: 25px;
+}
+
+.dataGridWidget .dashboard-table-filter-cell-text-disabled {
+	border: solid 1px var(--control__border-color--disabled);
+	background-color: var(--control__background-color--disabled);
+	color: var(--control__text-color--disabled);
+}
+
+.dataGridWidget .dashboard-table-filter-cell-buttons {
+    position: absolute;
+    display: flex;
+    height: 100%;
+    top: 0;
+    right: 0;
+    align-items: center;
+    padding: 5px;
+}
+
+.dataGridWidget .dashboard-table-filter-cell-disable-button {
+    display: flex;
+    position: relative;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    align-items: center;
+    outline: none;
+    background-color: transparent;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 0;
+    border-radius: .25rem;
+}
+
+
+/* Visualisation Assets */
+.visualisation-asset-tree table {
+    border-spacing: 3px;
+}
+
+.visualisation-asset-tree .gwt-TreeItem  {
+    padding-top: 1px;
+    padding-bottom: 2px;
+    padding-left: 2px;
+    padding-right: 1px;
+}
+
+.visualisation-asset-tree .gwt-TreeItem svg {
+    width: 16px;
+    height: 16px;
+}
+
+.visualisation-asset-tree td img {
+    margin-top: 4px;
+}
+
+.visualisation-asset-tree .gwt-TreeItem-selected {
+    background-color: var(--row__background-color--selected);
+}

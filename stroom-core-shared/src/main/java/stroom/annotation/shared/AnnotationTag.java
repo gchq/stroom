@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.annotation.shared;
 
 import stroom.docstore.shared.DocumentType;
@@ -14,6 +30,8 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class AnnotationTag {
 
+    private static final int DEFAULT_ID = 0;
+
     public static final String TYPE = "AnnotationTag";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.ANNOTATION_TAG_DOCUMENT_TYPE;
 
@@ -27,18 +45,22 @@ public class AnnotationTag {
     private final String name;
     @JsonProperty
     private final ConditionalFormattingStyle style;
+    @JsonProperty
+    private final String tagText;
 
     @JsonCreator
-    public AnnotationTag(@JsonProperty("id") final int id,
+    public AnnotationTag(@JsonProperty("id") final Integer id,
                          @JsonProperty("uuid") final String uuid,
                          @JsonProperty("type") final AnnotationTagType type,
                          @JsonProperty("name") final String name,
-                         @JsonProperty("style") final ConditionalFormattingStyle style) {
-        this.id = id;
+                         @JsonProperty("style") final ConditionalFormattingStyle style,
+                         @JsonProperty("tagText") final String tagText) {
+        this.id = Objects.requireNonNullElse(id, DEFAULT_ID);
         this.uuid = uuid;
         this.type = type;
         this.name = name;
         this.style = style;
+        this.tagText = tagText;
     }
 
     public int getId() {
@@ -59,6 +81,10 @@ public class AnnotationTag {
 
     public ConditionalFormattingStyle getStyle() {
         return style;
+    }
+
+    public String getTagText() {
+        return tagText;
     }
 
     @Override
@@ -86,6 +112,7 @@ public class AnnotationTag {
                ", type=" + type +
                ", name='" + name + '\'' +
                ", style=" + style +
+               ", tagText='" + tagText + '\'' +
                '}';
     }
 
@@ -104,6 +131,7 @@ public class AnnotationTag {
         private AnnotationTagType type;
         private String name;
         private ConditionalFormattingStyle style;
+        private String tagText;
 
         public Builder() {
         }
@@ -114,6 +142,7 @@ public class AnnotationTag {
             this.type = doc.type;
             this.name = doc.name;
             this.style = doc.style;
+            this.tagText = doc.tagText;
         }
 
         public Builder id(final int id) {
@@ -141,6 +170,11 @@ public class AnnotationTag {
             return self();
         }
 
+        public Builder tagText(final String tagText) {
+            this.tagText = tagText;
+            return self();
+        }
+
         protected Builder self() {
             return this;
         }
@@ -151,7 +185,8 @@ public class AnnotationTag {
                     uuid,
                     type,
                     name,
-                    style);
+                    style,
+                    tagText);
         }
     }
 }

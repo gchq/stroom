@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.client.view;
 
 import stroom.query.api.ParamUtil;
@@ -24,7 +40,7 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     private final Label label;
     private final PopupPanel popup;
     private final TimeRangePopup timeRangePopup;
-    private TimeRange value = TimeRanges.ALL_TIME;
+    private TimeRange value = stroom.query.api.TimeRanges.ALL_TIME;
     private ParamValues paramValues;
 
     public TimeRangeSelector() {
@@ -87,7 +103,7 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     @Override
     public void setValue(TimeRange value, final boolean fireEvents) {
         if (value == null) {
-            value = TimeRanges.ALL_TIME;
+            value = stroom.query.api.TimeRanges.ALL_TIME;
         }
 
         this.value = value;
@@ -106,7 +122,7 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
             final String from = ParamUtil.replaceParameters(value.getFrom(), paramValues);
             final String to = ParamUtil.replaceParameters(value.getTo(), paramValues);
             if (NullSafe.isBlankString(from) && NullSafe.isBlankString(to)) {
-                return TimeRanges.ALL_TIME.toString();
+                return stroom.query.api.TimeRanges.ALL_TIME.toString();
             } else if (NullSafe.isNonBlankString(from)) {
                 return "After " + from;
             } else {

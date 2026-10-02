@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -314,8 +314,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
     @Test
     void dictionaryTest1() {
         final DocRef docRef = dictionaryStore.createDocument("users");
-        final DictionaryDoc dic = dictionaryStore.readDocument(docRef);
-        dic.setData("user1\nuser2\nuser5");
+        final DictionaryDoc dic = dictionaryStore.readDocument(docRef).copy().data("user1\nuser2\nuser5").build();
         dictionaryStore.writeDocument(dic);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
@@ -332,13 +331,11 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
     @Test
     void dictionaryTest2() {
         final DocRef docRef1 = dictionaryStore.createDocument("users");
-        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
-        dic1.setData("user1\nuser2\nuser5");
+        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1).copy().data("user1\nuser2\nuser5").build();
         dictionaryStore.writeDocument(dic1);
 
         final DocRef docRef2 = dictionaryStore.createDocument("command");
-        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
-        dic2.setData("msg");
+        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2).copy().data("msg").build();
         dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
@@ -357,13 +354,11 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
     @Test
     void dictionaryTest3() {
         final DocRef docRef1 = dictionaryStore.createDocument("users");
-        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1);
-        dic1.setData("user1\nuser2\nuser5");
+        final DictionaryDoc dic1 = dictionaryStore.readDocument(docRef1).copy().data("user1\nuser2\nuser5").build();
         dictionaryStore.writeDocument(dic1);
 
         final DocRef docRef2 = dictionaryStore.createDocument("command");
-        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2);
-        dic2.setData("msg foo bar");
+        final DictionaryDoc dic2 = dictionaryStore.readDocument(docRef2).copy().data("msg foo bar").build();
         dictionaryStore.writeDocument(dic2);
 
         final ExpressionOperator.Builder and = ExpressionOperator.builder();
@@ -386,7 +381,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
         test(expression, 5);
     }
 
-    private void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
+    void test(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
         final List<String> componentIds = Collections.singletonList("table-1");
         test(expressionIn, expectResultCount, componentIds, true);
     }
@@ -455,7 +450,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 .as("Check indexStore is not empty")
                 .isNotEmpty();
 
-        final DocRef indexRef = indexStore.list().get(0);
+        final DocRef indexRef = indexStore.list().getFirst();
         assertThat(indexRef).as("Index is null").isNotNull();
 
         final QueryKey key = new QueryKey(UUID.randomUUID().toString());
@@ -467,7 +462,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 SearchRequestSource.builder().sourceType(SourceType.BATCH_SEARCH).build(),
                 key,
                 query,
-                new EventRef(1, 1),
+                new EventRef(1L, 1L),
                 new EventRef(Long.MAX_VALUE, Long.MAX_VALUE),
                 1000,
                 1000,
@@ -542,12 +537,12 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 .build();
     }
 
-    private ExpressionOperator.Builder buildExpression(final String userField,
-                                                       final String userTerm,
-                                                       final String from,
-                                                       final String to,
-                                                       final String wordsField,
-                                                       final String wordsTerm) {
+    ExpressionOperator.Builder buildExpression(final String userField,
+                                               final String userTerm,
+                                               final String from,
+                                               final String to,
+                                               final String wordsField,
+                                               final String wordsTerm) {
         final ExpressionOperator.Builder operator = ExpressionOperator.builder();
         operator.addTerm(userField, Condition.EQUALS, userTerm);
         operator.addTerm("EventTime", Condition.BETWEEN, from + "," + to);

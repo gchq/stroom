@@ -12,21 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.importexport.api;
 
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-
-import java.util.Map;
-
 
 public interface NonExplorerDocRefProvider {
 
     DocRef getOwnerDocument(DocRef docRef,
-                            Map<String, byte[]> dataMap);
+                            ImportExportDocument importExportDocument);
 
     /**
      * Find a docref in the explorer tree that is nearest to the provided non-explorer based docref,
@@ -45,12 +40,4 @@ public interface NonExplorerDocRefProvider {
      * @return A string that represents a suitable name for this docref.
      */
     String findNameOfDocRef(final DocRef docRef);
-
-    /**
-     * Retrieve the audit information for a particular doc ref
-     *
-     * @param docRef The docRef to return the information for
-     * @return The Audit information about the given DocRef.
-     */
-    DocRefInfo info(DocRef docRef);
 }

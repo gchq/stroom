@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
 import stroom.query.api.Column;
+import stroom.query.api.ColumnFilter;
 import stroom.query.api.ConditionalFormattingRule;
 import stroom.query.api.TableSettings;
 
@@ -48,7 +49,10 @@ import java.util.stream.Collectors;
         "conditionalFormattingRules",
         "modelVersion",
         "applyValueFilters",
-        "selectionHandlers"})
+        "showValueFilters",
+        "selectionHandlers",
+        "maxStringFieldLength",
+        "overrideMaxStringFieldLength"})
 @JsonInclude(Include.NON_NULL)
 public final class TableComponentSettings implements ComponentSettings, HasSelectionFilter {
 
@@ -96,16 +100,23 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
     @JsonProperty
     private final Boolean showDetail;
 
-    @Schema(description = "IGNORE: UI use only", hidden = true)
+    // Set and used by the UI; serialised on the wire, so they must stay in the OpenAPI spec
+    // (previously @Schema(hidden = true), which wrongly dropped them from generated clients).
     @JsonProperty("conditionalFormattingRules")
     private final List<ConditionalFormattingRule> conditionalFormattingRules;
-    @Schema(description = "IGNORE: UI use only", hidden = true)
     @JsonProperty("modelVersion")
     private final String modelVersion;
     @JsonProperty
+    @Deprecated
     private final Boolean applyValueFilters;
     @JsonProperty
+    private final Boolean showValueFilters;
+    @JsonProperty
     private final List<ComponentSelectionHandler> selectionHandlers;
+    @JsonProperty
+    private final Integer maxStringFieldLength;
+    @JsonProperty
+    private final Boolean overrideMaxStringFieldLength;
 
     @JsonCreator
     public TableComponentSettings(
@@ -122,7 +133,10 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
                     conditionalFormattingRules,
             @JsonProperty("modelVersion") final String modelVersion,
             @JsonProperty("applyValueFilters") final Boolean applyValueFilters,
-            @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers) {
+            @JsonProperty("showValueFilters") final Boolean showValueFilters,
+            @JsonProperty("selectionHandlers") final List<ComponentSelectionHandler> selectionHandlers,
+            @JsonProperty("maxStringFieldLength") final Integer maxStringFieldLength,
+            @JsonProperty("overrideMaxStringFieldLength") final Boolean overrideMaxStringFieldLength) {
 
         // TODO all List props should be set like this
         //  this.fields = NullSafe.unmodifiableList(fields);
@@ -132,7 +146,6 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
         //  Too dangerous to fix in 7.5, so best done in 7.7
         this.queryId = queryId;
         this.dataSourceRef = dataSourceRef;
-        this.fields = fields;
         this.extractValues = extractValues;
         this.useDefaultExtractionPipeline = useDefaultExtractionPipeline;
         this.extractionPipeline = extractionPipeline;
@@ -141,8 +154,44 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
         this.showDetail = showDetail;
         this.conditionalFormattingRules = conditionalFormattingRules;
         this.modelVersion = modelVersion;
-        this.applyValueFilters = applyValueFilters;
         this.selectionHandlers = selectionHandlers;
+        this.maxStringFieldLength = maxStringFieldLength;
+        this.overrideMaxStringFieldLength = overrideMaxStringFieldLength;
+
+        // Migrate value filter property as it is only responsible for showing now, individual columns do application.
+        if (applyValueFilters != null) {
+            this.showValueFilters = applyValueFilters;
+        } else {
+            this.showValueFilters = showValueFilters;
+        }
+
+        this.applyValueFilters = null;
+
+        // Migrate column value filter enabled state.
+        this.fields = migrateColumnValueFilters(fields, applyValueFilters);
+    }
+
+    @Deprecated
+    private List<Column> migrateColumnValueFilters(final List<Column> columns,
+                                                   final Boolean applyValueFilters) {
+        List<Column> cols = columns;
+        if (applyValueFilters != null && columns != null) {
+            cols = columns.stream().map(column -> {
+                final ColumnFilter columnFilter = column.getColumnFilter();
+                if (columnFilter == null) {
+                    return column;
+                }
+                return column
+                        .copy()
+                        .columnFilter(ColumnFilter
+                                .builder()
+                                .filter(columnFilter.getFilter())
+                                .enabled(applyValueFilters)
+                                .build())
+                        .build();
+            }).collect(Collectors.toList());
+        }
+        return cols;
     }
 
     public String getQueryId() {
@@ -207,12 +256,29 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
         return modelVersion;
     }
 
+    @Deprecated
     public Boolean getApplyValueFilters() {
         return applyValueFilters;
     }
 
-    public boolean applyValueFilters() {
-        return applyValueFilters == Boolean.TRUE;
+    public Boolean getShowValueFilters() {
+        return showValueFilters;
+    }
+
+    public boolean showValueFilters() {
+        return showValueFilters == Boolean.TRUE;
+    }
+
+    public Integer getMaxStringFieldLength() {
+        return maxStringFieldLength;
+    }
+
+    public Boolean getOverrideMaxStringFieldLength() {
+        return overrideMaxStringFieldLength;
+    }
+
+    public boolean overrideMaxStringFieldLength() {
+        return overrideMaxStringFieldLength == Boolean.TRUE;
     }
 
     @Deprecated
@@ -228,13 +294,28 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
         final TableComponentSettings that = (TableComponentSettings) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(queryId, that.queryId);
+//        final boolean b2 = Objects.equals(dataSourceRef, that.dataSourceRef);
+//        final boolean b3 = Objects.equals(fields, that.fields);
+//        final boolean b4 = Objects.equals(extractValues, that.extractValues);
+//        final boolean b5 = Objects.equals(useDefaultExtractionPipeline, that.useDefaultExtractionPipeline);
+//        final boolean b6 = Objects.equals(extractionPipeline, that.extractionPipeline);
+//        final boolean b7 = Objects.equals(maxResults, that.maxResults);
+//        final boolean b8 = Objects.equals(pageSize, that.pageSize);
+//        final boolean b9 = Objects.equals(showDetail, that.showDetail);
+//        final boolean b10 = Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules);
+//        final boolean b11 = Objects.equals(modelVersion, that.modelVersion);
+//        final boolean b12 = Objects.equals(applyValueFilters, that.applyValueFilters);
+//        final boolean b13 = Objects.equals(selectionHandlers, that.selectionHandlers);
+//        final boolean b14 = Objects.equals(maxStringFieldLength, that.maxStringFieldLength);
+//        final boolean b15 = Objects.equals(overrideMaxStringFieldLength, that.overrideMaxStringFieldLength);
+
         return Objects.equals(queryId, that.queryId) &&
                Objects.equals(dataSourceRef, that.dataSourceRef) &&
                Objects.equals(fields, that.fields) &&
@@ -247,13 +328,15 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
                Objects.equals(conditionalFormattingRules, that.conditionalFormattingRules) &&
                Objects.equals(modelVersion, that.modelVersion) &&
                Objects.equals(applyValueFilters, that.applyValueFilters) &&
-               Objects.equals(selectionHandlers, that.selectionHandlers);
+               Objects.equals(showValueFilters, that.showValueFilters) &&
+               Objects.equals(selectionHandlers, that.selectionHandlers) &&
+               Objects.equals(maxStringFieldLength, that.maxStringFieldLength) &&
+               Objects.equals(overrideMaxStringFieldLength, that.overrideMaxStringFieldLength);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(
-                queryId,
+        return Objects.hash(queryId,
                 dataSourceRef,
                 fields,
                 extractValues,
@@ -265,15 +348,18 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
                 conditionalFormattingRules,
                 modelVersion,
                 applyValueFilters,
-                selectionHandlers);
+                showValueFilters,
+                selectionHandlers,
+                maxStringFieldLength,
+                overrideMaxStringFieldLength);
     }
 
     @Override
     public String toString() {
-        return "TableSettings{" +
+        return "TableComponentSettings{" +
                "queryId='" + queryId + '\'' +
                ", dataSourceRef=" + dataSourceRef +
-               ", columns=" + fields +
+               ", fields=" + fields +
                ", extractValues=" + extractValues +
                ", useDefaultExtractionPipeline=" + useDefaultExtractionPipeline +
                ", extractionPipeline=" + extractionPipeline +
@@ -282,8 +368,11 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
                ", showDetail=" + showDetail +
                ", conditionalFormattingRules=" + conditionalFormattingRules +
                ", modelVersion='" + modelVersion + '\'' +
-               ", applyValueFilters='" + applyValueFilters + '\'' +
-               ", selectionHandlers='" + selectionHandlers + '\'' +
+               ", applyValueFilters=" + applyValueFilters +
+               ", showValueFilters=" + showValueFilters +
+               ", selectionHandlers=" + selectionHandlers +
+               ", maxStringFieldLength=" + maxStringFieldLength +
+               ", overrideMaxStringFieldLength=" + overrideMaxStringFieldLength +
                '}';
     }
 
@@ -318,8 +407,10 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
         private Boolean showDetail;
         private List<ConditionalFormattingRule> conditionalFormattingRules;
         private String modelVersion;
-        private Boolean applyValueFilters;
+        private Boolean showValueFilters;
         private List<ComponentSelectionHandler> selectionFilter;
+        private Integer maxStringFieldLength;
+        private Boolean overrideMaxStringFieldLength;
 
         private Builder() {
         }
@@ -342,10 +433,12 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
                     ? null
                     : new ArrayList<>(tableSettings.conditionalFormattingRules);
             this.modelVersion = tableSettings.modelVersion;
-            this.applyValueFilters = tableSettings.applyValueFilters;
+            this.showValueFilters = tableSettings.showValueFilters;
             this.selectionFilter = tableSettings.selectionHandlers == null
                     ? null
                     : new ArrayList<>(tableSettings.selectionHandlers);
+            this.maxStringFieldLength = tableSettings.maxStringFieldLength;
+            this.overrideMaxStringFieldLength = tableSettings.overrideMaxStringFieldLength;
         }
 
         private List<ConditionalFormattingRule> copyConditionalFormattingRules(
@@ -484,13 +577,23 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
             return self();
         }
 
-        public Builder applyValueFilters(final Boolean applyValueFilters) {
-            this.applyValueFilters = applyValueFilters;
+        public Builder showValueFilters(final Boolean showValueFilters) {
+            this.showValueFilters = showValueFilters;
             return self();
         }
 
         public Builder selectionFilter(final List<ComponentSelectionHandler> selectionFilter) {
             this.selectionFilter = selectionFilter;
+            return self();
+        }
+
+        public Builder maxStringFieldLength(final Integer maxStringFieldLength) {
+            this.maxStringFieldLength = maxStringFieldLength;
+            return self();
+        }
+
+        public Builder overrideMaxStringFieldLength(final Boolean overrideMaxStringFieldLength) {
+            this.overrideMaxStringFieldLength = overrideMaxStringFieldLength;
             return self();
         }
 
@@ -513,8 +616,11 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
                     showDetail,
                     conditionalFormattingRules,
                     modelVersion,
-                    applyValueFilters,
-                    selectionFilter);
+                    null,
+                    showValueFilters,
+                    selectionFilter,
+                    maxStringFieldLength,
+                    overrideMaxStringFieldLength);
         }
 
         public TableSettings buildTableSettings() {
@@ -530,7 +636,9 @@ public final class TableComponentSettings implements ComponentSettings, HasSelec
                     showDetail,
                     conditionalFormattingRules,
                     null,
-                    applyValueFilters);
+                    null,
+                    maxStringFieldLength,
+                    overrideMaxStringFieldLength);
         }
     }
 }

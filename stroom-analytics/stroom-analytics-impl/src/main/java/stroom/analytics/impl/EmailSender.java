@@ -1,19 +1,17 @@
 /*
+ * Copyright 2023 Crown Copyright
  *
- *   Copyright 2017 Crown Copyright
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *   Licensed under the Apache License, Version 2.0 (the "License");
- *   you may not use this file except in compliance with the License.
- *   You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
- *
- *   Unless required by applicable law or agreed to in writing, software
- *   distributed under the License is distributed on an "AS IS" BASIS,
- *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *   See the License for the specific language governing permissions and
- *   limitations under the License.
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package stroom.analytics.impl;
@@ -32,6 +30,7 @@ import jakarta.activation.FileDataSource;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.mail.Message.RecipientType;
+import org.jspecify.annotations.NonNull;
 import org.simplejavamail.api.email.AttachmentResource;
 import org.simplejavamail.api.email.Email;
 import org.simplejavamail.api.email.EmailPopulatingBuilder;
@@ -41,6 +40,7 @@ import org.simplejavamail.email.EmailBuilder;
 import org.simplejavamail.mailer.MailerBuilder;
 import org.simplejavamail.mailer.internal.MailerRegularBuilderImpl;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -83,21 +83,79 @@ public class EmailSender {
 
     public void sendReport(final ReportDoc reportDoc,
                            final NotificationEmailDestination emailDestination,
-                           final Path file,
+                           final ReportFile reportFile,
                            final Instant executionTime,
                            final Instant effectiveExecutionTime) {
+        Objects.requireNonNull(reportDoc);
+        Objects.requireNonNull(emailDestination);
+        Objects.requireNonNull(reportFile);
+        final Path file = reportFile.file();
+        if (!Files.isRegularFile(file)) {
+            throw new IllegalArgumentException(LogUtil.message("file '{}' does not exist or is not a regular file",
+                    file.toAbsolutePath().normalize()));
+        }
+
+        // Set the context map for the templates to use
+        final Map<String, Object> context = createTemplateContext(
+                reportDoc,
+                reportFile,
+                executionTime,
+                effectiveExecutionTime);
+
+        final EmailContent renderedEmail = ruleEmailTemplatingService.renderEmail(emailDestination, context);
+        final List<AttachmentResource> attachmentResources = createAttachments(reportFile);
+        if (LOGGER.isTraceEnabled()) {
+            logContentsOfFile(file);
+        }
+        send(emailDestination, renderedEmail, reportDoc.getName(), attachmentResources);
+    }
+
+    private static void logContentsOfFile(final Path file) {
+        try {
+            final String contents = Files.readString(file);
+            LOGGER.trace("sendReport() - file: {}, contents:\n{}", file, contents);
+        } catch (final Exception e) {
+            // Swallow
+            LOGGER.trace("Error logging file contents, file: {} - {}", file, LogUtil.exceptionMessage(e), e);
+        }
+    }
+
+    /**
+     * @return The report, and its summary too where the summary could not go inside the report. Separate
+     * attachments rather than an archive, so the recipient does not have to unpack anything.
+     */
+    static List<AttachmentResource> createAttachments(final ReportFile reportFile) {
+        final List<AttachmentResource> attachmentResources = new ArrayList<>();
+        attachmentResources.add(new AttachmentResource(
+                reportFile.file().getFileName().toString(),
+                new FileDataSource(reportFile.file().toFile())));
+        if (reportFile.summaryFile() != null) {
+            attachmentResources.add(new AttachmentResource(
+                    reportFile.summaryFile().getFileName().toString(),
+                    new FileDataSource(reportFile.summaryFile().toFile())));
+        }
+        return attachmentResources;
+    }
+
+    static @NonNull Map<String, Object> createTemplateContext(final ReportDoc reportDoc,
+                                                                      final ReportFile reportFile,
+                                                                      final Instant executionTime,
+                                                                      final Instant effectiveExecutionTime) {
+        // Can't use Map.of() cos of null values
         final Map<String, Object> context = new HashMap<>();
         context.put("reportName", reportDoc.getName());
         context.put("description", reportDoc.getDescription());
         context.put("executionTime", DateUtil.createNormalDateTimeString(executionTime));
         context.put("effectiveExecutionTime", DateUtil.createNormalDateTimeString(effectiveExecutionTime));
-
-        ruleEmailTemplatingService.renderEmail(emailDestination, context);
-        final EmailContent renderedEmail = ruleEmailTemplatingService.renderEmail(emailDestination, context);
-        final List<AttachmentResource> attachmentResources = new ArrayList<>();
-        attachmentResources.add(new AttachmentResource(file.getFileName().toString(),
-                new FileDataSource(file.toFile())));
-        send(emailDestination, renderedEmail, reportDoc.getName(), attachmentResources);
+        context.put("rowCount", reportFile.rowCount());
+        context.put("fileType", reportFile.fileType().name());
+        context.put("fileName", reportFile.file().getFileName().toString());
+        // Always present, so that a template using it renders whether or not there was a summary to make.
+        // Jinjava is configured to fail on unknown tokens, so the key has to be here even when the value
+        // is not.
+        context.put("aiSummary", Objects.requireNonNullElse(reportFile.aiSummary(), ""));
+        LOGGER.debug("createTemplateContext() - {}", context);
+        return Collections.unmodifiableMap(context);
     }
 
     private void send(final NotificationEmailDestination emailDestination,

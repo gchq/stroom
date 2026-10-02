@@ -1,9 +1,0 @@
-{
-  "type" : "Feed",
-  "uuid" : "860ccece-a3fb-4142-ace7-451718726307",
-  "name" : "COUNT_FEED_SMALL",
-  "version" : "d0eef53f-50aa-448a-9cf8-f9ca91580c7b",
-  "reference" : false,
-  "streamType" : "Raw Events",
-  "status" : "RECEIVE"
-}

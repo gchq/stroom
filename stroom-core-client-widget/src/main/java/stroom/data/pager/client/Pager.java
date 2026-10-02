@@ -71,6 +71,11 @@ public class Pager extends AbstractPager {
     @UiField
     Label lblOfSeparator;
     private boolean editing;
+    // When false, the Last button stays disabled even for an exact row count. Lets a caller show the
+    // exact total ("of N") while forbidding a jump to the last page (e.g. a forward-only cursor source
+    // that can't seek to an arbitrary offset). Defaults true — normal offset-addressable pagers are
+    // unaffected.
+    private boolean lastPageAllowed = true;
 
     private final Set<FocusWidget> focussed = new HashSet<>();
 
@@ -342,13 +347,23 @@ public class Pager extends AbstractPager {
         first.setEnabled(hasPreviousPage);
         prev.setEnabled(hasPreviousPage);
         next.setEnabled(hasNextPage);
-        last.setEnabled(hasNextPage && isRowCountExact);
+        last.setEnabled(hasNextPage && isRowCountExact && lastPageAllowed);
 
         refresh.setEnabled(true);
     }
 
     public RefreshButton getRefreshButton() {
         return refresh;
+    }
+
+    /**
+     * Controls whether the Last button may be enabled. When {@code false} it stays disabled even with an
+     * exact row count, so a caller can show the exact total while forbidding a jump to the last page.
+     */
+    public void setLastPageAllowed(final boolean lastPageAllowed) {
+        this.lastPageAllowed = lastPageAllowed;
+        final HasRows display = getDisplay();
+        last.setEnabled(display != null && display.isRowCountExact() && hasNextPage() && lastPageAllowed);
     }
 
     public void setTitle(final String title) {

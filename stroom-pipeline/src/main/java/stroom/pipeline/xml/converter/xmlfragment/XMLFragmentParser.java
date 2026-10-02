@@ -74,8 +74,18 @@ public class XMLFragmentParser extends AbstractParser {
             // entity resolution to achieve its goal, as the scanning for entities must add a fair
             // amount of overhead. A simpler and more crude approach may be better.
             xmlReader.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, false);
+
+            // The fragment wrapper mechanism cannot work without a DOCTYPE + external general entity - it
+            // injects the fragment as one - so, unlike the factory-level XXE hardening (a policy an operator
+            // may relax via config), these two are a functional requirement and are re-enabled here
+            // unconditionally. Security does NOT come from these being off (they cannot be); it comes from the
+            // FragmentEntity resolver below denying every entity except the fragment, plus external parameter
+            // entities and external DTD loading staying disabled. So the fragment parser is XXE-safe whether or
+            // not the configurable hardening is enabled.
+            xmlReader.setFeature(SAXParserFactoryFactory.FEATURE_DISALLOW_DOCTYPE, false);
+            xmlReader.setFeature(SAXParserFactoryFactory.FEATURE_EXTERNAL_GENERAL_ENTITIES, true);
         } catch (final SAXNotRecognizedException | SAXNotSupportedException e) {
-            LOGGER.error("Unable to disable FEATURE_SECURE_PROCESSING on the SAX PARSER", e);
+            LOGGER.error("Unable to configure the SAX parser for fragment parsing", e);
         }
 
         final InputSource inputSource = new InputSource(new StringReader(xml));
@@ -103,7 +113,9 @@ public class XMLFragmentParser extends AbstractParser {
                 return fragment;
             }
 
-            return null;
+            // Deny any other entity. Returning null would fall back to the default resolver, which would
+            // fetch the systemId (an XXE / SSRF / file-read vector); an empty source resolves it to nothing.
+            return new InputSource(new StringReader(""));
         }
     }
 }

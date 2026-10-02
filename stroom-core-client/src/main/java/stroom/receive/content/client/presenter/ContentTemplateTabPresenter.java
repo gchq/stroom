@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -225,13 +225,13 @@ public class ContentTemplateTabPresenter
 //                                .text("Enable/Disable template")
 //                                .command(() ->
 //                                        setRuleEnabledState(contentTemplate, !contentTemplate.isEnabled())))
-                .withIconMenuItemIf(contentTemplate.getTemplateNumber() > 0, itemBuilder ->
+                .withIconMenuItemIf(contentTemplate.getTemplateNumber() > 1, itemBuilder ->
                         itemBuilder
                                 .icon(SvgImage.UP)
                                 .text("Move template Up")
                                 .command(() ->
                                         moveRuleUp(contentTemplate)))
-                .withIconMenuItemIf(contentTemplate.getTemplateNumber() < getMaxTemplateIndex(),
+                .withIconMenuItemIf(contentTemplate.getTemplateNumber() < getTemplateCount(),
                         itemBuilder ->
                                 itemBuilder
                                         .icon(SvgImage.DOWN)
@@ -352,7 +352,7 @@ public class ContentTemplateTabPresenter
                     : "";
             ConfirmEvent.fire(
                     this,
-                    "Are you sure you want to delete rule "
+                    "Are you sure you want to delete template "
                     + rule.getTemplateNumber()
                     + nameStr + "?",
                     ok -> {
@@ -466,7 +466,7 @@ public class ContentTemplateTabPresenter
                     .create(CONTENT_TEMPLATE_RESOURCE)
                     .method(res ->
                             res.update(contentTemplatesWrapper.copy()
-                                    .withContentTemplates(getTemplates())
+                                    .contentTemplates(getTemplates())
                                     .build()))
                     .onSuccess(result -> {
                         contentTemplatesWrapper = result;
@@ -574,7 +574,7 @@ public class ContentTemplateTabPresenter
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)
                 .caption("Edit Template")
-                .onShow(e -> listPresenter.focus())
+                .onShow(e -> editRulePresenter.focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
                         final ContentTemplate rule = editRulePresenter.write();

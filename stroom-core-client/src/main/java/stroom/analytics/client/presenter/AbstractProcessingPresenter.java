@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,16 @@
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.presenter.AbstractProcessingPresenter.AnalyticProcessingView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessConfig;
 import stroom.analytics.shared.AnalyticProcessType;
-import stroom.analytics.shared.ReportDoc;
 import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
-import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
-import stroom.feed.shared.FeedDoc;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
 import stroom.pipeline.client.event.HasChangeDataHandlers;
-import stroom.security.shared.DocumentPermission;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 
@@ -38,11 +35,12 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
+import java.util.Objects;
+
 public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocumentEditPresenter<AbstractProcessingPresenter.AnalyticProcessingView, D>
+        extends DocPresenter<AnalyticProcessingView, D>
         implements AnalyticProcessingUiHandlers, HasChangeDataHandlers<AnalyticProcessType> {
 
-    final DocSelectionBoxPresenter errorFeedPresenter;
     private final ScheduledProcessingPresenter scheduledProcessingPresenter;
     private final TableBuilderProcessingPresenter tableBuilderProcessingPresenter;
     private final StreamingProcessingPresenter streamingProcessingPresenter;
@@ -51,25 +49,19 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     @Inject
     public AbstractProcessingPresenter(final EventBus eventBus,
                                        final AnalyticProcessingView view,
-                                       final DocSelectionBoxPresenter errorFeedPresenter,
                                        final ScheduledProcessingPresenter scheduledProcessingPresenter,
                                        final TableBuilderProcessingPresenter tableBuilderProcessingPresenter,
                                        final StreamingProcessingPresenter streamingProcessingPresenter,
                                        final UiConfigCache uiConfigCache) {
         super(eventBus, view);
         this.uiConfigCache = uiConfigCache;
-        this.errorFeedPresenter = errorFeedPresenter;
         this.scheduledProcessingPresenter = scheduledProcessingPresenter;
         this.tableBuilderProcessingPresenter = tableBuilderProcessingPresenter;
         this.streamingProcessingPresenter = streamingProcessingPresenter;
         view.setUiHandlers(this);
-
-        errorFeedPresenter.setIncludedTypes(FeedDoc.TYPE);
-        errorFeedPresenter.setRequiredPermissions(DocumentPermission.VIEW);
-        getView().setErrorFeedView(errorFeedPresenter.getView());
     }
 
-    public void setDocumentEditPresenter(final DocumentEditPresenter<?, ?> documentEditPresenter) {
+    public void setDocumentEditPresenter(final DocPresenter<?, ?> documentEditPresenter) {
         scheduledProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
         streamingProcessingPresenter.setDocumentEditPresenter(documentEditPresenter);
     }
@@ -77,14 +69,12 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(errorFeedPresenter.addDataSelectionHandler(e -> onDirty()));
-        registerHandler(tableBuilderProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
-        registerHandler(streamingProcessingPresenter.addDirtyHandler(event -> setDirty(true)));
+        registerHandler(tableBuilderProcessingPresenter.addChangeHandler(this::onChange));
     }
 
     @Override
     public void onProcessingTypeChange() {
-        setDirty(true);
+        onChange();
         setProcessType(getView().getProcessingType());
         ChangeDataEvent.fire(this, getView().getProcessingType());
     }
@@ -98,23 +88,10 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     protected void onRead(final DocRef docRef, final D analyticRuleDoc, final boolean readOnly) {
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
-                DocRef selectedDocRef = analyticRuleDoc.getErrorFeed();
-                if (selectedDocRef == null) {
-                    if (ReportDoc.TYPE.equals(docRef.getType())) {
-                        selectedDocRef = extendedUiConfig.getReportUiDefaultConfig().getDefaultErrorFeed();
-                    } else {
-                        selectedDocRef = extendedUiConfig.getAnalyticUiDefaultConfig().getDefaultErrorFeed();
-                    }
-                }
-
-                if (selectedDocRef != null) {
-                    errorFeedPresenter.setSelectedEntityReference(selectedDocRef, true);
-                }
-
                 final AnalyticProcessConfig analyticProcessConfig = analyticRuleDoc.getAnalyticProcessConfig();
-                final AnalyticProcessType analyticProcessType = analyticRuleDoc.getAnalyticProcessType() == null
-                        ? AnalyticProcessType.SCHEDULED_QUERY
-                        : analyticRuleDoc.getAnalyticProcessType();
+                final AnalyticProcessType analyticProcessType = Objects.requireNonNullElse(
+                        analyticRuleDoc.getAnalyticProcessType(),
+                        AnalyticProcessType.SCHEDULED_QUERY);
                 setProcessType(analyticProcessType);
 
                 if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
@@ -170,11 +147,6 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
     }
 
     @Override
-    public void onDirty() {
-        setDirty(true);
-    }
-
-    @Override
     public void setTaskMonitorFactory(final TaskMonitorFactory taskMonitorFactory) {
         super.setTaskMonitorFactory(taskMonitorFactory);
         this.scheduledProcessingPresenter.setTaskMonitorFactory(taskMonitorFactory);
@@ -187,8 +159,6 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
 
 
     public interface AnalyticProcessingView extends View, HasUiHandlers<AnalyticProcessingUiHandlers> {
-
-        void setErrorFeedView(View view);
 
         void addProcessingType(AnalyticProcessType processingType);
 

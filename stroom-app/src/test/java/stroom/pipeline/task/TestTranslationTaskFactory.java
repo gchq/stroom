@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.task;
@@ -329,9 +328,8 @@ class TestTranslationTaskFactory extends AbstractProcessIntegrationTest {
         try {
             // Add imported XSLT.
             final DocRef xsltRef = xsltStore.createDocument("imported.xsl");
-            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef);
-            xsltDoc.setDescription("Imported XSLT");
-            xsltDoc.setData(StreamUtil.fileToString(IMPORTED_XSLT));
+            final XsltDoc xsltDoc = xsltStore.readDocument(xsltRef)
+                    .copy().description("Imported XSLT").data(StreamUtil.fileToString(IMPORTED_XSLT)).build();
             xsltStore.writeDocument(xsltDoc);
 
             DocRef hostNameToIP = null;

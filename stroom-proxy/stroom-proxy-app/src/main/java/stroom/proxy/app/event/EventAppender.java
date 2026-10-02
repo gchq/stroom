@@ -1,3 +1,19 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.event;
 
 import java.io.BufferedOutputStream;
@@ -18,7 +34,6 @@ class EventAppender {
     private OutputStream outputStream;
     private long eventCount = 0;
     private long byteCount = 0;
-
 
     public EventAppender(final Path file,
                          final Instant createTime,
@@ -65,8 +80,8 @@ class EventAppender {
 
     public synchronized boolean shouldRoll(final long addBytes) {
         return createTime.isBefore(Instant.now().minus(eventStoreConfig.getMaxAge()))
-                || eventCount >= eventStoreConfig.getMaxEventCount()
-                || byteCount + addBytes > eventStoreConfig.getMaxByteCount();
+               || eventCount >= eventStoreConfig.getMaxEventCount()
+               || byteCount + addBytes > eventStoreConfig.getMaxByteCount();
     }
 
     public synchronized Path closeAndGetFile() {
@@ -76,5 +91,15 @@ class EventAppender {
             throw new UncheckedIOException(e);
         }
         return file;
+    }
+
+    @Override
+    public String toString() {
+        return "EventAppender{" +
+               "file=" + file +
+               ", createTime=" + createTime +
+               ", eventCount=" + eventCount +
+               ", byteCount=" + byteCount +
+               '}';
     }
 }

@@ -16,6 +16,8 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.widget.popup.client.view.DialogAction;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.gwtplatform.mvp.client.PresenterWidget;
@@ -25,16 +27,16 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenterWidget;
     private final boolean autoClose;
-    private final boolean ok;
+    private final DialogAction action;
     private final Runnable resetHandler;
 
     private HidePopupRequestEvent(final PresenterWidget<?> presenterWidget,
                                   final boolean autoClose,
-                                  final boolean ok,
+                                  final DialogAction action,
                                   final Runnable resetHandler) {
         this.presenterWidget = presenterWidget;
         this.autoClose = autoClose;
-        this.ok = ok;
+        this.action = action;
         this.resetHandler = resetHandler;
     }
 
@@ -68,14 +70,18 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
     }
 
     public boolean isOk() {
-        return ok;
+        return action == DialogAction.OK;
+    }
+
+    public boolean isCreate() {
+        return action == DialogAction.CREATE;
     }
 
     /**
      * Call to actually hide the popup if the request is handled and accepted.
      */
     public void hide() {
-        HidePopupEvent.builder(presenterWidget).autoClose(autoClose).ok(ok).fire();
+        HidePopupEvent.builder(presenterWidget).autoClose(autoClose).ok(isOk()).fire();
     }
 
     /**
@@ -105,7 +111,7 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
         private final PresenterWidget<?> presenterWidget;
 
         private boolean autoClose;
-        private boolean ok = true;
+        private DialogAction action = DialogAction.OK;
         private Runnable cancelHandler;
 
         public Builder(final PresenterWidget<?> presenterWidget) {
@@ -117,8 +123,8 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
             return this;
         }
 
-        public Builder ok(final boolean ok) {
-            this.ok = ok;
+        public Builder action(final DialogAction action) {
+            this.action = action;
             return this;
         }
 
@@ -131,7 +137,7 @@ public class HidePopupRequestEvent extends GwtEvent<HidePopupRequestEvent.Handle
             presenterWidget.fireEvent(new HidePopupRequestEvent(
                     presenterWidget,
                     autoClose,
-                    ok,
+                    action,
                     cancelHandler));
         }
     }

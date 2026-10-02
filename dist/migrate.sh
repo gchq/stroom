@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 #
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+#
 # Runs the DB migrations (if any) in the foreground then exits.
 # Useful for migration testing or when you know there is a major migration to
 # perform.
@@ -10,7 +26,7 @@ trap ctrl_c INT
 
 function ctrl_c() {
   # User hit ctrl-c so tidy up first
-  echo 
+  echo
   kill_log_tailing
   info "The migration may still be running in the background"
 }
@@ -34,8 +50,8 @@ invalid_arguments() {
 
 run_migrations() {
 
-  ensure_file_exists "${PATH_TO_MIGRATE_LOG}" 
-  ensure_file_exists "${PATH_TO_MIGRATION_LOG}" 
+  ensure_file_exists "${PATH_TO_MIGRATE_LOG}"
+  ensure_file_exists "${PATH_TO_MIGRATION_LOG}"
 
   local absolute_path_to_config
   local absoulte_path_to_jar
@@ -118,7 +134,7 @@ run_migrations() {
     if [ -n "${migrate_pid}" ]; then
       set +e
       # kill -0 returns true if the process is still alive
-      while kill -0 "${migrate_pid}" >/dev/null 2>&1; do 
+      while kill -0 "${migrate_pid}" >/dev/null 2>&1; do
         sleep 1
       done
       set -e
@@ -144,13 +160,13 @@ check_or_create_pid_file() {
 
     if [ "${stroom_pid}" = '' ]; then # If the pid file is empty for some reason
       run_migrations
-    else 
+    else
       if ps -p "${stroom_pid}" > /dev/null # Check if the PID is a running process
       then
         warn "${APP_NAME} is already running (pid: ${BLUE}${stroom_pid}${NC}). Use" \
           "${BLUE}stop.sh${NC} first."
         # echo -e "${RED}Warning:${NC} ${GREEN}Stroom${NC} is already running (pid: ${BLUE}$PID${NC}). Use ${BLUE}restart.sh${NC} if you want to start it."
-      else 
+      else
         warn "There was an instance of ${APP_NAME} running but it looks like"\
           "it wasn't stopped gracefully. You might want to check the logs." \
           "If you are certain it is not running delete the file" \
@@ -162,7 +178,7 @@ check_or_create_pid_file() {
         if [ "${will_run_migrations}" = 'y' ]; then
           rm "${STROOM_PID_FILE}"
           start
-        else 
+        else
           info "Ok. I won't run anything."
         fi
       fi
@@ -184,7 +200,7 @@ kill_log_tailing() {
   if [ -n "${pid}" ]; then
     set +e
     # kill -0 returns true if the process is still alive
-    while kill -0 "${pid}" >/dev/null 2>&1; do 
+    while kill -0 "${pid}" >/dev/null 2>&1; do
       sleep 1
     done
     set -e
@@ -209,17 +225,17 @@ main() {
   while getopts ":mhq" arg; do
     # shellcheck disable=SC2034
     case $arg in
-      h ) 
+      h )
         echo_usage
         exit 0
         ;;
-      m )  
-        MONOCHROME=true 
+      m )
+        MONOCHROME=true
         ;;
-      q )  
-        do_tailing=false 
+      q )
+        do_tailing=false
         ;;
-      * ) 
+      * )
         invalid_arguments
         ;;  # getopts already reported the illegal option
     esac

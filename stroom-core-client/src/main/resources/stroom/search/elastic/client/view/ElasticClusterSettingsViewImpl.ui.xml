@@ -20,8 +20,11 @@
         <form:FormGroup identity="elasticClusterSettingsAPIKeySecret" label="API key secret">
             <g:PasswordTextBox ui:field="apiKeySecret" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsSocketTimeout" label="Socket timeout (ms)">
-            <g:IntegerBox ui:field="socketTimeoutMillis" width="50px"/>
+        <form:FormGroup identity="elasticClusterSettingsConnectionTimeout" label="Connection timeout (ms)">
+            <g:IntegerBox ui:field="connectionTimeoutMillis" width="50px"/>
+        </form:FormGroup>
+        <form:FormGroup identity="elasticClusterSettingsResponseTimeout" label="Response timeout (ms)">
+            <g:IntegerBox ui:field="responseTimeoutMillis" width="50px"/>
         </form:FormGroup>
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>
     </g:FlowPanel>

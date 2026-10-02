@@ -131,4 +131,14 @@ public class PipelineData {
     public int hashCode() {
         return Objects.hash(elements, properties, pipelineReferences, links);
     }
+
+    @Override
+    public String toString() {
+        return "PipelineData{" +
+               "elements=" + elements +
+               ", properties=" + properties +
+               ", pipelineReferences=" + pipelineReferences +
+               ", links=" + links +
+               '}';
+    }
 }

@@ -12,16 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.client.presenter;
 
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyEvent;
-import stroom.document.client.event.DirtyEvent.DirtyHandler;
-import stroom.document.client.event.HasDirtyHandlers;
+import stroom.document.client.event.ChangeEvent;
+import stroom.document.client.event.ChangeEvent.ChangeHandler;
+import stroom.document.client.event.HasChangeHandlers;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.query.client.ExpressionUiHandlers;
@@ -29,6 +28,7 @@ import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPresenter.EditExpressionView>
-        implements HasDirtyHandlers, Focus {
+        implements HasChangeHandlers, Focus {
 
     private final ExpressionTreePresenter expressionPresenter;
 
@@ -68,8 +68,8 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         expressionPresenter.setUiHandlers(new ExpressionUiHandlers() {
             @Override
-            public void fireDirty() {
-                setDirty(true);
+            public void onChange() {
+                EditExpressionPresenter.this.onChange();
             }
 
             @Override
@@ -93,7 +93,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
             final List<Item> menuItems = addExpressionActionsToMenu();
-            if (menuItems.size() > 0) {
+            if (NullSafe.hasItems(menuItems)) {
                 showMenu(menuItems, event.getPopupPosition());
             }
         }));
@@ -241,16 +241,18 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                 .fire(this);
     }
 
-    public void setDirty(final boolean dirty) {
-        if (dirty) {
-            DirtyEvent.fire(this, dirty);
-        }
+    private void onChange() {
+        ChangeEvent.fire(this);
     }
 
     @Override
-    public HandlerRegistration addDirtyHandler(final DirtyHandler handler) {
-        return addHandlerToSource(DirtyEvent.getType(), handler);
+    public HandlerRegistration addChangeHandler(final ChangeHandler handler) {
+        return addHandlerToSource(ChangeEvent.getType(), handler);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     public interface EditExpressionView extends View {
 

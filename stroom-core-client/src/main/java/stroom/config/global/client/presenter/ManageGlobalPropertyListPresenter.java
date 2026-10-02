@@ -25,7 +25,7 @@ import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.client.NodeManager;
+import stroom.node.client.NodeClient;
 import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
 import stroom.util.client.DelayedUpdate;
@@ -76,7 +76,7 @@ public class ManageGlobalPropertyListPresenter
     private final MultiSelectionModelImpl<ConfigPropertyRow> selectionModel;
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
     private final RestFactory restFactory;
-    private final NodeManager nodeManager;
+    private final NodeClient nodeClient;
     private final Set<String> unreachableNodes = new HashSet<>();
 
     // propName => (node => effectiveValue)
@@ -108,16 +108,17 @@ public class ManageGlobalPropertyListPresenter
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
                                              final PagerView view,
                                              final RestFactory restFactory,
-                                             final NodeManager nodeManager) {
+                                             final NodeClient nodeClient) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Properties");
         dataGrid.setMultiLine(true);
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         view.setDataWidget(dataGrid);
 
         this.restFactory = restFactory;
-        this.nodeManager = nodeManager;
+        this.nodeClient = nodeClient;
 
         initColumns();
 
@@ -193,7 +194,7 @@ public class ManageGlobalPropertyListPresenter
         // Only care about enabled nodes
         unreachableNodes.clear();
         // No point hitting the node that we hit at the top level again as we already have its data
-        nodeManager.listEnabledNodes(
+        nodeClient.listEnabledNodes(
                 nodeNames ->
                         nodeNames
                                 .stream()
@@ -355,8 +356,8 @@ public class ManageGlobalPropertyListPresenter
     private void initColumns() {
         // Name.
         dataGrid.addResizableColumn(
-                DataGridUtil.htmlColumnBuilder((ConfigPropertyRow row) ->
-                                SafeHtmlUtils.fromString(row.getNameAsString()))
+                DataGridUtil.copyTextColumnBuilder((ConfigPropertyRow row) ->
+                                row.getNameAsString(), getEventBus())
                         .withSorting(GlobalConfigResource.FIELD_DEF_NAME.getDisplayName())
                         .build(),
                 GlobalConfigResource.FIELD_DEF_NAME.getDisplayName(),
@@ -396,8 +397,6 @@ public class ManageGlobalPropertyListPresenter
                         .build(),
                 GlobalConfigResource.FIELD_DEF_DESCRIPTION.getDisplayName(),
                 750);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     public ButtonView addButton(final Preset preset) {

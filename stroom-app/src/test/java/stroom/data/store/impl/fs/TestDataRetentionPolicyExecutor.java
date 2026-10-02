@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.store.impl.fs;
@@ -25,8 +24,9 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
-import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
-import stroom.docref.DocRef;
+import stroom.data.store.impl.DataVolumeService;
+import stroom.data.store.impl.fs.shared.DataVolume;
+import stroom.data.store.impl.fs.shared.FindDataVolumeCriteria;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
@@ -153,13 +153,14 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     }
 
     private void setupDataRetentionRules(final String feedName) {
-        final DocRef docRef = dataRetentionRulesService.createDocument("test");
-        final DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
+        DataRetentionRules dataRetentionRules = dataRetentionRulesService.getOrCreate();
 
         final ExpressionOperator.Builder builder = ExpressionOperator.builder();
         builder.addTextTerm(MetaFields.FEED, Condition.EQUALS, feedName);
         final DataRetentionRule rule = createRule(1, builder.build(), FIFTY_FIVE, TimeUnit.DAYS);
-        dataRetentionRules.setRules(Collections.singletonList(rule));
+        dataRetentionRules = dataRetentionRules.copy()
+                .rules(Collections.singletonList(rule))
+                .build();
         dataRetentionRulesService.writeDocument(dataRetentionRules);
     }
 

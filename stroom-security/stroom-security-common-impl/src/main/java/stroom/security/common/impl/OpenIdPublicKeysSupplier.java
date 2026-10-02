@@ -1,8 +1,22 @@
+/*
+ * Copyright 2022 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.common.impl;
 
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.jersey.JerseyClientFactory;
 import stroom.util.jersey.JerseyClientName;
 import stroom.util.logging.LambdaLogger;
@@ -15,8 +29,6 @@ import jakarta.inject.Singleton;
 import jakarta.ws.rs.core.Response;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.JsonWebKeySet;
-import org.jose4j.jwk.PublicJsonWebKey;
-import org.jose4j.jwk.PublicJsonWebKey.Factory;
 import org.jose4j.lang.JoseException;
 
 import java.time.Duration;
@@ -34,7 +46,6 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
 
     private final Provider<OpenIdConfiguration> openIdConfigProvider;
     private final JerseyClientFactory jerseyClientFactory;
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
 
     private final Map<String, KeySetWrapper> cache = new ConcurrentHashMap<>();
 
@@ -47,45 +58,15 @@ public class OpenIdPublicKeysSupplier implements Supplier<JsonWebKeySet> {
 
     @Inject
     OpenIdPublicKeysSupplier(final Provider<OpenIdConfiguration> openIdConfigProvider,
-                             final JerseyClientFactory jerseyClientFactory,
-                             final DefaultOpenIdCredentials defaultOpenIdCredentials) {
+                             final JerseyClientFactory jerseyClientFactory) {
         this.openIdConfigProvider = openIdConfigProvider;
         this.jerseyClientFactory = jerseyClientFactory;
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
     }
 
     @Override
     public JsonWebKeySet get() {
-        final OpenIdConfiguration openIdConfiguration = openIdConfigProvider.get();
-        if (IdpType.TEST_CREDENTIALS.equals(openIdConfiguration.getIdentityProviderType())) {
-            return buildHardCodedKeySet();
-        } else {
-            return get(openIdConfiguration.getJwksUri());
-        }
+        return get(openIdConfigProvider.get().getJwksUri());
     }
-
-    private JsonWebKeySet buildHardCodedKeySet() {
-        final String json = defaultOpenIdCredentials.getPublicKeyJson();
-        try {
-            final PublicJsonWebKey publicJsonWebKey = Factory.newPublicJwk(json);
-            return new JsonWebKeySet(publicJsonWebKey);
-        } catch (final JoseException e) {
-            LOGGER.error("Unable to create RsaJsonWebKey from hard coded json:\n{}", json, e);
-            throw new RuntimeException(e);
-        }
-    }
-
-//    private KeySetWrapper buildHardCodedKeySet() {
-//        final String json = defaultOpenIdCredentials.getPublicKeyJson();
-//        try {
-//            final PublicJsonWebKey publicJsonWebKey = Factory.newPublicJwk(json);
-//            JsonWebKeySet jsonWebKeySet = new JsonWebKeySet(publicJsonWebKey);
-//            return new KeySetWrapper(jsonWebKeySet, Long.MAX_VALUE);
-//        } catch (JoseException e) {
-//            LOGGER.error("Unable to create RsaJsonWebKey from json:\n{}", json, e);
-//            throw new RuntimeException(e);
-//        }
-//    }
 
     private boolean hasKeySetExpired(final KeySetWrapper keySetWrapper) {
         // Add a jitter, so it is less likely multiple threads will pile in at the same time

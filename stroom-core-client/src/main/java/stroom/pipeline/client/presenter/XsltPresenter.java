@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.client.presenter;
@@ -20,7 +19,7 @@ package stroom.pipeline.client.presenter;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.AbstractTabProvider;
-import stroom.entity.client.presenter.DocumentEditTabPresenter;
+import stroom.entity.client.presenter.DocTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
@@ -35,7 +34,7 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import javax.inject.Provider;
 
-public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, XsltDoc> {
+public class XsltPresenter extends DocTabPresenter<LinkTabPanelView, XsltDoc> {
 
     private static final TabData XSLT = new TabDataImpl("XSLT");
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
@@ -54,8 +53,8 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
             protected EditorPresenter createPresenter() {
                 final EditorPresenter editorPresenter = editorPresenterProvider.get();
                 editorPresenter.setMode(AceEditorMode.XML);
-                registerHandler(editorPresenter.addValueChangeHandler(event -> setDirty(true)));
-                registerHandler(editorPresenter.addFormatHandler(event -> setDirty(true)));
+                registerHandler(editorPresenter.addValueChangeHandler(event -> onChange()));
+                registerHandler(editorPresenter.addFormatHandler(event -> onChange()));
                 return editorPresenter;
             }
 
@@ -76,8 +75,7 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
 
             @Override
             public XsltDoc onWrite(final EditorPresenter presenter, final XsltDoc document) {
-                document.setData(presenter.getText());
-                return document;
+                return document.copy().data(presenter.getText()).build();
             }
         });
         addTab(DOCUMENTATION, new MarkdownTabProvider<XsltDoc>(eventBus, markdownEditPresenterProvider) {
@@ -93,8 +91,7 @@ public class XsltPresenter extends DocumentEditTabPresenter<LinkTabPanelView, Xs
             @Override
             public XsltDoc onWrite(final MarkdownEditPresenter presenter,
                                    final XsltDoc document) {
-                document.setDescription(presenter.getText());
-                return document;
+                return document.copy().description(presenter.getText()).build();
             }
         });
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);

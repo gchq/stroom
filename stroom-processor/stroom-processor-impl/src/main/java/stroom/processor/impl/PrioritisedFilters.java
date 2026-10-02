@@ -1,7 +1,24 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.processor.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.impl.db.migration.legacyqd.ExpressionTerm;
 import stroom.processor.shared.ProcessorFields;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterFields;
@@ -74,26 +91,30 @@ public class PrioritisedFilters implements Clearable {
             filters.sort(ProcessorFilter.HIGHEST_PRIORITY_FIRST_COMPARATOR);
 
             // Try and ensure we have pipeline names for each filter
-            for (final ProcessorFilter filter : NullSafe.list(filters)) {
-                try {
-                    if (filter != null
-                        && filter.getPipelineUuid() != null
-                        && NullSafe.isEmptyString(filter.getPipelineName())) {
-                        final Optional<String> pipelineName = processorFilterService
-                                .getPipelineName(filter.getProcessorType(), filter.getPipelineUuid());
-                        pipelineName.ifPresent(newPipeName -> {
-                            if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
-                                filter.setPipelineName(newPipeName);
+            return filters
+                    .stream()
+                    .map(filter -> {
+                        try {
+                            if (filter != null
+                                && filter.getPipelineUuid() != null
+                                && NullSafe.isEmptyString(filter.getPipelineName())) {
+                                final Optional<String> pipelineName = processorFilterService
+                                        .getPipelineName(filter.getProcessorType(), filter.getPipelineUuid());
+                                if (pipelineName.isPresent()) {
+                                    final String newPipeName = pipelineName.get();
+                                    if (!Objects.equals(filter.getPipelineName(), newPipeName)) {
+                                        return filter.copy().pipelineName(newPipeName).build();
+                                    }
+                                }
                             }
-                        });
-                    }
-                } catch (final RuntimeException e) {
-                    // This error is expected in tests and the pipeline name isn't essential
-                    // as it is only used in here for logging purposes.
-                    LOGGER.trace(e::getMessage, e);
-                }
-            }
-            return filters;
+                        } catch (final RuntimeException e) {
+                            // This error is expected in tests and the pipeline name isn't essential
+                            // as it is only used in here for logging purposes.
+                            LOGGER.trace(e::getMessage, e);
+                        }
+                        return filter;
+                    })
+                    .toList();
         });
     }
 

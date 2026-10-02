@@ -28,6 +28,7 @@ public class Split extends Expression implements Match {
     private int[] start = new int[2];
     private int[] end = new int[2];
     private CharBuffer escapeFiltered;
+    private int filteredGroup = -1;
 
     public Split(final VarMap varMap, final SplitFactory factory) {
         super(varMap, factory);
@@ -187,13 +188,14 @@ public class Split extends Expression implements Match {
 
     @Override
     public Buffer filter(final Buffer buffer, final int group) {
-        if (group > 2) {
+        if (group > 3) {
             throw new IndexOutOfBoundsException("No group " + group);
         }
 
         // Group 0 returns the whole string. Group 1 is the whole string minus
         // delimiter, whitespace and outermost container characters. Group 2 is
         // string minus delimiter and filtered to remove escape characters.
+        // Group 3 will return the string minus escape chars before delimiters
         if (group <= 1 || factory.getEscape() == null) {
             if (start[group] == 0 && end[group] == buffer.length()) {
                 return buffer.unsafeCopy();
@@ -203,33 +205,41 @@ public class Split extends Expression implements Match {
 
         } else {
             // Produce escape filtered buffer if we haven't already.
-            if (escapeFiltered == null) {
-                // Produce filtered buffer that removes escape characters.
-                boolean escape = false;
-                int pos = start[1];
-
-                final StringBuilder sb = new StringBuilder();
-                for (; pos < end[1]; ) {
-                    if (!escape) {
-                        if (isSubstring(cs, pos, factory.getEscape())) {
-                            escape = true;
-                            pos += factory.getEscape().length;
-                        } else {
-                            sb.append(cs.charAt(pos));
-                            pos++;
-                        }
-                    } else {
-                        sb.append(cs.charAt(pos));
-                        pos++;
-                        escape = false;
-                    }
-                }
-
-                final char[] chars = sb.toString().toCharArray();
-                escapeFiltered = new CharBuffer(chars, 0, chars.length);
+            if (escapeFiltered == null || filteredGroup != group) {
+                escapeFiltered = getFilteredBuffer(group);
+                filteredGroup = group;
             }
 
             return escapeFiltered;
         }
+    }
+
+    private CharBuffer getFilteredBuffer(final int group) {
+        // Produce filtered buffer that removes escape characters.
+        boolean escape = false;
+        int pos = start[1];
+
+        final StringBuilder sb = new StringBuilder();
+        for (; pos < end[1]; ) {
+            if (!escape) {
+                if (isSubstring(cs, pos, factory.getEscape())) {
+                    escape = true;
+                    pos += factory.getEscape().length;
+                } else {
+                    sb.append(cs.charAt(pos));
+                    pos++;
+                }
+            } else {
+                if (group == 3 && !isSubstring(cs, pos, factory.getDelimiter())) {
+                    sb.append(cs.charAt(pos - 1));
+                }
+                sb.append(cs.charAt(pos));
+                pos++;
+                escape = false;
+            }
+        }
+
+        final char[] chars = sb.toString().toCharArray();
+        return new CharBuffer(chars, 0, chars.length);
     }
 }

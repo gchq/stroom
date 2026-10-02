@@ -28,10 +28,10 @@ import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
 import stroom.proxy.app.handler.ForwardFileConfig;
 import stroom.proxy.app.handler.ForwardHttpPostConfig;
+import stroom.proxy.app.handler.ForwardS3Config;
 import stroom.proxy.app.handler.ProxyId;
-import stroom.security.openid.api.AbstractOpenIdConfig;
+import stroom.security.common.impl.InsecureTestCredentials;
 import stroom.security.openid.api.IdpType;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.config.ConfigValidator;
 import stroom.util.config.PropertyPathDecorator;
 import stroom.util.date.DateUtil;
@@ -39,6 +39,7 @@ import stroom.util.io.DirProvidersModule;
 import stroom.util.io.FileUtil;
 import stroom.util.io.HomeDirProvider;
 import stroom.util.io.PathConfig;
+import stroom.util.io.PathCreator;
 import stroom.util.io.TempDirProvider;
 import stroom.util.logging.DefaultLoggingFilter;
 import stroom.util.logging.LambdaLogger;
@@ -49,7 +50,7 @@ import stroom.util.shared.IsProxyConfig;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.validation.ValidationModule;
-import stroom.util.yaml.YamlUtil;
+import stroom.util.yaml.YamlFileUtil;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.inject.AbstractModule;
@@ -61,7 +62,7 @@ import io.dropwizard.core.setup.Environment;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import jakarta.inject.Inject;
 import jakarta.validation.ValidatorFactory;
-import org.eclipse.jetty.server.session.SessionHandler;
+import org.eclipse.jetty.ee10.servlet.SessionHandler;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -94,6 +95,8 @@ public class App extends Application<Config> {
     private BuildInfo buildInfo;
     @Inject
     private HomeDirProvider homeDirProvider;
+    @Inject
+    private PathCreator pathCreator;
     @Inject
     private TempDirProvider tempDirProvider;
     @Inject
@@ -132,14 +135,16 @@ public class App extends Application<Config> {
         //   Please add log4j-core to the classpath. Using SimpleLogger to log to the console...
         System.setProperty("org.jboss.logging.provider", "slf4j");
 
-        final Path yamlConfigFile = YamlUtil.getYamlFileFromArgs(args);
+        final Path yamlConfigFile = YamlFileUtil.getYamlFileFromArgs(args);
         new App(yamlConfigFile).run(args);
     }
 
     @Override
     public void initialize(final Bootstrap<Config> bootstrap) {
-        // Dropwizard 2.x no longer fails on unknown properties by default but we want it to.
-        bootstrap.getObjectMapper().enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        // Dropwizard 2.x no longer fails on unknown properties by default, but we want it to.
+        // Dropwizard v5.0.1 still using Jackson v2
+        bootstrap.getObjectMapper()
+                .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
         // This allows us to use env var templating and relative (to proxy home) paths in the YAML configuration.
         bootstrap.setConfigurationSourceProvider(ProxyYamlUtil.createConfigurationSourceProvider(
@@ -149,6 +154,9 @@ public class App extends Application<Config> {
         // then we need to set the ValidatorFactory. As our main Guice Injector is not available yet we need to
         // create one just for the REST validation
         bootstrap.setValidatorFactory(validationOnlyInjector.getInstance(ValidatorFactory.class));
+
+        // Admin servlet for Prometheus to scrape (pull) metrics
+//        bootstrap.addBundle(new PrometheusBundle());
     }
 
     @Override
@@ -206,39 +214,22 @@ public class App extends Application<Config> {
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
 
-        warnAboutDefaultOpenIdCreds(configuration, injector);
+        warnAboutInsecureTestCredentials(injector);
 
         showInfo(configuration);
     }
 
-    private void warnAboutDefaultOpenIdCreds(final Config configuration, final Injector injector) {
-
-        final boolean areDefaultOpenIdCredsInUse = NullSafe.test(configuration.getProxyConfig(),
-                ProxyConfig::getProxySecurityConfig,
-                ProxySecurityConfig::getAuthenticationConfig,
-                ProxyAuthenticationConfig::getOpenIdConfig,
-                openIdConfig ->
-                        IdpType.TEST_CREDENTIALS.equals(openIdConfig.getIdentityProviderType()));
-
-        if (areDefaultOpenIdCredsInUse) {
-            final DefaultOpenIdCredentials defaultOpenIdCredentials = injector.getInstance(
-                    DefaultOpenIdCredentials.class);
-            final String propPath = configuration.getProxyConfig()
-                    .getProxySecurityConfig()
-                    .getAuthenticationConfig()
-                    .getOpenIdConfig()
-                    .getFullPathStr(AbstractOpenIdConfig.PROP_NAME_IDP_TYPE);
+    private void warnAboutInsecureTestCredentials(final Injector injector) {
+        final InsecureTestCredentials insecureTestCredentials = injector.getInstance(InsecureTestCredentials.class);
+        if (insecureTestCredentials.isEnabled()) {
             LOGGER.warn("" +
                         "\n  ---------------------------------------------------------------------------------------" +
                         "\n  " +
                         "\n                                        WARNING!" +
                         "\n  " +
-                        "\n   Using default and publicly available Open ID authentication credentials. " +
-                        "\n   These should only be used in test/demo environments. " +
-                        "\n   Set " + propPath + " to EXTERNAL/NO_IDP for production environments." +
-                        "The API key in use is:" +
-                        "\n" +
-                        "\n   " + defaultOpenIdCredentials.getApiKey() +
+                        "\n   The insecure test credential (" + InsecureTestCredentials.SECRET_PROP + ") is " +
+                        "\n   enabled. This is insecure and must only be used in test/demo environments. " +
+                        "\n   Unset " + InsecureTestCredentials.ALLOW_PROP + " in production environments." +
                         "\n  ---------------------------------------------------------------------------------------" +
                         "");
         }
@@ -259,11 +250,14 @@ public class App extends Application<Config> {
 
     private void showInfo(final Config configuration) {
         Objects.requireNonNull(buildInfo);
+        final ProxyConfig proxyConfig = configuration.getProxyConfig();
 
-        final String forwaders = configuration.getProxyConfig().streamAllForwarders()
+        final String forwaders = proxyConfig.streamAllForwarders()
                 .map(forwarderConfig -> {
                     final String name = forwarderConfig.getName();
-                    final String destination = forwarderConfig.getDestinationDescription();
+                    final String destination = forwarderConfig.getDestinationDescription(
+                            proxyConfig.getDownstreamHostConfig(),
+                            pathCreator);
                     final String state = forwarderConfig.isEnabled()
                             ? ""
                             : " DISABLED";
@@ -273,11 +267,18 @@ public class App extends Application<Config> {
                     final String type = switch (forwarderConfig) {
                         case final ForwardHttpPostConfig ignored -> "HTTP";
                         case final ForwardFileConfig ignored -> "FILE";
+                        case final ForwardS3Config ignored -> "S3";
                     };
                     return "    " + type + ": '" + name + "' -> " + destination + instant + state;
                 })
                 .sorted()
                 .collect(Collectors.joining("\n"));
+        final IdpType idpType = NullSafe.get(
+                proxyConfig,
+                ProxyConfig::getProxySecurityConfig,
+                ProxySecurityConfig::getAuthenticationConfig,
+                ProxyAuthenticationConfig::getOpenIdConfig,
+                ProxyOpenIdConfig::getIdentityProviderType);
 
         LOGGER.info(""
                     + "\n  Build version:       " + buildInfo.getBuildVersion()
@@ -285,6 +286,7 @@ public class App extends Application<Config> {
                     + "\n  Stroom Proxy home:   " + homeDirProvider.get().toAbsolutePath().normalize()
                     + "\n  Stroom Proxy temp:   " + tempDirProvider.get().toAbsolutePath().normalize()
                     + "\n  Proxy ID:            " + proxyId.getId()
+                    + "\n  IDP Type:            " + idpType
                     + "\n  Forwarders:          " + "\n" + forwaders
                     + "\n");
     }

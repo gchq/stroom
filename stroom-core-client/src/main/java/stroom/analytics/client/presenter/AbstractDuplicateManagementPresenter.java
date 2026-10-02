@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,28 +12,29 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.analytics.client.presenter;
 
+import stroom.analytics.client.presenter.AbstractDuplicateManagementPresenter.DuplicateManagementView;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.DuplicateNotificationConfig;
 import stroom.docref.DocRef;
-import stroom.document.client.event.DirtyUiHandlers;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.document.client.event.ChangeUiHandlers;
+import stroom.entity.client.presenter.DocPresenter;
+import stroom.util.shared.NullSafe;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAnalyticRuleDoc>
-        extends DocumentEditPresenter<AbstractDuplicateManagementPresenter.DuplicateManagementView, D>
-        implements DirtyUiHandlers {
+        extends DocPresenter<DuplicateManagementView, D> {
 
     private final DuplicateManagementListPresenter duplicateManagementListPresenter;
 
@@ -49,11 +50,6 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
     }
 
     @Override
-    public void onDirty() {
-        setDirty(true);
-    }
-
-    @Override
     protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
         final DuplicateNotificationConfig duplicateNotificationConfig = document.getDuplicateNotificationConfig();
         getView().setRememberNotifications(duplicateNotificationConfig.isRememberNotifications());
@@ -64,21 +60,23 @@ public abstract class AbstractDuplicateManagementPresenter<D extends AbstractAna
     }
 
     protected DuplicateNotificationConfig writeDuplicateNotificationConfig() {
-        final String[] arr = getView().getColumns().split(",");
-        final List<String> columns = new ArrayList<>(arr.length);
-        for (final String col : arr) {
-            final String trimmed = col.trim();
-            if (trimmed.length() > 0) {
-                columns.add(trimmed);
-            }
-        }
+        final String[] arr = NullSafe.string(getView().getColumns())
+                .split(",");
+        final List<String> columns = Arrays.stream(arr)
+                .map(String::trim)
+                .filter(NullSafe::isNonEmptyString)
+                .collect(Collectors.toList());
         return new DuplicateNotificationConfig(getView().isRememberNotifications(),
                 getView().isSuppressDuplicateNotifications(),
                 getView().isChooseColumns(),
                 columns);
     }
 
-    public interface DuplicateManagementView extends View, HasUiHandlers<DirtyUiHandlers> {
+
+    // --------------------------------------------------------------------------------
+
+
+    public interface DuplicateManagementView extends View, HasUiHandlers<ChangeUiHandlers> {
 
         void setRememberNotifications(boolean rememberNotifications);
 

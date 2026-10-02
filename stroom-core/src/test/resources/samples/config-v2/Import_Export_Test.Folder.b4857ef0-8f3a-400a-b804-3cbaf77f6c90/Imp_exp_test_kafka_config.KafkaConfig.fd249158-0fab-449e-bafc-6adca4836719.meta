@@ -1,0 +1,7 @@
+{
+  "type" : "KafkaConfig",
+  "uuid" : "fd249158-0fab-449e-bafc-6adca4836719",
+  "name" : "Imp_exp_test_kafka_config",
+  "version" : "48f55fe2-f680-4c1a-bfc9-db632c98b46d",
+  "data" : "key.serializer=org.apache.kafka.common.serialization.StringSerializer\nvalue.serializer=org.apache.kafka.common.serialization.StringSerializer\nclient.id=stroom\nbootstrap.servers=localhost:9092\nacks=all\nbuffer.memory=100000\ncompression.type=none\nretries=0\n#max.block.ms=60000"
+}

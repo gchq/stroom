@@ -18,7 +18,7 @@ package stroom.visualisation.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 
@@ -51,26 +51,22 @@ import java.util.Objects;
         "scriptRef",
         "settings"})
 @JsonInclude(Include.NON_NULL)
-public class VisualisationDoc extends Doc {
+public class VisualisationDoc extends AbstractDoc {
 
     public static final String TYPE = "Visualisation";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.VISUALISATION_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String functionName;
+    private final String functionName;
     @JsonProperty
-    private DocRef scriptRef;
+    private final DocRef scriptRef;
     @JsonProperty
-    private String settings;
-
-    public VisualisationDoc() {
-    }
+    private final String settings;
 
     @JsonCreator
-    public VisualisationDoc(@JsonProperty("type") final String type,
-                            @JsonProperty("uuid") final String uuid,
+    public VisualisationDoc(@JsonProperty("uuid") final String uuid,
                             @JsonProperty("name") final String name,
                             @JsonProperty("version") final String version,
                             @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -81,7 +77,7 @@ public class VisualisationDoc extends Doc {
                             @JsonProperty("functionName") final String functionName,
                             @JsonProperty("scriptRef") final DocRef scriptRef,
                             @JsonProperty("settings") final String settings) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
         this.description = description;
         this.functionName = functionName;
         this.scriptRef = scriptRef;
@@ -108,39 +104,20 @@ public class VisualisationDoc extends Doc {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     public String getFunctionName() {
         return functionName;
-    }
-
-    public void setFunctionName(final String functionName) {
-        this.functionName = functionName;
     }
 
     public DocRef getScriptRef() {
         return scriptRef;
     }
 
-    public void setScriptRef(final DocRef scriptRef) {
-        this.scriptRef = scriptRef;
-    }
-
     public String getSettings() {
         return settings;
     }
 
-    public void setSettings(final String settings) {
-        this.settings = settings;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
@@ -148,14 +125,82 @@ public class VisualisationDoc extends Doc {
             return false;
         }
         final VisualisationDoc that = (VisualisationDoc) o;
-        return Objects.equals(description, that.description) &&
-               Objects.equals(functionName, that.functionName) &&
-               Objects.equals(scriptRef, that.scriptRef) &&
-               Objects.equals(settings, that.settings);
+        return Objects.equals(description, that.description)
+               && Objects.equals(functionName, that.functionName)
+               && Objects.equals(scriptRef, that.scriptRef)
+               && Objects.equals(settings, that.settings);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, functionName, scriptRef, settings);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder
+            extends AbstractBuilder<VisualisationDoc, Builder> {
+
+        private String description;
+        private String functionName;
+        private DocRef scriptRef;
+        private String settings;
+
+        private Builder() {
+        }
+
+        private Builder(final VisualisationDoc visualisationDoc) {
+            super(visualisationDoc);
+            this.description = visualisationDoc.description;
+            this.functionName = visualisationDoc.functionName;
+            this.scriptRef = visualisationDoc.scriptRef;
+            this.settings = visualisationDoc.settings;
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder functionName(final String functionName) {
+            this.functionName = functionName;
+            return self();
+        }
+
+        public Builder scriptRef(final DocRef scriptRef) {
+            this.scriptRef = scriptRef;
+            return self();
+        }
+
+        public Builder settings(final String settings) {
+            this.settings = settings;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public VisualisationDoc build() {
+            return new VisualisationDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    functionName,
+                    scriptRef,
+                    settings);
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2022 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class ListInputPresenter
     public void onValueChanged(final WordItem value) {
         setSettings(getListInputSettings().copy().value(value.getWord()).build());
         ComponentChangeEvent.fire(this, this);
-        setDirty(true);
+        onChange();
     }
 
     @Override
@@ -109,7 +109,7 @@ public class ListInputPresenter
         getView().setAllowTextEntry(settings.isAllowTextEntry());
 
         if (settings.isUseDictionary() &&
-                settings.getDictionary() != null) {
+            settings.getDictionary() != null) {
             restFactory
                     .create(WORD_LIST_RESOURCE)
                     .method(res -> res.getWords(settings.getDictionary().getUuid()))

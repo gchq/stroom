@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.annotation.client;
 
 import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
@@ -12,7 +28,7 @@ import stroom.data.client.presenter.DisplayMode;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DataGridUtil;
@@ -27,7 +43,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 public class LinkedEventPresenter
-        extends DocumentEditPresenter<LinkedEventView, Annotation> {
+        extends DocPresenter<LinkedEventView, Annotation> {
 
     private final MyDataGrid<EventId> dataGrid;
     private final MultiSelectionModelImpl<EventId> selectionModel;
@@ -44,7 +60,6 @@ public class LinkedEventPresenter
 
     private List<EventId> currentData;
     private EventId nextSelection;
-    private boolean dirty;
     private AnnotationPresenter parent;
 
     @Inject
@@ -56,7 +71,8 @@ public class LinkedEventPresenter
                                 final AddEventLinkPresenter addEventLinkPresenter) {
         super(eventBus, view);
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Linked Events");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -70,8 +86,10 @@ public class LinkedEventPresenter
         this.addEventLinkPresenter = addEventLinkPresenter;
 
         addEventButton = pagerView.addButton(SvgPresets.ADD);
-        addEventButton.setTitle("Add Event");
+        addEventButton.setTitle("Add Event Link");
+        addEventButton.setEnabled(false);
         removeEventButton = pagerView.addButton(SvgPresets.DELETE);
+        removeEventButton.setTitle("Remove Event Link");
         removeEventButton.setEnabled(false);
 
         view.setEventListView(pagerView);
@@ -84,6 +102,24 @@ public class LinkedEventPresenter
                 ColumnSizeConstants.MEDIUM_COL);
     }
 
+    private void linkEvent(final EventId eventId) {
+        annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
+                new LinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, this);
+    }
+
+    private void unlinkEvent(final EventId eventId) {
+        annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef,
+                new UnlinkEvents(Collections.singletonList(eventId))), this::onChangeComplete, this);
+    }
+
+    private void onChangeComplete(final Boolean success) {
+        if (success != null && success) {
+            AnnotationChangeEvent.fire(this, annotationRef);
+            parent.updateHistory();
+            refreshData();
+        }
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
@@ -91,17 +127,13 @@ public class LinkedEventPresenter
 
         registerHandler(addEventButton.addClickHandler(e -> addEventLinkPresenter.show(eventId -> {
             if (eventId != null) {
-                dirty = true;
-                annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new LinkEvents(
-                        Collections.singletonList(eventId))), success -> parent.updateHistory(), this);
+                linkEvent(eventId);
             }
         })));
 
         registerHandler(removeEventButton.addClickHandler(e -> {
             final EventId selected = selectionModel.getSelected();
             if (selected != null) {
-                dirty = true;
-
                 nextSelection = null;
                 if (currentData != null && currentData.size() > 1) {
                     int index = currentData.indexOf(selected);
@@ -110,22 +142,26 @@ public class LinkedEventPresenter
                     nextSelection = currentData.get(index);
                 }
 
-                annotationResourceClient.change(new SingleAnnotationChangeRequest(annotationRef, new UnlinkEvents(
-                        Collections.singletonList(selected))), success -> parent.updateHistory(), this);
+                unlinkEvent(selected);
             }
         }));
     }
 
     @Override
     protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
+        dataGrid.setTableName("Annotation '" + docRef.getName() + "' Events");
         this.annotationRef = docRef;
-        dirty = false;
-        annotationResourceClient.getLinkedEvents(docRef, this::setData, this);
+        refreshData();
+        enableButtons();
     }
 
     @Override
     protected Annotation onWrite(final Annotation document) {
         return null;
+    }
+
+    private void refreshData() {
+        annotationResourceClient.getLinkedEvents(annotationRef, this::setData, this);
     }
 
     private void setData(final List<EventId> data) {
@@ -163,16 +199,16 @@ public class LinkedEventPresenter
         } else {
             dataPresenter.clear();
         }
-
-        removeEventButton.setEnabled(selected != null);
-    }
-
-    public boolean isDirty() {
-        return dirty;
+        enableButtons();
     }
 
     public void setParent(final AnnotationPresenter parent) {
         this.parent = parent;
+    }
+
+    private void enableButtons() {
+        addEventButton.setEnabled(!isReadOnly());
+        removeEventButton.setEnabled(!isReadOnly() && selectionModel.getSelected() != null);
     }
 
     public interface LinkedEventView extends View {

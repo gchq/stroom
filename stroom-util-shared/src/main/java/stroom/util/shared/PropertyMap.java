@@ -22,6 +22,7 @@ import java.util.HashMap;
  * Class that allows you to embed properties in a string. Used for some simple
  * stuff that is outside GWT (like data upload).
  */
+@SuppressWarnings("checkstyle:IllegalType") //
 public class PropertyMap extends HashMap<String, String> {
 
     public static final String MAGIC_MARKER = "#PM#";

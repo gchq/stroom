@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package stroom.processor.impl;
 
 import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.docref.DocRef;
-import stroom.docref.DocRefInfo;
-import stroom.docrefinfo.api.DocRefInfoService;
+import stroom.docstore.api.DependencyRemapper;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.api.DocFinder;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
@@ -41,6 +42,7 @@ import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.ExpressionItem;
 import stroom.query.api.ExpressionOperator;
+import stroom.query.api.ExpressionOperator.Op;
 import stroom.query.api.ExpressionTerm;
 import stroom.query.api.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
@@ -48,7 +50,6 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.FindUserContext;
 import stroom.security.user.api.UserRefLookup;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -62,6 +63,7 @@ import stroom.util.shared.UserDependency;
 import stroom.util.shared.UserRef;
 
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
@@ -71,6 +73,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -85,8 +88,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     private final ProcessorTaskDao processorTaskDao;
     private final MetaService metaService;
     private final SecurityContext securityContext;
-    private final DocRefInfoService docRefInfoService;
+    private final DocFinder docFinder;
     private final UserRefLookup userRefLookup;
+    private final Provider<DocDependencyService> docDependencyServiceProvider;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
@@ -94,15 +98,17 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                                final ProcessorTaskDao processorTaskDao,
                                final MetaService metaService,
                                final SecurityContext securityContext,
-                               final DocRefInfoService docRefInfoService,
-                               final UserRefLookup userRefLookup) {
+                               final DocFinder docFinder,
+                               final UserRefLookup userRefLookup,
+                               final Provider<DocDependencyService> docDependencyServiceProvider) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskDao = processorTaskDao;
         this.metaService = metaService;
         this.securityContext = securityContext;
-        this.docRefInfoService = docRefInfoService;
+        this.docFinder = docFinder;
         this.userRefLookup = userRefLookup;
+        this.docDependencyServiceProvider = docDependencyServiceProvider;
     }
 
     @Override
@@ -138,22 +144,25 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         final int calculatedPriority = getAutoPriority(processor, request.getPriority(), request.isAutoPriority());
 
         // Create the filter and tracker
-        final ProcessorFilter processorFilter = new ProcessorFilter();
-        // Blank tracker
-        processorFilter.setReprocess(request.isReprocess());
-        processorFilter.setEnabled(request.isEnabled());
-        processorFilter.setPriority(calculatedPriority);
-        processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        processorFilter.setProcessor(processor);
-        processorFilter.setQueryData(request.getQueryData());
-        processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, processorFilter);
-        return create(processorFilter);
+        final ProcessorFilter.Builder builder = ProcessorFilter
+                .builder()
+                .reprocess(request.isReprocess())
+                .enabled(request.isEnabled())
+                .export(request.isExport())
+                .priority(calculatedPriority)
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .profileName(request.getProfileName())
+                .processor(processor)
+                .queryData(request.getQueryData())
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .maxTaskCreationDelay(request.getMaxTaskCreationDelay());
+        setRunAs(request, builder);
+        return create(builder.build());
     }
 
-    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter filter) {
-        filter.setRunAsUser(NullSafe.getOrElseGet(
+    private void setRunAs(final CreateProcessFilterRequest request, final ProcessorFilter.Builder filter) {
+        filter.runAsUser(NullSafe.getOrElseGet(
                 request,
                 CreateProcessFilterRequest::getRunAsUser,
                 securityContext::getUserRef));
@@ -180,29 +189,34 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         // If we are using auto priority then try and get a priority.
         final int calculatedPriority = getAutoPriority(processor, request.getPriority(), request.isAutoPriority());
 
-        if (request.getQueryData() != null && request.getQueryData().getDataSource() == null) {
-            request.getQueryData().setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+        QueryData queryData = request.getQueryData();
+        if (queryData != null && queryData.getDataSource() == null) {
+            queryData = queryData.copy().dataSource(MetaFields.STREAM_STORE_DOC_REF).build();
         }
 
         // now create the filter and tracker
-        final ProcessorFilter processorFilter = Objects.requireNonNullElseGet(
-                existingProcessorFilter,
-                ProcessorFilter::new);
-
-        AuditUtil.stamp(securityContext, processorFilter);
-        processorFilter.setReprocess(request.isReprocess());
-        processorFilter.setEnabled(request.isEnabled());
-        processorFilter.setPriority(calculatedPriority);
-        processorFilter.setMaxProcessingTasks(request.getMaxProcessingTasks());
-        processorFilter.setProcessor(processor);
-        processorFilter.setQueryData(request.getQueryData());
-        processorFilter.setMinMetaCreateTimeMs(request.getMinMetaCreateTimeMs());
-        processorFilter.setMaxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs());
-        setRunAs(request, processorFilter);
+        final ProcessorFilter.Builder builder = NullSafe.getOrElse(
+                        existingProcessorFilter,
+                        ProcessorFilter::copy,
+                        ProcessorFilter.builder())
+                .reprocess(request.isReprocess())
+                .enabled(request.isEnabled())
+                .export(request.isExport())
+                .priority(calculatedPriority)
+                .maxProcessingTasks(request.getMaxProcessingTasks())
+                .profileName(request.getProfileName())
+                .processor(processor)
+                .queryData(queryData)
+                .minMetaCreateTimeMs(request.getMinMetaCreateTimeMs())
+                .maxMetaCreateTimeMs(request.getMaxMetaCreateTimeMs())
+                .maxTaskCreationDelay(request.getMaxTaskCreationDelay())
+                .stampAudit(securityContext);
+        setRunAs(request, builder);
         if (processorFilterDocRef != null) {
-            processorFilter.setUuid(processorFilterDocRef.getUuid());
+            builder.uuid(processorFilterDocRef.getUuid());
         }
 
+        final ProcessorFilter processorFilter = builder.build();
         if (existingProcessorFilter != null) {
             LOGGER.debug("importFilter() - updating {}", processorFilter);
             return update(processorFilter);
@@ -212,15 +226,16 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         }
     }
 
-    private void checkRunAs(final ProcessorFilter processorFilter) {
+    private ProcessorFilter ensureRunAs(final ProcessorFilter processorFilter) {
         final UserRef currentUser = securityContext.getUserRef();
         if (processorFilter.getRunAsUser() == null) {
             // By default the creator of the filter becomes the run as user for the filter
             // (see stroom.processor.impl.ProcessorTaskCreatorImpl.createNewTasks)
-            processorFilter.setRunAsUser(currentUser);
+            return processorFilter.copy().runAsUser(currentUser).build();
         } else {
             checkRunAs(processorFilter.getRunAsUser());
         }
+        return processorFilter;
     }
 
     private void checkRunAs(final UserRef runAsUser) {
@@ -234,13 +249,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
-        checkRunAs(processorFilter);
-
+        final ProcessorFilter updated = ensureRunAs(processorFilter);
         final ProcessorFilter createdFilter = securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.create(ensureValid(processorFilter)));
-        createdFilter.setProcessor(processorFilter.getProcessor());
-
-        return createdFilter;
+                processorFilterDao.create(ensureValid(updated)));
+        updateDocDependencies(createdFilter);
+        return createdFilter.copy().processor(updated.getProcessor()).build();
     }
 
     @Override
@@ -268,53 +281,112 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     "You do not have permission to update this processor filter");
         }
 
-        if (processorFilter.getUuid() == null) {
-            processorFilter.setUuid(UUID.randomUUID().toString());
-        }
+        final ProcessorFilter result = securityContext.secureResult(PERMISSION, () -> {
+            ProcessorFilter updated = processorFilter;
+            if (processorFilter.getUuid() == null) {
+                updated = updated.copy().uuid(UUID.randomUUID().toString()).build();
+            }
 
-        checkRunAs(processorFilter);
-
-        AuditUtil.stamp(securityContext, processorFilter);
-        return securityContext.secureResult(PERMISSION, () ->
-                processorFilterDao.update(processorFilter));
+            updated = ensureRunAs(updated);
+            updated = updated.copy().stampAudit(securityContext).build();
+            return processorFilterDao.update(updated);
+        });
+        // Recompute after the write has committed so the dependency service sees the current filter.
+        updateDocDependencies(result);
+        return result;
     }
 
     @Override
     public boolean delete(final int id) {
         return securityContext.secureResult(PERMISSION, () -> {
+            // Capture the filter's uuid before deletion so we can clear its dependency edges.
+            final String uuid = processorFilterDao.fetch(id)
+                    .map(ProcessorFilter::getUuid)
+                    .orElse(null);
             if (processorFilterDao.logicalDeleteByProcessorFilterId(id) > 0) {
                 // Logically delete any associated tasks that have not yet finished processing.
                 // Once the filter is logically deleted no new tasks will be created for it, but we may still have
                 // active tasks for 'deleted' filters.
                 processorTaskDao.logicalDeleteByProcessorFilterId(id);
+                removeDocDependencies(uuid);
                 return true;
             }
             return false;
         });
     }
 
+    /**
+     * Keep the doc_dependency store current for a filter create/update by extracting the filter's
+     * dependencies <b>directly from the in-hand object</b> and storing them (once, on this node)
+     * rather than relying on a cluster-wide entity event or re-reading the filter back via the
+     * handler registry. Runs as the processing user (pipeline-name resolution may do privileged
+     * lookups); failures are swallowed and logged by {@link DocDependencyService} so they cannot
+     * break the filter write.
+     */
+    private void updateDocDependencies(final ProcessorFilter filter) {
+        final String uuid = NullSafe.get(filter, ProcessorFilter::getUuid);
+        if (uuid != null) {
+            final DocRef docRef = new DocRef(ProcessorFilter.ENTITY_TYPE, uuid);
+            securityContext.asProcessingUser(() -> {
+                final Set<DocRef> deps = getDependencies(
+                        filter, ref -> docFinder.getName(ref).orElse("Unknown"));
+                docDependencyServiceProvider.get().setDependencies(docRef, deps);
+            });
+        }
+    }
+
+    /**
+     * @param pipelineNameResolver resolves the display name for the filter's pipeline DocRef (e.g. a
+     *                             live lookup against the doc store). May be {@code null}, in which
+     *                             case the pipeline's own name (if any) is used.
+     */
+    private Set<DocRef> getDependencies(final ProcessorFilter processorFilter,
+                                        final Function<DocRef, String> pipelineNameResolver) {
+        final DependencyRemapper dependencyRemapper = new DependencyRemapper();
+        final QueryData queryData = processorFilter.getQueryData();
+        if (queryData != null) {
+            if (queryData.getDataSource() != null) {
+                dependencyRemapper.remap(queryData.getDataSource());
+            }
+            if (queryData.getExpression() != null) {
+                dependencyRemapper.remapExpression(queryData.getExpression());
+            }
+        }
+        final String pipelineUuid = processorFilter.getPipelineUuid();
+        if (NullSafe.isNonBlankString(pipelineUuid)) {
+            final DocRef pipeline = processorFilter.getPipeline();
+            final String name = pipelineNameResolver != null
+                    ? pipelineNameResolver.apply(pipeline)
+                    : NullSafe.get(pipeline, DocRef::getName);
+            dependencyRemapper.remap(new DocRef(PipelineDoc.TYPE, pipelineUuid, name));
+        }
+        return dependencyRemapper.getDependencies();
+    }
+
+    private void removeDocDependencies(final String uuid) {
+        if (uuid != null) {
+            final DocRef docRef = new DocRef(ProcessorFilter.ENTITY_TYPE, uuid);
+            securityContext.asProcessingUser(() ->
+                    docDependencyServiceProvider.get().removeDependencies(docRef));
+        }
+    }
+
     @Override
     public void setPriority(final Integer id, final Integer priority) {
-        fetch(id).ifPresent(processorFilter -> {
-            processorFilter.setPriority(priority);
-            update(processorFilter);
-        });
+        fetch(id).ifPresent(processorFilter ->
+                update(processorFilter.copy().priority(priority).build()));
     }
 
     @Override
     public void setMaxProcessingTasks(final Integer id, final Integer maxProcessingTasks) {
-        fetch(id).ifPresent(processorFilter -> {
-            processorFilter.setMaxProcessingTasks(maxProcessingTasks);
-            update(processorFilter);
-        });
+        fetch(id).ifPresent(processorFilter ->
+                update(processorFilter.copy().maxProcessingTasks(maxProcessingTasks).build()));
     }
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        fetch(id).ifPresent(processorFilter -> {
-            processorFilter.setEnabled(enabled);
-            update(processorFilter);
-        });
+        fetch(id).ifPresent(processorFilter ->
+                update(processorFilter.copy().enabled(enabled).build()));
     }
 
     @Override
@@ -368,10 +440,10 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     return o1.getId().compareTo(o2.getId());
                 });
 
-                for (final Processor processor : sorted) {
+                for (Processor processor : sorted) {
                     final Expander processorExpander = new Expander(0, false, false);
 
-                    updatePipelineName(processor);
+                    processor = updatePipelineName(processor);
 
                     final ProcessorRow processorRow = new ProcessorRow(processorExpander,
                             processor);
@@ -385,23 +457,27 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                         for (final ProcessorFilter processorFilter : processorFilters.getValues()) {
                             if (processor.equals(processorFilter.getProcessor())) {
 
-                                // If the user is not an admin then only show them filters that are set to run as them.
-                                if (securityContext.isAdmin() ||
-                                    Objects.equals(currentUser, processorFilter.getRunAsUser())) {
+                                if (canSeeFilter(processorFilter, currentUser)) {
+                                    final ProcessorFilter.Builder processorFilterBuilder = processorFilter.copy();
+
                                     // Decorate the expression with resolved dictionaries etc.
                                     final QueryData queryData = processorFilter.getQueryData();
                                     if (queryData != null && queryData.getExpression() != null) {
-                                        queryData.setExpression(decorate(queryData.getExpression()));
+                                        processorFilterBuilder.queryData(queryData
+                                                .copy()
+                                                .expression(decorate(queryData.getExpression()))
+                                                .build());
                                     }
 
                                     if (processorFilter.getPipelineName() == null) {
                                         if (processor.getPipelineName() == null) {
-                                            updatePipelineName(processor);
+                                            processor = updatePipelineName(processor);
                                         }
-                                        processorFilter.setPipelineName(processor.getPipelineName());
+                                        processorFilterBuilder.pipelineName(processor.getPipelineName());
                                     }
 
-                                    final ProcessorFilterRow processorFilterRow = getRow(processorFilter);
+                                    final ProcessorFilterRow processorFilterRow =
+                                            getRow(processorFilterBuilder.processor(processor).build());
                                     values.add(processorFilterRow);
                                 }
                             }
@@ -414,17 +490,47 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
         });
     }
 
+    private boolean canSeeFilter(final ProcessorFilter processorFilter, final UserRef currentUser) {
+        if (securityContext.isAdmin()) {
+            LOGGER.debug("canSeeFilter() - Is admin, current user: {}, processorFilter: {}",
+                    currentUser, processorFilter);
+            return true;
+        } else {
+            final UserRef runAsUser = processorFilter.getRunAsUser();
+            if (Objects.equals(currentUser, runAsUser)) {
+                LOGGER.debug("canSeeFilter() - Is runAsUser, current user: {}, runAsUser: {}, processorFilter: {}",
+                        currentUser, runAsUser, processorFilter);
+                return true;
+            } else if (runAsUser != null && runAsUser.isGroup()) {
+                final String groupName = runAsUser.getSubjectId();
+                if (securityContext.inGroup(groupName)) {
+                    LOGGER.debug("canSeeFilter() - Member of runAsUser group, current user: {}, runAsUser: {}, " +
+                                 "processorFilter: {}",
+                            currentUser, runAsUser, processorFilter);
+                    return true;
+                } else {
+                    LOGGER.debug("canSeeFilter() - Can't see filter, current user: {}, runAsUser: {}, " +
+                                 "processorFilter: {}",
+                            currentUser, runAsUser, processorFilter);
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+
     @Override
     public ProcessorFilterRow getRow(final ProcessorFilter processorFilter) {
         return new ProcessorFilterRow(processorFilter);
     }
 
-    private void updatePipelineName(final Processor processor) {
+    private Processor updatePipelineName(final Processor processor) {
         if (processor.getPipelineName() == null && processor.getPipelineUuid() != null) {
             final Optional<String> pipelineName = getPipelineName(
                     processor.getProcessorType(),
                     processor.getPipelineUuid());
-            processor.setPipelineName(pipelineName.orElseGet(() -> {
+            return processor.copy().pipelineName(pipelineName.orElseGet(() -> {
                 LOGGER.warn("Unable to find Pipeline " +
                             processor.getPipelineUuid() +
                             " associated with Processor " +
@@ -434,8 +540,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                             ")" +
                             " Has it been deleted?");
                 return null;
-            }));
+            })).build();
         }
+        return processor;
     }
 
     @Override
@@ -451,7 +558,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     .type(docType)
                     .uuid(uuid)
                     .build();
-            return docRefInfoService.name(pipelineDocRef);
+            return docFinder.getName(pipelineDocRef);
         } catch (final RuntimeException e) {
             // This error is expected in tests and the pipeline name isn't essential
             // as it is only used in here for logging purposes.
@@ -461,28 +568,34 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     }
 
     @Override
-    public ProcessorFilter restore(final DocRef processorFilterDocRef, final boolean resetTracker) {
+    public ProcessorFilter restore(final DocRef processorFilterDocRef) {
         final ProcessorFilter processorFilter = fetchByUuid(processorFilterDocRef.getUuid())
                 .orElseThrow(() ->
                         new RuntimeException("No processor filter found for docRef " + processorFilterDocRef));
 
-        return processorFilterDao.restoreProcessorFilter(processorFilter, resetTracker);
+        final ProcessorFilter restored = processorFilterDao.restoreProcessorFilter(processorFilter);
+        // The replica holds the doc ref's uuid now, so the dependency edges recorded against it
+        // are the replica's.
+        updateDocDependencies(restored);
+        return restored;
     }
 
     @Override
-    public ResultPage<ProcessorFilter> find(final DocRef pipelineDocRef) {
-        if (pipelineDocRef == null) {
-            throw new IllegalArgumentException("Supplied pipeline reference cannot be null");
+    public ResultPage<ProcessorFilter> find(final DocRef parentDocRef) {
+        if (parentDocRef == null) {
+            throw new IllegalArgumentException("Supplied document reference cannot be null");
         }
 
-        if (!PipelineDoc.TYPE.equals(pipelineDocRef.getType())) {
-            throw new IllegalArgumentException("Supplied pipeline reference cannot be of type " +
-                                               pipelineDocRef.getType());
+        if (!(PipelineDoc.TYPE.equals(parentDocRef.getType()) || AnalyticRuleDoc.TYPE.equals(parentDocRef.getType()))) {
+            throw new IllegalArgumentException("Supplied document reference cannot be of type " +
+                                               parentDocRef.getType());
         }
 
         // First try to find the associated processors
         final ExpressionOperator processorExpression = ExpressionOperator.builder()
-                .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, pipelineDocRef).build();
+                .op(Op.OR)
+                .addDocRefTerm(ProcessorFields.PIPELINE, Condition.IS_DOC_REF, parentDocRef)
+                .addDocRefTerm(ProcessorFields.ANALYTIC_RULE, Condition.IS_DOC_REF, parentDocRef).build();
         final ResultPage<Processor> processorResultPage = processorService.find(
                 new ExpressionCriteria(processorExpression));
         if (processorResultPage.isEmpty()) {
@@ -518,14 +631,14 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
 
                     try {
                         if (docRef != null) {
-                            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(docRef);
-                            if (optionalDocRefInfo.isPresent()) {
+                            final Optional<DocRef> optionalDocRef = docFinder.decorateIfExists(docRef);
+                            if (optionalDocRef.isPresent()) {
                                 expressionTerm = ExpressionTerm.builder()
                                         .enabled(expressionTerm.enabled())
                                         .field(expressionTerm.getField())
                                         .condition(expressionTerm.getCondition())
                                         .value(expressionTerm.getValue())
-                                        .docRef(optionalDocRefInfo.get().getDocRef())
+                                        .docRef(optionalDocRef.orElse(docRef))
                                         .build();
                             }
                         }
@@ -609,9 +722,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
     private String getPipelineDetails(final String uuid) {
         try {
             final DocRef pipelineDocRef = new DocRef("Pipeline", uuid);
-            final Optional<DocRefInfo> optionalDocRefInfo = docRefInfoService.info(pipelineDocRef);
-            return optionalDocRefInfo
-                    .map(DocRefInfo::getDocRef)
+            return docFinder.decorateIfExists(pipelineDocRef)
                     .map(DocRef::getName)
                     .map(name -> name + " (" + uuid + ")")
                     .orElse(uuid);
@@ -626,20 +737,23 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
             return null;
         }
 
+        final ProcessorFilter.Builder builder = processorFilter.copy();
         if (processorFilter.getUuid() == null) {
-            processorFilter.setUuid(UUID.randomUUID().toString());
+            builder.uuid(UUID.randomUUID().toString());
         }
 
-        if (processorFilter.getQueryData() == null) {
+        QueryData queryData = processorFilter.getQueryData();
+        if (queryData == null) {
             throw new IllegalArgumentException("QueryData cannot be null creating ProcessorFilter" + processorFilter);
         }
 
-        if (processorFilter.getQueryData().getDataSource() == null) {
-            processorFilter.getQueryData().setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+        if (queryData.getDataSource() == null) {
+            queryData = queryData.copy().dataSource(MetaFields.STREAM_STORE_DOC_REF).build();
+            builder.queryData(queryData);
         }
 
-        AuditUtil.stamp(securityContext, processorFilter);
-        return processorFilter;
+        builder.stampAudit(securityContext);
+        return builder.build();
     }
 
     @Override
@@ -654,11 +768,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService, HasUserDepen
                     try {
                         final String pipeUuid = Objects.requireNonNull(processorFilter.getPipelineUuid());
 
-                        DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
-                        pipelineDocRef = docRefInfoService.decorate(pipelineDocRef);
-
+                        final DocRef pipelineDocRef = PipelineDoc.getDocRef(pipeUuid);
+                        final DocRef decorated = docFinder.decorate(pipelineDocRef);
                         final String details = LogUtil.message(
-                                "Pipeline '{}' has a filter with a run-as dependency.", pipelineDocRef.getName());
+                                "Pipeline '{}' has a filter with a run-as dependency.",
+                                decorated.getName());
                         return new UserDependency(
                                 userRef,
                                 details,

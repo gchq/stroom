@@ -34,6 +34,22 @@ public class OpenId {
     public static final String REDIRECT_URI = "redirect_uri";
     public static final String REFRESH_TOKEN = "refresh_token";
     public static final String RESPONSE_TYPE = "response_type";
+
+    /**
+     * PKCE (RFC 7636). The client sends {@link #CODE_CHALLENGE} and {@link #CODE_CHALLENGE_METHOD} on the
+     * authorization request and the matching {@link #CODE_VERIFIER} when redeeming the code, proving it is
+     * the same party that began the flow.
+     */
+    public static final String CODE_CHALLENGE = "code_challenge";
+    public static final String CODE_CHALLENGE_METHOD = "code_challenge_method";
+    public static final String CODE_VERIFIER = "code_verifier";
+    public static final String CODE_CHALLENGE_METHOD__S256 = "S256";
+
+    /**
+     * The JOSE {@code typ} header value that marks a token as an OAuth 2.0 access token (RFC 9068).
+     * Only a token carrying this may authenticate a request; id, refresh and reset tokens do not.
+     */
+    public static final String TOKEN_TYPE__ACCESS = "at+jwt";
     public static final String SCOPE = "scope";
     public static final String STATE = "state";
 
@@ -55,6 +71,16 @@ public class OpenId {
      * A claim holding a set of audience values.
      */
     public static final String CLAIM__AUDIENCE = "aud";
+    /**
+     * The authorized party - the party to which the token was issued, i.e. the OAuth client. Set to the
+     * client id, as issued by Keycloak and other providers, so the relying party sees a familiar token.
+     */
+    public static final String CLAIM__AUTHORIZED_PARTY = "azp";
+    /**
+     * The time the end-user authentication occurred, as seconds since the epoch. On a refreshed id token
+     * this remains the time of the original login, not the time of the refresh.
+     */
+    public static final String CLAIM__AUTH_TIME = "auth_time";
     /**
      * Subject - Identifier for the End-User at the Issuer.
      * <p>

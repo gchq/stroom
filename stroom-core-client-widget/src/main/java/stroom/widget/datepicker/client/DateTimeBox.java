@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.widget.datepicker.client;
 
 import stroom.item.client.EventBinder;
@@ -25,10 +41,13 @@ public class DateTimeBox
     private String stringValue;
     private Long longValue;
     private DateTimePopup popup;
+    //Allows the box to be empty
+    private boolean optional = false;
 
     private final EventBinder eventBinder = new EventBinder() {
         @Override
         protected void onBind() {
+
             registerHandler(svgIconBox.addClickHandler(event -> showPopup()));
             registerHandler(textBox.addKeyDownHandler(event -> {
                 final int keyCode = event.getNativeKeyCode();
@@ -56,6 +75,7 @@ public class DateTimeBox
     public DateTimeBox() {
         textBox = new TextBox();
         textBox.addStyleName("ScheduleBox-textBox stroom-control allow-focus");
+        stringValue = textBox.getText();
 
         svgIconBox = new SvgIconBox();
         svgIconBox.addStyleName("ScheduleBox");
@@ -106,6 +126,11 @@ public class DateTimeBox
 
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
+        updateInvalidState();
+    }
+
+    public boolean isEnabled() {
+        return textBox.isEnabled();
     }
 
     private Long parse(final String text) {
@@ -143,8 +168,15 @@ public class DateTimeBox
         if (stringValue == null) {
             return true;
         }
+        if (optional && stringValue.isEmpty()) {
+            return true;
+        }
         final Long ms = parse(stringValue);
         return ms != null;
+    }
+
+    private boolean isEmpty() {
+        return stringValue == null || stringValue.isEmpty();
     }
 
     private void onFocus() {
@@ -152,11 +184,26 @@ public class DateTimeBox
     }
 
     private void onBlur() {
-        if (isValid()) {
+        updateInvalidState();
+    }
+
+    private void updateInvalidState() {
+        if (isEmpty() && optional
+            || !isEnabled()
+            || isValid()
+        ) {
             textBox.getElement().removeClassName("invalid");
         } else {
             textBox.getElement().addClassName("invalid");
         }
+    }
+
+    public void setOptional(final boolean optional) {
+        this.optional = optional;
+    }
+
+    public boolean getOptional() {
+        return optional;
     }
 
     @Override

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+        width="1792"
+        height="1792"
+        viewBox="0 0 1792 1792"
+        version="1.1"
+        xmlns="http://www.w3.org/2000/svg"
+        style="fill:none;stroke:#010101;stroke-width:113.596;stroke-linecap:round;stroke-linejoin:round;">
+    <circle cx="1498.8962"
+            cy="289.04169"
+            r="165.00735"/>
+    <circle cx="1498.8962"
+            cy="1505.6594"
+            r="165.00735"/>
+    <circle cx="1498.8962"
+            cy="897.35059"
+            r="165.00735"/>
+    <path d="M 1333.8889,897.35059 H 107.58148 L 110.65523,896"/>
+    <path d="m 720.73519,897.35059 189.05192,610.54781 v 0 l 424.10179,-2.239"/>
+    <path d="M 720.73519,897.35055 909.78711,286.80273 v 0 l 424.10179,2.239"/>
+</svg>

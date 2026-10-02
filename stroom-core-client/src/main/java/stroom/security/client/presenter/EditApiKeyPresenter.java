@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
@@ -29,6 +45,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+
+import java.util.Objects;
 
 public class EditApiKeyPresenter
         extends MyPresenterWidget<EditApiKeyView>
@@ -94,7 +112,7 @@ public class EditApiKeyPresenter
         final PopupSize popupSize = PopupSize.resizableX(600);
         uiConfigCache.get(uiConfigCache -> {
             if (Mode.PRE_CREATE.equals(mode)) {
-                getView().setHashAlgorithm(NullSafe.requireNonNullElse(
+                getView().setHashAlgorithm(Objects.requireNonNullElse(
                         uiConfigCache.getDefaultApiKeyHashAlgorithm(),
                         HashAlgorithm.DEFAULT));
             }
@@ -171,10 +189,11 @@ public class EditApiKeyPresenter
             if (NullSafe.isBlankString(getView().getName())) {
                 AlertEvent.fireError(this, "A name must be provided for the API key.", e::reset);
             } else {
-                final HashedApiKey updatedApiKey = HashedApiKey.builder(this.apiKey)
-                        .withName(getView().getName())
-                        .withComments(getView().getComments())
-                        .withEnabled(getView().isEnabled())
+                final HashedApiKey updatedApiKey = this.apiKey
+                        .copy()
+                        .name(getView().getName())
+                        .comments(getView().getComments())
+                        .enabled(getView().isEnabled())
                         .build();
 
 //                GWT.log("ID: " + this.apiKey.getId());
@@ -239,10 +258,13 @@ public class EditApiKeyPresenter
     private void handlePreCreateModeHide(final HidePopupRequestEvent event,
                                          final ExtendedUiConfig uiConfig) {
         final long now = System.currentTimeMillis();
-        final long expireTimeEpochMs = getView().getExpiresOnMs();
+        final Long expireTimeEpochMs = getView().getExpiresOnMs();
         final long maxExpiryEpochMs = now + uiConfig.getMaxApiKeyExpiryAgeMs();
         final UserRef owner = ownerPresenter.getSelected();
-        if (expireTimeEpochMs < now) {
+        if (expireTimeEpochMs == null) {
+            AlertEvent.fireError(this, "API Key expiry date must be less than or equal to "
+                                       + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
+        } else if (expireTimeEpochMs < now) {
             AlertEvent.fireError(this, "API Key expiry date cannot be in the past "
                                        + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
         } else if (expireTimeEpochMs > maxExpiryEpochMs) {

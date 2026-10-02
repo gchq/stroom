@@ -1,17 +1,34 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.identity.openid;
 
+import stroom.security.identity.exceptions.BadRequestException;
 import stroom.security.openid.api.AbstractOpenIdConfig;
 import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdClient;
 import stroom.security.openid.api.OpenIdClientFactory;
 import stroom.security.openid.api.OpenIdConfiguration;
-import stroom.util.authentication.DefaultOpenIdCredentials;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.string.StringUtil;
 
+import event.logging.AuthenticateOutcomeReason;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -30,7 +47,6 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
     private static final char[] ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGJKLMNPRSTUVWXYZ0123456789"
             .toCharArray();
 
-    private final DefaultOpenIdCredentials defaultOpenIdCredentials;
     // We have to use AbstractOpenIdConfig instead of OpenIdConfiguration, so we get
     // the one that is backed by stroom's config.yml rather than the one that is derived
     // from the config.yml + the IDP's config endpoint (i.e. relies on this class).
@@ -40,9 +56,7 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
 
     @Inject
     public OpenIdClientDetailsFactoryImpl(final OpenIdClientDao openIdClientDao,
-                                          final DefaultOpenIdCredentials defaultOpenIdCredentials,
                                           final Provider<AbstractOpenIdConfig> openIdConfigurationProvider) {
-        this.defaultOpenIdCredentials = defaultOpenIdCredentials;
         this.openIdConfigurationProvider = openIdConfigurationProvider;
         this.openIdClientDao = openIdClientDao;
     }
@@ -59,8 +73,17 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
         final OpenIdClient client = getClient();
         // Internal IDP only supports one client
         if (!Objects.requireNonNull(clientId).equals(client.getClientId())) {
-            throw new RuntimeException(LogUtil.message(
+            // The caller is told only that the client id was wrong, never what the right one is. It is a
+            // forty character random credential the rest of the system works to keep unguessable, and this
+            // is reachable without authenticating - naming it in the error hands over the value needed to
+            // build a well-formed authorize request. The token endpoint already answers this way; the
+            // authorize and refresh paths did not.
+            //
+            // The supplied id becomes the subject so the audit records what was attempted, and the id we
+            // expected goes no further than a debug log.
+            LOGGER.debug(() -> LogUtil.message(
                     "Unexpected client ID: {}, expecting {}", clientId, client.getClientId()));
+            throw new BadRequestException(clientId, AuthenticateOutcomeReason.OTHER, "Invalid client ID");
         } else {
             return client;
         }
@@ -75,9 +98,7 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
                 final OpenIdConfiguration openIdConfiguration = openIdConfigurationProvider.get();
                 final IdpType idpType = openIdConfiguration.getIdentityProviderType();
 
-                if (IdpType.TEST_CREDENTIALS.equals(idpType)) {
-                    client = createDefaultOAuthClient();
-                } else if (IdpType.INTERNAL_IDP.equals(idpType)) {
+                if (IdpType.INTERNAL_IDP.equals(idpType)) {
                     // We are first thread on this node, but other nodes may beat us to it so,
                     // check the DB
                     client = createOAuth2Client(clientName, openIdConfiguration);
@@ -119,14 +140,6 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
                         new NullPointerException("Unable to get or create internal client details"));
     }
 
-    private OpenIdClient createDefaultOAuthClient() {
-        return new OpenIdClient(
-                defaultOpenIdCredentials.getOauth2ClientName(),
-                defaultOpenIdCredentials.getOauth2ClientId(),
-                defaultOpenIdCredentials.getOauth2ClientSecret(),
-                defaultOpenIdCredentials.getOauth2ClientUriPattern());
-    }
-
     private static OpenIdClient createOAuth2ClientCredentials(final String name,
                                                               final OpenIdConfiguration openIdConfiguration) {
         // If we have them in config then use them, else fall back to randomised creds
@@ -138,15 +151,14 @@ public class OpenIdClientDetailsFactoryImpl implements OpenIdClientFactory {
                 () -> createRandomCode(CLIENT_SECRET_SUFFIX));
 
         LOGGER.debug("");
-        return new OpenIdClient(name, clientId, clientSecret, ".*");
+        return new OpenIdClient(name, clientId, clientSecret);
     }
 
     static OpenIdClient createRandomisedOAuth2Client(final String name) {
         return new OpenIdClient(
                 name,
                 createRandomCode(CLIENT_ID_SUFFIX),
-                createRandomCode(CLIENT_SECRET_SUFFIX),
-                ".*");
+                createRandomCode(CLIENT_SECRET_SUFFIX));
     }
 
     public static String createRandomCode(final String suffix) {

@@ -28,7 +28,7 @@ class TestSplitMatcher extends StroomUnitTest {
     private static final String TESTDATA = "" +
             ",692289,2012-08-28 09:56:00,2012-08-28 09:56:00,\"562\",8,Suc\"c\"ess Audit event,  \"3\" ,  " +
             "\"Objec\"t\" Access\"  ,   Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe," +
-            "CODE123/,NT AUTHORITY\\SYSTEM,   \"  Handle Closed,  \"  \": Ob/,ject \" Se,rver: " +
+            "CODE123/,NT AUTHORITY\\SYSTEM,   \"  Handle/Closed,  \"  \": Ob/,ject \" Se,rver: " +
             "Security Handle ID: 5676 Process ID: 1144 Image File Name: C:\\WINNT\\system32\\svchost.exe ,\n";
     private static final char[] TESTARR = TESTDATA.toCharArray();
 
@@ -110,6 +110,8 @@ class TestSplitMatcher extends StroomUnitTest {
                 .isEqualTo("2012-08-28 09:56:00");
         assertThat(match.filter(input, 2).toString())
                 .isEqualTo("2012-08-28 09:56:00");
+        assertThat(match.filter(input, 3).toString())
+                .isEqualTo("2012-08-28 09:56:00");
 
         input.move(match.end());
         match = split.match();
@@ -119,6 +121,8 @@ class TestSplitMatcher extends StroomUnitTest {
         assertThat(match.filter(input, 1).toString())
                 .isEqualTo("562");
         assertThat(match.filter(input, 2).toString())
+                .isEqualTo("562");
+        assertThat(match.filter(input, 3).toString())
                 .isEqualTo("562");
 
         input.move(match.end());
@@ -130,6 +134,8 @@ class TestSplitMatcher extends StroomUnitTest {
                 .isEqualTo("8");
         assertThat(match.filter(input, 2).toString())
                 .isEqualTo("8");
+        assertThat(match.filter(input, 3).toString())
+                .isEqualTo("8");
 
         input.move(match.end());
         match = split.match();
@@ -139,6 +145,8 @@ class TestSplitMatcher extends StroomUnitTest {
         assertThat(match.filter(input, 1).toString())
                 .isEqualTo("Suc\"c\"ess Audit event");
         assertThat(match.filter(input, 2).toString())
+                .isEqualTo("Suc\"c\"ess Audit event");
+        assertThat(match.filter(input, 3).toString())
                 .isEqualTo("Suc\"c\"ess Audit event");
 
         input.move(match.end());
@@ -150,6 +158,8 @@ class TestSplitMatcher extends StroomUnitTest {
                 .isEqualTo("3");
         assertThat(match.filter(input, 2).toString())
                 .isEqualTo("3");
+        assertThat(match.filter(input, 3).toString())
+                .isEqualTo("3");
 
         input.move(match.end());
         match = split.match();
@@ -159,6 +169,8 @@ class TestSplitMatcher extends StroomUnitTest {
         assertThat(match.filter(input, 1).toString())
                 .isEqualTo("Objec\"t\" Access");
         assertThat(match.filter(input, 2).toString())
+                .isEqualTo("Objec\"t\" Access");
+        assertThat(match.filter(input, 3).toString())
                 .isEqualTo("Objec\"t\" Access");
 
         input.move(match.end());
@@ -170,6 +182,8 @@ class TestSplitMatcher extends StroomUnitTest {
                 .isEqualTo("Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe");
         assertThat(match.filter(input, 2).toString())
                 .isEqualTo("Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe");
+        assertThat(match.filter(input, 3).toString())
+                .isEqualTo("Secur\"ity,Sec\"urity   |5676|1144|C:\\WINNT\\system32\\svchost.exe");
 
         input.move(match.end());
         match = split.match();
@@ -180,16 +194,20 @@ class TestSplitMatcher extends StroomUnitTest {
                 .isEqualTo("CODE123/,NT AUTHORITY\\SYSTEM");
         assertThat(match.filter(input, 2).toString())
                 .isEqualTo("CODE123,NT AUTHORITY\\SYSTEM");
+        assertThat(match.filter(input, 3).toString())
+                .isEqualTo("CODE123,NT AUTHORITY\\SYSTEM");
 
         input.move(match.end());
         match = split.match();
 
         assertThat(match.filter(input, 0).toString())
-                .isEqualTo("   \"  Handle Closed,  \"  \": Ob/,ject \" Se,");
+                .isEqualTo("   \"  Handle/Closed,  \"  \": Ob/,ject \" Se,");
         assertThat(match.filter(input, 1).toString())
-                .isEqualTo("Handle Closed,  \"  \": Ob/,ject \" Se");
+                .isEqualTo("Handle/Closed,  \"  \": Ob/,ject \" Se");
         assertThat(match.filter(input, 2).toString())
-                .isEqualTo("Handle Closed,  \"  \": Ob,ject \" Se");
+                .isEqualTo("HandleClosed,  \"  \": Ob,ject \" Se");
+        assertThat(match.filter(input, 3).toString())
+                .isEqualTo("Handle/Closed,  \"  \": Ob,ject \" Se");
 
     }
 }

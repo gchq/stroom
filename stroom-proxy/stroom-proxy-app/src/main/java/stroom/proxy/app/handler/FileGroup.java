@@ -1,14 +1,37 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
+import stroom.util.io.FileSyncUtil;
+import stroom.util.io.FsyncMode;
+
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
 public class FileGroup {
 
-    static final String META_FILE = "proxy.meta";
-    static final String ZIP_FILE = "proxy.zip";
+    static final String BASE_FILENAME = "proxy";
+    static final String META_EXTENSION = "meta";
+    static final String ZIP_EXTENSION = "zip";
     static final String ENTRIES_EXTENSION = "entries";
-    static final String ENTRIES_FILE = "proxy." + ENTRIES_EXTENSION;
+    static final String META_FILE = BASE_FILENAME + "." + META_EXTENSION;
+    static final String ZIP_FILE = BASE_FILENAME + "." + ZIP_EXTENSION;
+    static final String ENTRIES_FILE = BASE_FILENAME + "." + ENTRIES_EXTENSION;
 
     private final Path parentDir;
     private final Path zip;
@@ -56,6 +79,24 @@ public class FileGroup {
      */
     public List<Path> items() {
         return List.of(zip, meta, entries);
+    }
+
+    /// Forces every file in this group, and the directory that holds them, to durable storage.
+    ///
+    /// Call this before handing the parent dir on to the next pipeline phase if the data must
+    /// survive a power failure. Items that have not been written are skipped, as not every
+    /// receive path writes all three files.
+    ///
+    /// @throws IOException If any of the files cannot be forced to disk.
+    public void sync(final FsyncMode fsyncMode) throws IOException {
+        if (fsyncMode.isEnabledForFiles()) {
+            for (final Path item : items()) {
+                FileSyncUtil.syncFileIfExists(item);
+            }
+        }
+        if (fsyncMode.isEnabledForDirs()) {
+            FileSyncUtil.syncDir(parentDir);
+        }
     }
 
     @Override

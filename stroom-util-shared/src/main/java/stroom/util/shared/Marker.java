@@ -18,6 +18,8 @@ package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -27,6 +29,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = StoredError.class, name = "storedError"),
         @JsonSubTypes.Type(value = Summary.class, name = "summary")
 })
+@Schema(
+        discriminatorProperty = "type",
+        discriminatorMapping = {
+                @DiscriminatorMapping(value = "storedError", schema = StoredError.class),
+                @DiscriminatorMapping(value = "summary", schema = Summary.class)})
 public sealed interface Marker permits StoredError, Summary {
 
     Severity getSeverity();

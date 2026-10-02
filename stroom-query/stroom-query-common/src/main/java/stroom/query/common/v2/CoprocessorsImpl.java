@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.common.v2;
 
 import stroom.docref.DocRef;
@@ -127,9 +143,15 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
     }
 
     public void clear() {
+        // Per coprocessor catch so one failed clear (e.g. an LMDB env delete failing) can't
+        // leave the remaining coprocessors' stores open with their transfer threads running.
         for (final Coprocessor coprocessor : coprocessorMap.values()) {
-            getCompletionState(coprocessor).signalComplete();
-            coprocessor.clear();
+            try {
+                getCompletionState(coprocessor).signalComplete();
+                coprocessor.clear();
+            } catch (final RuntimeException e) {
+                LOGGER.error(() -> "Error clearing coprocessor: " + e.getMessage(), e);
+            }
         }
     }
 
@@ -153,7 +175,7 @@ public final class CoprocessorsImpl implements Coprocessors, HasCompletionState 
 
     @Override
     public boolean isPresent() {
-        return coprocessorMap.size() > 0;
+        return !coprocessorMap.isEmpty();
     }
 
     public long getValueCount() {

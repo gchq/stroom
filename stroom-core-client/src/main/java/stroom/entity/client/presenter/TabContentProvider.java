@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.entity.client.presenter;
@@ -49,6 +48,7 @@ public class TabContentProvider<E>
     private final Map<TabData, TabProvider<E>> presenterCache = new HashMap<>();
 
     private final Set<TabProvider<E>> usedProviders = new HashSet<>();
+    private final Set<TabProvider<E>> dirtyHandlerProviders = new HashSet<>();
 
     private final EventBus eventBus;
     private TabProvider<E> currentTabProvider;
@@ -91,6 +91,16 @@ public class TabContentProvider<E>
         tabProviders.put(tab, provider);
     }
 
+    public void replace(final TabData tab, final TabProvider<E> provider) {
+        tabProviders.replace(tab, provider);
+        presenterCache.replace(tab, provider);
+        // A replacement provider bypasses getPresenter(), so wire up its dirty events here or edits
+        // made in it would never reach the enclosing document.
+        if (dirtyHandlerProviders.add(provider)) {
+            registerHandler(provider.addDirtyHandler(this::fireEvent));
+        }
+    }
+
     public PresenterWidget<?> getPresenter(final TabData tab, final TaskMonitorFactory taskMonitorFactory) {
         currentTabProvider = presenterCache.get(tab);
         if (currentTabProvider == null) {
@@ -101,7 +111,9 @@ public class TabContentProvider<E>
                 presenterCache.put(tab, currentTabProvider);
 
                 // Handle dirty events.
-                registerHandler(currentTabProvider.addDirtyHandler(this::fireEvent));
+                if (dirtyHandlerProviders.add(currentTabProvider)) {
+                    registerHandler(currentTabProvider.addDirtyHandler(this::fireEvent));
+                }
 
                 if (currentTabProvider instanceof HasTaskMonitorFactory) {
                     ((HasTaskMonitorFactory) currentTabProvider)

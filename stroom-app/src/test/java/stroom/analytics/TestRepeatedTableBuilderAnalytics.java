@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2023 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package stroom.analytics;
 
+import stroom.ai.impl.mock.MockAiModule;
 import stroom.analytics.impl.TableBuilderAnalyticExecutor;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.AnalyticRuleDoc;
@@ -24,6 +25,7 @@ import stroom.analytics.shared.TableBuilderAnalyticProcessConfig;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.app.uri.UriFactoryModule;
+import stroom.docstore.impl.DocFinderModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.node.api.NodeInfo;
@@ -38,6 +40,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.UUID;
 
 @ExtendWith(GuiceExtension.class)
 @IncludeModule(UriFactoryModule.class)
@@ -49,6 +52,8 @@ import java.time.ZoneOffset;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
+@IncludeModule(MockAiModule.class)
+@IncludeModule(DocFinderModule.class)
 class TestRepeatedTableBuilderAnalytics extends AbstractAnalyticsTest {
 
     @Inject
@@ -71,6 +76,7 @@ class TestRepeatedTableBuilderAnalytics extends AbstractAnalyticsTest {
 
         // Create the rule.
         final AnalyticRuleDoc analyticRuleDoc = AnalyticRuleDoc.builder()
+                .uuid(UUID.randomUUID().toString())
                 .languageVersion(QueryLanguageVersion.STROOM_QL_VERSION_0_1)
                 .query(query)
                 .analyticProcessType(AnalyticProcessType.TABLE_BUILDER)

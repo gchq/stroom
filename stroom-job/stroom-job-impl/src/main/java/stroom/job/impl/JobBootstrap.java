@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,12 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
 
 import jakarta.inject.Inject;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -92,55 +94,65 @@ public class JobBootstrap {
                     .collect(Collectors.toMap(jobNode -> jobNode.getJob().getName(), Function.identity()));
 
             final Set<String> validJobNames = new HashSet<>();
+            final JobSystemConfig jobSystemConfig = jobSystemConfigProvider.get();
 
             // TODO: The form below isn't very clear. Split into job mapping and creation.
             for (final ScheduledJob scheduledJob : scheduledJobsMap.keySet()) {
                 // We only add managed jobs to the DB as only managed ones can accept user changes.
                 if (scheduledJob.isManaged()) {
                     if (validJobNames.contains(scheduledJob.getName())) {
-                        LOGGER.error("Duplicate job name detected: " + scheduledJob.getName());
+                        LOGGER.error("Duplicate job name detected: jobName: '{}', scheduledJob: '{}'",
+                                scheduledJob.getName(), scheduledJob);
                         throw new RuntimeException("Duplicate job name detected: " + scheduledJob.getName());
                     }
                     validJobNames.add(scheduledJob.getName());
 
-                    Job job = new Job();
-                    job.setName(scheduledJob.getName());
-                    job.setEnabled(scheduledJob.isEnabled());
-                    job = getOrCreateJob(job);
+                    final Job.Builder jobBuilder = Job.builder();
+                    jobBuilder.name(scheduledJob.getName());
+                    setEnabledState(scheduledJob, jobBuilder::enabled, jobSystemConfig);
+                    final Job persistedJob = getOrCreateJob(jobBuilder.build(), "scheduled");
 
-                    final JobNode newJobNode = new JobNode();
-                    newJobNode.setJob(job);
-                    newJobNode.setNodeName(nodeName);
-                    newJobNode.setEnabled(scheduledJob.isEnabled());
+                    final JobNode.Builder newJobNodeBuilder = JobNode.builder()
+                            .job(persistedJob)
+                            .nodeName(nodeName);
+                    setEnabledState(scheduledJob, newJobNodeBuilder::enabled, jobSystemConfig);
 
-                    final JobType newJobType = switch (scheduledJob.getSchedule().getType()) {
+                    final Schedule schedule = scheduledJob.getSchedule();
+                    final JobType newJobType = switch (schedule.getType()) {
                         case ScheduleType.CRON -> JobType.CRON;
                         case ScheduleType.FREQUENCY -> JobType.FREQUENCY;
-                        default -> throw new RuntimeException("Unknown ScheduleType!");
+                        default -> throw new RuntimeException("Unexpected ScheduleType "
+                                                              + scheduledJob.getSchedule().getType());
                     };
-                    newJobNode.setJobType(newJobType);
-                    newJobNode.setSchedule(scheduledJob.getSchedule().getExpression());
+                    newJobNodeBuilder.jobType(newJobType);
+                    newJobNodeBuilder.schedule(schedule.getExpression());
+                    JobNode newJobNode = newJobNodeBuilder.build();
 
                     // Add the job node to the DB if it isn't there already.
                     JobNode jobNode = localJobNodeMap.get(scheduledJob.getName());
                     if (jobNode == null) {
-                        LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
-                                "' for node '" + newJobNode.getNodeName() + "' (state: " +
-                                (newJobNode.isEnabled()
-                                        ? "ENABLED"
-                                        : "DISABLED") + ")");
+                        LOGGER.info("Adding   scheduled JobNode '{}' for node '{}' (state: {})",
+                                newJobNode.getJob().getName(),
+                                newJobNode.getNodeName(),
+                                newJobNode.getCombinedStateAsString());
 
-                        AuditUtil.stamp(securityContext, newJobNode);
+                        newJobNode = newJobNode.copy().stampAudit(securityContext).build();
                         jobNodeDao.create(newJobNode);
                         localJobNodeMap.put(newJobNode.getJob().getName(), newJobNode);
 
                     } else if (!Objects.equals(newJobNode.getJobType(), jobNode.getJobType())) {
                         // If the job type has changed then update the job node.
-                        jobNode.setJobType(newJobNode.getJobType());
-                        jobNode.setSchedule(newJobNode.getSchedule());
-                        AuditUtil.stamp(securityContext, jobNode);
-                        jobNode = jobNodeDao.update(jobNode);
-                        localJobNodeMap.put(scheduledJob.getName(), jobNode);
+                        jobNode = jobNode.copy()
+                                .jobType(newJobNode.getJobType())
+                                .schedule(newJobNode.getSchedule())
+                                .stampAudit(securityContext)
+                                .build();
+                        final JobNode persistedJobNode = jobNodeDao.update(jobNode);
+                        localJobNodeMap.put(scheduledJob.getName(), persistedJobNode);
+                        LOGGER.info("Updating scheduled JobNode '{}' for node '{}' (state: {})",
+                                persistedJobNode.getJob().getName(),
+                                persistedJobNode.getNodeName(),
+                                persistedJobNode.getCombinedStateAsString());
                     }
                 }
             }
@@ -148,7 +160,8 @@ public class JobBootstrap {
             // Distributed Jobs done a different way
             distributedTaskFactoryRegistry.getFactoryMap().forEach((jobName, factory) -> {
                 if (validJobNames.contains(jobName)) {
-                    LOGGER.error("Duplicate job name detected: " + jobName);
+                    LOGGER.error("Duplicate job name detected: jobName: '{}', factory: '{}'",
+                            jobName, NullSafe.get(factory, Object::getClass, Class::getSimpleName));
                     throw new RuntimeException("Duplicate job name detected: " + jobName);
                 }
                 validJobNames.add(jobName);
@@ -156,27 +169,28 @@ public class JobBootstrap {
                 // Add the job node to the DB if it isn't there already.
                 final JobNode jobNode = localJobNodeMap.get(jobName);
                 if (jobNode == null) {
-                    final JobSystemConfig jobSystemConfig = jobSystemConfigProvider.get();
+                    final boolean enabled = jobSystemConfig.isEnableJobsOnBootstrap();
                     // Get or create the actual parent job record
-                    Job job = new Job();
-                    job.setName(jobName);
-                    job.setEnabled(jobSystemConfig.isEnableJobsOnBootstrap());
-                    job = getOrCreateJob(job);
+                    final Job.Builder jobBuilder = Job.builder();
+                    jobBuilder.name(jobName);
+                    jobBuilder.enabled(enabled);
+                    final Job persistedJob = getOrCreateJob(jobBuilder.build(), "distributed");
 
                     // Now create the jobNode record for this node
-                    final JobNode newJobNode = new JobNode();
-                    newJobNode.setJob(job);
-                    newJobNode.setNodeName(nodeName);
-                    newJobNode.setEnabled(jobSystemConfig.isEnableJobsOnBootstrap());
-                    newJobNode.setJobType(JobType.DISTRIBUTED);
+                    final JobNode newJobNode = JobNode
+                            .builder()
+                            .job(persistedJob)
+                            .nodeName(nodeName)
+                            .enabled(enabled)
+                            .jobType(JobType.DISTRIBUTED)
+                            .stampAudit(securityContext)
+                            .build();
 
-                    LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() +
-                            "' for node '" + newJobNode.getNodeName() + "' (state: " +
-                            (newJobNode.isEnabled()
-                                    ? "ENABLED"
-                                    : "DISABLED") + ")");
+                    LOGGER.info("Adding   distributed JobNode '{}' for node '{}' (state: {})",
+                            newJobNode.getJob().getName(),
+                            newJobNode.getNodeName(),
+                            newJobNode.getCombinedStateAsString());
 
-                    AuditUtil.stamp(securityContext, newJobNode);
                     jobNodeDao.create(newJobNode);
                 }
             });
@@ -196,31 +210,48 @@ public class JobBootstrap {
         }));
     }
 
-    private Job getOrCreateJob(final Job job) {
-        Job result;
+    private static void setEnabledState(final ScheduledJob scheduledJob,
+                                        final Consumer<Boolean> setter,
+                                        final JobSystemConfig jobSystemConfig) {
+        final boolean enableJobsOnBootstrap = jobSystemConfig.isEnableJobsOnBootstrap();
+        final boolean enabled = enableJobsOnBootstrap
+                ? scheduledJob.isEnabledOnBootstrap()
+                : scheduledJob.isEnabled();
+        LOGGER.debug(() -> LogUtil.message(
+                "setEnabledState() - job: {}, scheduledJob.isEnabled: {}, scheduledJob.isEnabledOnBootstrap: {}, " +
+                "enableJobsOnBootstrap: {}, enabled: {}",
+                scheduledJob.getName(),
+                scheduledJob.isEnabled(),
+                scheduledJob.isEnabledOnBootstrap(),
+                enableJobsOnBootstrap,
+                enabled));
+        Objects.requireNonNull(setter).accept(enabled);
+    }
 
+    private Job getOrCreateJob(final Job job, final String type) {
         // See if the job exists in the database.
         final FindJobCriteria criteria = new FindJobCriteria();
+        // Should only match one job
         criteria.getName().setString(job.getName());
 
         // Add the job to the DB if it isn't there already.
-        final ResultPage<Job> existingJob = jobDao.find(criteria);
-        if (existingJob != null && existingJob.size() > 0) {
-            result = existingJob.getFirst();
+        final ResultPage<Job> existingJobs = jobDao.find(criteria);
+        if (NullSafe.hasItems(existingJobs)) {
+            final Job existing = existingJobs.getFirst();
 
             // Update the job description if we need to.
-            if (job.getDescription() != null && !job.getDescription().equals(result.getDescription())) {
-                result.setDescription(job.getDescription());
-                LOGGER.info(() -> "Updating Job     '" + job.getName() + "'");
-                AuditUtil.stamp(securityContext, result);
-                result = jobDao.update(result);
+            final String jobDescription = job.getDescription();
+            if (jobDescription != null && !jobDescription.equals(job.getDescription())) {
+                LOGGER.info("Updating {} Job     '{}'", type, existing.getName());
+                final Job.Builder builder = existing.copy();
+                builder.description(jobDescription);
+                builder.stampAudit(securityContext);
+                return jobDao.update(builder.build());
             }
+            return existing;
         } else {
-            LOGGER.info(() -> "Adding Job     '" + job.getName() + "'");
-            AuditUtil.stamp(securityContext, job);
-            result = jobDao.create(job);
+            LOGGER.info(() -> LogUtil.message("Adding   {} Job     '{}'", type, job.getName()));
+            return jobDao.create(job.copy().stampAudit(securityContext).build());
         }
-
-        return result;
     }
 }

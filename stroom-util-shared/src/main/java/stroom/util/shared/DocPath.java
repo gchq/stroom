@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -63,14 +79,18 @@ public class DocPath {
     @JsonCreator
     DocPath(@JsonProperty("parentParts") final List<String> parentParts,
             @JsonProperty("leafPart") final String leafPart,
-            @JsonProperty("absolute") final boolean absolute) {
+            @JsonProperty("absolute") final Boolean absolute) {
         this.parentParts = parentParts;
         this.leafPart = leafPart;
-        this.absolute = absolute;
+        this.absolute = Objects.requireNonNullElse(absolute, false);
     }
 
     private DocPath(final List<String> parts1, final List<String> parts2) {
         this(combineLists(parts1, parts2));
+    }
+
+    private DocPath(final List<String> parts1, final List<String> parts2, final boolean absolute) {
+        this(combineLists(parts1, parts2), absolute);
     }
 
     private static List<String> combineLists(final List<String> parts1, final List<String> parts2) {
@@ -124,7 +144,7 @@ public class DocPath {
      * will be stripped.
      */
     public static DocPath fromPathString(final String pathString) {
-        if (pathString == null || pathString.isEmpty()) {
+        if (pathString == null || pathString.isEmpty() || DELIMITER.equals(pathString)) {
             return EMPTY_INSTANCE;
         } else {
             String str = pathString.trim();
@@ -246,7 +266,7 @@ public class DocPath {
             if (otherPath.isAbsolute()) {
                 throw new IllegalArgumentException("otherPath can't be absolute");
             }
-            return new DocPath(this.getParts(), otherPath.getParts());
+            return new DocPath(this.getParts(), otherPath.getParts(), this.isAbsolute());
         }
     }
 

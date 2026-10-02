@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 set -e -o pipefail
 
 showUsage() {
@@ -27,7 +43,7 @@ setup_echo_colours() {
     BLUE2=''
     DGREY=''
     NC='' # No Colour
-  else 
+  else
     RED='\033[1;31m'
     GREEN='\033[1;32m'
     YELLOW='\033[1;33m'
@@ -41,7 +57,7 @@ setup_echo_colours() {
 debug_value() {
   local name="$1"; shift
   local value="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${name}: ${value}${NC}"
   fi
@@ -49,7 +65,7 @@ debug_value() {
 
 debug() {
   local str="$1"; shift
-  
+
   if [ "${IS_DEBUG}" = true ]; then
     echo -e "${DGREY}DEBUG ${str}${NC}"
   fi
@@ -135,9 +151,9 @@ main() {
   req_json=$( \
     jq -R -s '{
       docRefs: [
-        split("\n")[] 
-        | select(length > 0) 
-        | split(",") 
+        split("\n")[]
+        | select(length > 0)
+        | split(",")
         | {uuid: .[0], type: .[1]}
       ]
     }' <<< "${uuids_str}" )
@@ -182,9 +198,9 @@ main() {
     "${resource_url}"
 
 
-  #http POST http://localhost:8080/api/content/v1/export "Authorization:Bearer ${TOKEN}" 
+  #http POST http://localhost:8080/api/content/v1/export "Authorization:Bearer ${TOKEN}"
   #| jq -r '.resourceKey.key') && curl --output content.zip -H "Authorization: Bearer $TOKEN" http://localhost:8080/resourcestore/\?uuid\=$key
-  
+
 }
 
 main "$@"

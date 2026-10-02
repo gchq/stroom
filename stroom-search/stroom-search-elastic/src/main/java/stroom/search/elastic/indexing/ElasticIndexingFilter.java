@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2021 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,17 +61,19 @@ import co.elastic.clients.elasticsearch.core.DeleteByQueryResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
+import co.elastic.clients.transport.rest5_client.low_level.ResponseException;
 import co.elastic.clients.util.BinaryData;
 import co.elastic.clients.util.ContentType;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
+import co.elastic.clients.util.NamedValue;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.ws.rs.NotFoundException;
-import org.elasticsearch.client.ResponseException;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.json.JsonFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -145,6 +147,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     private int currentDocPropertyCount = 0;
     private boolean inOuterArray = false;
     private int currentDepth = 0;
+    private int maxNestedElementDepth;
     private JsonGenerator jsonGenerator;
     private int currentRetry;
 
@@ -215,7 +218,10 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
             populateIndexNameVariableNames();
 
-        } catch (final IOException e) {
+            // Cache config value to avoid Provider lookup on every element.
+            maxNestedElementDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
+
+        } catch (final Exception e) {
             fatalError("Failed to initialise JsonGenerator", e);
         } finally {
             super.startProcessing();
@@ -306,12 +312,11 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
     }
 
     private void incrementDepth() {
-        final int maxDepth = elasticConfigProvider.get().getIndexingConfig().getMaxNestedElementDepth();
-
         currentDepth++;
 
-        if (currentDepth > maxDepth) {
-            fatalError("Maximum nested element depth of " + maxDepth + " exceeded", new RuntimeException());
+        if (currentDepth > maxNestedElementDepth) {
+            fatalError("Maximum nested element depth of " + maxNestedElementDepth + " exceeded",
+                    new RuntimeException());
         }
     }
 
@@ -338,7 +343,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             // We have closed out an outer `map`, so queue the document for indexing
                             processDocument();
                         }
-                    } catch (final IOException e) {
+                    } catch (final Exception e) {
                         fatalError("Invalid end of object", e);
                     }
                     break;
@@ -346,7 +351,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     try {
                         currentDepth--;
                         jsonGenerator.writeEndArray();
-                    } catch (final IOException e) {
+                    } catch (final Exception e) {
                         fatalError("Invalid end of array", e);
                     }
                     break;
@@ -455,7 +460,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
 
     private boolean writeFieldName() throws IOException {
         if (currentDocFieldName != null) {
-            jsonGenerator.writeFieldName(currentDocFieldName);
+            jsonGenerator.writeName(currentDocFieldName);
             return true;
         } else {
             return false;
@@ -490,7 +495,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                     indexDocuments();
                 }
             }
-        } catch (final IOException e) {
+        } catch (final JacksonException e) {
             fatalError("Failed to flush JSON to stream", e);
         } catch (final Exception e) {
             fatalError(e.getMessage(), e);
@@ -555,7 +560,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
         final String indicesAggregationKey = "indices";
         final String indexNameSourceKey = "index_name";
 
-        final Map<String, CompositeAggregationSource> compositeAggregationSource = Map.of(
+        final NamedValue<CompositeAggregationSource> compositeAggregationSource = NamedValue.of(
                 indexNameSourceKey,
                 CompositeAggregationSource.of(source -> source
                         .terms(t -> t.field(ElasticIndexConstants.INDEX_NAME))
@@ -682,7 +687,7 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
                             handleElasticsearchException(e);
                         }
                     } catch (final ResponseException e) {
-                        if (e.getResponse().getStatusLine().getStatusCode() == ES_TOO_MANY_REQUESTS_STATUS) {
+                        if (e.getResponse().getStatusCode() == ES_TOO_MANY_REQUESTS_STATUS) {
                             handleElasticsearchOverloadedException(e);
                         } else {
                             handleElasticsearchException(e);
@@ -788,6 +793,9 @@ class ElasticIndexingFilter extends AbstractXMLFilter {
      * index name.
      */
     private String formatIndexName() {
+        if (indexNameVariables.isEmpty()) {
+            return indexName;
+        }
         final Matcher indexNameVariableMatcher = INDEX_NAME_VALUE_PATTERN.matcher(indexName);
         return indexNameVariableMatcher.replaceAll(matchResult -> {
             final String fieldNameMatch = matchResult.group();

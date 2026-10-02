@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.http;
 
 import stroom.util.io.FileUtil;
@@ -149,6 +165,7 @@ public class HttpClientConfigConverter {
             out.setTrustStoreType(convert(in.getTrustStoreType(), String.class));
             out.setTrustStoreProvider(convert(in.getTrustStoreProvider(), String.class));
             out.setTrustSelfSignedCertificates(convert(in.isTrustSelfSignedCertificates(), boolean.class));
+            out.setVerifyHostname(convert(in.isVerifyHostname(), boolean.class));
             out.setSupportedCiphers(convertList(in.getSupportedCiphers(), String.class));
             out.setSupportedProtocols(convertList(in.getSupportedProtocols(), String.class));
             out.setCertAlias(convert(in.getCertAlias(), String.class));
@@ -169,6 +186,7 @@ public class HttpClientConfigConverter {
                         .trustStoreType(convert(in.getTrustStoreType(), String.class))
                         .trustStoreProvider(convert(in.getTrustStoreProvider(), String.class))
                         .trustSelfSignedCertificates(convert(in.isTrustSelfSignedCertificates(), boolean.class))
+                        .verifyHostname(convert(in.isVerifyHostname(), boolean.class))
                         .supportedCiphers(convertList(in.getSupportedCiphers(), String.class))
                         .supportedProtocols(convertList(in.getSupportedProtocols(), String.class))
                         .certAlias(convert(in.getCertAlias(), String.class))

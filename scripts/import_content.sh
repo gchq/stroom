@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # Script to import a single Stroom content pack ZIP file into Stroom.
 # Requires that the environment variable TOKEN is set with either a
 # valid API Key or an OAuth token.
@@ -57,7 +73,7 @@ main() {
   fi
 
   echo -e "${GREEN}Uploading file '${BLUE}${content_zip_file}${GREEN}' to a temporary file${NC}"
-  
+
   local response1
   response1="$( \
     curl \
@@ -70,9 +86,9 @@ main() {
   )"
 
   echo -e "${GREEN}File uploaded${NC}"
-  
+
   echo -e "${response1}"
-  # response1 looks like 
+  # response1 looks like
   # '#PM#success=true name=StroomConfig.zip key=e015e5d4-8a6a-4454-8d81-913e6c13cca5#PM#'
 
   local key

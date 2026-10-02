@@ -85,6 +85,10 @@ public class ExecutorProviderImpl implements ExecutorProvider {
         this.stop.set(stop);
     }
 
+    boolean isStopped() {
+        return stop.get();
+    }
+
     void shutdownExecutors() {
         poolCreationLock.lock();
         try {

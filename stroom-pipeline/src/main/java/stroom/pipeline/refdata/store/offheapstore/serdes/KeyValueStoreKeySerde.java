@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.serdes;
@@ -36,9 +35,6 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 
 public class KeyValueStoreKeySerde implements Serde<KeyValueStoreKey> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreKeySerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreKeySerde.class);
 
     private static final int UID_OFFSET = 0;
     private static final int KEY_OFFSET = UID_OFFSET + UID.UID_ARRAY_LENGTH;

@@ -20,6 +20,8 @@ import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorStatistics;
 import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.util.shared.ElementId;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import org.slf4j.Logger;
@@ -34,6 +36,8 @@ import java.util.concurrent.TimeUnit;
 public class SimpleProcessorFactory implements ProcessorFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleProcessorFactory.class);
+    private static final ElementId MULTIWAY_ELEMENT_ID = new ElementId("MultiWayProcessor");
+
     private final ErrorReceiver errorReceiver;
 
     public SimpleProcessorFactory() {
@@ -46,16 +50,18 @@ public class SimpleProcessorFactory implements ProcessorFactory {
 
     @Override
     public Processor create(final List<Processor> processors) {
-        if (processors == null || processors.size() == 0) {
+        if (NullSafe.isEmptyCollection(processors)) {
             return null;
+        } else if (processors.size() == 1) {
+            return processors.getFirst();
+        } else {
+            return new MultiWayProcessor(processors, errorReceiver);
         }
-
-        if (processors.size() == 1) {
-            return processors.get(0);
-        }
-
-        return new MultiWayProcessor(processors, errorReceiver);
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     private static class MultiWayProcessor implements Processor {
 
@@ -124,9 +130,17 @@ public class SimpleProcessorFactory implements ProcessorFactory {
             if (errorReceiver != null && !(t instanceof LoggedException)) {
                 try {
                     if (t.getMessage() != null) {
-                        errorReceiver.log(Severity.FATAL_ERROR, null, "MultiWayProcessor", t.getMessage(), t);
+                        errorReceiver.log(Severity.FATAL_ERROR,
+                                null,
+                                MULTIWAY_ELEMENT_ID,
+                                t.getMessage(),
+                                t);
                     } else {
-                        errorReceiver.log(Severity.FATAL_ERROR, null, "MultiWayProcessor", t.toString(), t);
+                        errorReceiver.log(Severity.FATAL_ERROR,
+                                null,
+                                MULTIWAY_ELEMENT_ID,
+                                t.toString(),
+                                t);
                     }
                 } catch (final RuntimeException e) {
                     // Ignore exception as we generated it.

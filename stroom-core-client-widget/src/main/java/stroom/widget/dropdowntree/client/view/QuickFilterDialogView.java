@@ -28,4 +28,6 @@ public interface QuickFilterDialogView extends View, Focus, HasUiHandlers<QuickF
     void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
     void setDataView(View view);
+
+    void setText(String text, boolean fireEvents);
 }

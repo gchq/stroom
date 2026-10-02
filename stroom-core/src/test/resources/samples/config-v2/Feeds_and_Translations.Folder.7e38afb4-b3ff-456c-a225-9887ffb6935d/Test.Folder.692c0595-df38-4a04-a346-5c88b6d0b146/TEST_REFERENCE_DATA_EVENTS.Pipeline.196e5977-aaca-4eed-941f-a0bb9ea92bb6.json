@@ -1,0 +1,46 @@
+{
+  "properties" : {
+    "add" : [ {
+      "element" : "translationFilter",
+      "name" : "xslt",
+      "value" : {
+        "entity" : {
+          "type" : "XSLT",
+          "uuid" : "4c192e1d-5153-41bb-b478-9170a3ade637",
+          "name" : "TEST_REFERENCE_DATA-EVENTS"
+        }
+      }
+    } ]
+  },
+  "pipelineReferences" : {
+    "add" : [ {
+      "element" : "translationFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "da1c7351-086f-493b-866a-b42dbe990700",
+        "name" : "Reference Loader"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "350003fe-2b6c-4c57-95ed-2e6018c5b3d5",
+        "name" : "STAFF-NO-REFERENCE"
+      },
+      "streamType" : "Reference"
+    }, {
+      "element" : "translationFilter",
+      "name" : "pipelineReference",
+      "pipeline" : {
+        "type" : "Pipeline",
+        "uuid" : "da1c7351-086f-493b-866a-b42dbe990700",
+        "name" : "Reference Loader"
+      },
+      "feed" : {
+        "type" : "Feed",
+        "uuid" : "309e1ca0-7a5f-4f05-847b-b706805d758c",
+        "name" : "USER-DETAILS-REFERENCE"
+      },
+      "streamType" : "Reference"
+    } ]
+  }
+}

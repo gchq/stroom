@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.query.api;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -50,10 +66,10 @@ public class ConditionalFormattingRule {
     @JsonCreator
     public ConditionalFormattingRule(@JsonProperty("id") final String id,
                                      @JsonProperty("expression") final ExpressionOperator expression,
-                                     @JsonProperty("hide") final boolean hide,
+                                     @JsonProperty("hide") final Boolean hide,
                                      @Deprecated @JsonProperty("backgroundColor") final String backgroundColor,
                                      @Deprecated @JsonProperty("textColor") final String textColor,
-                                     @JsonProperty("enabled") final boolean enabled,
+                                     @JsonProperty("enabled") final Boolean enabled,
 
                                      @JsonProperty("formattingType") final ConditionalFormattingType formattingType,
                                      @JsonProperty("formattingStyle") final ConditionalFormattingStyle formattingStyle,
@@ -61,10 +77,10 @@ public class ConditionalFormattingRule {
                                      @JsonProperty("textAttributes") final TextAttributes textAttributes) {
         this.id = id;
         this.expression = expression;
-        this.hide = hide;
+        this.hide = Objects.requireNonNullElse(hide, false);
         this.backgroundColor = null;
         this.textColor = null;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.formattingType = formattingType;
         this.formattingStyle = formattingStyle;
         this.textAttributes = textAttributes;
@@ -126,6 +142,17 @@ public class ConditionalFormattingRule {
             return false;
         }
         final ConditionalFormattingRule that = (ConditionalFormattingRule) o;
+
+//        // TODO : REMOVE - GWT DEBUG
+//        final boolean b1 = Objects.equals(hide, that.hide);
+//        final boolean b2 = Objects.equals(enabled, that.enabled);
+//        final boolean b3 = Objects.equals(id, that.id);
+//        final boolean b4 = Objects.equals(expression, that.expression);
+//        final boolean b5 = Objects.equals(formattingType, that.formattingType);
+//        final boolean b6 = Objects.equals(formattingStyle, that.formattingStyle);
+//        final boolean b7 = Objects.equals(customStyle, that.customStyle);
+//        final boolean b8 = Objects.equals(textAttributes, that.textAttributes);
+
         return hide == that.hide &&
                enabled == that.enabled &&
                Objects.equals(id, that.id) &&

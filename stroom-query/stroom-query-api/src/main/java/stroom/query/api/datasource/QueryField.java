@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -66,12 +66,12 @@ public class QueryField implements Field, HasDisplayValue {
     @JsonCreator
     public QueryField(@Deprecated @JsonProperty("type") final String type,
                       @Deprecated @JsonProperty("name") final String name,
-
                       @JsonProperty("fldName") final String fldName,
                       @JsonProperty("fldType") final FieldType fldType,
                       @JsonProperty("conditionSet") final ConditionSet conditionSet,
                       @JsonProperty("docRefType") final String docRefType,
                       @JsonProperty("queryable") final Boolean queryable) {
+        // Don't use NullSafe as this breaks some tests
         this.fldName = fldName != null
                 ? fldName
                 : name;
@@ -300,6 +300,27 @@ public class QueryField implements Field, HasDisplayValue {
                 .conditionSet(ConditionSet.DOC_REF_UUID)
                 .docRefType(docRefType)
                 .queryable(Boolean.TRUE)
+                .build();
+    }
+
+    /**
+     * A {@link QueryField} for a {@link stroom.util.shared.UserRef}.
+     */
+    public static QueryField createUserRef(final String name) {
+        return createUserRef(name, Boolean.TRUE);
+    }
+
+
+    /**
+     * A {@link QueryField} for a {@link stroom.util.shared.UserRef}.
+     */
+    public static QueryField createUserRef(final String name,
+                                           final Boolean queryable) {
+        return builder()
+                .fldName(name)
+                .fldType(FieldType.USER_REF)
+                .conditionSet(ConditionSet.RUN_AS_USER)
+                .queryable(queryable)
                 .build();
     }
 

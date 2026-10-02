@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.lmdb.serde;
@@ -31,9 +30,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 
 public abstract class AbstractKryoSerde<T> implements Serde<T>, KryoSerializer<T> {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKryoSerde.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(AbstractKryoSerde.class);
 
     public static final int VARIABLE_LENGTH_LONG_BYTES = 9;
     public static final int BOOLEAN_BYTES = 1;

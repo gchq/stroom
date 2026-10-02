@@ -32,7 +32,7 @@ import java.util.Set;
 public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> implements HasSelection<ExplorerNode> {
 
     // Ensure one value per key
-    private final HashMap<ExplorerNode, TickBoxState> stateMap = new HashMap<>();
+    private final Map<ExplorerNode, TickBoxState> stateMap = new HashMap<>();
     private final Set<ExplorerNode> stateChanges = new HashSet<>();
 
     private final Map<ExplorerNode, ExplorerNode> parents = new HashMap<>();

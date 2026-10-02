@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.meta.api.AttributeMap;
@@ -10,6 +26,7 @@ import stroom.test.common.TestUtil;
 import stroom.util.exception.ThrowingConsumer;
 import stroom.util.exception.ThrowingSupplier;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.io.SimplePathCreator;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -78,7 +95,8 @@ class TestRetryingForwardDestination {
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
                 proxyServices,
-                mockFileStores);
+                mockFileStores,
+                FsyncMode.DISABLED);
 
         proxyServices.start();
 
@@ -119,7 +137,8 @@ class TestRetryingForwardDestination {
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
                 proxyServices,
-                mockFileStores);
+                mockFileStores,
+                FsyncMode.DISABLED);
 
         proxyServices.start();
 
@@ -167,7 +186,8 @@ class TestRetryingForwardDestination {
                 new SimplePathCreator(() -> homeDir, () -> tempDir),
                 dirQueueFactory,
                 proxyServices,
-                mockFileStores);
+                mockFileStores,
+                FsyncMode.DISABLED);
 
         proxyServices.start();
 

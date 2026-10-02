@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,7 @@ package stroom.test;
 
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.data.store.impl.fs.FsVolumeService;
-import stroom.data.store.impl.fs.S3ExampleVolumes;
+import stroom.data.store.impl.fs.s3v1.S3ExampleVolumes;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.index.VolumeCreator;
@@ -54,7 +54,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     private static final boolean USE_S3 = false;
 
-    private final ContentImportService contentImportService;
+    private final ContentStoreTestSetup contentStoreTestSetup;
     private final IndexShardManager indexShardManager;
     private final IndexShardWriterCache indexShardWriterCache;
     private final VolumeCreator volumeCreator;
@@ -72,7 +72,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private static final ThreadLocal<Boolean> NEEDS_CLEAN_UP_THREAD_LOCAL = ThreadLocal.withInitial(() -> false);
 
     @Inject
-    DatabaseCommonTestControl(final ContentImportService contentImportService,
+    DatabaseCommonTestControl(final ContentStoreTestSetup contentStoreTestSetup,
                               final IndexShardManager indexShardManager,
                               final IndexShardWriterCache indexShardWriterCache,
                               final VolumeCreator volumeCreator,
@@ -84,7 +84,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final PathCreator pathCreator,
                               final ExplorerNodeService explorerNodeService,
                               final S3ExampleVolumes s3ExampleVolumes) {
-        this.contentImportService = contentImportService;
+        this.contentStoreTestSetup = contentStoreTestSetup;
         this.indexShardManager = indexShardManager;
         this.indexShardWriterCache = indexShardWriterCache;
         this.volumeCreator = volumeCreator;
@@ -135,13 +135,14 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         final FsVolume fsVolume = fsVolumeService.getVolume(null);
         if (fsVolume == null) {
             Assertions.fail("No active and non-full volumes found. " +
-                    "Likely a problem with default volume creation in setup, or a too full disk.");
+                            "Likely a problem with default volume creation in setup, or a too full disk.");
         }
 
         LOGGER.info("Creating index volume groups in {}", indexVolDir.toAbsolutePath().normalize());
         volumeCreator.setup(indexVolDir);
 
-        // Ensure we can create tasks.
+        // Ensure we can create tasks. Only the master queue mode needs this, but it is harmless in
+        // worker claiming mode and doing it unconditionally keeps the two modes' test setup identical.
         processorTaskQueueManager.startup();
 
         LOGGER.info("Setting NEEDS_CLEAN_UP_THREAD_LOCAL to true");
@@ -171,7 +172,9 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         LOGGER.info(() -> LogUtil.inSeparatorLine("Starting tear down of thread '{}' ({})",
                 Thread.currentThread().getName(),
                 Thread.currentThread().getId()));
-        // Make sure we are no longer creating tasks.
+        // Make sure we are no longer creating tasks. This also clears the in memory task queue, which
+        // nothing else does - without it a queue entry can outlive the database row it points at and
+        // leak into the next test.
         processorTaskQueueManager.shutdown();
 
         // Make sure we don't delete database entries without clearing the pool.
@@ -197,7 +200,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     @Override
     public void createRequiredXMLSchemas() {
-        contentImportService.importStandardPacks();
+        contentStoreTestSetup.installStandardPacks();
     }
 
     /**

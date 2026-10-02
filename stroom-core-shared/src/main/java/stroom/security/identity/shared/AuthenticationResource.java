@@ -1,3 +1,19 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.security.identity.shared;
 
 import stroom.util.shared.ResourcePaths;
@@ -30,7 +46,7 @@ public interface AuthenticationResource extends RestResource, DirectRestService 
      * an AuthenticationRequest to /authenticate.
      */
     @POST
-    @Path("/noauth/login")
+    @Path("/login")
     @NotNull
     @Operation(
             summary = "Handle a login request made using username and password credentials.",
@@ -39,7 +55,7 @@ public interface AuthenticationResource extends RestResource, DirectRestService 
                         @NotNull LoginRequest loginRequest);
 
     @GET
-    @Path("/noauth/logout")
+    @Path("/logout")
     @NotNull
     @Operation(
             summary = "Log a user out of their session",
@@ -47,7 +63,7 @@ public interface AuthenticationResource extends RestResource, DirectRestService 
     Boolean logout(@QueryParam("post_logout_redirect_uri") @NotNull String postLogoutRedirectUri);
 
     @POST
-    @Path("/noauth/confirmPassword")
+    @Path("/confirmPassword")
     @NotNull
     @Operation(
             summary = "Confirm an authenticated user's current password.",
@@ -58,7 +74,7 @@ public interface AuthenticationResource extends RestResource, DirectRestService 
 
 
     @POST
-    @Path("/noauth/changePassword")
+    @Path("/changePassword")
     @NotNull
     @Operation(
             summary = "Change a user's password.",
@@ -68,7 +84,7 @@ public interface AuthenticationResource extends RestResource, DirectRestService 
             @NotNull ChangePasswordRequest changePasswordRequest);
 
     @POST
-    @Path("/noauth/reset")
+    @Path("/reset")
     @NotNull
     @Operation(
             summary = "Reset a user account using an email address.",
@@ -76,8 +92,18 @@ public interface AuthenticationResource extends RestResource, DirectRestService 
     Boolean resetEmail(
             @Parameter(description = "email", required = true) @NotNull String emailAddress);
 
+    @POST
+    @Path("/resetPassword")
+    @NotNull
+    @Operation(
+            summary = "Set a new password using the token emailed to a user who has forgotten theirs.",
+            operationId = "resetPassword")
+    ChangePasswordResponse resetPassword(
+            @Parameter(description = "resetPasswordRequest", required = true)
+            @NotNull ResetPasswordRequest resetPasswordRequest);
+
     @GET
-    @Path("/noauth/fetchPasswordPolicy")
+    @Path("/fetchPasswordPolicy")
     @NotNull
     @Operation(
             summary = "Get the password policy",

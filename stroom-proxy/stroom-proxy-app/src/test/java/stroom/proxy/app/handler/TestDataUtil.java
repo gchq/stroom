@@ -1,16 +1,32 @@
+/*
+ * Copyright 2024 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.proxy.app.handler;
 
 import stroom.data.zip.StroomZipFileType;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.proxy.app.handler.ZipEntryGroup.Entry;
-import stroom.proxy.repo.FeedKey;
-import stroom.proxy.repo.FeedKey.FeedKeyInterner;
+import stroom.proxy.repo.FeedKeyInterner;
 import stroom.test.common.data.DataGenerator;
 import stroom.test.common.data.FlatDataWriterBuilder;
 import stroom.util.exception.ThrowingFunction;
 import stroom.util.io.FileName;
 import stroom.util.io.FileUtil;
+import stroom.util.shared.FeedKey;
 import stroom.util.shared.NullSafe;
 import stroom.util.zip.ZipUtil;
 
@@ -98,8 +114,8 @@ public class TestDataUtil {
 
                         if (allowedFeedKeys == null || allowedFeedKeys.contains(feedKey)) {
                             final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
-                            zipEntryGroup.setMetaEntry(new Entry(metaEntryName, metaBytes.length));
-                            zipEntryGroup.setDataEntry(new Entry(dataEntryName, dataBytes.length));
+                            zipEntryGroup.setMetaEntry(new Entry(metaEntryName, (long) metaBytes.length));
+                            zipEntryGroup.setDataEntry(new Entry(dataEntryName, (long) dataBytes.length));
 
                             zipEntryGroup.write(entryWriter);
                         }
@@ -205,7 +221,7 @@ public class TestDataUtil {
         } else {
             final Path path = entriesPaths.getFirst();
             try {
-                final FeedKeyInterner feedKeyInterner = FeedKey.createInterner();
+                final FeedKeyInterner feedKeyInterner = FeedKeyInterner.create();
                 try (final Stream<String> stream = Files.lines(path)) {
                     return stream.map(ThrowingFunction.unchecked(line ->
                                     ZipEntryGroup.read(line, feedKeyInterner)))
@@ -258,14 +274,14 @@ public class TestDataUtil {
                 final String ext = fileName.getExtension();
 
                 if (StroomZipFileType.CONTEXT.hasExtension(path)) {
-                    final var prevVal = basePathToContextMap.put(
+                    final Item<String> prevVal = basePathToContextMap.put(
                             basePath,
                             new Item<>(path, ZipUtil.getEntryContent(zipFile, entry)));
                     if (prevVal != null) {
                         throw new RuntimeException("Duplicate context entry for basePath " + basePath);
                     }
                 } else if (StroomZipFileType.MANIFEST.hasExtension(path)) {
-                    final var prevVal = basePathToManifestMap.put(
+                    final Item<String> prevVal = basePathToManifestMap.put(
                             basePath,
                             new Item<>(path, ZipUtil.getEntryContent(zipFile, entry)));
                     if (prevVal != null) {
@@ -276,7 +292,8 @@ public class TestDataUtil {
                         try (final InputStream inputStream = zipFile.getInputStream(entry)) {
                             final AttributeMap attributeMap = new AttributeMap();
                             AttributeMapUtil.read(inputStream, attributeMap);
-                            final var prevVal = basePathToMetaMap.put(basePath, new Item<>(path, attributeMap));
+                            final Item<AttributeMap> prevVal = basePathToMetaMap.put(basePath,
+                                    new Item<>(path, attributeMap));
                             if (prevVal != null) {
                                 throw new RuntimeException("Duplicate meta entry for basePath " + basePath);
                             }
@@ -287,7 +304,7 @@ public class TestDataUtil {
                 } else if (StroomZipFileType.DATA.hasExtension(path)
                            || !path.getFileName().toString().contains(".")) {
                     // Also allow entries with no extension
-                    final var prevVal = basePathToDataMap.put(
+                    final Item<String> prevVal = basePathToDataMap.put(
                             basePath,
                             new Item<>(path, ZipUtil.getEntryContent(zipFile, entry)));
                     if (prevVal != null) {

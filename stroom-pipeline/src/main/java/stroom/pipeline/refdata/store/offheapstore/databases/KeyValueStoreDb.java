@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.pipeline.refdata.store.offheapstore.databases;
@@ -39,8 +38,6 @@ import org.lmdbjava.CursorIterable;
 import org.lmdbjava.CursorIterable.KeyVal;
 import org.lmdbjava.KeyRange;
 import org.lmdbjava.Txn;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
@@ -51,8 +48,7 @@ public class KeyValueStoreDb
         extends AbstractLmdbDb<KeyValueStoreKey, ValueStoreKey>
         implements EntryStoreDb<KeyValueStoreKey> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(KeyValueStoreDb.class);
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreDb.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(KeyValueStoreDb.class);
 
 
     public static final String DB_NAME = "KeyValueStore";
@@ -101,7 +97,7 @@ public class KeyValueStoreDb
 
                     while (iterator.hasNext()) {
                         final KeyVal<ByteBuffer> keyVal = iterator.next();
-                        LAMBDA_LOGGER.trace(() -> LogUtil.message("Entry {} {}",
+                        LOGGER.trace(() -> LogUtil.message("Entry {} {}",
                                 ByteBufferUtils.byteBufferInfo(keyVal.key()),
                                 ByteBufferUtils.byteBufferInfo(keyVal.val())));
 
@@ -164,7 +160,7 @@ public class KeyValueStoreDb
                     readTxn, keyRange)) {
                 //noinspection unused
                 for (final KeyVal<ByteBuffer> keyVal : cursorIterable) {
-//                    LAMBDA_LOGGER.trace(() -> LogUtil.message(
+//                    LOGGER.trace(() -> LogUtil.message(
 //                            "Key: {}",
 //                            ByteBufferUtils.byteBufferInfo(keyVal.key())));
 
@@ -226,7 +222,7 @@ public class KeyValueStoreDb
 
 //        final KeyValueStoreKey endKeyExc = new KeyValueStoreKey(nextMapUid, "");
 
-        LAMBDA_LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
+        LOGGER.trace(() -> LogUtil.message("Using range {} (inc) {} (exc)",
                 ByteBufferUtils.byteBufferInfo(startKeyIncBuffer),
                 ByteBufferUtils.byteBufferInfo(endKeyExcBuffer)));
 

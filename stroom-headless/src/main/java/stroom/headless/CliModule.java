@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,11 @@ import stroom.data.store.api.FsVolumeGroupService;
 import stroom.data.store.mock.MockFsVolumeGroupService;
 import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
+import stroom.docstore.api.DocDependencyService;
+import stroom.docstore.impl.DocFinderModule;
 import stroom.docstore.impl.DocStoreModule;
-import stroom.explorer.impl.DocRefInfoModule;
+import stroom.docstore.impl.dao.MockDocDependencyService;
+import stroom.explorer.api.IsSpecialExplorerDataSource;
 import stroom.explorer.impl.MockExplorerModule;
 import stroom.feed.impl.FeedModule;
 import stroom.importexport.impl.ImportExportModule;
@@ -31,20 +34,20 @@ import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.cache.PipelineCacheModule;
+import stroom.pipeline.factory.DataStorePipelineElementModule;
 import stroom.processor.impl.MockProcessorModule;
-import stroom.security.api.ContentPackUserService;
-import stroom.security.mock.MockSecurityContext;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.impl.TaskContextModule;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.http.BasicHttpClientFactory;
 import stroom.util.http.HttpClientFactory;
 import stroom.util.io.BasicStreamCloser;
 import stroom.util.io.DirProvidersModule;
+import stroom.util.io.FileUtil;
 import stroom.util.io.PathConfig;
 import stroom.util.io.StreamCloser;
-import stroom.util.io.StroomPathConfig;
 import stroom.util.jersey.MockJerseyModule;
 import stroom.util.metrics.Metrics;
 import stroom.util.metrics.MetricsImpl;
@@ -56,10 +59,21 @@ import com.codahale.metrics.MetricRegistry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 
+import java.nio.file.Path;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class CliModule extends AbstractModule {
+
+    private final Path homeDir;
+    private final Path tempDir;
+
+    public CliModule(final Path homeDir,
+                     final Path tempDir) {
+        this.homeDir = Objects.requireNonNull(homeDir);
+        this.tempDir = Objects.requireNonNull(tempDir);
+    }
 
     @Override
     protected void configure() {
@@ -75,7 +89,6 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.entity.cluster.EntityClusterModule());
 //        install(new EntityClusterTaskModule());
         install(new MockExplorerModule());
-        install(new DocRefInfoModule());
         install(new FeedModule());
         install(new PipelineScopeModule());
         install(new ImportExportModule());
@@ -98,7 +111,9 @@ public class CliModule extends AbstractModule {
 //        install(new stroom.resource.ResourceModule());
         install(new MockSecurityContextModule());
 //        install(new DataStoreHandlerModule());
+        install(new DataStorePipelineElementModule());
         install(new DocStoreModule());
+        install(new DocFinderModule());
         install(new MockStreamStoreModule());
         install(new stroom.docstore.impl.fs.FSPersistenceModule());
 //        install(new stroom.streamtask.StreamTaskModule());
@@ -109,20 +124,36 @@ public class CliModule extends AbstractModule {
         install(new MockProcessorModule());
         install(new TaskContextModule());
 
+        bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(InternalStatisticsReceiver.class).to(HeadlessInternalStatisticsReceiver.class);
+        GuiceUtil.buildMultiBinder(binder(), IsSpecialExplorerDataSource.class)
+                .addBinding(HeadlessIsSpecialExplorerDataSource.class);
         bind(StreamCloser.class).to(BasicStreamCloser.class).in(PipelineScoped.class);
 
-        bind(PathConfig.class).to(StroomPathConfig.class);
+        bind(PathConfig.class).toInstance(createPathConfig());
         install(new DirProvidersModule());
         install(new MockJerseyModule());
 
-        bind(ContentPackUserService.class).to(MockSecurityContext.class);
         bind(HttpClientFactory.class).to(BasicHttpClientFactory.class);
 
         // Only needed for feed import so not an issue for Cli
         bind(FsVolumeGroupService.class).to(MockFsVolumeGroupService.class);
 
         bind(Metrics.class).toInstance(new MetricsImpl(new MetricRegistry()));
+    }
+
+    private PathConfig createPathConfig() {
+        return new PathConfig() {
+            @Override
+            public String getHome() {
+                return FileUtil.getCanonicalPath(homeDir);
+            }
+
+            @Override
+            public String getTemp() {
+                return FileUtil.getCanonicalPath(tempDir);
+            }
+        };
     }
 
     @Provides
@@ -143,7 +174,6 @@ public class CliModule extends AbstractModule {
 
     @Provides
     EntityEventBus entityEventBus() {
-        return event -> {
-        };
+        return EntityEventBus.NO_OP_EVENT_BUS;
     }
 }

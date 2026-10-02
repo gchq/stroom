@@ -1,3 +1,19 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.config;
 
 import stroom.util.HasHealthCheck;
@@ -7,8 +23,10 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasPropertyPath;
 import stroom.util.shared.NullSafe;
+import stroom.util.thread.CustomThreadFactory;
 
 import com.codahale.metrics.health.HealthCheck;
+import org.jspecify.annotations.NonNull;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -24,10 +42,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
 public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
 
@@ -35,7 +52,8 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
 
     private final Path monitoredFile;
     private final Path dirToWatch;
-    private final ExecutorService executorService;
+    private final ExecutorService watcherExecutorService;
+    private final ScheduledExecutorService processorExecutorService;
     private WatchService watchService = null;
     private Future<?> watcherFuture = null;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
@@ -60,11 +78,15 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
             if (!Files.isDirectory(dirToWatch)) {
                 throw new RuntimeException(LogUtil.message("{} is not a directory", dirToWatch));
             }
-            executorService = Executors.newSingleThreadExecutor();
+            final CustomThreadFactory watcherThreadFactory = createThreadFactory("Watcher");
+            this.watcherExecutorService = Executors.newSingleThreadExecutor(watcherThreadFactory);
+            final CustomThreadFactory processorThreadFactory = createThreadFactory("Processor");
+            this.processorExecutorService = Executors.newSingleThreadScheduledExecutor(processorThreadFactory);
         } else {
             isValidFile = false;
             dirToWatch = null;
-            executorService = null;
+            watcherExecutorService = null;
+            processorExecutorService = null;
         }
     }
 
@@ -103,7 +125,7 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
 
         // run the watcher in its own thread else it will block app startup
         // TODO @AT Change to use CompleteableFuture.runAsync()
-        watcherFuture = executorService.submit(() -> {
+        watcherFuture = CompletableFuture.runAsync(() -> {
             WatchKey watchKey = null;
 
             LOGGER.info("Starting file modification watcher for {}",
@@ -140,8 +162,9 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
                         }
                     }
 
-                    if (event.kind().equals(OVERFLOW)) {
-                        LOGGER.warn("{} event detected breaking out. Retry file change", OVERFLOW.name());
+                    if (event.kind().equals(StandardWatchEventKinds.OVERFLOW)) {
+                        LOGGER.warn("{} event detected breaking out. Retry file change",
+                                StandardWatchEventKinds.OVERFLOW.name());
                         break;
                     }
                     if (event.kind() != null && Path.class.isAssignableFrom(event.kind().type())) {
@@ -156,7 +179,7 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
                     break;
                 }
             }
-        });
+        }, watcherExecutorService);
     }
 
     private void handleWatchEvent(final WatchEvent<Path> pathEvent) {
@@ -190,25 +213,35 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
         }
     }
 
-    private synchronized void scheduleUpdateIfRequired() {
+    private void scheduleUpdateIfRequired() {
 
         // When a file is changed the filesystem can trigger two changes, one to change the file content
         // and another to change the file access time. To prevent a duplicate read we delay the read
         // a bit so we can have many changes during that delay period but with only one read of the file.
         if (isFileReadScheduled.compareAndSet(false, true)) {
-            LOGGER.info("Scheduling call to change listener for file {} in {}ms",
-                    monitoredFile.toAbsolutePath().normalize(),
-                    DELAY_BEFORE_FILE_READ_MS);
-            CompletableFuture.delayedExecutor(DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS)
-                    .execute(() -> {
-                        try {
-                            synchronized (this) {
-                                onFileChange();
-                            }
-                        } finally {
-                            isFileReadScheduled.set(false);
+            try {
+                LOGGER.info("Scheduling call to change listener for file {} in {}ms",
+                        monitoredFile.toAbsolutePath().normalize(),
+                        DELAY_BEFORE_FILE_READ_MS);
+
+                final Runnable runnable = () -> {
+                    try {
+                        synchronized (this) {
+                            onFileChange();
                         }
-                    });
+                    } finally {
+                        isFileReadScheduled.set(false);
+                    }
+                };
+
+                // Schedule an async process to handle all the queued events
+                processorExecutorService.schedule(runnable, DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS);
+
+            } catch (final Throwable e) {
+                LOGGER.debug("Error scheduling update - {}", LogUtil.exceptionMessage(e), e);
+                isFileReadScheduled.set(false);
+                throw e;
+            }
         }
     }
 
@@ -251,14 +284,17 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
             if (watchService != null) {
                 watchService.close();
             }
-            if (executorService != null) {
-                watchService.close();
+            if (watcherExecutorService != null) {
                 if (watcherFuture != null
                     && !watcherFuture.isCancelled()
                     && !watcherFuture.isDone()) {
                     watcherFuture.cancel(true);
                 }
-                executorService.shutdown();
+                watcherExecutorService.shutdown();
+            }
+
+            if (processorExecutorService != null) {
+                processorExecutorService.shutdown();
             }
         }
         isRunning.set(false);
@@ -292,4 +328,9 @@ public abstract class AbstractFileChangeMonitor implements HasHealthCheck {
                 .withDetail("isValidFile", isValidFile)
                 .build();
     }
+
+    private @NonNull CustomThreadFactory createThreadFactory(final String prefixSuffix) {
+        return new CustomThreadFactory(this.getClass().getSimpleName() + "-" + prefixSuffix);
+    }
+
 }

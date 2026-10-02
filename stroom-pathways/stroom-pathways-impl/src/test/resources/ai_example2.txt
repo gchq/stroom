@@ -1,0 +1,18 @@
+This format using parent_span_id (with underscores) is much more common in practice. You'll see this snake_case naming convention in:
+
+Jaeger - Uses parent_span_id in their JSON format
+Zipkin - Also uses parent_span_id
+Custom logging formats - Many organizations use this naming
+APM tools like Datadog, New Relic, etc.
+Log aggregation systems like ELK stack implementations
+
+Key differences from the official OTLP format:
+
+parent_span_id instead of parentSpanId
+trace_id and span_id instead of traceId and spanId
+operation_name instead of name
+Flatter structure with tags instead of nested attributes
+Duration in milliseconds instead of nanosecond timestamps
+Root span has parent_span_id: null explicitly
+
+This format is more readable and widely adopted in real-world tracing implementations, even though it differs from the official OpenTelemetry specification.

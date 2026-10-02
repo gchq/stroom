@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2020 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,19 @@ package stroom.pipeline.xmlschema;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.rs.api.AutoLogged;
+import stroom.pipeline.filter.LSInputImpl;
 import stroom.util.shared.EntityServiceException;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 import stroom.xmlschema.shared.XmlSchemaResource;
+import stroom.xmlschema.shared.XmlSchemaValidationResponse;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
+
+import java.io.StringReader;
+import javax.xml.XMLConstants;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
 
 @AutoLogged
 class XmlSchemaResourceImpl implements XmlSchemaResource {
@@ -50,6 +57,22 @@ class XmlSchemaResourceImpl implements XmlSchemaResource {
             throw new EntityServiceException("The document UUID must match the update UUID");
         }
         return documentResourceHelperProvider.get().update(xmlSchemaStoreProvider.get(), doc);
+    }
+
+    @Override
+    public XmlSchemaValidationResponse validate(final String schemaData) {
+        try {
+            final SchemaFactory factory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            // This endpoint checks a single schema's syntax and has no schema store to resolve references
+            // from. Deny every external reference by returning an empty input (never null, which would let
+            // the parser fetch it off-box) to prevent XXE / SSRF from an authored schema.
+            factory.setResourceResolver((type, namespaceURI, publicId, systemId, baseURI) ->
+                    new LSInputImpl("", systemId, publicId, baseURI));
+            factory.newSchema(new StreamSource(new StringReader(schemaData)));
+            return new XmlSchemaValidationResponse(true, null);
+        } catch (final Exception e) {
+            return new XmlSchemaValidationResponse(false, e.getMessage());
+        }
     }
 
     private DocRef getDocRef(final String uuid) {

@@ -1,5 +1,21 @@
 #!/bin/bash
 
+#
+# Copyright 2016-2025 Crown Copyright
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 # This is the CI build script that is run by Github Actions and does the
 # following:
 #   * Start up a DB to run tests against
@@ -48,10 +64,10 @@ LATEST_SUFFIX="-LATEST"
 # As 7 is still in beta, this is currently 6.1
 
 # The version of stroom-resources used for running the DB, should be a tag really
-STROOM_RESOURCES_GIT_TAG="7.7-stroom-7.0-proxy"
+STROOM_RESOURCES_GIT_TAG="7.11-stroom-7.11-proxy"
 SWAGGER_UI_GIT_TAG="v3.49.0"
 doDockerBuild=false
-STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources" 
+STROOM_RESOURCES_DIR="${BUILD_DIR}/stroom-resources"
 RELEASE_ARTEFACTS_DIR="${BUILD_DIR}/release_artefacts"
 RELEASE_MANIFEST="${RELEASE_ARTEFACTS_DIR}/release-artefacts.txt"
 DDL_DUMP_DIR="${BUILD_DIR}/build"
@@ -91,8 +107,9 @@ create_file_hash() {
 stop_and_clear_down_stroom_all_dbs() {
   # clear down stroom-all-dbs container and volumes so we have a blank slate
   echo -e "${GREEN}Clearing down stroom-all-dbs${NC}"
-  docker ps -q -f=name='stroom-all-dbs' | xargs -r docker stop --time 0
-  docker ps -a -q -f=name='stroom-all-dbs' | xargs -r docker rm
+  # bouncit.sh prefixes the volume and container names with bounceit_
+  docker ps -q -f=name='bounceit_stroom-all-dbs' | xargs -r docker stop --time 0
+  docker ps -a -q -f=name='bounceit_stroom-all-dbs' | xargs -r docker rm
   docker volume ls -q -f=name='bounceit_stroom-all-dbs*' | xargs -r docker volume rm
 }
 
@@ -123,6 +140,9 @@ start_databases() {
     -x \
     "${dbs_to_start[@]}"
 
+  echo -e "${GREEN}Running Docker containers:${NC}"
+  docker ps --format '{{.Names}}'
+
   popd > /dev/null
 }
 
@@ -132,6 +152,7 @@ generate_ddl_dump() {
 
   stop_and_clear_down_stroom_all_dbs
 
+  # The service name is not prefixed with bounceit_ at this point
   start_databases stroom-all-dbs
 
   # Run the db migration against the empty db to give us a vanilla
@@ -143,7 +164,7 @@ generate_ddl_dump() {
   echo -e "${GREEN}Dumping the database DDL${NC}"
   # Produce the dump file
   docker exec \
-    stroom-all-dbs \
+    bounceit_stroom-all-dbs \
     mysqldump \
       -d \
       -p"my-secret-pw" \
@@ -549,7 +570,7 @@ elif [ -n "$BUILD_TAG" ]; then
   if [[ "$BUILD_TAG" =~ ${RELEASE_VERSION_REGEX} ]]; then
     echo "This is a release version so add gradle arg for publishing" \
       "libs to Maven Central"
-    # TODO need to add in the sonatype build args when we have decided 
+    # TODO need to add in the sonatype build args when we have decided
     # what we are publishing from stroom
     #extraBuildArgs+=("bintrayUpload")
   fi
@@ -579,8 +600,8 @@ docker_login
 
 check_for_out_of_date_puml_svgs
 
-echo "::group::Start stroom-all-dbs & scylladb"
-start_databases stroom-all-dbs scylladb
+echo "::group::Start stroom-all-dbs"
+start_databases stroom-all-dbs
 echo "::endgroup::"
 
 # Ensure we have a local.yml file as the integration tests will need it

@@ -1,0 +1,6 @@
+{
+  "type" : "Pipeline",
+  "uuid" : "95d1e95a-b588-4da6-ba59-ae15564edcd4",
+  "name" : "OTEL_TRACES_TO_PATHWAYS",
+  "version" : "6fbc9d89-72ac-4d7c-8401-6fd65ed54406"
+}

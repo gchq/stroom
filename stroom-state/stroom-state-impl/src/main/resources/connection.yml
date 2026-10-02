@@ -1,9 +1,0 @@
-# See full reference https://github.com/apache/cassandra-java-driver/blob/4.0.1/core/src/main/resources/reference.conf
-datastax-java-driver {
-    basic.contact-points = [ "127.0.0.1:9042" ]
-    basic.session-name = my_session
-    # basic.session-keyspace = state
-    basic.load-balancing-policy {
-        local-datacenter = datacenter1
-    }
-}

@@ -4,7 +4,8 @@
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="createUserViewImpl form max dock-container-vertical">
-        <form:FormGroup identity="createTypes"
+        <form:FormGroup ui:field="createTypesFormGroup"
+                        identity="createTypes"
                         label="Action"
                         helpText="Select the action to perform.">
             <i:SelectionBox ui:field="createTypes" addStyleNames="createUserViewImpl-selection dock-min w-100"/>

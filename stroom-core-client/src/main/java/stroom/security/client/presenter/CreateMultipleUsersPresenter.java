@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.security.client.presenter;
@@ -103,8 +102,7 @@ public class CreateMultipleUsersPresenter extends MyPresenterWidget<CreateMultip
             nextSelection.ifPresent(consumer);
             event.hide();
         } else {
-            final User user = disabled.remove(0);
-            user.setEnabled(true);
+            final User user = disabled.remove(0).copy().enabled(true).build();
             restFactory
                     .create(USER_RESOURCE)
                     .method(res -> res.update(user))

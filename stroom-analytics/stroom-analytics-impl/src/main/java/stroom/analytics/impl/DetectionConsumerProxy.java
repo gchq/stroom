@@ -1,8 +1,25 @@
+/*
+ * Copyright 2023 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.analytics.impl;
 
-import stroom.analytics.shared.AbstractAnalyticRuleDoc;
+import stroom.analytics.shared.AnalyticRuleDoc;
 import stroom.analytics.shared.ExecutionSchedule;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
+import stroom.pipeline.state.FeedHolder;
 import stroom.query.api.Column;
 import stroom.query.api.DateTimeSettings;
 import stroom.query.common.v2.CompiledColumn;
@@ -16,6 +33,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.StoredValues;
 import stroom.search.extraction.ProcessLifecycleAware;
 import stroom.util.date.DateUtil;
+import stroom.util.shared.ElementId;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
@@ -37,10 +55,11 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
     private final Provider<ErrorReceiverProxy> errorReceiverProxyProvider;
     private final ColumnFormatter fieldFormatter;
     private Provider<DetectionConsumer> detectionsConsumerProvider;
+    private final FeedHolder feedHolder;
 
     private DetectionConsumer detectionConsumer;
 
-    private AbstractAnalyticRuleDoc analyticRuleDoc;
+    private AnalyticRuleDoc analyticRuleDoc;
 
     private CompiledColumns compiledColumns;
 
@@ -51,8 +70,10 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
 
     @Inject
     public DetectionConsumerProxy(final Provider<ErrorReceiverProxy> errorReceiverProxyProvider,
-                                  final AnalyticsConfig analyticsConfig) {
+                                  final AnalyticsConfig analyticsConfig,
+                                  final FeedHolder feedHolder) {
         this.errorReceiverProxyProvider = errorReceiverProxyProvider;
+        this.feedHolder = feedHolder;
         final DateTimeSettings dateTimeSettings = DateTimeSettings
                 .builder()
                 .localZoneId(analyticsConfig.getTimezone())
@@ -88,7 +109,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
         }
     }
 
-    public void setAnalyticRuleDoc(final AbstractAnalyticRuleDoc analyticRuleDoc) {
+    public void setAnalyticRuleDoc(final AnalyticRuleDoc analyticRuleDoc) {
         this.analyticRuleDoc = analyticRuleDoc;
     }
 
@@ -152,7 +173,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
     private void log(final Severity severity, final String message, final Exception e) {
         LOGGER.error(message, e);
         errorReceiverProxyProvider.get().log(severity, null,
-                "AlertExtractionReceiver", message, e);
+                new ElementId(getClass().getSimpleName()), message, e);
     }
 
     private void writeRecord(final ColumnValue[] columnValues) {
@@ -217,7 +238,7 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 .withDetectorName(analyticRuleDoc.getName())
                 .withDetectorUuid(analyticRuleDoc.getUuid())
                 .withDetectorVersion(analyticRuleDoc.getVersion())
-                .withDetailedDescription(analyticRuleDoc.getDescription())
+                .withDetailedDescription(RuleUtil.getDetailedDescription(analyticRuleDoc))
                 .withRandomDetectionUniqueId()
                 .withDetectionRevision(0)
                 .withExecutionSchedule(NullSafe
@@ -227,19 +248,13 @@ public class DetectionConsumerProxy implements ValuesConsumer, ProcessLifecycleA
                 .notDefunct()
                 .withValues(values)
                 .withLinkedEvents(linkedEvents)
+                .withLevel(RuleUtil.getLevel(analyticRuleDoc))
+                .withStatus(RuleUtil.getStatus(analyticRuleDoc))
+                .withFeedName(feedHolder.getFeedName())
                 .build();
 
         final DetectionConsumer detectionConsumer = getDetectionConsumer();
         detectionConsumer.accept(detection);
-    }
-
-    public static Long getSafeLong(final String value) {
-        try {
-            return Long.parseLong(value);
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-        return null;
     }
 
     public static Long getSafeLong(final Val value) {

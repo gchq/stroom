@@ -16,46 +16,34 @@
 
 package stroom.dashboard.shared;
 
-import stroom.util.shared.RandomId;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 @JsonPropertyOrder({"preferredSize", "tabs", "selected"})
 @JsonInclude(Include.NON_NULL)
 public final class TabLayoutConfig extends LayoutConfig {
 
-    @JsonIgnore
-    private final String id;
-
     /**
      * The preferred size of this layout in width, height.
      */
     @JsonProperty("preferredSize")
-    private Size preferredSize;
+    private final Size preferredSize;
     @JsonProperty("tabs")
-    private List<TabConfig> tabs;
+    private final List<TabConfig> tabs;
     @JsonProperty("selected")
-    private Integer selected;
-
-    public TabLayoutConfig() {
-        this(new Size(), null, null);
-    }
+    private final Integer selected;
 
     @JsonCreator
     public TabLayoutConfig(@JsonProperty("preferredSize") final Size preferredSize,
                            @JsonProperty("tabs") final List<TabConfig> tabs,
                            @JsonProperty("selected") final Integer selected) {
-        id = "TabLayoutConfig_" + RandomId.createId(10);
         this.preferredSize = preferredSize;
         this.tabs = tabs;
         this.selected = selected;
@@ -66,97 +54,37 @@ public final class TabLayoutConfig extends LayoutConfig {
         return preferredSize;
     }
 
-    public void setPreferredSize(final Size preferredSize) {
-        this.preferredSize = preferredSize;
-    }
-
-    private List<TabConfig> getVisibleTabs() {
-        if (tabs == null) {
-            return Collections.emptyList();
-        }
-        return tabs.stream().filter(TabConfig::visible).collect(Collectors.toList());
-    }
-
-    public TabConfig get(final int index) {
-        if (tabs != null && tabs.size() > 0) {
-            final TabConfig tab = tabs.get(index);
-            if (tab != null) {
-                tab.setParent(this);
-                return tab;
-            }
-        }
-        return null;
-    }
-
-    public void add(final TabConfig tab) {
-        if (tabs == null) {
-            tabs = new ArrayList<>();
-        }
-        tabs.add(tab);
-        tab.setParent(this);
-    }
-
-    public void add(final int index, final TabConfig tab) {
-        if (tabs == null) {
-            tabs = new ArrayList<>();
-        }
-        if (index >= tabs.size()) {
-            tabs.add(tab);
-        } else {
-            tabs.add(index, tab);
-        }
-        tab.setParent(this);
-    }
-
-    public void remove(final TabConfig tab) {
-        if (tabs != null) {
-            tabs.remove(tab);
-            tab.setParent(null);
-        }
-    }
-
-    public int indexOf(final TabConfig tab) {
-        return tabs.indexOf(tab);
-    }
-
-    @JsonIgnore
-    public int getVisibleTabCount() {
-        return getVisibleTabs().size();
-    }
-
-    @JsonIgnore
-    public int getAllTabCount() {
-        if (tabs == null) {
-            return 0;
-        }
-        return tabs.size();
-    }
-
     public List<TabConfig> getTabs() {
-        if (tabs == null) {
-            tabs = new ArrayList<>();
-        }
-        for (final TabConfig tabConfig : tabs) {
-            tabConfig.setParent(this);
-        }
         return tabs;
-    }
-
-    public void setTabs(final List<TabConfig> tabs) {
-        this.tabs = tabs;
     }
 
     public Integer getSelected() {
         return selected;
     }
 
-    public void setSelected(final Integer selected) {
-        this.selected = selected;
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final TabLayoutConfig that = (TabLayoutConfig) o;
+        return Objects.equals(preferredSize, that.preferredSize) &&
+               Objects.equals(tabs, that.tabs) &&
+               Objects.equals(selected, that.selected);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(preferredSize, tabs, selected);
     }
 
     @Override
     public String toString() {
-        return id;
+        return "TabLayoutConfig{" +
+               "preferredSize=" + preferredSize +
+               ", tabs=" + tabs +
+               ", selected=" + selected +
+               '}';
     }
 
     @Override

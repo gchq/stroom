@@ -20,6 +20,7 @@ import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.security.api.AppPermissionService;
 import stroom.security.api.ContentPackUserService;
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.HashFunctionFactory;
 import stroom.security.api.ServiceUserFactory;
 import stroom.security.api.UserGroupsService;
 import stroom.security.api.UserIdentityFactory;
@@ -27,18 +28,17 @@ import stroom.security.api.UserService;
 import stroom.security.common.impl.ContentSecurityFilter;
 import stroom.security.common.impl.DelegatingServiceUserFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
-import stroom.security.common.impl.ExternalServiceUserFactory;
+import stroom.security.common.impl.HashFunctionFactoryImpl;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.RefreshManager;
-import stroom.security.common.impl.TestCredentialsServiceUserFactory;
+import stroom.security.impl.apikey.ApiKeyModule;
 import stroom.security.impl.apikey.ApiKeyObjectInfoProvider;
 import stroom.security.impl.apikey.ApiKeyResourceImpl;
 import stroom.security.impl.apikey.CreateHashedApiKeyResponseObjectInfoProvider;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
-import stroom.security.openid.api.IdpType;
 import stroom.security.openid.api.OpenIdConfiguration;
 import stroom.security.shared.CreateHashedApiKeyResponse;
 import stroom.security.shared.HashedApiKey;
@@ -61,6 +61,7 @@ public class SecurityModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new ApiKeyModule());
         install(new PermissionChangeEventModule());
         install(new PermissionChangeEventLifecycleModule());
 
@@ -77,19 +78,14 @@ public class SecurityModule extends AbstractModule {
         bind(UserInfoLookup.class).to(UserInfoLookupImpl.class);
         bind(AuthProxyService.class).to(AuthProxyServiceImpl.class);
         bind(UserGroupsService.class).to(UserGroupsCache.class);
+        bind(HashFunctionFactory.class).to(HashFunctionFactoryImpl.class);
 
         HasHealthCheckBinder.create(binder())
                 .bind(ExternalIdpConfigurationProvider.class);
 
-        // TODO: 26/07/2023 Remove these
-//        bind(ProcessingUserIdentityProvider.class).to(DelegatingProcessingUserIdentityProvider.class);
-//        GuiceUtil.buildMapBinder(binder(), IdpType.class, ProcessingUserIdentityProvider.class)
-//                .addBinding(IdpType.EXTERNAL_IDP, ExternalProcessingUserIdentityProvider.class);
-
         bind(ServiceUserFactory.class).to(DelegatingServiceUserFactory.class);
-        GuiceUtil.buildMapBinder(binder(), IdpType.class, ServiceUserFactory.class)
-                .addBinding(IdpType.EXTERNAL_IDP, ExternalServiceUserFactory.class)
-                .addBinding(IdpType.TEST_CREDENTIALS, TestCredentialsServiceUserFactory.class);
+        // INTERNAL_IDP and EXTERNAL_IDP both map to the internal service-user factory (bound in
+        // AccountModule) so the inter-node processing user is a cluster-internal credential in every mode.
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
@@ -119,8 +115,10 @@ public class SecurityModule extends AbstractModule {
         RestResourcesBinder.create(binder())
                 .bind(ApiKeyResourceImpl.class)
                 .bind(AppPermissionResourceImpl.class)
+                .bind(AuthFlowResourceImpl.class)
                 .bind(DocPermissionResourceImpl.class)
                 .bind(SessionResourceImpl.class)
+                .bind(UserAccessResourceImpl.class)
                 .bind(UserResourceImpl.class)
                 .bind(UserRefResourceImpl.class)
                 .bind(UserInfoResourceImpl.class)

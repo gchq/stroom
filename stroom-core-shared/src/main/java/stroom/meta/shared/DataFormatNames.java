@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.meta.shared;
 
 import java.util.Arrays;
@@ -18,7 +34,20 @@ public class DataFormatNames {
      */
     public static final String XML_FRAGMENT = "XML_FRAGMENT";
     public static final String JSON = "JSON";
+    /**
+     * Each line (delimited by \n) is a valid JSON document. The JSON equivalent of XML_FRAGMENT.
+     * See <a href="https://jsonlines.org">JSON Lines</a>.
+     */
+    public static final String JSON_LINES = "JSON_LINES";
+    /**
+     * YAML Ain't Markup Language.
+     * See <a href="https://yaml.org">YAML</a>.
+     */
     public static final String YAML = "YAML";
+    /**
+     * Tom's Obvious Minimal Language.
+     * See <a href="https://toml.io/en/">TOML</a>.
+     */
     public static final String TOML = "TOML";
     public static final String INI = "INI";
     /**
@@ -69,6 +98,7 @@ public class DataFormatNames {
             XML,
             XML_FRAGMENT,
             JSON,
+            JSON_LINES,
             YAML,
             TOML,
             INI,

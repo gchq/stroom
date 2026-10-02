@@ -16,7 +16,7 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import stroom.util.shared.StringUtil;
+import stroom.util.shared.NullSafe;
 
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
@@ -44,7 +44,7 @@ class HexToString extends StroomExtensionFunctionCall {
                 if (hex != null) {
                     hex = hex.replaceAll("\\s*", "");
                 }
-                if (!StringUtil.isBlank(hex)) {
+                if (!NullSafe.isBlankString(hex)) {
                     final Charset charset = Charset.forName(charsetName);
                     final ByteBuffer bytes = decodeHex(hex);
                     result = charset.decode(bytes).toString();

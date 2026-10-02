@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.util.shared;
 
 import java.util.ArrayList;
@@ -25,6 +41,12 @@ public interface ResourcePaths {
      * Used as the path for internal IdP sign in
      */
     String SIGN_IN_PATH = "/signIn";
+
+    /**
+     * Used as the path for the internal IdP page that lets a user who has forgotten their password set
+     * a new one using the token that was emailed to them.
+     */
+    String RESET_PASSWORD_PATH = "/resetPassword";
 
     /**
      * Used as the root path for all REST resources
@@ -58,9 +80,21 @@ public interface ResourcePaths {
     String V2 = "/v2";
     String V3 = "/v3";
 
+    /**
+     * Base path for the SPA (BFF) authentication flow REST resource.
+     */
+    String AUTH_FLOW_PATH = "/auth/flow" + V1;
+
+    /**
+     * Path part for the OIDC sign-in callback endpoint (the {@code redirect_uri} the IDP redirects back to
+     * after authentication). Named to match the widely used Duende / ASP.NET BFF convention.
+     */
+    String SIGN_IN_OIDC_PATH = "/signin-oidc";
+
     String UI_SERVLET_NAME = "UI";
     String STROOM_SERVLET_NAME = "StroomServlet";
     String SIGN_IN_SERVLET_NAME = "SignInServlet";
+    String RESET_PASSWORD_SERVLET_NAME = "ResetPasswordServlet";
     String SESSION_LIST_SERVLET_NAME = "SessionListServlet";
 
 
@@ -116,6 +150,18 @@ public interface ResourcePaths {
                 .addPathPart(API_ROOT_PATH)
                 .addPathParts(parts)
                 .build();
+    }
+
+    /**
+     * The full authenticated-api path of the OIDC sign-in callback,
+     * e.g. {@code /api/auth/flow/v1/signin-oidc}.
+     * <p>
+     * This is the single {@code redirect_uri} the internal IdP accepts, so both the auth flow resource
+     * (which sends it to the IdP) and the IdP itself (which exact-matches it) build it from here, keeping
+     * the two exactly in step.
+     */
+    static String buildSignInOidcCallbackPath() {
+        return buildAuthenticatedApiPath(AUTH_FLOW_PATH, SIGN_IN_OIDC_PATH);
     }
 
     static String buildPath(final String... parts) {

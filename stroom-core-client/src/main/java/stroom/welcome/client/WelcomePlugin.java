@@ -18,6 +18,7 @@ package stroom.welcome.client;
 
 import stroom.content.client.ContentPlugin;
 import stroom.core.client.ContentManager;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.main.client.event.ShowMainEvent;
 import stroom.welcome.client.presenter.WelcomePresenter;
 
@@ -32,8 +33,9 @@ public class WelcomePlugin extends ContentPlugin<WelcomePresenter> implements Sh
 
     @Inject
     public WelcomePlugin(final EventBus eventBus, final ContentManager eventManager,
-                         final Provider<WelcomePresenter> presenterProvider) {
-        super(eventBus, eventManager, presenterProvider);
+                         final Provider<WelcomePresenter> presenterProvider,
+                         final DocumentPluginRegistry documentPluginRegistry) {
+        super(eventBus, eventManager, presenterProvider, documentPluginRegistry);
 
         registerHandler(getEventBus().addHandler(ShowMainEvent.getType(), this));
     }
@@ -44,5 +46,10 @@ public class WelcomePlugin extends ContentPlugin<WelcomePresenter> implements Sh
         if (event.getInitialDocRef() == null) {
             open();
         }
+    }
+
+    @Override
+    public String getType() {
+        return WelcomePresenter.TAB_TYPE;
     }
 }

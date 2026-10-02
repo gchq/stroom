@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.search.elastic.client.presenter;
@@ -20,7 +19,7 @@ package stroom.search.elastic.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.client.presenter.DocumentEditPresenter;
+import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.search.elastic.client.presenter.ElasticClusterSettingsPresenter.ElasticClusterSettingsView;
 import stroom.search.elastic.shared.ElasticClusterDoc;
@@ -35,9 +34,10 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
 import java.util.List;
+import java.util.UUID;
 
 public class ElasticClusterSettingsPresenter
-        extends DocumentEditPresenter<ElasticClusterSettingsView, ElasticClusterDoc>
+        extends DocPresenter<ElasticClusterSettingsView, ElasticClusterDoc>
         implements ElasticClusterSettingsUiHandlers {
 
     private static final ElasticClusterResource ELASTIC_CLUSTER_RESOURCE = GWT.create(ElasticClusterResource.class);
@@ -61,13 +61,11 @@ public class ElasticClusterSettingsPresenter
     }
 
     @Override
-    public void onChange() {
-        setDirty(true);
-    }
-
-    @Override
     public void onTestConnection(final TaskMonitorFactory taskMonitorFactory) {
-        final ElasticClusterDoc cluster = onWrite(new ElasticClusterDoc());
+        final ElasticClusterDoc cluster = onWrite(ElasticClusterDoc
+                .builder()
+                .uuid(UUID.randomUUID().toString())
+                .build());
         restFactory
                 .create(ELASTIC_CLUSTER_RESOURCE)
                 .method(res -> res.testCluster(cluster))
@@ -92,7 +90,8 @@ public class ElasticClusterSettingsPresenter
             getView().setUseAuthentication(connectionConfig.getUseAuthentication());
             getView().setApiKeyId(connectionConfig.getApiKeyId());
             getView().setApiKeySecret(connectionConfig.getApiKeySecret());
-            getView().setSocketTimeoutMillis(connectionConfig.getSocketTimeoutMillis());
+            getView().setConnectionTimeoutMillis(connectionConfig.getConnectionTimeoutMillis());
+            getView().setResponseTimeoutMillis(connectionConfig.getResponseTimeoutMillis());
         }
     }
 
@@ -104,10 +103,10 @@ public class ElasticClusterSettingsPresenter
         connectionConfig.setUseAuthentication(getView().getUseAuthentication());
         connectionConfig.setApiKeyId(getView().getApiKeyId());
         connectionConfig.setApiKeySecret(getView().getApiKeySecret());
-        connectionConfig.setSocketTimeoutMillis(getView().getSocketTimeoutMillis());
+        connectionConfig.setConnectionTimeoutMillis(getView().getConnectionTimeoutMillis());
+        connectionConfig.setResponseTimeoutMillis(getView().getResponseTimeoutMillis());
 
-        cluster.setConnection(connectionConfig);
-        return cluster;
+        return cluster.copy().connection(connectionConfig).build();
     }
 
     public interface ElasticClusterSettingsView
@@ -133,8 +132,12 @@ public class ElasticClusterSettingsPresenter
 
         void setApiKeySecret(String apiKeySecret);
 
-        int getSocketTimeoutMillis();
+        int getConnectionTimeoutMillis();
 
-        void setSocketTimeoutMillis(int socketTimeoutMillis);
+        void setConnectionTimeoutMillis(int connectionTimeoutMillis);
+
+        int getResponseTimeoutMillis();
+
+        void setResponseTimeoutMillis(int responseTimeoutMillis);
     }
 }

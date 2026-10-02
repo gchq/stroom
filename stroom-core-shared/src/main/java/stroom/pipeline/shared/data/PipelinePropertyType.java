@@ -36,7 +36,9 @@ import java.util.Objects;
         "defaultValue",
         "pipelineReference",
         "docRefTypes",
-        "displayPriority"})
+        "displayPriority",
+        "canEmbed"
+})
 public class PipelinePropertyType implements Comparable<PipelinePropertyType>, HasType {
 
     @JsonProperty
@@ -55,6 +57,8 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
     private final String[] docRefTypes;
     @JsonProperty
     private final int displayPriority;
+    @JsonProperty
+    private final boolean canEmbed;
 
     @JsonCreator
     public PipelinePropertyType(@JsonProperty("elementType") final PipelineElementType elementType,
@@ -62,17 +66,19 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
                                 @JsonProperty("type") final String type,
                                 @JsonProperty("description") final String description,
                                 @JsonProperty("defaultValue") final String defaultValue,
-                                @JsonProperty("pipelineReference") final boolean pipelineReference,
+                                @JsonProperty("pipelineReference") final Boolean pipelineReference,
                                 @JsonProperty("docRefTypes") final String[] docRefTypes,
-                                @JsonProperty("displayPriority") final int displayPriority) {
+                                @JsonProperty("displayPriority") final Integer displayPriority,
+                                @JsonProperty("canEmbed") final Boolean canEmbed) {
         this.elementType = elementType;
         this.name = name;
         this.type = type;
         this.description = description;
         this.defaultValue = defaultValue;
-        this.pipelineReference = pipelineReference;
+        this.pipelineReference = Objects.requireNonNullElse(pipelineReference, false);
         this.docRefTypes = docRefTypes;
-        this.displayPriority = displayPriority;
+        this.displayPriority = Objects.requireNonNullElse(displayPriority, 0);
+        this.canEmbed = Objects.requireNonNullElse(canEmbed, false);
     }
 
     public PipelineElementType getElementType() {
@@ -100,6 +106,10 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
         return pipelineReference;
     }
 
+    public boolean canEmbed() {
+        return canEmbed;
+    }
+
     public String[] getDocRefTypes() {
         return docRefTypes;
     }
@@ -118,8 +128,8 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
         }
         final PipelinePropertyType that = (PipelinePropertyType) o;
         return elementType.equals(that.elementType) &&
-                name.equals(that.name) &&
-                type.equals(that.type);
+               name.equals(that.name) &&
+               type.equals(that.type);
     }
 
     @Override
@@ -155,6 +165,7 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
         private boolean pipelineReference;
         private String[] docRefTypes;
         private int displayPriority;
+        private boolean canEmbed;
 
         private Builder() {
         }
@@ -168,6 +179,7 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
             this.pipelineReference = pipelinePropertyType.pipelineReference;
             this.docRefTypes = pipelinePropertyType.docRefTypes;
             this.displayPriority = pipelinePropertyType.displayPriority;
+            this.canEmbed = pipelinePropertyType.canEmbed;
         }
 
         public Builder elementType(final PipelineElementType value) {
@@ -210,6 +222,11 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
             return this;
         }
 
+        public Builder canEmbed(final boolean canEmbed) {
+            this.canEmbed = canEmbed;
+            return this;
+        }
+
         public PipelinePropertyType build() {
             return new PipelinePropertyType(
                     elementType,
@@ -219,7 +236,8 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
                     defaultValue,
                     pipelineReference,
                     docRefTypes,
-                    displayPriority);
+                    displayPriority,
+                    canEmbed);
         }
     }
 }

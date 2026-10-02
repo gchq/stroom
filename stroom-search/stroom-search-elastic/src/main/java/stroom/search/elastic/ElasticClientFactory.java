@@ -1,22 +1,36 @@
+/*
+ * Copyright 2021 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.search.elastic;
 
 import stroom.search.elastic.shared.ElasticConnectionConfig;
+import stroom.util.net.SsrfGuard;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.json.jackson.Jackson3JsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.TransportUtils;
-import co.elastic.clients.transport.rest_client.RestClientTransport;
+import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
+import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import jakarta.inject.Inject;
-import org.apache.http.Header;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig.Builder;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
-import org.apache.http.message.BasicHeader;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
-import org.elasticsearch.client.RestClientBuilder.RequestConfigCallback;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,11 +44,13 @@ import java.util.regex.Pattern;
 import javax.net.ssl.SSLContext;
 
 public class ElasticClientFactory {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ElasticClientFactory.class);
     private static final Pattern URL_PATTERN = Pattern.compile("^([a-zA-Z]+)://(.+?)(?::([0-9]+)/?)?$");
 
     @Inject
-    public ElasticClientFactory() { }
+    public ElasticClientFactory() {
+    }
 
     public ElasticsearchClient create(final ElasticConnectionConfig config,
                                       final ElasticClientConfig elasticClientConfig) {
@@ -46,6 +62,11 @@ public class ElasticClientFactory {
             final HttpHost host = hostFromUrl(url);
 
             if (host != null) {
+                // Reject cloud-metadata/wildcard targets to prevent SSRF. Private and loopback hosts are
+                // allowed, as an Elasticsearch cluster legitimately lives on an internal or (in dev) a
+                // loopback address.
+                SsrfGuard.rejectMetadataAndWildcard(url);
+
                 // Extract the host, port and scheme
                 httpHosts.add(host);
 
@@ -57,13 +78,11 @@ public class ElasticClientFactory {
             }
         }
 
-        final RestClientBuilder restClientBuilder = RestClient.builder(httpHosts.toArray(new HttpHost[0]));
+        final Rest5ClientBuilder restClientBuilder = Rest5Client.builder(httpHosts.toArray(new HttpHost[0]));
 
-        restClientBuilder.setRequestConfigCallback(new RequestConfigCallback() {
-            @Override
-            public Builder customizeRequestConfig(final Builder requestConfigBuilder) {
-                return requestConfigBuilder.setSocketTimeout(config.getSocketTimeoutMillis());
-            }
+        restClientBuilder.setRequestConfigCallback(requestConfig -> {
+            requestConfig.setConnectionRequestTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
+            requestConfig.setResponseTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
         });
 
         // If using HTTPS, set the CA certificate to verify the connection with the Elasticsearch cluster
@@ -71,14 +90,11 @@ public class ElasticClientFactory {
             final SSLContext sslContext = getSslContext(config);
 
             if (sslContext != null) {
-                restClientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
-                    @Override
-                    public HttpAsyncClientBuilder customizeHttpClient(final HttpAsyncClientBuilder httpClientBuilder) {
-                        return httpClientBuilder
-                                .setSSLContext(sslContext)
-                                .setMaxConnPerRoute(elasticClientConfig.getMaxConnectionsPerRoute())
-                                .setMaxConnTotal(elasticClientConfig.getMaxConnections());
-                    }
+                restClientBuilder.setSSLContext(sslContext);
+                restClientBuilder.setConnectionManagerCallback(httpClientBuilder -> {
+                    httpClientBuilder
+                            .setMaxConnPerRoute(elasticClientConfig.getMaxConnectionsPerRoute())
+                            .setMaxConnTotal(elasticClientConfig.getMaxConnections());
                 });
             }
         }
@@ -86,15 +102,16 @@ public class ElasticClientFactory {
         // Set API key header if authentication is used. Key is in the format "<key id>:<secret>"
         final String apiKey = getEncodedApiKey(config);
         if (config.getUseAuthentication() && apiKey != null) {
-            final Header[] defaultHeaders = new Header[] {
-                new BasicHeader("Authorization", "ApiKey " + apiKey)
+            final Header[] defaultHeaders = new Header[]{
+                    new BasicHeader("Authorization", "ApiKey " + apiKey)
             };
 
             restClientBuilder.setDefaultHeaders(defaultHeaders);
         }
 
-        final ElasticsearchTransport transport = new RestClientTransport(restClientBuilder.build(),
-                new JacksonJsonpMapper());
+        // Use Jackson 3 not 2
+        final ElasticsearchTransport transport = new Rest5ClientTransport(restClientBuilder.build(),
+                new Jackson3JsonpMapper());
 
         return new ElasticsearchClient(transport);
     }
@@ -120,6 +137,7 @@ public class ElasticClientFactory {
 
     /**
      * Encode the API key ID and secret in base64 for use in a HTTP request.
+     *
      * @return Base-64 encoded string. If no API key or secret are defined, returns `null`.
      */
     private String getEncodedApiKey(final ElasticConnectionConfig config) {
@@ -145,21 +163,22 @@ public class ElasticClientFactory {
                 // Extract the host, port and scheme
                 final String scheme = matches.group(1);
                 final String host = matches.group(2);
-                Integer port = matches.group(3) != null ? Integer.parseInt(matches.group(3)) : null;
+                Integer port = matches.group(3) != null
+                        ? Integer.parseInt(matches.group(3))
+                        : null;
 
                 // If no port specified, try and infer it from the scheme
                 if (port == null) {
                     if (scheme.equalsIgnoreCase("http")) {
                         port = 80;
-                    }
-                    if (scheme.equalsIgnoreCase("https")) {
+                    } else if (scheme.equalsIgnoreCase("https")) {
                         port = 443;
                     } else {
                         throw new IllegalArgumentException("Port number could not be inferred");
                     }
                 }
 
-                return new HttpHost(host, port, scheme);
+                return new HttpHost(scheme, host, port);
             }
         } catch (final NumberFormatException e) {
             LOGGER.error("Invalid port format in URL: '" + url + "'");

@@ -1,0 +1,156 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.index.client.view;
+
+import stroom.index.client.presenter.DenseVectorFieldPresenter.DenseVectorFieldView;
+import stroom.item.client.SelectionBox;
+import stroom.query.api.datasource.DenseVectorFieldConfig;
+import stroom.query.api.datasource.DenseVectorFieldConfig.RerankModelType;
+import stroom.query.api.datasource.DenseVectorFieldConfig.VectorSimilarityFunctionType;
+import stroom.widget.valuespinner.client.ValueSpinner;
+
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.gwtplatform.mvp.client.View;
+import com.gwtplatform.mvp.client.ViewImpl;
+
+public class DenseVectorFieldViewImpl extends ViewImpl implements DenseVectorFieldView {
+
+    private final Widget widget;
+
+    @UiField
+    SimplePanel embeddingModel;
+    @UiField
+    SelectionBox<VectorSimilarityFunctionType> vectorSimilarityFunctionType;
+    @UiField
+    ValueSpinner segmentSize;
+    @UiField
+    ValueSpinner overlapSize;
+    @UiField
+    ValueSpinner nearestNeighbourCount;
+    @UiField
+    SimplePanel rerankModel;
+    @UiField
+    SelectionBox<RerankModelType> rerankModelType;
+    @UiField
+    ValueSpinner rerankBatchSize;
+    @UiField
+    TextBox rerankScoreMinimum;
+
+    @Inject
+    public DenseVectorFieldViewImpl(final Binder binder) {
+        widget = binder.createAndBindUi(this);
+        vectorSimilarityFunctionType.addItems(VectorSimilarityFunctionType.values());
+        segmentSize.setMin(1);
+        segmentSize.setMax(1000000);
+        overlapSize.setMin(1);
+        overlapSize.setMax(1000000);
+        nearestNeighbourCount.setMin(1);
+        nearestNeighbourCount.setMax(1000000);
+        rerankBatchSize.setMin(1);
+        rerankBatchSize.setMax(1000000);
+        rerankModelType.addItems(RerankModelType.values());
+    }
+
+    @Override
+    public Widget asWidget() {
+        return widget;
+    }
+
+    @Override
+    public void setEmbeddingModelView(final View view) {
+        embeddingModel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public SelectionBox<VectorSimilarityFunctionType> getVectorSimilarityFunctionType() {
+        return vectorSimilarityFunctionType;
+    }
+
+    @Override
+    public int getSegmentSize() {
+        return segmentSize.getIntValue();
+    }
+
+    @Override
+    public void setSegmentSize(final int segmentSize) {
+        this.segmentSize.setValue(segmentSize);
+    }
+
+    @Override
+    public int getOverlapSize() {
+        return overlapSize.getIntValue();
+    }
+
+    @Override
+    public void setOverlapSize(final int overlapSize) {
+        this.overlapSize.setValue(overlapSize);
+    }
+
+    @Override
+    public int getNearestNeighbourCount() {
+        return nearestNeighbourCount.getIntValue();
+    }
+
+    @Override
+    public void setNearestNeighbourCount(final int nearestNeighbourCount) {
+        this.nearestNeighbourCount.setValue(nearestNeighbourCount);
+    }
+
+    @Override
+    public void setRerankModelView(final View view) {
+        rerankModel.setWidget(view.asWidget());
+    }
+
+    @Override
+    public SelectionBox<RerankModelType> getRerankModelType() {
+        return rerankModelType;
+    }
+
+    @Override
+    public int getRerankBatchSize() {
+        return rerankBatchSize.getIntValue();
+    }
+
+    @Override
+    public void setRerankBatchSize(final int rerankBatchSize) {
+        this.rerankBatchSize.setValue(rerankBatchSize);
+    }
+
+    @Override
+    public void setRerankScoreMinimum(final float rerankScoreMinimum) {
+        this.rerankScoreMinimum.setValue(String.valueOf(rerankScoreMinimum));
+    }
+
+    @Override
+    public float getRerankScoreMinimum() {
+        try {
+            return Float.parseFloat(rerankScoreMinimum.getValue());
+        } catch (final NumberFormatException e) {
+            // Ignore.
+        }
+        return DenseVectorFieldConfig.DEFAULT_RERANK_SCORE_MINIMUM;
+    }
+
+    public interface Binder extends UiBinder<Widget, DenseVectorFieldViewImpl> {
+
+    }
+}

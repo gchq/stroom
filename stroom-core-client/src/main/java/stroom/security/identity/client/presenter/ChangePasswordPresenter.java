@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,9 @@ public class ChangePasswordPresenter extends MyPresenterWidget<ChangePasswordVie
         view.setUiHandlers(new HideRequestUiHandlers() {
             @Override
             public void hideRequest(final HideRequest request) {
-                HidePopupRequestEvent.builder(ChangePasswordPresenter.this).ok(request.isOk()).fire();
+                HidePopupRequestEvent.builder(ChangePasswordPresenter.this)
+                        .action(request.getAction())
+                        .fire();
             }
         });
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,8 @@ public class UserRefPopupPresenter
 
     };
 
+    private Consumer<UserRef> userConsumer = userRef -> {};
+
     @Inject
     public UserRefPopupPresenter(final EventBus eventBus,
                                  final QuickFilterDialogView userListView,
@@ -95,7 +97,8 @@ public class UserRefPopupPresenter
         this.pagerView = pagerView;
         this.restFactory = restFactory;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("Users");
         selectionModel = dataGrid.addDefaultSelectionModel(false);
         pagerView.setDataWidget(dataGrid);
 
@@ -154,8 +157,6 @@ public class UserRefPopupPresenter
                         .withToolTip("The full name of the user. Groups do not have a full name.")
                         .build(),
                 350);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     @Override
@@ -175,6 +176,10 @@ public class UserRefPopupPresenter
         this.selectionChangeConsumer = selectionChangeConsumer;
     }
 
+    public void setUserConsumer(final Consumer<UserRef> userConsumer) {
+        this.userConsumer = userConsumer;
+    }
+
     @Override
     public void onFilterChange(final String text) {
         filter = text;
@@ -187,11 +192,15 @@ public class UserRefPopupPresenter
         refresh();
     }
 
-    public void show(final Consumer<UserRef> userConsumer) {
-        show("Select User Or Group", userConsumer);
+    public void show(final String caption) {
+        show(caption, userConsumer);
     }
 
-    public void show(final String caption, final Consumer<UserRef> userConsumer) {
+    public void show(final Consumer<UserRef> consumer) {
+        show("Select User Or Group", consumer);
+    }
+
+    public void show(final String caption, final Consumer<UserRef> consumer) {
         initialSelection = getSelected();
         refresh();
 
@@ -205,7 +214,7 @@ public class UserRefPopupPresenter
                     if (e.isOk()) {
                         final UserRef selected = getSelected();
                         selectionChangeConsumer.accept(selected);
-                        userConsumer.accept(selected);
+                        consumer.accept(selected);
                         e.hide();
                     } else {
                         selectionChangeConsumer.accept(initialSelection);

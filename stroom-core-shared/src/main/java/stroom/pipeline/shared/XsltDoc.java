@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package stroom.pipeline.shared;
 
 import stroom.docref.DocRef;
 import stroom.docs.shared.Description;
-import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.AbstractDoc;
+import stroom.docstore.shared.AbstractEmbeddableDoc;
 import stroom.docstore.shared.DocumentType;
 import stroom.docstore.shared.DocumentTypeRegistry;
 import stroom.util.shared.HasData;
@@ -46,24 +47,21 @@ import java.util.Objects;
         "createUser",
         "updateUser",
         "description",
-        "data"})
+        "data",
+        "embeddedIn"})
 @JsonInclude(Include.NON_NULL)
-public class XsltDoc extends Doc implements HasData {
+public class XsltDoc extends AbstractEmbeddableDoc implements HasData {
 
     public static final String TYPE = "XSLT";
     public static final DocumentType DOCUMENT_TYPE = DocumentTypeRegistry.XSLT_DOCUMENT_TYPE;
 
     @JsonProperty
-    private String description;
+    private final String description;
     @JsonProperty
-    private String data;
-
-    public XsltDoc() {
-    }
+    private final String data;
 
     @JsonCreator
-    public XsltDoc(@JsonProperty("type") final String type,
-                   @JsonProperty("uuid") final String uuid,
+    public XsltDoc(@JsonProperty("uuid") final String uuid,
                    @JsonProperty("name") final String name,
                    @JsonProperty("version") final String version,
                    @JsonProperty("createTimeMs") final Long createTimeMs,
@@ -71,8 +69,9 @@ public class XsltDoc extends Doc implements HasData {
                    @JsonProperty("createUser") final String createUser,
                    @JsonProperty("updateUser") final String updateUser,
                    @JsonProperty("description") final String description,
-                   @JsonProperty("data") final String data) {
-        super(type, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser);
+                   @JsonProperty("data") final String data,
+                   @JsonProperty("embeddedIn") final DocRef embeddedIn) {
+        super(TYPE, uuid, name, version, createTimeMs, updateTimeMs, createUser, updateUser, embeddedIn);
         this.description = description;
         this.data = data;
     }
@@ -97,18 +96,9 @@ public class XsltDoc extends Doc implements HasData {
         return description;
     }
 
-    public void setDescription(final String description) {
-        this.description = description;
-    }
-
     @Override
     public String getData() {
         return data;
-    }
-
-    @Override
-    public void setData(final String data) {
-        this.data = data;
     }
 
     @Override
@@ -130,5 +120,69 @@ public class XsltDoc extends Doc implements HasData {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), description, data);
+    }
+
+    public Builder copy() {
+        return new Builder(this);
+    }
+
+    @Override
+    public HasData copyWithData(final String data) {
+        return copy().data(data).build();
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static final class Builder extends AbstractBuilder<XsltDoc, Builder> {
+
+        private String description;
+        private String data;
+        private DocRef embeddedIn;
+
+        private Builder() {
+        }
+
+        private Builder(final XsltDoc xsltDoc) {
+            super(xsltDoc);
+            this.description = xsltDoc.description;
+            this.data = xsltDoc.data;
+            this.embeddedIn = xsltDoc.getEmbeddedIn();
+        }
+
+        public Builder description(final String description) {
+            this.description = description;
+            return self();
+        }
+
+        public Builder data(final String data) {
+            this.data = data;
+            return self();
+        }
+
+        public Builder embeddedIn(final DocRef embeddedIn) {
+            this.embeddedIn = embeddedIn;
+            return self();
+        }
+
+        @Override
+        protected Builder self() {
+            return this;
+        }
+
+        public XsltDoc build() {
+            return new XsltDoc(
+                    uuid,
+                    name,
+                    version,
+                    createTimeMs,
+                    updateTimeMs,
+                    createUser,
+                    updateUser,
+                    description,
+                    data,
+                    embeddedIn);
+        }
     }
 }

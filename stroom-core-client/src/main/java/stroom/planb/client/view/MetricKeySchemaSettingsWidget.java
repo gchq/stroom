@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2025 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
 
 package stroom.planb.client.view;
 
+import stroom.document.client.event.ChangeUiHandlers;
 import stroom.item.client.SelectionBox;
-import stroom.planb.client.presenter.PlanBSettingsUiHandlers;
 import stroom.planb.shared.HashLength;
 import stroom.planb.shared.KeyType;
 import stroom.planb.shared.MetricKeySchema;
 import stroom.planb.shared.TemporalResolution;
 import stroom.query.api.UserTimeZone;
-import stroom.util.shared.NullSafe;
+import stroom.query.client.view.TimeZoneWidget;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -60,18 +60,15 @@ public class MetricKeySchemaSettingsWidget
         this.timeZoneWidget = timeZoneWidget;
         widget = binder.createAndBindUi(this);
         keyType.addItems(KeyType.ORDERED_LIST);
-        keyType.setValue(MetricKeySchema.DEFAULT_KEY_TYPE);
         hashLength.addItems(HashLength.ORDERED_LIST);
-        hashLength.setValue(MetricKeySchema.DEFAULT_HASH_LENGTH);
         temporalResolution.addItems(TemporalResolution.ORDERED_LIST);
-        temporalResolution.setValue(MetricKeySchema.DEFAULT_TEMPORAL_RESOLUTION);
         timeZone.setWidget(timeZoneWidget.asWidget());
-        timeZoneWidget.setUserTimeZone(MetricKeySchema.DEFAULT_TIME_ZONE);
+        setKeySchema(new MetricKeySchema.Builder().build());
         onKeyTypeChange();
     }
 
     @Override
-    public void setUiHandlers(final PlanBSettingsUiHandlers uiHandlers) {
+    public void setUiHandlers(final ChangeUiHandlers uiHandlers) {
         super.setUiHandlers(uiHandlers);
         timeZoneWidget.setUiHandlers(uiHandlers);
     }
@@ -84,23 +81,21 @@ public class MetricKeySchemaSettingsWidget
     @Override
     public MetricKeySchema getKeySchema() {
         final UserTimeZone userTimeZone = timeZoneWidget.getUserTimeZone();
-        return new MetricKeySchema(
-                keyType.getValue(),
-                hashLength.getValue(),
-                temporalResolution.getValue(),
-                userTimeZone);
+        return new MetricKeySchema.Builder()
+                .keyType(keyType.getValue())
+                .hashLength(hashLength.getValue())
+                .temporalResolution(temporalResolution.getValue())
+                .timeZone(userTimeZone)
+                .build();
     }
 
     @Override
     public void setKeySchema(final MetricKeySchema keySchema) {
-        keyType.setValue(NullSafe.getOrElse(keySchema,
-                MetricKeySchema::getKeyType, MetricKeySchema.DEFAULT_KEY_TYPE));
-        hashLength.setValue(NullSafe.getOrElse(keySchema,
-                MetricKeySchema::getHashLength, MetricKeySchema.DEFAULT_HASH_LENGTH));
-        temporalResolution.setValue(NullSafe.getOrElse(keySchema,
-                MetricKeySchema::getTemporalResolution, MetricKeySchema.DEFAULT_TEMPORAL_RESOLUTION));
-        timeZoneWidget.setUserTimeZone(NullSafe.getOrElse(keySchema,
-                MetricKeySchema::getTimeZone, MetricKeySchema.DEFAULT_TIME_ZONE));
+        final MetricKeySchema schema = new MetricKeySchema.Builder(keySchema).build();
+        keyType.setValue(schema.getKeyType());
+        hashLength.setValue(schema.getHashLength());
+        temporalResolution.setValue(schema.getTemporalResolution());
+        timeZoneWidget.setUserTimeZone(schema.getTimeZone());
         onKeyTypeChange();
     }
 

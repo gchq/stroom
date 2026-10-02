@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2024 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,7 +96,8 @@ public class AppUserPermissionsListPresenter
         this.uiConfigCache = uiConfigCache;
         this.securityContext = securityContext;
 
-        dataGrid = new MyDataGrid<>();
+        dataGrid = new MyDataGrid<>(this);
+        dataGrid.setTableName("User Permissions");
         selectionModel = new MultiSelectionModelImpl<>();
         final DataGridSelectionEventManager<AppUserPermissions> selectionEventManager =
                 new DataGridSelectionEventManager<>(
@@ -269,7 +270,8 @@ public class AppUserPermissionsListPresenter
                                                 appUsrPerms.getUserRef(),
                                                 isExternalIdp(),
                                                 UserScreen.allExcept(UserScreen.APP_PERMISSIONS),
-                                                this),
+                                                this,
+                                                null),
                                 this))
 //                .enabledWhen(User::isEnabled)
                 .build();
@@ -278,8 +280,6 @@ public class AppUserPermissionsListPresenter
                 actionMenuCol,
                 "",
                 ColumnSizeConstants.ICON_COL + 10);
-
-        DataGridUtil.addEndColumn(dataGrid);
     }
 
     private static SafeHtml buildPermissionsCellValue(final AppUserPermissions appUserPermissions) {

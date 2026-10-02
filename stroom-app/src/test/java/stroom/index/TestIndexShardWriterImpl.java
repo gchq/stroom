@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.index;
@@ -268,8 +267,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         Files.setPosixFilePermissions(tempDir, Set.of(PosixFilePermission.OWNER_READ));
         final ResultPage<IndexVolume> resultPage = indexVolumeDao.find(new ExpressionCriteria());
         resultPage.forEach(indexVolume -> {
-            indexVolume.setPath(tempDir + indexVolume.getPath());
-            indexVolumeDao.update(indexVolume);
+            indexVolumeDao.update(indexVolume.copy().path(tempDir + indexVolume.getPath()).build());
         });
 
         // Do some work.
