@@ -18,6 +18,8 @@ package stroom.security.common.impl.hash;
 
 import stroom.security.api.HashFunction;
 import stroom.security.shared.HashAlgorithm;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
@@ -27,7 +29,9 @@ import java.util.Objects;
 
 class BCryptHasher implements HashFunction {
 
-    private static final int MAX_LENGTH = 72;
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BCryptHasher.class);
+
+    private static final int MAX_LENGTH_BYTES = 72;
 
     @Override
     public String generateSalt() {
@@ -44,8 +48,8 @@ class BCryptHasher implements HashFunction {
         // This is not an issue for API keys as we enforce uniqueness on the hash in the DB table,
         // so we will never have two API keys with the same hash.
         byte[] valueBytes = value.getBytes(StandardCharsets.UTF_8);
-        if (valueBytes.length > MAX_LENGTH) {
-            valueBytes = Arrays.copyOfRange(valueBytes, 0, MAX_LENGTH);
+        if (valueBytes.length > MAX_LENGTH_BYTES) {
+            valueBytes = Arrays.copyOfRange(valueBytes, 0, MAX_LENGTH_BYTES);
         }
 
         return BCrypt.hashpw(
@@ -67,7 +71,9 @@ class BCryptHasher implements HashFunction {
             return false;
         } else {
             // Salt is encoded in the hash, so ignore the passed salt
-            return BCrypt.checkpw(value, hash);
+            final boolean isValid = BCrypt.checkpw(value, hash);
+            LOGGER.debug("verify() - hash: '{}', value: '{}', isValid: {}", hash, value, isValid);
+            return isValid;
         }
     }
 
