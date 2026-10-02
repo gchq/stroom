@@ -181,7 +181,7 @@ simple-java-mail-batch-module = { module = "org.simplejavamail:batch-module", ve
 slf4j-api = { module = "org.slf4j:slf4j-api" } # version controlled by dropwizard-dependencies
 solrj = { module = "org.apache.solr:solr-solrj", version = "9.10.1" }
 # Yes, I know it's Spring, but it doesn't pull in any other deps and is more up to date than github.com/patrickfav/bcrypt
-# Used for bcrypt hashing currently
+# and it provides a drop in replacement for JBcrypt that we used to use. Currently only used for BCrypt hashing.
 spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "7.1.1" }
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger" }
 swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }

@@ -1,6 +1,6 @@
 /*
  * Copyright 2026 Crown Copyright
- *
+ *k
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -20,13 +20,18 @@ import stroom.security.api.HashFunction;
 import stroom.security.shared.HashAlgorithm;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.string.StringUtil;
 
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
+import org.mindrot.jbcrypt.BCrypt;
 
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,24 +66,95 @@ class TestHashFunctionFactoryImpl {
         assertThat(hash3)
                 .isEqualTo(hash1);
 
-        assertThat(hashFunction.verify("foo", hash1))
-                .isFalse();
-        assertThat(hashFunction.verify("foo", hash1, salt))
-                .isTrue();
         // Salt is encoded in the hash with bcrypt, so bad salt is ignored
-        if (hashAlgorithm != HashAlgorithm.BCRYPT) {
+        final String saltForVerify;
+        if (hashAlgorithm == HashAlgorithm.BCRYPT_LEGACY || hashAlgorithm == HashAlgorithm.BCRYPT) {
+            saltForVerify = null;
+        } else {
+            saltForVerify = salt;
+            assertThat(hashFunction.verify("foo", hash1))
+                    .isFalse();
             assertThat(hashFunction.verify("foo", hash1, "bad salt"))
                     .isFalse();
         }
+        assertThat(hashFunction.verify("foo", hash1, saltForVerify))
+                .isTrue();
         assertThat(hashFunction.verify("fooX", hash1, salt))
                 .isFalse();
+    }
+
+    @Test
+    void testLegacy() {
+        final HashFunctionFactoryImpl hashFunctionFactory = new HashFunctionFactoryImpl();
+        final HashFunction bcryptHasher = hashFunctionFactory.getHashFunction(HashAlgorithm.BCRYPT);
+        final HashFunction bcryptLegacyHasher = hashFunctionFactory.getHashFunction(HashAlgorithm.BCRYPT_LEGACY);
+        final Random random = new Random();
+        final int minLen = 60;
+        final int maxLen = 130;
+        final int minRounds = 4;
+        final int maxRounds = 15;
+        final int maxInputLen = 72;
+        final SecureRandom secureRandom = new SecureRandom();
+
+        for (int i = 0; i < 20; i++) {
+            final int len = minLen + random.nextInt(maxLen - minLen);
+            final String input = StringUtil.createRandomCode(secureRandom, len);
+            // We are not using multibyte chars so can truncate by char
+            final String inputTruncated = input.length() > maxInputLen
+                    ? input.substring(0, maxInputLen)
+                    : input;
+            final int saltRounds = minRounds + random.nextInt(maxRounds - minRounds);
+
+            assertThat(inputTruncated.length())
+                    .isLessThanOrEqualTo(maxInputLen);
+            assertThat(inputTruncated.getBytes(StandardCharsets.UTF_8).length)
+                    .isLessThanOrEqualTo(maxInputLen);
+
+            try {
+                final String salt = BCrypt.gensalt(saltRounds, secureRandom);
+                final String hash1a = bcryptLegacyHasher.hash(input, salt);
+                final String hash1b = bcryptLegacyHasher.hash(inputTruncated, salt);
+                assertThat(hash1b)
+                        .isEqualTo(hash1a);
+
+                final String hash2a = bcryptHasher.hash(input, salt);
+                final String hash2b = bcryptHasher.hash(inputTruncated, salt);
+                assertThat(hash2b)
+                        .isEqualTo(hash2a);
+                LOGGER.info("""
+                        Iteration: {}, len: {}, saltRounds: {}
+                        input:   {}
+                        hash1a:  {}
+                        hash1b:  {}
+                        hash2a:  {}
+                        hash2b:  {}
+                        """, i, len, saltRounds, input, hash1a, hash1b, hash2a, hash2b);
+
+                boolean isValid = bcryptLegacyHasher.verify(input, hash1a);
+                assertThat(isValid)
+                        .isTrue();
+                isValid = bcryptLegacyHasher.verify(input, hash1b);
+                assertThat(isValid)
+                        .isTrue();
+                // Use new hasher to verify a hash from the legacy hasher
+                isValid = bcryptHasher.verify(input, hash1a);
+                assertThat(isValid)
+                        .isTrue();
+            } catch (final Exception e) {
+                LOGGER.error("Iteration: {}, len: {}, saltRounds: {} - {}", i, len, saltRounds, e.getMessage());
+                throw e;
+            }
+        }
     }
 
     @SuppressWarnings("checkstyle:LineLength")
     @Test
     void testLegacyBcryptHashes() {
+        final List<HashAlgorithm> hashAlgorithms = List.of(
+                HashAlgorithm.BCRYPT,
+                HashAlgorithm.BCRYPT_LEGACY);
 
-        // A set of inputs with their hashes (produced by JBcrypt to $2a$ spec)
+        // A set of inputs with their hashes (produced by JBcrypt to the old $2a$ hash spec)
         final List<InputAndHash> inputsAndHashes = List.of(
                 new InputAndHash(
                         "sdk_p9FXn5WhHJEufxPuDMVjHn8XCozenx5qkcNRagRUwbMqVjByFwoMPfPFFeynLjRFfwYMsH47XE93TfEs6oMoSrPBKHiG9H7XSr5hWas9cNKXNCdSLayAZL8q9gAn3K51",
@@ -96,14 +172,16 @@ class TestHashFunctionFactoryImpl {
                         "sdk_6spTs34iqQHLdWhYiuYot7MK3EAK1s378CZbmbvAwGDrzswmNTnkfSG9DAXLDuABJgP6d4SA2HvPehfxAD2P6x96n7wAPJLteFEVsf5dsPTufLN2roTRLiq6WiUweqX6",
                         "$2a$10$HPwdsRo8VrbgQZqK2TsiLOywyE/LXlEjD.LYN1lfZwqJLuznvkkiy"));
 
-        testBcryptHashes(inputsAndHashes);
+        testBcryptHashes(inputsAndHashes, hashAlgorithms);
     }
 
     @SuppressWarnings("checkstyle:LineLength")
     @Test
     void testNewBcryptHashes() {
+        final List<HashAlgorithm> hashAlgorithms = List.of(
+                HashAlgorithm.BCRYPT);
 
-        // A set of inputs with their hashes (produced by CyberChef to $2b$ spec)
+        // A set of inputs with their hashes (produced by CyberChef to the newer $2b$ spec)
         final List<InputAndHash> inputsAndHashes = List.of(
                 new InputAndHash(
                         "sdk_p9FXn5WhHJEufxPuDMVjHn8XCozenx5qkcNRagRUwbMqVjByFwoMPfPFFeynLjRFfwYMsH47XE93TfEs6oMoSrPBKHiG9H7XSr5hWas9cNKXNCdSLayAZL8q9gAn3K51",
@@ -121,20 +199,24 @@ class TestHashFunctionFactoryImpl {
                         "sdk_6spTs34iqQHLdWhYiuYot7MK3EAK1s378CZbmbvAwGDrzswmNTnkfSG9DAXLDuABJgP6d4SA2HvPehfxAD2P6x96n7wAPJLteFEVsf5dsPTufLN2roTRLiq6WiUweqX6",
                         "$2b$10$Fm0ifvMxSvDERueF8ItnpeYlr1X/wvWz7Ij7BP1Gs6rkeJ4xr3iO."));
 
-        testBcryptHashes(inputsAndHashes);
+        testBcryptHashes(inputsAndHashes, hashAlgorithms);
     }
 
-    private static void testBcryptHashes(final List<InputAndHash> legacyHashes) {
+    private static void testBcryptHashes(final List<InputAndHash> legacyHashes,
+                                         final List<HashAlgorithm> hashAlgorithms) {
         final HashFunctionFactoryImpl hashFunctionFactory = new HashFunctionFactoryImpl();
-        final HashFunction hashFunction = hashFunctionFactory.getHashFunction(HashAlgorithm.BCRYPT);
 
-        for (final InputAndHash inputAndHash : legacyHashes) {
-            boolean isValid = hashFunction.verify(inputAndHash.input(), inputAndHash.hash(), "ignored");
-            assertThat(isValid)
-                    .isTrue();
-            isValid = hashFunction.verify(inputAndHash.input(), inputAndHash.hash(), "ignored");
-            assertThat(isValid)
-                    .isTrue();
+        for (final HashAlgorithm hashAlgorithm : hashAlgorithms) {
+            final HashFunction hashFunction = hashFunctionFactory.getHashFunction(hashAlgorithm);
+
+            for (final InputAndHash inputAndHash : legacyHashes) {
+                boolean isValid = hashFunction.verify(inputAndHash.input(), inputAndHash.hash(), "ignored");
+                assertThat(isValid)
+                        .isTrue();
+                isValid = hashFunction.verify(inputAndHash.input(), inputAndHash.hash(), "ignored");
+                assertThat(isValid)
+                        .isTrue();
+            }
         }
     }
 

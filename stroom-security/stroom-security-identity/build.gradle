@@ -34,7 +34,6 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.jbcrypt
     implementation libs.dropwizard.client
     implementation libs.eventLogging
     implementation libs.guice
@@ -42,6 +41,7 @@ dependencies {
     implementation libs.jose4j
     implementation libs.restygwt
     implementation libs.simple.java.mail
+    implementation libs.spring.security.crypto
     implementation libs.swagger.annotations
     implementation libs.zxcvbn
 
