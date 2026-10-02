@@ -253,20 +253,29 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
 
     @Override
     public ResultStore createResultStore(final SearchRequest searchRequest) {
+        // Substitute any `${param}` references in the query expression with the values of the
+        // matching query parameters, so everything below works with literal values.
         final SearchRequest modifiedSearchRequest =
                 ExpressionUtil.replaceExpressionParameters(searchRequest);
         final Query query = modifiedSearchRequest.getQuery();
         final DocRef docRef = query.getDataSource();
 
+        // Resolve the event store document being queried.
         // Checks permission as a side effect.
         final FloorMapEventStoreDoc doc = getDoc(docRef);
         Objects.requireNonNull(doc, "Unable to find event store with key: " + docRef.getName());
 
+        // Work out which read the caller asked for. A null `asAt` means an ordinary range
+        // read; otherwise it is a snapshot at that instant, with the cut-off for expired
+        // entities derived from the store's own expiry setting rather than the request.
         final Instant asAt = readAsAt(query.getParams());
         final Instant notBefore = asAt == null
                 ? null
                 : expiryFloor(doc, asAt);
 
+        // Build the coprocessors that will receive each row the read produces and aggregate
+        // them into the results for each component of the request (e.g. a table or a
+        // visualisation). One set of coprocessor settings is created per result component.
         final Set<String> highlights = Collections.emptySet();
         final List<CoprocessorSettings> coprocessorSettingsList =
                 coprocessorsFactory.createSettings(modifiedSearchRequest);
@@ -280,12 +289,17 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
                 query.getParams(),
                 dataStoreSettings);
 
+        // Create the result store that is returned to the caller. The caller polls it for
+        // results while the search runs in the background and fills the coprocessors.
+        // There is no free-text search here, so there is nothing to highlight.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";
         final ResultStore resultStore = resultStoreFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
                 coprocessors);
         resultStore.addHighlights(highlights);
 
+        // Values captured for use inside the background task: a prefix for task progress
+        // messages, a name for debug logging, and the query expression as search criteria.
         final String infoPrefix = LogUtil.message(
                 "Querying {} {} - ",
                 getStoreName(docRef),
@@ -293,9 +307,15 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
         final String taskName = getTaskName(docRef);
         final ExpressionCriteria criteria = new ExpressionCriteria(query.getExpression());
 
+        // Wrap the search in a task context so it appears in the server tasks list, reports
+        // progress and can be terminated by the user or by the result store.
         final Runnable runnable = taskContextFactory.context(searchName, taskContext -> {
+            // Set if the search is terminated, so the read is skipped if termination was
+            // requested before the task got the chance to start.
             final AtomicBoolean destroyed = new AtomicBoolean();
 
+            // Links the result store to this task, letting it report the task's progress and
+            // terminate the task when the search is cancelled or the result store destroyed.
             final SearchProcess searchProcess = new SearchProcess() {
                 @Override
                 public SearchTaskProgress getSearchTaskProgress() {
@@ -320,11 +340,16 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
                 }
             };
 
+            // If the result store has already been terminated, this immediately calls
+            // `onTerminate()`, setting `destroyed`, so the check below skips the read.
             resultStore.setSearchProcess(searchProcess);
 
             if (!destroyed.get()) {
                 taskContext.info(() -> infoPrefix + "running query");
 
+                // Run the range or snapshot read against the store's shard, passing each
+                // matching row to the coprocessors. Any failure is recorded on the result
+                // store so the caller sees it as a search error rather than losing it.
                 final Instant queryStart = Instant.now();
                 try {
                     readThrough(
@@ -342,6 +367,8 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
                     resultStore.addError(e);
                 }
 
+                // Mark the search as complete, whether it succeeded or failed, so the caller
+                // stops waiting for more results.
                 LOGGER.debug(() -> String.format("%s complete called, counter: %s",
                         taskName,
                         coprocessors.getValueCount()));
@@ -351,6 +378,9 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
                                    + Duration.between(queryStart, Instant.now()));
             }
         });
+
+        // Start the search in the background and return the result store straight away; the
+        // caller collects results from it as they arrive.
         CompletableFuture.runAsync(runnable, executor);
 
         return resultStore;
@@ -398,7 +428,8 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
     /// Rejects each half without the other rather than guessing. A `readMode` with no
     /// `asAt` has no instant to read at, and an `asAt` with no `readMode` is a
     /// caller who believes they asked for a snapshot and would otherwise silently get every row.
-    // Package-private so the parameter contract can be tested without standing up a search.
+    ///
+    /// Package-private so the parameter contract can be tested without standing up a search.
     static Instant readAsAt(final List<Param> params) {
         final String readMode = paramValue(params, PARAM_READ_MODE);
         final String asAt = paramValue(params, PARAM_AS_AT);
@@ -460,6 +491,9 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
     ///
     /// Taken from the store, not from the request. An entity whose newest event predates this is
     /// omitted rather than drawn at a position it left long ago.
+    ///
+    /// If doc.getEventExpiry() returns null then this is replaced by the default time (24hrs) within
+    /// FloorMapEventExpiry.millis().
     static Instant expiryFloor(final FloorMapEventStoreDoc doc, final Instant asAt) {
         return Instant.ofEpochMilli(
                 FloorMapEventExpiry.cutoff(asAt.toEpochMilli(), doc.getEventExpiry()));
