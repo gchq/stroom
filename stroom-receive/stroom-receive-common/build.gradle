@@ -38,7 +38,6 @@ dependencies {
 
     implementation libs.aws.sqs
     implementation libs.aws.s3.transfer.manager
-    implementation libs.bcrypt
     implementation libs.bouncy.castle
     implementation libs.commons.compress
     implementation libs.dropwizard.lifecycle
@@ -49,6 +48,7 @@ dependencies {
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.restygwt
+    implementation libs.spring.security.crypto
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 
