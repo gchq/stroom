@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -58,10 +59,10 @@ public class SteppingResult {
                           @JsonProperty("foundLocation") final StepLocation foundLocation,
                           @JsonProperty("stepData") final SharedStepData stepData,
                           @JsonProperty("currentStreamOffset") final Integer currentStreamOffset,
-                          @JsonProperty("foundRecord") final boolean foundRecord,
+                          @JsonProperty("foundRecord") final Boolean foundRecord,
                           @JsonProperty("generalErrors") final Set<String> generalErrors,
-                          @JsonProperty("segmentedData") final boolean segmentedData,
-                          @JsonProperty("complete") final boolean complete) {
+                          @JsonProperty("segmentedData") final Boolean segmentedData,
+                          @JsonProperty("complete") final Boolean complete) {
 
         // Copy the step filter map so it can be remembered across multiple
         // requests.
@@ -71,10 +72,10 @@ public class SteppingResult {
         this.foundLocation = foundLocation;
         this.stepData = stepData;
         this.currentStreamOffset = currentStreamOffset;
-        this.foundRecord = foundRecord;
+        this.foundRecord = Objects.requireNonNullElse(foundRecord, false);
         this.generalErrors = generalErrors;
-        this.segmentedData = segmentedData;
-        this.complete = complete;
+        this.segmentedData = Objects.requireNonNullElse(segmentedData, false);
+        this.complete = Objects.requireNonNullElse(complete, false);
     }
 
     public String getSessionUuid() {

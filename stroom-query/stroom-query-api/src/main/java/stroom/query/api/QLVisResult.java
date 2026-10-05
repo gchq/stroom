@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder({
         "componentId",
@@ -47,13 +48,13 @@ public final class QLVisResult extends Result {
     public QLVisResult(@JsonProperty("componentId") final String componentId,
                        @JsonProperty("visSettings") final QLVisSettings visSettings,
                        @JsonProperty("jsonData") final String jsonData,
-                       @JsonProperty("dataPoints") final long dataPoints,
+                       @JsonProperty("dataPoints") final Long dataPoints,
                        @JsonProperty("errors") final List<String> errors,
                        @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
         super(componentId, errors, errorMessages);
         this.visSettings = visSettings;
         this.jsonData = jsonData;
-        this.dataPoints = dataPoints;
+        this.dataPoints = Objects.requireNonNullElse(dataPoints, 0L);
     }
 
     public QLVisSettings getVisSettings() {

@@ -12,16 +12,20 @@ guice = "7.0.0"
 gwt = "2.13.0"
 jgit = "7.5.0.202512021534-r"
 jmh = "1.37"
-jooq = "3.20.10"
+jooq = "3.21.9"
 junit-jupiter = "5.13.1"
 langchain4j = "1.17.1"
 langchain4j-cohere = "1.17.1-beta27"
 langchain4j-jina = "1.17.1-beta27"
 kafka = "3.9.0"
-openai = "4.41.0"
+openai = "4.69.3"
 poi = "5.4.1"
 simple-java-mail = "8.8.0"
 swagger = "2.2.42"
+
+
+# --------------------------------------------------------------------------------
+
 
 [libraries]
 #------Stroom-libs---------------
@@ -42,7 +46,7 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine" } # version contr
 commons-codec = { module = "commons-codec:commons-codec" } # version controlled by dropwizard-dependencies
 commons-compress = { module = "org.apache.commons:commons-compress", version = "1.27.1" }
 commons-csv = { module = "org.apache.commons:commons-csv", version = "1.14.1" }
-commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta-servlet6", version = "2.0.0-M4" }
+commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta-servlet6", version = "2.0.0-M5" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang = { module = "org.apache.commons:commons-lang3" } # version controlled by dropwizard-dependencies
 commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.13.1" }
@@ -190,6 +194,10 @@ zero-allocation-hashing = { module = "net.openhft:zero-allocation-hashing", vers
 zstd-jni = { module =  "com.github.luben:zstd-jni", version = "1.5.7-8" }
 zxcvbn = { module = "com.nulab-inc:zxcvbn", version = "1.9.0" }
 
+
+# --------------------------------------------------------------------------------
+
+
 [plugins]
 
 java-library = { id = "java-library" }
@@ -221,7 +229,12 @@ jdeps = { id = "org.kordamp.gradle.jdeps", version = "0.20.0" }
 
 swagger-gradle-plugin = { id = "io.swagger.core.v3.swagger-gradle-plugin", version = "2.2.19" }
 
+
+# --------------------------------------------------------------------------------
+
+
 [bundles]
+
 common-test-implementation = [
     "assertj-core",
     "mockito-core",

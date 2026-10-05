@@ -27,8 +27,8 @@ import java.util.Objects;
 public final class LongValue extends AbstractValue<Long> implements ConstraintValue {
 
     @JsonCreator
-    public LongValue(@JsonProperty("value") final long value) {
-        super(value);
+    public LongValue(@JsonProperty("value") final Long value) {
+        super(Objects.requireNonNullElse(value, 0L));
     }
 
     public boolean validate(final Long value) {

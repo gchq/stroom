@@ -16,6 +16,8 @@
 
 package stroom.sqlstore.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -59,9 +61,10 @@ public class ApplyChangesResult {
 
     @JsonCreator
     public ApplyChangesResult(
-            @JsonProperty("success") final boolean success,
+            @JsonProperty("success") final Boolean success,
             @JsonProperty("errorMessage") final String errorMessage) {
-        this.success = success;
+        // An absent success flag is treated as a failure
+        this.success = NullSafe.isTrue(success);
         this.errorMessage = errorMessage;
     }
 

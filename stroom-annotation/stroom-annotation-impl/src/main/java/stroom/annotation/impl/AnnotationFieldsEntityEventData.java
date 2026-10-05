@@ -22,8 +22,8 @@ import stroom.annotation.shared.AnnotationIdentity;
 import stroom.docref.DocRef;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
-import stroom.util.entityevent.EntityEvent.EntityEventData;
 import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventData;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;

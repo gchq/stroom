@@ -160,13 +160,13 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
                            @JsonProperty("queryData") final QueryData queryData,
                            @JsonProperty("processor") final Processor processor,
                            @JsonProperty("processorFilterTracker") final ProcessorFilterTracker processorFilterTracker,
-                           @JsonProperty("priority") final int priority,
-                           @JsonProperty("maxProcessingTasks") final int maxProcessingTasks,
+                           @JsonProperty("priority") final Integer priority,
+                           @JsonProperty("maxProcessingTasks") final Integer maxProcessingTasks,
                            @JsonProperty("profileName") final String profileName,
-                           @JsonProperty("reprocess") final boolean reprocess,
-                           @JsonProperty("enabled") final boolean enabled,
-                           @JsonProperty("deleted") final boolean deleted,
-                           @JsonProperty("export") final boolean export,
+                           @JsonProperty("reprocess") final Boolean reprocess,
+                           @JsonProperty("enabled") final Boolean enabled,
+                           @JsonProperty("deleted") final Boolean deleted,
+                           @JsonProperty("export") final Boolean export,
                            @JsonProperty("processorType") final ProcessorType processorType,
                            @JsonProperty("processorUuid") final String processorUuid,
                            @JsonProperty("pipelineUuid") final String pipelineUuid,
@@ -190,15 +190,16 @@ public class ProcessorFilter implements HasAuditInfoGetters, HasUuid, HasInteger
         this.pipelineUuid = pipelineUuid != null
                 ? pipelineUuid
                 : NullSafe.get(processor, Processor::getPipelineUuid);
-        this.priority = priority > 0
-                ? priority
+        final int resolvedPriority = Objects.requireNonNullElse(priority, 0);
+        this.priority = resolvedPriority > 0
+                ? resolvedPriority
                 : DEFAULT_PRIORITY;
-        this.maxProcessingTasks = maxProcessingTasks;
+        this.maxProcessingTasks = Objects.requireNonNullElse(maxProcessingTasks, 0);
         this.profileName = profileName;
-        this.reprocess = reprocess;
-        this.enabled = enabled;
-        this.deleted = deleted;
-        this.export = export;
+        this.reprocess = Objects.requireNonNullElse(reprocess, false);
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.deleted = Objects.requireNonNullElse(deleted, false);
+        this.export = Objects.requireNonNullElse(export, false);
         this.processorType = processorType != null
                 ? processorType
                 : NullSafe.getOrElse(processor, Processor::getProcessorType, ProcessorType.PIPELINE);

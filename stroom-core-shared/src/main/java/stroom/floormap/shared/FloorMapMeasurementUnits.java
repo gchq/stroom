@@ -168,11 +168,17 @@ public class FloorMapMeasurementUnits {
     @JsonProperty
     private final double unitsPerMapUnit;
 
+    /// @param unit the unit distances are configured in
+    /// @param unitsPerMapUnit how many `unit` one map unit spans. A `null` (e.g. absent
+    ///         from the JSON) is held as `0`, which [#checkUnitIsValid()] rejects, so
+    ///         consumers fall back to [#DEFAULT]
     @JsonCreator
     public FloorMapMeasurementUnits(@JsonProperty("unit") final Unit unit,
-                                    @JsonProperty("unitsPerMapUnit") final double unitsPerMapUnit) {
+                                    @JsonProperty("unitsPerMapUnit") final Double unitsPerMapUnit) {
         this.unit = unit;
-        this.unitsPerMapUnit = unitsPerMapUnit;
+        this.unitsPerMapUnit = unitsPerMapUnit != null
+                ? unitsPerMapUnit
+                : 0;
     }
 
     /// Convenience for the common "1 map unit = 1 unit" case.

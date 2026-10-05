@@ -35,8 +35,8 @@ public final class ValInteger implements ValNumber {
     private final int value;
 
     @JsonCreator
-    private ValInteger(@JsonProperty("value") final int value) {
-        this.value = value;
+    private ValInteger(@JsonProperty("value") final Integer value) {
+        this.value = Objects.requireNonNullElse(value, 0);
     }
 
     public static ValInteger create(final int value) {

@@ -300,7 +300,7 @@ fetch_git_issue_info() {
     issue_title="$( \
       grep \
         --only-matching \
-        --prl-regexp \
+        --perl-regexp \
         '(?<="title": ").*(?=",)' \
         <<< "${response_json}"
     )"

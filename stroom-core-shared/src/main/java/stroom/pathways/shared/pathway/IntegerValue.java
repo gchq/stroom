@@ -27,8 +27,8 @@ import java.util.Objects;
 public final class IntegerValue extends AbstractValue<Integer> implements ConstraintValue {
 
     @JsonCreator
-    public IntegerValue(@JsonProperty("value") final int value) {
-        super(value);
+    public IntegerValue(@JsonProperty("value") final Integer value) {
+        super(Objects.requireNonNullElse(value, 0));
     }
 
     public boolean validate(final Integer value) {

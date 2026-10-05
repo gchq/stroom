@@ -24,6 +24,7 @@ import stroom.proxy.app.handler.ZipEntryGroup.Entry;
 import stroom.proxy.repo.FeedKeyInterner;
 import stroom.proxy.repo.ProxyServices;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.logging.DurationTimer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -89,6 +90,7 @@ public class ZipSplitter {
 //    private static final String SPLIT_DIR_PREFIX = "split-";
 
     private final DirQueue splittingQueue;
+    private final FsyncMode fsyncModeForRewrittenData;
     private final NumberedDirProvider splitZipDirProvider;
     private final FeedKeyInterner feedKeyInterner;
     private Consumer<Path> destination;
@@ -98,7 +100,9 @@ public class ZipSplitter {
                        final DirQueueFactory dirQueueFactory,
                        final ProxyServices proxyServices,
                        final ThreadConfig threadConfig,
-                       final FeedKeyInterner feedKeyInterner) {
+                       final FeedKeyInterner feedKeyInterner,
+                       final FsyncConfig fsyncConfig) {
+        this.fsyncModeForRewrittenData = fsyncConfig.getReceivingMode();
         // Get or create the split zip dir provider.
         splitZipDirProvider = createDirProvider(dataDirProvider, DirNames.SPLIT_ZIP);
         this.feedKeyInterner = feedKeyInterner;
@@ -107,12 +111,17 @@ public class ZipSplitter {
         splittingQueue = dirQueueFactory.create(
                 splitZipQueue,
                 2,
-                "Zip Splitting Input Queue");
+                "Zip Splitting Input Queue",
+                fsyncConfig.getZipSplittingInputQueueMode());
 
         final DirQueueTransfer dirQueueTransfer = new DirQueueTransfer(
                 splittingQueue::next,
                 sourceDir ->
-                        splitZipByFeed(sourceDir, splitZipDirProvider, getDestination(), feedKeyInterner));
+                        splitZipByFeed(sourceDir,
+                                splitZipDirProvider,
+                                getDestination(),
+                                feedKeyInterner,
+                                fsyncModeForRewrittenData));
 
         proxyServices.addParallelExecutor(
                 "Zip split by feed input queue transfer",
@@ -141,6 +150,18 @@ public class ZipSplitter {
                                final NumberedDirProvider splitZipDirProvider,
                                final Consumer<Path> splitDirConsumer,
                                final FeedKeyInterner feedKeyInterner) {
+        splitZipByFeed(sourceDir, splitZipDirProvider, splitDirConsumer, feedKeyInterner, FsyncMode.DISABLED);
+    }
+
+    /**
+     * @param fsyncModeForRewrittenData Controls whether each split group is forced to durable storage
+     *                                  before it is passed on, as the source it was derived from is deleted here.
+     */
+    static void splitZipByFeed(final Path sourceDir,
+                               final NumberedDirProvider splitZipDirProvider,
+                               final Consumer<Path> splitDirConsumer,
+                               final FeedKeyInterner feedKeyInterner,
+                               final FsyncMode fsyncModeForRewrittenData) {
         LOGGER.debug("splitZipByFeed() - sourceDir: {}", sourceDir);
         Path splitZipDir = null;
         try {
@@ -167,6 +188,12 @@ public class ZipSplitter {
 
             // Move each group dir to onward destination
             for (final Path groupDir : groupDirs) {
+                if (fsyncModeForRewrittenData.isAnyFsyncEnabled()) {
+                    // These are freshly written files, not the ones synced on receipt, and the
+                    // source they were derived from is deleted below. They must be forced to disk
+                    // or the data the sender was told we had can still be lost.
+                    new FileGroup(groupDir).sync(fsyncModeForRewrittenData);
+                }
                 LOGGER.debug("Pass {}, sourceDir: {}, to destination {}",
                         groupDir, sourceDir, splitDirConsumer);
                 splitDirConsumer.accept(groupDir);
@@ -337,7 +364,7 @@ public class ZipSplitter {
         final byte[] bytes = AttributeMapUtil.toByteArray(entryAttributeMap);
         final String outEntryName = baseNameOut + stroomZipFileType.getDotExtension();
         zipWriter.writeStream(outEntryName, new ByteArrayInputStream(bytes));
-        return new Entry(outEntryName, bytes.length);
+        return new Entry(outEntryName, (long) bytes.length);
     }
 
     private NumberedDirProvider createDirProvider(final DataDirProvider dataDirProvider,

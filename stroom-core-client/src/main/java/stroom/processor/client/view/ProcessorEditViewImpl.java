@@ -47,7 +47,7 @@ public class ProcessorEditViewImpl
         implements ProcessorEditView {
 
     private static final SimpleDuration DEFAULT_MAX_TASK_CREATION_DELAY =
-            new SimpleDuration(30, TimeUnit.SECONDS);
+            new SimpleDuration(30L, TimeUnit.SECONDS);
 
     private final Widget widget;
 

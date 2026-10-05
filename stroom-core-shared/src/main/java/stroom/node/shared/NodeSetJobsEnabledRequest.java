@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
@@ -44,11 +45,11 @@ public class NodeSetJobsEnabledRequest {
 
     @JsonCreator
     public NodeSetJobsEnabledRequest(
-            @JsonProperty("enabled") final boolean enabled,
+            @JsonProperty("enabled") final Boolean enabled,
             @JsonProperty("includeJobs") final Set<String> includeJobs,
             @JsonProperty("excludeJobs") final Set<String> excludeJobs) {
 
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.includeJobs = includeJobs != null ? includeJobs : Collections.emptySet();
         this.excludeJobs = excludeJobs != null ? excludeJobs : Collections.emptySet();
     }

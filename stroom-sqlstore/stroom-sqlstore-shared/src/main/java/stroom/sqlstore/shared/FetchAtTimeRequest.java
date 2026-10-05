@@ -76,9 +76,12 @@ public class FetchAtTimeRequest {
     @JsonCreator
     public FetchAtTimeRequest(
             @JsonProperty("mapName") final String mapName,
-            @JsonProperty("timeTo") final long timeTo) {
+            @JsonProperty("timeTo") final Long timeTo) {
         this.mapName = mapName;
-        this.timeTo = timeTo;
+        // An absent timeTo is held as 0 (the epoch)
+        this.timeTo = timeTo != null
+                ? timeTo
+                : 0;
     }
 
     /**

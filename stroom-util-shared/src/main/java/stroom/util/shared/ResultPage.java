@@ -110,7 +110,7 @@ public class ResultPage<T> implements Serializable {
                 }
 
                 final PageResponse pageResponse = new PageResponse(
-                        offset,
+                        (long) offset,
                         limited.size(),
                         (long) fullList.size(),
                         true);
@@ -260,7 +260,7 @@ public class ResultPage<T> implements Serializable {
                                 new PageResponse(
                                         pageRequest != null
                                                 ? pageRequest.getOffset()
-                                                : 0,
+                                                : 0L,
                                         accumulator.size(),
                                         counter,
                                         true));

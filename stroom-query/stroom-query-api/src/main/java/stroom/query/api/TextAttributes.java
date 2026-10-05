@@ -37,10 +37,10 @@ public class TextAttributes {
     private final boolean italic;
 
     @JsonCreator
-    public TextAttributes(@JsonProperty("bold") final boolean bold,
-                          @JsonProperty("italic") final boolean italic) {
-        this.bold = bold;
-        this.italic = italic;
+    public TextAttributes(@JsonProperty("bold") final Boolean bold,
+                          @JsonProperty("italic") final Boolean italic) {
+        this.bold = Objects.requireNonNullElse(bold, false);
+        this.italic = Objects.requireNonNullElse(italic, false);
     }
 
     public boolean isBold() {

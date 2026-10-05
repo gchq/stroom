@@ -61,7 +61,7 @@ public class ProcessorTask {
     private final ProcessorFilter processorFilter;
 
     @JsonCreator
-    public ProcessorTask(@JsonProperty("id") final long id,
+    public ProcessorTask(@JsonProperty("id") final Long id,
                          @JsonProperty("version") final Integer version,
                          @JsonProperty("metaId") final Long metaId,
                          @JsonProperty("data") final String data,
@@ -73,7 +73,7 @@ public class ProcessorTask {
                          @JsonProperty("endTimeMs") final Long endTimeMs,
                          @JsonProperty("status") final TaskStatus status,
                          @JsonProperty("processorFilter") final ProcessorFilter processorFilter) {
-        this.id = id;
+        this.id = Objects.requireNonNullElse(id, 0L);
         this.version = version;
         this.metaId = metaId;
         this.data = data;

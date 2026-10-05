@@ -66,19 +66,19 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
                                 @JsonProperty("type") final String type,
                                 @JsonProperty("description") final String description,
                                 @JsonProperty("defaultValue") final String defaultValue,
-                                @JsonProperty("pipelineReference") final boolean pipelineReference,
+                                @JsonProperty("pipelineReference") final Boolean pipelineReference,
                                 @JsonProperty("docRefTypes") final String[] docRefTypes,
-                                @JsonProperty("displayPriority") final int displayPriority,
-                                @JsonProperty("canEmbed") final boolean canEmbed) {
+                                @JsonProperty("displayPriority") final Integer displayPriority,
+                                @JsonProperty("canEmbed") final Boolean canEmbed) {
         this.elementType = elementType;
         this.name = name;
         this.type = type;
         this.description = description;
         this.defaultValue = defaultValue;
-        this.pipelineReference = pipelineReference;
+        this.pipelineReference = Objects.requireNonNullElse(pipelineReference, false);
         this.docRefTypes = docRefTypes;
-        this.displayPriority = displayPriority;
-        this.canEmbed = canEmbed;
+        this.displayPriority = Objects.requireNonNullElse(displayPriority, 0);
+        this.canEmbed = Objects.requireNonNullElse(canEmbed, false);
     }
 
     public PipelineElementType getElementType() {

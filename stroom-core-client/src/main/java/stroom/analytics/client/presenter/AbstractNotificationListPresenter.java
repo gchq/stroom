@@ -49,11 +49,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO STROOMWORKS-LOCAL WORKAROUND - PREFER UPSTREAM ON MERGE FROM master
-// The only local divergence in this file is the identifier `value` renamed to `val`, for
-// compatibility with recent JDKs. Verified behaviour-neutral: neutralise that one rename and
-// the diff against the merge base is empty. Same workaround as RowValueFilter. If upstream has
-// done the same rename, or no longer needs it, take their version wholesale.
 public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyticRuleDoc>
         extends DocPresenter<PagerView, D> {
 
@@ -182,9 +177,9 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         dataGrid.addColumn(
                 DataGridUtil.updatableTickBoxColumnBuilder(
                                 TickBoxState.createTickBoxFunc(NotificationConfig::isEnabled))
-                        .withFieldUpdater((ignored, row, val) -> {
+                        .withFieldUpdater((ignored, row, value) -> {
                             final NotificationConfig updated = row.copy()
-                                    .enabled(TickBoxState.getAsBoolean(val))
+                                    .enabled(TickBoxState.getAsBoolean(value))
                                     .build();
                             replace(row, updated);
                             onChange();
@@ -222,9 +217,9 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                 DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
                                 NotificationConfig::isLimitNotifications))
                         .enabledWhen(NotificationConfig::isEnabled)
-                        .withFieldUpdater((ignored, row, val) -> {
+                        .withFieldUpdater((ignored, row, value) -> {
                             final NotificationConfig updated = row.copy()
-                                    .limitNotifications(TickBoxState.getAsBoolean(val))
+                                    .limitNotifications(TickBoxState.getAsBoolean(value))
                                     .build();
                             replace(row, updated);
                             onChange();

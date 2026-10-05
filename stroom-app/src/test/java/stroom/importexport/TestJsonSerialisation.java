@@ -53,6 +53,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
@@ -79,6 +80,7 @@ import java.util.stream.Stream;
  * 5. Ensure all JSON annotated classes default serialisation behaviour is consistent.
  * 6. Build complex JSON annotated objects and perform serialisation testing.
  * 7. Ensure all JSON classes that use Map have a string key
+ * 8. Ensure no @JsonCreator annotated constructor takes primitive parameters
  */
 class TestJsonSerialisation {
 
@@ -532,6 +534,51 @@ class TestJsonSerialisation {
                 });
             }
         });
+    }
+
+    /**
+     * Test that no constructor annotated with @{@link JsonCreator} has primitive parameters.
+     * Primitive parameters cannot represent an absent JSON property, so Jackson will silently
+     * substitute the primitive default (e.g. `0` or `false`) when the property is missing, which
+     * makes it impossible to distinguish an unset value from a deliberately set default.
+     * Use the boxed equivalent (e.g. {@link Integer} or {@link Boolean}) instead.
+     */
+    @TestFactory
+    @Execution(ExecutionMode.SAME_THREAD)
+    Stream<DynamicTest> testNoPrimitivesInJsonCreator() {
+        return buildRelatedResourceTests(clazz -> {
+            final List<String> primitiveParams = new ArrayList<>();
+
+            for (final Constructor<?> constructor : clazz.getDeclaredConstructors()) {
+                if (constructor.getAnnotation(JsonCreator.class) != null) {
+                    primitiveParams.addAll(getPrimitiveParamDescriptions(constructor));
+                }
+            }
+
+            Assertions.assertThat(primitiveParams)
+                    .describedAs("%s - @JsonCreator constructor parameters must not be primitive, " +
+                                 "use the boxed equivalent instead: %s",
+                            clazz.getName(), primitiveParams)
+                    .isEmpty();
+        });
+    }
+
+    /// Describes each primitive parameter of the supplied constructor, e.g. `int (maxResults)`.
+    /// Returns an empty list if the constructor has no primitive parameters.
+    private List<String> getPrimitiveParamDescriptions(final Constructor<?> constructor) {
+        final List<String> descriptions = new ArrayList<>();
+        final Parameter[] parameters = constructor.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+            final Parameter parameter = parameters[i];
+            if (parameter.getType().isPrimitive()) {
+                final JsonProperty jsonProperty = parameter.getDeclaredAnnotation(JsonProperty.class);
+                final String name = jsonProperty != null && !jsonProperty.value().isEmpty()
+                        ? jsonProperty.value()
+                        : "arg" + i;
+                descriptions.add(LogUtil.message("{} ({})", parameter.getType().getName(), name));
+            }
+        }
+        return descriptions;
     }
 
     @Test

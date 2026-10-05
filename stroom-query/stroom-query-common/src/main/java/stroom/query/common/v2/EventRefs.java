@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class EventRefs implements Iterable<EventRef> {
@@ -47,19 +48,19 @@ public class EventRefs implements Iterable<EventRef> {
 
     @JsonCreator
     public EventRefs(@JsonProperty("minEvent") final EventRef minEvent,
-                     @JsonProperty("maxStreams") final long maxStreams,
-                     @JsonProperty("maxEvents") final long maxEvents,
-                     @JsonProperty("maxEventsPerStream") final long maxEventsPerStream,
+                     @JsonProperty("maxStreams") final Long maxStreams,
+                     @JsonProperty("maxEvents") final Long maxEvents,
+                     @JsonProperty("maxEventsPerStream") final Long maxEventsPerStream,
                      @JsonProperty("list") final List<EventRef> list,
                      @JsonProperty("maxEvent") final EventRef maxEvent,
-                     @JsonProperty("reachedLimit") final boolean reachedLimit) {
+                     @JsonProperty("reachedLimit") final Boolean reachedLimit) {
         this.minEvent = minEvent;
-        this.maxStreams = maxStreams;
-        this.maxEvents = maxEvents;
-        this.maxEventsPerStream = maxEventsPerStream;
+        this.maxStreams = Objects.requireNonNullElse(maxStreams, 0L);
+        this.maxEvents = Objects.requireNonNullElse(maxEvents, 0L);
+        this.maxEventsPerStream = Objects.requireNonNullElse(maxEventsPerStream, 0L);
         this.list = list;
         this.maxEvent = maxEvent;
-        this.reachedLimit = reachedLimit;
+        this.reachedLimit = Objects.requireNonNullElse(reachedLimit, false);
     }
 
     public EventRefs(final EventRef minEvent,

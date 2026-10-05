@@ -32,9 +32,9 @@ public class XmlSchemaValidationResponse {
     private final String error;
 
     @JsonCreator
-    public XmlSchemaValidationResponse(@JsonProperty("ok") final boolean ok,
+    public XmlSchemaValidationResponse(@JsonProperty("ok") final Boolean ok,
                                        @JsonProperty("error") final String error) {
-        this.ok = ok;
+        this.ok = Objects.requireNonNullElse(ok, false);
         this.error = error;
     }
 

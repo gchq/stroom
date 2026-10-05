@@ -53,10 +53,10 @@ public class DurationSetting {
     final SimpleDuration checkInterval;
 
     @JsonCreator
-    public DurationSetting(@JsonProperty("enabled") final boolean enabled,
+    public DurationSetting(@JsonProperty("enabled") final Boolean enabled,
                            @JsonProperty("duration") final SimpleDuration duration,
                            @JsonProperty("checkInterval") final SimpleDuration checkInterval) {
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
         this.duration = Objects.requireNonNullElse(duration, DEFAULT_DURATION);
         this.checkInterval = Objects.requireNonNullElse(checkInterval, DEFAULT_CHECK_INTERVAL);
     }

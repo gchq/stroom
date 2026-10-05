@@ -65,17 +65,16 @@ convert_file() {
 
   echo -e "\n${GREEN}Processing source file ${BLUE}${puml_file}${GREEN}"
 
-  # TODO AT: It may be worth generating a .puml.sha1 for each .puml file.
-  #   Then we can see if the .puml has changed and only regen it if there is
-  #   no .puml.svg or the sha1 is different. This would speed up the process
-  #   when we have lots more images in the site.
-
   local puml_filename
+  # I.e. foo.puml
   puml_filename="$(basename "${puml_file}")"
 
   # Replace first match starting at end
+  # I.e. foo.svg
   local generated_svg_filename="${puml_filename/%\.puml/.svg}"
+  # I.e. foo.puml.svg
   local renamed_svg_filename="${puml_filename}.svg"
+  # I.e. foo.puml.sha1
   local sha1_filename="${puml_filename}.sha1"
 
   local puml_file_dir
@@ -89,8 +88,11 @@ convert_file() {
 
   if [[ -f "${renamed_svg_file}" ]]; then
     if [[ -f "${sha1_file}" ]]; then
-      # Busybox version of sha1sum so -s instead of --quiet
-      if sha1sum -c -s "${sha1_file}" >/dev/null 2>&1; then
+      # Don't bother converting the puml if the puml has not changed
+      # We are running in an Alpine container so you would expect sha1sum
+      # to come from busybox (which has different args) but the exlipse-temurin
+      # base image seems to pull in CoreUtils giving us GNU sha1sum.
+      if sha1sum -c --quiet "${sha1_file}" >/dev/null 2>&1; then
         echo -e "${GREEN}PUML file has not changed since last conversion${NC}"
       else
         echo -e "${GREEN}PUML file has changed, conversion required${NC}"

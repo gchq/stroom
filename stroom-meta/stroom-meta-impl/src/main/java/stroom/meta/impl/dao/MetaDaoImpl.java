@@ -42,7 +42,6 @@ import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
-import stroom.meta.impl.db.jooq.tables.records.MetaRecord;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -1676,14 +1675,14 @@ public class MetaDaoImpl implements MetaDao {
                     final Set<String> distinctStatuses = getDistinctStatuses(record.get(8, String.class));
 
                     return new SelectionSummary(
-                            NullSafe.getInt(record.get(0, Integer.class)),
-                            NullSafe.getInt(record.get(1, Integer.class)),
+                            NullSafe.getLong(record.get(0, Long.class)),
+                            NullSafe.getLong(record.get(1, Long.class)),
                             distinctFeeds,
-                            NullSafe.getInt(record.get(3, Integer.class)),
+                            NullSafe.getLong(record.get(3, Long.class)),
                             distinctTypes,
-                            NullSafe.getInt(record.get(5, Integer.class)),
-                            NullSafe.getInt(record.get(6, Integer.class)),
-                            NullSafe.getInt(record.get(7, Integer.class)),
+                            NullSafe.getLong(record.get(5, Long.class)),
+                            NullSafe.getLong(record.get(6, Long.class)),
+                            NullSafe.getLong(record.get(7, Long.class)),
                             distinctStatuses,
                             new Range<>(
                                     (Long) record.get(9),
@@ -1806,14 +1805,14 @@ public class MetaDaoImpl implements MetaDao {
                     final Set<String> distinctTypes = splitGroupConcat(record.get(4, String.class));
                     final Set<String> distinctStatuses = getDistinctStatuses(record.get(8, String.class));
                     return new SelectionSummary(
-                            NullSafe.getInt(record.get(0, Integer.class)),
-                            NullSafe.getInt(record.get(1, Integer.class)),
+                            NullSafe.getLong(record.get(0, Long.class)),
+                            NullSafe.getLong(record.get(1, Long.class)),
                             distinctFeeds,
-                            NullSafe.getInt(record.get(3, Integer.class)),
+                            NullSafe.getLong(record.get(3, Long.class)),
                             distinctTypes,
-                            NullSafe.getInt(record.get(5, Integer.class)),
-                            NullSafe.getInt(record.get(6, Integer.class)),
-                            NullSafe.getInt(record.get(7, Integer.class)),
+                            NullSafe.getLong(record.get(5, Long.class)),
+                            NullSafe.getLong(record.get(6, Long.class)),
+                            NullSafe.getLong(record.get(7, Long.class)),
                             distinctStatuses,
                             new Range<>((Long) record.get(9), (Long) record.get(10)));
                 })

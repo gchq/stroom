@@ -21,12 +21,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public final class DoubleValue extends AbstractValue<Double> implements ConstraintValue {
 
     @JsonCreator
-    public DoubleValue(@JsonProperty("value") final double value) {
-        super(value);
+    public DoubleValue(@JsonProperty("value") final Double value) {
+        super(Objects.requireNonNullElse(value, 0D));
     }
 
     @Override

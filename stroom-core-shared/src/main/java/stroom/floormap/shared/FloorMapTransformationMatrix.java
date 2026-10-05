@@ -61,19 +61,38 @@ public class FloorMapTransformationMatrix {
     @JsonProperty
     private final double f;
 
-    @JsonCreator
-    public FloorMapTransformationMatrix(@JsonProperty("a") final double a,
-                                        @JsonProperty("b") final double b,
-                                        @JsonProperty("c") final double c,
-                                        @JsonProperty("d") final double d,
-                                        @JsonProperty("e") final double e,
-                                        @JsonProperty("f") final double f) {
+    /// Creates a matrix from its six components, `matrix(a, b, c, d, e, f)`.
+    public FloorMapTransformationMatrix(final double a,
+                                        final double b,
+                                        final double c,
+                                        final double d,
+                                        final double e,
+                                        final double f) {
         this.a = a;
         this.b = b;
         this.c = c;
         this.d = d;
         this.e = e;
         this.f = f;
+    }
+
+    // Boxed so that a component absent from the JSON is an explicit null rather than
+    // a silent primitive default. A null component is held as 0. Kept separate from
+    // the public constructor so callers can still pass int literals.
+    @JsonCreator
+    private FloorMapTransformationMatrix(@JsonProperty("a") final Double a,
+                                         @JsonProperty("b") final Double b,
+                                         @JsonProperty("c") final Double c,
+                                         @JsonProperty("d") final Double d,
+                                         @JsonProperty("e") final Double e,
+                                         @JsonProperty("f") final Double f) {
+        this(orZero(a), orZero(b), orZero(c), orZero(d), orZero(e), orZero(f));
+    }
+
+    private static double orZero(final Double value) {
+        return value != null
+                ? value
+                : 0;
     }
 
     public double getA() {

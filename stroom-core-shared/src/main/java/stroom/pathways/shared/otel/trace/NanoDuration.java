@@ -31,7 +31,7 @@ import java.util.Objects;
 @JsonInclude(Include.NON_NULL)
 public class NanoDuration implements Comparable<NanoDuration> {
 
-    public static NanoDuration ZERO = new NanoDuration(0);
+    public static NanoDuration ZERO = new NanoDuration(0L);
 
     /**
      * The number of nanoseconds.
@@ -40,8 +40,8 @@ public class NanoDuration implements Comparable<NanoDuration> {
     private final long nanos;
 
     @JsonCreator
-    public NanoDuration(@JsonProperty("nanos") final long nanos) {
-        this.nanos = nanos;
+    public NanoDuration(@JsonProperty("nanos") final Long nanos) {
+        this.nanos = Objects.requireNonNullElse(nanos, 0L);
     }
 
     public static NanoDuration ofSeconds(final long seconds) {

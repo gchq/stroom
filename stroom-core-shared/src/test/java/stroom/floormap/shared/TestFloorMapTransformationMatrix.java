@@ -58,6 +58,15 @@ class TestFloorMapTransformationMatrix {
         assertThat(apply(identity, 12.5, -7.25)).containsExactly(12.5, -7.25);
     }
 
+    /// A component absent from the JSON is held as 0.
+    @Test
+    void testDeserialisesMissingComponentsAsZero() {
+        final FloorMapTransformationMatrix matrix = JsonUtil.readValue(
+                "{\"a\":2.0,\"d\":3.0}", FloorMapTransformationMatrix.class);
+
+        assertThat(matrix).isEqualTo(new FloorMapTransformationMatrix(2, 0, 0, 3, 0, 0));
+    }
+
     @Test
     void testToSvgMatrix() {
         final FloorMapTransformationMatrix matrix =

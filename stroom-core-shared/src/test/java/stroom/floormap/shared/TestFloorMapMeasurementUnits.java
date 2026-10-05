@@ -17,6 +17,7 @@
 package stroom.floormap.shared;
 
 import stroom.floormap.shared.FloorMapMeasurementUnits.Unit;
+import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
 
@@ -225,8 +226,38 @@ class TestFloorMapMeasurementUnits {
         assertThat(metres(-1).checkUnitIsValid()).isFalse();
         assertThat(metres(Double.NaN).checkUnitIsValid()).isFalse();
         assertThat(metres(Double.POSITIVE_INFINITY).checkUnitIsValid()).isFalse();
-        assertThat(new FloorMapMeasurementUnits(null, 1).checkUnitIsValid()).isFalse();
+        assertThat(new FloorMapMeasurementUnits(null, 1.0).checkUnitIsValid()).isFalse();
         assertThat(metres(0.187).checkUnitIsValid()).isTrue();
+    }
+
+    /// A missing scale factor must not be mistaken for a usable one.
+    @Test
+    void testRejectsNullScaleFactor() {
+        final FloorMapMeasurementUnits units = new FloorMapMeasurementUnits(Unit.METRE, null);
+
+        assertThat(units.getUnitsPerMapUnit()).isZero();
+        assertThat(units.checkUnitIsValid()).isFalse();
+        assertThat(FloorMapMeasurementUnits.orDefault(units)).isEqualTo(FloorMapMeasurementUnits.DEFAULT);
+    }
+
+    /// JSON with no `unitsPerMapUnit` deserialises to units that fall back to the default.
+    @Test
+    void testDeserialisesMissingScaleFactorAsInvalid() {
+        final FloorMapMeasurementUnits units = JsonUtil.readValue(
+                "{\"unit\":\"METRE\"}", FloorMapMeasurementUnits.class);
+
+        assertThat(units.getUnit()).isEqualTo(Unit.METRE);
+        assertThat(units.checkUnitIsValid()).isFalse();
+    }
+
+    @Test
+    void testJsonRoundTrip() {
+        final FloorMapMeasurementUnits units = metres(0.187);
+
+        final FloorMapMeasurementUnits result = JsonUtil.readValue(
+                JsonUtil.writeValueAsString(units), FloorMapMeasurementUnits.class);
+
+        assertThat(result).isEqualTo(units);
     }
 
     // ------------------------------------------------------------------------

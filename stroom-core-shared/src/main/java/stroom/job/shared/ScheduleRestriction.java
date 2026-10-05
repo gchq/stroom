@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({
         "allowSecond",
         "allowMinute",
@@ -38,12 +40,12 @@ public class ScheduleRestriction {
     private final boolean allowHour;
 
     @JsonCreator
-    public ScheduleRestriction(@JsonProperty("allowSecond") final boolean allowSecond,
-                               @JsonProperty("allowMinute") final boolean allowMinute,
-                               @JsonProperty("allowHour") final boolean allowHour) {
-        this.allowSecond = allowSecond;
-        this.allowMinute = allowMinute;
-        this.allowHour = allowHour;
+    public ScheduleRestriction(@JsonProperty("allowSecond") final Boolean allowSecond,
+                               @JsonProperty("allowMinute") final Boolean allowMinute,
+                               @JsonProperty("allowHour") final Boolean allowHour) {
+        this.allowSecond = Objects.requireNonNullElse(allowSecond, false);
+        this.allowMinute = Objects.requireNonNullElse(allowMinute, false);
+        this.allowHour = Objects.requireNonNullElse(allowHour, false);
     }
 
     public boolean isAllowSecond() {
