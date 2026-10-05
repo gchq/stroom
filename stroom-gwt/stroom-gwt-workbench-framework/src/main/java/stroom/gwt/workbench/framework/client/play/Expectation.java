@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package stroom.gwt.workbench.framework.client.play;
 
 import com.google.gwt.dom.client.Element;
@@ -22,7 +23,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 /// An expectation about an element, the equivalent of `expect(element).toBe...()` in React
-/// Storybook's play functions. Each assertion method adds a step to the play function.
+/// Storybook's play functions (with the `@testing-library/jest-dom` matchers). Each assertion
+/// method adds a step to the play function.
 public final class Expectation {
 
     private final Play play;
@@ -46,55 +48,113 @@ public final class Expectation {
     /// Expects the element to be in the document. With [#not()], expects no element to match the
     /// query.
     public void toBeInTheDocument() {
-        // Resolving the query checks it's there
-        add("toBeInTheDocument()", Dom::isConnected, true);
+        addCount("toBeInTheDocument()", Expectation::isPresent, true);
+    }
+
+    /// Expects the query to match no element, the equivalent of
+    /// `expect(queryByText(...)).toBeNull()` or `expect(el.querySelector(...)).toBeNull()`. With
+    /// [#not()], expects it to match at least one.
+    public void toBeNull() {
+        addCount("toBeNull()", count -> !isPresent(count), true);
+    }
+
+    /// Expects the query to match a number of elements, the equivalent of
+    /// `expect(getAllByRole("row")).toHaveLength(3)`.
+    ///
+    /// @param length The number of elements.
+    public void toHaveLength(final int length) {
+        addCount("toHaveLength(" + length + ")", count -> count == length, false);
     }
 
     /// Expects the element to be visible.
     public void toBeVisible() {
-        add("toBeVisible()", Dom::isVisible, false);
+        add("toBeVisible()", Dom::isVisible);
     }
 
-    /// Expects the element's text to contain some text.
+    /// Expects the element's text to contain some text, after whitespace is collapsed, as
+    /// `toHaveTextContent("text")` does.
     ///
     /// @param text The text.
     public void toHaveTextContent(final String text) {
-        add("toHaveTextContent(" + quote(text) + ")",
-                element -> Dom.getTextContent(element).contains(text), false);
+        add("toHaveTextContent(" + quote(text) + ")", element -> Dom.getTextContent(element).contains(text));
     }
 
-    /// Expects the element to have a CSS class.
+    /// Expects the element's text, after whitespace is collapsed, to match, as
+    /// `toHaveTextContent(/regex/)` does.
     ///
-    /// @param className The class.
-    public void toHaveClass(final String className) {
-        add("toHaveClass(" + quote(className) + ")", element -> element.hasClassName(className), false);
+    /// @param match How to match, e.g. `TextMatch.exact("Saved")` for the whole text.
+    public void toHaveTextContent(final TextMatch match) {
+        add("toHaveTextContent(" + match.describe() + ")", element -> match.matches(Dom.getTextContent(element)));
+    }
+
+    /// Expects the element to have all the CSS classes.
+    ///
+    /// @param classNames The classes, each of which may be several separated by spaces.
+    public void toHaveClass(final String... classNames) {
+        final StringBuilder args = new StringBuilder();
+        for (final String className : classNames) {
+            if (args.length() > 0) {
+                args.append(", ");
+            }
+            args.append(quote(className));
+        }
+        add("toHaveClass(" + args + ")", element -> hasClasses(element.getClassName(), classNames));
+    }
+
+    /// @param actualClassName The element's `className`.
+    /// @param classNames      The expected classes, each of which may be several separated by
+    ///                        spaces.
+    /// @return True if the element has all the classes (and at least one is given).
+    static boolean hasClasses(final String actualClassName, final String... classNames) {
+        final String padded = " " + (actualClassName != null
+                ? actualClassName.replace('\t', ' ').replace('\n', ' ')
+                : "") + " ";
+        boolean any = false;
+        for (final String classNameList : classNames) {
+            for (final String className : classNameList.trim().split(" ")) {
+                if (!className.isEmpty()) {
+                    any = true;
+                    if (!padded.contains(" " + className + " ")) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return any;
     }
 
     /// Expects the element to have the keyboard focus.
     public void toHaveFocus() {
-        add("toHaveFocus()", Dom::hasFocus, false);
+        add("toHaveFocus()", Dom::hasFocus);
     }
 
     /// Expects a form field to have a value.
     ///
     /// @param value The value.
     public void toHaveValue(final String value) {
-        add("toHaveValue(" + quote(value) + ")", element -> value.equals(Dom.getValue(element)), false);
+        add("toHaveValue(" + quote(value) + ")", element -> value.equals(Dom.getValue(element)));
     }
 
     /// Expects a check box (or ARIA checkbox) to be checked.
     public void toBeChecked() {
-        add("toBeChecked()", Dom::isChecked, false);
+        add("toBeChecked()", Dom::isChecked);
     }
 
     /// Expects the element to be disabled.
     public void toBeDisabled() {
-        add("toBeDisabled()", Dom::isDisabled, false);
+        add("toBeDisabled()", Dom::isDisabled);
     }
 
     /// Expects the element to be enabled.
     public void toBeEnabled() {
-        add("toBeEnabled()", element -> !Dom.isDisabled(element), false);
+        add("toBeEnabled()", element -> !Dom.isDisabled(element));
+    }
+
+    /// Expects the element to have an attribute, whatever its value.
+    ///
+    /// @param name The name of the attribute.
+    public void toHaveAttribute(final String name) {
+        add("toHaveAttribute(" + quote(name) + ")", element -> Dom.hasAttribute(element, name));
     }
 
     /// Expects the element to have an attribute with a value.
@@ -103,33 +163,54 @@ public final class Expectation {
     /// @param value The value.
     public void toHaveAttribute(final String name, final String value) {
         add("toHaveAttribute(" + quote(name) + ", " + quote(value) + ")",
-                element -> value.equals(element.getAttribute(name)), false);
+                element -> value.equals(Dom.getAttribute(element, name)));
     }
 
-    private void add(final String matcher,
-                     final Predicate<Element> predicate,
-                     final boolean allowMissing) {
-        final String not = negated
+    /// Expects the element to have a computed style.
+    ///
+    /// @param property The CSS property, e.g. `font-weight`.
+    /// @param value    The computed value, e.g. `700`.
+    public void toHaveStyle(final String property, final String value) {
+        add("toHaveStyle({ " + property + ": " + quote(value) + " })",
+                element -> value.equals(Dom.getComputedStyle(element, property)));
+    }
+
+    private String prefix() {
+        return "expect(";
+    }
+
+    private String suffix(final String matcher) {
+        return ")" + (negated
                 ? ".not"
-                : "";
-        final Function<Element, String> describer = root -> "expect("
-                                                           + (root != null
+                : "") + "." + matcher;
+    }
+
+    /// Adds an expectation about the number of elements the query matches. If `single`, a query
+    /// for a single element must not match several, as Testing Library's `getBy`/`queryBy` throw.
+    private void addCount(final String matcher, final Predicate<Integer> predicate, final boolean single) {
+        play.addStep(PlayStep.action(root -> prefix() + query.describe() + suffix(matcher), root -> {
+            final int count = query.countIn(root);
+            if (single && count > 1 && !query.isAll()) {
+                // Throws the 'found multiple elements' error
+                query.resolve(root);
+            }
+            if (predicate.test(count) == negated) {
+                throw new PlayException(prefix() + query.describe() + suffix(matcher) + " failed\n\n"
+                                        + "Matching elements: " + count);
+            }
+        }));
+    }
+
+    private void add(final String matcher, final Predicate<Element> predicate) {
+        final Function<Element, String> describer = root -> prefix()
+                                                           + (root != null && !query.isAll()
                 ? Dom.describe(query.resolve(root))
                 : query.describe())
-                                                           + ")" + not + "." + matcher;
+                                                           + suffix(matcher);
         play.addStep(PlayStep.action(describer, root -> {
-            if (allowMissing && negated) {
-                // Any match, even several, means the element is there
-                if (isPresent(query.count(root))) {
-                    throw new PlayException("expect(" + query.describe() + ")" + not + "." + matcher
-                                            + " failed");
-                }
-                return;
-            }
             final Element element = query.resolve(root);
             if (predicate.test(element) == negated) {
-                throw new PlayException("expect(" + Dom.describe(element) + ")" + not + "." + matcher
-                                        + " failed");
+                throw new PlayException(prefix() + Dom.describe(element) + suffix(matcher) + " failed");
             }
         }));
     }
@@ -149,6 +230,6 @@ public final class Expectation {
     static String quote(final String text) {
         return "\"" + (text == null
                 ? ""
-                : text.replace("\"", "\\\"")) + "\"";
+                : text.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")) + "\"";
     }
 }

@@ -1,0 +1,5 @@
+{
+  "_comment": "React stories that won't be ported to GWT ('n/a') or can't be yet ('blocked'), each with a reason. Keys are story ids (e.g. 'widgets-buttons-button--loading') or titles (e.g. 'Widgets/Buttons/Button', or a group such as 'App/AI', covering every story under it). Ported stories need no entry - they are ported by being registered in AllStories. Checked by TestReactStoryCoverage; see test-runner/README.md.",
+  "stories": {
+  }
+}

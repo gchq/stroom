@@ -48,6 +48,7 @@ import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -55,7 +56,8 @@ import java.util.List;
 
 /// Renders a single story in the preview page (iframe.html), which is shown in the manager's
 /// canvas or on its own when opened in isolation. It re-renders the story when its args change,
-/// runs its play function and reports progress to the manager.
+/// runs its play function and reports progress to the manager. The progress is also put on the
+/// page for the test runner (see [RunnerHooks]).
 public class StoryPreview {
 
     // The same ids/classes as React Storybook's preview
@@ -113,11 +115,14 @@ public class StoryPreview {
 
         story = registry.getStory(storyId);
         if (story == null) {
-            showError("Couldn't find story matching id '" + storyId + "'.\n\n"
-                      + "- Did you just rename a story?\n"
-                      + "- Did you add its stories to the registry?");
+            final String message = "Couldn't find story matching id '" + storyId + "'.\n\n"
+                                   + "- Did you just rename a story?\n"
+                                   + "- Did you add its stories to the registry?";
+            showError(message);
+            publishState(RunStatus.ERRORED.name(), List.of(), 0, 0, message);
             return;
         }
+        publishState(RunnerJson.RENDERING_STATUS, List.of(), 0, 0, null);
 
         setBodyClass(SHOW_MAIN_CLASS, true);
         for (final StoryLayout layout : StoryLayout.values()) {
@@ -173,6 +178,7 @@ public class StoryPreview {
     private boolean renderStory() {
         final RootPanel rootPanel = RootPanel.get(getOrCreateDiv(ROOT_ID, null).getId());
         rootPanel.clear();
+        removePopups();
         showError(null);
         // Highlights outline elements of the old rendering
         A11yRunner.clearHighlights();
@@ -181,16 +187,32 @@ public class StoryPreview {
             rootPanel.add(widget);
             return true;
         } catch (final RuntimeException e) {
-            showError("Error rendering story '" + story.getId() + "':\n\n" + e);
-            reportInteractions(RunStatus.ERRORED, List.of(), 0, 0);
+            final String message = "Error rendering story '" + story.getId() + "':\n\n" + e;
+            showError(message);
+            reportInteractions(RunStatus.ERRORED, List.of(), 0, 0, message);
             return false;
+        }
+    }
+
+    /// Removes the popups, e.g. GWT dialogs and menus, that the previous rendering added to the
+    /// page's body, so that they don't stay on screen, or match the play function's queries,
+    /// after the story is rendered again.
+    private static void removePopups() {
+        final RootPanel body = RootPanel.get();
+        for (int i = body.getWidgetCount() - 1; i >= 0; i--) {
+            final Widget widget = body.getWidget(i);
+            if (widget instanceof PopupPanel) {
+                // Hiding also removes the popup's glass
+                ((PopupPanel) widget).hide();
+            }
+            widget.removeFromParent();
         }
     }
 
     private void startPlay() {
         if (story.getPlay() == null) {
             // Tell the manager there are no interactions so it can show its empty state
-            reportInteractions(RunStatus.COMPLETED, List.of(), 0, 0);
+            reportInteractions(RunStatus.COMPLETED, List.of(), 0, 0, null);
             A11yRunner.run();
             return;
         }
@@ -198,13 +220,14 @@ public class StoryPreview {
         try {
             story.getPlay().play(play);
         } catch (final RuntimeException e) {
-            showError("Error in play function of story '" + story.getId() + "':\n\n" + e);
-            reportInteractions(RunStatus.ERRORED, List.of(), 0, 0);
+            final String message = "Error in play function of story '" + story.getId() + "':\n\n" + e;
+            showError(message);
+            reportInteractions(RunStatus.ERRORED, List.of(), 0, 0, message);
             return;
         }
         playRunner = new PlayRunner(play, getOrCreateDiv(ROOT_ID, null), this::renderStory,
                 (status, entries, nextStep, stepCount) -> {
-                    reportInteractions(status, entries, nextStep, stepCount);
+                    reportInteractions(status, entries, nextStep, stepCount, null);
                     // As in Storybook, check accessibility once the play function has finished
                     if (status == RunStatus.COMPLETED || status == RunStatus.ERRORED) {
                         A11yRunner.run();
@@ -216,7 +239,9 @@ public class StoryPreview {
     private void reportInteractions(final RunStatus status,
                                     final List<LogEntry> entries,
                                     final int nextStep,
-                                    final int stepCount) {
+                                    final int stepCount,
+                                    final String error) {
+        publishState(status.name(), entries, nextStep, stepCount, error);
         final JSONObject json = new JSONObject();
         json.put("status", new JSONString(status.name()));
         json.put("nextStep", new JSONNumber(nextStep));
@@ -238,6 +263,24 @@ public class StoryPreview {
         BrowserUtil.postToManager(BrowserUtil.INTERACTIONS_MESSAGE, story != null
                 ? story.getId()
                 : null, json.toString());
+    }
+
+    /// Exposes the state of the story to the test runner, see [RunnerHooks].
+    private void publishState(final String status,
+                              final List<LogEntry> entries,
+                              final int nextStep,
+                              final int stepCount,
+                              final String error) {
+        RunnerHooks.publishPlayState(status, RunnerJson.playState(
+                story != null
+                        ? story.getId()
+                        : BrowserUtil.getQueryParameter(StoryUrls.ID_PARAM),
+                status,
+                story != null && story.getPlay() != null,
+                entries,
+                nextStep,
+                stepCount,
+                error));
     }
 
     /// Adds the SVG filters that simulate vision deficiencies to the page.

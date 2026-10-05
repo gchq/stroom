@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.widgets;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
+import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -90,6 +91,9 @@ public final class ButtonStories {
                     play.expect(play.getByText("Clicked: 1")).toBeVisible();
                     play.click(play.getByRole("button"));
                     play.waitFor(() -> play.expect(play.getByText("Clicked: 2")).toBeInTheDocument());
+                    // The click handler is a spy, the equivalent of `onClick: fn()`
+                    play.expect(play.spy(ON_CLICK)).toHaveBeenCalledTimes(2);
+                    play.expect(play.spy(ON_CLICK)).toHaveBeenLastCalledWith("Save");
                 })
                 .story("Secondary", ButtonStories::fromArgs)
                 .withArgs(Args.of(TEXT, "Cancel", VARIANT, "contained-secondary"))
@@ -190,7 +194,8 @@ public final class ButtonStories {
         if (icon != null) {
             button.setIcon(icon);
         }
-        button.addClickHandler(event -> context.action(ON_CLICK, text));
+        final Spy onClick = context.fn(ON_CLICK);
+        button.addClickHandler(event -> onClick.call(text));
         return button;
     }
 }

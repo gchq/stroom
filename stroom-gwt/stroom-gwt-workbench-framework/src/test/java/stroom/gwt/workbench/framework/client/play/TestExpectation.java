@@ -45,4 +45,47 @@ class TestExpectation {
         assertThat(play.getSteps().get(0).describe(null))
                 .isEqualTo("expect(within(<div#workbench-root>).getByText(\"Gone\")).not.toBeInTheDocument()");
     }
+
+    @Test
+    void testHasClasses() {
+        assertThat(Expectation.hasClasses("a b  c", "b")).isTrue();
+        assertThat(Expectation.hasClasses("a b c", "a c")).isTrue();
+        assertThat(Expectation.hasClasses("a b c", "a", "c")).isTrue();
+        assertThat(Expectation.hasClasses("a b c", "d")).isFalse();
+        assertThat(Expectation.hasClasses("ab", "a")).isFalse();
+        assertThat(Expectation.hasClasses("a\tb", "b")).isTrue();
+        assertThat(Expectation.hasClasses(null, "a")).isFalse();
+        // At least one class must be given
+        assertThat(Expectation.hasClasses("a", " ")).isFalse();
+    }
+
+    @Test
+    void testQuoteEscapes() {
+        assertThat(Expectation.quote("a\\b\nc")).isEqualTo("\"a\\\\b\\nc\"");
+    }
+
+    @Test
+    void testDescribeNewMatchers() {
+        final Play play = new Play();
+        final Query query = play.getByRole("tab", "Bravo");
+        play.expect(play.queryByText("ACTIVE")).toBeNull();
+        play.expect(play.querySelector(".picker")).not().toBeNull();
+        play.expect(play.getAllByRole("row")).toHaveLength(3);
+        play.expect(query).toHaveAttribute("aria-selected", "false");
+        play.expect(query).toHaveAttribute("readonly");
+        play.expect(query).toHaveClass("a", "b c");
+        play.expect(query).toHaveTextContent(TextMatch.regex("^Bra"));
+        play.expect(query).toHaveStyle("font-weight", "700");
+
+        final String q = "within(<div#workbench-root>).getByRole(\"tab\", { name: \"Bravo\" })";
+        assertThat(play.getSteps()).extracting(step -> step.describe(null)).containsExactly(
+                "expect(within(<div#workbench-root>).queryByText(\"ACTIVE\")).toBeNull()",
+                "expect(within(<div#workbench-root>).querySelector(\".picker\")).not.toBeNull()",
+                "expect(within(<div#workbench-root>).getAllByRole(\"row\")).toHaveLength(3)",
+                "expect(" + q + ").toHaveAttribute(\"aria-selected\", \"false\")",
+                "expect(" + q + ").toHaveAttribute(\"readonly\")",
+                "expect(" + q + ").toHaveClass(\"a\", \"b c\")",
+                "expect(" + q + ").toHaveTextContent(/^Bra/)",
+                "expect(" + q + ").toHaveStyle({ font-weight: \"700\" })");
+    }
 }

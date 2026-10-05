@@ -82,6 +82,40 @@ class TestPlayStep {
         return PlayStep.action(root -> name, root -> ran.add(name));
     }
 
+    @Test
+    void testSleep() {
+        final List<String> ran = new ArrayList<>();
+        final PlayStep sleep = PlayStep.sleep(root -> "sleep(10)", 10);
+        assertThat(sleep.getKind()).isEqualTo(Kind.SLEEP);
+        assertThat(sleep.getTimeoutMillis()).isEqualTo(10);
+        // Inside a waitFor, a sleep does nothing
+        final PlayStep group = PlayStep.group(Kind.WAIT_FOR, root -> "waitFor", List.of(sleep, action("a", ran)));
+        final Recorder recorder = new Recorder();
+        for (final PlayStep child : group.getChildren()) {
+            child.runAll(null, recorder);
+        }
+        assertThat(ran).containsExactly("a");
+        assertThat(recorder.passed).containsExactly("sleep(10)", "a");
+        assertThatThrownBy(() -> PlayStep.sleep(root -> "x", -1)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void testCurrentRoot() {
+        assertThatThrownBy(PlayStep::currentRoot).isInstanceOf(PlayException.class);
+        final List<Boolean> rootRead = new ArrayList<>();
+        final PlayStep step = PlayStep.action(root -> "x", root -> rootRead.add(PlayStep.currentRoot() == null));
+        step.run(null);
+        assertThat(rootRead).containsExactly(true);
+        // Only while the step runs
+        assertThatThrownBy(PlayStep::currentRoot).isInstanceOf(PlayException.class);
+    }
+
+    @Test
+    void testDefaultTimeout() {
+        final PlayStep group = PlayStep.group(Kind.WAIT_FOR, root -> "waitFor", List.of());
+        assertThat(group.getTimeoutMillis()).isEqualTo(PlayStep.DEFAULT_TIMEOUT_MILLIS);
+    }
+
 
     // --------------------------------------------------------------------------------
 

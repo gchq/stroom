@@ -32,7 +32,6 @@ import java.util.Map;
 /// story and replaying the steps up to a chosen point.
 public class PlayRunner {
 
-    private static final int WAIT_FOR_TIMEOUT_MILLIS = 1000;
     private static final int WAIT_FOR_INTERVAL_MILLIS = 50;
     // A short pause between steps so the user can see each one happen
     private static final int STEP_DELAY_MILLIS = 20;
@@ -214,6 +213,12 @@ public class PlayRunner {
                 report();
                 callback.done(success);
             });
+        } else if (step.getKind() == Kind.SLEEP) {
+            schedule(step.getTimeoutMillis(), runGeneration, () -> {
+                entry.status = Status.DONE;
+                report();
+                callback.done(true);
+            });
         } else {
             waitFor(step, entry, Duration.currentTimeMillis(), runGeneration, callback);
         }
@@ -240,7 +245,7 @@ public class PlayRunner {
     }
 
     /// Runs the steps in the group (including any nested groups) synchronously, retrying until
-    /// they all pass or the time runs out.
+    /// they all pass or the group's timeout runs out.
     private void waitFor(final PlayStep step,
                          final LogEntry entry,
                          final double startTime,
@@ -275,7 +280,7 @@ public class PlayRunner {
             entry.status = Status.DONE;
             report();
             callback.done(true);
-        } else if (Duration.currentTimeMillis() - startTime < WAIT_FOR_TIMEOUT_MILLIS) {
+        } else if (Duration.currentTimeMillis() - startTime < step.getTimeoutMillis()) {
             report();
             schedule(WAIT_FOR_INTERVAL_MILLIS, runGeneration,
                     () -> waitFor(step, entry, startTime, runGeneration, callback));

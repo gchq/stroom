@@ -66,4 +66,83 @@ class TestQuery {
         assertThat(Query.countMatches(3, 2)).isOne();
         assertThat(Query.countMatches(3, 3)).isZero();
     }
+
+    @Test
+    void testClosest() {
+        final Play play = new Play();
+        final Query row = play.getByText("node3").closest("[role=\"row\"]");
+        assertThat(row.describe())
+                .isEqualTo("within(<div#workbench-root>).getByText(\"node3\").closest(\"[role=\\\"row\\\"]\")");
+        // Queries within the closest element
+        assertThat(play.within(row).getByRole("checkbox").describe())
+                .startsWith("within(within(<div#workbench-root>).getByText(\"node3\").closest(");
+    }
+
+    @Test
+    void testBodyAndFirst() {
+        final Play play = new Play();
+        assertThat(play.body().describe()).isEqualTo("document.body");
+        assertThat(play.screen().getAllByText("x").first().describe())
+                .isEqualTo("within(document.body).getAllByText(\"x\")[0]");
+    }
+
+    @Test
+    void testDescribeAs() {
+        final Play play = new Play();
+        final Query query = play.within(play.getByRole("menu")).getByText("Open");
+        // Only the query's own method is replaced, not its scope's
+        assertThat(query.describeAs("findByText"))
+                .isEqualTo("within(within(<div#workbench-root>).getByRole(\"menu\")).findByText(\"Open\")");
+    }
+
+    @Test
+    void testPick() {
+        assertThat(Query.pick(1, -1, false, "none")).isZero();
+        assertThat(Query.pick(3, -1, true, "none")).isZero();
+        assertThat(Query.pick(3, 2, false, "none")).isEqualTo(2);
+        assertThatThrownBy(() -> Query.pick(0, -1, false, "Unable to find an element with the text: x"))
+                .isInstanceOf(PlayException.class)
+                .hasMessage("Unable to find an element with the text: x");
+        assertThatThrownBy(() -> Query.pick(2, -1, false, "Unable to find an element with the text: x"))
+                .isInstanceOf(PlayException.class)
+                .hasMessage("Found multiple elements (2): elements with the text: x (use nth() to pick one)");
+        assertThatThrownBy(() -> Query.pick(2, 2, true, "Unable to find x"))
+                .isInstanceOf(PlayException.class)
+                .hasMessage("Unable to find x at index 2 (found 2)");
+    }
+
+    @Test
+    void testIsAll() {
+        final Play play = new Play();
+        assertThat(play.getAllByText("x").isAll()).isTrue();
+        assertThat(play.queryAllByText("x").isAll()).isTrue();
+        assertThat(play.getByText("x").isAll()).isFalse();
+        assertThat(play.getAllByText("x").nth(1).isAll()).isFalse();
+    }
+
+    @Test
+    void testValueLabels() {
+        final Play play = new Play();
+        final Query button = play.getByRole("button");
+        assertThat(button.textContent().getLabel())
+                .isEqualTo("within(<div#workbench-root>).getByRole(\"button\").textContent");
+        assertThat(play.getAllByRole("row").count().getLabel())
+                .isEqualTo("within(<div#workbench-root>).getAllByRole(\"row\").length");
+        assertThat(button.attribute("aria-pressed").getLabel()).endsWith(".getAttribute(\"aria-pressed\")");
+        assertThat(button.width().getLabel()).endsWith(".getBoundingClientRect().width");
+        assertThat(button.property("scrollTop").getLabel()).endsWith(".scrollTop");
+        assertThat(button.className().getLabel()).endsWith(".className");
+        assertThat(button.value().getLabel()).endsWith(".value");
+        assertThat(button.textContents().getLabel()).endsWith(".map(el => el.textContent)");
+    }
+
+    @Test
+    void testValuesNeedARunningStep() {
+        // Reading a value while the play function adds its steps is a mistake
+        final Play play = new Play();
+        final Value<String> text = play.getByRole("button").textContent();
+        assertThatThrownBy(text::get)
+                .isInstanceOf(PlayException.class)
+                .hasMessageContaining("only be found while a step runs");
+    }
 }

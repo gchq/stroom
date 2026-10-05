@@ -37,6 +37,48 @@
     <inherits name="stroom.widget.tickbox.TickBox"/>
     <inherits name="stroom.cell.tickbox.TickBox"/>
 
+    <!--
+      Screens (App/* stories): real presenters and views that call the server, shown with fake
+      REST replies (see stroom.gwt.workbench.client.app). These are the libraries and Stroom
+      modules that the screens' code is in, as inherited by stroom.app.App.
+    -->
+    <inherits name="com.google.gwt.inject.Inject"/>
+    <inherits name="com.gwtplatform.mvp.Mvp"/>
+    <inherits name="org.fusesource.restygwt.RestyGWT"/>
+    <inherits name='javax.xml.bind.annotation.Adapters'/>
+    <inherits name='io.swagger.Swagger'/>
+    <inherits name='stroom.Stroom'/>
+    <inherits name='stroom.dispatch.Dispatch'/>
+    <inherits name='stroom.event.Event'/>
+    <inherits name='stroom.alert.Alert'/>
+    <inherits name='stroom.security.Security'/>
+    <inherits name='stroom.document.Document'/>
+    <inherits name='stroom.docstore.DocStore'/>
+    <inherits name='stroom.explorer.Explorer'/>
+    <inherits name='stroom.about.About'/>
+    <inherits name='stroom.config.Config'/>
+    <inherits name='stroom.config.global.GlobalConfig'/>
+    <inherits name='stroom.ui.config.UiConfig'/>
+    <inherits name='stroom.preferences.Preferences'/>
+    <inherits name='stroom.editor.Editor'/>
+    <inherits name='stroom.data.Data'/>
+    <inherits name='stroom.data.grid.Grid'/>
+    <inherits name='stroom.data.table.Table'/>
+    <inherits name='stroom.data.pager.Pager'/>
+    <inherits name='stroom.cell.Cell'/>
+    <inherits name='stroom.item.Item'/>
+    <inherits name="stroom.widget.popup.Popup"/>
+    <inherits name="stroom.widget.dropdowntree.DropDownTree"/>
+    <inherits name="stroom.widget.spinner.Spinner"/>
+    <inherits name='stroom.entity.Entity'/>
+    <inherits name='stroom.query.Query'/>
+    <inherits name='stroom.ai.AI'/>
+    <inherits name='stroom.receive.rules.RuleSet'/>
+    <inherits name='stroom.annotation.Annotation'/>
+    <inherits name="stroom.widget.datepicker.DatePicker"/>
+    <inherits name="stroom.widget.customdatebox.CustomDateBox"/>
+    <inherits name="stroom.widget.tab.Tab"/>
+
     <entry-point class='stroom.gwt.workbench.client.StroomWorkbenchEntryPoint'/>
 
     <source path='client'/>

@@ -534,7 +534,8 @@ tasks.register('workbenchServe', JavaExec) {
     }
     def storiesSourceRoot = file('src/main/java')
     def storiesPackage = 'stroom.gwt.workbench.client.widgets'
-    def allStoriesFile = file('src/main/java/stroom/gwt/workbench/client/AllStories.java')
+    // The 'Create a new story' dialog creates 'Widgets/...' stories, so registers them here
+    def allStoriesFile = file('src/main/java/stroom/gwt/workbench/client/WidgetsStories.java')
 
     // Earlier roots take precedence. The code server launcher dir comes before the war dir
     // so that a running workbenchCodeServer wins over a previous compile.
@@ -559,3 +560,220 @@ tasks.register('workbenchClean') {
 
 tasks.clean.dependsOn(tasks.workbenchClean)
 tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)
+
+// ------------------------------------------------------------------------------------------------
+// Testing the stories, and tracking the porting of the React stories (see test-runner/README.md).
+// None of these are part of build/check, so normal builds don't need npm, Node or Playwright.
+//
+//   workbenchTest            Runs every story (and its play function) in headless Chromium, like
+//                            the React project's `npm run test:storybook`. Starts a workbench
+//                            server on a free port (after a draft compile) for the duration, or
+//                            tests a running one given by -PworkbenchUrl=http://localhost:6008.
+//                            -PworkbenchTestFilter=<id/title prefix or glob>[,...]
+//                            -PworkbenchTestWorkers=N  -PworkbenchTestScreenshots
+//                            -PworkbenchTestArgs='<more test-runner/run.mjs options>'
+//                            -PworkbenchTestPort=N (the server's port)
+//                            -PworkbenchSkipCompile (use the existing compile)
+//                            Reports are written to build/workbench-test.
+//   workbenchCoverage        Prints how many of the React stories have been ported, by group.
+//                            -PworkbenchCoverageList=<id or title prefix> also lists the remaining
+//                            stories matching it (or all of them with -PworkbenchCoverageList=).
+//   workbenchReactManifest   Regenerates src/test/resources/react-stories.json from the React
+//                            Storybook (see test-runner/react-manifest.mjs).
+// ------------------------------------------------------------------------------------------------
+
+dependencies {
+    // For reading react-stories.json in TestReactStoryCoverage
+    testImplementation libs.jackson.databind
+    testImplementation libs.slf4j.api
+}
+
+def testRunnerDir = file('test-runner')
+def workbenchTestDir = layout.buildDirectory.dir('workbench-test').get().asFile
+
+// Whether npm (and so Node) can be run, checked at most once per build
+def npmAvailableResult = null
+def npmAvailable = { ->
+    if (npmAvailableResult == null) {
+        try {
+            // providers.exec, as this may run while the task graph is built
+            npmAvailableResult = providers.exec {
+                commandLine 'npm', '--version'
+                ignoreExitValue = true
+            }.result.get().exitValue == 0
+        } catch (Exception ignored) {
+            // npm isn't on the path
+            npmAvailableResult = false
+        }
+    }
+    return npmAvailableResult
+}
+def noNpmMessage = "npm isn't available, so the workbench test runner can't be run. Install Node.js " +
+        "(which includes npm) to run it; see test-runner/README.md."
+
+// Runs a command in the test runner's directory, showing its output as it runs.
+// Returns the exit code.
+def runInTestRunnerDir = { List command ->
+    def process = new ProcessBuilder(command.collect { it.toString() })
+            .directory(testRunnerDir)
+            .redirectErrorStream(true)
+            .start()
+    process.inputStream.eachLine { line -> println line }
+    return process.waitFor()
+}
+
+tasks.register('workbenchTestRunnerInstall') {
+    group = "workbench"
+    description = "Installs the workbench test runner's npm packages (Playwright)"
+    inputs.files(file("${testRunnerDir}/package.json"), file("${testRunnerDir}/package-lock.json"))
+            .withPropertyName('packageFiles')
+    outputs.dir(file("${testRunnerDir}/node_modules")).withPropertyName('nodeModules')
+    outputs.cacheIf { false }
+    onlyIf { npmAvailable() }
+
+    doLast {
+        def exitCode = runInTestRunnerDir(['npm', 'ci', '--no-audit', '--no-fund', '--prefer-offline'])
+        if (exitCode != 0) {
+            throw new GradleException("'npm ci' failed in ${testRunnerDir} (exit code ${exitCode})")
+        }
+    }
+}
+
+tasks.register('workbenchTestRunnerBrowser') {
+    group = "workbench"
+    description = "Installs Playwright's Chromium for the workbench test runner, if it is missing"
+    dependsOn 'workbenchTestRunnerInstall'
+    onlyIf { npmAvailable() }
+
+    doLast {
+        // Does nothing if this Playwright version's Chromium is already in Playwright's cache
+        // (~/.cache/ms-playwright by default, or $PLAYWRIGHT_BROWSERS_PATH)
+        def exitCode = runInTestRunnerDir(['npx', '--no-install', 'playwright', 'install', 'chromium'])
+        if (exitCode != 0) {
+            throw new GradleException("'npx playwright install chromium' failed (exit code ${exitCode})")
+        }
+    }
+}
+
+tasks.register('workbenchTest') {
+    group = "workbench"
+    description = "Runs every workbench story and its play function in headless Chromium"
+    dependsOn 'workbenchTestRunnerBrowser'
+    // The workbench server's classpath, so that it is built
+    inputs.files(sourceSets.main.runtimeClasspath).withPropertyName('serverClasspath')
+    // Only compile when testing a server started by this task, and when it can actually run
+    dependsOn(provider {
+        findProperty('workbenchUrl') || findProperty('workbenchSkipCompile') != null || !npmAvailable()
+                ? []
+                : ['workbenchDraftCompile']
+    })
+    // Always run, as the result depends on the running/compiled workbench
+    outputs.upToDateWhen { false }
+
+    doLast {
+        if (!npmAvailable()) {
+            logger.warn("Skipping workbenchTest: ${noNpmMessage}")
+            return
+        }
+        workbenchTestDir.mkdirs()
+        String url = findProperty('workbenchUrl')
+        Process server = null
+        try {
+            if (!url) {
+                int port = (findProperty('workbenchTestPort') ?: new ServerSocket(0).withCloseable {
+                    it.localPort
+                }) as int
+                // The same Java as workbenchServe
+                def javaExecutable = tasks.named('workbenchServe', JavaExec).get().javaLauncher.get()
+                        .executablePath.asFile.absolutePath
+                def serverLog = new File(workbenchTestDir, 'server.log')
+                // The same roots as workbenchServe, see there
+                server = new ProcessBuilder([javaExecutable,
+                                             '-cp', sourceSets.main.runtimeClasspath.asPath,
+                                             'stroom.gwt.workbench.framework.server.WorkbenchServer',
+                                             port.toString(),
+                                             webappDir.toString(),
+                                             codeServerLauncherDir,
+                                             warDir,
+                                             axeDir,
+                                             stroomResourcesDir.toString()].collect { it.toString() })
+                        .redirectErrorStream(true)
+                        .redirectOutput(serverLog)
+                        .start()
+                // Wait for the server to start listening
+                def deadline = System.currentTimeMillis() + 60_000
+                boolean listening = false
+                while (!listening) {
+                    if (!server.isAlive()) {
+                        throw new GradleException("The workbench server failed to start, see ${serverLog}")
+                    }
+                    try {
+                        new Socket('localhost', port).close()
+                        listening = true
+                    } catch (IOException ignored) {
+                        if (System.currentTimeMillis() > deadline) {
+                            throw new GradleException("The workbench server didn't start within 60s, "
+                                    + "see ${serverLog}")
+                        }
+                        Thread.sleep(200)
+                    }
+                }
+                url = "http://localhost:${port}"
+                println "Started a workbench server on ${url} (log: ${serverLog})"
+            }
+
+            def command = ['node', 'run.mjs', '--url', url, '--output-dir', workbenchTestDir.toString()]
+            def filter = findProperty('workbenchTestFilter')
+            if (filter) {
+                filter.toString().split(',').each { command += ['--filter', it.trim()] }
+            }
+            if (findProperty('workbenchTestWorkers')) {
+                command += ['--workers', findProperty('workbenchTestWorkers').toString()]
+            }
+            if (findProperty('workbenchTestScreenshots') != null) {
+                command += ['--screenshots']
+            }
+            if (findProperty('workbenchTestArgs')) {
+                command += findProperty('workbenchTestArgs').toString().trim().split(/\s+/).toList()
+            }
+            def exitCode = runInTestRunnerDir(command)
+            if (exitCode != 0) {
+                throw new GradleException("Workbench stories failed (exit code ${exitCode}). See "
+                        + "${workbenchTestDir}/results.json and junit.xml")
+            }
+        } finally {
+            if (server != null) {
+                server.destroy()
+                if (!server.waitFor(10, java.util.concurrent.TimeUnit.SECONDS)) {
+                    server.destroyForcibly()
+                }
+            }
+        }
+    }
+}
+
+tasks.register('workbenchCoverage', JavaExec) {
+    group = "workbench"
+    description = "Prints how many of the React Storybook's stories have been ported to the workbench"
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'stroom.gwt.workbench.client.ReactStoryCoverage'
+    if (findProperty('workbenchCoverageList') != null) {
+        args = ["--list=${findProperty('workbenchCoverageList')}".toString()]
+    }
+}
+
+tasks.register('workbenchReactManifest') {
+    group = "workbench"
+    description = "Regenerates src/test/resources/react-stories.json from the React Storybook"
+    doLast {
+        def command = ['node', 'react-manifest.mjs']
+        if (findProperty('workbenchReactDir')) {
+            command += ['--react-dir', findProperty('workbenchReactDir').toString()]
+        }
+        def exitCode = runInTestRunnerDir(command)
+        if (exitCode != 0) {
+            throw new GradleException("react-manifest.mjs failed (exit code ${exitCode})")
+        }
+    }
+}

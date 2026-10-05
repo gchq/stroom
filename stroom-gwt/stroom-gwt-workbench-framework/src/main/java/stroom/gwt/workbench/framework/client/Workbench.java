@@ -17,6 +17,8 @@
 package stroom.gwt.workbench.framework.client;
 
 import stroom.gwt.workbench.framework.client.manager.WorkbenchManager;
+import stroom.gwt.workbench.framework.client.preview.RunnerHooks;
+import stroom.gwt.workbench.framework.client.preview.RunnerJson;
 import stroom.gwt.workbench.framework.client.preview.StoryPreview;
 import stroom.gwt.workbench.framework.client.story.StoryDecorator;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -39,6 +41,9 @@ import java.util.Objects;
 ///   own as the workbench adds it.
 /// * `iframe.html` - the preview, which renders a single story. This page should load any
 ///   styles/scripts the stories need.
+///
+/// Both pages expose an index of all the stories as `window.__workbenchIndex`, and the preview
+/// exposes the progress of the story's play function, for the test runner (see [RunnerHooks]).
 public final class Workbench {
 
     private Workbench() {
@@ -59,6 +64,8 @@ public final class Workbench {
     public static void start(final StoryRegistry registry, final StoryDecorator decorator) {
         Objects.requireNonNull(registry);
         Objects.requireNonNull(decorator);
+        // For the test runner, see RunnerHooks
+        RunnerHooks.publishIndex(RunnerJson.index(registry));
         if (StoryUrls.isPreviewPage(Window.Location.getPath())) {
             new StoryPreview(registry, decorator).render(
                     Window.Location.getParameter(StoryUrls.ID_PARAM));

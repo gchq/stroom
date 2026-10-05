@@ -28,26 +28,37 @@ import java.util.function.Function;
 /// something (e.g. a click or an expectation) or groups other steps (`step` and `waitFor`).
 final class PlayStep {
 
+    /// How long a `waitFor(...)` retries for by default, as in Testing Library.
+    static final int DEFAULT_TIMEOUT_MILLIS = 1000;
+
+    // The story's root element while a step runs or is described, so that values (see
+    // [Query#textContent()] etc.) can find their elements. GWT is single threaded.
+    private static Element currentRoot;
+    private static boolean inStep;
+
     private final Kind kind;
     private final Function<Element, String> describer;
     private final Consumer<Element> action;
     private final List<PlayStep> children;
+    private final int timeoutMillis;
 
     private PlayStep(final Kind kind,
                      final Function<Element, String> describer,
                      final Consumer<Element> action,
-                     final List<PlayStep> children) {
+                     final List<PlayStep> children,
+                     final int timeoutMillis) {
         this.kind = kind;
         this.describer = describer;
         this.action = action;
         this.children = children;
+        this.timeoutMillis = timeoutMillis;
     }
 
     /// @param describer Describes the step, given the story's root element.
     /// @param action    Does the step, throwing a [PlayException] if it fails.
     /// @return A step that does something.
     static PlayStep action(final Function<Element, String> describer, final Consumer<Element> action) {
-        return new PlayStep(Kind.ACTION, describer, action, Collections.emptyList());
+        return new PlayStep(Kind.ACTION, describer, action, Collections.emptyList(), DEFAULT_TIMEOUT_MILLIS);
     }
 
     /// @param kind      [Kind#STEP] or [Kind#WAIT_FOR].
@@ -57,7 +68,49 @@ final class PlayStep {
     static PlayStep group(final Kind kind,
                           final Function<Element, String> describer,
                           final List<PlayStep> children) {
-        return new PlayStep(kind, describer, null, new ArrayList<>(children));
+        return group(kind, describer, children, DEFAULT_TIMEOUT_MILLIS);
+    }
+
+    /// @param kind          [Kind#STEP] or [Kind#WAIT_FOR].
+    /// @param describer     Describes the group.
+    /// @param children      The steps in the group.
+    /// @param timeoutMillis For [Kind#WAIT_FOR], how long to retry the steps for.
+    /// @return A step that groups other steps.
+    static PlayStep group(final Kind kind,
+                          final Function<Element, String> describer,
+                          final List<PlayStep> children,
+                          final int timeoutMillis) {
+        if (timeoutMillis < 0) {
+            throw new IllegalArgumentException("The timeout must not be negative: " + timeoutMillis);
+        }
+        return new PlayStep(kind, describer, null, new ArrayList<>(children), timeoutMillis);
+    }
+
+    /// @param describer Describes the step.
+    /// @param millis    How long to pause for.
+    /// @return A step that pauses before the next step. Inside a `waitFor(...)` it does nothing.
+    static PlayStep sleep(final Function<Element, String> describer, final int millis) {
+        if (millis < 0) {
+            throw new IllegalArgumentException("The pause must not be negative: " + millis);
+        }
+        return new PlayStep(Kind.SLEEP, describer, null, Collections.emptyList(), millis);
+    }
+
+    /// @return The story's root element while a step runs or is described.
+    /// @throws PlayException If no step is running, e.g. a value is read while the play function
+    ///                       is adding its steps.
+    static Element currentRoot() {
+        if (!inStep) {
+            throw new PlayException("Elements can only be found while a step runs, not while the play "
+                                    + "function adds its steps");
+        }
+        return currentRoot;
+    }
+
+    /// @return For a `waitFor(...)` group, how long to retry its steps for; for a sleep, how long
+    /// to pause for.
+    int getTimeoutMillis() {
+        return timeoutMillis;
     }
 
     /// @return Whether the step does something or groups other steps.
@@ -73,10 +126,17 @@ final class PlayStep {
     /// @param root The story's root element.
     /// @return The description, which never throws even if the step's element can't be found.
     String describe(final Element root) {
+        final Element previousRoot = currentRoot;
+        final boolean previousInStep = inStep;
+        currentRoot = root;
+        inStep = true;
         try {
             return describer.apply(root);
         } catch (final RuntimeException e) {
             return describer.apply(null);
+        } finally {
+            currentRoot = previousRoot;
+            inStep = previousInStep;
         }
     }
 
@@ -88,7 +148,16 @@ final class PlayStep {
         if (action == null) {
             throw new IllegalStateException("A group can't be run as a single step");
         }
-        action.accept(root);
+        final Element previousRoot = currentRoot;
+        final boolean previousInStep = inStep;
+        currentRoot = root;
+        inStep = true;
+        try {
+            action.accept(root);
+        } finally {
+            currentRoot = previousRoot;
+            inStep = previousInStep;
+        }
     }
 
     /// Does the step or, for a group, each of the steps in it in turn, synchronously, stopping at
@@ -103,6 +172,7 @@ final class PlayStep {
         if (kind == Kind.ACTION) {
             run(root);
         } else {
+            // A sleep has no children, so does nothing, as it can't pause synchronously
             for (final PlayStep child : children) {
                 child.runAll(root, listener);
             }
@@ -135,6 +205,8 @@ final class PlayStep {
         /// A named group of steps, the equivalent of Storybook's `step(...)`.
         STEP,
         /// Steps that are retried until they pass, the equivalent of `waitFor(...)`.
-        WAIT_FOR
+        WAIT_FOR,
+        /// A pause before the next step.
+        SLEEP
     }
 }
