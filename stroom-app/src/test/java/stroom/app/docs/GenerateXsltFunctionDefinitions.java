@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -37,6 +38,18 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/// This class generates documentation for all the XSLT functions, using the annotations
+/// on the functions. For each function, it generates a JSON file containing the annotation data.
+/// This JSON data can be read by a Hugo shortcode in the docs (e.g `{{< xslt-func "format-dateTime" >}}`).
+///
+/// Each category of XSLT function has its own doc page. There is also an index page that lists all the functions.
+/// This class checks that each category page contains the shortcodes for all of the functions in that category.
+/// It also checks that the main index page contains the links for all the functions.
+/// It is up to the human to add the shortcodes and links to the doc pages, but this class will output
+/// what is missing so it is just a copy/paste job.
+///
+/// The reason for not automating the updating of the doc pages is that it allows the doc page to be manually
+/// edited to add extra information that is not really suitable for a java annotation.
 public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateXsltFunctionDefinitions.class);
@@ -73,7 +86,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                         .filter(Files::isRegularFile)
                         .filter(path -> path.getFileName().toString().endsWith(".json"))
                         .forEach(ThrowingConsumer.unchecked(path -> {
-                            LOGGER.info("Deleting file {}", path.toAbsolutePath().normalize());
+                            LOGGER.debug("Deleting file {}", path.toAbsolutePath().normalize());
                             Files.delete(path);
                         }));
             }
@@ -81,6 +94,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
             final List<AnnotatedClass<XsltFunctionDef>> annotatedClasses = getAllFunctionDefs(scanResult);
             annotatedClasses.forEach(this::processFunction);
             produceIndexFile(annotatedClasses);
+            LOGGER.info("All XSLT functions present in the documentation content");
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -88,6 +102,8 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
     private void produceIndexFile(final List<AnnotatedClass<XsltFunctionDef>> annotatedClasses) {
         final Map<XsltFunctionCategory, List<AnnotatedClass<XsltFunctionDef>>> groups = annotatedClasses.stream()
+                .sorted(Comparator.comparing(annotatedClass ->
+                        annotatedClass.clazz().getName()))
                 .collect(Collectors.groupingBy(annotatedClass -> {
                     final XsltFunctionCategory[] categories = annotatedClass.annotation().commonCategory();
                     Objects.requireNonNull(categories, () -> LogUtil.message(
@@ -114,7 +130,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
         try {
             final String json = JsonUtil.getMapper().writeValueAsString(map);
-            LOGGER.info("Index:\n{}", json);
+            LOGGER.debug("Index:\n{}", json);
 
             final Path outputFile = buildDataFilePath(INDEX_DATA_FILENAME);
             Files.writeString(outputFile, json, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
@@ -131,6 +147,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         try {
             // Check the _index.md file contains a link for each func with the appropriate category
             final Path indexDocFilePath = buildDocsFilePath(INDEX_DOC_FILENAME);
+            LOGGER.info("Checking docs page {}", indexDocFilePath.toAbsolutePath());
             if (!Files.isRegularFile(indexDocFilePath)) {
                 throw new RuntimeException(LogUtil.message("File {} does not exist",
                         indexDocFilePath.toAbsolutePath()));
@@ -138,25 +155,28 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
             final String docFileNameWithoutExtension = index.getDocFilename()
                     .replaceAll("\\.md$", "");
             final String indexDocContent = Files.readString(indexDocFilePath);
-            Set<String> stringsToFind = index.functionNames
+            final Set<String> missingLinks = index.functionNames
                     .stream()
-                    .map(functionName ->
-                            "[" + functionName + "]("
-                            + docFileNameWithoutExtension
-                            + "#" + functionName + ")")
+                    .sorted()
+                    .map(functionName -> "[`" + functionName + "`]({{< relref \""
+                                         + docFileNameWithoutExtension
+                                         + "#" + functionName + "\" >}})")
                     .collect(Collectors.toCollection(HashSet::new));
 
-            stringsToFind.removeIf(indexDocContent::contains);
+            missingLinks.removeIf(indexDocContent::contains);
 
-            if (!stringsToFind.isEmpty()) {
+            if (!missingLinks.isEmpty()) {
                 LOGGER.error("File {} is missing content for the following functions in category {}. " +
                              "Each function should have a link a bit like '[hash](conversion#hash)'.\n{}",
                         indexDocFilePath.toAbsolutePath(),
                         index.category,
-                        String.join("\n", stringsToFind));
+                        missingLinks.stream()
+                                .sorted()
+                                .map(link -> "  * " + link)
+                                .collect(Collectors.joining("\n")));
             }
             int errorCount = 0;
-            errorCount += stringsToFind.size();
+            errorCount += missingLinks.size();
 
             // Check the appropriate category file (e.g. conversion.md) contains a shortcode
             // for each of the funcs in that category.
@@ -168,20 +188,27 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
             final String categoryDocContent = Files.readString(categoryDocFilePath);
 
-            stringsToFind = index.functionNames
+            final Set<FuncAndShortCode> missingShortCodes = index.functionNames
                     .stream()
-                    .map(functionName -> "{{< xslt-func \"" + functionName + "\" >}}")
+                    .map(functionName -> {
+                        final String shortCode = "{{< xslt-func \"" + functionName + "\" >}}";
+                        return new FuncAndShortCode(functionName, shortCode);
+                    })
                     .collect(Collectors.toCollection(HashSet::new));
 
-            stringsToFind.removeIf(categoryDocContent::contains);
+            missingShortCodes.removeIf(funcAndShortCode ->
+                    categoryDocContent.contains(funcAndShortCode.shortCode()));
 
-            if (!stringsToFind.isEmpty()) {
+            if (!missingShortCodes.isEmpty()) {
                 LOGGER.error("File {} is missing content for the following functions. " +
                              "Each function should have a shortcode call like '{{< xslt-func \"hash\" >}}'.\n{}",
                         categoryDocFilePath.toAbsolutePath(),
-                        String.join("\n", stringsToFind));
+                        missingShortCodes.stream()
+                                .sorted(Comparator.comparing(FuncAndShortCode::funcName))
+                                .map(FuncAndShortCode::toString)
+                                .collect(Collectors.joining("\n\n")));
             }
-            errorCount += stringsToFind.size();
+            errorCount += missingLinks.size();
             return errorCount;
         } catch (final IOException e) {
             throw new RuntimeException(e);
@@ -239,7 +266,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
             final String json = objectMapper.writeValueAsString(functionDef);
             final String filename = annotatedClass.annotation().name() + ".json";
             final Path filePath = buildDataFilePath(filename);
-            LOGGER.info("{} - {} - {}\n{}",
+            LOGGER.debug("{} - {} - {}\n{}",
                     annotatedClass.clazz().getName(),
                     filename,
                     filePath.toAbsolutePath(),
@@ -349,6 +376,22 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
         public String getDocFilename() {
             return docFilename;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private record FuncAndShortCode(String funcName, String shortCode) {
+
+        @Override
+        public String toString() {
+            return LogUtil.message("""
+                    ## {}
+
+                    {}
+                    """, funcName, shortCode);
         }
     }
 }
