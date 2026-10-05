@@ -83,9 +83,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Singleton
+// We need to know about changes to volume groups AND volumes as we hold a cache of current volumes
+// grouped by their names, so a volume group may get renamed
 @EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {
         EntityAction.CREATE,
         EntityAction.UPDATE,
+        EntityAction.DELETE})
+@EntityEventHandler(type = FsVolumeGroupServiceImpl.ENTITY_TYPE, action = {
+        EntityAction.UPDATE,
+        EntityAction.CREATE,
         EntityAction.DELETE})
 public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushable, HasSystemInfo {
 
@@ -93,6 +99,8 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
+    static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
+
     protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
     private final FsVolumeDao fsVolumeDao;
@@ -177,10 +185,17 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                 builder.volumeState(fileVolumeState);
 
                 if (fsVolume.getVolumeGroupId() == null) {
-                    final FsVolumeGroup fsVolumeGroup = fsVolumeGroupService
-                            .getOrCreate(volumeConfigProvider.get().getDefaultStreamVolumeGroupName());
-                    if (fsVolumeGroup != null) {
-                        builder.volumeGroupId(fsVolumeGroup.getId());
+                    final String defaultVolGrpName = volumeConfigProvider.get().getDefaultStreamVolumeGroupName();
+                    if (NullSafe.isNonBlankString(defaultVolGrpName)) {
+                        final FsVolumeGroup fsVolumeGroup = fsVolumeGroupService.getOrCreate(defaultVolGrpName);
+                        if (fsVolumeGroup != null) {
+                            builder.volumeGroupId(fsVolumeGroup.getId());
+                        } else {
+                            throw new RuntimeException("No volume group exists with name '" + defaultVolGrpName + "'");
+                        }
+                    } else {
+                        throw new RuntimeException("defaultStreamVolumeGroupName has not been configured. " +
+                                                   "Can't create default volumes.");
                     }
                 }
 
@@ -395,7 +410,15 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     @Override
     public void onChange(final EntityEvent event) {
         LOGGER.debug("onChange() - event: {}", event);
-        clearCurrentVolumeList();
+        final EntityAction action = event.getAction();
+        if (action == EntityAction.CREATE
+            || action == EntityAction.UPDATE
+            || action == EntityAction.DELETE) {
+
+            // Changes to volumes/groups are pretty rare so the blunt approach of clearing the whole
+            // cache is OK.
+            clearCurrentVolumeList();
+        }
     }
 
     private synchronized void clearCurrentVolumeList() {
@@ -406,28 +429,17 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private void fireChange(final Integer id, final EntityAction action) {
         LOGGER.debug("fireChange() - id: {}, action: {}", id, action);
         clearCurrentVolumeList();
-        if (entityEventBusProvider != null) {
+        NullSafe.consume(entityEventBusProvider, Provider::get, entityEventBus -> {
             try {
-                final EntityEventBus entityEventBus = entityEventBusProvider.get();
-                if (entityEventBus != null) {
-                    entityEventBus.fire(createEntityEvent(id, action));
-                }
-            } catch (final RuntimeException e) {
+                entityEventBus.buildFiring()
+                        .withDocRef(EVENT_DOCREF)
+                        .withAction(action)
+                        .withIntData(id)
+                        .fire();
+            } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
             }
-        }
-    }
-
-    private EntityEvent createEntityEvent(final Integer id, final EntityAction action) {
-        // Abuse the uuid field with id as we have no uuid.
-        final String uuid = NullSafe.getOrElse(id, String::valueOf, ENTITY_TYPE);
-        return new EntityEvent(
-                DocRef.builder()
-                        .type(ENTITY_TYPE)
-                        .uuid(uuid)
-                        .name(ENTITY_TYPE)
-                        .build(),
-                action);
+        });
     }
 
     /**
@@ -670,18 +682,25 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, false, false);
                         final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
                         if (existingVolumes.isEmpty()) {
-                            if (volumeConfig.getDefaultStreamVolumePaths() != null) {
-                                final List<String> paths = volumeConfig.getDefaultStreamVolumePaths();
-                                for (final String path : paths) {
-                                    final Path resolvedPath = pathCreator.toAppPath(path);
-                                    LOGGER.info("Creating default data volume with path {}",
-                                            resolvedPath.toAbsolutePath().normalize());
+                            final String defaultVolGrpName = volumeConfig.getDefaultStreamVolumeGroupName();
+                            if (NullSafe.isNonBlankString(defaultVolGrpName)) {
+                                if (NullSafe.hasItems(volumeConfig.getDefaultStreamVolumePaths())) {
+                                    final FsVolumeGroup volGroup = fsVolumeGroupService.getOrCreate(defaultVolGrpName);
+                                    final List<String> paths = volumeConfig.getDefaultStreamVolumePaths();
+                                    for (final String path : paths) {
+                                        final Path resolvedPath = pathCreator.toAppPath(path);
+                                        LOGGER.info("Creating default data volume with path {}",
+                                                resolvedPath.toAbsolutePath().normalize());
 
-                                    createVolume(resolvedPath);
+                                        createVolume(volGroup, resolvedPath);
+                                    }
+                                } else {
+                                    LOGGER.warn(() -> "defaultStreamVolumePaths has not been configured. " +
+                                                      "No volumes to create.");
                                 }
-
                             } else {
-                                LOGGER.warn(() -> "No suitable directory to create default volumes in");
+                                LOGGER.warn(() -> "defaultStreamVolumeGroupName has not been configured. " +
+                                                  "Can't create default volume group or volumes.");
                             }
                         } else {
                             LOGGER.info(() -> "Existing volumes exist, won't create default volumes");
@@ -701,9 +720,11 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         }
     }
 
-    private void createVolume(final Path path) {
+    private void createVolume(final FsVolumeGroup volGroup, final Path path) {
+        Objects.requireNonNull(volGroup);
         final FsVolume fileVolume = FsVolume
                 .builder()
+                .volumeGroupId(volGroup.getId())
                 .volumeType(FsVolumeType.STANDARD)
                 .path(FileUtil.getCanonicalPath(path))
                 .build();
