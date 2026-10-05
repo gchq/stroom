@@ -19,8 +19,10 @@ package stroom.pipeline.refdata.store.offheapstore;
 import java.util.Objects;
 
 /**
- * < mapUid >< key >
+ * <pre>
+ * < mapUid  >< key >
  * < 4 bytes >< ? bytes >
+ * </pre>
  */
 public class KeyValueStoreKey {
 
@@ -54,7 +56,7 @@ public class KeyValueStoreKey {
         }
         final KeyValueStoreKey that = (KeyValueStoreKey) o;
         return Objects.equals(mapUid, that.mapUid) &&
-                Objects.equals(key, that.key);
+               Objects.equals(key, that.key);
     }
 
     @Override
@@ -65,8 +67,8 @@ public class KeyValueStoreKey {
     @Override
     public String toString() {
         return "KeyValueStoreKey{" +
-                "mapUid=" + mapUid +
-                ", key='" + key + '\'' +
-                '}';
+               "mapUid=" + mapUid +
+               ", key='" + key + '\'' +
+               '}';
     }
 }

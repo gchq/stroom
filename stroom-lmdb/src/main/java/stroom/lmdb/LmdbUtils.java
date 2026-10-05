@@ -159,7 +159,9 @@ public class LmdbUtils {
 //                .build();
 //    }
 
-    public static long getEntryCount(final LmdbEnv env, final Txn<ByteBuffer> txn, final Dbi<ByteBuffer> dbi) {
+    public static long getEntryCount(final LmdbEnv env,
+                                     final Txn<ByteBuffer> txn,
+                                     final Dbi<ByteBuffer> dbi) {
 
         return dbi.stat(txn).entries;
     }

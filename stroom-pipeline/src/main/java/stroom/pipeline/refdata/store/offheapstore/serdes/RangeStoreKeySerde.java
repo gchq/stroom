@@ -70,6 +70,10 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
         UIDSerde.writeUid(byteBuffer, rangeStoreKey.getMapUid());
         final Range<Long> range = rangeStoreKey.getKeyRange();
         byteBuffer.putLong(range.getFrom());
+        // TODO If from == (to + 1), i.e. it is not a range, just a single val, then
+        //  we could just store the from, however deser would also need to cater for the 'to'
+        //  potentially not being there and handling it accordingly. Would save 8bytes, albeit
+        //  in some niche cases.
         byteBuffer.putLong(range.getTo());
         byteBuffer.flip();
     }
@@ -103,9 +107,7 @@ public class RangeStoreKeySerde implements Serde<RangeStoreKey> {
     }
 
     public void serializeWithoutRangePart(final ByteBuffer byteBuffer, final RangeStoreKey key) {
-
         serialize(byteBuffer, key);
-
         // set the limit to just after the UID part
         byteBuffer.limit(UID.UID_ARRAY_LENGTH);
     }
