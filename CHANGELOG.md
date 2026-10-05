@@ -13,6 +13,11 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 ~~~
 
 
+## [v7.13.0] - 2026-10-05
+
+* Bug **#5813** : Fix missing entity event handlers.
+
+
 ## [v7.13-beta.18] - 2026-09-30
 
 * Feature **#5551** : Display API key expiry date in red when the key is expired or will expire in <30 days. Change the text in brackets to show `(EXPIRED)` when the key has expired.
@@ -2576,7 +2581,8 @@ DO NOT ADD CHANGES HERE - ADD THEM USING log_change.sh
 * Issue **#3830** : Add S3 data storage option.
 
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.13-beta.18...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.13.0...HEAD
+[v7.13.0]: https://github.com/gchq/stroom/compare/v7.13-beta.18...v7.13.0
 [v7.13-beta.18]: https://github.com/gchq/stroom/compare/v7.13-beta.17...v7.13-beta.18
 [v7.13-beta.17]: https://github.com/gchq/stroom/compare/v7.13-beta.16...v7.13-beta.17
 [v7.13-beta.16]: https://github.com/gchq/stroom/compare/v7.13-beta.15...v7.13-beta.16
