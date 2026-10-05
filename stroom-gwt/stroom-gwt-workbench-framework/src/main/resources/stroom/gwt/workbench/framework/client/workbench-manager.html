@@ -1,0 +1,490 @@
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!--
+  The markup of the workbench 'manager', i.e. the sidebar, toolbar and addon panel around the
+  preview iframe. It mirrors the layout of React Storybook and is added to the page by
+  WorkbenchManager, which then fills in the sidebar tree and the addon panel and wires up the
+  buttons. Styled by workbench-manager.css.
+
+  The icons in the sprite below are taken from Storybook's @storybook/icons package, apart from
+  wbm-icon-expander and wbm-icon-new, which are taken from Storybook itself (both MIT licence, see
+  NOTICE.md and licences/custom). Stroom's logo mark is Stroom's own.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none">
+    <!-- Stroom's logo mark, from stroom-app/src/main/resources/ui/raw-images/infinity_logo.svg -->
+    <symbol id="wbm-logo" viewBox="0 0 887.633 887.632"><circle r="443.81653" cy="443.81616" cx="443.81653" fill="#ff6f00"/><path fill="#fff" d="m 276.28719,237.81636 c -113.99987,0 -205.99976,91.99993 -205.99976,205.99979 0,112.9999 91.99989,205.9998 205.99976,205.9998 114,0 205.9999,-92.9999 205.9999,-205.9998 0,-113.99986 -91.9999,-205.9998 -205.9999,-205.99979 z m 0,333.99969 c -70.99987,0 -128.99987,-56.9999 -128.99987,-127.9999 0,-70.9999 58,-128.99985 128.99987,-128.99985 71,0 128.9999,57.99995 128.9999,128.99985 0,71 -57.9999,127.9999 -128.9999,127.9999 z"/><path fill="#fff" d="m 611.34559,237.81636 c -113.9999,0 -205.9998,91.99993 -205.9998,205.99979 0,112.9999 91.9999,205.9998 205.9998,205.9998 113.9999,0 205.9999,-92.9999 205.9999,-205.9998 0,-113.99986 -92,-205.9998 -205.9999,-205.99979 z m 0,333.99969 c -70.9999,0 -128.9999,-56.9999 -128.9999,-127.9999 0,-70.9999 58,-128.99985 128.9999,-128.99985 71,0 128.9999,57.99995 128.9999,128.99985 0,71 -57.9999,127.9999 -128.9999,127.9999 z"/></symbol>
+    <symbol id="wbm-icon-group" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M6.586 3.504l-1.5-1.5H1v9h12v-7.5H6.586zm.414-1L5.793 1.297a1 1 0 00-.707-.293H.5a.5.5 0 00-.5.5v10a.5.5 0 00.5.5h13a.5.5 0 00.5-.5v-8.5a.5.5 0 00-.5-.5H7z"/>
+    </symbol>
+    <symbol id="wbm-icon-component" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M3.5 1.004a2.5 2.5 0 00-2.5 2.5v7a2.5 2.5 0 002.5 2.5h7a2.5 2.5 0 002.5-2.5v-7a2.5 2.5 0 00-2.5-2.5h-7zm8.5 5.5H7.5v-4.5h3a1.5 1.5 0 011.5 1.5v3zm0 1v3a1.5 1.5 0 01-1.5 1.5h-3v-4.5H12zm-5.5 4.5v-4.5H2v3a1.5 1.5 0 001.5 1.5h3zM2 6.504h4.5v-4.5h-3a1.5 1.5 0 00-1.5 1.5v3z"/>
+    </symbol>
+    <symbol id="wbm-icon-story" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M3.5 0h7a.5.5 0 01.5.5v13a.5.5 0 01-.454.498.462.462 0 01-.371-.118L7 11.159l-3.175 2.72a.46.46 0 01-.379.118A.5.5 0 013 13.5V.5a.5.5 0 01.5-.5zM4 12.413l2.664-2.284a.454.454 0 01.377-.128.498.498 0 01.284.12L10 12.412V1H4v11.413z"/>
+    </symbol>
+    <symbol id="wbm-icon-expander" viewBox="0 0 8 8">
+        <path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"
+              d="M1.896 7.146a.5.5 0 1 0 .708.708l3.5-3.5a.5.5 0 0 0 0-.708l-3.5-3.5a.5.5 0 1 0-.708.708L5.043 4 1.896 7.146Z"/>
+    </symbol>
+    <symbol id="wbm-icon-expand-all" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M7.354.146l4 4a.5.5 0 01-.708.708L7 1.207 3.354 4.854a.5.5 0 11-.708-.708l4-4a.5.5 0 01.708 0zM11.354 9.146a.5.5 0 010 .708l-4 4a.5.5 0 01-.708 0l-4-4a.5.5 0 11.708-.708L7 12.793l3.646-3.647a.5.5 0 01.708 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-collapse-all" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M3.354.146a.5.5 0 10-.708.708l4 4a.5.5 0 00.708 0l4-4a.5.5 0 00-.708-.708L7 3.793 3.354.146zM6.646 9.146a.5.5 0 01.708 0l4 4a.5.5 0 01-.708.708L7 10.207l-3.646 3.647a.5.5 0 01-.708-.708l4-4z"/>
+    </symbol>
+    <symbol id="wbm-icon-search" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M9.544 10.206a5.5 5.5 0 11.662-.662.5.5 0 01.148.102l3 3a.5.5 0 01-.708.708l-3-3a.5.5 0 01-.102-.148zM10.5 6a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-clear" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M9.854 4.146a.5.5 0 010 .708L7.707 7l2.147 2.146a.5.5 0 01-.708.708L7 7.707 4.854 9.854a.5.5 0 01-.708-.708L6.293 7 4.146 4.854a.5.5 0 11.708-.708L7 6.293l2.146-2.147a.5.5 0 01.708 0z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M7 14A7 7 0 107 0a7 7 0 000 14zm0-1A6 6 0 107 1a6 6 0 000 12z"/>
+    </symbol>
+    <symbol id="wbm-icon-play" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M12.813 7.425l-9.05 5.603A.5.5 0 013 12.603V1.398a.5.5 0 01.763-.425l9.05 5.602a.5.5 0 010 .85z"/>
+    </symbol>
+    <symbol id="wbm-icon-new" viewBox="0 0 14 14">
+        <path d="M7 3.5L6.96971 3.68173C6.68873 5.36762 5.36762 6.68873 3.68173 6.96971L3.5 7" stroke="currentColor" stroke-linecap="round" fill="none"/>
+        <path d="M7 3.5L7.03029 3.68173C7.31127 5.36762 8.63238 6.68873 10.3183 6.96971L10.5 7" stroke="currentColor" stroke-linecap="round" fill="none"/>
+        <path d="M7 10.5L6.96971 10.3183C6.68873 8.63238 5.36762 7.31127 3.68173 7.03029L3.5 7" stroke="currentColor" stroke-linecap="round" fill="none"/>
+        <path d="M7 10.5L7.03029 10.3183C7.31127 8.63238 8.63238 7.31127 10.3183 7.03029L10.5 7" stroke="currentColor" stroke-linecap="round" fill="none"/>
+        <path d="M7 4.5L4.5 7L7 9.5L9.5 7L7 4.5Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="wbm-icon-modified" viewBox="0 0 14 14">
+        <circle cx="7" cy="7" r="3" fill="currentColor"/>
+    </symbol>
+    <symbol id="wbm-icon-related" viewBox="0 0 14 14">
+        <circle cx="7" cy="7" r="3" fill="currentColor"/>
+    </symbol>
+    <symbol id="wbm-icon-sweep" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M9.621 3.914l.379.379 3.146-3.147a.5.5 0 01.708.708L10.707 5l.379.379a3 3 0 010 4.242l-.707.707-.005.005-.008.008-.012.013-1.733 1.732a3 3 0 01-4.242 0L.146 7.854a.5.5 0 01.708-.707.915.915 0 001.292 0L4.64 4.654a.52.52 0 01.007-.008l.733-.732a3 3 0 014.242 0zm-4.26 1.432l.139-.139 3.146 3.147a.5.5 0 10.708-.707L6.212 4.505a2 2 0 012.702.116l.731.731.001.002h.002l.73.732a2 2 0 010 2.828l-.706.707-.012.013a.503.503 0 00-.014.013l-1.732 1.732a2 2 0 01-2.828 0L3.354 9.647a2.489 2.489 0 001.414-.708l1.086-1.085a.5.5 0 10-.708-.707L4.061 8.232a1.5 1.5 0 01-2.01.102c.294-.088.57-.248.803-.48l2.5-2.5a.475.475 0 00.007-.008z"/>
+        <path fill="currentColor"
+              d="M2 5.004a1 1 0 11-2 0 1 1 0 012 0zM4 3.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-batch-accept" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M11.5 2a.5.5 0 000 1h2a.5.5 0 000-1h-2zM9.3 2.6a.5.5 0 01.1.7l-5.995 7.993a.505.505 0 01-.37.206.5.5 0 01-.395-.152L.146 8.854a.5.5 0 11.708-.708l2.092 2.093L8.6 2.7a.5.5 0 01.7-.1zM11 7a.5.5 0 01.5-.5h2a.5.5 0 010 1h-2A.5.5 0 0111 7zM11.5 11a.5.5 0 000 1h2a.5.5 0 000-1h-2z"/>
+    </symbol>
+    <symbol id="wbm-icon-play-hollow" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M4.2 10.88L10.668 7 4.2 3.12v7.76zM3 2.414v9.174a.8.8 0 001.212.686l7.645-4.587a.8.8 0 000-1.372L4.212 1.727A.8.8 0 003 2.413z"/>
+    </symbol>
+    <symbol id="wbm-icon-delete" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M14 7A7 7 0 110 7a7 7 0 0114 0zm-1 0a6 6 0 01-9.874 4.582l8.456-8.456A5.976 5.976 0 0113 7zM2.418 10.874l8.456-8.456a6 6 0 00-8.456 8.456z"/>
+    </symbol>
+    <symbol id="wbm-icon-filter" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M1 2a.5.5 0 000 1h12a.5.5 0 000-1H1zM3 5a.5.5 0 000 1h8a.5.5 0 000-1H3zM4.5 8.5A.5.5 0 015 8h4a.5.5 0 010 1H5a.5.5 0 01-.5-.5zM6.5 11a.5.5 0 000 1h1a.5.5 0 000-1h-1z"/>
+    </symbol>
+    <symbol id="wbm-icon-plus" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M7 1a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 017 1z"/>
+    </symbol>
+    <symbol id="wbm-icon-settings" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M5.586 5.586A2 2 0 018.862 7.73a.5.5 0 10.931.365 3 3 0 10-1.697 1.697.5.5 0 10-.365-.93 2 2 0 01-2.145-3.277z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M.939 6.527c.127.128.19.297.185.464a.635.635 0 01-.185.465L0 8.395a7.099 7.099 0 001.067 2.572h1.32c.182 0 .345.076.46.197a.635.635 0 01.198.46v1.317A7.097 7.097 0 005.602 14l.94-.94a.634.634 0 01.45-.186H7.021c.163 0 .326.061.45.186l.939.938a7.098 7.098 0 002.547-1.057V11.61c0-.181.075-.344.197-.46a.634.634 0 01.46-.197h1.33c.507-.76.871-1.622 1.056-2.55l-.946-.946a.635.635 0 01-.186-.465.635.635 0 01.186-.464l.943-.944a7.099 7.099 0 00-1.044-2.522h-1.34a.635.635 0 01-.46-.197.635.635 0 01-.196-.46V1.057A7.096 7.096 0 008.413.002l-.942.942a.634.634 0 01-.45.186H6.992a.634.634 0 01-.45-.186L5.598 0a7.097 7.097 0 00-2.553 1.058v1.33c0 .182-.076.345-.197.46a.635.635 0 01-.46.198h-1.33A7.098 7.098 0 00.003 5.591l.936.936zm.707 1.636c.324-.324.482-.752.479-1.172a1.634 1.634 0 00-.48-1.171l-.538-.539c.126-.433.299-.847.513-1.235h.768c.459 0 .873-.19 1.167-.49.3-.295.49-.708.49-1.167v-.77c.39-.215.807-.388 1.243-.515l.547.547c.32.32.742.48 1.157.48l.015-.001h.014c.415 0 .836-.158 1.157-.479l.545-.544c.433.126.846.299 1.234.512v.784c0 .46.19.874.49 1.168.294.3.708.49 1.167.49h.776c.209.382.378.788.502 1.213l-.545.546a1.635 1.635 0 00-.48 1.17c-.003.421.155.849.48 1.173l.549.55c-.126.434-.3.85-.513 1.239h-.77c-.458 0-.872.19-1.166.49-.3.294-.49.708-.49 1.167v.77a6.09 6.09 0 01-1.238.514l-.54-.54a1.636 1.636 0 00-1.158-.48H6.992c-.415 0-.837.159-1.157.48l-.543.543a6.091 6.091 0 01-1.247-.516v-.756c0-.459-.19-.873-.49-1.167-.294-.3-.708-.49-1.167-.49h-.761a6.094 6.094 0 01-.523-1.262l.542-.542z"/>
+    </symbol>
+    <symbol id="wbm-icon-reload" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M5.5 1A.5.5 0 005 .5H2a.5.5 0 000 1h1.535a6.502 6.502 0 002.383 11.91.5.5 0 10.165-.986A5.502 5.502 0 014.5 2.1V4a.5.5 0 001 0V1.353a.5.5 0 000-.023V1zM7.507 1a.5.5 0 01.576-.41 6.502 6.502 0 012.383 11.91H12a.5.5 0 010 1H9a.5.5 0 01-.5-.5v-3a.5.5 0 011 0v1.9A5.5 5.5 0 007.917 1.576.5.5 0 017.507 1z"/>
+    </symbol>
+    <symbol id="wbm-icon-ruler" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M1.5 1.004a.5.5 0 01.5.5v.5h10v-.5a.5.5 0 011 0v2a.5.5 0 01-1 0v-.5H2v.5a.5.5 0 01-1 0v-2a.5.5 0 01.5-.5z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M1.5 6a.5.5 0 00-.5.5v6a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-6a.5.5 0 00-.5-.5h-11zM2 7v5h10V7h-1v2.5a.5.5 0 01-1 0V7h-.75v1a.5.5 0 01-1 0V7H7.5v2.5a.5.5 0 01-1 0V7h-.75v1a.5.5 0 01-1 0V7H4v2.5a.5.5 0 01-1 0V7H2z"/>
+    </symbol>
+    <symbol id="wbm-icon-outline" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M2 2.004v2H1v-2.5a.5.5 0 01.5-.5H4v1H2zM1 9.004v-4h1v4H1zM1 10.004v2.5a.5.5 0 00.5.5H4v-1H2v-2H1zM10 13.004h2.5a.5.5 0 00.5-.5v-2.5h-1v2h-2v1zM12 4.004h1v-2.5a.5.5 0 00-.5-.5H10v1h2v2zM9 12.004v1H5v-1h4zM9 1.004v1H5v-1h4zM13 9.004h-1v-4h1v4zM7 8.004a1 1 0 100-2 1 1 0 000 2z"/>
+    </symbol>
+    <symbol id="wbm-icon-viewport" viewBox="0 0 14 14">
+        <path fill="currentColor" d="M1.5 1.004a.5.5 0 100 1H12v10.5a.5.5 0 001 0v-10.5a1 1 0 00-1-1H1.5z"/>
+        <path fill="currentColor" d="M1 3.504a.5.5 0 01.5-.5H10a1 1 0 011 1v8.5a.5.5 0 01-1 0v-8.5H1.5a.5.5 0 01-.5-.5z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M1.5 5.004a.5.5 0 00-.5.5v7a.5.5 0 00.5.5h7a.5.5 0 00.5-.5v-7a.5.5 0 00-.5-.5h-7zm.5 1v6h6v-6H2z"/>
+    </symbol>
+    <symbol id="wbm-icon-accessibility" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M3.526 4.842a.5.5 0 01.632-.316l2.051.684a2.5 2.5 0 001.582 0l2.05-.684a.5.5 0 01.317.948l-2.453.818a.3.3 0 00-.205.285v.243a4.5 4.5 0 00.475 2.012l.972 1.944a.5.5 0 11-.894.448L7 9.118l-1.053 2.106a.5.5 0 11-.894-.447l.972-1.945A4.5 4.5 0 006.5 6.82v-.243a.3.3 0 00-.205-.285l-2.453-.818a.5.5 0 01-.316-.632z"/>
+        <path fill="currentColor" d="M7 4.5a1 1 0 100-2 1 1 0 000 2z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M7 14A7 7 0 107 0a7 7 0 000 14zm0-1A6 6 0 107 1a6 6 0 000 12z"/>
+    </symbol>
+    <symbol id="wbm-icon-share" viewBox="0 0 14 14">
+        <g fill="currentColor">
+            <path d="M10.5 12a.5.5 0 01.5.5v.504a1 1 0 01-1 1H8.5a.5.5 0 010-1H10V12.5a.5.5 0 01.5-.5zM.498 11a.5.5 0 01.5.5v1.502H2.5a.5.5 0 110 1H.998a1 1 0 01-1-1V11.5a.5.5 0 01.5-.5zM6.5 13a.5.5 0 010 1h-2a.5.5 0 010-1h2zM10.501 3.004h.006a.495.495 0 01.232.063c.04.022.08.049.115.083a.497.497 0 01.077.104.493.493 0 01.06.151l.003.038c.003.02.006.04.006.06V6.5a.5.5 0 01-1 0V4.71L6.857 7.855a.5.5 0 11-.707-.708l3.144-3.144L7.499 4a.5.5 0 01.002-1l3 .004z"/>
+            <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M13.6.014a.5.5 0 01.4.49v10l-.01.1a.501.501 0 01-.39.39l-.1.01h-10a.5.5 0 01-.49-.4l-.01-.1v-10a.5.5 0 01.5-.5h10l.1.01zM4 10.004h9v-9H4v9z"/>
+            <path d="M.5 7a.5.5 0 01.5.5v2a.5.5 0 01-1 0v-2A.5.5 0 01.5 7zM1.5 3.002a.5.5 0 010 1H.998L1 5.499a.5.5 0 01-1 .002l-.002-1.498a1 1 0 011-1.001H1.5z"/>
+        </g>
+    </symbol>
+    <symbol id="wbm-icon-fullscreen" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M1.5 1h2a.5.5 0 010 1h-.793l3.147 3.146a.5.5 0 11-.708.708L2 2.707V3.5a.5.5 0 01-1 0v-2a.5.5 0 01.5-.5zM10 1.5a.5.5 0 01.5-.5h2a.5.5 0 01.5.5v2a.5.5 0 01-1 0v-.793L8.854 5.854a.5.5 0 11-.708-.708L11.293 2H10.5a.5.5 0 01-.5-.5zM12.5 10a.5.5 0 01.5.5v2a.5.5 0 01-.5.5h-2a.5.5 0 010-1h.793L8.146 8.854a.5.5 0 11.708-.708L12 11.293V10.5a.5.5 0 01.5-.5zM2 11.293V10.5a.5.5 0 00-1 0v2a.5.5 0 00.5.5h2a.5.5 0 000-1h-.793l3.147-3.146a.5.5 0 10-.708-.708L2 11.293z"/>
+    </symbol>
+    <symbol id="wbm-icon-editor" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M7.536 5.314a.5.5 0 01.928.372l-2 5a.5.5 0 01-.928-.371l2-5zM3.646 6.146a.5.5 0 01.708.708L3.207 8l1.147 1.146a.5.5 0 01-.708.708l-1.5-1.5a.5.5 0 01-.063-.63l.063-.078 1.5-1.5zM9.646 6.146a.5.5 0 01.707 0l1.5 1.5.065.079a.497.497 0 01-.064.629l-1.5 1.5a.5.5 0 01-.708-.708L10.793 8 9.646 6.854a.5.5 0 010-.708z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M13.5 1.004a.5.5 0 01.5.5v11l-.01.1a.501.501 0 01-.39.39l-.1.01H.5l-.1-.01a.501.501 0 01-.39-.39l-.01-.1v-11a.5.5 0 01.5-.5h13zm-12.5 11h12v-8H1v8zm.5-10a.5.5 0 100 1 .5.5 0 000-1zm2 0a.5.5 0 100 1 .5.5 0 000-1zm2 0a.5.5 0 100 1 .5.5 0 000-1z"/>
+    </symbol>
+    <symbol id="wbm-icon-panel-right" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M9.5 4.504a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5zM10 6.004a.5.5 0 100 1h1a.5.5 0 000-1h-1zM9.5 8.504a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M1.5 13.004a.5.5 0 01-.5-.5v-11a.5.5 0 01.5-.5h11a.5.5 0 01.5.5v11a.5.5 0 01-.5.5h-11zm.5-1v-10h6v10H2zm7-10h3v10H9v-10z"/>
+    </symbol>
+    <symbol id="wbm-icon-panel-bottom" viewBox="0 0 14 14">
+        <path fill="currentColor" d="M3 10.504a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5zM6.5 10.004a.5.5 0 000 1h1a.5.5 0 000-1h-1zM9 10.504a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M1 1.504a.5.5 0 01.5-.5h11a.5.5 0 01.5.5v11a.5.5 0 01-.5.5h-11a.5.5 0 01-.5-.5v-11zm1 6.5v-6h10v6H2zm10 1v3H2v-3h10z"/>
+    </symbol>
+    <symbol id="wbm-icon-close-panel" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M9.854 4.146a.5.5 0 010 .708L7.707 7l2.147 2.146a.5.5 0 01-.708.708L7 7.707 4.854 9.854a.5.5 0 01-.708-.708L6.293 7 4.146 4.854a.5.5 0 11.708-.708L7 6.293l2.146-2.147a.5.5 0 01.708 0z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M7 14A7 7 0 107 0a7 7 0 000 14zm0-1A6 6 0 107 1a6 6 0 000 12z"/>
+    </symbol>
+    <symbol id="wbm-icon-ellipsis" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M4 7a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM13 7a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM7 8.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
+    </symbol>
+    <symbol id="wbm-icon-menu" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M13 3.5a.5.5 0 010 1H1a.5.5 0 010-1h12zM13.5 10a.5.5 0 00-.5-.5H1a.5.5 0 000 1h12a.5.5 0 00.5-.5zM13 6.5a.5.5 0 010 1H1a.5.5 0 010-1h12z"/>
+    </symbol>
+    <symbol id="wbm-icon-info" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M7 13A6 6 0 107 1a6 6 0 000 12zm0 1A7 7 0 107 0a7 7 0 000 14z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M7 5.5a.5.5 0 01.5.5v4.5a.5.5 0 01-1 0V6a.5.5 0 01.5-.5z"/>
+        <path fill="currentColor"
+              d="M7.75 3.75a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-command" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M3.5 6A2.5 2.5 0 116 3.5V5h2V3.5A2.5 2.5 0 1110.5 6H9v2h1.5A2.5 2.5 0 118 10.5V9H6v1.5A2.5 2.5 0 113.5 8H5V6H3.5zM2 3.5a1.5 1.5 0 113 0V5H3.5A1.5 1.5 0 012 3.5zM6 6v2h2V6H6zm3-1h1.5A1.5 1.5 0 109 3.5V5zM3.5 9H5v1.5A1.5 1.5 0 113.5 9zM9 9v1.5A1.5 1.5 0 1010.5 9H9z"/>
+    </symbol>
+    <symbol id="wbm-icon-check" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M13.854 3.354a.5.5 0 00-.708-.708L5 10.793.854 6.646a.5.5 0 10-.708.708l4.5 4.5a.5.5 0 00.708 0l8.5-8.5z"/>
+    </symbol>
+    <symbol id="wbm-icon-document" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M4 5.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5a.5.5 0 01-.5-.5zM4.5 7.5a.5.5 0 000 1h5a.5.5 0 000-1h-5zM4 10.5a.5.5 0 01.5-.5h5a.5.5 0 010 1h-5a.5.5 0 01-.5-.5z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M1.5 0a.5.5 0 00-.5.5v13a.5.5 0 00.5.5h11a.5.5 0 00.5-.5V3.207a.5.5 0 00-.146-.353L10.146.146A.5.5 0 009.793 0H1.5zM2 1h7.5v2a.5.5 0 00.5.5h2V13H2V1z"/>
+    </symbol>
+    <symbol id="wbm-icon-external" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M2 1.004a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1v-4.5a.5.5 0 00-1 0v4.5H2v-10h4.5a.5.5 0 000-1H2z"/>
+        <path fill="currentColor"
+              d="M7.354 7.357L12 2.711v1.793a.5.5 0 001 0v-3a.5.5 0 00-.5-.5h-3a.5.5 0 100 1h1.793L6.646 6.65a.5.5 0 10.708.707z"/>
+    </symbol>
+    <symbol id="wbm-icon-copy" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M11.746.07A.5.5 0 0011.5.003h-6a.5.5 0 00-.5.5v2.5H.5a.5.5 0 00-.5.5v10a.5.5 0 00.5.5h8a.5.5 0 00.5-.5v-2.5h4.5a.5.5 0 00.5-.5v-8a.498.498 0 00-.15-.357L11.857.154a.506.506 0 00-.11-.085zM9 10.003h4v-7h-1.5a.5.5 0 01-.5-.5v-1.5H6v2h.5a.5.5 0 01.357.15L8.85 5.147c.093.09.15.217.15.357v4.5zm-8-6v9h7v-7H6.5a.5.5 0 01-.5-.5v-1.5H1z"/>
+    </symbol>
+    <symbol id="wbm-icon-undo" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M1.146 3.854a.5.5 0 010-.708l2-2a.5.5 0 11.708.708L2.707 3h6.295A4 4 0 019 11H3a.5.5 0 010-1h6a3 3 0 100-6H2.707l1.147 1.146a.5.5 0 11-.708.708l-2-2z"/>
+    </symbol>
+    <symbol id="wbm-icon-github" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M7 0C3.132 0 0 3.132 0 7a6.996 6.996 0 004.786 6.641c.35.062.482-.149.482-.332 0-.166-.01-.718-.01-1.304-1.758.324-2.213-.429-2.353-.823-.079-.2-.42-.822-.717-.988-.246-.132-.596-.455-.01-.464.552-.009.946.508 1.077.717.63 1.06 1.636.762 2.039.578.061-.455.245-.761.446-.936-1.558-.175-3.185-.779-3.185-3.457 0-.76.271-1.39.717-1.88-.07-.176-.314-.893.07-1.856 0 0 .587-.183 1.925.718a6.495 6.495 0 011.75-.236c.595 0 1.19.078 1.75.236 1.34-.91 1.926-.718 1.926-.718.385.963.14 1.68.07 1.855.446.49.717 1.111.717 1.881 0 2.687-1.636 3.282-3.194 3.457.254.218.473.638.473 1.295 0 .936-.009 1.688-.009 1.925 0 .184.131.402.481.332A7.012 7.012 0 0014 7c0-3.868-3.133-7-7-7z"/>
+    </symbol>
+    <symbol id="wbm-icon-mobile" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M3 1.504a1.5 1.5 0 011.5-1.5h5a1.5 1.5 0 011.5 1.5v11a1.5 1.5 0 01-1.5 1.5h-5a1.5 1.5 0 01-1.5-1.5v-11zm1 10.5v-10h6v10H4z"/>
+    </symbol>
+    <symbol id="wbm-icon-tablet" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M3.5.004a1.5 1.5 0 00-1.5 1.5v11a1.5 1.5 0 001.5 1.5h7a1.5 1.5 0 001.5-1.5v-11a1.5 1.5 0 00-1.5-1.5h-7zm0 1h7a.5.5 0 01.5.5v9.5H3v-9.5a.5.5 0 01.5-.5zm2.5 11a.5.5 0 000 1h2a.5.5 0 000-1H6z"/>
+    </symbol>
+    <symbol id="wbm-icon-browser" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M.5 13.004a.5.5 0 01-.5-.5v-11a.5.5 0 01.5-.5h13a.5.5 0 01.5.5v11a.5.5 0 01-.5.5H.5zm.5-1v-8h12v8H1zm1-9.5a.5.5 0 11-1 0 .5.5 0 011 0zm2 0a.5.5 0 11-1 0 .5.5 0 011 0zm2 0a.5.5 0 11-1 0 .5.5 0 011 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-refresh" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M7.092.5H7a6.5 6.5 0 106.41 7.583.5.5 0 10-.986-.166A5.495 5.495 0 017 12.5a5.5 5.5 0 010-11h.006a5.5 5.5 0 014.894 3H10a.5.5 0 000 1h3a.5.5 0 00.5-.5V2a.5.5 0 00-1 0v1.535A6.495 6.495 0 007.092.5z"/>
+    </symbol>
+    <symbol id="wbm-icon-zoom" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M6 3.5a.5.5 0 01.5.5v1.5H8a.5.5 0 010 1H6.5V8a.5.5 0 01-1 0V6.5H4a.5.5 0 010-1h1.5V4a.5.5 0 01.5-.5z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M9.544 10.206a5.5 5.5 0 11.662-.662.5.5 0 01.148.102l3 3a.5.5 0 01-.708.708l-3-3a.5.5 0 01-.102-.148zM10.5 6a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-transfer" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M10.646 2.646a.5.5 0 01.708 0l1.5 1.5a.5.5 0 010 .708l-1.5 1.5a.5.5 0 01-.708-.708L11.293 5H1.5a.5.5 0 010-1h9.793l-.647-.646a.5.5 0 010-.708zM3.354 8.354L2.707 9H12.5a.5.5 0 010 1H2.707l.647.646a.5.5 0 01-.708.708l-1.5-1.5a.5.5 0 010-.708l1.5-1.5a.5.5 0 11.708.708z"/>
+    </symbol>
+    <symbol id="wbm-icon-rewind" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M9 2.42v2.315l4.228-2.736a.5.5 0 01.772.42v9.162a.5.5 0 01-.772.42L9 9.263v2.317a.5.5 0 01-.772.42L1.5 7.647v3.603a.75.75 0 01-1.5 0v-8.5a.75.75 0 011.5 0v3.603L8.228 2A.5.5 0 019 2.42z"/>
+    </symbol>
+    <symbol id="wbm-icon-play-back" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M11.24 12.035L3.697 7.427A.494.494 0 013.5 7.2v4.05a.75.75 0 01-1.5 0v-8.5a.75.75 0 011.5 0V6.8a.494.494 0 01.198-.227l7.541-4.608A.5.5 0 0112 2.39v9.217a.5.5 0 01-.76.427z"/>
+    </symbol>
+    <symbol id="wbm-icon-play-next" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M2.76 12.035l7.542-4.608A.495.495 0 0010.5 7.2v4.05a.75.75 0 001.5 0v-8.5a.75.75 0 00-1.5 0V6.8a.495.495 0 00-.198-.227L2.76 1.965A.5.5 0 002 2.39v9.217a.5.5 0 00.76.427z"/>
+    </symbol>
+    <symbol id="wbm-icon-fast-forward" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M5 2.42v2.315L.772 1.999a.5.5 0 00-.772.42v9.162a.5.5 0 00.772.42L5 9.263v2.317a.5.5 0 00.772.42L12.5 7.647v3.603a.75.75 0 001.5 0v-8.5a.75.75 0 00-1.5 0v3.603L5.772 2A.5.5 0 005 2.42z"/>
+    </symbol>
+    <symbol id="wbm-icon-sync" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M5.5 1A.5.5 0 005 .5H2a.5.5 0 000 1h1.535a6.502 6.502 0 002.383 11.91.5.5 0 10.165-.986A5.502 5.502 0 014.5 2.1V4a.5.5 0 001 0V1.353a.5.5 0 000-.023V1zM7.507 1a.5.5 0 01.576-.41 6.502 6.502 0 012.383 11.91H12a.5.5 0 010 1H9a.5.5 0 01-.5-.5v-3a.5.5 0 011 0v1.9A5.5 5.5 0 007.917 1.576.5.5 0 017.507 1z"/>
+    </symbol>
+    <symbol id="wbm-icon-eye" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M7 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M14 7l-.21.293C13.669 7.465 10.739 11.5 7 11.5S.332 7.465.21 7.293L0 7l.21-.293C.331 6.536 3.261 2.5 7 2.5s6.668 4.036 6.79 4.207L14 7zM2.896 5.302A12.725 12.725 0 001.245 7c.296.37.874 1.04 1.65 1.698C4.043 9.67 5.482 10.5 7 10.5c1.518 0 2.958-.83 4.104-1.802A12.72 12.72 0 0012.755 7c-.297-.37-.875-1.04-1.65-1.698C9.957 4.33 8.517 3.5 7 3.5c-1.519 0-2.958.83-4.104 1.802z"/>
+    </symbol>
+    <symbol id="wbm-icon-eye-close" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M1.854 1.146a.5.5 0 10-.708.708l11 11a.5.5 0 00.708-.708l-11-11zM11.104 8.698c-.177.15-.362.298-.553.439l.714.714a13.25 13.25 0 002.526-2.558L14 7l-.21-.293C13.669 6.536 10.739 2.5 7 2.5c-.89 0-1.735.229-2.506.58l.764.763A4.859 4.859 0 017 3.5c1.518 0 2.958.83 4.104 1.802A12.724 12.724 0 0112.755 7a12.72 12.72 0 01-1.65 1.698zM.21 6.707c.069-.096 1.03-1.42 2.525-2.558l.714.714c-.191.141-.376.288-.553.439A12.725 12.725 0 001.245 7c.296.37.874 1.04 1.65 1.698C4.043 9.67 5.482 10.5 7 10.5a4.86 4.86 0 001.742-.344l.764.764c-.772.351-1.616.58-2.506.58C3.262 11.5.332 7.465.21 7.293L0 7l.21-.293z"/>
+        <path fill="currentColor"
+              d="M4.5 7c0-.322.061-.63.172-.914l3.242 3.242A2.5 2.5 0 014.5 7zM9.328 7.914L6.086 4.672a2.5 2.5 0 013.241 3.241z"/>
+    </symbol>
+    <symbol id="wbm-icon-expand-alt" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M7.354.146l4 4a.5.5 0 01-.708.708L7 1.207 3.354 4.854a.5.5 0 11-.708-.708l4-4a.5.5 0 01.708 0zM11.354 9.146a.5.5 0 010 .708l-4 4a.5.5 0 01-.708 0l-4-4a.5.5 0 11.708-.708L7 12.793l3.646-3.647a.5.5 0 01.708 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-chevron-down" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M1.146 4.604l5.5 5.5a.5.5 0 00.708 0l5.5-5.5a.5.5 0 00-.708-.708L7 9.043 1.854 3.896a.5.5 0 10-.708.708z"/>
+    </symbol>
+    <symbol id="wbm-icon-chevron-up" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M7.354 3.896l5.5 5.5a.5.5 0 01-.708.708L7 4.957l-5.146 5.147a.5.5 0 01-.708-.708l5.5-5.5a.5.5 0 01.708 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-chevron-small-right" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M4.896 10.146a.5.5 0 00.708.708l3.5-3.5a.5.5 0 000-.708l-3.5-3.5a.5.5 0 10-.708.708L8.043 7l-3.147 3.146z"/>
+    </symbol>
+    <symbol id="wbm-icon-location" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M0 7a7 7 0 1114 0A7 7 0 010 7zm6.5 3.5v2.48A6.001 6.001 0 011.02 7.5H3.5a.5.5 0 000-1H1.02A6.001 6.001 0 016.5 1.02V3.5a.5.5 0 001 0V1.02a6.001 6.001 0 015.48 5.48H10.5a.5.5 0 000 1h2.48a6.002 6.002 0 01-5.48 5.48V10.5a.5.5 0 00-1 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-cross" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M11.146 2.146a.5.5 0 11.707.707L7.708 7l4.147 4.146a.5.5 0 11-.707.707L7 7.708l-4.146 4.147a.5.5 0 01-.707-.708L6.293 7 2.147 2.853a.5.5 0 11.707-.707L7 6.293l4.146-4.147z"/>
+    </symbol>
+    <symbol id="wbm-icon-circle" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M14 7A7 7 0 110 7a7 7 0 0114 0z"/>
+    </symbol>
+    <symbol id="wbm-icon-circle-hollow" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M7 13A6 6 0 107 1a6 6 0 000 12zm0 1A7 7 0 107 0a7 7 0 000 14z"/>
+    </symbol>
+    <symbol id="wbm-icon-plus-small" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M7 1a.5.5 0 01.5.5v5h5a.5.5 0 010 1h-5v5a.5.5 0 01-1 0v-5h-5a.5.5 0 010-1h5v-5A.5.5 0 017 1z"/>
+    </symbol>
+    <symbol id="wbm-icon-checklist" viewBox="0 0 14 14">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor"
+              d="M3.5 10a.5.5 0 01.5.5v2a.5.5 0 01-.5.5h-2a.5.5 0 01-.5-.5v-2a.5.5 0 01.5-.5h2zM2 12h1v-1H2v1z"/>
+        <path fill="currentColor"
+              d="M12.5 11a.5.5 0 110 1h-7a.5.5 0 010-1h7zM3.146 5.646a.5.5 0 11.708.707L3.207 7l.647.646a.5.5 0 11-.708.707L2.5 7.707l-.646.646a.5.5 0 01-.708-.707L1.793 7l-.647-.647a.5.5 0 11.708-.707l.646.647.646-.647zM12.5 6.5a.5.5 0 010 1h-7a.5.5 0 010-1h7zM4.146 1.146a.5.5 0 11.708.707l-2 2-.079.065a.498.498 0 01-.629-.065l-1-1a.5.5 0 11.708-.707l.646.647 1.646-1.647zM12.5 2a.5.5 0 010 1h-7a.5.5 0 010-1h7z"/>
+    </symbol>
+    <symbol id="wbm-icon-collapse" viewBox="0 0 14 14">
+        <path fill="currentColor"
+              d="M3.354.146a.5.5 0 10-.708.708l4 4a.5.5 0 00.708 0l4-4a.5.5 0 00-.708-.708L7 3.793 3.354.146zM6.646 9.146a.5.5 0 01.708 0l4 4a.5.5 0 01-.708.708L7 10.207l-3.646 3.647a.5.5 0 01-.708-.708l4-4z"/>
+    </symbol>
+</svg>
+
+<div class="wbm-layout" id="wbm-layout">
+
+    <!-- Sidebar -->
+    <div class="wbm-sidebar" id="workbench-sidebar-region" role="banner">
+        <div class="wbm-resizer wbm-resizer--sidebar" id="wbm-sidebar-resizer" role="separator"
+             aria-label="Sidebar resize handle"></div>
+        <div class="wbm-sidebar__scroll">
+            <div class="wbm-sidebar__content">
+                <div class="wbm-sidebar__header">
+                    <a class="wbm-brand" title="Stroom GWT Workbench" href="./">
+                        <span class="wbm-brand__mark-name"><svg class="wbm-brand__mark" aria-hidden="true"><use href="#wbm-logo"></use></svg><span class="wbm-brand__name">Stroom GWT Workbench</span></span>
+                    </a>
+                    <button class="wbm-icon-button wbm-icon-button--32" id="wbm-settings-button" aria-label="Settings"
+                            aria-haspopup="menu" aria-expanded="false" type="button">
+                        <svg class="wbm-icon"><use href="#wbm-icon-settings"/></svg>
+                    </button>
+                </div>
+
+                <div class="wbm-search" role="search">
+                    <div class="wbm-search__field" id="wbm-search-field">
+                        <div class="wbm-search__icon">
+                            <svg class="wbm-icon"><use href="#wbm-icon-search"/></svg>
+                        </div>
+                        <input class="wbm-search__input" id="workbench-explorer-searchfield" type="search"
+                               placeholder="Find components" autocomplete="off" spellcheck="false"
+                               aria-label="Search for components"/>
+                        <code class="wbm-search__shortcut" id="wbm-search-shortcut"></code>
+                        <button class="wbm-icon-button wbm-search__clear" id="wbm-search-clear" type="button"
+                                aria-label="Clear search">
+                            <svg class="wbm-icon"><use href="#wbm-icon-clear"/></svg>
+                        </button>
+                        <button class="wbm-icon-button wbm-tag-filter-button" id="wbm-tag-filter" aria-label="Tag filters" type="button">
+                            <svg class="wbm-icon"><use href="#wbm-icon-filter"/></svg>
+                        </button>
+                    </div>
+                    <button class="wbm-icon-button wbm-icon-button--32 wbm-create-button" id="wbm-create-button" type="button"
+                            aria-label="Create a new story">
+                        <svg class="wbm-icon"><use href="#wbm-icon-plus"/></svg>
+                    </button>
+                </div>
+
+                <div class="wbm-tree-wrapper" id="workbench-explorer-menu" tabindex="0">
+                    <nav class="wbm-tree" id="workbench-explorer-tree" role="navigation" aria-label="Stories">
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar and preview -->
+    <div class="wbm-content">
+        <section class="wbm-toolbar wbm-bar" id="wbm-toolbar" role="region" aria-label="Toolbar">
+            <div class="wbm-toolbar__group">
+                <button class="wbm-icon-button wbm-show-sidebar" id="wbm-show-sidebar" type="button"
+                        aria-label="Show sidebar" title="Show sidebar">
+                    <svg class="wbm-icon"><use href="#wbm-icon-menu"/></svg>
+                </button>
+                <button class="wbm-icon-button" id="wbm-reload" type="button" aria-label="Reload story"
+                        title="Reload story">
+                    <svg class="wbm-icon"><use href="#wbm-icon-reload"/></svg>
+                </button>
+                <button class="wbm-icon-button" id="wbm-measure" type="button" role="switch"
+                        aria-label="Measure tool" title="Measure tool">
+                    <svg class="wbm-icon"><use href="#wbm-icon-ruler"/></svg>
+                </button>
+                <button class="wbm-icon-button" id="wbm-outline" type="button" role="switch"
+                        aria-label="Outline tool" title="Outline tool">
+                    <svg class="wbm-icon"><use href="#wbm-icon-outline"/></svg>
+                </button>
+                <button class="wbm-icon-button" id="wbm-viewport-button" type="button" aria-label="Viewport size"
+                        aria-haspopup="listbox" title="Viewport size">
+                    <svg class="wbm-icon"><use href="#wbm-icon-viewport"/></svg>
+                    <span class="wbm-tool-label" id="wbm-viewport-label"></span>
+                </button>
+                <button class="wbm-icon-button" id="wbm-vision-button" type="button" aria-label="Vision filter"
+                        aria-haspopup="listbox" title="Vision filter">
+                    <svg class="wbm-icon"><use href="#wbm-icon-accessibility"/></svg>
+                    <span class="wbm-tool-label" id="wbm-vision-label"></span>
+                </button>
+            </div>
+            <div class="wbm-toolbar__group">
+                <button class="wbm-icon-button" id="wbm-isolation" type="button"
+                        aria-label="Open in isolation mode" title="Open in isolation mode">
+                    <svg class="wbm-icon"><use href="#wbm-icon-share"/></svg>
+                </button>
+                <button class="wbm-icon-button wbm-zoom" id="wbm-zoom" type="button" role="switch"
+                        aria-haspopup="dialog" aria-label="Change zoom level" title="Change zoom level">100%</button>
+                <button class="wbm-icon-button" id="wbm-fullscreen" type="button" aria-label="Enter full screen"
+                        title="Enter full screen">
+                    <svg class="wbm-icon"><use href="#wbm-icon-fullscreen"/></svg>
+                </button>
+                <button class="wbm-icon-button wbm-show-panel" id="wbm-show-panel" type="button"
+                        aria-label="Show addon panel" title="Show addon panel">
+                    <svg class="wbm-icon"><use href="#wbm-icon-panel-bottom"/></svg>
+                </button>
+                <button class="wbm-icon-button" id="wbm-open-in-editor" type="button" aria-label="Open in editor"
+                        title="Open in editor">
+                    <svg class="wbm-icon"><use href="#wbm-icon-editor"/></svg>
+                </button>
+            </div>
+        </section>
+        <main class="wbm-preview" id="workbench-preview-wrapper">
+            <!-- Only shown when a viewport size is selected -->
+            <div class="wbm-viewport-controls" id="wbm-viewport-controls">
+                <label class="wbm-size-input">
+                    <span class="wbm-size-input__prefix" aria-hidden="true">W</span>
+                    <input id="wbm-viewport-width" aria-label="Viewport width" data-size-input="width"
+                           spellcheck="false" autocomplete="off"/>
+                </label>
+                <button class="wbm-icon-button" id="wbm-viewport-rotate" type="button" aria-label="Rotate viewport"
+                        title="Rotate viewport">
+                    <svg class="wbm-icon"><use href="#wbm-icon-transfer"/></svg>
+                </button>
+                <label class="wbm-size-input">
+                    <span class="wbm-size-input__prefix" aria-hidden="true">H</span>
+                    <input id="wbm-viewport-height" aria-label="Viewport height" data-size-input="height"
+                           spellcheck="false" autocomplete="off"/>
+                </label>
+            </div>
+            <div class="wbm-viewport-frame" id="wbm-viewport-frame">
+                <div class="wbm-zoom-wrapper" id="wbm-zoom-wrapper">
+                    <iframe id="workbench-preview-iframe" title="workbench-preview-iframe"
+                            allow="clipboard-write;"></iframe>
+                </div>
+                <div class="wbm-viewport-handle wbm-viewport-handle--right" data-side="right"></div>
+                <div class="wbm-viewport-handle wbm-viewport-handle--bottom" data-side="bottom"></div>
+                <div class="wbm-viewport-handle wbm-viewport-handle--both" data-side="both"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Addon panel -->
+    <aside class="wbm-panel" id="workbench-panel-root" role="region" aria-label="Addon panel">
+        <div class="wbm-resizer wbm-resizer--panel" id="wbm-panel-resizer" role="separator"
+             aria-label="Addon panel resize handle"></div>
+        <div class="wbm-panel__bar wbm-bar">
+            <div class="wbm-panel__tabs" id="wbm-panel-tabs" role="tablist" aria-label="Available addons"></div>
+            <div class="wbm-panel__actions">
+                <button class="wbm-icon-button" id="wbm-panel-position" type="button"
+                        aria-label="Move addon panel to right" title="Move addon panel to right">
+                    <svg class="wbm-icon"><use href="#wbm-icon-panel-right"/></svg>
+                </button>
+                <button class="wbm-icon-button" id="wbm-panel-hide" type="button" aria-label="Hide addon panel"
+                        title="Hide addon panel">
+                    <svg class="wbm-icon"><use href="#wbm-icon-close-panel"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="wbm-panel__content" id="wbm-panel-content" role="tabpanel"></div>
+    </aside>
+
+    <!-- Settings pages, shown in place of the preview and addon panel -->
+    <div class="wbm-settings" id="wbm-settings" role="main">
+        <div class="wbm-settings__bar wbm-bar">
+            <div class="wbm-settings__tabs" id="wbm-settings-tabs" role="tablist"></div>
+            <button class="wbm-icon-button" id="wbm-settings-close" type="button"
+                    aria-label="Close settings page" title="Close settings page">
+                <svg class="wbm-icon"><use href="#wbm-icon-close-panel"/></svg>
+            </button>
+        </div>
+        <div class="wbm-settings__content" id="wbm-settings-content"></div>
+    </div>
+</div>

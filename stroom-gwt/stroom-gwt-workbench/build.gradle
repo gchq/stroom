@@ -1,0 +1,561 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// The workbench of Stroom's GWT widgets and screens. The stories are added to the workbench
+// framework (stroom-gwt-workbench-framework), which mimics React Storybook (see the stroom-ui-react repository), so
+// that the real GWT widgets can be viewed in isolation and compared side by side with their
+// React ports.
+//
+// Tasks (deliberately NOT named gwtCompile etc. so that `./gradlew gwtCompile` and the CI
+// build are unaffected by this module):
+//
+//   workbenchCompile       Full GWT compile into the workbench war dir.
+//   workbenchDraftCompile  Quick unoptimised GWT compile into the workbench war dir.
+//   workbenchCodeServer    SuperDevMode code server; recompiles on browser refresh. Changes to
+//                          the stories (this module) and the workbench framework
+//                          (stroom-gwt-workbench-framework) are picked up live; re-run it after changing
+//                          code in any other module.
+//   workbenchServe         Serves the workbench on http://localhost:6008 (-PworkbenchPort=NNNN).
+//   workbenchFetchAxe      Downloads axe-core with npm for the Accessibility addon (run by
+//                          workbenchServe; without npm the addon explains what is missing).
+//                          It is kept in the Gradle user home, so `clean` doesn't remove it.
+//                          Use -PworkbenchAxeVersion=N.N.N for a different version.
+//
+// workbenchDraftCompile and workbenchCodeServer only support Chrome-family browsers and Firefox
+// (see StroomWorkbenchSuperDevMode.gwt.xml). workbenchCompile supports all browsers.
+//
+// Run these from the root of the repository with the project prefix, e.g.
+//
+//   ./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchDraftCompile
+//   ./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchServe
+// or, for live editing, run workbenchCodeServer and workbenchServe in two terminals.
+
+import java.time.Duration
+import java.time.Instant
+
+ext.moduleName = 'stroom.gwt.workbench'
+
+def getSysPropertyOrDefault = { propName, defaultValue ->
+    def val
+    if (System.hasProperty(propName)
+            && System.getProperty(propName) != "unspecified"
+            && System.getProperty(propName) != "") {
+        val = System.getProperty(propName)
+        logger.info("Using property [${propName}] with value [${val}]")
+    } else {
+        val = defaultValue
+        logger.info("Property [${propName}] has no value, using default value [${val}]")
+    }
+    return val
+}
+
+// The GWT module to compile and the static web content that hosts it
+def gwtModule = 'stroom.gwt.workbench.StroomWorkbench'
+def gwtSuperDevModule = 'stroom.gwt.workbench.StroomWorkbenchSuperDevMode'
+def webappDir = file('src/main/webapp')
+def warDir = layout.buildDirectory.dir('workbench-war').get().asFile.toString()
+// Stroom's real CSS, fonts, images and scripts are served from here under /ui/
+def stroomResourcesDir = project(':stroom-app').file('src/main/resources')
+def workbenchPort = findProperty('workbenchPort') ?: '6008'
+// axe-core runs the Accessibility addon's checks. It is downloaded with npm rather than added to
+// the repository. Use the same version as the React Storybook by default.
+def axeVersion = findProperty('workbenchAxeVersion') ?: '4.12.1'
+// Kept outside the build dir, keyed by version, so that `clean` doesn't force a re-download.
+// This is a static root for workbenchServe, which serves it as /__workbench/axe.min.js
+def axeDir = new File(gradle.gradleUserHomeDir, "caches/stroom-gwt-workbench/axe-core-${axeVersion}").toString()
+def codeServerPort = findProperty('workbenchCodeServerPort') ?: '9877'
+
+def javaIoTmpDir = getSysPropertyOrDefault("java.io.tmpdir", "/tmp")
+// Append the rootDir so gwt builds from different dirs don't conflict
+def gwtBuildDir = "${javaIoTmpDir}/gwt/${rootProjectAbsPathStr}/workbench-gwt_build"
+gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
+logger.info('gwtBuildDir: ' + gwtBuildDir)
+
+def gwtTmpDir = "${gwtBuildDir}/tmp"
+def workDir = "${gwtBuildDir}/work"
+def deployDir = "${gwtBuildDir}/deploy"
+def extraDir = "${gwtBuildDir}/extra"
+def codeServerLauncherDir = "${gwtBuildDir}/launcher"
+
+def allSourceDir = "${gwtBuildDir}/all-source"
+def transformedSourceDir = "${gwtBuildDir}/transformed-source"
+def transformedBuildDir = "${gwtBuildDir}/transformed-build"
+def rsyncOutputDir = "${gwtBuildDir}/rsync-output"
+
+// The directories of the stories and the workbench framework's own source. They contain no
+// jakarta imports so need no transforming, and the code server is given them ahead of the
+// copied source so that it sees changes to them when the page is refreshed. The workbench's
+// JVM-only server code (stroom.gwt.workbench.framework.server) is never compiled by GWT, as
+// WorkbenchFramework.gwt.xml only has the 'client' package as source.
+def liveSourceDirs = [
+        project(':stroom-gwt:stroom-gwt-workbench'),
+        project(':stroom-gwt:stroom-gwt-workbench-framework'),
+].collectMany { prj ->
+    [prj.file('src/main/java'), prj.file('src/main/resources')]
+}
+
+// The same versions as stroom-app-gwt uses for its GWT compile, as gwt-jackson needs jackson 2.9.
+// Only applied to the GWT source sets' configurations, so that workbenchServe and the tests (which
+// use the main/test runtime classpaths) get the normal, current versions.
+configurations.matching { it.name.startsWith('gwtSource') || it.name.startsWith('gwtDevSource') }
+        .configureEach {
+            resolutionStrategy {
+                eachDependency { DependencyResolveDetails details ->
+                    if (details.requested.group == 'javax.xml.bind') {
+                        details.useVersion "2.3.1"
+                    }
+                    if (details.requested.group == 'com.fasterxml.jackson.core') {
+                        details.useVersion "2.9.6"
+                    }
+                }
+            }
+        }
+
+// Declare a source set just for our GWT compile that is separate from the Java compilation source set.
+sourceSets {
+    gwtSource
+    gwtDevSource
+    jakartaTransformer
+}
+
+dependencies {
+    implementation project(':stroom-gwt:stroom-gwt-workbench-framework')
+    implementation project(':stroom-core-client')
+    implementation project(':stroom-core-client-widget')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-util-shared')
+
+    // These source deps are all needed for the GWT transpiling to javascript
+    implementation libs.gin
+    implementation libs.gwt.user
+    implementation libs.gwtp.mvp.client
+    implementation libs.jackson.annotations
+    implementation libs.jaxb.api.gwt
+    implementation libs.restygwt
+    implementation libs.swagger.annotations
+    implementation libs.ws.rs.api.gwt
+
+    gwtSourceImplementation libs.gin
+    gwtSourceImplementation libs.gwt.user
+    gwtSourceImplementation libs.gwtp.mvp.client
+    gwtSourceImplementation libs.jaxb.api.gwt
+    gwtSourceImplementation libs.swagger.annotations
+    gwtSourceImplementation libs.restygwt
+    gwtSourceImplementation libs.ws.rs.api.gwt
+
+    gwtDevSourceImplementation project(':stroom-gwt:stroom-gwt-compiler')
+    gwtDevSourceImplementation libs.gwt.dev
+
+    jakartaTransformerImplementation libs.eclipse.transformer.cli
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+}
+
+// Define a list of projects that contain the source code we want to compile with GWT.
+def clientProjects = [
+        project(':stroom-gwt:stroom-gwt-workbench-framework'),
+        project(':stroom-gwt:stroom-gwt-workbench'),
+        project(':stroom-core-client'),
+        project(':stroom-core-client-widget'),
+        project(':stroom-core-shared'),
+        project(':stroom-docref'),
+        project(':stroom-query:stroom-query-api'),
+        project(':stroom-util-shared'),
+]
+
+// Copy the source of each client project then change all imports from jakarta => javax
+// so that GWT can use them. See the equivalent task in stroom-app-gwt for details.
+tasks.register('workbenchCopySources') {
+    group = "workbench"
+
+    // This file has all the rename mappings for TransformerCLI to use
+    def propFilePath = rootDir.toPath().resolve('jakarta-renames-reverse.properties')
+    def inputProjectPath = "${gwtBuildDir}/raw-source"
+
+    // So that it only re-runs when the source or the dependencies change
+    clientProjects.each { prj ->
+        inputs.files(prj.fileTree('src/main/java') { exclude 'stroom/gwt/workbench/framework/server/**' })
+                .withPropertyName("${prj.name}-java")
+        inputs.files(prj.fileTree('src/main/resources'))
+                .withPropertyName("${prj.name}-resources")
+    }
+    inputs.file(propFilePath).withPropertyName('renames')
+    inputs.files(sourceSets.gwtSource.compileClasspath).withPropertyName('gwtSourceClasspath')
+    inputs.files(sourceSets.jakartaTransformer.compileClasspath).withPropertyName('transformerClasspath')
+    outputs.dir(transformedSourceDir).withPropertyName('transformedSource')
+    outputs.dir(allSourceDir).withPropertyName('allSource')
+    // The outputs are outside the build dir and very large, so don't cache them
+    outputs.cacheIf { false }
+
+    doLast {
+
+        delete inputProjectPath
+
+        def start = Instant.now()
+
+        println("copy project source (java/resources) => ${inputProjectPath}")
+        clientProjects.each { prj ->
+            println('  ' + prj.projectDir)
+            copy {
+                from prj.projectDir.toPath().resolve('src').resolve('main').resolve('java')
+                into inputProjectPath
+                // The workbench's file server is JVM only and needs libs GWT doesn't have
+                exclude 'stroom/gwt/workbench/framework/server/**'
+            }
+            copy {
+                from prj.projectDir.toPath().resolve('src').resolve('main').resolve('resources')
+                into inputProjectPath
+            }
+        }
+        delete "${inputProjectPath}/module-info.java"
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        println 'Running eclipse TransformerCLI'
+        println('  input: ' + inputProjectPath)
+        println('  output: ' + transformedSourceDir)
+        delete transformedSourceDir
+
+        providers.javaexec {
+            classpath = files(sourceSets.jakartaTransformer.compileClasspath)
+            mainClass = "org.eclipse.transformer.cli.TransformerCLI"
+            args = [
+                    inputProjectPath,
+                    transformedSourceDir,
+                    '-tr', propFilePath,
+            ]
+        }.result.get()
+        println("${Duration.between(start, Instant.now())}")
+        start = Instant.now()
+
+        delete allSourceDir
+
+        println("copy dep jars => ${allSourceDir}")
+        sourceSets.gwtSource.compileClasspath.files.forEach { zipFile ->
+            copy {
+                from zipTree(zipFile)
+                into allSourceDir
+            }
+        }
+        println("${Duration.between(start, Instant.now())}")
+
+        copy {
+            from transformedSourceDir
+            into allSourceDir
+        }
+    }
+}
+
+tasks.register('workbenchCompileSources', JavaCompile) {
+    group = "workbench"
+    dependsOn workbenchCopySources
+
+    source = file(transformedSourceDir)
+    destinationDirectory.set(file(transformedBuildDir))
+    classpath = files(transformedSourceDir, sourceSets.gwtSource.compileClasspath)
+    options.sourcepath = files(transformedSourceDir)
+    // The output is outside the build dir, so don't cache it
+    outputs.cacheIf { false }
+}
+
+tasks.register('workbenchMakeGwtSourceDirs') {
+    group = "workbench"
+    dependsOn workbenchCompileSources
+
+    inputs.dir(allSourceDir).withPropertyName('allSource')
+    inputs.dir(transformedBuildDir).withPropertyName('transformedBuild')
+    outputs.dir(rsyncOutputDir).withPropertyName('rsyncOutput')
+    outputs.cacheIf { false }
+
+    doLast {
+        def rsyncInputDir = "${gwtBuildDir}/rsync-input"
+        delete rsyncInputDir
+        new File(rsyncInputDir).mkdirs()
+
+        copy {
+            from allSourceDir
+            into rsyncInputDir
+        }
+        copy {
+            from transformedBuildDir
+            into rsyncInputDir
+        }
+
+        // Rsync the files so that we don't delete all the files that the code server is
+        // monitoring, which it doesn't like.
+        println "rsync ${rsyncInputDir} => ${rsyncOutputDir}"
+        providers.exec {
+            executable = 'rsync'
+            args = [
+                    "--recursive",
+                    "--checksum",
+                    "--delete",
+                    rsyncInputDir + "/",
+                    rsyncOutputDir]
+        }.result.get()
+        delete rsyncInputDir
+    }
+}
+
+// The classpath for the GWT compiler
+def gwtClasspath = { ->
+    files(sourceSets.gwtDevSource.compileClasspath, rsyncOutputDir)
+}
+
+def ensureGwtBuildDirs = {
+    [gwtBuildDir, gwtTmpDir, workDir, deployDir, extraDir, codeServerLauncherDir].each {
+        new File(it).mkdirs()
+    }
+}
+
+// The compiles don't use -strict/-failOnError, as the inherited Stroom modules contain classes
+// that depend on the whole app (GWT reports these as 'Ignored N units with compilation errors').
+// Only the classes reachable from the entry point need to compile, and GWT still fails the
+// compile, showing the errors, if any of those are broken, e.g. a story (in AllStories) using a
+// JRE class that GWT doesn't emulate. Plain Java errors are caught first by compileJava.
+
+tasks.register('workbenchCompile', JavaExec) {
+    group = "workbench"
+    description = "Fully compiles the workbench into ${warDir}"
+    dependsOn classes
+    dependsOn 'workbenchMakeGwtSourceDirs'
+
+    doFirst {
+        delete gwtTmpDir, workDir, deployDir, extraDir
+        // Remove any code server launcher so that workbenchServe uses this compile
+        delete codeServerLauncherDir
+        ensureGwtBuildDirs()
+    }
+
+    mainClass.set(gwtCompilerProps.mainClass.toString())
+    classpath { gwtClasspath() }
+
+    args = [
+            '-sourceLevel', '17',
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-XfragmentCount', '5',
+            '-optimize', '9',
+            '-localWorkers', gwtCompilerProps.workers,
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            // Not -strict/-failOnError, see the comment above workbenchCompile
+            gwtModule
+    ]
+
+    jvmArgs = [
+            "-Djava.io.tmpdir=${gwtTmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
+}
+
+tasks.register('workbenchDraftCompile', JavaExec) {
+    group = "workbench"
+    description = "Quickly compiles an unoptimised workbench into ${warDir}"
+    dependsOn classes
+    dependsOn 'workbenchMakeGwtSourceDirs'
+
+    doFirst {
+        // Remove any code server launcher so that workbenchServe uses this compile
+        delete codeServerLauncherDir
+        ensureGwtBuildDirs()
+    }
+
+    mainClass = 'com.google.gwt.dev.Compiler'
+    classpath { gwtClasspath() }
+
+    args = [
+            '-sourceLevel', '17',
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-draftCompile',
+            '-XfragmentCount', '0',
+            '-optimize', '0',
+            '-localWorkers', '5',
+            '-war', warDir,
+            '-deploy', deployDir,
+            '-extra', extraDir,
+            // Not -strict/-failOnError, see the comment above workbenchCompile
+            gwtSuperDevModule
+    ]
+
+    jvmArgs = [
+            "-Djava.io.tmpdir=${gwtTmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
+    minHeapSize = '1G'
+    maxHeapSize = '4G'
+}
+
+tasks.register('workbenchCodeServer', JavaExec) {
+    group = "workbench"
+    description = "Runs the GWT SuperDevMode code server for the workbench"
+    dependsOn classes
+    dependsOn 'workbenchMakeGwtSourceDirs'
+
+    doFirst {
+        ensureGwtBuildDirs()
+        println """
+        To develop the workbench in SuperDevMode:
+          * Leave this task running.
+          * In another terminal run: ./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchServe
+          * Visit http://localhost:${workbenchPort} in Chrome/Edge or Firefox - refreshing the
+            page recompiles changed code.
+
+          Changes to stroom-gwt-workbench and stroom-gwt-workbench-framework are picked up live. Changes in any
+          other module need this task to be re-run, as the code server only sees a copy of them.
+          GWT compile errors are shown in this terminal (and in the browser).
+        """.stripIndent().trim()
+    }
+
+    mainClass = 'com.google.gwt.dev.codeserver.CodeServer'
+    // The live source dirs come before the copied source so that they win, letting changes to
+    // the stories and the workbench framework be recompiled on refresh.
+    classpath { files(sourceSets.gwtDevSource.compileClasspath, liveSourceDirs, rsyncOutputDir) }
+
+    args = [
+            '-sourceLevel', '17',
+            '-logLevel', 'INFO',
+            '-workDir', workDir,
+            '-port', codeServerPort,
+            // Incremental compiles need every class in the inherited modules to compile,
+            // see the comment about -strict below.
+            '-noincremental',
+            // Writes a workbench.nocache.js that loads the code from the code server and
+            // triggers a recompile on page load.
+            '-launcherDir', codeServerLauncherDir,
+            // Not -strict/-failOnError, see the comment above workbenchCompile
+            gwtSuperDevModule
+    ]
+
+    jvmArgs = [
+            "-Djava.io.tmpdir=${gwtTmpDir}",
+            '--add-opens', 'java.base/java.lang=ALL-UNNAMED',  // needed for GWT
+    ]
+    minHeapSize = gwtCompilerProps.minHeap
+    maxHeapSize = gwtCompilerProps.maxHeap
+}
+
+tasks.register('workbenchFetchAxe') {
+    group = "workbench"
+    description = "Downloads axe-core ${axeVersion} with npm for the Accessibility addon"
+    def axeFile = file("${axeDir}/__workbench/axe.min.js")
+    outputs.file(axeFile)
+    // Only download each version once
+    onlyIf { !axeFile.exists() }
+
+    doLast {
+        // Not under axeDir, as that is served by workbenchServe
+        def tmpDir = file("${axeDir}-tmp")
+        delete tmpDir
+        tmpDir.mkdirs()
+        try {
+            providers.exec {
+                workingDir = tmpDir
+                // Give up quickly when offline, rather than after npm's default retries
+                commandLine 'npm', 'pack', "axe-core@${axeVersion}", '--silent',
+                        '--prefer-offline',
+                        '--fetch-retries=1',
+                        '--fetch-retry-mintimeout=2000',
+                        '--fetch-retry-maxtimeout=5000',
+                        '--fetch-timeout=30000'
+            }.result.get()
+        } catch (Exception e) {
+            logger.warn("Unable to download axe-core with npm, so the workbench's Accessibility addon "
+                    + "won't work: ${e.message}")
+            delete tmpDir
+            return
+        }
+        def tarball = tmpDir.listFiles()?.find { it.name.endsWith('.tgz') }
+        if (tarball == null) {
+            throw new GradleException("'npm pack axe-core@${axeVersion}' succeeded but no .tgz file "
+                    + "was found in ${tmpDir}. Check that ${axeVersion} is a valid axe-core version "
+                    + "(-PworkbenchAxeVersion).")
+        }
+        copy {
+            from(tarTree(resources.gzip(tarball))) {
+                include 'package/axe.min.js'
+                eachFile { it.path = it.name }
+            }
+            includeEmptyDirs = false
+            into axeFile.parentFile
+        }
+        delete tmpDir
+    }
+}
+
+tasks.register('workbenchServe', JavaExec) {
+    group = "workbench"
+    description = "Serves the workbench on http://localhost:${workbenchPort}"
+    dependsOn classes
+    dependsOn 'workbenchFetchAxe'
+
+    mainClass = 'stroom.gwt.workbench.framework.server.WorkbenchServer'
+    classpath = sourceSets.main.runtimeClasspath
+
+    doFirst {
+        // A launcher left behind by a code server that has since stopped would stop the page
+        // loading, so remove it so that the last compile is used instead.
+        boolean codeServerRunning = false
+        try {
+            new Socket('localhost', codeServerPort as int).close()
+            codeServerRunning = true
+        } catch (IOException ignored) {
+            // Not running
+        }
+        if (!codeServerRunning) {
+            delete codeServerLauncherDir
+        }
+    }
+
+    // The Java sources, so the workbench's API can open stories in an editor, find components
+    // to create stories for, and mark stories whose source has changed in git
+    def sourceRootArgs = clientProjects.collect { prj ->
+        "--source-root=${prj.file('src/main/java')}".toString()
+    }
+    def storiesSourceRoot = file('src/main/java')
+    def storiesPackage = 'stroom.gwt.workbench.client.widgets'
+    def allStoriesFile = file('src/main/java/stroom/gwt/workbench/client/AllStories.java')
+
+    // Earlier roots take precedence. The code server launcher dir comes before the war dir
+    // so that a running workbenchCodeServer wins over a previous compile.
+    args = [workbenchPort] + sourceRootArgs + [
+            "--stories-root=${storiesSourceRoot}".toString(),
+            "--stories-package=${storiesPackage}".toString(),
+            "--all-stories=${allStoriesFile}".toString(),
+            webappDir.toString(),
+            codeServerLauncherDir,
+            warDir,
+            axeDir,
+            stroomResourcesDir.toString(),
+    ]
+}
+
+tasks.register('workbenchClean') {
+    group = "workbench"
+    doLast {
+        delete gwtBuildDir
+    }
+}
+
+tasks.clean.dependsOn(tasks.workbenchClean)
+tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)

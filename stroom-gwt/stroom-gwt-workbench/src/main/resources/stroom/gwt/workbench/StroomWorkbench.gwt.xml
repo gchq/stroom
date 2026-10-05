@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.5.0//EN"
+        "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
+<!--
+  The workbench of Stroom's GWT widgets and screens. It adds stories to the workbench framework
+  (stroom.gwt.workbench.framework.WorkbenchFramework), which is styled and laid out independently of Stroom.
+-->
+<module rename-to='workbench'>
+    <inherits name='com.google.gwt.user.User'/>
+
+    <!-- The workbench framework -->
+    <inherits name='stroom.gwt.workbench.framework.WorkbenchFramework'/>
+
+    <!-- The Stroom modules containing the widgets that have stories -->
+    <inherits name='stroom.util.Util'/>
+    <inherits name='stroom.svg.SVG'/>
+    <inherits name='stroom.task.Task'/>
+    <inherits name="stroom.widget.util.Util"/>
+    <inherits name="stroom.widget.button.Button"/>
+    <inherits name="stroom.widget.form.Form"/>
+    <inherits name="stroom.widget.tickbox.TickBox"/>
+    <inherits name="stroom.cell.tickbox.TickBox"/>
+
+    <entry-point class='stroom.gwt.workbench.client.StroomWorkbenchEntryPoint'/>
+
+    <source path='client'/>
+</module>

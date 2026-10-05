@@ -1,0 +1,70 @@
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<!--
+  The workbench 'preview' page shown in the canvas iframe of index.html, i.e.
+  iframe.html?id=<story id>&viewMode=story
+
+  It loads the real Stroom CSS and scripts (served from stroom-app/src/main/resources/ui) and
+  applies the same theme classes as the React Storybook's preview, so that GWT widgets look
+  exactly as they do in Stroom. The same GWT module as index.html renders the story.
+-->
+<!DOCTYPE html>
+<html lang="en"
+      class="stroom stroom-theme-dark transparency stroom-density-compact stroom-font-roboto stroom-font-size-medium">
+<head>
+    <meta charset="utf-8"/>
+    <title>Stroom GWT Workbench</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    <link rel="stylesheet" href="ui/css/app.css" type="text/css"/>
+
+    <script type="text/javascript" src="ui/script/moment/moment.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/moment/moment-timezone-with-data.min.js"
+            charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/showdown/showdown.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/prismjs/prism.js" data-manual charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/global-resize-observer.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/script/zxcvbn/zxcvbn.js" charset="utf-8"></script>
+
+    <!-- The Ace editor, as included by Stroom's app.html (stroom-core/.../servlet/app.html) -->
+    <script type="text/javascript" src="ui/stroom/ace/ace.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/beautify/beautify.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/ext-language_tools.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/ext-searchbox.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-javascript.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-json.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-markdown.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-properties.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_data_splitter.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_expression.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_fragment_parser.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_query.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_hex_dump.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_stepper.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-text.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-xml.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-yaml.js" charset="utf-8"></script>
+    <script type="text/javascript" src="ui/stroom/ace/mode-stroom_combined_parser.js" charset="utf-8"></script>
+
+    <script type="text/javascript" src="workbench/workbench.nocache.js"></script>
+</head>
+<!-- Unlike Stroom, the browser's context menu is left enabled so that Inspect works -->
+<body class="stroom-body">
+<!-- The workbench framework renders the story into this -->
+<div id="workbench-root"></div>
+</body>
+</html>

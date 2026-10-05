@@ -84,7 +84,7 @@ dependencies {
     implementation project(':stroom-core-shared')
     implementation project(':stroom-dashboard:stroom-dashboard-client')
     implementation project(':stroom-docref')
-    implementation project(':stroom-gwt')
+    implementation project(':stroom-gwt:stroom-gwt-compiler')
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-statistics:stroom-statistics-client')
 
@@ -109,7 +109,7 @@ dependencies {
     gwtSourceImplementation libs.restygwt
     gwtSourceImplementation libs.ws.rs.api.gwt
 
-    gwtDevSourceImplementation project(':stroom-gwt')
+    gwtDevSourceImplementation project(':stroom-gwt:stroom-gwt-compiler')
     gwtDevSourceImplementation libs.gwt.dev
 
     jakartaTransformerImplementation libs.eclipse.transformer.cli
