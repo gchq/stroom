@@ -21,39 +21,52 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Singleton;
-import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Objects;
 
+// There are subtle differences between this and BCryptHasher, e.g. how the salt is generated,
+// so we can't delegate to it.
 @Singleton // For thread safe SecureRandom
 public class BCryptDataFeedKeyHasher implements DataFeedKeyHasher {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(BCryptDataFeedKeyHasher.class);
+    private static final int SALT_LOG_ROUNDS = 10;
+    private static final int MAX_KEY_LENGTH_BYTES = 72;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Override
     public String generateSalt() {
-        final String salt = BCrypt.gensalt(10, secureRandom);
+        final String salt = BCrypt.gensalt(SALT_LOG_ROUNDS, secureRandom);
         LOGGER.debug("generateSalt() - salt: '{}'", salt);
         return salt;
     }
 
     @Override
-    public HashOutput hash(final String dataFeedKey, final String salt) {
-        final String hash = BCrypt.hashpw(Objects.requireNonNull(dataFeedKey), salt);
-        final HashOutput hashOutput = new HashOutput(hash, salt);
-        LOGGER.debug("hash() - salt: '{}', hash: '{}', dataFeedKey: '{}'", salt, hash, dataFeedKey);
-        return hashOutput;
+    public HashOutput hash(final String dataFeedKey) {
+        final String generatedSalt = BCrypt.gensalt(SALT_LOG_ROUNDS, secureRandom);
+        return hash(dataFeedKey, generatedSalt);
     }
 
     @Override
-    public HashOutput hash(final String dataFeedKey) {
-        final String generatedSalt = BCrypt.gensalt(10, secureRandom);
-        final String hash = BCrypt.hashpw(Objects.requireNonNull(dataFeedKey), generatedSalt);
-        final HashOutput hashOutput = new HashOutput(hash, generatedSalt);
-        LOGGER.debug("hash() - generatedSalt: '{}', hash: '{}', dataFeedKey: '{}'", generatedSalt, hash, dataFeedKey);
+    public HashOutput hash(final String dataFeedKey, final String salt) {
+        Objects.requireNonNull(dataFeedKey);
+
+        // Bcrypt can only handle 72 bytes of input. JBcrypt (that we used before spring-security-crypto)
+        // would just ignore the rest of the bytes, but Spring throws an exception if the input is
+        // too long. To preserve backwards compatibility, we truncate the input to 72 bytes.
+        byte[] keyBytes = dataFeedKey.getBytes(StandardCharsets.UTF_8);
+        if (keyBytes.length > MAX_KEY_LENGTH_BYTES) {
+            keyBytes = Arrays.copyOfRange(keyBytes, 0, MAX_KEY_LENGTH_BYTES);
+        }
+
+        final String hash = BCrypt.hashpw(keyBytes, salt);
+        final HashOutput hashOutput = new HashOutput(hash, salt);
+        LOGGER.debug("hash() - salt: '{}', hash: '{}', dataFeedKey: '{}'", salt, hash, dataFeedKey);
         return hashOutput;
     }
 
