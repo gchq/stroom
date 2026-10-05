@@ -24,7 +24,6 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.bcrypt
     implementation libs.bouncy.castle
     implementation libs.caffeine
     implementation libs.commons.codec
@@ -33,10 +32,11 @@ dependencies {
     implementation libs.guava
     implementation libs.jackson.databind
     implementation libs.jose4j
-    implementation libs.ws.rs.api
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.inject
+    implementation libs.spring.security.crypto
     implementation libs.vavr
+    implementation libs.ws.rs.api
 
     testImplementation project(':stroom-test-common')
     testImplementation libs.guice
