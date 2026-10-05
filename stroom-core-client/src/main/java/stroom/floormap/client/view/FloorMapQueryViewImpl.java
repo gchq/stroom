@@ -26,6 +26,7 @@ import stroom.util.client.Console;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
@@ -66,6 +67,8 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
     SelectionBox<String> locationRefColumn;
     @UiField
     SelectionBox<String> typeColumn;
+    @UiField
+    Label columnsHint;
 
     @Inject
     public FloorMapQueryViewImpl(final Binder binder) {
@@ -98,6 +101,11 @@ public class FloorMapQueryViewImpl extends ViewImpl implements FloorMapQueryView
     @Override
     public void setColumnMappingsVisible(final boolean visible) {
         columnMappingsContainer.setVisible(visible);
+    }
+
+    @Override
+    public void setColumnsHintVisible(final boolean visible) {
+        columnsHint.setVisible(visible);
     }
 
     /// Replaces the available items in every column-mapping dropdown with the given column names,

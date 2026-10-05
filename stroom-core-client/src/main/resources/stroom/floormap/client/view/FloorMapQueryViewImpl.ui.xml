@@ -39,6 +39,9 @@
                             helpText="The column holding what kind of thing each entity is - person, vehicle, asset. Type is the layer key: it selects the entity's style and its row in the Layers panel. Optional. Left unset, or absent from the data, an entity whose ID looks like an email address is treated as a person and everything else as an object - which means a vehicle cannot be styled as one until this is mapped.">
                 <l:SelectionBox ui:field="typeColumn" addStyleNames="w-100"/>
             </form:FormGroup>
+            <!-- Shown until the query has been run: before then the lists hold only the mapped columns. -->
+            <g:Label ui:field="columnsHint" styleName="floormap-query-columns-hint"
+                     text="Run the query to list its columns"/>
         </g:FlowPanel>
         <g:SimplePanel ui:field="queryEditContainer" styleName="dock-max overflow-hidden"/>
     </g:FlowPanel>

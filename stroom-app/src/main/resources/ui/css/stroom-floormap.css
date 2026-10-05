@@ -1098,6 +1098,15 @@
     white-space: normal;
 }
 
+/* Events Query tab: says why the column dropdowns hold only the mapped columns before a run. */
+.floormap-query-columns-hint {
+    flex: 0 0 auto;
+    margin-left: 10px;
+    font-size: 0.85em;
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
+}
+
 /*
  * Built-in icon grid. Wider than the 260px the dialog gives its single-control
  * rows — five columns is what lets every icon's name sit under it unabbreviated,
