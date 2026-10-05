@@ -80,6 +80,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(PointIsInsideXYPolygonFunction.class);
         bindFunction(PutFunction.class);
         bindFunction(RandomFunction.class);
+        bindFunction(RandomIntegerFunction.class);
         bindFunction(RecordNoFunction.class);
         bindFunction(SearchIdFunction.class);
         bindFunction(SplitDocumentFunction.class);
@@ -786,6 +787,22 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     0,
                     new SequenceType[]{},
                     SequenceType.OPTIONAL_DOUBLE,
+                    functionCallProvider);
+        }
+    }
+
+    private static class RandomIntegerFunction extends StroomExtensionFunctionDefinition<RandomInteger> {
+
+        @Inject
+        RandomIntegerFunction(final Provider<RandomInteger> functionCallProvider) {
+            super(
+                    RandomInteger.FUNCTION_NAME,
+                    1,
+                    1,
+                    new SequenceType[]{
+                            SequenceType.SINGLE_INTEGER,
+                    },
+                    SequenceType.OPTIONAL_INTEGER,
                     functionCallProvider);
         }
     }
