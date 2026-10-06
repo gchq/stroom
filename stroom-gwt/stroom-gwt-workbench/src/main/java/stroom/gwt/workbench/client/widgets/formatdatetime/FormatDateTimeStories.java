@@ -57,13 +57,9 @@ public final class FormatDateTimeStories {
                     // and a Z
                     play.expect(play.getByTestId("default-utc")).toHaveTextContent("2023-11-14T22:13:20.000Z");
                     play.expect(play.getByTestId("plain-utc")).toHaveTextContent("2023-11-14 22:13:20");
-                    // Etc/GMT-1 is UTC+1, so the hour advances.
-                    // Differs from React: Stroom converts Java's `XXX` (an ISO offset, +01:00) to
-                    // moment.js's `XXX` (the Unix time in seconds, three times), so the offset isn't
-                    // shown; the time before it is the same as React's
-                    play.expect(play.getByTestId("offset-plus1"))
-                            .toHaveTextContent("2023-11-14T23:13:20" + "1700000000".repeat(3));
-                    play.expect(play.getByTestId("offset-plus1").textContent()).not().toMatch("+01:00");
+                    // Etc/GMT-1 is UTC+1, so the hour advances, and Java's XXX shows the offset (it
+                    // once became moment.js's XXX, the Unix time in seconds three times)
+                    play.expect(play.getByTestId("offset-plus1")).toHaveTextContent("2023-11-14T23:13:20+01:00");
                     play.expect(play.getByTestId("month-name")).toHaveTextContent("14 Nov 2023");
                 });
     }

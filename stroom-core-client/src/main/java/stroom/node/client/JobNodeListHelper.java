@@ -212,7 +212,7 @@ public class JobNodeListHelper {
                                          + jobNode.getJobType() + "'.", null);
                 } else {
                     final String msg = "Are you sure you want to change the schedule of job '"
-                                       + jobNode.getJobName() + " for " + nodeCount + " nodes?\n\n" +
+                                       + jobNode.getJobName() + "' for " + nodeCount + " nodes?\n\n" +
                                        "All of the following nodes will be set to the same schedule.\n\n"
                                        + selectedItems.stream()
                                                .map(JobNode::getNodeName)

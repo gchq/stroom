@@ -61,9 +61,7 @@ public final class DocRefCellStories {
     private static final DocRef FEED_REF = new DocRef("Feed", "uuid-feed-1", "TEST_FEED");
     private static final DocRef PIPELINE_REF = new DocRef("Pipeline", "uuid-pipe-1", "Event Processing");
     private static final DocRef DICTIONARY_REF = new DocRef("Dictionary", "uuid-dict-1", "Known Hosts");
-    // A broken ref: a name but no UUID.
-    // Differs from React: a DocRef can't have a null UUID, which is what DocRefCell checks to hide the
-    // open button, so GWT shows the open button for an empty UUID
+    // A broken ref: a name but no UUID. A DocRef can't have a null UUID, so it is empty
     private static final DocRef BROKEN_REF = new DocRef("Pipeline", "", "Deleted Pipeline");
 
     private DocRefCellStories() {
@@ -80,6 +78,13 @@ public final class DocRefCellStories {
                 // A feed, a pipeline and a dictionary reference (with type icons). Hover a row to
                 // reveal the copy / open buttons. The broken ref has no uuid.
                 .story("Basic", DocRefCellStories::basic)
+                .withPlay(play -> {
+                    // The broken ref can be copied but not opened (DocRefCell once only hid the open
+                    // button for a null UUID, which a DocRef can't have)
+                    play.expect(play.getByTitle("Open Pipeline Event Processing in new tab")).toBeInTheDocument();
+                    play.expect(play.getByTitle("Copy name 'Deleted Pipeline' to clipboard")).toBeInTheDocument();
+                    play.expect(play.queryByTitle("Open Pipeline Deleted Pipeline in new tab")).toBeNull();
+                })
                 // No type icon, and the hasOpenAndCopy(false) variant (plain text, no buttons)
                 .story("IconAndButtonToggles", context -> StoryPanels.column(8,
                         cellBox(new DocRefCell.Builder<DocRef>()

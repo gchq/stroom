@@ -222,6 +222,9 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
             saveButton.setTitle("Save is not available as this document is read only");
         }
         tabContentProvider.read(docRef, document, readOnly);
+        // The name may have changed (e.g. after a rename or Save As), and a clean document doesn't
+        // become dirty to refresh the tab's label
+        refreshTabIfLabelChanged();
     }
 
     @Override
@@ -266,12 +269,16 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
 
     @Override
     public void onDirty() {
+        refreshTabIfLabelChanged();
+        saveButton.setEnabled(isDirty());
+    }
+
+    private void refreshTabIfLabelChanged() {
         // Only fire tab refresh if the tab has changed.
         if (lastLabel == null || !lastLabel.equals(getLabel())) {
             lastLabel = getLabel();
             RefreshContentTabEvent.fire(this, this);
         }
-        saveButton.setEnabled(isDirty());
     }
 
     @Override

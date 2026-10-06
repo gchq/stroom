@@ -364,12 +364,12 @@ public final class DashboardComponentStories {
                                 })))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    // Differs from React: the button is titled 'Enter Stepping Mode', and GWT shows it
-                    // as soon as the component shows its (empty) text, before a row is selected
-                    // (TextPresenter.showData)
-                    play.waitFor(() -> play.expect(play.getByTitle(STEP)).toBeVisible());
+                    // Differs from React: the button is titled 'Enter Stepping Mode'
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    // Hidden until a row is selected, as there is nothing to step (it was once shown
+                    // with the component's empty text, and then alerted 'No stream id')
+                    play.expect(play.getByTitle(STEP)).not().toBeVisible();
                     play.click(play.getByText("alpha"));
                     play.waitFor(() -> play.expect(play.getByTitle(STEP)).toBeVisible());
                     play.click(play.getByTitle(STEP));

@@ -228,7 +228,8 @@ public class DocRefCell<T_ROW> extends AbstractCell<T_ROW>
                         "Copy name '" + docRef.getName() + "' to clipboard",
                         copy));
 
-                if (docRef.getUuid() != null) {
+                // A broken ref may have an empty UUID, which can't be opened
+                if (NullSafe.isNonBlankString(docRef.getUuid())) {
                     final SafeHtml open = SvgImageUtil.toSafeHtml(
                             SvgImage.OPEN,
                             ICON_CLASS_NAME,

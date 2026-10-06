@@ -134,8 +134,10 @@ public class TextPresenter
         // Defer showing data to be sure that the data display has been made
         // visible first.
         Scheduler.get().scheduleDeferred(() -> {
-            // Determine if we should show tha play button.
+            // Determine if we should show tha play button. Stepping needs a source location, which
+            // the text has only once a row is selected (beginStepping needs the stream id)
             playButtonVisible = !isHtml
+                                && currentStreamId != null
                                 && getTextSettings().isShowStepping()
                                 && securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
 

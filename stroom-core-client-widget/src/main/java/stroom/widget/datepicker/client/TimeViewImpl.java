@@ -17,17 +17,15 @@
 package stroom.widget.datepicker.client;
 
 import stroom.util.shared.time.Time;
-import stroom.widget.datepicker.client.DateTimePopup.DateTimeView;
 import stroom.widget.datepicker.client.TimePopup.TimeView;
+import stroom.widget.form.client.FormGroup;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
@@ -45,6 +43,10 @@ public class TimeViewImpl extends ViewImpl implements TimeView {
     @SuppressWarnings("unused")
     @UiField
     ValueSpinner second;
+    @UiField
+    FormGroup minuteGroup;
+    @UiField
+    FormGroup secondGroup;
 
     @Inject
     public TimeViewImpl(final Binder binder) {
@@ -89,12 +91,12 @@ public class TimeViewImpl extends ViewImpl implements TimeView {
 
     @Override
     public void setMinuteVisible(final boolean visible) {
-
+        minuteGroup.setVisible(visible);
     }
 
     @Override
     public void setSecondVisible(final boolean visible) {
-
+        secondGroup.setVisible(visible);
     }
 
     @Override

@@ -149,10 +149,9 @@ public final class AnalyticRuleEditorStories {
                     // Differs from React: GWT's dialog is captioned 'Add Notification'
                     final Play dialog = dialog(screen, "Add Notification");
                     play.expect(dialog.getByText("Destination Type")).toBeInTheDocument();
-                    // Differs from React: a new notification has no destination type in GWT (React
-                    // defaults to Stream), so the play chooses Stream
-                    play.expect(destinationType(dialog)).toHaveValue("");
-                    pickDestinationType(play, dialog, "Stream");
+                    // A new notification defaults to Stream (it once had no destination type, and OK
+                    // added a row with none)
+                    play.expect(destinationType(dialog)).toHaveValue("Stream");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.getByText("Stream", "td *")).toBeInTheDocument());
                     expectNoProblems(play);

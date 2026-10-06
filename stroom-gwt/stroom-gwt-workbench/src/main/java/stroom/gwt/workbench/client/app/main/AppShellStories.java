@@ -438,12 +438,11 @@ public final class AppShellStories {
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(DICTIONARY_PATH + "new-doc").toSpyMatcher()));
-                    // The tab is re-keyed in place: still one tab.
-                    // Differs from React: GWT's tab keeps the old document's label, as the editor
-                    // reads the new document without refreshing its tab (DocTabPresenter.onRead
-                    // doesn't fire RefreshContentTabEvent when the name changes; a GWT bug)
+                    // The tab is re-keyed in place: still one tab, labelled with the new document's
+                    // name (it once kept the old label, as DocTabPresenter.onRead didn't refresh the
+                    // tab when the name changed)
                     play.expect(tabs(play)).toHaveLength(1);
-                    play.expect(tabs(play).nth(0)).toHaveTextContent("Countries");
+                    play.waitFor(() -> play.expect(tabs(play).nth(0)).toHaveTextContent("Countries Copy"));
                     expectNoProblems(play);
                 })
                 // A node's context menu (no 'Open': a document opens on a double click)
@@ -581,13 +580,13 @@ public final class AppShellStories {
                                     .withJsonBodyContaining("{\"docName\": \"Nations\"}")
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(screen.queryByLabelText("Name")).toBeNull());
-                    // Differs from React: the editor reloads the renamed document, but GWT's tab keeps
-                    // the old label (DocTabPresenter.onRead doesn't refresh the tab when the name
-                    // changes; a GWT bug), so the play checks the reload's request instead
+                    // The editor reloads the renamed document, and its tab is relabelled (it once kept
+                    // the old label, as DocTabPresenter.onRead didn't refresh the tab when the name
+                    // changed)
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("document fetches", () -> countCalls(requests,
                             "GET " + DICTIONARY_PATH + "dict-countries")).toBe(2));
-                    play.expect(tabs(play).nth(0)).toHaveTextContent("Countries");
+                    play.waitFor(() -> play.expect(tabs(play).nth(0)).toHaveTextContent("Nations"));
                     expectNoProblems(play);
                 })
                 // A blank name is refused with a warning, and the rename dialog stays open

@@ -120,12 +120,9 @@ public final class ReportEditorStories {
                             .toBeNull();
                     openTab(play, "Notifications");
                     play.click(play.findByRole("button", "Add Notification"));
-                    // Differs from React: GWT's dialog is captioned 'Add Notification', and a new
-                    // notification has no destination type, so the play chooses Stream
+                    // Differs from React: GWT's dialog is captioned 'Add Notification'. A new
+                    // notification defaults to Stream
                     final Play dialog = AnalyticRuleEditorStories.dialog(screen, "Add Notification");
-                    play.click(dialog.within(dialog.getByText("Destination Type", "label").closest(".form-group"))
-                            .querySelector(StroomDom.SELECTION_BOX));
-                    play.click(screen.findByText("Stream", ".SelectionPopup *"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.getByText("Stream", "td *")).toBeInTheDocument());
                     DocumentEditors.expectNoProblems(play);

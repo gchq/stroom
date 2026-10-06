@@ -24,7 +24,7 @@
                              text="Reset"/>
                 </g:FlowPanel>
             </form:FormGroup>
-            <form:FormGroup identity="minute" label="Minute" addStyleNames="dock-min">
+            <form:FormGroup ui:field="minuteGroup" identity="minute" label="Minute" addStyleNames="dock-min">
                 <g:FlowPanel styleName="valueChooser">
                     <v:ValueSpinner ui:field="minute"
                                     addStyleNames="dock-max"
@@ -35,7 +35,7 @@
                              text="Reset"/>
                 </g:FlowPanel>
             </form:FormGroup>
-            <form:FormGroup identity="second" label="Second" addStyleNames="dock-min">
+            <form:FormGroup ui:field="secondGroup" identity="second" label="Second" addStyleNames="dock-min">
                 <g:FlowPanel styleName="valueChooser">
                     <v:ValueSpinner ui:field="second"
                                     addStyleNames="dock-max"

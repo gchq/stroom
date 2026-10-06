@@ -114,6 +114,8 @@ public class TimeBox
 
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
+        // So the clock icon can't open the dialog either
+        svgIconBox.setReadonly(!enabled);
     }
 
     public Time getValue() {

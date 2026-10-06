@@ -19,6 +19,8 @@ package stroom.gwt.workbench.client.widgets.dateandtime;
 
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -55,10 +57,18 @@ public final class TimePickerStories {
                 .layout(StoryLayout.CENTERED)
                 // A full HH:MM:SS time
                 .story("Basic", context -> timePicker(context, new Time(14, 30, 0), true))
-                // Hours and minutes only (no seconds spinner in the dialog).
-                // Differs from React: the dialog still shows the seconds spinner, as Stroom's
-                // TimeViewImpl.setSecondVisible (and setMinuteVisible) do nothing
-                .story("HourMinute", context -> timePicker(context, new Time(9, 0, 0), false));
+                // Hours and minutes only (no seconds spinner in the dialog)
+                .story("HourMinute", context -> timePicker(context, new Time(9, 0, 0), false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.querySelector(".svgIconBox-icon-outer"));
+                    final Play dialog = screen.within(screen.findByText("Set Time").closest(StroomDom.DIALOG));
+                    play.expect(dialog.getByText("Minute")).toBeVisible();
+                    // The seconds spinner was once still shown (TimeViewImpl.setSecondVisible did
+                    // nothing)
+                    play.expect(dialog.getByText("Second")).not().toBeVisible();
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                });
     }
 
     /// The box with `<p>Time: HH:MM:SS</p>` below it, in a column with a gap of 8.

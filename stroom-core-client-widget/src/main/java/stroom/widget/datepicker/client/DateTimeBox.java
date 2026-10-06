@@ -126,6 +126,8 @@ public class DateTimeBox
 
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
+        // So the calendar icon can't open the dialog either
+        svgIconBox.setReadonly(!enabled);
         updateInvalidState();
     }
 

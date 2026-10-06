@@ -218,8 +218,10 @@ public final class JobsScreenStories {
                     // selection alone, so the multi-selection is kept
                     play.fireEvent().mouseDown(openIcon(play.within(play.getAllByTitle(EDIT_SCHEDULE).nth(0))));
                     // Differs from React: GWT asks to confirm the batch change (naming the nodes) before
-                    // it shows the schedule editor; React asks after the editor's OK
-                    play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing("for 2 nodes")))
+                    // it shows the schedule editor; React asks after the editor's OK. The job's name is
+                    // quoted (it once lacked the closing quote)
+                    play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing(
+                                    "change the schedule of job 'Data Retention' for 2 nodes?")))
                             .toBeInTheDocument());
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.getByText("Change Schedule")).toBeInTheDocument());

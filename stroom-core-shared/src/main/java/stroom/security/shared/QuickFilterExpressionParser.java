@@ -140,6 +140,23 @@ public class QuickFilterExpressionParser {
         return value;
     }
 
+    /// Quotes a token of quick filter input, e.g. `display:Alice Anderson`, if it needs it, so that
+    /// [#parse] reads it as one token rather than splitting it at its spaces. Any double quotes in
+    /// the token are escaped.
+    ///
+    /// The whole token must be quoted, including any qualifier, as a token is only unquoted when it
+    /// starts with a quote: `"display:Alice Anderson"`, not `display:"Alice Anderson"`.
+    ///
+    /// @param token The token to quote. May be null.
+    /// @return The token, quoted if it contains a space or a double quote, else as it is.
+    public static String quote(final String token) {
+        if (token == null
+            || (token.indexOf(SPLIT_CHAR) == -1 && token.indexOf(QUOTE_CHAR) == -1)) {
+            return token;
+        }
+        return QUOTE_STR + token.replace(QUOTE_STR, ESCAPED_QUOTE_STR) + QUOTE_STR;
+    }
+
     /**
      * Split the input on spaces with each chunk optionally enclosed with a double quotes.
      * Should ignore leading, trailing repeated spaces.

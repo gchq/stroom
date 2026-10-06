@@ -20,6 +20,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.analytics.shared.AbstractAnalyticRuleDoc;
 import stroom.analytics.shared.AnalyticProcessType;
 import stroom.analytics.shared.NotificationConfig;
+import stroom.analytics.shared.NotificationDestinationType;
 import stroom.analytics.shared.NotificationEmailDestination;
 import stroom.analytics.shared.NotificationStreamDestination;
 import stroom.cell.tickbox.shared.TickBoxState;
@@ -107,7 +108,11 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     private void add() {
         final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
-        presenter.read(docRef, analyticProcessType, NotificationConfig.builder().build());
+        // A new notification goes to a stream unless the user chooses otherwise; without a
+        // destination type it would be added with none
+        presenter.read(docRef, analyticProcessType, NotificationConfig.builder()
+                .destinationType(NotificationDestinationType.STREAM)
+                .build());
         ShowPopupEvent
                 .builder(presenter)
                 .popupType(PopupType.OK_CANCEL_DIALOG)

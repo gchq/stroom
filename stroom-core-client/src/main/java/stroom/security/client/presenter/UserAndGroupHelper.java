@@ -32,6 +32,7 @@ import stroom.security.client.event.OpenUsersScreenEvent;
 import stroom.security.identity.client.AccountsPlugin;
 import stroom.security.identity.client.event.OpenAccountEvent;
 import stroom.security.shared.HasUserRef;
+import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.User;
 import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
@@ -353,7 +354,8 @@ public class UserAndGroupHelper {
         if (userRef == null) {
             return "";
         } else if (userRef.getDisplayName() != null) {
-            return UserFields.FIELD_DISPLAY_NAME + ":" + userRef.getDisplayName();
+            // Quoted, as a display name may contain spaces
+            return QuickFilterExpressionParser.quote(UserFields.FIELD_DISPLAY_NAME + ":" + userRef.getDisplayName());
         } else {
             return "";
         }

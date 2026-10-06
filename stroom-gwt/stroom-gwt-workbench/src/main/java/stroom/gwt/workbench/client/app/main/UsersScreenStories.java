@@ -153,16 +153,16 @@ public final class UsersScreenStories {
                     play.findByText("Alice Anderson");
                     // Differs from React: GWT's OpenUsersScreenEvent carries the user, and
                     // UserListPresenter.showUser filters by its display name with the 'display' field
-                    // ('display:Alice Anderson'), not the React focus's free text ('alice'). The quick
+                    // ('"display:Alice Anderson"'), not the React focus's free text ('alice'). The quick
                     // filter has no label, only a placeholder
                     play.expect(play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))
-                            .toHaveValue("display:Alice Anderson");
-                    // GWT bug: the filter isn't quoted, so the parser splits it at the space: the
-                    // users are found by display name '*Alice*' and, separately, '*Anderson*' in any
-                    // default field
+                            .toHaveValue("\"display:Alice Anderson\"");
+                    // The filter is quoted, so the users are found by the whole display name (it was
+                    // once split at the space: display name '*Alice*' and '*Anderson*' in any default
+                    // field)
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/users/v1/find")
-                                    .withBodyContaining("\"value\":\"*Alice*\"")
+                                    .withBodyContaining("\"value\":\"*Alice Anderson*\"")
                                     .toSpyMatcher());
                     expectNoProblems(play);
                 });

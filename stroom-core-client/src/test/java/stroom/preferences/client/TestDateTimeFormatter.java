@@ -33,5 +33,12 @@ public class TestDateTimeFormatter {
         assertThat(dateTimeFormatter
                 .convertJavaDateTimePattern("E, dd MMM yyyy HH:mm:ss Z"))
                 .isEqualTo("ddd, DD MMM YYYY HH:mm:ss Z");
+        // An offset with a colon (+01:00), with and without milliseconds
+        assertThat(dateTimeFormatter
+                .convertJavaDateTimePattern("yyyy-MM-dd'T'HH:mm:ssXXX"))
+                .isEqualTo("YYYY-MM-DD[T]HH:mm:ssZ");
+        assertThat(dateTimeFormatter
+                .convertJavaDateTimePattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"))
+                .isEqualTo("YYYY-MM-DD[T]HH:mm:ss.SSSZ");
     }
 }

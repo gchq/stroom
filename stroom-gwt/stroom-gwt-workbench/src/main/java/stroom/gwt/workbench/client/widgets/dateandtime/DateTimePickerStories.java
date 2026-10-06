@@ -18,10 +18,12 @@
 package stroom.gwt.workbench.client.widgets.dateandtime;
 
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.svg.client.SvgIconBox;
 import stroom.widget.datepicker.client.DateTimeBox;
 import stroom.widget.datepicker.client.DateTimeModel;
 import stroom.widget.datepicker.client.DateTimePopup;
@@ -41,6 +43,9 @@ import com.google.gwt.user.client.ui.Widget;
 public final class DateTimePickerStories {
 
     private static final String ON_CHANGE = DateTimeWidgets.ON_CHANGE;
+    // The calendar icon, and the element its read-only class is on
+    private static final String ICON_OUTER = ".svgIconBox-icon-outer";
+    private static final String ICON_INNER = ".svgIconBox-icon-inner";
     /// 2024-01-15T09:50:00.000Z.
     private static final long VALUE_MS = 1705312200000L;
 
@@ -59,15 +64,24 @@ public final class DateTimePickerStories {
                 .story("Basic", context -> withMsLabel(context, VALUE_MS))
                 // Empty: the calendar icon opens the dialog on the current time
                 .story("Empty", context -> withMsLabel(context, null))
-                // Disabled: the text box is greyed out.
-                // Differs from React: the calendar icon still opens the dialog (DateTimeBox.setEnabled
-                // only disables its text box)
+                // Disabled: the text box and calendar icon are greyed out, and the icon doesn't open
+                // the dialog
                 .story("Disabled", context -> {
                     final ScreenHarness harness = DateTimeWidgets.popupHarness(context);
                     final DateTimeBox box = dateTimeBox(context, harness, VALUE_MS);
                     box.setEnabled(false);
                     harness.add(box);
                     return harness.asWidget();
+                })
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.expect(play.querySelector("input")).toBeDisabled();
+                    play.expect(play.querySelector(ICON_INNER)).toHaveClass(SvgIconBox.ICON_BOX_READONLY_CLASS_NAME);
+                    // The icon once still opened the dialog (DateTimeBox.setEnabled only disabled
+                    // its text box)
+                    play.click(play.querySelector(ICON_OUTER));
+                    play.sleep(100);
+                    play.expect(screen.queryByText("Set Date And Time")).toBeNull();
                 });
     }
 
