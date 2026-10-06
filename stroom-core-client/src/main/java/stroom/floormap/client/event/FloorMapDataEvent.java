@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package stroom.floormap.client.event;
 
-import stroom.floormap.shared.FloorMapObject;
+import stroom.floormap.client.model.FloorMapObject;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -24,9 +24,7 @@ import com.google.gwt.event.shared.HasHandlers;
 
 import java.util.List;
 
-/**
- * Event fired when new queried map objects are received from the query model.
- */
+/// Event fired when new queried map objects are received from the query model.
 public class FloorMapDataEvent extends GwtEvent<FloorMapDataEvent.Handler> {
 
     private static Type<Handler> TYPE;
@@ -61,27 +59,21 @@ public class FloorMapDataEvent extends GwtEvent<FloorMapDataEvent.Handler> {
         handler.onDataChange(this);
     }
 
-    /**
-     * @return the UUID of the document whose query produced these objects, so
-     *         receivers on the shared event bus can ignore events from other
-     *         open FloorMap documents; may be {@code null}
-     */
+    /// @return the UUID of the document whose query produced these objects, so
+    ///         receivers on the shared event bus can ignore events from other
+    ///         open FloorMap documents; may be `null`
     public String getDocUuid() {
         return docUuid;
     }
 
-    /**
-     * @return the list of map objects received from the query model
-     */
+    /// @return the list of map objects received from the query model
     public List<FloorMapObject> getObjects() {
         return objects;
     }
 
     // --------------------------------------------------------------------------------
 
-    /**
-     * Handler for {@link FloorMapDataEvent}.
-     */
+    /// Handler for [FloorMapDataEvent].
     public interface Handler extends EventHandler {
 
         void onDataChange(FloorMapDataEvent event);

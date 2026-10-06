@@ -16,6 +16,8 @@
 
 package stroom.sqlstore.impl;
 
+import stroom.sqlstore.shared.ApplyChangesResult;
+import stroom.sqlstore.shared.FetchAtTimeRequest;
 import stroom.sqlstore.shared.SqlTemporalStoreDoc;
 import stroom.util.json.JsonUtil;
 
@@ -85,5 +87,47 @@ class TestSqlTemporalStoreSerialisation {
         assertThat(deserialized).isNotNull();
         assertThat(deserialized.getName()).isEqualTo("StoreName");
         assertThat(deserialized.getDescription()).isEqualTo("desc");
+    }
+
+    @Test
+    void testApplyChangesResultRoundTrip() {
+        final ApplyChangesResult original = new ApplyChangesResult(false, "Rolled back");
+
+        final ApplyChangesResult deserialized = JsonUtil.readValue(
+                JsonUtil.writeValueAsString(original), ApplyChangesResult.class);
+
+        assertThat(deserialized).isEqualTo(original);
+    }
+
+    /// A result with no success flag must not be mistaken for a success.
+    @Test
+    void testApplyChangesResultMissingSuccessIsFailure() {
+        final ApplyChangesResult deserialized = JsonUtil.readValue(
+                "{\"errorMessage\":\"boom\"}", ApplyChangesResult.class);
+
+        assertThat(deserialized.isSuccess()).isFalse();
+        assertThat(deserialized.getErrorMessage()).isEqualTo("boom");
+        assertThat(new ApplyChangesResult(null, null).isSuccess()).isFalse();
+    }
+
+    @Test
+    void testFetchAtTimeRequestRoundTrip() {
+        final FetchAtTimeRequest original = new FetchAtTimeRequest("myMap", 1_600_000_000_000L);
+
+        final FetchAtTimeRequest deserialized = JsonUtil.readValue(
+                JsonUtil.writeValueAsString(original), FetchAtTimeRequest.class);
+
+        assertThat(deserialized).isEqualTo(original);
+    }
+
+    /// A request with no timeTo is held as 0 (the epoch).
+    @Test
+    void testFetchAtTimeRequestMissingTimeToIsZero() {
+        final FetchAtTimeRequest deserialized = JsonUtil.readValue(
+                "{\"mapName\":\"myMap\"}", FetchAtTimeRequest.class);
+
+        assertThat(deserialized.getMapName()).isEqualTo("myMap");
+        assertThat(deserialized.getTimeTo()).isZero();
+        assertThat(new FetchAtTimeRequest("myMap", null).getTimeTo()).isZero();
     }
 }

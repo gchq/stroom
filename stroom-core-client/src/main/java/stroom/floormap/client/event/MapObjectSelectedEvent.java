@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 
-/**
- * Event fired when a map object is selected (clicked) on the floor map canvas.
- */
+/// Event fired when a map object is selected (clicked) on the floor map canvas.
 public class MapObjectSelectedEvent extends GwtEvent<Handler> {
     private static Type<Handler> TYPE;
     private final String objectId;
@@ -54,18 +52,14 @@ public class MapObjectSelectedEvent extends GwtEvent<Handler> {
         handler.onSelect(this);
     }
 
-    /**
-     * @return the identifier of the selected object
-     */
+    /// @return the identifier of the selected object
     public String getObjectId() {
         return objectId;
     }
 
     // --------------------------------------------------------------------------------
 
-    /**
-     * Handler for {@link MapObjectSelectedEvent}.
-     */
+    /// Handler for [MapObjectSelectedEvent].
     public interface Handler extends EventHandler {
 
         void onSelect(MapObjectSelectedEvent event);

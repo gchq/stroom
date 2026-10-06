@@ -68,7 +68,7 @@ public class ExplorerTreeFilter {
                               @JsonProperty("nodeFlags") final Set<NodeFlag> nodeFlags,
                               @JsonProperty("requiredPermissions") final Set<DocumentPermission> requiredPermissions,
                               @JsonProperty("nameFilter") final String nameFilter,
-                              @JsonProperty("nameFilterChange") final boolean nameFilterChange,
+                              @JsonProperty("nameFilterChange") final Boolean nameFilterChange,
                               @JsonProperty("recentItems") final List<DocRef> recentItems) {
         this.includedTypes = includedTypes;
         this.includedRootTypes = includedRootTypes;
@@ -76,7 +76,7 @@ public class ExplorerTreeFilter {
         this.nodeFlags = nodeFlags;
         this.requiredPermissions = requiredPermissions;
         this.nameFilter = nameFilter;
-        this.nameFilterChange = nameFilterChange;
+        this.nameFilterChange = Objects.requireNonNullElse(nameFilterChange, false);
         this.recentItems = recentItems;
     }
 

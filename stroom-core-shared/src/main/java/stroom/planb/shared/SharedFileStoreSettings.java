@@ -52,9 +52,9 @@ public final class SharedFileStoreSettings {
 
     @JsonCreator
     public SharedFileStoreSettings(
-            @JsonProperty("shardCount") final int shardCount,
+            @JsonProperty("shardCount") final Integer shardCount,
             @JsonProperty("sharedPath") final String sharedPath) {
-        this.shardCount = shardCount;
+        this.shardCount = Objects.requireNonNullElse(shardCount, 0);
         this.sharedPath = sharedPath;
     }
 

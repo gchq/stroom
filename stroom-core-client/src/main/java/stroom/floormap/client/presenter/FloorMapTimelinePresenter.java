@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ package stroom.floormap.client.presenter;
 import stroom.alert.client.event.AlertEvent;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.floormap.client.event.TimeChangeEvent;
+import stroom.floormap.client.playback.FloorMapPlaybackRange;
+import stroom.floormap.client.playback.FloorMapQueryThrottle;
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimelineView;
-import stroom.floormap.shared.FloorMapPlaybackRange;
-import stroom.floormap.shared.FloorMapQueryThrottle;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
@@ -46,25 +46,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * Presenter for the floor map timeline control. Handles time range selection and fires events when the time changes.
- * Provides a timeline bar with step-back/play-pause/step-forward buttons, a progress scrubber, date labels,
- * a speed badge that opens a playback-speed menu when clicked, and a settings icon that opens a popup
- * for date range and loop options.
- */
+/// Presenter for the floor map timeline control. Handles time range selection and fires events when the time changes.
+/// Provides a timeline bar with step-back/play-pause/step-forward buttons, a progress scrubber, date labels,
+/// a speed badge that opens a playback-speed menu when clicked, and a settings icon that opens a popup
+/// for date range and loop options.
 public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelineView> {
 
-    /**
-     * Indicates whether the selected time falls outside the visible timeline range.
-     * Used to show a directional warning indicator so the user knows they need to
-     * extend the range to see the selected object.
-     */
+    /// Indicates whether the selected time falls outside the visible timeline range.
+    /// Used to show a directional warning indicator so the user knows they need to
+    /// extend the range to see the selected object.
     public enum OutOfRange {
-        /** The selected time is within the visible range. */
+        /// The selected time is within the visible range.
         NONE,
-        /** The selected time is before the timeline start. */
+        /// The selected time is before the timeline start.
         BEFORE,
-        /** The selected time is after the timeline end. */
+        /// The selected time is after the timeline end.
         AFTER
     }
 
@@ -74,14 +70,14 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     private static final Preset STEP_BACK_PRESET = new Preset(SvgImage.STEP_BACKWARD, "Step Back", true);
     private static final Preset STEP_FORWARD_PRESET = new Preset(SvgImage.STEP_FORWARD, "Step Forward", true);
     private static final double SPEED_MULTIPLIER = 1000.0;
-    /** Playback speed multipliers offered in the speed badge menu. */
+
+    /// Playback speed multipliers offered in the speed badge menu.
     private static final List<Double> SPEED_OPTIONS =
             Arrays.asList(0.5, 1.0, 10.0, 100.0, 1_000.0, 10_000.0);
-    /**
-     * Minimum wall-clock interval (ms) between data query fires during playback.
-     * The visual position updates every animation frame; queries are throttled to this rate
-     * so the server is not overwhelmed at high playback speeds.
-     */
+
+    /// Minimum wall-clock interval (ms) between data query fires during playback.
+    /// The visual position updates every animation frame; queries are throttled to this rate
+    /// so the server is not overwhelmed at high playback speeds.
     private static final double PLAYBACK_QUERY_INTERVAL_MS = 300.0;
 
     private final FloorMapTimelineSettingsPresenter settingsPresenter;
@@ -90,58 +86,55 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     private long endTime;
     private long currentTime;
 
-    /** Earliest timestamp observed in histogram data — used by Show All. */
+    /// Earliest timestamp observed in histogram data — used by Show All.
     private long dataRangeMin = Long.MAX_VALUE;
-    /** Latest timestamp observed in histogram data — used by Show All. */
+
+    /// Latest timestamp observed in histogram data — used by Show All.
     private long dataRangeMax = Long.MIN_VALUE;
 
-    /**
-     * Number of histogram bins, learned from the data supplied to
-     * {@link #setHistogramData(int[])}. Used to size a single step-back/forward
-     * to exactly one bin width. Defaults to the histogram's bin count until
-     * data arrives.
-     */
+    /// Number of histogram bins, learned from the data supplied to
+    /// [#setHistogramData(int\[\])]. Used to size a single step-back/forward
+    /// to exactly one bin width. Defaults to the histogram's bin count until
+    /// data arrives.
     private int histogramBinCount = 100;
 
-    /**
-     * The pending playback animation frame, or {@code null} when none is scheduled.
-     *
-     * <p>Retained so pause can cancel it. Clearing {@link #playing} alone does not stop
-     * the loop — it only makes the <em>next</em> callback decline to continue — so
-     * pressing play again before that callback fired used to leave two callbacks in
-     * flight, each re-requesting, and playback ran on two concurrent loops.</p>
-     *
-     * <p>That did not double the speed, but only by accident: both callbacks share
-     * {@link #lastFrameTime}, so whichever ran second in a frame computed a delta of
-     * about zero and advanced nothing. Making frame timing per-callback — an innocuous
-     * refactor — would have turned it into a silent speed multiplier. Cancelling removes
-     * the coincidence the correctness rested on.</p>
-     */
+    /// The pending playback animation frame, or `null` when none is scheduled.
+    ///
+    /// Retained so pause can cancel it. Clearing [#playing] alone does not stop
+    /// the loop — it only makes the *next* callback decline to continue — so
+    /// pressing play again before that callback fired used to leave two callbacks in
+    /// flight, each re-requesting, and playback ran on two concurrent loops.
+    ///
+    /// That did not double the speed, but only by accident: both callbacks share
+    /// [#lastFrameTime], so whichever ran second in a frame computed a delta of
+    /// about zero and advanced nothing. Making frame timing per-callback — an innocuous
+    /// refactor — would have turned it into a silent speed multiplier. Cancelling removes
+    /// the coincidence the correctness rested on.
     private AnimationScheduler.AnimationHandle playbackHandle;
 
     private boolean playing;
     private double playbackSpeed;
-    /** Tracks whether the last programmatic setCurrentTime() was out of the visible range. */
+
+    /// Tracks whether the last programmatic setCurrentTime() was out of the visible range.
     private OutOfRange outOfRange = OutOfRange.NONE;
     private double lastFrameTime;
-    /**
-     * Rate limit on the data queries playback issues, kept separate from the
-     * per-frame visual updates. See {@link FloorMapQueryThrottle} for why this is a
-     * class rather than a timestamp field.
-     */
+
+    /// Rate limit on the data queries playback issues, kept separate from the
+    /// per-frame visual updates. See [FloorMapQueryThrottle] for why this is a
+    /// class rather than a timestamp field.
     private final FloorMapQueryThrottle queryThrottle =
             new FloorMapQueryThrottle(PLAYBACK_QUERY_INTERVAL_MS);
 
-    /** Optional callback fired whenever the timeline transitions between playing and paused. */
+    /// Optional callback fired whenever the timeline transitions between playing and paused.
     private java.util.function.Consumer<Boolean> playStateChangeHandler;
 
-    /** Optional callback fired whenever the current time jumps non-continuously (scrub, step, loop). */
+    /// Optional callback fired whenever the current time jumps non-continuously (scrub, step, loop).
     private Runnable clearAnimationStateHandler;
 
-    /** Optional callback fired at the <em>discrete</em> jumps only. See {@link #setDiscontinuityHandler}. */
+    /// Optional callback fired at the *discrete* jumps only. See [#setDiscontinuityHandler].
     private Runnable discontinuityHandler;
 
-    /** Optional callback fired when the user changes the visible time range via the settings popup. */
+    /// Optional callback fired when the user changes the visible time range via the settings popup.
     private Runnable timeRangeChangeHandler;
 
 
@@ -202,12 +195,12 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }));
 
         // Forward date changes from the settings popup back to the timeline.
-        //noinspection unused e
+        //noinspection unused, CodeBlock2Expr
         registerHandler(settingsPresenter.addStartTimeChangeHandler(e -> {
             applyRange(settingsPresenter.getStartTime(), this.endTime);
         }));
 
-        //noinspection unused e
+        //noinspection unused, CodeBlock2Expr
         registerHandler(settingsPresenter.addEndTimeChangeHandler(e -> {
             applyRange(this.startTime, settingsPresenter.getEndTime());
         }));
@@ -298,10 +291,8 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         setPlaybackSpeed(1.0);
     }
 
-    /**
-     * Shows the playback-speed menu anchored above the speed badge. The currently
-     * selected speed is marked with a tick.
-     */
+    /// Shows the playback-speed menu anchored above the speed badge. The currently
+    /// selected speed is marked with a tick.
     private void showSpeedMenu() {
         final List<Item> items = new ArrayList<>();
         int priority = 0;
@@ -324,24 +315,22 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
                 .fire(this);
     }
 
-    /** Applies a new playback speed and updates the badge label to match. */
+    /// Applies a new playback speed and updates the badge label to match.
     private void setPlaybackSpeed(final double speed) {
         this.playbackSpeed = speed;
         getView().setSpeedBadge(formatSpeed(speed));
     }
 
-    /**
-     * Applies a range edited in the settings popup, rejecting one that cannot be used.
-     *
-     * <p>On rejection the picker is put back to the range actually in force, so the
-     * boxes never show a range the timeline is not using. Reverting rather than
-     * coercing is deliberate: silently moving the boundary the user did <em>not</em>
-     * touch is more surprising than declining the one they did.</p>
-     *
-     * <p>Restoring the picker cannot loop back into this method —
-     * {@code DateTimeBox.setValue(Long)} delegates to {@code setValue(value, false)}
-     * and fires no change event.</p>
-     */
+    /// Applies a range edited in the settings popup, rejecting one that cannot be used.
+    ///
+    /// On rejection the picker is put back to the range actually in force, so the
+    /// boxes never show a range the timeline is not using. Reverting rather than
+    /// coercing is deliberate: silently moving the boundary the user did *not*
+    /// touch is more surprising than declining the one they did.
+    ///
+    /// Restoring the picker cannot loop back into this method —
+    /// `DateTimeBox.setValue(Long)` delegates to `setValue(value, false)`
+    /// and fires no change event.
     private void applyRange(final long start, final long end) {
         if (!FloorMapPlaybackRange.isUsable(start, end)) {
             settingsPresenter.setStartTime(this.startTime);
@@ -357,12 +346,10 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }
     }
 
-    /**
-     * Sets the total time range visible on the timeline.
-     *
-     * @param start Start time in milliseconds.
-     * @param end   End time in milliseconds.
-     */
+    /// Sets the total time range visible on the timeline.
+    ///
+    /// @param start Start time in milliseconds.
+    /// @param end   End time in milliseconds.
     public void setTimeRange(final long start, final long end) {
         if (!FloorMapPlaybackRange.isUsable(start, end)) {
             // Keep whatever range is currently in force. Storing an unusable one makes
@@ -382,16 +369,14 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         updateDateLabels();
     }
 
-    /**
-     * Sets the current selected time on the timeline.
-     *
-     * <p>If the time falls outside the visible range [{@link #startTime},
-     * {@link #endTime}], it is clamped to the nearest boundary and the view is
-     * notified with an {@link OutOfRange} indicator so a warning chevron can
-     * be shown at the corresponding end of the bar.</p>
-     *
-     * @param time The selected time in milliseconds.
-     */
+    /// Sets the current selected time on the timeline.
+    ///
+    /// If the time falls outside the visible range, from [#startTime] to
+    /// [#endTime], it is clamped to the nearest boundary and the view is
+    /// notified with an [OutOfRange] indicator so a warning chevron can
+    /// be shown at the corresponding end of the bar.
+    ///
+    /// @param time The selected time in milliseconds.
     public void setCurrentTime(final long time) {
         if (endTime > startTime) {
             if (time < startTime) {
@@ -411,24 +396,20 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         updateProgress();
     }
 
-    /**
-     * Registers a callback to be invoked when the timeline transitions between playing and
-     * paused.  The boolean argument is {@code true} when playback starts, {@code false}
-     * when it stops for any reason.
-     *
-     * @param handler Called with {@code true} on play, {@code false} on pause/stop.
-     */
+    /// Registers a callback to be invoked when the timeline transitions between playing and
+    /// paused.  The boolean argument is `true` when playback starts, `false`
+    /// when it stops for any reason.
+    ///
+    /// @param handler Called with `true` on play, `false` on pause/stop.
     public void setPlayStateChangeHandler(final java.util.function.Consumer<Boolean> handler) {
         this.playStateChangeHandler = handler;
     }
 
-    /**
-     * Pauses playback if the timeline is currently playing.
-     *
-     * <p>This is a no-op when the timeline is already paused. The button preset is
-     * updated to reflect the paused state and the play-state-change handler is notified,
-     * matching the same logic used by the play/pause toggle button.</p>
-     */
+    /// Pauses playback if the timeline is currently playing.
+    ///
+    /// This is a no-op when the timeline is already paused. The button preset is
+    /// updated to reflect the paused state and the play-state-change handler is notified,
+    /// matching the same logic used by the play/pause toggle button.
     public void pause() {
         if (playing) {
             playing = false;
@@ -440,37 +421,33 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }
     }
 
-    /**
-     * Registers a callback to be invoked whenever the current time jumps non-continuously
-     * (scrub commit, step, stop-at-end, loop-around).  Used by the canvas presenter to
-     * discard any in-flight movement animations and trail data.
-     *
-     * @param handler Called on every discontinuous time jump.
-     */
+    /// Registers a callback to be invoked whenever the current time jumps non-continuously
+    /// (scrub commit, step, stop-at-end, loop-around).  Used by the canvas presenter to
+    /// discard any in-flight movement animations and trail data.
+    ///
+    /// @param handler Called on every discontinuous time jump.
     public void setClearAnimationStateHandler(final Runnable handler) {
         this.clearAnimationStateHandler = handler;
     }
 
-    /**
-     * Sets a callback for the <b>discrete</b> time jumps: a committed scrub, a step (button or
-     * keyboard), and stopping at the end of the range.
-     *
-     * <p>Distinct from {@link #setClearAnimationStateHandler} on purpose, and the difference is the
-     * loop wrap. That fires <b>per frame</b> while looping — which is fine for discarding animation
-     * state, and ruinous for anything that starts a query, as the throttle comment on the wrap
-     * explains. So a consumer that must re-read on a jump needs a signal the wrap does not raise.
-     * A backward wrap is self-evident from the time going down; a <em>forward</em> scrub or step is
-     * not, which is what this callback exists to report.</p>
-     *
-     * <p>Fired <b>before</b> the {@code TimeChangeEvent} at each site, so a handler that arms state
-     * has done so by the time the read for the new position is decided.</p>
-     *
-     * <p>Not fired by Show All, {@code applyRange} or {@code setTimeRange}: they change the visible
-     * <em>range</em>, never {@code currentTime}, and raise no {@code TimeChangeEvent} — so there is
-     * no read to classify.</p>
-     *
-     * @param handler the callback, or {@code null} to remove it
-     */
+    /// Sets a callback for the **discrete** time jumps: a committed scrub, a step (button or
+    /// keyboard), and stopping at the end of the range.
+    ///
+    /// Distinct from [#setClearAnimationStateHandler] on purpose, and the difference is the
+    /// loop wrap. That fires **per frame** while looping — which is fine for discarding animation
+    /// state, and ruinous for anything that starts a query, as the throttle comment on the wrap
+    /// explains. So a consumer that must re-read on a jump needs a signal the wrap does not raise.
+    /// A backward wrap is self-evident from the time going down; a *forward* scrub or step is
+    /// not, which is what this callback exists to report.
+    ///
+    /// Fired **before** the `TimeChangeEvent` at each site, so a handler that arms state
+    /// has done so by the time the read for the new position is decided.
+    ///
+    /// Not fired by Show All, `applyRange` or `setTimeRange`: they change the visible
+    /// *range*, never `currentTime`, and raise no `TimeChangeEvent` — so there is
+    /// no read to classify.
+    ///
+    /// @param handler the callback, or `null` to remove it
     public void setDiscontinuityHandler(final Runnable handler) {
         this.discontinuityHandler = handler;
     }
@@ -481,23 +458,21 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }
     }
 
-    /**
-     * Registers a callback to be invoked when the user changes the visible time range
-     * via the settings popup. Used by {@code FloorMapMapPresenter} to re-run the histogram
-     * query over the new range.
-     *
-     * @param handler Called whenever start or end time changes.
-     */
+    /// Registers a callback to be invoked when the user changes the visible time range
+    /// via the settings popup. Used by `FloorMapMapPresenter` to re-run the histogram
+    /// query over the new range.
+    ///
+    /// @param handler Called whenever start or end time changes.
     public void setTimeRangeChangeHandler(final Runnable handler) {
         this.timeRangeChangeHandler = handler;
     }
 
-    /** @return The current timeline start time in milliseconds. */
+    /// @return The current timeline start time in milliseconds.
     public long getStartTime() {
         return startTime;
     }
 
-    /** @return The current timeline end time in milliseconds. */
+    /// @return The current timeline end time in milliseconds.
     public long getEndTime() {
         return endTime;
     }
@@ -523,10 +498,8 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         getView().setEndDateLabel(formatTime(endTime));
     }
 
-    /**
-     * Sets the out-of-range state and notifies the view to show the indicator.
-     * Only notifies the view if the state actually changes to avoid redundant DOM updates.
-     */
+    /// Sets the out-of-range state and notifies the view to show the indicator.
+    /// Only notifies the view if the state actually changes to avoid redundant DOM updates.
     private void setOutOfRange(final OutOfRange direction) {
         if (this.outOfRange != direction) {
             this.outOfRange = direction;
@@ -534,9 +507,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }
     }
 
-    /**
-     * Clears the out-of-range indicator if one is currently showing.
-     */
+    /// Clears the out-of-range indicator if one is currently showing.
     private void clearOutOfRange() {
         if (this.outOfRange != OutOfRange.NONE) {
             this.outOfRange = OutOfRange.NONE;
@@ -544,12 +515,10 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }
     }
 
-    /**
-     * Steps the timeline by the given number of histogram bins and fires a data query.
-     * Positive values step forward; negative values step backward.
-     *
-     * @param bins Number of bins to step (positive = forward, negative = backward).
-     */
+    /// Steps the timeline by the given number of histogram bins and fires a data query.
+    /// Positive values step forward; negative values step backward.
+    ///
+    /// @param bins Number of bins to step (positive = forward, negative = backward).
     private void stepBy(final int bins) {
         if (endTime <= startTime) {
             return;
@@ -565,21 +534,19 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         TimeChangeEvent.fire(this, newTime);
     }
 
-    /**
-     * Formats a millisecond timestamp as a short display string for the timeline labels.
-     *
-     * <p>Public because it is the canonical rendering of a timeline instant: the
-     * canvas's accessible summary and its spoken time announcements have to read
-     * the same as the labels under the bar, or a screen-reader user and a sighted
-     * user comparing notes are looking at two different clocks.</p>
-     *
-     * <p>Rendered through the user's own date/time preference, like every other
-     * time in Stroom — in the shortened form that drops the seconds and the
-     * zone, since the axis and the scrubber pill have no room for them. Field
-     * order, separators and the 12/24-hour choice are the user's throughout, so
-     * this is the same format as the rest of the application in a narrower
-     * space, not a second format of its own.</p>
-     */
+    /// Formats a millisecond timestamp as a short display string for the timeline labels.
+    ///
+    /// Public because it is the canonical rendering of a timeline instant: the
+    /// canvas's accessible summary and its spoken time announcements have to read
+    /// the same as the labels under the bar, or a screen-reader user and a sighted
+    /// user comparing notes are looking at two different clocks.
+    ///
+    /// Rendered through the user's own date/time preference, like every other
+    /// time in Stroom — in the shortened form that drops the seconds and the
+    /// zone, since the axis and the scrubber pill have no room for them. Field
+    /// order, separators and the 12/24-hour choice are the user's throughout, so
+    /// this is the same format as the rest of the application in a narrower
+    /// space, not a second format of its own.
     public String formatTime(final long millis) {
         if (millis <= 0) {
             return "";
@@ -588,11 +555,9 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         return formatted != null ? formatted : "";
     }
 
-    /**
-     * Formats a playback speed value as a badge string, e.g. {@code "x1"}, {@code "x0.5"} or
-     * {@code "x1,000"} - an ASCII {@code x} prefix, not a multiplication sign.
-     * Large values are comma-formatted (e.g. {@code "×1,000"}).
-     */
+    /// Formats a playback speed value as a badge string, e.g. `"x1"`, `"x0.5"` or
+    /// `"x1,000"` - an ASCII `x` prefix, not a multiplication sign.
+    /// Large values are comma-formatted (e.g. `"×1,000"`).
     private static String formatSpeed(final double speed) {
         if (speed >= 1000) {
             // Format with thousands separator — GWT has no String.format %,d so we do it manually.
@@ -613,17 +578,15 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
 
 
 
-    /**
-     * Starts the playback loop, cancelling any frame already pending so there is never
-     * more than one callback in flight.
-     */
+    /// Starts the playback loop, cancelling any frame already pending so there is never
+    /// more than one callback in flight.
     private void startPlayback() {
         cancelPlayback();
         lastFrameTime = 0;
         playbackHandle = AnimationScheduler.get().requestAnimationFrame(playbackCallback);
     }
 
-    /** Cancels the pending playback frame, if any. Safe to call when none is scheduled. */
+    /// Cancels the pending playback frame, if any. Safe to call when none is scheduled.
     private void cancelPlayback() {
         if (playbackHandle != null) {
             playbackHandle.cancel();
@@ -700,11 +663,9 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }
     };
 
-    /**
-     * Provides histogram bin counts to be displayed above the scrubber.
-     *
-     * @param binCounts  Array of event counts per bin.
-     */
+    /// Provides histogram bin counts to be displayed above the scrubber.
+    ///
+    /// @param binCounts  Array of event counts per bin.
     public void setHistogramData(final int[] binCounts) {
         if (binCounts != null && binCounts.length > 0) {
             histogramBinCount = binCounts.length;
@@ -712,14 +673,12 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         getView().setHistogramData(binCounts);
     }
 
-    /**
-     * Records the actual min/max timestamps seen in the current histogram data.
-     * Called by {@code FloorMapMapPresenter} after each histogram query completes.
-     * Enables the "Show All" button once a valid range is known.
-     *
-     * @param min Earliest event timestamp in the queried data (milliseconds).
-     * @param max Latest event timestamp in the queried data (milliseconds).
-     */
+    /// Records the actual min/max timestamps seen in the current histogram data.
+    /// Called by `FloorMapMapPresenter` after each histogram query completes.
+    /// Enables the "Show All" button once a valid range is known.
+    ///
+    /// @param min Earliest event timestamp in the queried data (milliseconds).
+    /// @param max Latest event timestamp in the queried data (milliseconds).
     public void setDataRange(final long min, final long max) {
         if (min <= max) {
             this.dataRangeMin = min;
@@ -728,15 +687,13 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         }
     }
 
-    /**
-     * Adds a help button to the timeline's right-hand controls.
-     *
-     * <p>Called by the Editor tab only, so the read-only Map tab (which shares
-     * this presenter) shows no help button. Clicking the button (or activating
-     * it from the keyboard) opens the standard in-app help popup.</p>
-     *
-     * @param helpContent the HTML help body to show in the popup
-     */
+    /// Adds a help button to the timeline's right-hand controls.
+    ///
+    /// Called by the Editor tab only, so the read-only Map tab (which shares
+    /// this presenter) shows no help button. Clicking the button (or activating
+    /// it from the keyboard) opens the standard in-app help popup.
+    ///
+    /// @param helpContent the HTML help body to show in the popup
     public void setHelpContent(final SafeHtml helpContent) {
         final HelpButton helpButton = HelpButton.create("Timeline help");
         helpButton.setHelpContentHeading("Timeline");
@@ -748,122 +705,90 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
 
         void setProgressPct(double pct);
 
-        /**
-         * Sets the handler called on every mouse-move during a drag.
-         * Should update the visual position only — must NOT trigger a data query.
-         */
+        /// Sets the handler called on every mouse-move during a drag.
+        /// Should update the visual position only — must NOT trigger a data query.
         void setScrubHandler(Consumer<Double> scrubHandler);
 
-        /**
-         * Sets the handler called when the user releases the scrubber (mouse-up) or
-         * clicks directly on the histogram to seek.
-         * This is the point at which a data query should be fired.
-         */
+        /// Sets the handler called when the user releases the scrubber (mouse-up) or
+        /// clicks directly on the histogram to seek.
+        /// This is the point at which a data query should be fired.
         void setCommitHandler(Consumer<Double> commitHandler);
 
-        /**
-         * Sets the handler called when the bar is scrubbed from the keyboard, with
-         * a signed number of histogram bins to move by.
-         *
-         * <p>Stated in bins rather than as a percentage so a keypress lands on the
-         * same instants the step buttons reach; the view does not know the bin
-         * width, and a percentage step would drift off the bin grid.</p>
-         */
+        /// Sets the handler called when the bar is scrubbed from the keyboard, with
+        /// a signed number of histogram bins to move by.
+        ///
+        /// Stated in bins rather than as a percentage so a keypress lands on the
+        /// same instants the step buttons reach; the view does not know the bin
+        /// width, and a percentage step would drift off the bin grid.
         void setNudgeHandler(Consumer<Integer> nudgeHandler);
 
-        /**
-         * Repaints the histogram with the data it already has.
-         *
-         * <p>Needed on a theme change: the bars are canvas pixels, so unlike the
-         * CSS-styled parts of the strip they keep the colour they were painted with
-         * until something repaints them.</p>
-         */
+        /// Repaints the histogram with the data it already has.
+        ///
+        /// Needed on a theme change: the bars are canvas pixels, so unlike the
+        /// CSS-styled parts of the strip they keep the colour they were painted with
+        /// until something repaints them.
         void redrawHistogram();
 
-        /**
-         * Updates the text of the scrub tooltip shown above the handle during dragging.
-         */
+        /// Updates the text of the scrub tooltip shown above the handle during dragging.
         void setScrubTooltip(String text);
 
-        /**
-         * Set the text label shown at the left end of the timeline bar (start date).
-         */
+        /// Set the text label shown at the left end of the timeline bar (start date).
         void setStartDateLabel(String text);
 
-        /**
-         * Set the text label shown at the right end of the timeline bar (end date).
-         */
+        /// Set the text label shown at the right end of the timeline bar (end date).
         void setEndDateLabel(String text);
 
         void setPlayPausePreset(Preset preset);
 
         void setPlayPauseHandler(Runnable handler);
 
-        /** Set the icon/title for the step-back button. */
+        /// Set the icon/title for the step-back button.
         void setStepBackPreset(Preset preset);
 
-        /** Set the icon/title for the step-forward button. */
+        /// Set the icon/title for the step-forward button.
         void setStepForwardPreset(Preset preset);
 
-        /** Set the click handler for the step-back button. */
+        /// Set the click handler for the step-back button.
         void setStepBackHandler(Runnable handler);
 
-        /** Set the click handler for the step-forward button. */
+        /// Set the click handler for the step-forward button.
         void setStepForwardHandler(Runnable handler);
 
-        /**
-         * Set the icon/title for the settings gear button.
-         */
+        /// Set the icon/title for the settings gear button.
         void setSettingsPreset(Preset preset);
 
-        /**
-         * Set the click handler for the settings gear button.
-         */
+        /// Set the click handler for the settings gear button.
         void setSettingsHandler(Runnable handler);
 
-        /**
-         * Returns the settings button widget so the popup can be anchored to it.
-         */
+        /// Returns the settings button widget so the popup can be anchored to it.
         Widget getSettingsButtonWidget();
 
-        /**
-         * Appends a widget to the right-hand controls (beside the settings gear).
-         * Used by the Editor tab to add a help button.
-         *
-         * @param widget the widget to append
-         */
+        /// Appends a widget to the right-hand controls (beside the settings gear).
+        /// Used by the Editor tab to add a help button.
+        ///
+        /// @param widget the widget to append
         void addRightControl(Widget widget);
 
-        /**
-         * Updates the speed badge label shown beside the settings button (e.g. "x1").
-         */
+        /// Updates the speed badge label shown beside the settings button (e.g. "x1").
         void setSpeedBadge(String text);
 
-        /**
-         * Set the handler called when the speed badge is clicked (or activated from
-         * the keyboard). Opens the playback-speed menu.
-         */
+        /// Set the handler called when the speed badge is clicked (or activated from
+        /// the keyboard). Opens the playback-speed menu.
         void setSpeedBadgeHandler(Runnable handler);
 
-        /**
-         * Returns the speed badge widget so the speed menu can be anchored to it.
-         */
+        /// Returns the speed badge widget so the speed menu can be anchored to it.
         Widget getSpeedBadgeWidget();
 
-        /**
-         * Provides histogram data (event counts per bin) for display above the scrubber.
-         * An empty or null array clears the histogram.
-         */
+        /// Provides histogram data (event counts per bin) for display above the scrubber.
+        /// An empty or null array clears the histogram.
         void setHistogramData(int[] binCounts);
 
-        /**
-         * Shows or hides the out-of-range indicator at the appropriate end of the
-         * timeline bar.
-         *
-         * @param direction {@link OutOfRange#BEFORE} to show a left indicator,
-         *                  {@link OutOfRange#AFTER} to show a right indicator,
-         *                  or {@link OutOfRange#NONE} to hide both.
-         */
+        /// Shows or hides the out-of-range indicator at the appropriate end of the
+        /// timeline bar.
+        ///
+        /// @param direction [OutOfRange#BEFORE] to show a left indicator,
+        ///         [OutOfRange#AFTER] to show a right indicator,
+        ///         or [OutOfRange#NONE] to hide both.
         void setOutOfRangeIndicator(OutOfRange direction);
     }
 }

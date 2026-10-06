@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestFloorMapGeometry {
 
-    /** A 10x10 square with its lower-left corner at the origin. */
+    /// A 10x10 square with its lower-left corner at the origin.
     private static double[][] square() {
         return new double[][]{{0, 0}, {10, 0}, {10, 10}, {0, 10}};
     }
 
-    /** A concave "C" shape opening to the right, spanning 0..10 in both axes. */
+    /// A concave "C" shape opening to the right, spanning 0..10 in both axes.
     private static double[][] concave() {
         return new double[][]{
                 {0, 0}, {10, 0}, {10, 3}, {3, 3}, {3, 7}, {10, 7}, {10, 10}, {0, 10}};
@@ -49,19 +49,15 @@ class TestFloorMapGeometry {
         assertThat(FloorMapGeometry.contains(square(), -0.001, 5)).isFalse();
     }
 
-    /**
-     * The AABB prefilter must reject a far-away point without consulting the
-     * edges — same answer, and the path most calls take.
-     */
+    /// The AABB prefilter must reject a far-away point without consulting the
+    /// edges — same answer, and the path most calls take.
     @Test
     void testContainsFarAway() {
         assertThat(FloorMapGeometry.contains(square(), 1000, 1000)).isFalse();
     }
 
-    /**
-     * A concave polygon's notch is outside even though it is inside the
-     * bounding box — the case an AABB-only test would get wrong.
-     */
+    /// A concave polygon's notch is outside even though it is inside the
+    /// bounding box — the case an AABB-only test would get wrong.
     @Test
     void testContainsConcaveNotch() {
         assertThat(FloorMapGeometry.contains(concave(), 6, 5)).isFalse();
@@ -71,10 +67,8 @@ class TestFloorMapGeometry {
         assertThat(FloorMapGeometry.contains(concave(), 1.5, 5)).isTrue();
     }
 
-    /**
-     * Winding direction must not change the answer — the editor can produce
-     * either depending on which way the user drew the polygon.
-     */
+    /// Winding direction must not change the answer — the editor can produce
+    /// either depending on which way the user drew the polygon.
     @Test
     void testContainsIgnoresWindingDirection() {
         final double[][] clockwise = new double[][]{{0, 0}, {0, 10}, {10, 10}, {10, 0}};
@@ -125,79 +119,49 @@ class TestFloorMapGeometry {
     }
 
     // -----------------------------------------------------------------------
-    // toMapVertices — the load-bearing local-frame → map-space step
+    // centroid
     // -----------------------------------------------------------------------
 
-    /**
-     * Area vertices are stored centred on the centroid in a local frame and
-     * placed by the matrix, so an untransformed comparison is meaningless: the
-     * same local square must test as containing quite different map points once
-     * translated.
-     */
     @Test
-    void testToMapVerticesTranslated() {
-        final double[][] local = new double[][]{{-5, -5}, {5, -5}, {5, 5}, {-5, 5}};
-        final Fact area = new Fact("a1", FloorMapJsonKeys.AREA, null,
-                FloorMapTransformationMatrix.translate(100, 200),
-                new double[]{0, 0}, local, null, null);
+    void testCentroidSquare() {
+        assertThat(FloorMapGeometry.centroid(square())).containsExactly(5, 5);
+    }
 
-        final double[][] mapVertices = FloorMapGeometry.toMapVertices(area);
-
-        assertThat(FloorMapGeometry.aabb(mapVertices)).containsExactly(95, 195, 105, 205);
-        assertThat(FloorMapGeometry.contains(mapVertices, 100, 200)).isTrue();
-        // The local-frame origin is NOT inside the placed polygon.
-        assertThat(FloorMapGeometry.contains(mapVertices, 0, 0)).isFalse();
+    /// The vertex mean, not the area-weighted centroid: extra vertices pull it.
+    @Test
+    void testCentroidIsVertexMean() {
+        final double[][] polygon = new double[][]{{0, 0}, {3, 0}, {6, 0}, {0, 6}};
+        assertThat(FloorMapGeometry.centroid(polygon)).containsExactly(2.25, 1.5);
     }
 
     @Test
-    void testToMapVerticesScaled() {
-        final double[][] local = new double[][]{{-5, -5}, {5, -5}, {5, 5}, {-5, 5}};
-        final Fact area = new Fact("a1", FloorMapJsonKeys.AREA, null,
-                FloorMapTransformationMatrix.scale(2, 2),
-                new double[]{0, 0}, local, null, null);
-
-        final double[][] mapVertices = FloorMapGeometry.toMapVertices(area);
-
-        assertThat(FloorMapGeometry.area(mapVertices)).isEqualTo(400.0);
-        assertThat(FloorMapGeometry.contains(mapVertices, 9, 9)).isTrue();
-        assertThat(FloorMapGeometry.contains(mapVertices, 11, 11)).isFalse();
+    void testCentroidSkipsUnusableRows() {
+        final double[][] polygon = new double[][]{{0, 0}, null, {4, 0}, {9}, {4, 4}};
+        assertThat(FloorMapGeometry.centroid(polygon)).containsExactly(8.0 / 3, 4.0 / 3);
     }
 
     @Test
-    void testToMapVerticesNonArea() {
-        final Fact point = new Fact("p1", "gate", null,
-                FloorMapTransformationMatrix.identity(), new double[]{1, 2});
-        assertThat(FloorMapGeometry.toMapVertices(point)).isNull();
-        assertThat(FloorMapGeometry.toMapVertices(null)).isNull();
+    void testCentroidNoUsableVertices() {
+        //noinspection ConstantValue
+        assertThat(FloorMapGeometry.centroid(null)).isNull();
+        assertThat(FloorMapGeometry.centroid(new double[0][])).isNull();
+        assertThat(FloorMapGeometry.centroid(new double[][]{null, {1}})).isNull();
     }
 
     // -----------------------------------------------------------------------
-    // mapTestPoint
+    // distance
     // -----------------------------------------------------------------------
 
-    /** A point fact is located by its position through its own matrix. */
     @Test
-    void testMapTestPointPositionFact() {
-        final Fact gate = new Fact("g1", "gate", null,
-                FloorMapTransformationMatrix.translate(10, 20), new double[]{3, 4});
-        assertThat(FloorMapGeometry.mapTestPoint(gate)).containsExactly(13, 24);
+    void testDistance() {
+        assertThat(FloorMapGeometry.distance(1, 2, 4, 6)).isEqualTo(5.0);
+        assertThat(FloorMapGeometry.distance(4, 6, 1, 2)).isEqualTo(5.0);
+        assertThat(FloorMapGeometry.distance(3, 3, 3, 3)).isEqualTo(0.0);
     }
 
-    /** An area is located by its local centroid through its matrix. */
     @Test
-    void testMapTestPointArea() {
-        final double[][] local = new double[][]{{-2, -2}, {2, -2}, {2, 2}, {-2, 2}};
-        final Fact area = new Fact("a1", FloorMapJsonKeys.AREA, null,
-                FloorMapTransformationMatrix.translate(50, 60),
-                new double[]{0, 0}, local, null, null);
-        assertThat(FloorMapGeometry.mapTestPoint(area)).containsExactly(50, 60);
-    }
-
-    /** A fact with no position falls back to its matrix origin. */
-    @Test
-    void testMapTestPointNoPosition() {
-        final Fact fact = new Fact("f1", "gate", null,
-                FloorMapTransformationMatrix.translate(7, 8), null);
-        assertThat(FloorMapGeometry.mapTestPoint(fact)).containsExactly(7, 8);
+    void testDistanceSquared() {
+        assertThat(FloorMapGeometry.distanceSquared(1, 2, 4, 6)).isEqualTo(25.0);
+        assertThat(FloorMapGeometry.distanceSquared(-1, -1, 1, 1)).isEqualTo(8.0);
     }
 }

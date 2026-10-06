@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,46 +16,49 @@
 
 package stroom.floormap.shared;
 
-/**
- * The built-in icons a layer can be drawn with, as an alternative to a plain
- * {@link TypeStyle.Shape} or an uploaded image.
- *
- * <h2>Why these are geometry rather than images</h2>
- * <p>An icon is a path, not a file, for the same reason {@link FloorMapShapes}
- * is: one definition serves every surface that has to draw it — the canvas
- * glyph, the Layers panel swatch, the appearance dialog's preview and its
- * picker — so a legend cannot drift from the map.</p>
- *
- * <p>It also keeps the layer's <strong>colour</strong> meaningful. An icon is
- * filled with the layer colour exactly as a shape is, so one drawing serves
- * every layer that wants it and the colour control keeps working; an uploaded
- * image cannot be recoloured, which is why choosing one currently retires the
- * colour to labels and areas. And unlike an asset, an icon needs no upload, is
- * not per-document, and renders before the document has ever been saved.</p>
- *
- * <h2>What belongs in the set</h2>
- * <p><strong>Things that generate logs</strong> — and only those (client
- * direction, 2026-08-13). A floor map exists to show where logged activity
- * happens, so an entity worth its own icon is one with events behind it: a
- * badge reader, a printer, a camera, a person. Building furniture that emits
- * nothing — a fire extinguisher, a desk, a staircase — is not in the set and
- * should not be added to it. Those layers can still be drawn, as a coloured
- * {@link TypeStyle.Shape} or an uploaded image.</p>
- *
- * <h2>Drawing rules</h2>
- * <p>Every path is authored on a <strong>24&times;24 grid with Y pointing
- * down</strong>, filled with the default {@code nonzero} rule: overlapping
- * subpaths of the same winding simply union, and a hole is a subpath wound the
- * other way (the door's handle, the lift's arrows). {@link #transform} maps that
- * grid onto a glyph of any size.</p>
- *
- * <p>Paths are compile-time constants interpolated into trusted SVG. Nothing
- * from a document reaches them: a stored icon name is resolved through
- * {@link #fromName}, which yields {@code null} for anything it does not
- * recognise.</p>
- *
- * <p>Holds no GWT or DOM types so it can be unit-tested on the JVM.</p>
- */
+import stroom.util.shared.NullSafe;
+
+/// The built-in icons a layer can be drawn with, as an alternative to a plain
+/// [TypeStyle.Shape] or an uploaded image.
+///
+/// ## Why these are geometry rather than images
+///
+/// An icon is a path, not a file, for the same reason `FloorMapShapes`
+/// is: one definition serves every surface that has to draw it — the canvas
+/// glyph, the Layers panel swatch, the appearance dialog's preview and its
+/// picker — so a legend cannot drift from the map.
+///
+/// It also keeps the layer's **colour** meaningful. An icon is
+/// filled with the layer colour exactly as a shape is, so one drawing serves
+/// every layer that wants it and the colour control keeps working; an uploaded
+/// image cannot be recoloured, which is why choosing one currently retires the
+/// colour to labels and areas. And unlike an asset, an icon needs no upload, is
+/// not per-document, and renders before the document has ever been saved.
+///
+/// ## What belongs in the set
+///
+/// **Things that generate logs** — and only those (client
+/// direction, 2026-08-13). A floor map exists to show where logged activity
+/// happens, so an entity worth its own icon is one with events behind it: a
+/// badge reader, a printer, a camera, a person. Building furniture that emits
+/// nothing — a fire extinguisher, a desk, a staircase — is not in the set and
+/// should not be added to it. Those layers can still be drawn, as a coloured
+/// [TypeStyle.Shape] or an uploaded image.
+///
+/// ## Drawing rules
+///
+/// Every path is authored on a **24×24 grid with Y pointing
+/// down**, filled with the default `nonzero` rule: overlapping
+/// subpaths of the same winding simply union, and a hole is a subpath wound the
+/// other way (the door's handle, the lift's arrows). [#transform] maps that
+/// grid onto a glyph of any size.
+///
+/// Paths are compile-time constants interpolated into trusted SVG. Nothing
+/// from a document reaches them: a stored icon name is resolved through
+/// [#fromName], which yields `null` for anything it does not
+/// recognise.
+///
+/// Holds no GWT or DOM types so it can be unit-tested on the JVM.
 public enum FloorMapIcon {
 
     PERSON("Person",
@@ -168,7 +171,7 @@ public enum FloorMapIcon {
             + "15L20.8 16.6L1.8 16.6Z M4 17.8a2.4 2.4 0 1 1 4.8 0a2.4 2.4 0 1 1 -4.8 0Z M14.2 "
             + "17.8a2.4 2.4 0 1 1 4.8 0a2.4 2.4 0 1 1 -4.8 0Z");
 
-    /** The side of the square grid every path is authored on. */
+    /// The side of the square grid every path is authored on.
     public static final double GRID = 24;
 
     private final String label;
@@ -179,36 +182,30 @@ public enum FloorMapIcon {
         this.path = path;
     }
 
-    /**
-     * The icon's name for people — shown under it in the picker and as the
-     * layer's appearance in a tooltip. Not derived from {@link #name()}: "Wi-Fi"
-     * and "Badge reader" are not what a de-underscored enum constant gives.
-     */
+    /// The icon's name for people — shown under it in the picker and as the
+    /// layer's appearance in a tooltip. Not derived from [#name()]: "Wi-Fi"
+    /// and "Badge reader" are not what a de-underscored enum constant gives.
     public String getLabel() {
         return label;
     }
 
-    /**
-     * The SVG {@code d} attribute, on the {@value #GRID}-unit grid described in
-     * the class javadoc. Combine with {@link #transform} to place it.
-     */
+    /// The SVG `d` attribute, on the {@value #GRID}-unit grid described in
+    /// the class javadoc. Combine with [#transform] to place it.
     public String getPath() {
         return path;
     }
 
-    /**
-     * The icon with the given name, or {@code null} if there is none.
-     *
-     * <p>Null-safe and lenient by design: the name comes from a stored document,
-     * which may have been written by a later version that had an icon this one
-     * has never heard of, or hand-edited. An unknown name means "no icon", so the
-     * layer falls back to its shape rather than failing to draw.</p>
-     *
-     * @param name an icon name as stored on a {@link TypeStyle}; may be
-     *             {@code null}
-     */
+    /// The icon with the given name, or `null` if there is none.
+    ///
+    /// Null-safe and lenient by design: the name comes from a stored document,
+    /// which may have been written by a later version that had an icon this one
+    /// has never heard of, or hand-edited. An unknown name means "no icon", so the
+    /// layer falls back to its shape rather than failing to draw.
+    ///
+    /// @param name an icon name as stored on a [TypeStyle]; may be
+    ///         `null`
     public static FloorMapIcon fromName(final String name) {
-        if (name == null || name.isEmpty()) {
+        if (NullSafe.isEmptyString(name)) {
             return null;
         }
         for (final FloorMapIcon icon : values()) {
@@ -219,15 +216,13 @@ public enum FloorMapIcon {
         return null;
     }
 
-    /**
-     * The SVG {@code transform} that maps the icon's grid onto a glyph centred on
-     * the origin and spanning {@code ±halfSize} — the frame
-     * {@link FloorMapShapes} works in, so an icon drops into the same place a
-     * shape would.
-     *
-     * @param halfSize half the glyph's extent
-     * @return the {@code transform} attribute value
-     */
+    /// The SVG `transform` that maps the icon's grid onto a glyph centred on
+    /// the origin and spanning `±halfSize` — the frame
+    /// `FloorMapShapes` works in, so an icon drops into the same place a
+    /// shape would.
+    ///
+    /// @param halfSize half the glyph's extent
+    /// @return the `transform` attribute value
     public static String transform(final double halfSize) {
         return "translate(" + (-halfSize) + "," + (-halfSize) + ")"
                 + " scale(" + ((2 * halfSize) / GRID) + ")";

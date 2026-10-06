@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class LifespanInfo {
@@ -38,12 +40,12 @@ public class LifespanInfo {
     @JsonCreator
     public LifespanInfo(@JsonProperty("timeToIdle") final String timeToIdle,
                         @JsonProperty("timeToLive") final String timeToLive,
-                        @JsonProperty("destroyOnTabClose") final boolean destroyOnTabClose,
-                        @JsonProperty("destroyOnWindowClose") final boolean destroyOnWindowClose) {
+                        @JsonProperty("destroyOnTabClose") final Boolean destroyOnTabClose,
+                        @JsonProperty("destroyOnWindowClose") final Boolean destroyOnWindowClose) {
         this.timeToIdle = timeToIdle;
         this.timeToLive = timeToLive;
-        this.destroyOnTabClose = destroyOnTabClose;
-        this.destroyOnWindowClose = destroyOnWindowClose;
+        this.destroyOnTabClose = Objects.requireNonNullElse(destroyOnTabClose, false);
+        this.destroyOnWindowClose = Objects.requireNonNullElse(destroyOnWindowClose, false);
     }
 
     public String getTimeToIdle() {

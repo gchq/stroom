@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,40 +39,33 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-/**
- * Composes the Plan B settings widgets this store needs, and adds the one setting that is ours.
- *
- * <p>Reuses {@link GeneralSettingsWidget}, {@link CondenseSettingsWidget} and
- * {@link RetentionSettingsWidget} rather than reimplementing them, so a store's general settings look
- * and behave as they do everywhere else. The key and value schema widgets are simply not composed —
- * that is the whole mechanism by which they stop being editable here.</p>
- */
+/// Composes the Plan B settings widgets this store needs, and adds the one setting that is ours.
+///
+/// Reuses [GeneralSettingsWidget], [CondenseSettingsWidget] and
+/// [RetentionSettingsWidget] rather than reimplementing them, so a store's general settings look
+/// and behave as they do everywhere else. The key and value schema widgets are simply not composed —
+/// that is the whole mechanism by which they stop being editable here.
 public class FloorMapEventStoreSettingsViewImpl
         extends ViewWithUiHandlers<DirtyUiHandlers>
         implements FloorMapEventStoreSettingsView {
 
-    /**
-     * What turning condense on costs, in the one place a user can turn it on.
-     *
-     * <p>Condense collapses a run of identical values to the earliest row of the run, so a
-     * stationary entity's latest effective time stops advancing and it expires while still
-     * emitting. That is a surprising interaction, and it is not visible from either setting alone.
-     * </p>
-     */
+    /// What turning condense on costs, in the one place a user can turn it on.
+    ///
+    /// Condense collapses a run of identical values to the earliest row of the run, so a
+    /// stationary entity's latest effective time stops advancing and it expires while still
+    /// emitting. That is a surprising interaction, and it is not visible from either setting alone.
     private static final String CONDENSE_WARNING =
             "This will cause repeating events to disappear from the map.";
 
     private final Widget widget;
     private final GeneralSettingsWidget generalSettingsWidget;
 
-    /**
-     * The settings as read, so that writing back preserves what this tab does not show.
-     *
-     * <p>A {@code TemporalStateSettings} carries more than the five fields edited here —
-     * {@code snapshotSettings} among them, which decides whether a query reads live data or a
-     * periodically refreshed copy. Building a fresh object from the widgets would reset every one of
-     * them on every save, silently.</p>
-     */
+    /// The settings as read, so that writing back preserves what this tab does not show.
+    ///
+    /// A `TemporalStateSettings` carries more than the five fields edited here —
+    /// `snapshotSettings` among them, which decides whether a query reads live data or a
+    /// periodically refreshed copy. Building a fresh object from the widgets would reset every one of
+    /// them on every save, silently.
     private TemporalStateSettings readSettings = new TemporalStateSettings.Builder().build();
     private final CondenseSettingsWidget condenseSettingsWidget;
     private final RetentionSettingsWidget retentionSettingsWidget;
@@ -193,11 +186,13 @@ public class FloorMapEventStoreSettingsViewImpl
         expiryTimeUnit.setEnabled(!readOnly);
     }
 
+    @SuppressWarnings("unused")
     @UiHandler("expiryTime")
     public void onExpiryTime(final ValueChangeEvent<Long> event) {
         onDirty();
     }
 
+    @SuppressWarnings("unused")
     @UiHandler("expiryTimeUnit")
     public void onExpiryTimeUnit(final ValueChangeEvent<TimeUnit> event) {
         onDirty();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ class TestFloorMapGroup {
                 .containsExactly("bob@x.com", "gate-3", "alice@x.com");
     }
 
-    /** Adding an existing member is a no-op, and does not reorder. */
+    /// Adding an existing member is a no-op, and does not reorder.
     @Test
     void testAddingExistingMemberIsIdempotent() {
         final FloorMapGroup g = group("g1", "Maintenance", "bob@x.com", "gate-3");
@@ -101,10 +101,8 @@ class TestFloorMapGroup {
     // Identity is the id, never the name
     // ------------------------------------------------------------------------
 
-    /**
-     * The whole point of giving groups ids: a rename must not disturb membership
-     * or the group's position in the list.
-     */
+    /// The whole point of giving groups ids: a rename must not disturb membership
+    /// or the group's position in the list.
     @Test
     void testRenameKeepsIdentityMembersAndPosition() {
         final List<FloorMapGroup> groups = Arrays.asList(
@@ -123,10 +121,8 @@ class TestFloorMapGroup {
         assertThat(after.getFirst().getId()).isEqualTo("g1");
     }
 
-    /**
-     * Two groups may share a name (ids are identity), and each stays
-     * independently editable — the case name-keyed helpers would have corrupted.
-     */
+    /// Two groups may share a name (ids are identity), and each stays
+    /// independently editable — the case name-keyed helpers would have corrupted.
     @Test
     void testSameNamedGroupsRemainIndependent() {
         final List<FloorMapGroup> groups = Arrays.asList(
@@ -162,7 +158,7 @@ class TestFloorMapGroup {
         assertThat(after.getFirst().getId()).isEqualTo("g2");
     }
 
-    /** A hand-edited document with no id still opens: the name stands in. */
+    /// A hand-edited document with no id still opens: the name stands in.
     @Test
     void testMissingIdFallsBackToName() {
         assertThat(new FloorMapGroup(null, "Maintenance", null, null).getId())
@@ -188,11 +184,9 @@ class TestFloorMapGroup {
                 .startsWith("group-");
     }
 
-    /**
-     * The collision-retry path, driven rather than hoped for: a seeded generator
-     * produces a known first value, so seeding an existing group with exactly
-     * that id forces the retry.
-     */
+    /// The collision-retry path, driven rather than hoped for: a seeded generator
+    /// produces a known first value, so seeding an existing group with exactly
+    /// that id forces the retry.
     @Test
     void testGeneratedIdAvoidsCollision() {
         final String firstDraw = "group-" + new Random(42).nextInt(99999);
@@ -245,17 +239,16 @@ class TestFloorMapGroup {
         assertThat(created.getColour()).isEqualTo(FloorMapGroup.DEFAULT_COLOUR);
     }
 
-    /**
-     * The default colour must not collide with the three the canvas already means
-     * something specific with, or a user's first group would look like a
-     * selection or a containment hint.
-     */
+    /// The default colour must not collide with the three the canvas already means
+    /// something specific with, or a user's first group would look like a
+    /// selection or a containment hint.
     @Test
     void testDefaultColourAvoidsReservedColours() {
         assertThat(FloorMapGroup.DEFAULT_COLOUR)
                 .isNotEqualToIgnoringCase("#1e88e5")   // accent / handles / area fill
-                .isNotEqualToIgnoringCase("#ff9800")   // selected
-                .isNotEqualToIgnoringCase(FloorMapHighlight.RELATED_COLOUR);
+                .isNotEqualToIgnoringCase("#ff9800");  // selected
+        // The related-highlight colour is checked from TestFloorMapHighlight, which
+        // lives with the client-side FloorMapHighlight.
     }
 
     @Test

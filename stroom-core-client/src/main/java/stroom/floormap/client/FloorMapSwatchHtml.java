@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,63 +16,53 @@
 
 package stroom.floormap.client;
 
+import stroom.floormap.client.geometry.FloorMapMarker;
+import stroom.floormap.client.geometry.FloorMapShapes;
 import stroom.floormap.shared.FloorMapIcon;
-import stroom.floormap.shared.FloorMapMarker;
-import stroom.floormap.shared.FloorMapShapes;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-/**
- * Builds the small preview of a layer's graphic — the swatch in each Layers panel
- * row and the preview in the appearance dialog.
- *
- * <p>The geometry comes from {@link FloorMapShapes} and {@link FloorMapIcon}, the
- * same sources the canvas glyphs use, so the legend and the map cannot drift
- * apart. The dispatch matches the canvas's render precedence: a layer with a
- * {@link TypeStyle#getGraphic() graphic} previews as a thumbnail of that image,
- * one with an {@link TypeStyle#getIcon() icon} as that icon in the layer's
- * colour, and anything else as its shape.</p>
- */
+/// Builds the small preview of a layer's graphic — the swatch in each Layers panel
+/// row and the preview in the appearance dialog.
+///
+/// The geometry comes from [FloorMapShapes] and [FloorMapIcon], the
+/// same sources the canvas glyphs use, so the legend and the map cannot drift
+/// apart. The dispatch matches the canvas's render precedence: a layer with a
+/// [graphic][TypeStyle#getGraphic()] previews as a thumbnail of that image,
+/// one with an [icon][TypeStyle#getIcon()] as that icon in the layer's
+/// colour, and anything else as its shape.
 public final class FloorMapSwatchHtml {
 
-    /**
-     * Shape extent as a fraction of the swatch box, leaving a little breathing
-     * room around the edge.
-     */
+    /// Shape extent as a fraction of the swatch box, leaving a little breathing
+    /// room around the edge.
     private static final double SHAPE_EXTENT_RATIO = 0.34;
 
-    /**
-     * Icon extent as a fraction of the swatch box. Larger than
-     * {@link #SHAPE_EXTENT_RATIO} because an icon's ink does not fill its grid —
-     * a person is mostly empty at the corners — so matching the shapes' inset
-     * would leave it visibly smaller than the shape it replaces.
-     */
+    /// Icon extent as a fraction of the swatch box. Larger than
+    /// [#SHAPE_EXTENT_RATIO] because an icon's ink does not fill its grid —
+    /// a person is mostly empty at the corners — so matching the shapes' inset
+    /// would leave it visibly smaller than the shape it replaces.
     private static final double ICON_EXTENT_RATIO = 0.44;
 
-    /**
-     * Marker extent as a fraction of the preview box. Smaller than
-     * {@link #ICON_EXTENT_RATIO} because a marker <em>does</em> fill its grid,
-     * and its white outline needs somewhere to go.
-     */
+    /// Marker extent as a fraction of the preview box. Smaller than
+    /// [#ICON_EXTENT_RATIO] because a marker *does* fill its grid,
+    /// and its white outline needs somewhere to go.
     private static final double MARKER_EXTENT_RATIO = 0.42;
 
-    /** The marker's outline and the icon knocked out of it. See the canvas's copy. */
+    /// The marker's outline and the icon knocked out of it. See the canvas's copy.
     private static final String MARKER_OUTLINE = "#ffffff";
 
     private FloorMapSwatchHtml() {
         // Utility class
     }
 
-    /**
-     * A square preview of the given style at {@code sizePx}.
-     *
-     * @param style  the layer style; {@code null} previews as the fallback glyph
-     * @param sizePx the width and height of the preview in pixels
-     * @return safe markup for the preview
-     */
+    /// A square preview of the given style at `sizePx`.
+    ///
+    /// @param style  the layer style; `null` previews as the fallback glyph
+    /// @param sizePx the width and height of the preview in pixels
+    /// @return safe markup for the preview
     public static SafeHtml swatch(final TypeStyle style, final int sizePx) {
         if (style != null && style.hasGraphic()) {
             return imageSwatch(style.getGraphic(), sizePx);
@@ -87,19 +77,17 @@ public final class FloorMapSwatchHtml {
                 sizePx);
     }
 
-    /**
-     * A preview of exactly what the <strong>map</strong> draws for this style —
-     * which, for a layer using a built-in icon, is the icon inside its
-     * {@link FloorMapMarker marker}, not the bare icon.
-     *
-     * <p>Distinct from {@link #swatch} on purpose. A swatch is a legend key: it
-     * sits in a Layers row answering "which layer is this", and at that size the
-     * marker's outline and white knock-out would cost legibility for nothing. A
-     * preview is a promise about the canvas, so it has to carry the chrome.</p>
-     *
-     * @param style  the layer style; {@code null} previews as the fallback glyph
-     * @param sizePx the width and height of the preview in pixels
-     */
+    /// A preview of exactly what the **map** draws for this style —
+    /// which, for a layer using a built-in icon, is the icon inside its
+    /// [marker][FloorMapMarker], not the bare icon.
+    ///
+    /// Distinct from [#swatch] on purpose. A swatch is a legend key: it
+    /// sits in a Layers row answering "which layer is this", and at that size the
+    /// marker's outline and white knock-out would cost legibility for nothing. A
+    /// preview is a promise about the canvas, so it has to carry the chrome.
+    ///
+    /// @param style  the layer style; `null` previews as the fallback glyph
+    /// @param sizePx the width and height of the preview in pixels
     public static SafeHtml mapPreview(final TypeStyle style, final int sizePx) {
         if (style != null && !style.hasGraphic() && style.hasIcon()) {
             return markerSwatch(style.iconOrNull(),
@@ -108,14 +96,12 @@ public final class FloorMapSwatchHtml {
         return swatch(style, sizePx);
     }
 
-    /**
-     * The marker as the canvas draws it: the layer's colour filling a
-     * white-outlined teardrop with the icon knocked out of it.
-     *
-     * <p>Built from {@link FloorMapMarker} and {@link FloorMapIcon}, the same
-     * geometry the canvas uses, so the preview cannot promise something the map
-     * does not deliver.</p>
-     */
+    /// The marker as the canvas draws it: the layer's colour filling a
+    /// white-outlined teardrop with the icon knocked out of it.
+    ///
+    /// Built from [FloorMapMarker] and [FloorMapIcon], the same
+    /// geometry the canvas uses, so the preview cannot promise something the map
+    /// does not deliver.
     private static SafeHtml markerSwatch(final FloorMapIcon icon,
                                          final String colour,
                                          final String type,
@@ -143,16 +129,14 @@ public final class FloorMapSwatchHtml {
                 + "</g></g></g></svg>");
     }
 
-    /**
-     * A preview of one of the built-in icons, filled with the layer's colour —
-     * the same path and the same fill the canvas draws, so the swatch is the
-     * glyph in miniature rather than a likeness of it.
-     *
-     * @param icon   the icon; never {@code null} here
-     * @param colour the layer's colour, or {@code null} to resolve the default
-     * @param type   the layer's type, for that default
-     * @param sizePx the width and height of the preview
-     */
+    /// A preview of one of the built-in icons, filled with the layer's colour —
+    /// the same path and the same fill the canvas draws, so the swatch is the
+    /// glyph in miniature rather than a likeness of it.
+    ///
+    /// @param icon   the icon; never `null` here
+    /// @param colour the layer's colour, or `null` to resolve the default
+    /// @param type   the layer's type, for that default
+    /// @param sizePx the width and height of the preview
     public static SafeHtml iconSwatch(final FloorMapIcon icon,
                                       final String colour,
                                       final String type,
@@ -175,27 +159,25 @@ public final class FloorMapSwatchHtml {
                 + "</g></svg>");
     }
 
-    /**
-     * A thumbnail of an asset-store image, letterboxed into the box so a
-     * non-square image is not distorted — the same {@code contain} fit the canvas
-     * gives a layer graphic.
-     *
-     * <p><strong>Why there is no SVG scale compensation here.</strong> The canvas
-     * has to compensate for SVGs with no {@code viewBox} (see
-     * {@code FloorMapCanvasViewImpl.appendScaledImage}), because an SVG
-     * {@code <image>} scales its referent <em>through that referent's viewBox</em>
-     * and so cannot scale one that lacks it. An HTML {@code <img>} scales by a
-     * different route: the element's own box is the concrete object size and the SVG
-     * is scaled into it as an ordinary replaced element, viewBox or not. So sizing
-     * the element is sufficient here, and the two surfaces agree.</p>
-     *
-     * <p>The size is set as both attributes and inline style so a stylesheet rule on
-     * {@code img} cannot collapse the box and, with it, {@code object-fit}.</p>
-     *
-     * <p>The URL is document-controlled data going into {@code innerHTML}, so it
-     * is escaped; an unescaped value (a stray quote) would allow attribute
-     * injection.</p>
-     */
+    /// A thumbnail of an asset-store image, letterboxed into the box so a
+    /// non-square image is not distorted — the same `contain` fit the canvas
+    /// gives a layer graphic.
+    ///
+    /// **Why there is no SVG scale compensation here.** The canvas
+    /// has to compensate for SVGs with no `viewBox` (see
+    /// `FloorMapCanvasViewImpl.appendScaledImage`), because an SVG
+    /// `<image>` scales its referent *through that referent's viewBox*
+    /// and so cannot scale one that lacks it. An HTML `<img>` scales by a
+    /// different route: the element's own box is the concrete object size and the SVG
+    /// is scaled into it as an ordinary replaced element, viewBox or not. So sizing
+    /// the element is sufficient here, and the two surfaces agree.
+    ///
+    /// The size is set as both attributes and inline style so a stylesheet rule on
+    /// `img` cannot collapse the box and, with it, `object-fit`.
+    ///
+    /// The URL is document-controlled data going into `innerHTML`, so it
+    /// is escaped; an unescaped value (a stray quote) would allow attribute
+    /// injection.
     private static SafeHtml imageSwatch(final String url, final int sizePx) {
         return SafeHtmlUtils.fromTrustedString(
                 "<img src=\"" + SafeHtmlUtils.htmlEscape(url) + "\""
@@ -204,13 +186,11 @@ public final class FloorMapSwatchHtml {
                 + "object-fit:contain;\" alt=\"\"/>");
     }
 
-    /**
-     * An inline-SVG preview of {@code shape} filled with {@code colour}.
-     *
-     * <p>A layer with no colour of its own previews in the colour the canvas will
-     * actually draw it in ({@link TypeStyle#colourForType}) rather than a swatch-only
-     * grey, so the legend states the map's appearance.</p>
-     */
+    /// An inline-SVG preview of `shape` filled with `colour`.
+    ///
+    /// A layer with no colour of its own previews in the colour the canvas will
+    /// actually draw it in ([TypeStyle#colourForType]) rather than a swatch-only
+    /// grey, so the legend states the map's appearance.
     private static SafeHtml shapeSwatch(final Shape shape,
                                         final String colour,
                                         final String type,
@@ -231,11 +211,9 @@ public final class FloorMapSwatchHtml {
                 + "</g></svg>");
     }
 
-    /**
-     * The inner SVG for a shape centred on the origin and spanning
-     * {@code ±extent}. Mirrors the canvas's dispatch in
-     * {@code FloorMapCanvasViewImpl.appendStyledGlyph}.
-     */
+    /// The inner SVG for a shape centred on the origin and spanning
+    /// `±extent`. Mirrors the canvas's dispatch in
+    /// `FloorMapCanvasViewImpl.appendStyledGlyph`.
     private static String shapeSvg(final Shape shape, final String fill, final double extent) {
         if (shape == null) {
             // The fallback graphic for an unconfigured layer is a rounded rect.
@@ -265,11 +243,9 @@ public final class FloorMapSwatchHtml {
         }
     }
 
-    /**
-     * True if {@code colour} is a hex colour literal. Guards the swatch against a
-     * hand-edited document injecting markup through the colour field, which is
-     * interpolated into trusted SVG.
-     */
+    /// True if `colour` is a hex colour literal. Guards the swatch against a
+    /// hand-edited document injecting markup through the colour field, which is
+    /// interpolated into trusted SVG.
     private static boolean isValidColour(final String colour) {
         // Checked by hand rather than with a regex: this runs once per layer row on
         // every Layers rebuild, and GWT does not emulate java.util.regex.Pattern,

@@ -39,6 +39,7 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
     public static final String PROP_NAME_PREVENT_LOGIN = "preventLogin";
 
     private static final boolean DEFAULT_PREVENT_LOGIN = false;
+    private static final StroomDuration DEFAULT_MAX_API_KEY_EXPIRY_AGE = StroomDuration.ofDays(365);
     public static final String PROP_NAME_API_KEY_CACHE = "apiKeyCache";
     public static final String PROP_NAME_AUTHENTICATION_STATE_CACHE = "authenticationStateCache";
     public static final String PROP_NAME_CSRF = "csrf";
@@ -64,7 +65,7 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
                 .build();
         csrfConfig = new CsrfConfig();
         edgeAuthenticationConfig = new EdgeAuthenticationConfig();
-        maxApiKeyExpiryAge = StroomDuration.ofDays(365);
+        maxApiKeyExpiryAge = DEFAULT_MAX_API_KEY_EXPIRY_AGE;
         openIdConfig = new StroomOpenIdConfig();
         preventLogin = DEFAULT_PREVENT_LOGIN;
     }
@@ -83,7 +84,7 @@ public class AuthenticationConfig extends AbstractConfig implements IsStroomConf
         this.csrfConfig = Objects.requireNonNullElseGet(csrfConfig, CsrfConfig::new);
         this.edgeAuthenticationConfig = Objects.requireNonNullElseGet(
                 edgeAuthenticationConfig, EdgeAuthenticationConfig::new);
-        this.maxApiKeyExpiryAge = maxApiKeyExpiryAge;
+        this.maxApiKeyExpiryAge = Objects.requireNonNullElse(maxApiKeyExpiryAge, DEFAULT_MAX_API_KEY_EXPIRY_AGE);
         this.openIdConfig = openIdConfig;
         this.preventLogin = Objects.requireNonNullElse(preventLogin, DEFAULT_PREVENT_LOGIN);
     }

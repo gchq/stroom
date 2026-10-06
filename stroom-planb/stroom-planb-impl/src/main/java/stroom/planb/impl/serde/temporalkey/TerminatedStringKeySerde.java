@@ -34,30 +34,28 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * A string key stored as {@code bytes ‖ 0x00 ‖ time}.
- *
- * <p><b>The terminator is what makes the encoding prefix-free</b>, and prefix-freeness is what lets
- * a reader seek to one key's answer rather than scanning the store. Without it the bytes of
- * {@code door1} are a prefix of those of {@code door10}, the two keys' entries interleave, and a
- * reader stepping past a key by jumping beyond {@code prefix‖0xFF…} jumps over the longer key
- * entirely — silently dropping it. Terminating every key removes that: no key's bytes can extend
- * another's, because every key ends in a byte no key may contain.</p>
- *
- * <p><b>Order is preserved.</b> {@code 0x00} sorts below every other byte under LMDB's unsigned
- * comparator, so {@code door1} still sorts before {@code door10} exactly as the raw bytes would.
- * That is the advantage over a length prefix, which would be equally prefix-free but would sort
- * length-major and foreclose any future key-range scan.</p>
- *
- * <p><b>The one constraint is on key content:</b> a key may not contain an embedded {@code 0x00}.
- * That is free for text arriving through a pipeline — XML cannot carry a NUL character — and is
- * rejected on write rather than silently corrupting the ordering.</p>
- *
- * <p>Compare {@link LimitedStringKeySerde}, which is the same encoding without the terminator.</p>
- */
+/// A string key stored as `bytes ‖ 0x00 ‖ time`.
+///
+/// **The terminator is what makes the encoding prefix-free**, and prefix-freeness is what lets
+/// a reader seek to one key's answer rather than scanning the store. Without it the bytes of
+/// `door1` are a prefix of those of `door10`, the two keys' entries interleave, and a
+/// reader stepping past a key by jumping beyond `prefix‖0xFF…` jumps over the longer key
+/// entirely — silently dropping it. Terminating every key removes that: no key's bytes can extend
+/// another's, because every key ends in a byte no key may contain.
+///
+/// **Order is preserved.** `0x00` sorts below every other byte under LMDB's unsigned
+/// comparator, so `door1` still sorts before `door10` exactly as the raw bytes would.
+/// That is the advantage over a length prefix, which would be equally prefix-free but would sort
+/// length-major and foreclose any future key-range scan.
+///
+/// **The one constraint is on key content:** a key may not contain an embedded `0x00`.
+/// That is free for text arriving through a pipeline — XML cannot carry a NUL character — and is
+/// rejected on write rather than silently corrupting the ordering.
+///
+/// Compare [LimitedStringKeySerde], which is the same encoding without the terminator.
 public class TerminatedStringKeySerde implements TemporalKeySerde {
 
-    /** Sorts below every other byte, so appending it preserves the raw byte ordering. */
+    /// Sorts below every other byte, so appending it preserves the raw byte ordering.
     private static final byte TERMINATOR = 0x00;
 
     private final ByteBuffer reusableWriteBuffer;
@@ -116,14 +114,12 @@ public class TerminatedStringKeySerde implements TemporalKeySerde {
         });
     }
 
-    /**
-     * The key's bytes, checked for length and for the one thing the encoding cannot represent.
-     *
-     * <p>An embedded {@code 0x00} would make the key indistinguishable from a shorter key followed
-     * by its terminator, which is precisely the ambiguity the terminator exists to remove. Rejecting
-     * it here keeps the failure at the point of writing rather than as a key that cannot be read
-     * back.</p>
-     */
+    /// The key's bytes, checked for length and for the one thing the encoding cannot represent.
+    ///
+    /// An embedded `0x00` would make the key indistinguishable from a shorter key followed
+    /// by its terminator, which is precisely the ambiguity the terminator exists to remove. Rejecting
+    /// it here keeps the failure at the point of writing rather than as a key that cannot be read
+    /// back.
     private byte[] keyBytes(final TemporalKey key) {
         final byte[] bytes = ValSerdeUtil.getBytes(key.getPrefix().getVal());
         KeyLength.check(bytes.length, limit);

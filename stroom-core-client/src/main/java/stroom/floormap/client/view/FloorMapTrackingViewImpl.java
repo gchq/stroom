@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,13 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View implementation for the Tracking panel.
- *
- * <p>Layout: toolbar pinned above the data grid using a {@link DockLayoutPanel}
- * so the toolbar remains visible when data is loaded.</p>
- */
+/// View implementation for the Tracking panel.
+///
+/// Layout: toolbar pinned above the data grid using a [DockLayoutPanel]
+/// so the toolbar remains visible when data is loaded.
 public class FloorMapTrackingViewImpl extends ViewImpl implements FloorMapTrackingView {
 
-    /** Height of the button toolbar in pixels. */
+    /// Height of the button toolbar in pixels.
     private static final int TOOLBAR_HEIGHT_PX = 26;
 
     private final DockLayoutPanel root;

@@ -58,25 +58,25 @@ public class AiChatAttachment {
     private final String errorMessage;
 
     @JsonCreator
-    public AiChatAttachment(@JsonProperty("id") final int id,
-                            @JsonProperty("chatId") final int chatId,
-                            @JsonProperty("createTimeMs") final long createTimeMs,
-                            @JsonProperty("updateTimeMs") final long updateTimeMs,
+    public AiChatAttachment(@JsonProperty("id") final Integer id,
+                            @JsonProperty("chatId") final Integer chatId,
+                            @JsonProperty("createTimeMs") final Long createTimeMs,
+                            @JsonProperty("updateTimeMs") final Long updateTimeMs,
                             @JsonProperty("status") final AiAttachmentStatus status,
                             @JsonProperty("attachmentType") final AiAttachmentType attachmentType,
                             @JsonProperty("description") final String description,
                             @JsonProperty("rowCount") final Integer rowCount,
-                            @JsonProperty("truncated") final boolean truncated,
+                            @JsonProperty("truncated") final Boolean truncated,
                             @JsonProperty("errorMessage") final String errorMessage) {
-        this.id = id;
-        this.chatId = chatId;
-        this.createTimeMs = createTimeMs;
-        this.updateTimeMs = updateTimeMs;
+        this.id = Objects.requireNonNullElse(id, 0);
+        this.chatId = Objects.requireNonNullElse(chatId, 0);
+        this.createTimeMs = Objects.requireNonNullElse(createTimeMs, 0L);
+        this.updateTimeMs = Objects.requireNonNullElse(updateTimeMs, 0L);
         this.status = status;
         this.attachmentType = attachmentType;
         this.description = description;
         this.rowCount = rowCount;
-        this.truncated = truncated;
+        this.truncated = Objects.requireNonNullElse(truncated, false);
         this.errorMessage = errorMessage;
     }
 

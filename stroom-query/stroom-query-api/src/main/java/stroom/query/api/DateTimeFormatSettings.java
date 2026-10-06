@@ -57,10 +57,10 @@ public final class DateTimeFormatSettings implements FormatSettings {
      * @param timeZone The time zone to use when formatting the date time value
      */
     @JsonCreator
-    public DateTimeFormatSettings(@JsonProperty("usePreferences") final boolean usePreferences,
+    public DateTimeFormatSettings(@JsonProperty("usePreferences") final Boolean usePreferences,
                                   @JsonProperty("pattern") final String pattern,
                                   @JsonProperty("timeZone") final UserTimeZone timeZone) {
-        this.usePreferences = usePreferences;
+        this.usePreferences = Objects.requireNonNullElse(usePreferences, false);
         this.pattern = pattern;
         this.timeZone = timeZone;
     }

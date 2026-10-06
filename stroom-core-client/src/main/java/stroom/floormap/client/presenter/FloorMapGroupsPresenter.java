@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.floormap.client.FloorMapCellHtml;
 import stroom.floormap.client.FloorMapSwatchHtml;
+import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
+import stroom.floormap.client.overlay.FloorMapAreaCellText;
+import stroom.floormap.client.overlay.FloorMapGroupSnapshot;
 import stroom.floormap.client.presenter.FloorMapGroupsPresenter.FloorMapGroupsView;
-import stroom.floormap.shared.FloorMapAreaCellText;
-import stroom.floormap.shared.FloorMapEntityList.EntityEntry;
 import stroom.floormap.shared.FloorMapGroup;
-import stroom.floormap.shared.FloorMapGroupSnapshot;
 import stroom.floormap.shared.TypeStyle;
 import stroom.floormap.shared.TypeStyle.Shape;
 import stroom.svg.client.Preset;
@@ -58,46 +58,47 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * Presenter for the <strong>Groups</strong> panel — the third tab of the Map
- * tab's right-hand dock, listing the document's {@link FloorMapGroup}s.
- *
- * <p>A group is a named collection of map entities the user assembles by hand
- * ("Maintenance", "Security"). Membership is generic: any id from the map's one id
- * namespace, so people from the events stream, static object facts and even areas
- * can sit in the same group.</p>
- *
- * <h3>Tracking a group is not tracking an entity</h3>
- * <p>This panel <strong>never moves the camera</strong>. Selecting a group selects
- * it for editing; switching its eye on rings its members on the canvas in the
- * group's colour. It does not call {@code setTrackedObjectId}, so an entity the
- * Tracking panel is following keeps being followed while groups are used. That
- * separation is the whole point of the feature and should not be "improved" into a
- * camera jump.</p>
- *
- * <h3>Highlight is transient and starts off</h3>
- * <p>Which groups are highlighted is view state — never persisted, exactly like
- * layer visibility — and <em>every</em> group starts hidden, including one just
- * created. A consequence worth knowing: creating a group and adding members
- * produces no canvas change at all, so the confirmation that membership landed is
- * the Members / Positioned columns updating.</p>
- *
- * <p>"Starts hidden" is a property of a newly created presenter, not something
- * re-imposed on every document read — see {@link #setGroups(List)} for why that
- * distinction matters when the user presses save.</p>
- *
- * <h3>Positioned means "has a position at this instant"</h3>
- * <p>The Positioned column counts members with a position <em>right now</em>. A
- * member whose events have gone quiet has no position and is not counted, so the
- * number can fall without anyone moving. It is not a head-count of who is on
- * site — see {@link FloorMapGroupSnapshot}.</p>
- */
+/// Presenter for the **Groups** panel — the third tab of the Map
+/// tab's right-hand dock, listing the document's [FloorMapGroup]s.
+///
+/// A group is a named collection of map entities the user assembles by hand
+/// ("Maintenance", "Security"). Membership is generic: any id from the map's one id
+/// namespace, so people from the events stream, static object facts and even areas
+/// can sit in the same group.
+///
+/// ### Tracking a group is not tracking an entity
+///
+/// This panel **never moves the camera**. Selecting a group selects
+/// it for editing; switching its eye on rings its members on the canvas in the
+/// group's colour. It does not call `setTrackedObjectId`, so an entity the
+/// Tracking panel is following keeps being followed while groups are used. That
+/// separation is the whole point of the feature and should not be "improved" into a
+/// camera jump.
+///
+/// ### Highlight is transient and starts off
+///
+/// Which groups are highlighted is view state — never persisted, exactly like
+/// layer visibility — and *every* group starts hidden, including one just
+/// created. A consequence worth knowing: creating a group and adding members
+/// produces no canvas change at all, so the confirmation that membership landed is
+/// the Members / Positioned columns updating.
+///
+/// "Starts hidden" is a property of a newly created presenter, not something
+/// re-imposed on every document read — see [#setGroups(List)] for why that
+/// distinction matters when the user presses save.
+///
+/// ### Positioned means "has a position at this instant"
+///
+/// The Positioned column counts members with a position *right now*. A
+/// member whose events have gone quiet has no position and is not counted, so the
+/// number can fall without anyone moving. It is not a head-count of who is on
+/// site — see [FloorMapGroupSnapshot].
 public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsView> {
 
-    /** Column text for a group with nothing to show. */
+    /// Column text for a group with nothing to show.
     private static final String NONE = "—";
 
-    /** Size of the colour swatch on each row, in pixels. */
+    /// Size of the colour swatch on each row, in pixels.
     private static final int SWATCH_SIZE_PX = 12;
 
     private final Provider<FloorMapGroupEditPresenter> groupEditPresenterProvider;
@@ -110,32 +111,30 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     private final ButtonView editButton;
     private final ButtonView deleteButton;
 
-    /** The document's groups as last read or edited, in display order. */
+    /// The document's groups as last read or edited, in display order.
     private List<FloorMapGroup> groups = new ArrayList<>();
 
-    /**
-     * Ids of the groups currently highlighted on the canvas. Transient view state:
-     * starts empty on every document read and is never written to the document.
-     * Keyed on group <em>id</em> so a rename cannot drop a highlight.
-     */
+    /// Ids of the groups currently highlighted on the canvas. Transient view state:
+    /// starts empty on every document read and is never written to the document.
+    /// Keyed on group *id* so a rename cannot drop a highlight.
     private final Set<String> shownGroupIds = new LinkedHashSet<>();
 
-    /** The live per-group counts, refreshed on every facts/events query refresh. */
+    /// The live per-group counts, refreshed on every facts/events query refresh.
     private FloorMapGroupSnapshot snapshot = FloorMapGroupSnapshot.EMPTY;
 
-    /** The roster the member picker offers, pushed by the parent presenter. */
+    /// The roster the member picker offers, pushed by the parent presenter.
     private List<EntityEntry> roster = Collections.emptyList();
 
-    /** Resolves any entity id — an area, a person, an object — to its display name. */
+    /// Resolves any entity id — an area, a person, an object — to its display name.
     private Function<String, String> nameResolver;
 
-    /** Notified with the new group list whenever the user edits one. */
+    /// Notified with the new group list whenever the user edits one.
     private Consumer<List<FloorMapGroup>> groupsEditHandler;
 
-    /** Run whenever the set of highlighted groups changes. */
+    /// Run whenever the set of highlighted groups changes.
     private Runnable highlightChangeHandler;
 
-    /** Source of generated group ids. */
+    /// Source of generated group ids.
     private final Random random = new Random();
 
     @Inject
@@ -237,7 +236,7 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         dataGrid.addResizableColumn(areasColumn, "Areas", 200);
     }
 
-    /** The eye icon for a row, worded for what a click will do next. */
+    /// The eye icon for a row, worded for what a click will do next.
     private static Preset highlightPreset(final boolean shown) {
         return new Preset(
                 shown
@@ -249,21 +248,17 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
                 true);
     }
 
-    /**
-     * The Name cell: a swatch in the group's colour, its name, and a tooltip
-     * naming every member so the membership is readable without opening the
-     * dialog.
-     */
+    /// The Name cell: a swatch in the group's colour, its name, and a tooltip
+    /// naming every member so the membership is readable without opening the
+    /// dialog.
     private SafeHtml nameCell(final FloorMapGroup group) {
         final SafeHtml swatch = FloorMapSwatchHtml.swatch(
                 new TypeStyle(null, Shape.CIRCLE, group.findColourOrDefault()), SWATCH_SIZE_PX);
         return FloorMapCellHtml.cellWithSwatch(swatch, group.getName(), membersTooltip(group));
     }
 
-    /**
-     * Every member named, one per line — never a "+N" summary, which would hide
-     * exactly the names the user is looking for.
-     */
+    /// Every member named, one per line — never a "+N" summary, which would hide
+    /// exactly the names the user is looking for.
     private String membersTooltip(final FloorMapGroup group) {
         if (group.countMembers() == 0) {
             return "No members yet — use Edit Group to add some";
@@ -283,10 +278,8 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         return tooltip.toString();
     }
 
-    /**
-     * The Positioned cell — how many members are on the map at this instant, out
-     * of how many there are.
-     */
+    /// The Positioned cell — how many members are on the map at this instant, out
+    /// of how many there are.
     private SafeHtml positionedCell(final FloorMapGroup group) {
         final int positioned = snapshot.getPositionedCount(group.getId());
         final int total = group.countMembers();
@@ -302,10 +295,8 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         return FloorMapCellHtml.cell(text, tooltip);
     }
 
-    /**
-     * The Areas cell — every area the group's positioned members are standing in,
-     * with how many are in each, most-populated first.
-     */
+    /// The Areas cell — every area the group's positioned members are standing in,
+    /// with how many are in each, most-populated first.
     private SafeHtml areasCell(final FloorMapGroup group) {
         final Map<String, Integer> areaCounts = snapshot.getAreaCounts(group.getId());
         if (areaCounts.isEmpty()) {
@@ -336,10 +327,8 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         return FloorMapCellHtml.cell(joined, tooltip.toString());
     }
 
-    /**
-     * The display name for any entity id, falling back to the raw id when the
-     * parent supplied no resolver or does not know it.
-     */
+    /// The display name for any entity id, falling back to the raw id when the
+    /// parent supplied no resolver or does not know it.
     private String nameFor(final String id) {
         if (id == null) {
             return "";
@@ -361,10 +350,8 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         editNewGroup(FloorMapGroup.create(groups, random));
     }
 
-    /**
-     * Opens the edit dialog on a not-yet-added group, adding and selecting it only
-     * if the user confirms — so cancelling leaves no empty group behind.
-     */
+    /// Opens the edit dialog on a not-yet-added group, adding and selecting it only
+    /// if the user confirms — so cancelling leaves no empty group behind.
     private void editNewGroup(final FloorMapGroup created) {
         groupEditPresenterProvider.get().show(created, roster, nameResolver, true, saved -> {
             applyEdit(FloorMapGroup.replace(groups, saved));
@@ -394,13 +381,11 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         notifyHighlightChanged();
     }
 
-    /**
-     * Adds an entity to a group, from elsewhere in the UI (the Tracking panel's
-     * "Add to Group" action). A no-op when the entity is already a member.
-     *
-     * @param groupId  the target group's id
-     * @param entityId the entity to add
-     */
+    /// Adds an entity to a group, from elsewhere in the UI (the Tracking panel's
+    /// "Add to Group" action). A no-op when the entity is already a member.
+    ///
+    /// @param groupId  the target group's id
+    /// @param entityId the entity to add
     public void addMember(final String groupId, final String entityId) {
         final FloorMapGroup group = FloorMapGroup.find(groups, groupId);
         if (group == null || entityId == null || group.contains(entityId)) {
@@ -409,30 +394,26 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         applyEdit(FloorMapGroup.replace(groups, group.withMember(entityId)));
     }
 
-    /**
-     * Creates a group containing just the given entity — the Tracking panel's
-     * "New group with this entity" path — and opens the edit dialog on it.
-     *
-     * <p>The dialog is opened rather than the group being created silently: the
-     * caller is on a different dock tab, and with highlight off by default a silent
-     * create would produce no visible feedback whatsoever. It also gives the group
-     * a name at the point the user cares about it.</p>
-     *
-     * @param entityId the first member; may be {@code null} for an empty group
-     */
+    /// Creates a group containing just the given entity — the Tracking panel's
+    /// "New group with this entity" path — and opens the edit dialog on it.
+    ///
+    /// The dialog is opened rather than the group being created silently: the
+    /// caller is on a different dock tab, and with highlight off by default a silent
+    /// create would produce no visible feedback whatsoever. It also gives the group
+    /// a name at the point the user cares about it.
+    ///
+    /// @param entityId the first member; may be `null` for an empty group
     public void createGroupWith(final String entityId) {
         editNewGroup(FloorMapGroup.create(groups, random).withMember(entityId));
     }
 
-    /** The groups as currently edited, for callers offering an "add to…" menu. */
+    /// The groups as currently edited, for callers offering an "add to…" menu.
     public List<FloorMapGroup> getGroups() {
         return Collections.unmodifiableList(groups);
     }
 
-    /**
-     * Applies an edited group list: refreshes the grid and tells the host to stage
-     * it against the document (which lights the save button).
-     */
+    /// Applies an edited group list: refreshes the grid and tells the host to stage
+    /// it against the document (which lights the save button).
     private void applyEdit(final List<FloorMapGroup> edited) {
         groups = new ArrayList<>(edited);
         // Highlight state can only name groups that still exist.
@@ -475,22 +456,20 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
     // Inputs from the host presenter
     // ------------------------------------------------------------------------
 
-    /**
-     * Sets the groups read from the document.
-     *
-     * <p><strong>Deliberately preserves the highlight state and the selection.</strong>
-     * Saving a document re-reads every visited tab, so clearing here would silently
-     * switch off the user's highlights every time they pressed save. Highlight
-     * starts off because the field starts empty on a freshly created presenter —
-     * one per open document — not because this method resets it. Ids naming groups
-     * that no longer exist are dropped.</p>
-     *
-     * <p>The snapshot is left alone for the same reason: the queries that follow a
-     * read will refresh it, and zeroing it first would flash "0 of N" across every
-     * row on every save.</p>
-     *
-     * @param groups the document's groups; {@code null} treated as empty
-     */
+    /// Sets the groups read from the document.
+    ///
+    /// **Deliberately preserves the highlight state and the selection.**
+    /// Saving a document re-reads every visited tab, so clearing here would silently
+    /// switch off the user's highlights every time they pressed save. Highlight
+    /// starts off because the field starts empty on a freshly created presenter —
+    /// one per open document — not because this method resets it. Ids naming groups
+    /// that no longer exist are dropped.
+    ///
+    /// The snapshot is left alone for the same reason: the queries that follow a
+    /// read will refresh it, and zeroing it first would flash "0 of N" across every
+    /// row on every save.
+    ///
+    /// @param groups the document's groups; `null` treated as empty
     public void setGroups(final List<FloorMapGroup> groups) {
         this.groups = groups != null
                 ? new ArrayList<>(groups)
@@ -500,15 +479,13 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         notifyHighlightChanged();
     }
 
-    /**
-     * Updates the live per-group counts.
-     *
-     * <p>Called on every facts/events query refresh (~300ms during playback), so
-     * the grid is only redrawn when the counts actually changed — otherwise
-     * playback would re-render it continuously.</p>
-     *
-     * @param snapshot the new snapshot; may be {@code null}
-     */
+    /// Updates the live per-group counts.
+    ///
+    /// Called on every facts/events query refresh (~300ms during playback), so
+    /// the grid is only redrawn when the counts actually changed — otherwise
+    /// playback would re-render it continuously.
+    ///
+    /// @param snapshot the new snapshot; may be `null`
     public void setSnapshot(final FloorMapGroupSnapshot snapshot) {
         final FloorMapGroupSnapshot next = snapshot != null
                 ? snapshot
@@ -520,13 +497,11 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         }
     }
 
-    /**
-     * Sets the entity roster the member picker offers, and the resolver used to
-     * name members and areas in the grid.
-     *
-     * @param roster       every entity seen on the map; {@code null} treated as empty
-     * @param nameResolver resolves an entity id to its display name; may be {@code null}
-     */
+    /// Sets the entity roster the member picker offers, and the resolver used to
+    /// name members and areas in the grid.
+    ///
+    /// @param roster       every entity seen on the map; `null` treated as empty
+    /// @param nameResolver resolves an entity id to its display name; may be `null`
     public void setRoster(final List<EntityEntry> roster,
                           final Function<String, String> nameResolver) {
         this.roster = roster != null
@@ -538,31 +513,25 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         dataGrid.redraw();
     }
 
-    /**
-     * @param groupsEditHandler receives the new group list whenever the user
-     *                          edits groups, so the host can stage it for save
-     */
+    /// @param groupsEditHandler receives the new group list whenever the user
+    ///         edits groups, so the host can stage it for save
     public void setGroupsEditHandler(final Consumer<List<FloorMapGroup>> groupsEditHandler) {
         this.groupsEditHandler = groupsEditHandler;
     }
 
-    /**
-     * @param highlightChangeHandler run whenever the highlighted set changes, so
-     *                               the host can push a new overlay to the canvas
-     */
+    /// @param highlightChangeHandler run whenever the highlighted set changes, so
+    ///         the host can push a new overlay to the canvas
     public void setHighlightChangeHandler(final Runnable highlightChangeHandler) {
         this.highlightChangeHandler = highlightChangeHandler;
     }
 
-    /**
-     * The ids of the groups currently highlighted — read by the host when building
-     * the canvas overlay.
-     */
+    /// The ids of the groups currently highlighted — read by the host when building
+    /// the canvas overlay.
     public Set<String> getShownGroupIds() {
         return Collections.unmodifiableSet(shownGroupIds);
     }
 
-    /** Re-pushes the group list into the grid, preserving the selected group. */
+    /// Re-pushes the group list into the grid, preserving the selected group.
     private void refreshGrid() {
         final FloorMapGroup selected = selectionModel.getSelectedObject();
         final List<FloorMapGroup> visible = new ArrayList<>(groups);
@@ -581,24 +550,18 @@ public class FloorMapGroupsPresenter extends MyPresenterWidget<FloorMapGroupsVie
         }
     }
 
-    /**
-     * View contract for the Groups panel: a toolbar strip above a data grid —
-     * the same shape as the Tracking panel.
-     */
+    /// View contract for the Groups panel: a toolbar strip above a data grid —
+    /// the same shape as the Tracking panel.
     public interface FloorMapGroupsView extends View {
 
-        /**
-         * Sets the data-grid widget into the main content area of the panel.
-         *
-         * @param gridWidget the data grid widget; must not be {@code null}
-         */
+        /// Sets the data-grid widget into the main content area of the panel.
+        ///
+        /// @param gridWidget the data grid widget; must not be `null`
         void setGridView(Widget gridWidget);
 
-        /**
-         * Sets the toolbar widget into the area above the grid.
-         *
-         * @param toolbarWidget the toolbar widget; must not be {@code null}
-         */
+        /// Sets the toolbar widget into the area above the grid.
+        ///
+        /// @param toolbarWidget the toolbar widget; must not be `null`
         void setToolbar(Widget toolbarWidget);
     }
 }

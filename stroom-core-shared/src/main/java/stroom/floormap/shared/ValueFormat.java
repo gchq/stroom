@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,13 @@
 
 package stroom.floormap.shared;
 
-/**
- * Defines the serialisation format of temporal store entry values in a floor
- * map. {@link #JSON} is the default format.
- */
+/// Defines the serialisation format of temporal store entry values in a floor
+/// map. [#JSON] is the default format.
 public enum ValueFormat {
 
-    /**
-     * Values are serialised as JSON.
-     */
+    /// Values are serialised as JSON.
     JSON,
 
-    /**
-     * Values are serialised as XML.
-     */
+    /// Values are serialised as XML.
     XML
 }

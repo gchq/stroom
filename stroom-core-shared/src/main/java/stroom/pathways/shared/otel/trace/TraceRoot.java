@@ -156,26 +156,26 @@ public class TraceRoot {
                      @JsonProperty("name") final String name,
                      @JsonProperty("startTime") final NanoTime startTime,
                      @JsonProperty("endTime") final NanoTime endTime,
-                     @JsonProperty("services") final int services,
-                     @JsonProperty("depth") final int depth,
-                     @JsonProperty("totalSpans") final int totalSpans,
-                     @JsonProperty("lastActivityMs") final long lastActivityMs,
+                     @JsonProperty("services") final Integer services,
+                     @JsonProperty("depth") final Integer depth,
+                     @JsonProperty("totalSpans") final Integer totalSpans,
+                     @JsonProperty("lastActivityMs") final Long lastActivityMs,
                      @JsonProperty("rootEndTime") final NanoTime rootEndTime,
-                     @JsonProperty("orphan") final boolean orphan,
-                     @JsonProperty("error") final boolean error,
-                     @JsonProperty("truncated") final boolean truncated) {
+                     @JsonProperty("orphan") final Boolean orphan,
+                     @JsonProperty("error") final Boolean error,
+                     @JsonProperty("truncated") final Boolean truncated) {
         this.traceId = traceId;
         this.name = name;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.services = services;
-        this.depth = depth;
-        this.totalSpans = totalSpans;
-        this.lastActivityMs = lastActivityMs;
+        this.services = Objects.requireNonNullElse(services, 0);
+        this.depth = Objects.requireNonNullElse(depth, 0);
+        this.totalSpans = Objects.requireNonNullElse(totalSpans, 0);
+        this.lastActivityMs = Objects.requireNonNullElse(lastActivityMs, 0L);
         this.rootEndTime = rootEndTime;
-        this.orphan = orphan;
-        this.error = error;
-        this.truncated = truncated;
+        this.orphan = Objects.requireNonNullElse(orphan, false);
+        this.error = Objects.requireNonNullElse(error, false);
+        this.truncated = Objects.requireNonNullElse(truncated, false);
     }
 
     public String getTraceId() {

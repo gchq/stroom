@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,50 +45,43 @@ import com.gwtplatform.mvp.client.ViewImpl;
 
 import java.util.function.Consumer;
 
-/**
- * View implementation for the floor map timeline control.
- * Includes step-back, play/pause and step-forward buttons, a progress scrubber with date labels,
- * a clickable speed badge that opens the playback-speed menu, a settings button, and a histogram
- * above the scrubber.
- * Features:
- * <ul>
- *   <li>Scrub tooltip — datetime pill above the handle while dragging.</li>
- *   <li>Histogram click-to-seek — clicking the histogram jumps the timeline head.</li>
- *   <li>Histogram hover tooltip — shows event count for the hovered bin.</li>
- *   <li>ARIA slider attributes for accessibility.</li>
- * </ul>
- */
+/// View implementation for the floor map timeline control.
+/// Includes step-back, play/pause and step-forward buttons, a progress scrubber with date labels,
+/// a clickable speed badge that opens the playback-speed menu, a settings button, and a histogram
+/// above the scrubber.
+/// Features:
+///
+/// - Scrub tooltip — datetime pill above the handle while dragging.
+/// - Histogram click-to-seek — clicking the histogram jumps the timeline head.
+/// - Histogram hover tooltip — shows event count for the hovered bin.
+/// - ARIA slider attributes for accessibility.
 public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimelineView {
 
     private final Widget widget;
-    /** Called on every mouse-move during a drag — updates visuals only, no data queries. */
+    /// Called on every mouse-move during a drag — updates visuals only, no data queries.
     private Consumer<Double> scrubHandler;
-    /** Called on mouse-up (release) — commits the time and triggers data queries. */
+    /// Called on mouse-up (release) — commits the time and triggers data queries.
     private Consumer<Double> commitHandler;
-    /** Called when the play/pause button is clicked. */
+    /// Called when the play/pause button is clicked.
     private Runnable playPauseHandler;
-    /** Called when the step-back button is clicked. */
+    /// Called when the step-back button is clicked.
     private Runnable stepBackHandler;
-    /** Called when the step-forward button is clicked. */
+    /// Called when the step-forward button is clicked.
     private Runnable stepForwardHandler;
-    /** Called when the settings button is clicked. */
+    /// Called when the settings button is clicked.
     private Runnable settingsHandler;
-    /** Called when the speed badge is clicked (or activated from the keyboard). */
+    /// Called when the speed badge is clicked (or activated from the keyboard).
     private Runnable speedBadgeHandler;
-    /**
-     * Called with a signed number of histogram bins when the focused bar is
-     * scrubbed from the keyboard.
-     */
+    /// Called with a signed number of histogram bins when the focused bar is
+    /// scrubbed from the keyboard.
     private Consumer<Integer> nudgeHandler;
     private boolean dragging;
-    /**
-     * Set when the user dismisses the datetime pill with Escape, so it stays
-     * dismissed until the bar is focused again.
-     */
+    /// Set when the user dismisses the datetime pill with Escape, so it stays
+    /// dismissed until the bar is focused again.
     private boolean scrubTooltipSuppressed;
     private final HistogramWidget histogramWidget;
 
-    /** Class that makes the datetime pill visible. */
+    /// Class that makes the datetime pill visible.
     private static final String SCRUB_TOOLTIP_VISIBLE =
             "stroom-floormap-timeline-scrub-tooltip--visible";
 
@@ -122,7 +115,7 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
     Label outOfRangeLeftLabel;
     @UiField
     Label outOfRangeRightLabel;
-    /** Visually-hidden live region announcing the out-of-range state. */
+    /// Visually-hidden live region announcing the out-of-range state.
     @UiField
     Label timelineStatus;
 
@@ -397,15 +390,13 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
         applySpeedBadgeLabel();
     }
 
-    /**
-     * Names the speed badge for assistive technology as purpose plus current
-     * value, e.g. {@code "Playback speed ×1, opens the speed menu"}.
-     *
-     * <p>Kept in step with the visible text, which is the whole accessible name
-     * otherwise: {@code ×1} on its own is unintelligible out of visual context,
-     * and the {@code title} attribute that explains it is not used for the name
-     * of an element that has content.</p>
-     */
+    /// Names the speed badge for assistive technology as purpose plus current
+    /// value, e.g. `"Playback speed ×1, opens the speed menu"`.
+    ///
+    /// Kept in step with the visible text, which is the whole accessible name
+    /// otherwise: `×1` on its own is unintelligible out of visual context,
+    /// and the `title` attribute that explains it is not used for the name
+    /// of an element that has content.
     private void applySpeedBadgeLabel() {
         speedBadge.getElement().setAttribute("aria-label",
                 "Playback speed " + speedBadge.getText() + ", opens the speed menu");
@@ -466,20 +457,16 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
     // Mouse / drag handling on the scrubber bar
     // -----------------------------------------------------------------------
 
-    /**
-     * Number of histogram bins a Page Up / Page Down moves — the ARIA slider
-     * pattern's "larger step". Ten bins crosses a visible fraction of the bar
-     * without skipping so far that the user loses their place.
-     */
+    /// Number of histogram bins a Page Up / Page Down moves — the ARIA slider
+    /// pattern's "larger step". Ten bins crosses a visible fraction of the bar
+    /// without skipping so far that the user loses their place.
     private static final int PAGE_BINS = 10;
 
-    /**
-     * Handles keyboard scrubbing on the focused bar.
-     *
-     * <p>Every handled key calls {@code preventDefault}: left unhandled, the
-     * arrows and Page keys scroll the surrounding panel instead, which moves the
-     * timeline out from under the user rather than moving the time.</p>
-     */
+    /// Handles keyboard scrubbing on the focused bar.
+    ///
+    /// Every handled key calls `preventDefault`: left unhandled, the
+    /// arrows and Page keys scroll the surrounding panel instead, which moves the
+    /// timeline out from under the user rather than moving the time.
     private void onBarKeyDown(final KeyDownEvent event) {
         switch (event.getNativeKeyCode()) {
             // Right/Up increase, Left/Down decrease — the ARIA slider convention,
@@ -517,13 +504,11 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
         }
     }
 
-    /**
-     * Shows or hides the datetime pill, honouring an Escape dismissal.
-     *
-     * <p>A dismissal that un-did itself on the next keystroke would not be a
-     * dismissal, so {@code scrubTooltipSuppressed} outranks a request to show;
-     * it is cleared when the bar is focused afresh.</p>
-     */
+    /// Shows or hides the datetime pill, honouring an Escape dismissal.
+    ///
+    /// A dismissal that un-did itself on the next keystroke would not be a
+    /// dismissal, so `scrubTooltipSuppressed` outranks a request to show;
+    /// it is cleared when the bar is focused afresh.
     private void showScrubTooltip(final boolean visible) {
         if (visible && !scrubTooltipSuppressed) {
             scrubTooltip.addStyleName(SCRUB_TOOLTIP_VISIBLE);
@@ -532,7 +517,7 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
         }
     }
 
-    /** Moves the time by {@code bins} histogram bins and swallows the keystroke. */
+    /// Moves the time by `bins` histogram bins and swallows the keystroke.
     private void nudge(final KeyDownEvent event, final int bins) {
         event.preventDefault();
         event.stopPropagation();
@@ -542,12 +527,10 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
         }
     }
 
-    /**
-     * Jumps to an absolute position on the bar and swallows the keystroke. Goes
-     * through the commit handler — the same path as releasing a drag — because
-     * Home/End are a finished movement, not an in-progress one, and so should
-     * fire the data query rather than only move the handle.
-     */
+    /// Jumps to an absolute position on the bar and swallows the keystroke. Goes
+    /// through the commit handler — the same path as releasing a drag — because
+    /// Home/End are a finished movement, not an in-progress one, and so should
+    /// fire the data query rather than only move the handle.
     private void seekTo(final KeyDownEvent event, final double pct) {
         event.preventDefault();
         event.stopPropagation();
@@ -590,27 +573,23 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
         }
     }
 
-    /**
-     * Notifies the scrub handler with the percentage position for the given client X coordinate.
-     * Updates visuals immediately but intentionally does NOT trigger a data query.
-     */
+    /// Notifies the scrub handler with the percentage position for the given client X coordinate.
+    /// Updates visuals immediately but intentionally does NOT trigger a data query.
     private void notifyScrub(final int clientX) {
         if (scrubHandler != null) {
             scrubHandler.accept(computeBarPct(clientX));
         }
     }
 
-    /**
-     * Notifies the commit handler with the percentage position for the given client X coordinate.
-     * This is the signal that the user has finished scrubbing and a data query should be fired.
-     */
+    /// Notifies the commit handler with the percentage position for the given client X coordinate.
+    /// This is the signal that the user has finished scrubbing and a data query should be fired.
     private void notifyCommit(final int clientX) {
         if (commitHandler != null) {
             commitHandler.accept(computeBarPct(clientX));
         }
     }
 
-    /** Converts a client-X pixel position to a [0, 100] percentage along the scrubber bar. */
+    /// Converts a client-X pixel position to a `[0, 100]` percentage along the scrubber bar.
     private double computeBarPct(final int clientX) {
         final Element element = outerBar.getElement();
         final int absoluteLeft = element.getAbsoluteLeft();

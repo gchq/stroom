@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,12 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * The type's guarantees, which stand in place of a runtime guard.
- *
- * <p>The Map tab's read seeks to each entity's answer rather than scanning, and that is only correct
- * over a prefix-free key encoding. Rather than check the encoding on every read and throw, the
- * document type makes a store that would need a scan inexpressible. These tests are what hold that
- * claim up — if one of them fails, the seek has become unsafe.</p>
- */
+/// The type's guarantees, which stand in place of a runtime guard.
+///
+/// The Map tab's read seeks to each entity's answer rather than scanning, and that is only correct
+/// over a prefix-free key encoding. Rather than check the encoding on every read and throw, the
+/// document type makes a store that would need a scan inexpressible. These tests are what hold that
+/// claim up — if one of them fails, the seek has become unsafe.
 class TestFloorMapEventStoreDoc {
 
     private static FloorMapEventStoreDoc doc(final TemporalStateSettings settings) {
@@ -55,13 +53,10 @@ class TestFloorMapEventStoreDoc {
                 .isEqualTo(KeyType.TERMINATED_STRING);
     }
 
-    /**
-     * The point of fixing it in the constructor rather than hiding a form field.
-     *
-     * <p>A hidden dropdown still leaves the value settable by import, by the REST API, or by editing
-     * an exported document. Overwriting it here is what makes the guarantee hold for every route in.
-     * </p>
-     */
+    /// The point of fixing it in the constructor rather than hiding a form field.
+    ///
+    /// A hidden dropdown still leaves the value settable by import, by the REST API, or by editing
+    /// an exported document. Overwriting it here is what makes the guarantee hold for every route in.
     @Test
     void keyEncodingSuppliedFromOutsideIsOverwritten() {
         final TemporalStateSettings hostile = new TemporalStateSettings.Builder()
@@ -141,9 +136,7 @@ class TestFloorMapEventStoreDoc {
         assertThat(doc.getEventExpiryOrDefault()).isEqualTo(tenMinutes);
     }
 
-    /**
-     * The import route, which is the one a hidden form field would not have covered.
-     */
+    /// The import route, which is the one a hidden form field would not have covered.
     @Test
     void documentDeserialisedWithAForeignKeySchemaStillReadsBackFixed() {
         final String json = JsonUtil.writeValueAsString(doc(new TemporalStateSettings.Builder()

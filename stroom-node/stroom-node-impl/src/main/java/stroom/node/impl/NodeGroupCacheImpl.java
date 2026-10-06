@@ -21,7 +21,13 @@ import stroom.cache.api.LoadingStroomCache;
 import stroom.node.api.NodeGroupCache;
 import stroom.node.api.NodeGroupState;
 import stroom.node.shared.NodeGroup;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
@@ -31,11 +37,17 @@ import java.util.Optional;
 import java.util.Set;
 
 @Singleton
-public class NodeGroupCacheImpl implements Clearable, NodeGroupCache {
+@EntityEventHandler(type = NodeGroupService.ENTITY_TYPE, action = {
+        EntityAction.UPDATE,
+        EntityAction.CREATE,
+        EntityAction.DELETE})
+public class NodeGroupCacheImpl implements Clearable, NodeGroupCache, EntityEvent.Handler {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeGroupCacheImpl.class);
 
     private static final String CACHE_NAME = "Node Group Cache";
 
-    private final LoadingStroomCache<String, Optional<NodeGroupState>> cache;
+    private final LoadingStroomCache<String, Optional<NodeGroupState>> nameToNodeGroupCache;
     private final NodeGroupDao nodeGroupDao;
 
     @Inject
@@ -43,7 +55,7 @@ public class NodeGroupCacheImpl implements Clearable, NodeGroupCache {
                               final NodeGroupDao nodeGroupDao,
                               final Provider<NodeConfig> nodeConfigProvider) {
         this.nodeGroupDao = nodeGroupDao;
-        cache = cacheManager.createLoadingCache(
+        nameToNodeGroupCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> nodeConfigProvider.get().getNodeGroupCache(),
                 this::create);
@@ -51,7 +63,7 @@ public class NodeGroupCacheImpl implements Clearable, NodeGroupCache {
 
     @Override
     public Optional<NodeGroupState> getSelectedGroupNodes(final String name) {
-        return cache.get(name);
+        return nameToNodeGroupCache.get(name);
     }
 
     private Optional<NodeGroupState> create(final String name) {
@@ -65,6 +77,25 @@ public class NodeGroupCacheImpl implements Clearable, NodeGroupCache {
 
     @Override
     public void clear() {
-        cache.clear();
+        nameToNodeGroupCache.clear();
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        if (event != null) {
+            LOGGER.debug("onChange: {}", event);
+            final EntityAction action = event.getAction();
+            final String profileName = event.getDataAsString();
+            if (NullSafe.isNonBlankString(profileName)) {
+                switch (action) {
+                    case CREATE, UPDATE, DELETE -> nameToNodeGroupCache.invalidate(profileName);
+                }
+            } else {
+                switch (action) {
+                    // We don't know what the profile name is, so clear the cache.
+                    case CREATE, UPDATE, DELETE -> clear();
+                }
+            }
+        }
     }
 }

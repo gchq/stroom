@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public final class TableCoprocessorSettings implements CoprocessorSettings {
     @JsonProperty
@@ -33,10 +35,10 @@ public final class TableCoprocessorSettings implements CoprocessorSettings {
     private final TableSettings tableSettings;
 
     @JsonCreator
-    public TableCoprocessorSettings(@JsonProperty("coprocessorId") final int coprocessorId,
+    public TableCoprocessorSettings(@JsonProperty("coprocessorId") final Integer coprocessorId,
                                     @JsonProperty("componentIds") final String[] componentIds,
                                     @JsonProperty("tableSettings") final TableSettings tableSettings) {
-        this.coprocessorId = coprocessorId;
+        this.coprocessorId = Objects.requireNonNullElse(coprocessorId, 0);
         this.componentIds = componentIds;
         this.tableSettings = tableSettings;
     }

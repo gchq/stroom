@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,32 +37,30 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * View implementation for the group edit dialog.
- *
- * <pre>
- * Name      [ Maintenance        ]
- * Colour    [ ■ ]
- *
- * Members
- * [ filter…                      ]
- * ┌──────────────────────────────┐
- * │ ☑ bob        person          │
- * │ ☐ Gate 3     gate            │
- * │ ☑ sue        (not on the map) │
- * └──────────────────────────────┘
- * </pre>
- *
- * <p>The filter box hides non-matching rows; it deliberately does <strong>not</strong>
- * clear their ticks, so filtering can never silently drop a member the user cannot
- * see. Selection is read from the checkbox state of every row, hidden or not.</p>
- */
+/// View implementation for the group edit dialog.
+///
+/// ```
+/// Name      [ Maintenance        ]
+/// Colour    [ ■ ]
+///
+/// Members
+/// [ filter…                      ]
+/// ┌──────────────────────────────┐
+/// │ ☑ bob        person          │
+/// │ ☐ Gate 3     gate            │
+/// │ ☑ sue        (not on the map) │
+/// └──────────────────────────────┘
+/// ```
+///
+/// The filter box hides non-matching rows; it deliberately does **not**
+/// clear their ticks, so filtering can never silently drop a member the user cannot
+/// see. Selection is read from the checkbox state of every row, hidden or not.
 public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroupEditView {
 
     private static final int ROW_NAME = 0;
     private static final int ROW_COLOUR = 1;
 
-    /** Shown against a member the roster has not seen this session. */
+    /// Shown against a member the roster has not seen this session.
     private static final String NOT_ON_MAP = "(not on the map)";
 
     private final FlowPanel root;
@@ -72,13 +70,13 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
     private final FlowPanel memberList = new FlowPanel();
     private final Label summary = new Label();
 
-    /** Checkbox per candidate id, in display order, so selection can be read back. */
+    /// Checkbox per candidate id, in display order, so selection can be read back.
     private final Map<String, CheckBox> checkBoxesById = new LinkedHashMap<>();
 
-    /** The row widget per candidate id, so the filter can hide and show rows. */
+    /// The row widget per candidate id, so the filter can hide and show rows.
     private final Map<String, Widget> rowsById = new LinkedHashMap<>();
 
-    /** Lower-cased searchable text per candidate id, prepared once per show. */
+    /// Lower-cased searchable text per candidate id, prepared once per show.
     private final Map<String, String> searchTextById = new LinkedHashMap<>();
 
     @Inject
@@ -241,11 +239,9 @@ public class FloorMapGroupEditViewImpl extends ViewImpl implements FloorMapGroup
         }
     }
 
-    /**
-     * Spells out how many members are ticked, so the count is visible without
-     * counting rows — and so a selection hidden by the filter is still accounted
-     * for.
-     */
+    /// Spells out how many members are ticked, so the count is visible without
+    /// counting rows — and so a selection hidden by the filter is still accounted
+    /// for.
     private void updateSummary() {
         final int selected = getSelectedMemberIds().size();
         final int total = checkBoxesById.size();

@@ -52,7 +52,7 @@ class TestResultRequest {
                                    final Set<String> expected) {
 
         final ResultRequest request = new ResultRequest("1", null, List.of(), OffsetRange.UNBOUNDED,
-                new TimeFilter(12, 1), openGroups, ResultStyle.TABLE, Fetch.ALL, groupSelection, "tableName");
+                new TimeFilter(12L, 1L), openGroups, ResultStyle.TABLE, Fetch.ALL, groupSelection, "tableName");
 
         assertThat(request.getGroupSelection()).isNotNull();
         assertThat(request.getGroupSelection().getOpenGroups()).isEqualTo(expected);

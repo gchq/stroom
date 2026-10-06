@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -53,7 +54,7 @@ public final class FetchDataResult extends AbstractFetchDataResult {
                            @JsonProperty("totalBytes") final Long totalBytes,
                            @JsonProperty("availableChildStreamTypes") final Set<String> availableChildStreamTypes,
                            @JsonProperty("data") final String data,
-                           @JsonProperty("html") final boolean html,
+                           @JsonProperty("html") final Boolean html,
                            @JsonProperty("dataType") final DataType dataType,
                            @JsonProperty("displayMode") final DisplayMode displayMode,
                            @JsonProperty("errors") final List<String> errors) {
@@ -68,7 +69,7 @@ public final class FetchDataResult extends AbstractFetchDataResult {
                 displayMode,
                 errors);
         this.data = data;
-        this.html = html;
+        this.html = Objects.requireNonNullElse(html, false);
         this.dataType = dataType;
         this.totalBytes = totalBytes;
     }

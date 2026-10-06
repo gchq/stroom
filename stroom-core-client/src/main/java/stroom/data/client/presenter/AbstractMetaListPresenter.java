@@ -91,11 +91,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.inject.Provider;
 
-// TODO STROOMWORKS-LOCAL WORKAROUND - PREFER UPSTREAM ON MERGE FROM master
-// The only local divergence in this file is the identifier `value` renamed to `val`, for
-// compatibility with recent JDKs. Verified behaviour-neutral: neutralise that one rename and
-// the diff against the merge base is empty. Same workaround as RowValueFilter. If upstream has
-// done the same rename, or no longer needs it, take their version wholesale.
 public abstract class AbstractMetaListPresenter
         extends MyPresenterWidget<PagerView>
         implements HasDataSelectionHandlers<Selection<Long>>, Refreshable, HasChangeDataHandlers<ResultPage<MetaRow>> {
@@ -312,10 +307,10 @@ public abstract class AbstractMetaListPresenter
             };
             dataGrid.addColumn(column, header, ColumnSizeConstants.CHECKBOX_COL);
 
-            header.setUpdater(val -> {
-                if (val.equals(TickBoxState.UNTICK)) {
+            header.setUpdater(value -> {
+                if (value.equals(TickBoxState.UNTICK)) {
                     setMatchAll(false);
-                } else if (val.equals(TickBoxState.TICK)) {
+                } else if (value.equals(TickBoxState.TICK)) {
                     setMatchAll(true);
                 }
             });
@@ -328,8 +323,8 @@ public abstract class AbstractMetaListPresenter
         }
 
         // Add Handlers
-        column.setFieldUpdater((index, row, val) -> {
-            if (val.toBoolean()) {
+        column.setFieldUpdater((index, row, value) -> {
+            if (value.toBoolean()) {
                 selection.add(row.getMeta().getId());
 
             } else {
@@ -478,11 +473,11 @@ public abstract class AbstractMetaListPresenter
                                         final int size) {
 
         final Function<MetaRow, String> extractor = metaRow -> {
-            final String val = metaRow.getAttributeValue(attribute.getFldName());
-            if (val == null) {
+            final String value = metaRow.getAttributeValue(attribute.getFldName());
+            if (value == null) {
                 return null;
             } else {
-                return formatter.apply(val);
+                return formatter.apply(value);
             }
         };
 
@@ -502,11 +497,11 @@ public abstract class AbstractMetaListPresenter
                                         final int size) {
 
         final Function<MetaRow, String> extractor = metaRow -> {
-            final String val = metaRow.getAttributeValue(attribute.getFldName());
-            if (val == null) {
+            final String value = metaRow.getAttributeValue(attribute.getFldName());
+            if (value == null) {
                 return null;
             } else {
-                return formatter.apply(val);
+                return formatter.apply(value);
             }
         };
 

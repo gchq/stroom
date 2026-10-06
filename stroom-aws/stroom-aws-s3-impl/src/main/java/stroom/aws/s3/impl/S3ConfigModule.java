@@ -18,6 +18,7 @@ package stroom.aws.s3.impl;
 
 import stroom.aws.s3.shared.S3ConfigDoc;
 import stroom.docstore.api.DocumentStoreBinder;
+import stroom.util.entityevent.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -33,6 +34,9 @@ public class S3ConfigModule extends AbstractModule {
                 .bind(S3ConfigDoc.TYPE, S3ConfigStore.class, S3ConfigStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
+                .addBinding(S3ClientConfigCache.class);
+
+        GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(S3ClientConfigCache.class);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
 package stroom.floormap.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.floormap.client.model.FloorMapEntityList.EntityEntry;
 import stroom.floormap.client.presenter.FloorMapGroupEditPresenter.FloorMapGroupEditView;
-import stroom.floormap.shared.FloorMapEntityList.EntityEntry;
 import stroom.floormap.shared.FloorMapGroup;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -35,20 +35,18 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * Modal dialog for editing one {@link FloorMapGroup} — its name, its highlight
- * colour, and which entities belong to it.
- *
- * <p>Membership is edited here rather than inline in the Groups panel because the
- * dock is narrow: a checkbox list with a filter needs the room a popup has. Opened
- * from the panel's New / Edit buttons; on OK it calls back with a replacement
- * group, which the panel persists through the groups bridge.</p>
- *
- * <p><strong>Members the roster has not seen are kept, not dropped.</strong> A
- * group is configuration: an id whose owner has had a quiet afternoon must survive
- * an edit of the group it is in. Those members are listed with an explicit note
- * rather than silently disappearing from the picker.</p>
- */
+/// Modal dialog for editing one [FloorMapGroup] — its name, its highlight
+/// colour, and which entities belong to it.
+///
+/// Membership is edited here rather than inline in the Groups panel because the
+/// dock is narrow: a checkbox list with a filter needs the room a popup has. Opened
+/// from the panel's New / Edit buttons; on OK it calls back with a replacement
+/// group, which the panel persists through the groups bridge.
+///
+/// **Members the roster has not seen are kept, not dropped.** A
+/// group is configuration: an id whose owner has had a quiet afternoon must survive
+/// an edit of the group it is in. Those members are listed with an explicit note
+/// rather than silently disappearing from the picker.
 public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupEditView> {
 
     @Inject
@@ -57,17 +55,15 @@ public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupE
         super(eventBus, view);
     }
 
-    /**
-     * Shows the dialog for the given group.
-     *
-     * @param group        the group to edit; its id is carried through to the
-     *                     replacement, so a rename keeps its identity
-     * @param roster       every entity seen on the map, offered as candidate members
-     * @param nameResolver resolves a member id the roster no longer holds to a
-     *                     display name; may be {@code null}
-     * @param isNew        {@code true} when creating, which only changes the caption
-     * @param onOk         called with the replacement group when the user confirms
-     */
+    /// Shows the dialog for the given group.
+    ///
+    /// @param group        the group to edit; its id is carried through to the
+    ///         replacement, so a rename keeps its identity
+    /// @param roster       every entity seen on the map, offered as candidate members
+    /// @param nameResolver resolves a member id the roster no longer holds to a
+    ///         display name; may be `null`
+    /// @param isNew        `true` when creating, which only changes the caption
+    /// @param onOk         called with the replacement group when the user confirms
     public void show(final FloorMapGroup group,
                      final List<EntityEntry> roster,
                      final Function<String, String> nameResolver,
@@ -106,10 +102,8 @@ public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupE
                 .fire();
     }
 
-    /**
-     * The candidate list the picker shows: every roster entity, plus any current
-     * member the roster does not hold (so it cannot be lost by editing).
-     */
+    /// The candidate list the picker shows: every roster entity, plus any current
+    /// member the roster does not hold (so it cannot be lost by editing).
     private static List<MemberCandidate> candidates(final FloorMapGroup group,
                                                     final List<EntityEntry> roster,
                                                     final Function<String, String> nameResolver) {
@@ -142,13 +136,11 @@ public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupE
         return candidates;
     }
 
-    /**
-     * One row of the member picker.
-     *
-     * <p>A plain class rather than a record: nothing else in the GWT-compiled
-     * source uses records, so this is not the place to find out whether the
-     * compiler in use emulates them.</p>
-     */
+    /// One row of the member picker.
+    ///
+    /// A plain class rather than a record: nothing else in the GWT-compiled
+    /// source uses records, so this is not the place to find out whether the
+    /// compiler in use emulates them.
     public static final class MemberCandidate {
 
         private final String id;
@@ -156,14 +148,12 @@ public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupE
         private final String type;
         private final boolean onTheMap;
 
-        /**
-         * @param id       the entity id — what actually gets stored
-         * @param name     the display name
-         * @param type     the entity type, shown so a gate and a person are
-         *                 distinguishable at a glance; may be empty
-         * @param onTheMap {@code false} for a member the roster has not seen this
-         *                 session, which the picker flags rather than hiding
-         */
+        /// @param id       the entity id — what actually gets stored
+        /// @param name     the display name
+        /// @param type     the entity type, shown so a gate and a person are
+        ///         distinguishable at a glance; may be empty
+        /// @param onTheMap `false` for a member the roster has not seen this
+        ///         session, which the picker flags rather than hiding
         public MemberCandidate(final String id,
                                final String name,
                                final String type,
@@ -191,10 +181,8 @@ public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupE
         }
     }
 
-    /**
-     * View contract: a name field, a colour chooser and a filterable member
-     * picker.
-     */
+    /// View contract: a name field, a colour chooser and a filterable member
+    /// picker.
     public interface FloorMapGroupEditView extends View {
 
         void setName(String name);
@@ -205,18 +193,16 @@ public class FloorMapGroupEditPresenter extends MyPresenterWidget<FloorMapGroupE
 
         String getColour();
 
-        /**
-         * Populates the member picker.
-         *
-         * @param candidates      every selectable entity, in display order
-         * @param selectedMembers the ids currently in the group
-         */
+        /// Populates the member picker.
+        ///
+        /// @param candidates      every selectable entity, in display order
+        /// @param selectedMembers the ids currently in the group
         void setCandidates(List<MemberCandidate> candidates, List<String> selectedMembers);
 
-        /** The ticked member ids, in the picker's display order. */
+        /// The ticked member ids, in the picker's display order.
         List<String> getSelectedMemberIds();
 
-        /** Puts keyboard focus in the name field. */
+        /// Puts keyboard focus in the name field.
         void focus();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,25 +39,23 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/**
- * The document store for {@link FloorMapEventStoreDoc}.
- *
- * <p>Mirrors {@code PlanBDocStoreImpl} where the rules are Plan B's, because the store this document
- * describes <em>is</em> a Plan B store and is reached by the same machinery. Two things are worth
- * stating:</p>
- *
- * <p><b>The name is a pipeline identifier, not a label.</b> {@code PlanBFilter} lowercases the map
- * name it is given and {@code DocFinder.findByName} is case-sensitive, so a store named
- * {@code Events} can never be resolved by ingest. The only symptom is one line in a stream's error
- * log, which is a poor way to learn it — so the same {@code PlanBNameValidator} pattern Plan B
- * enforces is enforced here, at creation rather than at first write.</p>
- *
- * <p><b>{@code maxStoreSize} is deliberately unchecked.</b> Lowering it below what is already
- * written cannot take effect, so a guard looks attractive — but {@code createDocument} persists Plan
- * B's 10 GiB default, and after construction a default nobody chose is indistinguishable from a
- * value someone did. A guard would therefore refuse a user's first, perfectly reasonable, reduction.
- * Plan B does not check it either, and this store is not the place to invent the rule.</p>
- */
+/// The document store for [FloorMapEventStoreDoc].
+///
+/// Mirrors `PlanBDocStoreImpl` where the rules are Plan B's, because the store this document
+/// describes *is* a Plan B store and is reached by the same machinery. Two things are worth
+/// stating:
+///
+/// **The name is a pipeline identifier, not a label.** `PlanBFilter` lowercases the map
+/// name it is given and `DocFinder.findByName` is case-sensitive, so a store named
+/// `Events` can never be resolved by ingest. The only symptom is one line in a stream's error
+/// log, which is a poor way to learn it — so the same `PlanBNameValidator` pattern Plan B
+/// enforces is enforced here, at creation rather than at first write.
+///
+/// **`maxStoreSize` is deliberately unchecked.** Lowering it below what is already
+/// written cannot take effect, so a guard looks attractive — but `createDocument` persists Plan
+/// B's 10 GiB default, and after construction a default nobody chose is indistinguishable from a
+/// value someone did. A guard would therefore refuse a user's first, perfectly reasonable, reduction.
+/// Plan B does not check it either, and this store is not the place to invent the rule.
 @Singleton
 public class FloorMapEventStoreStoreImpl
         extends AbstractDocumentStore<FloorMapEventStoreDoc>
@@ -228,15 +226,13 @@ public class FloorMapEventStoreStoreImpl
         }
     }
 
-    /**
-     * Expiry may not outlive retention.
-     *
-     * <p>Expiry hides an entity whose last event is older than the cutoff; retention <em>deletes</em>
-     * data older than its own. Set expiry longer than retention and the map silently under-reports:
-     * an entity idle for longer than retention is dropped even though the expiry rule says to show
-     * it, and the symptom — a missing entity — looks like a data problem rather than a configuration
-     * one. The two settings live on this one document precisely so this can be checked.</p>
-     */
+    /// Expiry may not outlive retention.
+    ///
+    /// Expiry hides an entity whose last event is older than the cutoff; retention *deletes*
+    /// data older than its own. Set expiry longer than retention and the map silently under-reports:
+    /// an entity idle for longer than retention is dropped even though the expiry rule says to show
+    /// it, and the symptom — a missing entity — looks like a data problem rather than a configuration
+    /// one. The two settings live on this one document precisely so this can be checked.
     private void validateExpiryWithinRetention(final FloorMapEventStoreDoc document) {
         if (expiryExceedsRetention(document)) {
             final RetentionSettings retention = NullSafe.get(
@@ -250,12 +246,10 @@ public class FloorMapEventStoreStoreImpl
         }
     }
 
-    /**
-     * Whether the document asks to show entities for longer than it keeps the data.
-     *
-     * <p>Package-private and free of the store's collaborators so the rule can be tested directly —
-     * it is the one piece of judgement in this class, and the failure it prevents is silent.</p>
-     */
+    /// Whether the document asks to show entities for longer than it keeps the data.
+    ///
+    /// Package-private and free of the store's collaborators so the rule can be tested directly —
+    /// it is the one piece of judgement in this class, and the failure it prevents is silent.
     static boolean expiryExceedsRetention(final FloorMapEventStoreDoc document) {
         final RetentionSettings retention = NullSafe.get(
                 document.getSettings(),

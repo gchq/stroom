@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,10 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View implementation for the FloorMap initialisation dialog.
- *
- * <p>Provides labelled slots for the Facts Store and Events Store
- * document selection widgets. Uses UiBinder for layout.</p>
- */
+/// View implementation for the FloorMap initialisation dialog.
+///
+/// Provides labelled slots for the Facts Store and Events Store
+/// document selection widgets. Uses UiBinder for layout.
 public class FloorMapInitViewImpl
         extends ViewImpl
         implements FloorMapInitView {
@@ -45,11 +43,9 @@ public class FloorMapInitViewImpl
     @UiField
     SimplePanel eventsStoreContainer;
 
-    /**
-     * Creates a new {@code FloorMapInitViewImpl}.
-     *
-     * @param binder the UiBinder for this view; never null
-     */
+    /// Creates a new `FloorMapInitViewImpl`.
+    ///
+    /// @param binder the UiBinder for this view; never null
     @Inject
     public FloorMapInitViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -66,33 +62,27 @@ public class FloorMapInitViewImpl
         return widget;
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public void setFactsStoreView(final View view) {
         this.factsStoreContainer.setWidget(view.asWidget());
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    /// {@inheritDoc}
     @Override
     public void setEventsStoreView(final View view) {
         this.eventsStoreContainer.setWidget(view.asWidget());
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Focuses the first control inside the Facts Store row.</p>
-     *
-     * <p>Focusing the container itself does not work: it is a plain
-     * {@code SimplePanel} div with no tabindex, so {@code focus()} on it is a
-     * silent no-op and the dialog opens with focus still on whatever the user was
-     * last on — outside the dialog. Reaching for the first real control inside is
-     * what actually moves focus.</p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// Focuses the first control inside the Facts Store row.
+    ///
+    /// Focusing the container itself does not work: it is a plain
+    /// `SimplePanel` div with no tabindex, so `focus()` on it is a
+    /// silent no-op and the dialog opens with focus still on whatever the user was
+    /// last on — outside the dialog. Reaching for the first real control inside is
+    /// what actually moves focus.
     @Override
     public void focus() {
         FloorMapAria.focusFirstFocusable(factsStoreContainer.getElement());

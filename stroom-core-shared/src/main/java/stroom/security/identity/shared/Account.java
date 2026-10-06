@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -88,14 +89,14 @@ public class Account implements HasIntegerId {
                    @JsonProperty("firstName") final String firstName,
                    @JsonProperty("lastName") final String lastName,
                    @JsonProperty("comments") final String comments,
-                   @JsonProperty("loginCount") final int loginCount,
-                   @JsonProperty("failureCount") final int failureCount,
+                   @JsonProperty("loginCount") final Integer loginCount,
+                   @JsonProperty("failureCount") final Integer failureCount,
                    @JsonProperty("lastLoginMs") final Long lastLoginMs,
                    @JsonProperty("reactivatedMs") final Long reactivatedMs,
-                   @JsonProperty("forcePasswordChange") final boolean forcePasswordChange,
-                   @JsonProperty("neverExpires") final boolean neverExpires,
-                   @JsonProperty("enabled") final boolean enabled,
-                   @JsonProperty("inactive") final boolean inactive,
+                   @JsonProperty("forcePasswordChange") final Boolean forcePasswordChange,
+                   @JsonProperty("neverExpires") final Boolean neverExpires,
+                   @JsonProperty("enabled") final Boolean enabled,
+                   @JsonProperty("inactive") final Boolean inactive,
                    @JsonProperty("failureLockedMs") final Long failureLockedMs,
                    @JsonProperty("failureLockedUntilMs") final Long failureLockedUntilMs) {
         this.id = id;
@@ -109,14 +110,14 @@ public class Account implements HasIntegerId {
         this.firstName = firstName;
         this.lastName = lastName;
         this.comments = comments;
-        this.loginCount = loginCount;
-        this.failureCount = failureCount;
+        this.loginCount = Objects.requireNonNullElse(loginCount, 0);
+        this.failureCount = Objects.requireNonNullElse(failureCount, 0);
         this.lastLoginMs = lastLoginMs;
         this.reactivatedMs = reactivatedMs;
-        this.forcePasswordChange = forcePasswordChange;
-        this.neverExpires = neverExpires;
-        this.enabled = enabled;
-        this.inactive = inactive;
+        this.forcePasswordChange = Objects.requireNonNullElse(forcePasswordChange, false);
+        this.neverExpires = Objects.requireNonNullElse(neverExpires, false);
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+        this.inactive = Objects.requireNonNullElse(inactive, false);
         this.failureLockedMs = failureLockedMs;
         this.failureLockedUntilMs = failureLockedUntilMs;
     }

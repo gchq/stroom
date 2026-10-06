@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,10 +85,8 @@ import stroom.floormap.client.view.FloorMapTimelineSettingsViewImpl;
 import stroom.floormap.client.view.FloorMapTimelineViewImpl;
 import stroom.floormap.client.view.FloorMapTrackingViewImpl;
 
-/**
- * GIN module for the Floor Map feature.
- * Binds the presenters and views for the floor map components.
- */
+/// GIN module for the Floor Map feature.
+/// Binds the presenters and views for the floor map components.
 public class FloorMapModule extends PluginModule {
 
     @Override

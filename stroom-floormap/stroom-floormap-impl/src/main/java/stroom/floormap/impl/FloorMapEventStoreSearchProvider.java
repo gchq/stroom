@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,58 +73,54 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Serves queries against a {@link FloorMapEventStoreDoc}.
- *
- * <p>Plan B's own {@code StateSearchProvider} answers for {@code PlanBDoc.TYPE} only, and
- * {@code SearchProviderRegistryImpl} resolves a provider by the data source's document type, so a
- * type of ours needs a provider of ours. That is not merely a consequence of choosing a separate
- * document type — it is the reason to have one, because it is what lets the read mode be
- * <b>stated</b> rather than inferred.</p>
- *
- * <h2>The read mode is opt-in</h2>
- *
- * <p>The default is an ordinary range read, exactly as any other data source gives: a query with a
- * time range gets the rows in that range. A snapshot — one row per entity, as the map wants —
- * happens only when the caller says so, by sending <b>both</b> {@code readMode=snapshot} and
- * {@code asAt}. Either alone is rejected by name.</p>
- *
- * <p><b>Why not default to a snapshot</b>, given that is what this store mostly serves? Because the
- * store serves three reads and only one of them is a snapshot: the density histogram and the
- * timeline extent both need every row. And because defaulting would be inference from absence — the
- * Events Query tab and any dashboard send a time range and cannot set a param from query text, so
- * they would silently get a read nobody asked for. The map is presenter code and opts in with one
- * line; a human writing a query gets what they wrote.</p>
- *
- * <p>This replaces a mechanism that inferred the mode from whether a time term happened to be
- * {@code <} rather than {@code >}, inside shared Plan B code, for every temporal state store in the
- * system. See {@code docs/temporal-store-parity-report.md}.</p>
- *
- * <h2>Expiry comes from the store, not from the caller</h2>
- *
- * <p>The caller says <em>when</em>; the store says <em>how long an entity lasts</em>. So the floor
- * passed to {@code searchSnapshot} is derived here from the document's own expiry rather than sent
- * with the request — which is what makes two floor maps reading one store agree, and what makes the
- * {@code expiry <= retention} check on the document meaningful.</p>
- */
+/// Serves queries against a [FloorMapEventStoreDoc].
+///
+/// Plan B's own `StateSearchProvider` answers for `PlanBDoc.TYPE` only, and
+/// `SearchProviderRegistryImpl` resolves a provider by the data source's document type, so a
+/// type of ours needs a provider of ours. That is not merely a consequence of choosing a separate
+/// document type — it is the reason to have one, because it is what lets the read mode be
+/// **stated** rather than inferred.
+///
+/// ## The read mode is opt-in
+///
+/// The default is an ordinary range read, exactly as any other data source gives: a query with a
+/// time range gets the rows in that range. A snapshot — one row per entity, as the map wants —
+/// happens only when the caller says so, by sending **both** `readMode=snapshot` and
+/// `asAt`. Either alone is rejected by name.
+///
+/// **Why not default to a snapshot**, given that is what this store mostly serves? Because the
+/// store serves three reads and only one of them is a snapshot: the density histogram and the
+/// timeline extent both need every row. And because defaulting would be inference from absence — the
+/// Events Query tab and any dashboard send a time range and cannot set a param from query text, so
+/// they would silently get a read nobody asked for. The map is presenter code and opts in with one
+/// line; a human writing a query gets what they wrote.
+///
+/// This replaces a mechanism that inferred the mode from whether a time term happened to be
+/// `<` rather than `>`, inside shared Plan B code, for every temporal state store in the
+/// system. See `docs/temporal-store-parity-report.md`.
+///
+/// ## Expiry comes from the store, not from the caller
+///
+/// The caller says *when*; the store says *how long an entity lasts*. So the floor
+/// passed to `searchSnapshot` is derived here from the document's own expiry rather than sent
+/// with the request — which is what makes two floor maps reading one store agree, and what makes the
+/// `expiry <= retention` check on the document meaningful.
 public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFieldProvider {
 
     private static final LambdaLogger LOGGER =
             LambdaLoggerFactory.getLogger(FloorMapEventStoreSearchProvider.class);
 
-    /** Names the read the caller wants. Absent means an ordinary range read. */
+    /// Names the read the caller wants. Absent means an ordinary range read.
     public static final String PARAM_READ_MODE = "readMode";
-    /** The instant to take a snapshot at, as epoch milliseconds. */
+    /// The instant to take a snapshot at, as epoch milliseconds.
     public static final String PARAM_AS_AT = "asAt";
-    /** The only value of {@link #PARAM_READ_MODE} that changes anything. */
+    /// The only value of [#PARAM_READ_MODE] that changes anything.
     public static final String READ_MODE_SNAPSHOT = "snapshot";
 
-    /**
-     * The largest instant the key encoding can hold — six unsigned bytes of milliseconds.
-     *
-     * <p>Beyond this the store's own encoding refuses the value from several frames deeper, with a
-     * message about negative unsigned bytes that says nothing about what the caller sent.</p>
-     */
+    /// The largest instant the key encoding can hold — six unsigned bytes of milliseconds.
+    ///
+    /// Beyond this the store's own encoding refuses the value from several frames deeper, with a
+    /// message about negative unsigned bytes that says nothing about what the caller sent.
     private static final long MAX_AS_AT_MILLIS = (1L << 48) - 1;
 
     private final Executor executor;
@@ -167,15 +163,13 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
         this.docFinder = docFinder;
     }
 
-    /**
-     * Resolves the store by name through Plan B's cache, as ingest does.
-     *
-     * <p>Whatever {@code PlanBDocCache} does about permissions is what happens here: it throws a
-     * {@code PermissionException} for a document the user may not read and a
-     * {@code PlanBDocNotFoundException} for one that is absent. Deliberately not given different
-     * behaviour from every other Plan B store — a store of ours answering differently would be its
-     * own kind of disclosure, and if that distinction is wrong it is wrong for Plan B as a whole.</p>
-     */
+    /// Resolves the store by name through Plan B's cache, as ingest does.
+    ///
+    /// Whatever `PlanBDocCache` does about permissions is what happens here: it throws a
+    /// `PermissionException` for a document the user may not read and a
+    /// `PlanBDocNotFoundException` for one that is absent. Deliberately not given different
+    /// behaviour from every other Plan B store — a store of ours answering differently would be its
+    /// own kind of disclosure, and if that distinction is wrong it is wrong for Plan B as a whole.
     private FloorMapEventStoreDoc getDoc(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             Objects.requireNonNull(docRef, "Null doc reference");
@@ -186,15 +180,13 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
         });
     }
 
-    /**
-     * The document as this provider's own type, or a refusal.
-     *
-     * <p>{@code PlanBDocCache} resolves by <b>name across every registered Plan B type</b>, so a
-     * name that belongs to some other type resolves to that other type's document — and then every
-     * read here would run against its shard. Checked once, here, rather than on the snapshot path
-     * alone: the range read would otherwise serve another store's rows quite happily, and the
-     * snapshot read would seek over an encoding that is not prefix-free, dropping keys in silence.</p>
-     */
+    /// The document as this provider's own type, or a refusal.
+    ///
+    /// `PlanBDocCache` resolves by **name across every registered Plan B type**, so a
+    /// name that belongs to some other type resolves to that other type's document — and then every
+    /// read here would run against its shard. Checked once, here, rather than on the snapshot path
+    /// alone: the range read would otherwise serve another store's rows quite happily, and the
+    /// snapshot read would seek over an encoding that is not prefix-free, dropping keys in silence.
     static FloorMapEventStoreDoc requireEventStore(final PlanBDocument doc) {
         if (doc instanceof final FloorMapEventStoreDoc eventStore) {
             return eventStore;
@@ -261,20 +253,29 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
 
     @Override
     public ResultStore createResultStore(final SearchRequest searchRequest) {
+        // Substitute any `${param}` references in the query expression with the values of the
+        // matching query parameters, so everything below works with literal values.
         final SearchRequest modifiedSearchRequest =
                 ExpressionUtil.replaceExpressionParameters(searchRequest);
         final Query query = modifiedSearchRequest.getQuery();
         final DocRef docRef = query.getDataSource();
 
+        // Resolve the event store document being queried.
         // Checks permission as a side effect.
         final FloorMapEventStoreDoc doc = getDoc(docRef);
         Objects.requireNonNull(doc, "Unable to find event store with key: " + docRef.getName());
 
+        // Work out which read the caller asked for. A null `asAt` means an ordinary range
+        // read; otherwise it is a snapshot at that instant, with the cut-off for expired
+        // entities derived from the store's own expiry setting rather than the request.
         final Instant asAt = readAsAt(query.getParams());
         final Instant notBefore = asAt == null
                 ? null
                 : expiryFloor(doc, asAt);
 
+        // Build the coprocessors that will receive each row the read produces and aggregate
+        // them into the results for each component of the request (e.g. a table or a
+        // visualisation). One set of coprocessor settings is created per result component.
         final Set<String> highlights = Collections.emptySet();
         final List<CoprocessorSettings> coprocessorSettingsList =
                 coprocessorsFactory.createSettings(modifiedSearchRequest);
@@ -288,12 +289,17 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
                 query.getParams(),
                 dataStoreSettings);
 
+        // Create the result store that is returned to the caller. The caller polls it for
+        // results while the search runs in the background and fills the coprocessors.
+        // There is no free-text search here, so there is nothing to highlight.
         final String searchName = "Search '" + modifiedSearchRequest.getKey().toString() + "'";
         final ResultStore resultStore = resultStoreFactory.create(
                 modifiedSearchRequest.getSearchRequestSource(),
                 coprocessors);
         resultStore.addHighlights(highlights);
 
+        // Values captured for use inside the background task: a prefix for task progress
+        // messages, a name for debug logging, and the query expression as search criteria.
         final String infoPrefix = LogUtil.message(
                 "Querying {} {} - ",
                 getStoreName(docRef),
@@ -301,9 +307,15 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
         final String taskName = getTaskName(docRef);
         final ExpressionCriteria criteria = new ExpressionCriteria(query.getExpression());
 
+        // Wrap the search in a task context so it appears in the server tasks list, reports
+        // progress and can be terminated by the user or by the result store.
         final Runnable runnable = taskContextFactory.context(searchName, taskContext -> {
+            // Set if the search is terminated, so the read is skipped if termination was
+            // requested before the task got the chance to start.
             final AtomicBoolean destroyed = new AtomicBoolean();
 
+            // Links the result store to this task, letting it report the task's progress and
+            // terminate the task when the search is cancelled or the result store destroyed.
             final SearchProcess searchProcess = new SearchProcess() {
                 @Override
                 public SearchTaskProgress getSearchTaskProgress() {
@@ -328,11 +340,16 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
                 }
             };
 
+            // If the result store has already been terminated, this immediately calls
+            // `onTerminate()`, setting `destroyed`, so the check below skips the read.
             resultStore.setSearchProcess(searchProcess);
 
             if (!destroyed.get()) {
                 taskContext.info(() -> infoPrefix + "running query");
 
+                // Run the range or snapshot read against the store's shard, passing each
+                // matching row to the coprocessors. Any failure is recorded on the result
+                // store so the caller sees it as a search error rather than losing it.
                 final Instant queryStart = Instant.now();
                 try {
                     readThrough(
@@ -350,6 +367,8 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
                     resultStore.addError(e);
                 }
 
+                // Mark the search as complete, whether it succeeded or failed, so the caller
+                // stops waiting for more results.
                 LOGGER.debug(() -> String.format("%s complete called, counter: %s",
                         taskName,
                         coprocessors.getValueCount()));
@@ -359,19 +378,20 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
                                    + Duration.between(queryStart, Instant.now()));
             }
         });
+
+        // Start the search in the background and return the result store straight away; the
+        // caller collects results from it as they arrive.
         CompletableFuture.runAsync(runnable, executor);
 
         return resultStore;
     }
 
-    /**
-     * Opens the store and runs whichever read the caller asked for.
-     *
-     * <p>The one decision this provider exists to make, and therefore the one worth being able to
-     * test: {@code asAt} present means the snapshot, absent means the ordinary range read that any
-     * data source gives. Package-private, and taking its collaborators as arguments, so that
-     * decision can be exercised without standing up a coprocessor stack and an async task.</p>
-     */
+    /// Opens the store and runs whichever read the caller asked for.
+    ///
+    /// The one decision this provider exists to make, and therefore the one worth being able to
+    /// test: `asAt` present means the snapshot, absent means the ordinary range read that any
+    /// data source gives. Package-private, and taking its collaborators as arguments, so that
+    /// decision can be exercised without standing up a coprocessor stack and an async task.
     static void readThrough(final ShardManager shardManager,
                             final String storeName,
                             final ExpressionCriteria criteria,
@@ -403,14 +423,13 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
         });
     }
 
-    /**
-     * The instant to snapshot at, or {@code null} for an ordinary range read.
-     *
-     * <p>Rejects each half without the other rather than guessing. A {@code readMode} with no
-     * {@code asAt} has no instant to read at, and an {@code asAt} with no {@code readMode} is a
-     * caller who believes they asked for a snapshot and would otherwise silently get every row.</p>
-     */
-    // Package-private so the parameter contract can be tested without standing up a search.
+    /// The instant to snapshot at, or `null` for an ordinary range read.
+    ///
+    /// Rejects each half without the other rather than guessing. A `readMode` with no
+    /// `asAt` has no instant to read at, and an `asAt` with no `readMode` is a
+    /// caller who believes they asked for a snapshot and would otherwise silently get every row.
+    ///
+    /// Package-private so the parameter contract can be tested without standing up a search.
     static Instant readAsAt(final List<Param> params) {
         final String readMode = paramValue(params, PARAM_READ_MODE);
         final String asAt = paramValue(params, PARAM_AS_AT);
@@ -455,7 +474,7 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
         return Instant.ofEpochMilli(millis);
     }
 
-    /** The value of a named query parameter, or {@code null} where it was not supplied. */
+    /// The value of a named query parameter, or `null` where it was not supplied.
     private static String paramValue(final List<Param> params, final String key) {
         if (params == null) {
             return null;
@@ -468,24 +487,23 @@ public class FloorMapEventStoreSearchProvider implements SearchProvider, IndexFi
         return null;
     }
 
-    /**
-     * The instant before which an entity is considered to have nothing in scope.
-     *
-     * <p>Taken from the store, not from the request. An entity whose newest event predates this is
-     * omitted rather than drawn at a position it left long ago.</p>
-     */
+    /// The instant before which an entity is considered to have nothing in scope.
+    ///
+    /// Taken from the store, not from the request. An entity whose newest event predates this is
+    /// omitted rather than drawn at a position it left long ago.
+    ///
+    /// If doc.getEventExpiry() returns null then this is replaced by the default time (24hrs) within
+    /// FloorMapEventExpiry.millis().
     static Instant expiryFloor(final FloorMapEventStoreDoc doc, final Instant asAt) {
         return Instant.ofEpochMilli(
                 FloorMapEventExpiry.cutoff(asAt.toEpochMilli(), doc.getEventExpiry()));
     }
 
-    /**
-     * The reader as a {@link TemporalStateDb}, which is the only shape that can serve a snapshot.
-     *
-     * <p>A {@link FloorMapEventStoreDoc} always carries {@code stateType = TEMPORAL_STATE}, so this
-     * holds by construction; the check exists so that a store whose type was somehow changed fails
-     * with something a person can act on.</p>
-     */
+    /// The reader as a [TemporalStateDb], which is the only shape that can serve a snapshot.
+    ///
+    /// A [FloorMapEventStoreDoc] always carries `stateType = TEMPORAL_STATE`, so this
+    /// holds by construction; the check exists so that a store whose type was somehow changed fails
+    /// with something a person can act on.
     private static TemporalStateDb snapshotReader(final Object reader) {
         if (reader instanceof final TemporalStateDb temporalStateDb) {
             return temporalStateDb;

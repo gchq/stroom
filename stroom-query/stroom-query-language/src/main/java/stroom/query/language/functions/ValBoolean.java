@@ -36,8 +36,8 @@ public final class ValBoolean implements Val {
     private final boolean value;
 
     @JsonCreator
-    private ValBoolean(@JsonProperty("value") final boolean value) {
-        this.value = value;
+    private ValBoolean(@JsonProperty("value") final Boolean value) {
+        this.value = Objects.requireNonNullElse(value, false);
     }
 
     public static ValBoolean create(final boolean value) {

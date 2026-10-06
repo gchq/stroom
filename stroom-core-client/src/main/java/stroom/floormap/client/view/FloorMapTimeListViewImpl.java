@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,13 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View for the Time List panel.
- *
- * <p>Layout: toolbar (Add / Delete) pinned above a scrollable data grid.
- * The toolbar and column headers remain visible while the grid body scrolls.</p>
- */
+/// View for the Time List panel.
+///
+/// Layout: toolbar (Add / Delete) pinned above a scrollable data grid.
+/// The toolbar and column headers remain visible while the grid body scrolls.
 public class FloorMapTimeListViewImpl extends ViewImpl implements FloorMapTimeListView {
 
-    /** Height of the button toolbar in pixels. */
+    /// Height of the button toolbar in pixels.
     private static final int TOOLBAR_HEIGHT_PX = 26;
 
     private final DockLayoutPanel root;

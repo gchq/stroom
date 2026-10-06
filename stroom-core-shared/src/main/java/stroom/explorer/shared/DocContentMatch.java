@@ -51,13 +51,13 @@ public class DocContentMatch {
                            @JsonProperty("extension") final String extension,
                            @JsonProperty("location") final StringMatchLocation location,
                            @JsonProperty("sample") final String sample,
-                           @JsonProperty("sampleAtStartOfLine") final boolean sampleAtStartOfLine,
+                           @JsonProperty("sampleAtStartOfLine") final Boolean sampleAtStartOfLine,
                            @JsonProperty("tags") final List<String> tags) {
         this.docRef = docRef;
         this.extension = extension;
         this.location = location;
         this.sample = sample;
-        this.sampleAtStartOfLine = sampleAtStartOfLine;
+        this.sampleAtStartOfLine = Objects.requireNonNullElse(sampleAtStartOfLine, false);
         this.tags = tags;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,25 +24,25 @@ import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
-import stroom.floormap.client.ValueAccessorFactory;
+import stroom.floormap.client.editor.FloorMapDocSession;
+import stroom.floormap.client.editor.FloorMapEditorModel;
+import stroom.floormap.client.editor.FloorMapPendingChanges;
 import stroom.floormap.client.event.FloorMapDataEvent;
 import stroom.floormap.client.event.MapContextMenuEvent;
 import stroom.floormap.client.event.TimeChangeEvent;
+import stroom.floormap.client.model.Fact;
+import stroom.floormap.client.model.FloorMapObject;
 import stroom.floormap.client.presenter.FloorMapEditorPresenter.FloorMapEditorView;
-import stroom.floormap.shared.Fact;
+import stroom.floormap.client.value.FloorMapEntryParser;
+import stroom.floormap.client.value.ParsedValue;
+import stroom.floormap.client.value.ValueAccessor;
+import stroom.floormap.client.value.ValueAccessorFactory;
 import stroom.floormap.shared.FloorMapDoc;
-import stroom.floormap.shared.FloorMapDocSession;
-import stroom.floormap.shared.FloorMapEditorModel;
-import stroom.floormap.shared.FloorMapEntryParser;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.FloorMapJsonKeys;
-import stroom.floormap.shared.FloorMapObject;
-import stroom.floormap.shared.FloorMapPendingChanges;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
-import stroom.floormap.shared.ParsedValue;
 import stroom.floormap.shared.TypeStyle;
-import stroom.floormap.shared.ValueAccessor;
 import stroom.floormap.shared.ValueFormat;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionTerm;
@@ -82,81 +82,78 @@ import javax.inject.Provider;
 
 
 
-/**
- * Presenter for the FloorMap <b>Editor</b> tab.
- *
- * <p>The Editor tab provides a dedicated authoring environment for configuring a
- * {@link FloorMapDoc}. It is <em>always</em> in edit mode and exposes all
- * editing panels simultaneously.</p>
- *
- * <h3>Layout</h3>
- * <pre>
- * ┌─────────────────────────────────────────┬────────────┐
- * │            Map Canvas  (MAIN)           │    DOCK    │
- * ├─────────────────────────────────────────┴────────────┤ ◄─ draggable
- * │              Timeline control (TIMELINE)             │  fixed height
- * ├───────────────────────────┬──────────────────────────┤
- * │        Fact List          │        Time List         │
- * │       (FACT_LIST)         │       (TIME_LIST)        │
- * └───────────────────────────┴──────────────────────────┘
- * </pre>
- *
- * <p>Object properties are <em>not</em> a slot: they open as a modal dialog
- * ({@code FloorMapObjectEditPresenter}), so there is no {@code PROPERTIES}
- * region to lay out. The right-hand dock holds the Layers panel; Groups lives on the Map
- * tab's dock.</p>
- *
- * <h3>Shared selection model (single source of truth)</h3>
- * <p>The state itself lives in {@link FloorMapEditorModel}, which this presenter
- * owns and is the only thing that mutates. Child panels signal changes to this
- * presenter only; they never call each other directly. What the model holds:</p>
- *
- * <ul>
- *   <li>{@code selectedFactKey} — key of the selected fact, or {@code null}</li>
- *   <li>{@code selectedTime} — current timeline position in ms</li>
- *   <li>{@code showAllFacts} — whether "show all" mode is active</li>
- *   <li>{@code pendingChanges} — staged edits awaiting flush</li>
- * </ul>
- *
- * <h3>Staged saves</h3>
- * <p>All edits are buffered in {@link FloorMapPendingChanges}. They are flushed
- * via {@link #onSave(FloorMapDoc, Consumer)} as part of the standard
- * Stroom document save chain. On success the buffer is cleared and all panels
- * are reloaded. On failure a top-level error is shown and the staged changes are
- * <strong>kept</strong> for a retry - the panels are deliberately not reloaded, as that would
- * discard the user's in-progress edits. Replay is idempotent.</p>
- */
+/// Presenter for the FloorMap **Editor** tab.
+///
+/// The Editor tab provides a dedicated authoring environment for configuring a
+/// [FloorMapDoc]. It is *always* in edit mode and exposes all
+/// editing panels simultaneously.
+///
+/// ### Layout
+///
+/// ```
+/// ┌─────────────────────────────────────────┬────────────┐
+/// │            Map Canvas  (MAIN)           │    DOCK    │
+/// ├─────────────────────────────────────────┴────────────┤ ◄─ draggable
+/// │              Timeline control (TIMELINE)             │  fixed height
+/// ├───────────────────────────┬──────────────────────────┤
+/// │        Fact List          │        Time List         │
+/// │       (FACT_LIST)         │       (TIME_LIST)        │
+/// └───────────────────────────┴──────────────────────────┘
+/// ```
+///
+/// Object properties are *not* a slot: they open as a modal dialog
+/// (`FloorMapObjectEditPresenter`), so there is no `PROPERTIES`
+/// region to lay out. The right-hand dock holds the Layers panel; Groups lives on the Map
+/// tab's dock.
+///
+/// ### Shared selection model (single source of truth)
+///
+/// The state itself lives in [FloorMapEditorModel], which this presenter
+/// owns and is the only thing that mutates. Child panels signal changes to this
+/// presenter only; they never call each other directly. What the model holds:
+///
+/// - `selectedFactKey` — key of the selected fact, or `null`
+/// - `selectedTime` — current timeline position in ms
+/// - `showAllFacts` — whether "show all" mode is active
+/// - `pendingChanges` — staged edits awaiting flush
+///
+/// ### Staged saves
+///
+/// All edits are buffered in [FloorMapPendingChanges]. They are flushed
+/// via [#onSave(FloorMapDoc, Consumer)] as part of the standard
+/// Stroom document save chain. On success the buffer is cleared and all panels
+/// are reloaded. On failure a top-level error is shown and the staged changes are
+/// **kept** for a retry - the panels are deliberately not reloaded, as that would
+/// discard the user's in-progress edits. Replay is idempotent.
 public class FloorMapEditorPresenter
         extends DocPresenter<FloorMapEditorView, FloorMapDoc>
         implements HasToolbar {
 
-    /** REST endpoint */
+    /// REST endpoint
     private static final SqlTemporalStoreResource SQL_TEMPORAL_STORE_RESOURCE =
             GWT.create(SqlTemporalStoreResource.class);
 
-    /** One day in ms */
+    /// One day in ms
     private static final long ONE_DAY_MS = 24L * 60L * 60L * 1000L;
 
     // -----------------------------------------------------------------------
     // View slots
     // -----------------------------------------------------------------------
 
-    /** Slot for the interactive map canvas. */
+    /// Slot for the interactive map canvas.
     public static final Object MAIN = new Object();
 
-    /** Slot for the right-hand dock, which holds the Layers panel. */
+    /// Slot for the right-hand dock, which holds the Layers panel.
     public static final Object DOCK = new Object();
 
-    /**
-     * Slot for the timeline scrubber.
-     * Fixed-height — stored in {@code FloorMapEditorViewImpl.TIMELINE_HEIGHT}.
-     */
+    /// Slot for the timeline scrubber.
+    /// Fixed-height — stored in `FloorMapEditorViewImpl.TIMELINE_HEIGHT`.
     public static final Object TIMELINE = new Object();
 
-    /** Slot for the Fact List panel (leftmost bottom column). */
+    /// Slot for the Fact List panel (leftmost bottom column).
     public static final Object FACT_LIST = new Object();
 
-    /** Slot for the Time List panel (centre bottom column). */
+    /// Slot for the Time List panel (centre bottom column).
     public static final Object TIME_LIST = new Object();
 
     // -----------------------------------------------------------------------
@@ -170,72 +167,56 @@ public class FloorMapEditorPresenter
     private final FloorMapTimeListPresenter floorMapTimeListPresenter;
     private final FloorMapObjectEditPresenter floorMapObjectEditPresenter;
 
-    /** The dialog that turns a measured line into the map's scale. */
+    /// The dialog that turns a measured line into the map's scale.
     private final FloorMapSetScalePresenter floorMapSetScalePresenter;
     private final FloorMapLayersPresenter floorMapLayersPresenter;
     private final FloorMapLayerStylePresenter floorMapLayerStylePresenter;
 
-    /**
-     * Cumulative set of types observed this document session — fact types from
-     * the canvas plus event types seen via {@link FloorMapDataEvent}
-     * (which fires from the Map tab's events query on the shared event bus).
-     * Fed to the Layers panel so unsaved types appear as provisional layers.
-     */
+    /// Cumulative set of types observed this document session — fact types from
+    /// the canvas plus event types seen via [FloorMapDataEvent]
+    /// (which fires from the Map tab's events query on the shared event bus).
+    /// Fed to the Layers panel so unsaved types appear as provisional layers.
     private final Set<String> observedTypes = new HashSet<>();
 
-    /** The GWT-free model containing all shared state and pure logic. */
+    /// The GWT-free model containing all shared state and pure logic.
     private final FloorMapEditorModel model;
 
-    /**
-     * Toolbar toggle controlling the canvas grid overlay. Shown next to the
-     * document save buttons via {@link HasToolbar} whenever the Editor tab is
-     * active. On by default — the grid is the primary editing aid.
-     */
+    /// Toolbar toggle controlling the canvas grid overlay. Shown next to the
+    /// document save buttons via [HasToolbar] whenever the Editor tab is
+    /// active. On by default — the grid is the primary editing aid.
     private final InlineSvgToggleButton showGridButton;
 
-    /**
-     * Contribution to the document toolbar (Save / Save As …): a single help
-     * button for the map-interaction help, shown only while the Editor tab is
-     * active (via {@link HasToolbar#getToolbars()}).
-     */
+    /// Contribution to the document toolbar (Save / Save As …): a single help
+    /// button for the map-interaction help, shown only while the Editor tab is
+    /// active (via [HasToolbar#getToolbars()]).
     private final ButtonPanel helpToolbar;
 
-    /**
-     * Toolbar toggle that shows/hides the right-hand dock, which holds the Layers
-     * panel. On by default, matching the view, which starts the dock visible.
-     */
+    /// Toolbar toggle that shows/hides the right-hand dock, which holds the Layers
+    /// panel. On by default, matching the view, which starts the dock visible.
     private final InlineSvgToggleButton dockToggleButton;
 
-    /**
-     * The Editor's pending document-level edits — the area-support upgrade and
-     * the Layers-panel type-styles list — with their read/write invariants. The
-     * loaded entity is read-only, so these are staged here until save. See the
-     * shared, unit-tested {@link FloorMapDocSession}.
-     */
+    /// The Editor's pending document-level edits — the area-support upgrade and
+    /// the Layers-panel type-styles list — with their read/write invariants. The
+    /// loaded entity is read-only, so these are staged here until save. See the
+    /// shared, unit-tested [FloorMapDocSession].
     private final FloorMapDocSession docSession = new FloorMapDocSession();
 
-    /**
-     * Notified when area support is enabled on this document, so the parent
-     * {@link FloorMapPresenter} can refresh the Settings tab's grids — the
-     * Settings tab writes {@code valueSchema} wholesale on save and would
-     * otherwise silently revert the upgrade.
-     */
+    /// Notified when area support is enabled on this document, so the parent
+    /// [FloorMapPresenter] can refresh the Settings tab's grids — the
+    /// Settings tab writes `valueSchema` wholesale on save and would
+    /// otherwise silently revert the upgrade.
     private Runnable areaSupportEnabledListener;
 
-    /**
-     * Whether the timeline range/scrubber has been initialised. Set on the first
-     * {@code onRead}; a save triggers a re-read of every tab, and the timeline
-     * must not re-initialise then — it would discard the user's chosen range and
-     * jump the scrubber (and every panel) to the newest time. Mirrors
-     * {@code FloorMapMapPresenter.timelineInitialised}.
-     */
+    /// Whether the timeline range/scrubber has been initialised. Set on the first
+    /// `onRead`; a save triggers a re-read of every tab, and the timeline
+    /// must not re-initialise then — it would discard the user's chosen range and
+    /// jump the scrubber (and every panel) to the newest time. Mirrors
+    /// `FloorMapMapPresenter.timelineInitialised`.
     private boolean timelineInitialised;
 
-    /**
-     * UUID of the document this Editor is showing, used to ignore
-     * {@link FloorMapDataEvent}s fired by other open FloorMap documents on the
-     * shared event bus (which would otherwise pollute this doc's observed types).
-     */
+    /// UUID of the document this Editor is showing, used to ignore
+    /// [FloorMapDataEvent]s fired by other open FloorMap documents on the
+    /// shared event bus (which would otherwise pollute this doc's observed types).
     private String docUuid;
 
     // -----------------------------------------------------------------------
@@ -403,13 +384,11 @@ public class FloorMapEditorPresenter
     // Toolbar contribution (HasToolbar)
     // -----------------------------------------------------------------------
 
-    /**
-     * Builds the help panel for the document toolbar: a single help button
-     * describing the map interaction model, pushed to the right-hand end of the
-     * toolbar.
-     *
-     * @return the help toolbar panel
-     */
+    /// Builds the help panel for the document toolbar: a single help button
+    /// describing the map interaction model, pushed to the right-hand end of the
+    /// toolbar.
+    ///
+    /// @return the help toolbar panel
     private ButtonPanel createHelpToolbar() {
         final ButtonPanel buttonPanel = new ButtonPanel();
         // Float the panel to the right-hand end of the flex toolbar container,
@@ -422,14 +401,12 @@ public class FloorMapEditorPresenter
         return buttonPanel;
     }
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Contributes the Editor tab's toolbar buttons whenever the tab is shown:
-     * the grid toggle (next to the document Save / Save As buttons) and, at the
-     * right-hand end, the map help button. {@code DocTabPresenter} appends these
-     * after the save buttons.</p>
-     */
+    /// {@inheritDoc}
+    ///
+    /// Contributes the Editor tab's toolbar buttons whenever the tab is shown:
+    /// the grid toggle (next to the document Save / Save As buttons) and, at the
+    /// right-hand end, the map help button. `DocTabPresenter` appends these
+    /// after the save buttons.
     @Override
     public List<Widget> getToolbars() {
         final ButtonPanel gridToolbar = new ButtonPanel();
@@ -442,12 +419,10 @@ public class FloorMapEditorPresenter
     // DocPresenter lifecycle
     // -----------------------------------------------------------------------
 
-    /**
-     * Called by the framework when the document is opened or refreshed.
-     *
-     * <p>Loads the time range from the server and initialises the timeline,
-     * then fetches facts at the initial time and populates all panels.</p>
-     */
+    /// Called by the framework when the document is opened or refreshed.
+    ///
+    /// Loads the time range from the server and initialises the timeline,
+    /// then fetches facts at the initial time and populates all panels.
     @Override
     protected void onRead(final DocRef docRef, final FloorMapDoc document, final boolean readOnly) {
         this.docUuid = docRef != null ? docRef.getUuid() : null;
@@ -500,78 +475,64 @@ public class FloorMapEditorPresenter
                 .exec();
     }
 
-    /**
-     * Called by the framework when the document is saved.
-     *
-     * <p>The Editor tab does not normally write state into the
-     * {@link FloorMapDoc} itself (temporal store edits are flushed separately
-     * via {@link #onSave}) — except for the doc-level edits staged in the session: the
-     * area-support upgrade, the Layers panel's type-styles list, and a Set Scale
-     * calibration, all of which are merged into the document here. The merge is re-applied to the
-     * <em>incoming</em> document (rather than writing the stored lists
-     * verbatim) so it stays correct regardless of the order the tabs' onWrite
-     * methods run in.</p>
-     */
+    /// Called by the framework when the document is saved.
+    ///
+    /// The Editor tab does not normally write state into the
+    /// [FloorMapDoc] itself (temporal store edits are flushed separately
+    /// via [#onSave]) — except for the doc-level edits staged in the session: the
+    /// area-support upgrade, the Layers panel's type-styles list, and a Set Scale
+    /// calibration, all of which are merged into the document here. The merge is re-applied to the
+    /// *incoming* document (rather than writing the stored lists
+    /// verbatim) so it stays correct regardless of the order the tabs' onWrite
+    /// methods run in.
     @Override
     protected FloorMapDoc onWrite(final FloorMapDoc document) {
         return docSession.applyToWrite(document);
     }
 
-    /**
-     * The value schema in effect for this editing session: the pending
-     * area-support upgrade when one exists, otherwise the entity's persisted
-     * schema.
-     */
+    /// The value schema in effect for this editing session: the pending
+    /// area-support upgrade when one exists, otherwise the entity's persisted
+    /// schema.
     private List<FloorMapFieldMapping> valueSchema() {
         return docSession.valueSchema(getEntity().getValueSchema());
     }
 
-    /**
-     * The type styles in effect for this editing session (see
-     * {@link #valueSchema()}).
-     */
+    /// The type styles in effect for this editing session (see
+    /// [#valueSchema()]).
     private List<TypeStyle> typeStyles() {
         return docSession.typeStyles(getEntity().getTypeStyles());
     }
 
-    /**
-     * The document as this editing session sees it: the loaded entity with any
-     * pending area upgrade applied. Must be used wherever the document is
-     * handed to a child presenter that resolves schema roles itself (the
-     * object-edit dialog), or fill/opacity/geometry would silently resolve
-     * against the pre-upgrade schema until the document is saved.
-     */
+    /// The document as this editing session sees it: the loaded entity with any
+    /// pending area upgrade applied. Must be used wherever the document is
+    /// handed to a child presenter that resolves schema roles itself (the
+    /// object-edit dialog), or fill/opacity/geometry would silently resolve
+    /// against the pre-upgrade schema until the document is saved.
     private FloorMapDoc sessionEntity() {
         return docSession.sessionEntity(getEntity());
     }
 
-    /**
-     * Sets the callback notified when area support is enabled on this document
-     * (see {@link #ensureAreaSupport}).
-     */
+    /// Sets the callback notified when area support is enabled on this document
+    /// (see [#ensureAreaSupport]).
     public void setAreaSupportEnabledListener(final Runnable listener) {
         this.areaSupportEnabledListener = listener;
     }
 
-    /**
-     * Adopts an initial view {@code {scale, offsetX, offsetY}} computed by the
-     * Map tab so the Editor's first frame matches and the view doesn't jump on
-     * the tab switch. Only affects the one-time initial view; user pan/zoom in
-     * the Editor is independent afterwards.
-     *
-     * @param view the view state, or {@code null} to fit locally
-     */
+    /// Adopts an initial view `{scale, offsetX, offsetY}` computed by the
+    /// Map tab so the Editor's first frame matches and the view doesn't jump on
+    /// the tab switch. Only affects the one-time initial view; user pan/zoom in
+    /// the Editor is independent afterwards.
+    ///
+    /// @param view the view state, or `null` to fit locally
     public void setInitialViewState(final double[] view) {
         floorMapCanvasPresenter.setInitialViewState(view);
     }
 
-    /**
-     * Handles a type-styles edit from the Layers panel (reorder / appearance /
-     * discovered types): stages the new list, applies it live to the canvas and
-     * object-edit dialog, and marks the document dirty.
-     *
-     * @param newTypeStyles the new ordered type styles
-     */
+    /// Handles a type-styles edit from the Layers panel (reorder / appearance /
+    /// discovered types): stages the new list, applies it live to the canvas and
+    /// object-edit dialog, and marks the document dirty.
+    ///
+    /// @param newTypeStyles the new ordered type styles
     private void onLayerTypeStylesEdited(final List<TypeStyle> newTypeStyles) {
         docSession.stageTypeStyles(newTypeStyles);
         floorMapCanvasPresenter.setTypeStyles(newTypeStyles);
@@ -579,12 +540,10 @@ public class FloorMapEditorPresenter
         setDirty(true);
     }
 
-    /**
-     * Scans the whole facts store for every distinct type (all keys, all times),
-     * unions it with the types already observed this session (fact + event), and
-     * hands the result to the Layers panel to merge into the saved layers. Backs
-     * the panel's Discover action.
-     */
+    /// Scans the whole facts store for every distinct type (all keys, all times),
+    /// unions it with the types already observed this session (fact + event), and
+    /// hands the result to the Layers panel to merge into the saved layers. Backs
+    /// the panel's Discover action.
     private void onDiscoverTypes() {
         final Set<String> discovered = new HashSet<>(observedTypes);
         final DocRef store = getEntity() != null
@@ -625,63 +584,53 @@ public class FloorMapEditorPresenter
     // Save chain hook (called by FloorMapPresenter)
     // -----------------------------------------------------------------------
 
-    /**
-     * Returns {@code true} when there are staged edits awaiting flush.
-     *
-     * <p>Used by {@link FloorMapPresenter#hasAssociatedDirty()} to drive the
-     * dirty indicator on the document tab.</p>
-     *
-     * @return {@code true} when pending changes exist
-     */
+    /// Returns `true` when there are staged edits awaiting flush.
+    ///
+    /// Used by [FloorMapPresenter#hasAssociatedDirty()] to drive the
+    /// dirty indicator on the document tab.
+    ///
+    /// @return `true` when pending changes exist
     public boolean hasPendingChanges() {
         return model.hasPendingChanges();
     }
 
-    /**
-     * Pauses the timeline if it is currently playing.
-     *
-     * <p>Called by {@link FloorMapPresenter} when the user navigates away from
-     * the Editor tab, so that background queries are not issued while the tab
-     * is hidden.</p>
-     */
+    /// Pauses the timeline if it is currently playing.
+    ///
+    /// Called by [FloorMapPresenter] when the user navigates away from
+    /// the Editor tab, so that background queries are not issued while the tab
+    /// is hidden.
     public void pauseTimeline() {
         floorMapTimelinePresenter.pause();
     }
 
-    /**
-     * Stops the clock when the document is closed.
-     *
-     * <p>Closing a document tab does not unbind its presenters, so a timeline
-     * left playing keeps its animation loop — and the per-tick fetches it drives
-     * — running for the rest of the session.</p>
-     */
+    /// Stops the clock when the document is closed.
+    ///
+    /// Closing a document tab does not unbind its presenters, so a timeline
+    /// left playing keeps its animation loop — and the per-tick fetches it drives
+    /// — running for the rest of the session.
     @Override
     public void onClose() {
         super.onClose();
         floorMapTimelinePresenter.pause();
     }
 
-    /**
-     * Flushes pending changes to the server as part of the Stroom save chain.
-     *
-     * <p>Called by {@link FloorMapPresenter} via {@code getPostSaveCallback()}
-     * after the {@link FloorMapDoc} has been saved. Sends all staged operations
-     * in a single {@code applyChanges} call.</p>
-     *
-     * <ul>
-     *   <li><b>Success</b>: the operations that were sent are discarded, all
-     *       panels reload from the server, and {@code callback} is invoked with
-     *       the document.</li>
-     *   <li><b>Failure</b> (server-side error or HTTP error): the buffer is
-     *       <em>kept</em> so the user can retry, a top-level alert is shown, and
-     *       panels are not reloaded over in-progress edits. The {@code callback}
-     *       is <em>not</em> invoked, so the save chain stops here.</li>
-     * </ul>
-     *
-     * @param document the saved document; passed through to the callback on
-     *                 success
-     * @param callback invoked with the document only when the flush succeeds
-     */
+    /// Flushes pending changes to the server as part of the Stroom save chain.
+    ///
+    /// Called by [FloorMapPresenter] via `getPostSaveCallback()`
+    /// after the [FloorMapDoc] has been saved. Sends all staged operations
+    /// in a single `applyChanges` call.
+    ///
+    /// - **Success**: the operations that were sent are discarded, all
+    ///   panels reload from the server, and `callback` is invoked with
+    ///   the document.
+    /// - **Failure** (server-side error or HTTP error): the buffer is
+    ///   *kept* so the user can retry, a top-level alert is shown, and
+    ///   panels are not reloaded over in-progress edits. The `callback`
+    ///   is *not* invoked, so the save chain stops here.
+    ///
+    /// @param document the saved document; passed through to the callback on
+    ///         success
+    /// @param callback invoked with the document only when the flush succeeds
     public void onSave(final FloorMapDoc document, final Consumer<FloorMapDoc> callback) {
         if (!model.hasPendingChanges()) {
             callback.accept(document);
@@ -723,11 +672,9 @@ public class FloorMapEditorPresenter
                 .exec();
     }
 
-    /**
-     * Builds an {@link ApplyChangesRequest} from the model's pending changes.
-     * This method lives in the presenter (not the model) because the
-     * {@code sqlstore.shared} types are not available in {@code stroom-core-shared}.
-     */
+    /// Builds an [ApplyChangesRequest] from the model's pending changes.
+    /// This method lives in the presenter (not the model) because the
+    /// `sqlstore.shared` types are not available in `stroom-core-shared`.
     private ApplyChangesRequest buildApplyChangesRequest() {
         final List<ChangeOperation> ops = new ArrayList<>();
         for (final FloorMapPendingChanges.PendingChange change : model.getPendingChanges().getChanges()) {
@@ -749,30 +696,27 @@ public class FloorMapEditorPresenter
     // Timeline
     // -----------------------------------------------------------------------
 
-    /**
-     * Initialises the timeline slider from the server-supplied time range.
-     *
-     * <ul>
-     *   <li>If the store is empty the slider covers [now − 1 day, now + 1 day]
-     *       and the initial selected time is now.</li>
-     *   <li>Otherwise the slider range is [min, max] and the initial selected
-     *       time is max (the most recent entry) — except when min equals max, where the range is
-     *       padded to [min − 1 day, max + 1 day], since a zero-length range breaks playback.</li>
-     * </ul>
-     *
-     * <p>A real range is also handed to
-     * {@link FloorMapTimelinePresenter#setDataRange(long, long)}, which is what enables the
-     * <b>Show All</b> button. That is the only thing that enables it, and on the Map tab it comes
-     * from the events histogram — which this tab has none of, and needs none of: the store's own
-     * min and max already are the extent Show All should fit to. Without this the button sits
-     * permanently greyed, which is how it behaved until 2026-09-11.</p>
-     *
-     * <p>Deliberately not called from the {@code min == max} branch. {@code setDataRange} would
-     * accept it, but the Show All handler guards on {@code dataRangeMin < dataRangeMax}, so arming
-     * it for a single-instant store would light the button up and do nothing when pressed.</p>
-     *
-     * @param range the time range returned by the server; never {@code null}
-     */
+    /// Initialises the timeline slider from the server-supplied time range.
+    ///
+    /// - If the store is empty the slider covers from one day before now to one day after
+    ///   now, and the initial selected time is now.
+    /// - Otherwise the slider covers from min to max, and the initial selected
+    ///   time is max (the most recent entry) — except when min equals max, where the range is
+    ///   padded to run from one day before min to one day after max, since a zero-length range
+    ///   breaks playback.
+    ///
+    /// A real range is also handed to
+    /// [FloorMapTimelinePresenter#setDataRange(long, long)], which is what enables the
+    /// **Show All** button. That is the only thing that enables it, and on the Map tab it comes
+    /// from the events histogram — which this tab has none of, and needs none of: the store's own
+    /// min and max already are the extent Show All should fit to. Without this the button sits
+    /// permanently greyed, which is how it behaved until 2026-09-11.
+    ///
+    /// Deliberately not called from the `min == max` branch. `setDataRange` would
+    /// accept it, but the Show All handler guards on `dataRangeMin < dataRangeMax`, so arming
+    /// it for a single-instant store would light the button up and do nothing when pressed.
+    ///
+    /// @param range the time range returned by the server; never `null`
     private void initTimeline(final TemporalStoreTimeRange range) {
         final long now = System.currentTimeMillis();
 
@@ -799,16 +743,14 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /**
-     * Called when the user moves the timeline scrubber.
-     *
-     * <p>Updates the model's selected time and reloads the canvas and Fact List
-     * at the new time. If a fact is selected, also refreshes the Time List
-     * from the model's server entries for the selected fact overlaid with pending changes
-     * (no extra server call).</p>
-     *
-     * @param timeMs the new timeline position in milliseconds
-     */
+    /// Called when the user moves the timeline scrubber.
+    ///
+    /// Updates the model's selected time and reloads the canvas and Fact List
+    /// at the new time. If a fact is selected, also refreshes the Time List
+    /// from the model's server entries for the selected fact overlaid with pending changes
+    /// (no extra server call).
+    ///
+    /// @param timeMs the new timeline position in milliseconds
     private void onTimeChange(final long timeMs) {
         model.setSelectedTime(timeMs);
         // Keep this canvas's accessible summary and live region on the same clock
@@ -826,19 +768,17 @@ public class FloorMapEditorPresenter
     // Data loading
     // -----------------------------------------------------------------------
 
-    /**
-     * Reloads the canvas (and Fact List) for the given timeline position.
-     *
-     * <p>The canvas always shows the facts <strong>active at the scrubber
-     * time</strong>, so the canvas data is always the time-filtered fetch —
-     * the "Show all" toggle does not change what the canvas renders. When
-     * "Show all" is on, an additional fetch retrieves one row per key (each
-     * key's latest shard) purely so the <strong>Fact List</strong> can list
-     * every fact in the store, selectable regardless of whether it is on
-     * screen at the current time.</p>
-     *
-     * @param timeMs the point in time to query
-     */
+    /// Reloads the canvas (and Fact List) for the given timeline position.
+    ///
+    /// The canvas always shows the facts **active at the scrubber
+    /// time**, so the canvas data is always the time-filtered fetch —
+    /// the "Show all" toggle does not change what the canvas renders. When
+    /// "Show all" is on, an additional fetch retrieves one row per key (each
+    /// key's latest shard) purely so the **Fact List** can list
+    /// every fact in the store, selectable regardless of whether it is on
+    /// screen at the current time.
+    ///
+    /// @param timeMs the point in time to query
     private void loadAtTime(final long timeMs) {
         final String mapName = getMapName();
         if (mapName == null) {
@@ -851,14 +791,12 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /**
-     * Fetches the most recent entry per key at or before {@code timeMs}
-     * from the server, then calls {@link #onEntriesFetched} to update
-     * the canvas (and, outside "Show all" mode, the Fact List).
-     *
-     * @param mapName the temporal store name
-     * @param timeMs  the upper bound for effective_time
-     */
+    /// Fetches the most recent entry per key at or before `timeMs`
+    /// from the server, then calls [#onEntriesFetched] to update
+    /// the canvas (and, outside "Show all" mode, the Fact List).
+    ///
+    /// @param mapName the temporal store name
+    /// @param timeMs  the upper bound for effective_time
     private void fetchAtTime(final String mapName, final long timeMs) {
         final FetchAtTimeRequest request = new FetchAtTimeRequest(mapName, timeMs);
         restFactory.create(SQL_TEMPORAL_STORE_RESOURCE)
@@ -867,13 +805,11 @@ public class FloorMapEditorPresenter
                 .exec();
     }
 
-    /**
-     * Fetches one row per key — each key's latest shard, with no time bound —
-     * to populate the Fact List in "Show all" mode. Feeds the Fact List
-     * <em>only</em>; the canvas is owned by the {@link #fetchAtTime} path.
-     *
-     * @param mapName the temporal store name
-     */
+    /// Fetches one row per key — each key's latest shard, with no time bound —
+    /// to populate the Fact List in "Show all" mode. Feeds the Fact List
+    /// *only*; the canvas is owned by the [#fetchAtTime] path.
+    ///
+    /// @param mapName the temporal store name
     private void fetchAllKeysForFactList(final String mapName) {
         restFactory.create(SQL_TEMPORAL_STORE_RESOURCE)
                 .method(res -> res.fetchAll(mapName))
@@ -881,13 +817,11 @@ public class FloorMapEditorPresenter
                 .exec();
     }
 
-    /**
-     * Callback for {@link #fetchAtTime}. Stores the server entries, merges
-     * pending changes, then refreshes the canvas. The Fact List is refreshed
-     * too unless "Show all" is on — in that mode the list is owned by
-     * {@link #onAllKeysFetched}, and rebuilding it here would race the two
-     * responses and clobber the full key list with the time-filtered subset.
-     */
+    /// Callback for [#fetchAtTime]. Stores the server entries, merges
+    /// pending changes, then refreshes the canvas. The Fact List is refreshed
+    /// too unless "Show all" is on — in that mode the list is owned by
+    /// [#onAllKeysFetched], and rebuilding it here would race the two
+    /// responses and clobber the full key list with the time-filtered subset.
     private void onEntriesFetched(final List<TemporalEntry> entries) {
         final List<TemporalEntry> merged = model.onEntriesFetched(entries);
         updateCanvas(merged);
@@ -896,12 +830,10 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /**
-     * Callback for {@link #fetchAllKeysForFactList}: refreshes the Fact List
-     * (one row per key, pending changes overlaid so unflushed creations still
-     * appear). Ignored if "Show all" was toggled off while the request was in
-     * flight — the time-filtered path owns the list again.
-     */
+    /// Callback for [#fetchAllKeysForFactList]: refreshes the Fact List
+    /// (one row per key, pending changes overlaid so unflushed creations still
+    /// appear). Ignored if "Show all" was toggled off while the request was in
+    /// flight — the time-filtered path owns the list again.
     private void onAllKeysFetched(final List<TemporalEntry> entries) {
         if (!model.isShowAllFacts()) {
             return;
@@ -909,28 +841,24 @@ public class FloorMapEditorPresenter
         updateFactList(model.mergePendingChanges(entries));
     }
 
-    /**
-     * Fetches all temporal entries (every effective time) for the given key.
-     * Uses {@code find(Map=name, Key=key)} with no time term.
-     *
-     * @param mapName the temporal store name
-     * @param key     the fact key
-     */
+    /// Fetches all temporal entries (every effective time) for the given key.
+    /// Uses `find(Map=name, Key=key)` with no time term.
+    ///
+    /// @param mapName the temporal store name
+    /// @param key     the fact key
     private void fetchTimeList(final String mapName, final String key) {
         fetchTimeList(mapName, key, null);
     }
 
-    /**
-     * Fetches all shards for the key, then runs {@code after} (if non-null) once
-     * the model's time list has been populated. Callers that must act on the
-     * fresh time list (e.g. "Add Time Version" on a fact that isn't the current
-     * selection) use the callback so they don't run against the previous
-     * selection's stale shards.
-     *
-     * @param mapName the temporal store name
-     * @param key     the fact key
-     * @param after   action to run after the fetch completes, or {@code null}
-     */
+    /// Fetches all shards for the key, then runs `after` (if non-null) once
+    /// the model's time list has been populated. Callers that must act on the
+    /// fresh time list (e.g. "Add Time Version" on a fact that isn't the current
+    /// selection) use the callback so they don't run against the previous
+    /// selection's stale shards.
+    ///
+    /// @param mapName the temporal store name
+    /// @param key     the fact key
+    /// @param after   action to run after the fetch completes, or `null`
     private void fetchTimeList(final String mapName, final String key, final Runnable after) {
         restFactory.create(SQL_TEMPORAL_STORE_RESOURCE)
                 .method(res -> res.find(mapKeyCriteria(mapName, key)))
@@ -952,7 +880,7 @@ public class FloorMapEditorPresenter
                 .exec();
     }
 
-    /** As {@link #mapKeyCriteria} but matching any of {@code keys}. */
+    /// As [#mapKeyCriteria] but matching any of `keys`.
     private ExpressionCriteria mapKeysCriteria(final String mapName, final List<String> keys) {
         final ExpressionOperator.Builder anyKey = ExpressionOperator.builder()
                 .op(ExpressionOperator.Op.OR);
@@ -969,11 +897,9 @@ public class FloorMapEditorPresenter
                 .build());
     }
 
-    /**
-     * Criteria selecting <em>every</em> shard (all effective times) of a single
-     * fact key within a map. Shared by the Time List fetch and the "delete all
-     * versions" flow.
-     */
+    /// Criteria selecting *every* shard (all effective times) of a single
+    /// fact key within a map. Shared by the Time List fetch and the "delete all
+    /// versions" flow.
     private ExpressionCriteria mapKeyCriteria(final String mapName, final String key) {
         return new ExpressionCriteria(ExpressionOperator.builder()
                 .addTerm(ExpressionTerm.builder()
@@ -989,13 +915,11 @@ public class FloorMapEditorPresenter
     // Canvas + Fact List rendering
     // -----------------------------------------------------------------------
 
-    /**
-     * Updates the canvas from a merged entry list, rendering the facts active
-     * at the current scrubber time. Also ensures the currently selected fact
-     * remains highlighted on the canvas.
-     *
-     * @param entries merged entries (server data + pending changes)
-     */
+    /// Updates the canvas from a merged entry list, rendering the facts active
+    /// at the current scrubber time. Also ensures the currently selected fact
+    /// remains highlighted on the canvas.
+    ///
+    /// @param entries merged entries (server data + pending changes)
     private void updateCanvas(final List<TemporalEntry> entries) {
         // Update canvas using shared parser (applies world-to-map transform)
         final List<Fact> facts = model.parseForCanvas(
@@ -1020,14 +944,12 @@ public class FloorMapEditorPresenter
         floorMapCanvasPresenter.setSelectedObjectIds(model.getSelectedFactKeys());
     }
 
-    /**
-     * Updates the Fact List from a merged entry list — one row per unique key.
-     * The entry list may contain multiple entries for the same key (e.g. when a
-     * pending creation overlaps with a server-returned entry), so it is
-     * deduplicated by key to show each object exactly once.
-     *
-     * @param entries merged entries (server data + pending changes)
-     */
+    /// Updates the Fact List from a merged entry list — one row per unique key.
+    /// The entry list may contain multiple entries for the same key (e.g. when a
+    /// pending creation overlaps with a server-returned entry), so it is
+    /// deduplicated by key to show each object exactly once.
+    ///
+    /// @param entries merged entries (server data + pending changes)
     private void updateFactList(final List<TemporalEntry> entries) {
         final List<FloorMapFieldMapping> schema = valueSchema();
         final List<FloorMapFactListPresenter.FactObject> factObjects = new ArrayList<>();
@@ -1049,28 +971,24 @@ public class FloorMapEditorPresenter
     // Event handlers
     // -----------------------------------------------------------------------
 
-    /**
-     * Called when a canvas interaction changes the selection (click, Shift-click
-     * toggle, or rubber-band marquee). The canvas already holds the highlight;
-     * this syncs the model, Fact List and side panels.
-     *
-     * @param keys    the full selection in selection order
-     * @param primary the first-selected id, or {@code null} when empty (derived
-     *                from {@code keys}, so unused here)
-     */
+    /// Called when a canvas interaction changes the selection (click, Shift-click
+    /// toggle, or rubber-band marquee). The canvas already holds the highlight;
+    /// this syncs the model, Fact List and side panels.
+    ///
+    /// @param keys    the full selection in selection order
+    /// @param primary the first-selected id, or `null` when empty (derived
+    ///         from `keys`, so unused here)
     private void onCanvasSelectionChanged(final java.util.Collection<String> keys,
                                           final String primary) {
         applySelection(keys);
     }
 
-    /**
-     * Makes {@code keys} the current selection across the model, the canvas
-     * highlight and the Fact List, then reflects it into the Time List and
-     * Properties panel. Loop-safe: the canvas and Fact List inbound setters do
-     * not re-fire their change callbacks.
-     *
-     * @param keys the fact keys to select
-     */
+    /// Makes `keys` the current selection across the model, the canvas
+    /// highlight and the Fact List, then reflects it into the Time List and
+    /// Properties panel. Loop-safe: the canvas and Fact List inbound setters do
+    /// not re-fire their change callbacks.
+    ///
+    /// @param keys the fact keys to select
     private void applySelection(final java.util.Collection<String> keys) {
         model.setSelection(keys);
         floorMapCanvasPresenter.setSelectedObjectIds(keys);
@@ -1078,14 +996,12 @@ public class FloorMapEditorPresenter
         reflectSelectionSideEffects(keys);
     }
 
-    /**
-     * Updates the Time List and Properties panel for the current selection. The
-     * time shard list is meaningful only for a single fact, so it is shown only
-     * when exactly one fact is selected and blanked otherwise (nothing selected,
-     * or a multi-selection).
-     *
-     * @param keys the current selection
-     */
+    /// Updates the Time List and Properties panel for the current selection. The
+    /// time shard list is meaningful only for a single fact, so it is shown only
+    /// when exactly one fact is selected and blanked otherwise (nothing selected,
+    /// or a multi-selection).
+    ///
+    /// @param keys the current selection
     private void reflectSelectionSideEffects(final java.util.Collection<String> keys) {
         if (keys != null && keys.size() == 1) {
             final String primary = keys.iterator().next();
@@ -1098,12 +1014,10 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /**
-     * Persists a completed transform gesture (move/rotate/scale) as a single
-     * map-space affine applied to the whole selection (see
-     * {@link FloorMapCanvasPresenter.DragHandler}). Each fact's world-to-map
-     * matrix is composed as {@code transform · oldMatrix}.
-     */
+    /// Persists a completed transform gesture (move/rotate/scale) as a single
+    /// map-space affine applied to the whole selection (see
+    /// [FloorMapCanvasPresenter.DragHandler]). Each fact's world-to-map
+    /// matrix is composed as `transform · oldMatrix`.
     private void onFactsTransformed(final java.util.Collection<String> keys,
                                     final FloorMapTransformationMatrix transform) {
         if (getMapName() == null || keys == null || keys.isEmpty()) {
@@ -1123,14 +1037,12 @@ public class FloorMapEditorPresenter
         refreshCanvasOnly();
     }
 
-    /**
-     * Called when an area's geometry is edited on the canvas (a vertex moved,
-     * inserted or deleted). Persists the new local-frame vertices through the
-     * pending-changes pipeline and refreshes the canvas.
-     *
-     * @param key           the area fact's key
-     * @param localVertices the new local-frame vertices ({@code >= 3})
-     */
+    /// Called when an area's geometry is edited on the canvas (a vertex moved,
+    /// inserted or deleted). Persists the new local-frame vertices through the
+    /// pending-changes pipeline and refreshes the canvas.
+    ///
+    /// @param key           the area fact's key
+    /// @param localVertices the new local-frame vertices (`>= 3`)
     private void onFactGeometryEdited(final String key, final double[][] localVertices) {
         if (getMapName() == null || key == null || localVertices == null) {
             return;
@@ -1150,22 +1062,18 @@ public class FloorMapEditorPresenter
     }
 
 
-    /**
-     * Refreshes the canvas by re-applying pending changes and reparsing,
-     * without reloading the Fact List (which would clear its selection
-     * and cascade into the Time List).
-     */
+    /// Refreshes the canvas by re-applying pending changes and reparsing,
+    /// without reloading the Fact List (which would clear its selection
+    /// and cascade into the Time List).
     private void refreshCanvasOnly() {
         updateCanvas(model.buildMergedCanvasEntries());
     }
 
-    /**
-     * Called when the Fact List selection changes through user interaction
-     * (click, ctrl/shift-click). Mirrors the selection onto the canvas, model
-     * and side panels via {@link #applySelection}.
-     *
-     * @param factObjects the selected fact objects (possibly empty)
-     */
+    /// Called when the Fact List selection changes through user interaction
+    /// (click, ctrl/shift-click). Mirrors the selection onto the canvas, model
+    /// and side panels via [#applySelection].
+    ///
+    /// @param factObjects the selected fact objects (possibly empty)
     private void onFactListSelectionChanged(
             final java.util.List<FloorMapFactListPresenter.FactObject> factObjects) {
         final java.util.List<String> keys = new ArrayList<>();
@@ -1175,22 +1083,20 @@ public class FloorMapEditorPresenter
         applySelection(keys);
     }
 
-    /**
-     * Called when a row in the Time List is selected.
-     *
-     * <p>Moves the timeline scrubber to the entry's effective time and reloads
-     * the canvas so all panels stay in sync. {@link FloorMapTimelinePresenter#setCurrentTime}
-     * only repositions the scrubber — it does <em>not</em> fire a
-     * {@link stroom.floormap.client.event.TimeChangeEvent} — so there is no
-     * feedback loop back into {@link #onTimeChange}.</p>
-     *
-     * <p>Selecting a shard first <strong>stops playback</strong> if the timeline
-     * is auto-advancing: otherwise the scrubber would keep moving and immediately
-     * change the active shard out from under the user's selection. The pause is a
-     * no-op when the timeline is already paused.</p>
-     *
-     * @param entry the selected entry, or {@code null}
-     */
+    /// Called when a row in the Time List is selected.
+    ///
+    /// Moves the timeline scrubber to the entry's effective time and reloads
+    /// the canvas so all panels stay in sync. [FloorMapTimelinePresenter#setCurrentTime]
+    /// only repositions the scrubber — it does *not* fire a
+    /// [stroom.floormap.client.event.TimeChangeEvent] — so there is no
+    /// feedback loop back into [#onTimeChange].
+    ///
+    /// Selecting a shard first **stops playback** if the timeline
+    /// is auto-advancing: otherwise the scrubber would keep moving and immediately
+    /// change the active shard out from under the user's selection. The pause is a
+    /// no-op when the timeline is already paused.
+    ///
+    /// @param entry the selected entry, or `null`
     private void onTimeSelectedInTimeList(final TemporalEntry entry) {
         if (entry != null) {
             // Stop auto-advance before repositioning, so playback can't race the
@@ -1202,12 +1108,10 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /**
-     * Called when the Time List's Edit button is clicked.
-     * Opens the Properties dialog for the currently selected entry.
-     *
-     * @param entry the selected entry to edit
-     */
+    /// Called when the Time List's Edit button is clicked.
+    /// Opens the Properties dialog for the currently selected entry.
+    ///
+    /// @param entry the selected entry to edit
     private void onEditTimeInTimeList(final TemporalEntry entry) {
         if (entry == null) {
             return;
@@ -1249,12 +1153,10 @@ public class FloorMapEditorPresenter
                 });
     }
 
-    /**
-     * Called when the Time List's Add button is clicked.
-     * Creates a new entry defaulted to the timeline scrubber position and cloned
-     * from the shard in effect at that time (the latest shard whose effective
-     * time is at or before the scrubber), staged in the pending-changes buffer.
-     */
+    /// Called when the Time List's Add button is clicked.
+    /// Creates a new entry defaulted to the timeline scrubber position and cloned
+    /// from the shard in effect at that time (the latest shard whose effective
+    /// time is at or before the scrubber), staged in the pending-changes buffer.
     private void onAddTimeInTimeList() {
         final String mapName = getMapName();
         if (mapName == null || model.getSelectedFactKey() == null) {
@@ -1290,24 +1192,20 @@ public class FloorMapEditorPresenter
                 });
     }
 
-    /**
-     * Called when the Fact List's Add button is clicked.
-     *
-     * <p>Delegates to {@link #onAddObjectAtPosition} using the centre of the
-     * visible canvas area as the initial position, giving the same
-     * properties-editor experience as the right-click "Add Object Here" action.</p>
-     */
+    /// Called when the Fact List's Add button is clicked.
+    ///
+    /// Delegates to [#onAddObjectAtPosition] using the centre of the
+    /// visible canvas area as the initial position, giving the same
+    /// properties-editor experience as the right-click "Add Object Here" action.
     private void onAddFactToFactList() {
         final double[] centre = floorMapCanvasPresenter.getVisibleCentreMapCoords();
         onAddObjectAtPosition(centre[0], centre[1]);
     }
 
-    /**
-     * Called when the Fact List's Delete button is clicked.
-     * Confirms with the user then stages deletions for all time-entries of the selected fact.
-     *
-     * @param key the fact key to delete
-     */
+    /// Called when the Fact List's Delete button is clicked.
+    /// Confirms with the user then stages deletions for all time-entries of the selected fact.
+    ///
+    /// @param key the fact key to delete
     private void onDeleteFactFromFactList(final String key) {
         if (key == null) {
             return;
@@ -1336,18 +1234,16 @@ public class FloorMapEditorPresenter
                 });
     }
 
-    /**
-     * Stages deletion of every shard of every key in one request.
-     *
-     * <p>The criteria match the map and any of the keys, so a single fetch returns all their
-     * history; the entries are then grouped by key because the model stages a key at a time. Keys
-     * with no entries are still staged, so a fact with nothing stored is not silently skipped.</p>
-     *
-     * <p>Uses an OR of equality terms rather than a single {@code IN}: the {@code IN} handler
-     * splits its value on commas and trims the parts, so any key containing a comma or leading
-     * space would be silently mangled into keys that match the wrong rows - or none. This deletes
-     * data, so it is not the place to assume keys are well behaved.</p>
-     */
+    /// Stages deletion of every shard of every key in one request.
+    ///
+    /// The criteria match the map and any of the keys, so a single fetch returns all their
+    /// history; the entries are then grouped by key because the model stages a key at a time. Keys
+    /// with no entries are still staged, so a fact with nothing stored is not silently skipped.
+    ///
+    /// Uses an OR of equality terms rather than a single `IN`: the `IN` handler
+    /// splits its value on commas and trims the parts, so any key containing a comma or leading
+    /// space would be silently mangled into keys that match the wrong rows - or none. This deletes
+    /// data, so it is not the place to assume keys are well behaved.
     private void deleteAllShardsForKeys(final String mapName, final List<String> keys) {
         if (keys.isEmpty()) {
             return;
@@ -1381,17 +1277,15 @@ public class FloorMapEditorPresenter
                 .exec();
     }
 
-    /**
-     * Fetches every shard of {@code key} (all effective times) and stages a
-     * deletion for each, so "delete object" removes the whole history rather
-     * than only the shard active at the scrubber (which would let the fact
-     * reappear at other times / after reload). Runs {@code onDone} once the
-     * deletions are staged.
-     *
-     * @param mapName the map name
-     * @param key     the fact key to delete
-     * @param onDone  run after deletions are staged (UI refresh)
-     */
+    /// Fetches every shard of `key` (all effective times) and stages a
+    /// deletion for each, so "delete object" removes the whole history rather
+    /// than only the shard active at the scrubber (which would let the fact
+    /// reappear at other times / after reload). Runs `onDone` once the
+    /// deletions are staged.
+    ///
+    /// @param mapName the map name
+    /// @param key     the fact key to delete
+    /// @param onDone  run after deletions are staged (UI refresh)
     private void deleteAllShardsForKey(final String mapName,
                                        final String key,
                                        final Runnable onDone) {
@@ -1416,13 +1310,11 @@ public class FloorMapEditorPresenter
                 .exec();
     }
 
-    /**
-     * Called when the Time List's Delete button is clicked on an entry.
-     * Stages a deletion in the pending-changes buffer; the entry disappears
-     * immediately from the Time List (optimistic hide).
-     *
-     * @param entry the entry to delete
-     */
+    /// Called when the Time List's Delete button is clicked on an entry.
+    /// Stages a deletion in the pending-changes buffer; the entry disappears
+    /// immediately from the Time List (optimistic hide).
+    ///
+    /// @param entry the entry to delete
     private void onDeleteTimeFromTimeList(final TemporalEntry entry) {
         // Stage the deletion and compute the row to select afterwards (the item
         // above the deleted one) so the user stays in context.
@@ -1441,16 +1333,14 @@ public class FloorMapEditorPresenter
     // Canvas context menu
     // -----------------------------------------------------------------------
 
-    /**
-     * Called when the user right-clicks on the floor map canvas.
-     *
-     * <p>Builds and shows a context menu whose items depend on whether the
-     * click landed on an existing map object or on empty canvas space.
-     * All actions use the current timeline scrubber position as the
-     * effective time.</p>
-     *
-     * @param event the context menu event from the canvas
-     */
+    /// Called when the user right-clicks on the floor map canvas.
+    ///
+    /// Builds and shows a context menu whose items depend on whether the
+    /// click landed on an existing map object or on empty canvas space.
+    /// All actions use the current timeline scrubber position as the
+    /// effective time.
+    ///
+    /// @param event the context menu event from the canvas
     private void onCanvasContextMenu(final MapContextMenuEvent event) {
         showCanvasContextMenu(
                 event.getObjectId(),
@@ -1461,33 +1351,24 @@ public class FloorMapEditorPresenter
                 event.getVertexIndex());
     }
 
-    /**
-     * Builds and displays the canvas context menu at the given screen position.
-     *
-     * <p>Menu structure:</p>
-     * <ul>
-     *   <li><b>Empty canvas:</b>
-     *       <ul>
-     *         <li>"Add Object Here" — creates a new object at the clicked map position</li>
-     *       </ul>
-     *   </li>
-     *   <li><b>On an object:</b>
-     *       <ul>
-     *         <li>"Edit Properties" — selects the object and opens the property editor</li>
-     *         <li>"Add Time Version" — creates a new effective time entry at the scrubber
-     *             position, cloned from the current version</li>
-     *         <li>"Duplicate Object" — clones the object with a new key, offset slightly</li>
-     *         <li>"Delete Object" — confirms and stages deletion of all time entries</li>
-     *       </ul>
-     *   </li>
-     * </ul>
-     *
-     * @param objectId the right-clicked object's key, or {@code null} for empty canvas
-     * @param mapX     map-space X coordinate of the click
-     * @param mapY     map-space Y coordinate of the click
-     * @param clientX  screen X coordinate for popup positioning
-     * @param clientY  screen Y coordinate for popup positioning
-     */
+    /// Builds and displays the canvas context menu at the given screen position.
+    ///
+    /// Menu structure:
+    ///
+    /// - **Empty canvas:**
+    ///   - "Add Object Here" — creates a new object at the clicked map position
+    /// - **On an object:**
+    ///   - "Edit Properties" — selects the object and opens the property editor
+    ///   - "Add Time Version" — creates a new effective time entry at the scrubber
+    ///     position, cloned from the current version
+    ///   - "Duplicate Object" — clones the object with a new key, offset slightly
+    ///   - "Delete Object" — confirms and stages deletion of all time entries
+    ///
+    /// @param objectId the right-clicked object's key, or `null` for empty canvas
+    /// @param mapX     map-space X coordinate of the click
+    /// @param mapY     map-space Y coordinate of the click
+    /// @param clientX  screen X coordinate for popup positioning
+    /// @param clientY  screen Y coordinate for popup positioning
     private void showCanvasContextMenu(final String objectId,
                                        final double mapX,
                                        final double mapY,
@@ -1661,17 +1542,15 @@ public class FloorMapEditorPresenter
                 .fire(this);
     }
 
-    /**
-     * Creates a new object at the given map-space position.
-     *
-     * <p>Called from the canvas context menu's "Add Object Here" action.
-     * Uses the current timeline scrubber position as the effective time,
-     * and opens the properties editor dialog so the user can set the type,
-     * name, and image before confirming.</p>
-     *
-     * @param mapX the X coordinate in map space
-     * @param mapY the Y coordinate in map space
-     */
+    /// Creates a new object at the given map-space position.
+    ///
+    /// Called from the canvas context menu's "Add Object Here" action.
+    /// Uses the current timeline scrubber position as the effective time,
+    /// and opens the properties editor dialog so the user can set the type,
+    /// name, and image before confirming.
+    ///
+    /// @param mapX the X coordinate in map space
+    /// @param mapY the Y coordinate in map space
     private void onAddObjectAtPosition(final double mapX, final double mapY) {
         final String mapName = getMapName();
         if (mapName == null) {
@@ -1730,21 +1609,19 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /**
-     * Runs {@code onReady} once this document supports areas, upgrading the
-     * document if needed.
-     *
-     * <p>Documents created before the area feature lack the
-     * {@code GEOMETRY}/{@code FILL}/{@code OPACITY} schema mappings (and the
-     * {@code "area"} type style that paints areas just above the background).
-     * Rather than failing in {@link #pathForRole}, this offers to add the
-     * missing defaults. The merge is role-based, so customised paths for those
-     * roles are left untouched; the upgrade is staged via
-     * {@link FloorMapDocSession#stageAreaUpgrade} and persisted by
-     * {@link #onWrite} on the next document save.</p>
-     *
-     * @param onReady the action to run once area support is available
-     */
+    /// Runs `onReady` once this document supports areas, upgrading the
+    /// document if needed.
+    ///
+    /// Documents created before the area feature lack the
+    /// `GEOMETRY`/`FILL`/`OPACITY` schema mappings (and the
+    /// `"area"` type style that paints areas just above the background).
+    /// Rather than failing in [#pathForRole], this offers to add the
+    /// missing defaults. The merge is role-based, so customised paths for those
+    /// roles are left untouched; the upgrade is staged via
+    /// [FloorMapDocSession#stageAreaUpgrade] and persisted by
+    /// [#onWrite] on the next document save.
+    ///
+    /// @param onReady the action to run once area support is available
     private void ensureAreaSupport(final Runnable onReady) {
         if (FloorMapDocSession.hasAreaSupport(valueSchema())
                 && FloorMapDocSession.hasAreaStyle(typeStyles())) {
@@ -1777,18 +1654,16 @@ public class FloorMapEditorPresenter
                 });
     }
 
-    /**
-     * Handles a finished Set Scale measurement: asks what the measured line
-     * really spans, and calibrates the document from the answer.
-     *
-     * <p>The calibration is staged in the doc session rather than written
-     * straight to the entity — this tab does not normally write the document at
-     * all — and pushed to the canvas so the grid, scale bar and gesture readouts
-     * relabel immediately. No other tab reads or writes the field, so
-     * {@code copy()} carries it safely through a save from anywhere.</p>
-     *
-     * @param mapLength the measured length in map units
-     */
+    /// Handles a finished Set Scale measurement: asks what the measured line
+    /// really spans, and calibrates the document from the answer.
+    ///
+    /// The calibration is staged in the doc session rather than written
+    /// straight to the entity — this tab does not normally write the document at
+    /// all — and pushed to the canvas so the grid, scale bar and gesture readouts
+    /// relabel immediately. No other tab reads or writes the field, so
+    /// `copy()` carries it safely through a save from anywhere.
+    ///
+    /// @param mapLength the measured length in map units
     private void onScaleMeasured(final double mapLength) {
         floorMapSetScalePresenter.show(
                 mapLength,
@@ -1800,20 +1675,18 @@ public class FloorMapEditorPresenter
                 });
     }
 
-    /**
-     * Creates a new area fact from a polygon the user has just drawn on the
-     * canvas (see {@link FloorMapCanvasPresenter.AreaHandler}).
-     *
-     * <p>The vertices are stored in the fact's <em>local</em> frame, centred on
-     * their centroid, with {@code WORLD_TO_MAP = translate(centroid)} — so the
-     * existing move/scale/rotate handles pivot about the polygon's middle and
-     * areas inherit duplicate/time-versioning like every other fact. The entry
-     * is created at effective time {@code 0} (areas are usually timeless floor
-     * features and should be visible at all past scrubber positions); a later
-     * reshape at a scrubber time adds a shard as normal.</p>
-     *
-     * @param mapVertices the polygon vertices in map space, in click order
-     */
+    /// Creates a new area fact from a polygon the user has just drawn on the
+    /// canvas (see [FloorMapCanvasPresenter.AreaHandler]).
+    ///
+    /// The vertices are stored in the fact's *local* frame, centred on
+    /// their centroid, with `WORLD_TO_MAP = translate(centroid)` — so the
+    /// existing move/scale/rotate handles pivot about the polygon's middle and
+    /// areas inherit duplicate/time-versioning like every other fact. The entry
+    /// is created at effective time `0` (areas are usually timeless floor
+    /// features and should be visible at all past scrubber positions); a later
+    /// reshape at a scrubber time adds a shard as normal.
+    ///
+    /// @param mapVertices the polygon vertices in map space, in click order
     private void onAreaDrawn(final List<double[]> mapVertices) {
         final String mapName = getMapName();
         if (mapName == null || mapVertices == null || mapVertices.size() < 3) {
@@ -1860,33 +1733,29 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /**
-     * Duplicates an existing object with a new key, offset from the original so
-     * the copy is visible rather than sitting directly on top of it.
-     *
-     * <p>The new object is a clone of the original's current state at the
-     * timeline scrubber position (which is also its effective time), shifted by
-     * five minor grid divisions in both axes — a visually consistent nudge at
-     * any zoom. The offset is applied to the placement matrix (as a drag-move
-     * would be), so it moves image facts and imageless facts alike.</p>
-     *
-     * @param originalKey the key of the object to duplicate
-     */
+    /// Duplicates an existing object with a new key, offset from the original so
+    /// the copy is visible rather than sitting directly on top of it.
+    ///
+    /// The new object is a clone of the original's current state at the
+    /// timeline scrubber position (which is also its effective time), shifted by
+    /// five minor grid divisions in both axes — a visually consistent nudge at
+    /// any zoom. The offset is applied to the placement matrix (as a drag-move
+    /// would be), so it moves image facts and imageless facts alike.
+    ///
+    /// @param originalKey the key of the object to duplicate
     private void onDuplicateObject(final String originalKey) {
         if (stageDuplicate(originalKey) != null) {
             loadAtTime(model.getSelectedTime());
         }
     }
 
-    /**
-     * Stages one duplicate without reloading, returning the new key, or {@code null} if the
-     * original could not be duplicated.
-     *
-     * <p>Separate from {@link #onDuplicateObject} so a group duplicate can stage every copy and
-     * reload once at the end. Reloading per object re-queried the facts store once per selected
-     * item, so duplicating a selection of two hundred issued two hundred searches to produce one
-     * visible result.</p>
-     */
+    /// Stages one duplicate without reloading, returning the new key, or `null` if the
+    /// original could not be duplicated.
+    ///
+    /// Separate from [#onDuplicateObject] so a group duplicate can stage every copy and
+    /// reload once at the end. Reloading per object re-queried the facts store once per selected
+    /// item, so duplicating a selection of two hundred issued two hundred searches to produce one
+    /// visible result.
     private String stageDuplicate(final String originalKey) {
         final String mapName = getMapName();
         if (mapName == null) {
@@ -1926,16 +1795,14 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /**
-     * Duplicates every fact in {@code keys} (group duplicate). Each copy is
-     * offset by the same grid nudge, so the group keeps its formation.
-     *
-     * <p>Every copy is staged first and the facts are reloaded once at the end, rather than once
-     * per object. The new copies are then left selected, so the group can be dragged straight
-     * away.</p>
-     *
-     * @param keys the fact keys to duplicate
-     */
+    /// Duplicates every fact in `keys` (group duplicate). Each copy is
+    /// offset by the same grid nudge, so the group keeps its formation.
+    ///
+    /// Every copy is staged first and the facts are reloaded once at the end, rather than once
+    /// per object. The new copies are then left selected, so the group can be dragged straight
+    /// away.
+    ///
+    /// @param keys the fact keys to duplicate
     private void onDuplicateObjects(final java.util.Collection<String> keys) {
         final List<String> newKeys = new ArrayList<>();
         for (final String key : keys) {
@@ -1950,12 +1817,10 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /**
-     * Deletes every fact in {@code keys} (group delete) after a single
-     * confirmation, then clears the selection and refreshes.
-     *
-     * @param keys the fact keys to delete
-     */
+    /// Deletes every fact in `keys` (group delete) after a single
+    /// confirmation, then clears the selection and refreshes.
+    ///
+    /// @param keys the fact keys to delete
     private void onDeleteObjects(final java.util.Collection<String> keys) {
         if (keys.isEmpty()) {
             return;
@@ -1981,22 +1846,20 @@ public class FloorMapEditorPresenter
     // Key generation
     // -----------------------------------------------------------------------
 
-    /**
-     * Generates a unique object key with the given prefix, guaranteed not to
-     * clash with any key currently known to the editor.
-     *
-     * <p>The returned key has the form {@code prefix-NNNNN} where {@code NNNNN}
-     * is a random integer. If the generated key already exists, a new random
-     * suffix is tried until a unique key is found (up to a safety limit of
-     * 1000 attempts).</p>
-     *
-     * <p>The prefix must not start with
-     * {@link FloorMapJsonKeys#SVG_GROUP_PREFIX} as that would make the object
-     * unselectable on the canvas.</p>
-     *
-     * @param prefix a human-readable prefix (e.g. {@code "new"}, {@code "gate-1-copy"})
-     * @return a key string suitable for use as a temporal-store fact key
-     */
+    /// Generates a unique object key with the given prefix, guaranteed not to
+    /// clash with any key currently known to the editor.
+    ///
+    /// The returned key has the form `prefix-NNNNN` where `NNNNN`
+    /// is a random integer. If the generated key already exists, a new random
+    /// suffix is tried until a unique key is found (up to a safety limit of
+    /// 1000 attempts).
+    ///
+    /// The prefix must not start with
+    /// [FloorMapJsonKeys#SVG_GROUP_PREFIX] as that would make the object
+    /// unselectable on the canvas.
+    ///
+    /// @param prefix a human-readable prefix (e.g. `"new"`, `"gate-1-copy"`)
+    /// @return a key string suitable for use as a temporal-store fact key
     private String generateObjectKey(final String prefix) {
         return model.generateObjectKey(prefix);
     }
@@ -2005,11 +1868,9 @@ public class FloorMapEditorPresenter
     // "Show all" toggle
     // -----------------------------------------------------------------------
 
-    /**
-     * Called when the Fact List's "Show all" button is toggled.
-     *
-     * @param showAll {@code true} to ignore the time filter
-     */
+    /// Called when the Fact List's "Show all" button is toggled.
+    ///
+    /// @param showAll `true` to ignore the time filter
     public void onShowAllFactsToggled(final boolean showAll) {
         model.setShowAllFacts(showAll);
         loadAtTime(model.getSelectedTime());
@@ -2019,24 +1880,22 @@ public class FloorMapEditorPresenter
     // Optimistic refresh helpers
     // -----------------------------------------------------------------------
 
-    /**
-     * Refreshes the Time List from the model's server entries for the selected fact,
-     * overlaid with pending changes, then selects the entry active at
-     * the model's selected time (i.e. the most recent entry ≤ the current
-     * timeline position).
-     *
-     * <p>Called on timeline scrubber moves so the highlighted row tracks the
-     * time position rather than always jumping to the newest entry.</p>
-     *
-     * @param timeMs the timeline position to select against
-     */
+    /// Refreshes the Time List from the model's server entries for the selected fact,
+    /// overlaid with pending changes, then selects the entry active at
+    /// the model's selected time (i.e. the most recent entry ≤ the current
+    /// timeline position).
+    ///
+    /// Called on timeline scrubber moves so the highlighted row tracks the
+    /// time position rather than always jumping to the newest entry.
+    ///
+    /// @param timeMs the timeline position to select against
     private void refreshTimeListAtTime(final long timeMs) {
         final List<TemporalEntry> merged = model.buildMergedTimeList();
         floorMapTimeListPresenter.setData(merged);
         floorMapTimeListPresenter.selectAtTime(timeMs);
     }
 
-    /** Refreshes the canvas using the latest Fact List data at the current time. */
+    /// Refreshes the canvas using the latest Fact List data at the current time.
     private void refreshCanvas() {
         loadAtTime(model.getSelectedTime());
     }
@@ -2045,15 +1904,13 @@ public class FloorMapEditorPresenter
     // Error handling
     // -----------------------------------------------------------------------
 
-    /**
-     * Handles a server-side flush failure.
-     *
-     * <p>Shows a top-level error and <strong>keeps the staged changes</strong> so the user can
-     * retry. Nothing is reloaded: the server reported the changes were not applied, so reloading
-     * would overwrite the user's in-progress edits with server state and lose their work.</p>
-     *
-     * @param result the failed {@link ApplyChangesResult}
-     */
+    /// Handles a server-side flush failure.
+    ///
+    /// Shows a top-level error and **keeps the staged changes** so the user can
+    /// retry. Nothing is reloaded: the server reported the changes were not applied, so reloading
+    /// would overwrite the user's in-progress edits with server state and lose their work.
+    ///
+    /// @param result the failed [ApplyChangesResult]
     private void onFlushError(final ApplyChangesResult result) {
         // The server reported the changes were NOT applied, so keep them staged
         // for a retry rather than clearing the user's work and reloading over
@@ -2066,9 +1923,7 @@ public class FloorMapEditorPresenter
                 + "kept, please try saving again: " + message, null);
     }
 
-    /**
-     * Reloads all panels by re-reading from the server using the current time.
-     */
+    /// Reloads all panels by re-reading from the server using the current time.
     private void reloadAllPanels() {
         final String mapName = getMapName();
         if (mapName != null) {
@@ -2083,11 +1938,9 @@ public class FloorMapEditorPresenter
     // Helpers
     // -----------------------------------------------------------------------
 
-    /**
-     * Loads the Time List for the currently selected fact, then selects the entry active at the
-     * current timeline position — the most recent entry at or before the scrubber time, not
-     * necessarily the newest — and scrolls to it.
-     */
+    /// Loads the Time List for the currently selected fact, then selects the entry active at the
+    /// current timeline position — the most recent entry at or before the scrubber time, not
+    /// necessarily the newest — and scrolls to it.
     private void loadTimeListForSelectedFact() {
         final String mapName = getMapName();
         if (mapName == null || model.getSelectedFactKey() == null) {
@@ -2097,12 +1950,10 @@ public class FloorMapEditorPresenter
         fetchTimeList(mapName, model.getSelectedFactKey());
     }
 
-    /**
-     * Returns the temporal store map name from the document, or {@code null}
-     * if the document has no store reference configured.
-     *
-     * @return the map name, or {@code null}
-     */
+    /// Returns the temporal store map name from the document, or `null`
+    /// if the document has no store reference configured.
+    ///
+    /// @return the map name, or `null`
     private String getMapName() {
         final FloorMapDoc doc = getEntity();
         if (doc == null
@@ -2114,46 +1965,33 @@ public class FloorMapEditorPresenter
         return doc.getFactsStoreRef().getName();
     }
 
-    /**
-     * Returns the value path for the given {@link Role} from the session's value schema.
-     *
-     * <p>There is no fallback to a default schema: an unmapped role throws. The path is
-     * format-neutral rather than JSON-specific - the same path drives the XML accessor when the
-     * document's {@code ValueFormat} is XML.</p>
-     *
-     * @param role the field role to look up
-     * @return the value path for the role; never {@code null}
-     * @throws IllegalStateException if the schema does not contain the requested role
-     */
+    /// Returns the value path for the given [Role] from the session's value schema.
+    ///
+    /// There is no fallback to a default schema: an unmapped role throws. The path is
+    /// format-neutral rather than JSON-specific - the same path drives the XML accessor when the
+    /// document's `ValueFormat` is XML.
+    ///
+    /// @param role the field role to look up
+    /// @return the value path for the role; never `null`
+    /// @throws IllegalStateException if the schema does not contain the requested role
     private String pathForRole(final Role role) {
-        final String path = FloorMapEntryParser.findPath(valueSchema(), role);
-        if (path == null) {
-            throw new IllegalStateException(
-                    "The Value Schema for this Floor Map does not define a mapping "
-                    + "for the '" + role + "' role. Please add a '" + role
-                    + "' mapping in the Settings tab under Value Schema.");
-        }
-        return path;
+        return FloorMapFieldMapping.requirePath(valueSchema(), role);
     }
 
     // -----------------------------------------------------------------------
     // View interface
     // -----------------------------------------------------------------------
 
-    /**
-     * View interface for the Editor tab.
-     *
-     * <p>Child content is routed through GWTP's standard
-     * {@link com.gwtplatform.mvp.client.View#setInSlot} mechanism, overridden in
-     * {@link stroom.floormap.client.view.FloorMapEditorViewImpl}.</p>
-     */
+    /// View interface for the Editor tab.
+    ///
+    /// Child content is routed through GWTP's standard
+    /// [com.gwtplatform.mvp.client.View#setInSlot] mechanism, overridden in
+    /// [stroom.floormap.client.view.FloorMapEditorViewImpl].
     public interface FloorMapEditorView extends View {
 
-        /**
-         * Shows or hides the right-hand dock, preserving its dragged width.
-         *
-         * @param visible {@code true} to show the dock, {@code false} to hide it
-         */
+        /// Shows or hides the right-hand dock, preserving its dragged width.
+        ///
+        /// @param visible `true` to show the dock, `false` to hide it
         void setDockVisible(boolean visible);
     }
 }

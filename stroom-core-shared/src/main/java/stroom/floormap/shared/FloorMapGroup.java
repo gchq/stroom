@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package stroom.floormap.shared;
 
+import stroom.util.shared.NullSafe;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -30,50 +32,46 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 
-/**
- * A user-created group of floor-map entities — "Maintenance", "Security" — held
- * on the {@link FloorMapDoc} as an ordered list.
- *
- * <p>A group is deliberately <strong>generic over ids</strong>: a member is any
- * {@code memberId} from the one id namespace the map already uses, so a group can
- * hold event-stream entities (people, vehicles), static object facts (a gate, a
- * camera), or even areas and backgrounds, freely mixed. Nothing here knows or
- * cares which — that is what lets the tracking panel, the roster
- * ({@link FloorMapEntityList}) and the canvas highlight all key on the same
- * string.</p>
- *
- * <p><strong>Identity is {@link #getId()}, never the name.</strong> The name is
- * display-only and freely renamable, and two groups may legitimately share one:
- * an id keeps them distinct, so a rename can never orphan membership, drop a
- * canvas highlight, or confuse a future reference to a group. This differs from {@link TypeStyle}, whose identity
- * <em>is</em> its {@code type} — a type name already exists in the data, whereas
- * a group is invented in the UI and has no natural key.</p>
- *
- * <p>Immutable, and every mutation is a static helper returning a new value, so
- * all list surgery is unit-testable off the GWT presenters (the shape
- * {@link TypeStyle#merge} already established). Holds no GWT or DOM types.</p>
- */
+/// A user-created group of floor-map entities — "Maintenance", "Security" — held
+/// on the [FloorMapDoc] as an ordered list.
+///
+/// A group is deliberately **generic over ids**: a member is any
+/// `memberId` from the one id namespace the map already uses, so a group can
+/// hold event-stream entities (people, vehicles), static object facts (a gate, a
+/// camera), or even areas and backgrounds, freely mixed. Nothing here knows or
+/// cares which — that is what lets the tracking panel, the roster
+/// (`FloorMapEntityList`) and the canvas highlight all key on the same
+/// string.
+///
+/// **Identity is [#getId()], never the name.** The name is
+/// display-only and freely renamable, and two groups may legitimately share one:
+/// an id keeps them distinct, so a rename can never orphan membership, drop a
+/// canvas highlight, or confuse a future reference to a group. This differs from [TypeStyle], whose identity
+/// *is* its `type` — a type name already exists in the data, whereas
+/// a group is invented in the UI and has no natural key.
+///
+/// Immutable, and every mutation is a static helper returning a new value, so
+/// all list surgery is unit-testable off the GWT presenters (the shape
+/// [TypeStyle#merge] already established). Holds no GWT or DOM types.
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public class FloorMapGroup {
 
-    /**
-     * The colour a brand-new group starts with, which the user then changes at
-     * will — the same one-default shape area creation uses for its
-     * {@code "area"} fill.
-     *
-     * <p>Purple, chosen to avoid every colour the canvas already means something
-     * with: {@code #1e88e5} blue (selection handles, and the default area fill),
-     * {@code #ff9800} orange (selected) and {@code #00c853} green (area-related).
-     * A default that collided with one of those would make a user's very first
-     * group look like a selection or a containment hint.</p>
-     */
+    /// The colour a brand-new group starts with, which the user then changes at
+    /// will — the same one-default shape area creation uses for its
+    /// `"area"` fill.
+    ///
+    /// Purple, chosen to avoid every colour the canvas already means something
+    /// with: `#1e88e5` blue (selection handles, and the default area fill),
+    /// `#ff9800` orange (selected) and `#00c853` green (area-related).
+    /// A default that collided with one of those would make a user's very first
+    /// group look like a selection or a containment hint.
     public static final String DEFAULT_COLOUR = "#8e24aa";
 
-    /** Prefix for generated group ids, mirroring the fact-key idiom. */
+    /// Prefix for generated group ids, mirroring the fact-key idiom.
     private static final String ID_PREFIX = "group";
 
-    /** Base name new groups are numbered from ("Group", "Group 2", …). */
+    /// Base name new groups are numbered from ("Group", "Group 2", …).
     public static final String DEFAULT_NAME = "Group";
 
     @JsonProperty
@@ -100,46 +98,41 @@ public class FloorMapGroup {
                 : Collections.emptyList();
     }
 
-    /**
-     * The group's stable identity.
-     *
-     * <p>Falls back to the {@link #getName() name} when the stored id is absent
-     * or blank. No document has ever been written without ids — this is purely so
-     * a hand-edited document still opens rather than throwing. Note the fallback is not a
-     * non-null guarantee: {@code name} is itself nullable, so a group with neither an id nor a
-     * name — the same hand-edited case — still yields {@code null}.</p>
-     */
+    /// The group's stable identity.
+    ///
+    /// Falls back to the [name][#getName()] when the stored id is absent
+    /// or blank. No document has ever been written without ids — this is purely so
+    /// a hand-edited document still opens rather than throwing. Note the fallback is not a
+    /// non-null guarantee: `name` is itself nullable, so a group with neither an id nor a
+    /// name — the same hand-edited case — still yields `null`.
     public String getId() {
-        return id != null && !id.isEmpty()
+        return NullSafe.isNonEmptyString(id)
                 ? id
                 : name;
     }
 
-    /** The user-facing name; display only, and not required to be unique. */
+    /// The user-facing name; display only, and not required to be unique.
     public String getName() {
         return name;
     }
 
-    /**
-     * The highlight colour for this group's members, or {@code null} when unset.
-     * Callers wanting a colour to actually draw with should use
-     * {@link #findColourOrDefault()}.
-     */
+    /// The highlight colour for this group's members, or `null` when unset.
+    /// Callers wanting a colour to actually draw with should use
+    /// [#findColourOrDefault()].
     public String getColour() {
         return colour;
     }
 
-    /** The group's colour, or {@link #DEFAULT_COLOUR} when it has none.
-     *
-     * <p>Name structured to avoid triggering TestJsonSerialisation.testNoExtraProps() </p>
-     */
+    /// The group's colour, or [#DEFAULT_COLOUR] when it has none.
+    ///
+    /// Name structured to avoid triggering TestJsonSerialisation.testNoExtraProps()
     public String findColourOrDefault() {
-        return colour != null && !colour.isEmpty()
+        return NullSafe.isNonEmptyString(colour)
                 ? colour
                 : DEFAULT_COLOUR;
     }
 
-    /** The member ids, in insertion order, duplicate-free; never {@code null}. */
+    /// The member ids, in insertion order, duplicate-free; never `null`.
     public List<String> getMemberIds() {
         return memberIds;
     }
@@ -148,31 +141,27 @@ public class FloorMapGroup {
         return memberId != null && memberIds.contains(memberId);
     }
 
-    /**
-     * The number of members, however many of them are currently on the map.
-     *
-     * <p>Name structured to avoid triggering TestJsonSerialisation.testNoExtraProps() </p>
-     */
+    /// The number of members, however many of them are currently on the map.
+    ///
+    /// Name structured to avoid triggering TestJsonSerialisation.testNoExtraProps()
     public int countMembers() {
         return memberIds.size();
     }
 
-    /** Returns a copy of this group with the given name. */
+    /// Returns a copy of this group with the given name.
     public FloorMapGroup withName(final String newName) {
         return new FloorMapGroup(getId(), newName, colour, memberIds);
     }
 
-    /** Returns a copy of this group with the given membership. */
+    /// Returns a copy of this group with the given membership.
     public FloorMapGroup withMembers(final List<String> newMemberIds) {
         return new FloorMapGroup(getId(), name, colour, newMemberIds);
     }
 
-    /**
-     * Returns a copy with {@code memberId} added at the end, or this group
-     * unchanged if the id is null/blank or already a member.
-     */
+    /// Returns a copy with `memberId` added at the end, or this group
+    /// unchanged if the id is null/blank or already a member.
     public FloorMapGroup withMember(final String memberId) {
-        if (memberId == null || memberId.isEmpty() || memberIds.contains(memberId)) {
+        if (NullSafe.isEmptyString(memberId) || memberIds.contains(memberId)) {
             return this;
         }
         final List<String> next = new ArrayList<>(memberIds);
@@ -180,10 +169,8 @@ public class FloorMapGroup {
         return withMembers(next);
     }
 
-    /**
-     * Returns a copy without {@code memberId}, or this group unchanged if it was
-     * not a member.
-     */
+    /// Returns a copy without `memberId`, or this group unchanged if it was
+    /// not a member.
     public FloorMapGroup withoutMember(final String memberId) {
         if (memberId == null || !memberIds.contains(memberId)) {
             return this;
@@ -197,15 +184,13 @@ public class FloorMapGroup {
     // List helpers — all matched on group id, never on name
     // ------------------------------------------------------------------------
 
-    /**
-     * Returns a copy of {@code groups} with the entry sharing {@code group}'s id
-     * replaced, keeping its position. Appends when no entry has that id, so this
-     * doubles as "save this group".
-     *
-     * @param groups the current list; may be {@code null}
-     * @param group  the replacement; must not be {@code null}
-     * @return a new list; never {@code null}
-     */
+    /// Returns a copy of `groups` with the entry sharing `group`'s id
+    /// replaced, keeping its position. Appends when no entry has that id, so this
+    /// doubles as "save this group".
+    ///
+    /// @param groups the current list; may be `null`
+    /// @param group  the replacement; must not be `null`
+    /// @return a new list; never `null`
     public static List<FloorMapGroup> replace(final List<FloorMapGroup> groups,
                                               final FloorMapGroup group) {
         final List<FloorMapGroup> result = new ArrayList<>();
@@ -226,13 +211,11 @@ public class FloorMapGroup {
         return result;
     }
 
-    /**
-     * Returns a copy of {@code groups} without the group having {@code groupId}.
-     *
-     * @param groups  the current list; may be {@code null}
-     * @param groupId the id to remove; may be {@code null} (a no-op copy)
-     * @return a new list; never {@code null}
-     */
+    /// Returns a copy of `groups` without the group having `groupId`.
+    ///
+    /// @param groups  the current list; may be `null`
+    /// @param groupId the id to remove; may be `null` (a no-op copy)
+    /// @return a new list; never `null`
     public static List<FloorMapGroup> without(final List<FloorMapGroup> groups,
                                               final String groupId) {
         final List<FloorMapGroup> result = new ArrayList<>();
@@ -246,13 +229,11 @@ public class FloorMapGroup {
         return result;
     }
 
-    /**
-     * Finds the group with the given id.
-     *
-     * @param groups  the list to search; may be {@code null}
-     * @param groupId the id to look for; may be {@code null}
-     * @return the group, or {@code null} when absent
-     */
+    /// Finds the group with the given id.
+    ///
+    /// @param groups  the list to search; may be `null`
+    /// @param groupId the id to look for; may be `null`
+    /// @return the group, or `null` when absent
     public static FloorMapGroup find(final List<FloorMapGroup> groups,
                                      final String groupId) {
         if (groups != null && groupId != null) {
@@ -265,19 +246,17 @@ public class FloorMapGroup {
         return null;
     }
 
-    /**
-     * Generates an id that no group in {@code groups} is using.
-     *
-     * <p>Same idiom as {@link FloorMapEditorModel#generateObjectKey(String)}:
-     * {@code group-NNNNN} from a random int, retried on collision, with a
-     * timestamp suffix as the never-expected fallback. The {@link Random} is a
-     * parameter so the collision path is testable with a seeded generator
-     * instead of left to chance.</p>
-     *
-     * @param groups the existing groups; may be {@code null}
-     * @param random the generator to draw from; may be {@code null} for a fresh one
-     * @return an unused group id; never {@code null}
-     */
+    /// Generates an id that no group in `groups` is using.
+    ///
+    /// Same idiom as `FloorMapEditorModel.generateObjectKey(String)`:
+    /// `group-NNNNN` from a random int, retried on collision, with a
+    /// timestamp suffix as the never-expected fallback. The [Random] is a
+    /// parameter so the collision path is testable with a seeded generator
+    /// instead of left to chance.
+    ///
+    /// @param groups the existing groups; may be `null`
+    /// @param random the generator to draw from; may be `null` for a fresh one
+    /// @return an unused group id; never `null`
     public static String generateId(final List<FloorMapGroup> groups,
                                     final Random random) {
         final Random rng = random != null
@@ -300,21 +279,19 @@ public class FloorMapGroup {
         return ID_PREFIX + "-" + System.currentTimeMillis();
     }
 
-    /**
-     * A display name not already in use — {@code "Group"}, else {@code "Group 2"},
-     * {@code "Group 3"}, and so on.
-     *
-     * <p>Duplicate names are <em>allowed</em> (ids are identity), so this is only
-     * about the new-group default reading well without the user having to fix it.
-     * A name the user types is never adjusted.</p>
-     *
-     * @param groups  the existing groups; may be {@code null}
-     * @param desired the base name; may be {@code null} for {@link #DEFAULT_NAME}
-     * @return an unused name; never {@code null}
-     */
+    /// A display name not already in use — `"Group"`, else `"Group 2"`,
+    /// `"Group 3"`, and so on.
+    ///
+    /// Duplicate names are *allowed* (ids are identity), so this is only
+    /// about the new-group default reading well without the user having to fix it.
+    /// A name the user types is never adjusted.
+    ///
+    /// @param groups  the existing groups; may be `null`
+    /// @param desired the base name; may be `null` for [#DEFAULT_NAME]
+    /// @return an unused name; never `null`
     public static String uniqueName(final List<FloorMapGroup> groups,
                                     final String desired) {
-        final String base = desired != null && !desired.isEmpty()
+        final String base = NullSafe.isNonEmptyString(desired)
                 ? desired
                 : DEFAULT_NAME;
         final Set<String> used = new LinkedHashSet<>();
@@ -335,14 +312,12 @@ public class FloorMapGroup {
         return base + " " + n;
     }
 
-    /**
-     * Creates a new group, ready to be appended to {@code groups}: a generated
-     * id, a non-colliding default name and the default colour, with no members.
-     *
-     * @param groups the existing groups; may be {@code null}
-     * @param random the generator for the id; may be {@code null}
-     * @return the new group; never {@code null}
-     */
+    /// Creates a new group, ready to be appended to `groups`: a generated
+    /// id, a non-colliding default name and the default colour, with no members.
+    ///
+    /// @param groups the existing groups; may be `null`
+    /// @param random the generator for the id; may be `null`
+    /// @return the new group; never `null`
     public static FloorMapGroup create(final List<FloorMapGroup> groups,
                                        final Random random) {
         return new FloorMapGroup(

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,13 @@ import stroom.document.client.event.HasChangeHandlers;
 import stroom.entity.client.presenter.HasClose;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.floormap.client.event.FloorMapDataEvent;
+import stroom.floormap.client.model.FloorMapLocationResolver;
+import stroom.floormap.client.model.FloorMapObject;
 import stroom.floormap.client.presenter.FloorMapQueryPresenter.FloorMapQueryView;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventRole;
 import stroom.floormap.shared.FloorMapJsonKeys;
-import stroom.floormap.shared.FloorMapLocationResolver;
-import stroom.floormap.shared.FloorMapObject;
 import stroom.query.api.Column;
 import stroom.query.api.Row;
 import stroom.query.api.TableResult;
@@ -53,29 +53,27 @@ import java.util.Map;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-/**
- * Presenter for the Floor Map query tab.
- *
- * <p>Embeds a {@link QueryEditPresenter} for authoring and executing StroomQL
- * queries, parses the resulting {@link TableResult} rows into
- * {@link FloorMapObject} lists, and fires {@link FloorMapDataEvent} so the
- * canvas can display the matched entities.  Also provides column-mapping
- * dropdowns that let the user choose which result columns contain the entity
- * ID, both location forms and the entity type — one dropdown per {@link FloorMapEventRole},
- * driven by the mapping on the document rather than by settings and a hardcoded column name. The
- * type dropdown replaced an auto-detect on a column literally named "type"; the
- * {@code @}-heuristic person fallback survives for data that carries no type at all.</p>
- */
+/// Presenter for the Floor Map query tab.
+///
+/// Embeds a [QueryEditPresenter] for authoring and executing StroomQL
+/// queries, parses the resulting [TableResult] rows into
+/// [FloorMapObject] lists, and fires [FloorMapDataEvent] so the
+/// canvas can display the matched entities.  Also provides column-mapping
+/// dropdowns that let the user choose which result columns contain the entity
+/// ID, both location forms and the entity type — one dropdown per [FloorMapEventRole],
+/// driven by the mapping on the document rather than by settings and a hardcoded column name. The
+/// type dropdown replaced an auto-detect on a column literally named "type"; the
+/// `@`-heuristic person fallback survives for data that carries no type at all.
 public class FloorMapQueryPresenter
         extends MyPresenterWidget<FloorMapQueryView>
         implements HasToolbar, HasClose, HasChangeHandlers {
 
     private final QueryEditPresenter queryEditPresenter;
-    /** Which result column carries each event role. Never {@code null} once {@code read} has run. */
+    /// Which result column carries each event role. Never `null` once `read` has run.
     private FloorMapEventColumns currentEventColumns = FloorMapEventColumns.defaults();
-    /** UUID of the document being queried, stamped onto {@link FloorMapDataEvent}. */
+    /// UUID of the document being queried, stamped onto [FloorMapDataEvent].
     private String docUuid;
-    /** {@code true} while this tab's query is running — see {@link #onBind()}. */
+    /// `true` while this tab's query is running — see [#onBind()].
     private boolean searching;
 
     @Inject
@@ -153,27 +151,23 @@ public class FloorMapQueryPresenter
         // fire a second, identical query per playback tick.
     }
 
-    /**
-     * Stops this tab's query when the document is closed.
-     *
-     * <p>Without this the search outlives the document: the result store is left
-     * on the server, the client keeps polling it, and each response still fires a
-     * {@link FloorMapDataEvent} stamped with this document's UUID — which a
-     * <em>reopened</em> copy of the same document accepts as live entity data.
-     * Reachable only because this presenter declares {@link HasClose}; {@code
-     * AbstractTabProvider} forwards the close hook to nothing else.</p>
-     */
+    /// Stops this tab's query when the document is closed.
+    ///
+    /// Without this the search outlives the document: the result store is left
+    /// on the server, the client keeps polling it, and each response still fires a
+    /// [FloorMapDataEvent] stamped with this document's UUID — which a
+    /// *reopened* copy of the same document accepts as live entity data.
+    /// Reachable only because this presenter declares [HasClose];
+    /// `AbstractTabProvider` forwards the close hook to nothing else.
     @Override
     public void onClose() {
         queryEditPresenter.onClose();
     }
 
-    /**
-     * Parses the current result table into map objects and publishes them as the
-     * canvas entity overlay.
-     *
-     * <p>Only ever called for a finished result set (see {@link #onBind()}).</p>
-     */
+    /// Parses the current result table into map objects and publishes them as the
+    /// canvas entity overlay.
+    ///
+    /// Only ever called for a finished result set (see [#onBind()]).
     private void publishMapObjects() {
         final TableResult tableResult = queryEditPresenter.getQueryResultPresenter()
                 .getTablePresenter()
@@ -186,10 +180,8 @@ public class FloorMapQueryPresenter
         }
     }
 
-    /**
-     * Refreshes the per-role column dropdowns from the latest table columns, preserving the user's
-     * current selections where possible.
-     */
+    /// Refreshes the per-role column dropdowns from the latest table columns, preserving the user's
+    /// current selections where possible.
     private void updateColumnSelections() {
         final List<Column> columns = queryEditPresenter.getQueryResultPresenter()
                 .getTablePresenter()
@@ -225,37 +217,35 @@ public class FloorMapQueryPresenter
         }
     }
 
-    /**
-     * Reduces a time window to the most recent row per entity.
-     *
-     * <p>The Map tab queries a trailing window rather than an instant, because an instant is
-     * unsatisfiable against a store that applies the time range literally — see
-     * {@code FloorMapMapPresenter.runQueryAtSelectedTime}. A window can return several events for
-     * one entity, and the canvas wants exactly one position each, so the extras are dropped here.
-     * A store that already deduplicates server-side returns one row per key anyway, and this then
-     * costs a pass over the rows and changes nothing.</p>
-     *
-     * <p><strong>How "most recent" is decided, and where that is imperfect.</strong> The time
-     * column arrives already rendered as text, formatted to the viewing user's date-time
-     * preference, so there is no timestamp to compare — only its presentation. Two forms are
-     * handled properly: epoch milliseconds, compared numerically, and the ISO-8601 form Stroom
-     * emits when no pattern preference is set, which sorts correctly as text. A user pattern that
-     * is <em>not</em> lexicographically ordered — {@code dd/MM/yyyy} being the obvious one — makes
-     * the text comparison pick the wrong row of the window. The error is bounded by the window
-     * (an entity can appear at a position up to that stale, not at a wrong one) and is strictly
-     * better than the zero rows this replaced, but the real fix is for the query to carry a raw
-     * numeric time alongside the formatted one.</p>
-     *
-     * <p>With no usable time column the last row for each entity wins, which is at least
-     * deterministic for a given result.</p>
-     *
-     * @param columns      the result columns; may be {@code null}
-     * @param rows         the rows to reduce; may be {@code null}
-     * @param entityColumn the column naming the entity; {@code null} leaves rows untouched
-     * @param timeColumn   the column holding the effective time; absent or unmatched falls back to
-     *                     last-row-wins
-     * @return one row per entity, in first-appearance order; never {@code null}
-     */
+    /// Reduces a time window to the most recent row per entity.
+    ///
+    /// The Map tab queries a trailing window rather than an instant, because an instant is
+    /// unsatisfiable against a store that applies the time range literally — see
+    /// `FloorMapMapPresenter.runQueryAtSelectedTime`. A window can return several events for
+    /// one entity, and the canvas wants exactly one position each, so the extras are dropped here.
+    /// A store that already deduplicates server-side returns one row per key anyway, and this then
+    /// costs a pass over the rows and changes nothing.
+    ///
+    /// **How "most recent" is decided, and where that is imperfect.** The time
+    /// column arrives already rendered as text, formatted to the viewing user's date-time
+    /// preference, so there is no timestamp to compare — only its presentation. Two forms are
+    /// handled properly: epoch milliseconds, compared numerically, and the ISO-8601 form Stroom
+    /// emits when no pattern preference is set, which sorts correctly as text. A user pattern that
+    /// is *not* lexicographically ordered — `dd/MM/yyyy` being the obvious one — makes
+    /// the text comparison pick the wrong row of the window. The error is bounded by the window
+    /// (an entity can appear at a position up to that stale, not at a wrong one) and is strictly
+    /// better than the zero rows this replaced, but the real fix is for the query to carry a raw
+    /// numeric time alongside the formatted one.
+    ///
+    /// With no usable time column the last row for each entity wins, which is at least
+    /// deterministic for a given result.
+    ///
+    /// @param columns      the result columns; may be `null`
+    /// @param rows         the rows to reduce; may be `null`
+    /// @param entityColumn the column naming the entity; `null` leaves rows untouched
+    /// @param timeColumn   the column holding the effective time; absent or unmatched falls back to
+    ///         last-row-wins
+    /// @return one row per entity, in first-appearance order; never `null`
     static List<Row> latestPerEntity(final List<Column> columns,
                                      final List<Row> rows,
                                      final String entityColumn,
@@ -295,12 +285,10 @@ public class FloorMapQueryPresenter
         return new ArrayList<>(latest.values());
     }
 
-    /**
-     * Whether {@code candidate} is the later of the two rows at {@code timeColIndex}.
-     *
-     * <p>With no time column every row is treated as later than the one before it, which makes
-     * the last row for an entity win.</p>
-     */
+    /// Whether `candidate` is the later of the two rows at `timeColIndex`.
+    ///
+    /// With no time column every row is treated as later than the one before it, which makes
+    /// the last row for an entity win.
     private static boolean isAfter(final Row candidate, final Row incumbent, final int timeColIndex) {
         if (timeColIndex == -1) {
             return true;
@@ -321,13 +309,13 @@ public class FloorMapQueryPresenter
         return candidateTime.compareTo(incumbentTime) >= 0;
     }
 
-    /** The value at {@code index}, or {@code null} if the row is short or holds nothing there. */
+    /// The value at `index`, or `null` if the row is short or holds nothing there.
     private static String valueAt(final Row row, final int index) {
         final List<String> values = row == null ? null : row.getValues();
         return values == null || values.size() <= index ? null : values.get(index);
     }
 
-    /** Parses epoch milliseconds, or {@code null} when the text is not a bare number. */
+    /// Parses epoch milliseconds, or `null` when the text is not a bare number.
     private static Long asEpochMs(final String value) {
         try {
             return Long.valueOf(value.trim());
@@ -336,26 +324,24 @@ public class FloorMapQueryPresenter
         }
     }
 
-    /**
-     * Parses all rows of the supplied {@link TableResult} into
-     * {@link FloorMapObject} instances using the given entity and location
-     * column mappings.
-     *
-     * <p>Static and package-visible because two callers run the same events
-     * query: this editor tab, and {@link FloorMapMapPresenter}, which owns the
-     * timeline-driven playback query feeding the animated entity overlay.</p>
-     *
-     * <p>An entity is positioned outright when its {@link FloorMapEventRole#LOCATION} column holds
-     * coordinates; one carrying a {@link FloorMapEventRole#LOCATION_REF} instead gets a
-     * {@link FloorMapObject#getLocationRef()} and must be run through
-     * {@link FloorMapLocationResolver#resolve} against the current facts before it is drawn.</p>
-     *
-     * @param tableResult  the query result to parse
-     * @param eventColumns which result column carries each role
-     * @param warnings     receives a message for contradictory or malformed location data, at most
-     *                     one per result; may be {@code null}
-     * @return a list of map objects; never {@code null}
-     */
+    /// Parses all rows of the supplied [TableResult] into
+    /// [FloorMapObject] instances using the given entity and location
+    /// column mappings.
+    ///
+    /// Static and package-visible because two callers run the same events
+    /// query: this editor tab, and [FloorMapMapPresenter], which owns the
+    /// timeline-driven playback query feeding the animated entity overlay.
+    ///
+    /// An entity is positioned outright when its [FloorMapEventRole#LOCATION] column holds
+    /// coordinates; one carrying a [FloorMapEventRole#LOCATION_REF] instead gets a
+    /// [FloorMapObject#getLocationRef()] and must be run through
+    /// [FloorMapLocationResolver#resolve] against the current facts before it is drawn.
+    ///
+    /// @param tableResult  the query result to parse
+    /// @param eventColumns which result column carries each role
+    /// @param warnings     receives a message for contradictory or malformed location data, at most
+    ///         one per result; may be `null`
+    /// @return a list of map objects; never `null`
     static List<FloorMapObject> parseRows(final TableResult tableResult,
                                           final FloorMapEventColumns eventColumns,
                                           final Consumer<String> warnings) {
@@ -365,21 +351,19 @@ public class FloorMapQueryPresenter
         return parseRows(tableResult.getColumns(), tableResult.getRows(), eventColumns, warnings);
     }
 
-    /**
-     * As {@link #parseRows(TableResult, FloorMapEventColumns, Consumer)}, over a caller-supplied
-     * row list.
-     *
-     * <p>Split out so a caller can filter the rows first — {@link #latestPerEntity} reduces a
-     * time window to one row per entity — without rebuilding a {@link TableResult} whose
-     * {@code totalResults} would then disagree with its contents.</p>
-     *
-     * @param columns      the result columns; may be {@code null}
-     * @param rows         the rows to parse; may be {@code null}
-     * @param eventColumns which result column carries each role
-     * @param warnings     receives a message for contradictory or malformed location data, at most
-     *                     one per result; may be {@code null}
-     * @return a list of map objects; never {@code null}
-     */
+    /// As [#parseRows(TableResult, FloorMapEventColumns, Consumer)], over a caller-supplied
+    /// row list.
+    ///
+    /// Split out so a caller can filter the rows first — [#latestPerEntity] reduces a
+    /// time window to one row per entity — without rebuilding a [TableResult] whose
+    /// `totalResults` would then disagree with its contents.
+    ///
+    /// @param columns      the result columns; may be `null`
+    /// @param rows         the rows to parse; may be `null`
+    /// @param eventColumns which result column carries each role
+    /// @param warnings     receives a message for contradictory or malformed location data, at most
+    ///         one per result; may be `null`
+    /// @return a list of map objects; never `null`
     static List<FloorMapObject> parseRows(final List<Column> columns,
                                           final List<Row> rows,
                                           final FloorMapEventColumns eventColumns,
@@ -461,7 +445,7 @@ public class FloorMapQueryPresenter
         return list;
     }
 
-    /** The value at {@code index}, or {@code null} when absent, blank, or the column is unmapped. */
+    /// The value at `index`, or `null` when absent, blank, or the column is unmapped.
     private static String cell(final List<String> values, final int index) {
         if (index < 0 || index >= values.size()) {
             return null;
@@ -470,7 +454,7 @@ public class FloorMapQueryPresenter
         return value == null || value.trim().isEmpty() ? null : value;
     }
 
-    /** Exact match, as the mapping promises: an alias that matches nothing is a fault, not a hint. */
+    /// Exact match, as the mapping promises: an alias that matches nothing is a fault, not a hint.
     private static int columnIndex(final List<Column> columns, final String name) {
         if (name == null) {
             return -1;
@@ -484,11 +468,9 @@ public class FloorMapQueryPresenter
         return -1;
     }
 
-    /**
-     * Convenience overload that reads all query state from a {@link FloorMapDoc}.
-     *
-     * @param doc the floor map document to read from
-     */
+    /// Convenience overload that reads all query state from a [FloorMapDoc].
+    ///
+    /// @param doc the floor map document to read from
     public void read(final FloorMapDoc doc) {
         read(doc.asDocRef(), doc.getEventsQuery(), doc.getEventsQueryTimeRange(),
                 doc.getEventsQueryTablePreferences(),
@@ -496,17 +478,15 @@ public class FloorMapQueryPresenter
                 buildQueryVariables(doc));
     }
 
-    /**
-     * Populates the query editor and column-mapping dropdowns from the supplied
-     * parameters.
-     *
-     * @param docRef               the document reference for the query context
-     * @param query                the StroomQL query text
-     * @param timeRange            the time range filter; may be {@code null}
-     * @param queryTablePreferences table column preferences; may be {@code null}
-     * @param eventColumns         which result column carries each event role
-     * @param showColumnMappings   {@code true} to show the column-mapping dropdowns
-     */
+    /// Populates the query editor and column-mapping dropdowns from the supplied
+    /// parameters.
+    ///
+    /// @param docRef               the document reference for the query context
+    /// @param query                the StroomQL query text
+    /// @param timeRange            the time range filter; may be `null`
+    /// @param queryTablePreferences table column preferences; may be `null`
+    /// @param eventColumns         which result column carries each event role
+    /// @param showColumnMappings   `true` to show the column-mapping dropdowns
     public void read(final DocRef docRef,
                      final String query,
                      final TimeRange timeRange,
@@ -531,13 +511,11 @@ public class FloorMapQueryPresenter
         updateColumnSelections();
     }
 
-    /**
-     * Writes the current query editor state and column selections back into a
-     * copy of the supplied document.
-     *
-     * @param doc the document to update
-     * @return a new document copy with the query state applied
-     */
+    /// Writes the current query editor state and column selections back into a
+    /// copy of the supplied document.
+    ///
+    /// @param doc the document to update
+    /// @return a new document copy with the query state applied
     public FloorMapDoc write(final FloorMapDoc doc) {
         this.currentEventColumns = getView().getEventColumns();
 
@@ -549,21 +527,19 @@ public class FloorMapQueryPresenter
                 .build();
     }
 
-    /**
-     * Registers a handler for changes the user makes on <em>this tab</em> — the query text, and the
-     * per-role column dropdowns.
-     *
-     * <p>Two sources, deliberately. The query editor's own {@code addChangeHandler} uses
-     * {@code addHandlerToSource}, so it fires only for this editor rather than for every
-     * {@code ChangeEvent} on the shared bus — which is why the tab uses it for dirty tracking. But
-     * it knows nothing about the dropdowns, so registering only the delegate left the column
-     * mapping <b>unsaveable on its own</b>: the save icon stayed disabled and the edit was lost on
-     * the next tab switch, persisting only when an unrelated query-text edit happened to enable
-     * saving.</p>
-     *
-     * @param handler notified on either kind of change
-     * @return a registration that removes both
-     */
+    /// Registers a handler for changes the user makes on *this tab* — the query text, and the
+    /// per-role column dropdowns.
+    ///
+    /// Two sources, deliberately. The query editor's own `addChangeHandler` uses
+    /// `addHandlerToSource`, so it fires only for this editor rather than for every
+    /// `ChangeEvent` on the shared bus — which is why the tab uses it for dirty tracking. But
+    /// it knows nothing about the dropdowns, so registering only the delegate left the column
+    /// mapping **unsaveable on its own**: the save icon stayed disabled and the edit was lost on
+    /// the next tab switch, persisting only when an unrelated query-text edit happened to enable
+    /// saving.
+    ///
+    /// @param handler notified on either kind of change
+    /// @return a registration that removes both
     public HandlerRegistration addChangeHandler(final ChangeEvent.ChangeHandler handler) {
         // Both sources: the embedded query editor, and this presenter's own ChangeEvent for a
         // dropdown change. Registering only the delegate is what left the mapping unsaveable.
@@ -600,15 +576,13 @@ public class FloorMapQueryPresenter
         return queryEditPresenter.getToolbars();
     }
 
-    /**
-     * Builds the query parameter map from a {@link FloorMapDoc}'s store references.
-     * Parameters {@code FactStore} and {@code EventStore} are mapped to the
-     * store names so that {@code param('FactStore')} and {@code param('EventStore')}
-     * references in queries resolve correctly.
-     *
-     * @param doc the floor map document; never null
-     * @return a parameter map, possibly empty but never null
-     */
+    /// Builds the query parameter map from a [FloorMapDoc]'s store references.
+    /// Parameters `FactStore` and `EventStore` are mapped to the
+    /// store names so that `param('FactStore')` and `param('EventStore')`
+    /// references in queries resolve correctly.
+    ///
+    /// @param doc the floor map document; never null
+    /// @return a parameter map, possibly empty but never null
     public static Map<String, String> buildQueryVariables(final FloorMapDoc doc) {
         final Map<String, String> vars = new HashMap<>();
         if (doc.getFactsStoreRef() != null && doc.getFactsStoreRef().getName() != null) {
@@ -625,13 +599,13 @@ public class FloorMapQueryPresenter
 
         void setAvailableColumns(List<String> columnNames);
 
-        /** Applies a mapping to the per-role dropdowns; an unmapped role selects nothing. */
+        /// Applies a mapping to the per-role dropdowns; an unmapped role selects nothing.
         void setEventColumns(FloorMapEventColumns eventColumns);
 
-        /** Reads the per-role dropdowns back; a dropdown with nothing selected is unmapped. */
+        /// Reads the per-role dropdowns back; a dropdown with nothing selected is unmapped.
         FloorMapEventColumns getEventColumns();
 
-        /** Registers a handler notified whenever the user changes any role's dropdown. */
+        /// Registers a handler notified whenever the user changes any role's dropdown.
         void setColumnChangeHandler(Runnable handler);
 
         void setColumnMappingsVisible(boolean visible);

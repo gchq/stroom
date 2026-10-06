@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import javax.inject.Provider;
 
-/** The editor for a {@link FloorMapEventStoreDoc}. */
+/// The editor for a [FloorMapEventStoreDoc].
 public class FloorMapEventStorePresenter
         extends DocTabPresenter<LinkTabPanelView, FloorMapEventStoreDoc> {
 
@@ -56,7 +56,7 @@ public class FloorMapEventStorePresenter
         addTab(SETTINGS, new DocTabProvider<>(settingsPresenterProvider::get));
         addTab(DATA, new DocTabProvider<>(dataPresenterProvider::get));
         addTab(DOCUMENTATION,
-                new MarkdownTabProvider<FloorMapEventStoreDoc>(eventBus, markdownEditPresenterProvider) {
+                new MarkdownTabProvider<>(eventBus, markdownEditPresenterProvider) {
                     @Override
                     public void onRead(final MarkdownEditPresenter presenter,
                                        final DocRef docRef,

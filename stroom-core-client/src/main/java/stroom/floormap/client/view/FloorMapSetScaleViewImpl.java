@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,22 +30,20 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View implementation for the Set Scale dialog.
- *
- * <pre>
- * The line you measured is currently   1 m
- *
- * It is really   [ 2.4 ] [ Metres (m) v ]
- * </pre>
- *
- * <p>The current reading is shown because it is the quantity being corrected —
- * it says how wrong the map's present scale is.</p>
- *
- * <p>The unit list is <strong>metric only</strong>: it names the unit of the
- * number being typed, not a display preference, and maps are always measured in
- * metric.</p>
- */
+/// View implementation for the Set Scale dialog.
+///
+/// ```
+/// The line you measured is currently   1 m
+///
+/// It is really   [ 2.4 ] [ Metres (m) v ]
+/// ```
+///
+/// The current reading is shown because it is the quantity being corrected —
+/// it says how wrong the map's present scale is.
+///
+/// The unit list is **metric only**: it names the unit of the
+/// number being typed, not a display preference, and maps are always measured in
+/// metric.
 public class FloorMapSetScaleViewImpl extends ViewImpl implements FloorMapSetScaleView {
 
     private static final int ROW_CURRENT = 0;

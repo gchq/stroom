@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public final class EventCoprocessorSettings implements CoprocessorSettings {
     @JsonProperty
@@ -37,18 +39,18 @@ public final class EventCoprocessorSettings implements CoprocessorSettings {
     private final long maxEventsPerStream;
 
     @JsonCreator
-    public EventCoprocessorSettings(@JsonProperty("coprocessorId") final int coprocessorId,
+    public EventCoprocessorSettings(@JsonProperty("coprocessorId") final Integer coprocessorId,
                                     @JsonProperty("minEvent") final EventRef minEvent,
                                     @JsonProperty("maxEvent") final EventRef maxEvent,
-                                    @JsonProperty("maxStreams") final long maxStreams,
-                                    @JsonProperty("maxEvents") final long maxEvents,
-                                    @JsonProperty("maxEventsPerStream") final long maxEventsPerStream) {
-        this.coprocessorId = coprocessorId;
+                                    @JsonProperty("maxStreams") final Long maxStreams,
+                                    @JsonProperty("maxEvents") final Long maxEvents,
+                                    @JsonProperty("maxEventsPerStream") final Long maxEventsPerStream) {
+        this.coprocessorId = Objects.requireNonNullElse(coprocessorId, 0);
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
-        this.maxStreams = maxStreams;
-        this.maxEvents = maxEvents;
-        this.maxEventsPerStream = maxEventsPerStream;
+        this.maxStreams = Objects.requireNonNullElse(maxStreams, 0L);
+        this.maxEvents = Objects.requireNonNullElse(maxEvents, 0L);
+        this.maxEventsPerStream = Objects.requireNonNullElse(maxEventsPerStream, 0L);
     }
 
     @Override

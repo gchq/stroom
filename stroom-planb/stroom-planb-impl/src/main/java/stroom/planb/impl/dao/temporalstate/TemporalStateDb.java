@@ -256,48 +256,46 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
     // no equivalent, so an incoming version of this file will not contain it and must not be allowed
     // to remove it. Nothing upstream calls it: search() above is untouched.
 
-    /**
-     * Emits the newest entry at or before {@code asAt} for each key, ignoring keys whose newest
-     * entry in scope predates {@code notBefore}.
-     *
-     * <p><b>The caller states the read it wants.</b> Nothing here is inferred from the shape of the
-     * expression: {@link #search} decides nothing, and this method is reached only by a caller that
-     * asked for a snapshot and supplied the instant to take it at. That is the whole point of it
-     * being separate — a read mode guessed from whether a time term happens to be {@code <} rather
-     * than {@code >} is a guess that silently changes what a query means.</p>
-     *
-     * <p><b>Precondition: the store's key encoding must be prefix-free.</b> Advancing past a key
-     * jumps beyond {@code prefix + 0xFF...}, which is greater than every key sharing that prefix —
-     * but <b>also greater than every longer key beginning with those bytes</b>. Where keys can
-     * extend one another, as they can under {@code VARIABLE} or {@code STRING}, the longer key is
-     * skipped and silently never emitted. {@code KeyType.TERMINATED_STRING} exists to satisfy this;
-     * see {@code TerminatedStringKeySerde}. This class also serves stores with other encodings
-     * through {@link #search}, so the precondition belongs to the caller, not to the store.</p>
-     *
-     * <p><b>Why seek rather than scan.</b> Entries are stored under {@code prefix + time}, so LMDB's
-     * ordering groups every entry for one key together in ascending time order. A key's answer is
-     * found by seeking straight to {@code prefix + asAt} and stepping back, rather than by reading
-     * the key's whole history. The scan costs O(rows in the store); this costs O(keys &times; log n),
-     * and the rows in between are never deserialised — so cost stops growing with retention.</p>
-     *
-     * <p>Two details worth knowing. <b>A predicate makes it a short backward walk, not a single
-     * seek</b>, because the contract is the newest row that <em>satisfies</em> the expression; with
-     * no predicate, the common case, it is one step. And <b>a coarse {@code TemporalPrecision} does
-     * not affect the seek</b>, because stored times are truncated by the same serde that encodes
-     * {@code asAt} here — though note {@code notBefore} is compared against those truncated stored
-     * times without being truncated itself, so at a coarse precision a key can fall on the wrong
-     * side of the floor by up to one tick. Moot at {@code MILLISECOND}.</p>
-     *
-     * <p>Unlike the inferred path this replaces, the expression is applied <b>whole</b>. Time terms
-     * are not stripped: with the mode explicit there is no framework-injected range to remove, so
-     * stripping could only discard a filter the user wrote themselves.</p>
-     *
-     * @param asAt      the instant to take the snapshot at; required
-     * @param notBefore the floor below which a key is considered to have nothing in scope, or
-     *                  {@code null} for no floor. A key whose newest entry at or before {@code asAt}
-     *                  predates this is omitted rather than returned stale, which is what makes
-     *                  expiry a property of the read rather than a filter over its result
-     */
+    /// Emits the newest entry at or before `asAt` for each key, ignoring keys whose newest
+    /// entry in scope predates `notBefore`.
+    ///
+    /// **The caller states the read it wants.** Nothing here is inferred from the shape of the
+    /// expression: [#search] decides nothing, and this method is reached only by a caller that
+    /// asked for a snapshot and supplied the instant to take it at. That is the whole point of it
+    /// being separate — a read mode guessed from whether a time term happens to be `<` rather
+    /// than `>` is a guess that silently changes what a query means.
+    ///
+    /// **Precondition: the store's key encoding must be prefix-free.** Advancing past a key
+    /// jumps beyond `prefix + 0xFF...`, which is greater than every key sharing that prefix —
+    /// but **also greater than every longer key beginning with those bytes**. Where keys can
+    /// extend one another, as they can under `VARIABLE` or `STRING`, the longer key is
+    /// skipped and silently never emitted. `KeyType.TERMINATED_STRING` exists to satisfy this;
+    /// see `TerminatedStringKeySerde`. This class also serves stores with other encodings
+    /// through [#search], so the precondition belongs to the caller, not to the store.
+    ///
+    /// **Why seek rather than scan.** Entries are stored under `prefix + time`, so LMDB's
+    /// ordering groups every entry for one key together in ascending time order. A key's answer is
+    /// found by seeking straight to `prefix + asAt` and stepping back, rather than by reading
+    /// the key's whole history. The scan costs O(rows in the store); this costs O(keys × log n),
+    /// and the rows in between are never deserialised — so cost stops growing with retention.
+    ///
+    /// Two details worth knowing. **A predicate makes it a short backward walk, not a single
+    /// seek**, because the contract is the newest row that *satisfies* the expression; with
+    /// no predicate, the common case, it is one step. And **a coarse `TemporalPrecision` does
+    /// not affect the seek**, because stored times are truncated by the same serde that encodes
+    /// `asAt` here — though note `notBefore` is compared against those truncated stored
+    /// times without being truncated itself, so at a coarse precision a key can fall on the wrong
+    /// side of the floor by up to one tick. Moot at `MILLISECOND`.
+    ///
+    /// Unlike the inferred path this replaces, the expression is applied **whole**. Time terms
+    /// are not stripped: with the mode explicit there is no framework-injected range to remove, so
+    /// stripping could only discard a filter the user wrote themselves.
+    ///
+    /// @param asAt      the instant to take the snapshot at; required
+    /// @param notBefore the floor below which a key is considered to have nothing in scope, or
+    ///                  `null` for no floor. A key whose newest entry at or before `asAt`
+    ///                  predates this is omitted rather than returned stale, which is what makes
+    ///                  expiry a property of the read rather than a filter over its result
     public void searchSnapshot(final ExpressionCriteria criteria,
                                final FieldIndex fieldIndex,
                                final DateTimeSettings dateTimeSettings,
@@ -338,16 +336,14 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
         });
     }
 
-    /**
-     * The key prefix of the first entry belonging to a key after {@code afterPrefix}, or
-     * {@code null} when none remains.
-     *
-     * <p>A prefix followed by {@code 0xFF} across the time field is the greatest key that prefix can
-     * take — the comparator is unsigned — so the first key beyond it belongs to another key. That
-     * avoids needing to know anything about the time encoding's range.</p>
-     *
-     * @param afterPrefix the prefix just handled, or {@code null} to start at the first entry
-     */
+    /// The key prefix of the first entry belonging to a key after `afterPrefix`, or
+    /// `null` when none remains.
+    ///
+    /// A prefix followed by `0xFF` across the time field is the greatest key that prefix can
+    /// take — the comparator is unsigned — so the first key beyond it belongs to another key. That
+    /// avoids needing to know anything about the time encoding's range.
+    ///
+    /// @param afterPrefix the prefix just handled, or `null` to start at the first entry
     private ByteBuffer nextPrefix(final Txn<ByteBuffer> readTxn, final ByteBuffer afterPrefix) {
         if (afterPrefix == null) {
             return firstPrefix(readTxn, LmdbKeyRange.all());
@@ -363,10 +359,8 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
         });
     }
 
-    /**
-     * The key prefix of the first entry in {@code keyRange}, copied to the heap so it outlives the
-     * cursor, or {@code null} where the range is empty.
-     */
+    /// The key prefix of the first entry in `keyRange`, copied to the heap so it outlives the
+    /// cursor, or `null` where the range is empty.
     private ByteBuffer firstPrefix(final Txn<ByteBuffer> readTxn, final LmdbKeyRange keyRange) {
         try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi, keyRange)) {
             for (final LmdbEntry entry : iterable) {
@@ -380,22 +374,18 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
         return null;
     }
 
-    /**
-     * The effective time of a stored key, read from its trailing time field.
-     *
-     * <p>Keys are {@code prefix + time} with the time last and of fixed width, which is what makes
-     * this a slice rather than a decode.</p>
-     */
+    /// The effective time of a stored key, read from its trailing time field.
+    ///
+    /// Keys are `prefix + time` with the time last and of fixed width, which is what makes
+    /// this a slice rather than a decode.
     private Instant timeAt(final ByteBuffer key) {
         return timeSerde.read(key.slice(
                 key.position() + key.remaining() - timeSerde.getSize(),
                 timeSerde.getSize()));
     }
 
-    /**
-     * Emits the newest entry for {@code prefix} at or before {@code asAt} that satisfies
-     * {@code predicate}, if there is one in scope.
-     */
+    /// Emits the newest entry for `prefix` at or before `asAt` that satisfies
+    /// `predicate`, if there is one in scope.
     private void emitLatestAsAt(final Txn<ByteBuffer> readTxn,
                                 final ByteBuffer prefix,
                                 final Instant asAt,

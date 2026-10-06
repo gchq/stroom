@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,17 @@ package stroom.floormap.client.presenter;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 
-/**
- * What the cluster dialog's view tells its presenter: one of the three controls
- * — the search box, the Area dropdown or the Group dropdown — has changed.
- *
- * <p>Top-level rather than nested in {@link FloorMapClusterPresenter} because
- * the presenter implements it, and a class cannot name its own nested type in
- * its {@code implements} clause. Mirrors the platform's own
- * {@code QuickFilterUiHandlers}.</p>
- */
+/// What the cluster dialog's view tells its presenter: one of the three controls
+/// — the search box, the Area dropdown or the Group dropdown — has changed.
+///
+/// Top-level rather than nested in [FloorMapClusterPresenter] because
+/// the presenter implements it, and a class cannot name its own nested type in
+/// its `implements` clause. Mirrors the platform's own
+/// `QuickFilterUiHandlers`.
 public interface FloorMapClusterUiHandlers extends UiHandlers {
 
-    /**
-     * The search text or one of the dropdowns changed. The presenter reads the
-     * current state back off the view rather than being handed it, so a change to
-     * one control cannot be applied without the other two.
-     */
+    /// The search text or one of the dropdowns changed. The presenter reads the
+    /// current state back off the view rather than being handed it, so a change to
+    /// one control cannot be applied without the other two.
     void onFilterChange();
 }

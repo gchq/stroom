@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Packages all the stuff about document assets in one object
@@ -89,11 +90,11 @@ public class DocumentAssets {
     @SuppressWarnings("unused")
     @JsonCreator
     public DocumentAssets(@JsonProperty("ownerId") final String ownerId,
-                               @JsonProperty("dirty") final boolean dirty,
-                               @JsonProperty("uploadedFiles") final Map<String, ResourceKey> uploadedFiles,
-                               @JsonProperty("assets") final Collection<DocumentAsset> assets) {
+                          @JsonProperty("dirty") final Boolean dirty,
+                          @JsonProperty("uploadedFiles") final Map<String, ResourceKey> uploadedFiles,
+                          @JsonProperty("assets") final Collection<DocumentAsset> assets) {
         this.ownerId = ownerId;
-        this.dirty = dirty;
+        this.dirty = Objects.requireNonNullElse(dirty, false);
         if (uploadedFiles != null) {
             this.uploadedFiles.putAll(uploadedFiles);
         }

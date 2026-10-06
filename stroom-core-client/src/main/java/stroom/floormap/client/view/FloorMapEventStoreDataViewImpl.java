@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import stroom.query.client.view.QueryDataViewImpl;
 
 import com.google.inject.Inject;
 
-/** The shared query editor and results grid, as {@code PlanBDataViewImpl} uses it. */
+/// The shared query editor and results grid, as `PlanBDataViewImpl` uses it.
 public class FloorMapEventStoreDataViewImpl extends QueryDataViewImpl implements FloorMapEventStoreDataView {
 
     @Inject

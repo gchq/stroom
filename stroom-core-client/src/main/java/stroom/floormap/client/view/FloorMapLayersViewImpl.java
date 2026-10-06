@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,10 +26,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/**
- * View implementation for the Layers panel — a scrolling list of layer rows.
- * The panel needs no title of its own (the dock tab already reads "Layers").
- */
+/// View implementation for the Layers panel — a scrolling list of layer rows.
+/// The panel needs no title of its own (the dock tab already reads "Layers").
 public class FloorMapLayersViewImpl extends ViewImpl implements FloorMapLayersView {
 
     private final FlowPanel root;

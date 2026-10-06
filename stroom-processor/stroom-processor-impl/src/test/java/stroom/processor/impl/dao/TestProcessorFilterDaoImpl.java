@@ -16,7 +16,6 @@
 
 package stroom.processor.impl.dao;
 
-import stroom.processor.impl.db.jooq.tables.ProcessorTask;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
@@ -247,7 +246,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
                 .describedAs("Defaults to the cluster wide maximum")
                 .isNull();
 
-        final SimpleDuration delay = new SimpleDuration(30, TimeUnit.SECONDS);
+        final SimpleDuration delay = new SimpleDuration(30L, TimeUnit.SECONDS);
         processorFilterDao.update(created.copy().maxTaskCreationDelay(delay).build());
         assertThat(processorFilterDao.fetch(created.getId()).orElseThrow().getMaxTaskCreationDelay())
                 .isEqualTo(delay);

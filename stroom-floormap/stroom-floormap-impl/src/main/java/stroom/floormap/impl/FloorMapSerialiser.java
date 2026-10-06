@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,10 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 
-/**
- * Handles serialisation and deserialisation of {@link FloorMapDoc} documents
- * for the document store.
- * <p>
- * Delegates to a {@link Serialiser2} instance created by the {@link Serialiser2Factory}.
- */
+/// Handles serialisation and deserialisation of [FloorMapDoc] documents
+/// for the document store.
+///
+/// Delegates to a [Serialiser2] instance created by the [Serialiser2Factory].
 public class FloorMapSerialiser implements DocumentSerialiser2<FloorMapDoc> {
 
     private final Serialiser2<FloorMapDoc> delegate;

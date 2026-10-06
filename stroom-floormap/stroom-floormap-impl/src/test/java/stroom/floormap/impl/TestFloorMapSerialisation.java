@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Verifies JSON serialisation and deserialisation of {@link FloorMapDoc},
- * including round-trip fidelity and backward compatibility with legacy JSON
- * that may contain removed fields.
- */
+/// Verifies JSON serialisation and deserialisation of [FloorMapDoc],
+/// including round-trip fidelity and backward compatibility with legacy JSON
+/// that may contain removed fields.
 class TestFloorMapSerialisation {
 
     @Test
@@ -94,18 +92,16 @@ class TestFloorMapSerialisation {
         assertThat(deserialised.getMeasurementUnits()).isNull();
     }
 
-    /**
-     * A document written before {@code temporalStoreRef} was renamed must still find
-     * its facts store.
-     *
-     * <p>The rename is carried by a single {@code @JsonAlias("temporalStoreRef")} on
-     * the {@code factsStoreRef} constructor parameter. Nothing else migrates the field
-     * and nothing else was pinning it, so deleting that one annotation — or renaming
-     * the parameter without moving the alias with it — would silently detach every
-     * pre-rename document from its store. The map would then open with no facts and no
-     * error, which reads as "the data is gone" rather than "the document did not
-     * load".</p>
-     */
+    /// A document written before `temporalStoreRef` was renamed must still find
+    /// its facts store.
+    ///
+    /// The rename is carried by a single `@JsonAlias("temporalStoreRef")` on
+    /// the `factsStoreRef` constructor parameter. Nothing else migrates the field
+    /// and nothing else was pinning it, so deleting that one annotation — or renaming
+    /// the parameter without moving the alias with it — would silently detach every
+    /// pre-rename document from its store. The map would then open with no facts and no
+    /// error, which reads as "the data is gone" rather than "the document did not
+    /// load".
     @Test
     void testLegacyTemporalStoreRefMigratesToFactsStoreRef() {
         final String legacyJson = "{"
@@ -128,14 +124,12 @@ class TestFloorMapSerialisation {
         assertThat(deserialised.getEventsStoreRef()).isNull();
     }
 
-    /**
-     * The migration completes on the next save: the document is rewritten under the
-     * new name, and reading it back a second time still resolves the store.
-     *
-     * <p>This is the half that makes the rename one-way. If the field were written
-     * back under the alias, the old name would live on in newly-saved documents for
-     * ever and the alias could never be retired.</p>
-     */
+    /// The migration completes on the next save: the document is rewritten under the
+    /// new name, and reading it back a second time still resolves the store.
+    ///
+    /// This is the half that makes the rename one-way. If the field were written
+    /// back under the alias, the old name would live on in newly-saved documents for
+    /// ever and the alias could never be retired.
     @Test
     void testMigratedFactsStoreRefIsRewrittenUnderTheNewName() {
         final String legacyJson = "{"
@@ -159,11 +153,9 @@ class TestFloorMapSerialisation {
         assertThat(reread.getFactsStoreRef().getUuid()).isEqualTo("store-uuid-123");
     }
 
-    /**
-     * Groups are configuration stored on the document, so they must survive a
-     * write/read cycle intact — ids included, since a lost id would orphan the
-     * group's identity.
-     */
+    /// Groups are configuration stored on the document, so they must survive a
+    /// write/read cycle intact — ids included, since a lost id would orphan the
+    /// group's identity.
     @Test
     void testGroupsRoundTrip() {
         final FloorMapGroup maintenance = new FloorMapGroup(
@@ -193,10 +185,8 @@ class TestFloorMapSerialisation {
                 .isEqualTo(FloorMapGroup.DEFAULT_COLOUR);
     }
 
-    /**
-     * A calibrated scale must survive a write/read cycle: losing it would silently
-     * revert every size on the map to "map units".
-     */
+    /// A calibrated scale must survive a write/read cycle: losing it would silently
+    /// revert every size on the map to "map units".
     @Test
     void testMeasurementUnitsRoundTrip() {
         final FloorMapMeasurementUnits units =
@@ -216,11 +206,9 @@ class TestFloorMapSerialisation {
         assertThat(deserialised.getMeasurementUnits().getUnitsPerMapUnit()).isEqualTo(0.187);
     }
 
-    /**
-     * Every tab's {@code onWrite} returns {@code doc.copy()…build()}, so a field
-     * missing from the copy constructor is silently deleted whenever the user
-     * saves from a tab that does not itself write it.
-     */
+    /// Every tab's `onWrite` returns `doc.copy()…build()`, so a field
+    /// missing from the copy constructor is silently deleted whenever the user
+    /// saves from a tab that does not itself write it.
     @Test
     void testMeasurementUnitsSurviveACopy() {
         final FloorMapMeasurementUnits units =
@@ -239,11 +227,9 @@ class TestFloorMapSerialisation {
         assertThat(copied.getMeasurementUnits()).isEqualTo(units);
     }
 
-    /**
-     * The client decides the document is dirty by diffing the written doc against
-     * the read one, so calibrating the map must change equality — otherwise the
-     * save button never lights up and the user's work is lost on close.
-     */
+    /// The client decides the document is dirty by diffing the written doc against
+    /// the read one, so calibrating the map must change equality — otherwise the
+    /// save button never lights up and the user's work is lost on close.
     @Test
     void testMeasurementUnitsAffectEquality() {
         final FloorMapDoc uncalibrated = FloorMapDoc.builder()

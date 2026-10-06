@@ -76,9 +76,13 @@ class TestFilteredStepAfterEdit extends TranslationTest {
     private static final String FEED = "XML-EVENTS";
     private static final String FILTERED_ELEMENT_ID = "translationFilter";
 
-    /** The sample stream holds 10 records, so record-nos 3, 6 and 9 emit a Hit and the rest do not. */
+    /**
+     * The sample stream holds 10 records, so record-nos 3, 6 and 9 emit a Hit and the rest do not.
+     */
     private static final int HIT_EVERY = 3;
-    /** The first matching record, as an index: record-no 3. */
+    /**
+     * The first matching record, as an index: record-no 3.
+     */
     private static final long FIRST_HIT_INDEX = 2;
 
     /**
@@ -188,7 +192,7 @@ class TestFilteredStepAfterEdit extends TranslationTest {
             // Stepping FORWARD from record 0 under a NOT_EMPTY filter on the edited element must skip the two
             // non-matching records and land on record-no 3, serving output that really does match. Landing on
             // record 1 would mean the scan treated an unmaterialised record as a match.
-            final StepLocation record0 = new StepLocation(found.getMetaId(), found.getPartIndex(), 0);
+            final StepLocation record0 = new StepLocation((long) found.getMetaId(), (long) found.getPartIndex(), 0L);
 
             // Prefetch off for this phase: the stream is only ten records, so the unfiltered control's
             // default prefetch window would materialise all of them - leaving the filtered scan nothing to
@@ -387,7 +391,8 @@ class TestFilteredStepAfterEdit extends TranslationTest {
                                             final long recordIndex) {
         final SteppingResult result = steppingService.step(base.copy()
                 .stepType(StepType.REFRESH)
-                .stepLocation(new StepLocation(found.getMetaId(), found.getPartIndex(), recordIndex))
+                .stepLocation(
+                        new StepLocation(found.getMetaId(), found.getPartIndex(), recordIndex))
                 .sessionUuid(session.getSessionUuid())
                 .code(Map.of(FILTERED_ELEMENT_ID, PROBE_XSLT))
                 .build());

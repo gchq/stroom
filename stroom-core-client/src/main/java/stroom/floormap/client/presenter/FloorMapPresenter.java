@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,15 +38,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import javax.inject.Provider;
 
-/**
- * Top-level document tab presenter for a {@link FloorMapDoc}.
- *
- * <p>Hosts all sub-tabs — Map, Editor, Events Query, Settings,
- * Assets, Documentation, and Permissions — and coordinates the save chain
- * across them.  The {@link #getPostSaveCallback()} method chains the Editor
- * tab’s pending-change flush with the asset save so that both are persisted
- * in a single user-initiated save.</p>
- */
+/// Top-level document tab presenter for a [FloorMapDoc].
+///
+/// Hosts all sub-tabs — Map, Editor, Events Query, Settings,
+/// Assets, Documentation, and Permissions — and coordinates the save chain
+/// across them.  The [#getPostSaveCallback()] method chains the Editor
+/// tab’s pending-change flush with the asset save so that both are persisted
+/// in a single user-initiated save.
 public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMapDoc> {
 
     private static final TabData MAP = new TabDataImpl("Map");
@@ -63,26 +61,20 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     private FloorMapSettingsPresenter floorMapSettingsPresenter;
     private FloorMapQueryPresenter eventsQueryPresenter;
 
-    /**
-     * Tracks the presenter that was active before the most recent tab switch.
-     * Used to pause the timeline when the user navigates away from the Map or
-     * Editor tab.
-     */
+    /// Tracks the presenter that was active before the most recent tab switch.
+    /// Used to pause the timeline when the user navigates away from the Map or
+    /// Editor tab.
     private PresenterWidget<?> previousContent;
 
-    /**
-     * Set when the Editor tab enables area support on this document, so a
-     * Settings tab created <em>afterwards</em> still gets its grid patched
-     * (see {@link FloorMapSettingsPresenter#applyAreaPatch()}).
-     */
+    /// Set when the Editor tab enables area support on this document, so a
+    /// Settings tab created *afterwards* still gets its grid patched
+    /// (see [FloorMapSettingsPresenter#applyAreaPatch()]).
     private boolean areaSupportEnabled;
 
-    /**
-     * The initial view {@code {scale, offsetX, offsetY}} the Map tab zoomed to
-     * fit on open, stashed so the Editor tab (opened afterwards) adopts the same
-     * zoom + translation and nothing jumps on the switch. {@code null} until the
-     * Map has fitted, or when the Editor is opened first (it fits locally).
-     */
+    /// The initial view `{scale, offsetX, offsetY}` the Map tab zoomed to
+    /// fit on open, stashed so the Editor tab (opened afterwards) adopts the same
+    /// zoom + translation and nothing jumps on the switch. `null` until the
+    /// Map has fitted, or when the Editor is opened first (it fits locally).
     private double[] sharedInitialView;
 
     @Inject
@@ -204,28 +196,26 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         selectTab(MAP);
     }
 
-    /** {@inheritDoc} */
+    /// {@inheritDoc}
     @Override
     protected void onRead(final DocRef docRef, final FloorMapDoc document, final boolean readOnly) {
         super.onRead(docRef, document, readOnly);
     }
 
-    /**
-     * Reacts to this <em>document's</em> content tab being fronted or backgrounded.
-     *
-     * <p>{@link #afterSelectTab} covers only this document's inner tabs, so without this a switch
-     * to a different Stroom document left whichever timeline was playing still playing, its result
-     * stores churning on a document nobody was looking at — and, on return, gave the Map no chance
-     * to catch up on facts or events that had arrived meanwhile.</p>
-     *
-     * <p>{@code QueryDocPresenter} and {@code DashboardSuperPresenter} — the other two document
-     * types that run searches — consume this event in exactly this shape.</p>
-     *
-     * <p>Both branches act on {@link #previousContent}, the inner tab actually on screen, rather
-     * than on the Map unconditionally. Two tabs carry a timeline, so hiding must pause whichever
-     * one is showing; and refreshing a Map that is not the visible inner tab would issue reads for
-     * something the user cannot see. This mirrors {@code afterSelectTab}'s own dispatch.</p>
-     */
+    /// Reacts to this *document's* content tab being fronted or backgrounded.
+    ///
+    /// [#afterSelectTab] covers only this document's inner tabs, so without this a switch
+    /// to a different Stroom document left whichever timeline was playing still playing, its result
+    /// stores churning on a document nobody was looking at — and, on return, gave the Map no chance
+    /// to catch up on facts or events that had arrived meanwhile.
+    ///
+    /// `QueryDocPresenter` and `DashboardSuperPresenter` — the other two document
+    /// types that run searches — consume this event in exactly this shape.
+    ///
+    /// Both branches act on [#previousContent], the inner tab actually on screen, rather
+    /// than on the Map unconditionally. Two tabs carry a timeline, so hiding must pause whichever
+    /// one is showing; and refreshing a Map that is not the visible inner tab would issue reads for
+    /// something the user cannot see. This mirrors `afterSelectTab`'s own dispatch.
     @Override
     protected void onBind() {
         super.onBind();
@@ -244,11 +234,9 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         }
     }
 
-    /**
-     * Performs post-tab-selection logic: pauses the Map / Editor timeline when
-     * the user navigates away from those tabs, and triggers asset change
-     * detection.
-     */
+    /// Performs post-tab-selection logic: pauses the Map / Editor timeline when
+    /// the user navigates away from those tabs, and triggers asset change
+    /// detection.
     @Override
     protected void afterSelectTab(final PresenterWidget<?> content) {
         // Pause whichever timeline-bearing tab the user just left.
@@ -292,10 +280,8 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         return DOCUMENTATION;
     }
 
-    /**
-     * Returns {@code true} when any associated presenter (Map, Editor, or
-     * Assets) has unsaved changes.
-     */
+    /// Returns `true` when any associated presenter (Map, Editor, or
+    /// Assets) has unsaved changes.
     @Override
     protected boolean hasAssociatedDirty() {
         return super.hasAssociatedDirty() ||
@@ -304,28 +290,24 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                 (documentAssetPresenter != null && documentAssetPresenter.isDirty());
     }
 
-    /**
-     * Returns the post-save callback for the Editor tab's staged-change flush
-     * followed by the document asset save.
-     *
-     * <p>The returned {@link java.util.function.BiConsumer} first flushes any
-     * pending Editor-tab changes via
-     * {@link FloorMapEditorPresenter#onSave(FloorMapDoc, Consumer)}, then on
-     * success delegates to {@link stroom.document.asset.client.presenter.DocumentAssetPresenter#onSave}
-     * to persist any associated binary assets.</p>
-     *
-     * @return a BiConsumer that is inserted into the Stroom document save chain
-     */
+    /// Returns the post-save callback for the Editor tab's staged-change flush
+    /// followed by the document asset save.
+    ///
+    /// The returned [java.util.function.BiConsumer] first flushes any
+    /// pending Editor-tab changes via
+    /// [FloorMapEditorPresenter#onSave(FloorMapDoc, Consumer)], then on
+    /// success delegates to [stroom.document.asset.client.presenter.DocumentAssetPresenter#onSave]
+    /// to persist any associated binary assets.
+    ///
+    /// @return a BiConsumer that is inserted into the Stroom document save chain
     @Override
     public BiConsumer<FloorMapDoc, Consumer<FloorMapDoc>> getPostSaveCallback() {
         return this::flushEditorThenSaveAssets;
     }
 
-    /**
-     * Chains the Editor pending-changes flush and the asset save.
-     * If the editor has pending changes they are flushed first; only on
-     * success does the asset save proceed.
-     */
+    /// Chains the Editor pending-changes flush and the asset save.
+    /// If the editor has pending changes they are flushed first; only on
+    /// success does the asset save proceed.
     private void flushEditorThenSaveAssets(final FloorMapDoc document,
                                             final Consumer<FloorMapDoc> callback) {
         if (floorMapEditorPresenter != null && floorMapEditorPresenter.hasPendingChanges()) {
@@ -343,23 +325,21 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
         }
     }
 
-    /**
-     * Provide a callback to be inserted into the SaveAs chain after the document saveAs
-     * has happened.
-     * @return The consumer for the callback. The second parameter will be the
-     * consumer to call after this method has completed.
-     */
+    /// Provide a callback to be inserted into the SaveAs chain after the document saveAs
+    /// has happened.
+    ///
+    /// @return The consumer for the callback. The second parameter will be the
+    ///         consumer to call after this method has completed.
     @Override
     public BiConsumer<FloorMapDoc, Consumer<FloorMapDoc>> getPostSaveAsCallback() {
         return this::saveAsAssets;
     }
 
-    /**
-     * Called by DocumentPlugin to do a SaveAs to a new document.
-     * Specified in getPostSaveAsCallback().
-     * @param document The new document to save to.
-     * @param callback Thing to call when the assets have been saved.
-     */
+    /// Called by DocumentPlugin to do a SaveAs to a new document.
+    /// Specified in getPostSaveAsCallback().
+    ///
+    /// @param document The new document to save to.
+    /// @param callback Thing to call when the assets have been saved.
     public void saveAsAssets(final FloorMapDoc document, final Consumer<FloorMapDoc> callback) {
         documentAssetPresenter.onSaveAs(document, callback);
     }

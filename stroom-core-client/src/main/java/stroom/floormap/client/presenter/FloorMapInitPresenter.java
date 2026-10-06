@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,10 @@ import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerResource;
 import stroom.explorer.shared.ExplorerServiceDeleteRequest;
+import stroom.floormap.client.playback.FloorMapEventsQuery;
 import stroom.floormap.shared.FloorMapDoc;
 import stroom.floormap.shared.FloorMapEventColumns;
 import stroom.floormap.shared.FloorMapEventStoreDoc;
-import stroom.floormap.shared.FloorMapEventsQuery;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapResource;
 import stroom.floormap.shared.ValueFormat;
@@ -53,38 +53,36 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
-/**
- * Initialisation handler for new {@link FloorMapDoc} documents.
- *
- * <p>Displays a modal dialog requiring the user to select both a
- * <strong>Facts Store</strong> — a {@link SqlTemporalStoreDoc}, because the Editor
- * tab writes spatial data back to it — and an <strong>Events Store</strong> — a
- * {@link FloorMapEventStoreDoc}, which is only ever read. The OK button remains disabled until
- * both are selected.</p>
- *
- * <p>The two stores are deliberately <em>not</em> interchangeable: facts are
- * edited in place through {@code SqlTemporalStoreResource}, which only the SQL
- * Temporal Store implements, while events are append-only ingest and belong in
- * a {@link FloorMapEventStoreDoc} — a Plan B temporal state store whose key schema,
- * temporal precision and value schema are fixed by the type. Each picker therefore
- * admits exactly one document type.</p>
- *
- * <p>At query time the floor map references each store by <em>name</em> only —
- * the name is substituted into the {@code param('FactStore')} /
- * {@code param('EventStore')} placeholders of the stored queries.</p>
- *
- * <p>The default events query this dialog writes selects {@code EffectiveTime},
- * {@code Key} and {@code Value}, which only a temporal state store exposes. A
- * {@link FloorMapEventStoreDoc} always has that state type, so restricting the
- * picker to that document type is the whole check; nothing further is fetched or
- * validated on OK.</p>
- *
- * <p>On OK: the new document is patched with the selected store
- * references and saved. On Cancel: the document is deleted from
- * the explorer.</p>
- *
- * @see DocInitialisationHandler
- */
+/// Initialisation handler for new [FloorMapDoc] documents.
+///
+/// Displays a modal dialog requiring the user to select both a
+/// **Facts Store** — a [SqlTemporalStoreDoc], because the Editor
+/// tab writes spatial data back to it — and an **Events Store** — a
+/// [FloorMapEventStoreDoc], which is only ever read. The OK button remains disabled until
+/// both are selected.
+///
+/// The two stores are deliberately *not* interchangeable: facts are
+/// edited in place through `SqlTemporalStoreResource`, which only the SQL
+/// Temporal Store implements, while events are append-only ingest and belong in
+/// a [FloorMapEventStoreDoc] — a Plan B temporal state store whose key schema,
+/// temporal precision and value schema are fixed by the type. Each picker therefore
+/// admits exactly one document type.
+///
+/// At query time the floor map references each store by *name* only —
+/// the name is substituted into the `param('FactStore')` /
+/// `param('EventStore')` placeholders of the stored queries.
+///
+/// The default events query this dialog writes selects `EffectiveTime`,
+/// `Key` and `Value`, which only a temporal state store exposes. A
+/// [FloorMapEventStoreDoc] always has that state type, so restricting the
+/// picker to that document type is the whole check; nothing further is fetched or
+/// validated on OK.
+///
+/// On OK: the new document is patched with the selected store
+/// references and saved. On Cancel: the document is deleted from
+/// the explorer.
+///
+/// @see DocInitialisationHandler
 public class FloorMapInitPresenter
         extends MyPresenterWidget<FloorMapInitPresenter.FloorMapInitView>
         implements DocInitialisationHandler {
@@ -95,30 +93,28 @@ public class FloorMapInitPresenter
     private static final ExplorerResource EXPLORER_RESOURCE =
             GWT.create(ExplorerResource.class);
 
-    /** Default dialog width in pixels. */
+    /// Default dialog width in pixels.
     private static final int DIALOG_WIDTH = 320;
-    /** Default dialog height in pixels. */
+    /// Default dialog height in pixels.
     private static final int DIALOG_HEIGHT = 300;
 
     private final DocSelectionBoxPresenter factsStorePresenter;
     private final DocSelectionBoxPresenter eventsStorePresenter;
     private final RestFactory restFactory;
 
-    /** The DocRef of the newly created document being initialised. May be null when dialog is not showing. */
+    /// The DocRef of the newly created document being initialised. May be null when dialog is not showing.
     private DocRef docRef;
 
-    /** Callback to signal the outcome to the caller. Never null while the dialog is showing. */
+    /// Callback to signal the outcome to the caller. Never null while the dialog is showing.
     private Consumer<Boolean> completionCallback;
 
-    /**
-     * Creates a new {@code FloorMapInitPresenter}.
-     *
-     * @param eventBus                        the event bus; never null
-     * @param view                            the view implementation; never null
-     * @param docSelectionBoxPresenterProvider provider for doc selection widgets;
-     *                                        never null
-     * @param restFactory                     factory for REST calls; never null
-     */
+    /// Creates a new `FloorMapInitPresenter`.
+    ///
+    /// @param eventBus                        the event bus; never null
+    /// @param view                            the view implementation; never null
+    /// @param docSelectionBoxPresenterProvider provider for doc selection widgets;
+    ///         never null
+    /// @param restFactory                     factory for REST calls; never null
     @Inject
     public FloorMapInitPresenter(
             final EventBus eventBus,
@@ -154,13 +150,11 @@ public class FloorMapInitPresenter
 
     // -- Validation --
 
-    /**
-     * Updates the OK button enabled state based on current validity.
-     *
-     * <p>The OK button is enabled only when both the Facts Store and the
-     * Events Store have a non-null selection. The picker itself constrains
-     * each selection to a valid store type, so no further check is needed.</p>
-     */
+    /// Updates the OK button enabled state based on current validity.
+    ///
+    /// The OK button is enabled only when both the Facts Store and the
+    /// Events Store have a non-null selection. The picker itself constrains
+    /// each selection to a valid store type, so no further check is needed.
     private void validate() {
         final boolean factsOk =
                 factsStorePresenter.getSelectedEntityReference() != null;
@@ -178,30 +172,26 @@ public class FloorMapInitPresenter
 
     // -- DocInitialisationHandler --
 
-    /**
-     * {@inheritDoc}
-     *
-     * <p>Shows a modal dialog with Facts Store and Events Store pickers.
-     * The OK button is disabled until both are validly selected.</p>
-     *
-     * <p>Preconditions:</p>
-     * <ul>
-     *   <li>{@code docRef} must be non-null and refer to an existing
-     *       FloorMapDoc on the server.</li>
-     *   <li>{@code onComplete} must be non-null.</li>
-     *   <li>{@code taskMonitorFactory} must be non-null.</li>
-     * </ul>
-     *
-     * <p>Postconditions:</p>
-     * <ul>
-     *   <li>If OK is clicked: the FloorMapDoc has been patched with
-     *       the selected store refs and saved;
-     *       {@code onComplete.accept(true)} is called.</li>
-     *   <li>If Cancel is clicked: the FloorMapDoc has been deleted
-     *       from the explorer; {@code onComplete.accept(false)} is
-     *       called.</li>
-     * </ul>
-     */
+    /// {@inheritDoc}
+    ///
+    /// Shows a modal dialog with Facts Store and Events Store pickers.
+    /// The OK button is disabled until both are validly selected.
+    ///
+    /// Preconditions:
+    ///
+    /// - `docRef` must be non-null and refer to an existing
+    ///   FloorMapDoc on the server.
+    /// - `onComplete` must be non-null.
+    /// - `taskMonitorFactory` must be non-null.
+    ///
+    /// Postconditions:
+    ///
+    /// - If OK is clicked: the FloorMapDoc has been patched with
+    ///   the selected store refs and saved;
+    ///   `onComplete.accept(true)` is called.
+    /// - If Cancel is clicked: the FloorMapDoc has been deleted
+    ///   from the explorer; `onComplete.accept(false)` is
+    ///   called.
     @Override
     public void showInitialisationDialog(final DocRef docRef,
                                          final Consumer<Boolean> onComplete,
@@ -237,17 +227,15 @@ public class FloorMapInitPresenter
                 .fire();
     }
 
-    /**
-     * Hands off to {@link #saveInitialisation}.
-     *
-     * <p>This used to fetch the chosen store to check its {@code StateType}, because only a temporal
-     * state store records the effective time the events query selects. That check is gone with the
-     * dedicated document type, which fixes the state type in its constructor — there is no longer a
-     * wrong choice to make here.</p>
-     *
-     * @param e   the hide-popup event to control dialog dismissal; never null
-     * @param tmf task monitor factory for REST calls; never null
-     */
+    /// Hands off to [#saveInitialisation].
+    ///
+    /// This used to fetch the chosen store to check its `StateType`, because only a temporal
+    /// state store records the effective time the events query selects. That check is gone with the
+    /// dedicated document type, which fixes the state type in its constructor — there is no longer a
+    /// wrong choice to make here.
+    ///
+    /// @param e   the hide-popup event to control dialog dismissal; never null
+    /// @param tmf task monitor factory for REST calls; never null
     private void applyInitialisation(final HidePopupRequestEvent e,
                                      final TaskMonitorFactory tmf) {
         final DocRef factsDocRef = factsStorePresenter.getSelectedEntityReference();
@@ -259,22 +247,20 @@ public class FloorMapInitPresenter
         saveInitialisation(e, tmf, factsDocRef, eventsDocRef);
     }
 
-    /**
-     * Patches the new document with the chosen store references and the default
-     * queries, then saves it.
-     *
-     * <p>The events query written here selects {@code EffectiveTime}, which every
-     * {@link FloorMapEventStoreDoc} records: the type fixes its state type, so there is nothing to
-     * confirm first.</p>
-     *
-     * <p>Postcondition: on success, the document has been updated and
-     * {@code completionCallback} receives {@code true}.</p>
-     *
-     * @param e             the hide-popup event to control dialog dismissal; never null
-     * @param tmf           task monitor factory for REST calls; never null
-     * @param factsDocRef   the chosen facts store; never null
-     * @param eventsDocRef  the chosen events store; never null
-     */
+    /// Patches the new document with the chosen store references and the default
+    /// queries, then saves it.
+    ///
+    /// The events query written here selects `EffectiveTime`, which every
+    /// [FloorMapEventStoreDoc] records: the type fixes its state type, so there is nothing to
+    /// confirm first.
+    ///
+    /// Postcondition: on success, the document has been updated and
+    /// `completionCallback` receives `true`.
+    ///
+    /// @param e             the hide-popup event to control dialog dismissal; never null
+    /// @param tmf           task monitor factory for REST calls; never null
+    /// @param factsDocRef   the chosen facts store; never null
+    /// @param eventsDocRef  the chosen events store; never null
     private void saveInitialisation(final HidePopupRequestEvent e,
                                     final TaskMonitorFactory tmf,
                                     final DocRef factsDocRef,
@@ -319,20 +305,18 @@ public class FloorMapInitPresenter
                 .exec();
     }
 
-    /**
-     * Deletes the freshly-created document and signals cancellation.
-     *
-     * <p>The explorer tree is refreshed after deletion so the
-     * now-deleted node disappears from the UI.</p>
-     *
-     * <p>Postcondition: the document has been deleted (or a
-     * best-effort attempt was made) and {@code completionCallback}
-     * receives {@code false}.</p>
-     *
-     * @param e   the hide-popup event to control dialog dismissal;
-     *            never null
-     * @param tmf task monitor factory for REST calls; never null
-     */
+    /// Deletes the freshly-created document and signals cancellation.
+    ///
+    /// The explorer tree is refreshed after deletion so the
+    /// now-deleted node disappears from the UI.
+    ///
+    /// Postcondition: the document has been deleted (or a
+    /// best-effort attempt was made) and `completionCallback`
+    /// receives `false`.
+    ///
+    /// @param e   the hide-popup event to control dialog dismissal;
+    ///         never null
+    /// @param tmf task monitor factory for REST calls; never null
     private void deleteAndAbort(final HidePopupRequestEvent e,
                                 final TaskMonitorFactory tmf) {
         e.hide();
@@ -354,28 +338,22 @@ public class FloorMapInitPresenter
                 .exec();
     }
 
-    /**
-     * View interface for the FloorMap initialisation dialog.
-     *
-     * <p>Implementations must provide labelled slots for the
-     * Facts Store and Events Store selection widgets.</p>
-     */
+    /// View interface for the FloorMap initialisation dialog.
+    ///
+    /// Implementations must provide labelled slots for the
+    /// Facts Store and Events Store selection widgets.
     public interface FloorMapInitView extends View, Focus {
 
-        /**
-         * Sets the view for the Facts Store selector.
-         *
-         * @param view the DocSelectionBox view for selecting a
-         *             {@link SqlTemporalStoreDoc}; never null
-         */
+        /// Sets the view for the Facts Store selector.
+        ///
+        /// @param view the DocSelectionBox view for selecting a
+        ///         [SqlTemporalStoreDoc]; never null
         void setFactsStoreView(View view);
 
-        /**
-         * Sets the view for the Events Store selector.
-         *
-         * @param view the DocSelectionBox view for selecting a
-         *             {@link FloorMapEventStoreDoc}; never null
-         */
+        /// Sets the view for the Events Store selector.
+        ///
+        /// @param view the DocSelectionBox view for selecting a
+        ///         [FloorMapEventStoreDoc]; never null
         void setEventsStoreView(View view);
     }
 }

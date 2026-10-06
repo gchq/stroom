@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ package stroom.floormap.client.presenter;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.floormap.client.FloorMapEditorHelp;
+import stroom.floormap.client.editor.FloorMapEditorModel;
 import stroom.floormap.client.presenter.FloorMapTimeListPresenter.FloorMapTimeListView;
-import stroom.floormap.shared.FloorMapEditorModel;
 import stroom.floormap.shared.FloorMapJsonKeys;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
@@ -46,18 +46,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * Presenter for the Time List panel — the centre column of the Editor tab's
- * bottom strip.
- *
- * <p>Shows every {@link TemporalEntry} for the currently selected fact,
- * sorted ascending by effective time (oldest first, most recent last).
- * When a fact is selected, {@link #setData(List)} populates the grid.</p>
- *
- * <h3>Toolbar</h3>
- * <p>Edit, Add, and Delete buttons. Edit and Delete are enabled only when a row
- * is selected. Clicks are reported via consumers that the Editor presenter sets.</p>
- */
+/// Presenter for the Time List panel — the centre column of the Editor tab's
+/// bottom strip.
+///
+/// Shows every [TemporalEntry] for the currently selected fact,
+/// sorted ascending by effective time (oldest first, most recent last).
+/// When a fact is selected, [#setData(List)] populates the grid.
+///
+/// ### Toolbar
+///
+/// Edit, Add, and Delete buttons. Edit and Delete are enabled only when a row
+/// is selected. Clicks are reported via consumers that the Editor presenter sets.
 public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeListView> {
 
     private final MyDataGrid<TemporalEntry> dataGrid;
@@ -178,12 +177,10 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
     // Data
     // -----------------------------------------------------------------------
 
-    /**
-     * Replaces the grid contents with the supplied entries.
-     * The entries should already be sorted ascending by effective time.
-     *
-     * @param entries entries to display; may be {@code null} (treated as empty)
-     */
+    /// Replaces the grid contents with the supplied entries.
+    /// The entries should already be sorted ascending by effective time.
+    ///
+    /// @param entries entries to display; may be `null` (treated as empty)
     public void setData(final List<TemporalEntry> entries) {
         selectionModel.clear();
         editButton.setEnabled(false);
@@ -197,17 +194,15 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         }
     }
 
-    /**
-     * Selects the entry that would be active at {@code timeMs} — i.e. the
-     * most recent entry whose effective time is at or before {@code timeMs}.
-     *
-     * <p>If all entries are later than {@code timeMs} the selection is <strong>cleared</strong>
-     * and the Edit and Delete buttons are disabled - no entry is active at that time, so the
-     * Properties form has nothing to act on, matching the canvas which also shows nothing for
-     * this object then. No-op when the list is empty.</p>
-     *
-     * @param timeMs the point in time to match against
-     */
+    /// Selects the entry that would be active at `timeMs` — i.e. the
+    /// most recent entry whose effective time is at or before `timeMs`.
+    ///
+    /// If all entries are later than `timeMs` the selection is **cleared**
+    /// and the Edit and Delete buttons are disabled - no entry is active at that time, so the
+    /// Properties form has nothing to act on, matching the canvas which also shows nothing for
+    /// this object then. No-op when the list is empty.
+    ///
+    /// @param timeMs the point in time to match against
     public void selectAtTime(final long timeMs) {
         final List<TemporalEntry> list = dataProvider.getList();
         if (list == null || list.isEmpty()) {
@@ -233,14 +228,12 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         }
     }
 
-    /**
-     * Selects the entry at the given index.
-     *
-     * <p>If the index is out of range the selection is clamped to the nearest
-     * valid row (first or last). No-op when the list is empty.</p>
-     *
-     * @param index the zero-based row index to select
-     */
+    /// Selects the entry at the given index.
+    ///
+    /// If the index is out of range the selection is clamped to the nearest
+    /// valid row (first or last). No-op when the list is empty.
+    ///
+    /// @param index the zero-based row index to select
     public void selectAtIndex(final int index) {
         final List<TemporalEntry> list = dataProvider.getList();
         if (list == null || list.isEmpty()) {
@@ -260,41 +253,33 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
     // Consumer wiring
     // -----------------------------------------------------------------------
 
-    /**
-     * Sets the consumer called whenever the row selection changes.
-     *
-     * @param selectionConsumer called with the selected entry, or {@code null}
-     *                          when the selection is cleared
-     */
+    /// Sets the consumer called whenever the row selection changes.
+    ///
+    /// @param selectionConsumer called with the selected entry, or `null`
+    ///         when the selection is cleared
     public void setSelectionConsumer(final Consumer<TemporalEntry> selectionConsumer) {
         this.selectionConsumer = selectionConsumer;
     }
 
-    /**
-     * Sets the action to perform when the Edit button is clicked.
-     * Called with the currently selected entry.
-     *
-     * @param editConsumer called with the entry to edit
-     */
+    /// Sets the action to perform when the Edit button is clicked.
+    /// Called with the currently selected entry.
+    ///
+    /// @param editConsumer called with the entry to edit
     public void setEditConsumer(final Consumer<TemporalEntry> editConsumer) {
         this.editConsumer = editConsumer;
     }
 
-    /**
-     * Sets the action to perform when the Add button is clicked.
-     *
-     * @param addConsumer the runnable to invoke on Add
-     */
+    /// Sets the action to perform when the Add button is clicked.
+    ///
+    /// @param addConsumer the runnable to invoke on Add
     public void setAddConsumer(final Runnable addConsumer) {
         this.addConsumer = addConsumer;
     }
 
-    /**
-     * Sets the action to perform when the Delete button is clicked.
-     * Called with the currently selected entry.
-     *
-     * @param deleteConsumer called with the entry to delete
-     */
+    /// Sets the action to perform when the Delete button is clicked.
+    /// Called with the currently selected entry.
+    ///
+    /// @param deleteConsumer called with the entry to delete
     public void setDeleteConsumer(final Consumer<TemporalEntry> deleteConsumer) {
         this.deleteConsumer = deleteConsumer;
     }

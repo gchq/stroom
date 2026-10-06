@@ -56,19 +56,17 @@ public class QueryNodeResolverImpl implements QueryNodeResolver {
     // Behaviour for PlanBDoc is deliberately untouched: the shared-file-store test below is guarded
     // so it cannot apply to it.
 
-    /**
-     * Pins the query to the node that holds the store, unless snapshots of it are pushed to every node.
-     *
-     * <p>Applies to any document type registered as a Plan B store through {@link PlanBDocumentTypes}
-     * whose data is node-local. A store kept on a <b>shared file store</b> is excluded, because every
-     * node can already reach it and there is therefore no node to pin to — that is what excludes a
-     * traces store, and it is the reason rather than the type that matters.</p>
-     *
-     * <p>Returning null does not mean the query fails on another node: it falls back to that node's
-     * snapshot of the store, which is fetched by UUID and works for any type. It means the query is
-     * answered from a periodically refreshed copy rather than from the live store, which is the right
-     * default only where the caller has asked for it.</p>
-     */
+    /// Pins the query to the node that holds the store, unless snapshots of it are pushed to every node.
+    ///
+    /// Applies to any document type registered as a Plan B store through [PlanBDocumentTypes]
+    /// whose data is node-local. A store kept on a **shared file store** is excluded, because every
+    /// node can already reach it and there is therefore no node to pin to — that is what excludes a
+    /// traces store, and it is the reason rather than the type that matters.
+    ///
+    /// Returning null does not mean the query fails on another node: it falls back to that node's
+    /// snapshot of the store, which is fetched by UUID and works for any type. It means the query is
+    /// answered from a periodically refreshed copy rather than from the live store, which is the right
+    /// default only where the caller has asked for it.
     @Override
     public String getNode(final DocRef docRef) {
         if (docRef == null) {

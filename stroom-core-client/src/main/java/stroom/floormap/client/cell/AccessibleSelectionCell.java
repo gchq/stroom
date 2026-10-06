@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,38 +27,34 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * A {@link SelectionCell} that a keyboard user can reach, and that a screen reader can name.
- *
- * <p>GWT's {@code SelectionCell} renders {@code <select tabindex="-1">}. That is deliberate
- * on GWT's part rather than an oversight: a cell is not meant to be its own tab stop,
- * because {@code AbstractCellTable} is expected to move between cells with the arrow keys,
- * marking the keyboard-selected cell's wrapper focusable instead.
- *
- * <p>That leaves the control reachable only by first finding the table's own tab stop and
- * then arrowing to the right row — indirect at best, and unavailable entirely in the grids
- * where {@code MyDataGrid}'s two-arg {@code setSelectionModel} has replaced the keyboard
- * handler with an empty lambda. Dropping the {@code tabindex} puts the control in the tab
- * order directly, which is what a user tabbing through a form expects to find.
- *
- * <p>This subclass renders the same markup with the {@code tabindex} dropped, so the select
- * takes its natural place in the tab order, and adds an {@code aria-label} identifying the
- * row it belongs to — without one, every row's control announces identically. When read-only
- * it renders {@code disabled}, so the control stops presenting itself as editable in a state
- * where the field updater would discard the edit.
- *
- * <p>Restoring arrow-key navigation in {@code MyDataGrid} for the grids that lost it would
- * be the broader fix, but that is a shared-widget change with a much wider blast radius and
- * the empty handler there looks deliberate, so it needs its owner. This class is the
- * contained alternative, and it does not disturb the table's own keyboard handling — a grid
- * using these cells keeps whatever row navigation and selection it had.
- */
+/// A [SelectionCell] that a keyboard user can reach, and that a screen reader can name.
+///
+/// GWT's `SelectionCell` renders `<select tabindex="-1">`. That is deliberate
+/// on GWT's part rather than an oversight: a cell is not meant to be its own tab stop,
+/// because `AbstractCellTable` is expected to move between cells with the arrow keys,
+/// marking the keyboard-selected cell's wrapper focusable instead.
+///
+/// That leaves the control reachable only by first finding the table's own tab stop and
+/// then arrowing to the right row — indirect at best, and unavailable entirely in the grids
+/// where `MyDataGrid`'s two-arg `setSelectionModel` has replaced the keyboard
+/// handler with an empty lambda. Dropping the `tabindex` puts the control in the tab
+/// order directly, which is what a user tabbing through a form expects to find.
+///
+/// This subclass renders the same markup with the `tabindex` dropped, so the select
+/// takes its natural place in the tab order, and adds an `aria-label` identifying the
+/// row it belongs to — without one, every row's control announces identically. When read-only
+/// it renders `disabled`, so the control stops presenting itself as editable in a state
+/// where the field updater would discard the edit.
+///
+/// Restoring arrow-key navigation in `MyDataGrid` for the grids that lost it would
+/// be the broader fix, but that is a shared-widget change with a much wider blast radius and
+/// the empty handler there looks deliberate, so it needs its owner. This class is the
+/// contained alternative, and it does not disturb the table's own keyboard handling — a grid
+/// using these cells keeps whatever row navigation and selection it had.
 public class AccessibleSelectionCell extends SelectionCell {
 
-    /**
-     * Supplies the accessible name for the control on a given row, so that each row's
-     * control is distinguishable rather than six controls all called "Role".
-     */
+    /// Supplies the accessible name for the control on a given row, so that each row's
+    /// control is distinguishable rather than six controls all called "Role".
     public interface RowLabelProvider {
 
         String getLabel(int rowIndex);

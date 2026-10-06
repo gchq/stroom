@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 
-/**
- * Presenter for the timeline settings popup.
- * Shows loop-playback and date range controls when the settings button is clicked.
- * Playback speed has its own menu opened from the speed badge on the timeline.
- */
+/// Presenter for the timeline settings popup.
+/// Shows loop-playback and date range controls when the settings button is clicked.
+/// Playback speed has its own menu opened from the speed badge on the timeline.
 public class FloorMapTimelineSettingsPresenter
         extends MyPresenterWidget<FloorMapTimelineSettingsView> {
 
@@ -46,11 +44,9 @@ public class FloorMapTimelineSettingsPresenter
         super(eventBus, view);
     }
 
-    /**
-     * Show the settings popup positioned relative to the anchor widget (e.g. the settings button).
-     *
-     * @param anchor The widget to anchor the popup above/below.
-     */
+    /// Show the settings popup positioned relative to the anchor widget (e.g. the settings button).
+    ///
+    /// @param anchor The widget to anchor the popup above/below.
     public void show(final Widget anchor) {
         Rect relativeRect = new Rect(anchor.getElement());
         relativeRect = relativeRect.grow(3);
@@ -62,86 +58,72 @@ public class FloorMapTimelineSettingsPresenter
                 .fire();
     }
 
-    /** Hides the settings popup. */
+    /// Hides the settings popup.
     public void hide() {
         HidePopupRequestEvent.builder(this).fire();
     }
 
-    /** Returns {@code true} if loop playback is enabled. */
+    /// Returns `true` if loop playback is enabled.
     public boolean isLoopPlayback() {
         return getView().isLoopPlayback();
     }
 
-    /**
-     * Enables or disables loop playback mode.
-     *
-     * @param loop {@code true} to loop, {@code false} to stop at end
-     */
+    /// Enables or disables loop playback mode.
+    ///
+    /// @param loop `true` to loop, `false` to stop at end
     public void setLoopPlayback(final boolean loop) {
         getView().setLoopPlayback(loop);
     }
 
-    /**
-     * Sets the start time displayed in the date picker.
-     *
-     * @param startTime start time in milliseconds
-     */
+    /// Sets the start time displayed in the date picker.
+    ///
+    /// @param startTime start time in milliseconds
     public void setStartTime(final long startTime) {
         getView().setStartTime(startTime);
     }
 
-    /**
-     * Sets the end time displayed in the date picker.
-     *
-     * @param endTime end time in milliseconds
-     */
+    /// Sets the end time displayed in the date picker.
+    ///
+    /// @param endTime end time in milliseconds
     public void setEndTime(final long endTime) {
         getView().setEndTime(endTime);
     }
 
-    /** Returns the start time from the date picker, in milliseconds. */
+    /// Returns the start time from the date picker, in milliseconds.
     public long getStartTime() {
         return getView().getStartTime();
     }
 
-    /** Returns the end time from the date picker, in milliseconds. */
+    /// Returns the end time from the date picker, in milliseconds.
     public long getEndTime() {
         return getView().getEndTime();
     }
 
-    /**
-     * Registers a handler that fires when the start time date picker value changes.
-     *
-     * @param handler the value-change handler
-     * @return the handler registration for later removal
-     */
+    /// Registers a handler that fires when the start time date picker value changes.
+    ///
+    /// @param handler the value-change handler
+    /// @return the handler registration for later removal
     public HandlerRegistration addStartTimeChangeHandler(final ValueChangeHandler<String> handler) {
         return getView().addStartTimeChangeHandler(handler);
     }
 
-    /**
-     * Registers a handler that fires when the end time date picker value changes.
-     *
-     * @param handler the value-change handler
-     * @return the handler registration for later removal
-     */
+    /// Registers a handler that fires when the end time date picker value changes.
+    ///
+    /// @param handler the value-change handler
+    /// @return the handler registration for later removal
     public HandlerRegistration addEndTimeChangeHandler(final ValueChangeHandler<String> handler) {
         return getView().addEndTimeChangeHandler(handler);
     }
 
-    /**
-     * Registers the handler called when the user clicks the "Show All" button.
-     * The handler should respond by computing the full data range and calling
-     * {@link #setStartTime(long)} / {@link #setEndTime(long)} to update the date pickers.
-     */
+    /// Registers the handler called when the user clicks the "Show All" button.
+    /// The handler should respond by computing the full data range and calling
+    /// [#setStartTime(long)] / [#setEndTime(long)] to update the date pickers.
     public void setShowAllHandler(final Runnable handler) {
         getView().setShowAllHandler(handler);
     }
 
-    /**
-     * Enables or disables the "Show All" button.
-     * Should be disabled until at least one histogram data point has been received.
-     */
+    /// Enables or disables the "Show All" button.
+    /// Should be disabled until at least one histogram data point has been received.
     public void setShowAllEnabled(final boolean enabled) {
         getView().setShowAllEnabled(enabled);
     }

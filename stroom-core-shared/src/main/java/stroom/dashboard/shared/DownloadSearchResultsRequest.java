@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class DownloadSearchResultsRequest {
 
@@ -41,15 +43,15 @@ public class DownloadSearchResultsRequest {
     public DownloadSearchResultsRequest(@JsonProperty("searchRequest") final DashboardSearchRequest searchRequest,
                                         @JsonProperty("componentId") final String componentId,
                                         @JsonProperty("fileType") final DownloadSearchResultFileType fileType,
-                                        @JsonProperty("downloadAllTables") final boolean downloadAllTables,
-                                        @JsonProperty("sample") final boolean sample,
-                                        @JsonProperty("percent") final int percent) {
+                                        @JsonProperty("downloadAllTables") final Boolean downloadAllTables,
+                                        @JsonProperty("sample") final Boolean sample,
+                                        @JsonProperty("percent") final Integer percent) {
         this.searchRequest = searchRequest;
         this.componentId = componentId;
         this.fileType = fileType;
-        this.downloadAllTables = downloadAllTables;
-        this.sample = sample;
-        this.percent = percent;
+        this.downloadAllTables = Objects.requireNonNullElse(downloadAllTables, false);
+        this.sample = Objects.requireNonNullElse(sample, false);
+        this.percent = Objects.requireNonNullElse(percent, 0);
     }
 
     public DashboardSearchRequest getSearchRequest() {

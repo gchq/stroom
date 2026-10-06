@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,11 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 
-/**
- * The settings tab for a {@link FloorMapEventStoreDoc}.
- *
- * <p>Shows only what a user may safely change once data exists: how long an entity stays on the map,
- * how long data is kept, how large the store may grow, and whether to condense. The key and value
- * schemas are absent because the type fixes them — see the view template for why.</p>
- */
+/// The settings tab for a [FloorMapEventStoreDoc].
+///
+/// Shows only what a user may safely change once data exists: how long an entity stays on the map,
+/// how long data is kept, how large the store may grow, and whether to condense. The key and value
+/// schemas are absent because the type fixes them — see the view template for why.
 public class FloorMapEventStoreSettingsPresenter
         extends DocPresenter<FloorMapEventStoreSettingsView, FloorMapEventStoreDoc>
         implements DirtyUiHandlers {

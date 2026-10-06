@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 import javax.inject.Singleton;
 
-/** Makes a {@link FloorMapEventStoreDoc} creatable and openable from the explorer. */
+/// Makes a [FloorMapEventStoreDoc] creatable and openable from the explorer.
 @Singleton
 public class FloorMapEventStorePlugin extends DocumentPlugin<FloorMapEventStoreDoc> {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2026 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ class TestTypeStyle {
         return styles.stream().map(TypeStyle::getType).toList();
     }
 
-    /** Discovering into an empty config adds every type, alphabetically. */
+    /// Discovering into an empty config adds every type, alphabetically.
     @Test
     void testMerge_emptyExisting_addsAlphabetically() {
         final List<TypeStyle> merged =
@@ -39,7 +39,7 @@ class TestTypeStyle {
         assertThat(types(merged)).containsExactly("background", "gate", "room");
     }
 
-    /** Existing entries keep their (user-arranged) order; new types append after. */
+    /// Existing entries keep their (user-arranged) order; new types append after.
     @Test
     void testMerge_preservesExistingOrder_appendsNew() {
         final List<TypeStyle> existing = List.of(
@@ -54,7 +54,7 @@ class TestTypeStyle {
         assertThat(types(merged)).containsExactly("gate", "background", "desk", "person");
     }
 
-    /** A re-discovery of already-known types leaves the config unchanged. */
+    /// A re-discovery of already-known types leaves the config unchanged.
     @Test
     void testMerge_existingTypeSettingsPreserved() {
         final List<TypeStyle> existing = List.of(new TypeStyle("gate", Shape.DIAMOND, "#abc"));
@@ -65,7 +65,7 @@ class TestTypeStyle {
         assertThat(merged.getFirst().getColour()).isEqualTo("#abc");
     }
 
-    /** Null / blank discovered names are ignored. */
+    /// Null / blank discovered names are ignored.
     @Test
     void testMerge_ignoresBlankNames() {
         final List<TypeStyle> merged = TypeStyle.merge(null,
@@ -73,7 +73,7 @@ class TestTypeStyle {
         assertThat(types(merged)).containsExactly("desk", "gate");
     }
 
-    /** Null discovered set leaves existing untouched. */
+    /// Null discovered set leaves existing untouched.
     @Test
     void testMerge_nullDiscovered_returnsExisting() {
         final List<TypeStyle> existing = List.of(new TypeStyle("gate", null, null));
@@ -81,17 +81,15 @@ class TestTypeStyle {
         assertThat(types(merged)).containsExactly("gate");
     }
 
-    /**
-     * A null element in the stored list is skipped, not dereferenced.
-     *
-     * <p>Nothing in the application produces one — every producer builds elements
-     * explicitly — so this guards against a hand-edited or badly imported document
-     * carrying a literal {@code null} in its {@code typeStyles} array. The three sibling
-     * walkers over this same list ({@code colourForType}, {@code withAreaStyle},
-     * {@code FloorMapDocSession.hasAreaStyle}) all guard for it; {@code merge} did not.</p>
-     *
-     * <p>Uses {@code Arrays.asList} rather than {@code List.of}, which rejects nulls.</p>
-     */
+    /// A null element in the stored list is skipped, not dereferenced.
+    ///
+    /// Nothing in the application produces one — every producer builds elements
+    /// explicitly — so this guards against a hand-edited or badly imported document
+    /// carrying a literal `null` in its `typeStyles` array. The three sibling
+    /// walkers over this same list (`colourForType`, `withAreaStyle`,
+    /// `FloorMapDocSession.hasAreaStyle`) all guard for it; `merge` did not.
+    ///
+    /// Uses `Arrays.asList` rather than `List.of`, which rejects nulls.
     @Test
     void testMerge_nullElementIsSkipped() {
         final List<TypeStyle> existing =
@@ -105,10 +103,8 @@ class TestTypeStyle {
         assertThat(merged).doesNotContainNull();
     }
 
-    /**
-     * The "area" style is inserted directly after the last background entry —
-     * areas must paint above the floor plan but beneath everything else.
-     */
+    /// The "area" style is inserted directly after the last background entry —
+    /// areas must paint above the floor plan but beneath everything else.
     @Test
     void testWithAreaStyle_insertsAfterBackground() {
         final List<TypeStyle> existing = List.of(
@@ -120,7 +116,7 @@ class TestTypeStyle {
                 .containsExactly("background", "area", "gate", "person");
     }
 
-    /** With no background style, the area style goes first. */
+    /// With no background style, the area style goes first.
     @Test
     void testWithAreaStyle_noBackground_insertsFirst() {
         final List<TypeStyle> existing = List.of(new TypeStyle("gate", null, null));
@@ -129,7 +125,7 @@ class TestTypeStyle {
         assertThat(types(TypeStyle.withAreaStyle(null))).containsExactly("area");
     }
 
-    /** An existing "area" style is kept untouched (idempotent). */
+    /// An existing "area" style is kept untouched (idempotent).
     @Test
     void testWithAreaStyle_existingAreaKept() {
         final List<TypeStyle> existing = List.of(
@@ -178,7 +174,7 @@ class TestTypeStyle {
                 new TypeStyle("van", null, "#111111", "/assets/abc/van.png").hashCode());
     }
 
-    /** A configured colour wins — this is what the map paints, so it is what pickers show. */
+    /// A configured colour wins — this is what the map paints, so it is what pickers show.
     @Test
     void testColourForType_configuredColourWins() {
         final List<TypeStyle> styles = List.of(
@@ -189,7 +185,7 @@ class TestTypeStyle {
         assertThat(TypeStyle.colourForType("area", styles)).isEqualTo("#1e88e5");
     }
 
-    /** A style with no colour of its own falls through to the built-in default. */
+    /// A style with no colour of its own falls through to the built-in default.
     @Test
     void testColourForType_blankConfiguredColourFallsBack() {
         final List<TypeStyle> styles = java.util.Arrays.asList(
@@ -201,7 +197,7 @@ class TestTypeStyle {
         assertThat(TypeStyle.colourForType("desk", styles)).isEqualTo(TypeStyle.DEFAULT_COLOUR);
     }
 
-    /** People keep their traditional blue until a person layer is configured. */
+    /// People keep their traditional blue until a person layer is configured.
     @Test
     void testColourForType_personDefaultsToBlue() {
         assertThat(TypeStyle.colourForType("person", null))
@@ -214,7 +210,7 @@ class TestTypeStyle {
                 .isEqualTo("#101010");
     }
 
-    /** An unknown or absent type still resolves to a usable colour. */
+    /// An unknown or absent type still resolves to a usable colour.
     @Test
     void testColourForType_unknownType() {
         assertThat(TypeStyle.colourForType("camera", List.of(new TypeStyle("gate", null, "#abcdef"))))
@@ -222,7 +218,7 @@ class TestTypeStyle {
         assertThat(TypeStyle.colourForType(null, null)).isEqualTo(TypeStyle.DEFAULT_COLOUR);
     }
 
-    /** The default an area inherits is the "area" layer's colour, not a hard-coded one. */
+    /// The default an area inherits is the "area" layer's colour, not a hard-coded one.
     @Test
     void testColourForType_areaDefaultComesFromTheAreaLayer() {
         final List<TypeStyle> styles = TypeStyle.withAreaStyle(null);

@@ -30,6 +30,10 @@ import javax.inject.Singleton;
 @Singleton
 public class DateTimeFormatter {
 
+    private static final long ONE_SECOND = 1000;
+    private static final long ONE_MINUTE = ONE_SECOND * 60;
+    private static final long ONE_HOUR = ONE_MINUTE * 60;
+
     private final UserPreferencesManager userPreferencesManager;
 
     @Inject
@@ -44,9 +48,9 @@ public class DateTimeFormatter {
 
         final long now = System.currentTimeMillis();
         return format(ms) +
-                " (" +
-                MomentJs.humanise(ms - now, true) +
-                ")";
+               " (" +
+               MomentJs.humanise(ms - now, true) +
+               ")";
     }
 
     // STROOMWORKS-LOCAL: formatCompact and toCompactPattern are a local addition -
@@ -289,11 +293,9 @@ public class DateTimeFormatter {
         return converted;
     }
 
+
     // ---------------------------------------------------------------
 
-    private static final long ONE_SECOND = 1000;
-    private static final long ONE_MINUTE = ONE_SECOND * 60;
-    private static final long ONE_HOUR = ONE_MINUTE * 60;
 
     private static class TimeZoneSettings {
 

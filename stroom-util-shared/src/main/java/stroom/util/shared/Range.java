@@ -54,10 +54,10 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
     @JsonCreator
     public Range(@JsonProperty("from") final T from,
                  @JsonProperty("to") final T to,
-                 @JsonProperty("matchNull") final boolean matchNull) {
+                 @JsonProperty("matchNull") final Boolean matchNull) {
         this.from = from;
         this.to = to;
-        this.matchNull = matchNull;
+        this.matchNull = Objects.requireNonNullElse(matchNull, false);
     }
 
     /**
