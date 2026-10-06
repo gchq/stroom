@@ -800,7 +800,14 @@ one closest to your screen.
   Escape; Escape closed only the innermost menu (`MenuPresenter`); a click on the parent row of an
   open submenu didn't close it (now it does if a click opened the submenu, not hovering or the
   keyboard); and a `SelectionBox`'s list ignored Escape unless it had the focus,
-  and let the key through to the window (`SelectionPopup`).
+  and let the key through to the window (`SelectionPopup`). Null checks for data Stroom's server
+  always sends, so the fixtures can leave it out as React's do: a processor filter tracker's status
+  (`ProcessorStatusUtil`: `ProcessorFilterList`), a schedule's bounds
+  (`BatchExecutionScheduleEditViewImpl`: `ExecutionSchedulesScreen`), a meta row's attributes
+  (`MetaRow.getAttributeValue`) and a selection summary's age range (`SelectionSummaryPresenter`:
+  `MetaBrowser`), a layout's preferred size (`MutableConfigUtil`, which `FlexLayout` needs:
+  `DashboardLayout`'s `SplitterKeepsThirdPanel`), and an Embedded Query's `automate` and
+  `queryTablePreferences` (`EmbeddedQueryPresenter`: every Embedded Query story).
 * In compiled GWT, a `String` field that was never set can be `undefined` rather than `null`, and
   `Objects.equals(null, undefined)` is false (it compares two `String`s strictly), while `x == null`
   is true for both. `DataPresenter.refreshHighlights` hit this; check with `== null` when a value

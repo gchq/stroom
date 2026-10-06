@@ -72,26 +72,25 @@ public final class MetaBrowserStories {
               "pageResponse": {"offset": 0, "length": 3, "total": 3, "exact": true}
             }""".replace("ATTRIBUTES", ATTRIBUTES);
 
-    // The selected stream's parent/child chain. Stroom always sends a row's attributes (the meta
-    // list reads them without a null check), so the child has an empty map where React's has none
+    // The selected stream's parent/child chain. The child has no attributes, as React's (the meta
+    // list once read them without a null check)
     private static final String RELATIONS = """
             {
               "values": [
                 {"meta": {"id": 101, "feedName": "EVENTS", "typeName": "Raw Events", "status": "UNLOCKED",
                   "createMs": 1700000000000}, "attributes": ATTRIBUTES},
                 {"meta": {"id": 201, "feedName": "EVENTS", "typeName": "Events", "status": "UNLOCKED",
-                  "createMs": 1700000010000, "parentMetaId": 101}, "attributes": {}}
+                  "createMs": 1700000010000, "parentMetaId": 101}}
               ],
               "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}
             }""".replace("ATTRIBUTES", ATTRIBUTES);
 
-    // The selection summary. Stroom's summary dialog reads its age range without a null check, so it
-    // has one where React's fixture has none
+    // The selection summary, with no age range, as React's (Stroom's summary dialog once read it
+    // without a null check)
     private static final String SUMMARY = """
             {"itemCount": 3, "feedCount": 2, "typeCount": 3, "processorCount": 0, "pipelineCount": 1,
               "statusCount": 2, "distinctFeeds": ["EVENTS", "REFERENCE"],
-              "distinctTypes": ["Raw Events", "Reference", "Events"], "distinctStatuses": ["Unlocked", "Locked"],
-              "ageRange": {"from": 1700000000000, "to": 1700000900000}}""";
+              "distinctTypes": ["Raw Events", "Reference", "Events"], "distinctStatuses": ["Unlocked", "Locked"]}""";
 
     // DataResource.fetch(), shaped as the gwt-suite corpus records it
     private static final String DATA = """

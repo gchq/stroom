@@ -38,7 +38,8 @@ class ProcessorStatusUtil {
                             tracker.getStatus(),
                             status2 -> status2.getDisplayValue() + ": " + tracker.getMessage(),
                             tracker::getMessage);
-                } else if (!ProcessorFilterTrackerStatus.CREATED.equals(tracker.getStatus())) {
+                } else if (tracker.getStatus() != null
+                           && !ProcessorFilterTrackerStatus.CREATED.equals(tracker.getStatus())) {
                     status = tracker.getStatus().getDisplayValue();
                 } else if (tracker.getLastPollTaskCount() != null && tracker.getLastPollTaskCount() == 0) {
                     status = "Up to date";

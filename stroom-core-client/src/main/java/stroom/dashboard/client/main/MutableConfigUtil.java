@@ -86,7 +86,7 @@ public class MutableConfigUtil {
         }
         if (layoutConfig instanceof final SplitLayoutConfig splitLayoutConfig) {
             final MutableSplitLayoutConfig mutableSplitLayoutConfig = new MutableSplitLayoutConfig(
-                    fromSize(splitLayoutConfig.getPreferredSize()),
+                    fromPreferredSize(splitLayoutConfig.getPreferredSize()),
                     splitLayoutConfig.getDimension());
             if (!NullSafe.isEmptyCollection(splitLayoutConfig.getChildren())) {
                 splitLayoutConfig.getChildren().forEach(child ->
@@ -96,7 +96,7 @@ public class MutableConfigUtil {
 
         } else if (layoutConfig instanceof final TabLayoutConfig tabLayoutConfig) {
             final MutableTabLayoutConfig mutableTabLayoutConfig = new MutableTabLayoutConfig(
-                    fromSize(tabLayoutConfig.getPreferredSize()),
+                    fromPreferredSize(tabLayoutConfig.getPreferredSize()),
                     tabLayoutConfig.getSelected());
             if (!NullSafe.isEmptyCollection(tabLayoutConfig.getTabs())) {
                 tabLayoutConfig.getTabs().forEach(child ->
@@ -105,6 +105,15 @@ public class MutableConfigUtil {
             return mutableTabLayoutConfig;
         }
         return null;
+    }
+
+    // A layout's preferred size, or a default if it has none (e.g. a dashboard written without
+    // them), as FlexLayout expects every layout to have one
+    private static MutableSize fromPreferredSize(final Size size) {
+        final MutableSize mutableSize = fromSize(size);
+        return mutableSize != null
+                ? mutableSize
+                : new MutableSize();
     }
 
     public static MutableSize fromSize(final Size size) {

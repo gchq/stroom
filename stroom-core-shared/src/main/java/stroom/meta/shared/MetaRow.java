@@ -57,7 +57,9 @@ public class MetaRow {
     }
 
     public String getAttributeValue(final String name) {
-        return attributes.get(name);
+        return attributes != null
+                ? attributes.get(name)
+                : null;
     }
 
     @Override

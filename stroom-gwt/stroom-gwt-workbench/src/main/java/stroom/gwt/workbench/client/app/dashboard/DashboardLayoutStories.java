@@ -251,9 +251,8 @@ public final class DashboardLayoutStories {
                         routes -> {
                         }))
                 .withPlay(play -> {
-                    // Differs from React: GWT can't lay out panels with no preferred sizes (a
-                    // NullPointerException in FlexLayout.recalculateDimension), so the three panels
-                    // have Stroom's equal default sizes (see DashboardDocs)
+                    // The panels have no preferred sizes (FlexLayout once threw a
+                    // NullPointerException for them, in recalculateDimension)
                     DashboardPlays.opened(play);
                     DashboardPlays.designMode(play, true);
                     final Query splitter = play.querySelectorAll(DashboardPlays.SPLITTER).nth(0);

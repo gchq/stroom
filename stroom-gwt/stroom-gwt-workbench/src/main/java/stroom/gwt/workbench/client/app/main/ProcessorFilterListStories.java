@@ -61,8 +61,9 @@ public final class ProcessorFilterListStories {
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}
             }""";
 
+    // No status (ProcessorStatusUtil once read it without a null check)
     private static final String TRACKER = """
-            {"status": "CREATED", "lastPollMs": 1700000000000, "lastPollTaskCount": 3, "metaCount": 12,
+            {"lastPollMs": 1700000000000, "lastPollTaskCount": 3, "metaCount": 12,
               "eventCount": 340}""";
 
     private static final String BACKOFF_TRACKER = """

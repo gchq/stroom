@@ -61,7 +61,7 @@ public abstract class AbstractRefreshableComponentPresenter<V extends View>
         cancelRefresh();
 
         final Automate automate = getAutomate();
-        if (isInitialised() && automate.isRefresh()) {
+        if (isInitialised() && automate != null && automate.isRefresh()) {
             try {
                 final String interval = automate.getRefreshInterval();
                 int millis = ModelStringUtil.parseDurationString(interval).intValue();

@@ -149,7 +149,7 @@ public final class DashboardDocs {
 
     /// React's `SIZELESS_THREE_PANEL`: three text inputs side by side with no preferred sizes.
     public static final String SIZELESS_THREE_PANEL = doc("dash-11", "Sizeless Three", null, "\"designMode\": false",
-            split(0, tabs(0, "p0"), tabs(0, "p1"), tabs(0, "p2")),
+            unsized(split(0, tabs(0, "p0"), tabs(0, "p1"), tabs(0, "p2"))),
             textInput("p0", "P0", "p0"),
             textInput("p1", "P1", "p1"),
             textInput("p2", "P2", "p2"));
@@ -292,16 +292,13 @@ public final class DashboardDocs {
     /// @param settings The members of its settings (other than their `type`).
     /// @return The component's JSON.
     public static String component(final String type, final String id, final String name, final String settings) {
-        // Differs from React: an Embedded Query's settings need an 'automate' and
-        // 'queryTablePreferences' (EmbeddedQueryPresenter reads them without null checks as it reads
-        // the component and starts a search), and its embedded query document needs its type, UUID
-        // and name (as every document, which Stroom's server gives it); React's leave them out
-        String allSettings = settings.replace("\"embeddedQueryDoc\": {\"query\"",
+        // Differs from React: an Embedded Query's embedded query document needs its type, UUID and
+        // name (as every document, which Stroom's server gives it); React's leave them out. Its
+        // settings may leave out 'automate' and 'queryTablePreferences', as React's do
+        // (EmbeddedQueryPresenter once read them without null checks)
+        final String allSettings = settings.replace("\"embeddedQueryDoc\": {\"query\"",
                 "\"embeddedQueryDoc\": {\"type\": \"Query\", \"uuid\": \"eq-" + id + "\", \"name\": \""
                 + name + "\", \"query\"");
-        if ("embedded-query".equals(type) && !settings.contains("\"automate\"")) {
-            allSettings = allSettings + ", \"automate\": {\"open\": false}, \"queryTablePreferences\": {}";
-        }
         return "{\"type\": \"" + type + "\", \"id\": \"" + id + "\", \"name\": \"" + name
                + "\", \"settings\": {\"type\": \"" + type + "\"" + (allSettings.isEmpty()
                 ? ""
@@ -388,6 +385,14 @@ public final class DashboardDocs {
     public static String sized(final String layout, final int width, final int height) {
         return layout.substring(0, layout.lastIndexOf(", \"preferredSize\": ")) + ", \"preferredSize\": {\"width\": "
                + width + ", \"height\": " + height + "}}";
+    }
+
+    /// A layout and its children with no preferred sizes.
+    ///
+    /// @param layout The layout's JSON.
+    /// @return The layout's JSON with every preferred size removed.
+    public static String unsized(final String layout) {
+        return layout.replace(DEFAULT_SIZE, "");
     }
 
     /// A split layout, with the default preferred size (see [#sized]).

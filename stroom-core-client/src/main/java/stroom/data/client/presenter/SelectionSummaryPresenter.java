@@ -24,6 +24,7 @@ import stroom.meta.shared.SelectionSummary;
 import stroom.meta.shared.SelectionSummaryRequest;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.DocumentPermission;
+import stroom.util.shared.Range;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.SafeHtmlUtil;
@@ -141,11 +142,12 @@ public class SelectionSummaryPresenter
                 result.getFeedCount(),
                 result.getDistinctFeeds(),
                 2);
-        if (result.getAgeRange().getFrom() != null || result.getAgeRange().getTo() != null) {
+        final Range<Long> ageRange = result.getAgeRange();
+        if (ageRange != null && (ageRange.getFrom() != null || ageRange.getTo() != null)) {
             sb.appendEscaped("Created Between: ");
-            sb.appendEscaped(dateTimeFormatter.format(result.getAgeRange().getFrom()));
+            sb.appendEscaped(dateTimeFormatter.format(ageRange.getFrom()));
             sb.appendHtmlConstant(" and ");
-            sb.appendEscaped(dateTimeFormatter.format(result.getAgeRange().getTo()));
+            sb.appendEscaped(dateTimeFormatter.format(ageRange.getTo()));
         } else {
             sb.appendEscaped("Created at any time.");
         }

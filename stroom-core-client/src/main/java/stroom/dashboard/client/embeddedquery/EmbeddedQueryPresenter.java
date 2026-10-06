@@ -306,8 +306,7 @@ public class EmbeddedQueryPresenter
                 restFactory,
                 dateTimeSettingsFactory,
                 resultStoreModel,
-                () -> getQuerySettings()
-                        .getQueryTablePreferences()
+                () -> getQueryTablePreferences()
                         .copy()
                         .selectionFilter(getCurrentSelectionFilter())
                         .build());
@@ -480,8 +479,7 @@ public class EmbeddedQueryPresenter
             // The filter may not depend on a selection, so the new table needs it now, not only when
             // the dashboard's context next changes
             currentTablePresenter.setCurrentSelectionFilter(resolveSelectionFilter());
-            currentTablePresenter.setQueryTablePreferencesSupplier(() ->
-                    getQuerySettings().getQueryTablePreferences());
+            currentTablePresenter.setQueryTablePreferencesSupplier(this::getQueryTablePreferences);
             currentTablePresenter.setQueryTablePreferencesConsumer(queryTablePreferences ->
                     setSettings(getQuerySettings().copy().queryTablePreferences(queryTablePreferences).build()));
             currentTablePresenter.setQueryModel(queryModel);
@@ -682,8 +680,7 @@ public class EmbeddedQueryPresenter
             queryModel.init(queryDoc.asDocRef());
             query = queryDoc.getQuery();
             initialised = true;
-            final Automate automate = settings.getAutomate();
-            if (queryOnOpen || automate.isOpen()) {
+            if (queryOnOpen || getAutomate().isOpen()) {
                 run(true, false);
             }
         }
@@ -716,7 +713,20 @@ public class EmbeddedQueryPresenter
 
     @Override
     public Automate getAutomate() {
-        return getQuerySettings().getAutomate();
+        // Settings may have no automate (e.g. a dashboard written without one)
+        final Automate automate = getQuerySettings().getAutomate();
+        return automate != null
+                ? automate
+                : Automate.builder().build();
+    }
+
+    // The settings' table preferences, or the defaults if they have none (e.g. a dashboard written
+    // without them), as the results table expects some
+    private QueryTablePreferences getQueryTablePreferences() {
+        final QueryTablePreferences queryTablePreferences = getQuerySettings().getQueryTablePreferences();
+        return queryTablePreferences != null
+                ? queryTablePreferences
+                : QueryTablePreferences.builder().build();
     }
 
     private EmbeddedQueryComponentSettings getQuerySettings() {

@@ -68,11 +68,12 @@ public final class ExecutionSchedulesScreenStories {
     private static final String RUN_NOW_PATH = BASE + "/executeSchedulesNow";
     private static final String SET_CONFIG_PATH = "/config/v1/setConfigValue";
 
+    // The schedules have no scheduleBounds, as React's (BatchExecutionScheduleEditViewImpl once read
+    // them without a null check)
     private static final String HOURLY = """
             {"uuid": "s1", "name": "Hourly rollup", "enabled": true, "nodeName": "node1",
               "owningDoc": {"type": "AnalyticRule", "uuid": "a1", "name": "Suspicious logins"},
               "schedule": {"type": "CRON", "expression": "0 0 * * * ?"}, "contiguous": false,
-              "scheduleBounds": {},
               "runAsUser": {"uuid": "u-admin", "subjectId": "admin", "displayName": "admin", "group": false,
                 "enabled": true}}""";
 
@@ -80,7 +81,6 @@ public final class ExecutionSchedulesScreenStories {
             {"uuid": "s2", "name": "NAME", "enabled": false, "nodeName": "node2",
               "owningDoc": {"type": "AnalyticRule", "uuid": "a2", "name": "Weekly summary"},
               "schedule": {"type": "FREQUENCY", "expression": "1d"}, "contiguous": false,
-              "scheduleBounds": {},
               "runAsUser": {"uuid": "u-analyst", "subjectId": "analyst", "displayName": "analyst", "group": false,
                 "enabled": true}}""";
 
