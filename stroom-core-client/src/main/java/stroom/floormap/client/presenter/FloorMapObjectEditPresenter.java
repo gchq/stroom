@@ -473,7 +473,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
             }
         }
 
-        return accessor.serialize(newValue);
+        return accessor.serialise(newValue);
     }
 
     /// Builds a [TemporalEntry] from the current view state without

@@ -54,18 +54,18 @@ class TestFloorMapSerialisation {
                 .eventsQueryTimeRange(timeRange)
                 .build();
 
-        // Serialize
+        // Serialise
         final String json = JsonUtil.writeValueAsString(original);
         assertThat(json).isNotNull();
 
-        // Deserialize
-        final FloorMapDoc deserialized = JsonUtil.readValue(json, FloorMapDoc.class);
-        assertThat(deserialized).isNotNull();
+        // Deserialise
+        final FloorMapDoc deserialised = JsonUtil.readValue(json, FloorMapDoc.class);
+        assertThat(deserialised).isNotNull();
 
         // Assert new fields
-        assertThat(deserialized.getFactsStoreRef()).isEqualTo(storeRef);
-        assertThat(deserialized.getEventsQuery()).isEqualTo("from StoreName select events");
-        assertThat(deserialized.getEventsQueryTimeRange()).isEqualTo(timeRange);
+        assertThat(deserialised.getFactsStoreRef()).isEqualTo(storeRef);
+        assertThat(deserialised.getEventsQuery()).isEqualTo("from StoreName select events");
+        assertThat(deserialised.getEventsQueryTimeRange()).isEqualTo(timeRange);
     }
 
     @Test
@@ -80,16 +80,16 @@ class TestFloorMapSerialisation {
                                + "\"queryTimeRange\":{\"name\":\"LAST_24_HOURS\"}"
                                + "}";
 
-        final FloorMapDoc deserialized = JsonUtil.readValue(oldJson, FloorMapDoc.class);
-        assertThat(deserialized).isNotNull();
+        final FloorMapDoc deserialised = JsonUtil.readValue(oldJson, FloorMapDoc.class);
+        assertThat(deserialised).isNotNull();
 
         // The legacy 'query' field is not migrated, so eventsQuery stays null.
-        assertThat(deserialized.getEventsQuery()).isNull();
-        assertThat(deserialized.getFactsStoreRef()).isNull();
+        assertThat(deserialised.getEventsQuery()).isNull();
+        assertThat(deserialised.getFactsStoreRef()).isNull();
         // A document written before groups existed simply has none.
-        assertThat(deserialized.getGroups()).isNull();
+        assertThat(deserialised.getGroups()).isNull();
         // Likewise units: an uncalibrated map has no scale, and that is normal.
-        assertThat(deserialized.getMeasurementUnits()).isNull();
+        assertThat(deserialised.getMeasurementUnits()).isNull();
     }
 
     /// A document written before `temporalStoreRef` was renamed must still find
@@ -113,15 +113,15 @@ class TestFloorMapSerialisation {
                                   + "\"name\":\"StoreName\"}"
                                   + "}";
 
-        final FloorMapDoc deserialized = JsonUtil.readValue(legacyJson, FloorMapDoc.class);
+        final FloorMapDoc deserialised = JsonUtil.readValue(legacyJson, FloorMapDoc.class);
 
-        assertThat(deserialized.getFactsStoreRef()).isNotNull();
-        assertThat(deserialized.getFactsStoreRef().getUuid()).isEqualTo("store-uuid-123");
-        assertThat(deserialized.getFactsStoreRef().getType()).isEqualTo("SqlTemporalStore");
-        assertThat(deserialized.getFactsStoreRef().getName()).isEqualTo("StoreName");
+        assertThat(deserialised.getFactsStoreRef()).isNotNull();
+        assertThat(deserialised.getFactsStoreRef().getUuid()).isEqualTo("store-uuid-123");
+        assertThat(deserialised.getFactsStoreRef().getType()).isEqualTo("SqlTemporalStore");
+        assertThat(deserialised.getFactsStoreRef().getName()).isEqualTo("StoreName");
         // The alias feeds the facts store only — the events store has no alias and a
         // legacy document never named one.
-        assertThat(deserialized.getEventsStoreRef()).isNull();
+        assertThat(deserialised.getEventsStoreRef()).isNull();
     }
 
     /// The migration completes on the next save: the document is rewritten under the
@@ -170,18 +170,18 @@ class TestFloorMapSerialisation {
                 .groups(List.of(maintenance, security))
                 .build();
 
-        final FloorMapDoc deserialized = JsonUtil.readValue(
+        final FloorMapDoc deserialised = JsonUtil.readValue(
                 JsonUtil.writeValueAsString(original), FloorMapDoc.class);
 
-        assertThat(deserialized.getGroups()).containsExactly(maintenance, security);
+        assertThat(deserialised.getGroups()).containsExactly(maintenance, security);
         //noinspection SequencedCollectionMethodCanBeUsed
-        final FloorMapGroup readBack = deserialized.getGroups().get(0);
+        final FloorMapGroup readBack = deserialised.getGroups().get(0);
         assertThat(readBack.getId()).isEqualTo("group-40213");
         assertThat(readBack.getName()).isEqualTo("Maintenance");
         assertThat(readBack.getColour()).isEqualTo("#8e24aa");
         assertThat(readBack.getMemberIds()).containsExactly("bob@x.com", "gate-3");
         // A colourless group still renders: the default fills in at read time.
-        assertThat(deserialized.getGroups().get(1).findColourOrDefault())
+        assertThat(deserialised.getGroups().get(1).findColourOrDefault())
                 .isEqualTo(FloorMapGroup.DEFAULT_COLOUR);
     }
 
@@ -198,12 +198,12 @@ class TestFloorMapSerialisation {
                 .measurementUnits(units)
                 .build();
 
-        final FloorMapDoc deserialized = JsonUtil.readValue(
+        final FloorMapDoc deserialised = JsonUtil.readValue(
                 JsonUtil.writeValueAsString(original), FloorMapDoc.class);
 
-        assertThat(deserialized.getMeasurementUnits()).isEqualTo(units);
-        assertThat(deserialized.getMeasurementUnits().getUnit()).isEqualTo(Unit.METRE);
-        assertThat(deserialized.getMeasurementUnits().getUnitsPerMapUnit()).isEqualTo(0.187);
+        assertThat(deserialised.getMeasurementUnits()).isEqualTo(units);
+        assertThat(deserialised.getMeasurementUnits().getUnit()).isEqualTo(Unit.METRE);
+        assertThat(deserialised.getMeasurementUnits().getUnitsPerMapUnit()).isEqualTo(0.187);
     }
 
     /// Every tab's `onWrite` returns `doc.copy()…build()`, so a field

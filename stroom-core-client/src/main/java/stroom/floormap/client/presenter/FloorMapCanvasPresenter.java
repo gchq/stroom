@@ -1102,7 +1102,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             }
         }));
 
-        // Mouse Wheel (Zoom toward cursor)
+        // Mouse Wheel (Zoom towards cursor)
         registerHandler(getView().getMouseWheelHandlers().addMouseWheelHandler(event -> {
             event.preventDefault();
             // The zoom moves the map out from under the tooltip's anchor, and
@@ -1112,7 +1112,7 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
             // Note: zooming deliberately does NOT pause following — zooming in
             // on a tracked entity is the natural way to watch it, and the
             // dead-zone follow simply keeps it in view at the new zoom level.
-            // Delegate the zoom-toward-cursor + clamp maths to the shared,
+            // Delegate the zoom-towards-cursor + clamp maths to the shared,
             // unit-tested viewport, then read the updated pan/zoom back.
             final boolean zoomIn = event.getNativeDeltaY() <= 0;
             final FloorMapViewport vp = new FloorMapViewport(scale, offsetX, offsetY);
@@ -1311,8 +1311,8 @@ public class FloorMapCanvasPresenter extends MyPresenterWidget<FloorMapCanvasVie
     /// - **Arrows** pan; with **Shift**, five times as
     ///   far.
     /// - **+** / **-** (main row or numeric keypad)
-    ///   zoom about the centre of the viewport. The wheel zooms toward the
-    ///   cursor, but a keyboard user has no cursor to zoom toward, and the
+    ///   zoom about the centre of the viewport. The wheel zooms towards the
+    ///   cursor, but a keyboard user has no cursor to zoom towards, and the
     ///   viewport centre is the one point they can be sure of.
     /// - **0** resets to the fit-everything view — the escape hatch
     ///   from having panned or zoomed into empty space, which is easy to do

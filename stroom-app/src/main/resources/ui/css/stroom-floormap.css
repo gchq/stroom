@@ -119,7 +119,7 @@
 }
 
 /* The center section holds the scrubber bar */
-.stroom-floormap-timeline-center {
+.stroom-floormap-timeline-centre {
     grid-area: bar;
     min-width: 0;
     cursor: pointer;
@@ -1096,6 +1096,15 @@
     line-height: 1.3;
     color: var(--text-color--low-emphasis);
     white-space: normal;
+}
+
+/* Events Query tab: says why the column dropdowns hold only the mapped columns before a run. */
+.floormap-query-columns-hint {
+    flex: 0 0 auto;
+    margin-left: 10px;
+    font-size: 0.85em;
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
 }
 
 /*

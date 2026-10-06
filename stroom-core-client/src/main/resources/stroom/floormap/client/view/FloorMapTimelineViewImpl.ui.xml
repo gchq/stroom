@@ -34,8 +34,8 @@
             <b:SvgButton ui:field="stepForwardButton" addStyleNames="stroom-floormap-timeline-step-button" />
         </g:FlowPanel>
 
-        <!-- Center section: the timeline scrubber bar -->
-        <g:FlowPanel addStyleNames="stroom-floormap-timeline-center">
+        <!-- Centre section: the timeline scrubber bar -->
+        <g:FlowPanel addStyleNames="stroom-floormap-timeline-centre">
             <g:FlowPanel ui:field="outerBar" addStyleNames="stroom-floormap-timeline-outer-bar">
                 <g:FlowPanel ui:field="innerBar" addStyleNames="stroom-floormap-timeline-inner-bar" />
                 <g:FlowPanel ui:field="handle" addStyleNames="stroom-floormap-timeline-handle" />

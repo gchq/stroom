@@ -287,7 +287,7 @@ class TestFloorMapEntryParserXml {
 
         // Simulate what an object drag does: touch one field, then re-serialise.
         ACCESSOR.setArray(parsed, "/entry/coords", new double[]{10, 20});
-        final String round = ACCESSOR.serialize(parsed);
+        final String round = ACCESSOR.serialise(parsed);
 
         assertThat(round)
                 .as("CDATA content must survive, escaped rather than deleted")

@@ -345,10 +345,10 @@ class TestFloorMapTransformationMatrix {
                 new FloorMapTransformationMatrix(1.2, 0.9, -0.9, 1.2, 100.5, 50.25);
 
         final String json = JsonUtil.writeValueAsString(original);
-        final FloorMapTransformationMatrix deserialized =
+        final FloorMapTransformationMatrix deserialised =
                 JsonUtil.readValue(json, FloorMapTransformationMatrix.class);
 
-        assertThat(deserialized).isEqualTo(original);
+        assertThat(deserialised).isEqualTo(original);
     }
 
     // -----------------------------------------------------------------------

@@ -63,10 +63,13 @@ import java.util.Objects;
 /// ### Two-Store Architecture
 ///
 /// - **Facts store** ([#factsStoreRef]) — a SQL Temporal Store
-///   containing the spatial data (objects, positions, background image, matrices).
-/// - **Events store** ([#eventsStoreRef]) — a FloorMap Event Store of
-///   state type `TEMPORAL_STATE`, containing status / event records keyed by
-///   entity ID. Queried via [#eventsQuery]; never written to by the floor map.
+///   containing the time-versioned layout (backgrounds, objects, areas, their positions
+///   and matrices) and static details about entities, such as a person's name. Written
+///   by the Editor tab and by ingest; facts never move or animate.
+/// - **Events store** ([#eventsStoreRef]) — a FloorMap Event Store, a
+///   Plan B store of state type `TEMPORAL_STATE`, containing each entity's location
+///   over time, keyed by entity ID. Queried via [#eventsQuery]; never written to by
+///   the floor map.
 ///
 /// ### Value Schema
 ///
@@ -108,7 +111,7 @@ import java.util.Objects;
 /// @see FloorMapTransformationMatrix
 @Description(
     """
-    Defines a floor map document which can be used to visualize data over time.
+    Defines a floor map document which can be used to visualise data over time.
     """)
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -153,8 +156,9 @@ public class FloorMapDoc extends AbstractDoc {
     private final FloorMapEventColumns eventColumns;
 
     /// Reference to the SQL Temporal Store document used as the facts store.
-    /// The facts store contains spatial data: object positions, background
-    /// images, and transformation matrices.
+    /// The facts store contains the time-versioned layout (object positions,
+    /// background images, areas and transformation matrices) and static details
+    /// about entities, such as a person's name.
     /// May be `null` if not yet configured.
     ///
     /// **Back-compatibility:** previously serialised as
@@ -163,18 +167,19 @@ public class FloorMapDoc extends AbstractDoc {
     @JsonProperty("factsStoreRef")
     private final DocRef factsStoreRef;
 
-    /// Reference to the Plan B document used as the events store. The events store
-    /// contains status / event records keyed by entity ID, and is only ever read.
+    /// Reference to the [FloorMapEventStoreDoc] used as the events store. The events
+    /// store contains each entity's location over time, keyed by entity ID, and is only
+    /// ever read by the floor map; pipelines write to it.
     ///
-    /// Only the referenced document's *name* is used at query time — it is
-    /// substituted into the `param('EventStore')` placeholder of
-    /// [#eventsQuery] — so nothing here is coupled to a particular store
-    /// implementation. In practice the store must expose `Key`,
-    /// `EffectiveTime` and `Value`, which for Plan B means a state type of
-    /// `TEMPORAL_STATE`; the pickers restrict the choice to Plan B documents but
-    /// cannot filter on state type, so a mismatch surfaces as a query-time error.
+    /// A [FloorMapEventStoreDoc] is a Plan B temporal state store whose key schema,
+    /// temporal precision and value schema are fixed by the type, so the pickers restrict
+    /// the choice to that type rather than to general-purpose Plan B documents. A document
+    /// saved before the type existed may still reference a plain Plan B document; the Map
+    /// tab reports that on its status line rather than drawing nothing in silence.
     ///
-    /// For Plan B that name is load-bearing twice over: the `<map>` element of an
+    /// The referenced document's *name* is substituted into the
+    /// `param('EventStore')` placeholder of [#eventsQuery]. Because ingest is
+    /// still Plan B's, that name is load-bearing twice over: the `<map>` element of an
     /// ingest XSLT must *equal the store's own name* too, so renaming this document
     /// breaks ingest lookups as well as the events query.
     ///
@@ -311,7 +316,7 @@ public class FloorMapDoc extends AbstractDoc {
     /// @param eventColumns                events-query role to column mapping; may be
     ///         `null` on a document predating the mapping
     /// @param factsStoreRef               facts store [DocRef]; may be `null`
-    /// @param eventsStoreRef              Plan B events store [DocRef]; may be `null`
+    /// @param eventsStoreRef              FloorMap Event Store [DocRef]; may be `null`
     /// @param eventsQuery                 StroomQL for the events store; may be `null`
     /// @param eventsQueryTimeRange        time range for the events query; may be `null`
     /// @param eventsQueryTablePreferences table prefs for events query results; may be `null`
@@ -409,8 +414,9 @@ public class FloorMapDoc extends AbstractDoc {
 
     /// Returns the reference to the facts store (SQL Temporal Store).
     ///
-    /// The facts store contains spatial data: object positions,
-    /// background images, and transformation matrices.
+    /// The facts store contains the time-versioned layout (object positions,
+    /// background images, areas and transformation matrices) and static details
+    /// about entities, such as a person's name.
     ///
     /// @return the facts store [DocRef], or `null` if not
     ///         yet configured
@@ -420,8 +426,8 @@ public class FloorMapDoc extends AbstractDoc {
 
     /// Returns the reference to the events store (a FloorMap Event Store).
     ///
-    /// The events store contains status / event records keyed by
-    /// entity ID, and is only ever read.
+    /// The events store contains each entity's location over time, keyed
+    /// by entity ID, and is only ever read.
     ///
     /// @return the events store [DocRef], or `null` if not
     ///         yet configured
@@ -772,7 +778,7 @@ public class FloorMapDoc extends AbstractDoc {
 
         /// Sets the events store reference.
         ///
-        /// @param eventsStoreRef the [DocRef] to the Plan B events store, or
+        /// @param eventsStoreRef the [DocRef] to the FloorMap Event Store, or
         ///         `null` to clear
         /// @return this builder
         public Builder eventsStoreRef(final DocRef eventsStoreRef) {

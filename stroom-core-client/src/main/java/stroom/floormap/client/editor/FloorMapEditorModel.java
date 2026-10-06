@@ -1076,7 +1076,7 @@ public class FloorMapEditorModel {
         // Repoint the copy's label at its new key.
         accessor.setString(parsed, FloorMapFieldMapping.findPath(schema, Role.LABEL), newKey);
 
-        return new TemporalEntry(mapName, newKey, effectiveTimeMs, accessor.serialize(parsed));
+        return new TemporalEntry(mapName, newKey, effectiveTimeMs, accessor.serialise(parsed));
     }
 
     /// Builds a new area entry from a polygon drawn on the canvas.
@@ -1133,7 +1133,7 @@ public class FloorMapEditorModel {
                 new double[]{1, 0, 0, 1, cx, cy});
         accessor.setArray(value, FloorMapFieldMapping.requirePath(schema, Role.GEOMETRY), flatLocal);
 
-        return new TemporalEntry(mapName, key, effectiveTimeMs, accessor.serialize(value));
+        return new TemporalEntry(mapName, key, effectiveTimeMs, accessor.serialise(value));
     }
 
     /// Builds an updated entry with the given `role`'s matrix set to the
@@ -1165,7 +1165,7 @@ public class FloorMapEditorModel {
                 original.getMap(),
                 original.getKey(),
                 original.getEffectiveTimeMs(),
-                accessor.serialize(parsed));
+                accessor.serialise(parsed));
     }
 
     /// Builds a copy of `original` with new area geometry — the flat local
@@ -1193,7 +1193,7 @@ public class FloorMapEditorModel {
                 original.getMap(),
                 original.getKey(),
                 original.getEffectiveTimeMs(),
-                accessor.serialize(parsed));
+                accessor.serialise(parsed));
     }
 
     // -----------------------------------------------------------------------

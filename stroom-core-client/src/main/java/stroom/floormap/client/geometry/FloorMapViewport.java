@@ -143,12 +143,12 @@ public final class FloorMapViewport {
         offsetY += screenDeltaY;
     }
 
-    /// Zooms toward the cursor by one [#ZOOM_STEP] notch, keeping the
+    /// Zooms towards the cursor by one [#ZOOM_STEP] notch, keeping the
     /// map point under the cursor fixed on screen. The resulting scale is
     /// clamped between [#MIN_SCALE] and [#MAX_SCALE].
     ///
-    /// @param cursorX element-relative cursor X to zoom toward
-    /// @param cursorY element-relative cursor Y to zoom toward
+    /// @param cursorX element-relative cursor X to zoom towards
+    /// @param cursorY element-relative cursor Y to zoom towards
     /// @param zoomIn  `true` to zoom in, `false` to zoom out
     public void zoom(final double cursorX, final double cursorY, final boolean zoomIn) {
         final double zoomFactor = zoomIn
@@ -180,7 +180,7 @@ public final class FloorMapViewport {
     /// @param marginFraction the dead-zone margin as a fraction of each view
     ///         dimension, clamped to `[0, 0.5]`; 0.5
     ///         collapses the dead zone to the centre point
-    ///         (hard-centering)
+    ///         (hard-centring)
     /// @return `{deltaX, deltaY}` to add to the pan offsets
     public static double[] followDelta(final double screenX,
                                        final double screenY,

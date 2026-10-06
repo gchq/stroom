@@ -64,17 +64,19 @@ import java.util.function.Consumer;
 /// The two stores are deliberately *not* interchangeable: facts are
 /// edited in place through `SqlTemporalStoreResource`, which only the SQL
 /// Temporal Store implements, while events are append-only ingest and belong in
-/// Plan B. Each picker therefore admits exactly one document type.
+/// a [FloorMapEventStoreDoc] — a Plan B temporal state store whose key schema,
+/// temporal precision and value schema are fixed by the type. Each picker therefore
+/// admits exactly one document type.
 ///
 /// At query time the floor map references each store by *name* only —
 /// the name is substituted into the `param('FactStore')` /
 /// `param('EventStore')` placeholders of the stored queries.
 ///
 /// The default events query this dialog writes selects `EffectiveTime`,
-/// `Key` and `Value`, which of the Plan B state types only
-/// a [FloorMapEventStoreDoc] exposes. The picker can filter by document type
-/// but not by state type, so that is checked explicitly on OK rather than left to
-/// fail later as an opaque unknown-field error at query time.
+/// `Key` and `Value`, which only a temporal state store exposes. A
+/// [FloorMapEventStoreDoc] always has that state type, so restricting the
+/// picker to that document type is the whole check; nothing further is fetched or
+/// validated on OK.
 ///
 /// On OK: the new document is patched with the selected store
 /// references and saved. On Cancel: the document is deleted from
@@ -129,7 +131,7 @@ public class FloorMapInitPresenter
         factsStorePresenter.setRequiredPermissions(DocumentPermission.USE);
         view.setFactsStoreView(factsStorePresenter.getView());
 
-        // Events Store = PlanB (read-only; state type checked on OK)
+        // Events Store = FloorMapEventStore (read-only; the type fixes its state type)
         eventsStorePresenter = docSelectionBoxPresenterProvider.get();
         eventsStorePresenter.setCaption("Choose Events Store");
         eventsStorePresenter.setIncludedTypes(FloorMapEventStoreDoc.TYPE);
