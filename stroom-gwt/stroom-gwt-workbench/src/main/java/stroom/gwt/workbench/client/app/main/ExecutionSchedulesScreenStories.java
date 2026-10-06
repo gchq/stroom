@@ -29,7 +29,6 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
-import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -190,21 +189,22 @@ public final class ExecutionSchedulesScreenStories {
                     // The expression is validated
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/expression/v1/validate").toSpyMatcher()));
-                    // Differs from React: a GWT bug. The filter's empty expression has no children
-                    // (null, not an empty list), and ExecutionScheduleManager.formatISOExpressions
-                    // iterates operator.getChildren() without a null check, so the refresh fails with
-                    // an error alert and the find is never re-run with the expression
-                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
-                            ValueMatcher.stringContaining("Cannot read properties of null")));
-                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                    // The filter is applied: the find re-runs with the (empty) expression, which has no
+                    // children; the dialog closes and nothing fails (ExecutionScheduleManager's
+                    // formatISOExpressions once failed for an operator with no children)
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(FETCH_PATH)
                                     .withJsonBodyContaining("{\"expression\": {\"type\": \"operator\"}}")
-                                    .toSpyMatcher());
+                                    .toSpyMatcher()));
+                    play.waitFor(() -> play.expect(screen.queryByText("Filter Schedules", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.findByText("Hourly rollup");
                     // Differs from React: GWT's Clear Filter button is always there, but only enabled
                     // for an expression with terms (setButtonState), so an empty filter leaves it
-                    // disabled
+                    // disabled and React's Clear Filter step can't be taken
                     play.expect(play.getByTitle("Clear Filter")).toHaveClass("disabled");
-                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    expectNoErrors(play);
                 })
                 // Batch Edit applies only the enabled fields to every filtered schedule
                 .story("BatchEdit", context -> render(context, FIXTURES, false))

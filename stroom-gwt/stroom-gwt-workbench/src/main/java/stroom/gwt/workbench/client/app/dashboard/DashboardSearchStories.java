@@ -230,10 +230,11 @@ public final class DashboardSearchStories {
                     play.expect(DashboardPlays.tab(play, "Detail Table")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON))
                             .toHaveLength(2));
-                    runDetailThenMaster(play);
+                    runMaster(play);
                     play.expect(play.queryByText("detail for alpha")).toBeNull();
                     play.click(play.getByText("alpha"));
                     play.waitFor(() -> play.expect(play.getByText("detail for alpha")).toBeInTheDocument());
+                    expectSearchesComplete(play);
                     DashboardPlays.expectNoProblems(play);
                 })
                 // The current selection's dialog lists the dashboard's parameters and selections
@@ -244,7 +245,7 @@ public final class DashboardSearchStories {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON))
                             .toHaveLength(2));
-                    runDetailThenMaster(play);
+                    runMaster(play);
                     play.click(play.getByText("alpha"));
                     // Not offered outside design mode
                     play.expect(play.queryByRole("button", "View Current Selection")).toBeNull();
@@ -356,19 +357,24 @@ public final class DashboardSearchStories {
                 });
     }
 
-    // Runs the detail query (q2), then the master query (q1).
-    // Differs from React: React runs only the master query. GWT's DashboardPresenter.getCombinedErrors
-    // asks every Query for its errors as any search reports them, and QueryPresenter.getCurrentErrors
-    // throws (a NullPointerException) for a Query that hasn't searched yet; SearchModel.update
-    // swallows it before it marks the search complete, so the master search would poll forever
-    private static void runDetailThenMaster(final Play play) {
-        DashboardPlays.runQuery(play, 1);
-        play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
-                DashboardSupport.SEARCH
-                        .withBody("asks for t2's results", body -> DashboardPlays.componentIds(body).contains("t2"))
-                        .toSpyMatcher()));
+    // Runs only the master query (q1), as React does, while the detail query (q2) hasn't searched,
+    // and checks that its search completes. DashboardPresenter.getCombinedErrors asks every Query for
+    // its errors as any search reports them, and QueryPresenter.getCurrentErrors once threw for a
+    // Query that hadn't searched, which SearchModel.update swallowed before it marked the search
+    // complete, so the master search polled forever
+    private static void runMaster(final Play play) {
         DashboardPlays.runQuery(play, 0);
         play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+        expectSearchesComplete(play);
+    }
+
+    // No Query is still searching: each Query's own button is back to 'Execute Query' (it is
+    // 'Stop Query', with the 'stop' class, while its search polls)
+    private static void expectSearchesComplete(final Play play) {
+        play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + ".stop"))
+                .toHaveLength(0));
+        play.expect(play.querySelectorAll(DashboardPlays.QUERY_RUN_BUTTON + "[title='Execute Query']"))
+                .toHaveLength(2);
     }
 
     // The offsets of t1's result requests in the dashboard searches the spy recorded

@@ -95,15 +95,15 @@ public final class ServerTasksScreenStories {
 
     private static final String TASK_INFO = "node=node1, feed=TEST_FEED, filter id=7, pipeline uuid=pipe-uuid-1, "
             + "meta_id=5";
-    // GWT bug: TaskManagerListPresenter.getContextMenus creates the 'Open Feed' item's DocRef with a
-    // null UUID, which DocRef refuses (NullPointerException: Null DocRef UUID), so the Info cell's
-    // context menu fails for a task whose info has a 'feed=' key. The context menu stories use a
-    // task info without it
-    private static final String TASK_INFO_WITHOUT_FEED =
-            "node=node1, filter id=7, pipeline uuid=pipe-uuid-1, meta_id=5";
+    // The task info only holds the feed's name, so 'Open Feed' looks up its doc ref by name
+    // (FeedResource.getDocRefForName) when it is chosen
+    private static final String FEED_LOOKUP_PATH = "/feed/v1/getDocRefForName/TEST_FEED";
+    private static final String FEED_DOC_REF = """
+            {"type": "Feed", "uuid": "feed-uuid-1", "name": "TEST_FEED"}""";
 
-    private static final RestFixtures FIXTURES = fixtures(TASK_INFO);
-    private static final RestFixtures FIXTURES_WITHOUT_FEED = fixtures(TASK_INFO_WITHOUT_FEED);
+    private static final RestFixtures FIXTURES = fixtures(TASK_INFO, RestReply.json(FEED_DOC_REF));
+    // The feed has gone since the task started: the lookup finds nothing (the server's null)
+    private static final RestFixtures FIXTURES_WITHOUT_FEED_DOC = fixtures(TASK_INFO, RestReply.noContent());
 
     // A task with no node at all
     private static final RestFixtures ORPHAN_FIXTURES = fixtures(TASK_INFO, RestReply.json("""
@@ -116,7 +116,7 @@ public final class ServerTasksScreenStories {
               ],
               "errors": [],
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}
-            }"""));
+            }"""), RestReply.json(FEED_DOC_REF));
 
     private ServerTasksScreenStories() {
         // Static utility
@@ -150,9 +150,7 @@ public final class ServerTasksScreenStories {
                     expectNoProblems(play);
                 })
                 // Right-clicking the Info cell parses the task info for Open Feed / Open Pipeline
-                // Differs from React: the task info has no 'feed=' key (see TASK_INFO_WITHOUT_FEED, a
-                // GWT bug), so there is no 'Open Feed' item
-                .story("InfoActions", context -> render(context, FIXTURES_WITHOUT_FEED, null))
+                .story("InfoActions", context -> render(context, FIXTURES, null))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Pipeline Processor");
@@ -160,24 +158,30 @@ public final class ServerTasksScreenStories {
                     // Differs from React: GWT has no per-callback wiring, so every item the task
                     // info's keys allow is shown (React shows only the doc-opening ones here); the
                     // per-cell items come first, before the grid's own items
-                    play.waitFor(() -> play.expect(firstMenuItems(screen, 3)).toEqual(
-                            Arrays.asList("Show Filter Tasks", "Open Pipeline", "Open Stream")));
+                    play.waitFor(() -> play.expect(firstMenuItems(screen, 4)).toEqual(
+                            Arrays.asList("Open Feed", "Show Filter Tasks", "Open Pipeline", "Open Stream")));
                     play.click(screen.getByText("Open Pipeline"));
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_DOC)).toHaveBeenCalledWith("Pipeline:pipe-uuid-1"));
+                    // Open Feed looks the feed up by name and opens the doc ref found (a DocRef
+                    // needs a UUID, so the menu once failed for a task with a feed)
+                    play.rightClick(infoCell(play, "Pipeline Processor"));
+                    play.click(screen.findByText("Open Feed"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.get(FEED_LOOKUP_PATH).toSpyMatcher()));
+                    play.waitFor(() -> play.expect(play.spy(ON_OPEN_DOC)).toHaveBeenCalledWith("Feed:feed-uuid-1"));
                     expectNoProblems(play);
                 })
                 // STREAM_ID → ShowDataEvent(SourceLocation(streamId), INFO, STROOM_TAB); FILTER_ID →
                 // OpenProcessorTaskEvent(filter), both gated on their key being in the task info
-                // Differs from React: the task info has no 'feed=' key (see TASK_INFO_WITHOUT_FEED, a
-                // GWT bug), so the menu has no 'Open Feed' item first
-                .story("InfoActionsStreamAndFilter", context -> render(context, FIXTURES_WITHOUT_FEED, null))
+                // (Here the feed has gone, so Open Feed can't find it)
+                .story("InfoActionsStreamAndFilter", context -> render(context, FIXTURES_WITHOUT_FEED_DOC, null))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Pipeline Processor");
                     play.rightClick(infoCell(play, "Pipeline Processor"));
                     // GWT's buildMenuItems order
-                    play.waitFor(() -> play.expect(firstMenuItems(screen, 3)).toEqual(
-                            Arrays.asList("Show Filter Tasks", "Open Pipeline", "Open Stream")));
+                    play.waitFor(() -> play.expect(firstMenuItems(screen, 4)).toEqual(
+                            Arrays.asList("Open Feed", "Show Filter Tasks", "Open Pipeline", "Open Stream")));
                     // meta_id=5 → the INFO view in a Stroom tab, exactly GWT's ShowDataEvent arguments
                     play.click(screen.findByText("Open Stream"));
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_DATA))
@@ -187,7 +191,17 @@ public final class ServerTasksScreenStories {
                     play.click(screen.findByText("Show Filter Tasks"));
                     play.waitFor(() -> play.expect(play.spy(ON_SHOW_FILTER_TASKS))
                             .toHaveBeenCalledWith("filterTasks:7"));
-                    expectNoProblems(play);
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    // Not in React: a feed that can't be found by name is reported, and nothing opens
+                    play.rightClick(infoCell(play, "Pipeline Processor"));
+                    play.click(screen.findByText("Open Feed"));
+                    // The alert's text is HTML (the quotes are escaped)
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
+                            ValueMatcher.stringContaining("ERROR: Unable to find feed &#39;TEST_FEED&#39;")));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.get(FEED_LOOKUP_PATH).toSpyMatcher());
+                    play.expect(play.spy(ON_OPEN_DOC)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // A task whose info has no filter/stream keys shows neither item (GWT's per-key gating)
                 .story("InfoActionsGatedByKeys", context -> render(context, FIXTURES, null))
@@ -286,8 +300,10 @@ public final class ServerTasksScreenStories {
         play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
     }
 
-    private static RestFixtures fixtures(final String parentTaskInfo) {
-        return fixtures(parentTaskInfo, RestReply.json(tasks(parentTaskInfo, "MATCHED", "MATCHED", "MATCHED")));
+    private static RestFixtures fixtures(final String parentTaskInfo, final RestReply feedLookup) {
+        return fixtures(parentTaskInfo,
+                RestReply.json(tasks(parentTaskInfo, "MATCHED", "MATCHED", "MATCHED")),
+                feedLookup);
     }
 
     private static String tasks(final String parentTaskInfo,
@@ -300,7 +316,9 @@ public final class ServerTasksScreenStories {
                 .replace("B_STATE", bState);
     }
 
-    private static RestFixtures fixtures(final String parentTaskInfo, final RestReply unfilteredTasks) {
+    private static RestFixtures fixtures(final String parentTaskInfo,
+                                         final RestReply unfilteredTasks,
+                                         final RestReply feedLookup) {
         return RestFixtures.builder()
                 .post("/node/v1/find", RestReply.json(NODES))
                 // The server marks the tasks matching the name filter
@@ -309,6 +327,7 @@ public final class ServerTasksScreenStories {
                         RestReply.json(tasks(parentTaskInfo, "NOT_MATCHED", "MATCHED", "NOT_MATCHED")))
                 .post(TASK_FIND_PATH, unfilteredTasks)
                 .post("/task/v1/terminate/node1", RestReply.json("true"))
+                .get(FEED_LOOKUP_PATH, feedLookup)
                 .build();
     }
 
@@ -321,10 +340,9 @@ public final class ServerTasksScreenStories {
         harness.fn(ON_OPEN_DOC);
         harness.fn(ON_OPEN_DATA);
         harness.fn(ON_SHOW_FILTER_TASKS);
+        // 'type:uuid', so that a feed opened by name shows the UUID it was resolved to
         harness.getEventBus().addHandler(OpenDocumentEvent.getType(), event ->
-                harness.spy(ON_OPEN_DOC, event.getDocRef().getType() + ":" + (event.getDocRef().getName() != null
-                        ? event.getDocRef().getName()
-                        : event.getDocRef().getUuid())));
+                harness.spy(ON_OPEN_DOC, event.getDocRef().getType() + ":" + event.getDocRef().getUuid()));
         harness.getEventBus().addHandler(ShowDataEvent.getType(), event ->
                 harness.spy(ON_OPEN_DATA, "data:" + event.getSourceLocation().getMetaId() + ":"
                         + event.getDataViewType() + ":" + event.getDisplayMode()));

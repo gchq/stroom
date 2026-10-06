@@ -183,15 +183,20 @@ public final class UsersScreenStories {
         harness.getEventBus().addHandler(OpenAppPermissionsScreenEvent.getType(), event ->
                 harness.spy(OPEN_SCREEN, "ApplicationPermissions: " + event.getUserRef().getDisplayName()));
 
-        // Opened once Stroom has started (the list reads the UI config when it refreshes), as
-        // UsersPlugin.open opens it: refreshed, then (for an OpenUsersScreenEvent) showing the user
-        harness.afterStartUp(() -> {
+        if (focus == null) {
+            // Opened at once, before the UI config is cached: the list reads it when it refreshes,
+            // and UiConfigCache fetches it then (it once also called the list back with null at
+            // once, which failed), as UsersPlugin.open opens it, refreshed
+            harness.addContent(injector.getUsersPresenter()).refresh();
+        } else {
+            // Opened at once, as for an OpenUsersScreenEvent: refreshed, then showing the user.
+            // Both refreshes wait for the UI config; only the first sets up the list (the second
+            // once set it up again, duplicating its columns and rows, which the play's
+            // findByText would now find twice)
             final UsersPresenter presenter = harness.addContent(injector.getUsersPresenter());
             presenter.refresh();
-            if (focus != null) {
-                presenter.showUser(focus);
-            }
-        });
+            presenter.showUser(focus);
+        }
         return harness.asWidget();
     }
 }

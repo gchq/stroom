@@ -110,10 +110,14 @@ Also on the harness, for what Stroom's app does around a screen:
 
 * **`afterStartUp(action)`** runs the action once the harness has loaded the UI config into its
   `UiConfigCache` and the user's preferences into `CurrentPreferences`, as Stroom does at login
-  before it shows any screen. Create the screen in it when the screen (or anything it creates) calls
-  `UiConfigCache.get(consumer)` before the config is cached (a GWT bug: `get` then also calls the
-  consumer with null at once) or uses an editor (`EditorPresenter` reads the editor preferences).
-  If in doubt, use it: it costs two fixture replies.
+  before it shows any screen. Create the screen in it when the screen (or anything it creates)
+  reads the cached UI config at once (e.g. a `ClassificationLabel`'s colours) or the user's
+  preferences (`EditorPresenter` reads the editor preferences, lists format dates with them).
+  `UiConfigCache.get(consumer)` fetches the config when nothing is cached (it once also called the
+  consumer with null at once, now fixed), so a screen that only uses that may work without it (most
+  of the Users screen's stories open it at once), but each call made before the config arrives is
+  answered, which a screen may not expect (`UserListPresenter` then sets up its columns twice). If
+  in doubt, use it: it costs two fixture replies and is the order Stroom opens screens in.
 * **Menus**: the harness installs Stroom's `Menu`, so `ShowMenuEvent`s (an `ActionMenuCell`'s
   'Actions...' menu, a grid's context menu) show Stroom's real menu on the page's body. Don't
   install another (menus would show twice).
@@ -690,9 +694,10 @@ one closest to your screen.
 
 ### Start-up, permissions and users
 
-* Create screens inside `harness.afterStartUp(...)` when they read the UI config or use an editor
-  (lists with user cells, document editors, the Server Tasks screen). It does nothing harmful for
-  others.
+* Create screens inside `harness.afterStartUp(...)` as Stroom opens them after login, and always
+  when they read the cached UI config or the user's preferences (lists that format dates, document
+  editors). It does nothing harmful for others. (Most of the Users screen's stories open it at once,
+  as the regression test of `UiConfigCache.get` calling its consumer with null.)
 * React's `fetchEffectiveAppPermissions` → `.appPermissions(...)` (default `ADMINISTRATOR`, which
   implies every permission); a React read-only `ctx`/`readOnly` →
   `harness.getSecurityContext().setDocumentPermission(DocumentPermission.VIEW)` before the plugin's
@@ -749,11 +754,12 @@ one closest to your screen.
   or read `window.__workbenchPlay.error`. When it is a Stroom bug, record it (`GWT bug` in
   `REACT-DIFFERENCES.md`), port what still works (e.g. a fixture without the key that triggers it)
   and suggest the fix in your report.
-* Stroom bugs found by the pilot, which other screens may hit: `UiConfigCache.get` calling its
-  consumer with null (use `afterStartUp`); confirmation callbacks that ignore `ok`
-  (`JobNodeListHelper.executeJobNow`, `UserTaskManagerPresenter.onTerminate`);
-  `new DocRef(type, null, name)` (null UUIDs are refused); unquoted quick filter terms built from
-  names with spaces (`UserAndGroupHelper.buildDisplayNameFilterInput`).
+* Stroom bugs found by the pilot, which other screens may hit: confirmation callbacks that ignore
+  `ok` (`JobNodeListHelper.executeJobNow`, `UserTaskManagerPresenter.onTerminate`); unquoted quick
+  filter terms built from names with spaces (`UserAndGroupHelper.buildDisplayNameFilterInput`).
+  Fixed since, with stories as their regression tests: `UiConfigCache.get` calling its consumer with
+  null (`UsersScreen`); `new DocRef(type, null, name)` for the Server Tasks screen's 'Open Feed'
+  (null UUIDs are refused; it now looks the feed up by name: `ServerTasksScreen`'s `InfoActions`).
 
 ### Module inherits added by the pilot
 
@@ -799,12 +805,14 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
   `DIALOG` config: Stroom's default, `DOCK`, needs the app's main layout) and register the chat with
   `AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter)`
   (`DashboardEditor`'s `TableAskAiButton`, `QueryEditor`'s `AskAiButton`). It creates the presenter
-  on the first event, as its GWTP proxy does. Don't create the presenter before start-up (e.g. in a
-  `DashboardSupport` `setup`): its constructor reads the AI config from the user's preferences, and
-  as Stroom's default preferences have no `askStroomAiConfig` it fetches the default and stores it
-  by copying the current preferences, which are still null until `afterStartUp` has loaded them
-  ("Cannot read properties of undefined (reading 'copy')", from `AskStroomAiClient.setConfig`).
-  Stroom never hits this, as the proxy creates the presenter after login.
+  on the first event, as its GWTP proxy does, i.e. after start-up. Don't create the presenter
+  before start-up (e.g. in a `DashboardSupport` `setup`): its constructor reads the AI config from
+  the user's preferences, and as Stroom's default preferences have no `askStroomAiConfig` it
+  fetches the default and stores it in a copy of the current preferences, which are still null
+  until `afterStartUp` has loaded them. That once failed ("Cannot read properties of undefined
+  (reading 'copy')", from `AskStroomAiClient.setConfig`); `setConfig` now skips storing the config
+  without preferences, so creating it after start-up is for fidelity (the default is then stored,
+  as in Stroom).
 * A polling chat (AI) uses a stateless `RestHandler` that replies with the messages after the
   request's `lastSeenMessageId`, as the server does (a repeated reply would add the messages again);
   `RestReply.delayed(...)` keeps a request in flight (e.g. to show a Stop button).
@@ -1056,10 +1064,13 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
   dy)`, which computes the drop point from the target's rectangle when the step runs. A window close
   is `closeWindow(play)` (`beforeunload`). Request bodies are read with `at(json, path...)`,
   `param`, `componentIds` and `componentRequest`.
-* **Stroom bugs that shape the plays** (see `REACT-DIFFERENCES.md`): a dashboard search whose
-  `update` throws polls forever (e.g. `QueryPresenter.getCurrentErrors` for a Query that hasn't
-  searched: run every Query once); `DoubleSelectTester` counts two quick list refreshes as a double
-  select (wait 600ms before changing a list in a dialog).
+* **Stroom bugs that shaped the plays**, now fixed: a dashboard search whose `update` throws polls
+  forever, and `QueryPresenter.getCurrentErrors` threw for a Query that hadn't searched (the
+  selection-driven stories run only the master query and check every search completes: no Query
+  button left as 'Stop Query'); `MySingleSelectionModel` counted two quick list refreshes as a
+  double select, which closed the Query Favourites dialog (`QueryHistoryAndFavourites` changes the
+  list quickly and checks the dialog stays open). Any other exception in a search's `update` would
+  still poll forever, so check for a Query still searching when a play waits for nothing.
 * **Private iteration**: as the editors batch, the dashboard batch compiled only its own classes
   (`javac` into a private classes dir ahead of the workbench's on the GWT classpath, and an
   `AllStories` override) so other batches' broken code couldn't stop it.

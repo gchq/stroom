@@ -98,12 +98,6 @@ public final class DashboardComponentStories {
     // The spy of the app's stepping event
     private static final String BEGIN_STEPPING = "beginStepping";
 
-    // How long to wait before the favourites' list changes: GWT's DoubleSelectTester counts clearing
-    // the selection (MySingleSelectionModel.clear(), which the list's refresh does) as selecting, so
-    // a refresh within the double click period of the previous selection or refresh is a 'double
-    // select', which closes the dialog
-    private static final int DOUBLE_SELECT_WAIT = 600;
-
     // The Text component's Step button (React's title 'Step')
     private static final String STEP = "Enter Stepping Mode";
 
@@ -439,17 +433,21 @@ public final class DashboardComponentStories {
                     play.click(favourites.getByTitle("Create Favourite From Current Query"));
                     final Play name = DashboardPlays.dialog(screen, "Create New Favourite");
                     play.type(name.querySelector("input"), "My Fav");
-                    // Differs from React: the play waits before each change of the list (see
-                    // DOUBLE_SELECT_WAIT)
-                    play.sleep(DOUBLE_SELECT_WAIT);
+                    // The list changes quickly (each refresh clears its selection), and the dialog
+                    // stays open: clearing a selection twice within the double click period is not
+                    // a double select (MySingleSelectionModel once counted it as one, which closed
+                    // the dialog)
                     play.click(name.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(favourites.getByText("My Fav")).toBeInTheDocument());
+                    play.expect(screen.getByText("Query Favourites", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                     play.click(favourites.getByText("My Fav"));
                     play.click(favourites.getByTitle("Delete Favourite"));
-                    play.sleep(DOUBLE_SELECT_WAIT);
                     play.click(screen.within(screen.findByText("Are you sure you want to delete this favourite?")
                             .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(favourites.queryByText("My Fav")).toBeNull());
+                    // Still open after the list's changes (a double select would have closed it)
+                    play.sleep(100);
+                    play.expect(screen.getByText("Query Favourites", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/storedQuery/v1/create")
                                     .withJsonBodyContaining("{\"name\": \"My Fav\", \"favourite\": true}")

@@ -51,6 +51,8 @@ import java.util.Map;
 public final class AnnotationEditorStories {
 
     private static final String CHANGE_PATH = "/annotation/v1/change";
+    // FindAnnotationPresenter's warning for OK with no annotation selected
+    private static final String NOTHING_SELECTED = "No annotation has been selected";
 
     private static final String ENTRIES = "["
             + AnnotationFixtures.entry(1, "STATUS", "Alice", 1700000000000L, "Open", null)
@@ -109,16 +111,30 @@ public final class AnnotationEditorStories {
                     play.waitFor(() -> play.expect(screen.getByText("Choose Annotation")).toBeInTheDocument());
                     final Play chooser = screen.within(screen.getByText("Choose Annotation").closest(StroomDom.DIALOG));
                     // Differs from React: GWT doesn't select the first annotation found (its list only
-                    // selects the first result when the filter changes), and OK with nothing selected
-                    // throws, so the annotation is selected first
-                    play.click(chooser.findByText("Related alert"));
+                    // selects the first result when the filter changes), so OK with nothing selected
+                    // warns and keeps the chooser open; the annotation is then selected
+                    play.expect(chooser.findByText("Related alert").closest("tr"))
+                            .not().toHaveClass("cellTableSelectedRow");
+                    play.click(chooser.getByRole("button", StroomDom.button("OK")));
+                    final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
+                    play.click(warning.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText(NOTHING_SELECTED)).toBeNull());
+                    play.expect(screen.getByText("Choose Annotation", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH).toSpyMatcher());
+                    play.click(chooser.getByText("Related alert"));
                     play.click(chooser.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(CHANGE_PATH)
                                     .withJsonBodyContaining("{\"change\": {\"type\": \"linkAnnotations\", "
                                             + "\"annotations\": [99]}}")
                                     .toSpyMatcher()));
-                    ContentStorySupport.expectNoProblems(play);
+                    play.waitFor(() -> play.expect(screen.queryByText("Choose Annotation", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    // The warning is the only alert
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledTimes(1);
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Events tab: "Add Event Link" asks for streamId:eventId and links it
                 .story("AddEventLink", context -> render(context, fixtures(ENTRIES).build()))

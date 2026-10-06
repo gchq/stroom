@@ -36,6 +36,7 @@ import stroom.security.shared.UserFields;
 import stroom.security.shared.UserResource;
 import stroom.svg.client.Preset;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -390,8 +391,15 @@ public class UserListPresenter
     public void refresh() {
         if (dataProvider == null) {
             uiConfigCache.get(extendedUiConfig -> {
-                isExternalIdp = extendedUiConfig.isExternalIdentityProvider();
-                initDataProvider();
+                // Another refresh may have set up the data provider while the config was fetched
+                if (dataProvider == null) {
+                    // The config is null if it couldn't be fetched (an error will have been shown)
+                    isExternalIdp = NullSafe.isTrue(extendedUiConfig,
+                            ExtendedUiConfig::isExternalIdentityProvider);
+                    initDataProvider();
+                } else {
+                    dataProvider.refresh();
+                }
             });
         } else {
 //            GWT.log(name + " - refresh");

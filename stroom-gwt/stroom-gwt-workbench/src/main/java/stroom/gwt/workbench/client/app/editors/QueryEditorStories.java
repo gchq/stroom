@@ -96,6 +96,9 @@ public final class QueryEditorStories {
               "description": "# Query docs"
             }""";
 
+    // FindAnnotationPresenter's warning for OK with no annotation selected
+    private static final String NOTHING_SELECTED = "No annotation has been selected";
+
     // React's TABLE_RESPONSE: one table result with four columns and two rows, the second
     // annotated
     static final String TABLE = QueryFixtures.tableResult("table", """
@@ -743,7 +746,7 @@ public final class QueryEditorStories {
                 })
                 // Add To Annotation: choose an existing annotation, link the row's event to it and
                 // open it
-                .story("AddToAnnotation", context -> render(context, ANNOTATION_FIXTURES, null, false,
+                .story("AddToAnnotation", context -> render(context, ANNOTATION_FIXTURES, null, false, true,
                         QueryEditorStories::findAnnotation))
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -753,9 +756,19 @@ public final class QueryEditorStories {
                     play.click(screen.findByText("Add To Annotation", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Choose Annotation");
                     // Differs from React: GWT doesn't select the first annotation (the list only
-                    // selects it when the filter changes), and OK with none selected fails, so the
-                    // play selects it
-                    play.click(dialog.findByText("Existing incident"));
+                    // selects it when the filter changes), so OK with none selected warns and keeps
+                    // the chooser open; the play then selects it
+                    play.expect(dialog.findByText("Existing incident").closest("tr"))
+                            .not().toHaveClass("cellTableSelectedRow");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    final Play warning = screen.within(screen.findByText(NOTHING_SELECTED).closest(StroomDom.DIALOG));
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_SELECTED);
+                    play.click(warning.getByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText(NOTHING_SELECTED)).toBeNull());
+                    play.expect(screen.getByText("Choose Annotation", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/annotation/v1/change").toSpyMatcher());
+                    play.click(dialog.getByText("Existing incident"));
                     play.waitFor(() -> play.expect(dialog.getByText("Existing incident").closest("tr"))
                             .toHaveClass("cellTableSelectedRow"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
@@ -765,7 +778,9 @@ public final class QueryEditorStories {
                                     + "\"linkEvents\", \"events\": [{\"streamId\": 1001, \"eventId\": 5}]}}")
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(play.spy(EDIT_ANNOTATION)).toHaveBeenCalledWith("77"));
-                    DocumentEditors.expectNoProblems(play);
+                    // The warning is the only alert
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledTimes(1);
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // A STEPPING link begins stepping at the 0 based part and record
                 .story("SteppingHyperlink", context -> render(context, STEPPING_FIXTURES, null, false,
@@ -1033,10 +1048,24 @@ public final class QueryEditorStories {
                                  final String uiConfig,
                                  final boolean readOnly,
                                  final BiConsumer<ScreenHarness, QueryScreenGinjector> setup) {
+        return render(context, fixtures, uiConfig, readOnly, false, setup);
+    }
+
+    // As above; with `realAlerts`, alerts are shown as Stroom shows them (e.g. for a play that
+    // dismisses one)
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final String uiConfig,
+                                 final boolean readOnly,
+                                 final boolean realAlerts,
+                                 final BiConsumer<ScreenHarness, QueryScreenGinjector> setup) {
         final QueryScreenGinjector injector = GWT.create(QueryScreenGinjector.class);
         final ScreenHarness.Builder builder = ScreenHarness.builder(context, fixtures).injector(injector);
         if (uiConfig != null) {
             builder.uiConfig(uiConfig);
+        }
+        if (realAlerts) {
+            builder.realAlerts();
         }
         final ScreenHarness harness = builder.build();
         harness.getSecurityContext().setDocumentPermission(readOnly

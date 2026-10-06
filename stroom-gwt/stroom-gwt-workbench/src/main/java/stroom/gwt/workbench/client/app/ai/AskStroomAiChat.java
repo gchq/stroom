@@ -29,12 +29,13 @@ import java.util.function.Supplier;
 /// AI toggle), as the presenter's GWTP proxy does in Stroom.
 ///
 /// Like the proxy (`@ProxyCodeSplit`), it creates the presenter only when the first of those events
-/// is fired, i.e. after start-up. That matters: the presenter reads its configuration from the user's
-/// preferences as it is created (`AskStroomAiClient.getConfig`), and when they have no
-/// `askStroomAiConfig` (Stroom's default preferences have none) it fetches the default config and
-/// copies the current preferences to store it in them. A presenter created before the harness has
-/// loaded the preferences (e.g. in a story's set up, before `ScreenHarness.afterStartUp`) copies
-/// null preferences and fails with "Cannot read properties of undefined (reading 'copy')".
+/// is fired, i.e. after start-up, so the chat starts as it does in Stroom. The presenter reads its
+/// configuration from the user's preferences as it is created (`AskStroomAiClient.getConfig`), and
+/// when they have no `askStroomAiConfig` (Stroom's default preferences have none) it fetches the
+/// default config and stores it in a copy of the current preferences. Created after start-up, the
+/// preferences are loaded and the default is stored in them, as in Stroom. (A presenter created
+/// before the preferences had loaded once failed copying null preferences; `AskStroomAiClient.setConfig`
+/// now skips storing the config then, so the lazy creation is only for fidelity.)
 ///
 /// Add the chat's routes with [AiFixtures#chatRoutes(stroom.gwt.workbench.client.app.rest.RestFixtures.Builder)].
 public final class AskStroomAiChat {

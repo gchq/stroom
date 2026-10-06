@@ -306,8 +306,8 @@ public final class ScreenHarness {
     /// keeping the workbench page's own theme classes, which Stroom would replace with the user's).
     /// Screens rely on both:
     ///
-    /// * `UiConfigCache.get(consumer)`, when nothing is cached, fetches the config but also calls the
-    ///   consumer with null at once, which fails in e.g. `UserListPresenter.refresh()`;
+    /// * some read the cached config at once (e.g. a `ClassificationLabel` reads the label colours
+    ///   as it is created), rather than with `UiConfigCache.get(consumer)`, which fetches it first;
     /// * editors (`EditorPresenter`) read the editor preferences, which are null until set.
     ///
     /// The action isn't run if the story has rendered again meanwhile; a failure in it is reported

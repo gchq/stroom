@@ -62,7 +62,7 @@ final class DisplayWidgets {
     /// @param action  What to do once the UI config is in the cache.
     static void whenUiConfigLoaded(final ScreenHarness harness, final Runnable action) {
         harness.getUiConfigCache().get(config -> {
-            // Called with null at once if the config hasn't been fetched yet, then again when it has
+            // Called once the config has been fetched (with null if fetching it failed)
             if (config != null) {
                 action.run();
             }

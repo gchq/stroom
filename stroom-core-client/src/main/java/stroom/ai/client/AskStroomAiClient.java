@@ -61,6 +61,11 @@ public class AskStroomAiClient {
 
     public void setConfig(final AskStroomAiConfig config, final TaskMonitorFactory taskMonitorFactory) {
         final UserPreferences currentPrefs = userPreferencesManager.getCurrentUserPreferences();
+        if (currentPrefs == null) {
+            // The user's preferences haven't been loaded yet, so the config can't be saved
+            // without losing them; it will be fetched again when next needed
+            return;
+        }
         final UserPreferences newPrefs = currentPrefs.copy()
                 .askStroomAiConfig(config)
                 .build();
