@@ -16,6 +16,7 @@
 
 package stroom.annotation.client;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.annotation.client.FindAnnotationPresenter.FindAnnotationProxy;
 import stroom.annotation.shared.Annotation;
 import stroom.explorer.client.presenter.AbstractFindPresenter.FindView;
@@ -85,7 +86,13 @@ public class FindAnnotationPresenter
                     .onShow(e -> getView().focus())
                     .onHideRequest(e -> {
                         if (e.isOk()) {
-                            event.getAnnotationConsumer().accept(findResultListPresenter.getSelected());
+                            final Annotation selected = findResultListPresenter.getSelected();
+                            if (selected == null) {
+                                // The consumers can't handle no annotation, so keep the dialog open
+                                AlertEvent.fireWarn(this, "No annotation has been selected", e::reset);
+                                return;
+                            }
+                            event.getAnnotationConsumer().accept(selected);
                         }
                         e.hide();
                     })
