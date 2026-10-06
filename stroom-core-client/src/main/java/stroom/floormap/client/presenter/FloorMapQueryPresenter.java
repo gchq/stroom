@@ -182,17 +182,17 @@ public class FloorMapQueryPresenter
 
     /// Refreshes the per-role column dropdowns from the latest table columns, preserving the user's
     /// current selections where possible.
+    ///
+    /// With no result yet — the tab opened without the query being run — the lists are seeded from
+    /// the mapping's own column names instead, and the view is told to say why the list is short.
+    /// Without this the lists were empty and no role could be changed until the query was run.
+    /// A result holding only special columns counts as no result — see [#selectableColumnNames].
     private void updateColumnSelections() {
-        final List<Column> columns = queryEditPresenter.getQueryResultPresenter()
+        final List<String> colNames = selectableColumnNames(queryEditPresenter.getQueryResultPresenter()
                 .getTablePresenter()
-                .getCurrentColumns();
+                .getCurrentColumns());
 
-        if (columns != null && !columns.isEmpty()) {
-            final List<String> colNames = columns
-                    .stream()
-                    .map(Column::getName)
-                    .toList();
-
+        if (!colNames.isEmpty()) {
             // Save what is selected now, before repopulating drops anything the new result does
             // not offer.
             final FloorMapEventColumns onScreen = getView().getEventColumns();
@@ -214,7 +214,62 @@ public class FloorMapQueryPresenter
             }
             currentEventColumns = next;
             getView().setEventColumns(currentEventColumns);
+            getView().setColumnsHintVisible(false);
+        } else {
+            // No result to check the mapping against, so offer what it already names and leave it
+            // alone. Unmapping roles whose column is "missing" here would wipe every role, because
+            // with no result every column is missing.
+            getView().setAvailableColumns(mappedColumnNames(currentEventColumns));
+            getView().setEventColumns(currentEventColumns);
+            getView().setColumnsHintVisible(true);
         }
+    }
+
+    /// The names of the result columns a role may be mapped to.
+    ///
+    /// Special columns are left out. An ungrouped query's result always carries hidden bookkeeping
+    /// columns such as `__stream_id__` and `__event_id__`, which the query never selects and the
+    /// results table never shows, so offering them would let a role be pointed at a column the
+    /// query does not select.
+    ///
+    /// @param columns the result columns; may be `null`
+    /// @return the selectable column names, in result order; never `null`
+    static List<String> selectableColumnNames(final List<Column> columns) {
+        final List<String> names = new ArrayList<>();
+        if (columns == null) {
+            return names;
+        }
+        for (final Column column : columns) {
+            if (column != null && !Boolean.TRUE.equals(column.isSpecial())) {
+                names.add(column.getName());
+            }
+        }
+        return names;
+    }
+
+    /// The distinct column names a mapping refers to, in [FloorMapEventRole] order.
+    ///
+    /// Used to seed the dropdowns before any result exists. These are only what the document
+    /// currently maps, not columns known to exist: the defaults match the default query's aliases,
+    /// but nothing checks any name against an edited query until it is run, when
+    /// [#updateColumnSelections()] unmaps any role whose column the result lacks. Offering only
+    /// these means seeding can never introduce a name the mapping does not already hold.
+    ///
+    /// @param eventColumns the mapping to read; may be `null`
+    /// @return the mapped column names, without duplicates or unmapped roles; never `null`
+    static List<String> mappedColumnNames(final FloorMapEventColumns eventColumns) {
+        final List<String> names = new ArrayList<>();
+        if (eventColumns == null) {
+            return names;
+        }
+        for (final FloorMapEventRole role : FloorMapEventRole.values()) {
+            // getColumn already returns null for a blank column.
+            final String column = eventColumns.getColumn(role);
+            if (column != null && !names.contains(column)) {
+                names.add(column);
+            }
+        }
+        return names;
     }
 
     /// Reduces a time window to the most recent row per entity.
@@ -609,5 +664,11 @@ public class FloorMapQueryPresenter
         void setColumnChangeHandler(Runnable handler);
 
         void setColumnMappingsVisible(boolean visible);
+
+        /// Shows or hides the hint explaining that the column lists only hold the mapped columns
+        /// until the query has been run.
+        ///
+        /// @param visible `true` to show the hint
+        void setColumnsHintVisible(boolean visible);
     }
 }
