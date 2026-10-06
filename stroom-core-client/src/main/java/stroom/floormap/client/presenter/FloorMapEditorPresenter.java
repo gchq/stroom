@@ -26,6 +26,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.floormap.client.FloorMapEditorHelp;
 import stroom.floormap.client.editor.FloorMapDocSession;
 import stroom.floormap.client.editor.FloorMapEditorModel;
+import stroom.floormap.client.editor.FloorMapFactEndMessages;
 import stroom.floormap.client.editor.FloorMapPendingChanges;
 import stroom.floormap.client.event.FloorMapDataEvent;
 import stroom.floormap.client.event.MapContextMenuEvent;
@@ -38,6 +39,7 @@ import stroom.floormap.client.value.ParsedValue;
 import stroom.floormap.client.value.ValueAccessor;
 import stroom.floormap.client.value.ValueAccessorFactory;
 import stroom.floormap.shared.FloorMapDoc;
+import stroom.floormap.shared.FloorMapFactStatus;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.FloorMapJsonKeys;
@@ -74,7 +76,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -206,6 +210,7 @@ public class FloorMapEditorPresenter
     /// Settings tab writes `valueSchema` wholesale on save and would
     /// otherwise silently revert the upgrade.
     private Runnable areaSupportEnabledListener;
+    private Runnable statusSupportEnabledListener;
 
     /// Whether the timeline range/scrubber has been initialised. Set on the first
     /// `onRead`; a save triggers a re-read of every tab, and the timeline
@@ -371,6 +376,7 @@ public class FloorMapEditorPresenter
         floorMapFactListPresenter.setShowAllConsumer(() -> onShowAllFactsToggled(true));
         floorMapFactListPresenter.setShowTimeFilteredConsumer(() -> onShowAllFactsToggled(false));
         floorMapFactListPresenter.setAddConsumer(this::onAddFactToFactList);
+        floorMapFactListPresenter.setEndConsumer(key -> onEndFacts(Collections.singletonList(key)));
         floorMapFactListPresenter.setDeleteConsumer(this::onDeleteFactFromFactList);
 
         // ---- Time List selection / toolbar ----------------------------------
@@ -378,6 +384,7 @@ public class FloorMapEditorPresenter
         floorMapTimeListPresenter.setEditConsumer(this::onEditTimeInTimeList);
         floorMapTimeListPresenter.setAddConsumer(this::onAddTimeInTimeList);
         floorMapTimeListPresenter.setDeleteConsumer(this::onDeleteTimeFromTimeList);
+        floorMapTimeListPresenter.setDeletedTest(this::isHidden);
     }
 
     // -----------------------------------------------------------------------
@@ -490,11 +497,15 @@ public class FloorMapEditorPresenter
         return docSession.applyToWrite(document);
     }
 
-    /// The value schema in effect for this editing session: the pending
-    /// area-support upgrade when one exists, otherwise the entity's persisted
-    /// schema.
+    /// The value schema in effect for this editing session: the entity's persisted
+    /// schema with any pending area- or status-support upgrade applied.
     private List<FloorMapFieldMapping> valueSchema() {
         return docSession.valueSchema(getEntity().getValueSchema());
+    }
+
+    /// The value accessor for the document's value format.
+    private ValueAccessor accessor() {
+        return ValueAccessorFactory.forFormat(getEntity().getValueFormat());
     }
 
     /// The type styles in effect for this editing session (see
@@ -516,6 +527,14 @@ public class FloorMapEditorPresenter
     /// (see [#ensureAreaSupport]).
     public void setAreaSupportEnabledListener(final Runnable listener) {
         this.areaSupportEnabledListener = listener;
+    }
+
+    /// Sets the callback notified when status support is enabled on this document
+    /// (see [#ensureStatusSupport]).
+    ///
+    /// @param listener the callback; may be `null`
+    public void setStatusSupportEnabledListener(final Runnable listener) {
+        this.statusSupportEnabledListener = listener;
     }
 
     /// Adopts an initial view `{scale, offsetX, offsetY}` computed by the
@@ -568,8 +587,7 @@ public class FloorMapEditorPresenter
                             ? result.getValues()
                             : null;
                     final List<Fact> parsed = FloorMapEntryParser.parse(
-                            entries, schema,
-                            ValueAccessorFactory.forFormat(getEntity().getValueFormat()), null);
+                            entries, schema, accessor(), null);
                     for (final Fact fact : parsed) {
                         if (fact.getType() != null && !fact.getType().isEmpty()) {
                             discovered.add(fact.getType());
@@ -924,7 +942,7 @@ public class FloorMapEditorPresenter
         // Update canvas using shared parser (applies world-to-map transform)
         final List<Fact> facts = model.parseForCanvas(
                 entries, valueSchema(),
-                ValueAccessorFactory.forFormat(getEntity().getValueFormat()));
+                accessor());
         floorMapCanvasPresenter.setTypeStyles(typeStyles());
         floorMapCanvasPresenter.setFacts(facts);
         // Accumulate fact types seen on the canvas and surface any not yet
@@ -952,11 +970,17 @@ public class FloorMapEditorPresenter
     /// @param entries merged entries (server data + pending changes)
     private void updateFactList(final List<TemporalEntry> entries) {
         final List<FloorMapFieldMapping> schema = valueSchema();
+        final boolean showAll = model.isShowAllFacts();
         final List<FloorMapFactListPresenter.FactObject> factObjects = new ArrayList<>();
-        final Set<String> seenKeys = new HashSet<>();
-        for (final TemporalEntry entry : entries) {
-            if (seenKeys.add(entry.getKey())) {
-                factObjects.add(FloorMapFactListPresenter.FactObject.fromEntry(entry, schema));
+        // The latest version per key decides whether a fact is deleted.
+        for (final TemporalEntry entry : model.latestEntryPerKey(entries, !showAll)) {
+            final FloorMapFactListPresenter.FactObject factObject =
+                    FloorMapFactListPresenter.FactObject.fromEntry(entry, schema);
+            if (!isHidden(entry)) {
+                factObjects.add(factObject);
+            } else if (showAll) {
+                // Listed when showing all, so a deletion can be found and undone in the Time List.
+                factObjects.add(factObject.asDeleted());
             }
         }
 
@@ -1026,7 +1050,7 @@ public class FloorMapEditorPresenter
         try {
             final int n = model.transformFacts(keys, transform,
                     valueSchema(),
-                    ValueAccessorFactory.forFormat(getEntity().getValueFormat()));
+                    accessor());
             if (n > 0) {
                 setDirty(true);
             }
@@ -1050,7 +1074,7 @@ public class FloorMapEditorPresenter
         try {
             final boolean changed = model.updateFactGeometry(key, localVertices,
                     valueSchema(),
-                    ValueAccessorFactory.forFormat(getEntity().getValueFormat()));
+                    accessor());
             if (changed) {
                 setDirty(true);
             }
@@ -1179,7 +1203,16 @@ public class FloorMapEditorPresenter
             return;
         }
 
-        final TemporalEntry newEntry = model.buildNewEntryAtTime(mapName, newTime);
+        final TemporalEntry cloned = model.buildNewEntryAtTime(mapName, newTime);
+        // Adding a version to a deleted fact is how it is brought back, so the copy must not
+        // inherit the deleted status of the version it was cloned from.
+        final TemporalEntry newEntry = isHidden(cloned)
+                ? FloorMapEditorModel.withStatus(
+                        cloned,
+                        FloorMapFactStatus.ACTIVE,
+                        valueSchema(),
+                        accessor())
+                : cloned;
 
         floorMapObjectEditPresenter.show(
                 "Add Time Properties",
@@ -1202,7 +1235,7 @@ public class FloorMapEditorPresenter
         onAddObjectAtPosition(centre[0], centre[1]);
     }
 
-    /// Called when the Fact List's Delete button is clicked.
+    /// Called for Erase History, from the Fact List or the canvas context menu.
     /// Confirms with the user then stages deletions for all time-entries of the selected fact.
     ///
     /// @param key the fact key to delete
@@ -1220,7 +1253,9 @@ public class FloorMapEditorPresenter
         // the selected fact's panels).
         final boolean wasSelected = key.equals(model.getSelectedFactKey());
         ConfirmEvent.fire(this,
-                "Delete all entries for '" + key + "'? This cannot be undone.",
+                "Erase every version of '" + key + "'? It will disappear at all times, "
+                + "and this cannot be undone once saved. To remove it from the current time "
+                + "onwards and keep its history, use Delete From This Time instead.",
                 ok -> {
                     if (ok) {
                         deleteAllShardsForKey(mapName, key, () -> {
@@ -1362,7 +1397,9 @@ public class FloorMapEditorPresenter
     ///   - "Add Time Version" — creates a new effective time entry at the scrubber
     ///     position, cloned from the current version
     ///   - "Duplicate Object" — clones the object with a new key, offset slightly
-    ///   - "Delete Object" — confirms and stages deletion of all time entries
+    ///   - "Delete From This Time" — confirms and stages a version at the scrubber
+    ///     position that marks the object deleted, keeping its history
+    ///   - "Erase History" — confirms and stages deletion of all time entries
     ///
     /// @param objectId the right-clicked object's key, or `null` for empty canvas
     /// @param mapX     map-space X coordinate of the click
@@ -1424,8 +1461,14 @@ public class FloorMapEditorPresenter
                     .build());
             menuItems.add(new IconMenuItem.Builder()
                     .priority(2)
+                    .icon(SvgImage.REMOVE)
+                    .text("Delete Selected From This Time (" + n + ")")
+                    .command(() -> onEndFacts(keys))
+                    .build());
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(3)
                     .icon(SvgImage.DELETE)
-                    .text("Delete Selected (" + n + ")")
+                    .text("Erase History of Selected (" + n + ")")
                     .command(() -> onDeleteObjects(keys))
                     .build());
         } else {
@@ -1503,11 +1546,19 @@ public class FloorMapEditorPresenter
                     .command(() -> onDuplicateObject(objectId))
                     .build());
 
-            // Delete Object
+            // Delete From This Time - ends the object, keeping its history
             menuItems.add(new IconMenuItem.Builder()
                     .priority(4)
+                    .icon(SvgImage.REMOVE)
+                    .text("Delete From This Time")
+                    .command(() -> onEndFacts(Collections.singletonList(objectId)))
+                    .build());
+
+            // Erase History - removes every version
+            menuItems.add(new IconMenuItem.Builder()
+                    .priority(5)
                     .icon(SvgImage.DELETE)
-                    .text("Delete Object")
+                    .text("Erase History")
                     .command(() -> onDeleteFactFromFactList(objectId))
                     .build());
 
@@ -1515,7 +1566,7 @@ public class FloorMapEditorPresenter
             // background image, so area drawing must also be reachable from a
             // right-click that lands on the background (or any object).
             menuItems.add(new IconMenuItem.Builder()
-                    .priority(5)
+                    .priority(6)
                     .icon(SvgImage.PEN)
                     .text("Draw Area Here")
                     .command(() -> ensureAreaSupport(
@@ -1527,7 +1578,7 @@ public class FloorMapEditorPresenter
             // action only on the empty-canvas branch is one most users can never
             // right-click their way to.
             menuItems.add(new IconMenuItem.Builder()
-                    .priority(6)
+                    .priority(7)
                     .icon(SvgImage.DOUBLE_ARROW)
                     .text("Set Scale")
                     .command(floorMapCanvasPresenter::startScaleMeasurement)
@@ -1654,6 +1705,43 @@ public class FloorMapEditorPresenter
                 });
     }
 
+    /// Runs `onReady` once this document maps the Status role, upgrading the
+    /// document if needed.
+    ///
+    /// Documents created before facts could be deleted from a point in time lack
+    /// the `STATUS` schema mapping, so there is nowhere to record that a fact has
+    /// been deleted. As for [#ensureAreaSupport], this offers to add the default
+    /// mapping rather than refusing; the upgrade is staged via
+    /// [FloorMapDocSession#stageStatusUpgrade] and persisted by [#onWrite] on
+    /// the next document save.
+    ///
+    /// @param onReady the action to run once status support is available
+    private void ensureStatusSupport(final Runnable onReady) {
+        if (FloorMapDocSession.hasStatusSupport(valueSchema())) {
+            onReady.run();
+            return;
+        }
+
+        ConfirmEvent.fire(this,
+                "This floor map is not yet configured for deleting objects from a point "
+                        + "in time. Add the default Status mapping to the Value Schema? The "
+                        + "document will be marked as modified.",
+                ok -> {
+                    if (!ok) {
+                        return;
+                    }
+                    docSession.stageStatusUpgrade(valueSchema(), getEntity().getValueFormat());
+                    // Re-hand the upgraded document to the object-edit dialog so it
+                    // resolves the new role immediately.
+                    floorMapObjectEditPresenter.setFloorMapDoc(sessionEntity());
+                    setDirty(true);
+                    if (statusSupportEnabledListener != null) {
+                        statusSupportEnabledListener.run();
+                    }
+                    onReady.run();
+                });
+    }
+
     /// Handles a finished Set Scale measurement: asks what the measured line
     /// really spans, and calibrates the document from the answer.
     ///
@@ -1699,7 +1787,7 @@ public class FloorMapEditorPresenter
             // Effective from epoch 0: the area exists across all past time.
             final TemporalEntry entry = FloorMapEditorModel.buildAreaEntry(
                     mapName, newKey, mapVertices, 0L, valueSchema(),
-                    ValueAccessorFactory.forFormat(getEntity().getValueFormat()));
+                    accessor());
 
             // Open the properties editor so the user can name/colour the area
             // before committing.
@@ -1765,7 +1853,9 @@ public class FloorMapEditorPresenter
         // Duplicate the shard the canvas is showing (active at the scrubber),
         // not merely the first key match — which could be a historical shard
         // under a pending time-version.
-        final TemporalEntry sourceEntry = model.activeMergedEntryForKey(originalKey);
+        // A deleted fact is skipped, since its copy would be deleted too.
+        final ValueAccessor accessor = accessor();
+        final TemporalEntry sourceEntry = model.duplicateSourceForKey(originalKey, valueSchema(), accessor);
         if (sourceEntry == null) {
             return null;
         }
@@ -1780,7 +1870,7 @@ public class FloorMapEditorPresenter
                     sourceEntry, mapName, newKey, model.getSelectedTime(),
                     offset, offset,
                     valueSchema(),
-                    ValueAccessorFactory.forFormat(getEntity().getValueFormat()));
+                    accessor);
 
             model.stageCreation(newEntry);
             setDirty(true);
@@ -1817,7 +1907,114 @@ public class FloorMapEditorPresenter
         }
     }
 
-    /// Deletes every fact in `keys` (group delete) after a single
+    /// Ends every fact in `keys` at the timeline position after a single confirmation, by
+    /// staging a version marked deleted for each (see [FloorMapEditorModel#stageFactEnd]).
+    /// History is kept: deleting the staged version in the Time List undoes it.
+    ///
+    /// A document without a Status mapping is offered one first (see [#ensureStatusSupport]).
+    ///
+    /// @param keys the fact keys to end
+    private void onEndFacts(final java.util.Collection<String> keys) {
+        if (keys.isEmpty()) {
+            return;
+        }
+        if (model.getSelectedTime() <= 0) {
+            AlertEvent.fireWarn(this,
+                    "Set a time on the timeline before deleting from it.",
+                    null);
+            return;
+        }
+        ensureStatusSupport(() -> endFacts(keys));
+    }
+
+    /// Ends every fact in `keys` that can be ended, once the document maps the Status role -
+    /// see [#onEndFacts].
+    ///
+    /// @param keys the fact keys to end
+    private void endFacts(final java.util.Collection<String> keys) {
+        final List<FloorMapFieldMapping> schema = valueSchema();
+        final ValueAccessor accessor = accessor();
+
+        // Checked before confirming, so the confirmation can say which keys will be skipped.
+        final List<String> endable = new ArrayList<>();
+        final Map<String, FloorMapEditorModel.FactEndCheck> skipped = new LinkedHashMap<>();
+        for (final String key : keys) {
+            final FloorMapEditorModel.FactEndCheck check = model.checkFactEnd(key, schema, accessor);
+            if (check == FloorMapEditorModel.FactEndCheck.OK) {
+                endable.add(key);
+            } else {
+                skipped.put(key, check);
+            }
+        }
+        if (endable.isEmpty()) {
+            AlertEvent.fireWarn(this,
+                    FloorMapFactEndMessages.nothingToEnd(skipped),
+                    null);
+            return;
+        }
+
+        // A later version brings a deleted fact back, so the confirmation has to say whether
+        // there are any. Only the version current at the timeline time is held, so fetch every
+        // version of the keys being ended - one request for the whole selection.
+        final String mapName = getMapName();
+        if (mapName == null) {
+            return;
+        }
+        restFactory.create(SQL_TEMPORAL_STORE_RESOURCE)
+                .method(res -> res.find(mapKeysCriteria(mapName, endable)))
+                .onSuccess(result -> confirmEndFacts(
+                        endable,
+                        skipped,
+                        model.laterVersionCounts(
+                                endable,
+                                result != null
+                                        ? result.getValues()
+                                        : new ArrayList<>()),
+                        schema,
+                        accessor))
+                // Not knowing is no reason to refuse: the confirmation says so instead.
+                .onFailure(error -> confirmEndFacts(endable, skipped, null, schema, accessor))
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    /// Asks the user to confirm ending `endable`, then stages it.
+    ///
+    /// @param endable      the keys that can be ended
+    /// @param skipped      the keys that cannot, with why
+    /// @param laterCounts  the number of versions after the timeline time for each key that has
+    ///         any, or `null` if that could not be found out
+    /// @param schema       the value schema
+    /// @param accessor     the value accessor
+    private void confirmEndFacts(final List<String> endable,
+                                 final Map<String, FloorMapEditorModel.FactEndCheck> skipped,
+                                 final Map<String, Integer> laterCounts,
+                                 final List<FloorMapFieldMapping> schema,
+                                 final ValueAccessor accessor) {
+        ConfirmEvent.fire(this,
+                FloorMapFactEndMessages.confirmation(endable, skipped, laterCounts),
+                ok -> {
+                    if (ok) {
+                        final Map<String, FloorMapEditorModel.FactEndCheck> outcomes =
+                                model.stageFactEnd(endable, schema, accessor);
+                        if (outcomes.containsValue(FloorMapEditorModel.FactEndCheck.OK)) {
+                            setDirty(true);
+                        }
+                        // Ended facts leave the selection, as an erased one does, so the
+                        // selection-driven panels are rebuilt from what is left.
+                        applySelection(new ArrayList<>(model.getSelectedFactKeys()));
+                        loadAtTime(model.getSelectedTime());
+                    }
+                });
+    }
+
+    /// Whether `entry` is a version that hides its fact - see
+    /// [FloorMapEditorModel#isHidden].
+    private boolean isHidden(final TemporalEntry entry) {
+        return FloorMapEditorModel.isHidden(entry, valueSchema(), accessor());
+    }
+
+    /// Erases every fact in `keys` (group delete) after a single
     /// confirmation, then clears the selection and refreshes.
     ///
     /// @param keys the fact keys to delete
@@ -1826,8 +2023,10 @@ public class FloorMapEditorPresenter
             return;
         }
         ConfirmEvent.fire(this,
-                "Delete all entries for the " + keys.size()
-                + " selected objects? This cannot be undone.",
+                "Erase every version of the " + keys.size()
+                + " selected objects? They will disappear at all times, and this cannot be "
+                + "undone once saved. To remove them from the current time onwards and keep "
+                + "their history, use Delete From This Time instead.",
                 ok -> {
                     if (ok) {
                         final String mapName = getMapName();

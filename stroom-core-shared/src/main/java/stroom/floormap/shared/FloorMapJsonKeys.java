@@ -44,6 +44,9 @@ public final class FloorMapJsonKeys {
     /// JSON field name for an area's fill opacity (number in `[0, 1]`).
     public static final String OPACITY = "opacity";
 
+    /// JSON field name for a fact version's lifecycle state (see [FloorMapFactStatus]).
+    public static final String STATUS = "status";
+
     /// Display name for the background object in the fact list UI.
     public static final String BACKGROUND_DISPLAY_NAME = "Background";
 

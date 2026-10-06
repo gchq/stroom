@@ -71,6 +71,11 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
     /// (see [FloorMapSettingsPresenter#applyAreaPatch()]).
     private boolean areaSupportEnabled;
 
+    /// Set when the Editor tab enables status support on this document, so a
+    /// Settings tab created *afterwards* still gets its grid patched
+    /// (see [FloorMapSettingsPresenter#applyStatusPatch()]).
+    private boolean statusSupportEnabled;
+
     /// The initial view `{scale, offsetX, offsetY}` the Map tab zoomed to
     /// fit on open, stashed so the Editor tab (opened afterwards) adopts the same
     /// zoom + translation and nothing jumps on the switch. `null` until the
@@ -118,6 +123,14 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                 areaSupportEnabled = true;
                 if (floorMapSettingsPresenter != null) {
                     floorMapSettingsPresenter.applyAreaPatch();
+                }
+            });
+            // Likewise when the Editor enables status support (a Status mapping, so
+            // facts can be deleted from a point in time).
+            floorMapEditorPresenter.setStatusSupportEnabledListener(() -> {
+                statusSupportEnabled = true;
+                if (floorMapSettingsPresenter != null) {
+                    floorMapSettingsPresenter.applyStatusPatch();
                 }
             });
             // Type styles are owned by the Editor's Layers panel and persisted
@@ -170,6 +183,9 @@ public class FloorMapPresenter extends DocTabPresenter<LinkTabPanelView, FloorMa
                 // Area support was enabled before this tab was first opened —
                 // keep its grid patched (idempotent; also re-applied on read).
                 floorMapSettingsPresenter.applyAreaPatch();
+            }
+            if (statusSupportEnabled) {
+                floorMapSettingsPresenter.applyStatusPatch();
             }
             return floorMapSettingsPresenter;
         }));

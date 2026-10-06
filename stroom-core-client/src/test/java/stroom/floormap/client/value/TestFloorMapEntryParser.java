@@ -720,6 +720,66 @@ class TestFloorMapEntryParser {
                 .isEqualTo("Loading Bay");
     }
 
+    // -----------------------------------------------------------------------
+    // parse — status
+    // -----------------------------------------------------------------------
+
+    /// A version whose status is DELETED yields no fact, whatever else it carries.
+    @Test
+    void testParse_deletedStatusYieldsNoFact() {
+        final List<Fact> facts = FloorMapEntryParser.parse(
+                List.of(entry("desk-1", 100,
+                                "{\"type\":\"desk\",\"coords\":[1,2],\"status\":\"DELETED\"}"),
+                        entry("desk-2", 100,
+                                "{\"type\":\"desk\",\"coords\":[3,4],\"status\":\"ACTIVE\"}"),
+                        entry("desk-3", 100, "{\"type\":\"desk\",\"coords\":[5,6]}")),
+                SCHEMA, ACCESSOR, warnings::add);
+
+        assertThat(facts).extracting(Fact::getKey).containsExactly("desk-2", "desk-3");
+        assertThat(warnings).isEmpty();
+    }
+
+    /// A bare deleted version is enough.
+    @Test
+    void testParse_bareDeletedStatusYieldsNoFact() {
+        final List<Fact> facts = FloorMapEntryParser.parse(
+                List.of(entry("desk-1", 100, "{\"status\":\"deleted\"}")),
+                SCHEMA, ACCESSOR, warnings::add);
+
+        assertThat(facts).isEmpty();
+    }
+
+    /// An unrecognised status is drawn and reported.
+    @Test
+    void testParse_unknownStatusIsDrawnAndReported() {
+        final List<Fact> facts = FloorMapEntryParser.parse(
+                List.of(entry("desk-1", 100, "{\"type\":\"desk\",\"status\":\"open\"}")),
+                SCHEMA, ACCESSOR, warnings::add);
+
+        assertThat(facts).extracting(Fact::getKey).containsExactly("desk-1");
+        assertThat(warnings).singleElement().asString().contains("open");
+    }
+
+    /// The status is read from wherever the schema maps the role, and not read at all when the
+    /// role is unmapped.
+    @Test
+    void testParse_statusFollowsTheSchema() {
+        final List<FloorMapFieldMapping> customSchema = List.of(
+                new FloorMapFieldMapping(".type", Role.TYPE, "Type", null),
+                new FloorMapFieldMapping(".lifecycle", Role.STATUS, "Status", null));
+        final List<FloorMapFieldMapping> noStatusSchema = List.of(
+                new FloorMapFieldMapping(".type", Role.TYPE, "Type", null));
+        final List<TemporalEntry> entries = List.of(
+                entry("desk-1", 100, "{\"type\":\"desk\",\"lifecycle\":\"DELETED\"}"),
+                entry("desk-2", 100, "{\"type\":\"desk\",\"status\":\"DELETED\"}"));
+
+        assertThat(FloorMapEntryParser.parse(entries, customSchema, ACCESSOR, warnings::add))
+                .extracting(Fact::getKey)
+                .containsExactly("desk-2");
+        assertThat(FloorMapEntryParser.parse(entries, noStatusSchema, ACCESSOR, warnings::add))
+                .extracting(Fact::getKey)
+                .containsExactly("desk-1", "desk-2");
+    }
 
     private static TemporalEntry entry(final String key,
                                        @SuppressWarnings("SameParameterValue") final long time,

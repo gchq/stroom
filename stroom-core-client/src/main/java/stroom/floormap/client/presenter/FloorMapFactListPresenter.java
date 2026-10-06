@@ -61,7 +61,10 @@ import java.util.function.Consumer;
 /// The toolbar provides:
 ///
 /// - **Add** — adds a new object (delegated via [#setAddConsumer(Runnable)]).
-/// - **Delete** — deletes the currently selected object (delegated via
+/// - **Delete From This Time** — ends the selected object at the timeline position, keeping
+///   its history (delegated via [#setEndConsumer(Consumer)]). Disabled when nothing is
+///   selected, or when the selected object is already deleted.
+/// - **Erase History** — erases every version of the selected object (delegated via
 ///   [#setDeleteConsumer(Consumer)]). Disabled when nothing is selected.
 /// - **Show All** (toggle) — when ON, instructs the parent presenter to ignore
 ///   the current time filter and display all objects; when OFF, reverts to time-filtered
@@ -69,6 +72,8 @@ import java.util.function.Consumer;
 ///
 /// Renamed from `FloorMapObjectListPresenter`.
 public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactListView> {
+
+    private static final String END_TITLE = "Delete From This Time (keeps history)";
 
     private final MyDataGrid<FactObject> dataGrid;
     private final ListDataProvider<FactObject> dataProvider = new ListDataProvider<>();
@@ -80,8 +85,10 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
     private boolean showingAll = false;
 
     private final ButtonView addButton;
+    private final ButtonView endButton;
     private final ButtonView deleteButton;
     private Runnable addConsumer;
+    private Consumer<String> endConsumer;
     private Consumer<String> deleteConsumer;
 
     /// This grid's element id, so the canvas can name it as the map's text alternative
@@ -130,8 +137,11 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         final ButtonPanel buttonPanel = new ButtonPanel();
         addButton = buttonPanel.addButton(SvgPresets.ADD);
         addButton.setTitle("Add New Object");
+        endButton = buttonPanel.addButton(SvgPresets.REMOVE);
+        endButton.setTitle(END_TITLE);
+        endButton.setEnabled(false);
         deleteButton = buttonPanel.addButton(SvgPresets.DELETE);
-        deleteButton.setTitle("Delete Object");
+        deleteButton.setTitle("Erase History (delete every version)");
         deleteButton.setEnabled(false);
 
         // Show All toggle button
@@ -171,6 +181,7 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         registerHandler(selectionModel.addSelectionHandler(e -> {
             final List<FactObject> selected = selectionModel.getSelectedItems();
             final FactObject primary = selectionModel.getSelected();
+            updateEndButton();
             deleteButton.setEnabled(!selected.isEmpty());
             if (multiSelectionConsumer != null) {
                 multiSelectionConsumer.accept(selected);
@@ -203,6 +214,16 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         registerHandler(addButton.addClickHandler(e -> {
             if (addConsumer != null) {
                 addConsumer.run();
+            }
+        }));
+
+        //noinspection unused e
+        registerHandler(endButton.addClickHandler(e -> {
+            if (endConsumer != null) {
+                final FactObject selected = selectionModel.getSelected();
+                if (selected != null) {
+                    endConsumer.accept(selected.getKey());
+                }
             }
         }));
 
@@ -240,7 +261,9 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         final Column<FactObject, String> nameColumn = new TextColumn<>() {
             @Override
             public String getValue(final FactObject object) {
-                return object.getName();
+                return object.isDeleted()
+                        ? object.getName() + " (deleted)"
+                        : object.getName();
             }
         };
         dataGrid.addColumn(nameColumn, "Name");
@@ -316,7 +339,22 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         this.addConsumer = addConsumer;
     }
 
-    /// Sets the action to run when the user clicks the Delete button.
+    /// Sets the action to run when the user clicks the Delete From This Time button.
+    /// The consumer receives the key of the selected fact.
+    ///
+    /// @param endConsumer called with the selected fact's key
+    public void setEndConsumer(final Consumer<String> endConsumer) {
+        this.endConsumer = endConsumer;
+    }
+
+    private void updateEndButton() {
+        // The button acts on the primary selection, so it is that row that must not already be
+        // deleted; Show All lists deleted facts so they can be found and restored, not re-deleted.
+        final FactObject primary = selectionModel.getSelected();
+        endButton.setEnabled(primary != null && !primary.isDeleted());
+    }
+
+    /// Sets the action to run when the user clicks the Erase History button.
     /// The consumer receives the key of the selected fact.
     ///
     /// @param deleteConsumer called with the selected fact's key
@@ -341,18 +379,38 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
     // -----------------------------------------------------------------------
 
     /// Represents a single object (fact) entry shown in the list.
-    /// Identified by its temporal-store key; carries display name and type.
+    /// Identified by its temporal-store key; carries display name, type, and whether the fact has
+    /// been deleted (only listed when showing all facts).
     @SuppressWarnings("ClassCanBeRecord")
     public static class FactObject {
 
         private final String key;
         private final String name;
         private final String type;
+        private final boolean deleted;
 
         public FactObject(final String key, final String name, final String type) {
+            this(key, name, type, false);
+        }
+
+        /// Creates a fact object, marked deleted or not.
+        ///
+        /// @param key     the fact's temporal-store key
+        /// @param name    the display name
+        /// @param type    the fact type
+        /// @param deleted whether the fact's current version hides it
+        public FactObject(final String key, final String name, final String type, final boolean deleted) {
             this.key = key;
             this.name = name;
             this.type = type;
+            this.deleted = deleted;
+        }
+
+        /// Returns a copy of this object marked as deleted.
+        ///
+        /// @return the marked copy
+        public FactObject asDeleted() {
+            return new FactObject(key, name, type, true);
         }
 
         /// Creates a [FactObject] from a [stroom.util.shared.TemporalEntry]
@@ -399,6 +457,13 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
 
         public String getType() {
             return type;
+        }
+
+        /// Whether the fact's current version hides it.
+        ///
+        /// @return `true` if the fact is deleted
+        public boolean isDeleted() {
+            return deleted;
         }
 
         @Override

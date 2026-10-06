@@ -277,6 +277,107 @@ class TestFloorMapFactTableParser {
     }
 
     // -----------------------------------------------------------------------
+    // Status
+    // -----------------------------------------------------------------------
+
+    /// A key whose row is DELETED is left out, while other keys are kept.
+    @Test
+    void testDeletedRowHidesItsFact() {
+        final List<Fact> facts = parse(
+                cols("Key", "type", "status"),
+                List.of(row("desk-1", "desk", "DELETED"),
+                        row("desk-2", "desk", "ACTIVE")),
+                aliases(Role.TYPE, "type", Role.STATUS, "status"));
+
+        assertThat(facts).extracting(Fact::getKey).containsExactly("desk-2");
+        assertThat(warnings).isEmpty();
+    }
+
+    /// When the rows are every version rather than a snapshot, a later DELETED row ends a fact
+    /// an earlier row created; it is not merely skipped, leaving the earlier one drawn.
+    @Test
+    void testDeletedRowEndsAnEarlierVersionOfTheSameKey() {
+        final List<Fact> facts = parse(
+                cols("Key", "status"),
+                List.of(row("desk-1", ""), row("desk-1", "DELETED")),
+                aliases(Role.STATUS, "status"));
+
+        assertThat(facts).isEmpty();
+    }
+
+    /// A version after the deletion brings the fact back.
+    @Test
+    void testLaterRowRecreatesADeletedFact() {
+        final List<Fact> facts = parse(
+                cols("Key", "status", "label"),
+                List.of(row("desk-1", "", "Old"),
+                        row("desk-1", "DELETED", "Old"),
+                        row("desk-1", "ACTIVE", "New")),
+                aliases(Role.STATUS, "status", Role.LABEL, "label"));
+
+        assertThat(facts).extracting(Fact::getLabel).containsExactly("New");
+    }
+
+    /// A bare deleted version - status and nothing else, as a pipeline might write it - is
+    /// enough to hide the fact.
+    @Test
+    void testBareDeletedRowIsEnough() {
+        final List<Fact> facts = parse(
+                cols("Key", "type", "pos", "status"),
+                List.of(row("desk-1", "desk", "[1, 2]"),
+                        row("desk-1", null, null, "DELETED")),
+                aliases(Role.TYPE, "type", Role.POSITION, "pos", Role.STATUS, "status"));
+
+        assertThat(facts).isEmpty();
+    }
+
+    /// Status matching ignores case and surrounding whitespace.
+    @Test
+    void testStatusMatchingIgnoresCaseAndWhitespace() {
+        final List<Fact> facts = parse(
+                cols("Key", "status"),
+                List.of(row("desk-1", " deleted ")),
+                aliases(Role.STATUS, "status"));
+
+        assertThat(facts).isEmpty();
+    }
+
+    /// An unrecognised status is drawn and reported, rather than hidden on a value we do not
+    /// understand.
+    @Test
+    void testUnknownStatusIsDrawnAndReported() {
+        final List<Fact> facts = parse(
+                cols("Key", "status"),
+                List.of(row("desk-1", "open")),
+                aliases(Role.STATUS, "status"));
+
+        assertThat(facts).extracting(Fact::getKey).containsExactly("desk-1");
+        assertThat(warnings).singleElement().asString().contains("open");
+    }
+
+    /// With no status role mapped, a column that happens to be called "status" is not read.
+    @Test
+    void testUnmappedStatusIsNotRead() {
+        final List<Fact> facts = parse(
+                cols("Key", "status"),
+                List.of(row("desk-1", "DELETED")),
+                aliases());
+
+        assertThat(facts).extracting(Fact::getKey).containsExactly("desk-1");
+    }
+
+    /// A custom status alias is honoured.
+    @Test
+    void testCustomStatusAlias() {
+        final List<Fact> facts = parse(
+                cols("Key", "lifecycle"),
+                List.of(row("desk-1", "DELETED")),
+                aliases(Role.STATUS, "lifecycle"));
+
+        assertThat(facts).isEmpty();
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 

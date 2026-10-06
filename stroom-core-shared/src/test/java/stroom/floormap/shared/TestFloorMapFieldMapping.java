@@ -208,6 +208,21 @@ class TestFloorMapFieldMapping {
         assertThat(schema.stream()
                 .anyMatch(m -> m.getRole() == Role.OPACITY))
                 .isTrue();
+        // ...and deleting a fact from a point in time.
+        assertThat(FloorMapFieldMapping.findPath(schema, Role.STATUS)).isEqualTo(".status");
+    }
+
+    /// A STATUS mapping survives serialisation like any other role.
+    @Test
+    void testJsonRoundTrip_statusMapping() {
+        final FloorMapFieldMapping original =
+                new FloorMapFieldMapping(".lifecycle", Role.STATUS, "Status", null);
+
+        final FloorMapFieldMapping restored = JsonUtil.readValue(
+                JsonUtil.writeValueAsString(original), FloorMapFieldMapping.class);
+
+        assertThat(restored.getRole()).isEqualTo(Role.STATUS);
+        assertThat(restored.getPath()).isEqualTo(".lifecycle");
     }
 
     /// All three default area mappings are appended to a pre-area schema.
@@ -286,6 +301,60 @@ class TestFloorMapFieldMapping {
         assertThat(FloorMapFieldMapping.withAreaMappings(null, ValueFormat.JSON))
                 .extracting(FloorMapFieldMapping::getRole)
                 .containsExactly(Role.GEOMETRY, Role.FILL, Role.OPACITY);
+    }
+
+    // -----------------------------------------------------------------------
+    // withStatusMapping
+    // -----------------------------------------------------------------------
+
+    /// A default Status mapping is appended to a schema that predates it, keeping the
+    /// existing mappings in place and leaving the input untouched.
+    @Test
+    void testWithStatusMapping_appendsMissing() {
+        final List<FloorMapFieldMapping> legacy = List.of(
+                new FloorMapFieldMapping(".type", Role.TYPE, "Type", null),
+                new FloorMapFieldMapping(".coords", Role.POSITION, "Coords", null));
+
+        final List<FloorMapFieldMapping> merged =
+                FloorMapFieldMapping.withStatusMapping(legacy, ValueFormat.JSON);
+
+        assertThat(merged).containsExactly(
+                legacy.get(0),
+                legacy.get(1),
+                new FloorMapFieldMapping(".status", Role.STATUS, "Status", null));
+        assertThat(legacy).hasSize(2);
+    }
+
+    /// On an XML schema the path is an XPath-style sibling of the existing mappings; with
+    /// nothing to derive from, the format decides the style.
+    @Test
+    void testWithStatusMapping_xmlPathDerivedFromSiblings() {
+        final List<FloorMapFieldMapping> xmlSchema = List.of(
+                new FloorMapFieldMapping("/rec/type", Role.TYPE, "Type", null));
+
+        assertThat(FloorMapFieldMapping.findPath(
+                FloorMapFieldMapping.withStatusMapping(xmlSchema, ValueFormat.XML), Role.STATUS))
+                .isEqualTo("/rec/status");
+        assertThat(FloorMapFieldMapping.findPath(
+                FloorMapFieldMapping.withStatusMapping(null, ValueFormat.XML), Role.STATUS))
+                .isEqualTo("/entry/status");
+        assertThat(FloorMapFieldMapping.findPath(
+                FloorMapFieldMapping.withStatusMapping(null, null), Role.STATUS))
+                .isEqualTo(".status");
+    }
+
+    /// The check is role-based: a customised status path is kept and no second mapping is
+    /// added, so merging is idempotent.
+    @Test
+    void testWithStatusMapping_respectsCustomisedPathAndIsIdempotent() {
+        final List<FloorMapFieldMapping> schema = List.of(
+                new FloorMapFieldMapping(".lifecycle", Role.STATUS, "Lifecycle", null));
+
+        assertThat(FloorMapFieldMapping.withStatusMapping(schema, ValueFormat.JSON))
+                .isEqualTo(schema);
+        assertThat(FloorMapFieldMapping.withStatusMapping(
+                FloorMapFieldMapping.initialValueSchema(), ValueFormat.JSON))
+                .isEqualTo(FloorMapFieldMapping.initialValueSchema());
     }
 
     // -----------------------------------------------------------------------

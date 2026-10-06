@@ -45,6 +45,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /// Presenter for the Time List panel — the centre column of the Editor tab's
 /// bottom strip.
@@ -71,6 +72,8 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
     private Consumer<TemporalEntry> editConsumer;
     private Runnable addConsumer;
     private Consumer<TemporalEntry> deleteConsumer;
+    /// Whether a version ends its fact. Supplied by the Editor, which holds the value schema.
+    private Predicate<TemporalEntry> deletedTest = entry -> false;
 
     private final DateTimeFormatter dateTimeFormatter;
 
@@ -276,6 +279,16 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         this.addConsumer = addConsumer;
     }
 
+    /// Sets how to tell a version that ends its fact, so the Summary column can say so.
+    ///
+    /// @param deletedTest `true` for a version whose status hides the fact; `null`
+    ///         treats every version as active
+    public void setDeletedTest(final Predicate<TemporalEntry> deletedTest) {
+        this.deletedTest = deletedTest != null
+                ? deletedTest
+                : entry -> false;
+    }
+
     /// Sets the action to perform when the Delete button is clicked.
     /// Called with the currently selected entry.
     ///
@@ -308,7 +321,12 @@ public class FloorMapTimeListPresenter extends MyPresenterWidget<FloorMapTimeLis
         final Column<TemporalEntry, String> summaryColumn = new TextColumn<>() {
             @Override
             public String getValue(final TemporalEntry entry) {
-                return extractSummary(entry);
+                // A deleted version usually carries the fact's last state too, so say so first:
+                // otherwise it reads exactly like the version before it.
+                final String summary = extractSummary(entry);
+                return deletedTest.test(entry)
+                        ? "Deleted - " + summary
+                        : summary;
             }
         };
         dataGrid.addColumn(summaryColumn, "Summary");

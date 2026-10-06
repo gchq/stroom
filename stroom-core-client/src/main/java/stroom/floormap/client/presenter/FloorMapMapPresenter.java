@@ -1182,7 +1182,7 @@ public class FloorMapMapPresenter
     /// unmatched.
     private static final List<Role> FACT_COLUMN_ROLES = List.of(
             Role.TYPE, Role.POSITION, Role.IMAGE, Role.WORLD_TO_MAP,
-            Role.GEOMETRY, Role.FILL, Role.OPACITY, Role.LABEL);
+            Role.GEOMETRY, Role.FILL, Role.OPACITY, Role.LABEL, Role.STATUS);
 
     /// Parses a [TableResult] from the facts StroomQL query into canvas-renderable
     /// objects. Maps column names to schema roles to extract key, type, coordinates,

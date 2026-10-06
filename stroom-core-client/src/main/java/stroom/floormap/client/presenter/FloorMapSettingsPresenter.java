@@ -114,6 +114,10 @@ public class FloorMapSettingsPresenter
     /// upgrade before it is persisted.
     private boolean areaPatchActive;
 
+    /// Set once the Editor tab enables status support on this document; onRead
+    /// then re-applies [#applyStatusPatch()], as for [#areaPatchActive].
+    private boolean statusPatchActive;
+
     @Inject
     public FloorMapSettingsPresenter(final EventBus eventBus,
                                      final FloorMapSettingsView view,
@@ -539,6 +543,9 @@ public class FloorMapSettingsPresenter
         if (areaPatchActive) {
             applyAreaPatch();
         }
+        if (statusPatchActive) {
+            applyStatusPatch();
+        }
 
         // Note: measurementUnits is deliberately NOT read or written by this tab.
         // A map's scale is set with the Editor's Set Scale tool and staged in its
@@ -561,6 +568,22 @@ public class FloorMapSettingsPresenter
                 : ValueFormat.JSON;
         schemaDataProvider.setList(new ArrayList<>(
                 FloorMapFieldMapping.withAreaMappings(schemaDataProvider.getList(), vf)));
+        refreshGrid();
+    }
+
+    /// Merges the default `STATUS` mapping into the Value Schema grid, if
+    /// absent. Called when the Editor tab enables status support on this
+    /// document, for the same reason as [#applyAreaPatch()]: this tab writes
+    /// `valueSchema` wholesale from its grid state on save, so an unpatched
+    /// grid would silently revert the upgrade. Idempotent; stays active so
+    /// subsequent reads re-apply it until the upgrade is persisted.
+    public void applyStatusPatch() {
+        statusPatchActive = true;
+        final ValueFormat vf = getEntity() != null
+                ? getEntity().getValueFormat()
+                : ValueFormat.JSON;
+        schemaDataProvider.setList(new ArrayList<>(
+                FloorMapFieldMapping.withStatusMapping(schemaDataProvider.getList(), vf)));
         refreshGrid();
     }
 

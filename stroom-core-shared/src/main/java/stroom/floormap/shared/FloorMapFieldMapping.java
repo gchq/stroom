@@ -93,6 +93,9 @@ public class FloorMapFieldMapping {
         FILL,
         /// Area fill opacity (number in `[0, 1]`).
         OPACITY,
+        /// The fact's lifecycle state (see [FloorMapFactStatus]). A version whose status is
+        /// `DELETED` hides the fact from its effective time onwards; absent means active.
+        STATUS,
         /// Extra user-defined field.
         CUSTOM
     }
@@ -177,6 +180,7 @@ public class FloorMapFieldMapping {
     /// | `.geometry` | [Role#GEOMETRY] | Geometry | `null` |
     /// | `.fill` | [Role#FILL] | Fill | `null` |
     /// | `.opacity` | [Role#OPACITY] | Opacity | `null` |
+    /// | `.status` | [Role#STATUS] | Status | `null` |
     ///
     /// The returned list is created via [List#of(Object...)] and is
     /// therefore *unmodifiable*; any attempt to mutate it will throw
@@ -192,7 +196,8 @@ public class FloorMapFieldMapping {
                 new FloorMapFieldMapping(".tm-world-to-map", Role.WORLD_TO_MAP, null, null),
                 new FloorMapFieldMapping(".geometry", Role.GEOMETRY, "Geometry", null),
                 new FloorMapFieldMapping(".fill", Role.FILL, "Fill", null),
-                new FloorMapFieldMapping(".opacity", Role.OPACITY, "Opacity", null)
+                new FloorMapFieldMapping(".opacity", Role.OPACITY, "Opacity", null),
+                new FloorMapFieldMapping(".status", Role.STATUS, "Status", null)
         );
     }
 
@@ -219,23 +224,55 @@ public class FloorMapFieldMapping {
     ///         any missing area roles; never `null`
     public static List<FloorMapFieldMapping> withAreaMappings(final List<FloorMapFieldMapping> schema,
                                                               final ValueFormat format) {
+        final List<FloorMapFieldMapping> result = copyOf(schema);
+        addIfRoleMissing(result, format, Role.GEOMETRY, FloorMapJsonKeys.GEOMETRY, "Geometry");
+        addIfRoleMissing(result, format, Role.FILL, "fill", "Fill");
+        addIfRoleMissing(result, format, Role.OPACITY, FloorMapJsonKeys.OPACITY, "Opacity");
+        return result;
+    }
+
+    /// Returns a copy of `schema` guaranteed to contain a mapping for
+    /// [Role#STATUS], appending a default one if it is absent.
+    ///
+    /// The counterpart of [#withAreaMappings] for documents created before facts
+    /// could be deleted from a point in time, and it follows the same rules: the
+    /// check is role-based, so a customised status path is kept; the default path
+    /// is a *sibling* of the schema's existing paths (`".type"` yields
+    /// `".status"`, `"/entry/type"` yields `"/entry/status"`), with
+    /// `format` deciding the style only when there is no path to derive from; and
+    /// the input list is never mutated.
+    ///
+    /// @param schema the existing schema, or `null` (treated as empty)
+    /// @param format the document's value format, used only as the fallback
+    ///         path style; `null` is treated as JSON
+    /// @return a new list containing all existing mappings plus a default status
+    ///         mapping if one was missing; never `null`
+    public static List<FloorMapFieldMapping> withStatusMapping(final List<FloorMapFieldMapping> schema,
+                                                               final ValueFormat format) {
+        final List<FloorMapFieldMapping> result = copyOf(schema);
+        addIfRoleMissing(result, format, Role.STATUS, FloorMapJsonKeys.STATUS, "Status");
+        return result;
+    }
+
+    /// A new, mutable copy of `schema`; `null` gives an empty list.
+    private static List<FloorMapFieldMapping> copyOf(final List<FloorMapFieldMapping> schema) {
         final List<FloorMapFieldMapping> result = new ArrayList<>();
         if (schema != null) {
             result.addAll(schema);
         }
-        if (isRoleMissing(result, Role.GEOMETRY)) {
-            result.add(new FloorMapFieldMapping(
-                    siblingPath(result, format, FloorMapJsonKeys.GEOMETRY), Role.GEOMETRY, "Geometry", null));
-        }
-        if (isRoleMissing(result, Role.FILL)) {
-            result.add(new FloorMapFieldMapping(
-                    siblingPath(result, format, "fill"), Role.FILL, "Fill", null));
-        }
-        if (isRoleMissing(result, Role.OPACITY)) {
-            result.add(new FloorMapFieldMapping(
-                    siblingPath(result, format, FloorMapJsonKeys.OPACITY), Role.OPACITY, "Opacity", null));
-        }
         return result;
+    }
+
+    /// Appends a default mapping for `role` to `schema` unless the role is already mapped,
+    /// at a path for `name` derived as a sibling of the schema's existing paths.
+    private static void addIfRoleMissing(final List<FloorMapFieldMapping> schema,
+                                         final ValueFormat format,
+                                         final Role role,
+                                         final String name,
+                                         final String displayName) {
+        if (isRoleMissing(schema, role)) {
+            schema.add(new FloorMapFieldMapping(siblingPath(schema, format, name), role, displayName, null));
+        }
     }
 
     /// Derives a path for `name` alongside the schema's existing paths:

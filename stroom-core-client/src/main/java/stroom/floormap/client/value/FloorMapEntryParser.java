@@ -58,6 +58,10 @@ public final class FloorMapEntryParser {
     /// The optional `POSITION` coords are read for every fact (used by the
     /// imageless default-graphic renderer); an image fact usually has none.
     ///
+    /// An entry whose `STATUS` hides it (see [stroom.floormap.shared.FloorMapFactStatus])
+    /// yields no fact. Callers pass the version current at a point in time, so this is
+    /// what makes a fact deleted at that time disappear.
+    ///
     /// @param entries         the temporal entries to parse; may be `null` or empty
     /// @param schema          the value schema to use; may be `null`
     /// @param accessor        the value accessor for parsing; must not be `null`
@@ -84,6 +88,7 @@ public final class FloorMapEntryParser {
         final String geometryPath = FloorMapFieldMapping.findPath(schema, Role.GEOMETRY);
         final String fillPath = FloorMapFieldMapping.findPath(schema, Role.FILL);
         final String opacityPath = FloorMapFieldMapping.findPath(schema, Role.OPACITY);
+        final String statusPath = FloorMapFieldMapping.findPath(schema, Role.STATUS);
 
         for (final TemporalEntry entry : entries) {
             try {
@@ -103,6 +108,13 @@ public final class FloorMapEntryParser {
                 if (parsed == null) {
                     NullSafe.consume("Skipping temporal entry that parsed to null (key='"
                             + entry.getKey() + "')", warningConsumer);
+                    continue;
+                }
+
+                final String status = statusPath != null
+                        ? accessor.getString(parsed, statusPath)
+                        : null;
+                if (FloorMapFactTableParser.isHidden(status, warningConsumer)) {
                     continue;
                 }
 
