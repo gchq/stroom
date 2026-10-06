@@ -17,11 +17,14 @@
 package stroom.gwt.workbench.client.app.data;
 
 import stroom.data.client.presenter.DataUploadPresenter;
+import stroom.data.client.presenter.MetaPresenter;
 import stroom.docref.DocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.rest.UploadReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
@@ -41,17 +44,25 @@ import com.google.gwt.user.client.ui.Widget;
 /// |---|---|
 /// | `feedName` | `GET /feed/v1/{uuid}` (the feed, loaded before the dialog shows) |
 /// | `streamTypes` | `GET /meta/v1/getTypes` |
+/// | `uploadFile` (its `uploaded` recorder) | the file's upload (`importfile.rpc`, the upload spy) |
+/// | `upload` (its `requests` recorder) | `POST /data/v1/upload` (the request spy) |
+/// | `onUploaded` | the 'Uploaded file' message; its Close refreshes the data and closes the dialog |
 ///
-/// `Upload` (choosing and posting a file) is blocked: Stroom's `FileUploadSubmitter` posts the
-/// file with its own `XMLHttpRequest` (see `react-story-status.json`).
+/// The dialog is shown as the feed's data browser (`MetaPresenter`) shows it, with that browser
+/// (from GIN, not shown) as the presenter it refreshes after an upload.
 public final class DataUploadDialogStories {
 
     private static final String FEED_UUID = "feed-1";
+    private static final String UPLOAD_PATH = "/data/v1/upload";
 
     private static final RestFixtures FIXTURES = RestFixtures.builder()
             .get("/feed/v1/" + FEED_UUID, RestReply.json(
                     "{\"type\": \"Feed\", \"uuid\": \"" + FEED_UUID + "\", \"name\": \"TEST_FEED\"}"))
             .get("/meta/v1/getTypes", RestReply.json("[\"Raw Events\", \"Raw Reference\", \"Events\"]"))
+            // React's uploadFile: the resource key is named after the file
+            .upload(UploadReply.success("rk-stream.txt", "stream.txt"))
+            // React's upload
+            .post(UPLOAD_PATH, RestReply.json("{\"key\": \"stored\", \"name\": \"stored\"}"))
             .build();
 
     private DataUploadDialogStories() {
@@ -64,6 +75,41 @@ public final class DataUploadDialogStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Data/DataUploadDialog", DataUploadDialogStories.class)
                 .layout(StoryLayout.FULLSCREEN)
+                // Choose a file and a stream type; OK uploads the file, then posts an
+                // UploadDataRequest (key, feed and type) for it
+                .story("Upload", DataUploadDialogStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = screen.within(screen.findByText("Upload", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    // No Feed field: the feed is the one whose data is being browsed
+                    play.expect(screen.queryByText("TEST_FEED")).toBeNull();
+                    // The stream type defaults to Raw Events; choose Events
+                    play.waitFor(() -> play.expect(dialog.getByDisplayValue("Raw Events")).toBeInTheDocument());
+                    // Differs from React: GWT's SelectionBox opens when its text box is clicked
+                    play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Events"));
+                    play.waitFor(() -> play.expect(dialog.getByDisplayValue("Events")).toBeInTheDocument());
+                    play.upload(dialog.querySelector(StroomDom.FILE_INPUT), "stream.txt", "data", "text/plain");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    // React's uploaded recorder
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.UPLOAD_SPY))
+                            .toHaveBeenCalledWith("importfile.rpc", "stream.txt", "data"));
+                    // Differs from React: the file name is the file input's value, which browsers
+                    // give as C:\fakepath\<name> (DataUploadPresenter sends getFilename() as it is)
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post(UPLOAD_PATH)
+                                    .withJsonBodyContaining("""
+                                            {"key": {"key": "rk-stream.txt"}, "feedName": "TEST_FEED",
+                                             "streamTypeName": "Events", "fileName": "C:\\\\fakepath\\\\stream.txt"}""")
+                                    .toSpyMatcher()));
+                    // Differs from React: GWT says the file was uploaded, and closing the message
+                    // refreshes the feed's data browser and closes the dialog (React's onUploaded)
+                    play.click(screen.findByRole("button", StroomDom.button("Close")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Upload", StroomDom.DIALOG_TITLE)).toBeNull());
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("INFO: Uploaded file");
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
                 // GWT doesn't disable OK: it validates on the click and warns
                 .story("OkValidatesOnClick", DataUploadDialogStories::render)
                 .withPlay(play -> {
@@ -89,8 +135,13 @@ public final class DataUploadDialogStories {
                 .build();
         final DocRef feedRef = DocRef.builder().type(FeedDoc.TYPE).uuid(FEED_UUID).name("TEST_FEED").build();
         final DataUploadPresenter presenter = injector.getDataUploadPresenter();
-        // As MetaPresenter's 'Upload' button shows it (the meta presenter is only used after an upload)
-        harness.afterStartUp(() -> presenter.show(null, feedRef));
+        harness.afterStartUp(() -> {
+            // The feed's data browser, which the dialog refreshes after an upload (its info
+            // message is fired from it). Created after start-up, as it reads the UI config.
+            final MetaPresenter metaPresenter = harness.unbindOnCleanUp(injector.getMetaPresenter());
+            // As MetaPresenter's 'Upload' button shows it
+            presenter.show(metaPresenter, feedRef);
+        });
         return harness.asWidget();
     }
 }

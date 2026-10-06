@@ -41,6 +41,7 @@ import stroom.script.client.presenter.ScriptPresenter;
 import stroom.search.elastic.client.presenter.ElasticClusterPresenter;
 import stroom.search.elastic.client.presenter.ElasticIndexPresenter;
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
+import stroom.visualisation.client.presenter.VisualisationAssetsPresenter;
 import stroom.visualisation.client.presenter.VisualisationPresenter;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 
@@ -110,6 +111,10 @@ public interface EditorsScreenGinjector extends ScreenGinjector {
 
     /// @return A Visualisation's editor tab, as `VisualisationPlugin` creates it.
     VisualisationPresenter getVisualisationPresenter();
+
+    /// @return A Visualisation's 'Assets' tab on its own (the asset tree, its editor and its
+    /// toolbar's 'Add file' menu with 'Upload File').
+    VisualisationAssetsPresenter getVisualisationAssetsPresenter();
 
     // Code documents
 

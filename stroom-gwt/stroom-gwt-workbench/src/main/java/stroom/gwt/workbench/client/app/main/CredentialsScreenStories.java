@@ -20,6 +20,7 @@ import stroom.gwt.workbench.client.app.gin.security.SecurityScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.rest.UploadReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.app.security.SecurityPlays;
@@ -40,9 +41,9 @@ import com.google.gwt.user.client.ui.Widget;
 /// | `createDocRef` | `GET /credentials/createDocRef` |
 /// | `store` (its recorder) | `POST /credentials/store` (the request spy) |
 /// | `docPermission.fetchPermissions` | `POST /permission/doc/v1/fetchDocumentUserPermissions` |
+/// | `uploadFile` | the key store file's upload (`importfile.rpc`): an upload reply, key `rk-1` |
 ///
-/// The presenter comes from GIN and is shown as `CredentialsPlugin` shows it. `KeyStore` is
-/// recorded as blocked: choosing a key store file uploads it with Stroom's `FileUploadSubmitter`.
+/// The presenter comes from GIN and is shown as `CredentialsPlugin` shows it.
 public final class CredentialsScreenStories {
 
     private static final RestFixtures FIXTURES = RestFixtures.builder()
@@ -58,6 +59,8 @@ public final class CredentialsScreenStories {
                     {"type": "Credential", "uuid": "new-uuid", "name": ""}"""))
             .post("/credentials/store", RestReply.json("""
                     {"uuid": "new-uuid", "name": "CI Token", "credentialType": "USERNAME_PASSWORD"}"""))
+            // React's KeyStore uploadFile
+            .upload(UploadReply.success("rk-1", "ks.p12"))
             .build();
 
     private CredentialsScreenStories() {
@@ -100,6 +103,29 @@ public final class CredentialsScreenStories {
                     play.click(play.screen().findByText("SSH Key"));
                     dialog.findByLabelText("Private Key");
                     play.expect(dialog.getByText("Verify Hosts")).toBeInTheDocument();
+                    SecurityPlays.expectNoProblems(play);
+                })
+                // Key Store: the chosen file is uploaded, and the stored keyStore secret carries the
+                // upload's resource key
+                .story("KeyStore", CredentialsScreenStories::render)
+                .withPlay(play -> {
+                    play.findByText("My Creds");
+                    final Play dialog = openNewCredentials(play);
+                    play.type(dialog.getByLabelText("Name"), "TLS Store");
+                    // Differs from React: GWT's SelectionBox opens when its text box is clicked
+                    play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(play.screen().findByText("Key Store"));
+                    play.waitFor(() -> play.expect(dialog.querySelector(StroomDom.FILE_INPUT)).not().toBeNull());
+                    play.upload(dialog.querySelector(StroomDom.FILE_INPUT), "ks.p12", "x", "application/octet-stream");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.UPLOAD_SPY))
+                            .toHaveBeenCalledWith("importfile.rpc", "ks.p12", "x"));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/credentials/store")
+                                    .withJsonBodyContaining("""
+                                            {"credential": {"name": "TLS Store", "keyStoreType": "PKCS12"},
+                                             "secret": {"type": "keyStore", "resourceKey": {"key": "rk-1"}}}""")
+                                    .toSpyMatcher()));
                     SecurityPlays.expectNoProblems(play);
                 });
     }

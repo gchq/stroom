@@ -16,22 +16,6 @@
     "app-editors-pathwayseditor--new-pathway": {
       "status": "blocked",
       "reason": "GWT bug: New Pathway reads a pathway with no root into PathwayEditPresenter, and PathwayTreePresenter.read calls addNode(pathway.getRoot()) with a null root, which throws (TypeError reading 'getUuid'), so the dialog never opens. Suggested Stroom fix: in PathwayTreePresenter.read, only add and draw the nodes when pathway.getRoot() != null (or give a new Pathway a root node)."
-    },
-    "app-main-credentialsscreen--key-store": {
-      "status": "blocked",
-      "reason": "Choosing the key store file uploads it with Stroom's FileUploadSubmitter (KeyStoreSecretPresenter's CustomFileUpload), which posts the file with its own XMLHttpRequest in JSNI, bypassing RestyGWT and anything the screen harness can replace (see PORTING.md 'Uploads'). Port once Stroom routes uploads through an injectable seam."
-    },
-    "app-main-importdialog--nothing-to-import": {
-      "status": "blocked",
-      "reason": "Needs a file upload: the 'contains nothing that can be imported' warning is shown by ImportConfigPresenter when the confirmation list for the uploaded file is empty, and the upload is CustomFileUpload's own XMLHttpRequest (FileUploadSubmitter, JSNI), which story fixtures can't answer (see PORTING.md, Uploads). The other ImportDialog stories start at the confirmation, after the upload. Needs Stroom to route uploads through an injectable seam."
-    },
-    "App/Main/VisualisationAssets": {
-      "status": "blocked",
-      "reason": "Both stories upload a file: VisualisationAssetsUploadFileDialogPresenter uploads it with CustomFileUpload's own XMLHttpRequest (FileUploadSubmitter, JSNI), which story fixtures can't answer (see PORTING.md, Uploads), and what the plays check (the asset created with the upload's resource key, and the de-duplicated name) happens in the upload's success callback. Needs Stroom to route uploads through an injectable seam."
-    },
-    "app-data-datauploaddialog--upload": {
-      "status": "blocked",
-      "reason": "Needs a file upload: DataUploadPresenter submits the chosen file with CustomFileUpload's own XMLHttpRequest (FileUploadSubmitter, JSNI), which story fixtures can't answer (see PORTING.md, Uploads), and the UploadDataRequest the play checks is sent from the upload's success callback. OkValidatesOnClick is ported. Needs Stroom to route uploads through an injectable seam."
     }
   }
 }

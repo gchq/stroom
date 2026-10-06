@@ -120,6 +120,7 @@ import stroom.gwt.workbench.client.app.main.UserProfileScreenStories;
 import stroom.gwt.workbench.client.app.main.UserTabScreenStories;
 import stroom.gwt.workbench.client.app.main.UserTaskManagerDialogStories;
 import stroom.gwt.workbench.client.app.main.UsersScreenStories;
+import stroom.gwt.workbench.client.app.main.VisualisationAssetsStories;
 import stroom.gwt.workbench.client.app.main.WelcomeScreenStories;
 import stroom.gwt.workbench.client.app.query.QueryResultsTableStories;
 import stroom.gwt.workbench.client.app.security.DocumentPermissionsTabStories;
@@ -280,6 +281,7 @@ public final class AppStories {
         // App/Main/UsersScreen
         UsersScreenStories.addTo(registry);
         // App/Main/VisualisationAssets
+        VisualisationAssetsStories.addTo(registry);
         // App/Main/WelcomeScreen
         WelcomeScreenStories.addTo(registry);
         // App/Main/currentActivity

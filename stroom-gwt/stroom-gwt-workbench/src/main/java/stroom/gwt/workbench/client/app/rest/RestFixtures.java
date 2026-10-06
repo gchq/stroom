@@ -33,6 +33,8 @@ import java.util.Objects;
 ///         .post("/search/v1", RestReply.json(PENDING), RestReply.json(COMPLETE))
 ///         .route(RequestMatcher.post("/explorer/v2/find").withBodyContaining("Events"),
 ///                 RestReply.json(EVENTS))
+///         // File uploads (Stroom's CustomFileUpload), a sequence as above
+///         .upload(UploadReply.success("res-1", "import.zip"))
 ///         .build();
 /// ```
 ///
@@ -47,14 +49,17 @@ import java.util.Objects;
 ///
 /// A request that no route matches gets a `404` reply and is reported by the harness. Fixtures are
 /// strict by default, so that also fails the story; use [Builder#lenient()] for a story that
-/// expects unmatched requests.
+/// expects unmatched requests. The same goes for a file upload that no upload route
+/// ([Builder#upload(UploadReply, UploadReply...)]) matches.
 public final class RestFixtures {
 
     private final List<Route> routes;
+    private final List<UploadRoute> uploadRoutes;
     private final boolean strict;
 
-    private RestFixtures(final List<Route> routes, final boolean strict) {
+    private RestFixtures(final List<Route> routes, final List<UploadRoute> uploadRoutes, final boolean strict) {
         this.routes = Collections.unmodifiableList(new ArrayList<>(routes));
+        this.uploadRoutes = Collections.unmodifiableList(new ArrayList<>(uploadRoutes));
         this.strict = strict;
     }
 
@@ -65,7 +70,7 @@ public final class RestFixtures {
 
     /// @return Strict fixtures that reply to nothing, so every request fails the story.
     public static RestFixtures none() {
-        return new RestFixtures(Collections.emptyList(), true);
+        return new RestFixtures(Collections.emptyList(), Collections.emptyList(), true);
     }
 
     /// Combines these fixtures with ones to fall back on, e.g. a story's fixtures with the
@@ -77,7 +82,9 @@ public final class RestFixtures {
     public RestFixtures followedBy(final RestFixtures fallback) {
         final List<Route> combined = new ArrayList<>(routes);
         combined.addAll(Objects.requireNonNull(fallback, "fallback").routes);
-        return new RestFixtures(combined, strict);
+        final List<UploadRoute> combinedUploads = new ArrayList<>(uploadRoutes);
+        combinedUploads.addAll(fallback.uploadRoutes);
+        return new RestFixtures(combined, combinedUploads, strict);
     }
 
     /// @return A new session, which keeps the position in each sequence of replies for one
@@ -123,6 +130,23 @@ public final class RestFixtures {
         return routes.get(index);
     }
 
+    /// @param upload A file upload.
+    /// @return The index of the first upload route that matches the upload, or -1 if none does.
+    int findUploadRoute(final RecordedUpload upload) {
+        for (int i = 0; i < uploadRoutes.size(); i++) {
+            if (uploadRoutes.get(i).matches(upload)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// @param index The index of an upload route.
+    /// @return The upload route.
+    UploadRoute getUploadRoute(final int index) {
+        return uploadRoutes.get(index);
+    }
+
     // --------------------------------------------------------------------------------
 
 
@@ -132,6 +156,9 @@ public final class RestFixtures {
         private final List<Route> routes = new ArrayList<>();
         // The routes added with this builder's route methods (not addAll), compared by identity
         private final List<Route> ownRoutes = new ArrayList<>();
+        private final List<UploadRoute> uploadRoutes = new ArrayList<>();
+        // The upload routes added with this builder's upload methods (not addAll)
+        private final List<UploadRoute> ownUploadRoutes = new ArrayList<>();
         private boolean strict = true;
 
         private Builder() {
@@ -252,7 +279,30 @@ public final class RestFixtures {
         /// @return This builder.
         public Builder addAll(final RestFixtures fixtures) {
             routes.addAll(fixtures.routes);
+            uploadRoutes.addAll(fixtures.uploadRoutes);
             return this;
+        }
+
+        /// Replies to the file uploads a screen makes (Stroom's `CustomFileUpload.submit()`, which
+        /// posts the chosen file to the import file servlet), whatever the file, e.g.
+        /// `upload(UploadReply.success("res-1", "import.zip"))`.
+        ///
+        /// @param reply The reply, or the first of a sequence of replies.
+        /// @param more  The rest of the sequence. The last reply repeats.
+        /// @return This builder.
+        public Builder upload(final UploadReply reply, final UploadReply... more) {
+            return addOwnUpload(new UploadRoute(null, replies(reply, more)));
+        }
+
+        /// Replies to the uploads of a file with the given name, e.g. a successful upload of one
+        /// file and a failing upload of another. Put it before any route for all uploads.
+        ///
+        /// @param fileName The chosen file's name, e.g. `import.zip`.
+        /// @param reply    The reply, or the first of a sequence of replies.
+        /// @param more     The rest of the sequence. The last reply repeats.
+        /// @return This builder.
+        public Builder upload(final String fileName, final UploadReply reply, final UploadReply... more) {
+            return addOwnUpload(new UploadRoute(Objects.requireNonNull(fileName, "fileName"), replies(reply, more)));
         }
 
         /// Makes the fixtures lenient: a request that no route matches still gets a `404` reply
@@ -287,13 +337,43 @@ public final class RestFixtures {
                     }
                 }
             }
-            return new RestFixtures(routes, strict);
+            for (int later = 0; later < uploadRoutes.size(); later++) {
+                final UploadRoute laterRoute = uploadRoutes.get(later);
+                if (!ownUploadRoutes.contains(laterRoute)) {
+                    continue;
+                }
+                for (int earlier = 0; earlier < later; earlier++) {
+                    final UploadRoute earlierRoute = uploadRoutes.get(earlier);
+                    if (earlierRoute.shadows(laterRoute)) {
+                        throw new IllegalStateException("The upload route " + laterRoute.describe()
+                                + " can never reply, as the earlier upload route " + earlierRoute.describe()
+                                + " matches the same uploads. Remove one, put the route for a file name "
+                                + "first, or use a reply sequence.");
+                    }
+                }
+            }
+            return new RestFixtures(routes, uploadRoutes, strict);
         }
 
         private Builder addOwn(final Route route) {
             routes.add(route);
             ownRoutes.add(route);
             return this;
+        }
+
+        private Builder addOwnUpload(final UploadRoute route) {
+            uploadRoutes.add(route);
+            ownUploadRoutes.add(route);
+            return this;
+        }
+
+        private static List<UploadReply> replies(final UploadReply reply, final UploadReply... more) {
+            final List<UploadReply> replies = new ArrayList<>();
+            replies.add(Objects.requireNonNull(reply, "reply"));
+            for (final UploadReply next : Arrays.asList(more)) {
+                replies.add(Objects.requireNonNull(next, "reply"));
+            }
+            return replies;
         }
     }
 
@@ -333,6 +413,47 @@ public final class RestFixtures {
         /// @return The route's matcher.
         RequestMatcher getMatcher() {
             return matcher;
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    /// An upload route: the file uploads it matches (all, or those of one file name) and its
+    /// sequence of replies.
+    static final class UploadRoute {
+
+        private final String fileName;
+        private final List<UploadReply> replies;
+
+        private UploadRoute(final String fileName, final List<UploadReply> replies) {
+            this.fileName = fileName;
+            this.replies = Collections.unmodifiableList(replies);
+        }
+
+        /// @param upload An upload.
+        /// @return True if this route replies to it.
+        boolean matches(final RecordedUpload upload) {
+            return fileName == null || fileName.equals(upload.getFileName());
+        }
+
+        /// @param later A route after this one.
+        /// @return True if this route matches every upload the later one does.
+        boolean shadows(final UploadRoute later) {
+            return fileName == null || fileName.equals(later.fileName);
+        }
+
+        /// @param callIndex How many earlier uploads this route has replied to in the session.
+        /// @return The reply.
+        UploadReply reply(final int callIndex) {
+            return replies.get(Math.min(callIndex, replies.size() - 1));
+        }
+
+        /// @return The route, e.g. `upload of import.zip` or `upload of any file`.
+        String describe() {
+            return fileName != null
+                    ? "upload of " + fileName
+                    : "upload of any file";
         }
     }
 }

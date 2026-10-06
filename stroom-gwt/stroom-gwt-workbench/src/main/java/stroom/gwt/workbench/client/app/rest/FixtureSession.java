@@ -30,6 +30,7 @@ public final class FixtureSession {
 
     private final RestFixtures fixtures;
     private final Map<Integer, Integer> callCounts = new HashMap<>();
+    private final Map<Integer, Integer> uploadCounts = new HashMap<>();
 
     /// @param fixtures The fixtures.
     FixtureSession(final RestFixtures fixtures) {
@@ -61,6 +62,26 @@ public final class FixtureSession {
             return new Exchange(request, RestReply.error(500, problem), route.getMatcher().describe(), problem,
                     true);
         }
+    }
+
+    /// Finds the reply to a file upload. An upload that no upload route matches gets the reply
+    /// Stroom's transport would give a `404` (`Upload failed (HTTP 404)`), with a problem for the
+    /// harness to report.
+    ///
+    /// @param upload The upload.
+    /// @return The reply and any problem, e.g. that no upload route matched.
+    public UploadExchange exchangeUpload(final RecordedUpload upload) {
+        final int index = fixtures.findUploadRoute(upload);
+        if (index < 0) {
+            final String problem = "No upload fixture for " + upload.describe()
+                    + ". Add an upload reply for it to the story's RestFixtures (RestFixtures.Builder.upload, or "
+                    + "lenient() if the story expects it to fail).";
+            return new UploadExchange(UploadReply.httpError(404), null, problem);
+        }
+        final RestFixtures.UploadRoute route = fixtures.getUploadRoute(index);
+        final int callIndex = uploadCounts.getOrDefault(index, 0);
+        uploadCounts.put(index, callIndex + 1);
+        return new UploadExchange(route.reply(callIndex), route.describe(), null);
     }
 
     /// @return The fixtures.
@@ -115,6 +136,43 @@ public final class FixtureSession {
         /// @return True if the matching route's handler threw an exception or returned null.
         public boolean isFixtureFailed() {
             return fixtureFailed;
+        }
+
+        /// @return What went wrong, for the harness to report, or null if nothing did.
+        public String getProblem() {
+            return problem;
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A file upload's reply.
+    public static final class UploadExchange {
+
+        private final UploadReply reply;
+        private final String route;
+        private final String problem;
+
+        private UploadExchange(final UploadReply reply, final String route, final String problem) {
+            this.reply = reply;
+            this.route = route;
+            this.problem = problem;
+        }
+
+        /// @return The reply, never null.
+        public UploadReply getReply() {
+            return reply;
+        }
+
+        /// @return The upload route that matched, e.g. `upload of any file`, or null if none did.
+        public String getRoute() {
+            return route;
+        }
+
+        /// @return True if an upload route matched the upload.
+        public boolean isHandled() {
+            return route != null;
         }
 
         /// @return What went wrong, for the harness to report, or null if nothing did.

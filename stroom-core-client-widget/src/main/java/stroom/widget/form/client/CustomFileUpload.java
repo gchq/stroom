@@ -38,6 +38,8 @@ import java.util.function.Consumer;
 public class CustomFileUpload extends Composite {
 
     private static final Binder BINDER = GWT.create(Binder.class);
+    private static final FileUploadTransport DEFAULT_TRANSPORT = FileUploadSubmitter::submit;
+    private static FileUploadTransport uploadTransport = DEFAULT_TRANSPORT;
     private final Widget widget;
 
     @UiField
@@ -101,9 +103,20 @@ public class CustomFileUpload extends Composite {
     }
 
     public void submit() {
-        // Upload via XMLHttpRequest rather than a native form submission so we can attach the
-        // X-CSRF header that the server requires for session-authenticated requests.
-        FileUploadSubmitter.submit(actionUrl, fileUpload.getElement(), resultHandler);
+        // By default this uploads via XMLHttpRequest rather than a native form submission so we
+        // can attach the X-CSRF header that the server requires for session-authenticated requests.
+        resultHandler.onUploadStart();
+        uploadTransport.upload(actionUrl, fileUpload.getElement(), resultHandler);
+    }
+
+    /// Sets how every [CustomFileUpload] sends its file, e.g. to fake uploads in tests.
+    ///
+    /// @param transport The transport, or null for Stroom's default, which uploads the file with
+    ///                  an `XMLHttpRequest`.
+    public static void setUploadTransport(final FileUploadTransport transport) {
+        uploadTransport = transport != null
+                ? transport
+                : DEFAULT_TRANSPORT;
     }
 
     public void focus() {

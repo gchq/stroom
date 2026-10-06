@@ -26,7 +26,9 @@ import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
 import stroom.gwt.workbench.client.app.rest.FixtureDispatcher;
+import stroom.gwt.workbench.client.app.rest.FixtureUploads;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
+import stroom.gwt.workbench.client.app.rest.RecordedUpload;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.rest.TimerReplyScheduler;
@@ -75,11 +77,13 @@ import java.util.function.Consumer;
 ///   [StorySecurityContext]...);
 /// * a [FixtureDispatcher] that answers the screen's REST requests from the story's
 ///   [RestFixtures], followed by the [StartupFixtures], so no server is needed;
+/// * a [StoryUploadTransport] that answers the screen's file uploads (Stroom's `CustomFileUpload`)
+///   from the fixtures' upload replies;
 /// * a [PopupManager], so that dialogs shown with `ShowPopupEvent` appear, on the page's body
 ///   as in Stroom, where play functions find them with `play.screen()`, and Stroom's [Menu], so
 ///   that menus shown with `ShowMenuEvent` (e.g. a grid's 'Actions...' cell) appear too;
-/// * spies on the requests made, unhandled requests, alerts, confirmations and downloads, which
-///   play functions check with `play.expect(play.spy(name))`.
+/// * spies on the requests made, unhandled requests, alerts, confirmations, downloads and
+///   uploads, which play functions check with `play.expect(play.spy(name))`.
 ///
 /// The story creates its presenter with `new`, passing it what the harness provides, then
 /// returns [#asWidget()], e.g.
@@ -100,7 +104,8 @@ import java.util.function.Consumer;
 /// disposed through [StoryContext#addCleanUp(Runnable)], which it registers first, so even a
 /// harness whose construction failed is undone: its dispatcher cancels the pending replies and
 /// drops any later request (an old presenter keeps its injector's `RestFactory`, so its timers and
-/// chained requests can only reach this dispatcher), Stroom's `UiConfigCache` stops refreshing,
+/// chained requests can only reach this dispatcher), its upload transport does the same for
+/// uploads and restores Stroom's default transport, Stroom's `UiConfigCache` stops refreshing,
 /// the [StoryLocationManager] removes its window-closing handler, the popups it opened are hidden
 /// through Stroom's own `HidePopupEvent` (which unbinds their presenters), the timers, handlers
 /// and presenters registered with [#addTimer(Timer)], [#addRegistration(HandlerRegistration)] and
@@ -120,6 +125,10 @@ public final class ScreenHarness {
     /// The name of the spy that records each download, as the URL relative to the host page,
     /// e.g. `resourcestore/my-notes.md?uuid=k1`.
     public static final String DOWNLOAD_SPY = "download";
+    /// The name of the spy that records each file upload with three arguments: the URL relative to
+    /// the host page (`importfile.rpc` for all of Stroom's uploads), the chosen file's name and
+    /// its content (null unless it is text of at most 64 KiB).
+    public static final String UPLOAD_SPY = "upload";
 
     private static final String ERROR_STYLE = "screen-harness-error";
     private static final String CONTENT_STYLE = "screen-harness-content";
@@ -128,6 +137,7 @@ public final class ScreenHarness {
     // which dispose() copes with
     private final StoryContext context;
     private final FixtureDispatcher dispatcher;
+    private final StoryUploadTransport uploadTransport;
     private final ScreenGinjector injector;
     private final StoryEventBus eventBus;
     private final RestFactory restFactory;
@@ -148,11 +158,17 @@ public final class ScreenHarness {
 
         // Spies must be registered as the story renders, for plays to check they weren't called
         for (final String name : new String[]{
-                REQUEST_SPY, UNHANDLED_REQUEST_SPY, ALERT_SPY, CONFIRM_SPY, DOWNLOAD_SPY}) {
+                REQUEST_SPY, UNHANDLED_REQUEST_SPY, ALERT_SPY, CONFIRM_SPY, DOWNLOAD_SPY, UPLOAD_SPY}) {
             fn(name);
         }
-        dispatcher = new FixtureDispatcher(builder.buildFixtures(), Defaults::getServiceRoot,
+        final RestFixtures fixtures = builder.buildFixtures();
+        dispatcher = new FixtureDispatcher(fixtures, Defaults::getServiceRoot,
                 new TimerReplyScheduler(), new HarnessListener());
+        // CustomFileUpload's transport is static: this harness answers uploads until it is
+        // disposed (or another harness is created)
+        uploadTransport = new StoryUploadTransport(
+                new FixtureUploads(fixtures, new TimerReplyScheduler(), new HarnessUploadListener()));
+        uploadTransport.install();
 
         injector = builder.injector != null
                 ? builder.injector
@@ -417,6 +433,9 @@ public final class ScreenHarness {
         if (dispatcher != null) {
             dispatcher.dispose();
         }
+        if (uploadTransport != null) {
+            runSafely("restoring Stroom's upload transport", uploadTransport::dispose);
+        }
         if (uiConfigCache != null) {
             runSafely("stopping the UI config refresh", uiConfigCache::stopRefreshing);
         }
@@ -620,6 +639,34 @@ public final class ScreenHarness {
         @Override
         public void onDroppedRequest(final RecordedRequest request) {
             warn("A request from a previous rendering of the story was dropped: " + request.describe());
+        }
+    }
+
+    // --------------------------------------------------------------------------------
+
+
+    /// Records the uploads and reports problems with them, as [HarnessListener] does for requests.
+    private final class HarnessUploadListener implements FixtureUploads.Listener {
+
+        @Override
+        public void onUpload(final RecordedUpload upload) {
+            if (!disposed) {
+                fn(UPLOAD_SPY).call(upload.getUrl(), upload.getFileName(), upload.getContent());
+            }
+        }
+
+        @Override
+        public void onUnhandledUpload(final RecordedUpload upload, final String message, final boolean strict) {
+            warn(message);
+            spy(UNHANDLED_REQUEST_SPY, upload.describe());
+            if (strict) {
+                fail(message);
+            }
+        }
+
+        @Override
+        public void onDroppedUpload(final RecordedUpload upload) {
+            warn("An upload from a previous rendering of the story was dropped: " + upload.describe());
         }
     }
 }

@@ -21,6 +21,7 @@ import stroom.gwt.workbench.client.app.gin.content.ContentScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
+import stroom.gwt.workbench.client.app.rest.UploadReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
@@ -30,35 +31,36 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
+import stroom.importexport.client.event.ImportConfigEvent;
 import stroom.importexport.client.presenter.ImportConfigConfirmPresenter;
-import stroom.importexport.shared.ContentResource;
-import stroom.importexport.shared.ImportConfigRequest;
-import stroom.importexport.shared.ImportSettings;
-import stroom.task.client.DefaultTaskMonitorFactory;
-import stroom.util.shared.ResourceKey;
+import stroom.importexport.client.presenter.ImportConfigPresenter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-import java.util.ArrayList;
-
 /// Stories matching `App/Main/ImportDialog` in the React Storybook, showing Stroom's real
+/// [ImportConfigPresenter] (the 'Import' dialog, which uploads the chosen file) and
 /// [ImportConfigConfirmPresenter] (the 'Confirm Import' dialog) with fake REST replies.
 ///
-/// The React stories start by choosing a file, which `ImportConfigPresenter` uploads with
-/// `CustomFileUpload` (its own `XMLHttpRequest`, which stories can't answer, see PORTING.md). So
-/// these stories start where the upload finishes: as `ImportConfigPresenter` does with the uploaded
-/// file's resource key, the story asks `ContentResource.importContent` for the confirmation list
-/// (`POST /content/v1/import`, `CREATE_CONFIRMATION`) and fires `ImportConfigConfirmEvent` with the
-/// reply, with the confirm dialog (from GIN) as its handler. The React `ContentApi` becomes routes for
-/// `POST /content/v1/import` (by import mode) and `POST /content/v1/abortImport` (and the root folder
-/// picker's explorer requests, [TreeFixtures]); its recorder becomes
-/// checks on the request spy. `NothingToImport` is blocked: its warning is shown by
-/// `ImportConfigPresenter` when the upload's confirmation list is empty.
+/// | React seam | Stroom |
+/// |---|---|
+/// | `uploadImportFile` | the file's upload (`importfile.rpc`): an upload reply, key `res-1` |
+/// | `importContent` (its recorder) | `POST /content/v1/import`, by import mode (the request spy) |
+/// | `abortImport` (its recorder) | `POST /content/v1/abortImport` (the request spy) |
+///
+/// The story fires `ImportConfigEvent` (as the main menu's 'Import' item does) with both dialogs
+/// registered as their events' handlers, as their GWTP proxies would be. The confirm dialog's root
+/// folder picker gets its folder from the explorer ([TreeFixtures]).
 public final class ImportDialogStories {
 
     private static final String IMPORT_PATH = "/content/v1/import";
+    private static final String UPLOAD_URL = "importfile.rpc";
     private static final String RESOURCE_KEY = "{\"key\": \"res-1\", \"name\": \"import.zip\"}";
+
+    // React's uploadFile: the file chosen in each story but NothingToImport
+    private static final String FILE_NAME = "import.zip";
+    private static final String FILE_CONTENT = "<config/>";
+    private static final String FILE_TYPE = "application/zip";
 
     // A clean confirm list (all NEW, no messages): OK imports without a warning
     private static final String CLEAN_ITEMS = """
@@ -81,6 +83,9 @@ public final class ImportDialogStories {
                 "updatedFieldList": ["description", "classification"]}
             ]""";
 
+    private static final String NOTHING_TO_IMPORT = "The import package contains nothing that can be "
+            + "imported into this version of Stroom.";
+
     private ImportDialogStories() {
         // Static utility
     }
@@ -91,32 +96,51 @@ public final class ImportDialogStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/ImportDialog", ImportDialogStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // Confirm the parsed list; OK imports the ticked items (ACTION_CONFIRMATION)
+                // Choose a file, confirm the parsed list; OK imports the ticked items
+                // (ACTION_CONFIRMATION)
                 .story("ImportWizard", context -> render(context, CLEAN_ITEMS))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // Differs from React: the story starts at the confirmation, after the upload
-                    screen.findByText("Confirm Import");
+                    uploadFile(play);
                     play.expect(screen.getByText("Dictionary")).toBeInTheDocument();
                     play.expect(screen.getByText("Feed")).toBeInTheDocument();
                     play.expect(screen.getAllByText("System/Feeds/EVENTS")).toHaveLength(2);
-                    play.click(dialog(screen).getByRole("button", StroomDom.button("OK")));
+                    play.click(confirmDialog(screen).getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(IMPORT_PATH)
                                     .withJsonBodyContaining("{\"importSettings\": {\"importMode\": "
                                             + "\"ACTION_CONFIRMATION\"}, \"confirmList\": [{}, {}]}")
                                     .toSpyMatcher()));
-                    // Differs from React: GWT tells the user the import is complete
+                    // Both tell the user the import is complete (React's play doesn't check it)
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("INFO: Import Complete"));
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // An empty confirm list warns that there is nothing to import, and stays on the
+                // file step
+                .story("NothingToImport", context -> render(context, "[]"))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Play dialog = importDialog(screen);
+                    play.upload(dialog.querySelector(StroomDom.FILE_INPUT), "empty.zip", "x", "");
+                    dialog.findByText("empty.zip");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.getByText(
+                            TextMatch.containingIgnoreCase("contains nothing that can be imported")))
+                            .toBeInTheDocument());
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("WARN: " + NOTHING_TO_IMPORT);
+                    // Still on the file step (no confirm grid)
+                    play.expect(screen.queryByText("Confirm Import")).toBeNull();
+                    play.expect(screen.getByText("Import", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.expect(play.spy(ScreenHarness.UPLOAD_SPY)).toHaveBeenCalledWith(UPLOAD_URL, "empty.zip", "x");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // The info icon shows the row's messages and updated fields
                 .story("InfoPopup", context -> render(context, WARN_ITEMS))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    screen.findByText("Confirm Import");
-                    play.click(dialog(screen).querySelector(".svgCell-icon, .infoColumn, [title='Info']"));
+                    uploadFile(play);
+                    play.click(confirmDialog(screen).querySelector(".svgCell-icon, .infoColumn, [title='Info']"));
                     play.waitFor(() -> play.expect(screen.getByText("Will overwrite the existing document"))
                             .toBeInTheDocument());
                     play.expect(screen.getByText("Fields Updated")).toBeInTheDocument();
@@ -127,8 +151,8 @@ public final class ImportDialogStories {
                 .story("WarningsConfirm", context -> render(context, WARN_ITEMS))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    screen.findByText("Confirm Import");
-                    play.click(dialog(screen).getByRole("button", StroomDom.button("OK")));
+                    uploadFile(play);
+                    play.click(confirmDialog(screen).getByRole("button", StroomDom.button("OK")));
                     final Play confirm = screen.within(screen.findByText(
                                     TextMatch.containingIgnoreCase("There are warnings in the items selected"))
                             .closest(StroomDom.DIALOG));
@@ -144,27 +168,55 @@ public final class ImportDialogStories {
                 .story("CancelAborts", context -> render(context, CLEAN_ITEMS))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    screen.findByText("Confirm Import");
-                    play.click(dialog(screen).getByRole("button", StroomDom.button("Cancel")));
+                    uploadFile(play);
+                    play.click(confirmDialog(screen).getByRole("button", StroomDom.button("Cancel")));
+                    // The key of the uploaded file
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/content/v1/abortImport")
                                     .withJsonBodyContaining("{\"key\": \"res-1\"}")
                                     .toSpyMatcher()));
-                    // Differs from React: GWT tells the user the import was aborted
+                    // Both tell the user the import was aborted (React's play doesn't check it)
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("WARN: Import Aborted"));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
     }
 
+    /// React's `uploadFile`: chooses `import.zip` in the 'Import' dialog, waits for its name, then
+    /// OK uploads it, and the confirm grid opens with the parsed items. Also checks the upload and
+    /// that the confirmation was asked for the uploaded file's resource key.
+    private static void uploadFile(final Play play) {
+        final Play screen = play.screen();
+        final Play dialog = importDialog(screen);
+        // React sets the file with fireEvent.change; userEvent.upload fires the same change event
+        play.upload(dialog.querySelector(StroomDom.FILE_INPUT), FILE_NAME, FILE_CONTENT, FILE_TYPE);
+        // CustomFileUpload shows the chosen name
+        dialog.findByText(FILE_NAME);
+        play.click(dialog.getByRole("button", StroomDom.button("OK")));
+        play.waitFor(() -> play.expect(screen.getByText("Confirm Import")).toBeInTheDocument());
+        play.expect(play.spy(ScreenHarness.UPLOAD_SPY)).toHaveBeenCalledWith(UPLOAD_URL, FILE_NAME, FILE_CONTENT);
+        play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                RequestMatcher.post(IMPORT_PATH)
+                        .withJsonBodyContaining("{\"resourceKey\": {\"key\": \"res-1\"}, "
+                                + "\"importSettings\": {\"importMode\": \"CREATE_CONFIRMATION\"}}")
+                        .toSpyMatcher());
+    }
+
+    // The 'Import' dialog, once it has opened
+    private static Play importDialog(final Play screen) {
+        return screen.within(screen.findByText("Import", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
+    }
+
     // The 'Confirm Import' dialog
-    private static Play dialog(final Play screen) {
+    private static Play confirmDialog(final Play screen) {
         return screen.within(screen.getByText("Confirm Import").closest(StroomDom.DIALOG));
     }
 
     private static Widget render(final StoryContext context, final String confirmList) {
         // The dialog's root folder picker gets its folder's node from the explorer
         final RestFixtures fixtures = TreeFixtures.explorerRoutes(TreeFixtures.fixtureTree())
+                // React's uploadImportFile
+                .upload(UploadReply.success("res-1", FILE_NAME))
                 .route(RequestMatcher.post(IMPORT_PATH).withJsonBodyContaining(
                                 "{\"importSettings\": {\"importMode\": \"ACTION_CONFIRMATION\"}}"),
                         RestReply.json("{\"resourceKey\": " + RESOURCE_KEY + ", \"confirmList\": []}"))
@@ -179,19 +231,14 @@ public final class ImportDialogStories {
                 // The confirmations and alerts are shown in Stroom's real dialogs
                 .realAlerts()
                 .build();
-        // As the presenter's GWTP proxy would
-        final ImportConfigConfirmPresenter presenter = injector.getImportConfigConfirmPresenter();
-        harness.addRegistration(harness.getEventBus().addHandler(ImportConfigConfirmEvent.getType(), presenter));
-        // As ImportConfigPresenter does when the file has been uploaded
-        final ContentResource contentResource = GWT.create(ContentResource.class);
-        harness.afterStartUp(() -> harness.getRestFactory()
-                .create(contentResource)
-                .method(res -> res.importContent(new ImportConfigRequest(new ResourceKey("res-1", "import.zip"),
-                        ImportSettings.createConfirmation(),
-                        new ArrayList<>())))
-                .onSuccess(response -> ImportConfigConfirmEvent.fire(harness.getHasHandlers(), response))
-                .taskMonitorFactory(new DefaultTaskMonitorFactory(harness.getHasHandlers()))
-                .exec());
+        // As the presenters' GWTP proxies would
+        final ImportConfigPresenter importPresenter = injector.getImportConfigPresenter();
+        harness.addRegistration(harness.getEventBus().addHandler(ImportConfigEvent.getType(), importPresenter));
+        final ImportConfigConfirmPresenter confirmPresenter = injector.getImportConfigConfirmPresenter();
+        harness.addRegistration(harness.getEventBus().addHandler(ImportConfigConfirmEvent.getType(),
+                confirmPresenter));
+        // As the main menu's 'Import' item does
+        harness.afterStartUp(() -> ImportConfigEvent.fire(harness.getHasHandlers()));
         return harness.asWidget();
     }
 }

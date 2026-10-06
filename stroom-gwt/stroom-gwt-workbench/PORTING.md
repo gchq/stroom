@@ -71,7 +71,7 @@ etc. record into the same spies.
   constructor; bind fakes in `ScreenGinModule`). Presenters and views are not added there, as each
   would compile its whole graph into every story;
 * spies: `REQUEST_SPY` (`"METHOD /path?query body"`), `UNHANDLED_REQUEST_SPY`, `ALERT_SPY`
-  (`"ERROR: message"`), `CONFIRM_SPY` and `DOWNLOAD_SPY`. A story's own spies, e.g. for React's
+  (`"ERROR: message"`), `CONFIRM_SPY`, `DOWNLOAD_SPY` and `UPLOAD_SPY` (see "Uploads" below). A story's own spies, e.g. for React's
   `onOpenDoc: fn()`, are made with `harness.fn(name)` **as the story renders** (so a play can
   check they weren't called) and called with `harness.spy(name, detail)`.
 
@@ -330,13 +330,61 @@ that bypassed `RestFactory` would reach neither the network nor another harness'
   the host page, e.g. `resourcestore/my-notes.md?uuid=k1`) instead of navigating away. Each
   harness has its own; give the screen `harness.getInjector().getLocationManager()`. Check with
   `play.expect(play.spy(ScreenHarness.DOWNLOAD_SPY)).toHaveBeenCalledWith(ValueMatcher.stringContaining("resourcestore/"))`.
-* **Uploads** are blocked: Stroom's `FileUploadSubmitter` (used by `CustomFileUpload` in the
-  import, data upload, visualisation asset and key store dialogs) posts the file with its own
-  `XMLHttpRequest` in JSNI, bypassing RestyGWT and anything the harness can replace. Record such
-  stories as blocked until Stroom routes uploads through an injectable seam.
+* **Uploads** are answered by the fixtures' upload replies: see "Uploads" below.
 * **WebSocket/EventSource**: Stroom's GWT client uses neither (it polls with REST, which fixture
   sequences cover). React stories that stream (e.g. AI chat) have no GWT equivalent of the
   streaming; record them as not applicable, or port what GWT does instead.
+
+### Uploads
+
+Stroom's `CustomFileUpload` (the import, data upload, visualisation asset and key store dialogs)
+posts the chosen file to the import file servlet (`ImportUtil.getImportFileURL()`,
+`importfile.rpc`) through a static `FileUploadTransport` (`CustomFileUpload.setUploadTransport`),
+whose default is an `XMLHttpRequest`. The harness installs its own, `StoryUploadTransport`, when it
+is built and restores Stroom's default when the story renders again, so uploads never reach the
+network. It reads the chosen file (a `FileReader`, asynchronously) and answers the upload from the
+story's fixtures:
+
+```java
+RestFixtures.builder()
+        // Every upload: the servlet stored the file with this resource key and name
+        .upload(UploadReply.success("res-1", "import.zip"))
+        // Or by the chosen file's name (put these before a route for every upload)
+        .upload("bad.zip", UploadReply.failure("Not a zip file"))
+        // A sequence: the first upload gets the first reply, and so on; the last repeats
+        .upload("a.txt", UploadReply.networkError("Network error during upload"),
+                UploadReply.success("k1", "a.txt").delayed(500))
+        .build();
+```
+
+* `UploadReply.success(key, name)` is the servlet's `PropertyMap` arg line
+  (`#PM#success=true key=res-1 name=import.zip#PM#`), which Stroom's `FileUploadResultHandler`
+  reads into the `ResourceKey` given to the screen's success handler (e.g. the key sent with
+  `ImportConfigRequest`, `UploadDataRequest` or a key store secret). `failure(message)` is the
+  servlet's `success=false` reply, whose exception message goes to the screen's failure handler
+  (usually an error alert); `networkError(message)` and `httpError(status)` are failures before the
+  servlet (Stroom's transport reports `Network error during upload` and
+  `Upload failed (HTTP <status>)`). `.delayed(millis)` keeps the upload in flight.
+* Replies are asynchronous, as REST replies are; a pending reply is cancelled on re-render, and an
+  upload from an old rendering is dropped with a `console.warn`.
+* `ScreenHarness.UPLOAD_SPY` records each upload with three arguments: the URL relative to the host
+  page (always `importfile.rpc`), the chosen file's name and its content (null unless it is text of
+  at most 64 KiB). React's `uploaded` recorders become
+  `play.expect(play.spy(ScreenHarness.UPLOAD_SPY)).toHaveBeenCalledWith("importfile.rpc", "a.txt", "x")`
+  (`ValueMatcher.anything()` for an argument that doesn't matter).
+* **Strict**: an upload that no upload route matches fails the story, as an unmatched request does
+  (it is also recorded by `UNHANDLED_REQUEST_SPY` and fails as Stroom reports a `404`); with
+  `lenient()` it only fails the upload.
+* Choose the file with `play.upload(input, name, content, mimeType)` on the hidden file input
+  (`StroomDom.FILE_INPUT`, inside the dialog): it sets the input's files with a `DataTransfer` and
+  fires `input` and `change`, so `CustomFileUpload` shows the name, whether or not the input is
+  visible. Then press the dialog's OK, which submits it.
+* Browsers give a file input's value as `C:\fakepath\<name>`, and some Stroom presenters send
+  `getFilename()` as it is (e.g. `DataUploadPresenter`'s `UploadDataRequest.fileName`); check what
+  GWT sends.
+* `CustomFileUpload`'s transport is static, so with several harnesses in one rendering the last
+  one built answers every upload. Widget stories (no harness) keep Stroom's default transport, so
+  they must not submit a `CustomFileUpload`.
 
 ## Play functions: Testing Library → Java
 
@@ -826,9 +874,8 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
   about), and show the opened tab by handling `OpenContentTabEvent` with `harness.addContent`.
   Unbind both on clean up (`harness.addCleanUp(plugin::unbind)`).
 * **Uploads before a step**: where a React story uploads a file and then works on what the upload
-  returns (e.g. Import's 'Confirm Import'), the story starts after the upload, doing the request the
-  upload's success callback does and firing its event (`ImportConfigConfirmEvent`). Stories whose
-  checks are about the upload itself stay blocked.
+  returns (e.g. Import's 'Confirm Import'), the story uploads it too, answered by an upload reply
+  (see "Uploads" under the harness); the Import stories start at the 'Import' dialog.
 * **Batch helpers** (in `app.main`): `ContentStorySupport` (`expectNoProblems`, `queryParam`, `decorate`)
   and the batch's fixtures (`ActivityFixtures`, `AnnotationFixtures`).
 * A leftover workbench server (e.g. after a Gradle daemon is killed for memory) keeps the test port;

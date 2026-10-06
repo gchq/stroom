@@ -41,16 +41,16 @@ final class FileUploadSubmitter {
     }
 
     /**
-     * Upload the file currently selected in the given file input element to the given URL.
+     * Upload the file currently selected in the given file input element to the given URL. This
+     * is Stroom's default {@link FileUploadTransport}.
      *
      * @param url              The upload endpoint (same-origin as the app).
      * @param fileInputElement The {@code <input type="file">} element holding the selected file.
-     * @param callback         Notified of the start, success or failure of the upload.
+     * @param callback         Notified of the success or failure of the upload.
      */
     static void submit(final String url,
                        final Element fileInputElement,
                        final FileUploadCallback callback) {
-        callback.onUploadStart();
         doSubmit(url, fileInputElement, FILE_FIELD_NAME, CSRF_HEADER, CSRF_VALUE, callback);
     }
 
