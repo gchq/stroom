@@ -38,7 +38,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.feed.shared.FeedDoc;
+import stroom.feed.client.FeedClient;
 import stroom.node.client.NodeClient;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
@@ -120,6 +120,7 @@ public class TaskManagerListPresenter
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
+    private final FeedClient feedClient;
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
     private final Map<String, List<String>> errorMap = new HashMap<>();
@@ -149,12 +150,14 @@ public class TaskManagerListPresenter
                                     final TooltipPresenter tooltipPresenter,
                                     final RestFactory restFactory,
                                     final NodeClient nodeClient,
+                                    final FeedClient feedClient,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
+        this.feedClient = feedClient;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
@@ -469,13 +472,14 @@ public class TaskManagerListPresenter
 
             final String feedName = parser.getString(TaskInfoKey.FEED_NAME);
             if (feedName != null) {
-                final DocRef docRef = new DocRef(FeedDoc.TYPE, null, feedName);
+                // The task info only holds the feed's name, so look up its doc ref (a DocRef must
+                // have a UUID) when the item is chosen
                 menuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.OPEN)
                         .text("Open Feed")
                         .enabled(true)
-                        .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                        .command(() -> openFeed(feedName))
                         .build());
             }
 
@@ -660,6 +664,16 @@ public class TaskManagerListPresenter
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    }
+
+    private void openFeed(final String feedName) {
+        feedClient.getDocRefForName(feedName, docRef -> {
+            if (docRef != null) {
+                OpenDocumentEvent.fire(this, docRef, true);
+            } else {
+                AlertEvent.fireError(this, "Unable to find feed '" + feedName + "'", null);
+            }
+        }, getView());
     }
 
 
