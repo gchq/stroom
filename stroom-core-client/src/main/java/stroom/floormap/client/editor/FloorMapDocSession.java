@@ -29,8 +29,8 @@ import stroom.util.shared.NullSafe;
 import java.util.List;
 import java.util.Objects;
 
-/// A tab's pending document-level edits — the Editor's area-support upgrade,
-/// Layers type-styles list and Set Scale calibration, and the Map tab's groups —
+/// A tab's pending document-level edits — the Editor's area- and status-support
+/// upgrades, Layers type-styles list and Set Scale calibration, and the Map tab's groups —
 /// with the invariants that keep them consistent across read/write.
 ///
 /// Neither tab normally writes the [FloorMapDoc] itself (temporal store
@@ -50,12 +50,21 @@ import java.util.Objects;
 /// are passed in where needed (this class doesn't own the document).
 public final class FloorMapDocSession {
 
-    /// The area-support schema upgrade staged for save, or `null`. When set,
-    /// it is the effective value schema for the session (older docs predate the
-    /// area roles). Its companion [#pendingAreaTypeStyles] seeds the "area"
-    /// z-order style.
-    private List<FloorMapFieldMapping> pendingAreaSchema;
+    /// The value schema with every staged schema upgrade applied, or `null` if
+    /// none is staged. When set, it is the effective value schema for the session
+    /// (older docs predate the area and status roles). Which upgrades it carries is
+    /// recorded by [#areaUpgradeStaged] and [#statusUpgradeStaged], so each
+    /// can be re-applied on write and dropped independently once persisted.
+    private List<FloorMapFieldMapping> pendingSchema;
+
+    /// Whether the area-support upgrade is staged. Its companion
+    /// [#pendingAreaTypeStyles] seeds the "area" z-order style.
+    private boolean areaUpgradeStaged;
     private List<TypeStyle> pendingAreaTypeStyles;
+
+    /// Whether the status-support upgrade (a default Status mapping, so facts can
+    /// be deleted from a point in time) is staged.
+    private boolean statusUpgradeStaged;
 
     /// Type styles edited via the Layers panel (reorder / appearance / discovered
     /// types) not yet saved. When non-null this is the authoritative ordered list.
@@ -79,7 +88,7 @@ public final class FloorMapDocSession {
 
     /// `true` if any document-level edit is staged.
     public boolean hasPendingDocEdits() {
-        return pendingAreaSchema != null
+        return pendingSchema != null
                || pendingTypeStyles != null
                || pendingGroups != null
                || pendingUnitsStaged;
@@ -87,7 +96,7 @@ public final class FloorMapDocSession {
 
     /// The value schema in effect this session: the pending upgrade, else the entity's.
     public List<FloorMapFieldMapping> valueSchema(final List<FloorMapFieldMapping> entitySchema) {
-        return pendingAreaSchema != null ? pendingAreaSchema : entitySchema;
+        return pendingSchema != null ? pendingSchema : entitySchema;
     }
 
     /// The type styles in effect this session (Layers edit, else area upgrade, else entity's).
@@ -139,8 +148,24 @@ public final class FloorMapDocSession {
     public void stageAreaUpgrade(final List<FloorMapFieldMapping> baseSchema,
                                  final ValueFormat format,
                                  final List<TypeStyle> baseTypeStyles) {
-        pendingAreaSchema = FloorMapFieldMapping.withAreaMappings(baseSchema, format);
+        pendingSchema = FloorMapFieldMapping.withAreaMappings(baseSchema, format);
+        areaUpgradeStaged = true;
         pendingAreaTypeStyles = TypeStyle.withAreaStyle(baseTypeStyles);
+    }
+
+    /// Stages the status-support upgrade: a default Status schema mapping,
+    /// derived from the current effective schema, so facts can be deleted from a
+    /// point in time on a document created before that was possible.
+    ///
+    /// Composes with [#stageAreaUpgrade] in either order, since each derives
+    /// from the effective schema, which already carries the other.
+    ///
+    /// @param baseSchema the current effective value schema
+    /// @param format     the document's value format (for the default path)
+    public void stageStatusUpgrade(final List<FloorMapFieldMapping> baseSchema,
+                                   final ValueFormat format) {
+        pendingSchema = FloorMapFieldMapping.withStatusMapping(baseSchema, format);
+        statusUpgradeStaged = true;
     }
 
     /// Returns the document as this session sees it: the loaded entity with any
@@ -159,8 +184,8 @@ public final class FloorMapDocSession {
                 .build();
     }
 
-    /// Merges the staged edits into `document` for save. The area upgrade
-    /// writes the upgraded schema; the type styles come from the Layers edit if
+    /// Merges the staged edits into `document` for save. The area and status
+    /// upgrades write the upgraded schema; the type styles come from the Layers edit if
     /// present (with the "area" style folded in when an area upgrade is also
     /// pending, so a Layers edit around the upgrade can't drop it), else from the
     /// area upgrade alone. Staged groups are written as-is.
@@ -169,15 +194,21 @@ public final class FloorMapDocSession {
             return document;
         }
         final FloorMapDoc.Builder builder = document.copy();
-        if (pendingAreaSchema != null) {
-            builder.valueSchema(FloorMapFieldMapping.withAreaMappings(
-                    document.getValueSchema(), document.getValueFormat()));
+        if (pendingSchema != null) {
+            List<FloorMapFieldMapping> schema = document.getValueSchema();
+            if (areaUpgradeStaged) {
+                schema = FloorMapFieldMapping.withAreaMappings(schema, document.getValueFormat());
+            }
+            if (statusUpgradeStaged) {
+                schema = FloorMapFieldMapping.withStatusMapping(schema, document.getValueFormat());
+            }
+            builder.valueSchema(schema);
         }
         if (pendingTypeStyles != null) {
-            builder.typeStyles(pendingAreaSchema != null
+            builder.typeStyles(areaUpgradeStaged
                     ? TypeStyle.withAreaStyle(pendingTypeStyles)
                     : pendingTypeStyles);
-        } else if (pendingAreaSchema != null) {
+        } else if (areaUpgradeStaged) {
             builder.typeStyles(TypeStyle.withAreaStyle(document.getTypeStyles()));
         }
         if (pendingGroups != null) {
@@ -191,15 +222,22 @@ public final class FloorMapDocSession {
 
     /// Drops staged edits that the just-read document already carries (post-save
     /// re-read). The area upgrade is dropped only once BOTH the schema roles and
-    /// the "area" style are present; the Layers edit once the doc's styles equal
-    /// it (accepting the area-folded form written by [#applyToWrite]); the
-    /// groups edit once the doc's groups equal it.
+    /// the "area" style are present; the status upgrade once the Status role is;
+    /// the Layers edit once the doc's styles equal it (accepting the area-folded
+    /// form written by [#applyToWrite]); the groups edit once the doc's groups
+    /// equal it.
     public void reconcileAfterRead(final FloorMapDoc document) {
-        if (pendingAreaSchema != null
+        if (areaUpgradeStaged
                 && hasAreaSupport(document.getValueSchema())
                 && hasAreaStyle(document.getTypeStyles())) {
-            pendingAreaSchema = null;
+            areaUpgradeStaged = false;
             pendingAreaTypeStyles = null;
+        }
+        if (statusUpgradeStaged && hasStatusSupport(document.getValueSchema())) {
+            statusUpgradeStaged = false;
+        }
+        if (!areaUpgradeStaged && !statusUpgradeStaged) {
+            pendingSchema = null;
         }
         if (pendingTypeStyles != null
                 && (pendingTypeStyles.equals(document.getTypeStyles())
@@ -236,6 +274,12 @@ public final class FloorMapDocSession {
         return FloorMapFieldMapping.findPath(schema, Role.GEOMETRY) != null
                 && FloorMapFieldMapping.findPath(schema, Role.FILL) != null
                 && FloorMapFieldMapping.findPath(schema, Role.OPACITY) != null;
+    }
+
+    /// `true` when the schema maps the Status role, which deleting a fact from a
+    /// point in time needs.
+    public static boolean hasStatusSupport(final List<FloorMapFieldMapping> schema) {
+        return FloorMapFieldMapping.findPath(schema, Role.STATUS) != null;
     }
 
     /// `true` when the type styles contain an `"area"` entry.

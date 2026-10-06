@@ -18,6 +18,7 @@ package stroom.floormap.client.editor;
 
 import stroom.floormap.client.editor.FloorMapEditorModel.FactEndCheck;
 import stroom.floormap.client.model.Fact;
+import stroom.floormap.client.value.DomValueAccessor;
 import stroom.floormap.client.value.MapValueAccessor;
 import stroom.floormap.client.value.ParsedValue;
 import stroom.floormap.shared.FloorMapFactStatus;
@@ -1537,6 +1538,28 @@ class TestFloorMapEditorModel {
         assertThat(FloorMapEditorModel.isHidden(null, SCHEMA, ACCESSOR)).isFalse();
     }
 
+    /// The status checks read a value only if the canvas parser would: the accessor's format
+    /// check comes first, as in `FloorMapEntryParser`. With an accessor whose format check is
+    /// stricter than its parser, a deleted value the canvas skips must not count as hidden, and
+    /// a fact the canvas cannot draw must not be offered for deletion.
+    @Test
+    void testStatusChecksUseTheParsersFormatCheck() {
+        final RejectingFormatAccessor strict = new RejectingFormatAccessor();
+        final TemporalEntry deleted = entry("desk-1", 100,
+                "{\"type\":\"desk\",\"status\":\"DELETED\"}");
+        // Readable by parse alone, so only the format check can reject it.
+        assertThat(strict.parse(deleted.getValue())).isNotNull();
+
+        assertThat(FloorMapEditorModel.isHidden(deleted, SCHEMA, ACCESSOR)).isTrue();
+        assertThat(FloorMapEditorModel.isHidden(deleted, SCHEMA, strict)).isFalse();
+
+        model.onEntriesFetched(List.of(entry("desk-2", 100, DESK)));
+        model.setSelectedTime(500);
+        assertThat(model.parseForCanvas(model.buildMergedCanvasEntries(), SCHEMA, strict)).isEmpty();
+        assertThat(model.checkFactEnd("desk-2", SCHEMA, strict)).isEqualTo(FactEndCheck.UNREADABLE);
+        assertThat(model.checkFactEnd("desk-2", SCHEMA, ACCESSOR)).isEqualTo(FactEndCheck.OK);
+    }
+
     /// The Fact List's reduction keeps the latest version per key, at the selected time or
     /// overall.
     @Test
@@ -1554,6 +1577,112 @@ class TestFloorMapEditorModel {
                 .extracting(TemporalEntry::getEffectiveTimeMs)
                 .containsExactly(900L);
         assertThat(model.latestEntryPerKey(null, false)).isEmpty();
+    }
+
+    /// A delete, a restore and a second delete each take effect from their own time: the fact
+    /// is shown before the first, hidden between it and the restore, shown again after the
+    /// restore, and hidden after the second delete. Ending it again after the restore is
+    /// allowed, and the Fact List's reduction agrees with the canvas at each time.
+    @Test
+    void testDeleteRestoreDeleteAgain() {
+        final String deleted = "{\"type\":\"desk\",\"name\":\"Desk 1\",\"status\":\"DELETED\"}";
+        final String restored = "{\"type\":\"desk\",\"name\":\"Desk 1\",\"status\":\"ACTIVE\"}";
+        model.onEntriesFetched(List.of(
+                entry("desk-1", 100, DESK),
+                entry("desk-1", 500, deleted),
+                entry("desk-1", 900, restored)));
+
+        model.setSelectedTime(700);
+        assertThat(model.checkFactEnd("desk-1", SCHEMA, ACCESSOR)).isEqualTo(FactEndCheck.ALREADY_DELETED);
+        assertThat(isListedAtSelectedTime("desk-1")).isFalse();
+
+        model.setSelectedTime(1000);
+        assertThat(model.checkFactEnd("desk-1", SCHEMA, ACCESSOR)).isEqualTo(FactEndCheck.OK);
+        assertThat(model.stageFactEnd(List.of("desk-1"), SCHEMA, ACCESSOR))
+                .containsExactly(Map.entry("desk-1", FactEndCheck.OK));
+
+        assertThat(visibleKeysAt(300)).containsExactly("desk-1");
+        assertThat(visibleKeysAt(700)).isEmpty();
+        assertThat(visibleKeysAt(950)).containsExactly("desk-1");
+        assertThat(isListedAtSelectedTime("desk-1")).isTrue();
+        assertThat(visibleKeysAt(1000)).isEmpty();
+        assertThat(isListedAtSelectedTime("desk-1")).isFalse();
+    }
+
+    /// Regression: duplicating a deleted fact - possible from a group selection with Show All
+    /// on - created an invisible, deleted copy. A deleted fact has no duplicate source, so the
+    /// group duplicate skips it.
+    @Test
+    void testDuplicateSourceForKey_skipsDeletedFact() {
+        model.onEntriesFetched(List.of(
+                entry("desk-1", 100, DESK),
+                entry("desk-1", 500, "{\"type\":\"desk\",\"name\":\"Desk 1\",\"status\":\"DELETED\"}"),
+                entry("desk-2", 100, DESK)));
+
+        model.setSelectedTime(700);
+        assertThat(model.duplicateSourceForKey("desk-1", SCHEMA, ACCESSOR)).isNull();
+        assertThat(model.duplicateSourceForKey("desk-2", SCHEMA, ACCESSOR))
+                .extracting(TemporalEntry::getKey)
+                .isEqualTo("desk-2");
+
+        // Before the deletion the fact is there to duplicate, and so is its active version.
+        model.setSelectedTime(300);
+        assertThat(model.duplicateSourceForKey("desk-1", SCHEMA, ACCESSOR))
+                .extracting(TemporalEntry::getEffectiveTimeMs)
+                .isEqualTo(100L);
+    }
+
+    /// A fact with no version at the selected time has nothing to duplicate.
+    @Test
+    void testDuplicateSourceForKey_absentFact() {
+        model.onEntriesFetched(List.of(entry("desk-1", 900, DESK)));
+        model.setSelectedTime(500);
+
+        assertThat(model.duplicateSourceForKey("desk-1", SCHEMA, ACCESSOR)).isNull();
+        assertThat(model.duplicateSourceForKey("missing", SCHEMA, ACCESSOR)).isNull();
+    }
+
+    /// An XML value without a status element gets one written, alongside its other elements,
+    /// and is then hidden; writing ACTIVE over it shows the fact again.
+    @Test
+    void testWithStatus_xmlCreatesStatusElement() {
+        final DomValueAccessor xml = DomValueAccessor.INSTANCE;
+        final List<FloorMapFieldMapping> xmlSchema = List.of(
+                new FloorMapFieldMapping("/entry/type", FloorMapFieldMapping.Role.TYPE, "Type", null),
+                new FloorMapFieldMapping("/entry/name", FloorMapFieldMapping.Role.LABEL, "Name", null),
+                new FloorMapFieldMapping("/entry/status", FloorMapFieldMapping.Role.STATUS, "Status", null));
+        final TemporalEntry desk = entry("desk-1", 100,
+                "<entry><type>desk</type><name>Desk 1</name></entry>");
+        assertThat(FloorMapEditorModel.isHidden(desk, xmlSchema, xml)).isFalse();
+
+        final TemporalEntry deleted = FloorMapEditorModel.withStatus(
+                desk, FloorMapFactStatus.DELETED, xmlSchema, xml);
+
+        assertThat(deleted.getValue()).contains("<status>DELETED</status>");
+        final ParsedValue parsed = xml.parse(deleted.getValue());
+        assertThat(xml.getString(parsed, "/entry/name")).isEqualTo("Desk 1");
+        assertThat(xml.getString(parsed, "/entry/type")).isEqualTo("desk");
+        assertThat(FloorMapEditorModel.isHidden(deleted, xmlSchema, xml)).isTrue();
+
+        final TemporalEntry restored = FloorMapEditorModel.withStatus(
+                deleted, FloorMapFactStatus.ACTIVE, xmlSchema, xml);
+        assertThat(FloorMapEditorModel.isHidden(restored, xmlSchema, xml)).isFalse();
+        assertThat(restored.getValue()).doesNotContain("DELETED");
+    }
+
+    private List<String> visibleKeysAt(final long time) {
+        model.setSelectedTime(time);
+        return model.parseForCanvas(model.buildMergedCanvasEntries(), SCHEMA, ACCESSOR)
+                .stream()
+                .map(Fact::getKey)
+                .toList();
+    }
+
+    private boolean isListedAtSelectedTime(final String key) {
+        return model.latestEntryPerKey(model.buildMergedCanvasEntries(), true)
+                .stream()
+                .anyMatch(e -> key.equals(e.getKey())
+                               && !FloorMapEditorModel.isHidden(e, SCHEMA, ACCESSOR));
     }
 
     // -----------------------------------------------------------------------
@@ -1595,5 +1724,18 @@ class TestFloorMapEditorModel {
     @Test
     void testResolveEntryKey_nullWhenNeitherSourceHasAKey() {
         assertThat(FloorMapEditorModel.resolveEntryKey(null, null)).isNull();
+    }
+
+    // -----------------------------------------------------------------------
+    // Test types
+    // -----------------------------------------------------------------------
+
+    /// A [MapValueAccessor] whose format check rejects every value its parser still accepts.
+    private static final class RejectingFormatAccessor extends MapValueAccessor {
+
+        @Override
+        public boolean canParse(final String raw) {
+            return false;
+        }
     }
 }

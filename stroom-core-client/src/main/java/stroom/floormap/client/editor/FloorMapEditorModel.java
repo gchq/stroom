@@ -389,9 +389,19 @@ public class FloorMapEditorModel {
         if (entries == null) {
             return null;
         }
+        return latestPerKey(entries, selectedTime > 0);
+    }
+
+    /// Reduces `entries` to the one with the greatest effective time per key, preserving
+    /// first-seen key order.
+    ///
+    /// @param entries        the entries; must not be `null`
+    /// @param atSelectedTime whether to ignore versions after [#selectedTime]
+    private List<TemporalEntry> latestPerKey(final List<TemporalEntry> entries,
+                                             final boolean atSelectedTime) {
         final Map<String, TemporalEntry> byKey = new LinkedHashMap<>();
         for (final TemporalEntry e : entries) {
-            if (selectedTime > 0 && e.getEffectiveTimeMs() > selectedTime) {
+            if (atSelectedTime && e.getEffectiveTimeMs() > selectedTime) {
                 continue;
             }
             final TemporalEntry existing = byKey.get(e.getKey());
@@ -448,6 +458,24 @@ public class FloorMapEditorModel {
             }
         }
         return null;
+    }
+
+    /// Returns the version of `key` to copy when duplicating it: the one active at
+    /// [#selectedTime], or `null` if there is none or it hides its fact.
+    ///
+    /// A deleted fact is not duplicated, since the copy would be deleted, and so invisible, too.
+    ///
+    /// @param key      the fact key
+    /// @param schema   the value schema
+    /// @param accessor the value accessor
+    /// @return the version to duplicate, or `null` if the fact cannot be duplicated
+    public TemporalEntry duplicateSourceForKey(final String key,
+                                              final List<FloorMapFieldMapping> schema,
+                                              final ValueAccessor accessor) {
+        final TemporalEntry active = activeMergedEntryForKey(key);
+        return isHidden(active, schema, accessor)
+                ? null
+                : active;
     }
 
     // -----------------------------------------------------------------------
@@ -619,11 +647,9 @@ public class FloorMapEditorModel {
     /// ended.
     ///
     /// Only a key whose [#checkFactEnd] is [FactEndCheck#OK] is staged; every other key is
-    /// left untouched and its reason returned, so the caller can say why. In particular a version
-    /// already at the selected time is never overwritten: it would be lost, and deleting the
-    /// staged version - the documented undo - would then erase or regress the fact instead of
-    /// restoring it. Each staged key leaves the selection, as for an erase, because a hidden fact
-    /// cannot be shown as selected.
+    /// left untouched and its reason returned, so the caller can say why (see [FactEndCheck]).
+    /// Each staged key leaves the selection, as for an erase, because a hidden fact cannot be
+    /// shown as selected.
     ///
     /// @param keys     the fact keys to end
     /// @param schema   the value schema; must map [Role#STATUS]
@@ -676,7 +702,7 @@ public class FloorMapEditorModel {
         if (active == null) {
             return FactEndCheck.NOT_PRESENT;
         }
-        if (!canParse(active, accessor)) {
+        if (parseAsParsersDo(active, accessor) == null) {
             // isHidden reports an unreadable value as visible, matching the parsers, so this
             // has to be checked first: withStatus cannot write a status into it.
             return FactEndCheck.UNREADABLE;
@@ -725,14 +751,28 @@ public class FloorMapEditorModel {
         return counts;
     }
 
-    private static boolean canParse(final TemporalEntry entry, final ValueAccessor accessor) {
-        if (entry.getValue() == null) {
-            return false;
+    /// Parses `entry`'s value exactly as `FloorMapEntryParser` does - the accessor's
+    /// [ValueAccessor#canParse] format check first, then [ValueAccessor#parse] - so the
+    /// lists and the delete checks agree with the canvas on which values can be read.
+    ///
+    /// Only parsing succeeding is not enough: an accessor whose format check is stricter than
+    /// its parser would leave a value the canvas skips that the editor still treats as readable.
+    ///
+    /// @return the parsed value, or `null` if the parsers would skip this entry
+    private static ParsedValue parseAsParsersDo(final TemporalEntry entry, final ValueAccessor accessor) {
+        final String value = entry != null
+                ? entry.getValue()
+                : null;
+        if (value == null) {
+            return null;
         }
         try {
-            return accessor.parse(entry.getValue()) != null;
+            if (!accessor.canParse(value.trim())) {
+                return null;
+            }
+            return accessor.parse(value);
         } catch (final RuntimeException e) {
-            return false;
+            return null;
         }
     }
 
@@ -750,14 +790,14 @@ public class FloorMapEditorModel {
                                    final List<FloorMapFieldMapping> schema,
                                    final ValueAccessor accessor) {
         final String statusPath = FloorMapFieldMapping.findPath(schema, Role.STATUS);
-        if (entry == null || statusPath == null || entry.getValue() == null) {
+        if (statusPath == null) {
+            return false;
+        }
+        final ParsedValue parsed = parseAsParsersDo(entry, accessor);
+        if (parsed == null) {
             return false;
         }
         try {
-            final ParsedValue parsed = accessor.parse(entry.getValue());
-            if (parsed == null) {
-                return false;
-            }
             final FloorMapFactStatus status = FloorMapFactStatus.fromValue(
                     accessor.getString(parsed, statusPath));
             return status != null && status.isHidden();
@@ -794,7 +834,7 @@ public class FloorMapEditorModel {
                 entry.getMap(),
                 entry.getKey(),
                 entry.getEffectiveTimeMs(),
-                accessor.serialize(parsed));
+                accessor.serialise(parsed));
     }
 
     /// Reduces `entries` to the latest per key, for the Fact List.
@@ -810,18 +850,9 @@ public class FloorMapEditorModel {
         if (entries == null) {
             return new ArrayList<>();
         }
-        if (atSelectedTime) {
-            return activeEntriesAtSelectedTime(entries);
-        }
-        final Map<String, TemporalEntry> byKey = new LinkedHashMap<>();
-        for (final TemporalEntry e : entries) {
-            final TemporalEntry existing = byKey.get(e.getKey());
-            if (existing == null
-                    || e.getEffectiveTimeMs() >= existing.getEffectiveTimeMs()) {
-                byKey.put(e.getKey(), e);
-            }
-        }
-        return new ArrayList<>(byKey.values());
+        return atSelectedTime
+                ? activeEntriesAtSelectedTime(entries)
+                : latestPerKey(entries, false);
     }
 
     /// Stages the deletion of a single time entry and returns the rebuilt time

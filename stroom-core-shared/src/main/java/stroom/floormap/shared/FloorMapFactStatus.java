@@ -21,13 +21,9 @@ import stroom.util.shared.NullSafe;
 /// The lifecycle state carried by a fact version through the [FloorMapFieldMapping.Role#STATUS]
 /// role.
 ///
-/// ### Why a status rather than a deleted flag
-///
-/// A fact comes into existence at its first version and changes at each later one; "as at T" is
-/// the latest version at or before T. Ending a fact is therefore just another version — one whose
-/// status is [#DELETED] — so it is hidden from that version's effective time onwards and still
-/// shown before it, and scrubbing back in time stays correct with no change to the store. A
-/// status rather than a boolean leaves room for further states without another schema change.
+/// Ending a fact is just another version, one whose status is [#DELETED], so it is hidden from
+/// that version's effective time onwards and still shown before it. A status rather than a
+/// boolean leaves room for further states.
 ///
 /// ### The rules every reader follows
 ///

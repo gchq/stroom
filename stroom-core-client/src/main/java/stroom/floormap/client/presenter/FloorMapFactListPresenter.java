@@ -63,7 +63,7 @@ import java.util.function.Consumer;
 /// - **Add** — adds a new object (delegated via [#setAddConsumer(Runnable)]).
 /// - **Delete From This Time** — ends the selected object at the timeline position, keeping
 ///   its history (delegated via [#setEndConsumer(Consumer)]). Disabled when nothing is
-///   selected, or when the schema maps no status field (see [#setEndAvailable(boolean)]).
+///   selected, or when the selected object is already deleted.
 /// - **Erase History** — erases every version of the selected object (delegated via
 ///   [#setDeleteConsumer(Consumer)]). Disabled when nothing is selected.
 /// - **Show All** (toggle) — when ON, instructs the parent presenter to ignore
@@ -90,7 +90,6 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
     private Runnable addConsumer;
     private Consumer<String> endConsumer;
     private Consumer<String> deleteConsumer;
-    private boolean endAvailable = true;
 
     /// This grid's element id, so the canvas can name it as the map's text alternative
     /// via `aria-describedby`. Minted per instance, not a constant.
@@ -348,24 +347,11 @@ public class FloorMapFactListPresenter extends MyPresenterWidget<FloorMapFactLis
         this.endConsumer = endConsumer;
     }
 
-    /// Sets whether Delete From This Time can be offered at all. It cannot when the value schema
-    /// maps no status field, since there is then nowhere to record that a fact has ended; the
-    /// button is disabled and its tooltip says why.
-    ///
-    /// @param endAvailable `true` if the schema maps the status role
-    public void setEndAvailable(final boolean endAvailable) {
-        this.endAvailable = endAvailable;
-        endButton.setTitle(endAvailable
-                ? END_TITLE
-                : END_TITLE + " - unavailable: map a field to the Status role on the Settings tab");
-        updateEndButton();
-    }
-
     private void updateEndButton() {
         // The button acts on the primary selection, so it is that row that must not already be
         // deleted; Show All lists deleted facts so they can be found and restored, not re-deleted.
         final FactObject primary = selectionModel.getSelected();
-        endButton.setEnabled(endAvailable && primary != null && !primary.isDeleted());
+        endButton.setEnabled(primary != null && !primary.isDeleted());
     }
 
     /// Sets the action to run when the user clicks the Erase History button.

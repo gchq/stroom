@@ -138,6 +138,111 @@ class TestFloorMapDocSession {
     }
 
     // -----------------------------------------------------------------------
+    // Status-support upgrade
+    // -----------------------------------------------------------------------
+
+    /// Staging the status upgrade adds the Status role to the effective, session and written
+    /// schemas, and nothing else.
+    @Test
+    void testStageStatusUpgrade() {
+        final FloorMapDoc d = doc(List.of(GATE));
+        assertThat(FloorMapDocSession.hasStatusSupport(d.getValueSchema())).isFalse();
+
+        session.stageStatusUpgrade(d.getValueSchema(), d.getValueFormat());
+
+        assertThat(session.hasPendingDocEdits()).isTrue();
+        assertThat(FloorMapDocSession.hasStatusSupport(session.valueSchema(d.getValueSchema()))).isTrue();
+        assertThat(FloorMapDocSession.hasStatusSupport(session.sessionEntity(d).getValueSchema())).isTrue();
+        final FloorMapDoc written = session.applyToWrite(d);
+        assertThat(FloorMapFieldMapping.findPath(written.getValueSchema(), Role.STATUS)).isEqualTo(".status");
+        assertThat(FloorMapDocSession.hasAreaSupport(written.getValueSchema())).isFalse();
+        assertThat(written.getTypeStyles()).containsExactly(GATE);
+    }
+
+    /// The area and status upgrades compose in either order: each is derived from the effective
+    /// schema, so the second keeps the first, and both are written.
+    @Test
+    void testStatusAndAreaUpgradesCompose() {
+        final FloorMapDoc d = doc(List.of(GATE));
+        session.stageStatusUpgrade(d.getValueSchema(), d.getValueFormat());
+        session.stageAreaUpgrade(session.valueSchema(d.getValueSchema()), d.getValueFormat(), d.getTypeStyles());
+        assertBothUpgrades(session.valueSchema(d.getValueSchema()));
+        assertBothUpgrades(session.applyToWrite(d).getValueSchema());
+
+        final FloorMapDocSession other = new FloorMapDocSession();
+        other.stageAreaUpgrade(d.getValueSchema(), d.getValueFormat(), d.getTypeStyles());
+        other.stageStatusUpgrade(other.valueSchema(d.getValueSchema()), d.getValueFormat());
+        assertBothUpgrades(other.valueSchema(d.getValueSchema()));
+        assertBothUpgrades(other.applyToWrite(d).getValueSchema());
+        assertThat(FloorMapDocSession.hasAreaStyle(other.applyToWrite(d).getTypeStyles())).isTrue();
+    }
+
+    /// The status upgrade is dropped once a re-read document carries the Status role, and not
+    /// before.
+    @Test
+    void testReconcileDropsStatusUpgradeWhenPersisted() {
+        final FloorMapDoc d = doc(List.of(GATE));
+        session.stageStatusUpgrade(d.getValueSchema(), d.getValueFormat());
+
+        session.reconcileAfterRead(d);
+        assertThat(session.hasPendingDocEdits()).isTrue();
+
+        session.reconcileAfterRead(session.applyToWrite(d));
+        assertThat(session.hasPendingDocEdits()).isFalse();
+        assertThat(session.valueSchema(d.getValueSchema())).isEqualTo(PRE_AREA_SCHEMA);
+    }
+
+    /// With both upgrades staged, persisting only one keeps the other pending, and its effect
+    /// on the effective and written schemas.
+    @Test
+    void testReconcileDropsUpgradesIndependently() {
+        final FloorMapDoc d = doc(List.of(GATE));
+        session.stageAreaUpgrade(d.getValueSchema(), d.getValueFormat(), d.getTypeStyles());
+        session.stageStatusUpgrade(session.valueSchema(d.getValueSchema()), d.getValueFormat());
+
+        // A save from elsewhere persisted the status mapping but not the area upgrade.
+        final FloorMapDoc statusOnly = d.copy()
+                .valueSchema(FloorMapFieldMapping.withStatusMapping(d.getValueSchema(), d.getValueFormat()))
+                .build();
+        session.reconcileAfterRead(statusOnly);
+
+        assertThat(session.hasPendingDocEdits()).isTrue();
+        assertBothUpgrades(session.valueSchema(statusOnly.getValueSchema()));
+        final FloorMapDoc written = session.applyToWrite(statusOnly);
+        assertBothUpgrades(written.getValueSchema());
+        assertThat(written.getValueSchema()
+                .stream()
+                .filter(m -> m.getRole() == Role.STATUS))
+                .hasSize(1);
+
+        session.reconcileAfterRead(written);
+        assertThat(session.hasPendingDocEdits()).isFalse();
+    }
+
+    /// An XML document's default status path follows its existing XPath-style paths.
+    @Test
+    void testStageStatusUpgrade_xmlPath() {
+        final List<FloorMapFieldMapping> xmlSchema = List.of(
+                new FloorMapFieldMapping("/entry/type", Role.TYPE, "Type", null));
+        final FloorMapDoc d = FloorMapDoc.builder()
+                .uuid("test-uuid")
+                .name("test-map")
+                .valueFormat(ValueFormat.XML)
+                .valueSchema(xmlSchema)
+                .build();
+
+        session.stageStatusUpgrade(d.getValueSchema(), d.getValueFormat());
+
+        assertThat(FloorMapFieldMapping.findPath(session.applyToWrite(d).getValueSchema(), Role.STATUS))
+                .isEqualTo("/entry/status");
+    }
+
+    private static void assertBothUpgrades(final List<FloorMapFieldMapping> schema) {
+        assertThat(FloorMapDocSession.hasAreaSupport(schema)).isTrue();
+        assertThat(FloorMapDocSession.hasStatusSupport(schema)).isTrue();
+    }
+
+    // -----------------------------------------------------------------------
     // Groups (Map tab)
     // -----------------------------------------------------------------------
 
