@@ -125,9 +125,12 @@ public class UiConfigCache implements HasHandlers {
     public void get(final Consumer<ExtendedUiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
         final ExtendedUiConfig props = clientProperties;
         if (props == null) {
+            // The consumer is called once the properties have been fetched (or with null if
+            // fetching them fails), so it must not also be called now with null
             refresh(consumer, taskMonitorFactory);
+        } else {
+            consumer.accept(props);
         }
-        consumer.accept(props);
     }
 
     public HandlerRegistration addPropertyChangeHandler(final PropertyChangeEvent.Handler handler) {
