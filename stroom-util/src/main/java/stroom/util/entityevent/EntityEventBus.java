@@ -16,6 +16,8 @@
 
 package stroom.util.entityevent;
 
+import stroom.util.entityevent.EntityEvent.FiringBuilder;
+
 public interface EntityEventBus {
 
     EntityEventBus NO_OP_EVENT_BUS = new NoOpEntityEventBus();
@@ -23,6 +25,15 @@ public interface EntityEventBus {
     void fire(EntityEvent event);
 
     void fire(EntityEventBatch events);
+
+    /**
+     * Starts building an event-firing operation.
+     *
+     * @return A builder that requires the document reference and action to be supplied.
+     */
+    default FiringBuilder buildFiring() {
+        return EntityEvent.buildFiring(this);
+    }
 
 
     // --------------------------------------------------------------------------------

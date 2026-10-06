@@ -80,23 +80,25 @@ public class KafkaConfigDocCache implements Clearable, EntityEvent.Handler {
 
     @Override
     public void onChange(final EntityEvent event) {
-        LOGGER.debug("Received event {}", event);
-        final EntityAction eventAction = event.getAction();
+        if (event != null) {
+            LOGGER.debug("Received event {}", event);
+            final EntityAction eventAction = event.getAction();
 
-        switch (eventAction) {
-            case CLEAR_CACHE -> {
-                LOGGER.debug("Clearing cache");
-                clear();
+            switch (eventAction) {
+                case CLEAR_CACHE -> {
+                    LOGGER.debug("Clearing cache");
+                    clear();
+                }
+                case UPDATE, DELETE -> {
+                    NullSafe.consume(
+                            event.getDocRef(),
+                            docRef -> {
+                                LOGGER.debug("Invalidating docRef {}", docRef);
+                                cache.invalidate(docRef);
+                            });
+                }
+                default -> LOGGER.debug("Unexpected event action {}", eventAction);
             }
-            case UPDATE, DELETE -> {
-                NullSafe.consume(
-                        event.getDocRef(),
-                        docRef -> {
-                            LOGGER.debug("Invalidating docRef {}", docRef);
-                            cache.invalidate(docRef);
-                        });
-            }
-            default -> LOGGER.debug("Unexpected event action {}", eventAction);
         }
     }
 }
