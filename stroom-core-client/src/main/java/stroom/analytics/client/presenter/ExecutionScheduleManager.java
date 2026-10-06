@@ -48,6 +48,7 @@ import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
@@ -795,7 +796,8 @@ public class ExecutionScheduleManager
         }
         if (item instanceof final ExpressionOperator operator) {
             final ArrayList<ExpressionItem> newChildren = new ArrayList<>();
-            for (final ExpressionItem child : operator.getChildren()) {
+            // An operator with no terms has no children
+            for (final ExpressionItem child : NullSafe.list(operator.getChildren())) {
                 newChildren.add(formatISOExpressions(child));
             }
             return operator.copy().children(newChildren).build();
