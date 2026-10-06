@@ -23,6 +23,7 @@ import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.MetaPresenter;
 import stroom.data.client.presenter.ProcessChoicePresenter;
 import stroom.data.client.presenter.SourceTabPresenter;
+import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.gwt.workbench.client.app.gin.EntityScreenModule;
 import stroom.gwt.workbench.client.app.gin.ExplorerScreenModule;
@@ -33,6 +34,8 @@ import stroom.gwt.workbench.client.app.gin.TaskScreenModule;
 import stroom.gwt.workbench.client.app.screen.ScreenGinjector;
 import stroom.node.client.presenter.NodeGroupEditPresenter;
 import stroom.node.client.presenter.NodeGroupPresenter;
+import stroom.pipeline.client.PipelinePlugin;
+import stroom.pipeline.client.XsltPlugin;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
@@ -136,6 +139,19 @@ public interface ProcessingScreenGinjector extends ScreenGinjector {
 
     /// @return The factory of a pipeline's model (`POST /pipeline/v1/fetchPipelineLayers`).
     PipelineModelFactory getPipelineModelFactory();
+
+    // Document plugins (getting a plugin registers it for its document type, see
+    // `StoryDocumentPlugins`)
+
+    /// @return Stroom's handler of the document events (open, save, close...), which finds each
+    /// document's plugin in the `DocumentPluginRegistry`.
+    DocumentPluginEventManager getDocumentPluginEventManager();
+
+    /// @return The Pipeline document plugin (opening, saving with the 'Save Pipeline' picker, stepping).
+    PipelinePlugin getPipelinePlugin();
+
+    /// @return The XSLT document plugin, which loads and saves a stepping element's code.
+    XsltPlugin getXsltPlugin();
 
     // Data retention and receipt rules
 

@@ -20,11 +20,14 @@ import stroom.docref.DocRef;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StoryDocumentPlugins;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -35,6 +38,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.SteppingPresenter;
+import stroom.security.shared.DocumentPermission;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -51,13 +55,22 @@ import java.util.Map;
 /// | `api.step` | `POST /stepping/v1/step` (a handler, see `step`) |
 /// | `api.terminate` | `POST /stepping/v1/terminateStepping` |
 /// | `api.findElementDoc` | `POST /stepping/v1/findElementDoc` |
+/// | `codeApi.loadCode`, `saveCode` | `GET`, `PUT /xslt/v1/x1` (through Stroom's `XsltPlugin`) |
 /// | `structure` | `POST /pipeline/v1/fetchPipelineLayers`, `GET /pipeline/v1/propertyTypes` |
 /// | (the stream) | `POST /data/v1/fetch`, `GET /meta/v1/1` |
 ///
-/// `SteppingWithCode` is blocked (see `react-story-status.json`).
+/// `SteppingWithCode` registers Stroom's XSLT document plugin ([StoryDocumentPlugins]), through which
+/// the element's code is loaded, as the app's plugins register themselves as it starts.
 public final class SteppingScreenStories {
 
     private static final String STEP_PATH = "/stepping/v1/step";
+
+    // React's SteppingWithCode: the xsltFilter's code is in the XSLT 'My XSLT'
+    private static final String XSLT_PATH = "/xslt/v1/x1";
+    private static final String XSLT_REF = """
+            {"type": "XSLT", "uuid": "x1", "name": "My XSLT"}""";
+    private static final String XSLT = """
+            {"type": "XSLT", "uuid": "x1", "name": "My XSLT", "data": "ORIGINAL XSLT CODE"}""";
 
     // The pipeline: Source -> xsltFilter -> xmlWriter (-> recordCount, for the full tree)
     private static final String LAYERS = """
@@ -110,7 +123,7 @@ public final class SteppingScreenStories {
         registry.component("App/Main/SteppingScreen", SteppingScreenStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // Stepping through records: the location label and the buttons follow the result
-                .story("Stepping", context -> render(context, STEP_LAYERS))
+                .story("Stepping", context -> render(context, STEP_LAYERS, null))
                 .withPlay(play -> {
                     // beginStepping refreshes on entry: the label settles at [1:1:1] (record 0)
                     play.waitFor(() -> play.expect(play.getAllByText("[1:1:1]").count()).toBeGreaterThan(0));
@@ -150,7 +163,7 @@ public final class SteppingScreenStories {
                     expectNoProblems(play);
                 })
                 // With the pipeline structure, the left panel is the element tree with severities
-                .story("SteppingWithTree", context -> render(context, STEP_LAYERS))
+                .story("SteppingWithTree", context -> render(context, STEP_LAYERS, null))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Source");
@@ -170,7 +183,7 @@ public final class SteppingScreenStories {
                     expectNoProblems(play);
                 })
                 // Change Step Filters lists the whole pipeline, not just the elements with data
-                .story("SteppingFilterFullTree", context -> render(context, FULL_LAYERS))
+                .story("SteppingFilterFullTree", context -> render(context, FULL_LAYERS, null))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(play.getAllByText("[1:1:1]").count()).toBeGreaterThan(0));
@@ -182,6 +195,27 @@ public final class SteppingScreenStories {
                     // recordCount returned no step data, yet is listed
                     play.expect(list.getByText("recordCount")).toBeInTheDocument();
                     play.expect(list.getByText("xsltFilter")).toBeInTheDocument();
+                    expectNoProblems(play);
+                })
+                // A hasCode element loads its document's code into an editable pane
+                .story("SteppingWithCode", context -> render(context, STEP_LAYERS, XSLT_REF))
+                .withPlay(play -> {
+                    play.findByText("xsltFilter");
+                    play.click(play.getByText("xsltFilter"));
+                    // The code pane loads the element's document with its document plugin
+                    // (XsltPlugin) and shows its code.
+                    // Differs from React: GWT's code pane is an editor with no 'Code' heading; the
+                    // play checks that it shows the code the plugin loaded
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.get(XSLT_PATH).toSpyMatcher()));
+                    final Query code = play.findByText("ORIGINAL XSLT CODE");
+                    // Differs from React: GWT's code pane has no 'Save code' button; the code is
+                    // editable, and saved with the pipeline's Save (see PipelineEditor's
+                    // MultiDocumentSave), so the play checks that the code can be edited
+                    // Ace's text layer ignores the mouse: click its content to focus the editor
+                    play.click(code.closest(".ace_content"));
+                    play.keyboard("{Control>}{End}{/Control} EDITED");
+                    play.findByText("ORIGINAL XSLT CODE EDITED");
                     expectNoProblems(play);
                 });
     }
@@ -233,11 +267,19 @@ public final class SteppingScreenStories {
         play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
     }
 
-    private static RestFixtures fixtures(final String layers) {
-        return RestFixtures.builder()
+    // The stepping server's fixtures; elementDoc is the document findElementDoc finds (the XSLT
+    // of an element with code), or null for none
+    private static RestFixtures fixtures(final String layers, final String elementDoc) {
+        final RestFixtures.Builder builder = RestFixtures.builder();
+        if (elementDoc != null) {
+            StoryDocumentPlugins.documentRoutes(builder, XSLT_PATH, XSLT);
+        }
+        return builder
                 .post(STEP_PATH, request -> step(request.getBody()))
                 .post("/stepping/v1/terminateStepping", RestReply.json("true"))
-                .post("/stepping/v1/findElementDoc", RestReply.json("null"))
+                .post("/stepping/v1/findElementDoc", RestReply.json(elementDoc == null
+                        ? "null"
+                        : elementDoc))
                 .get(PipelineFixtures.PROPERTY_TYPES_PATH, RestReply.json(PipelineFixtures.PROPERTY_TYPES))
                 .post("/pipeline/v1/fetchPipelineLayers", RestReply.json(layers))
                 .post("/data/v1/fetch", RestReply.json(DATA))
@@ -247,11 +289,18 @@ public final class SteppingScreenStories {
                 .build();
     }
 
-    private static Widget render(final StoryContext context, final String layers) {
+    private static Widget render(final StoryContext context, final String layers, final String elementDoc) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, fixtures(layers))
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures(layers, elementDoc))
                 .injector(injector)
                 .build();
+        if (elementDoc != null) {
+            // As the app's plugins do as it starts: the XSLT plugin registers itself for its type,
+            // so the element's code is loaded (and saved) through it
+            harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+            StoryDocumentPlugins.register(harness, injector.getDocumentPluginEventManager(),
+                    injector.getXsltPlugin());
+        }
         final DocRef pipeline = DocRef.builder().type(PipelineDoc.TYPE).uuid("p1").name("Test Pipeline").build();
         final PipelineDoc pipelineDoc = PipelineDoc.builder().uuid("p1").name("Test Pipeline").build();
         final Meta meta = Meta.builder().id(1L).feedName("MY_FEED").typeName("Raw Events").build();

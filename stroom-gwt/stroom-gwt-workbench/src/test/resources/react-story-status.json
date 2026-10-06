@@ -32,14 +32,6 @@
     "app-data-datauploaddialog--upload": {
       "status": "blocked",
       "reason": "Needs a file upload: DataUploadPresenter submits the chosen file with CustomFileUpload's own XMLHttpRequest (FileUploadSubmitter, JSNI), which story fixtures can't answer (see PORTING.md, Uploads), and the UploadDataRequest the play checks is sent from the upload's success callback. OkValidatesOnClick is ported. Needs Stroom to route uploads through an injectable seam."
-    },
-    "app-main-pipelineeditor--multi-document-save": {
-      "status": "blocked",
-      "reason": "The 'Save Pipeline: <name>' picker (DocRefSelectionPresenter) is shown by PipelinePlugin.save, a DocumentPlugin that needs the app's ContentManager and DocumentPluginEventManager, and the other dirty document it lists comes from code edited while stepping (SteppingPresenter.getDirtyDocs), loaded through the document plugins registered in DocumentPluginRegistry as the app starts. The harness has no app shell or document plugins; needs a story-level way to create and register DocumentPlugins."
-    },
-    "app-main-steppingscreen--stepping-with-code": {
-      "status": "blocked",
-      "reason": "ElementPresenter loads a hasCode element's document (found with POST /stepping/v1/findElementDoc) through its DocumentPlugin from DocumentPluginRegistry, which only the app fills as its plugins start; without one GWT alerts \"Cannot read properties of undefined (reading 'load')\" and shows no code pane. Needs a story-level way to create and register DocumentPlugins (e.g. XsltPlugin) in the harness."
     }
   }
 }

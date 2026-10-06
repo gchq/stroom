@@ -17,17 +17,20 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.docref.DocRef;
+import stroom.document.client.event.OpenDocumentEvent;
 import stroom.gwt.workbench.client.app.gin.processing.ProcessingScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StoryDocumentPlugins;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.tree.ExplorerFixture;
 import stroom.gwt.workbench.client.widgets.tree.TreeFixtures;
 import stroom.gwt.workbench.framework.client.play.EventInit;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -60,8 +63,11 @@ import java.util.Map;
 /// | `processorTask` | `POST /processorTask/v1/find`, `POST /processorTask/v1/summary` |
 /// | `loadNodes` | the explorer tree's `POST /explorer/v2/fetchExplorerNodes` |
 /// | `steppingApi` | `SteppingResource` (`PipelineFixtures.stepping`) |
+/// | the other tab's document (`MultiDocumentSave`) | `GET`, `PUT /xslt/v1/x1` (through Stroom's `XsltPlugin`) |
 ///
-/// `MultiDocumentSave` is blocked (see `react-story-status.json`).
+/// `MultiDocumentSave` opens the pipeline through Stroom's document plugins ([StoryDocumentPlugins]):
+/// `PipelinePlugin` saves it with its 'Save Pipeline' picker, and `XsltPlugin` loads and saves the
+/// code edited while stepping.
 public final class PipelineEditorStories {
 
     /// The name of the spy recording the editor's dirty state (its `DirtyEvent`s).
@@ -194,6 +200,18 @@ public final class PipelineEditorStories {
                             RestReply.json(COLLAPSED_PROCESSOR_ROWS)));
     private static final RestFixtures STEPPING_FIXTURES = fixtures(DOC, STREAMS, NO_ROWS,
             RestFixtures.builder().post(LAYERS_PATH, RestReply.json(LAYERS)));
+    // The XSLT of the xslt element, whose code is edited while stepping
+    private static final String XSLT_PATH = "/xslt/v1/x1";
+    private static final String XSLT = """
+            {"type": "XSLT", "uuid": "x1", "name": "My XSLT", "data": "ORIGINAL XSLT CODE"}""";
+
+    // Stepping, with the xslt element's code in 'My XSLT' (loaded and saved by its plugin)
+    private static final RestFixtures MULTI_SAVE_FIXTURES = fixtures(DOC, STREAMS, NO_ROWS,
+            StoryDocumentPlugins.documentRoutes(RestFixtures.builder()
+                            .post(LAYERS_PATH, RestReply.json(LAYERS))
+                            .post("/stepping/v1/findElementDoc", RestReply.json(
+                                    "{\"type\": \"XSLT\", \"uuid\": \"x1\", \"name\": \"My XSLT\"}")),
+                    XSLT_PATH, XSLT));
     private static final RestFixtures INHERIT_FIXTURES = fixtures(INHERIT_DOC, NO_ROWS, NO_ROWS,
             RestFixtures.builder()
                     .route(RequestMatcher.post(LAYERS_PATH).withJsonBodyContaining("{\"uuid\": \"parent2\"}"),
@@ -272,8 +290,8 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(property.getByDisplayValue("EMBEDDED XSLT (xslt)"))
                             .toBeInTheDocument());
                     // Differs from React: OK creates the embedded XSLT with the XSLT DocumentPlugin
-                    // (PropertyListPresenter.createEmbeddedDocument), which only the app registers in
-                    // DocumentPluginRegistry (as its plugins start), so the story stops before OK
+                    // (PropertyListPresenter.createEmbeddedDocument), which this story doesn't
+                    // register (see StoryDocumentPlugins), so the story stops before OK
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // The Structure tab toggles into stepping mode with a stream list
@@ -362,6 +380,49 @@ public final class PipelineEditorStories {
                                     .toSpyMatcher()));
                     play.findByText("Parser B");
                     play.expect(play.queryByText("Parser A")).toBeNull();
+                    expectNoProblems(play);
+                })
+                // Saving with another dirty document (code edited while stepping) opens the picker;
+                // OK saves both
+                .story("MultiDocumentSave", PipelineEditorStories::renderWithPlugins)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    // Differs from React: GWT's other dirty document can only be the code of an
+                    // element edited while stepping (SteppingPresenter.getDirtyDocs), and the
+                    // pipeline is dirtied by an edit, so the play makes both dirty first: it
+                    // removes the xslt element's reference loader, steps a stream and edits the
+                    // element's code (the XSLT 'My XSLT', loaded by Stroom's XsltPlugin)
+                    openStructure(play);
+                    play.click(play.findByText("xslt"));
+                    play.click(play.findByText("Ref Pipeline"));
+                    play.click(play.getByTitle("Remove Reference"));
+                    play.waitFor(() -> play.expect(play.queryByText("Ref Pipeline")).toBeNull());
+                    play.click(play.getByTitle("Enter Stepping Mode"));
+                    play.click(play.findAllByText("MY_FEED").nth(0));
+                    play.findByTitle("Step Forward");
+                    play.click(play.getByText("xslt"));
+                    final Query code = play.findByText("ORIGINAL XSLT CODE");
+                    // Ace's text layer ignores the mouse: click its content to focus the editor
+                    play.click(code.closest(".ace_content"));
+                    play.keyboard("{Control>}{End}{/Control} EDITED");
+                    play.findByText("ORIGINAL XSLT CODE EDITED");
+                    // Save with the XSLT dirty: the picker lists both documents
+                    play.click(play.getByTitle("Save"));
+                    final Play picker = dialog(screen, "Save Pipeline: My Pipeline");
+                    play.expect(picker.getByText("My Pipeline")).toBeInTheDocument();
+                    play.expect(picker.getByText("My XSLT")).toBeInTheDocument();
+                    // OK saves both (both ticked by default).
+                    // Differs from React: the saves are checked as the PUT requests of the
+                    // pipeline (PipelinePlugin) and of the XSLT (XsltPlugin), not as spies
+                    play.click(picker.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Save Pipeline: My Pipeline",
+                            StroomDom.DIALOG_TITLE)).toBeNull());
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put("/pipeline/v1/" + UUID).toSpyMatcher()));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.put(XSLT_PATH)
+                                    .withJsonBodyContaining("{\"data\": \"ORIGINAL XSLT CODE EDITED\"}")
+                                    .toSpyMatcher()));
                     expectNoProblems(play);
                 })
                 // Removing an inherited reference keeps it, struck through, and Remove restores it
@@ -462,6 +523,24 @@ public final class PipelineEditorStories {
                         .route(RequestMatcher.post("/processorTask/v1/*"), RestReply.json(NO_ROWS))
                         .build())
                 .build();
+    }
+
+    // As the app opens a pipeline with its document plugins registered: the explorer's
+    // OpenDocumentEvent goes to PipelinePlugin (through the DocumentPluginEventManager), which opens
+    // the tab, and saves it (the tab's Save) with its 'Save Pipeline' picker; a stepping element's
+    // code is loaded and saved by XsltPlugin
+    private static Widget renderWithPlugins(final StoryContext context) {
+        final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
+        final ScreenHarness harness = ScreenHarness.builder(context, MULTI_SAVE_FIXTURES)
+                .injector(injector)
+                .realAlerts()
+                .build();
+        harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+        StoryDocumentPlugins.register(harness, injector.getDocumentPluginEventManager(),
+                        injector.getPipelinePlugin(), injector.getXsltPlugin())
+                .showOpenedTabs();
+        harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), DOC_REF, true));
+        return harness.asWidget();
     }
 
     private static Widget render(final StoryContext context, final RestFixtures fixtures) {

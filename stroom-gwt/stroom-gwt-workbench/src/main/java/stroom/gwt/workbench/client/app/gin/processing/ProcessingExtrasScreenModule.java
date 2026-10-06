@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.gin.processing;
 import stroom.alert.client.presenter.CommonAlertPresenter;
 import stroom.alert.client.presenter.CommonAlertPresenter.CommonAlertView;
 import stroom.alert.client.view.CommonAlertViewImpl;
+import stroom.core.client.ContentManager;
 import stroom.dashboard.client.query.ProcessorLimitsPresenter;
 import stroom.dashboard.client.query.ProcessorLimitsPresenter.ProcessorLimitsView;
 import stroom.dashboard.client.query.ProcessorLimitsViewImpl;
@@ -26,12 +27,14 @@ import stroom.data.client.presenter.DataUploadPresenter;
 import stroom.data.client.presenter.DataUploadPresenter.DataUploadView;
 import stroom.data.client.view.DataUploadViewImpl;
 
+import com.google.inject.Singleton;
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 
 /// Single bindings from Stroom's modules that the processing screens need without the rest of
 /// their module: `AlertModule`'s alert dialog (the data browser's selection summary shows one),
-/// `FeedModule`'s data upload dialog (opened from the data browser) and `QueryModule`'s processor
-/// limits dialog.
+/// `FeedModule`'s data upload dialog (opened from the data browser), `QueryModule`'s processor
+/// limits dialog and `AppModule`'s content manager (a singleton, which the document plugins share,
+/// as in Stroom).
 public class ProcessingExtrasScreenModule extends AbstractPresenterModule {
 
     /// Binds the presenters and views.
@@ -46,5 +49,6 @@ public class ProcessingExtrasScreenModule extends AbstractPresenterModule {
         bindPresenterWidget(ProcessorLimitsPresenter.class,
                 ProcessorLimitsView.class,
                 ProcessorLimitsViewImpl.class);
+        bind(ContentManager.class).in(Singleton.class);
     }
 }

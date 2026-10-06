@@ -126,6 +126,24 @@ Also on the harness, for what Stroom's app does around a screen:
 * `GlobalKeyHandler` is bound to `StoryGlobalKeyHandler`, which ignores the app's keyboard
   shortcuts (e.g. `ctrl+s`), as there is no app shell.
 
+**Document plugins.** Stroom finds a document's plugin (`DocumentPlugin`: load, save, open its
+tab) by type in `DocumentPluginRegistry`, which the app fills as its plugins start; a plugin
+registers itself when it is created. Screens that go through a plugin (`OpenDocumentEvent`, an
+editor's Save via `DocumentPluginEventManager`, a stepping element's code in `ElementPresenter`, an
+embedded document created from a pipeline property, `PipelinePlugin`'s 'Save Pipeline' picker) need
+the plugins created from the story's ginjector (which must bind `ContentManager` as a singleton, as
+`AppModule` does). `StoryDocumentPlugins` does the rest: `register(harness, eventManager,
+plugins...)` unbinds them on re-render, `showOpenedTabs()` shows the tab a plugin opens
+(`OpenContentTabEvent`) with `addContent`, and `documentRoutes(builder, path, docJson)` answers a
+plugin's `GET` and `PUT /{resource}/v1/{uuid}`. Without a plugin for the type, Stroom fails with
+"Cannot read properties of undefined (reading 'load')".
+
+```java
+StoryDocumentPlugins.register(harness, injector.getDocumentPluginEventManager(),
+        injector.getPipelinePlugin(), injector.getXsltPlugin()).showOpenedTabs();
+harness.afterStartUp(() -> OpenDocumentEvent.fire(harness.getHasHandlers(), docRef, true));
+```
+
 A screen may need more Stroom GWT modules inherited in `StroomWorkbench.gwt.xml`: RestyGWT
 generates code for every method of a resource interface used, so the types of all of them must be
 available.
@@ -727,6 +745,18 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
   `// Differs from React:` constant).
 * Stories that open screens using `UiConfigCache` defaults Stroom always sends (e.g. the execution
   schedule dialog's `analyticUiDefaultConfig`) set them with `.uiConfig(...)`.
+* **The 'Ask Stroom AI' chat opened by another screen** (a results table's 'Ask Stroom AI' button
+  fires `AskStroomAiEvent`): add the ginjector's `AskStroomAIScreenModule` and a getter for
+  `AskStroomAiPresenter`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a
+  `DIALOG` config: Stroom's default, `DOCK`, needs the app's main layout) and register the chat with
+  `AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter)`
+  (`DashboardEditor`'s `TableAskAiButton`, `QueryEditor`'s `AskAiButton`). It creates the presenter
+  on the first event, as its GWTP proxy does. Don't create the presenter before start-up (e.g. in a
+  `DashboardSupport` `setup`): its constructor reads the AI config from the user's preferences, and
+  as Stroom's default preferences have no `askStroomAiConfig` it fetches the default and stores it
+  by copying the current preferences, which are still null until `afterStartUp` has loaded them
+  ("Cannot read properties of undefined (reading 'copy')", from `AskStroomAiClient.setConfig`).
+  Stroom never hits this, as the proxy creates the presenter after login.
 * A polling chat (AI) uses a stateless `RestHandler` that replies with the messages after the
   request's `lastSeenMessageId`, as the server does (a repeated reply would add the messages again);
   `RestReply.delayed(...)` keeps a request in flight (e.g. to show a Stop button).
@@ -752,10 +782,14 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
 * **Plugins the story stands in for** (`PipelinePlugin.onBeginStepping`/`step`, `DataDisplaySupport`,
   `HyperlinkEventHandlerImpl.openData`, `QueryPresenter.setProcessorLimits`) are copied into the
   story's `render`, naming the source, when they only wire up presenters the injector can create.
-* **Document plugins** aren't registered in the harness (`DocumentPluginRegistry` is filled as the
-  app's plugins start), so what goes through them (embedded documents, a stepping element's code, the
-  pipeline's multi-document save) can't be shown: stop the play before it, or record the story as
-  blocked.
+* **Document plugins** (`DocumentPluginRegistry` is filled as the app's plugins start) are
+  registered with `StoryDocumentPlugins` (see "Document plugins" under the harness): the
+  `ProcessingScreenGinjector` gives `DocumentPluginEventManager`, `PipelinePlugin` and `XsltPlugin`
+  (and binds `ContentManager` as a singleton). `SteppingScreen`'s `SteppingWithCode` registers
+  `XsltPlugin`, so a stepping element's code loads; `PipelineEditor`'s `MultiDocumentSave` opens the
+  pipeline with `OpenDocumentEvent` through `PipelinePlugin`, whose Save shows the 'Save Pipeline'
+  picker for the code edited while stepping. (`EmbeddedProperty` still stops before OK; registering
+  `XsltPlugin` would let it create the embedded XSLT.)
 * **Null checks the server makes unnecessary**: fixtures must include what the server always sends
   and GWT reads without a null check, e.g. a processor filter tracker's `status`, a meta row's
   `attributes`, a selection summary's `ageRange`, an execution schedule's `scheduleBounds`.
@@ -783,7 +817,8 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
 * **Silent decode failures**: a reply that Stroom's JSON classes refuse (e.g. a
   `ContentStoreMetadata` without its required `ownerId`) can leave a list empty with no error
   shown; check the shared class's `@JsonCreator` for `requireNonNull` when a list stays empty.
-* **Document plugins** can be registered: getting a plugin (e.g. `XMLSchemaPlugin`) and
+* **Document plugins** can be registered (now with `StoryDocumentPlugins`, see "Document plugins"
+  under the harness): getting a plugin (e.g. `XMLSchemaPlugin`) and
   `DocumentPluginEventManager` from the batch's injector registers the plugin, so
   `OpenDocumentEvent` loads and opens the document as in Stroom, and the editor's Save
   (`SaveDocumentEvent`) goes through `DocumentPlugin.save` (`App/Main/docPlugin`). Answer the

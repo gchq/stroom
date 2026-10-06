@@ -16,18 +16,18 @@
 
 package stroom.gwt.workbench.client.app.editors;
 
-import stroom.ai.shared.QueryTableContext;
 import stroom.annotation.client.AnnotationChangeEvent;
 import stroom.annotation.client.CreateAnnotationEvent;
 import stroom.annotation.client.EditAnnotationEvent;
 import stroom.annotation.client.FindAnnotationPresenter;
 import stroom.annotation.client.ShowFindAnnotationEvent;
-import stroom.data.client.event.AskStroomAiEvent;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.gwt.workbench.client.app.ai.AiFixtures;
+import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.gin.query.QueryScreenGinjector;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
 import stroom.gwt.workbench.client.app.query.QueryFixtures;
@@ -124,6 +124,13 @@ public final class QueryEditorStories {
 
     private static final RestFixtures FIXTURES = fixtures(RestFixtures.builder(), RestReply.json(COMPLETE));
 
+    // AskAiButton: the chat's requests as well (React's askAiApiFixture)
+    private static final RestFixtures ASK_AI_FIXTURES = fixtures(AiFixtures.chatRoutes(RestFixtures.builder()),
+            RestReply.json(COMPLETE));
+
+    // The description of the query's results table, as the chat's context
+    private static final String TABLE_CONTEXT = "Query 'My Query'";
+
     // QueryHelpPaging: a level with a full page (100 rows), then 5 more
     private static final RestFixtures PAGING_FIXTURES = docAndSearch(RestFixtures.builder()
                     .route(helpItems("fields.").withJsonBodyContaining("{\"pageRequest\": {\"offset\": 0}}"),
@@ -180,7 +187,6 @@ public final class QueryEditorStories {
     static final String EDIT_ANNOTATION = "editAnnotation";
     static final String STEPPING = "beginStepping";
     static final String SHOW_DATA = "showData";
-    static final String ASK_AI = "askAi";
     static final String ANNOTATION_CHANGE = "annotationChange";
 
     // The text of a query help item
@@ -586,15 +592,26 @@ public final class QueryEditorStories {
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The results table's 'Ask Stroom AI' button asks the AI about the table
-                .story("AskAiButton", context -> render(context, FIXTURES, null, false,
+                .story("AskAiButton", context -> render(context, ASK_AI_FIXTURES, null, false,
                         QueryEditorStories::askAi))
                 .withPlay(play -> {
+                    final Play screen = play.screen();
                     execute(play);
                     play.findByText("alpha");
                     play.click(play.getByRole("button", "Ask Stroom AI"));
-                    // Differs from React: GWT fires AskStroomAiEvent, which Stroom's AI chat (not
-                    // part of this screen) handles, so the check is the event and its context
-                    play.waitFor(() -> play.expect(play.spy(ASK_AI)).toHaveBeenCalledWith("Query 'My Query'"));
+                    // Differs from React: the chat is Stroom's 'Ask Stroom AI' dialog, and its 'How
+                    // can I help?' greeting is hidden once the table is attached as the chat's
+                    // context, so the play checks the message box's placeholder, which is the same
+                    // text
+                    play.expect(screen.findByText("Ask Stroom AI", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.waitFor(() -> play.expect(screen.getByPlaceholderText("How can I help?")).toBeVisible());
+                    // The chat is titled with the table's context, which is sent to the server
+                    play.waitFor(() -> play.expect(screen.getByText(TABLE_CONTEXT)).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/ai/v1/askStroomAi")
+                                    .withJsonBodyContaining("{\"context\": {\"type\": \"queryTable\", "
+                                                            + "\"description\": \"" + TABLE_CONTEXT + "\"}}")
+                                    .toSpyMatcher()));
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Create Rule: validates the query, chooses STREAMING (not grouped), asks for a new
@@ -1109,10 +1126,9 @@ public final class QueryEditorStories {
         injector.getDataDisplaySupport();
     }
 
+    // As the app does: Stroom's chat handles the table's AskStroomAiEvent
     private static void askAi(final ScreenHarness harness, final QueryScreenGinjector injector) {
-        harness.fn(ASK_AI);
-        harness.getEventBus().addHandler(AskStroomAiEvent.getType(), event ->
-                harness.spy(ASK_AI, ((QueryTableContext) event.getData()).getDescription()));
+        AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter);
     }
 
     // The number of searches made

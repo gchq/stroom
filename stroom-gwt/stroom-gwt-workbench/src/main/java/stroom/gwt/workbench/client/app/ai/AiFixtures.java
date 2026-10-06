@@ -43,12 +43,15 @@ import java.util.Map;
 /// | `getDefaultConfig` | `POST /ai/v1/getDefaultConfig` |
 /// | `getAttachmentData` | `POST /ai/v1/getAttachmentData` |
 /// | `downloadChat` | `POST /ai/v1/downloadChatHistory` |
-final class AiFixtures {
+///
+/// Other batches' stories that open the chat (e.g. a table's 'Ask Stroom AI' button) add its routes
+/// with [#chatRoutes(RestFixtures.Builder)] and show it with [AskStroomAiChat].
+public final class AiFixtures {
 
     // AskStroomAiResource.getDefaultConfig(). Differs from React: React's is empty; GWT's empty
     // config docks the chat into the app's main layout (DockType.DOCK), which a story doesn't
     // have, so the stories' config shows it as a dialog
-    static final String CONFIG = """
+    public static final String CONFIG = """
             {"dockType": "DIALOG", "dockLocation": "RIGHT"}""";
 
     /// The chat's Run button.
@@ -82,6 +85,24 @@ final class AiFixtures {
                 .post("/ai/v1/updateChatTitle/1", RestReply.json("true"))
                 .post("/ai/v1/deleteMessage/1/9", RestReply.json("true"))
                 .post("/ai/v1/deleteAllMessages/1", RestReply.json("true"));
+    }
+
+    /// Adds the routes of a chat opened by another screen (e.g. by a table's 'Ask Stroom AI' button,
+    /// which sends the table as the chat's context): the default config ([#CONFIG], a dialog),
+    /// saving it in the user's preferences, a new chat (id 1), the question (or context) answered at
+    /// once, a poll with no messages, complete, and the chat's title.
+    ///
+    /// @param builder The story's fixtures' builder.
+    /// @return The builder.
+    public static RestFixtures.Builder chatRoutes(final RestFixtures.Builder builder) {
+        return builder
+                .post("/ai/v1/getDefaultConfig", RestReply.json(CONFIG))
+                // UserPreferencesResource.update(): the chat saves the default config as the user's
+                .post("/preferences/v1", RestReply.json("true"))
+                .post("/ai/v1/createChat", RestReply.json("{\"id\": 1, \"title\": \"\"}"))
+                .post("/ai/v1/askStroomAi", RestReply.json("{\"message\": \"\"}"))
+                .post("/ai/v1/pollMessages/1", RestReply.json("{\"newMessages\": [], \"complete\": true}"))
+                .post("/ai/v1/updateChatTitle/1", RestReply.json("true"));
     }
 
     /// @param poll The poll replies.

@@ -17,8 +17,8 @@
 
 package stroom.gwt.workbench.client.app.dashboard;
 
-import stroom.ai.shared.DashboardTableContext;
-import stroom.data.client.event.AskStroomAiEvent;
+import stroom.gwt.workbench.client.app.ai.AiFixtures;
+import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -50,7 +50,7 @@ import java.util.List;
 /// | `VisRuntimeApi.fetchLinkedScripts` | `POST /script/v1/fetchLinkedScripts` |
 /// | `LoadSource` | `POST /data/v1/fetch` |
 /// | `StoredQueryApi` | `POST /storedQuery/v1/find`, `create`, `DELETE /storedQuery/v1/delete` |
-/// | `AskAiApi` | `POST /ai/v1/...` (see the `App/AI` stories) |
+/// | `AskAiApi` | `POST /ai/v1/...` (`AiFixtures.chatRoutes`; the chat is shown by `AskStroomAiChat`) |
 public final class DashboardComponentStories {
 
     // React's dashboardApiFixtureWithStream: a table result with stream and event ids
@@ -92,8 +92,8 @@ public final class DashboardComponentStories {
                                           + DashboardDocs.operator(DashboardDocs.term("Name", "EQUALS", "alpha"))
                                           + "}}";
 
-    // The spy of the app's Ask Stroom AI event
-    private static final String ASK_AI = "askStroomAi";
+    // The description of the 'Query + Table' dashboard's table, as the chat's context
+    private static final String TABLE_CONTEXT = "Dashboard 'Query + Table' -> Table 'The Table'";
 
     // The spy of the app's stepping event
     private static final String BEGIN_STEPPING = "beginStepping";
@@ -119,28 +119,28 @@ public final class DashboardComponentStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // The table's Ask Stroom AI button opens the chat
                 .story("TableAskAiButton", DashboardSupport.story(DashboardDocs.QUERY_TABLE_DASHBOARD,
-                        routes -> {
-                        },
-                        options -> options.setup((harness, injector) -> {
-                            // Differs from React: the story records the app event the button fires
-                            // (AskStroomAiEvent, which Stroom's chat handles) with the table's context,
-                            // rather than showing the chat: in this injector the chat's
-                            // AskStroomAiClient is given a UserPreferencesManager of its own, without
-                            // the user's preferences, and fails reading them
-                            harness.fn(ASK_AI);
-                            harness.addRegistration(harness.getEventBus().addHandler(AskStroomAiEvent.getType(),
-                                    event -> harness.spy(ASK_AI, event.getData() instanceof
-                                            final DashboardTableContext context
-                                            ? context.getDescription()
-                                            : String.valueOf(event.getData()))));
-                        })))
+                        AiFixtures::chatRoutes,
+                        options -> options.setup((harness, injector) ->
+                                AskStroomAiChat.register(harness, injector::getAskStroomAiPresenter))))
                 .withPlay(play -> {
+                    final Play screen = play.screen();
                     DashboardPlays.opened(play);
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
                     play.click(play.getByRole("button", "Ask Stroom AI"));
-                    play.waitFor(() -> play.expect(play.spy(ASK_AI)).toHaveBeenCalledWith(
-                            "Dashboard 'Query + Table' -> Table 'The Table'"));
+                    // Differs from React: the chat is Stroom's 'Ask Stroom AI' dialog, and its 'How
+                    // can I help?' greeting is hidden once the table is attached as the chat's
+                    // context, so the play checks the message box's placeholder, which is the same
+                    // text
+                    play.expect(screen.findByText("Ask Stroom AI", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.waitFor(() -> play.expect(screen.getByPlaceholderText("How can I help?")).toBeVisible());
+                    // The chat is titled with the table's context, which is sent to the server
+                    play.waitFor(() -> play.expect(screen.getByText(TABLE_CONTEXT)).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/ai/v1/askStroomAi")
+                                    .withJsonBodyContaining("{\"context\": {\"type\": \"dashboardTable\", "
+                                                            + "\"description\": \"" + TABLE_CONTEXT + "\"}}")
+                                    .toSpyMatcher()));
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A visualisation of a table shows its visualisation's frame

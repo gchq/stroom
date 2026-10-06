@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.ai;
 import stroom.gwt.workbench.client.app.rest.FixtureSession;
 import stroom.gwt.workbench.client.app.rest.JsonValues;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
+import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 
@@ -71,6 +72,30 @@ class TestAiFixtures {
                 .isEqualTo(AiFixtures.CONFIG);
         assertThat(session.exchange(post("/preferences/v1", "{}")).isHandled()).isTrue();
         assertThat(session.exchange(post("/ai/v1/cancelProcessing/1", "")).getReply().getBody()).isEqualTo("true");
+    }
+
+    @Test
+    void testChatRoutes_answersAChatOpenedWithAContext() {
+        final FixtureSession session = AiFixtures.chatRoutes(RestFixtures.builder()).build().newSession();
+
+        assertThat(session.exchange(post("/ai/v1/getDefaultConfig", "")).getReply().getBody())
+                .isEqualTo(AiFixtures.CONFIG);
+        assertThat(session.exchange(post("/preferences/v1", "{}")).getReply().getBody()).isEqualTo("true");
+        assertThat(session.exchange(post("/ai/v1/createChat", "")).getReply().getBody()).contains("\"id\": 1");
+        assertThat(session.exchange(post("/ai/v1/askStroomAi", "{\"context\": {}}")).isHandled()).isTrue();
+        assertThat(session.exchange(post("/ai/v1/updateChatTitle/1", "\"t\"")).getReply().getBody())
+                .isEqualTo("true");
+        final Map<?, ?> poll = (Map<?, ?>) JsonValues.parse(
+                session.exchange(pollRequest(0)).getReply().getBody());
+        assertThat(poll.get("complete")).isEqualTo(true);
+        assertThat((List<?>) poll.get("newMessages")).isEmpty();
+    }
+
+    @Test
+    void testChatRoutes_leavesOtherChatsUnanswered() {
+        final FixtureSession session = AiFixtures.chatRoutes(RestFixtures.builder()).lenient().build().newSession();
+
+        assertThat(session.exchange(post("/ai/v1/pollMessages/2", "{}")).isHandled()).isFalse();
     }
 
     private static RecordedRequest pollRequest(final int lastSeenMessageId) {
