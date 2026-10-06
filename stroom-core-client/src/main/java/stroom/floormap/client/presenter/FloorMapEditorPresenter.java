@@ -1693,7 +1693,7 @@ public class FloorMapEditorPresenter
             accessor.setArray(newValue, pathForRole(Role.WORLD_TO_MAP),
                     new double[]{identity.getA(), identity.getB(), identity.getC(),
                             identity.getD(), identity.getE(), identity.getF()});
-            final String valueStr = accessor.serialize(newValue);
+            final String valueStr = accessor.serialise(newValue);
 
             final TemporalEntry entry = new TemporalEntry(
                     mapName, newKey, model.getSelectedTime(), valueStr);

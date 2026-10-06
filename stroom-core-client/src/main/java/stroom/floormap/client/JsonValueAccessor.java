@@ -211,7 +211,7 @@ public final class JsonValueAccessor implements ValueAccessor {
     }
 
     @Override
-    public String serialize(final ParsedValue value) {
+    public String serialise(final ParsedValue value) {
         final JSONObject json = asJson(value);
         return json != null ? json.toString() : null;
     }

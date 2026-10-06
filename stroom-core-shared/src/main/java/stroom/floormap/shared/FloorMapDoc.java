@@ -71,10 +71,13 @@ import java.util.Objects;
  * <h3>Two-Store Architecture</h3>
  * <ul>
  *   <li><strong>Facts store</strong> ({@link #factsStoreRef}) — a SQL Temporal Store
- *       containing the spatial data (objects, positions, background image, matrices).</li>
- *   <li><strong>Events store</strong> ({@link #eventsStoreRef}) — a FloorMap Event Store of
- *       state type {@code TEMPORAL_STATE}, containing status / event records keyed by
- *       entity ID. Queried via {@link #eventsQuery}; never written to by the floor map.</li>
+ *       containing the time-versioned layout (backgrounds, objects, areas, their positions
+ *       and matrices) and static details about entities, such as a person's name. Written
+ *       by the Editor tab and by ingest; facts never move or animate.</li>
+ *   <li><strong>Events store</strong> ({@link #eventsStoreRef}) — a FloorMap Event Store, a
+ *       Plan B store of state type {@code TEMPORAL_STATE}, containing each entity's location
+ *       over time, keyed by entity ID. Queried via {@link #eventsQuery}; never written to by
+ *       the floor map.</li>
  * </ul>
  *
  * <h3>Value Schema</h3>
@@ -115,7 +118,7 @@ import java.util.Objects;
  */
 @Description(
     """
-    Defines a floor map document which can be used to visualize data over time.
+    Defines a floor map document which can be used to visualise data over time.
     """)
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -169,8 +172,9 @@ public class FloorMapDoc extends AbstractDoc {
 
     /**
      * Reference to the SQL Temporal Store document used as the facts store.
-     * The facts store contains spatial data: object positions, background
-     * images, and transformation matrices.
+     * The facts store contains the time-versioned layout (object positions,
+     * background images, areas and transformation matrices) and static details
+     * about entities, such as a person's name.
      * May be {@code null} if not yet configured.
      *
      * <p><strong>Back-compatibility:</strong> previously serialised as
@@ -181,18 +185,19 @@ public class FloorMapDoc extends AbstractDoc {
     private final DocRef factsStoreRef;
 
     /**
-     * Reference to the Plan B document used as the events store. The events store
-     * contains status / event records keyed by entity ID, and is only ever read.
+     * Reference to the {@link FloorMapEventStoreDoc} used as the events store. The events
+     * store contains each entity's location over time, keyed by entity ID, and is only
+     * ever read by the floor map; pipelines write to it.
      *
-     * <p>Only the referenced document's <em>name</em> is used at query time — it is
-     * substituted into the {@code param('EventStore')} placeholder of
-     * {@link #eventsQuery} — so nothing here is coupled to a particular store
-     * implementation. In practice the store must expose {@code Key},
-     * {@code EffectiveTime} and {@code Value}, which for Plan B means a state type of
-     * {@code TEMPORAL_STATE}; the pickers restrict the choice to Plan B documents but
-     * cannot filter on state type, so a mismatch surfaces as a query-time error.</p>
+     * <p>A {@link FloorMapEventStoreDoc} is a Plan B temporal state store whose key schema,
+     * temporal precision and value schema are fixed by the type, so the pickers restrict
+     * the choice to that type rather than to general-purpose Plan B documents. A document
+     * saved before the type existed may still reference a plain Plan B document; the Map
+     * tab reports that on its status line rather than drawing nothing in silence.</p>
      *
-     * <p>For Plan B that name is load-bearing twice over: the {@code <map>} element of an
+     * <p>The referenced document's <em>name</em> is substituted into the
+     * {@code param('EventStore')} placeholder of {@link #eventsQuery}. Because ingest is
+     * still Plan B's, that name is load-bearing twice over: the {@code <map>} element of an
      * ingest XSLT must <em>equal the store's own name</em> too, so renaming this document
      * breaks ingest lookups as well as the events query.</p>
      *
@@ -351,7 +356,7 @@ public class FloorMapDoc extends AbstractDoc {
      * @param eventColumns                events-query role to column mapping; may be
      *                                    {@code null} on a document predating the mapping
      * @param factsStoreRef               facts store {@link DocRef}; may be {@code null}
-     * @param eventsStoreRef              Plan B events store {@link DocRef}; may be {@code null}
+     * @param eventsStoreRef              FloorMap Event Store {@link DocRef}; may be {@code null}
      * @param eventsQuery                 StroomQL for the events store; may be {@code null}
      * @param eventsQueryTimeRange        time range for the events query; may be {@code null}
      * @param eventsQueryTablePreferences table prefs for events query results; may be {@code null}
@@ -457,8 +462,9 @@ public class FloorMapDoc extends AbstractDoc {
     /**
      * Returns the reference to the facts store (SQL Temporal Store).
      *
-     * <p>The facts store contains spatial data: object positions,
-     * background images, and transformation matrices.</p>
+     * <p>The facts store contains the time-versioned layout (object positions,
+     * background images, areas and transformation matrices) and static details
+     * about entities, such as a person's name.</p>
      *
      * @return the facts store {@link DocRef}, or {@code null} if not
      *         yet configured
@@ -470,8 +476,8 @@ public class FloorMapDoc extends AbstractDoc {
     /**
      * Returns the reference to the events store (a FloorMap Event Store).
      *
-     * <p>The events store contains status / event records keyed by
-     * entity ID, and is only ever read.</p>
+     * <p>The events store contains each entity's location over time, keyed
+     * by entity ID, and is only ever read.</p>
      *
      * @return the events store {@link DocRef}, or {@code null} if not
      *         yet configured
@@ -873,7 +879,7 @@ public class FloorMapDoc extends AbstractDoc {
         /**
          * Sets the events store reference.
          *
-         * @param eventsStoreRef the {@link DocRef} to the Plan B events store, or
+         * @param eventsStoreRef the {@link DocRef} to the FloorMap Event Store, or
          *                       {@code null} to clear
          * @return this builder
          */

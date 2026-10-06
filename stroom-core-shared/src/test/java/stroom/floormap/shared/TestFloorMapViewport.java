@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.within;
 /**
  * Tests for {@link FloorMapViewport} — the pure pan/zoom/drag maths extracted
  * from the canvas presenter. Verifies coordinate conversions, the
- * zoom-toward-cursor invariant, scale clamping, and Edit-Mode drag deltas.
+ * zoom-towards-cursor invariant, scale clamping, and Edit-Mode drag deltas.
  */
 class TestFloorMapViewport {
 
@@ -90,11 +90,11 @@ class TestFloorMapViewport {
     }
 
     // -----------------------------------------------------------------------
-    // Zoom toward cursor
+    // Zoom towards cursor
     // -----------------------------------------------------------------------
 
     /**
-     * The defining property of zoom-toward-cursor: the map point directly under
+     * The defining property of zoom-towards-cursor: the map point directly under
      * the cursor must not move on screen when zooming.
      */
     @Test

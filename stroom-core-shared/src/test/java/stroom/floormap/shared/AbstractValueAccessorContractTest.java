@@ -225,7 +225,7 @@ abstract class AbstractValueAccessorContractTest {
         final ParsedValue value = accessor().parse(docWithNumericArray("coords", 1, 2));
         accessor().setArray(value, path("coords"), new double[]{7, 9});
 
-        final String serialised = accessor().serialize(value);
+        final String serialised = accessor().serialise(value);
         assertThat(serialised).isNotNull();
 
         final ParsedValue reparsed = accessor().parse(serialised);

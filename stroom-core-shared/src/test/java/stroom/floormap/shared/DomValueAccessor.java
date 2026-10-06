@@ -182,7 +182,7 @@ public class DomValueAccessor implements ValueAccessor {
     }
 
     @Override
-    public String serialize(final ParsedValue value) {
+    public String serialise(final ParsedValue value) {
         final Document doc = asDoc(value);
         if (doc == null || doc.getDocumentElement() == null) {
             return null;

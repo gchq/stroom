@@ -7,7 +7,7 @@
         <form:FormGroup label="Facts Store">
             <g:SimplePanel ui:field="factsStoreContainer" />
         </form:FormGroup>
-        <!-- Events Store (SQL Temporal Store) Selection -->
+        <!-- Events Store (FloorMap Event Store) Selection -->
         <form:FormGroup label="Events Store">
             <g:SimplePanel ui:field="eventsStoreContainer" />
         </form:FormGroup>

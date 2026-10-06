@@ -4,7 +4,7 @@
              xmlns:form="urn:import:stroom.widget.form.client">
 
     <g:FlowPanel styleName="max dock-container-vertical form-padding form">
-        <!-- Events Store (SQL Temporal Store) Reference Selection -->
+        <!-- Events Store (FloorMap Event Store) Reference Selection -->
         <form:FormGroup label="Events Store">
             <form:HelpHTML>
                 <p>The temporal store supplying the map's time-varying <strong>events</strong> —
@@ -21,7 +21,8 @@
         <form:FormGroup label="Facts Store">
             <form:HelpHTML>
                 <p>The temporal store supplying the map's <strong>facts</strong> — the
-                    longer-lived content such as background images, gates, desks and rooms.</p>
+                    longer-lived content such as background images, gates, desks and rooms, and
+                    static details about the entities on the map, such as a person's name.</p>
                 <p>Each fact is versioned over time, so the map shows how the space was arranged
                     at the moment selected on the timeline. This is also the store the Editor tab
                     reads and writes, and the one <strong>Discover</strong> (below) scans for

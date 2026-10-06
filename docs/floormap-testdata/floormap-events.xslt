@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  Events CSV -> reference-data:2, for a Plan B TEMPORAL_STATE store.
+  Events CSV -> reference-data:2, for a FloorMap Event Store (a Plan B TEMPORAL_STATE store).
 
   Same input and same output shape as floormap-facts.xslt - only the value schema differs, because
   the events query reads a different set of jq paths:
@@ -77,7 +77,7 @@
     </xsl:variable>
 
     <temporal-state>
-      <!-- The Plan B document's name, which must match ^[a-z_0-9]+$. -->
+      <!-- The FloorMap Event Store's name, which must match ^[a-z_0-9]+$. -->
       <map><xsl:value-of select="records:data[@name='map']/@value"/></map>
       <key><xsl:value-of select="records:data[@name='key']/@value"/></key>
       <!--

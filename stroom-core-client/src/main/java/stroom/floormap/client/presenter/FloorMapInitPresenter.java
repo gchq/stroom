@@ -16,7 +16,6 @@
 
 package stroom.floormap.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocInitialisationHandler;
@@ -66,17 +65,19 @@ import java.util.function.Consumer;
  * <p>The two stores are deliberately <em>not</em> interchangeable: facts are
  * edited in place through {@code SqlTemporalStoreResource}, which only the SQL
  * Temporal Store implements, while events are append-only ingest and belong in
- * Plan B. Each picker therefore admits exactly one document type.</p>
+ * a {@link FloorMapEventStoreDoc} — a Plan B temporal state store whose key schema,
+ * temporal precision and value schema are fixed by the type. Each picker therefore
+ * admits exactly one document type.</p>
  *
  * <p>At query time the floor map references each store by <em>name</em> only —
  * the name is substituted into the {@code param('FactStore')} /
  * {@code param('EventStore')} placeholders of the stored queries.</p>
  *
  * <p>The default events query this dialog writes selects {@code EffectiveTime},
- * {@code Key} and {@code Value}, which of the Plan B state types only
- * a {@link FloorMapEventStoreDoc} exposes. The picker can filter by document type
- * but not by state type, so that is checked explicitly on OK rather than left to
- * fail later as an opaque unknown-field error at query time.</p>
+ * {@code Key} and {@code Value}, which only a temporal state store exposes. A
+ * {@link FloorMapEventStoreDoc} always has that state type, so restricting the
+ * picker to that document type is the whole check; nothing further is fetched or
+ * validated on OK.</p>
  *
  * <p>On OK: the new document is patched with the selected store
  * references and saved. On Cancel: the document is deleted from
@@ -134,7 +135,7 @@ public class FloorMapInitPresenter
         factsStorePresenter.setRequiredPermissions(DocumentPermission.USE);
         view.setFactsStoreView(factsStorePresenter.getView());
 
-        // Events Store = PlanB (read-only; state type checked on OK)
+        // Events Store = FloorMapEventStore (read-only; the type fixes its state type)
         eventsStorePresenter = docSelectionBoxPresenterProvider.get();
         eventsStorePresenter.setCaption("Choose Events Store");
         eventsStorePresenter.setIncludedTypes(FloorMapEventStoreDoc.TYPE);

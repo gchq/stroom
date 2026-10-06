@@ -190,7 +190,7 @@ public class MapValueAccessor implements ValueAccessor {
     }
 
     @Override
-    public String serialize(final ParsedValue value) {
+    public String serialise(final ParsedValue value) {
         if (value == null) {
             return "{}";
         }

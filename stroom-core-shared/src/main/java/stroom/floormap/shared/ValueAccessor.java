@@ -162,7 +162,7 @@ public interface ValueAccessor {
      * @param value the parsed value to serialise
      * @return the serialised string (JSON or XML)
      */
-    String serialize(ParsedValue value);
+    String serialise(ParsedValue value);
 
     /**
      * Returns {@code true} if the given raw string looks like it

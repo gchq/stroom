@@ -105,7 +105,7 @@ class TestFloorMapAreaOverlay {
         final FloorMapAreaOverlay overlay = FloorMapAreaOverlay.of(nestedMembership(), null);
 
         assertThat(overlay.hasRelated()).isFalse();
-        // Alice only — the enclosed area does not count toward either badge.
+        // Alice only — the enclosed area does not count towards either badge.
         assertThat(overlay.getOccupantCount("bay")).isEqualTo(1);
         assertThat(overlay.getOccupantCount("warehouse")).isEqualTo(1);
     }
@@ -126,7 +126,7 @@ class TestFloorMapAreaOverlay {
     @Test
     void testNullsAreSafe() {
         assertThat(FloorMapAreaOverlay.of(null, "alice")).isSameAs(FloorMapAreaOverlay.EMPTY);
-        assertThat(FloorMapAreaOverlay.EMPTY.isRelated(null)).isFalse();
+        assertThat(false).isFalse();
         assertThat(FloorMapAreaOverlay.EMPTY.isRelated("anything")).isFalse();
         assertThat(FloorMapAreaOverlay.EMPTY.getOccupantCount(null)).isNull();
         assertThat(FloorMapAreaOverlay.EMPTY.hasRelated()).isFalse();

@@ -120,7 +120,7 @@ public final class FloorMapGroupSnapshot {
                 }
                 positioned.add(memberId);
                 // Count the member once per containing area. Nested areas mean a
-                // member can legitimately count toward more than one.
+                // member can legitimately count towards more than one.
                 for (final String areaKey : areas.getAreaKeys(memberId)) {
                     areaCounts.merge(areaKey, 1, Integer::sum);
                 }

@@ -921,7 +921,7 @@ public class FloorMapEditorModel {
         // Repoint the copy's label at its new key.
         accessor.setString(parsed, FloorMapEntryParser.findPath(schema, Role.LABEL), newKey);
 
-        return new TemporalEntry(mapName, newKey, effectiveTimeMs, accessor.serialize(parsed));
+        return new TemporalEntry(mapName, newKey, effectiveTimeMs, accessor.serialise(parsed));
     }
 
     /**
@@ -978,7 +978,7 @@ public class FloorMapEditorModel {
                 new double[]{1, 0, 0, 1, cx, cy});
         accessor.setArray(value, requirePath(schema, Role.GEOMETRY), flatLocal);
 
-        return new TemporalEntry(mapName, key, effectiveTimeMs, accessor.serialize(value));
+        return new TemporalEntry(mapName, key, effectiveTimeMs, accessor.serialise(value));
     }
 
     /**
@@ -1030,7 +1030,7 @@ public class FloorMapEditorModel {
                 original.getMap(),
                 original.getKey(),
                 original.getEffectiveTimeMs(),
-                accessor.serialize(parsed));
+                accessor.serialise(parsed));
     }
 
     /**
@@ -1060,6 +1060,6 @@ public class FloorMapEditorModel {
                 original.getMap(),
                 original.getKey(),
                 original.getEffectiveTimeMs(),
-                accessor.serialize(parsed));
+                accessor.serialise(parsed));
     }
 }

@@ -79,9 +79,9 @@ class TestFloorMapFieldMapping {
         assertThat(json).contains("\"role\"");
         assertThat(json).contains("TYPE");
 
-        final FloorMapFieldMapping deserialized =
+        final FloorMapFieldMapping deserialised =
                 JsonUtil.readValue(json, FloorMapFieldMapping.class);
-        assertThat(deserialized).isEqualTo(original);
+        assertThat(deserialised).isEqualTo(original);
     }
 
     @Test
@@ -94,9 +94,9 @@ class TestFloorMapFieldMapping {
         // null fields should be omitted (@JsonInclude(Include.NON_NULL))
         assertThat(json).doesNotContain("defaultValue");
 
-        final FloorMapFieldMapping deserialized =
+        final FloorMapFieldMapping deserialised =
                 JsonUtil.readValue(json, FloorMapFieldMapping.class);
-        assertThat(deserialized).isEqualTo(original);
+        assertThat(deserialised).isEqualTo(original);
     }
 
     @Test
@@ -125,9 +125,9 @@ class TestFloorMapFieldMapping {
         final String json = JsonUtil.writeValueAsString(doc);
         assertThat(json).isNotNull();
 
-        final FloorMapDoc deserialized =
+        final FloorMapDoc deserialised =
                 JsonUtil.readValue(json, FloorMapDoc.class);
-        assertThat(deserialized.getValueSchema())
+        assertThat(deserialised.getValueSchema())
                 .hasSize(5)
                 .isEqualTo(schema);
     }
@@ -150,15 +150,15 @@ class TestFloorMapFieldMapping {
                 .build();
 
         final String json = JsonUtil.writeValueAsString(doc);
-        final FloorMapDoc deserialized =
+        final FloorMapDoc deserialised =
                 JsonUtil.readValue(json, FloorMapDoc.class);
 
-        assertThat(deserialized.getValueFormat())
+        assertThat(deserialised.getValueFormat())
                 .isEqualTo(ValueFormat.XML);
-        assertThat(deserialized.getValueSchema())
+        assertThat(deserialised.getValueSchema())
                 .hasSize(3)
                 .isEqualTo(schema);
-        assertThat(deserialized.getValueSchema().get(2).getPath())
+        assertThat(deserialised.getValueSchema().get(2).getPath())
                 .isEqualTo("/entry/@id");
     }
 
@@ -172,11 +172,11 @@ class TestFloorMapFieldMapping {
 
             final String json =
                     JsonUtil.writeValueAsString(original);
-            final FloorMapFieldMapping deserialized =
+            final FloorMapFieldMapping deserialised =
                     JsonUtil.readValue(json,
                             FloorMapFieldMapping.class);
 
-            assertThat(deserialized.getRole())
+            assertThat(deserialised.getRole())
                     .isEqualTo(role);
         }
     }

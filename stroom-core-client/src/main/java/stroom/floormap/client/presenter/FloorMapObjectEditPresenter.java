@@ -271,7 +271,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
     public void show(final String caption,
                      final TemporalEntry entry,
                      final Consumer<TemporalEntry> onSave) {
-        doShow(caption, entry, false, (built, clone) -> {
+        doShow(caption, entry, false, (built, _) -> {
             onSave.accept(built);
             return true;
         });
@@ -507,7 +507,7 @@ public class FloorMapObjectEditPresenter extends MyPresenterWidget<FloorMapObjec
             }
         }
 
-        return accessor.serialize(newValue);
+        return accessor.serialise(newValue);
     }
 
     /**

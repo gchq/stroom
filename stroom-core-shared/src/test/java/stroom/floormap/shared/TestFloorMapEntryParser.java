@@ -785,7 +785,7 @@ class TestFloorMapEntryParser {
         ACCESSOR.setArray(value, ".geometry", new double[]{-10, -10, 10, -10, 0, 15});
         ACCESSOR.setString(value, ".fill", "#1e88e5");
         ACCESSOR.setNumber(value, ".opacity", 0.25);
-        final String serialised = ACCESSOR.serialize(value);
+        final String serialised = ACCESSOR.serialise(value);
 
         final List<Fact> facts = FloorMapEntryParser.parse(
                 List.of(entry("zone-1", 0L, serialised)), SCHEMA, ACCESSOR, warnings::add);

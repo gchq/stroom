@@ -37,7 +37,7 @@ import java.util.TreeMap;
  * between neighbours is unbounded. Two consequences, which are the same bug:
  * entities at the <em>same</em> position are zero pixels apart at every zoom, so
  * no amount of zooming in separates them and only the last one painted is
- * visible; and zooming out drives every distance toward zero while the glyphs
+ * visible; and zooming out drives every distance towards zero while the glyphs
  * stay the same size, clumping the whole map into a mass.</p>
  *
  * <h2>Rules</h2>
