@@ -111,17 +111,20 @@ public class MySingleSelectionModel<T> extends AbstractSelectionModel<T> impleme
 
         boolean ignore = false;
         if (doubleSelectTest != null) {
-            if (doubleSelectTest.test(item)) {
-                DoubleSelectEvent.fire(this);
-                ignore = true;
+            if (selected && item != null) {
+                if (doubleSelectTest.test(item)) {
+                    DoubleSelectEvent.fire(this);
+                    ignore = true;
+                }
+            } else {
+                // Deselecting or clearing (e.g. when a list is refreshed) is never a double select,
+                // or two quick refreshes would count as one. It resets the tester instead, so
+                // selecting the same item straight after a clear isn't a double select either
+                doubleSelectTest.reset();
             }
         }
 
         if (!ignore) {
-//        // If we are deselecting an item that isn't actually selected, ignore
-//        // it.
-//        if (!selected) {
-
             if (newSelected == selected) {
                 final Object oldKey = newSelectedPending
                         ? getKey(newSelectedItem)
