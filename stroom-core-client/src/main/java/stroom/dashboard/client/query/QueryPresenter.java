@@ -383,7 +383,10 @@ public class QueryPresenter
 
     @Override
     public List<ErrorMessage> getCurrentErrors() {
-        return currentErrors.getErrorMessages();
+        // Null until this query has searched, as for EmbeddedQueryPresenter
+        return currentErrors != null
+                ? currentErrors.getErrorMessages()
+                : null;
     }
 
     private void setButtonsEnabled() {
