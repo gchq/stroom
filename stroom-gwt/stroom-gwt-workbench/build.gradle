@@ -48,20 +48,6 @@ import java.time.Instant
 
 ext.moduleName = 'stroom.gwt.workbench'
 
-def getSysPropertyOrDefault = { propName, defaultValue ->
-    def val
-    if (System.hasProperty(propName)
-            && System.getProperty(propName) != "unspecified"
-            && System.getProperty(propName) != "") {
-        val = System.getProperty(propName)
-        logger.info("Using property [${propName}] with value [${val}]")
-    } else {
-        val = defaultValue
-        logger.info("Property [${propName}] has no value, using default value [${val}]")
-    }
-    return val
-}
-
 // The GWT module to compile and the static web content that hosts it
 def gwtModule = 'stroom.gwt.workbench.StroomWorkbench'
 def gwtSuperDevModule = 'stroom.gwt.workbench.StroomWorkbenchSuperDevMode'
@@ -78,10 +64,14 @@ def axeVersion = findProperty('workbenchAxeVersion') ?: '4.12.1'
 def axeDir = new File(gradle.gradleUserHomeDir, "caches/stroom-gwt-workbench/axe-core-${axeVersion}").toString()
 def codeServerPort = findProperty('workbenchCodeServerPort') ?: '9877'
 
-def javaIoTmpDir = getSysPropertyOrDefault("java.io.tmpdir", "/tmp")
-// Append the rootDir so gwt builds from different dirs don't conflict
-def gwtBuildDir = "${javaIoTmpDir}/gwt/${rootProjectAbsPathStr}/workbench-gwt_build"
-gwtBuildDir = gwtBuildDir.replaceAll('//', '/')
+// The GWT build directory, under this project's build directory rather than /tmp: /tmp is often
+// a RAM-backed tmpfs with a per-user quota, which GWT's compile cache can fill. Override with
+// -PworkbenchGwtBuildDir=<dir>. The copied/transformed sources kept here let later builds skip
+// copying when nothing has changed; the compile's scratch directories (tmp, work, deploy, extra)
+// are deleted after each compile (see workbenchCleanGwtScratch). GWT's persistent unit cache, which
+// speeds up later compiles, is kept next to the war directory (build/gwt-unitCache).
+def gwtBuildDir = (findProperty('workbenchGwtBuildDir')
+        ?: layout.buildDirectory.dir('gwt').get().asFile).toString()
 logger.info('gwtBuildDir: ' + gwtBuildDir)
 
 def gwtTmpDir = "${gwtBuildDir}/tmp"
@@ -557,6 +547,19 @@ tasks.register('workbenchServe', JavaExec) {
             stroomResourcesDir.toString(),
     ]
 }
+
+// Deletes the compile's scratch directories once a compile has finished, whether or not it
+// succeeded. Every compile deletes them before it starts, so they're of no use to later builds.
+tasks.register('workbenchCleanGwtScratch') {
+    group = "workbench"
+    description = "Deletes the GWT compile's scratch directories (tmp, work, deploy, extra)"
+    doLast {
+        delete gwtTmpDir, workDir, deployDir, extraDir
+    }
+}
+
+tasks.named('workbenchCompile') { finalizedBy 'workbenchCleanGwtScratch' }
+tasks.named('workbenchDraftCompile') { finalizedBy 'workbenchCleanGwtScratch' }
 
 tasks.register('workbenchClean') {
     group = "workbench"
