@@ -383,9 +383,9 @@ RestFixtures.builder()
   (`StroomDom.FILE_INPUT`, inside the dialog): it sets the input's files with a `DataTransfer` and
   fires `input` and `change`, so `CustomFileUpload` shows the name, whether or not the input is
   visible. Then press the dialog's OK, which submits it.
-* Browsers give a file input's value as `C:\fakepath\<name>`, and some Stroom presenters send
-  `getFilename()` as it is (e.g. `DataUploadPresenter`'s `UploadDataRequest.fileName`); check what
-  GWT sends.
+* Browsers give a file input's value as `C:\fakepath\<name>`. `CustomFileUpload.getFilename()`
+  returns just the name (`FileUploadUtil.getFileName`); `DataUploadPresenter` once sent the fake
+  path as the `UploadDataRequest`'s `fileName` (`DataUploadDialog`'s `Upload` is its regression test).
 * `CustomFileUpload`'s transport is static, so with several harnesses in one rendering the last
   one built answers every upload. Widget stories (no harness) keep Stroom's default transport, so
   they must not submit a `CustomFileUpload`.

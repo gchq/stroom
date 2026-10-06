@@ -95,13 +95,13 @@ public final class DataUploadDialogStories {
                     // React's uploaded recorder
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.UPLOAD_SPY))
                             .toHaveBeenCalledWith("importfile.rpc", "stream.txt", "data"));
-                    // Differs from React: the file name is the file input's value, which browsers
-                    // give as C:\fakepath\<name> (DataUploadPresenter sends getFilename() as it is)
+                    // The file's name, not the file input's value, which browsers give as
+                    // C:\fakepath\<name> (it was once sent as it is)
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(UPLOAD_PATH)
                                     .withJsonBodyContaining("""
                                             {"key": {"key": "rk-stream.txt"}, "feedName": "TEST_FEED",
-                                             "streamTypeName": "Events", "fileName": "C:\\\\fakepath\\\\stream.txt"}""")
+                                             "streamTypeName": "Events", "fileName": "stream.txt"}""")
                                     .toSpyMatcher()));
                     // Differs from React: GWT says the file was uploaded, and closing the message
                     // refreshes the feed's data browser and closes the dialog (React's onUploaded)

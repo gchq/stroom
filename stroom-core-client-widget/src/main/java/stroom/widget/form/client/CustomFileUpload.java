@@ -63,8 +63,12 @@ public class CustomFileUpload extends Composite {
         return widget;
     }
 
+    /// Gets the name of the chosen file, without the (fake) path that browsers give a file input's
+    /// value, e.g. `stream.txt` for `C:\fakepath\stream.txt`.
+    ///
+    /// @return The name of the chosen file, or an empty string if no file has been chosen.
     public String getFilename() {
-        return fileUpload.getFilename();
+        return FileUploadUtil.getFileName(fileUpload.getFilename());
     }
 
     /**
@@ -130,18 +134,7 @@ public class CustomFileUpload extends Composite {
 
     @UiHandler("fileUpload")
     void onFileUpload(final ChangeEvent e) {
-        String name = fileUpload.getFilename();
-        if (name != null) {
-            int index = name.lastIndexOf("/");
-            if (index != -1) {
-                name = name.substring(index + 1);
-            }
-            index = name.lastIndexOf("\\");
-            if (index != -1) {
-                name = name.substring(index + 1);
-            }
-        }
-        fileName.setText(name);
+        fileName.setText(getFilename());
     }
 
     public interface Binder extends UiBinder<Widget, CustomFileUpload> {

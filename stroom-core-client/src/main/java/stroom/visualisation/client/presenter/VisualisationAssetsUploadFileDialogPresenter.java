@@ -82,7 +82,7 @@ public class VisualisationAssetsUploadFileDialogPresenter
                     final String fileName =
                             addFileCallback.getNonClashingLabel(
                                     parentFolderItem,
-                                    parseFakeFilename(getView().getFileUpload().getFilename()),
+                                    removeIllegalCharacters(getView().getFileUpload().getFilename()),
                                     null);
 
                     addFileCallback.addUploadedFile(parentFolderItem, fileName, resourceKey);
@@ -150,23 +150,14 @@ public class VisualisationAssetsUploadFileDialogPresenter
     }
 
     /**
-     * Removes any paths from the filename returned by the browser.
-     * Chrome returns a path like C:\fakepath\actual-filename.ext on Linux.
-     * Not sure about other browsers.
-     * <p>
-     * Also removes any illegal characters, deleting them from the filename.
-     * </p>
+     * Removes any illegal characters, deleting them from the filename. The file upload has
+     * already removed the path the browser gives the file, e.g. C:\fakepath\actual-filename.ext.
      *
-     * @param fakeFilename The filename given by the browser.
-     * @return The filename part of the path.
+     * @param uploadFilename The name of the uploaded file.
+     * @return The filename without illegal characters.
      */
-    private String parseFakeFilename(final String fakeFilename) {
-        String filename = fakeFilename;
-
-        final int iSlash = fakeFilename.lastIndexOf('\\');
-        if ((iSlash != -1) && (iSlash + 1 < fakeFilename.length())) {
-            filename = fakeFilename.substring(iSlash + 1);
-        }
+    private String removeIllegalCharacters(final String uploadFilename) {
+        String filename = uploadFilename;
 
         // Strip out any illegal characters
         if (illegalAssetNameCharacters != null) {

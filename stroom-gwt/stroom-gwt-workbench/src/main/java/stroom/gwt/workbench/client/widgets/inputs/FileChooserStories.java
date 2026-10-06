@@ -69,7 +69,7 @@ public final class FileChooserStories {
                     // read here when it changes.
                     final Spy onFile = context.fn(ON_FILE);
                     fileUpload.addDomHandler(event -> {
-                        final String name = baseName(fileUpload.getFilename());
+                        final String name = fileUpload.getFilename();
                         selected.setText("Selected: " + name);
                         onFile.call(name);
                     }, ChangeEvent.getType());
@@ -87,14 +87,5 @@ public final class FileChooserStories {
         final FlowPanel panel = StoryPanels.column(16, widgets);
         panel.getElement().getStyle().setProperty("padding", "16px");
         return panel;
-    }
-
-    /// The file name without any path, as [CustomFileUpload] shows it.
-    private static String baseName(final String fileName) {
-        if (fileName == null) {
-            return "";
-        }
-        final int index = Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'));
-        return fileName.substring(index + 1);
     }
 }
