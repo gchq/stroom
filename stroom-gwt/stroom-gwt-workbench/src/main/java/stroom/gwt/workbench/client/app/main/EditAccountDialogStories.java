@@ -159,7 +159,14 @@ public final class EditAccountDialogStories {
                     screen.findByText("Edit Account");
                     play.expect(screen.getByText(TextMatch.regex("^Locked until .*, after 3 failed sign-ins$")))
                             .toBeInTheDocument();
-                    play.expect(screen.getByRole("button", StroomDom.button("Unlock"))).not().toBeDisabled();
+                    final Query unlock = screen.getByRole("button", StroomDom.button("Unlock"));
+                    play.expect(unlock).not().toBeDisabled();
+                    // The long line wraps beside the button, which stays inside the dialog (it was once
+                    // pushed out of it, and clipped)
+                    final Query dialog = unlock.closest(StroomDom.DIALOG);
+                    play.expect("the Unlock button's overflow of the dialog",
+                                    () -> unlock.right().get() - dialog.right().get())
+                            .toBeLessThanOrEqual(0);
                     expectNoProblems(play);
                 })
                 // A lock with no end time says it won't clear on its own

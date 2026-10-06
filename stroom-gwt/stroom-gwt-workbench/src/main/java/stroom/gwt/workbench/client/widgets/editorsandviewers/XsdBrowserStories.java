@@ -18,6 +18,7 @@ package stroom.gwt.workbench.client.widgets.editorsandviewers;
 
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -133,11 +134,15 @@ public final class XsdBrowserStories {
                 // The box diagram browser: double-click to drill in, single-click to see the
                 // documentation and constraints; Home / Back / Forward
                 .story("Browse", XsdBrowserStories::fromArgs)
-                // A malformed schema.
-                // Differs from React: Chrome's XML parser recovers, so GWT shows the partial schema,
-                // not the parse error
+                // A malformed schema: the parse error is shown, not the partial schema (Chrome's
+                // XML parser recovers, and GWT's XSDModel once showed what it recovered)
                 .story("ParseError", XsdBrowserStories::fromArgs)
-                .withArgs(Args.of(XSD_TEXT, MALFORMED_XSD));
+                .withArgs(Args.of(XSD_TEXT, MALFORMED_XSD))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText(TextMatch.containingIgnoreCase("error on line")))
+                            .toBeInTheDocument());
+                    play.expect(play.queryByText("oops")).toBeNull();
+                });
     }
 
     private static Widget fromArgs(final StoryContext context) {

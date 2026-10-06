@@ -309,8 +309,7 @@ public class EmbeddedQueryPresenter
                 () -> getQuerySettings()
                         .getQueryTablePreferences()
                         .copy()
-                        .selectionFilter(NullSafe.get(currentTablePresenter,
-                                QueryResultTablePresenter::getCurrentSelectionFilter))
+                        .selectionFilter(getCurrentSelectionFilter())
                         .build());
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, tableResultConsumer);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, visResultConsumer);
@@ -410,9 +409,7 @@ public class EmbeddedQueryPresenter
 
                 if (currentTablePresenter != null) {
                     currentTablePresenter.setDashboardContext(dashboardContext);
-                    final ExpressionOperator selectionFilter = dashboardContext
-                            .createSelectionHandlerExpression(getQuerySettings().getSelectionFilter())
-                            .orElse(null);
+                    final ExpressionOperator selectionFilter = resolveSelectionFilter();
                     if (!Objects.equals(currentTablePresenter.getCurrentSelectionFilter(), selectionFilter)) {
                         currentTablePresenter.setCurrentSelectionFilter(selectionFilter);
                         currentTablePresenter.onColumnFilterChange();
@@ -449,6 +446,24 @@ public class EmbeddedQueryPresenter
         }));
     }
 
+    // The table's selection filter, or, before the table exists (e.g. for the first search), the
+    // one the dashboard's context gives
+    private ExpressionOperator getCurrentSelectionFilter() {
+        return currentTablePresenter != null
+                ? currentTablePresenter.getCurrentSelectionFilter()
+                : resolveSelectionFilter();
+    }
+
+    private ExpressionOperator resolveSelectionFilter() {
+        final DashboardContext dashboardContext = getDashboardContext();
+        if (dashboardContext == null) {
+            return null;
+        }
+        return dashboardContext
+                .createSelectionHandlerExpression(getQuerySettings().getSelectionFilter())
+                .orElse(null);
+    }
+
     private void updateVisibleResult() {
         if (currentVisPresenter != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
             getView().setResultView(currentVisPresenter.getView());
@@ -462,6 +477,9 @@ public class EmbeddedQueryPresenter
         if (currentTablePresenter == null) {
             currentTablePresenter = tablePresenterProvider.get();
             currentTablePresenter.setDashboardContext(getDashboardContext());
+            // The filter may not depend on a selection, so the new table needs it now, not only when
+            // the dashboard's context next changes
+            currentTablePresenter.setCurrentSelectionFilter(resolveSelectionFilter());
             currentTablePresenter.setQueryTablePreferencesSupplier(() ->
                     getQuerySettings().getQueryTablePreferences());
             currentTablePresenter.setQueryTablePreferencesConsumer(queryTablePreferences ->

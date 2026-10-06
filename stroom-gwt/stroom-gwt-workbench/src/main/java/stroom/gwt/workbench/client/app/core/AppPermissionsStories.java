@@ -95,9 +95,12 @@ public final class AppPermissionsStories {
                     // The NullSafe fallback.
                     // Differs from React: null and undefined are one case in Java
                     expectCaption(play, "null", "Unknown User/Group");
-                    // Differs from React: a user with no names isn't 'Unknown User/Group' in GWT;
-                    // toDisplayString falls back to the UUID in braces
-                    expectCaption(play, "empty", "User: {null}");
+                    // A user with nothing to identify it (it was once 'User: {null}', from
+                    // toDisplayString's UUID fallback)
+                    expectCaption(play, "empty", "Unknown User/Group");
+                    // setUserRef(null) once set the caption and then threw, as the Info tab's view
+                    // refused a null user
+                    play.expect(play.queryByText("(setUserRef threw)")).toBeNull();
                 });
     }
 
@@ -160,15 +163,9 @@ public final class AppPermissionsStories {
         try {
             presenter.setUserRef(userRef);
         } catch (final RuntimeException e) {
-            // GWT bug: setUserRef(null) sets the label, then throws as the Info tab's view
-            // refuses a null user
-            note = " (setUserRef threw)";
+            note = "(setUserRef threw)";
         }
         final Label label = new Label(presenter.getLabel());
-        if (userRef == null) {
-            // Give it a user, so that its deferred selection of the Info tab doesn't throw too
-            presenter.setUserRef(new UserRef("u-0", "nobody", null, null, false, true));
-        }
         label.getElement().setAttribute("data-testid", "caption-" + id);
         panel.add(StoryPanels.row(8, new Label(id + ":"), label, new Label(note)));
     }

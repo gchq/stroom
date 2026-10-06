@@ -133,16 +133,26 @@ public final class AskAiChatPanelStories {
                 .story("DeleteMessageConfirm", context -> render(context, AiFixtures.builder(AiFixtures.poll("", true,
                         "{\"id\": 9, \"chatId\": 1, \"messageType\": \"USER_MESSAGE\", \"message\": \"delete me\"}",
                         "{\"id\": 10, \"chatId\": 1, \"messageType\": \"AI_RESPONSE\", \"message\": \"ok\"}"))
+                        // The chat is reloaded once the message is deleted
+                        .post("/ai/v1/getMessages/1", RestReply.json(
+                                "[{\"id\": 10, \"chatId\": 1, \"messageType\": \"AI_RESPONSE\", \"message\": \"ok\"}]"))
                         .build()))
                 .withPlay(play -> {
                     send(play, "delete me");
                     play.waitFor(() -> play.expect(play.getByText("ok")).toBeInTheDocument());
-                    // Differs from React: GWT never gives a message sent in this session a Delete
-                    // button (a GWT bug: onSendMessage renders it with no id, and the poll skips the
-                    // server's copy of it), so the confirmation can't be reached; only a chat
-                    // reloaded from the history has deletable messages
-                    play.expect(play.queryByTitle("Delete message")).toBeNull();
-                    play.expect(play.within(play.querySelector(MESSAGES)).getByText("delete me")).toBeInTheDocument();
+                    // The message sent is replaced by the stored one, which has a Delete button (a
+                    // message sent in this session once had none: it was rendered with no id, and the
+                    // poll skipped the stored copy). It is shown once
+                    play.waitFor(() -> play.expect(play.getByTitle("Delete message")).toBeInTheDocument());
+                    play.expect(play.within(play.querySelector(MESSAGES)).getAllByText("delete me").count())
+                            .toBe(1);
+                    play.click(play.getByTitle("Delete message"));
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(screen.getByText("Are you sure you want to delete this message?"))
+                            .toBeInTheDocument());
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/ai/v1/deleteMessage/1/9").toSpyMatcher()));
                     DocEditors.expectNoProblems(play);
                 })
                 // New Conversation clears the conversation

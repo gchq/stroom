@@ -17,6 +17,7 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.UserInfoPresenter.UserInfoView;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -27,8 +28,6 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewImpl;
-
-import java.util.Objects;
 
 public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
 
@@ -65,8 +64,9 @@ public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
 
     @Override
     public void setUserRef(final UserRef userRef) {
-        this.userRef = Objects.requireNonNull(userRef);
-        final boolean isUser = userRef.isUser();
+        this.userRef = userRef;
+        // No user (e.g. an unknown one) is shown as a user with no details
+        final boolean isUser = userRef == null || userRef.isUser();
 
         enabledFormGroup.setVisible(isUser);
         fullNameFormGroup.setVisible(isUser);
@@ -79,10 +79,10 @@ public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
                 ? null
                 // helpHTML element in ui.xml will be used instead
                 : "The name of the group."); // Overrides the helpHTML element
-        subjectId.setText(userRef.getSubjectId());
-        displayName.setText(userRef.getDisplayName());
-        fullName.setText(userRef.getFullName());
-        isEnabledTickBox.setValue(userRef.isEnabled());
+        subjectId.setText(NullSafe.get(userRef, UserRef::getSubjectId));
+        displayName.setText(NullSafe.get(userRef, UserRef::getDisplayName));
+        fullName.setText(NullSafe.get(userRef, UserRef::getFullName));
+        isEnabledTickBox.setValue(userRef != null && userRef.isEnabled());
     }
 
     @Override

@@ -24,6 +24,9 @@ import stroom.widget.xsdbrowser.client.view.XSDNode.XSDType;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.xml.client.Document;
+import com.google.gwt.xml.client.Element;
+import com.google.gwt.xml.client.Node;
+import com.google.gwt.xml.client.NodeList;
 import com.google.gwt.xml.client.XMLParser;
 import com.google.gwt.xml.client.impl.DOMParseException;
 import com.google.web.bindery.event.shared.HandlerRegistration;
@@ -77,11 +80,46 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
         if (contents != null) {
             try {
                 doc = XMLParser.parse(contents);
+                // Some browsers (e.g. Chrome) don't fail to parse malformed XML; they recover, and
+                // report the error in a parsererror element in the partial document
+                final String parserError = getParserError(doc);
+                if (parserError != null) {
+                    doc = null;
+                    parseException = new DOMParseException(parserError);
+                }
             } catch (final DOMParseException e) {
                 parseException = e;
             }
         }
         showRoot();
+    }
+
+    private static String getParserError(final Document doc) {
+        final NodeList parserErrors = doc.getElementsByTagName("parsererror");
+        if (parserErrors.getLength() == 0) {
+            return null;
+        }
+        // Chrome's parsererror holds a heading, the error in a div, and another heading
+        final Element parserError = (Element) parserErrors.item(0);
+        final NodeList details = parserError.getElementsByTagName("div");
+        final String text = getText(details.getLength() > 0
+                ? details.item(0)
+                : parserError).trim();
+        return text.isEmpty()
+                ? "Unable to parse the schema"
+                : text;
+    }
+
+    private static String getText(final Node node) {
+        if (node.getNodeType() == Node.TEXT_NODE) {
+            return node.getNodeValue();
+        }
+        final StringBuilder sb = new StringBuilder();
+        final NodeList children = node.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            sb.append(getText(children.item(i)));
+        }
+        return sb.toString();
     }
 
     private void showRoot() {
@@ -105,7 +143,15 @@ public class XSDModel implements HasDataSelectionHandlers<XSDNode> {
             globalGroupMap = new HashMap<>();
         }
 
-        setSelectedItem(selectedItem, true, selectedItem != null);
+        if (selectedItem != null) {
+            setSelectedItem(selectedItem, true, true);
+        } else {
+            // No schema (e.g. the contents couldn't be parsed), so the display is told to change, to
+            // clear the last schema and show any parse error
+            this.currentItem = null;
+            this.selectedItem = null;
+            DataSelectionEvent.fire(this, null, true);
+        }
     }
 
     private void createGlobalMaps(final XSDNode node) {

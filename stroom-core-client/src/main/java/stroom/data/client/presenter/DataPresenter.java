@@ -42,6 +42,7 @@ import stroom.ui.config.shared.SourceConfig;
 import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
 import stroom.util.shared.HasItems;
+import stroom.util.shared.Location;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
@@ -1050,6 +1051,9 @@ public class DataPresenter
 
             textPresenter.setMode(editorMode);
             textPresenter.setText(data, shouldFormatData);
+            // The data may be a range of the stream, so number its lines from the range's first
+            // line, as SourcePresenter does (a highlight is placed by these numbers)
+            textPresenter.setFirstLineNumber(getFirstLineNo(lastResult));
             textPresenter.setControlsVisible(playButtonVisible);
             // Resets the context menu states to default
             textPresenter.setOptionsToDefaultAvailability();
@@ -1096,7 +1100,9 @@ public class DataPresenter
             && Objects.equals(getCurrentMetaId(), highlightMetaId)
             && partIndex == highlightPartIndex
             && result != null
-            && Objects.equals(result.getStreamTypeName(), highlightChildDataType)) {
+            // Compare child types: the result's stream type name is that of the stream (e.g.
+            // 'Events'), never the null child type of a highlight in the main data
+            && isSameChildType(result.getSourceLocation().getChildType(), highlightChildDataType)) {
             // Set the content to be displayed in the source view with a
             // highlight.
             textPresenter.setHighlights(highlights);
@@ -1105,6 +1111,26 @@ public class DataPresenter
             // highlight.
             textPresenter.setHighlights(null);
         }
+    }
+
+    private static int getFirstLineNo(final AbstractFetchDataResult result) {
+        if (result == null || result.getSourceLocation() == null) {
+            return 1;
+        }
+        return result.getSourceLocation()
+                .getOptDataRange()
+                .flatMap(DataRange::getOptLocationFrom)
+                .map(Location::getLineNo)
+                .orElse(1);
+    }
+
+    private static boolean isSameChildType(final String childType1, final String childType2) {
+        // Not Objects.equals: in compiled GWT, a child type that was never set can be undefined
+        // rather than null, and Objects.equals sees the two as different
+        if (childType1 == null) {
+            return childType2 == null;
+        }
+        return childType1.equals(childType2);
     }
 
     private void refreshMarkers(final AbstractFetchDataResult result) {

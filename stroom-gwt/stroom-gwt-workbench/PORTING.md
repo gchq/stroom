@@ -778,7 +778,23 @@ one closest to your screen.
   (`DocRefCell`: `DocRefCell`'s `Basic`); a dashboard text's stepping button shown before a row is
   selected (`TextPresenter.showData`: `DashboardComponent`'s `TextSteppingButton`); and a new
   notification with no destination type (`AbstractNotificationListPresenter.add`, now Stream:
-  `AnalyticRuleEditor`'s `AddNotification`, `ReportEditor`'s `NotificationsNoIncludeDoc`).
+  `AnalyticRuleEditor`'s `AddNotification`, `ReportEditor`'s `NotificationsNoIncludeDoc`). And: an
+  account's long lock or activity line pushing its button out of the dialog (`EditAccountViewImpl`:
+  `EditAccountDialog`'s `LockedUntilState`); a user tab captioned `User: {null}`, and
+  `setUserRef(null)` throwing (`UserTabPresenter`, `UserInfoViewImpl`: `AppPermissions`'
+  `UserProfileTabCaption`); a chat's first message's chat left without Download or Delete All, and
+  messages sent in the session without a Delete button (`AskStroomAiPresenter`: `AskStroomAiDialog`'s
+  `DownloadChat`, `AskAiChatPanel`'s `DeleteMessageConfirm`); a malformed schema shown as the partial
+  schema Chrome recovers, and a parse error never shown (`XSDModel`: `XsdBrowser`'s `ParseError`); an
+  Embedded Query's static selection filter not sent with its first search
+  (`EmbeddedQueryPresenter`: `DashboardSearch`'s `EmbeddedQuerySelectionFilter`); no data source for
+  a copied query's selection handlers (`EmbeddedQuerySettingsPresenter`: `DashboardComponent`'s
+  `EmbeddedQuerySettingsFields`); and a data preview's highlight never shown
+  (`DataPresenter.refreshHighlights` and its first line number: `SourceViewer`'s `HighlightedRange`).
+* In compiled GWT, a `String` field that was never set can be `undefined` rather than `null`, and
+  `Objects.equals(null, undefined)` is false (it compares two `String`s strictly), while `x == null`
+  is true for both. `DataPresenter.refreshHighlights` hit this; check with `== null` when a value
+  may come from a builder that left it unset.
 
 ### Module inherits added by the pilot
 

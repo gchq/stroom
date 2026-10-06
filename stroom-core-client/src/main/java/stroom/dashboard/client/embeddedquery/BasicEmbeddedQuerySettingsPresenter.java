@@ -52,6 +52,7 @@ public class BasicEmbeddedQuerySettingsPresenter
     private final Provider<DocSelectionPopup> docSelectionPopupProvider;
     private final QueryClient queryClient;
     private QueryDoc loaded;
+    private QueryDoc readEmbeddedQueryDoc;
 
     @Inject
     public BasicEmbeddedQuerySettingsPresenter(final EventBus eventBus,
@@ -75,6 +76,17 @@ public class BasicEmbeddedQuerySettingsPresenter
         getView().focus();
     }
 
+    /// @return The StroomQL of the embedded (copied) query, or null if the query is a reference.
+    String getEmbeddedQueryString() {
+        if (getView().isReference()) {
+            return null;
+        }
+        final QueryDoc embeddedQueryDoc = loaded != null
+                ? loaded
+                : readEmbeddedQueryDoc;
+        return NullSafe.get(embeddedQueryDoc, QueryDoc::getQuery);
+    }
+
     DocRef getQuery() {
         return querySelectionPresenter.getSelectedEntityReference();
     }
@@ -89,6 +101,7 @@ public class BasicEmbeddedQuerySettingsPresenter
 
         final EmbeddedQueryComponentSettings settings = (EmbeddedQueryComponentSettings) componentConfig.getSettings();
         getView().setReference(settings.reference());
+        readEmbeddedQueryDoc = settings.getEmbeddedQueryDoc();
         querySelectionPresenter.setEnabled(settings.reference());
         setQuery(settings.getQueryRef());
 

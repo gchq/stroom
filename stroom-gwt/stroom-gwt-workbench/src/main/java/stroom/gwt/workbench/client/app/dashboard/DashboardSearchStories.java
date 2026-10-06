@@ -184,13 +184,14 @@ public final class DashboardSearchStories {
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     DashboardPlays.runAll(play);
-                    // Differs from React: GWT only applies an Embedded Query's selection filter when
-                    // the dashboard's context changes after its table exists
-                    // (EmbeddedQueryPresenter.setDashboardContext), so a static filter isn't sent
-                    // with the first search
+                    // The static filter (Status = OPEN) is sent with the first search (it was once
+                    // only applied when the dashboard's context changed after the table existed)
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             QueryFixtures.SEARCH
-                                    .withJsonBodyContaining("{\"queryTablePreferences\": {\"selectionFilter\": null}}")
+                                    .withBody("the selection filter Status = OPEN", body -> body != null
+                                            && body.contains("\"selectionFilter\":{")
+                                            && body.contains("\"field\":\"Status\"")
+                                            && body.contains("\"value\":\"OPEN\""))
                                     .toSpyMatcher()));
                     DashboardPlays.expectNoProblems(play);
                 })

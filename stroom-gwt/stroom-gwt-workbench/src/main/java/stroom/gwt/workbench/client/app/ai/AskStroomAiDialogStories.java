@@ -180,11 +180,8 @@ public final class AskStroomAiDialogStories {
                     screen.findByText(CAPTION, StroomDom.DIALOG_TITLE);
                     send(screen, "anything");
                     play.waitFor(() -> play.expect(screen.getByText("A fresh reply.")).toBeInTheDocument());
-                    // Differs from React: Download stays disabled for the chat created by sending
-                    // the first message (a GWT bug: only onNewChat and loadChat enable it), so the
-                    // play starts a new conversation to enable it
-                    play.expect(screen.getByTitle("Download")).toBeDisabled();
-                    play.click(screen.getByTitle("New Conversation"));
+                    // Download is enabled for the chat created by sending the first message (it once
+                    // stayed disabled: only onNewChat and loadChat enabled it)
                     play.waitFor(() -> play.expect(screen.getByTitle("Download")).toBeEnabled());
                     play.click(screen.getByTitle("Download"));
                     play.waitFor(() -> play.expect(screen.getByText("Download Options", StroomDom.DIALOG_TITLE))

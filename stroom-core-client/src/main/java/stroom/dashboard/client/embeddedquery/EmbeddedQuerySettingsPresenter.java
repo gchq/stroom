@@ -37,7 +37,8 @@ public class EmbeddedQuerySettingsPresenter extends SettingsPresenter {
 
     private static final QueryResource QUERY_RESOURCE = GWT.create(QueryResource.class);
 
-    private DocRef currentQueryReference;
+    // The query reference or embedded query string that currentDataSource was found for
+    private Object currentDataSourceKey;
     private DocRef currentDataSource;
 
     @Inject
@@ -52,24 +53,33 @@ public class EmbeddedQuerySettingsPresenter extends SettingsPresenter {
         getView().asWidget().addStyleName("settingsPresenter");
 
         final Consumer<Consumer<DocRef>> dataSourceRefConsumer = consumer -> {
+            // An embedded (copied) query has no reference, so its data source is found from its
+            // StroomQL
+            final String embeddedQueryString = NullSafe
+                    .get(basicSettingsPresenter, BasicEmbeddedQuerySettingsPresenter::getEmbeddedQueryString);
             final DocRef queryDocRef = NullSafe
                     .get(basicSettingsPresenter, BasicEmbeddedQuerySettingsPresenter::getQuery);
-            if (Objects.equals(queryDocRef, currentQueryReference)) {
-                consumer.accept(currentDataSource);
-            } else if (queryDocRef == null) {
+            final Object key = NullSafe.isNonBlankString(embeddedQueryString)
+                    ? embeddedQueryString
+                    : queryDocRef;
+            if (key == null) {
                 consumer.accept(null);
+            } else if (Objects.equals(key, currentDataSourceKey)) {
+                consumer.accept(currentDataSource);
             } else {
                 restFactory
                         .create(QUERY_RESOURCE)
-                        .method(res -> res.fetchQueryDataSource(queryDocRef))
+                        .method(res -> key instanceof final String queryString
+                                ? res.fetchDataSourceFromQueryString(queryString)
+                                : res.fetchQueryDataSource(queryDocRef))
                         .onSuccess(result -> {
                             currentDataSource = result;
-                            currentQueryReference = queryDocRef;
+                            currentDataSourceKey = key;
                             consumer.accept(result);
                         })
                         .onFailure(new DefaultErrorHandler(this, () -> {
                             currentDataSource = null;
-                            currentQueryReference = queryDocRef;
+                            currentDataSourceKey = key;
                             consumer.accept(null);
                         }))
                         .taskMonitorFactory(this)

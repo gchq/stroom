@@ -35,13 +35,13 @@
         -->
         <form:FormGroup ui:field="lockedGroup" identity="accountLocked" label="Sign-in lock">
             <g:FlowPanel addStyleNames="dock-container-horizontal">
-                <g:Label ui:field="lockState" addStyleNames="w-100"/>
+                <g:Label ui:field="lockState" addStyleNames="dock-max" wordWrap="true"/>
                 <b:Button ui:field="unlock" text="Unlock" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup ui:field="inactiveGroup" identity="accountInactive" label="Activity">
             <g:FlowPanel addStyleNames="dock-container-horizontal">
-                <g:Label ui:field="activityState" addStyleNames="w-100"/>
+                <g:Label ui:field="activityState" addStyleNames="dock-max" wordWrap="true"/>
                 <b:Button ui:field="reactivate" text="Reactivate" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>

@@ -204,10 +204,11 @@ public final class SourceViewerStories {
                 .story("HighlightedRange", context -> render(context, HIGHLIGHT_FIXTURES, highlightLocation()))
                 .withPlay(play -> {
                     waitForEditorText(play, "line six  TARGET word");
-                    // Differs from React: DataPresenter only shows a highlight when the stream's type
-                    // equals the location's child type (refreshHighlights), which it never does for
-                    // a data stream, so no highlight (Ace marker) is shown
-                    play.expect(play.querySelectorAll(".ace_marker-layer .hl")).toHaveLength(0);
+                    // The range is highlighted (an Ace marker). It once never was for a data stream:
+                    // DataPresenter.refreshHighlights compared the stream's type with the location's
+                    // child type
+                    play.waitFor(() -> play.expect(play.querySelectorAll(".ace_marker-layer .hl").count())
+                            .toBeGreaterThan(0));
                     // Differs from React: the data preview hides the line numbers (it formats the
                     // data), so there is no gutter numbered from the returned first line
                     play.expect(play.querySelector(".ace_gutter")).not().toBeVisible();

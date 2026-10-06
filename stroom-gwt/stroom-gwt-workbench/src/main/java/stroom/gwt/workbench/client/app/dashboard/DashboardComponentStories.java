@@ -252,8 +252,14 @@ public final class DashboardComponentStories {
                 })
                 // An Embedded Query's settings find the fields of its query's data source, for its
                 // selection handlers
-                .story("EmbeddedQuerySettingsFields", DashboardSupport.story(DashboardDocs.DASHBOARD_DOC, routes -> {
-                }))
+                .story("EmbeddedQuerySettingsFields", DashboardSupport.story(DashboardDocs.DASHBOARD_DOC, routes ->
+                        routes.route(RequestMatcher.post("/query/v1/fetchDataSourceFromQueryString"),
+                                        RestReply.json(
+                                                "{\"type\": \"Index\", \"uuid\": \"idx-1\", \"name\": \"index\"}"))
+                                // The data source's fields, for the field list
+                                .route(RequestMatcher.post("/dataSource/v1/findFields"), RestReply.json(
+                                        "{\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, "
+                                        + "\"total\": 0, \"exact\": true}}"))))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     DashboardPlays.opened(play);
@@ -275,12 +281,19 @@ public final class DashboardComponentStories {
                     // Differs from React: GWT's caption is 'Add New Selection Handler'
                     play.expect(screen.findByText("Add New Selection Handler", StroomDom.DIALOG_TITLE))
                             .toBeInTheDocument();
-                    // Differs from React: GWT doesn't resolve the data source of an embedded (copied)
-                    // query's StroomQL for its handlers: EmbeddedQuerySettingsPresenter only fetches
-                    // a referenced query's (POST /query/v1/fetchQueryDataSource, when the field picker
-                    // asks), so this panel's handlers get no field suggestions
-                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
-                            RequestMatcher.post("/query/v1/fetchDataSourceFromQueryString").toSpyMatcher());
+                    // Add a term and open its field list, which asks for the query's data source
+                    final Play handler = DashboardPlays.dialog(screen, "Add New Selection Handler");
+                    play.click(handler.getByTitle("Add Term"));
+                    final Query fieldPicker = handler.querySelector(
+                            ".termEditor-item.field " + StroomDom.SELECTION_BOX);
+                    play.waitFor(() -> play.expect(fieldPicker).toBeInTheDocument());
+                    play.click(fieldPicker);
+                    // The data source of the embedded (copied) query is found from its StroomQL, for
+                    // its handlers' field suggestions (it was once only found for a referenced query)
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                            RequestMatcher.post("/query/v1/fetchDataSourceFromQueryString")
+                                    .withBodyContaining("from index")
+                                    .toSpyMatcher()));
 
                     DashboardPlays.expectNoProblems(play);
                 })

@@ -91,6 +91,8 @@ public class AskStroomAiPresenter
     private static final SafeHtml DETAILS = SafeHtmlUtils.fromSafeConstant("details");
     private static final SafeHtml BUTTON = SafeHtmlUtils.fromSafeConstant("button");
     private static final String WORKING_MESSAGE_ID = "ai-working-message";
+    // The user's message as rendered when sent, until the poll brings back the stored message
+    private static final String PENDING_USER_MESSAGE_ID = "ai-pending-user-message";
     private static final String WORKING_TEXT_ID = "ai-working-text";
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
@@ -415,6 +417,7 @@ public class AskStroomAiPresenter
         appendMessageHtml(hb, "ai-message ai-message--user", "> " + message,
                 nowMs, nowMs, false, 0, false);
         appendToContainer(hb);
+        markPendingUserMessage();
 
         // Scroll markdown container to bottom, so the user's message is displayed
         final SimplePanel markdownContainer = getView().getMarkdownContainer();
@@ -497,8 +500,10 @@ public class AskStroomAiPresenter
                 final long nowMs = System.currentTimeMillis();
                 final HtmlBuilder hb = new HtmlBuilder();
                 for (final AiChatMessage msg : response.getNewMessages()) {
-                    // Skip USER_MESSAGE — we already rendered it inline in onSendMessage.
-                    if (msg.getMessageType() != AiMessageType.USER_MESSAGE) {
+                    // A USER_MESSAGE was rendered inline when it was sent, but without its id, so it
+                    // is replaced by the stored one (which can then be deleted)
+                    if (msg.getMessageType() != AiMessageType.USER_MESSAGE
+                        || !replacePendingUserMessage(msg, nowMs)) {
                         renderMessage(hb, msg, nowMs);
                     }
                     // Track the highest seen message ID.
@@ -535,6 +540,39 @@ public class AskStroomAiPresenter
             polling = false;
             getView().setSendButtonLoadingState(false);
         }, getView());
+    }
+
+    /// Marks the last message in the container, the user's message just sent, as pending.
+    private void markPendingUserMessage() {
+        // Only the latest message sent is pending
+        final Element previous = Document.get().getElementById(PENDING_USER_MESSAGE_ID);
+        if (previous != null) {
+            previous.removeAttribute("id");
+        }
+        final Element message = getView().getMarkdownContainer().getElement().getLastChild().cast();
+        if (message != null) {
+            message.setId(PENDING_USER_MESSAGE_ID);
+        }
+    }
+
+    /// Replaces the pending user message with the stored one.
+    ///
+    /// @return False if there is no pending message to replace.
+    private boolean replacePendingUserMessage(final AiChatMessage msg, final long nowMs) {
+        final Element pending = Document.get().getElementById(PENDING_USER_MESSAGE_ID);
+        if (pending == null) {
+            return false;
+        }
+        final HtmlBuilder hb = new HtmlBuilder();
+        renderMessage(hb, msg, nowMs);
+        final Element temp = Document.get().createDivElement();
+        temp.setInnerHTML(hb.toSafeHtml().asString());
+        final Element stored = temp.getFirstChildElement();
+        if (stored == null) {
+            return false;
+        }
+        pending.getParentElement().replaceChild(stored, pending);
+        return true;
     }
 
     void appendToContainer(final HtmlBuilder hb) {
@@ -1001,6 +1039,9 @@ public class AskStroomAiPresenter
                 titleGenerated = false;
                 lastSeenMessageId = 0;
                 getView().setTitle(chat.getTitle());
+                // As for a new chat (onNewChat), the chat can now be downloaded and cleared
+                getView().setDownloadEnabled(true);
+                getView().setDeleteAllEnabled(true);
                 then.run();
             }, this);
         }
