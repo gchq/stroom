@@ -34,8 +34,9 @@ import java.util.function.Supplier;
 /// when they have no `askStroomAiConfig` (Stroom's default preferences have none) it fetches the
 /// default config and stores it in a copy of the current preferences. Created after start-up, the
 /// preferences are loaded and the default is stored in them, as in Stroom. (A presenter created
-/// before the preferences had loaded once failed copying null preferences; `AskStroomAiClient.setConfig`
-/// now skips storing the config then, so the lazy creation is only for fidelity.)
+/// before the preferences had loaded once failed copying null preferences; `AskStroomAiClient` now
+/// waits for the user's preferences (`UserPreferencesManager.whenLoaded`), so the lazy creation is
+/// only for fidelity.)
 ///
 /// Add the chat's routes with [AiFixtures#chatRoutes(stroom.gwt.workbench.client.app.rest.RestFixtures.Builder)].
 public final class AskStroomAiChat {

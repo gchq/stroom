@@ -33,7 +33,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.UserPreferencesManager;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.shared.UserPreferences;
-import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResultPage;
 
@@ -60,39 +59,38 @@ public class AskStroomAiClient {
     }
 
     public void setConfig(final AskStroomAiConfig config, final TaskMonitorFactory taskMonitorFactory) {
-        final UserPreferences currentPrefs = userPreferencesManager.getCurrentUserPreferences();
-        if (currentPrefs == null) {
-            // The user's preferences haven't been loaded yet, so the config can't be saved
-            // without losing them; it will be fetched again when next needed
-            return;
-        }
-        final UserPreferences newPrefs = currentPrefs.copy()
-                .askStroomAiConfig(config)
-                .build();
-        userPreferencesManager.setCurrentPreferences(newPrefs);
-        userPreferencesManager.update(newPrefs, result -> {
-        }, taskMonitorFactory);
+        // Wait for the user's preferences, so that saving the config doesn't lose them
+        userPreferencesManager.whenLoaded(currentPrefs -> {
+            final UserPreferences newPrefs = currentPrefs.copy()
+                    .askStroomAiConfig(config)
+                    .build();
+            userPreferencesManager.setCurrentPreferences(newPrefs);
+            userPreferencesManager.update(newPrefs, result -> {
+            }, taskMonitorFactory);
+        });
     }
 
     void getConfig(final Consumer<AskStroomAiConfig> consumer, final TaskMonitorFactory taskMonitorFactory) {
-        final AskStroomAiConfig config = NullSafe.get(userPreferencesManager.getCurrentUserPreferences(),
-                UserPreferences::getAskStroomAiConfig);
-        if (config != null) {
-            consumer.accept(config);
-        } else {
-            // If the user preferences do not contain an AI config then load the defaults.
-            getDefaultConfig(defaultConfig -> {
-                final AskStroomAiConfig currentUserPrefConfig = NullSafe.get(
-                        userPreferencesManager.getCurrentUserPreferences(), UserPreferences::getAskStroomAiConfig);
-                if (currentUserPrefConfig == null) {
-                    // Establish the user preference default config.
-                    setConfig(defaultConfig, taskMonitorFactory);
-                    consumer.accept(defaultConfig);
-                } else {
-                    consumer.accept(currentUserPrefConfig);
-                }
-            }, taskMonitorFactory);
-        }
+        // Wait for the user's preferences, so that the user's own config is used if they have one
+        userPreferencesManager.whenLoaded(userPreferences -> {
+            final AskStroomAiConfig config = userPreferences.getAskStroomAiConfig();
+            if (config != null) {
+                consumer.accept(config);
+            } else {
+                // If the user preferences do not contain an AI config then load the defaults.
+                getDefaultConfig(defaultConfig -> {
+                    final AskStroomAiConfig currentUserPrefConfig =
+                            userPreferencesManager.getCurrentUserPreferences().getAskStroomAiConfig();
+                    if (currentUserPrefConfig == null) {
+                        // Establish the user preference default config.
+                        setConfig(defaultConfig, taskMonitorFactory);
+                        consumer.accept(defaultConfig);
+                    } else {
+                        consumer.accept(currentUserPrefConfig);
+                    }
+                }, taskMonitorFactory);
+            }
+        });
     }
 
     void getDefaultConfig(final Consumer<AskStroomAiConfig> consumer,

@@ -808,11 +808,12 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
   on the first event, as its GWTP proxy does, i.e. after start-up. Don't create the presenter
   before start-up (e.g. in a `DashboardSupport` `setup`): its constructor reads the AI config from
   the user's preferences, and as Stroom's default preferences have no `askStroomAiConfig` it
-  fetches the default and stores it in a copy of the current preferences, which are still null
-  until `afterStartUp` has loaded them. That once failed ("Cannot read properties of undefined
-  (reading 'copy')", from `AskStroomAiClient.setConfig`); `setConfig` now skips storing the config
-  without preferences, so creating it after start-up is for fidelity (the default is then stored,
-  as in Stroom).
+  fetches the default and stores it in a copy of the user's preferences, which aren't loaded until
+  `afterStartUp`. That once failed ("Cannot read properties of undefined (reading 'copy')", from
+  `AskStroomAiClient.setConfig`); `UserPreferencesManager.getCurrentUserPreferences()` now gives
+  defaults until the preferences load, and `AskStroomAiClient` waits for the user's preferences
+  (`UserPreferencesManager.whenLoaded`) before reading or storing its config, so creating it after
+  start-up is for fidelity (the default is then stored, as in Stroom).
 * A polling chat (AI) uses a stateless `RestHandler` that replies with the messages after the
   request's `lastSeenMessageId`, as the server does (a repeated reply would add the messages again);
   `RestReply.delayed(...)` keeps a request in flight (e.g. to show a Stop button).
