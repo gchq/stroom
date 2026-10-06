@@ -163,18 +163,19 @@ public final class SelectionBoxStories {
         final Query textBox = play.querySelector(".SelectionBox-textBox");
         play.run("focus the box's text box", () -> textBox.element().get().focus());
         play.keyboard("{Escape}");
-        // Differs from React: Stroom's list only handles the keys pressed in it (its quick filter
-        // and cell table), so with the focus outside it Escape leaves it open
-        play.expect(play.screen().querySelector(POPUP)).not().toBeNull();
+        // Escape closes the list wherever the focus is (it once only did with the focus in the
+        // list's quick filter or cell table)
+        play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
 
-        // With the focus in the list, Escape closes the list
+        // With the focus in the list, Escape closes the list too
+        play.click(play.querySelector(OPENER));
+        play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
         final Query focusable = play.screen().querySelector(POPUP + " [tabindex]");
         play.run("focus the list", () -> focusable.element().get().focus());
         play.keyboard("{Escape}");
         play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
-        // Differs from React: the key isn't stopped, so the window sees it as well. Stroom's
-        // dialogs see keys first (with GWT's native preview handlers), so it doesn't close them.
-        play.expect(play.spy(ON_WINDOW_ESCAPE)).toHaveBeenCalledWith("Escape");
+        // And the key is stopped, so the window doesn't see it (it once did)
+        play.expect(play.spy(ON_WINDOW_ESCAPE)).not().toHaveBeenCalled();
     }
 
     private static SelectionBox<String> selectionBox(final StoryContext context, final List<String> items) {

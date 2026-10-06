@@ -52,6 +52,7 @@ import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
@@ -106,7 +107,9 @@ public class ProcessorTaskListPresenter
         // Info column.
         dataGrid.addColumn(new InfoColumn<ProcessorTask>() {
             @Override
-            protected void showInfo(final ProcessorTask row, final PopupPosition popupPosition) {
+            protected void showInfo(final ProcessorTask row,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.setExpression(MetaExpressionUtil.createDataIdExpression(row.getMetaId()));
 
@@ -119,7 +122,7 @@ public class ProcessorTaskListPresenter
                                     .map(ResultPage::getFirst)
                                     .map(MetaRow::getMeta)
                                     .orElse(null);
-                            showTooltip(popupPosition, row, meta);
+                            showTooltip(popupPosition, anchor, row, meta);
                         })
                         .taskMonitorFactory(getView())
                         .exec();
@@ -210,6 +213,7 @@ public class ProcessorTaskListPresenter
     }
 
     private void showTooltip(final PopupPosition popupPosition,
+                             final Element anchor,
                              final ProcessorTask processorTask,
                              final Meta meta) {
 
@@ -274,7 +278,7 @@ public class ProcessorTaskListPresenter
 
         final HtmlBuilder htmlBuilder = new HtmlBuilder();
         htmlBuilder.div(tb::write, Attribute.className("infoTable"));
-        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
+        tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
 
         OpenLinkUtil.addClickHandler(this, tooltipPresenter.getView().asWidget());
     }

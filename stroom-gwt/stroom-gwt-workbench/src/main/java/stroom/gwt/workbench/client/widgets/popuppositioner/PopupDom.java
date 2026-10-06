@@ -230,22 +230,6 @@ final class PopupDom {
         return painted;
     }-*/;
 
-    /// Presses (mousedown then mouseup with the primary button) an element, for a press made by
-    /// the play's own code rather than as a step. Stroom's `InlineSvgButton` clicks on mouseup, so
-    /// ignores a bare `click()`.
-    ///
-    /// @param selector A CSS selector.
-    static native void press(String selector) /*-{
-        var el = $doc.querySelector(selector);
-        if (el) {
-            var init = {bubbles: true, cancelable: true, button: 0, buttons: 1, view: $wnd};
-            el.dispatchEvent(new MouseEvent('mousedown', init));
-            init.buttons = 0;
-            el.dispatchEvent(new MouseEvent('mouseup', init));
-            el.dispatchEvent(new MouseEvent('click', init));
-        }
-    }-*/;
-
     private static List<String> toList(final JsArrayString array) {
         final List<String> list = new ArrayList<>();
         for (int i = 0; i < array.length(); i++) {

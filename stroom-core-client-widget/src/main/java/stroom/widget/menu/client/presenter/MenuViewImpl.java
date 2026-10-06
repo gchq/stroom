@@ -92,6 +92,13 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
         }
     }
 
+    private void toggleSubMenu(final Item item) {
+        if (getUiHandlers() != null && item instanceof MenuItem) {
+            cancelDelayedSubMenu();
+            getUiHandlers().toggleSubMenu((MenuItem) item, getRowElement(item));
+        }
+    }
+
     private void showSubMenuAfterDelay(final Item item, final int delayMillis) {
         if (item != null) {
             if (timerItem == null || !Objects.equals(item, timerItem)) {
@@ -305,7 +312,8 @@ public class MenuViewImpl extends ViewWithUiHandlers<MenuUiHandlers> implements 
                 if (item instanceof MenuItem && ((MenuItem) item).getCommand() != null) {
                     execute((MenuItem) item);
                 } else {
-                    showSubMenu(item);
+                    // A click on the item of an open sub menu closes it
+                    toggleSubMenu(item);
                 }
             }
         }

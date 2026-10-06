@@ -55,6 +55,7 @@ import stroom.widget.util.client.TableBuilder;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.shared.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.view.client.Range;
@@ -237,7 +238,9 @@ public class IndexShardPresenter
         // Info column.
         final InfoColumn<IndexShard> infoColumn = new InfoColumn<IndexShard>() {
             @Override
-            protected void showInfo(final IndexShard indexShard, final PopupPosition popupPosition) {
+            protected void showInfo(final IndexShard indexShard,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final TableBuilder tb = new TableBuilder();
 
                 if (index != null) {
@@ -270,7 +273,7 @@ public class IndexShardPresenter
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 htmlBuilder.div(tb::write, Attribute.className("infoTable"));
 
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

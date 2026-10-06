@@ -20,17 +20,26 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.view.AbstractPopupPanel;
+import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.popup.client.view.DialogActionUiHandlers;
 import stroom.widget.popup.client.view.Popup;
 import stroom.widget.popup.client.view.PopupUtil;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
+import java.util.Objects;
+
 public class HelpManager {
+
+    private HelpPopup currentPopup;
+    private Element currentElement;
 
     @Inject
     public HelpManager(final EventBus eventBus) {
@@ -38,8 +47,27 @@ public class HelpManager {
     }
 
     private void onShow(final ShowHelpEvent showHelpEvent) {
+        final Element element = showHelpEvent.getElement();
+        // A second click on the help button that showed the popup closes it
+        if (currentPopup != null && currentPopup.isShowing() && Objects.equals(element, currentElement)) {
+            currentPopup.hide();
+            return;
+        }
 
         final HelpPopup popup = new HelpPopup(showHelpEvent.getContent());
+        // A mousedown on the help button mustn't auto-hide the popup, so that its click can toggle it
+        // shut
+        if (element != null) {
+            popup.addAutoHidePartner(element);
+        }
+        popup.addCloseHandler(event -> {
+            if (currentPopup == popup) {
+                currentPopup = null;
+                currentElement = null;
+            }
+        });
+        currentPopup = popup;
+        currentElement = element;
         popup.setVisible(false);
         popup.setModal(false);
         // Add the markdown class so that it gets styled like rendered markdown, so we are
@@ -65,11 +93,16 @@ public class HelpManager {
     private static class HelpPopup extends AbstractPopupPanel implements Popup {
 
         public HelpPopup(final SafeHtml content) {
+            this(content, new CloseActionHandler());
+        }
+
+        private HelpPopup(final SafeHtml content, final CloseActionHandler closeActionHandler) {
             // PopupPanel's constructor takes 'auto-hide' as its boolean parameter.
             // If this is set, the panel closes itself automatically when the user
             // clicks outside of it.
-            super(e -> {
-            }, true, false);
+            super(closeActionHandler, true, false);
+            // Escape (the close action) closes it
+            closeActionHandler.popup = this;
 
             setWidget(new HTMLPanel(content));
         }
@@ -92,6 +125,22 @@ public class HelpManager {
         @Override
         public void setCaption(final String caption) {
             // No caption
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    private static class CloseActionHandler implements DialogActionUiHandlers {
+
+        private PopupPanel popup;
+
+        @Override
+        public void onDialogAction(final DialogAction action) {
+            if (action == DialogAction.CLOSE && popup != null) {
+                popup.hide();
+            }
         }
     }
 }

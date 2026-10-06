@@ -84,6 +84,7 @@ import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
@@ -322,9 +323,11 @@ public class TaskManagerListPresenter
 
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
             @Override
-            protected void showInfo(final TaskProgress row, final PopupPosition popupPosition) {
+            protected void showInfo(final TaskProgress row,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final SafeHtml tooltipHtml = buildTooltipHtml(row);
-                tooltipPresenter.show(tooltipHtml, popupPosition);
+                tooltipPresenter.show(tooltipHtml, popupPosition, anchor);
             }
         };
         dataGrid.addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

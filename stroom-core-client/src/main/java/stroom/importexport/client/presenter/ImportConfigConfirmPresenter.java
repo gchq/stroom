@@ -54,6 +54,7 @@ import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.Header;
 import com.google.gwt.user.client.ui.Focus;
@@ -416,7 +417,9 @@ public class ImportConfigConfirmPresenter extends
             }
 
             @Override
-            protected void showInfo(final ImportState action, final PopupPosition popupPosition) {
+            protected void showInfo(final ImportState action,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final HtmlBuilder htmlBuilder = new HtmlBuilder();
                 if (action.getMessageList().size() > 0) {
 
@@ -438,7 +441,7 @@ public class ImportConfigConfirmPresenter extends
                     action.getUpdatedFieldList().forEach(tb::row);
                     htmlBuilder.div(tb::write, Attribute.className("infoTable"));
                 }
-                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition);
+                tooltipPresenter.show(htmlBuilder.toSafeHtml(), popupPosition, anchor);
             }
         };
         dataGrid.addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);

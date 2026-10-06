@@ -791,6 +791,16 @@ one closest to your screen.
   a copied query's selection handlers (`EmbeddedQuerySettingsPresenter`: `DashboardComponent`'s
   `EmbeddedQuerySettingsFields`); and a data preview's highlight never shown
   (`DataPresenter.refreshHighlights` and its first line number: `SourceViewer`'s `HighlightedRange`).
+  Popups and menus (`PopupContract`'s stories, `InfoPopoverCell`'s and `SelectionBox`'s): help
+  popups (`HelpManager`, `QuickFilter`) and an `InfoColumn`'s popover were auto-hidden by a
+  mousedown on their own button, so a second click showed them again rather than closing them
+  (`InfoColumn.showInfo` now gets the clicked cell, which `TooltipPresenter.show` makes the
+  popup's auto-hide partner);
+  `QuickFilter` needed two clicks to reopen its help after an auto-hide; help popups ignored
+  Escape; Escape closed only the innermost menu (`MenuPresenter`); a click on the parent row of an
+  open submenu didn't close it (now it does if a click opened the submenu, not hovering or the
+  keyboard); and a `SelectionBox`'s list ignored Escape unless it had the focus,
+  and let the key through to the window (`SelectionPopup`).
 * In compiled GWT, a `String` field that was never set can be `undefined` rather than `null`, and
   `Objects.equals(null, undefined)` is false (it compares two `String`s strictly), while `x == null`
   is true for both. `DataPresenter.refreshHighlights` hit this; check with `== null` when a value

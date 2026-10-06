@@ -38,7 +38,14 @@ public abstract class InfoColumn<T> extends Column<T, Preset> {
         return SvgPresets.INFO;
     }
 
-    protected abstract void showInfo(T row, PopupPosition popupPosition);
+    /// Shows the row's info, e.g. with [stroom.widget.tooltip.client.presenter.TooltipPresenter].
+    ///
+    /// @param row           The row whose info to show.
+    /// @param popupPosition Where to show it.
+    /// @param anchor        The cell clicked, which should be the popup's auto-hide partner, so that
+    ///                      a second click on it closes the popup rather than its mousedown
+    ///                      auto-hiding the popup and its click showing it again.
+    protected abstract void showInfo(T row, PopupPosition popupPosition, Element anchor);
 
     @Override
     public void onBrowserEvent(final Context context, final Element elem, final T row, final NativeEvent event) {
@@ -54,6 +61,6 @@ public abstract class InfoColumn<T> extends Column<T, Preset> {
 
         final Rect relativeRect = new Rect(target);
         final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
-        showInfo(row, position);
+        showInfo(row, position, target);
     }
 }

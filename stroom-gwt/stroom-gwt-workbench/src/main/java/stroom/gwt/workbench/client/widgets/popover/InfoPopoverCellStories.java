@@ -30,6 +30,7 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.view.TooltipViewImpl;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -75,11 +76,12 @@ public final class InfoPopoverCellStories {
                     play.waitFor(() -> play.expect(body.getByText(BODY)).toBeInTheDocument());
 
                     play.click(icon);
-                    // Differs from React: InfoColumn doesn't make its icon the popup's auto-hide
-                    // partner, so the mousedown auto-hides the popup and the click shows it
-                    // again: it never toggles shut.
+                    // The icon is the popup's anchor, so its mousedown doesn't auto-hide the popup
+                    // and its click toggles it shut (it once auto-hid it and showed it again)
+                    play.waitFor(() -> play.expect(body.queryByText(BODY)).toBeNull());
+                    // ... and it stays closed
                     play.sleep(50);
-                    play.expect(body.queryByText(BODY)).toBeInTheDocument();
+                    play.expect(body.queryByText(BODY)).toBeNull();
                 });
     }
 
@@ -105,8 +107,10 @@ public final class InfoPopoverCellStories {
         final TooltipPresenter tooltipPresenter = new TooltipPresenter(popups.getEventBus(), new TooltipViewImpl());
         final InfoColumn<String> infoColumn = new InfoColumn<String>() {
             @Override
-            protected void showInfo(final String row, final PopupPosition popupPosition) {
-                tooltipPresenter.show(SafeHtmlUtils.fromSafeConstant("<div>" + BODY + "</div>"), popupPosition);
+            protected void showInfo(final String row,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
+                tooltipPresenter.show(SafeHtmlUtils.fromSafeConstant("<div>" + BODY + "</div>"), popupPosition, anchor);
             }
         };
         final MyCellTable<String> table = new MyCellTable<>(1);

@@ -40,7 +40,6 @@ final class PopupCase {
     private String insideTarget;
     private boolean triggerToggles = true;
     private boolean escapeCloses = true;
-    private boolean reopenAfterAutoHide;
     private boolean reactTriggerToggles = true;
     private boolean reactEscapeClosesViaHook = true;
     private Placement placement;
@@ -120,14 +119,6 @@ final class PopupCase {
         return this;
     }
 
-    /// @param reopenAfterAutoHide Whether the first click on the opener after the popup has been
-    ///                            auto-hidden only resets the widget, so a second is needed.
-    /// @return This.
-    PopupCase reopenAfterAutoHide(final boolean reopenAfterAutoHide) {
-        this.reopenAfterAutoHide = reopenAfterAutoHide;
-        return this;
-    }
-
     /// @param anchor   The selector (within the container) of the element GWT positions against.
     /// @param location The `PopupLocation` the GWT call site asks for.
     /// @param shadow   GWT's `relativeRect.grow(shadow)` at the call site, or 0.
@@ -194,11 +185,6 @@ final class PopupCase {
     /// @return Whether Escape closes the popup in GWT.
     boolean isEscapeCloses() {
         return escapeCloses;
-    }
-
-    /// @return Whether the first click after an auto-hide only resets the widget.
-    boolean isReopenAfterAutoHide() {
-        return reopenAfterAutoHide;
     }
 
     /// @return React's `triggerToggles`, which says whether the trigger story runs over the case.

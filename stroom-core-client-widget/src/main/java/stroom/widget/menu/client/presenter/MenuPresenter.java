@@ -50,6 +50,9 @@ public class MenuPresenter
     private final Provider<MenuPresenter> menuPresenterProvider;
     private MenuPresenter currentMenu;
     private MenuItem currentItem;
+    // Whether the current sub menu was opened (or since clicked) by a click on its item, rather
+    // than by hovering over it or the keyboard
+    private boolean subMenuOpenedByClick;
 
     private MenuPresenter parent;
     private MenuItem parentItem;
@@ -64,8 +67,28 @@ public class MenuPresenter
     }
 
     @Override
+    public void toggleSubMenu(final MenuItem menuItem, final Element element) {
+        if (currentItem != null && Objects.equals(currentItem, menuItem)) {
+            if (subMenuOpenedByClick) {
+                hideChildren(false, false);
+            } else {
+                // The sub menu was opened by hovering over its item, perhaps only just, so a click
+                // on the item (likely meant to open it) leaves it open. A further click closes it
+                subMenuOpenedByClick = true;
+            }
+        } else {
+            showSubMenu(menuItem, element, true);
+        }
+    }
+
+    @Override
     public void showSubMenu(final MenuItem menuItem, final Element element) {
+        showSubMenu(menuItem, element, false);
+    }
+
+    private void showSubMenu(final MenuItem menuItem, final Element element, final boolean byClick) {
         if (!Objects.equals(currentItem, menuItem)) {
+            subMenuOpenedByClick = byClick;
             if (currentItem != null) {
                 // We are changing the highlighted item so close the current popup
                 // if it is open.
@@ -106,10 +129,19 @@ public class MenuPresenter
                                 .popupPosition(popupPosition)
                                 .addAutoHidePartner(element)
                                 .onHideRequest(e -> {
-                                    presenter.hideChildren(e.isAutoClose(), e.isOk());
-                                    presenter.hideSelf(e.isAutoClose(), e.isOk());
-                                    currentMenu = null;
-                                    currentItem = null;
+                                    if (!e.isAutoClose() && !e.isOk()) {
+                                        // Escape, which the sub menu's popup takes as its close
+                                        // action: close the whole menu, as Escape in the root
+                                        // menu does
+                                        currentMenu = null;
+                                        currentItem = null;
+                                        presenter.escape();
+                                    } else {
+                                        presenter.hideChildren(e.isAutoClose(), e.isOk());
+                                        presenter.hideSelf(e.isAutoClose(), e.isOk());
+                                        currentMenu = null;
+                                        currentItem = null;
+                                    }
                                 })
                                 .fire();
                     }

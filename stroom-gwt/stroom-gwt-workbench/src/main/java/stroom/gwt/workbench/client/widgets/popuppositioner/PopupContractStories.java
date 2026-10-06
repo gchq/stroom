@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.widgets.popuppositioner;
 
 import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -88,39 +89,20 @@ public final class PopupContractStories {
                 .opener("button.help-button")
                 // React: the button and the icon inside it
                 .partners("button.help-button", "button.help-button svg")
-                // Differs from React: HelpManager's popup has no auto-hide partners, so a
-                // mousedown on the button hides it and the click then shows a new one
-                .partnersExempt(false)
-                .triggerToggles(false)
                 .panel(HELP_PANEL)
                 .insideTarget(HELP_PANEL + " h4")
-                // Differs from React: HelpManager's popup ignores Escape (its close action does
-                // nothing)
-                .escapeCloses(false)
                 .placement("button.help-button", PopupLocation.RIGHT, 0,
                         "ShowHelpEvent — new PopupPosition(new Rect(element), PopupLocation.RIGHT)"));
         cases.add(PopupCase.of("QuickFilter help", PopupHarnesses::quickFilter)
                 .opener(".quickFilter button.help-button")
                 .partners(".quickFilter button.help-button", ".quickFilter button.help-button svg")
-                // Differs from React: QuickFilter's help popup has no auto-hide partners
-                .partnersExempt(false)
                 .panel(QUICK_FILTER_PANEL)
-                .insideTarget(QUICK_FILTER_PANEL)
-                // Differs from React: QuickFilter's help popup is a plain PopupPanel, which
-                // ignores Escape
-                .escapeCloses(false)
-                // Differs from React: QuickFilter keeps its help popup after it auto-hides, so the
-                // next click on the button only forgets it and a second click shows a new one
-                .reopenAfterAutoHide(true));
+                .insideTarget(QUICK_FILTER_PANEL));
         cases.add(PopupCase.of("FormGroup help", PopupHarnesses::formGroup)
                 .opener("button.form-group-help")
                 .partners("button.form-group-help", "button.form-group-help svg")
-                // Differs from React: as HelpButton, which FormGroup's help is
-                .partnersExempt(false)
-                .triggerToggles(false)
                 .panel(HELP_PANEL)
                 .insideTarget(HELP_PANEL)
-                .escapeCloses(false)
                 .placement("button.form-group-help", PopupLocation.RIGHT, 0,
                         "the same ShowHelpEvent default — FormGroup's help is a HelpButton"));
         cases.add(PopupCase.of("TypeFilter", PopupHarnesses::typeFilter)
@@ -319,10 +301,8 @@ public final class PopupContractStories {
                     play.waitFor(() -> play.expect("help should open", () -> PopupDom.isOpen(QUICK_FILTER_PANEL))
                             .toBe(true));
                     play.keyboard("{Escape}");
-                    // Differs from React: QuickFilter's help popup is a plain PopupPanel that
-                    // ignores Escape (see cases()), so it stays open
-                    play.sleep(30);
-                    play.expect("help ignores Escape", () -> PopupDom.isOpen(QUICK_FILTER_PANEL)).toBe(true);
+                    play.waitFor(() -> play.expect("help should close", () -> PopupDom.isOpen(QUICK_FILTER_PANEL))
+                            .toBe(false));
                     play.expect("the field list must survive closing its help",
                             () -> PopupDom.isOpen(sel.getPanel())).toBe(true);
                     closeAll(play);
@@ -403,17 +383,15 @@ public final class PopupContractStories {
                 .story("ClosingAMenuClosesItsDescendants", PopupContractStories::render)
                 .withPlay(play -> {
                     openNestedSubmenus(play);
-                    // Click the root's parent row, which toggles its submenu shut
-                    play.click(play.screen().querySelectorAll(MENU_PANEL + " " + MENU_ITEM).nth(1));
-                    // Differs from React: clicking a parent row whose submenu is open doesn't
-                    // close that submenu in Stroom (MenuPresenter.showSubMenu ignores the current
-                    // item); the mousedown only auto-hides the innermost menu, whose auto-hide
-                    // partner is a row of the submenu, not of the root. Stroom closes an
-                    // intermediate level, with what it opened, when another row of its parent is
-                    // highlighted, so the cascade is checked by hovering the root's other row.
-                    play.sleep(60);
-                    play.expect(PopupContractStories::visibleMenus).toBe(2);
-                    play.hover(play.screen().querySelectorAll(MENU_PANEL + " " + MENU_ITEM).nth(0));
+                    // Click the root's parent row, which toggles its submenu shut.
+                    // Differs from React: the submenu was opened by the keyboard, and Stroom only
+                    // toggles shut a submenu that a click opened, so that a click meant to open a
+                    // submenu that hovering has only just opened doesn't close it. The first click
+                    // (whose mousedown auto-hides the innermost level) claims it; the second closes it
+                    final Query parentRow = play.screen().querySelectorAll(MENU_PANEL + " " + MENU_ITEM).nth(1);
+                    play.click(parentRow);
+                    play.waitFor(() -> play.expect(PopupContractStories::visibleMenus).toBe(2));
+                    play.click(parentRow);
                     play.waitFor(() -> play.expect(
                             "closing a submenu must close the submenu it had open, leaving only the root",
                             PopupContractStories::visibleMenus).toBe(1));
@@ -424,13 +402,10 @@ public final class PopupContractStories {
                 .withPlay(play -> {
                     openNestedSubmenus(play);
                     play.keyboard("{Escape}");
-                    // Differs from React: the innermost menu's popup takes Escape as its close
-                    // action (AbstractPopupPanel) and cancels it, so MenuViewImpl.escape() →
-                    // MenuPresenter.hideAll() is never reached: only the innermost level closes
-                    play.waitFor(() -> play.expect("Escape closes the innermost level",
-                            PopupContractStories::visibleMenus).toBe(2));
-                    play.sleep(60);
-                    play.expect(PopupContractStories::visibleMenus).toBe(2);
+                    // The innermost menu's popup takes Escape as its close action, and closes the
+                    // whole menu (it once closed only its own level)
+                    play.waitFor(() -> play.expect("Escape closes every level",
+                            PopupContractStories::visibleMenus).toBe(0));
                     closeAll(play);
                 })
                 .story("ArrowLeftClosesOnlyTheCurrentLevel", PopupContractStories::render)
@@ -457,10 +432,28 @@ public final class PopupContractStories {
                 .story("ParentItemClickTogglesItsSubmenu", PopupContractStories::render)
                 .withPlay(play -> {
                     openSubmenu(play);
-                    // Clicking the open parent row closes just its submenu; the parent menu stays up
-                    play.click(play.screen().querySelectorAll(MENU_PANEL + " " + MENU_ITEM).nth(1));
-                    // Differs from React: Stroom ignores a click on the parent row of the open
-                    // submenu (MenuPresenter.showSubMenu), so the submenu stays open
+                    final Query parentRow = play.screen().querySelectorAll(MENU_PANEL + " " + MENU_ITEM).nth(1);
+                    // Differs from React: the submenu was opened by the keyboard, and Stroom only
+                    // toggles shut a submenu that a click opened (see ClosingAMenuClosesItsDescendants),
+                    // so the first click on its parent row leaves it open
+                    play.click(parentRow);
+                    play.sleep(60);
+                    play.expect(PopupContractStories::visibleMenus).toBe(2);
+                    // Clicking the open parent row again closes just its submenu; the parent menu
+                    // stays up
+                    play.click(parentRow);
+                    play.waitFor(() -> play.expect(PopupContractStories::visibleMenus).toBe(1));
+                    // ... clicking it again opens it again, and a click then closes that
+                    play.click(parentRow);
+                    play.waitFor(() -> play.expect(PopupContractStories::visibleMenus).toBe(2));
+                    play.click(parentRow);
+                    play.waitFor(() -> play.expect(PopupContractStories::visibleMenus).toBe(1));
+                    // A submenu that hovering opened isn't closed by a click on its parent row (the
+                    // click was likely meant to open it)
+                    play.hover(play.screen().querySelectorAll(MENU_PANEL + " " + MENU_ITEM).nth(0));
+                    play.hover(parentRow);
+                    play.waitFor(() -> play.expect(PopupContractStories::visibleMenus).toBe(2));
+                    play.click(parentRow);
                     play.sleep(60);
                     play.expect(PopupContractStories::visibleMenus).toBe(2);
                     closeAll(play);
@@ -511,15 +504,6 @@ public final class PopupContractStories {
 
     private static void openPopup(final Play play, final PopupCase c) {
         play.click(play.querySelector(c.getOpener()));
-        if (c.isReopenAfterAutoHide()) {
-            // Workaround: QuickFilter forgets an auto-hidden help popup on the next click
-            // (see cases()), so click again if that click only did that
-            play.run(c.getName() + ": click again if the click only reset the widget", () -> {
-                if (!PopupDom.isOpen(c.getPanel())) {
-                    PopupDom.press(c.getOpener());
-                }
-            });
-        }
         play.waitFor(() -> play.expect(c.getName() + ": should be open", () -> PopupDom.isOpen(c.getPanel()))
                 .toBe(true));
     }

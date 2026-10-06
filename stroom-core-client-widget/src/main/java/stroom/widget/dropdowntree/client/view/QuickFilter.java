@@ -19,6 +19,8 @@ package stroom.widget.dropdowntree.client.view;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.HtmlBuilder;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -30,6 +32,8 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.FocusUtil;
@@ -109,6 +113,16 @@ public class QuickFilter extends FlowPanel
 
             final HelpPopup popup = new HelpPopup(popupText);
             popup.setStyleName("quickFilter-tooltip");
+            // A mousedown on the help button mustn't auto-hide the popup, so that its click can
+            // toggle it shut
+            popup.addAutoHidePartner(helpButton.getElement());
+            // Forget the popup however it is hidden (e.g. auto-hidden by a click elsewhere, or by
+            // Escape), so that the next click on the help button shows it again
+            popup.addCloseHandler(event -> {
+                if (helpPopup == popup) {
+                    helpPopup = null;
+                }
+            });
             popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
                 // Position it below the filter
@@ -232,6 +246,17 @@ public class QuickFilter extends FlowPanel
 //            setWidget(new Label(popupTextSupplier.get(), true));
             setWidget(new HTMLPanel(content));
 //            setWidget(new HTMLPanel(SafeHtmlUtils.fromTrustedString("<b>hello</b>")));
+        }
+
+        @Override
+        protected void onPreviewNativeEvent(final NativePreviewEvent event) {
+            super.onPreviewNativeEvent(event);
+            // Escape closes it, as it does Stroom's other popups
+            if (event.getTypeInt() == Event.ONKEYDOWN
+                && KeyBinding.test(event.getNativeEvent()) == Action.CLOSE) {
+                event.cancel();
+                hide();
+            }
         }
     }
 }
