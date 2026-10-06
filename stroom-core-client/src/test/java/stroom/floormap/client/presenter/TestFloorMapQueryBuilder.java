@@ -53,6 +53,18 @@ class TestFloorMapQueryBuilder {
     }
 
     @Test
+    void testBuildFactsQuery_selectsTheStatusColumnLikeAnyOtherRole() {
+        // The Map tab reads status from this column, so a mapped status must be selected - and
+        // under a custom path, from that path.
+        final String query = FloorMapQueryBuilder.buildFactsQuery(
+                List.of(new FloorMapFieldMapping(".type", Role.TYPE, "Type", null),
+                        new FloorMapFieldMapping(".lifecycle", Role.STATUS, "Status", null)),
+                ValueFormat.JSON);
+
+        assertThat(query).contains("jq(Value, \".lifecycle\") as \"lifecycle\"");
+    }
+
+    @Test
     void testBuildFactsQuery_selectsTheRawMillisecondColumn() {
         // The alias is the contract between this builder and FloorMapFactHistory, which is in
         // another module and matches the column back by name. Asserted against the constant

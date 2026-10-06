@@ -93,6 +93,9 @@ public class FloorMapFieldMapping {
         FILL,
         /// Area fill opacity (number in `[0, 1]`).
         OPACITY,
+        /// The fact's lifecycle state (see [FloorMapFactStatus]). A version whose status is
+        /// `DELETED` hides the fact from its effective time onwards; absent means active.
+        STATUS,
         /// Extra user-defined field.
         CUSTOM
     }
@@ -177,6 +180,7 @@ public class FloorMapFieldMapping {
     /// | `.geometry` | [Role#GEOMETRY] | Geometry | `null` |
     /// | `.fill` | [Role#FILL] | Fill | `null` |
     /// | `.opacity` | [Role#OPACITY] | Opacity | `null` |
+    /// | `.status` | [Role#STATUS] | Status | `null` |
     ///
     /// The returned list is created via [List#of(Object...)] and is
     /// therefore *unmodifiable*; any attempt to mutate it will throw
@@ -192,7 +196,8 @@ public class FloorMapFieldMapping {
                 new FloorMapFieldMapping(".tm-world-to-map", Role.WORLD_TO_MAP, null, null),
                 new FloorMapFieldMapping(".geometry", Role.GEOMETRY, "Geometry", null),
                 new FloorMapFieldMapping(".fill", Role.FILL, "Fill", null),
-                new FloorMapFieldMapping(".opacity", Role.OPACITY, "Opacity", null)
+                new FloorMapFieldMapping(".opacity", Role.OPACITY, "Opacity", null),
+                new FloorMapFieldMapping(".status", Role.STATUS, "Status", null)
         );
     }
 

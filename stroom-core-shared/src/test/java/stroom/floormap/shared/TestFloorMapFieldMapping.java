@@ -208,6 +208,21 @@ class TestFloorMapFieldMapping {
         assertThat(schema.stream()
                 .anyMatch(m -> m.getRole() == Role.OPACITY))
                 .isTrue();
+        // ...and deleting a fact from a point in time.
+        assertThat(FloorMapFieldMapping.findPath(schema, Role.STATUS)).isEqualTo(".status");
+    }
+
+    /// A STATUS mapping survives serialisation like any other role.
+    @Test
+    void testJsonRoundTrip_statusMapping() {
+        final FloorMapFieldMapping original =
+                new FloorMapFieldMapping(".lifecycle", Role.STATUS, "Status", null);
+
+        final FloorMapFieldMapping restored = JsonUtil.readValue(
+                JsonUtil.writeValueAsString(original), FloorMapFieldMapping.class);
+
+        assertThat(restored.getRole()).isEqualTo(Role.STATUS);
+        assertThat(restored.getPath()).isEqualTo(".lifecycle");
     }
 
     /// All three default area mappings are appended to a pre-area schema.

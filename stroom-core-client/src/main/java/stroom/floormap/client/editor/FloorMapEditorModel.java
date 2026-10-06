@@ -20,6 +20,7 @@ import stroom.floormap.client.model.Fact;
 import stroom.floormap.client.value.FloorMapEntryParser;
 import stroom.floormap.client.value.ParsedValue;
 import stroom.floormap.client.value.ValueAccessor;
+import stroom.floormap.shared.FloorMapFactStatus;
 import stroom.floormap.shared.FloorMapFieldMapping;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.FloorMapGeometry;
@@ -604,6 +605,225 @@ public class FloorMapEditorModel {
         return staged;
     }
 
+    // -----------------------------------------------------------------------
+    // Fact status
+    // -----------------------------------------------------------------------
+
+    /// Stages a version of each fact at [#selectedTime] whose status is
+    /// [FloorMapFactStatus#DELETED], so the fact is hidden from that time onwards and still
+    /// shown before it. Unlike [#stageFactDeletionForAllShards] nothing is erased: undoing it is
+    /// a matter of deleting the staged version.
+    ///
+    /// The new version is a copy of the one active at the selected time with only its status
+    /// changed, so the history still records where the fact was and what it looked like when it
+    /// ended.
+    ///
+    /// Only a key whose [#checkFactEnd] is [FactEndCheck#OK] is staged; every other key is
+    /// left untouched and its reason returned, so the caller can say why. In particular a version
+    /// already at the selected time is never overwritten: it would be lost, and deleting the
+    /// staged version - the documented undo - would then erase or regress the fact instead of
+    /// restoring it. Each staged key leaves the selection, as for an erase, because a hidden fact
+    /// cannot be shown as selected.
+    ///
+    /// @param keys     the fact keys to end
+    /// @param schema   the value schema; must map [Role#STATUS]
+    /// @param accessor the value accessor
+    /// @return the outcome per key, in the order given; [FactEndCheck#OK] means it was staged
+    /// @throws IllegalStateException if the schema does not map [Role#STATUS], or the
+    ///         timeline position is unset
+    public Map<String, FactEndCheck> stageFactEnd(final Collection<String> keys,
+                                                  final List<FloorMapFieldMapping> schema,
+                                                  final ValueAccessor accessor) {
+        FloorMapFieldMapping.requirePath(schema, Role.STATUS);
+        if (selectedTime <= 0) {
+            throw new IllegalStateException(
+                    "Set a time on the timeline before deleting from it.");
+        }
+        final Map<String, FactEndCheck> outcomes = new LinkedHashMap<>();
+        if (keys == null) {
+            return outcomes;
+        }
+        for (final String key : keys) {
+            final FactEndCheck check = checkFactEnd(key, schema, accessor);
+            outcomes.put(key, check);
+            if (check == FactEndCheck.OK) {
+                final TemporalEntry active = activeMergedEntryForKey(key);
+                final TemporalEntry atSelectedTime = new TemporalEntry(
+                        active.getMap(), key, selectedTime, active.getValue());
+                pendingChanges.recordUpdate(withStatus(
+                        atSelectedTime, FloorMapFactStatus.DELETED, schema, accessor));
+                selectedFactKeys.remove(key);
+            }
+        }
+        return outcomes;
+    }
+
+    /// Whether `key` can be ended at [#selectedTime] by [#stageFactEnd], and if not, why.
+    ///
+    /// Stages nothing, so the caller can ask before confirming with the user rather than
+    /// confirming and then doing nothing.
+    ///
+    /// @param key      the fact key; may be `null`
+    /// @param schema   the value schema
+    /// @param accessor the value accessor
+    /// @return [FactEndCheck#OK] if the fact can be ended, otherwise the reason it cannot
+    public FactEndCheck checkFactEnd(final String key,
+                                     final List<FloorMapFieldMapping> schema,
+                                     final ValueAccessor accessor) {
+        final TemporalEntry active = key != null
+                ? activeMergedEntryForKey(key)
+                : null;
+        if (active == null) {
+            return FactEndCheck.NOT_PRESENT;
+        }
+        if (!canParse(active, accessor)) {
+            // isHidden reports an unreadable value as visible, matching the parsers, so this
+            // has to be checked first: withStatus cannot write a status into it.
+            return FactEndCheck.UNREADABLE;
+        }
+        if (isHidden(active, schema, accessor)) {
+            return FactEndCheck.ALREADY_DELETED;
+        }
+        if (active.getEffectiveTimeMs() != null
+            && active.getEffectiveTimeMs() == selectedTime) {
+            return FactEndCheck.VERSION_AT_TIME;
+        }
+        return FactEndCheck.OK;
+    }
+
+    /// Counts, for each of `keys`, the versions after [#selectedTime] - the versions that
+    /// would bring a fact back after [#stageFactEnd] ends it.
+    ///
+    /// Pending changes are applied first, so an unsaved later version counts and one staged for
+    /// deletion does not.
+    ///
+    /// @param keys           the fact keys to count for
+    /// @param serverVersions every stored version of those keys; may be `null`
+    /// @return the count for each key that has any later versions, in the order of `keys`;
+    ///         keys with none are absent
+    public Map<String, Integer> laterVersionCounts(final Collection<String> keys,
+                                                   final List<TemporalEntry> serverVersions) {
+        final Map<String, Integer> counts = new LinkedHashMap<>();
+        if (keys == null) {
+            return counts;
+        }
+        final List<TemporalEntry> merged = pendingChanges.applyTo(serverVersions);
+        for (final String key : keys) {
+            int count = 0;
+            for (final TemporalEntry e : merged) {
+                if (key != null
+                    && key.equals(e.getKey())
+                    && e.getEffectiveTimeMs() != null
+                    && e.getEffectiveTimeMs() > selectedTime) {
+                    count++;
+                }
+            }
+            if (count > 0) {
+                counts.put(key, count);
+            }
+        }
+        return counts;
+    }
+
+    private static boolean canParse(final TemporalEntry entry, final ValueAccessor accessor) {
+        if (entry.getValue() == null) {
+            return false;
+        }
+        try {
+            return accessor.parse(entry.getValue()) != null;
+        } catch (final RuntimeException e) {
+            return false;
+        }
+    }
+
+    /// Whether `entry`'s status hides its fact (see [FloorMapFactStatus]).
+    ///
+    /// `false` when the schema maps no [Role#STATUS], when the value cannot be parsed, or
+    /// when the status is not one we recognise - in each case the parser draws the fact, and
+    /// the lists must agree with the canvas.
+    ///
+    /// @param entry    the entry to test; may be `null`
+    /// @param schema   the value schema
+    /// @param accessor the value accessor
+    /// @return `true` if the fact is hidden while this entry is its current version
+    public static boolean isHidden(final TemporalEntry entry,
+                                   final List<FloorMapFieldMapping> schema,
+                                   final ValueAccessor accessor) {
+        final String statusPath = FloorMapFieldMapping.findPath(schema, Role.STATUS);
+        if (entry == null || statusPath == null || entry.getValue() == null) {
+            return false;
+        }
+        try {
+            final ParsedValue parsed = accessor.parse(entry.getValue());
+            if (parsed == null) {
+                return false;
+            }
+            final FloorMapFactStatus status = FloorMapFactStatus.fromValue(
+                    accessor.getString(parsed, statusPath));
+            return status != null && status.isHidden();
+        } catch (final RuntimeException e) {
+            return false;
+        }
+    }
+
+    /// Returns a copy of `entry` with its status set to `status`, all other fields
+    /// unchanged.
+    ///
+    /// Used both to end a fact and to bring one back: a version cloned from a deleted one is
+    /// otherwise deleted too, since cloning copies the whole value.
+    ///
+    /// @param entry    the entry to copy
+    /// @param status   the status to write
+    /// @param schema   the value schema; must map [Role#STATUS]
+    /// @param accessor the value accessor
+    /// @return the new entry; never `null`
+    /// @throws IllegalStateException if the schema does not map [Role#STATUS] or the
+    ///         entry's value cannot be parsed
+    public static TemporalEntry withStatus(final TemporalEntry entry,
+                                           final FloorMapFactStatus status,
+                                           final List<FloorMapFieldMapping> schema,
+                                           final ValueAccessor accessor) {
+        final String statusPath = FloorMapFieldMapping.requirePath(schema, Role.STATUS);
+        final ParsedValue parsed = accessor.parse(entry.getValue());
+        if (parsed == null) {
+            throw new IllegalStateException(
+                    "Entry value could not be parsed: " + entry.getValue());
+        }
+        accessor.setString(parsed, statusPath, status.name());
+        return new TemporalEntry(
+                entry.getMap(),
+                entry.getKey(),
+                entry.getEffectiveTimeMs(),
+                accessor.serialize(parsed));
+    }
+
+    /// Reduces `entries` to the latest per key, for the Fact List.
+    ///
+    /// With `atSelectedTime` only versions at or before [#selectedTime] count,
+    /// matching the canvas; without it the latest overall is kept, for "show all".
+    ///
+    /// @param entries        the merged entries; may be `null`
+    /// @param atSelectedTime whether to ignore versions after the selected time
+    /// @return one entry per key in first-seen key order; never `null`
+    public List<TemporalEntry> latestEntryPerKey(final List<TemporalEntry> entries,
+                                                 final boolean atSelectedTime) {
+        if (entries == null) {
+            return new ArrayList<>();
+        }
+        if (atSelectedTime) {
+            return activeEntriesAtSelectedTime(entries);
+        }
+        final Map<String, TemporalEntry> byKey = new LinkedHashMap<>();
+        for (final TemporalEntry e : entries) {
+            final TemporalEntry existing = byKey.get(e.getKey());
+            if (existing == null
+                    || e.getEffectiveTimeMs() >= existing.getEffectiveTimeMs()) {
+                byKey.put(e.getKey(), e);
+            }
+        }
+        return new ArrayList<>(byKey.values());
+    }
+
     /// Stages the deletion of a single time entry and returns the rebuilt time
     /// list with a suggested selection index (the entry above the deleted one).
     ///
@@ -974,5 +1194,44 @@ public class FloorMapEditorModel {
                 original.getKey(),
                 original.getEffectiveTimeMs(),
                 accessor.serialize(parsed));
+    }
+
+    // -----------------------------------------------------------------------
+    // Inner types
+    // -----------------------------------------------------------------------
+
+    /// Whether a fact can be deleted from the selected time, and if not, why - see
+    /// [#checkFactEnd].
+    public enum FactEndCheck {
+
+        /// The fact can be ended (or, from [#stageFactEnd], has been).
+        OK("can be deleted"),
+
+        /// The fact has no version at or before the selected time.
+        NOT_PRESENT("does not exist at this time"),
+
+        /// The fact's version at the selected time already deletes it.
+        ALREADY_DELETED("is already deleted at this time"),
+
+        /// The fact already has a version at exactly the selected time, which ending it would
+        /// overwrite and lose.
+        VERSION_AT_TIME("already has a version at this time - move the timeline to a "
+                        + "different time, or edit that version"),
+
+        /// The fact's value cannot be read, so no status can be written into it.
+        UNREADABLE("has a value that cannot be read");
+
+        private final String reason;
+
+        FactEndCheck(final String reason) {
+            this.reason = reason;
+        }
+
+        /// A phrase completing "'key' ...", for messages to the user.
+        ///
+        /// @return the reason text
+        public String getReason() {
+            return reason;
+        }
     }
 }

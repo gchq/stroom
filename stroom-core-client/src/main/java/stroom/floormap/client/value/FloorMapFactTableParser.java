@@ -17,6 +17,7 @@
 package stroom.floormap.client.value;
 
 import stroom.floormap.client.model.Fact;
+import stroom.floormap.shared.FloorMapFactStatus;
 import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.floormap.shared.FloorMapTransformationMatrix;
 import stroom.query.api.Column;
@@ -77,6 +78,11 @@ public final class FloorMapFactTableParser {
     /// single current instance per object rather than every time version at once. Distinct
     /// keys (several backgrounds, say) are all preserved, in first-seen order.
     ///
+    /// A row whose [Role#STATUS] hides it (see [FloorMapFactStatus]) ends its key: the fact
+    /// is dropped, and only a later row for the same key brings it back. This is the one funnel
+    /// for the Map tab's facts, so the canvas, the tracking roster, location references and area
+    /// membership all agree that a deleted fact is gone.
+    ///
     /// @param columns     the result columns; `null` yields an empty list
     /// @param rows        the result rows; `null` yields an empty list
     /// @param aliasByRole the column alias expected for each schema role, as produced by the
@@ -102,6 +108,7 @@ public final class FloorMapFactTableParser {
         int geometryIdx = -1;
         int fillIdx = -1;
         int opacityIdx = -1;
+        int statusIdx = -1;
 
         // Aliases are resolved once, before the loop: each lookup is a linear scan of the
         // schema and none of them varies by column, so resolving per column made this
@@ -114,6 +121,7 @@ public final class FloorMapFactTableParser {
         final String fillAlias = alias(aliasByRole, Role.FILL);
         final String opacityAlias = alias(aliasByRole, Role.OPACITY);
         final String labelAlias = alias(aliasByRole, Role.LABEL);
+        final String statusAlias = alias(aliasByRole, Role.STATUS);
 
         for (int i = 0; i < columns.size(); i++) {
             final String colName = columns.get(i).getName();
@@ -140,6 +148,8 @@ public final class FloorMapFactTableParser {
                 fillIdx = i;
             } else if (colName.equalsIgnoreCase(opacityAlias)) {
                 opacityIdx = i;
+            } else if (colName.equalsIgnoreCase(statusAlias)) {
+                statusIdx = i;
             }
         }
 
@@ -151,6 +161,13 @@ public final class FloorMapFactTableParser {
                     continue;
                 }
                 final String key = valueAt(values, keyIdx);
+                if (isHidden(valueAt(values, statusIdx), warnings)) {
+                    // Removed rather than skipped: when the rows are every version rather than a
+                    // snapshot, an earlier version of this key may already be held, and the
+                    // deleted version has to end it just as a later version would replace it.
+                    factsByKey.remove(key);
+                    continue;
+                }
                 // Fact turns a missing type into "", so none is substituted here.
                 final String type = valueAt(values, typeIdx);
                 final String img = valueAt(values, imgIdx);
@@ -178,6 +195,23 @@ public final class FloorMapFactTableParser {
             }
         }
         return new ArrayList<>(factsByKey.values());
+    }
+
+    /// Whether a row's status hides its fact; see [FloorMapFactStatus].
+    ///
+    /// An unrecognised status is reported and the fact kept, rather than hidden on the strength
+    /// of a value we do not understand.
+    ///
+    /// @param str      the status cell; `null` or blank means active
+    /// @param warnings receives a message for an unrecognised status; may be `null`
+    /// @return `true` if the fact should be left off the map
+    static boolean isHidden(final String str, final Consumer<String> warnings) {
+        final FloorMapFactStatus status = FloorMapFactStatus.fromValue(str);
+        if (status == null) {
+            NullSafe.consume("Unknown fact status, treating as active: " + str, warnings);
+            return false;
+        }
+        return status.isHidden();
     }
 
     /// Parses `"[x, y]"` into `{x, y}`.

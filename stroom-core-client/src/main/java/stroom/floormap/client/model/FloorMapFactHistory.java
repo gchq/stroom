@@ -175,6 +175,10 @@ public final class FloorMapFactHistory {
     /// Ties on effective time keep the later row, matching
     /// [FloorMapFactTableParser]'s last-row-wins.
     ///
+    /// **Status is deliberately not considered here.** A deleted version is returned like any
+    /// other, and [FloorMapFactTableParser] drops it. Filtering it out before picking the latest
+    /// would let the version before it win, bringing the fact back instead of ending it.
+    ///
     /// **Cost, stated rather than optimised.** This is a linear scan of the whole history on
     /// every call, so at the expected volume — keys plus about two rows a week — a playback tick
     /// visits a few hundred rows, which is nothing against the server round trip it replaces. At the

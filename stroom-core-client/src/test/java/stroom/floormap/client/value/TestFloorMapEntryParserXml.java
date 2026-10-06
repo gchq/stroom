@@ -557,6 +557,26 @@ class TestFloorMapEntryParserXml {
     }
 
     // -----------------------------------------------------------------------
+    // parse — status
+    // -----------------------------------------------------------------------
+
+    /// A deleted XML version yields no fact, so status works for both value formats.
+    @Test
+    void testParse_deletedStatusYieldsNoFact() {
+        final List<FloorMapFieldMapping> schema = new ArrayList<>(SCHEMA);
+        schema.add(new FloorMapFieldMapping("/entry/status", Role.STATUS, "Status", null));
+
+        final List<Fact> facts = FloorMapEntryParser.parse(
+                List.of(entry("gate-1", 100,
+                                "<entry><type>gate</type><status>DELETED</status></entry>"),
+                        entry("gate-2", 100, "<entry><type>gate</type></entry>")),
+                schema, ACCESSOR, warnings::add);
+
+        assertThat(facts).extracting(Fact::getKey).containsExactly("gate-2");
+        assertThat(warnings).isEmpty();
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
 

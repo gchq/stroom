@@ -16,6 +16,8 @@
 
 package stroom.floormap.client.model;
 
+import stroom.floormap.client.value.FloorMapFactTableParser;
+import stroom.floormap.shared.FloorMapFieldMapping.Role;
 import stroom.query.api.Column;
 import stroom.query.api.Row;
 
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -331,7 +334,70 @@ class TestFloorMapFactHistory {
         assertThat(history.rowCount()).isEqualTo(1);
     }
 
+    // ---- deletion over time ----
+    //
+    // The snapshot is status-unaware by design and the parser drops deleted facts, so these test
+    // the two together: that is the path the Map tab takes.
+
+    @Test
+    void factDeletedAtTIsShownBeforeTAndHiddenFromT() {
+        final FloorMapFactHistory history = withStatus(
+                statusRow("desk-1", 100, ""),
+                statusRow("desk-1", 500, "DELETED"));
+
+        assertThat(factKeysAt(history, 499)).containsExactly("desk-1");
+        assertThat(factKeysAt(history, 500)).isEmpty();
+        assertThat(factKeysAt(history, 10_000)).isEmpty();
+    }
+
+    @Test
+    void factRecreatedAfterDeletionIsShownAgain() {
+        final FloorMapFactHistory history = withStatus(
+                statusRow("desk-1", 100, ""),
+                statusRow("desk-1", 500, "DELETED"),
+                statusRow("desk-1", 900, "ACTIVE"));
+
+        assertThat(factKeysAt(history, 700)).isEmpty();
+        assertThat(factKeysAt(history, 900)).containsExactly("desk-1");
+    }
+
+    @Test
+    void deletingOneFactLeavesOthers() {
+        final FloorMapFactHistory history = withStatus(
+                statusRow("desk-1", 100, ""),
+                statusRow("desk-2", 100, ""),
+                statusRow("desk-1", 500, "DELETED"));
+
+        assertThat(factKeysAt(history, 600)).containsExactly("desk-2");
+    }
+
     // ---- helpers ----
+
+    private static FloorMapFactHistory withStatus(final Row... rows) {
+        final FloorMapFactHistory history = new FloorMapFactHistory();
+        history.setHistory(statusColumns(), Arrays.asList(rows), false);
+        return history;
+    }
+
+    private static List<Column> statusColumns() {
+        return List.of(column("Key"), column(MS), column("status"));
+    }
+
+    private static Row statusRow(final String key, final long ms, final String status) {
+        return Row.builder().values(Arrays.asList(key, String.valueOf(ms), status)).build();
+    }
+
+    private static List<String> factKeysAt(final FloorMapFactHistory history, final long t) {
+        final List<String> keys = new ArrayList<>();
+        for (final Fact fact : FloorMapFactTableParser.parse(
+                history.columns(),
+                history.snapshotAt(t),
+                Map.of(Role.STATUS, "status"),
+                null)) {
+            keys.add(fact.getKey());
+        }
+        return keys;
+    }
 
     private static FloorMapFactHistory loaded(final Row... rows) {
         final FloorMapFactHistory history = new FloorMapFactHistory();
