@@ -102,8 +102,6 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
     private void produceIndexFile(final List<AnnotatedClass<XsltFunctionDef>> annotatedClasses) {
         final Map<XsltFunctionCategory, List<AnnotatedClass<XsltFunctionDef>>> groups = annotatedClasses.stream()
-                .sorted(Comparator.comparing(annotatedClass ->
-                        annotatedClass.clazz().getName()))
                 .collect(Collectors.groupingBy(annotatedClass -> {
                     final XsltFunctionCategory[] categories = annotatedClass.annotation().commonCategory();
                     Objects.requireNonNull(categories, () -> LogUtil.message(
@@ -114,19 +112,25 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
         final Map<XsltFunctionCategory, XsltFunctionCategoryIndex> map = new HashMap<>();
         final AtomicInteger errorCounter = new AtomicInteger();
-        groups.forEach((category, classesGroup) -> {
-            final String docFilename = category.name()
-                                               .toLowerCase()
-                                               .replace("[^a-zA-Z0-9-]", "-") + ".md";
-            final XsltFunctionCategoryIndex index = map.computeIfAbsent(category,
-                    k -> new XsltFunctionCategoryIndex(null, k, docFilename));
-            classesGroup.forEach(annotatedClass -> {
-                final String functionName = annotatedClass.annotation().name();
-                index.addFunction(functionName);
-            });
-            final int errorCount = checkDocPage(index);
-            errorCounter.addAndGet(errorCount);
-        });
+        groups.entrySet()
+                .stream()
+                .sorted(Comparator.comparing(entry ->
+                        entry.getKey().name()))
+                .forEach(entry -> {
+                    final XsltFunctionCategory category = entry.getKey();
+                    final List<AnnotatedClass<XsltFunctionDef>> classesGroup = entry.getValue();
+                    final String docFilename = category.name()
+                                                       .toLowerCase()
+                                                       .replace("[^a-zA-Z0-9-]", "-") + ".md";
+                    final XsltFunctionCategoryIndex index = map.computeIfAbsent(category,
+                            k -> new XsltFunctionCategoryIndex(null, k, docFilename));
+                    classesGroup.forEach(annotatedClass -> {
+                        final String functionName = annotatedClass.annotation().name();
+                        index.addFunction(functionName);
+                    });
+                    final int errorCount = checkDocPage(index);
+                    errorCounter.addAndGet(errorCount);
+                });
 
         try {
             final String json = JsonUtil.getMapper().writeValueAsString(map);
@@ -147,7 +151,6 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         try {
             // Check the _index.md file contains a link for each func with the appropriate category
             final Path indexDocFilePath = buildDocsFilePath(INDEX_DOC_FILENAME);
-            LOGGER.info("Checking docs page {}", indexDocFilePath.toAbsolutePath());
             if (!Files.isRegularFile(indexDocFilePath)) {
                 throw new RuntimeException(LogUtil.message("File {} does not exist",
                         indexDocFilePath.toAbsolutePath()));
@@ -181,6 +184,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
             // Check the appropriate category file (e.g. conversion.md) contains a shortcode
             // for each of the funcs in that category.
             final Path categoryDocFilePath = buildDocsFilePath(index.getDocFilename());
+            LOGGER.info("Checking category {} in page {}", index.category, indexDocFilePath.toAbsolutePath());
             if (!Files.isRegularFile(categoryDocFilePath)) {
                 throw new RuntimeException(LogUtil.message("File {} does not exist",
                         indexDocFilePath.toAbsolutePath()));

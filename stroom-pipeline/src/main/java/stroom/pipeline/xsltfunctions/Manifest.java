@@ -45,10 +45,10 @@ import java.util.Set;
         commonReturnDescription = "An XML document containing the stream's manifest attributes.",
         signatures = {
                 @XsltFunctionSignature(
-                        description = "`manifest()` reads the manifest of the current stream.",
+                        description = "Reads the manifest of the current stream.",
                         args = {}),
                 @XsltFunctionSignature(
-                        description = "`manifest-for-id()` reads the manifest of the specified stream.",
+                        description = "Reads the manifest of the specified stream.",
                         args = {
                                 @XsltFunctionArg(
                                         name = "streamId",

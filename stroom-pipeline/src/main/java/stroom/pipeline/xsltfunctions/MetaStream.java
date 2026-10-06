@@ -45,10 +45,10 @@ import java.util.Set;
         commonReturnDescription = "An XML document containing the stream part's metadata.",
         signatures = {
                 @XsltFunctionSignature(
-                        description = "`meta-stream()` reads the current stream part's metadata.",
+                        description = "Reads the current stream part's metadata.",
                         args = {}),
                 @XsltFunctionSignature(
-                        description = "`meta-stream-for-id()` reads the specified stream part's metadata.",
+                        description = "Reads the specified stream part's metadata.",
                         args = {
                                 @XsltFunctionArg(
                                         name = "streamId",

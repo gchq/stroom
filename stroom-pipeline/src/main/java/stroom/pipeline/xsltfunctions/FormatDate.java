@@ -69,9 +69,9 @@ import java.util.function.Function;
                                 """,
                         args = {
                                 @XsltFunctionArg(
-                                        name = "milliseconds",
+                                        name = "epochMillis",
                                         description = "The number of milliseconds since the Unix epoch.",
-                                        argType = XsltDataType.STRING
+                                        argType = XsltDataType.INTEGER
                                 )
                         }
                 ),
@@ -93,8 +93,7 @@ import java.util.function.Function;
                                 @XsltFunctionArg(
                                         name = "inputTimeZone",
                                         description = "The input time zone; defaults to UTC. `GMT/BST` handles " +
-                                                "British Summer " +
-                                        "Time.",
+                                                      "British Summer Time.",
                                         argType = XsltDataType.STRING,
                                         isOptional = true
                                 )

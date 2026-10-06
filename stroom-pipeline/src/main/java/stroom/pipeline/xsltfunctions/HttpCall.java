@@ -55,7 +55,7 @@ import java.util.Optional;
         name = HttpCall.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.NETWORK,
         commonDescription = """
-                Sends an HTTP POST request and returns a `stroom-http` XML response containing the status, headers
+                Sends an HTTP _POST_ request and returns a `stroom-http` XML response containing the status, headers
                 and body. The request body is optional.
                 """,
         commonReturnType = XsltDataType.SEQUENCE,
@@ -77,8 +77,9 @@ import java.util.Optional;
                                 @XsltFunctionArg(
                                         name = "mediaType",
                                         description = "The request media type; defaults to `application/json; " +
-                                                "charset=utf-8`.",
+                                                      "charset=utf-8`.",
                                         argType = XsltDataType.STRING,
+                                        defaultValue = HttpCall.DEFAULT_MEDIA_TYPE,
                                         isOptional = true
                                 ),
                                 @XsltFunctionArg(
@@ -90,7 +91,7 @@ import java.util.Optional;
                                 @XsltFunctionArg(
                                         name = "clientConfig",
                                         description = "Optional JSON HTTP client configuration, including SSL " +
-                                                "settings.",
+                                                      "settings.",
                                         argType = XsltDataType.STRING,
                                         isOptional = true
                                 )
@@ -106,6 +107,7 @@ class HttpCall extends StroomExtensionFunctionCall {
     private static final String URI = "stroom-http";
     private static final String HEADER_DELIMITER = "\n";
     private static final String HEADER_KV_DELIMITER = ":";
+    static final String DEFAULT_MEDIA_TYPE = "application/json; charset=utf-8";
 
     private final CommonHttpClient commonHttpClient;
 
@@ -121,7 +123,7 @@ class HttpCall extends StroomExtensionFunctionCall {
 
         final String url = getOptionalString(arguments, 0).orElse("");
         final String headers = getOptionalString(arguments, 1).orElse("");
-        final String mediaType = getOptionalString(arguments, 2).orElse("application/json; charset=utf-8");
+        final String mediaType = getOptionalString(arguments, 2).orElse(DEFAULT_MEDIA_TYPE);
         final String data = getOptionalString(arguments, 3).orElse("");
         final String clientConfigStr = getOptionalString(arguments, 4).orElse("");
 

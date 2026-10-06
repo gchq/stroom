@@ -93,7 +93,7 @@ import java.util.concurrent.atomic.AtomicReference;
                 | `96`                 | `0x60`           | `1100000` | `Delete_Data Manage_Volumes`            |
                 """,
         commonReturnType = XsltDataType.SEQUENCE,
-        commonReturnDescription = "The hash of the value",
+        commonReturnDescription = "The matching value or XML nodes, or an empty sequence if no value is found.",
         signatures = {
                 @XsltFunctionSignature(
                         args = {

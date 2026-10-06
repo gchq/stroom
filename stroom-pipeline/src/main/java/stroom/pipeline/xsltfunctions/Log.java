@@ -38,8 +38,9 @@ import net.sf.saxon.trans.XPathException;
                                 @XsltFunctionArg(
                                         name = "severity",
                                         description = "The message severity, such as `INFO`, `WARN`, `ERROR` or " +
-                                                "`FATAL`.",
-                                        argType = XsltDataType.STRING
+                                                      "`FATAL`.",
+                                        argType = XsltDataType.STRING,
+                                        allowedValues = {"INFO", "WARN", "ERROR", "FATAL"}
                                 ),
                                 @XsltFunctionArg(
                                         name = "message",

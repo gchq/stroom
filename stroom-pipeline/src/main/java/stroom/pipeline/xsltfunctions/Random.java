@@ -26,9 +26,9 @@ import java.util.concurrent.ThreadLocalRandom;
 @XsltFunctionDef(
         name = Random.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.VALUE,
-        commonDescription = "Generates a random number greater than 0.0 and less than 1.0.",
+        commonDescription = "Generates a random decimal number between 0.0 (inclusive) and 1.0 (exclusive).",
         commonReturnType = XsltDataType.DECIMAL,
-        commonReturnDescription = "The random number.",
+        commonReturnDescription = "The random decimal number.",
         signatures = {
                 @XsltFunctionSignature(
                         args = {})

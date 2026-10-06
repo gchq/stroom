@@ -19,7 +19,6 @@ package stroom.pipeline.xsltfunctions;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
-import com.google.common.io.BaseEncoding;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
@@ -28,6 +27,7 @@ import net.sf.saxon.value.StringValue;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 @XsltFunctionDef(
         name = Hash.FUNCTION_NAME,
@@ -122,9 +122,8 @@ class Hash extends StroomExtensionFunctionCall {
 
         final byte[] arr = digest.digest();
 
-        // TODO: 30/01/2023 In Java17+ use HexFormat class
-        return BaseEncoding.base16()
-                .lowerCase()
-                .encode(arr);
+        return HexFormat.of()
+                .withLowerCase()
+                .formatHex(arr);
     }
 }

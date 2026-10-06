@@ -52,12 +52,12 @@ import java.util.stream.Collectors;
                                 @XsltFunctionArg(
                                         name = "segmentSize",
                                         description = "The target segment size in estimated tokens.",
-                                        argType = XsltDataType.DECIMAL
+                                        argType = XsltDataType.INTEGER
                                 ),
                                 @XsltFunctionArg(
                                         name = "overlapSize",
                                         description = "The overlap between adjacent segments in estimated tokens.",
-                                        argType = XsltDataType.DECIMAL
+                                        argType = XsltDataType.INTEGER
                                 )
                         }
                 )
@@ -77,7 +77,10 @@ class SplitDocument extends StroomExtensionFunctionCall {
 
             final SimpleTokenCountEstimator estimator = new SimpleTokenCountEstimator();
             result = DocumentSplitters
-                    .recursive(Integer.parseInt(segmentSize), Integer.parseInt(overlapSize), estimator)
+                    .recursive(
+                            Integer.parseInt(segmentSize),
+                            Integer.parseInt(overlapSize),
+                            estimator)
                     .split(Document.from(doc))
                     .stream().map(TextSegment::text)
                     .toList();
