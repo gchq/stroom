@@ -754,12 +754,17 @@ one closest to your screen.
   or read `window.__workbenchPlay.error`. When it is a Stroom bug, record it (`GWT bug` in
   `REACT-DIFFERENCES.md`), port what still works (e.g. a fixture without the key that triggers it)
   and suggest the fix in your report.
-* Stroom bugs found by the pilot, which other screens may hit: confirmation callbacks that ignore
-  `ok` (`JobNodeListHelper.executeJobNow`, `UserTaskManagerPresenter.onTerminate`); unquoted quick
-  filter terms built from names with spaces (`UserAndGroupHelper.buildDisplayNameFilterInput`).
-  Fixed since, with stories as their regression tests: `UiConfigCache.get` calling its consumer with
-  null (`UsersScreen`); `new DocRef(type, null, name)` for the Server Tasks screen's 'Open Feed'
-  (null UUIDs are refused; it now looks the feed up by name: `ServerTasksScreen`'s `InfoActions`).
+* Stroom bugs found by the pilot, which other screens may hit: unquoted quick filter terms built
+  from names with spaces (`UserAndGroupHelper.buildDisplayNameFilterInput`). Fixed since, with
+  stories as their regression tests: `UiConfigCache.get` calling its consumer with null
+  (`UsersScreen`); `new DocRef(type, null, name)` for the Server Tasks screen's 'Open Feed' (null
+  UUIDs are refused; it now looks the feed up by name: `ServerTasksScreen`'s `InfoActions`);
+  confirmation callbacks that ignored `ok`, so a cancel still executed the job or terminated the
+  task (`JobNodeListHelper.executeJobNow`, `UserTaskManagerPresenter.onTerminate`: `JobsScreen`'s
+  `JobSchedule`, `UserTaskManagerDialog`'s `Tasks`); a cancelled delete that never called its
+  `ResultCallback` (`DocumentPluginEventManager`: `DeleteConfirmation`'s `CancelIsReported`); and
+  the credential picker returning the credential's UUID as its name
+  (`CredentialsManagerViewImpl.getCredentialName`: `CredentialPickerDialog`'s `Pick`).
 
 ### Module inherits added by the pilot
 

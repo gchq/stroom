@@ -210,15 +210,17 @@ public class UserTaskManagerPresenter
     @Override
     public void onTerminate(final TaskProgress taskProgress) {
         final String message = "Are you sure you want to terminate this task?";
-        ConfirmEvent.fire(UserTaskManagerPresenter.this, message, result -> {
-            final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-            findTaskCriteria.addId(taskProgress.getId());
-            final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
-            restFactory
-                    .create(TASK_RESOURCE)
-                    .method(res -> res.terminate(taskProgress.getNodeName(), request))
-                    .taskMonitorFactory(this)
-                    .exec();
+        ConfirmEvent.fire(UserTaskManagerPresenter.this, message, ok -> {
+            if (ok) {
+                final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
+                findTaskCriteria.addId(taskProgress.getId());
+                final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria);
+                restFactory
+                        .create(TASK_RESOURCE)
+                        .method(res -> res.terminate(taskProgress.getNodeName(), request))
+                        .taskMonitorFactory(this)
+                        .exec();
+            }
         });
     }
 

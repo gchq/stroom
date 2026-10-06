@@ -87,10 +87,10 @@ public final class CredentialPickerDialogStories {
                     play.waitFor(() -> play.expect(screen.getByText("github-token")).toBeInTheDocument());
                     play.click(screen.getByText("gitlab-ssh"));
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: the React picker returns the credential's name; GWT's
-                    // getCredentialName() returns the selected credential's UUID (its view's
-                    // getSelectedCredentialsId()), which ContentStore passes on as the name
-                    play.waitFor(() -> play.expect(play.spy(ON_PICK)).toHaveBeenCalledWith("c2"));
+                    // The credential's name, not its UUID ('c2'): ContentStore passes it on as the
+                    // GitRepo's credential name, which the server looks the credentials up by (the
+                    // view once returned the UUID)
+                    play.waitFor(() -> play.expect(play.spy(ON_PICK)).toHaveBeenCalledWith("gitlab-ssh"));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/credentials/findCredentialsWithPermissions")
                                     .withJsonBodyContaining("{\"requiredPermission\": \"VIEW\"}")

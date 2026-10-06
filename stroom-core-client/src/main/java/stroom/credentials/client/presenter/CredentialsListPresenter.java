@@ -340,6 +340,16 @@ public class CredentialsListPresenter extends MyPresenterWidget<PagerView> {
         }
     }
 
+    /// @return The name of the currently selected credentials, or null if nothing is selected.
+    public String getSelectedCredentialsName() {
+        final CredentialWithPerms selectedCwp = gridSelectionModel.getSelected();
+        if (selectedCwp != null) {
+            return selectedCwp.getCredential().getName();
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Updates the UI state.
      */

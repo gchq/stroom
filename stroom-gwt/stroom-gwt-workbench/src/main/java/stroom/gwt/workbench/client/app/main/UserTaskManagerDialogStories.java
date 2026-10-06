@@ -83,7 +83,16 @@ public final class UserTaskManagerDialogStories {
                     play.waitFor(3000, () -> play.expect(screen.getByText("Search")).toBeInTheDocument());
                     play.expect(screen.getByText("Export")).toBeInTheDocument();
                     // GWT sorts by age descending (oldest first), so the first row is the older task
-                    // (t1, submitted earlier). Terminate it, then confirm
+                    // (t1, submitted earlier). Cancelling the confirmation doesn't terminate it (it
+                    // once did)
+                    play.click(screen.getAllByTitle("Terminate").nth(0));
+                    play.click(screen.findByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText(
+                            "Are you sure you want to terminate this task?")).toBeNull());
+                    play.sleep(100);
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/task/v1/terminate/node1").toSpyMatcher());
+                    // Terminate it, then confirm
                     play.click(screen.getAllByTitle("Terminate").nth(0));
                     play.click(screen.findByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

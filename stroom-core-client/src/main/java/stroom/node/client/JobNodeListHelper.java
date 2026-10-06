@@ -131,10 +131,14 @@ public class JobNodeListHelper {
                 "\n\nThe job will execute shortly, likely within ten seconds. " +
                 "You can check it has run by refreshing the table until the 'Last Executed' " +
                 "column has been updated.",
-                ok -> restFactory.create(JOB_NODE_RESOURCE)
-                        .call(resource -> resource.execute(jobNode.getId()))
-                        .taskMonitorFactory(taskMonitorFactory)
-                        .exec());
+                ok -> {
+                    if (ok) {
+                        restFactory.create(JOB_NODE_RESOURCE)
+                                .call(resource -> resource.execute(jobNode.getId()))
+                                .taskMonitorFactory(taskMonitorFactory)
+                                .exec();
+                    }
+                });
     }
 
     public void showSchedule(final JobNodeAndInfo jobNodeAndInfo) {

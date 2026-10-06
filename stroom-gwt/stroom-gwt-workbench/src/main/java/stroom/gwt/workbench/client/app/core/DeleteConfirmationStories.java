@@ -242,10 +242,9 @@ public final class DeleteConfirmationStories {
                 .withPlay(play -> {
                     open(play, "cancel");
                     cancel(play);
-                    // Differs from React (GWT bug): DocumentPluginEventManager.confirmDelete only acts
-                    // on OK, so the event's callback isn't told about a cancel. Nothing is deleted
-                    play.sleep(100);
-                    play.expect(play.spy(ON_RESULT)).not().toHaveBeenCalled();
+                    // The event's callback is told about the cancel (it once only heard about an OK,
+                    // leaving a caller waiting on the result). Nothing is deleted
+                    play.waitFor(() -> play.expect(play.spy(ON_RESULT)).toHaveBeenCalledWith("false"));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.delete(DELETE_PATH).toSpyMatcher());
                     expectNoProblems(play);

@@ -168,11 +168,16 @@ public final class JobsScreenStories {
                     play.expect(play.getByText("Cron")).toBeInTheDocument();
                     play.expect(play.getByText("Distributed")).toBeInTheDocument();
                     play.expect(play.getByText("0 0 * * ?")).toBeInTheDocument();
-                    // Run Now on node1 is an item of the row's action menu
-                    play.click(play.within(row(play, "node1")).getByTitle(StroomDom.ACTIONS_TITLE));
-                    play.click(screen.findByText("Run Job on 'node1' Now"));
-                    play.waitFor(() -> play.expect(screen.getByText(
-                            TextMatch.containing("execute job 'Data Retention' on node 'node1'"))).toBeInTheDocument());
+                    // Run Now on node1 is an item of the row's action menu. Cancelling the confirmation
+                    // doesn't execute the job (it once did)
+                    runNow(play);
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.querySelectorAll(StroomDom.DIALOG)).toHaveLength(0));
+                    play.sleep(100);
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/jobNode/v1/11/execute").toSpyMatcher());
+                    // Agreeing executes it
+                    runNow(play);
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/jobNode/v1/11/execute").toSpyMatcher()));
@@ -283,6 +288,15 @@ public final class JobsScreenStories {
     // implicit), so a cell's row is its closest <tr>, not its closest [role="row"]
     private static Query row(final Play play, final String text) {
         return play.getByText(text).closest("tr");
+    }
+
+    // Runs node1's job now from its row's action menu, and waits for the confirmation
+    private static void runNow(final Play play) {
+        final Play screen = play.screen();
+        play.click(play.within(row(play, "node1")).getByTitle(StroomDom.ACTIONS_TITLE));
+        play.click(screen.findByText("Run Job on 'node1' Now"));
+        play.waitFor(() -> play.expect(screen.getByText(
+                TextMatch.containing("execute job 'Data Retention' on node 'node1'"))).toBeInTheDocument());
     }
 
     // The 'open' icon of a CommandLinkCell, which runs the link's command when pressed
