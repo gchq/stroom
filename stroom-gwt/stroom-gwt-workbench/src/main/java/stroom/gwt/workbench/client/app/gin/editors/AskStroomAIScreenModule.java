@@ -1,0 +1,77 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.gwt.workbench.client.app.gin.editors;
+
+import stroom.ai.client.AiChatHistoryPresenter;
+import stroom.ai.client.AiChatHistoryPresenter.AiChatHistoryView;
+import stroom.ai.client.AiChatHistoryViewImpl;
+import stroom.ai.client.AiConfigGeneralPresenter;
+import stroom.ai.client.AiConfigGeneralPresenter.AiConfigGeneralView;
+import stroom.ai.client.AiConfigGeneralViewImpl;
+import stroom.ai.client.AiConfigTableAnalysisPresenter;
+import stroom.ai.client.AiConfigTableAnalysisPresenter.AiConfigTableAnalysisView;
+import stroom.ai.client.AiConfigTableAnalysisViewImpl;
+import stroom.ai.client.AskStroomAiConfigPresenter;
+import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
+import stroom.ai.client.AskStroomAiConfigViewImpl;
+import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.client.AskStroomAiViewImpl;
+import stroom.ai.client.DownloadChatPresenter;
+import stroom.ai.client.DownloadChatPresenter.DownloadChatView;
+import stroom.ai.client.DownloadChatViewImpl;
+
+import com.google.inject.Provides;
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+
+/// The presenter and view bindings of Stroom's `AskStroomAIModule`
+/// (`stroom/ai/client/gin/AskStroomAIModule.java`),
+/// without its plugins and app services.
+/// Presenters that Stroom binds with a GWTP proxy are bound as presenter widgets with a null
+/// proxy: a story shows one by registering it as the handler of its event, as the proxy would.
+public class AskStroomAIScreenModule extends AbstractPresenterModule {
+
+    /// Binds the presenters and views.
+    @Override
+    protected void configure() {
+        bindPresenterWidget(AskStroomAiPresenter.class,
+                AskStroomAiView.class,
+                AskStroomAiViewImpl.class);
+        bindPresenterWidget(AskStroomAiConfigPresenter.class,
+                AskStroomAiConfigView.class,
+                AskStroomAiConfigViewImpl.class);
+        bindPresenterWidget(AiConfigGeneralPresenter.class,
+                AiConfigGeneralView.class,
+                AiConfigGeneralViewImpl.class);
+        bindPresenterWidget(AiConfigTableAnalysisPresenter.class,
+                AiConfigTableAnalysisView.class,
+                AiConfigTableAnalysisViewImpl.class);
+        bindPresenterWidget(AiChatHistoryPresenter.class,
+                AiChatHistoryView.class,
+                AiChatHistoryViewImpl.class);
+        bindPresenterWidget(DownloadChatPresenter.class,
+                DownloadChatView.class,
+                DownloadChatViewImpl.class);
+    }
+
+    /// @return No proxy, see the class description.
+    @Provides
+    AskStroomAiPresenter.AskStroomAiProxy provideAskStroomAiProxy() {
+        return null;
+    }
+}
+

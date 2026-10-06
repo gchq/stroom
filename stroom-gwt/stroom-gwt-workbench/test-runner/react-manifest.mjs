@@ -25,7 +25,13 @@
 //   3. Parsing <react dir>/src/**/*.stories.tsx with Storybook's id rules
 //
 // Whichever is used, the *.stories.tsx files are also parsed (if present) and any differences
-// reported, so the parser stays trustworthy for when no index is available.
+// reported, so the parser stays trustworthy for when no index is available. A file the parser
+// can't handle (e.g. one relying on Storybook's auto-titles) is reported, and only stops the
+// manifest being generated when there is no index.
+//
+// --check never reads a running Storybook unless asked to with --source url, as that may be a
+// different branch's: by default it checks against the built index, or the parsed files if
+// there is no built index.
 //
 // Usage: node react-manifest.mjs [options]   (see --help)
 
@@ -52,7 +58,9 @@ Options:
   --react-dir <dir>    The stroom-ui-react checkout (default: $STROOM_UI_REACT_DIR or
                        ${DEFAULT_REACT_DIR})
   --index-url <url>    A running React Storybook's index.json (default: ${DEFAULT_INDEX_URL})
-  --source <source>    auto (default), url, static or parse - where to read the stories from
+  --source <source>    auto (default), url, static or parse - where to read the stories from.
+                       auto is the first of url, static and parse that is available, except
+                       with --check, where it is static, or parse if there is no built index.
   --out <file>         Where to write the manifest
   --check              Don't write anything; exit 1 if the manifest is out of date
   -h, --help           Show this help
@@ -93,21 +101,33 @@ async function findStoryFiles(dir) {
   return files.sort();
 }
 
-// Parses every story file, returning the stories in file then export order.
+// Parses every story file, returning {stories, errors, warnings}: the stories in file then export
+// order, a message for each file that couldn't be parsed and one for each export that was ignored
+// (see parseCsf). Returns null if there is no src dir.
 async function parseStories(reactDir) {
   const srcDir = path.join(reactDir, 'src');
   if (!existsSync(srcDir)) {
     return null;
   }
   const stories = [];
+  const errors = [];
+  const warnings = [];
   for (const file of await findStoryFiles(srcDir)) {
     const relative = './' + path.relative(reactDir, file).split(path.sep).join('/');
-    const { stories: fileStories } = parseCsf(await readFile(file, 'utf8'), relative);
+    let fileStories;
+    try {
+      let fileWarnings;
+      ({ stories: fileStories, warnings: fileWarnings } = parseCsf(await readFile(file, 'utf8'), relative));
+      warnings.push(...fileWarnings);
+    } catch (error) {
+      errors.push(`Unable to parse ${relative}: ${error.message}`);
+      continue;
+    }
     for (const story of fileStories) {
       stories.push({ ...story, file: relative });
     }
   }
-  return stories;
+  return { stories, errors, warnings };
 }
 
 // Converts a Storybook index.json (v5) into manifest entries. The index is in file order.
@@ -212,11 +232,13 @@ async function main() {
   }
   const reactDir = path.resolve(values['react-dir']);
   const staticIndex = path.join(reactDir, 'storybook-static', 'index.json');
-  const source = values.source;
-  if (!['auto', 'url', 'static', 'parse'].includes(source)) {
-    console.error(`Unknown --source '${source}'\n\n${HELP}`);
+  if (!['auto', 'url', 'static', 'parse'].includes(values.source)) {
+    console.error(`Unknown --source '${values.source}'\n\n${HELP}`);
     return 2;
   }
+  // A check must give the same answer wherever it is run, so doesn't use whatever Storybook
+  // happens to be running unless asked to
+  const source = values.check && values.source === 'auto' ? 'static-or-parse' : values.source;
 
   let stories = null;
   let sourceName = null;
@@ -230,7 +252,7 @@ async function main() {
       return 2;
     }
   }
-  if (!stories && (source === 'auto' || source === 'static')) {
+  if (!stories && (source === 'auto' || source === 'static' || source === 'static-or-parse')) {
     if (existsSync(staticIndex)) {
       stories = sidebarOrder(fromIndex(await readJson(staticIndex)));
       sourceName = 'React Storybook index.json (storybook-static)';
@@ -240,12 +262,25 @@ async function main() {
     }
   }
 
-  const parsed = await parseStories(reactDir);
+  const parseResult = await parseStories(reactDir);
+  const parsed = parseResult?.stories ?? null;
+  if (parseResult?.warnings.length > 0) {
+    console.warn(`Ignored ${parseResult.warnings.length} export(s) the *.stories.tsx parser doesn't support:`);
+    parseResult.warnings.forEach((warning) => console.warn(`  ${warning}`));
+  }
   if (!stories) {
     if (!parsed) {
       console.error(`No React Storybook index is available and ${reactDir}/src doesn't exist. `
         + 'Use --react-dir or --index-url.');
       return 2;
+    }
+    if (parseResult.errors.length > 0) {
+      // The manifest would be missing these files' stories
+      console.error(`Unable to parse ${parseResult.errors.length} *.stories.tsx file(s), and there is `
+        + 'no Storybook index to use instead (run the React Storybook, or build it with '
+        + `'npm run build-storybook' in ${reactDir}):`);
+      parseResult.errors.forEach((error) => console.error(`  ${error}`));
+      return 1;
     }
     stories = sidebarOrder(parsed).map((story) => ({
       id: story.id,
@@ -258,7 +293,7 @@ async function main() {
     }));
     sourceName = 'Parsed from the React *.stories.tsx files';
   } else if (parsed) {
-    const problems = crossCheck(stories, parsed);
+    const problems = [...parseResult.errors, ...crossCheck(stories, parsed)];
     if (problems.length > 0) {
       console.warn(`The *.stories.tsx parser disagrees with the index in ${problems.length} place(s); `
         + 'the index has been used:');

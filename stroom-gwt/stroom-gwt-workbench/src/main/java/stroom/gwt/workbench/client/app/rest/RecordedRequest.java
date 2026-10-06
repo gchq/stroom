@@ -32,7 +32,7 @@ public final class RecordedRequest {
     /// @param query  The query string without the `?`, or null if there isn't one.
     /// @param body   The request body, or null if there isn't one.
     public RecordedRequest(final String method, final String path, final String query, final String body) {
-        this.method = Objects.requireNonNull(method);
+        this.method = Objects.requireNonNull(method).toUpperCase();
         this.path = Objects.requireNonNull(path);
         this.query = query;
         this.body = body;
@@ -40,29 +40,89 @@ public final class RecordedRequest {
 
     /// Creates a request from the URL that RestyGWT sends it to.
     ///
-    /// @param method The HTTP method, e.g. `POST`.
-    /// @param url    The full URL, e.g. `http://localhost:6008/api/explorer/v2/find?x=1`.
-    /// @param body   The request body, or null if there isn't one.
-    /// @return The request, with its path relative to the `/api` service root.
-    public static RecordedRequest fromUrl(final String method, final String url, final String body) {
-        String path = url;
-        final int schemeEnd = path.indexOf("//");
-        if (schemeEnd >= 0) {
-            final int pathStart = path.indexOf('/', schemeEnd + 2);
-            path = pathStart >= 0
-                    ? path.substring(pathStart)
-                    : "/";
-        }
+    /// @param method      The HTTP method, e.g. `POST`.
+    /// @param url         The full URL, e.g. `http://localhost:6008/api/explorer/v2/find?x=1`.
+    /// @param body        The request body, or null if there isn't one.
+    /// @param serviceRoot The REST service root that RestyGWT prefixes paths with, i.e.
+    ///                    `Defaults.getServiceRoot()`, e.g. `http://localhost:6008/api/`. Its path
+    ///                    (`/api`) is removed from the start of the URL's path. May be null.
+    /// @return The request, with its path relative to the service root.
+    public static RecordedRequest fromUrl(final String method,
+                                          final String url,
+                                          final String body,
+                                          final String serviceRoot) {
+        String path = pathOf(url);
         String query = null;
         final int queryStart = path.indexOf('?');
         if (queryStart >= 0) {
             query = path.substring(queryStart + 1);
             path = path.substring(0, queryStart);
         }
-        if (path.startsWith(RestFixtures.SERVICE_ROOT + "/")) {
-            path = path.substring(RestFixtures.SERVICE_ROOT.length());
+        return new RecordedRequest(method, stripRoot(path, rootPathOf(serviceRoot)), query, body);
+    }
+
+    /// Parses a request as [#describeWithBody()] describes it, e.g. as recorded by the harness's
+    /// request spy: `METHOD /path?query body`, where the query and body are optional. The path
+    /// and query (sent URL encoded) never hold a space, so the body is everything after the first
+    /// space following the path.
+    ///
+    /// @param described The request as [#describeWithBody()] describes it.
+    /// @return The request.
+    /// @throws IllegalArgumentException If the text has no method and path.
+    public static RecordedRequest parse(final String described) {
+        Objects.requireNonNull(described, "described");
+        final int methodEnd = described.indexOf(' ');
+        if (methodEnd <= 0 || methodEnd + 1 >= described.length()) {
+            throw new IllegalArgumentException("Not a request: '" + described + "'");
         }
-        return new RecordedRequest(method.toUpperCase(), path, query, body);
+        final String method = described.substring(0, methodEnd);
+        final int pathEnd = described.indexOf(' ', methodEnd + 1);
+        final String pathAndQuery = pathEnd >= 0
+                ? described.substring(methodEnd + 1, pathEnd)
+                : described.substring(methodEnd + 1);
+        final String body = pathEnd >= 0
+                ? described.substring(pathEnd + 1)
+                : null;
+        final int queryStart = pathAndQuery.indexOf('?');
+        return queryStart >= 0
+                ? new RecordedRequest(method, pathAndQuery.substring(0, queryStart),
+                pathAndQuery.substring(queryStart + 1), body)
+                : new RecordedRequest(method, pathAndQuery, null, body);
+    }
+
+    /// @param serviceRoot A service root URL, e.g. `http://localhost:6008/api/`, or null.
+    /// @return Its path without a trailing `/`, e.g. `/api`, or an empty string for none.
+    static String rootPathOf(final String serviceRoot) {
+        if (serviceRoot == null) {
+            return "";
+        }
+        String rootPath = pathOf(serviceRoot);
+        final int queryStart = rootPath.indexOf('?');
+        if (queryStart >= 0) {
+            rootPath = rootPath.substring(0, queryStart);
+        }
+        while (rootPath.endsWith("/")) {
+            rootPath = rootPath.substring(0, rootPath.length() - 1);
+        }
+        return rootPath;
+    }
+
+    private static String pathOf(final String url) {
+        final int schemeEnd = url.indexOf("//");
+        if (schemeEnd >= 0) {
+            final int pathStart = url.indexOf('/', schemeEnd + 2);
+            return pathStart >= 0
+                    ? url.substring(pathStart)
+                    : "/";
+        }
+        return url;
+    }
+
+    private static String stripRoot(final String path, final String rootPath) {
+        if (!rootPath.isEmpty() && path.startsWith(rootPath + "/")) {
+            return path.substring(rootPath.length());
+        }
+        return path;
     }
 
     /// @return The HTTP method, e.g. `POST`.
@@ -85,13 +145,22 @@ public final class RecordedRequest {
         return body;
     }
 
-    /// @return The method and path, e.g. `POST /explorer/v2/find`.
+    /// @return The method, path and query, e.g. `GET /node/v1/info?x=1`.
     public String describe() {
         return method + " " + path + (query != null
                 ? "?" + query
                 : "");
     }
 
+    /// @return [#describe()] followed by the body, if there is one, e.g.
+    /// `POST /explorer/v2/find {"filter": ...}`, as recorded by the harness's request spy.
+    public String describeWithBody() {
+        return describe() + (body != null && !body.isEmpty()
+                ? " " + body
+                : "");
+    }
+
+    /// @return [#describe()].
     @Override
     public String toString() {
         return describe();

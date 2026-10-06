@@ -18,54 +18,30 @@ package stroom.gwt.workbench.client.app.main;
 
 import stroom.about.client.presenter.AboutPresenter;
 import stroom.about.client.view.AboutViewImpl;
-import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
-import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
-import stroom.gwt.workbench.client.app.screen.StorySecurityContext;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.preferences.client.UserPreferencesManager;
 import stroom.ui.config.client.UiConfigCache;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories matching `App/Main/AboutDialog` in the React Storybook, showing Stroom's real
-/// [AboutPresenter] with fake REST replies. It needs two endpoints and, through its
-/// [UiConfigCache] and [DateTimeFormatter], a small graph of Stroom services.
+/// [AboutPresenter] with fake REST replies. It needs two endpoints, the session info and the UI
+/// config, which are both start-up fixtures, and through its [UiConfigCache] and
+/// [DateTimeFormatter] a small graph of Stroom services, which come from the harness's injector.
 public final class AboutDialogStories {
 
-    // The reply of SessionInfoResource.get()
-    private static final String SESSION_INFO = """
-            {
-              "userRef": {"uuid": "admin-uuid", "subjectId": "admin", "displayName": "admin",
-                          "group": false, "enabled": true},
-              "nodeName": "node1a",
-              "buildInfo": {"upTime": 1710000000000, "buildVersion": "v7.5-test", "buildTime": 1700000000000}
-            }
+    // The uiConfig part of GlobalConfigResource.fetchExtendedUiConfig(), with only what the dialog
+    // uses, as in React's fetchUiConfig fixture
+    private static final String UI_CONFIG = """
+            {"aboutHtml": "<p class=\\"about-marker\\">Stroom is a data processing platform.</p>"}
             """;
-
-    // The reply of GlobalConfigResource.fetchExtendedUiConfig(), with only what the dialog uses
-    private static final String EXTENDED_UI_CONFIG = """
-            {
-              "uiConfig": {
-                "aboutHtml": "<p class=\\"about-marker\\">Stroom is a data processing platform.</p>"
-              },
-              "externalIdentityProvider": false,
-              "dependencyWarningsEnabled": false,
-              "lastAnnotationChangeTime": 0
-            }
-            """;
-
-    private static final RestFixtures FIXTURES = RestFixtures.builder()
-            .get("/sessionInfo/v1", RestReply.json(SESSION_INFO))
-            .get("/config/v1/noauth/fetchExtendedUiConfig", RestReply.json(EXTENDED_UI_CONFIG))
-            .build();
 
     private AboutDialogStories() {
         // Static utility
@@ -78,7 +54,7 @@ public final class AboutDialogStories {
         registry.component("App/Main/AboutDialog", AboutDialogStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // The About dialog shows the build/session info and the uiConfig aboutHtml block
-                .story("Default", context -> render(context, FIXTURES))
+                .story("Default", AboutDialogStories::render)
                 .withPlay(play -> {
                     // The dialog is shown on the page's body, as in Stroom
                     final Play screen = play.screen();
@@ -90,25 +66,25 @@ public final class AboutDialogStories {
                             .toHaveBeenCalledWith(ValueMatcher.stringContaining("GET /sessionInfo/v1"));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             ValueMatcher.stringContaining("GET /config/v1/noauth/fetchExtendedUiConfig"));
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
     }
 
-    private static Widget render(final StoryContext context, final RestFixtures fixtures) {
-        final ScreenHarness harness = ScreenHarness.create(context, fixtures);
-
-        // The services that GIN would inject
-        final UiConfigCache uiConfigCache = new UiConfigCache(
-                harness.getRestFactory(), StorySecurityContext.admin());
-        final DateTimeFormatter dateTimeFormatter = new DateTimeFormatter(
-                new UserPreferencesManager(harness.getRestFactory(), new CurrentPreferences()));
+    private static Widget render(final StoryContext context) {
+        // Only the start-up fixtures are needed, with React's session info and uiConfig
+        final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.none())
+                .startup(startup -> startup.buildVersion("v7.5-test").nodeName("node1a"))
+                .uiConfig(UI_CONFIG)
+                .build();
 
         final AboutPresenter presenter = new AboutPresenter(
                 harness.getEventBus(),
                 new AboutViewImpl(GWT.create(AboutViewImpl.Binder.class)),
                 null,
                 harness.getRestFactory(),
-                uiConfigCache,
-                dateTimeFormatter);
+                harness.getUiConfigCache(),
+                harness.getDateTimeFormatter());
         presenter.show();
         return harness.asWidget();
     }

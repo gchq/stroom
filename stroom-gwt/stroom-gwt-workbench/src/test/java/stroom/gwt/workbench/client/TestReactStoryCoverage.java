@@ -54,6 +54,7 @@ class TestReactStoryCoverage {
             new ReactStory("app-ai-chat--streaming", "App/AI/Chat", "Streaming",
                     "Streaming", "./Chat.stories.tsx", true));
 
+    /// Checks that every workbench story has the id of a React story in react-stories.json.
     @Test
     void testWorkbenchStoriesAreReactStories() {
         final ReactStoryCoverage coverage = ReactStoryCoverage.load();
@@ -67,6 +68,7 @@ class TestReactStoryCoverage {
                 .isEmpty();
     }
 
+    /// Checks that react-story-status.json has no problems, e.g. a key matching no React story.
     @Test
     void testStatusFile() {
         assertThat(ReactStoryCoverage.load().getStatusProblems())
@@ -74,6 +76,7 @@ class TestReactStoryCoverage {
                 .isEmpty();
     }
 
+    /// Checks that the manifest has unique ids and that every React story is counted exactly once.
     @Test
     void testManifest() {
         final ReactStoryCoverage coverage = ReactStoryCoverage.load();
@@ -87,11 +90,13 @@ class TestReactStoryCoverage {
         assertThat(total.getReact()).isEqualTo(coverage.getReactStories().size());
         assertThat(total.getPorted() + total.getNotApplicable() + total.getBlocked() + total.todo())
                 .isEqualTo(total.getReact());
-        // The stories ported so far
-        assertThat(total.getPorted()).isGreaterThanOrEqualTo(AllStories.create().getStories().size()
-                                                             - coverage.getUnknownGwtStoryIds().size());
+        // Every workbench story with a React id is counted as ported, exactly once
+        final int workbenchStoryCount = AllStories.create().getStories().size();
+        assertThat(total.getPorted())
+                .isEqualTo(workbenchStoryCount - coverage.getUnknownGwtStoryIds().size());
     }
 
+    /// Checks that workbench stories whose ids aren't React ones (e.g. a typo) are reported.
     @Test
     void testUnknownIds() {
         final StoryRegistry registry = new StoryRegistry();
@@ -110,6 +115,7 @@ class TestReactStoryCoverage {
                 "widgets-button-iconbutton--default");
     }
 
+    /// Checks each React story's status, the most specific status entry winning.
     @Test
     void testStatuses() {
         final StoryRegistry registry = new StoryRegistry();
@@ -128,6 +134,7 @@ class TestReactStoryCoverage {
         assertThat(coverage.getWarnings()).isEmpty();
     }
 
+    /// Checks the problems reported for bad status entries.
     @Test
     void testStatusProblems() {
         final ReactStoryCoverage coverage = new ReactStoryCoverage("test", REACT_STORIES, Map.of(
@@ -143,6 +150,7 @@ class TestReactStoryCoverage {
                 "'Widgets/Buttons/IconButton' has no reason");
     }
 
+    /// Checks the warnings for e.g. a display name that differs from the React story's.
     @Test
     void testWarnings() {
         final StoryRegistry registry = new StoryRegistry();
@@ -163,6 +171,7 @@ class TestReactStoryCoverage {
         assertThat(coverage.statusOf(REACT_STORIES.get(3))).isEqualTo("ported");
     }
 
+    /// Checks the counts of each group's stories, in sidebar order.
     @Test
     void testGroupCounts() {
         final StoryRegistry registry = new StoryRegistry();
@@ -207,6 +216,7 @@ class TestReactStoryCoverage {
                 .containsExactly(75, 100, 100, 100, 83);
     }
 
+    /// Checks the coverage report, including the list of the remaining stories.
     @Test
     void testReport() {
         final StoryRegistry registry = new StoryRegistry();
@@ -230,6 +240,7 @@ class TestReactStoryCoverage {
                         .containsExactly("Total", "6", "1", "0", "0", "5", "16%", "4", "0"));
     }
 
+    /// Checks that the workbench's top level groups are registered in the React sidebar's order.
     @Test
     void testAllStoriesAreInGroupOrder() {
         // The top level groups are registered in the React sidebar's order
@@ -237,9 +248,24 @@ class TestReactStoryCoverage {
                 .getStories()
                 .stream()
                 .map(Story::getTitle)
-                .map(title -> title.substring(0, title.indexOf('/')))
+                .map(TestReactStoryCoverage::topLevelGroup)
                 .distinct()
                 .toList();
         assertThat(List.of("App", "Screens", "Widgets")).containsSubsequence(groups);
+    }
+
+    /// Checks `topLevelGroup`, including for a title without a group.
+    @Test
+    void testTopLevelGroup() {
+        assertThat(topLevelGroup("Widgets/Buttons/Button")).isEqualTo("Widgets");
+        // A title without a group used to throw StringIndexOutOfBoundsException
+        assertThat(topLevelGroup("Introduction")).isEqualTo("Introduction");
+    }
+
+    private static String topLevelGroup(final String title) {
+        final int slash = title.indexOf('/');
+        return slash < 0
+                ? title
+                : title.substring(0, slash);
     }
 }

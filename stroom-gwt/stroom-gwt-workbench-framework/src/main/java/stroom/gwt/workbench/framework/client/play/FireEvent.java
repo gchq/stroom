@@ -235,16 +235,27 @@ public final class FireEvent {
     /// @param target The element.
     /// @param init   The event's options, or null for the defaults.
     public void event(final String type, final Query target, final EventInit init) {
-        add("fireEvent(" + target.describe() + ", new Event(" + Expectation.quote(type) + (init != null
-                ? ", " + init.describe()
-                : "") + "))", root -> dispatch(target.resolve(root), type, init, root));
+        Objects.requireNonNull(target, "target");
+        // Copied so that changing the options afterwards doesn't change the step
+        final EventInit options = copy(init);
+        add("fireEvent(" + target.describe() + ", new Event(" + Expectation.quote(type) + (options != null
+                ? ", " + options.describe()
+                : "") + "))", root -> dispatch(target.resolve(root), type, options, root));
     }
 
     private void fire(final String method, final Query target, final EventInit init) {
         Objects.requireNonNull(target, "target");
-        add("fireEvent." + method + "(" + target.describe() + (init != null
-                ? ", " + init.describe()
-                : "") + ")", root -> dispatch(target.resolve(root), method.toLowerCase(), init, root));
+        // Copied so that changing the options afterwards doesn't change the step
+        final EventInit options = copy(init);
+        add("fireEvent." + method + "(" + target.describe() + (options != null
+                ? ", " + options.describe()
+                : "") + ")", root -> dispatch(target.resolve(root), method.toLowerCase(), options, root));
+    }
+
+    private static EventInit copy(final EventInit init) {
+        return init != null
+                ? init.copy()
+                : null;
     }
 
     private void fireWithValue(final String method, final Query target, final String value) {
@@ -260,7 +271,13 @@ public final class FireEvent {
         play.addStep(PlayStep.action(root -> description, action));
     }
 
-    private static void dispatch(final Element target, final String type, final EventInit init, final Element root) {
+    /// Fires an event as Testing Library's `fireEvent` does.
+    ///
+    /// @param target The element.
+    /// @param type   The event type, e.g. `contextmenu`.
+    /// @param init   The event's options, or null for the defaults.
+    /// @param root   The story's root element, to find an element the options refer to.
+    static void dispatch(final Element target, final String type, final EventInit init, final Element root) {
         final EventInit options = init != null
                 ? init
                 : EventInit.create();
@@ -279,12 +296,14 @@ public final class FireEvent {
             clientX = options.getClientX();
             clientY = options.getClientY();
         }
+        // As Testing Library's fireEvent, which leaves button and buttons at the MouseEvent
+        // defaults (0), even for contextMenu, mouseDown and pointerDown
         final int button = options.getButton() != null
                 ? options.getButton()
-                : defaultButton(type);
+                : 0;
         final int buttons = options.getButtons() != null
                 ? options.getButtons()
-                : defaultButtons(type, button);
+                : 0;
         final String key = options.getKey();
         final int keyCode = options.getKeyCode() != null
                 ? options.getKeyCode()
@@ -344,29 +363,6 @@ public final class FireEvent {
     /// @return True if events of the type can be cancelled.
     static boolean defaultCancelable(final String type) {
         return !NON_CANCELABLE.contains(type);
-    }
-
-    /// @param type An event type.
-    /// @return The mouse button of events of the type, 2 for `contextmenu`, otherwise 0.
-    static int defaultButton(final String type) {
-        return "contextmenu".equals(type)
-                ? 2
-                : 0;
-    }
-
-    /// @param type   An event type.
-    /// @param button The mouse button.
-    /// @return The mouse buttons held during events of the type: the button for a press,
-    /// otherwise none.
-    static int defaultButtons(final String type, final int button) {
-        if ("mousedown".equals(type) || "pointerdown".equals(type)) {
-            return button == 2
-                    ? 2
-                    : button == 1
-                            ? 4
-                            : 1;
-        }
-        return 0;
     }
 
     /// @param type A keyboard event type.

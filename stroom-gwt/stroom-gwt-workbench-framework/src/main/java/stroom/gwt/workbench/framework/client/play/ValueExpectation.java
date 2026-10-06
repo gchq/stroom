@@ -17,6 +17,8 @@
 
 package stroom.gwt.workbench.framework.client.play;
 
+import stroom.gwt.workbench.framework.client.play.Values.Comparison;
+
 import com.google.gwt.dom.client.Element;
 
 import java.util.Map;
@@ -95,8 +97,8 @@ public final class ValueExpectation {
         });
     }
 
-    /// Expects a string, collection, map or array to have a length, the equivalent of
-    /// `toHaveLength`.
+    /// Expects a string, collection or array to have a length, the equivalent of `toHaveLength`.
+    /// As in Jest, a map has no length, so fails (use `play.expect(() -> map.size()).toBe(n)`).
     ///
     /// @param length The length.
     public void toHaveLength(final int length) {
@@ -114,7 +116,8 @@ public final class ValueExpectation {
     ///
     /// @param number The other number.
     public void toBeGreaterThan(final Number number) {
-        add("toBeGreaterThan", Values.format(number), actual -> Values.compare(actual, number) > 0);
+        add("toBeGreaterThan", Values.format(number),
+                actual -> Values.compare(actual, number, Comparison.GREATER_THAN));
     }
 
     /// Expects a number to be greater than or equal to another, the equivalent of
@@ -122,14 +125,16 @@ public final class ValueExpectation {
     ///
     /// @param number The other number.
     public void toBeGreaterThanOrEqual(final Number number) {
-        add("toBeGreaterThanOrEqual", Values.format(number), actual -> Values.compare(actual, number) >= 0);
+        add("toBeGreaterThanOrEqual", Values.format(number),
+                actual -> Values.compare(actual, number, Comparison.GREATER_THAN_OR_EQUAL));
     }
 
     /// Expects a number to be less than another, the equivalent of `toBeLessThan`.
     ///
     /// @param number The other number.
     public void toBeLessThan(final Number number) {
-        add("toBeLessThan", Values.format(number), actual -> Values.compare(actual, number) < 0);
+        add("toBeLessThan", Values.format(number),
+                actual -> Values.compare(actual, number, Comparison.LESS_THAN));
     }
 
     /// Expects a number to be less than or equal to another, the equivalent of
@@ -137,7 +142,8 @@ public final class ValueExpectation {
     ///
     /// @param number The other number.
     public void toBeLessThanOrEqual(final Number number) {
-        add("toBeLessThanOrEqual", Values.format(number), actual -> Values.compare(actual, number) <= 0);
+        add("toBeLessThanOrEqual", Values.format(number),
+                actual -> Values.compare(actual, number, Comparison.LESS_THAN_OR_EQUAL));
     }
 
     /// Expects a number to be within 0.005 of another, the equivalent of `toBeCloseTo(number)`.
@@ -234,13 +240,17 @@ public final class ValueExpectation {
         final String not = negated
                 ? ".not"
                 : "";
+        // The value is only read when the step runs (reading it to describe the step could have
+        // side effects, or fail before the step runs), then shown as it was read
+        final LastValue last = new LastValue();
         final Function<Element, String> describer = root -> "expect("
-                                                           + (root != null
-                ? Values.format(supplier.get())
+                                                           + (last.isFromThisRun()
+                ? Values.format(last.value)
                 : label)
                                                            + ")" + not + "." + call;
         play.addStep(PlayStep.action(describer, root -> {
             final Object actual = supplier.get();
+            last.set(actual);
             if (test.test(actual) == negated) {
                 throw new PlayException(failureMessage(matcher, expectedText, negated, actual));
             }
@@ -273,5 +283,25 @@ public final class ValueExpectation {
             sb.append("Expected: ").append(not).append(expectedText).append('\n');
         }
         return sb.append("Received: ").append(Values.format(actual)).toString();
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The value an expectation's step last read, to show in its description.
+    private static final class LastValue {
+
+        private Object value;
+        private int runId = -1;
+
+        private void set(final Object value) {
+            this.value = value;
+            this.runId = PlayStep.currentRun();
+        }
+
+        private boolean isFromThisRun() {
+            return runId == PlayStep.currentRun();
+        }
     }
 }

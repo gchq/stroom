@@ -21,6 +21,8 @@ import stroom.gwt.workbench.framework.client.play.Spies;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.preview.StoryActions;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /// What a story is given when it renders: its args (as set in the Controls addon) and a way to
@@ -28,19 +30,25 @@ import java.util.Objects;
 /// `render`.
 ///
 /// A context is created each time the story renders (including when the Interactions addon
-/// re-runs or rewinds the play function), which clears the calls of the story's spies.
+/// re-runs or rewinds the play function), which starts a new generation of spies (see [Spies]):
+/// the play function sees only the calls made to the spies this rendering registers, and calls
+/// to spies an earlier rendering registered (e.g. from a timer it left running) are ignored.
 public final class StoryContext {
 
     private final Story story;
     private final Args args;
+    private final List<Runnable> cleanUps = new ArrayList<>();
+    // The generation of spies (see Spies) this rendering started
+    private final int generation;
 
     /// @param story The story being rendered.
     /// @param args  The story's current args.
     public StoryContext(final Story story, final Args args) {
         this.story = Objects.requireNonNull(story);
         this.args = Objects.requireNonNull(args);
-        // A new rendering, so the play function's spies start afresh
-        Spies.clearAll();
+        // A new rendering, so the play function's spies start afresh, and those of the previous
+        // rendering stop recording
+        this.generation = Spies.startRendering();
     }
 
     /// @return The story being rendered.
@@ -62,9 +70,40 @@ public final class StoryContext {
         StoryActions.log(name, detail);
     }
 
+    /// Registers something to undo when this rendering is replaced, i.e. before the story renders
+    /// again or another story is shown, e.g. cancelling timers, pending requests or popups that
+    /// the story started, so that they can't affect the next rendering.
+    ///
+    /// @param cleanUp What to do. Clean ups run in the reverse order they were added.
+    public void addCleanUp(final Runnable cleanUp) {
+        cleanUps.add(Objects.requireNonNull(cleanUp));
+    }
+
+    /// Runs the clean ups added with [#addCleanUp(Runnable)], once. Called by the preview before
+    /// the story renders again. A clean up that fails doesn't stop the others running.
+    ///
+    /// @return The first failure, or null if all the clean ups succeeded.
+    public RuntimeException cleanUp() {
+        RuntimeException firstFailure = null;
+        for (int i = cleanUps.size() - 1; i >= 0; i--) {
+            try {
+                cleanUps.get(i).run();
+            } catch (final RuntimeException e) {
+                if (firstFailure == null) {
+                    firstFailure = e;
+                }
+            }
+        }
+        cleanUps.clear();
+        return firstFailure;
+    }
+
     /// Gets a spy to pass to a widget as a callback, the equivalent of an arg set to `fn()` in
     /// React Storybook. Each call is recorded, for the play function to check with
     /// `play.expect(play.spy(name)).toHaveBeenCalled()` etc., and logged to the Actions addon.
+    /// Register every spy the play function checks while the story renders (as React's `fn()`
+    /// args exist before the play runs), not only when it is first called: the play function's
+    /// expectations fail for a spy that wasn't registered, to catch misspelt names.
     /// E.g.
     /// ```
     /// final Spy onClick = context.fn("onClick");
@@ -72,9 +111,18 @@ public final class StoryContext {
     /// widget.setChangeHandler(context.fn("onChange").asConsumer());
     /// ```
     ///
+    /// Once the story has rendered again (or another context has been created), this context is
+    /// stale: its `fn(name)` returns a detached spy that records nothing and logs no actions, so
+    /// a callback left over from this rendering (e.g. a timer that calls `context.fn("onX")`)
+    /// can't add calls to the new rendering's spies.
+    ///
     /// @param name The spy's name, e.g. `onClick`, which is also the action's name.
-    /// @return The story's spy with the name.
+    /// @return This rendering's spy with the name, or a detached spy if this rendering has been
+    /// replaced.
     public Spy fn(final String name) {
-        return Spies.get(name).logTo(StoryActions::log);
+        if (!Spies.isCurrent(generation)) {
+            return Spies.register(name, generation);
+        }
+        return Spies.register(name, generation).logTo(StoryActions::log);
     }
 }

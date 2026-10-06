@@ -36,8 +36,11 @@ import java.util.Objects;
 /// | `/- Click for help$/`              | `TextMatch.endingWith("- Click for help")` |
 /// | anything else, e.g. `/close\|ok/i` | `TextMatch.regex("close\|ok", "i")`        |
 ///
-/// [#regex(String, String)] uses the browser's own `RegExp` (and `java.util.regex` in JVM tests),
-/// so a JavaScript regular expression can be copied as it is.
+/// [#regex(String, String)] uses the browser's own `RegExp`, so in the workbench a JavaScript
+/// regular expression can be copied as it is (with its flags; `g` is dropped, as Testing Library
+/// resets it anyway). In JVM tests GWT's `RegExp` is emulated with `java.util.regex`, which only
+/// accepts the `g`, `i` and `m` flags (so `s`, `u` and `y` throw) and ignores case only for ASCII
+/// letters; expressions using JavaScript-only syntax may also behave differently there.
 public final class TextMatch implements ValueMatcher {
 
     private static final String REGEX_SPECIALS = "\\^$.|?*+()[]{}/";

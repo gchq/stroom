@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.framework.client.play;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,13 +26,16 @@ import java.util.Map;
 /// Parses `userEvent.keyboard(...)`/`userEvent.type(...)` key descriptions and knows the
 /// properties of the `KeyboardEvent`s each key fires, e.g. `keyCode`, which GWT widgets read.
 ///
-/// The syntax is user-event's:
+/// The syntax and keys are user-event 14's (its `readNextDescriptor`, `parseKeyDef` and default
+/// US keyboard map):
 ///
 /// * a character types itself, e.g. `abc`
 /// * `{Name}` presses and releases a key by its `key` value, e.g. `{Enter}`, `{ArrowDown}`,
-///   `{Escape}` or `{Tab}`; user-event 13's lower case names, e.g. `{enter}`, `{esc}`, `{del}` and
-///   `{selectall}`, are also understood
-/// * `[Code]` does the same by the key's `code`, e.g. `[KeyA]` or `[ShiftLeft]`
+///   `{Escape}` or `{Tab}`, ignoring case, e.g. `{enter}`; a name that isn't on the keyboard is
+///   pressed as a key with that `key` and the `code` `Unknown`, e.g. `{esc}` (user-event 13's
+///   names aren't understood, as in user-event 14)
+/// * `[Code]` does the same by the key's `code`, e.g. `[KeyA]` or `[ShiftRight]`; a code that
+///   isn't on the keyboard, e.g. `[Period]`, presses a key `Unknown` with that `code`
 /// * `{Name>}` presses and holds a key, e.g. `{Shift>}` or `{Control>}`; `{Name>3}` presses it 3
 ///   times and holds it; `{Name>3/}` presses it 3 times and releases it
 /// * `{/Name}` releases a held key
@@ -46,12 +50,13 @@ final class Keys {
     static final int ALT = 4;
     /// The bit for Meta in a modifier mask.
     static final int META = 8;
-    /// The pseudo key for user-event 13's `{selectall}`, which selects all the text in a field.
-    static final String SELECT_ALL = "{selectall}";
+    /// The `key` (or `code`) user-event gives a key that isn't on its keyboard.
+    static final String UNKNOWN = "Unknown";
 
     private static final Map<String, Integer> KEY_CODES = new HashMap<>();
-    private static final Map<String, String> ALIASES = new HashMap<>();
-    private static final Map<String, String> PUNCTUATION_CODES = new HashMap<>();
+    // user-event 14's default keyboard map, as [key, code] pairs in its order (the first match
+    // wins)
+    private static final List<String[]> KEY_MAP = new ArrayList<>();
 
     static {
         KEY_CODES.put("Backspace", 8);
@@ -91,82 +96,89 @@ final class Keys {
         KEY_CODES.put("]", 221);
         KEY_CODES.put("'", 222);
 
-        PUNCTUATION_CODES.put(";", "Semicolon");
-        PUNCTUATION_CODES.put("=", "Equal");
-        PUNCTUATION_CODES.put(",", "Comma");
-        PUNCTUATION_CODES.put("-", "Minus");
-        PUNCTUATION_CODES.put(".", "Period");
-        PUNCTUATION_CODES.put("/", "Slash");
-        PUNCTUATION_CODES.put("`", "Backquote");
-        PUNCTUATION_CODES.put("[", "BracketLeft");
-        PUNCTUATION_CODES.put("\\", "Backslash");
-        PUNCTUATION_CODES.put("]", "BracketRight");
-        PUNCTUATION_CODES.put("'", "Quote");
-        PUNCTUATION_CODES.put(" ", "Space");
-
-        // user-event 13's names, and codes, mapped to key values
-        ALIASES.put("enter", "Enter");
-        ALIASES.put("esc", "Escape");
-        ALIASES.put("escape", "Escape");
-        ALIASES.put("tab", "Tab");
-        ALIASES.put("space", " ");
-        ALIASES.put("backspace", "Backspace");
-        ALIASES.put("del", "Delete");
-        ALIASES.put("delete", "Delete");
-        ALIASES.put("arrowup", "ArrowUp");
-        ALIASES.put("arrowdown", "ArrowDown");
-        ALIASES.put("arrowleft", "ArrowLeft");
-        ALIASES.put("arrowright", "ArrowRight");
-        ALIASES.put("home", "Home");
-        ALIASES.put("end", "End");
-        ALIASES.put("pageup", "PageUp");
-        ALIASES.put("pagedown", "PageDown");
-        ALIASES.put("shift", "Shift");
-        ALIASES.put("ctrl", "Control");
-        ALIASES.put("control", "Control");
-        ALIASES.put("alt", "Alt");
-        ALIASES.put("meta", "Meta");
-        ALIASES.put("selectall", SELECT_ALL);
-        ALIASES.put("shiftleft", "Shift");
-        ALIASES.put("shiftright", "Shift");
-        ALIASES.put("controlleft", "Control");
-        ALIASES.put("controlright", "Control");
-        ALIASES.put("altleft", "Alt");
-        ALIASES.put("altright", "Alt");
-        ALIASES.put("metaleft", "Meta");
-        ALIASES.put("metaright", "Meta");
-        ALIASES.put("osleft", "Meta");
-        ALIASES.put("osright", "Meta");
+        for (char chr = '0'; chr <= '9'; chr++) {
+            map(String.valueOf(chr), "Digit" + chr);
+        }
+        final String shiftedDigits = ")!@#$%^&*(";
+        for (int i = 0; i < shiftedDigits.length(); i++) {
+            map(String.valueOf(shiftedDigits.charAt(i)), "Digit" + i);
+        }
+        for (char chr = 'a'; chr <= 'z'; chr++) {
+            map(String.valueOf(chr), "Key" + Character.toUpperCase(chr));
+        }
+        for (char chr = 'A'; chr <= 'Z'; chr++) {
+            map(String.valueOf(chr), "Key" + chr);
+        }
+        map("[", "BracketLeft");
+        map("{", "BracketLeft");
+        map("]", "BracketRight");
+        map("}", "BracketRight");
+        map(" ", "Space");
+        map("Alt", "AltLeft");
+        map("Alt", "AltRight");
+        map("Shift", "ShiftLeft");
+        map("Shift", "ShiftRight");
+        map("Control", "ControlLeft");
+        map("Control", "ControlRight");
+        map("Meta", "MetaLeft");
+        map("Meta", "MetaRight");
+        map("OS", "OSLeft");
+        map("OS", "OSRight");
+        for (final String named : Arrays.asList("ContextMenu", "Tab", "CapsLock", "Backspace", "Enter", "Escape",
+                "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Home", "End", "Delete", "PageUp", "PageDown",
+                "Fn", "Symbol")) {
+            map(named, named);
+        }
+        map("AltGraph", "AltRight");
     }
 
     private Keys() {
         // Static utility
     }
 
+    private static void map(final String key, final String code) {
+        KEY_MAP.add(new String[]{key, code});
+    }
+
     /// @param keys The keys, e.g. `ab{Enter}` or `{Control>}a{/Control}`.
     /// @return What to do with each key, in order.
+    /// @throws IllegalArgumentException If a `{` or `[` isn't closed or is empty, as user-event
+    ///                                  throws, e.g. for `{Enter`.
     static List<KeyAction> parse(final String keys) {
         final List<KeyAction> actions = new ArrayList<>();
         int i = 0;
         while (i < keys.length()) {
             final char chr = keys.charAt(i);
-            final char close = chr == '{'
-                    ? '}'
-                    : ']';
             if ((chr == '{' || chr == '[') && i + 1 < keys.length() && keys.charAt(i + 1) == chr) {
                 // {{ or [[ is a literal brace or bracket
-                actions.add(new KeyAction(String.valueOf(chr), true, true, 1));
+                actions.add(byCharacter(String.valueOf(chr)));
                 i += 2;
-            } else if ((chr == '{' || chr == '[') && keys.indexOf(close, i) > i + 1) {
+            } else if (chr == '{' || chr == '[') {
+                final char close = chr == '{'
+                        ? '}'
+                        : ']';
                 final int end = keys.indexOf(close, i);
-                actions.add(parseDescriptor(keys.substring(i + 1, end), chr == '['));
+                if (end < 0) {
+                    throw new IllegalArgumentException("Expected \"" + close + "\" after \"" + keys.substring(i)
+                                                       + "\" in \"" + keys + "\"");
+                }
+                final String descriptor = keys.substring(i + 1, end);
+                if (descriptor.isEmpty() || "/".equals(descriptor)) {
+                    throw new IllegalArgumentException("Expected key descriptor but found \"" + close
+                                                       + "\" in \"" + keys + "\"");
+                }
+                actions.add(parseDescriptor(descriptor, chr == '['));
                 i = end + 1;
             } else {
-                actions.add(new KeyAction(String.valueOf(chr), true, true, 1));
+                actions.add(byCharacter(String.valueOf(chr)));
                 i++;
             }
         }
         return actions;
+    }
+
+    private static KeyAction byCharacter(final String character) {
+        return new KeyAction(character, code(character), true, true, 1);
     }
 
     private static KeyAction parseDescriptor(final String descriptor, final boolean byCode) {
@@ -192,10 +204,10 @@ final class Keys {
                 }
             }
         }
-        final String key = byCode
-                ? keyForCode(name)
-                : keyForName(name);
-        return new KeyAction(key, press, release, repeat);
+        final String[] keyAndCode = byCode
+                ? lookUpCode(name)
+                : lookUpName(name);
+        return new KeyAction(keyAndCode[0], keyAndCode[1], press, release, repeat);
     }
 
     private static int parseRepeat(final String text) {
@@ -210,33 +222,41 @@ final class Keys {
         return Math.max(1, value);
     }
 
-    /// @param name A key name from between braces, e.g. `Enter` or `enter`.
-    /// @return The key value, e.g. `Enter`.
-    static String keyForName(final String name) {
-        if (name.length() == 1 || KEY_CODES.containsKey(name)) {
-            return name;
-        }
-        final String alias = ALIASES.get(name.toLowerCase());
-        return alias != null
-                ? alias
-                : name;
-    }
-
-    /// @param code A key code from between brackets, e.g. `KeyA`, `Digit1` or `ShiftLeft`.
-    /// @return The key value, e.g. `a`, `1` or `Shift`.
-    static String keyForCode(final String code) {
-        if (code.length() == 4 && code.startsWith("Key")) {
-            return code.substring(3).toLowerCase();
-        }
-        if (code.length() == 6 && code.startsWith("Digit")) {
-            return code.substring(5);
-        }
-        for (final Map.Entry<String, String> entry : PUNCTUATION_CODES.entrySet()) {
-            if (entry.getValue().equals(code)) {
-                return entry.getKey();
+    // As user-event's parseKeyDef for {name}: the first key on the keyboard whose key matches,
+    // ignoring case, or an unknown key with the name as its key
+    private static String[] lookUpName(final String name) {
+        for (final String[] keyAndCode : KEY_MAP) {
+            if (keyAndCode[0].equalsIgnoreCase(name)) {
+                return keyAndCode;
             }
         }
-        return keyForName(code);
+        return new String[]{name, UNKNOWN};
+    }
+
+    // As user-event's parseKeyDef for [code]: the first key on the keyboard whose code matches,
+    // ignoring case, or an unknown key with the name as its code
+    private static String[] lookUpCode(final String code) {
+        for (final String[] keyAndCode : KEY_MAP) {
+            if (keyAndCode[1].equalsIgnoreCase(code)) {
+                return keyAndCode;
+            }
+        }
+        return new String[]{UNKNOWN, code};
+    }
+
+    /// @param name A key name from between braces, e.g. `Enter` or `enter`.
+    /// @return The key value, e.g. `Enter`; an unknown name is its own key value, as in
+    /// user-event, e.g. `{Foo}` presses a key `Foo` whose `code` is `Unknown`.
+    static String keyForName(final String name) {
+        return lookUpName(name)[0];
+    }
+
+    /// @param code A key code from between brackets, e.g. `KeyA`, `Digit1` or `ShiftLeft`, in any
+    ///             case, as user-event looks codes up ignoring case.
+    /// @return The key value, e.g. `a`, `1` or `Shift`, or `Unknown` for a code that isn't on
+    /// user-event's keyboard.
+    static String keyForCode(final String code) {
+        return lookUpCode(code)[0];
     }
 
     /// @param key A key value, e.g. `a`, `A`, `Enter` or ` `.
@@ -260,25 +280,16 @@ final class Keys {
     }
 
     /// @param key A key value.
-    /// @return The `code` of the physical key, e.g. `KeyA`, `Digit1`, `Space` or `Enter`.
+    /// @return The `code` user-event 14 gives a typed character or named key, from its US keyboard
+    /// map, e.g. `KeyA`, `Digit1` (also for `!`), `BracketLeft` (also for `{`), `Space`,
+    /// `ShiftLeft` or `Enter`, or `Unknown` for a key not on it, e.g. `.`, `-`, `F1` or `Foo`.
     static String code(final String key) {
-        if (key.length() == 1) {
-            final char chr = key.charAt(0);
-            if ((chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z')) {
-                return "Key" + String.valueOf(chr).toUpperCase();
+        for (final String[] keyAndCode : KEY_MAP) {
+            if (keyAndCode[0].equals(key)) {
+                return keyAndCode[1];
             }
-            if (chr >= '0' && chr <= '9') {
-                return "Digit" + chr;
-            }
-            final String punctuation = PUNCTUATION_CODES.get(key);
-            return punctuation != null
-                    ? punctuation
-                    : "";
         }
-        if ("Shift".equals(key) || "Control".equals(key) || "Alt".equals(key) || "Meta".equals(key)) {
-            return key + "Left";
-        }
-        return key;
+        return UNKNOWN;
     }
 
     /// @param key A key value.
@@ -312,74 +323,121 @@ final class Keys {
 
     /// @param key       A key value.
     /// @param modifiers The modifiers held, as a mask of [#SHIFT] etc.
-    /// @return True if pressing the key fires a `keypress` event, i.e. it types a character (and
-    /// no Control, Alt or Meta is held) or it's Enter.
+    /// @return True if pressing the key fires a `keypress` event, as user-event 14 decides: it
+    /// types a character or it's Enter, and neither Control nor Alt is held (Meta doesn't stop it).
     static boolean firesKeyPress(final String key, final int modifiers) {
-        if ("Enter".equals(key)) {
-            return true;
-        }
-        return key.length() == 1 && (modifiers & (CONTROL | ALT | META)) == 0;
+        return (key.length() == 1 || "Enter".equals(key)) && (modifiers & (CONTROL | ALT)) == 0;
     }
 
+    /// What user-event 14 does by default when a key's `keydown` isn't cancelled (its keydown
+    /// "behaviour"), whatever modifiers are held, except Control with the A key selecting all.
+    ///
     /// @param key       A key value.
+    /// @param code      The physical key, e.g. `KeyA`.
     /// @param modifiers The modifiers held, as a mask of [#SHIFT] etc.
-    /// @return What the browser does by default when the key is pressed (unless the `keydown` is
-    /// cancelled).
-    static DefaultAction defaultAction(final String key, final int modifiers) {
-        final boolean shortcut = (modifiers & (CONTROL | META)) != 0;
-        if (SELECT_ALL.equals(key) || (shortcut && "a".equalsIgnoreCase(key))) {
-            return DefaultAction.SELECT_ALL;
-        }
-        if (shortcut || (modifiers & ALT) != 0) {
-            return DefaultAction.NONE;
-        }
+    /// @return The default action, or [DefaultAction#NONE].
+    static DefaultAction keyDownAction(final String key, final String code, final int modifiers) {
         switch (key) {
-            case "Tab":
-                return (modifiers & SHIFT) != 0
-                        ? DefaultAction.FOCUS_PREVIOUS
-                        : DefaultAction.FOCUS_NEXT;
-            case "Enter":
-                return DefaultAction.ENTER;
+            case "ArrowDown":
+                return DefaultAction.ARROW_DOWN;
+            case "ArrowUp":
+                return DefaultAction.ARROW_UP;
+            case "ArrowLeft":
+                return DefaultAction.MOVE_LEFT;
+            case "ArrowRight":
+                return DefaultAction.MOVE_RIGHT;
             case "Backspace":
                 return DefaultAction.DELETE_BACKWARD;
             case "Delete":
                 return DefaultAction.DELETE_FORWARD;
-            case "Home":
-                return DefaultAction.MOVE_TO_START;
             case "End":
                 return DefaultAction.MOVE_TO_END;
+            case "Home":
+                return DefaultAction.MOVE_TO_START;
+            case "PageDown":
+                return DefaultAction.PAGE_DOWN;
+            case "PageUp":
+                return DefaultAction.PAGE_UP;
+            case "Tab":
+                return (modifiers & SHIFT) != 0
+                        ? DefaultAction.FOCUS_PREVIOUS
+                        : DefaultAction.FOCUS_NEXT;
             default:
-                return key.length() == 1
-                        ? DefaultAction.TYPE
+                // As user-event, only Control (not Meta) with the A key selects all
+                return "KeyA".equals(code) && (modifiers & CONTROL) != 0
+                        ? DefaultAction.SELECT_ALL
                         : DefaultAction.NONE;
         }
+    }
+
+    /// What user-event 14 does by default when a key's `keypress` (see
+    /// [#firesKeyPress(String, int)]) isn't cancelled.
+    ///
+    /// @param key A key value that fires a `keypress`.
+    /// @return [DefaultAction#ENTER] for Enter, otherwise [DefaultAction#TYPE].
+    static DefaultAction keyPressAction(final String key) {
+        return "Enter".equals(key)
+                ? DefaultAction.ENTER
+                : DefaultAction.TYPE;
+    }
+
+    /// The equivalent of [#keyDownAction(String, String, int)] then, if the key fires a `keypress`,
+    /// [#keyPressAction(String)], for describing what pressing a key does.
+    ///
+    /// @param key       A key value.
+    /// @param modifiers The modifiers held, as a mask of [#SHIFT] etc.
+    /// @return The keydown's default action, or if it has none, the keypress's, or
+    /// [DefaultAction#NONE].
+    static DefaultAction defaultAction(final String key, final int modifiers) {
+        final DefaultAction keyDown = keyDownAction(key, code(key), modifiers);
+        if (keyDown != DefaultAction.NONE) {
+            return keyDown;
+        }
+        return firesKeyPress(key, modifiers)
+                ? keyPressAction(key)
+                : DefaultAction.NONE;
     }
 
 
     // --------------------------------------------------------------------------------
 
 
-    /// What a browser does by default when a key is pressed.
+    /// What user-event 14 does by default when a key is pressed (unless the event is cancelled).
     enum DefaultAction {
         /// Nothing.
         NONE,
-        /// Types the character into the focused text field.
+        /// Types the character into the focused editable element.
         TYPE,
         /// Deletes the selection, or the character before the caret.
         DELETE_BACKWARD,
         /// Deletes the selection, or the character after the caret.
         DELETE_FORWARD,
-        /// Selects all the text in the focused field.
+        /// Selects all the text in the focused field (or content editable element, or page).
         SELECT_ALL,
         /// Moves the caret to the start of the field.
         MOVE_TO_START,
         /// Moves the caret to the end of the field.
         MOVE_TO_END,
+        /// In a radio button, checks the previous one in its group; otherwise collapses the
+        /// selection to its start, or moves the caret one character left.
+        MOVE_LEFT,
+        /// In a radio button, checks the next one in its group; otherwise collapses the
+        /// selection to its end, or moves the caret one character right.
+        MOVE_RIGHT,
+        /// In a radio button, checks the previous one in its group.
+        ARROW_UP,
+        /// In a radio button, checks the next one in its group.
+        ARROW_DOWN,
+        /// In an input, moves the caret to the start.
+        PAGE_UP,
+        /// In an input, moves the caret to the end.
+        PAGE_DOWN,
         /// Moves the focus to the next focusable element.
         FOCUS_NEXT,
         /// Moves the focus to the previous focusable element.
         FOCUS_PREVIOUS,
-        /// Clicks a focused button or link, or types a new line in a text area.
+        /// Clicks a focused button, link or button-like input, submits the form of a focused
+        /// input, or types a new line in an editable element.
         ENTER
     }
 
@@ -391,16 +449,19 @@ final class Keys {
     static final class KeyAction {
 
         private final String key;
+        private final String code;
         private final boolean press;
         private final boolean release;
         private final int repeat;
 
         /// @param key     The key value, e.g. `a` or `Enter`.
+        /// @param code    The physical key, e.g. `KeyA` or `Enter`.
         /// @param press   True to press the key.
         /// @param release True to release the key (after pressing it if `press`).
         /// @param repeat  How many times to press it.
-        KeyAction(final String key, final boolean press, final boolean release, final int repeat) {
+        KeyAction(final String key, final String code, final boolean press, final boolean release, final int repeat) {
             this.key = key;
+            this.code = code;
             this.press = press;
             this.release = release;
             this.repeat = repeat;
@@ -409,6 +470,11 @@ final class Keys {
         /// @return The key value, e.g. `a` or `Enter`.
         String getKey() {
             return key;
+        }
+
+        /// @return The physical key, e.g. `KeyA`, `ShiftRight` or `Unknown`.
+        String getCode() {
+            return code;
         }
 
         /// @return True to press the key.
@@ -426,6 +492,7 @@ final class Keys {
             return repeat;
         }
 
+        /// @return The action in a compact form for debugging, e.g. `a`, `/Shift` or `Shift>1`.
         @Override
         public String toString() {
             return (press

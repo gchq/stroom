@@ -51,11 +51,16 @@ public final class RecentItemsDialogStories {
     /// The name of the spy recording the documents opened.
     static final String OPEN_DOC_SPY = "onOpenDoc";
 
+    // The rows of the dialog's result list (GWT marks each data row of a CellTable with __gwt_row)
+    private static final String RESULT_ROWS = ".FindCellTable tr[__gwt_row]";
+
     private static final DocRef RECENT_DICTIONARY = new DocRef("Dictionary", "d-1", "Recent Dictionary");
     private static final DocRef OLDER_FEED = new DocRef("Feed", "f-1", "Older Feed");
 
-    // The reply of ExplorerResource.find(). Unlike the React dialog, the GWT one shows the results
-    // in the order the server returns them (the server orders them by recency)
+    // The reply of ExplorerResource.find(), in the order of recency.
+    // Differs from React: the React fixture returns the results in the wrong order to prove that
+    // the React dialog reorders them by recency; the GWT dialog shows them in the order the server
+    // returns them (the server orders them by recency), so this fixture is already in that order
     private static final String FIND_RESULTS = """
             {
               "values": [
@@ -85,7 +90,8 @@ public final class RecentItemsDialogStories {
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/RecentItemsDialog", RecentItemsDialogStories.class)
-                .layout(StoryLayout.FULLSCREEN)
+                // As React's 'centered'; the dialog itself is shown on the page's body
+                .layout(StoryLayout.CENTERED)
                 // Recent items load; double-click opens the document
                 .story("Recent", context -> render(context, Arrays.asList(RECENT_DICTIONARY, OLDER_FEED)))
                 .withPlay(play -> {
@@ -94,6 +100,7 @@ public final class RecentItemsDialogStories {
                     screen.findByText("Recent Items");
                     screen.findByText("Recent Dictionary");
                     play.expect(screen.getByText("Older Feed")).toBeInTheDocument();
+                    play.expect(screen.querySelectorAll(RESULT_ROWS)).toHaveLength(2);
                     // The recent items are sent to the server to find
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY))
                             .toHaveBeenCalledWith(ValueMatcher.stringContaining("POST /explorer/v2/find"));
@@ -105,14 +112,19 @@ public final class RecentItemsDialogStories {
                             .toHaveBeenCalledWith("Dictionary Recent Dictionary"));
                     // Opening a document closes the dialog
                     play.waitFor(() -> play.expect(screen.queryByText("Recent Items")).toBeNull());
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Empty history shows no results, without asking the server
                 .story("Empty", context -> render(context, Collections.emptyList()))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText("Recent Items");
+                    // Differs from React: the React dialog shows "There are no recent items."; the
+                    // GWT dialog shows an empty result list with no message
+                    play.expect(screen.querySelectorAll(RESULT_ROWS)).toHaveLength(0);
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalled();
-                    play.expect(screen.queryByText("Recent Dictionary")).toBeNull();
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 });
     }
 
@@ -136,6 +148,7 @@ public final class RecentItemsDialogStories {
                 resultList,
                 recentItems);
 
+        harness.fn(OPEN_DOC_SPY);
         eventBus.addHandler(OpenDocumentEvent.getType(), event ->
                 harness.spy(OPEN_DOC_SPY, event.getDocRef().getType() + " " + event.getDocRef().getName()));
 

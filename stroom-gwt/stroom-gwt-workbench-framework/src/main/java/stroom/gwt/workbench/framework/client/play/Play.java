@@ -45,39 +45,71 @@ import java.util.function.Supplier;
 /// Calling a method adds a step; the steps run once the play function has returned. Queries and
 /// values are lazy, so find their element (or read their value) when the step runs.
 ///
+/// Steps can only be added while the play function runs, not while a step runs: e.g. calling
+/// `play.click(...)` inside [#run(String, Runnable)] or a [Value]'s supplier throws a
+/// [PlayException] (rather than being silently ignored). To use a value read part way through the
+/// play in a later step, capture it with [#capture(String, Supplier)].
+///
+/// A `findBy*`/`findAllBy*` method adds a step that waits for the element at the point it is
+/// called, as `await findBy...` waits there in a React play; the query it returns can then be used
+/// by later steps (which find the element again as they run). So
+/// `final Query dialog = screen.findByRole("dialog");` waits for the dialog, and a bare
+/// `screen.findByText("Saved");` is the equivalent of `await screen.findByText('Saved')`.
+///
 /// A builder's queries search the story's root element (`within(canvasElement)`); those of
 /// [#screen()] search the whole `<body>` (`within(document.body)`), where GWT attaches popups and
 /// dialogs; those of [#within(Query)] search an element.
 public final class Play {
 
-    private final List<PlayStep> steps;
-    // The lists steps are added to, the top one changing inside step(...) and waitFor(...).
-    // Shared with any builders created by within(...).
-    private final Deque<List<PlayStep>> targets;
+    // Shared with any builders created by screen() and within(...)
+    private final Build build;
     private final Query scope;
 
     /// Creates a play builder for a whole story.
     public Play() {
-        this(null, new ArrayDeque<>(), new ArrayList<>());
-        targets.push(steps);
+        this(null, new Build());
     }
 
-    private Play(final Query scope, final Deque<List<PlayStep>> targets, final List<PlayStep> steps) {
+    private Play(final Query scope, final Build build) {
         this.scope = scope;
-        this.targets = targets;
-        this.steps = steps;
+        this.build = build;
     }
 
     /// @return The steps added, in order.
     List<PlayStep> getSteps() {
-        return steps;
+        return build.steps;
+    }
+
+    /// Stops steps being added, as the play function has returned and its steps are about to
+    /// run. Called by [PlayRunner].
+    void finishBuilding() {
+        build.finished = true;
+    }
+
+    /// @return True while the play function is adding its steps, i.e. it hasn't returned and no
+    /// step is running.
+    boolean isBuilding() {
+        return !build.finished && !PlayStep.isRunning();
     }
 
     /// Adds a step to the play function, or to the `step` or `waitFor` group being built.
     ///
     /// @param step The step.
+    /// @throws PlayException If the play function has finished adding its steps, e.g. a step is
+    ///                       added inside [#run(String, Runnable)].
     void addStep(final PlayStep step) {
-        targets.peek().add(step);
+        checkBuilding();
+        build.targets.peek().add(step);
+    }
+
+    private void checkBuilding() {
+        if (build.finished || PlayStep.isRunning()) {
+            throw new PlayException("A step can't be added while the steps run, e.g. by play.click(...), "
+                                    + "play.expect(...) or play.findBy...(...) inside play.run(...) or a "
+                                    + "value's supplier. Add the step in the play function itself, use "
+                                    + "play.waitFor(...) to retry it, or play.capture(...) to read a value "
+                                    + "for a later step.");
+        }
     }
 
     // ---------- Scopes ----------
@@ -86,14 +118,14 @@ public final class Play {
     /// `within(document.body)` or `screen`. Use it for popups, menus and dialogs, which GWT
     /// attaches to the body rather than the story's root element.
     public Play screen() {
-        return new Play(Query.body(), targets, steps);
+        return new Play(Query.body(), build);
     }
 
     /// @param container A query for the element to search within.
     /// @return A builder whose queries only find elements within the container, the equivalent of
     /// `within(element)`.
     public Play within(final Query container) {
-        return new Play(Objects.requireNonNull(container, "container"), targets, steps);
+        return new Play(Objects.requireNonNull(container, "container"), build);
     }
 
     /// @return A query for the document's `<body>` element itself, e.g. as the target of
@@ -114,7 +146,11 @@ public final class Play {
     }
 
     /// A query for the single element with the role and accessible name, the equivalent of `getByRole(role,
-    /// { name })`; an error if there's none or several.
+    /// { name })`; an error if there's none or several. The accessible name is worked out as
+    /// Testing Library does (`aria-labelledby`, then `aria-label`, then e.g. a label, `alt` or,
+    /// for roles such as button, link, tab and option, the visible text of the content), so
+    /// hidden content doesn't count. For any name, use [#getByRole(String)] (a null name, which
+    /// must be cast, e.g. `(String) null`, also means any).
     ///
     /// @param role The ARIA role, e.g. `button`.
     /// @param name The accessible name, exactly, e.g. the button's text.
@@ -161,6 +197,16 @@ public final class Play {
     /// @return The query.
     public Query getByText(final TextMatch text, final String selector) {
         return byText(Variant.GET, text, selector);
+    }
+
+    /// A query for the single element whose own text is the text and that matches the selector, the
+    /// equivalent of `getByText(text, { selector })`; an error if there's none or several.
+    ///
+    /// @param text     The element's own text (whitespace collapsed), exactly.
+    /// @param selector Only elements matching this CSS selector are included, e.g. `label`.
+    /// @return The query.
+    public Query getByText(final String text, final String selector) {
+        return byText(Variant.GET, TextMatch.exact(text), selector);
     }
 
     /// A query for the single element labelled with matching text, the equivalent of
@@ -311,6 +357,16 @@ public final class Play {
     /// @return The query.
     public Query getAllByText(final TextMatch text, final String selector) {
         return byText(Variant.GET_ALL, text, selector);
+    }
+
+    /// A query for all the elements whose own text is the text and that match the selector (at least
+    /// one), the equivalent of `getAllByText(text, { selector })`.
+    ///
+    /// @param text     The element's own text (whitespace collapsed), exactly.
+    /// @param selector Only elements matching this CSS selector are included, e.g. `label`.
+    /// @return The query.
+    public Query getAllByText(final String text, final String selector) {
+        return byText(Variant.GET_ALL, TextMatch.exact(text), selector);
     }
 
     /// A query for all the elements labelled with matching text (at least one), the equivalent of
@@ -464,6 +520,16 @@ public final class Play {
         return byText(Variant.QUERY, text, selector);
     }
 
+    /// A query for the single element whose own text is the text and that matches the selector, if any,
+    /// the equivalent of `queryByText(text, { selector })`.
+    ///
+    /// @param text     The element's own text (whitespace collapsed), exactly.
+    /// @param selector Only elements matching this CSS selector are included, e.g. `label`.
+    /// @return The query.
+    public Query queryByText(final String text, final String selector) {
+        return byText(Variant.QUERY, TextMatch.exact(text), selector);
+    }
+
     /// A query for the single element labelled with matching text, if any, the equivalent of
     /// `queryByLabelText(label)`, e.g. for `toBeNull()`.
     ///
@@ -612,6 +678,16 @@ public final class Play {
     /// @return The query.
     public Query queryAllByText(final TextMatch text, final String selector) {
         return byText(Variant.QUERY_ALL, text, selector);
+    }
+
+    /// A query for all the elements whose own text is the text and that match the selector (perhaps
+    /// none), the equivalent of `queryAllByText(text, { selector })`.
+    ///
+    /// @param text     The element's own text (whitespace collapsed), exactly.
+    /// @param selector Only elements matching this CSS selector are included, e.g. `label`.
+    /// @return The query.
+    public Query queryAllByText(final String text, final String selector) {
+        return byText(Variant.QUERY_ALL, TextMatch.exact(text), selector);
     }
 
     /// A query for all the elements labelled with matching text (perhaps none), the equivalent of
@@ -765,6 +841,16 @@ public final class Play {
         return byText(Variant.FIND, text, selector);
     }
 
+    /// Waits for a single element whose own text is the text and that matches the selector, then
+    /// returns a query for it, the equivalent of `findByText(text, { selector })`.
+    ///
+    /// @param text     The element's own text (whitespace collapsed), exactly.
+    /// @param selector Only elements matching this CSS selector are included, e.g. `label`.
+    /// @return The query.
+    public Query findByText(final String text, final String selector) {
+        return byText(Variant.FIND, TextMatch.exact(text), selector);
+    }
+
     /// Waits for a single element labelled with matching text, then returns a query for it, the equivalent
     /// of `findByLabelText(label)`.
     ///
@@ -916,6 +1002,16 @@ public final class Play {
         return byText(Variant.FIND_ALL, text, selector);
     }
 
+    /// Waits for at least one element whose own text is the text and that matches the selector, then
+    /// returns a query for them all, the equivalent of `findAllByText(text, { selector })`.
+    ///
+    /// @param text     The element's own text (whitespace collapsed), exactly.
+    /// @param selector Only elements matching this CSS selector are included, e.g. `label`.
+    /// @return The query.
+    public Query findAllByText(final String text, final String selector) {
+        return byText(Variant.FIND_ALL, TextMatch.exact(text), selector);
+    }
+
     /// Waits for at least one element labelled with matching text, then returns a query for them all, the
     /// equivalent of `findAllByLabelText(label)`.
     ///
@@ -1009,12 +1105,13 @@ public final class Play {
     // ---------- CSS selectors ----------
 
     /// @param selector A CSS selector.
-    /// @return A query for the single element matching the selector, the equivalent of
-    /// `container.querySelector(selector)` (but an error if several match; use [Query#first()]
-    /// for the first).
+    /// @return A query for the first element matching the selector, the equivalent of
+    /// `container.querySelector(selector)`; several matching isn't an error. As an expectation's
+    /// subject, e.g. `toBeNull()`, it matches at most one element.
     public Query querySelector(final String selector) {
         return build(Variant.SELECTOR, "", Expectation.quote(selector),
                 "Unable to find an element matching: " + selector,
+                "Found multiple elements matching: " + selector,
                 container -> Dom.querySelectorAll(container, selector));
     }
 
@@ -1024,6 +1121,7 @@ public final class Play {
     public Query querySelectorAll(final String selector) {
         return build(Variant.SELECTOR_ALL, "", Expectation.quote(selector),
                 "Unable to find an element matching: " + selector,
+                "Found multiple elements matching: " + selector,
                 container -> Dom.querySelectorAll(container, selector));
     }
 
@@ -1032,11 +1130,12 @@ public final class Play {
         final String args = Expectation.quote(role) + (name != null
                 ? ", { name: " + name.describe() + " }"
                 : "");
+        final String nameText = name != null
+                ? " and name " + name.describe()
+                : "";
         return build(variant, "ByRole", args,
-                "Unable to find an accessible element with the role " + Expectation.quote(role)
-                + (name != null
-                        ? " and name " + name.describe()
-                        : ""),
+                "Unable to find an accessible element with the role " + Expectation.quote(role) + nameText,
+                "Found multiple elements with the role " + Expectation.quote(role) + nameText,
                 container -> Dom.queryAllByRole(container, role, name));
     }
 
@@ -1045,10 +1144,12 @@ public final class Play {
         final String args = text.describe() + (selector != null
                 ? ", { selector: " + Expectation.quote(selector) + " }"
                 : "");
+        final String selectorText = selector != null
+                ? " matching " + selector
+                : "";
         return build(variant, "ByText", args,
-                "Unable to find an element with the text: " + text.describe() + (selector != null
-                        ? " matching " + selector
-                        : ""),
+                "Unable to find an element with the text: " + text.describe() + selectorText,
+                "Found multiple elements with the text: " + text.describe() + selectorText,
                 container -> Dom.queryAllByText(container, text, selector));
     }
 
@@ -1056,6 +1157,7 @@ public final class Play {
         Objects.requireNonNull(label, "label");
         return build(variant, "ByLabelText", label.describe(),
                 "Unable to find a label with the text of: " + label.describe(),
+                "Found multiple elements with the text of: " + label.describe(),
                 container -> Dom.queryAllByLabelText(container, label));
     }
 
@@ -1063,6 +1165,7 @@ public final class Play {
         Objects.requireNonNull(title, "title");
         return build(variant, "ByTitle", title.describe(),
                 "Unable to find an element with the title: " + title.describe(),
+                "Found multiple elements with the title: " + title.describe(),
                 container -> Dom.queryAllByTitle(container, title));
     }
 
@@ -1070,6 +1173,7 @@ public final class Play {
         Objects.requireNonNull(placeholder, "placeholder");
         return build(variant, "ByPlaceholderText", placeholder.describe(),
                 "Unable to find an element with the placeholder text of: " + placeholder.describe(),
+                "Found multiple elements with the placeholder text of: " + placeholder.describe(),
                 container -> Dom.queryAllByAttribute(container, "placeholder", placeholder));
     }
 
@@ -1077,6 +1181,7 @@ public final class Play {
         Objects.requireNonNull(testId, "testId");
         return build(variant, "ByTestId", testId.describe(),
                 "Unable to find an element by: [data-testid=" + testId.describe() + "]",
+                "Found multiple elements by: [data-testid=" + testId.describe() + "]",
                 container -> Dom.queryAllByAttribute(container, "data-testid", testId));
     }
 
@@ -1084,6 +1189,7 @@ public final class Play {
         Objects.requireNonNull(value, "value");
         return build(variant, "ByDisplayValue", value.describe(),
                 "Unable to find an element with the display value: " + value.describe(),
+                "Found multiple elements with the display value: " + value.describe(),
                 container -> Dom.queryAllByDisplayValue(container, value));
     }
 
@@ -1091,9 +1197,10 @@ public final class Play {
                         final String by,
                         final String args,
                         final String notFoundMessage,
+                        final String multipleMessage,
                         final Function<Element, JsArray<Element>> finder) {
         final Query query = new Query(scope, variant.singleMethod + by, variant.allMethod + by, args,
-                variant.all, notFoundMessage, finder);
+                variant.all, notFoundMessage, multipleMessage, variant == Variant.SELECTOR, finder);
         if (variant.findMethod != null) {
             final String description = query.describeAs(variant.findMethod + by);
             addStep(PlayStep.group(Kind.WAIT_FOR, root -> description, List.of(
@@ -1116,44 +1223,57 @@ public final class Play {
     /// @return The story's spy with the name, the equivalent of `args.onClick` when it's a `fn()`,
     /// e.g. for `play.expect(play.spy("onClick")).toHaveBeenCalled()`.
     public Spy spy(final String name) {
-        return Spies.get(name);
+        return Spy.playSpy(name, this);
     }
 
     // ---------- User events ----------
 
-    /// Clicks an element, as `userEvent.click` does: moves the mouse onto it, presses and releases
-    /// the main button (moving the focus) and fires `click`.
+    /// Clicks an element, as `userEvent.click` does: moves the mouse onto it (from the body, as
+    /// each `userEvent` call in a React play starts with a new pointer), presses and releases the
+    /// main button (putting the caret at the end of a field's text and moving the focus) and
+    /// fires `click`. As in user-event, the step fails if the element has (or inherits)
+    /// `pointer-events: none`, and a disabled element (or one in a disabled form control or
+    /// field set) only gets the pointer events and the mouse moving over it, no `mousedown`,
+    /// `mouseup` or `click`. See `Dom.click` for the details.
     ///
     /// @param target The element.
     public void click(final Query target) {
-        addUserEvent("click", target, null, root -> Dom.click(target.resolve(root), 1, 0, 0));
+        addUserEvent("click", target, null, root -> Dom.click(target.resolve(root), 1, 0, 0, true));
     }
 
-    /// Double clicks an element, as `userEvent.dblClick` does: two clicks, then `dblclick`.
+    /// Double clicks an element, as `userEvent.dblClick` does: two clicks, then `dblclick`. As in
+    /// user-event, the second press selects the last word of a field's text.
     ///
     /// @param target The element.
     public void dblClick(final Query target) {
-        addUserEvent("dblClick", target, null, root -> Dom.click(target.resolve(root), 2, 0, 0));
+        addUserEvent("dblClick", target, null, root -> Dom.click(target.resolve(root), 2, 0, 0, true));
     }
 
     /// Right clicks an element, as `userEvent.pointer({ keys: "[MouseRight]", target })` does:
-    /// presses and releases the secondary button and fires `contextmenu`.
+    /// presses and releases the secondary button, firing `contextmenu` and `auxclick`. As in
+    /// user-event, the mouse isn't moved onto the element first, so there are no `mouseover`,
+    /// `mouseenter` or `mousemove` events.
     ///
     /// @param target The element.
     public void rightClick(final Query target) {
         addStep(PlayStep.action(root -> "userEvent.pointer({ keys: \"[MouseRight]\", target: "
                                         + target.describe() + " })",
-                root -> Dom.click(target.resolve(root), 1, 2, 0)));
+                root -> Dom.click(target.resolve(root), 1, 2, 0, false)));
     }
 
-    /// Moves the mouse onto an element, as `userEvent.hover` does.
+    /// Moves the mouse onto an element, as `userEvent.hover` does: from the body (as each
+    /// `userEvent` call in a React play starts with a new pointer), so `pointerout` and
+    /// `mouseout` fire on the body, then the over, enter and move events on the element.
     ///
     /// @param target The element.
     public void hover(final Query target) {
         addUserEvent("hover", target, null, root -> Dom.hover(target.resolve(root), true));
     }
 
-    /// Moves the mouse off an element, as `userEvent.unhover` does.
+    /// Moves the mouse off an element, as `userEvent.unhover` does. As in a React play, where each
+    /// `userEvent` call starts with a new pointer over the body, this only fires `pointermove` and
+    /// `mousemove` on the body: it does NOT fire `mouseout` or `mouseleave` on the element. Use
+    /// `play.fireEvent().mouseOut(...)` etc. where the React play does.
     ///
     /// @param target The element.
     public void unhover(final Query target) {
@@ -1162,22 +1282,39 @@ public final class Play {
 
     /// Clicks a field then types into it, as `userEvent.type` does, appending to its text. The
     /// text may include special keys in user-event's syntax, e.g. `abc{Enter}` (see
-    /// [#keyboard(String)]). The field fires `input` for each character and `change` when it
-    /// loses the focus.
+    /// [#keyboard(String)]). The field fires `beforeinput` and `input` for each character and
+    /// `change` when it loses the focus. As in user-event, typing into a disabled field does
+    /// nothing, typing into a read only field only fires the key events, `maxlength` is honoured
+    /// and a number field only takes text a browser accepts (keeping e.g. `1.` as typed until
+    /// `1.5` is complete). The click puts the caret at the end of the text (unless its
+    /// `pointerdown` or `mousedown` is cancelled), and typing into a content editable element
+    /// inserts the text there, keeping its markup. Keys still held at the end (e.g. `{Shift>}`)
+    /// are released.
     ///
     /// @param target The field.
     /// @param text   The text to type.
     public void type(final Query target, final String text) {
         final List<KeyAction> actions = Keys.parse(text);
-        addUserEvent("type", target, text, root -> {
-            final Element element = target.resolve(root);
-            Dom.click(element, 1, 0, 0);
-            Dom.moveCaretToEnd(element);
-            Keyboard.press(root, actions);
-        });
+        addUserEvent("type", target, text, root -> typeInto(target.resolve(root), actions));
     }
 
-    /// Clears a field, as `userEvent.clear` does: focuses it, selects its text and deletes it.
+    /// Does what `userEvent.type` does: nothing if the element is disabled, otherwise clicks it
+    /// (putting the caret at the end of its text) and presses the keys, releasing any still held
+    /// at the end.
+    ///
+    /// @param element The field.
+    /// @param actions The keys, from [Keys#parse(String)].
+    static void typeInto(final Element element, final List<KeyAction> actions) {
+        if (Dom.hasDisabledProperty(element)) {
+            // As user-event, which does nothing
+            return;
+        }
+        Dom.click(element, 1, 0, 0, true);
+        Keyboard.press(element, actions, true);
+    }
+
+    /// Clears a field, as `userEvent.clear` does: focuses it, selects its text and deletes it. As in
+    /// user-event, the step fails if the field is disabled or read only.
     ///
     /// @param target The field.
     public void clear(final Query target) {
@@ -1220,7 +1357,7 @@ public final class Play {
     public void keyboard(final String keys) {
         final List<KeyAction> actions = Keys.parse(keys);
         addStep(PlayStep.action(root -> "userEvent.keyboard(" + Expectation.quote(keys) + ")",
-                root -> Keyboard.press(root, actions)));
+                root -> Keyboard.press(root, actions, false)));
     }
 
     /// Presses Tab to move the focus to the next focusable element, as `userEvent.tab()` does.
@@ -1238,7 +1375,7 @@ public final class Play {
         addStep(PlayStep.action(root -> shift
                         ? "userEvent.tab({ shift: true })"
                         : "userEvent.tab()",
-                root -> Keyboard.press(root, actions)));
+                root -> Keyboard.press(root, actions, false)));
     }
 
     /// Chooses a file in a file input, as `userEvent.upload(input, new File([content], name,
@@ -1367,6 +1504,35 @@ public final class Play {
         addStep(PlayStep.sleep(root -> "sleep(" + millis + ")", millis));
     }
 
+    /// Adds a step that reads a value as it runs, for later steps to use, the equivalent of
+    /// `const before = spy.mock.calls.length;` part way through a React play, e.g.
+    /// ```
+    /// final Value<Integer> before = play.capture("before", spy.callCount());
+    /// play.click(button);
+    /// play.expect("calls since", () -> spy.getCallCount() - before.get()).toBe(1);
+    /// ```
+    /// Expected values (e.g. the argument of `toBe`) are fixed when the play function runs, so
+    /// put the captured value in the value being checked, as above.
+    ///
+    /// @param name  The name shown in the Interactions addon, e.g. `before`.
+    /// @param value Reads the value when the step runs.
+    /// @param <T>   The type of the value.
+    /// @return The value as read by the step. Reading it before the step has run (in this run of
+    /// the steps) throws a [PlayException].
+    public <T> Value<T> capture(final String name, final Supplier<T> value) {
+        Objects.requireNonNull(name, "name");
+        Objects.requireNonNull(value, "value");
+        final Captured<T> captured = new Captured<>(name);
+        final String label = value instanceof Value
+                ? ((Value<?>) value).getLabel()
+                : "value";
+        addStep(PlayStep.action(root -> "const " + name + " = " + (captured.isSet()
+                        ? Values.format(captured.value)
+                        : label),
+                root -> captured.set(value.get())));
+        return Value.of(name, captured::get);
+    }
+
     /// Adds a step that runs some code, for anything the other methods can't do, e.g. calling a
     /// widget's method or recording a value for a later expectation. [Query] values (e.g.
     /// `query.element().get()`) can be read in it.
@@ -1382,12 +1548,13 @@ public final class Play {
                           final Function<Element, String> describer,
                           final Runnable body,
                           final int timeoutMillis) {
+        checkBuilding();
         final List<PlayStep> children = new ArrayList<>();
-        targets.push(children);
+        build.targets.push(children);
         try {
             body.run();
         } finally {
-            targets.pop();
+            build.targets.pop();
         }
         addStep(PlayStep.group(kind, describer, children, timeoutMillis));
     }
@@ -1418,6 +1585,60 @@ public final class Play {
             this.allMethod = allMethod;
             this.all = all;
             this.findMethod = findMethod;
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The state shared by a play function's builders.
+    private static final class Build {
+
+        private final List<PlayStep> steps = new ArrayList<>();
+        // The lists steps are added to, the top one changing inside step(...) and waitFor(...)
+        private final Deque<List<PlayStep>> targets = new ArrayDeque<>();
+        // True once the play function has returned and its steps are running
+        private boolean finished;
+
+        private Build() {
+            targets.push(steps);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// A value read by a [#capture(String, Supplier)] step.
+    ///
+    /// @param <T> The type of the value.
+    private static final class Captured<T> {
+
+        private final String name;
+        private T value;
+        // The run of the steps (see PlayStep#currentRun()) the value was read in, or -1
+        private int runId = -1;
+
+        private Captured(final String name) {
+            this.name = name;
+        }
+
+        private void set(final T value) {
+            this.value = value;
+            this.runId = PlayStep.currentRun();
+        }
+
+        private boolean isSet() {
+            return runId == PlayStep.currentRun();
+        }
+
+        private T get() {
+            if (!isSet()) {
+                throw new PlayException("The captured value '" + name + "' was read before the step capturing it "
+                                        + "ran");
+            }
+            return value;
         }
     }
 }

@@ -48,6 +48,8 @@ class TestValueExpectation {
         assertPasses(List.of(1, 2), e -> e.toHaveLength(2));
         assertPasses("", e -> e.toHaveLength(0));
         assertFails(5, e -> e.toHaveLength(1), "does not have a length");
+        // Regression: a map's size counted as its length, but in Jest a Map has no length
+        assertFails(Map.of("a", 1), e -> e.toHaveLength(1), "does not have a length");
     }
 
     @Test

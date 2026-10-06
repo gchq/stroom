@@ -19,6 +19,7 @@ package stroom.gwt.workbench.framework.client.play;
 
 import com.google.gwt.dom.client.Element;
 
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -72,11 +73,24 @@ public final class Expectation {
     }
 
     /// Expects the element's text to contain some text, after whitespace is collapsed, as
-    /// `toHaveTextContent("text")` does.
+    /// `toHaveTextContent("text")` does. As in jest-dom, an empty string only matches an element
+    /// with no text (use it with [#not()] to expect some text).
     ///
     /// @param text The text.
     public void toHaveTextContent(final String text) {
-        add("toHaveTextContent(" + quote(text) + ")", element -> Dom.getTextContent(element).contains(text));
+        Objects.requireNonNull(text, "text");
+        add("toHaveTextContent(" + quote(text) + ")", element -> textContentMatches(Dom.getTextContent(element), text));
+    }
+
+    /// @param actual   The element's text with whitespace collapsed.
+    /// @param expected The text expected.
+    /// @return True if the text contains the expected text, as jest-dom's `toHaveTextContent`
+    /// checks, except that an empty string only matches empty text.
+    static boolean textContentMatches(final String actual, final String expected) {
+        if (expected.isEmpty()) {
+            return actual.isEmpty();
+        }
+        return actual.contains(expected);
     }
 
     /// Expects the element's text, after whitespace is collapsed, to match, as
@@ -87,9 +101,12 @@ public final class Expectation {
         add("toHaveTextContent(" + match.describe() + ")", element -> match.matches(Dom.getTextContent(element)));
     }
 
-    /// Expects the element to have all the CSS classes.
+    /// Expects the element to have all the CSS classes. As in jest-dom, `not().toHaveClass()` with
+    /// no classes expects the element to have no classes at all, and `toHaveClass()` with none is
+    /// an error.
     ///
     /// @param classNames The classes, each of which may be several separated by spaces.
+    /// @throws IllegalArgumentException If no classes are given and the expectation isn't negated.
     public void toHaveClass(final String... classNames) {
         final StringBuilder args = new StringBuilder();
         for (final String className : classNames) {
@@ -98,13 +115,28 @@ public final class Expectation {
             }
             args.append(quote(className));
         }
-        add("toHaveClass(" + args + ")", element -> hasClasses(element.getClassName(), classNames));
+        if (!negated && !anyClassGiven(classNames)) {
+            throw new IllegalArgumentException("toHaveClass() needs at least one class; use not().toHaveClass() "
+                                               + "to expect no classes");
+        }
+        add("toHaveClass(" + args + ")", element -> hasClasses(Dom.getClassName(element), classNames));
     }
 
-    /// @param actualClassName The element's `className`.
+    /// @param classNames Classes, each of which may be several separated by spaces.
+    /// @return True if there is at least one class among them.
+    static boolean anyClassGiven(final String... classNames) {
+        for (final String classNameList : classNames) {
+            if (classNameList != null && !classNameList.trim().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// @param actualClassName The element's classes.
     /// @param classNames      The expected classes, each of which may be several separated by
     ///                        spaces.
-    /// @return True if the element has all the classes (and at least one is given).
+    /// @return True if the element has all the classes or, if none are given, any class.
     static boolean hasClasses(final String actualClassName, final String... classNames) {
         final String padded = " " + (actualClassName != null
                 ? actualClassName.replace('\t', ' ').replace('\n', ' ')
@@ -120,7 +152,7 @@ public final class Expectation {
                 }
             }
         }
-        return any;
+        return any || !padded.trim().isEmpty();
     }
 
     /// Expects the element to have the keyboard focus.
@@ -128,24 +160,74 @@ public final class Expectation {
         add("toHaveFocus()", Dom::hasFocus);
     }
 
-    /// Expects a form field to have a value.
+    /// Expects a form field to have a text value, as jest-dom's `toHaveValue("text")` does, which
+    /// compares the value with its type: a text field's value is a string, but a number field's
+    /// is a number, so `toHaveValue("5")` fails for a number field (use
+    /// [#toHaveValue(Number)]). As in jest-dom, the step fails for a check box or radio button
+    /// (use [#toBeChecked()]), even with [#not()].
     ///
-    /// @param value The value.
+    /// @param value The value, e.g. `"Smith"`.
     public void toHaveValue(final String value) {
-        add("toHaveValue(" + quote(value) + ")", element -> value.equals(Dom.getValue(element)));
+        Objects.requireNonNull(value, "value");
+        addValue("toHaveValue(" + quote(value) + ")", value);
     }
 
-    /// Expects a check box (or ARIA checkbox) to be checked.
+    /// Expects a number field (or an element with a role such as `spinbutton` and
+    /// `aria-valuenow`) to have a numeric value, the equivalent of `toHaveValue(1.5)`. As in
+    /// jest-dom, a text field's value is a string, so never equals a number, and the step fails
+    /// for a check box or radio button, even with [#not()].
+    ///
+    /// @param value The number.
+    public void toHaveValue(final Number value) {
+        Objects.requireNonNull(value, "value");
+        addValue("toHaveValue(" + Values.formatNumber(value) + ")", value);
+    }
+
+    private void addValue(final String matcher, final Object expected) {
+        add(matcher, element -> {
+            if (Dom.isCheckableInput(element)) {
+                throw new PlayException("input with type=checkbox or type=radio cannot be used with "
+                                        + ".toHaveValue(). Use .toBeChecked() for type=checkbox or "
+                                        + ".toHaveFormValues() instead");
+            }
+            return typedValueMatches(Dom.getTypedValue(element), expected);
+        });
+    }
+
+    /// @param actual   The element's value as jest-dom reads it (see `Dom.getTypedValue`): a
+    ///                 String, a Double or null.
+    /// @param expected The value expected: a String or a Number.
+    /// @return True if the values are equal and of the same JavaScript type, as jest-dom
+    /// compares them, e.g. the number 5 doesn't equal the text `"5"`.
+    static boolean typedValueMatches(final Object actual, final Object expected) {
+        if (actual instanceof Number && expected instanceof Number) {
+            final double a = Values.toDouble((Number) actual);
+            final double e = Values.toDouble((Number) expected);
+            return a == e || (Double.isNaN(a) && Double.isNaN(e));
+        }
+        if (actual instanceof String && expected instanceof String) {
+            return actual.equals(expected);
+        }
+        return false;
+    }
+
+    /// Expects a check box, radio button or element with a checkable role (e.g. `checkbox`,
+    /// `switch` or `menuitemcheckbox`) and an `aria-checked` of `true` or `false` to be
+    /// checked, as jest-dom's `toBeChecked` does. As in jest-dom, an element that can't be
+    /// checked fails the expectation, so passes it with [#not()].
     public void toBeChecked() {
-        add("toBeChecked()", Dom::isChecked);
+        add("toBeChecked()", element -> Dom.getCheckedState(element) == 1);
     }
 
-    /// Expects the element to be disabled.
+    /// Expects the element to be disabled, as jest-dom decides: a form control (button, input,
+    /// select, text area, option, option group or field set) with the `disabled` attribute or in
+    /// a disabled field set (outside its first legend). As in jest-dom, `aria-disabled` doesn't
+    /// count; check it with `toHaveAttribute("aria-disabled", "true")`.
     public void toBeDisabled() {
         add("toBeDisabled()", Dom::isDisabled);
     }
 
-    /// Expects the element to be enabled.
+    /// Expects the element to be enabled, i.e. not [#toBeDisabled()].
     public void toBeEnabled() {
         add("toBeEnabled()", element -> !Dom.isDisabled(element));
     }
@@ -160,19 +242,48 @@ public final class Expectation {
     /// Expects the element to have an attribute with a value.
     ///
     /// @param name  The name of the attribute.
-    /// @param value The value.
+    /// @param value The value, or null for any value (as `toHaveAttribute(name, undefined)`).
     public void toHaveAttribute(final String name, final String value) {
+        if (value == null) {
+            toHaveAttribute(name);
+            return;
+        }
         add("toHaveAttribute(" + quote(name) + ", " + quote(value) + ")",
                 element -> value.equals(Dom.getAttribute(element, name)));
     }
 
-    /// Expects the element to have a computed style.
+    /// Expects the element to have a computed style, as `toHaveStyle({ property: value })` does
+    /// in a real browser: the value is normalised as a style declaration normalises it (e.g.
+    /// `#f00` becomes `rgb(255, 0, 0)`) and must then be the same as the computed value. As in
+    /// React Storybook, a named colour such as `red` doesn't match, as the computed colour is
+    /// `rgb(255, 0, 0)`.
     ///
-    /// @param property The CSS property, e.g. `font-weight`.
-    /// @param value    The computed value, e.g. `700`.
+    /// @param property The CSS property, in CSS or JavaScript form, e.g. `font-weight` or
+    ///                 `fontWeight`.
+    /// @param value    The value, e.g. `700`.
     public void toHaveStyle(final String property, final String value) {
+        Objects.requireNonNull(value, "value");
+        final String cssProperty = toCssProperty(Objects.requireNonNull(property, "property"));
         add("toHaveStyle({ " + property + ": " + quote(value) + " })",
-                element -> value.equals(Dom.getComputedStyle(element, property)));
+                element -> Dom.hasStyle(element, cssProperty, value));
+    }
+
+    /// @param property A CSS property in JavaScript (camel case) or CSS form, e.g. `fontWeight`.
+    /// @return The property in CSS form, e.g. `font-weight`. Custom properties (`--x`) are kept.
+    static String toCssProperty(final String property) {
+        if (property.startsWith("--")) {
+            return property;
+        }
+        final StringBuilder sb = new StringBuilder(property.length() + 4);
+        for (int i = 0; i < property.length(); i++) {
+            final char chr = property.charAt(i);
+            if (chr >= 'A' && chr <= 'Z') {
+                sb.append('-').append((char) (chr - 'A' + 'a'));
+            } else {
+                sb.append(chr);
+            }
+        }
+        return sb.toString();
     }
 
     private String prefix() {

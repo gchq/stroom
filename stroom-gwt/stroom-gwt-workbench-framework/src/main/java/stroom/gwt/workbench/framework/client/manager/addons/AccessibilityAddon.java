@@ -310,7 +310,9 @@ public class AccessibilityAddon extends Addon {
                     .appendEscaped(nullToEmpty(getString(rule, "description")))
                     .appendHtmlConstant(" <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"")
                     .appendEscaped(UriUtils.sanitizeUri(nullToEmpty(getString(rule, "helpUrl"))))
-                    .appendHtmlConstant("\">Learn how to resolve this violation");
+                    .appendHtmlConstant("\">" + (resultType == ResultType.PASSES
+                            ? "Learn more about this rule"
+                            : "Learn how to resolve this violation"));
             MenuHtml.appendIcon(builder, "wbm-icon", "wbm-icon-chevron-small-right");
             builder.appendHtmlConstant("</a></p>");
             appendNodes(builder, key, nodes);

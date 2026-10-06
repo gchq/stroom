@@ -31,22 +31,96 @@ import java.util.function.Supplier;
 /// A mock function that records its calls, the equivalent of `fn()` from `storybook/test`. A
 /// story gets one from `StoryContext.fn(name)` and passes it to a widget as a callback, e.g.
 /// `button.addClickHandler(event -> onClick.call())` or `widget.setOnChange(onChange.asConsumer())`;
-/// the play function gets the same spy by name from [Play#spy(String)] and checks its calls, e.g.
-/// `play.expect(onClick).toHaveBeenCalledTimes(1)`.
+/// the play function gets the spy with the same name from [Play#spy(String)] and checks its calls,
+/// e.g. `play.expect(onClick).toHaveBeenCalledTimes(1)`.
 ///
-/// Spies are kept by name (see [Spies]) and their calls are cleared each time the story renders,
-/// so a re-run or rewind of the play function starts afresh.
+/// There are three kinds of spy (see [Spies]):
+///
+/// * a story's spy belongs to one rendering of the story and records calls only while that
+///   rendering is the current one, so a callback left over from an earlier rendering, e.g. a
+///   timer, can't add calls to the next;
+/// * a play function's spy reads the calls of the current rendering's spy with the same name, and
+///   throws a [PlayException] if the story didn't register one, e.g. because the name is misspelt;
+/// * a spy made with the package's constructor (in tests) always records.
+///
+/// [#mockClear()], [#mockReturnValue(Object)] and [#logTo(BiConsumer)] called on a spy from
+/// [Play#spy(String)] while the play function adds its steps add a step (shown in the
+/// Interactions addon), so they happen at that point of the play, and again on each rerun, as
+/// they would in a React play; called inside a step, e.g. `play.run(...)`, they happen at once.
+///
+/// To pass an array as a single argument, cast it, e.g. `spy.call((Object) names)`; otherwise
+/// Java spreads it into separate arguments.
 public final class Spy {
 
+    // The generation of a spy that isn't bound to a rendering
+    private static final int UNBOUND = -1;
+
     private final String name;
+    // The rendering (see Spies) whose calls this spy records, or UNBOUND to always record
+    private final int generation;
+    // True for the play function's spy, which reads the current rendering's spy
+    private final boolean play;
+    // For a play function's spy from Play#spy(String), the play function it belongs to, so that
+    // calling mockClear() etc. while the play function adds its steps adds a step; may be null
+    private final Play builder;
     private final List<List<Object>> calls = new ArrayList<>();
     // Told about each call, e.g. to log it to the Actions addon, may be null
     private BiConsumer<String, String> logger;
     private Object returnValue;
 
-    /// @param name The spy's name, e.g. `onClick`.
+    /// @param name The spy's name, e.g. `onChange`.
     Spy(final String name) {
+        this(name, UNBOUND, false, null);
+    }
+
+    /// @param name       The spy's name.
+    /// @param generation The rendering whose calls it records.
+    Spy(final String name, final int generation) {
+        this(name, generation, false, null);
+    }
+
+    private Spy(final String name, final int generation, final boolean play, final Play builder) {
         this.name = Objects.requireNonNull(name, "name");
+        this.generation = generation;
+        this.play = play;
+        this.builder = builder;
+    }
+
+    /// @param name The spy's name.
+    /// @return A play function's spy, which reads the current rendering's spy with the name.
+    static Spy playSpy(final String name) {
+        return new Spy(name, UNBOUND, true, null);
+    }
+
+    /// @param name    The spy's name.
+    /// @param builder The play function the spy belongs to.
+    /// @return A play function's spy, which reads the current rendering's spy with the name, and
+    /// whose [#mockClear()], [#mockReturnValue(Object)] and [#logTo(BiConsumer)] add a step when
+    /// called while the play function adds its steps.
+    static Spy playSpy(final String name, final Play builder) {
+        return new Spy(name, UNBOUND, true, Objects.requireNonNull(builder, "builder"));
+    }
+
+    // True if a call to change the spy should be a step of the play function, as the play
+    // function is adding its steps (which run later, and again on each rerun)
+    private boolean isAddingSteps() {
+        return play && builder != null && builder.isBuilding();
+    }
+
+    // The spy whose calls this one reads and records
+    private Spy target() {
+        if (!play) {
+            return this;
+        }
+        final Spy registered = Spies.registered(name);
+        if (registered == null) {
+            throw new PlayException("No spy named \"" + name + "\" was registered when the story rendered, "
+                                    + "so it can't have been called. Check the name matches the story's "
+                                    + "context.fn(\"" + name + "\"), and that the story registers the spy as it "
+                                    + "renders rather than when it is first called. Registered spies: "
+                                    + Spies.registeredNames());
+        }
+        return registered;
     }
 
     /// @return The spy's name, e.g. `onClick`, as shown in the Interactions addon.
@@ -65,6 +139,14 @@ public final class Spy {
     }
 
     private Object record(final List<Object> args) {
+        if (play) {
+            return target().record(args);
+        }
+        if (generation != UNBOUND && generation != Spies.generation()) {
+            // A call from a rendering that has been replaced, e.g. by a timer it started, so
+            // ignore it rather than count it as a call in the current rendering
+            return returnValue;
+        }
         final List<Object> copy = Collections.unmodifiableList(new ArrayList<>(args));
         calls.add(copy);
         if (logger != null) {
@@ -75,22 +157,37 @@ public final class Spy {
         return returnValue;
     }
 
-    /// Sets the value calls return, the equivalent of `mockReturnValue(value)`.
+    /// Sets the value calls return, the equivalent of `mockReturnValue(value)`. For a play
+    /// function's spy called while the play function adds its steps, adds a step that does so.
     ///
     /// @param value The value, may be null.
     /// @return This spy.
     public Spy mockReturnValue(final Object value) {
-        this.returnValue = value;
+        if (isAddingSteps()) {
+            builder.addStep(PlayStep.action(root -> name + ".mockReturnValue(" + Values.format(value) + ")",
+                    root -> target().mockReturnValue(value)));
+        } else if (play) {
+            target().mockReturnValue(value);
+        } else {
+            this.returnValue = value;
+        }
         return this;
     }
 
-    /// Logs each call, e.g. to the Actions addon.
+    /// Logs each call, e.g. to the Actions addon. For a play function's spy called while the play
+    /// function adds its steps, adds a step that does so.
     ///
     /// @param logger Given the spy's name and its arguments formatted, or null if there are none;
     ///               null to stop logging.
     /// @return This spy.
     public Spy logTo(final BiConsumer<String, String> logger) {
-        this.logger = logger;
+        if (isAddingSteps()) {
+            builder.addStep(PlayStep.action(root -> name + ".logTo(...)", root -> target().logTo(logger)));
+        } else if (play) {
+            target().logTo(logger);
+        } else {
+            this.logger = logger;
+        }
         return this;
     }
 
@@ -155,21 +252,24 @@ public final class Spy {
     }
 
     /// @return The arguments of each call, in order, the equivalent of `mock.calls`.
+    /// @throws PlayException For a play function's spy, if the story didn't register the spy.
     public List<List<Object>> getCalls() {
-        return Collections.unmodifiableList(calls);
+        return Collections.unmodifiableList(target().calls);
     }
 
     /// @return The number of calls.
+    /// @throws PlayException For a play function's spy, if the story didn't register the spy.
     public int getCallCount() {
-        return calls.size();
+        return getCalls().size();
     }
 
     /// @return The arguments of the last call, or null if there have been no calls, the
     /// equivalent of `mock.lastCall` or `mock.calls.at(-1)`.
     public List<Object> getLastCall() {
-        return calls.isEmpty()
+        final List<List<Object>> all = getCalls();
+        return all.isEmpty()
                 ? null
-                : calls.get(calls.size() - 1);
+                : all.get(all.size() - 1);
     }
 
     /// @return A value for the number of calls, e.g. for `play.expect(spy.callCount())`.
@@ -183,11 +283,17 @@ public final class Spy {
         return Value.of(name + ".mock.lastCall", this::getLastCall);
     }
 
-    /// Forgets the calls, the equivalent of `mockClear()`. The return value is kept.
+    /// Forgets the calls, the equivalent of `mockClear()`. The return value is kept. For a play
+    /// function's spy called while the play function adds its steps, adds a step that does so.
     public void mockClear() {
-        calls.clear();
+        if (isAddingSteps()) {
+            builder.addStep(PlayStep.action(root -> name + ".mockClear()", root -> target().calls.clear()));
+        } else {
+            target().calls.clear();
+        }
     }
 
+    /// @return The spy's name.
     @Override
     public String toString() {
         return name;

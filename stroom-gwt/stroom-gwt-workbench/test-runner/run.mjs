@@ -26,23 +26,63 @@
 //
 // Usage: node run.mjs [options] [patterns...]   (see --help, and README.md)
 
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
+import { SharedBrowser } from './lib/browsers.mjs';
+import { TIMED_OUT, withDeadline } from './lib/deadline.mjs';
 import { selectStories } from './lib/filter.mjs';
 import { toJUnitXml } from './lib/junit.mjs';
+import {
+  decideOutcome, DONE_STATUSES, errorRepeatsPageOrConsoleError, formatMillis, isFailure, runWithRetries,
+} from './lib/outcome.mjs';
+import { screenshotFile } from './lib/screenshots.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_URL = process.env.WORKBENCH_URL ?? 'http://localhost:6008';
 const DEFAULT_OUTPUT_DIR = path.resolve(HERE, '../build/workbench-test');
 const DEFAULT_TIMEOUT_MILLIS = 15000;
+// How long to keep watching a story after it has finished, so that e.g. an error thrown by a timer
+// it started fails it rather than going unnoticed
+const DEFAULT_SETTLE_MILLIS = 100;
 const DEFAULT_WORKERS = Math.max(1, Math.min(8, Math.floor(os.availableParallelism() / 2)));
 const INDEX_TIMEOUT_MILLIS = 30000;
-const DONE_STATUSES = ['COMPLETED', 'ERRORED'];
 const MAX_PRINTED_CONSOLE_ERRORS = 5;
+// How much longer than --timeout plus --settle to wait for a story's page before deciding that it
+// has stopped responding (e.g. an endless loop), as some Playwright calls never time out
+const UNRESPONSIVE_GRACE_MILLIS = 5000;
+const SCREENSHOT_TIMEOUT_MILLIS = 5000;
+// How long to wait for a browser context to close
+const CLOSE_TIMEOUT_MILLIS = 10000;
+
+// The exit codes
+const EXIT_PASSED = 0;
+const EXIT_FAILED = 1;
+const EXIT_RUN_FAILED = 2;
+const EXIT_NO_STORIES = 3;
+// A cancelled run exits with 128 + the signal's number, as a shell does, e.g. 130 for SIGINT
+
+// Numbers each new top level document in a story's page (in session storage, which survives
+// reloads), so that the runner can tell if the page reloads or navigates away
+const DOCUMENT_COUNTER_SCRIPT = `(() => {
+  if (window !== window.top) {
+    return;
+  }
+  let number = -1;
+  try {
+    number = Number(sessionStorage.getItem('__workbenchRunnerDocuments') ?? 0) + 1;
+    sessionStorage.setItem('__workbenchRunnerDocuments', String(number));
+  } catch {
+    // e.g. about:blank, which has no storage of its own
+  }
+  Object.defineProperty(window, '__workbenchRunnerDocument', { value: number });
+})();`;
+
+// The signal that cancelled the run (e.g. Ctrl-C, or Gradle stopping it), or null
+let cancelledBy = null;
 
 const HELP = `Usage: node run.mjs [options] [patterns...]
 
@@ -61,7 +101,10 @@ Options:
   --skip-tags <tags>       Report stories with any of these tags as skipped (default: skip-test)
   -w, --workers <n>        Stories to run at once (default: ${DEFAULT_WORKERS}); --maxWorkers is an alias
   --timeout <ms>           Time allowed for each story (default: ${DEFAULT_TIMEOUT_MILLIS})
-  --retries <n>            Retry failed stories up to n times (default: 0)
+  --retries <n>            Retry failed stories up to n times (default: 0). A story that passes on
+                           a retry is reported as flaky
+  --settle <ms>            How long to keep watching a story for errors after it has finished
+                           (default: ${DEFAULT_SETTLE_MILLIS})
   --fail-on-console        Fail stories that log console errors (they are always reported)
   --output-dir <dir>       Where to write results.json, junit.xml and screenshots
                            (default: ${path.relative(process.cwd(), DEFAULT_OUTPUT_DIR) || '.'})
@@ -71,7 +114,10 @@ Options:
   -v, --verbose            Show every story, not just failed ones
   -h, --help               Show this help
 
-Exit code: 0 if every story passed, 1 if any failed, 2 if the stories couldn't be run at all.
+Exit code: 0 if every story passed, 1 if any failed, 2 if the stories couldn't be run at all or
+the run failed part way (the reports are still written, with the stories not run as errors), 3 if
+no stories match the patterns and tags, and 128 + the signal's number (e.g. 130 for Ctrl-C) if the
+run was cancelled.
 `;
 
 function parseOptions() {
@@ -88,6 +134,7 @@ function parseOptions() {
       maxWorkers: { type: 'string' },
       timeout: { type: 'string', default: String(DEFAULT_TIMEOUT_MILLIS) },
       retries: { type: 'string', default: '0' },
+      settle: { type: 'string', default: String(DEFAULT_SETTLE_MILLIS) },
       'fail-on-console': { type: 'boolean', default: false },
       'output-dir': { type: 'string', default: DEFAULT_OUTPUT_DIR },
       screenshots: { type: 'boolean', default: false },
@@ -116,6 +163,7 @@ function parseOptions() {
     workers: integer('workers', values.workers ?? values.maxWorkers ?? String(DEFAULT_WORKERS), 1),
     timeout: integer('timeout', values.timeout, 100),
     retries: integer('retries', values.retries, 0),
+    settle: integer('settle', values.settle, 0),
     failOnConsole: values['fail-on-console'],
     outputDir: path.resolve(values['output-dir']),
     screenshots: values.screenshots,
@@ -127,10 +175,6 @@ function parseOptions() {
 
 function previewUrl(baseUrl, id) {
   return `${baseUrl}/iframe.html?id=${encodeURIComponent(id)}&viewMode=story`;
-}
-
-function formatMillis(millis) {
-  return millis >= 1000 ? `${(millis / 1000).toFixed(1)} s` : `${Math.round(millis)} ms`;
 }
 
 // Reads every story from the workbench's index (window.__workbenchIndex).
@@ -152,36 +196,140 @@ async function loadIndex(browser, baseUrl) {
         + 'Has it been compiled (./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchDraftCompile)?'
         + (errors.length > 0 ? `\nPage errors:\n  ${errors.join('\n  ')}` : ''));
     }
-    const index = await page.evaluate(() => window.__workbenchIndex);
+    const index = await withDeadline(page.evaluate(() => window.__workbenchIndex), INDEX_TIMEOUT_MILLIS);
+    if (index === TIMED_OUT) {
+      throw new Error(`The workbench page at ${baseUrl} stopped responding`);
+    }
     return Object.values(index.entries).filter((entry) => entry.type === 'story');
   } finally {
-    await page.close();
+    await withDeadline(page.close().catch(() => {}), CLOSE_TIMEOUT_MILLIS);
   }
 }
 
-// Runs one story, returning its result.
-async function runStory(context, story, options) {
-  const url = previewUrl(options.url, story.id);
-  const start = performance.now();
-  const pageErrors = [];
-  const consoleErrors = [];
-  const result = {
+// A result for a story that hasn't been run (yet).
+function emptyResult(story, options, status) {
+  return {
     id: story.id,
     title: story.title,
     name: story.name,
     hasPlay: Boolean(story.hasPlay),
-    url,
-    status: 'PASS',
+    url: previewUrl(options.url, story.id),
+    status,
     durationMs: 0,
     failedStep: null,
     error: null,
-    pageErrors,
-    consoleErrors,
+    pageErrors: [],
+    consoleErrors: [],
     steps: [],
     screenshot: null,
   };
-  const page = await context.newPage();
-  page.on('pageerror', (error) => pageErrors.push(error.stack ?? error.message));
+}
+
+// The first line of an error's message; Playwright's errors include a call log, which isn't needed.
+function firstLine(error) {
+  return String(error?.message ?? error).split('\n')[0];
+}
+
+// Runs one attempt at a story (numbered from 1) in the shared browser. If the browser stops
+// meanwhile it is relaunched and the story run again, noting that in its result
+// (browserRestarts). Returns its result; never throws.
+async function runStory(browsers, story, options, attempt) {
+  let restarts = 0;
+  let durationMs = 0;
+  while (true) {
+    const browser = browsers.browser;
+    const result = await runStoryOnce(browser, story, options, attempt);
+    durationMs += result.durationMs;
+    result.durationMs = durationMs;
+    if (restarts > 0) {
+      result.browserRestarts = restarts;
+    }
+    if (browser.isConnected() || cancelledBy) {
+      return result;
+    }
+    // Whatever the story seemed to do, the real cause is that the browser has gone
+    console.log(`  Chromium stopped unexpectedly while running ${story.id}; relaunching it to run the `
+      + 'story again');
+    try {
+      await browsers.replace(browser);
+    } catch (error) {
+      return Object.assign(result, {
+        status: 'ERROR',
+        error: `Chromium stopped unexpectedly while running the story: ${firstLine(error)}`,
+        failedStep: null,
+        screenshot: null,
+      });
+    }
+    restarts++;
+  }
+}
+
+// Runs one attempt at a story in a new browser context, so that nothing (e.g. local storage, or a
+// crashed page) carries over from the previous story. Returns its result; never throws.
+async function runStoryOnce(browser, story, options, attempt) {
+  const start = performance.now();
+  const result = emptyResult(story, options, 'PASS');
+  // What the page reports while the story runs
+  const seen = { crashed: false, pageErrors: [], consoleErrors: [] };
+  let context = null;
+  try {
+    context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+    await context.addInitScript(DOCUMENT_COUNTER_SCRIPT);
+    const page = await context.newPage();
+    watchPage(page, seen);
+    // Some Playwright calls (e.g. evaluate) never time out if the page is stuck, e.g. in an
+    // endless loop, so give up on the page if it hasn't answered well after the story's time
+    const observed = await withDeadline(observeStory(page, result.url, options, start, seen),
+      options.timeout + options.settle + UNRESPONSIVE_GRACE_MILLIS);
+    const unresponsive = observed === TIMED_OUT;
+    if (!unresponsive && observed.openError) {
+      Object.assign(result, { status: 'ERROR', error: observed.openError });
+      result.pageErrors = [...seen.pageErrors];
+      result.consoleErrors = [...seen.consoleErrors];
+      return result;
+    }
+    const state = unresponsive ? { play: null, status: null, started: true } : observed.state;
+    result.steps = (state.play?.entries ?? []).map((entry) => ({
+      depth: entry.depth, text: entry.text, status: entry.status, error: entry.error ?? null,
+    }));
+    // The errors so far decide the outcome. Any while the screenshot is taken are kept apart.
+    result.pageErrors = [...seen.pageErrors];
+    result.consoleErrors = [...seen.consoleErrors];
+    Object.assign(result, decideOutcome({
+      storyId: story.id,
+      crashed: seen.crashed,
+      unresponsive,
+      navigated: unresponsive ? null : observed.navigated,
+      timedOut: unresponsive ? false : observed.timedOut,
+      timeoutMillis: options.timeout,
+      state,
+      pageErrors: result.pageErrors,
+      consoleErrors: result.consoleErrors,
+      failOnConsole: options.failOnConsole,
+    }));
+    if (!unresponsive && !seen.crashed && (options.screenshots || result.status !== 'PASS')) {
+      await takeScreenshot(page, screenshotFile(screenshotsDir(options), story.id, attempt), result, seen);
+    }
+  } catch (error) {
+    // e.g. the page crashed, or the browser has gone
+    result.status = 'ERROR';
+    result.error = `Unable to run the story: ${firstLine(error)}`;
+  } finally {
+    result.durationMs = Math.round(performance.now() - start);
+    if (context) {
+      await withDeadline(context.close().catch(() => {}), CLOSE_TIMEOUT_MILLIS);
+    }
+  }
+  return result;
+}
+
+// Records what the page reports in seen: whether it crashed, its uncaught errors and its console
+// errors.
+function watchPage(page, seen) {
+  page.on('crash', () => {
+    seen.crashed = true;
+  });
+  page.on('pageerror', (error) => seen.pageErrors.push(error.stack ?? error.message));
   page.on('console', (message) => {
     if (message.type() === 'error') {
       // e.g. 'Failed to load resource: ... 404' says which resource only in its location
@@ -190,106 +338,132 @@ async function runStory(context, story, options) {
         ? `${message.text()} (${location})`
         : message.text();
       // Only record each distinct error once, as e.g. a missing stylesheet is reported repeatedly
-      if (!consoleErrors.includes(text)) {
-        consoleErrors.push(text);
+      if (!seen.consoleErrors.includes(text)) {
+        seen.consoleErrors.push(text);
       }
     }
   });
+}
+
+// Opens the story in the page and waits for it to finish (and settle), returning what was seen:
+// {openError} if it couldn't be opened, otherwise {state, timedOut, navigated} (see decideOutcome).
+async function observeStory(page, url, options, start, seen) {
   try {
-    try {
-      await page.goto(url, { timeout: options.timeout, waitUntil: 'domcontentloaded' });
-    } catch (error) {
-      result.status = 'ERROR';
-      result.error = `Unable to open the story: ${error.message.split('\n')[0]}`;
-      return result;
+    await page.goto(url, { timeout: options.timeout, waitUntil: 'domcontentloaded' });
+  } catch (error) {
+    return { openError: seen.crashed ? 'The page crashed' : `Unable to open the story: ${firstLine(error)}` };
+  }
+  const origin = new URL(url).origin;
+  const remaining = Math.max(100, options.timeout - (performance.now() - start));
+  let timedOut = false;
+  try {
+    // Until the story has finished, or the page has loaded another document (which may never
+    // finish), e.g. a reload or about:blank
+    await page.waitForFunction(
+      ([statuses, storyOrigin]) => window.__workbenchRunnerDocument !== 1
+        || window.location.origin !== storyOrigin
+        || statuses.includes(document.documentElement.getAttribute('data-play-status')),
+      [DONE_STATUSES, origin], { timeout: remaining, polling: 50 });
+  } catch {
+    timedOut = true;
+  }
+  if (!timedOut && !seen.crashed) {
+    // Keep watching for a moment: the next frame, then the settle time
+    await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve())))
+      .catch(() => {});
+    if (options.settle > 0) {
+      await page.waitForTimeout(options.settle).catch(() => {});
     }
-    const remaining = Math.max(100, options.timeout - (performance.now() - start));
-    let timedOut = false;
-    try {
-      await page.waitForFunction(
-        (statuses) => statuses.includes(document.documentElement.getAttribute('data-play-status')),
-        DONE_STATUSES, { timeout: remaining, polling: 50 });
-    } catch {
-      timedOut = true;
-    }
-    const state = await page.evaluate(() => ({
-      play: window.__workbenchPlay ?? null,
-      started: window.__workbenchIndex !== undefined,
-    })).catch(() => ({ play: null, started: false }));
-    const play = state.play;
-    result.steps = (play?.entries ?? []).map((entry) => ({
-      depth: entry.depth, text: entry.text, status: entry.status, error: entry.error ?? null,
-    }));
+  }
+  const state = await page.evaluate(() => ({
+    play: window.__workbenchPlay ?? null,
+    status: document.documentElement.getAttribute('data-play-status'),
+    started: window.__workbenchIndex !== undefined,
+    document: window.__workbenchRunnerDocument ?? null,
+    href: window.location.href,
+  })).catch(() => null);
+  // A state that can't be read (unless the page crashed) means the page is between documents
+  const href = state?.href ?? page.url();
+  const navigated = !seen.crashed && (state === null || state.document !== 1 || new URL(href).origin !== origin)
+    ? { url: href, reloaded: href.split('#')[0] === url }
+    : null;
+  return {
+    state: state ?? { play: null, status: null, started: false },
+    timedOut,
+    navigated,
+  };
+}
 
-    if (timedOut) {
-      if (!state.started) {
-        result.status = 'ERROR';
-        result.error = `The workbench didn't start within ${formatMillis(options.timeout)}`;
-      } else {
-        result.status = 'FAIL';
-        const active = (play?.entries ?? []).filter((entry) => entry.status === 'ACTIVE').pop();
-        result.error = `Timed out after ${formatMillis(options.timeout)} waiting for the story`
-          + (play ? ` (status ${play.status}` + (play.stepCount > 0
-            ? `, at step ${Math.min(play.nextStep + 1, play.stepCount)} of ${play.stepCount}` : '') + ')' : '');
-        result.failedStep = active?.text ?? null;
-      }
-    } else if (play.status === 'ERRORED') {
-      result.status = 'FAIL';
-      result.failedStep = play.failedStep ?? null;
-      result.error = play.error ?? 'The play function failed';
-    } else if (play.storyId !== story.id) {
-      result.status = 'ERROR';
-      result.error = `The preview reported story '${play.storyId}', not '${story.id}'`;
-    }
-    if (result.status === 'PASS' && pageErrors.length > 0) {
-      result.status = 'FAIL';
-      result.error = `Uncaught error in the page: ${pageErrors[0].split('\n')[0]}`;
-    }
-    if (result.status === 'PASS' && options.failOnConsole && consoleErrors.length > 0) {
-      result.status = 'FAIL';
-      result.error = `Console error: ${consoleErrors[0]}`;
-    }
-
-    if (options.screenshots || result.status !== 'PASS') {
-      const file = path.join(options.outputDir, 'screenshots', `${story.id}.png`);
-      try {
-        await page.screenshot({ path: file, fullPage: true, timeout: 5000 });
-        result.screenshot = file;
-      } catch {
-        // The page may have crashed; the result matters more than the screenshot
-      }
-    }
-    return result;
-  } finally {
-    result.durationMs = Math.round(performance.now() - start);
-    await page.close().catch(() => {});
+// Saves a screenshot of the page to file, recording it in the result, and any errors the page
+// reports meanwhile as the result's screenshotErrors (they don't change its outcome).
+async function takeScreenshot(page, file, result, seen) {
+  const pageErrorCount = seen.pageErrors.length;
+  const consoleErrorCount = seen.consoleErrors.length;
+  const saved = await withDeadline(
+    page.screenshot({ path: file, fullPage: true, timeout: SCREENSHOT_TIMEOUT_MILLIS }).then(() => true, () => false),
+    SCREENSHOT_TIMEOUT_MILLIS + 2000);
+  if (saved === true) {
+    // The result matters more than the screenshot, so a failure to take one is ignored
+    result.screenshot = file;
+  }
+  const lateErrors = [
+    ...seen.pageErrors.slice(pageErrorCount).map((error) => `Page error: ${error}`),
+    ...seen.consoleErrors.slice(consoleErrorCount).map((error) => `Console error: ${error}`),
+  ];
+  if (lateErrors.length > 0) {
+    result.screenshotErrors = lateErrors;
   }
 }
 
+function screenshotsDir(options) {
+  return path.join(options.outputDir, 'screenshots');
+}
+
+// Runs a story, retrying it if it fails (--retries). Each attempt's screenshot is saved as
+// <id>.attempt-<n>.png; the last attempt's is then renamed to <id>.png.
+async function runStoryWithRetries(browsers, story, options) {
+  const result = await runWithRetries((attempt) => runStory(browsers, story, options, attempt), options.retries);
+  if (result.screenshot) {
+    const file = screenshotFile(screenshotsDir(options), story.id);
+    try {
+      await rename(result.screenshot, file);
+      result.screenshot = file;
+    } catch {
+      // Keep the attempt's name
+    }
+  }
+  return result;
+}
+
 function printComponent(title, results, verbose) {
-  const failed = results.some((result) => result.status === 'FAIL' || result.status === 'ERROR');
+  const failed = results.some(isFailure);
   const allSkipped = results.every((result) => result.status === 'SKIP');
   const label = failed ? 'FAIL' : allSkipped ? 'SKIP' : 'PASS';
   const time = results.reduce((sum, result) => sum + result.durationMs, 0);
   console.log(` ${label}  ${title} (${results.length} ${results.length === 1 ? 'story' : 'stories'}, `
     + `${formatMillis(time)})`);
   for (const result of results) {
-    const show = verbose || result.status === 'FAIL' || result.status === 'ERROR';
-    if (!show) {
+    if (!verbose && !isFailure(result) && !result.flaky) {
       continue;
     }
     const mark = { PASS: '✓', FAIL: '✕', ERROR: '✕', SKIP: '○' }[result.status];
-    console.log(`    ${mark} ${result.name}${result.status === 'SKIP' ? ' (skipped)' : ''} `
-      + `(${formatMillis(result.durationMs)})`);
+    const note = result.status === 'SKIP' ? ' (skipped)'
+      : result.flaky ? ` (flaky: passed on attempt ${result.attempts})`
+        : result.attempts > 1 ? ` (failed on all ${result.attempts} attempts)` : '';
+    console.log(`    ${mark} ${result.name}${note} (${formatMillis(result.durationMs)})`);
   }
 }
 
 function printFailure(result) {
   console.log(`\n  ● ${result.title} › ${result.name}  [${result.id}]\n`);
+  if (result.attempts > 1) {
+    console.log(`    Failed on all ${result.attempts} attempts`);
+  }
   if (result.failedStep) {
     console.log(`    Failed step: ${result.failedStep}`);
   }
-  if (result.error) {
+  // An error taken from the first page or console error is shown with them below
+  if (result.error && !errorRepeatsPageOrConsoleError(result)) {
     console.log(result.error.split('\n').map((line) => `    ${line}`).join('\n'));
   }
   for (const error of result.pageErrors) {
@@ -302,10 +476,71 @@ function printFailure(result) {
     console.log(`    ... and ${result.consoleErrors.length - MAX_PRINTED_CONSOLE_ERRORS} more console errors `
       + '(see results.json)');
   }
+  printNotes(result);
   console.log(`\n    ${result.url}`);
   if (result.screenshot) {
     console.log(`    Screenshot: ${result.screenshot}`);
   }
+}
+
+// Prints what happened outside the story's outcome: errors while its screenshot was taken, and
+// Chromium restarts.
+function printNotes(result) {
+  for (const error of result.screenshotErrors ?? []) {
+    console.log(`    While taking the screenshot (ignored): ${error.split('\n')[0]}`);
+  }
+  if (result.browserRestarts > 0) {
+    console.log(`    Chromium stopped unexpectedly while it ran, so it was run again in a new Chromium `
+      + `(${result.browserRestarts} time(s))`);
+  }
+}
+
+function printFlaky(result) {
+  console.log(`\n  ● ${result.title} › ${result.name}  [${result.id}] passed on attempt ${result.attempts}`);
+  result.previousAttempts.forEach((attempt, i) => {
+    console.log(`    Attempt ${i + 1}: ${attempt.status}${attempt.failedStep ? ` at ${attempt.failedStep}` : ''}`
+      + ` - ${(attempt.error ?? '').split('\n')[0]}`
+      + (attempt.screenshot ? `\n      Screenshot: ${attempt.screenshot}` : ''));
+  });
+  printNotes(result);
+}
+
+// Removes the reports of a previous run, so that they can't be mistaken for this run's.
+async function removeReports(outputDir) {
+  for (const name of ['results.json', 'junit.xml', 'screenshots']) {
+    await rm(path.join(outputDir, name), { recursive: true, force: true });
+  }
+}
+
+async function writeReports(options, results, durationMs, runError, browserRelaunches) {
+  const count = (status) => results.filter((result) => result.status === status).length;
+  const summary = {
+    total: results.length,
+    passed: count('PASS'),
+    failed: count('FAIL'),
+    errors: count('ERROR'),
+    skipped: count('SKIP'),
+    flaky: results.filter((result) => result.flaky).length,
+  };
+  const jsonFile = path.join(options.outputDir, 'results.json');
+  const junitFile = path.join(options.outputDir, 'junit.xml');
+  await mkdir(options.outputDir, { recursive: true });
+  await writeFile(jsonFile, JSON.stringify({
+    url: options.url,
+    startedAt: new Date(Date.now() - durationMs).toISOString(),
+    durationMs,
+    ...(runError ? { runError } : {}),
+    ...(browserRelaunches > 0 ? { browserRelaunches } : {}),
+    summary,
+    stories: results,
+  }, null, 2) + '\n');
+  await writeFile(junitFile, toJUnitXml(results));
+  console.log(`Reports:     ${jsonFile}\n             ${junitFile}`);
+}
+
+// The exit code for a run cancelled by the signal, as a shell gives it.
+function cancelledExitCode(signal) {
+  return 128 + (os.constants.signals[signal] ?? 15);
 }
 
 async function main() {
@@ -314,11 +549,11 @@ async function main() {
     options = parseOptions();
   } catch (error) {
     console.error(`${error.message}\n\n${HELP}`);
-    return 2;
+    return EXIT_RUN_FAILED;
   }
   if (options.help) {
     process.stdout.write(HELP);
-    return 0;
+    return EXIT_PASSED;
   }
 
   let chromium;
@@ -327,36 +562,57 @@ async function main() {
   } catch {
     console.error(`Playwright isn't installed. Run 'npm ci' (and 'npx playwright install chromium') in ${HERE}, `
       + 'or use ./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest');
-    return 2;
+    return EXIT_RUN_FAILED;
+  }
+
+  if (!options.list) {
+    await removeReports(options.outputDir);
   }
 
   const startTime = performance.now();
-  let browser;
+  const browsers = new SharedBrowser(() => chromium.launch({ headless: !options.headed }),
+    { isCancelled: () => cancelledBy !== null });
+  // On Ctrl-C, or when Gradle stops the run, stop the stories (by closing the browser) and still
+  // write the reports. A second signal stops at once.
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    process.on(signal, () => {
+      if (cancelledBy) {
+        process.exit(cancelledExitCode(signal));
+      }
+      cancelledBy = signal;
+      console.error(`\nCancelled (${signal}); stopping the stories`);
+      browsers.close();
+    });
+  }
   try {
-    browser = await chromium.launch({ headless: !options.headed });
+    await browsers.start();
   } catch (error) {
     console.error(`Unable to start Chromium: ${error.message}\nRun 'npx playwright install chromium' in ${HERE}`);
-    return 2;
+    return cancelledBy ? cancelledExitCode(cancelledBy) : EXIT_RUN_FAILED;
   }
 
   try {
     let allStories;
     try {
-      allStories = await loadIndex(browser, options.url);
+      allStories = await loadIndex(browsers.browser, options.url);
     } catch (error) {
-      // Playwright's errors include a call log, which isn't needed
-      console.error(`Unable to read the stories from the workbench: ${error.message.split('\n')[0]}`);
-      return 2;
+      if (cancelledBy) {
+        console.error('The test run was cancelled');
+        return cancelledExitCode(cancelledBy);
+      }
+      console.error(`Unable to read the stories from the workbench: ${firstLine(error)}`);
+      return EXIT_RUN_FAILED;
     }
     const stories = selectStories(allStories, options);
     if (options.list) {
       stories.forEach((story) => console.log(`${story.id}${story.skip ? ' (skip)' : ''}`));
       console.log(`\n${stories.length} of ${allStories.length} stories`);
-      return 0;
+      return EXIT_PASSED;
     }
     if (stories.length === 0) {
-      console.error(`No stories match (${allStories.length} stories in the workbench at ${options.url})`);
-      return 1;
+      console.error(`No stories match the patterns and tags given (${allStories.length} stories in the `
+        + `workbench at ${options.url}). Use --list to see which stories a pattern selects.`);
+      return EXIT_NO_STORIES;
     }
     console.log(`Running ${stories.length} of ${allStories.length} stories against ${options.url} `
       + `with ${Math.min(options.workers, stories.length)} worker(s)\n`);
@@ -378,40 +634,59 @@ async function main() {
       }
     };
 
+    // Stops taking stories once the run is cancelled, or the browser can't be relaunched
     const worker = async () => {
-      const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
-      try {
-        while (next < stories.length) {
-          const index = next++;
-          const story = stories[index];
-          if (story.skip) {
-            results[index] = {
-              id: story.id, title: story.title, name: story.name, hasPlay: Boolean(story.hasPlay),
-              url: previewUrl(options.url, story.id), status: 'SKIP', durationMs: 0, failedStep: null,
-              error: null, pageErrors: [], consoleErrors: [], steps: [], screenshot: null,
-            };
-          } else {
-            let result = await runStory(context, story, options);
-            let attempts = 1;
-            while (result.status !== 'PASS' && attempts <= options.retries) {
-              attempts++;
-              result = await runStory(context, story, options);
-            }
-            result.attempts = attempts;
-            results[index] = result;
+      while (next < stories.length && !cancelledBy && !browsers.failure) {
+        const index = next++;
+        const story = stories[index];
+        let result;
+        if (story.skip) {
+          result = emptyResult(story, options, 'SKIP');
+        } else {
+          try {
+            result = await runStoryWithRetries(browsers, story, options);
+          } catch (error) {
+            // runStory doesn't throw, so this is a bug in the runner; report it against the story
+            result = { ...emptyResult(story, options, 'ERROR'), error: `The runner failed: ${firstLine(error)}` };
           }
-          onDone(index);
         }
-      } finally {
-        await context.close();
+        if (cancelledBy) {
+          // Its result is probably just the effect of the cancellation, so it counts as not run
+          break;
+        }
+        results[index] = result;
+        onDone(index);
       }
     };
-    await Promise.all(Array.from({ length: Math.min(options.workers, stories.length) }, worker));
 
-    const failures = results.filter((result) => result.status === 'FAIL' || result.status === 'ERROR');
-    if (failures.length > 0) {
+    let runError = null;
+    try {
+      await Promise.all(Array.from({ length: Math.min(options.workers, stories.length) }, worker));
+    } catch (error) {
+      runError = error.stack ?? String(error);
+    }
+    if (cancelledBy) {
+      runError = `The test run was cancelled (${cancelledBy})`;
+    } else if (!runError && browsers.failure) {
+      runError = `Chromium stopped unexpectedly, and the run couldn't continue: ${firstLine(browsers.failure)}`;
+    }
+    // Any story not run because the run failed or was cancelled
+    stories.forEach((story, i) => {
+      if (!results[i]) {
+        results[i] = { ...emptyResult(story, options, 'ERROR'),
+          error: cancelledBy ? 'Not run, as the test run was cancelled' : 'Not run, as the test run failed' };
+      }
+    });
+
+    const failures = results.filter(isFailure);
+    if (failures.length > 0 && !cancelledBy) {
       console.log('\nFailures:');
       failures.forEach(printFailure);
+    }
+    const flaky = results.filter((result) => result.flaky);
+    if (flaky.length > 0 && !cancelledBy) {
+      console.log('\nFlaky (failed, then passed when retried):');
+      flaky.forEach(printFlaky);
     }
 
     const count = (status) => results.filter((result) => result.status === status).length;
@@ -423,31 +698,26 @@ async function main() {
     console.log(`Test Suites: ${parts([[failedTitles.size, 'failed'],
       [titles.length - failedTitles.size, 'passed']])}, ${titles.length} total`);
     console.log(`Tests:       ${parts([[count('FAIL'), 'failed'], [count('ERROR'), 'errors'],
-      [count('SKIP'), 'skipped'], [count('PASS'), 'passed']])}, ${results.length} total`);
+      [count('SKIP'), 'skipped'], [flaky.length, 'flaky'], [count('PASS'), 'passed']])}, ${results.length} total`);
     console.log(`Time:        ${formatMillis(durationMs)}`);
-
-    const summary = {
-      total: results.length,
-      passed: count('PASS'),
-      failed: count('FAIL'),
-      errors: count('ERROR'),
-      skipped: count('SKIP'),
-    };
-    const jsonFile = path.join(options.outputDir, 'results.json');
-    const junitFile = path.join(options.outputDir, 'junit.xml');
-    await writeFile(jsonFile, JSON.stringify({
-      url: options.url,
-      startedAt: new Date(Date.now() - durationMs).toISOString(),
-      durationMs,
-      summary,
-      stories: results,
-    }, null, 2) + '\n');
-    await writeFile(junitFile, toJUnitXml(results));
-    console.log(`Reports:     ${jsonFile}\n             ${junitFile}`);
-    return failures.length > 0 ? 1 : 0;
+    if (browsers.relaunches > 0) {
+      console.log(`Chromium:    stopped unexpectedly and was relaunched ${browsers.relaunches} time(s)`);
+    }
+    await writeReports(options, results, durationMs, runError, browsers.relaunches);
+    if (runError) {
+      console.error(cancelledBy ? `\n${runError}` : `\nThe test run failed: ${runError}`);
+      return cancelledBy ? cancelledExitCode(cancelledBy) : EXIT_RUN_FAILED;
+    }
+    return failures.length > 0 ? EXIT_FAILED : EXIT_PASSED;
+  } catch (error) {
+    console.error(`The test run failed: ${error.stack ?? error}`);
+    return cancelledBy ? cancelledExitCode(cancelledBy) : EXIT_RUN_FAILED;
   } finally {
-    await browser.close();
+    await withDeadline(browsers.close(), CLOSE_TIMEOUT_MILLIS);
   }
 }
 
 process.exitCode = await main();
+// Something may still keep the process alive, e.g. a Playwright call into a page that stopped
+// responding, so exit anyway if it hasn't exited by itself shortly
+setTimeout(() => process.exit(), 2000).unref();

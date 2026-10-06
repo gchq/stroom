@@ -94,6 +94,25 @@ class TestPlay {
     }
 
     @Test
+    void testGetByTextWithSelector() {
+        final Play play = new Play();
+        final String prefix = "within(<div#workbench-root>).";
+        assertThat(play.getByText("Name", "label").describe())
+                .isEqualTo(prefix + "getByText(\"Name\", { selector: \"label\" })");
+        assertThat(play.getAllByText("Name", "label").describe())
+                .isEqualTo(prefix + "getAllByText(\"Name\", { selector: \"label\" })");
+        assertThat(play.queryByText("Name", "label").describe())
+                .isEqualTo(prefix + "queryByText(\"Name\", { selector: \"label\" })");
+        assertThat(play.queryAllByText("Name", "label").describe())
+                .isEqualTo(prefix + "queryAllByText(\"Name\", { selector: \"label\" })");
+        assertThat(play.findByText("Name", "label").describe())
+                .isEqualTo(prefix + "getByText(\"Name\", { selector: \"label\" })");
+        assertThat(play.findAllByText("Name", "label").describe())
+                .isEqualTo(prefix + "getAllByText(\"Name\", { selector: \"label\" })");
+        assertThat(play.getSteps()).hasSize(2);
+    }
+
+    @Test
     void testFindByAddsAWait() {
         final Play play = new Play();
         play.findByRole("dialog");
@@ -227,7 +246,18 @@ class TestPlay {
     @Test
     void testSpy() {
         final Play play = new Play();
-        assertThat(play.spy("onTestPlaySpy")).isSameAs(Spies.get("onTestPlaySpy"));
+        Spies.startRendering();
+        Spies.register("onTestPlaySpy").call("a");
+        // The play's spy reads the calls of the rendering's spy with the same name
+        assertThat(play.spy("onTestPlaySpy").getName()).isEqualTo("onTestPlaySpy");
+        assertThat(play.spy("onTestPlaySpy").getCalls()).containsExactly(List.of("a"));
+        assertThat(play.getSteps()).isEmpty();
+        // Changing it while the play adds its steps adds a step
+        play.spy("onTestPlaySpy").mockClear();
+        assertThat(describeAll(play)).containsExactly("onTestPlaySpy.mockClear()");
+        assertThat(play.spy("onTestPlaySpy").getCallCount()).isOne();
+        play.getSteps().get(0).run(null);
+        assertThat(play.spy("onTestPlaySpy").getCallCount()).isZero();
     }
 
     private static List<String> describeAll(final Play play) {

@@ -45,6 +45,7 @@ public class UiConfigCache implements HasHandlers {
     private static final int ONE_MINUTE = 1_000 * 60;
 
     private final RestFactory restFactory;
+    private final Timer refreshTimer;
     private ExtendedUiConfig clientProperties;
     private EventBus eventBus;
     private long lastAnnotationChangeTime;
@@ -56,8 +57,15 @@ public class UiConfigCache implements HasHandlers {
         // Refreshing the client properties keeps them current and also ensures that all actions on the
         // server belonging to the logged-in user are refreshed every minute so that the server doesn't
         // try and terminate them.
-        final Timer refreshTimer = createRefreshTimer(securityContext);
+        refreshTimer = createRefreshTimer(securityContext);
         refreshTimer.scheduleRepeating(ONE_MINUTE);
+    }
+
+    /// Stops the regular refresh of the client properties, e.g. when this cache is no longer
+    /// used because the UI that created it is being thrown away. The properties can still be
+    /// fetched with [#get(Consumer)] and [#refresh(Consumer, TaskMonitorFactory)].
+    public void stopRefreshing() {
+        refreshTimer.cancel();
     }
 
     private Timer createRefreshTimer(final ClientSecurityContext securityContext) {

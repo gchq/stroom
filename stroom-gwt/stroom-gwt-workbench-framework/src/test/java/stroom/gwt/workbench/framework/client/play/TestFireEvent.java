@@ -24,6 +24,21 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestFireEvent {
 
     @Test
+    void testOptionsAreCopied() {
+        // Regression: the options were read when the step ran, so changing them afterwards
+        // changed the event (but not the description)
+        final Play play = new Play();
+        final EventInit init = EventInit.create().key("a");
+        play.fireEvent().keyDown(play.body(), init);
+        init.key("b").ctrlKey();
+
+        assertThat(play.getSteps().get(0).describe(null)).isEqualTo("fireEvent.keyDown(document.body, { key: \"a\" })");
+        final EventInit copy = init.copy();
+        assertThat(copy).isNotSameAs(init);
+        assertThat(copy.describe()).isEqualTo(init.describe());
+    }
+
+    @Test
     void testDescriptions() {
         final Play play = new Play();
         final Query tree = play.getByText("Countries");
@@ -80,12 +95,8 @@ class TestFireEvent {
         assertThat(FireEvent.defaultBubbles("mouseenter")).isFalse();
         assertThat(FireEvent.defaultCancelable("mousedown")).isTrue();
         assertThat(FireEvent.defaultCancelable("change")).isFalse();
-        assertThat(FireEvent.defaultButton("contextmenu")).isEqualTo(2);
-        assertThat(FireEvent.defaultButton("mousedown")).isZero();
-        assertThat(FireEvent.defaultButtons("mousedown", 0)).isEqualTo(1);
-        assertThat(FireEvent.defaultButtons("pointerdown", 2)).isEqualTo(2);
-        assertThat(FireEvent.defaultButtons("mousedown", 1)).isEqualTo(4);
-        assertThat(FireEvent.defaultButtons("mouseup", 0)).isZero();
+        // The default button and buttons (0, as Testing Library leaves them, even for
+        // contextMenu) are checked in the browser by test-runner/selftest
         assertThat(FireEvent.defaultKeyCode("keydown", "u")).isEqualTo(85);
         assertThat(FireEvent.defaultKeyCode("keypress", "u")).isEqualTo(117);
         assertThat(FireEvent.defaultKeyCode("keyup", "Enter")).isEqualTo(13);

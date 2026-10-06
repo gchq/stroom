@@ -153,6 +153,26 @@ public final class EventInit {
         return this;
     }
 
+    /// @return A copy of these options, so a step keeps the options it was given even if they are
+    /// changed afterwards.
+    EventInit copy() {
+        final EventInit copy = new EventInit();
+        copy.clientX = clientX;
+        copy.clientY = clientY;
+        copy.reference = reference;
+        copy.offsetX = offsetX;
+        copy.offsetY = offsetY;
+        copy.button = button;
+        copy.buttons = buttons;
+        copy.detail = detail;
+        copy.modifiers = modifiers;
+        copy.key = key;
+        copy.code = code;
+        copy.keyCode = keyCode;
+        copy.bubbles = bubbles;
+        return copy;
+    }
+
     /// @return The `clientX` coordinate, or null if not set.
     Double getClientX() {
         return clientX;

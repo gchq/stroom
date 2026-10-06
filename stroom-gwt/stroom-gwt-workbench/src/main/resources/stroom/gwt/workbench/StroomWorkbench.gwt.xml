@@ -34,8 +34,14 @@
     <inherits name="stroom.widget.util.Util"/>
     <inherits name="stroom.widget.button.Button"/>
     <inherits name="stroom.widget.form.Form"/>
+    <inherits name="stroom.widget.help.Help"/>
+    <inherits name="stroom.widget.tooltip.Tooltip"/>
     <inherits name="stroom.widget.tickbox.TickBox"/>
     <inherits name="stroom.cell.tickbox.TickBox"/>
+    <inherits name="stroom.widget.linecolinput.LineColInput"/>
+    <inherits name="stroom.widget.valuespinner.ValueSpinner"/>
+    <inherits name="stroom.pipeline.Pipeline"/>
+    <inherits name="stroom.pipeline.stepping.PipelineStepping"/>
 
     <!--
       Screens (App/* stories): real presenters and views that call the server, shown with fake
@@ -70,6 +76,7 @@
     <inherits name="stroom.widget.popup.Popup"/>
     <inherits name="stroom.widget.dropdowntree.DropDownTree"/>
     <inherits name="stroom.widget.spinner.Spinner"/>
+    <inherits name="stroom.widget.progress.Progress"/>
     <inherits name='stroom.entity.Entity'/>
     <inherits name='stroom.query.Query'/>
     <inherits name='stroom.ai.AI'/>
@@ -78,6 +85,78 @@
     <inherits name="stroom.widget.datepicker.DatePicker"/>
     <inherits name="stroom.widget.customdatebox.CustomDateBox"/>
     <inherits name="stroom.widget.tab.Tab"/>
+    <inherits name="stroom.widget.htree.HTree"/>
+    <inherits name="stroom.pipeline.structure.Structure"/>
+    <inherits name="stroom.datasource.DataSource"/>
+    <inherits name='stroom.core.Core'/>
+    <inherits name='stroom.content.Content'/>
+    <inherits name='stroom.welcome.Welcome'/>
+    <!-- App/Main screens (screen pilot) -->
+    <inherits name='stroom.credentials.Credentials'/>
+    <!-- Credentials: KeyStoreSecretPresenter uploads with ImportUtil -->
+    <inherits name='stroom.importexport.ImportExport'/>
+    <inherits name='stroom.dictionary.Dictionary'/>
+    <inherits name='stroom.job.Job'/>
+    <inherits name='stroom.node.Node'/>
+    <inherits name='stroom.schedule.Schedule'/>
+    <inherits name='stroom.processor.Processor'/>
+    <inherits name='stroom.monitoring.Monitoring'/>
+    <!-- Widgets/Editors & Viewers -->
+    <inherits name='com.google.gwt.xml.XML'/>
+    <inherits name="stroom.widget.xsdbrowser.XSDBrowser"/>
+    <inherits name="stroom.widget.menu.Menu"/>
+    <inherits name="stroom.widget.contextmenu.ContextMenu"/>
+    <inherits name="stroom.iframe.IFrame"/>
+    <inherits name="stroom.meta.Meta"/>
+    <!-- DataPresenter's links (OpenLinkUtil) and SourceTabPlugin -->
+    <inherits name="stroom.feed.Feed"/>
+    <inherits name="stroom.menubar.Menubar"/>
+
+    <!-- Widgets/Data Grid: MyDataGrid's hyperlink context menu items -->
+    <inherits name="stroom.hyperlink.Hyperlink"/>
+
+    <!-- The query batch (App/Editors/QueryEditor, ViewEditor, PlanBEditor, ...) -->
+    <inherits name="stroom.view.View"/>
+    <inherits name="stroom.planb.PlanB"/>
+    <!-- ConditionalFormattingDynamicStyles (the query table's conditional formatting) -->
+    <inherits name="stroom.main.Main"/>
+    <inherits name="stroom.statistics.impl.sql.SqlStatistics"/>
+
+    <!-- The editors batch (App/Editors/GitRepoEditor, ..., App/Index/*, App/Feed/*, App/AI/*) -->
+    <inherits name="stroom.documentation.Documentation"/>
+    <inherits name="stroom.http.Http"/>
+    <inherits name="stroom.contentstore.ContentStore"/>
+    <inherits name="stroom.gitrepo.GitRepo"/>
+    <inherits name="stroom.openai.OpenAIModel"/>
+    <inherits name="stroom.search.elastic.ElasticCluster"/>
+    <inherits name="stroom.search.elastic.ElasticIndex"/>
+    <inherits name="stroom.search.solr.SolrIndex"/>
+    <inherits name="stroom.index.Index"/>
+    <inherits name="stroom.pathways.Pathways"/>
+    <inherits name="stroom.analytics.Analytics"/>
+    <inherits name="stroom.datagen.DataGen"/>
+    <inherits name="stroom.folder.Folder"/>
+    <inherits name="stroom.visualisation.Visualisation"/>
+    <inherits name="stroom.script.Script"/>
+    <inherits name="stroom.xmlschema.XMLSchema"/>
+    <inherits name="stroom.kafka.KafkaConfig"/>
+    <inherits name="stroom.aws.s3.S3Config"/>
+
+    <!-- The security batch: CurrentPasswordPresenter needs Stroom's CurrentUser (CurrentActivity) -->
+    <inherits name="stroom.activity.Activity"/>
+
+    <!-- The processing batch (node groups, processors, pipelines, data retention, ...) -->
+    <inherits name="stroom.data.retention.DataRetention"/>
+    <inherits name="stroom.data.store.impl.fs.FsVolume"/>
+    <inherits name="stroom.dashboard.Dashboard"/>
+
+    <!-- The content batch (caches, content templates, ...) -->
+    <inherits name="stroom.cache.Cache"/>
+    <inherits name="stroom.receive.content.ContentTemplate"/>
+    <inherits name="stroom.aws.common.AwsCommon"/>
+
+    <!-- The shell batch (App/Main/AppShell: the main menu's plugins) -->
+    <inherits name="stroom.help.Help"/>
 
     <entry-point class='stroom.gwt.workbench.client.StroomWorkbenchEntryPoint'/>
 

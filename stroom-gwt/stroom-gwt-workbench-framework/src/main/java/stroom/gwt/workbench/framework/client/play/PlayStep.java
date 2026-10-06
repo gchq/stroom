@@ -35,6 +35,9 @@ final class PlayStep {
     // [Query#textContent()] etc.) can find their elements. GWT is single threaded.
     private static Element currentRoot;
     private static boolean inStep;
+    // Incremented each time the runner (re)starts the steps, so values captured by an earlier
+    // run aren't mistaken for this run's
+    private static int runId;
 
     private final Kind kind;
     private final Function<Element, String> describer;
@@ -107,6 +110,22 @@ final class PlayStep {
         return currentRoot;
     }
 
+    /// @return True while a step runs or is described, when steps can't be added.
+    static boolean isRunning() {
+        return inStep;
+    }
+
+    /// Starts a new run of the steps, e.g. on a re-run or rewind, so values captured by the
+    /// previous run (see [Play#capture(String, java.util.function.Supplier)]) are forgotten.
+    static void startRun() {
+        runId++;
+    }
+
+    /// @return The id of the current run of the steps.
+    static int currentRun() {
+        return runId;
+    }
+
     /// @return For a `waitFor(...)` group, how long to retry its steps for; for a sleep, how long
     /// to pause for.
     int getTimeoutMillis() {
@@ -133,10 +152,22 @@ final class PlayStep {
         try {
             return describer.apply(root);
         } catch (final RuntimeException e) {
-            return describer.apply(null);
+            return describeWithoutRoot(e);
         } finally {
             currentRoot = previousRoot;
             inStep = previousInStep;
+        }
+    }
+
+    // Describes the step without finding its elements, e.g. as the query's code rather than the
+    // element found, or if even that fails, says why
+    private String describeWithoutRoot(final RuntimeException rootFailure) {
+        try {
+            return describer.apply(null);
+        } catch (final RuntimeException e) {
+            return "(step that can't be described: " + (e.getMessage() != null
+                    ? e.getMessage()
+                    : rootFailure.toString()) + ")";
         }
     }
 

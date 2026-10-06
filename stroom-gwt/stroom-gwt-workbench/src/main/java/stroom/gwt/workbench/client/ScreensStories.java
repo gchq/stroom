@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client;
 
+import stroom.gwt.workbench.client.screens.signin.RedirectUrlStories;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
 /// Registers the GWT ports of the React Storybook's `Screens/*` stories (1 component,
@@ -24,7 +25,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 /// ## Adding a story class
 ///
 /// 1. Write the stories class in the `stroom.gwt.workbench.client.screens` package (see
-///    `widgets/ButtonStories` for an example), giving it a
+///    `widgets/buttons/ButtonStories` for an example), giving it a
 ///    `public static void addTo(StoryRegistry registry)` method that calls
 ///    `registry.component("<React title>", XxxStories.class)` with exactly the React `title`,
 ///    and `.story("<React export name>", ...)` for each story, so that the story ids match the
@@ -51,6 +52,7 @@ public final class ScreensStories {
     /// @return The registry.
     public static StoryRegistry addTo(final StoryRegistry registry) {
         // Screens/SignIn/redirectUrl
+        RedirectUrlStories.addTo(registry);
         return registry;
     }
 }

@@ -31,7 +31,9 @@ import java.util.function.Supplier;
 /// A query made by a `getBy`/`queryBy`/`findBy` method must match exactly one element when an
 /// element is needed (e.g. to click it); one made by a `getAllBy`/`queryAllBy`/`findAllBy` method
 /// stands for all its matches, e.g. for `toHaveLength`, and gives the first of them when a single
-/// element is needed. Use [#nth(int)] to pick one match.
+/// element is needed. Use [#nth(int)] to pick one match. A query made by
+/// [Play#querySelector(String)] stands for the first match, as `querySelector` does, and is never
+/// ambiguous.
 ///
 /// A query also gives [Value]s derived from its element(s), read when a step runs, e.g.
 /// `play.expect(query.textContent()).toBe("Save")`.
@@ -51,6 +53,11 @@ public final class Query {
     private final String args;
     private final boolean all;
     private final String notFoundMessage;
+    // The start of the error if several elements match a query for one, e.g. "Found multiple
+    // elements with the text: Save"
+    private final String multipleMessage;
+    // True if the query stands for its first match, as querySelector does
+    private final boolean firstMatch;
     private final Function<Element, JsArray<Element>> finder;
     private final int index;
 
@@ -60,6 +67,10 @@ public final class Query {
     /// @param args            The arguments as JavaScript, e.g. `"Open"`.
     /// @param all             True if the query stands for all its matches.
     /// @param notFoundMessage The error if no element matches.
+    /// @param multipleMessage The error if several elements match a query for one, e.g.
+    ///                        `Found multiple elements with the text: Save`.
+    /// @param firstMatch      True if the query stands for its first match, as `querySelector`
+    ///                        does, rather than requiring a single match.
     /// @param finder          Finds all the matching elements within a container.
     Query(final Query scope,
           final String singleMethod,
@@ -67,8 +78,11 @@ public final class Query {
           final String args,
           final boolean all,
           final String notFoundMessage,
+          final String multipleMessage,
+          final boolean firstMatch,
           final Function<Element, JsArray<Element>> finder) {
-        this(scope, false, singleMethod, allMethod, args, all, notFoundMessage, finder, -1);
+        this(scope, false, singleMethod, allMethod, args, all, notFoundMessage, multipleMessage, firstMatch,
+                finder, -1);
     }
 
     private Query(final Query scope,
@@ -78,6 +92,8 @@ public final class Query {
                   final String args,
                   final boolean all,
                   final String notFoundMessage,
+                  final String multipleMessage,
+                  final boolean firstMatch,
                   final Function<Element, JsArray<Element>> finder,
                   final int index) {
         this.scope = scope;
@@ -87,6 +103,8 @@ public final class Query {
         this.args = args;
         this.all = all;
         this.notFoundMessage = notFoundMessage;
+        this.multipleMessage = multipleMessage;
+        this.firstMatch = firstMatch;
         this.finder = finder;
         this.index = index;
     }
@@ -95,7 +113,7 @@ public final class Query {
     /// [Play#screen()] which finds popups and dialogs attached to the body.
     static Query body() {
         return new Query(null, BODY_DESCRIPTION, BODY_DESCRIPTION, null, false,
-                "Unable to find the document body", Dom::body);
+                "Unable to find the document body", "Found multiple document bodies", false, Dom::body);
     }
 
     /// @param index The index of the match to use, when several elements match, the equivalent of
@@ -106,7 +124,8 @@ public final class Query {
         if (index < 0) {
             throw new IllegalArgumentException("The index must not be negative: " + index);
         }
-        return new Query(scope, chained, singleMethod, allMethod, args, true, notFoundMessage, finder, index);
+        return new Query(scope, chained, singleMethod, allMethod, args, true, notFoundMessage, multipleMessage,
+                false, finder, index);
     }
 
     /// @return A query for the first element this query matches, i.e. `nth(0)`.
@@ -120,6 +139,7 @@ public final class Query {
     public Query closest(final String selector) {
         return new Query(this, true, "closest", "closest", Expectation.quote(selector), false,
                 "Unable to find an ancestor of " + describe() + " matching: " + selector,
+                "Found multiple ancestors matching: " + selector, false,
                 element -> Dom.closest(element, selector), -1);
     }
 
@@ -168,7 +188,14 @@ public final class Query {
     ///                       single element.
     public Element resolve(final Element root) {
         final JsArray<Element> matches = findAll(root);
-        return matches.get(pick(matches.length(), index, all, notFoundMessage));
+        return matches.get(pick(matches.length(), effectiveIndex(), all, notFoundMessage, multipleMessage));
+    }
+
+    // The index of the match to use, or -1 for none in particular
+    private int effectiveIndex() {
+        return firstMatch && index < 0
+                ? 0
+                : index;
     }
 
     /// Picks which match a query uses.
@@ -177,9 +204,15 @@ public final class Query {
     /// @param index           The index of the match to use, or -1 for none in particular.
     /// @param all             True if the query stands for all its matches.
     /// @param notFoundMessage The error if no element matches.
+    /// @param multipleMessage The error if several elements match a query for one, e.g.
+    ///                        `Found multiple elements with the text: Save`.
     /// @return The index of the match to use.
     /// @throws PlayException If there is no such match, or several when a single one is needed.
-    static int pick(final int matchCount, final int index, final boolean all, final String notFoundMessage) {
+    static int pick(final int matchCount,
+                    final int index,
+                    final boolean all,
+                    final String notFoundMessage,
+                    final String multipleMessage) {
         if (index >= 0) {
             if (index >= matchCount) {
                 throw new PlayException(notFoundMessage + (matchCount > 0
@@ -192,9 +225,8 @@ public final class Query {
             throw new PlayException(notFoundMessage);
         }
         if (matchCount > 1 && !all) {
-            throw new PlayException("Found multiple elements (" + matchCount + "): "
-                                    + notFoundMessage.replace("Unable to find an element", "elements")
-                                    + " (use nth() to pick one)");
+            throw new PlayException(multipleMessage + " (" + matchCount + " found; use nth() to pick one, or a "
+                                    + "getAllBy/queryAllBy query for all of them)");
         }
         return 0;
     }
@@ -205,6 +237,7 @@ public final class Query {
     List<Element> resolveAll(final Element root) {
         final JsArray<Element> matches = findAll(root);
         final List<Element> elements = new ArrayList<>();
+        final int index = effectiveIndex();
         if (index >= 0) {
             if (index < matches.length()) {
                 elements.add(matches.get(index));
@@ -222,7 +255,7 @@ public final class Query {
     /// [#nth(int)].
     /// @throws PlayException If the query's scope can't be found or its selector isn't valid.
     int countIn(final Element root) {
-        return countMatches(findAll(root).length(), index);
+        return countMatches(findAll(root).length(), effectiveIndex());
     }
 
     /// @param matchCount The number of elements the query's finder matches.
@@ -292,9 +325,10 @@ public final class Query {
         return value(".value", () -> Dom.getValue(resolve(PlayStep.currentRoot())));
     }
 
-    /// @return The element's `className`.
+    /// @return The element's classes, the equivalent of `element.className` (for an SVG element,
+    /// whose `className` isn't a string, its `class` attribute).
     public Value<String> className() {
-        return value(".className", () -> resolve(PlayStep.currentRoot()).getClassName());
+        return value(".className", () -> Dom.getClassName(resolve(PlayStep.currentRoot())));
     }
 
     /// @param name The name of a property, e.g. `scrollTop`, `checked` or `tagName`.

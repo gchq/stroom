@@ -25,6 +25,7 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.PlayRunner;
 import stroom.gwt.workbench.framework.client.play.PlayRunner.LogEntry;
 import stroom.gwt.workbench.framework.client.play.PlayRunner.RunStatus;
+import stroom.gwt.workbench.framework.client.play.SelfTestHooks;
 import stroom.gwt.workbench.framework.client.shortcuts.KeyCombo;
 import stroom.gwt.workbench.framework.client.shortcuts.KeyEvents;
 import stroom.gwt.workbench.framework.client.shortcuts.Shortcuts;
@@ -58,6 +59,13 @@ import java.util.List;
 /// canvas or on its own when opened in isolation. It re-renders the story when its args change,
 /// runs its play function and reports progress to the manager. The progress is also put on the
 /// page for the test runner (see [RunnerHooks]).
+///
+/// Errors the story's code throws after it first renders, e.g. in timers, are reported for the
+/// whole life of the page by the [PlayRunner] (which every story has, with no steps if it has no
+/// play function): they fail the running step, or mark the run as ERRORED.
+///
+/// With a `selftest` query parameter, the page also exposes the play API's DOM helpers for the
+/// self-test (see [SelfTestHooks]).
 public class StoryPreview {
 
     // The same ids/classes as React Storybook's preview
@@ -68,12 +76,16 @@ public class StoryPreview {
     private static final String ERROR_CLASS = "wbp-error";
     private static final String OUTLINE_CLASS = "wbp-outline";
     private static final String VISION_FILTERS_CLASS = "wbp-vision-filters";
+    // The query parameter that installs window.__workbenchDom for the self-test
+    private static final String SELF_TEST_PARAM = "selftest";
 
     private final StoryRegistry registry;
     private final StoryDecorator decorator;
     private Story story;
     private Args args;
     private PlayRunner playRunner;
+    // The context of the current rendering, to clean up before the next
+    private StoryContext context;
 
     /// @param registry  All the stories.
     /// @param decorator Wraps each story's widget.
@@ -113,6 +125,9 @@ public class StoryPreview {
             }
         });
 
+        if (BrowserUtil.getQueryParameter(SELF_TEST_PARAM) != null) {
+            SelfTestHooks.install();
+        }
         story = registry.getStory(storyId);
         if (story == null) {
             final String message = "Couldn't find story matching id '" + storyId + "'.\n\n"
@@ -172,18 +187,44 @@ public class StoryPreview {
         }
     }
 
-    /// Renders the story with the current args, replacing any previous rendering.
+    /// Renders the story with the current args, replacing any previous rendering: first the
+    /// previous rendering's clean ups run (see [StoryContext#addCleanUp(Runnable)]), so that its
+    /// timers, pending requests etc. are disposed before the preview removes what is left on the
+    /// page, then its widgets and popups are removed. A failure in any of these is logged to the
+    /// browser's console and reported to the play runner (failing the running step, or marking
+    /// the run as errored), and doesn't stop the others or the new rendering.
     ///
     /// @return True if it rendered without an error.
     private boolean renderStory() {
         final RootPanel rootPanel = RootPanel.get(getOrCreateDiv(ROOT_ID, null).getId());
-        rootPanel.clear();
-        removePopups();
+        if (context != null) {
+            final StoryContext previous = context;
+            context = null;
+            try {
+                final RuntimeException failure = previous.cleanUp();
+                if (failure != null) {
+                    reportRenderingError("Error cleaning up story '" + story.getId() + "'", failure);
+                }
+            } catch (final RuntimeException e) {
+                reportRenderingError("Error cleaning up story '" + story.getId() + "'", e);
+            }
+        }
+        try {
+            rootPanel.clear();
+        } catch (final RuntimeException e) {
+            reportRenderingError("Error removing the previous rendering of story '" + story.getId() + "'", e);
+        }
+        try {
+            removePopups();
+        } catch (final RuntimeException e) {
+            reportRenderingError("Error removing the popups of story '" + story.getId() + "'", e);
+        }
         showError(null);
         // Highlights outline elements of the old rendering
         A11yRunner.clearHighlights();
         try {
-            final Widget widget = decorator.decorate(story.getRenderer().render(new StoryContext(story, args)));
+            context = new StoryContext(story, args);
+            final Widget widget = decorator.decorate(story.getRenderer().render(context));
             rootPanel.add(widget);
             return true;
         } catch (final RuntimeException e) {
@@ -194,9 +235,27 @@ public class StoryPreview {
         }
     }
 
-    /// Removes the popups, e.g. GWT dialogs and menus, that the previous rendering added to the
-    /// page's body, so that they don't stay on screen, or match the play function's queries,
-    /// after the story is rendered again.
+    /// Reports a failure replacing the previous rendering: logs it to the browser's console and,
+    /// if there is a play runner, reports it as an error in the story (see
+    /// [PlayRunner#reportError(String)]).
+    private void reportRenderingError(final String message, final RuntimeException e) {
+        final String text = message + ": " + e;
+        consoleError(text);
+        if (playRunner != null) {
+            playRunner.reportError(text);
+        }
+    }
+
+    private static native void consoleError(String message) /*-{
+        if ($wnd.console && $wnd.console.error) {
+            $wnd.console.error(message);
+        }
+    }-*/;
+
+    /// Removes everything the previous rendering added to the page's body as GWT widgets, e.g.
+    /// dialogs, menus and Stroom's frames, so that they don't stay on screen, or match the play
+    /// function's queries, after the story is rendered again. Popups are hidden first so that
+    /// their glass is removed too.
     private static void removePopups() {
         final RootPanel body = RootPanel.get();
         for (int i = body.getWidgetCount() - 1; i >= 0; i--) {
@@ -210,15 +269,14 @@ public class StoryPreview {
     }
 
     private void startPlay() {
-        if (story.getPlay() == null) {
-            // Tell the manager there are no interactions so it can show its empty state
-            reportInteractions(RunStatus.COMPLETED, List.of(), 0, 0, null);
-            A11yRunner.run();
-            return;
-        }
+        // A story without a play function gets a runner with no steps, which reports COMPLETED
+        // with no interactions (so the manager shows its empty state), and still reports errors
+        // the story throws later, as ERRORED
         final Play play = new Play();
         try {
-            story.getPlay().play(play);
+            if (story.getPlay() != null) {
+                story.getPlay().play(play);
+            }
         } catch (final RuntimeException e) {
             final String message = "Error in play function of story '" + story.getId() + "':\n\n" + e;
             showError(message);

@@ -22,61 +22,118 @@ import stroom.gwt.workbench.framework.client.play.Keys.KeyAction;
 
 import com.google.gwt.dom.client.Element;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
-/// Presses keys on the focused element as `userEvent.keyboard` does: `keydown`, `keypress` (for
-/// characters and Enter) and `keyup`, with the browser's default action for each key (typing,
-/// deleting, moving the focus with Tab, clicking a button with Enter or Space, etc.) unless the
-/// `keydown` or `keypress` is cancelled.
+/// Presses keys on the focused element as `userEvent.keyboard` (user-event 14's
+/// `KeyboardHost`) does:
+///
+/// * pressing a key that is already held releases it first;
+/// * a press fires `keydown` and, unless it is cancelled, does the key's keydown default (see
+///   [Keys#keyDownAction(String, String, int)], e.g. moving the focus with Tab or deleting with
+///   Backspace), then for a character or Enter (without Control or Alt) fires `keypress` and,
+///   unless that is cancelled, does its default (typing, or for Enter clicking a button or
+///   submitting a form);
+/// * a release fires `keyup` and, for Space, if neither the `keydown` nor the `keyup` was
+///   cancelled, clicks a focused button, check box, radio button etc.;
+/// * a release of a key that isn't held does nothing.
 final class Keyboard {
 
     private Keyboard() {
         // Static utility
     }
 
-    /// @param root    Any element in the document, used if nothing has the focus.
-    /// @param actions The keys, from [Keys#parse(String)].
-    static void press(final Element root, final List<KeyAction> actions) {
-        // The modifiers held, as a mask of Keys.SHIFT etc.
-        int modifiers = 0;
+    /// @param root       Any element in the document, used if nothing has the focus.
+    /// @param actions    The keys, from [Keys#parse(String)].
+    /// @param releaseAll True to release the keys still held at the end, as `userEvent.type`
+    ///                   does (`userEvent.keyboard` doesn't).
+    static void press(final Element root, final List<KeyAction> actions, final boolean releaseAll) {
+        Dom.prepareDocument(root);
+        final State state = new State();
         for (final KeyAction action : actions) {
-            final String key = action.getKey();
-            if (Keys.SELECT_ALL.equals(key)) {
-                Dom.keyDefault(root, DefaultAction.SELECT_ALL.name(), key);
-                continue;
+            final KeyAction held = state.pressed.get(action.getCode());
+            if (held != null) {
+                keyUp(root, held, state);
             }
-            final int bit = Keys.modifierBit(key);
-            final String code = Keys.code(key);
-            boolean notCancelled = true;
             if (action.isPress()) {
                 for (int i = 0; i < action.getRepeat(); i++) {
-                    modifiers |= bit;
-                    notCancelled = keyDown(root, key, code, modifiers);
+                    keyDown(root, action, state);
+                }
+                if (action.isRelease()) {
+                    keyUp(root, action, state);
                 }
             }
-            if (action.isRelease()) {
-                modifiers &= ~bit;
-                Dom.keyEvent(root, "keyup", key, code, Keys.keyCode(key), 0, modifiers);
-                if (notCancelled && action.isPress() && " ".equals(key) && modifiers == 0) {
-                    Dom.spaceActivate(root);
-                }
+        }
+        if (releaseAll) {
+            for (final KeyAction held : new ArrayList<>(state.pressed.values())) {
+                keyUp(root, held, state);
             }
         }
     }
 
-    private static boolean keyDown(final Element root, final String key, final String code, final int modifiers) {
-        boolean notCancelled = Dom.keyEvent(root, "keydown", key, code, Keys.keyCode(key), 0, modifiers);
-        if (notCancelled && Keys.firesKeyPress(key, modifiers)) {
+    private static void keyDown(final Element root, final KeyAction action, final State state) {
+        final String key = action.getKey();
+        final String code = action.getCode();
+        if (!state.pressed.containsKey(code)) {
+            state.pressed.put(code, action);
+            state.unprevented.put(code, false);
+        }
+        state.updateModifiers();
+        final boolean unprevented = Dom.keyEvent(root, "keydown", key, code, Keys.keyCode(key), 0,
+                state.modifiers);
+        if (!unprevented) {
+            return;
+        }
+        state.unprevented.put(code, true);
+        final DefaultAction keyDownAction = Keys.keyDownAction(key, code, state.modifiers);
+        if (keyDownAction != DefaultAction.NONE) {
+            Dom.keyDefault(root, keyDownAction.name(), key, state.modifiers);
+        }
+        if (Keys.firesKeyPress(key, state.modifiers)) {
             final int charCode = Keys.charCode(key);
             // A keypress has the character's code as its keyCode too
-            notCancelled = Dom.keyEvent(root, "keypress", key, code, charCode, charCode, modifiers);
-        }
-        if (notCancelled) {
-            final DefaultAction defaultAction = Keys.defaultAction(key, modifiers);
-            if (defaultAction != DefaultAction.NONE) {
-                Dom.keyDefault(root, defaultAction.name(), key);
+            if (Dom.keyEvent(root, "keypress", key, code, charCode, charCode, state.modifiers)) {
+                Dom.keyDefault(root, Keys.keyPressAction(key).name(), key, state.modifiers);
             }
         }
-        return notCancelled;
+    }
+
+    private static void keyUp(final Element root, final KeyAction action, final State state) {
+        final String key = action.getKey();
+        final String code = action.getCode();
+        final boolean unprevented = Boolean.TRUE.equals(state.unprevented.remove(code));
+        state.pressed.remove(code);
+        state.updateModifiers();
+        final boolean keyUpUnprevented = Dom.keyEvent(root, "keyup", key, code, Keys.keyCode(key), 0,
+                state.modifiers);
+        if (" ".equals(key) && unprevented && keyUpUnprevented) {
+            Dom.spaceActivate(root, state.modifiers);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /// The keys held during one call, as user-event's keyboard state (which a direct API call
+    /// starts afresh), by their `code`.
+    private static final class State {
+
+        // The keys held, in the order pressed
+        private final Map<String, KeyAction> pressed = new LinkedHashMap<>();
+        // Whether each held key's keydown wasn't cancelled
+        private final Map<String, Boolean> unprevented = new LinkedHashMap<>();
+        // The modifiers held, as a mask of Keys.SHIFT etc.
+        private int modifiers;
+
+        // A modifier is held while any key with its key value is held
+        private void updateModifiers() {
+            modifiers = 0;
+            for (final KeyAction held : pressed.values()) {
+                modifiers |= Keys.modifierBit(held.getKey());
+            }
+        }
     }
 }

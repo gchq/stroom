@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.rest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -28,24 +29,33 @@ import java.util.Objects;
 /// RestFixtures.builder()
 ///         .post("/explorer/v2/find", RestReply.json("{\"values\": []}"))
 ///         .get("/sessionInfo/v1", request -> RestReply.json(SESSION_INFO))
+///         // A sequence: the first request gets the first reply, and so on; the last repeats
+///         .post("/search/v1", RestReply.json(PENDING), RestReply.json(COMPLETE))
+///         .route(RequestMatcher.post("/explorer/v2/find").withBodyContaining("Events"),
+///                 RestReply.json(EVENTS))
 ///         .build();
 /// ```
 ///
-/// Paths are relative to Stroom's REST service root (`/api`) and may end with `*` to match any
-/// path starting with the rest. The first route that matches a request replies to it. A query
-/// string in the request is ignored when matching.
+/// Paths are relative to Stroom's REST service root (`/api`); see [RequestMatcher] for wildcards
+/// and matching the query string or body (both are ignored unless asked for). The first route
+/// that matches a request replies to it, so put more specific routes first; [Builder#build()]
+/// refuses a route that an earlier one makes unreachable.
+///
+/// Fixtures are immutable and hold no state, so can be `static final`: the position in a sequence
+/// is kept by the [FixtureSession] of each rendering, so a re-rendered story starts its sequences
+/// again.
+///
+/// A request that no route matches gets a `404` reply and is reported by the harness. Fixtures are
+/// strict by default, so that also fails the story; use [Builder#lenient()] for a story that
+/// expects unmatched requests.
 public final class RestFixtures {
 
-    /// The root of Stroom's REST API, as set by `RestFactoryImpl`.
-    public static final String SERVICE_ROOT = "/api";
-
-    private static final String ANY = "*";
-    private static final String WILDCARD = "*";
-
     private final List<Route> routes;
+    private final boolean strict;
 
-    private RestFixtures(final List<Route> routes) {
+    private RestFixtures(final List<Route> routes, final boolean strict) {
         this.routes = Collections.unmodifiableList(new ArrayList<>(routes));
+        this.strict = strict;
     }
 
     /// @return A builder for the fixtures.
@@ -53,47 +63,64 @@ public final class RestFixtures {
         return new Builder();
     }
 
-    /// @return Fixtures that reply to nothing, so every request fails with `404`.
+    /// @return Strict fixtures that reply to nothing, so every request fails the story.
     public static RestFixtures none() {
-        return new RestFixtures(Collections.emptyList());
+        return new RestFixtures(Collections.emptyList(), true);
     }
 
-    /// Finds the reply to a request.
+    /// Combines these fixtures with ones to fall back on, e.g. a story's fixtures with the
+    /// start-up fixtures that every screen needs. These routes come first, so override the
+    /// fallback's, and these fixtures' strictness is kept (the fallback's is ignored).
     ///
-    /// @param request The request.
-    /// @return The reply of the first route that matches the request, or a `404` reply if none
-    /// does.
-    public RestReply reply(final RecordedRequest request) {
-        for (final Route route : routes) {
-            if (route.matches(request)) {
-                final RestReply reply = route.handler.reply(request);
-                if (reply == null) {
-                    throw new IllegalStateException("The fixture for " + route + " returned null");
-                }
-                return reply;
-            }
-        }
-        return RestReply.error(404, "No fixture for " + request.describe());
+    /// @param fallback The fixtures for requests that none of these routes match.
+    /// @return The combined fixtures.
+    public RestFixtures followedBy(final RestFixtures fallback) {
+        final List<Route> combined = new ArrayList<>(routes);
+        combined.addAll(Objects.requireNonNull(fallback, "fallback").routes);
+        return new RestFixtures(combined, strict);
+    }
+
+    /// @return A new session, which keeps the position in each sequence of replies for one
+    /// rendering of a story.
+    public FixtureSession newSession() {
+        return new FixtureSession(this);
+    }
+
+    /// @return True if a request that no route matches should fail the story.
+    public boolean isStrict() {
+        return strict;
     }
 
     /// @param request The request.
     /// @return True if a route matches the request.
     public boolean isHandled(final RecordedRequest request) {
-        for (final Route route : routes) {
-            if (route.matches(request)) {
-                return true;
-            }
-        }
-        return false;
+        return findRoute(request) >= 0;
     }
 
-    /// @return The routes, as `METHOD path`, in the order they are matched.
+    /// @return The routes, e.g. `POST /explorer/v2/find`, in the order they are matched.
     public List<String> describeRoutes() {
         final List<String> list = new ArrayList<>();
         for (final Route route : routes) {
-            list.add(route.toString());
+            list.add(route.matcher.describe());
         }
         return list;
+    }
+
+    /// @param request The request.
+    /// @return The index of the first route that matches the request, or -1 if none does.
+    int findRoute(final RecordedRequest request) {
+        for (int i = 0; i < routes.size(); i++) {
+            if (routes.get(i).matcher.matches(request)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /// @param index The index of a route.
+    /// @return The route.
+    Route getRoute(final int index) {
+        return routes.get(index);
     }
 
     // --------------------------------------------------------------------------------
@@ -103,63 +130,123 @@ public final class RestFixtures {
     public static final class Builder {
 
         private final List<Route> routes = new ArrayList<>();
+        // The routes added with this builder's route methods (not addAll), compared by identity
+        private final List<Route> ownRoutes = new ArrayList<>();
+        private boolean strict = true;
 
         private Builder() {
         }
 
         /// @param path  The path, e.g. `/sessionInfo/v1`.
-        /// @param reply The reply.
+        /// @param reply The reply, or the first of a sequence of replies.
+        /// @param more  The rest of the sequence. The last reply repeats.
         /// @return This builder.
-        public Builder get(final String path, final RestReply reply) {
-            return route("GET", path, request -> reply);
+        public Builder get(final String path, final RestReply reply, final RestReply... more) {
+            return route(RequestMatcher.get(path), reply, more);
         }
 
         /// @param path    The path, e.g. `/sessionInfo/v1`.
         /// @param handler Creates the reply from the request.
         /// @return This builder.
         public Builder get(final String path, final RestHandler handler) {
-            return route("GET", path, handler);
+            return route(RequestMatcher.get(path), handler);
         }
 
         /// @param path  The path, e.g. `/explorer/v2/find`.
-        /// @param reply The reply.
+        /// @param reply The reply, or the first of a sequence of replies.
+        /// @param more  The rest of the sequence. The last reply repeats.
         /// @return This builder.
-        public Builder post(final String path, final RestReply reply) {
-            return route("POST", path, request -> reply);
+        public Builder post(final String path, final RestReply reply, final RestReply... more) {
+            return route(RequestMatcher.post(path), reply, more);
         }
 
         /// @param path    The path, e.g. `/explorer/v2/find`.
         /// @param handler Creates the reply from the request, e.g. depending on its body.
         /// @return This builder.
         public Builder post(final String path, final RestHandler handler) {
-            return route("POST", path, handler);
-        }
-
-        /// @param path  The path, e.g. `/explorer/v2/find`.
-        /// @param reply The reply.
-        /// @return This builder.
-        public Builder put(final String path, final RestReply reply) {
-            return route("PUT", path, request -> reply);
+            return route(RequestMatcher.post(path), handler);
         }
 
         /// @param path  The path.
-        /// @param reply The reply.
+        /// @param reply The reply, or the first of a sequence of replies.
+        /// @param more  The rest of the sequence. The last reply repeats.
         /// @return This builder.
-        public Builder delete(final String path, final RestReply reply) {
-            return route("DELETE", path, request -> reply);
+        public Builder put(final String path, final RestReply reply, final RestReply... more) {
+            return route(RequestMatcher.put(path), reply, more);
         }
 
-        /// @param method  The HTTP method, e.g. `POST`, or `*` for any.
-        /// @param path    The path, which may end with `*` to match any path starting with the rest.
+        /// @param path    The path.
+        /// @param handler Creates the reply from the request.
+        /// @return This builder.
+        public Builder put(final String path, final RestHandler handler) {
+            return route(RequestMatcher.put(path), handler);
+        }
+
+        /// @param path  The path.
+        /// @param reply The reply, or the first of a sequence of replies.
+        /// @param more  The rest of the sequence. The last reply repeats.
+        /// @return This builder.
+        public Builder delete(final String path, final RestReply reply, final RestReply... more) {
+            return route(RequestMatcher.delete(path), reply, more);
+        }
+
+        /// @param path    The path.
+        /// @param handler Creates the reply from the request.
+        /// @return This builder.
+        public Builder delete(final String path, final RestHandler handler) {
+            return route(RequestMatcher.delete(path), handler);
+        }
+
+        /// @param method  The HTTP method, e.g. `POST`, or [RequestMatcher#ANY_METHOD].
+        /// @param path    The path, which may end with [RequestMatcher#PATH_WILDCARD].
         /// @param handler Creates the reply from the request.
         /// @return This builder.
         public Builder route(final String method, final String path, final RestHandler handler) {
-            routes.add(new Route(method.toUpperCase(), path, handler));
-            return this;
+            return route(RequestMatcher.of(method, path), handler);
+        }
+
+        /// @param matcher The requests to reply to, e.g. matching on the body.
+        /// @param reply   The reply, or the first of a sequence of replies.
+        /// @param more    The rest of the sequence. The last reply repeats.
+        /// @return This builder.
+        public Builder route(final RequestMatcher matcher, final RestReply reply, final RestReply... more) {
+            final List<RestReply> replies = new ArrayList<>();
+            replies.add(Objects.requireNonNull(reply, "reply"));
+            for (final RestReply next : Arrays.asList(more)) {
+                replies.add(Objects.requireNonNull(next, "reply"));
+            }
+            return addOwn(new Route(Objects.requireNonNull(matcher, "matcher"), replies, null));
+        }
+
+        /// @param matcher The requests to reply to, e.g. matching on the body.
+        /// @param handler Creates the reply from the request.
+        /// @return This builder.
+        public Builder route(final RequestMatcher matcher, final RestHandler handler) {
+            return addOwn(new Route(Objects.requireNonNull(matcher, "matcher"), null,
+                    Objects.requireNonNull(handler, "handler")));
+        }
+
+        /// Adds a route for a request recorded in the gwt-suite corpus, keyed as the corpus keys
+        /// it, e.g. `POST /api/permission/doc/v1/checkDocumentPermission #4717b566b9280660`. The
+        /// `/api` root is removed, the query must match exactly and, if the key has a body hash,
+        /// the SHA-1 of the request body must match it, so several recordings of one endpoint with
+        /// different bodies each answer their own request. For a request whose body holds an id
+        /// the client generates (so its hash differs every time), use
+        /// `route(CorpusKey.parse(key).toMatcherIgnoringBody(), ...)` instead. See [CorpusKey].
+        ///
+        /// @param corpusKey The key of the request in the corpus manifest.
+        /// @param reply     The first recorded reply.
+        /// @param more      The rest of the recorded replies, in order. The last repeats, as in
+        ///                  the corpus.
+        /// @return This builder.
+        public Builder recorded(final String corpusKey, final RestReply reply, final RestReply... more) {
+            return route(CorpusKey.parse(corpusKey).toMatcher(), reply, more);
         }
 
         /// Adds all the routes of other fixtures, after the routes already added, e.g. to share
-        /// the fixtures that every screen needs.
+        /// the fixtures that every screen needs. Their strictness is ignored. A route added
+        /// earlier may override one of theirs (e.g. a story's own session info before the
+        /// start-up fixtures'), so they aren't checked for unreachable routes.
         ///
         /// @param fixtures The fixtures.
         /// @return This builder.
@@ -168,40 +255,84 @@ public final class RestFixtures {
             return this;
         }
 
+        /// Makes the fixtures lenient: a request that no route matches still gets a `404` reply
+        /// and is reported, but doesn't fail the story.
+        ///
+        /// @return This builder.
+        public Builder lenient() {
+            strict = false;
+            return this;
+        }
+
         /// @return The fixtures.
+        /// @throws IllegalStateException If a route added to this builder (other than with
+        ///                               [#addAll(RestFixtures)]) can never reply, because an
+        ///                               earlier route matches the same requests, e.g. two routes
+        ///                               for the same method, path and query without a body rule,
+        ///                               or the same corpus key recorded twice.
         public RestFixtures build() {
-            return new RestFixtures(routes);
+            for (int later = 0; later < routes.size(); later++) {
+                final Route laterRoute = routes.get(later);
+                if (!ownRoutes.contains(laterRoute)) {
+                    continue;
+                }
+                for (int earlier = 0; earlier < later; earlier++) {
+                    final RequestMatcher earlierMatcher = routes.get(earlier).matcher;
+                    if (earlierMatcher.shadows(laterRoute.matcher)) {
+                        throw new IllegalStateException("The route " + laterRoute.matcher.describe()
+                                + " can never reply, as the earlier route " + earlierMatcher.describe()
+                                + " matches the same requests. Remove one, put the more specific route "
+                                + "first, or tell them apart with a body rule (e.g. "
+                                + "RequestMatcher.withJsonBody) or a reply sequence.");
+                    }
+                }
+            }
+            return new RestFixtures(routes, strict);
+        }
+
+        private Builder addOwn(final Route route) {
+            routes.add(route);
+            ownRoutes.add(route);
+            return this;
         }
     }
 
     // --------------------------------------------------------------------------------
 
 
-    private static final class Route {
+    /// A route: the requests it matches and either a sequence of replies or a handler.
+    static final class Route {
 
-        private final String method;
-        private final String path;
+        private final RequestMatcher matcher;
+        private final List<RestReply> replies;
         private final RestHandler handler;
 
-        private Route(final String method, final String path, final RestHandler handler) {
-            this.method = Objects.requireNonNull(method);
-            this.path = Objects.requireNonNull(path);
-            this.handler = Objects.requireNonNull(handler);
+        private Route(final RequestMatcher matcher, final List<RestReply> replies, final RestHandler handler) {
+            this.matcher = matcher;
+            this.replies = replies != null
+                    ? Collections.unmodifiableList(replies)
+                    : null;
+            this.handler = handler;
         }
 
-        private boolean matches(final RecordedRequest request) {
-            if (!ANY.equals(method) && !method.equals(request.getMethod())) {
-                return false;
+        /// @param request   The request, which the route matches.
+        /// @param callIndex How many earlier requests this route has replied to in the session.
+        /// @return The reply, never null.
+        /// @throws RuntimeException If the handler fails or returns null.
+        RestReply reply(final RecordedRequest request, final int callIndex) {
+            if (handler != null) {
+                final RestReply reply = handler.reply(request);
+                if (reply == null) {
+                    throw new IllegalStateException("The fixture for " + matcher.describe() + " returned null");
+                }
+                return reply;
             }
-            if (path.endsWith(WILDCARD)) {
-                return request.getPath().startsWith(path.substring(0, path.length() - 1));
-            }
-            return path.equals(request.getPath());
+            return replies.get(Math.min(callIndex, replies.size() - 1));
         }
 
-        @Override
-        public String toString() {
-            return method + " " + path;
+        /// @return The route's matcher.
+        RequestMatcher getMatcher() {
+            return matcher;
         }
     }
 }

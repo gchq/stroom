@@ -139,7 +139,7 @@ public class SettingsPages {
         builder.appendHtmlConstant("<div class=\"wbm-about\"><div class=\"wbm-about__logo\">");
         appendBrand(builder);
         builder.appendHtmlConstant("</div><div class=\"wbm-about__card\">"
-                                   + "<div class=\"wbm-about__title\">Stroom GWT Workbench</div>"
+                                   + "<div class=\"wbm-about__title\">What is the workbench?</div>"
                                    + "<p>The workbench shows Stroom's GWT widgets in isolation, so they can be "
                                    + "developed, tried with different arguments, tested and checked for "
                                    + "accessibility one at a time.</p>"

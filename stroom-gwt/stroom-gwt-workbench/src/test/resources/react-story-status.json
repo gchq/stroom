@@ -1,5 +1,45 @@
 {
-  "_comment": "React stories that won't be ported to GWT ('n/a') or can't be yet ('blocked'), each with a reason. Keys are story ids (e.g. 'widgets-buttons-button--loading') or titles (e.g. 'Widgets/Buttons/Button', or a group such as 'App/AI', covering every story under it). Ported stories need no entry - they are ported by being registered in AllStories. Checked by TestReactStoryCoverage; see test-runner/README.md.",
+  "_comment": "React stories that won't be ported to GWT ('n/a') or can't be yet ('blocked'), each with a reason. Keys are story ids (e.g. 'widgets-buttons-button--loading') or titles (e.g. 'Widgets/Buttons/Button', or a group such as 'App/AI', covering every story under it). Ported stories need no entry - they are ported by being registered in one of the group registrars (AppStories, ScreensStories or WidgetsStories). Checked by TestReactStoryCoverage; see test-runner/README.md.",
   "stories": {
+    "Widgets/Tree/EntityCheckList": {
+      "status": "n/a",
+      "reason": "A legacy flat check list from the Rust port (stroom-ui-rs EntityCheckListWidget, 'kept for backward compatibility'); Stroom's GWT UI has no flat entity check list, only the tri-state explorer tick tree (EntityCheckTreePresenter), ported as Widgets/EntityCheckTree."
+    },
+    "widgets-editors-viewers-xsdbrowser--tree": {
+      "status": "n/a",
+      "reason": "Shows the React port's expandable tree of the schema (XsdBrowser with buildXsdTree), which its source says is 'a Leptos consolidation with no GWT equivalent'; Stroom's only XSD browser is the box diagram (XSDBrowserPresenter), ported as Browse and ParseError."
+    },
+    "widgets-data-grid-datagrid--virtual-is-live": {
+      "status": "n/a",
+      "reason": "Toggles the React port's virtual rendering (only the rows in view) on and off; GWT's MyDataGrid has no virtual mode, it always renders the whole page (and pages long lists with a pager), so there is nothing to toggle. FixedRowsVirtual and FixedRowsManyRows show what GWT does instead."
+    },
+    "app-editors-pathwayseditor--new-pathway": {
+      "status": "blocked",
+      "reason": "GWT bug: New Pathway reads a pathway with no root into PathwayEditPresenter, and PathwayTreePresenter.read calls addNode(pathway.getRoot()) with a null root, which throws (TypeError reading 'getUuid'), so the dialog never opens. Suggested Stroom fix: in PathwayTreePresenter.read, only add and draw the nodes when pathway.getRoot() != null (or give a new Pathway a root node)."
+    },
+    "app-main-credentialsscreen--key-store": {
+      "status": "blocked",
+      "reason": "Choosing the key store file uploads it with Stroom's FileUploadSubmitter (KeyStoreSecretPresenter's CustomFileUpload), which posts the file with its own XMLHttpRequest in JSNI, bypassing RestyGWT and anything the screen harness can replace (see PORTING.md 'Uploads'). Port once Stroom routes uploads through an injectable seam."
+    },
+    "app-main-importdialog--nothing-to-import": {
+      "status": "blocked",
+      "reason": "Needs a file upload: the 'contains nothing that can be imported' warning is shown by ImportConfigPresenter when the confirmation list for the uploaded file is empty, and the upload is CustomFileUpload's own XMLHttpRequest (FileUploadSubmitter, JSNI), which story fixtures can't answer (see PORTING.md, Uploads). The other ImportDialog stories start at the confirmation, after the upload. Needs Stroom to route uploads through an injectable seam."
+    },
+    "App/Main/VisualisationAssets": {
+      "status": "blocked",
+      "reason": "Both stories upload a file: VisualisationAssetsUploadFileDialogPresenter uploads it with CustomFileUpload's own XMLHttpRequest (FileUploadSubmitter, JSNI), which story fixtures can't answer (see PORTING.md, Uploads), and what the plays check (the asset created with the upload's resource key, and the de-duplicated name) happens in the upload's success callback. Needs Stroom to route uploads through an injectable seam."
+    },
+    "app-data-datauploaddialog--upload": {
+      "status": "blocked",
+      "reason": "Needs a file upload: DataUploadPresenter submits the chosen file with CustomFileUpload's own XMLHttpRequest (FileUploadSubmitter, JSNI), which story fixtures can't answer (see PORTING.md, Uploads), and the UploadDataRequest the play checks is sent from the upload's success callback. OkValidatesOnClick is ported. Needs Stroom to route uploads through an injectable seam."
+    },
+    "app-main-pipelineeditor--multi-document-save": {
+      "status": "blocked",
+      "reason": "The 'Save Pipeline: <name>' picker (DocRefSelectionPresenter) is shown by PipelinePlugin.save, a DocumentPlugin that needs the app's ContentManager and DocumentPluginEventManager, and the other dirty document it lists comes from code edited while stepping (SteppingPresenter.getDirtyDocs), loaded through the document plugins registered in DocumentPluginRegistry as the app starts. The harness has no app shell or document plugins; needs a story-level way to create and register DocumentPlugins."
+    },
+    "app-main-steppingscreen--stepping-with-code": {
+      "status": "blocked",
+      "reason": "ElementPresenter loads a hasCode element's document (found with POST /stepping/v1/findElementDoc) through its DocumentPlugin from DocumentPluginRegistry, which only the app fills as its plugins start; without one GWT alerts \"Cannot read properties of undefined (reading 'load')\" and shows no code pane. Needs a story-level way to create and register DocumentPlugins (e.g. XsltPlugin) in the harness."
+    }
   }
 }

@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestSpy {
 
@@ -109,15 +110,69 @@ class TestSpy {
 
     @Test
     void testSpies() {
-        final Spy spy = Spies.get("onTestSpies");
-        assertThat(Spies.get("onTestSpies")).isSameAs(spy);
-        assertThat(Spies.get("onTestSpiesOther")).isNotSameAs(spy);
-        spy.call();
+        Spies.startRendering();
+        final Spy registered = Spies.register("onTestSpies");
+        final Spy playSpy = Spies.get("onTestSpies");
+        assertThat(Spies.register("onTestSpies")).isSameAs(registered);
+        assertThat(Spies.get("onTestSpies")).isSameAs(playSpy);
+        assertThat(Spies.get("onTestSpiesOther")).isNotSameAs(playSpy);
+        registered.call("a");
+        assertThat(playSpy.getCalls()).containsExactly(List.of("a"));
+        assertThat(playSpy.getName()).isEqualTo("onTestSpies");
 
-        Spies.clearAll();
+        // A new rendering: the play function's spy is the same object, but reads the new
+        // rendering's spy, which has no calls
+        Spies.startRendering();
+        final Spy rerendered = Spies.register("onTestSpies");
+        assertThat(rerendered).isNotSameAs(registered);
+        assertThat(Spies.get("onTestSpies")).isSameAs(playSpy);
+        assertThat(playSpy.getCalls()).isEmpty();
+        rerendered.call("b");
+        assertThat(playSpy.getLastCall()).containsExactly("b");
+        assertThat(playSpy.callCount().get()).isOne();
+    }
 
-        // The same spy, so the play function's references stay valid, but with no calls
-        assertThat(Spies.get("onTestSpies")).isSameAs(spy);
-        assertThat(spy.getCalls()).isEmpty();
+    @Test
+    void testSpies_callsFromAnEarlierRenderingAreIgnored() {
+        // Regression: a callback left over from the previous rendering (e.g. a timer) recorded
+        // its calls into the next rendering's spy
+        Spies.startRendering();
+        final Spy first = Spies.register("onTestSpiesStale");
+        final Runnable staleCallback = first.asRunnable();
+        Spies.startRendering();
+        Spies.register("onTestSpiesStale");
+
+        first.call("late");
+        staleCallback.run();
+
+        assertThat(Spies.get("onTestSpiesStale").getCalls()).isEmpty();
+        assertThat(first.getCalls()).isEmpty();
+    }
+
+    @Test
+    void testSpies_unregisteredNameFails() {
+        // Regression: a misspelt name silently made a new spy with no calls, so
+        // not().toHaveBeenCalled() passed
+        Spies.startRendering();
+        Spies.register("onChange");
+        final Spy misspelt = Spies.get("onChnage");
+
+        assertThatThrownBy(misspelt::getCalls)
+                .isInstanceOf(PlayException.class)
+                .hasMessageContaining("No spy named \"onChnage\"")
+                .hasMessageContaining("[onChange]");
+        assertThatThrownBy(() -> misspelt.callCount().get()).isInstanceOf(PlayException.class);
+        assertThatThrownBy(() -> misspelt.call("x")).isInstanceOf(PlayException.class);
+    }
+
+    @Test
+    void testSpies_unregisteredNameFailsTheExpectation() {
+        Spies.startRendering();
+        final Play play = new Play();
+        play.expect(play.spy("onTestSpiesMissing")).not().toHaveBeenCalled();
+
+        assertThatThrownBy(() -> play.getSteps().get(0).run(null))
+                .isInstanceOf(PlayException.class)
+                .hasMessageContaining("No spy named \"onTestSpiesMissing\"");
     }
 }

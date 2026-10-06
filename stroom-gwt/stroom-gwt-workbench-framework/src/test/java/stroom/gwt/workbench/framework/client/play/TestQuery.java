@@ -97,18 +97,37 @@ class TestQuery {
 
     @Test
     void testPick() {
-        assertThat(Query.pick(1, -1, false, "none")).isZero();
-        assertThat(Query.pick(3, -1, true, "none")).isZero();
-        assertThat(Query.pick(3, 2, false, "none")).isEqualTo(2);
-        assertThatThrownBy(() -> Query.pick(0, -1, false, "Unable to find an element with the text: x"))
+        assertThat(Query.pick(1, -1, false, "none", "many")).isZero();
+        assertThat(Query.pick(3, -1, true, "none", "many")).isZero();
+        assertThat(Query.pick(3, 2, false, "none", "many")).isEqualTo(2);
+        assertThatThrownBy(() -> Query.pick(0, -1, false, "Unable to find an element with the text: x", "many"))
                 .isInstanceOf(PlayException.class)
                 .hasMessage("Unable to find an element with the text: x");
-        assertThatThrownBy(() -> Query.pick(2, -1, false, "Unable to find an element with the text: x"))
-                .isInstanceOf(PlayException.class)
-                .hasMessage("Found multiple elements (2): elements with the text: x (use nth() to pick one)");
-        assertThatThrownBy(() -> Query.pick(2, 2, true, "Unable to find x"))
+        assertThatThrownBy(() -> Query.pick(2, 2, true, "Unable to find x", "many"))
                 .isInstanceOf(PlayException.class)
                 .hasMessage("Unable to find x at index 2 (found 2)");
+    }
+
+    @Test
+    void testPick_multipleMessage() {
+        // Regression: the role query's message became "Found multiple elements (2): Unable to find
+        // an accessible element with the role ..."
+        assertThatThrownBy(() -> Query.pick(2, -1, false, "Unable to find an accessible element with the role "
+                                                         + "\"button\"",
+                "Found multiple elements with the role \"button\""))
+                .isInstanceOf(PlayException.class)
+                .hasMessageStartingWith("Found multiple elements with the role \"button\" (2 found; use nth()");
+    }
+
+    @Test
+    void testQuerySelector_isTheFirstMatch() {
+        // Regression: querySelector threw when several elements matched, where the DOM's
+        // querySelector gives the first
+        final Play play = new Play();
+        final Query first = play.querySelector(".row");
+        assertThat(first.isAll()).isFalse();
+        assertThat(first.describe()).isEqualTo("within(<div#workbench-root>).querySelector(\".row\")");
+        assertThat(play.querySelectorAll(".row").isAll()).isTrue();
     }
 
     @Test

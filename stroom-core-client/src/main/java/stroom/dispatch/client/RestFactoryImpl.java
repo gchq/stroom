@@ -37,18 +37,26 @@ import org.fusesource.restygwt.client.Dispatcher;
 import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.REST;
+import org.fusesource.restygwt.client.RestServiceProxy;
 
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-class RestFactoryImpl implements RestFactory, HasHandlers {
+/// Stroom's [RestFactory], which sends requests with RestyGWT using the [Dispatcher] it is given.
+/// It is normally bound by [RestModule], but is public so that it can also be created directly,
+/// e.g. with a test dispatcher.
+public class RestFactoryImpl implements RestFactory, HasHandlers {
 
     private final EventBus eventBus;
+    private final Dispatcher dispatcher;
 
+    /// @param eventBus   The event bus to fire events on, e.g. alerts for failed requests.
+    /// @param dispatcher The dispatcher to send every request with.
     @Inject
     public RestFactoryImpl(final EventBus eventBus, final Dispatcher dispatcher) {
         this.eventBus = eventBus;
+        this.dispatcher = dispatcher;
 
         String hostPageBaseUrl = GWT.getHostPageBaseURL();
         hostPageBaseUrl = trimPath(hostPageBaseUrl);
@@ -72,23 +80,26 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
     @Override
     public <T extends DirectRestService> Resource<T> create(final T service) {
-        return new ResourceImpl<>(this, service);
+        return new ResourceImpl<>(this, dispatcher, service);
     }
 
     private static class ResourceImpl<T extends DirectRestService> implements Resource<T> {
 
         private final HasHandlers hasHandlers;
+        private final Dispatcher dispatcher;
         private final T service;
 
         public ResourceImpl(final HasHandlers hasHandlers,
+                            final Dispatcher dispatcher,
                             final T service) {
             this.hasHandlers = hasHandlers;
+            this.dispatcher = dispatcher;
             this.service = service;
         }
 
         @Override
         public <R> MethodExecutor<T, R> method(final Function<T, R> function) {
-            return new MethodExecutorImpl<>(hasHandlers, service, function);
+            return new MethodExecutorImpl<>(hasHandlers, dispatcher, service, function);
         }
 
         @Override
@@ -97,13 +108,14 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                 consumer.accept(t);
                 return null;
             };
-            return new MethodExecutorImpl<>(hasHandlers, service, function);
+            return new MethodExecutorImpl<>(hasHandlers, dispatcher, service, function);
         }
     }
 
     private static class MethodExecutorImpl<T extends DirectRestService, R> implements MethodExecutor<T, R> {
 
         private final HasHandlers hasHandlers;
+        private final Dispatcher dispatcher;
         private final T service;
         private final Function<T, R> function;
 
@@ -111,9 +123,11 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         private RestErrorHandler errorConsumer;
 
         public MethodExecutorImpl(final HasHandlers hasHandlers,
+                                  final Dispatcher dispatcher,
                                   final T service,
                                   final Function<T, R> function) {
             this.hasHandlers = hasHandlers;
+            this.dispatcher = dispatcher;
             this.service = service;
             this.function = function;
         }
@@ -128,6 +142,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                                                      final String taskMessage) {
             return new TaskExecutorImpl<>(
                     hasHandlers,
+                    dispatcher,
                     service,
                     function,
                     resultConsumer,
@@ -152,6 +167,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
     private static class TaskExecutorImpl<T extends DirectRestService, R> implements TaskExecutor<T, R> {
 
         private final HasHandlers hasHandlers;
+        private final Dispatcher dispatcher;
         private final T service;
         private final Function<T, R> function;
 
@@ -161,6 +177,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         private final Task task;
 
         public TaskExecutorImpl(final HasHandlers hasHandlers,
+                                final Dispatcher dispatcher,
                                 final T service,
                                 final Function<T, R> function,
                                 final Consumer<R> resultConsumer,
@@ -168,6 +185,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                                 final TaskMonitorFactory taskMonitorFactory,
                                 final String taskMessage) {
             this.hasHandlers = hasHandlers;
+            this.dispatcher = dispatcher;
             this.service = service;
             this.function = function;
             this.resultConsumer = resultConsumer;
@@ -202,6 +220,13 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                     taskMonitor,
                     task);
             final REST<R> rest = REST.withCallback(methodCallback);
+            // Send the request with this factory's dispatcher rather than RestyGWT's static
+            // default, so that factories with different dispatchers can be used side by side
+            // (e.g. in tests). The service instances are shared, but the request is created and
+            // sent synchronously within the call below, so it picks up this dispatcher.
+            if (service instanceof RestServiceProxy) {
+                ((RestServiceProxy) service).setDispatcher(dispatcher);
+            }
             taskMonitor.onStart(task);
             function.apply(rest.call(service));
         }

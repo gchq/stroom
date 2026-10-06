@@ -17,10 +17,13 @@
 
 package stroom.gwt.workbench.framework.client.play;
 
+import stroom.gwt.workbench.framework.client.play.Values.Comparison;
+
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -112,7 +115,8 @@ class TestValues {
     void testLengthOf() {
         assertThat(Values.lengthOf("abc")).isEqualTo(3);
         assertThat(Values.lengthOf(List.of(1, 2))).isEqualTo(2);
-        assertThat(Values.lengthOf(Map.of("a", 1))).isEqualTo(1);
+        // As Jest, which reads a length property, which a Map doesn't have
+        assertThat(Values.lengthOf(Map.of("a", 1))).isNull();
         assertThat(Values.lengthOf(new Object[0])).isZero();
         assertThat(Values.lengthOf(5)).isNull();
         assertThat(Values.lengthOf(null)).isNull();
@@ -120,14 +124,87 @@ class TestValues {
 
     @Test
     void testCompare() {
-        assertThat(Values.compare(2, 1)).isPositive();
-        assertThat(Values.compare(1.5, 2L)).isNegative();
-        assertThat(Values.compare(2.0, 2)).isZero();
-        assertThatThrownBy(() -> Values.compare("2", 1))
+        assertThat(Values.compare(2, 1, Comparison.GREATER_THAN)).isTrue();
+        assertThat(Values.compare(1.5, 2L, Comparison.LESS_THAN)).isTrue();
+        assertThat(Values.compare(2.0, 2, Comparison.GREATER_THAN_OR_EQUAL)).isTrue();
+        assertThat(Values.compare(2.0, 2, Comparison.LESS_THAN_OR_EQUAL)).isTrue();
+        assertThat(Values.compare(2.0, 2, Comparison.GREATER_THAN)).isFalse();
+        assertThatThrownBy(() -> Values.compare("2", 1, Comparison.GREATER_THAN))
                 .isInstanceOf(PlayException.class)
                 .hasMessageContaining("must be a number");
-        assertThatThrownBy(() -> Values.compare(1, null))
+        assertThatThrownBy(() -> Values.compare(1, null, Comparison.GREATER_THAN))
                 .isInstanceOf(PlayException.class);
+    }
+
+    @Test
+    void testCompare_nanAndNegativeZero() {
+        // Regression: Double.compare made NaN greater than everything and -0.0 less than 0
+        for (final Comparison comparison : Comparison.values()) {
+            assertThat(Values.compare(Double.NaN, 1, comparison)).isFalse();
+            assertThat(Values.compare(1, Double.NaN, comparison)).isFalse();
+        }
+        assertThat(Values.compare(-0.0, 0, Comparison.GREATER_THAN_OR_EQUAL)).isTrue();
+        assertThat(Values.compare(-0.0, 0, Comparison.LESS_THAN)).isFalse();
+    }
+
+    @Test
+    void testFloatsCompareAsInTheBrowser() {
+        // Regression: 0.1f widened to 0.10000000149011612 on the JVM
+        assertThat(Values.isSame(0.1f, 0.1)).isTrue();
+        assertThat(Values.deepEquals(List.of(0.1f), List.of(0.1))).isTrue();
+        assertThat(Values.format(0.1f)).isEqualTo("0.1");
+        assertThat(Values.isSame(Float.NaN, Double.NaN)).isTrue();
+    }
+
+    @Test
+    void testDeepEquals_sets() {
+        // Regression: sets were compared in iteration order, and a list equalled a set
+        final Set<Integer> set = new LinkedHashSet<>(List.of(1, 2));
+        final Set<Integer> reversed = new LinkedHashSet<>(List.of(2, 1));
+        assertThat(Values.deepEquals(set, reversed)).isTrue();
+        assertThat(Values.deepEquals(set, Set.of(1, 3))).isFalse();
+        assertThat(Values.deepEquals(set, Set.of(1))).isFalse();
+        assertThat(Values.deepEquals(List.of(1, 2), set)).isFalse();
+        assertThat(Values.deepEquals(set, List.of(1, 2))).isFalse();
+        assertThat(Values.deepEquals(Set.of(Map.of("a", 1)), Set.of(Map.of("a", 1)))).isTrue();
+        assertThat(Values.format(set)).isEqualTo("Set {1, 2}");
+    }
+
+    @Test
+    void testDeepEquals_nullValuesAreUndefined() {
+        // Regression: as Jest ignores undefined properties, a null-valued key is as if absent
+        final Map<String, Object> withNull = new LinkedHashMap<>();
+        withNull.put("a", 1);
+        withNull.put("b", null);
+        assertThat(Values.deepEquals(withNull, Map.of("a", 1))).isTrue();
+        assertThat(Values.deepEquals(Map.of("a", 1), withNull)).isTrue();
+        assertThat(Values.deepEquals(withNull, Map.of("a", 1, "b", 2))).isFalse();
+    }
+
+    @Test
+    void testDeepEquals_primitiveArrays() {
+        // Regression: primitive arrays were compared by reference
+        assertThat(Values.deepEquals(new int[]{1, 2}, new int[]{1, 2})).isTrue();
+        assertThat(Values.deepEquals(new int[]{1, 2}, List.of(1, 2))).isTrue();
+        assertThat(Values.deepEquals(new double[]{1.5}, new long[]{1})).isFalse();
+        assertThat(Values.deepEquals(new boolean[]{true}, List.of(true))).isTrue();
+        assertThat(Values.deepEquals(new char[]{'a'}, List.of("a"))).isTrue();
+        assertThat(Values.containsItem(new int[]{1, 2}, 2, false)).isTrue();
+        assertThat(Values.lengthOf(new byte[3])).isEqualTo(3);
+        assertThat(Values.format(new int[]{1, 2})).isEqualTo("[1, 2]");
+    }
+
+    @Test
+    void testMatchesObject_partialInLists() {
+        // Regression: maps inside lists had to match exactly
+        final Map<String, Object> actual = Map.of("rows", List.of(Map.of("id", 1, "name", "a"),
+                Map.of("id", 2, "name", "b")), "total", 2);
+        assertThat(Values.matchesObject(actual, Map.of("rows", List.of(Map.of("id", 1), Map.of("id", 2)))))
+                .isTrue();
+        assertThat(Values.matchesObject(actual, Map.of("rows", List.of(Map.of("id", 1))))).isFalse();
+        assertThat(Values.matchesObject(actual, Map.of("rows", List.of(Map.of("id", 1), Map.of("id", 3)))))
+                .isFalse();
+        assertThat(Values.matchesObject(actual, Map.of("total", 2))).isTrue();
     }
 
     @Test
@@ -183,5 +260,17 @@ class TestValues {
             map.put((String) keysAndValues[i], keysAndValues[i + 1]);
         }
         return map;
+    }
+
+    @Test
+    void testZeroAndNegativeZeroAreNotTheSame() {
+        // Regression: toBe and toEqual treated 0 and -0 as the same, unlike Object.is in Jest
+        assertThat(Values.isSame(0.0, -0.0)).isFalse();
+        assertThat(Values.isSame(-0.0, 0)).isFalse();
+        assertThat(Values.isSame(-0.0, -0.0)).isTrue();
+        assertThat(Values.isSame(0, 0.0)).isTrue();
+        assertThat(Values.isSame(Double.NaN, Float.NaN)).isTrue();
+        assertThat(Values.deepEquals(List.of(0.0), List.of(-0.0))).isFalse();
+        assertThat(Values.deepEquals(Map.of("a", -0.0), Map.of("a", -0.0))).isTrue();
     }
 }

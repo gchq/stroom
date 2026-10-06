@@ -101,7 +101,10 @@ public final class A11yRunner {
             var root = $doc.getElementById('workbench-root') || $doc.body;
             var promise;
             try {
-                promise = $wnd.axe.run(root, {});
+                // Without preloading, axe doesn't fetch the page's stylesheets itself, which
+                // fails (404s) for stylesheets that import others relatively; no rule result
+                // depends on it for stories
+                promise = $wnd.axe.run(root, {preload: false});
             } catch (e) {
                 promise = $wnd.Promise.reject(e);
             }
