@@ -6,7 +6,8 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfLightBackgroundColour"
-                        label="Light Background Colour">
+                        label="Light Background Colour"
+                        screenReaderText="CSS colour name or hex value, e.g. #FF0000.">
             <form:HelpHTML>
                 <p>Sets the background colour of matching rows when using the light theme.</p>
                 <p>
@@ -19,7 +20,8 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfLightTextColour"
-                        label="Light Text Colour">
+                        label="Light Text Colour"
+                        screenReaderText="CSS colour name or hex value, e.g. #FF0000.">
             <form:HelpHTML>
                 <p>Sets the text colour of matching rows when using the light theme.</p>
                 <p>
@@ -32,14 +34,16 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfLightExample"
-                        label="Light Example">
+                        label="Light Example"
+                        helpText="Preview of how matching rows will look in the light theme.">
             <g:SimplePanel ui:field="lightExample" addStyleNames="cf-light-example" width="200px"/>
         </form:FormGroup>
 
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfDarkBackgroundColour"
-                        label="Dark Background Colour">
+                        label="Dark Background Colour"
+                        screenReaderText="CSS colour name or hex value, e.g. #FF0000.">
             <form:HelpHTML>
                 <p>Sets the background colour of matching rows when using the dark theme.</p>
                 <p>
@@ -52,7 +56,8 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfDarkTextColour"
-                        label="Dark Text Colour">
+                        label="Dark Text Colour"
+                        screenReaderText="CSS colour name or hex value, e.g. #FF0000.">
             <form:HelpHTML>
                 <p>Sets the text colour of matching rows when using the dark theme.</p>
                 <p>
@@ -65,7 +70,8 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfDarkExample"
-                        label="Dark Example">
+                        label="Dark Example"
+                        helpText="Preview of how matching rows will look in the dark theme.">
             <g:SimplePanel ui:field="darkExample" addStyleNames="cf-dark-example" width="200px"/>
         </form:FormGroup>
 

@@ -5,10 +5,15 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="indexFieldType" label="Type">
+        <form:FormGroup identity="indexFieldType" label="Type"
+                        helpText="The data type of the field, for example Text, Date, Long or DenseVector. The type controls how values are indexed and which query conditions can be used."
+                        screenReaderText="Data type of the field. Controls how values are indexed and queried.">
             <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexFieldName" label="Name">
+        <form:FormGroup identity="indexFieldName" label="Name"
+                        helpText="The name of the field. Values in the indexing XML are matched to this name, and it is the name used in queries."
+                        screenReaderText="Must match the field name in the indexing XML."
+                        required="true">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
@@ -20,7 +25,9 @@
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="positions" identity="indexFieldPositions" label="Positions"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexFieldAnalyser" label="Analyser">
+        <form:FormGroup identity="indexFieldAnalyser" label="Analyser"
+                        helpText="How the field's text is split into terms for indexing and searching: Keyword (whole value as one term), Alpha, Numeric, Alpha numeric, Whitespace, Stop words or Standard."
+                        screenReaderText="How text is split into searchable terms. Keyword keeps the whole value.">
             <l:SelectionBox ui:field="analyser" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>

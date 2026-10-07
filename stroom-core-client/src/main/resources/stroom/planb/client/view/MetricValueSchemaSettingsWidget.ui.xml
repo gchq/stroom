@@ -6,27 +6,33 @@
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="Value Size"
-                        helpText="Choose how big a value can be for a data point. Larger values require more storage.">
+                        helpText="The largest whole-number value a single data point can hold, from Max 255 (1 byte) to about 9.2 quintillion (8 bytes). Larger limits need more storage. Default is Max 65,535."
+                        screenReaderText="Largest whole number per data point; larger limits need more storage.">
             <i:SelectionBox ui:field="maxValue" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Store Latest Value"
-                        helpText="Should we store the last value received for the time period?">
+                        helpText="Stores the most recent value received in each time period. Default is ticked."
+                        screenReaderText="Most recent value in each period. Default is ticked.">
             <tickbox:CustomCheckBox ui:field="storeLatestValue" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Store Min Value"
-                        helpText="Should we store the minimum value received for the time period?">
+                        helpText="Stores the smallest value received in each time period. Default is unticked."
+                        screenReaderText="Smallest value in each period. Default is unticked.">
             <tickbox:CustomCheckBox ui:field="storeMin" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Store Max Value"
-                        helpText="Should we store the maximum value received for the time period?">
+                        helpText="Stores the largest value received in each time period. Default is unticked."
+                        screenReaderText="Largest value in each period. Default is unticked.">
             <tickbox:CustomCheckBox ui:field="storeMax" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Store Count"
-                        helpText="Should we remember how many values we received for the time period? This is needed for calculating averages.">
+                        helpText="Stores how many values were received in each time period. Needed, with Store Sum, to calculate averages. Default is unticked."
+                        screenReaderText="Needed with Store Sum to calculate averages.">
             <tickbox:CustomCheckBox ui:field="storeCount" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Store Sum"
-                        helpText="Should we store the sum of the values we received for the time period? This is needed for calculating averages.">
+                        helpText="Stores the total of the values received in each time period. Needed, with Store Count, to calculate averages. Default is unticked."
+                        screenReaderText="Needed with Store Count to calculate averages.">
             <tickbox:CustomCheckBox ui:field="storeSum" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>

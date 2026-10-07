@@ -8,14 +8,16 @@
     <g:FlowPanel styleName="max form">
         <form:FormGroup
                 label="Enabled"
-                helpText="Forget duplicate repeating temporal values and just keep the first in order to optimise the store and reduce store size. Note that some care may be needed when processing old data or when data is received late. It may be necessary to turn condense off during the time you are loading old data.">
+                helpText="Once data is older than the condense age, merges redundant entries for the same key to reduce store size: only the first of a run of identical values is kept, and overlapping or adjacent sessions are joined. Untick it while loading old or late-arriving data. Default is unticked."
+                screenReaderText="Merges repeated values or touching sessions once data passes the condense age.">
             <tickbox:CustomCheckBox ui:field="condenseEnabled"
                                     identity="condenseEnabled"/>
         </form:FormGroup>
         <form:FormGroup ui:field="condenseAgePanel"
                         identity="condenseAgePanel"
                         label="Condense Age"
-                        helpText="Choose how long to wait before condensing recently added data.">
+                        helpText="How old data must be before it is condensed. Enter a number from 1 to 9999 and choose Days, Weeks, Months or Years. Default is 1 day. Only used when condense is enabled."
+                        screenReaderText="Number from 1 to 9999 and a unit, days to years. Default is 1 day.">
             <g:FlowPanel styleName="durationSetting">
                 <valuespinner:ValueSpinner ui:field="condenseAge"/>
                 <i:SelectionBox ui:field="condenseTimeUnit" addStyleNames="allow-focus"/>

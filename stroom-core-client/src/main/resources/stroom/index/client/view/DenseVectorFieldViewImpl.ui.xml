@@ -7,47 +7,54 @@
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="EmbeddingModel"
                         label="Embedding Model"
-                        helpText="Choose the AI model to convert field data to vectors.">
+                        helpText="The AI model used to turn this field's text into vectors, both when indexing and when building a query. Choose an OpenAI model document.">
             <g:SimplePanel ui:field="embeddingModel"/>
         </form:FormGroup>
         <form:FormGroup identity="vectorSimilarityFunctionType"
                         label="Vector Similarity Function Type"
-                        helpText="Vector similarity function; used in search to return top K most similar vectors to a target vector. This is a label describing the method used during indexing and searching of the vectors in order to determine the nearest neighbors.">
+                        helpText="How the similarity between two vectors is measured when indexing and searching: Euclidean distance, Dot product, Cosine similarity or Maximum inner product. Dot product needs all vectors normalised to unit length. Default is Dot product."
+                        screenReaderText="How vector similarity is measured. Dot product needs normalised vectors.">
             <l:SelectionBox ui:field="vectorSimilarityFunctionType" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="segmentSize"
                         label="Segment Size"
-                        helpText="The maximum size of the segment used during vectorisation, defined in tokens.">
+                        helpText="The maximum size of each segment that the field's text is split into before it is converted to vectors, in tokens. Default is 2000."
+                        screenReaderText="Maximum segment size in tokens.">
             <v:ValueSpinner ui:field="segmentSize" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="overlapSize"
                         label="Overlap Size"
-                        helpText="The maximum size of the overlap, defined in tokens. Only full sentences are considered for the overlap.">
+                        helpText="The maximum number of tokens that adjoining segments share, so that context is not lost at a split. Only whole sentences are included in the overlap. Default is 200."
+                        screenReaderText="Maximum overlap between segments in tokens. Whole sentences only.">
             <v:ValueSpinner ui:field="overlapSize" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="nearestNeighbourCount"
                         label="Nearest Neighbour Count"
-                        helpText="The number of nearest neighbors to gather when querying.">
+                        helpText="The number of nearest neighbours (most similar vectors) to return for a vector query. Default is 10."
+                        screenReaderText="Number of most similar vectors to return per query.">
             <v:ValueSpinner ui:field="nearestNeighbourCount" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="RerankModel"
                         label="Reranking Model"
-                        helpText="Choose the AI model to rerank KNN search results.">
+                        helpText="The AI model used to rerank the results of a vector search by relevance. Reranking only happens when the query asks for the field's rerank score. Choose an OpenAI model document.">
             <g:SimplePanel ui:field="rerankModel"/>
         </form:FormGroup>
         <form:FormGroup identity="rerankModelType"
                         label="Rerank Model Type"
-                        helpText="The type or reranking model to use.">
+                        helpText="The kind of service the reranking model runs on: Jina, Cohere or Open AI. Default is Open AI."
+                        screenReaderText="Service the reranking model runs on.">
             <l:SelectionBox ui:field="rerankModelType" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="rerankBatchSize"
                         label="Rerank Batch Size"
-                        helpText="The number of items to send to the rerank model in each batch.">
+                        helpText="The number of search results sent to the reranking model in each request. Default is 1000."
+                        screenReaderText="Number of results sent to the reranking model per request.">
             <v:ValueSpinner ui:field="rerankBatchSize" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="rerankScoreMinimum"
                         label="Minimum Rerank Score"
-                        helpText="Choose the minimum score for reranking KNN results (default 0.8).">
+                        helpText="Results scoring below this value are removed after reranking. Enter a decimal number; anything else is treated as the default. Applies to Jina and Cohere models only. Default is 0.8."
+                        screenReaderText="Decimal number. Jina and Cohere only. Default is 0.8.">
             <g:TextBox ui:field="rerankScoreMinimum"/>
         </form:FormGroup>
     </g:FlowPanel>

@@ -16,7 +16,8 @@
         <form:FormGroup ui:field="styleGroup"
                         identity="cfStyle"
                         label="Style"
-                        helpText="Choose a style for the tag.">
+                        helpText="The colour used to show this label on annotations. Default is None."
+                        screenReaderText="Colour used to show the label. Default is None.">
             <l:SelectionBox ui:field="formattingStyle"/>
         </form:FormGroup>
 

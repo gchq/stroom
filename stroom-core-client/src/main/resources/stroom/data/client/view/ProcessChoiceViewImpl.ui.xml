@@ -7,7 +7,8 @@
              xmlns:c="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form-page form">
         <form:FormGroup identity="processChoicePriority" label="Priority"
-                        helpText="The priority of the new processor filters, from 1 to 100. Filters with a higher priority are processed first. Default 10. Ignored when automatic priority is ticked and the pipeline has an existing filter.">
+                        helpText="The priority of the new processor filters, from 1 to 100. Filters with a higher priority are processed first. Default is 10. Ignored when automatic priority is ticked and the pipeline has an existing filter."
+                        screenReaderText="1 to 100, higher runs first. Used unless automatic priority applies.">
             <v:ValueSpinner ui:field="priority"/>
         </form:FormGroup>
         <form:FormGroup>
@@ -19,10 +20,14 @@
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="enabled" identity="processChoiceEnable" label="Enable new filters"/>
         </form:FormGroup>
-        <form:FormGroup identity="processChoiceMinCreateTime" label="Min Create Time">
+        <form:FormGroup identity="processChoiceMinCreateTime" label="Min Create Time"
+                        helpText="Only process streams created at or after this time, in ISO 8601 format, e.g. 2026-01-31T00:00:00.000Z. Leave blank for no lower limit."
+                        screenReaderText="Earliest stream create time, ISO 8601.">
             <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
         </form:FormGroup>
-        <form:FormGroup identity="processChoiceMaxCreateTime" label="Max Create Time">
+        <form:FormGroup identity="processChoiceMaxCreateTime" label="Max Create Time"
+                        helpText="Only process streams created at or before this time, in ISO 8601 format. Leave blank for no upper limit. Set to now when specific streams are selected or Reprocess data is changed."
+                        screenReaderText="Latest stream create time, ISO 8601.">
             <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
         </form:FormGroup>
     </g:FlowPanel>

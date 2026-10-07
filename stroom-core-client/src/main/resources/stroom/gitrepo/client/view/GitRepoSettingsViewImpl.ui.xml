@@ -10,14 +10,14 @@
         <!-- Content Store stuff -->
         <form:FormGroup identity="lblContentStore"
                         label="Content Store"
-                        helpText="Name of the Content Store that specified this Content Pack"
+                        helpText="Content store that this content pack came from. Read-only."
                         ui:field="fgContentStore">
             <g:Label title="The name of the Content Store that specified this Content Pack"
                      ui:field="lblContentStore">Lorem ipsum</g:Label>
         </form:FormGroup>
         <form:FormGroup identity="lblContentPack"
                         label="Content Pack Name"
-                        helpText="Name of this Content Pack"
+                        helpText="Name of this content pack. Read-only."
                         ui:field="fgContentPack">
             <g:Label title="The name of this Content Pack"
                      ui:field="lblContentPack">Lorem ipsum</g:Label>
@@ -26,19 +26,22 @@
         <!-- Git basic settings -->
         <form:FormGroup identity="txtGitUrl"
                         label="Git repository URL"
-                        helpText="URL to access the Git repository">
+                        helpText="URL of the Git repository, using HTTPS or SSH, e.g. https://github.com/org/repo.git. Read-only for content packs."
+                        screenReaderText="HTTPS or SSH URL. Read-only for content packs.">
             <g:TextBox title="The URL of the GIT repository"
                        ui:field="txtGitUrl" />
         </form:FormGroup>
         <form:FormGroup identity="txtGitBranch"
                         label="Git branch"
-                        helpText="Branch of the Git repository to pull from or push to">
+                        helpText="Branch of the Git repository to pull from and push to, e.g. main. Read-only for content packs."
+                        screenReaderText="Branch to pull from and push to. Read-only for content packs.">
             <g:TextBox title="The branch of the GIT repository"
                        ui:field="txtGitBranch" />
         </form:FormGroup>
         <form:FormGroup identity="txtGitPath"
                         label="Git path"
-                        helpText="Path within the Git repository that is the root of the Stroom content">
+                        helpText="Folder within the Git repository that holds the Stroom content, e.g. stroom/content. Leave blank to use the root of the repository. Read-only for content packs."
+                        screenReaderText="Leave blank for the repository root. Read-only for content packs.">
             <g:TextBox title="The path within the GIT repository"
                        ui:field="txtGitPath" />
         </form:FormGroup>
@@ -46,7 +49,8 @@
         <!-- Specify the commit hash to pull from Git => readonly; cannot push -->
         <form:FormGroup identity="txtGitCommitToPull"
                         label="Git commit"
-                        helpText="Hash of a Git commit that you want to pull. Makes the repository read-only.">
+                        helpText="Hash of a Git commit to pull instead of the latest commit on the branch. While it is set, Push to Git and Automatically push are not available. Leave blank to pull the latest commit. Read-only for content packs."
+                        screenReaderText="While set, pushing is not available.">
             <g:TextBox title="The commit you want to pull from Git"
                        ui:field="txtGitCommitToPull" />
         </form:FormGroup>
@@ -54,8 +58,9 @@
         <!-- Whether to automatically push to Git whenever something changes -->
         <form:FormGroup identity="chkGitAutoPush"
                         label="Automatically push"
-                        helpText="Whether to automatically push any changes into Git"
-                        ui:field="fgGitAutoPush">
+                        helpText="Tick to push any changes to Git automatically. The Git Repo Push job does this, every minute by default, with a generic commit message. Not available while a commit hash is set."
+                        ui:field="fgGitAutoPush"
+                        screenReaderText="Pushed by the Git Repo Push job, every minute by default.">
             <tickbox:CustomCheckBox title="Automatically push changes to the Git repository"
                                     ui:field="chkGitAutoPush" />
         </form:FormGroup>
@@ -63,7 +68,8 @@
         <!-- Button to set credentials -->
         <form:FormGroup identity="credentials-group"
                         label="Credentials"
-                        helpText="Select credentials to use with the Git repository">
+                        helpText="Stored credential used to access the Git repository: an SSH key, a user name and password, or an access token."
+                        screenReaderText="SSH key, user name and password, or access token.">
             <g:HorizontalPanel>
                 <sel:SelectionBox ui:field="credentialSelectionBox"/>
 <!--                <b:Button ui:field="btnSetCredentials"-->

@@ -13,7 +13,9 @@
 <!--                <g:Label ui:field="midnight" addStyleNames="dateTime-quickSetting">Midnight</g:Label>-->
 <!--                <g:Label ui:field="midday" addStyleNames="dateTime-quickSetting">Midday</g:Label>-->
 <!--            </g:FlowPanel>-->
-            <form:FormGroup identity="hour" label="Hour" addStyleNames="dock-min">
+            <form:FormGroup identity="hour" label="Hour" addStyleNames="dock-min"
+                            helpText="Hour of the day, 0 to 23. Values wrap round. Reset sets the hour, minute and second to 0."
+                            screenReaderText="0 to 23.">
                 <g:FlowPanel styleName="valueChooser">
                     <v:ValueSpinner ui:field="hour"
                                     addStyleNames="dock-max"
@@ -24,7 +26,9 @@
                              text="Reset"/>
                 </g:FlowPanel>
             </form:FormGroup>
-            <form:FormGroup ui:field="minuteGroup" identity="minute" label="Minute" addStyleNames="dock-min">
+            <form:FormGroup ui:field="minuteGroup" identity="minute" label="Minute" addStyleNames="dock-min"
+                            helpText="Minute, 0 to 59. Values wrap round. Reset sets the minute and second to 0."
+                            screenReaderText="0 to 59.">
                 <g:FlowPanel styleName="valueChooser">
                     <v:ValueSpinner ui:field="minute"
                                     addStyleNames="dock-max"
@@ -35,7 +39,9 @@
                              text="Reset"/>
                 </g:FlowPanel>
             </form:FormGroup>
-            <form:FormGroup ui:field="secondGroup" identity="second" label="Second" addStyleNames="dock-min">
+            <form:FormGroup ui:field="secondGroup" identity="second" label="Second" addStyleNames="dock-min"
+                            helpText="Second, 0 to 59. Values wrap round. Reset sets it to 0."
+                            screenReaderText="0 to 59.">
                 <g:FlowPanel styleName="valueChooser">
                     <v:ValueSpinner ui:field="second"
                                     addStyleNames="dock-max"

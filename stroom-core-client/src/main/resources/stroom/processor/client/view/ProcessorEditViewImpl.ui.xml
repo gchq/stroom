@@ -8,43 +8,57 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="processorEditExpression" label="Expression" addStyleNames="dock-max">
+        <form:FormGroup identity="processorEditExpression" label="Expression" addStyleNames="dock-max"
+                        helpText="Selects the streams this filter processes, using stream meta fields such as Feed and Type."
+                        screenReaderText="Streams matching this expression are processed.">
             <g:SimplePanel ui:field="expression" styleName="max default-min-sizes"/>
         </form:FormGroup>
-        <form:FormGroup identity="processorEditMinMetaCreateTimeMs" label="Min Create Time">
+        <form:FormGroup identity="processorEditMinMetaCreateTimeMs" label="Min Create Time"
+                        helpText="Only process streams created at or after this date and time. Leave blank for no lower limit. Use ISO 8601 format, e.g. 2024-01-31T00:00:00.000Z."
+                        screenReaderText="ISO 8601 date and time; blank for no lower limit.">
             <c:MyDateBox ui:field="minMetaCreateTimeMs"/>
         </form:FormGroup>
-        <form:FormGroup identity="processorEditMaxMetaCreateTimeMs" label="Max Create Time">
+        <form:FormGroup identity="processorEditMaxMetaCreateTimeMs" label="Max Create Time"
+                        helpText="Only process streams created at or before this date and time. Leave blank for no upper limit. Use ISO 8601 format, e.g. 2024-12-31T23:59:59.999Z."
+                        screenReaderText="ISO 8601 date and time; blank for no upper limit.">
             <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditMaxProcessingTasks"
                         label="Max Processing Tasks"
-                        helpText="Choose the maximum number of tasks that will be processed concurrently across the cluster. Set to 0 for no limit.">
+                        helpText="The maximum number of this filter's tasks that can be processed at the same time across the cluster. Set to 0 for no limit. Default is 0. A processing profile, if selected, takes precedence over this limit."
+                        screenReaderText="0 means no limit. A processing profile overrides this.">
             <v:ValueSpinner ui:field="maxProcessingTasks"
                             addStyleNames="dock-max"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditProfile"
                         label="Processing Profile"
-                        helpText="The processing profile to use. Profiles control max concurrent tasks for individual nodes and the entire cluster.">
+                        helpText="The processing profile that controls when, and on which nodes, this filter's tasks run and how many run at once. Choose [ none ] to use Max Processing Tasks instead."
+                        screenReaderText="Controls when, where and how many tasks run; none uses Max Processing Tasks.">
             <l:SelectionBox ui:field="profile"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditMaxTaskCreationDelayEnabled"
                         label="Limit Task Creation Delay"
-                        helpText="Select if this filter needs tasks to be created more promptly than the rest of the cluster, e.g. a filter raising alerts from data that only arrives occasionally.">
+                        helpText="Tick to give this filter its own maximum task creation delay instead of the cluster-wide limit. Useful for filters that must react quickly to data that only arrives occasionally."
+                        screenReaderText="When unticked, the cluster-wide limit is used.">
             <tickbox:CustomCheckBox ui:field="maxTaskCreationDelayEnabled"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditMaxTaskCreationDelay"
                         label="Max Task Creation Delay"
-                        helpText="How long this filter will wait, at most, before it is checked for new data again after checks that found none. Filters that keep finding nothing are checked progressively less often, up to this limit, so lowering it makes this filter pick up new data sooner at the cost of checking for it more often. Leave unselected to use the cluster wide limit.">
+                        helpText="The longest this filter waits between checks for new data after checks that found none. Lower values pick up new data sooner but check more often. Default is 30 seconds. The cluster-wide limit is 1 minute by default."
+                        screenReaderText="Longest wait between checks for new data. Default is 30 seconds.">
             <c:DurationPicker ui:field="maxTaskCreationDelay"/>
         </form:FormGroup>
-        <form:FormGroup identity="processorEditExport" label="Include in Export">
+        <form:FormGroup identity="processorEditExport" label="Include in Export"
+                        helpText="Tick to include this processor filter when its pipeline is exported. Default is unticked."
+                        screenReaderText="Exported with its pipeline when ticked.">
             <tickbox:CustomCheckBox ui:field="export"/>
         </form:FormGroup>
-        <form:FormGroup identity="runAsUser" label="Run As User">
+        <form:FormGroup identity="runAsUser" label="Run As User"
+                        helpText="The user whose permissions are used when this filter's processing runs. Default is you, for a new filter.">
             <g:SimplePanel ui:field="runAsUser"/>
         </form:FormGroup>
-        <form:FormGroup identity="processorEditFeedDependencies">
+        <form:FormGroup identity="processorEditFeedDependencies"
+                        helpText="Opens a dialog to set the feeds this filter must wait for and the minimum and maximum processing delays.">
             <b:Button addStyleNames="dock-min allow-focus"
                       ui:field="editFeedDependencies"
                       text="Set Feed Dependencies"/>

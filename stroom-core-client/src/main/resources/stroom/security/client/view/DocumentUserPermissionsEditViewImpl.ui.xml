@@ -5,13 +5,17 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="document" label="Document">
+        <form:FormGroup identity="document" label="Document"
+                        helpText="The document or folder whose permissions are being edited.">
             <g:Label ui:field="document"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="userFormGroup" identity="user" label="User">
+        <form:FormGroup ui:field="userFormGroup" identity="user" label="User"
+                        helpText="The user or group whose permissions are being edited.">
             <g:Label ui:field="user"/>
         </form:FormGroup>
-        <form:FormGroup identity="permission" label="Permission">
+        <form:FormGroup identity="permission" label="Permission"
+                        helpText="The permission held on this document. Each level includes all lower ones; from lowest to highest: Use, View, Edit, Delete, Owner. Choose '[ none ]' to remove the permission."
+                        screenReaderText="Use, View, Edit, Delete or Owner. '[ none ]' removes it.">
             <l:SelectionBox ui:field="permission"/>
         </form:FormGroup>
         <b:Button ui:field="applyPermissionToDescendants" addStyleNames="allow-focus Button--contained-primary" text="Apply To Descendants"/>

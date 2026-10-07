@@ -100,6 +100,7 @@ public class FormGroup extends Composite implements HasWidgets {
     // The inputs a label doesn't name: hidden ones, and buttons, which their own text names
     private static final String ARIA_KEY_SHORTCUTS = "aria-keyshortcuts";
     private static final String ARIA_LABEL = "aria-label";
+    private static final String ARIA_REQUIRED = "aria-required";
     private static final String ARIA_LABELLED_BY = "aria-labelledby";
     private static final String ROLE = "role";
     private static final String GROUP_ROLE = "group";
@@ -119,6 +120,10 @@ public class FormGroup extends Composite implements HasWidgets {
     private final Label helpDescription = new Label();
     // The short description a screen reader reads, or null to use the plain help text
     private String screenReaderText;
+    // Whether the control must have a value, so assistive technology says it is required
+    private boolean required;
+    // The control marked as required, or null for none
+    private Element requiredControl;
     // The names of the controls in a group of several, in the order they are shown
     private List<String> controlNames = List.of();
     // The form control the label is for, or null if there is none (or several)
@@ -225,6 +230,18 @@ public class FormGroup extends Composite implements HasWidgets {
             }
         }
         updateHelpDescription();
+        updateRequired();
+    }
+
+    private void updateRequired() {
+        if (requiredControl != null) {
+            requiredControl.removeAttribute(ARIA_REQUIRED);
+            requiredControl = null;
+        }
+        if (required && labelledControl != null) {
+            requiredControl = labelledControl;
+            requiredControl.setAttribute(ARIA_REQUIRED, "true");
+        }
     }
 
     private void clearGroup() {
@@ -276,7 +293,7 @@ public class FormGroup extends Composite implements HasWidgets {
 
     /// @param root The child's element.
     /// @return The form controls a label for the child could be for, in the order they are shown: the
-    /// element itself if it is one, otherwise those inside it.
+    /// element itself if it is one, otherwise those inside it that aren't hidden.
     static List<Element> findFormControls(final Element root) {
         if (isFormControl(root)) {
             return List.of(root);
@@ -285,11 +302,24 @@ public class FormGroup extends Composite implements HasWidgets {
         final NodeList<Element> elements = querySelectorAll(root, String.join(", ", FORM_CONTROL_TAGS));
         for (int i = 0; i < elements.getLength(); i++) {
             final Element element = elements.getItem(i);
-            if (isFormControl(element)) {
+            if (isFormControl(element) && !isHidden(element, root)) {
                 controls.add(element);
             }
         }
         return controls;
+    }
+
+    // Whether the element, or a parent of it inside the root, is hidden (e.g. a widget made
+    // invisible, such as a grid pager's text boxes, which are only shown while editing)
+    private static boolean isHidden(final Element element, final Element root) {
+        Element current = element;
+        while (current != null && current != root) {
+            if ("none".equals(current.getStyle().getDisplay())) {
+                return true;
+            }
+            current = current.getParentElement();
+        }
+        return false;
     }
 
     private static native NodeList<Element> querySelectorAll(Element root, String selectors) /*-{
@@ -334,6 +364,16 @@ public class FormGroup extends Composite implements HasWidgets {
     public void setScreenReaderText(final String screenReaderText) {
         this.screenReaderText = screenReaderText;
         updateHelpDescription();
+    }
+
+    /// Marks the control the label is for as one that must have a value, so that assistive
+    /// technology says it is required (`aria-required`). It doesn't change how the field looks or
+    /// validate it. Bound to the `required` attribute in ui.xml.
+    ///
+    /// @param required Whether the control must have a value.
+    public void setRequired(final boolean required) {
+        this.required = required;
+        updateRequired();
     }
 
     /// Names the controls of a group that has several (e.g. a number and its unit), which the label

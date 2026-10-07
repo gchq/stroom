@@ -3,7 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="nameName" label="Name" addStyleNames="dock-min">
+        <form:FormGroup identity="nameName" label="Name" addStyleNames="dock-min"
+                        helpText="New name for the tab. If left blank the tab keeps its current name."
+                        screenReaderText="Leave blank to keep the current name.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

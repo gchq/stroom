@@ -7,14 +7,15 @@
 
         <form:FormGroup identity="editNodeTagsAddTags"
                         label="Add/Filter Tag(s)"
-                        addStyleNames="editNodeTagsAddTagsFrmGrp dock-min form">
+                        addStyleNames="editNodeTagsAddTagsFrmGrp dock-min form"
+                        screenReaderText="Space-separated tags, lower case. Enter adds them. Also filters the list.">
             <form:DescriptionHTML>
                 E.g. One tag '<code>extraction-pipeline</code>' or
                 multiple tags '<code>system-x system-y</code>'.
             </form:DescriptionHTML>
             <form:HelpHTML>
                 <p>Either enter a full tag then press the Enter key or click the Add button to add the tag,
-                or enter a partial tag to filter the list of All Known Tags using the partial tag.</p>
+                or enter a partial tag to filter the All known tags list using the partial tag.</p>
                 <p><strong>Note</strong>: All users have visibility of all tags even if they do not have
                     visibility of the document the tag is used on.</p>
             </form:HelpHTML>
@@ -34,7 +35,8 @@
             <form:FormGroup identity="editNodeTagsAllTags"
                             ui:field="allTagsFormGroup"
                             addStyleNames="editNodeTagsAllTagsFrmGrp dock-max max"
-                            label="All known tags">
+                            label="All known tags"
+                            screenReaderText="Enter or double-click adds the selected tags.">
                 <form:HelpHTML>
                     A list of all tags currently in use across all documents in Stroom.
                     The list also includes any suggested tags configured using the property

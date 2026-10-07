@@ -9,22 +9,26 @@
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="httpClientTimeout"
                         label="Timeout"
-                        helpText="Determines the timeout until arrival of a response from the opposite endpoint. A timeout value of zero is interpreted as an infinite timeout. Default: 3 minutes">
+                        helpText="How long to wait for a response once a request has been sent. 0 means wait indefinitely. Default is 3 minutes."
+                        screenReaderText="0 waits indefinitely. Default is 3 minutes.">
             <d:DurationPicker ui:field="timeout"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientConnectionTimeout"
                         label="Connection Timeout"
-                        helpText="Determines the timeout until a new connection is fully established. This may also include transport security negotiation exchanges such as SSL or TLS protocol negotiation. A timeout value of zero is interpreted as an infinite timeout. Default: 3 minutes">
+                        helpText="How long to wait for a new connection to be established, including any TLS negotiation. 0 means wait indefinitely. Default is 3 minutes."
+                        screenReaderText="Includes TLS negotiation; 0 waits indefinitely. Default is 3 minutes.">
             <d:DurationPicker ui:field="connectionTimeout"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientConnectionRequestTimeout"
                         label="Connection Request Timeout"
-                        helpText="Returns the connection lease request timeout used when requesting a connection from the connection manager. Default: 3 minutes">
+                        helpText="How long to wait for a free connection from the connection pool. Default is 3 minutes."
+                        screenReaderText="Wait for a free pooled connection. Default is 3 minutes.">
             <d:DurationPicker ui:field="connectionRequestTimeout"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientTimeToLive"
                         label="Time To Live"
-                        helpText="The maximum time a pooled connection can stay idle (not leased to any thread) before it is shut down. Default: 1 hour">
+                        helpText="The longest time a pooled connection can stay idle before it is closed. Default is 1 hour."
+                        screenReaderText="Idle time before a pooled connection is closed. Default is 1 hour.">
             <d:DurationPicker ui:field="timeToLive"/>
         </form:FormGroup>
         <form:FormGroup>
@@ -32,44 +36,51 @@
                                     identity="httpClientCookiesEnabled"
                                     label="Cookies Enabled"/>
         </form:FormGroup>
-        <form:FormGroup helpText="Whether a redirect response (3xx) is followed. Some endpoints redirect in order to authenticate, so a request that does not follow redirects will see the redirect response itself rather than the resource it was after. Default: on">
+        <form:FormGroup helpText="Whether a redirect response (3xx) is followed. Some endpoints redirect in order to authenticate, so a request that does not follow redirects will see the redirect response itself rather than the resource it was after. Default is ticked."
+                        screenReaderText="Some endpoints redirect to authenticate. Default is ticked.">
             <tickbox:CustomCheckBox ui:field="followRedirects"
                                     identity="httpClientFollowRedirects"
                                     label="Follow Redirects"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientMaxConnections"
                         label="Max Connections"
-                        helpText="Max Connections">
+                        helpText="The maximum number of connections in the pool across all hosts. Default is 1024."
+                        screenReaderText="Total across all hosts. Default is 1024.">
             <v:ValueSpinner ui:field="maxConnections"
                             width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientMaxConnectionsPerRoute"
                         label="Max Connections Per Route"
-                        helpText="Max Connections Per Route">
+                        helpText="The maximum number of pooled connections to any one host. Default is 1024."
+                        screenReaderText="Per host. Default is 1024.">
             <v:ValueSpinner ui:field="maxConnectionsPerRoute"
                             width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientKeepAlive"
                         label="Keep Alive"
-                        helpText="The maximum time a connection will be kept alive before it is reconnected. If set to 0, connections will be immediately closed after every request/response. Default: 0">
+                        helpText="How long a connection is kept open for reuse before it is reconnected. 0 closes the connection after every request. Default is 0."
+                        screenReaderText="0 closes the connection after each request. Default is 0.">
             <d:DurationPicker ui:field="keepAlive"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientRetries"
                         label="Retries"
-                        helpText="Retries">
+                        helpText="How many times a failed request is retried. 0 means no retries. Default is 0."
+                        screenReaderText="0 to 1000. Default is 0.">
             <v:ValueSpinner ui:field="retries"
                             width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientUserAgent"
                         label="User Agent"
-                        helpText="User Agent">
+                        helpText="The value sent as the User-Agent header of each request. Leave blank to use the HTTP client's default."
+                        screenReaderText="Sent as the User-Agent header. Blank uses the HTTP client's default.">
             <g:TextBox ui:field="userAgent"
                        width="400px"
                        title="User Agent"/>
         </form:FormGroup>
         <form:FormGroup identity="httpClientValidateAfterInactivityPeriod"
                         label="Validate After Inactivity Period"
-                        helpText="Validate After Inactivity Period">
+                        helpText="How long a pooled connection can be idle before it is checked as still usable before reuse. 0 checks it every time. Default is 0."
+                        screenReaderText="Idle time before a reused connection is checked. Default is 0.">
             <d:DurationPicker ui:field="validateAfterInactivityPeriod"/>
         </form:FormGroup>
         <b:Button ui:field="setHttpTlsConfig" text="Set HTTP TLS Config" width="200px" addStyleNames="allow-focus"/>

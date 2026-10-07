@@ -8,7 +8,9 @@
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="forever" identity="annotationRetentionKeepForever" label="Keep Forever"/>
         </form:FormGroup>
-        <form:FormGroup identity="annotationRetainFor" label="Retain For">
+        <form:FormGroup identity="annotationRetainFor" label="Retain For"
+                        helpText="How long to keep the annotation, measured from when it was created. Disabled when Keep Forever is ticked."
+                        screenReaderText="Measured from creation. Disabled when Keep Forever is ticked.">
             <d:DurationPicker ui:field="durationPicker"/>
         </form:FormGroup>
     </g:FlowPanel>

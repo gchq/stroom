@@ -5,11 +5,14 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client">
     <g:FlowPanel styleName="form-group">
         <form:FormGroup label="Path"
-                        helpText="Path to the shared file store. Note: This cannot be modified after data has been written.">
+                        helpText="The directory, on storage that every node can reach, where this store's files are kept. Required. It cannot be changed once data has been written."
+                        screenReaderText="Must be reachable by every node. Cannot be changed after data is written."
+                        required="true">
             <g:TextBox ui:field="sharedPath" width="400px" addStyleNames="gwt-TextBox allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Shard Count"
-                        helpText="The number of shards to partition the data across. Use 1 for no sharding. Note: This cannot be modified after data has been written.">
+                        helpText="The number of shards to spread the data across, from 1 to 999. Use 1 for no sharding. It cannot be changed once data has been written. Default is 1."
+                        screenReaderText="1 to 999; 1 means no sharding. Cannot be changed after data is written.">
             <v:ValueSpinner ui:field="shardCount" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>

@@ -12,7 +12,8 @@
         <g:center>
             <g:FlowPanel>
                 <form:FormGroup label="Permission Visibility"
-                                addStyleNames="form-padding">
+                                addStyleNames="form-padding"
+                                screenReaderText="Filters the users and groups list: explicit, effective or all.">
                     <form:HelpHTML>
                         <p>This dropdown controls which users/groups are shown in the <em>Users and Groups</em>
                             pane below.</p>
@@ -29,7 +30,8 @@
                     <l:SelectionBox ui:field="permissionVisibility"/>
                 </form:FormGroup>
                 <form:FormGroup label="Users and Groups"
-                                addStyleNames="form-label-padding max">
+                                addStyleNames="form-label-padding max"
+                                screenReaderText="Filtered by Permission Visibility. Select one to edit its permissions.">
                     <form:HelpHTML>
                         <p>Shows users/groups, optionally filtered based on the value of the
                             <em>Permission Visibility</em> dropdown.</p>

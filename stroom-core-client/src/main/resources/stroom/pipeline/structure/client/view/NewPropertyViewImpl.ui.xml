@@ -21,7 +21,8 @@
             <g:Label ui:field="description" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
         <form:FormGroup identity="newPropertySource"
-                        label="Source">
+                        label="Source"
+                        screenReaderText="Default, Inherit, Local, or Embedded for some document properties.">
             <form:HelpHTML>
                 <p>The source of the value for this property.</p>
                 <ul>
@@ -34,12 +35,14 @@
                         means the value is inherited from the parent pipeline.
                     </li>
                     <li>
-                        <code>Inline</code>
-                        means the value is owned by the pipeline????
-                    </li>
-                    <li>
                         <code>Local</code>
                         means the value set on this element is used.
+                    </li>
+                    <li>
+                        <code>Embedded</code>
+                        means a new document is created and embedded in this pipeline,
+                        rather than referencing an existing document.
+                        Only offered for some document properties.
                     </li>
                 </ul>
             </form:HelpHTML>
@@ -47,7 +50,8 @@
         </form:FormGroup>
         <form:FormGroup identity="newPropertyValue"
                         label="Value"
-                        helpText="The value assigned to this property.">
+                        helpText="The value of this property. Changing it sets Source to Local."
+                        screenReaderText="Changing it sets Source to Local.">
             <g:SimplePanel ui:field="value" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup ui:field="defaultValueGroup"

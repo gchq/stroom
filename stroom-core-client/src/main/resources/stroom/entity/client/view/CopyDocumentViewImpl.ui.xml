@@ -13,18 +13,20 @@
         <form:FormGroup ui:field="nameFormGroup"
                         identity="copyDocumentName"
                         label="Name"
-                        helpText="The name of the new copy of the document."
+                        helpText="The name of the new copy. Default is the name of the original."
                         addStyleNames="dock-min">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="copyDocumentPermissions" label="Permissions" addStyleNames="dock-min">
+        <form:FormGroup identity="copyDocumentPermissions" label="Permissions" addStyleNames="dock-min"
+                        screenReaderText="You become an owner of the copy. Default is Destination.">
             <form:HelpHTML>
                 <p>Determines the permissions and ownership of the new copy of the document.</p>
                 <ul>
-                    <li><Strong>None</Strong> - Ignores original permissions and those of the destination folder.
+                    <li><strong>None</strong> - Ignores original permissions and those of the destination folder.
                         You will be the owner of the new document if not already.</li>
-                    <li><strong>Source</strong> - Copy the document's current permissions and ownership.
-                        Ignore the permissions of the destination folder.</li>
+                    <li><strong>Source</strong> - Copy the document's current permissions and owners.
+                        Ignore the permissions of the destination folder.
+                        You will also be an owner of the new document.</li>
                     <li><strong>Destination</strong> - Ignore permissions of the current document.
                         Add permissions of the destination folder.
                         You will be the owner of the new document if not already.
@@ -33,6 +35,7 @@
                         Add permissions of the destination folder.
                         You will be the owner of the new document if not already.</li>
                 </ul>
+                <p>Default is Destination.</p>
             </form:HelpHTML>
             <l:SelectionBox ui:field="permissionInheritance" addStyleNames="w-100"/>
         </form:FormGroup>

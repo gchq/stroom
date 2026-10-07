@@ -6,10 +6,12 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="basicQuerySettingsId" label="Id">
+        <form:FormGroup identity="basicQuerySettingsId" label="Id"
+                        helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. embedded-query-AB1C2). It cannot be changed.">
             <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicQuerySettingsName" label="Name">
+        <form:FormGroup identity="basicQuerySettingsName" label="Name"
+                        helpText="Name of this component, shown in its tab on the dashboard.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
@@ -18,7 +20,8 @@
         </form:FormGroup>
         <form:FormGroup  ui:field="queryRefFormGroup"
                          identity="basicQuerySettingsQueryRef"
-                         label="Referenced Query">
+                         label="Referenced Query"
+                         helpText="The Query document this component runs when Reference Existing Query is ticked. You need Use permission on the query.">
             <g:SimplePanel ui:field="queryRef" addStyleNames="w-100"/>
         </form:FormGroup>
         <b:Button ui:field="copyQuery" addStyleNames="allow-focus" text="Copy Query"/>
@@ -32,10 +35,14 @@
                                     identity="basicQuerySettingsAutoRefresh"
                                     label="Auto Refresh"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval">
+        <form:FormGroup identity="basicQuerySettingsRefreshInterval" label="Refresh Interval"
+                        helpText="How often the query is re-run when Auto Refresh is ticked. Enter a number with a unit of ms, s, m, h or d (e.g. 30s or 5m); a number with no unit is in milliseconds. The minimum is 10 seconds. Default is 10s."
+                        screenReaderText="Number with unit, e.g. 30s or 5m. Minimum 10 seconds.">
             <g:TextBox ui:field="refreshInterval" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableSettingsPageSize" label="Table Page Size">
+        <form:FormGroup identity="basicTableSettingsPageSize" label="Table Page Size"
+                        helpText="Number of rows shown on each page of the query results table, from 1 to 10,000. Default is 100."
+                        screenReaderText="1 to 10,000 rows. Default is 100.">
             <valuespinner:ValueSpinner ui:field="pageSize" width="200px"/>
         </form:FormGroup>
     </g:FlowPanel>

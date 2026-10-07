@@ -11,7 +11,8 @@
         </form:FormGroup>
         <form:FormGroup identity="importConfigConfirmFromThisdate"
                         label="Process From"
-                        helpText="Imported processor filters only process streams created on or after this date. Leave blank to process from the first stream.">
+                        helpText="Imported processor filters only process streams created on or after this date. Leave blank to process from the first stream."
+                        screenReaderText="ISO 8601 date, e.g. 2024-01-31T00:00:00.000Z.">
             <c:MyDateBox ui:field="enableFrom"/>
         </form:FormGroup>
         <form:FormGroup>
@@ -20,7 +21,8 @@
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="useImportFolders" identity="importConfigConfirmUseImportFolders" label="Use Import Folders"/>
         </form:FormGroup>
-        <form:FormGroup identity="importConfigConfirmImportToRootFolder" label="Import To Root Folder">
+        <form:FormGroup identity="importConfigConfirmImportToRootFolder" label="Import To Root Folder"
+                        helpText="The folder that new items are imported into; folders in the import file are created under it. Existing items stay where they are unless Use Import Folders is ticked. Default is System, the top level.">
             <g:SimplePanel ui:field="rootFolder"/>
         </form:FormGroup>
     </g:FlowPanel>

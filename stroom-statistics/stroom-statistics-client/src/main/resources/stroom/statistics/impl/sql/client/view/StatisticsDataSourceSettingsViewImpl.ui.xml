@@ -5,13 +5,19 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="statisticsSettingsStatisticType" label="Statistic Type">
+        <form:FormGroup identity="statisticsSettingsStatisticType" label="Statistic Type"
+                        helpText="Count records the number of events; Value records a numeric value from each event, e.g. a size or duration. Must match the type of the statistic events sent to this store."
+                        screenReaderText="Count of events, or a numeric value per event.">
             <l:SelectionBox ui:field="statisticType"/>
         </form:FormGroup>
-        <form:FormGroup identity="statisticsSettingsPrecision" label="Precision">
+        <form:FormGroup identity="statisticsSettingsPrecision" label="Precision"
+                        helpText="The time bucket that events are grouped into when stored: Second, Minute, Hour or Day. Smaller buckets give more detail but use more storage. Default is Hour."
+                        screenReaderText="Smallest time bucket for stored values. Default is Hour.">
             <l:SelectionBox ui:field="precision"/>
         </form:FormGroup>
-        <form:FormGroup identity="statisticsSettingsRollUpType" label="Roll Up Type">
+        <form:FormGroup identity="statisticsSettingsRollUpType" label="Roll Up Type"
+                        helpText="Which tag combinations are also stored with tag values replaced by '*', so they can be queried quickly. None stores no roll-ups, All stores every combination, Custom stores only the combinations you define."
+                        screenReaderText="None, All, or Custom combinations of rolled-up tags.">
             <l:SelectionBox ui:field="rollUpType"/>
         </form:FormGroup>
         <form:FormGroup>

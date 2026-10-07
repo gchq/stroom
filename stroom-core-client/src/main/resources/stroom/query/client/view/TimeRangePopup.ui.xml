@@ -4,13 +4,18 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:c="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="quickSettings" label="Quick Settings" addStyleNames="dock-min">
+        <form:FormGroup identity="quickSettings" label="Quick Settings" addStyleNames="dock-min"
+                        helpText="Preset time ranges, grouped as Relative, Present, Past and All. Select one to fill in both times.">
             <g:SimplePanel ui:field="quickSettings" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="timeRange" label="After Time (inclusive)" addStyleNames="dock-min">
+        <form:FormGroup identity="timeRangeFrom" label="After Time (inclusive)" addStyleNames="dock-min"
+                        helpText="Start of the time range; this time is included. Enter a date and time such as 2026-01-01T00:00:00.000Z, or an expression such as now()-1d or day(). Leave blank for no start limit."
+                        screenReaderText="Date and time, or e.g. now()-1d. Blank means no start limit.">
             <c:MyDateBox ui:field="timeFrom"/>
         </form:FormGroup>
-        <form:FormGroup identity="timeRange" label="Before Time (exclusive)" addStyleNames="dock-min">
+        <form:FormGroup identity="timeRangeTo" label="Before Time (exclusive)" addStyleNames="dock-min"
+                        helpText="End of the time range; this time is not included. Enter a date and time such as 2026-01-02T00:00:00.000Z, or an expression such as now() or day(). Leave blank for no end limit."
+                        screenReaderText="Date and time, or e.g. now(). Blank means no end limit.">
             <c:MyDateBox ui:field="timeTo"/>
         </form:FormGroup>
     </g:FlowPanel>

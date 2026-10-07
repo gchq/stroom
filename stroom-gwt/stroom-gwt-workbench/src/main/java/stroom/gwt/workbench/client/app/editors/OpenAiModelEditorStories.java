@@ -52,6 +52,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// | `docPermission` | the Permissions tab's routes |
 public final class OpenAiModelEditorStories {
 
+    private static final String USER_AGENT = "Stroom-Test/1.0";
     private static final DocRef DOC_REF = new DocRef(OpenAIModelDoc.TYPE, "model-1", "GPT-4o");
 
     // OpenAIModelResource.fetch(): React's MODEL_DOC
@@ -143,7 +144,8 @@ public final class OpenAiModelEditorStories {
                     play.click(play.getByRole("button", "Base URL (optional) - Click for help"));
                     // Differs from React: the help is a popup on the page's body (the help is also in
                     // the page, hidden, as the field's description)
-                    play.expect(screen.findByText("The URL of the AI service", ".help-button-tooltip *"))
+                    play.expect(screen.findByText(TextMatch.containing("The base URL of an OpenAI-compatible API"),
+                                    ".help-button-tooltip *"))
                             .toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })
@@ -216,10 +218,17 @@ public final class OpenAiModelEditorStories {
                     final Play tlsDialog = play.within(protocol.closest(StroomDom.DIALOG));
                     play.click(tlsDialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP TLS Configuration")).toBeNull());
+                    play.type(screen.getByLabelText("User Agent"), USER_AGENT);
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP Client Configuration"))
                             .toBeNull());
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    // The user agent is kept (it used to be lost on OK)
+                    play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
+                    play.waitFor(() -> play.expect(screen.getByLabelText("User Agent")).toHaveValue(USER_AGENT));
+                    play.click(screen.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP Client Configuration"))
+                            .toBeNull());
                     DocEditors.expectNoProblems(play);
                 })
                 .story("ReadOnly", context -> render(context, null, true))

@@ -6,15 +6,21 @@
 
     <g:FlowPanel styleName="max form">
         <!-- Ace editor theme -->
-        <form:FormGroup identity="userPreferencesEditorTheme" label="Editor Theme">
+        <form:FormGroup identity="userPreferencesEditorTheme" label="Editor Theme"
+                        helpText="The colour theme for code editors. The themes offered match the Light or Dark Stroom theme, and changing the Stroom theme resets this to its default."
+                        screenReaderText="Themes offered match the Light or Dark Stroom theme.">
             <item:SelectionBox ui:field="editorTheme" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Ace editor key bindings -->
-        <form:FormGroup identity="userPreferencesEditorKeyBindings" label="Editor Key Bindings">
+        <form:FormGroup identity="userPreferencesEditorKeyBindings" label="Editor Key Bindings"
+                        helpText="The keyboard shortcuts used in code editors: Standard or Vim. Default is Standard unless an administrator has changed the defaults."
+                        screenReaderText="Standard or Vim.">
             <item:SelectionBox ui:field="editorKeyBindings" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Ace editor live auto completion -->
-        <form:FormGroup identity="userPreferencesEditorLiveAutoCompletion" label="Editor Live Auto Completion">
+        <form:FormGroup identity="userPreferencesEditorLiveAutoCompletion" label="Editor Live Auto Completion"
+                        helpText="Whether code editors show completion suggestions automatically as you type. Default is Off unless an administrator has changed the defaults."
+                        screenReaderText="Shows suggestions as you type. Default is Off.">
             <item:SelectionBox ui:field="editorLiveAutoCompletion" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

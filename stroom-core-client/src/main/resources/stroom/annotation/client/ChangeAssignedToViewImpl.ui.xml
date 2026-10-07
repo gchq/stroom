@@ -5,7 +5,8 @@
              xmlns:annotation="urn:import:stroom.annotation.client">
     <g:FlowPanel addStyleNames="annotationSetting">
         <annotation:SettingBlock ui:field="assignedToBlock" title="Change Assigned To">
-            <form:FormGroup identity="annotationAssignedTo" label="Assigned To">
+            <form:FormGroup identity="annotationAssignedTo" label="Assigned To"
+                            helpText="The user to assign all the selected annotations to when you select OK. Select it to choose a user, or select Assign Yourself. If it shows Nobody when you select OK, the annotations are unassigned.">
                 <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
                     <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
                     <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself

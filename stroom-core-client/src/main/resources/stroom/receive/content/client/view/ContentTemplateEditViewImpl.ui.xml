@@ -22,9 +22,10 @@
 
         <form:FormGroup
                 identity="contentTemplateType"
-                label="Template Type">
+                label="Template Type"
+                screenReaderText="Add a filter to the pipeline, or create a pipeline that inherits from it.">
             <form:HelpHTML>
-                <p>Defines type of content that will be created from the template pipeline.</p>
+                <p>The type of content that is created from the template pipeline.</p>
                 <ul>
                     <li>
                         <strong>PROCESSOR_FILTER</strong>
@@ -44,40 +45,38 @@
                 ui:field="copyDependenciesFormGroup"
                 identity="contentTemplateCopyDependencies"
                 label="Copy Pipeline Element Dependencies"
-                helpText="If Template Type is INHERIT_PIPELINE then this option allows you to copy any entities set
-               within the properties of the pipeline being inherited from. It will not copy entities referenced on
-                any ancestor pipelines.">
+                helpText="Tick to give the new pipeline its own copies of the documents set in the inherited pipeline's element properties. Documents set on ancestor pipelines are not copied. Only available when Template Type is INHERIT_PIPELINE."
+                screenReaderText="Only available when Template Type is INHERIT_PIPELINE.">
             <tickbox:CustomCheckBox ui:field="copyDependenciesCheckBox" addStyleNames="allow-focus"/>
         </form:FormGroup>
 
         <form:FormGroup
                 identity="contentTemplatePipeline"
                 label="Pipeline"
-                helpText="The pipeline to use as the template for content.">
+                helpText="The pipeline to add the processor filter to, or to inherit from, depending on Template Type.">
             <g:SimplePanel ui:field="pipeline" styleName="max"/>
         </form:FormGroup>
 
         <form:FormGroup
                 identity="contentTemplateProcessorPriority"
                 label="Processor Priority"
-                helpText="The priority to assign to the pipeline processor when created. The higher the number
-                        the higher the priority. Value must be between 1 and 100. The default priority is 10.">
+                helpText="The priority to assign to the pipeline processor when it is created. The higher the number, the higher the priority. Must be from 1 to 100. Default is 10."
+                screenReaderText="1 to 100, higher first. Default is 10.">
             <v:ValueSpinner ui:field="processorPriority" addStyleNames="allow-focus"/>
         </form:FormGroup>
 
         <form:FormGroup
                 identity="contentTemplateProcessorMaxConcurrent"
                 label="Processor Max Concurrent Tasks"
-                helpText="The maximum number of concurrent tasks to assign to the pipeline processor when created.
-                Zero means un-bounded.">
+                helpText="The maximum number of concurrent tasks for the processor filter when it is created. 0 means no limit. Default is 0."
+                screenReaderText="0 means no limit. Default is 0.">
             <v:ValueSpinner ui:field="processorMaxConcurrent" addStyleNames="allow-focus"/>
         </form:FormGroup>
 
         <form:FormGroup identity="contentTemplateExpression"
                         label="Expression"
                         addStyleNames="dock-max"
-                        helpText="The expression to match received streams to this template.
-                        The stream header attributes will be used for matching.">
+                        helpText="When data arrives for a feed that does not exist yet, the first active template whose expression matches the data's header attributes is used. Attribute names are not case sensitive; an empty expression matches all data.">
             <g:SimplePanel ui:field="expression" styleName="max"/>
         </form:FormGroup>
     </g:FlowPanel>

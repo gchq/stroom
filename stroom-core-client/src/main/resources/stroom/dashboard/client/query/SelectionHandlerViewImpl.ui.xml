@@ -10,13 +10,16 @@
         <g:MySplitLayoutPanel vSplits="0.5" styleName="dock-max">
             <g:north size="400">
                 <form:FormGroup addStyleNames="max" identity="selectionHandlerExpression"
-                                label="Additional Query Expression">
+                                label="Additional Query Expression"
+                                helpText="Expression added when other components on the dashboard have a selection. Use selection parameters such as ${{component.table-AB1C2.selection.Name}, which you can insert from Current Selection. If several handlers are enabled, their expressions are combined with OR."
+                                screenReaderText="Use selection parameters, e.g. ${{component.&lt;id&gt;.selection.&lt;column&gt;}.">
                     <g:SimplePanel ui:field="layout" styleName="dock-max form-control-border form-control-background"/>
                 </form:FormGroup>
             </g:north>
             <g:center>
                 <form:FormGroup addStyleNames="max" identity="selectionHandlerCurrentSelection"
-                                label="Current Selection">
+                                label="Current Selection"
+                                helpText="Parameters and selected values currently available from other components. Use the insert button next to a value to add it to the expression, or the copy button to copy it.">
                     <g:SimplePanel ui:field="currentSelection" styleName="dock-max overflow-hidden"/>
                 </form:FormGroup>
             </g:center>

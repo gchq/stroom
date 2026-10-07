@@ -5,26 +5,38 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max dock-container-vertical form">
-        <form:FormGroup identity="accountUserId" label="User ID">
+        <form:FormGroup identity="accountUserId" label="User ID"
+                        helpText="The name the user signs in with. Must be unique."
+                        screenReaderText="Used to sign in. Must be unique.">
             <g:TextBox ui:field="userId" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="accountEmail" label="Email">
+        <form:FormGroup identity="accountEmail" label="Email"
+                        helpText="Optional. Used to send password reset emails, so it must not be used by another account."
+                        screenReaderText="Must not be used by another account. Used for password resets.">
             <g:TextBox ui:field="email" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="accountFirstName" label="First Name">
+        <form:FormGroup identity="accountFirstName" label="First Name"
+                        helpText="The user's first name.">
             <g:TextBox ui:field="firstName" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="accountLastName" label="Last Name">
+        <form:FormGroup identity="accountLastName" label="Last Name"
+                        helpText="The user's last name.">
             <g:TextBox ui:field="lastName" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="accountComments" label="Comments">
+        <form:FormGroup identity="accountComments" label="Comments"
+                        helpText="Optional notes about the account, for administrators."
+                        screenReaderText="Notes for administrators.">
             <g:TextArea ui:field="comments" addStyleNames="w-100"/>
         </form:FormGroup>
 
-        <form:FormGroup ui:field="neverExpiresGroup" identity="accountNeverExpires" label="Never Deactivate When Unused">
+        <form:FormGroup ui:field="neverExpiresGroup" identity="accountNeverExpires" label="Never Deactivate When Unused"
+                        helpText="Tick to stop the account being marked inactive when it goes unused. Accounts that are never used, or not signed in to for a set time, are otherwise deactivated automatically."
+                        screenReaderText="Stops the account being deactivated when unused.">
             <tickbox:CustomCheckBox ui:field="neverExpires" identity="accountNeverExpiresCheckBox"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="enabledGroup" identity="accountEnabled" label="Enabled">
+        <form:FormGroup ui:field="enabledGroup" identity="accountEnabled" label="Enabled"
+                        helpText="Untick to stop the user signing in."
+                        screenReaderText="Unticked accounts cannot sign in.">
             <tickbox:CustomCheckBox ui:field="enabled" identity="accountEnabledCheckBox"/>
         </form:FormGroup>
 
@@ -33,13 +45,15 @@
             passwords and made inactive by going unused, so each shows what happened and offers only the
             one thing an administrator can do about it.
         -->
-        <form:FormGroup ui:field="lockedGroup" identity="accountLocked" label="Sign-in lock">
+        <form:FormGroup ui:field="lockedGroup" identity="accountLocked" label="Sign-in lock"
+                        helpText="Shows whether the account is locked after repeated failed sign-ins. Select Unlock to clear the lock and the failed sign-in count.">
             <g:FlowPanel addStyleNames="dock-container-horizontal">
                 <g:Label ui:field="lockState" addStyleNames="dock-max" wordWrap="true"/>
                 <b:Button ui:field="unlock" text="Unlock" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup ui:field="inactiveGroup" identity="accountInactive" label="Activity">
+        <form:FormGroup ui:field="inactiveGroup" identity="accountInactive" label="Activity"
+                        helpText="Shows whether the account has been made inactive because it was not used. Select Reactivate to let the user sign in again.">
             <g:FlowPanel addStyleNames="dock-container-horizontal">
                 <g:Label ui:field="activityState" addStyleNames="dock-max" wordWrap="true"/>
                 <b:Button ui:field="reactivate" text="Reactivate" addStyleNames="allow-focus"/>

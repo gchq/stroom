@@ -5,13 +5,18 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client">
     <g:FormPanel ui:field="form" styleName="max">
         <g:FlowPanel styleName="max form">
-            <form:FormGroup identity="stepLocationStreamId" label="Stream Id" addStyleNames="dock-min">
+            <form:FormGroup identity="stepLocationStreamId" label="Stream Id" addStyleNames="dock-min"
+                            helpText="The ID of the stream to step to.">
                 <v:ValueSpinner ui:field="metaId" addStyleNames="w-100"/>
             </form:FormGroup>
-            <form:FormGroup identity="stepLocationPartNumber" label="Part Number" addStyleNames="dock-min">
+            <form:FormGroup identity="stepLocationPartNumber" label="Part Number" addStyleNames="dock-min"
+                            helpText="The part within the stream, starting at 1. Most streams have a single part."
+                            screenReaderText="Starts at 1.">
                 <v:ValueSpinner ui:field="partNo" addStyleNames="w-100"/>
             </form:FormGroup>
-            <form:FormGroup identity="stepLocationRecordNumber" label="Record Number" addStyleNames="dock-min">
+            <form:FormGroup identity="stepLocationRecordNumber" label="Record Number" addStyleNames="dock-min"
+                            helpText="The record within the part, starting at 1."
+                            screenReaderText="Starts at 1.">
                 <v:ValueSpinner ui:field="recordNo" addStyleNames="w-100"/>
             </form:FormGroup>
         </g:FlowPanel>

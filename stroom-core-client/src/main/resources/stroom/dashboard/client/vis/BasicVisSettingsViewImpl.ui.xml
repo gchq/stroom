@@ -4,16 +4,20 @@
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="basicVisSettingsId" label="Id">
+        <form:FormGroup identity="basicVisSettingsId" label="Id"
+                        helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. vis-AB1C2). It cannot be changed.">
             <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicVisSettingsName" label="Name">
+        <form:FormGroup identity="basicVisSettingsName" label="Name"
+                        helpText="Name of this component, shown in its tab on the dashboard.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicVisSettingsTable" label="Table">
+        <form:FormGroup identity="basicVisSettingsTable" label="Table"
+                        helpText="Table that supplies the data for this visualisation.">
             <i:SelectionBox ui:field="table" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicVisSettingsVisualisation" label="Visualisation">
+        <form:FormGroup identity="basicVisSettingsVisualisation" label="Visualisation"
+                        helpText="Visualisation document used to draw the chart. Choosing one adds its settings tabs. You need Use permission on it.">
             <g:SimplePanel ui:field="visualisation" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

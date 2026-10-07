@@ -7,9 +7,7 @@
             <g:north size="300">
                 <form:FormGroup identity="dictionarySettingsImports"
                                 label="Imports"
-                                helpText="Adding an import Dictionary means all the words in the imported dictionary
-                                         (and any from its imports) will be included in this Dictionary. Words from
-                                         imported dictionaries come before words in this dictionary."
+                                helpText="Other dictionaries whose words, and the words of their own imports, are added to this dictionary. Imported words come before this dictionary's own words."
                                 addStyleNames="default-min-sizes flex-grow-2">
                     <g:SimplePanel ui:field="importsPanel" addStyleNames="dock-max stroom-control"/>
                 </form:FormGroup>
@@ -17,8 +15,7 @@
             <g:center>
                 <form:FormGroup identity="dictionarySettingsWords"
                                 label="Effective Words"
-                                helpText="Lists the words in the selected dictionary and from any dictionaries
-                                         it imports."
+                                helpText="The words in the selected import, including words from any dictionaries it imports. Read-only."
                                 addStyleNames="default-min-sizes flex-grow-1">
                     <g:SimplePanel ui:field="wordsPanel" addStyleNames="dock-max stroom-control"/>
                 </form:FormGroup>

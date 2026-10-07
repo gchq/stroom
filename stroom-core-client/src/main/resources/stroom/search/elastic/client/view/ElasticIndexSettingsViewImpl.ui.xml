@@ -8,52 +8,70 @@
         <g:HTML>
             <h2>General settings</h2>
         </g:HTML>
-        <form:FormGroup identity="elasticIndexSettingsClusterConfiguration" label="Cluster configuration">
+        <form:FormGroup identity="elasticIndexSettingsClusterConfiguration" label="Cluster configuration"
+                        helpText="Elasticsearch cluster document that holds the connection details for this index. Only clusters you have Use permission on are listed.">
             <g:SimplePanel ui:field="cluster"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index name or pattern">
+        <form:FormGroup identity="elasticIndexSettingsIndexNameOrPattern" label="Index name or pattern"
+                        helpText="Name of the Elasticsearch index to search, or a pattern matching several indices or a data stream, e.g. events-*"
+                        screenReaderText="Wildcards allowed, e.g. events-*.">
             <g:TextBox ui:field="indexName" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsTimeField" label="Main date field">
+        <form:FormGroup identity="elasticIndexSettingsTimeField" label="Main date field"
+                        helpText="Name of the date field used to apply the query time range. Usually @timestamp, especially for data streams. If left blank, @timestamp is used."
+                        screenReaderText="Default is @timestamp.">
             <g:TextBox ui:field="timeField" width="200px"
                        title="Usually @timestamp, especially for data streams"/>
         </form:FormGroup>
         <g:HTML>
             <h2>Search settings</h2>
         </g:HTML>
-        <form:FormGroup identity="elasticIndexSettingsSearchSlices" label="Number of slices">
+        <form:FormGroup identity="elasticIndexSettingsSearchSlices" label="Number of slices"
+                        helpText="Number of slices to query at the same time when retrieving search results. Increasing this can speed up retrieval from large indices. 1 to 1000. Default is 1."
+                        screenReaderText="1 to 1000. Default is 1.">
             <valuespinner:ValueSpinner ui:field="searchSlices" width="80px"
                                        title="Number of concurrent threads to use to retrieve search results.&#10;
                                        Increasing this value can speed up retrieval for larger indices."/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Scroll size">
+        <form:FormGroup identity="elasticIndexSettingsSearchScrollSize" label="Scroll size"
+                        helpText="Number of documents to retrieve in each scroll batch when searching. 1 to 1,000,000. Default is 1000."
+                        screenReaderText="Documents per batch, 1 to 1,000,000. Default is 1000.">
             <valuespinner:ValueSpinner ui:field="searchScrollSize" width="80px"
                                        title="How many results to retrieve each batch"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default extraction pipeline">
+        <form:FormGroup identity="elasticIndexSettingsDefaultExtractionPipeline" label="Default extraction pipeline"
+                        helpText="Pipeline used to extract field values from the original events at search time, when a dashboard or query does not specify its own extraction pipeline.">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>
         <g:HTML>
             <h2>Vector search</h2>
         </g:HTML>
-        <form:FormGroup identity="elasticIndexSettingsVectorGenerationModel" label="Vector generation model">
+        <form:FormGroup identity="elasticIndexSettingsVectorGenerationModel" label="Vector generation model"
+                        helpText="AI model used to create vector embeddings from query terms, so that dense_vector fields can be searched. Required to search dense_vector fields.">
             <g:SimplePanel ui:field="vectorGenerationModel"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsRerankModel" label="Rerank model">
+        <form:FormGroup identity="elasticIndexSettingsRerankModel" label="Rerank model"
+                        helpText="Optional AI model used to rerank vector search results by comparing each result's text with the search term. If left blank, results are not reranked.">
             <g:SimplePanel ui:field="rerankModel"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsRerankTextFieldSuffix" label="Rerank text field suffix">
+        <form:FormGroup identity="elasticIndexSettingsRerankTextFieldSuffix" label="Rerank text field suffix"
+                        helpText="Suffix of the text field that holds the original text for each dense_vector field. The vector field suffix is replaced with this, e.g. Content.vector becomes Content.text. Default is .text."
+                        screenReaderText="E.g. Content.vector uses Content.text. Default is .text.">
             <g:TextBox ui:field="rerankTextFieldSuffix" width="200px"
                        title="Suffix used to identify the text equivalent of dense_vector fields (e.g. `.text`).&#10;
 The original text field value is obtained by removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix (e.g. `.text`)."/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsRerankScoreFieldSuffix" label="Rerank score field suffix">
+        <form:FormGroup identity="elasticIndexSettingsRerankScoreFieldSuffix" label="Rerank score field suffix"
+                        helpText="Suffix used to name the field that receives the rerank score. The vector field suffix is replaced with this, e.g. Content.vector gives Content.score, which can be used in dashboard expressions. Default is .score."
+                        screenReaderText="E.g. Content.vector gives Content.score. Default is .score.">
             <g:TextBox ui:field="rerankScoreFieldSuffix" width="200px"
                        title="Suffix used to name the destination rerank score field, after removing the vector field suffix (e.g. `.vector`) and replacing it with the supplied suffix.&#10;
 This field is set to the relevance score when comparing the original text field against the user's search term.&#10;
 This field can be referenced in dashboard expressions, e.g. $\{BaseField.score\}."/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum Rerank Score">
+        <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum Rerank Score"
+                        helpText="Only results with a rerank score greater than or equal to this value are included. A number from 0.0 to 1.0. Default is 0.8. If above 0, the score field must be included in the query's fields."
+                        screenReaderText="0.0 to 1.0. Default is 0.8.">
             <g:TextBox ui:field="rerankScoreMinimum" width="80px"
                        title="Only include results with a rerank score greater than or equal to this value (in the range 0.0 to 1.0)"/>
         </form:FormGroup>

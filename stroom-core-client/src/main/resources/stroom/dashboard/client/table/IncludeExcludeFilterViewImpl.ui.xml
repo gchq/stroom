@@ -27,10 +27,14 @@
     <g:DockLayoutPanel>
         <g:west size="520">
             <g:FlowPanel  styleName="max form">
-                <form:FormGroup identity="filterInclude" label="Include" addStyleNames="dock-max">
+                <form:FormGroup identity="filterInclude" label="Include" addStyleNames="dock-max"
+                                helpText="Regular expressions, one per line. A row is shown if its value contains a match for any of them (or matches an Include Dictionary). Parameters such as ${{key} can be used."
+                                screenReaderText="Regular expressions, one per line. Rows containing a match are shown.">
                     <g:TextArea ui:field="includeText" styleName="max"/>
                 </form:FormGroup>
-                <form:FormGroup label="Include Dictionaries" addStyleNames=" default-min-sizes dock-max">
+                <form:FormGroup label="Include Dictionaries" addStyleNames=" default-min-sizes dock-max"
+                                helpText="Dictionaries of values to include. Rows whose value exactly matches a dictionary word (case-sensitive) are shown; * can be used as a wildcard."
+                                screenReaderText="Exact, case-sensitive matches; * is a wildcard.">
                     <g:SimplePanel ui:field="includeDictionaryPanel" addStyleNames="max stroom-control"/>
                 </form:FormGroup>
             </g:FlowPanel>
@@ -38,10 +42,14 @@
 
         <g:east size="520">
             <g:FlowPanel styleName="max form">
-                <form:FormGroup identity="filterExclude" label="Exclude" addStyleNames="dock-max">
+                <form:FormGroup identity="filterExclude" label="Exclude" addStyleNames="dock-max"
+                                helpText="Regular expressions, one per line. A row is hidden if its value contains a match for any of them. Parameters such as ${{key} can be used."
+                                screenReaderText="Regular expressions, one per line. Rows containing a match are hidden.">
                     <g:TextArea ui:field="excludeText" styleName="max"/>
                 </form:FormGroup>
-                <form:FormGroup label="Exclude Dictionaries" addStyleNames="default-min-sizes dock-max">
+                <form:FormGroup label="Exclude Dictionaries" addStyleNames="default-min-sizes dock-max"
+                                helpText="Dictionaries of values to exclude. Rows whose value exactly matches a dictionary word (case-sensitive) are hidden; * can be used as a wildcard."
+                                screenReaderText="Exact, case-sensitive matches; * is a wildcard.">
                     <g:SimplePanel ui:field="excludeDictionaryPanel" addStyleNames="max stroom-control"/>
                 </form:FormGroup>
             </g:FlowPanel>

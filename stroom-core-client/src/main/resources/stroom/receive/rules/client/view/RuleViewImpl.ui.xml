@@ -7,7 +7,7 @@
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="ruleExpression"
                         label="Expression"
-                        helpText="The expression to match against the meta entries on receipt."
+                        helpText="Selects the received data this rule applies to, using its header attributes. The first matching rule's action is used; data that matches no rule is rejected."
                         addStyleNames="dock-max">
 <!--            <g:SimplePanel ui:field="expression" styleName="max default-min-sizes stroom-control"/>-->
             <g:SimplePanel ui:field="expression" styleName="max"/>
@@ -15,14 +15,15 @@
 
         <form:FormGroup identity="ruleRuleName"
                         label="Rule Name (optional)"
-                        helpText="The name of the rule. This is optional and for the benefit of the user in
-                            distinguishing rules">
+                        helpText="An optional name to help you tell rules apart. It does not affect which data the rule matches."
+                        screenReaderText="For your reference only.">
             <g:TextBox ui:field="name" addStyleNames="ruleViewImpl-name"/>
         </form:FormGroup>
 
         <form:FormGroup identity="ruleAction"
                         label="Action"
-                        helpText="The action to perform on data that matches this rule.">
+                        helpText="What to do with matching data. Receive accepts it, Reject returns an error to the sender, and Drop discards it silently while still reporting success."
+                        screenReaderText="Receive, Reject (sender gets an error) or Drop (silently discarded).">
             <i:SelectionBox ui:field="action"/>
         </form:FormGroup>
     </g:FlowPanel>

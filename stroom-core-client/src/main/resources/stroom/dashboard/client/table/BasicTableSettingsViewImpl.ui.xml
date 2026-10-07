@@ -6,13 +6,16 @@
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="basicTableSettingsId" label="Id">
+        <form:FormGroup identity="basicTableSettingsId" label="Id"
+                        helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. table-AB1C2). It cannot be changed.">
             <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableSettingsName" label="Name">
+        <form:FormGroup identity="basicTableSettingsName" label="Name"
+                        helpText="Name of this component, shown in its tab on the dashboard.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableSettingsQuery" label="Query">
+        <form:FormGroup identity="basicTableSettingsQuery" label="Query"
+                        helpText="Query component that supplies the results for this table.">
             <i:SelectionBox ui:field="query" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>
@@ -21,13 +24,18 @@
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="useDefaultExtractionPipeline" identity="basicTableSettingsUseDefaultExtractionPipeline" label="Use Default Extraction Pipeline"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableSettingsExtractionPipeline" label="Extraction Pipeline">
+        <form:FormGroup identity="basicTableSettingsExtractionPipeline" label="Extraction Pipeline"
+                        helpText="Pipeline used to extract field values when Extract Values is ticked and Use Default Extraction Pipeline is not. You need Use permission on the pipeline.">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableSettingsMaximumResults" label="Maximum Results">
+        <form:FormGroup identity="basicTableSettingsMaximumResults" label="Maximum Results"
+                        helpText="Maximum number of results to keep at each grouping level, as a comma-separated list, e.g. 1000000,100,10 (the last value applies to any deeper levels). Leave blank to use the system default."
+                        screenReaderText="Comma-separated, one per group level, e.g. 1000000,100,10. Blank uses default.">
             <g:TextBox ui:field="maxResults" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableSettingsPageSize" label="Table Page Size">
+        <form:FormGroup identity="basicTableSettingsPageSize" label="Table Page Size"
+                        helpText="Number of rows shown on each page of the table, from 1 to 10,000. Default is 100."
+                        screenReaderText="1 to 10,000 rows. Default is 100.">
             <valuespinner:ValueSpinner ui:field="pageSize" width="200px"/>
         </form:FormGroup>
         <form:FormGroup>

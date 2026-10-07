@@ -5,24 +5,30 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="globalPropertyEditName"  label="Name">
+        <form:FormGroup identity="globalPropertyEditName"  label="Name"
+                        helpText="The full name of the property, e.g. stroom.ui.namePattern. Use the copy button to copy it.">
             <g:FlowPanel addStyleNames="inline-label-icon">
                 <g:Label ui:field="name" addStyleNames="globalProperties stroom-control-label"/>
                 <b:InlineSvgButton ui:field="copyNameButton" title="Copy" addStyleNames="svgIcon copyNameIcon"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditDescription" label="Description">
+        <form:FormGroup identity="globalPropertyEditDescription" label="Description"
+                        helpText="What the property controls.">
             <g:TextArea ui:field="description"
                         addStyleNames="globalProperties globalPropertyEditViewImpl-textArea w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditDescription" label="Default Value">
+        <form:FormGroup identity="globalPropertyEditDefaultValue" label="Default Value"
+                        helpText="The value built into Stroom, used when neither a database nor a YAML value is set."
+                        screenReaderText="Used when no database or YAML value is set.">
             <g:TextArea ui:field="defaultValue"
                         addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight w-100"/>
         </form:FormGroup>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="useOverride" identity="globalPropertyEditSetDatabasevalue" label="Set Database value"/>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditDatabaseValue" label="Database Value">
+        <form:FormGroup identity="globalPropertyEditDatabaseValue" label="Database Value"
+                        helpText="The cluster-wide value stored in the database. Only editable when 'Set Database value' is ticked. The format depends on the Data Type."
+                        screenReaderText="Editable when Set Database value is ticked. Format depends on the data type.">
             <g:FlowPanel>
                 <g:TextArea ui:field="databaseValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
@@ -30,27 +36,33 @@
                                    addStyleNames="globalProperties allow-focus  w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditNodeYAMLValue" label="Node YAML Value">
+        <form:FormGroup identity="globalPropertyEditNodeYAMLValue" label="Node YAML Value"
+                        helpText="The value set in the nodes' YAML configuration files, if any. On each node it overrides the database value. If nodes have different YAML values, a message says so."
+                        screenReaderText="Read only. Overrides the database value on the nodes where it is set.">
             <g:FlowPanel>
                 <b:ButtonPanel ui:field="yamlValueButtonPanel"/>
                 <g:TextArea ui:field="yamlValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditNodeEffectiveValue" label="Node Effective Value">
+        <form:FormGroup identity="globalPropertyEditNodeEffectiveValue" label="Node Effective Value"
+                        helpText="The value the nodes are actually using: the YAML value if set, otherwise the database value, otherwise the default. A warning icon shows if nodes differ in value or source, or a node could not be checked; select it to see each node's value."
+                        screenReaderText="Read only. YAML value, else database value, else default.">
             <g:FlowPanel>
                 <b:ButtonPanel ui:field="effectiveValueButtonPanel"/>
                 <g:TextArea ui:field="effectiveValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditDataType" label="Data Type">
+        <form:FormGroup identity="globalPropertyEditDataType" label="Data Type"
+                        helpText="The type of value the property takes, which sets the format to use. The help button beside the type name gives details of each type.">
             <g:FlowPanel addStyleNames="globalPropertyEditViewImpl-dataType">
                 <g:Label ui:field="dataType" addStyleNames="globalProperties"/>
                 <b:ButtonPanel ui:field="dataTypeButtonPanel" addStyleNames="helpIcon"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="globalPropertyEditSource" label="Source">
+        <form:FormGroup identity="globalPropertyEditSource" label="Source"
+                        helpText="Where the effective value comes from: Default, Database or YAML. If nodes use different sources, a message says so.">
             <g:Label ui:field="source" addStyleNames="globalProperties"/>
         </form:FormGroup>
         <g:FlowPanel addStyleNames="globalPropertyEditViewImpl-attributes">

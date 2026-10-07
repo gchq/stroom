@@ -7,7 +7,9 @@
 
             <form:FormGroup identity="visualisationAssetsAssetName"
                             label="Name"
-                            addStyleNames="dock-min">
+                            addStyleNames="dock-min"
+                            helpText="The new name for the file or folder. It must not contain '/' or ':'."
+                            screenReaderText="Must not contain a slash or a colon.">
                 <g:TextBox ui:field="txtAssetName" addStyleNames="stroom-control" name="assetName"/>
             </form:FormGroup>
         </g:FlowPanel>

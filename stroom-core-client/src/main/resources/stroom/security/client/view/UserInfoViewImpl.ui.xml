@@ -7,8 +7,8 @@
 
         <form:FormGroup ui:field="displayNameFormGroup"
                         identity="userInfoDisplayName"
-                        helpText="The name that is displayed in Stroom."
-                        label="Display Name">
+                        label="Display Name"
+                        screenReaderText="Read only. Updated from the identity provider at sign-in.">
             <form:HelpHTML>
                 <p>This is the display name for the user that will be used in most screens in Stroom and
                     in audit log entries.
@@ -17,8 +17,8 @@
                     <code>stroom.security.authentication.openId.userDisplayNameClaim</code>
                     determines which Open ID Connect claim is used to supply the Display Name.
                 </p>
-                <p>The Display Name will be obtained from the identity provider when the user logs in, but
-                    you can optionally enter it to make it easier to identify the user in Stroom.
+                <p>It is read only here: it is obtained from the identity provider and updated each time
+                    the user signs in.
                 </p>
             </form:HelpHTML>
             <g:TextBox ui:field="displayName" width="400px"/>
@@ -26,12 +26,13 @@
 
         <form:FormGroup ui:field="fullNameFormGroup"
                         identity="userInfoFullName"
-                        label="Full Name">
+                        label="Full Name"
+                        screenReaderText="Read only. Updated from the identity provider at sign-in.">
             <form:HelpHTML>
                 <p>The full name of the user, e.g. <code>Joe Bloggs</code>.
                 </p>
-                <p>The Full Name will be obtained from the identity provider when the user logs in, but
-                    you can optionally enter it to make it easier to identify the user in Stroom.
+                <p>It is read only here: it is obtained from the identity provider and updated each time
+                    the user signs in.
                 </p>
             </form:HelpHTML>
             <g:TextBox ui:field="fullName" width="400px"/>
@@ -39,15 +40,14 @@
 
         <form:FormGroup ui:field="subjectIdFormGroup"
                         identity="userInfoSubjectId"
-                        helpText="The unique identifier"
                         label="Unique Identifier">
             <form:HelpHTML>
                 <p>This is the user's unique identifier on the external identity provider
                     (e.g. Azure Entra ID, Cognito, Keycloak, etc.).
                 </p>
                 <p>The identifier may be a UUID like <code>b2cf3670-9d78-4bdf-9638-21f96b522b87</code>,
-                    look like an email address or be something else. Find the user in the identity provider
-                    and copy their unique identifier.
+                    look like an email address or be something else. To find a user, look them up in the
+                    identity provider by this identifier.
                 </p>
                 <p>Stroom's property
                     <code>stroom.security.authentication.openId.uniqueIdentityClaim</code>
@@ -60,7 +60,8 @@
         <form:FormGroup ui:field="enabledFormGroup"
                         identity="userInfoIsEnabled"
                         label="Enabled"
-                        helpText="If not enabled, the user will not be able to sign in.">
+                        helpText="Untick to stop the user signing in. The change is saved immediately. Their permissions and content are kept."
+                        screenReaderText="Unticked users cannot sign in. Saved immediately.">
             <tickbox:CustomCheckBox ui:field="isEnabledTickBox"/>
         </form:FormGroup>
 

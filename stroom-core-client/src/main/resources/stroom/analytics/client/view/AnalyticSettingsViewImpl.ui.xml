@@ -8,25 +8,28 @@
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="analyticRuleLevel"
                         label="Level"
-                        helpText="The severity of this rule. A detection from a rule with a high level should be prioritised over one from a rule with a low level. The level is included in the detections that this rule produces.">
+                        helpText="The severity of this rule. A detection from a rule with a high level should be prioritised over one from a rule with a low level. The level is included in the detections that this rule produces."
+                        screenReaderText="Low, Medium, High or Critical. Included in this rule's detections.">
             <list:SelectionBox ui:field="level"/>
         </form:FormGroup>
 
         <form:FormGroup identity="analyticRuleStatus"
                         label="Status"
-                        helpText="How reliable this rule is, from Experimental through to Stable, or Deprecated for a rule that has been superseded. The status is included in the detections that this rule produces.">
+                        helpText="How reliable this rule is, from Experimental through to Stable, or Deprecated for a rule that has been superseded. The status is included in the detections that this rule produces."
+                        screenReaderText="Experimental, Testing, Stable or Deprecated. Included in detections.">
             <list:SelectionBox ui:field="status"/>
         </form:FormGroup>
 
         <form:FormGroup identity="includeRuleDocumentation"
                         label="Include Rule Documentation"
-                        helpText="Determines if the rule's documentation will be included in any detections that it produces.">
+                        helpText="Include the rule's documentation in the detections it produces, including those sent by email. Untick to keep the documentation inside Stroom."
+                        screenReaderText="Adds the rule's documentation to its detections, including emails.">
             <tickbox:CustomCheckBox ui:field="includeRuleDocumentation"/>
         </form:FormGroup>
 
         <form:FormGroup identity="analyticProcessingErrorFeed"
                         label="Feed For Errors"
-                        helpText="The Feed to write to for any errors that occur during execution.">
+                        helpText="Feed that errors from running this rule are written to. If the rule has none, the default error feed is shown and used. A schedule cannot be enabled without an error feed. Administrators can select Set Default to make this feed the default for all rules.">
             <g:FlowPanel styleName="button-group">
                 <g:SimplePanel ui:field="errorFeed"/>
                 <b:Button ui:field="setDefaultErrorFeed"

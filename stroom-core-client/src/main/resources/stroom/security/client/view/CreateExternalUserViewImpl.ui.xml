@@ -6,7 +6,8 @@
   <g:FlowPanel styleName="createExternalUserViewImpl max form flex-column">
     <form:FormGroup identity="subjectId"
                     label="Unique User Identity"
-                    addStyleNames="createExternalUserViewImpl-subjectId dock-min form">
+                    addStyleNames="createExternalUserViewImpl-subjectId dock-min form"
+                    screenReaderText="The user's ID in the identity provider, e.g. a UUID or email address.">
       <form:HelpHTML>
         <p>This is the user's unique identifier on the external identity provider
           (e.g. Azure Entra ID, Cognito, Keycloak, etc.).</p>
@@ -21,16 +22,17 @@
 
     <form:FormGroup identity="displayName"
                     label="Display Name (optional)"
-                    addStyleNames="createExternalUserViewImpl-displayName dock-min form">
+                    addStyleNames="createExternalUserViewImpl-displayName dock-min form"
+                    screenReaderText="Replaced by the identity provider's value when the user signs in.">
       <form:DescriptionHTML>
-        This name will be overwritten by the value obtained from the identity provider on login.
+        This name will be overwritten by the value obtained from the identity provider when the user signs in.
       </form:DescriptionHTML>
       <form:HelpHTML>
         <p>This is the display name for the user that will be used in most screens in Stroom and
         in audit log entries.</p>
         <p>Stroom's property <code>stroom.security.authentication.openId.userDisplayNameClaim</code>
           determines which Open ID Connect claim is used to supply the Display Name.</p>
-        <p>The Display Name will be obtained from the identity provider when the user logs in, but
+        <p>The Display Name will be obtained from the identity provider when the user signs in, but
           you can optionally enter it to make it easier to identify the user in Stroom.</p>
       </form:HelpHTML>
       <g:TextBox ui:field="displayName" addStyleNames="w-100" />
@@ -38,13 +40,14 @@
 
     <form:FormGroup identity="fullName"
                     label="Full Name (optional)"
-                    addStyleNames="createExternalUserViewImpl-fullName dock-min form">
+                    addStyleNames="createExternalUserViewImpl-fullName dock-min form"
+                    screenReaderText="E.g. Joe Bloggs. Replaced by the identity provider's value when the user signs in.">
       <form:DescriptionHTML>
-        This name will be overwritten by the value obtained from the identity provider on login.
+        This name will be overwritten by the value obtained from the identity provider when the user signs in.
       </form:DescriptionHTML>
       <form:HelpHTML>
         <p>The full name of the user, e.g. <code>Joe Bloggs</code>.</p>
-        <p>The Full Name will be obtained from the identity provider when the user logs in, but
+        <p>The Full Name will be obtained from the identity provider when the user signs in, but
           you can optionally enter it to make it easier to identify the user in Stroom.</p>
       </form:HelpHTML>
       <g:TextBox ui:field="fullName" addStyleNames="w-100" />

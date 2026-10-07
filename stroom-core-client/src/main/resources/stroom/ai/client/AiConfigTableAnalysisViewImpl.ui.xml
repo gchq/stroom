@@ -4,25 +4,39 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
-        <form:FormGroup identity="maxTotalRows" label="Max Total Rows">
+        <form:FormGroup identity="maxTotalRows" label="Max Total Rows"
+                        helpText="Maximum number of rows taken from a table for AI analysis. If the table has more, the data is truncated and the AI is told so. 1 to 1,000,000. Default is 10,000."
+                        screenReaderText="Rows, 1 to 1,000,000. Default is 10,000.">
             <v:ValueSpinner ui:field="maxTotalRows" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="maxRowsPerBatch" label="Max Rows Per Batch">
+        <form:FormGroup identity="maxRowsPerBatch" label="Max Rows Per Batch"
+                        helpText="Maximum number of table rows sent to the AI model in one prompt. Larger tables are split into batches whose answers are then merged. 1 to 1,000,000. Default is 1000."
+                        screenReaderText="Rows per prompt, 1 to 1,000,000. Default is 1000.">
             <v:ValueSpinner ui:field="maxRowsPerBatch" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="maxParallelBatches" label="Max Parallel Batches">
+        <form:FormGroup identity="maxParallelBatches" label="Max Parallel Batches"
+                        helpText="Maximum number of batches sent to the AI model at the same time. 1 to 100. Default is 4."
+                        screenReaderText="1 to 100. Default is 4.">
             <v:ValueSpinner ui:field="maxParallelBatches" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="attachmentDownloadTimeoutMs" label="Attachment Download Timeout (ms)">
+        <form:FormGroup identity="attachmentDownloadTimeoutMs" label="Attachment Download Timeout (ms)"
+                        helpText="Time in milliseconds to wait for attached table data to finish downloading before asking the AI. Currently only the value saved with Set As Default is used. 1000 to 600,000. Default is 60,000 (1 minute)."
+                        screenReaderText="Milliseconds, 1000 to 600,000. Default is 60,000.">
             <v:ValueSpinner ui:field="attachmentDownloadTimeoutMs" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="tableQuerySystemPrompt" label="Table Query System Prompt">
+        <form:FormGroup identity="tableQuerySystemPrompt" label="Table Query System Prompt"
+                        helpText="Instructions sent to the AI model when answering questions about table data. A default prompt is provided."
+                        screenReaderText="Sent to the model with each table query.">
             <g:TextArea ui:field="tableQuerySystemPrompt" width="100%" visibleLines="4"/>
         </form:FormGroup>
-        <form:FormGroup identity="tableQueryUserPrompt" label="Table Query User Prompt">
+        <form:FormGroup identity="tableQueryUserPrompt" label="Table Query User Prompt"
+                        helpText="Template for the message sent with each batch of table data. Use {{{{query}} for the user's question, {{{{table}} for the table data and {{{{context}} for earlier conversation."
+                        screenReaderText="Placeholders: {{{{query}}, {{{{table}}, {{{{context}}.">
             <g:TextArea ui:field="tableQueryUserPrompt" width="100%" visibleLines="6"/>
         </form:FormGroup>
-        <form:FormGroup identity="multiSummaryMergePrompt" label="Multi-Summary Merge Prompt">
+        <form:FormGroup identity="multiSummaryMergePrompt" label="Multi-Summary Merge Prompt"
+                        helpText="Template used to merge the answers from several batches into one. Use {{{{summaries}} for the numbered list of answers to merge."
+                        screenReaderText="Placeholder: {{{{summaries}}.">
             <g:TextArea ui:field="multiSummaryMergePrompt" width="100%" visibleLines="5"/>
         </form:FormGroup>
     </g:FlowPanel>

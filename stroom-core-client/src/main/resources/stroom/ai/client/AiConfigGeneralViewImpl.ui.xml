@@ -7,22 +7,33 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max default-min-sizes dock-container-vertical">
         <form:FormGroup identity="model"
-                        label="Model">
+                        label="Model"
+                        helpText="AI model used by Ask Stroom AI to answer questions. Only models you have Use permission on are listed.">
             <g:SimplePanel ui:field="modelRef"/>
         </form:FormGroup>
-        <form:FormGroup identity="dockTypeSelectionBox" label="Dock Type">
+        <form:FormGroup identity="dockTypeSelectionBox" label="Dock Type"
+                        helpText="How the Ask Stroom AI panel is shown: Dialog opens it in a pop-up window, Dock attaches it to the side of the main window."
+                        screenReaderText="Dialog or Dock.">
             <l:SelectionBox ui:field="dockTypeSelectionBox"/>
         </form:FormGroup>
-        <form:FormGroup identity="dockLocationSelectionBox" label="Dock Location">
+        <form:FormGroup identity="dockLocationSelectionBox" label="Dock Location"
+                        helpText="Edge of the main window the Ask Stroom AI panel docks to: Right, Left, Top or Bottom. Only used when the dock type is Dock."
+                        screenReaderText="Only used when the dock type is Dock.">
             <l:SelectionBox ui:field="dockLocationSelectionBox"/>
         </form:FormGroup>
-        <form:FormGroup identity="chatSystemPrompt" label="Chat System Prompt">
+        <form:FormGroup identity="chatSystemPrompt" label="Chat System Prompt"
+                        helpText="Instructions sent to the AI model at the start of every chat, setting how the assistant should behave. A default prompt is provided. Currently only the value saved with Set As Default is used."
+                        screenReaderText="Sent to the model at the start of every chat.">
             <g:TextArea ui:field="chatSystemPrompt" width="100%" visibleLines="5"/>
         </form:FormGroup>
-        <form:FormGroup identity="historySummaryPrompt" label="History Summary Prompt">
+        <form:FormGroup identity="historySummaryPrompt" label="History Summary Prompt"
+                        helpText="Instructions used to summarise older messages when the conversation is too long for the model's context window. A default prompt is provided."
+                        screenReaderText="Used to summarise older messages when the chat is too long.">
             <g:TextArea ui:field="historySummaryPrompt" width="100%" visibleLines="3"/>
         </form:FormGroup>
-        <form:FormGroup identity="maxHistorySafetyCapMessages" label="Maximum History Messages">
+        <form:FormGroup identity="maxHistorySafetyCapMessages" label="Maximum History Messages"
+                        helpText="Maximum number of earlier chat messages loaded as history for each question. Older messages are trimmed further if the model's context window is too small. Currently only the value saved with Set As Default is used. 1 to 500. Default is 200."
+                        screenReaderText="Messages, 1 to 500. Default is 200.">
             <v:ValueSpinner ui:field="maxHistorySafetyCapMessages" width="200px"/>
         </form:FormGroup>
         <form:FormGroup>

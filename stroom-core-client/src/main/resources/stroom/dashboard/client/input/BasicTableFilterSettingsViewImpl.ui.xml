@@ -4,16 +4,21 @@
              xmlns:i="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="basicTableFilterSettingsId" label="Id">
+        <form:FormGroup identity="basicTableFilterSettingsId" label="Id"
+                        helpText="Unique ID of this component on the dashboard, generated when the component is added (e.g. table-filter-AB1C2). It cannot be changed.">
             <g:Label ui:field="id" addStyleNames="w-100 stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableFilterSettingsName" label="Name">
+        <form:FormGroup identity="basicTableFilterSettingsName" label="Name"
+                        helpText="Name of this component, shown in its tab on the dashboard.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="basicTableFilterSettingsTable" label="Table">
+        <form:FormGroup identity="basicTableFilterSettingsTable" label="Table"
+                        helpText="Table or embedded query whose columns this filter acts on.">
             <i:SelectionBox ui:field="table" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup label="Columns To Display" addStyleNames="dock-max">
+        <form:FormGroup label="Columns To Display" addStyleNames="dock-max"
+                        helpText="Columns of the selected table to show value filters for. Tick each column you want users to filter on."
+                        screenReaderText="Tick the columns to show filters for.">
             <g:SimplePanel ui:field="columns" styleName="max form-control-border form-control-background"/>
         </form:FormGroup>
     </g:FlowPanel>

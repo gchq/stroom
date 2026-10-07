@@ -6,10 +6,11 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min form-padding form">
             <form:FormGroup identity="analyticProcessingType"
-                            label="Processing Type">
+                            label="Processing Type"
+                            screenReaderText="How the rule runs. Table Builder is experimental; do not use.">
                 <l:SelectionBox ui:field="processingType"/>
                 <form:HelpHTML>
-                    <p>The type of rule execution.</p>
+                    <p>The type of rule execution. Reports can only use Scheduled Query.</p>
                     <ul>
                         <li><strong>Scheduled Query</strong>: The rule will be executed on a regular configured schedule.</li>
                         <li><strong>Streaming</strong>: The rule will be executed against all streams that match the configured filter.</li>

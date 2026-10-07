@@ -7,30 +7,42 @@
     <g:FlowPanel styleName="max form">
         <!-- Theme -->
         <form:FormGroup identity="userPreferencesTheme"
-                        label="Theme">
+                        label="Theme"
+                        helpText="The colour scheme for the user interface: Light or Dark. Default is Dark unless an administrator has changed the defaults."
+                        screenReaderText="Light or Dark.">
             <item:SelectionBox ui:field="theme" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Layout Density -->
         <form:FormGroup identity="userPreferencesLayoutDensity"
-                        label="Layout Density">
+                        label="Layout Density"
+                        helpText="How much spacing is used in the user interface: Comfortable or Compact. Default is Compact unless an administrator has changed the defaults."
+                        screenReaderText="Comfortable or Compact.">
             <item:SelectionBox ui:field="density" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Font -->
         <form:FormGroup identity="userPreferencesFont"
-                        label="Font">
+                        label="Font"
+                        helpText="The font used in the user interface, e.g. Roboto, Arial or Verdana. Default is Roboto unless an administrator has changed the defaults."
+                        screenReaderText="The font for the user interface. Default is Roboto.">
             <item:SelectionBox ui:field="font" addStyleNames="w-100"/>
         </form:FormGroup>
         <!-- Font Size -->
         <form:FormGroup identity="userPreferencesFontSize"
-                        label="Font Size">
+                        label="Font Size"
+                        helpText="The text size used in the user interface: Small, Medium or Large. Default is Medium unless an administrator has changed the defaults."
+                        screenReaderText="Small, Medium or Large.">
             <item:SelectionBox ui:field="fontSize" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="userPreferencesEnableTransparency"
-                        label="Enable Transparency">
+                        label="Enable Transparency"
+                        helpText="Tick to give dialogs and popups a translucent background that blurs the page behind them. Default is ticked unless an administrator has changed the defaults."
+                        screenReaderText="Gives dialogs and popups a translucent, blurred background.">
             <tickbox:CustomCheckBox ui:field="enableTransparency"/>
         </form:FormGroup>
         <form:FormGroup identity="userPreferencesHideConditionalStyles"
-                        label="Hide Conditional Styles">
+                        label="Hide Conditional Styles"
+                        helpText="Tick to turn off conditional formatting colours and styles in table rows. Default is unticked unless an administrator has changed the defaults."
+                        screenReaderText="Turns off conditional formatting in tables.">
             <tickbox:CustomCheckBox ui:field="hideConditionalStyles"/>
         </form:FormGroup>
     </g:FlowPanel>

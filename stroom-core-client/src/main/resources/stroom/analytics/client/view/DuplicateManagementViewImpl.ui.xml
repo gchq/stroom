@@ -7,33 +7,35 @@
         <g:FlowPanel styleName="dock-min form-padding form">
             <form:FormGroup identity="rememberNotifications"
                             label="Remember Notifications"
-                            helpText="If ticked, the column values from de-duplicated notifications will be stored
-                                in the duplicated check store so they can be viewed.">
+                            helpText="Store the duplicate check column values of each notification in the duplicate check store so they can be viewed in the duplicates list."
+                            screenReaderText="Stored values can be viewed in the duplicates list.">
                 <tickbox:CustomCheckBox ui:field="rememberNotifications"/>
             </form:FormGroup>
             <form:FormGroup identity="suppressDuplicateNotifications"
                             label="Suppress Duplicate Notifications"
-                            helpText="If ticked, notifications that are identical (across the configured columns)
-                            to ones previously sent will be suppressed. This relies on notification values being
-                            stored in the duplicate check store.">
+                            helpText="Do not send a notification if its values in the duplicate check columns match one already stored. Values are stored automatically while this is ticked."
+                            screenReaderText="Skips notifications that match a stored one.">
                 <tickbox:CustomCheckBox ui:field="suppressDuplicateNotifications"/>
             </form:FormGroup>
             <form:FormGroup identity="chooseColumns"
-                            label="Choose Columns">
+                            label="Choose Columns"
+                            screenReaderText="If unticked, grouped columns, or else all columns, are compared.">
                 <tickbox:CustomCheckBox ui:field="chooseColumns"/>
                 <form:HelpHTML>
                     <p>If ticked, enter the column names in the Columns field to define which columns will be
-                        used for de-duplication of notifications.</p>
+                        used for de-duplication of notifications. If unticked, the grouped columns are used, or all
+                        columns if the query has no grouping.</p>
                     <p><strong>Note</strong>: Any change to the columns used for de-duplication will require the
                         duplication store to be cleared.</p>
                 </form:HelpHTML>
             </form:FormGroup>
             <form:FormGroup identity="columns"
-                            label="Columns">
+                            label="Columns"
+                            screenReaderText="Comma-separated, case-sensitive. Enabled when Choose Columns is ticked.">
                 <g:TextBox ui:field="columns" width="100%"/>
                 <form:HelpHTML>
                     <p>A comma delimited list of column names (case-sensitive) that should be used to
-                        de-duplicated notifications.</p>
+                        de-duplicate notifications. Only editable when Choose Columns is ticked.</p>
                     <p><strong>Note</strong>: Any change to the columns used for de-duplication will require the
                     duplication store to be cleared.</p>
                 </form:HelpHTML>

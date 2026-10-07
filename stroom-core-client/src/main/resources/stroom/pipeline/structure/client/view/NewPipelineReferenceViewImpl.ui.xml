@@ -4,16 +4,21 @@
         xmlns:g="urn:import:com.google.gwt.user.client.ui"
         xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="newPipelineReferenceElementId" label="Element Id">
+        <form:FormGroup identity="newPipelineReferenceElementId" label="Element Id"
+                        helpText="The ID of the pipeline element that this reference data lookup belongs to.">
             <g:Label ui:field="element" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPipelineReferencePipeline" label="Pipeline">
+        <form:FormGroup identity="newPipelineReferencePipeline" label="Pipeline"
+                        helpText="The reference loader pipeline that loads the reference data. A Plan B store can also be chosen here for state lookups.">
             <g:SimplePanel ui:field="pipeline" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPipelineReferenceFeed" label="Feed">
+        <form:FormGroup identity="newPipelineReferenceFeed" label="Feed"
+                        helpText="The feed that holds the reference data streams.">
             <g:SimplePanel ui:field="feed" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPipelineReferenceType" label="Stream Type">
+        <form:FormGroup identity="newPipelineReferenceType" label="Stream Type"
+                        helpText="The stream type to load reference data from. Default is Reference. Choose Context to use the context data of the stream being processed."
+                        screenReaderText="Default is Reference.">
             <g:SimplePanel ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

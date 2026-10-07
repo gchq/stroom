@@ -3,7 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="nameName" label="Name" addStyleNames="dock-min">
+        <form:FormGroup identity="nameName" label="Name" addStyleNames="dock-min"
+                        helpText="New name for the column. It must be different from the names of the other columns in the table. If left blank the name is not changed."
+                        screenReaderText="Must be unique in the table. Blank keeps the current name.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

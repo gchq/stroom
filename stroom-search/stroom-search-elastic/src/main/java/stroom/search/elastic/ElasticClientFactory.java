@@ -27,6 +27,7 @@ import co.elastic.clients.transport.rest5_client.Rest5ClientTransport;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5Client;
 import co.elastic.clients.transport.rest5_client.low_level.Rest5ClientBuilder;
 import jakarta.inject.Inject;
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.message.BasicHeader;
@@ -80,10 +81,7 @@ public class ElasticClientFactory {
 
         final Rest5ClientBuilder restClientBuilder = Rest5Client.builder(httpHosts.toArray(new HttpHost[0]));
 
-        restClientBuilder.setRequestConfigCallback(requestConfig -> {
-            requestConfig.setConnectionRequestTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
-            requestConfig.setResponseTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
-        });
+        restClientBuilder.setRequestConfigCallback(requestConfig -> setTimeouts(requestConfig, config));
 
         // If using HTTPS, set the CA certificate to verify the connection with the Elasticsearch cluster
         if (useHttps) {
@@ -150,6 +148,16 @@ public class ElasticClientFactory {
 
         final String combinedSecret = apiKeyId + ":" + apiKeySecret;
         return Base64.getEncoder().encodeToString(combinedSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /// Sets the timeouts of requests to the cluster from its connection config: how long to wait for
+    /// a connection, and how long to wait for a response once a request is sent.
+    ///
+    /// @param requestConfig The requests' config.
+    /// @param config        The cluster's connection config.
+    public static void setTimeouts(final RequestConfig.Builder requestConfig, final ElasticConnectionConfig config) {
+        requestConfig.setConnectionRequestTimeout(Timeout.ofMilliseconds(config.getConnectionTimeoutMillis()));
+        requestConfig.setResponseTimeout(Timeout.ofMilliseconds(config.getResponseTimeoutMillis()));
     }
 
     /**

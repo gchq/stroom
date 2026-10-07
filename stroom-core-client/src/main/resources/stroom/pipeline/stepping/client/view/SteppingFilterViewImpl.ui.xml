@@ -13,16 +13,19 @@
             <g:FlowPanel styleName="max form">
                 <g:Label ui:field="nameLabel" addStyleNames="form-heading"/>
                 <form:FormGroup identity="steppingSeverity" label="Minimum Severity"
-                                helpText="Stops stepping at the next record where the selected element produced a message of this severity or higher: Info, Warning, Error or Fatal Error. Leave blank to turn this condition off.">
+                                helpText="Stops stepping at the next record where the selected element produced a message of this severity or higher: INFO, WARN, ERROR or FATAL. Leave blank to turn this condition off."
+                                screenReaderText="Stops at the next record with a message this severe or worse. Blank turns it off.">
                     <l:SelectionBox ui:field="skipToErrors"/>
                 </form:FormGroup>
                 <form:FormGroup identity="steppingErrors" label="Output"
-                                helpText="Stops stepping at the next record where the output of the selected element is empty, or not empty. Leave blank to turn this condition off.">
+                                helpText="Stops stepping at the next record where the output of the selected element is empty or not empty. Leave blank to turn this condition off."
+                                screenReaderText="Stops at the next record with empty or not empty output. Blank turns it off.">
                     <l:SelectionBox ui:field="skipToOutput"/>
                 </form:FormGroup>
                 <form:FormGroup identity="steppingConditions"
                                 label="Stepping Conditions"
-                                addStyleNames="default-min-sizes flex-grow-1">
+                                addStyleNames="default-min-sizes flex-grow-1"
+                                helpText="XPath filters applied to the output of the selected element. Stepping stops at the next record where any filter matches. Use the toolbar buttons to add, edit or delete filters.">
                     <g:SimplePanel ui:field="xPathList" addStyleNames="dock-max stroom-control"/>
                 </form:FormGroup>
             </g:FlowPanel>

@@ -5,11 +5,13 @@
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup label="Range Type"
-                        helpText="Choose the data type to use to define the range.">
+                        helpText="The data type used to store the start and end of each range: unsigned Byte, Short, Integer or Long. Choose the smallest type that holds your largest value. Default is Unsigned Long."
+                        screenReaderText="Smallest unsigned type that holds your largest value. Default is Unsigned Long.">
             <i:SelectionBox ui:field="rangeType" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="Temporal Precision"
-                        helpText="Choose how to store the temporal dimension.">
+                        helpText="How precisely the time of each entry is stored, from Day down to Nanosecond. Coarser precision uses less space. Default is Millisecond."
+                        screenReaderText="From Day to Nanosecond; coarser uses less space. Default is Millisecond.">
             <i:SelectionBox ui:field="temporalPrecision" addStyleNames="allow-focus"/>
         </form:FormGroup>
     </g:FlowPanel>

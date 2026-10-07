@@ -5,12 +5,15 @@
     <g:FormPanel ui:field="form" styleName="max">
         <g:FlowPanel styleName="max visualisation-assets-add-dialog">
             <form:FormGroup identity="visualisationAssetsCreateIn"
-                            label="Create in">
+                            label="Create in"
+                            helpText="The folder that the new file or folder will be created in.">
                 <g:Label ui:field="lblPath"/>
             </form:FormGroup>
             <form:FormGroup identity="visualisationAssetsName"
                             label="Name"
-                            addStyleNames="dock-min">
+                            addStyleNames="dock-min"
+                            helpText="The name of the new file or folder. It must not contain '/' or ':'."
+                            screenReaderText="Must not contain a slash or a colon.">
                 <g:TextBox ui:field="txtName" addStyleNames="stroom-control" name="name"/>
             </form:FormGroup>
         </g:FlowPanel>

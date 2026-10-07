@@ -4,10 +4,13 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="documentPermissions form max dock-container-vertical overflow-hidden">
-        <form:FormGroup identity="action" label="Change">
+        <form:FormGroup identity="action" label="Change"
+                        helpText="The change to make to every processor filter in the current filtered list: Enable, Disable, Delete or Set run as user. You are asked to confirm before the change is applied."
+                        screenReaderText="Applies to every processor filter in the current filtered list.">
             <i:SelectionBox ui:field="documentPermissionChange"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="userRefLabel" label="Run As User">
+        <form:FormGroup ui:field="userRefLabel" label="Run As User"
+                        helpText="The user whose permissions are used when the filtered processor filters run. Only shown when Change is Set run as user, and a user must be selected.">
             <g:SimplePanel ui:field="userRef"/>
         </form:FormGroup>
     </g:FlowPanel>

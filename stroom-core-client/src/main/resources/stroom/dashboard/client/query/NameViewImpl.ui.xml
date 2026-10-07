@@ -3,7 +3,10 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="nameName" label="Name" addStyleNames="dock-min">
+        <form:FormGroup identity="nameName" label="Name" addStyleNames="dock-min"
+                        helpText="Name for this favourite query. A name is required."
+                        screenReaderText="Name for this favourite query."
+                        required="true">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

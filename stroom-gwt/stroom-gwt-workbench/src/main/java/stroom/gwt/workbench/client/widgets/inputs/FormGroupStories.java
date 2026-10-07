@@ -147,6 +147,7 @@ public final class FormGroupStories {
                     final FormGroup formGroup = formGroup("fg-store-size", "Max Store Size");
                     formGroup.setHelpText(STORE_SIZE_HELP);
                     formGroup.setScreenReaderText(STORE_SIZE_SR);
+                    formGroup.setRequired(true);
                     formGroup.add(InputWidgets.textBox(context, "10GiB", null));
                     return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
                 })
@@ -155,6 +156,8 @@ public final class FormGroupStories {
                     final Query size = play.getByLabelText("Max Store Size");
                     play.expect(size).toHaveAccessibleDescription(STORE_SIZE_SR);
                     play.expect(size).toHaveAttribute("aria-keyshortcuts", "F1");
+                    // A required field is announced as required (not in its description)
+                    play.expect(size).toHaveAttribute("aria-required", "true");
                     play.click(play.getByTitle("Max Store Size - Click for help"));
                     play.expect(play.screen().findByText(STORE_SIZE_HELP, ".help-button-tooltip *"))
                             .toBeInTheDocument();

@@ -4,13 +4,19 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="xmlSchemaSettingsNamespaceURI" label="Namespace URI">
+        <form:FormGroup identity="xmlSchemaSettingsNamespaceURI" label="Namespace URI"
+                        helpText="XML namespace that this schema defines, e.g. event-logging:3. Schema validation uses it to find the right schema for the data."
+                        screenReaderText="Namespace the schema defines, e.g. event-logging:3.">
             <g:TextBox ui:field="namespaceURI" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="xmlSchemaSettingSystemId" label="System Id">
+        <form:FormGroup identity="xmlSchemaSettingSystemId" label="System Id"
+                        helpText="Identifier that XML data uses in xsi:schemaLocation to refer to this schema, e.g. file://event-logging-v3.0.0.xsd."
+                        screenReaderText="Used in schemaLocation, e.g. file://event-logging-v3.0.0.xsd.">
             <g:TextBox ui:field="systemId" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="xmlSchemaSettingSchemaGroup" label="Schema Group">
+        <form:FormGroup identity="xmlSchemaSettingSchemaGroup" label="Schema Group"
+                        helpText="Name of a group of related schemas. A schema filter can be set to only use schemas in a given group."
+                        screenReaderText="Lets a schema filter use only schemas in this group.">
             <g:TextBox ui:field="schemaGroup" width="400px"/>
         </form:FormGroup>
         <form:FormGroup>

@@ -5,7 +5,8 @@
              xmlns:view="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="searchDownloadFileType" label="File Type">
+        <form:FormGroup identity="searchDownloadFileType" label="File Type"
+                        helpText="Format of the downloaded file: Excel, CSV, TSV or Markdown. Default is Excel.">
             <list:SelectionBox ui:field="fileType"/>
         </form:FormGroup>
         <form:FormGroup ui:field="downloadAll">
@@ -14,7 +15,9 @@
         <form:FormGroup>
             <view:CustomCheckBox ui:field="sample" identity="searchDownloadSampleOnly" label="Sample Only"/>
         </form:FormGroup>
-        <form:FormGroup identity="searchDownloadSampleSize" label="Sample Size (%)">
+        <form:FormGroup identity="searchDownloadSampleSize" label="Sample Size (%)"
+                        helpText="Approximate percentage of rows to include in a sample download, from 1 to 100. Used only when Sample Only is ticked."
+                        screenReaderText="1 to 100 percent. Used only when Sample Only is ticked.">
             <v:ValueSpinner ui:field="percent"/>
         </form:FormGroup>
     </g:FlowPanel>

@@ -5,16 +5,24 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="solrIndexFieldUse" label="Field Use">
+        <form:FormGroup identity="solrIndexFieldUse" label="Field Use"
+                        helpText="How Stroom treats the field when searching and indexing, e.g. Text, Long or Date. This decides which query conditions can be used on the field."
+                        screenReaderText="Sets which query conditions the field supports.">
             <l:SelectionBox ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexFieldName" label="Field Name">
+        <form:FormGroup identity="solrIndexFieldName" label="Field Name"
+                        helpText="Name of the field in Solr. Must start with a letter or underscore and contain only letters, digits and underscores. Must be unique in this index."
+                        screenReaderText="Letters, digits and underscores; must not start with a digit.">
             <g:TextBox ui:field="fieldName" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexFieldType" label="Field Type">
+        <form:FormGroup identity="solrIndexFieldType" label="Field Type"
+                        helpText="Solr field type to use for this field, as defined in the collection's schema. The list is read from Solr."
+                        screenReaderText="Types are read from the Solr schema.">
             <l:SelectionBox ui:field="fieldType" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="solrIndexDefaultValue" label="Default Value">
+        <form:FormGroup identity="solrIndexDefaultValue" label="Default Value"
+                        helpText="Value Solr stores for this field when a document does not supply one. Leave blank for no default."
+                        screenReaderText="Used when a document has no value.">
             <g:TextBox ui:field="defaultValue" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup>

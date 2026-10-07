@@ -10,61 +10,66 @@
         <form:FormGroup addStyleNames="dock-max"
                         identity="cfRuleExpression"
                         label="Row Match Expression"
-                        helpText="All rows matching this expression will be formatted according to the settings below.">
+                        helpText="All rows matching this expression are formatted according to this rule's settings."
+                        screenReaderText="Rows matching this expression get this rule's formatting.">
             <g:SimplePanel ui:field="expression" styleName="dock-max stroom-control"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfRuleEnabledState"
                         label="Enabled"
-                        helpText="Enables or disables this rule. When disabled this rule will be ignored.">
+                        helpText="Tick to enable this rule. When unticked, this rule is ignored."
+                        screenReaderText="When unticked, this rule is ignored.">
             <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
                         label="Hide Matching Rows"
-                        helpText="When checked, prevents matching rows from appearing in the table.">
+                        helpText="When ticked, rows matching this rule are not shown in the table."
+                        screenReaderText="When ticked, matching rows are not shown.">
             <tickbox:CustomCheckBox ui:field="hide" identity="cfRuleHide" label="Hide"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
                         label="Formatting Type"
-                        helpText="Choose how to apply styles to matching rows.">
+                        helpText="How the style is applied to matching rows: Background colours the row background, Text colours the text only, and Custom uses your own colours."
+                        screenReaderText="Background, Text or Custom.">
             <l:SelectionBox ui:field="formattingType"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="styleGroup"
                         identity="cfStyle"
                         label="Style"
-                        helpText="Choose an standard style to apply to matching rows.">
+                        helpText="Standard colour style to apply to matching rows.">
             <l:SelectionBox ui:field="formattingStyle"/>
         </form:FormGroup>
 
         <form:FormGroup ui:field="customStyleGroup"
                         identity="cfCustomStyle"
                         label="Custom Style"
-                        helpText="Provide a custom style for the matched rows.">
+                        helpText="Opens a dialog to set your own background and text colours for matching rows, for both light and dark themes.">
             <b:Button ui:field="editCustomStyle" text="Set Custom Style" width="200px"
                       addStyleNames="allow-focus Button--contained-primary"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
-                        identity="cfRuleTextBold"
+                        identity="cfRuleTextBoldState"
                         label="Make Text Bold"
-                        helpText="Makes the text bold.">
+                        helpText="When ticked, the text of matching rows is shown in bold.">
             <tickbox:CustomCheckBox ui:field="textBold" identity="cfRuleTextBold" label="Bold"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
-                        identity="cfRuleTextItalic"
+                        identity="cfRuleTextItalicState"
                         label="Make Text Italic"
-                        helpText="Makes the text italic.">
+                        helpText="When ticked, the text of matching rows is shown in italics.">
             <tickbox:CustomCheckBox ui:field="textItalic" identity="cfRuleTextItalic" label="Italic"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfExample"
-                        label="Example">
+                        label="Example"
+                        helpText="Preview of how matching rows will look with the chosen style.">
             <g:SimplePanel ui:field="example" width="200px"/>
         </form:FormGroup>
 

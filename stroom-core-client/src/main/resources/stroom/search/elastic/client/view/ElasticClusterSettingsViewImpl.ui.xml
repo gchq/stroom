@@ -5,25 +5,37 @@
              xmlns:t="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="elasticClusterSettingsConnectionURLs" label="Connection URLs">
+        <form:FormGroup identity="elasticClusterSettingsConnectionURLs" label="Connection URLs"
+                        helpText="URLs of the Elasticsearch nodes to connect to, one per line, in the form scheme://host:port, e.g. https://elastic.example.com:9200. If the port is left out it defaults to 80 for http and 443 for https."
+                        screenReaderText="One URL per line, e.g. https://host:9200.">
             <g:TextArea ui:field="connectionUrls" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsCAcertificate" label="CA certificate (PEM format)">
+        <form:FormGroup identity="elasticClusterSettingsCAcertificate" label="CA certificate (PEM format)"
+                        helpText="CA certificate used to verify the TLS certificates of the Elasticsearch nodes, in PEM format. Only used when a connection URL uses https. If left blank, the Java default trust store is used."
+                        screenReaderText="PEM text. Only used for https URLs.">
             <g:TextArea ui:field="caCertificate" width="400px"/>
         </form:FormGroup>
         <form:FormGroup>
             <t:CustomCheckBox ui:field="useAuthentication" identity="elasticClusterSettingsUseauthentication" label="Use authentication"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsAPIKeyId" label="API key ID">
+        <form:FormGroup identity="elasticClusterSettingsAPIKeyId" label="API key ID"
+                        helpText="ID of the Elasticsearch API key used to authenticate. Only used when 'Use authentication' is ticked and a secret is also set."
+                        screenReaderText="Used with the API key secret when authentication is on.">
             <g:TextBox ui:field="apiKeyId" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsAPIKeySecret" label="API key secret">
+        <form:FormGroup identity="elasticClusterSettingsAPIKeySecret" label="API key secret"
+                        helpText="Secret of the Elasticsearch API key used to authenticate. Only used when 'Use authentication' is ticked and an API key ID is also set."
+                        screenReaderText="Used with the API key ID when authentication is on.">
             <g:PasswordTextBox ui:field="apiKeySecret" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsConnectionTimeout" label="Connection timeout (ms)">
+        <form:FormGroup identity="elasticClusterSettingsConnectionTimeout" label="Connection timeout (ms)"
+                        helpText="Time in milliseconds to wait for a connection to Elasticsearch. Default is 3000 (3 seconds)."
+                        screenReaderText="Milliseconds. Default is 3000.">
             <g:IntegerBox ui:field="connectionTimeoutMillis" width="50px"/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticClusterSettingsResponseTimeout" label="Response timeout (ms)">
+        <form:FormGroup identity="elasticClusterSettingsResponseTimeout" label="Response timeout (ms)"
+                        helpText="Time in milliseconds to wait for a response from Elasticsearch once a request has been sent. 0 means no limit. Default is 0."
+                        screenReaderText="Milliseconds. 0 means no limit. Default is 0.">
             <g:IntegerBox ui:field="responseTimeoutMillis" width="50px"/>
         </form:FormGroup>
         <b:Button ui:field="testConnection" text="Test Connection" width="200px" addStyleNames="allow-focus"/>

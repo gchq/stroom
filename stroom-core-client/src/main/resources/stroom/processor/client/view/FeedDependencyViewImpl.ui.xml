@@ -7,27 +7,32 @@
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="feedDependencies"
                         label="Feed Dependencies"
-                        addStyleNames="dock-max">
+                        addStyleNames="dock-max"
+                        helpText="The feeds and stream types whose data must arrive before this filter processes a stream. A dependency is met once that feed has unlocked data of that type with an effective time at or after the stream's create time.">
             <g:SimplePanel ui:field="feedDependencies" addStyleNames="max"/>
         </form:FormGroup>
         <form:FormGroup identity="minProcessingDelayEnabled"
                         label="Enable Minimum Processing Delay"
-                        helpText="Select if you want to enable a minimum processing delay.">
+                        helpText="Tick to make data wait a minimum time after it is created before it is processed, even when its feed dependencies are already met."
+                        screenReaderText="Makes data wait a minimum time after creation.">
             <tickbox:CustomCheckBox ui:field="minProcessingDelayEnabled"/>
         </form:FormGroup>
         <form:FormGroup identity="minProcessingDelay"
                         label="Minimum Processing Delay"
-                        helpText="What is the minimum length of time we should wait until we process this data after we have satisfied the dependencies. This should be at least long enough for the effective feed cache to be invalidated, e.g. 10 minutes.">
+                        helpText="The minimum time to wait after data is created before processing it, even once its feed dependencies are met. Default is 30 minutes."
+                        screenReaderText="Time to wait after data is created. Default is 30 minutes.">
             <d:DurationPicker ui:field="minProcessingDelay"/>
         </form:FormGroup>
         <form:FormGroup identity="maxProcessingDelayEnabled"
                         label="Enable Maximum Processing Delay"
-                        helpText="Select if you want to enable a maximum processing delay.">
+                        helpText="Tick to set a maximum wait, after which data is processed even if its feed dependencies have not been met."
+                        screenReaderText="Processes data after a set time even if dependencies are unmet.">
             <tickbox:CustomCheckBox ui:field="maxProcessingDelayEnabled"/>
         </form:FormGroup>
         <form:FormGroup identity="maxProcessingDelay"
                         label="Maximum Processing Delay"
-                        helpText="What is the maximum length of time we should wait until we process this data if the dependencies are not satisfied. This allows data to continue processing if we stop receiving reference data.">
+                        helpText="The longest time to wait for feed dependencies, measured from when the data was created. After this the data is processed anyway, so processing continues if dependency data stops arriving. Default is 1 day."
+                        screenReaderText="Data older than this is processed even if dependencies are unmet.">
             <d:DurationPicker ui:field="maxProcessingDelay"/>
         </form:FormGroup>
     </g:FlowPanel>

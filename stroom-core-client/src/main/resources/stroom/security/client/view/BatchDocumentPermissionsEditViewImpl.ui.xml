@@ -4,19 +4,27 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="documentPermissions form max dock-container-vertical overflow-hidden">
-        <form:FormGroup identity="action" label="Change">
+        <form:FormGroup identity="action" label="Change"
+                        helpText="The change to apply to every document that matches the current filter. The other fields shown depend on the change chosen. 'Remove all permissions for all users [DANGEROUS]' cannot be undone."
+                        screenReaderText="Applies to all filtered documents. Other fields depend on this choice.">
             <i:SelectionBox ui:field="documentPermissionChange" width="350px"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="docTypeLabel" label="Document Type">
+        <form:FormGroup ui:field="docTypeLabel" label="Document Type"
+                        helpText="The document type whose create permission is added or removed for the chosen user or group. Only shown for 'Add permission to create' and 'Remove permission to create'."
+                        screenReaderText="Document type to allow or stop the user or group creating in the filtered folders.">
             <i:SelectionBox ui:field="docType"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="userRefLabel" label="For User Or Group">
+        <form:FormGroup ui:field="userRefLabel" label="For User Or Group"
+                        helpText="The user or group the permission change applies to.">
             <g:SimplePanel ui:field="userRef"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="docRefLabel" label="From Document">
+        <form:FormGroup ui:field="docRefLabel" label="From Document"
+                        helpText="The document whose permissions are copied. 'Add all permissions' adds its permissions to the filtered documents; 'Set all permissions' makes them exactly the same as this document's.">
             <g:SimplePanel ui:field="docRef"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="permissionLabel" label="Permission">
+        <form:FormGroup ui:field="permissionLabel" label="Permission"
+                        helpText="The permission to give the chosen user or group on each filtered document. Each level includes all lower ones; from lowest to highest: Use, View, Edit, Delete, Owner. Choose '[ none ]' to remove their permission."
+                        screenReaderText="Use, View, Edit, Delete or Owner. '[ none ]' removes the permission.">
             <i:SelectionBox ui:field="permission"/>
         </form:FormGroup>
     </g:FlowPanel>

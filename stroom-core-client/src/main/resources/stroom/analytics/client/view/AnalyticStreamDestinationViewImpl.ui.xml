@@ -5,7 +5,8 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="analyticStreamDestinationFeed" label="Destination Feed">
+        <form:FormGroup identity="analyticStreamDestinationFeed" label="Destination Feed"
+                        helpText="Feed that notifications are written to as streams. Administrators can select Set Default to make this feed the default for new notifications.">
             <g:FlowPanel styleName="button-group">
                 <g:SimplePanel ui:field="destinationFeed"/>
                 <b:Button ui:field="setDefaultDestinationFeed"
@@ -13,7 +14,9 @@
                           addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="analyticStreamDestinationUseSourceFeedIfPossible" label="Use Source Feed If Possible (Streaming Only)">
+        <form:FormGroup identity="analyticStreamDestinationUseSourceFeedIfPossible" label="Use Source Feed If Possible (Streaming Only)"
+                        helpText="For streaming rules, write detections to the feed of the stream being processed instead of the destination feed. Disabled and ignored for other processing types."
+                        screenReaderText="Streaming rules only. Writes detections to the source stream's feed.">
             <tickbox:CustomCheckBox ui:field="useSourceFeedIfPossible"/>
         </form:FormGroup>
     </g:FlowPanel>

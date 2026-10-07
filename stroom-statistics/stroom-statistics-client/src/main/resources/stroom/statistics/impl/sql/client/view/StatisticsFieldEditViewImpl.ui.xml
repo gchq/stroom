@@ -3,7 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="statisticsFieldName" label="Name">
+        <form:FormGroup identity="statisticsFieldName" label="Name"
+                        helpText="The name of the statistic field (tag). Must be unique in this store. By default it may contain letters, numbers, spaces, underscores, hyphens, full stops and brackets."
+                        screenReaderText="Unique. By default letters, numbers, spaces, underscores, hyphens, full stops, brackets.">
             <g:TextBox ui:field="name"/>
         </form:FormGroup>
     </g:FlowPanel>

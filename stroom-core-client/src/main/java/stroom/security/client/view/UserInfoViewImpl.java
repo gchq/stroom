@@ -79,6 +79,9 @@ public class UserInfoViewImpl extends ViewImpl implements UserInfoView {
                 ? null
                 // helpHTML element in ui.xml will be used instead
                 : "The name of the group."); // Overrides the helpHTML element
+        subjectIdFormGroup.setScreenReaderText(isUser
+                ? "Read only. The user's ID in the identity provider."
+                : "Read only.");
         subjectId.setText(NullSafe.get(userRef, UserRef::getSubjectId));
         displayName.setText(NullSafe.get(userRef, UserRef::getDisplayName));
         fullName.setText(NullSafe.get(userRef, UserRef::getFullName));

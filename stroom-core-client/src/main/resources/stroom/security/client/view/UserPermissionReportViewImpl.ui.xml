@@ -6,11 +6,10 @@
 >
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="form dock-min form-padding">
-            <form:FormGroup label="Permission Visibility">
+            <form:FormGroup label="Permission Visibility"
+                            screenReaderText="Filters the documents list: explicit, effective or all.">
                 <form:HelpHTML>
-                    <p>This dropdown controls which users/groups are shown in the
-                        <em>Users and Groups</em>
-                        pane below.
+                    <p>This dropdown controls which documents/folders are shown in the list.
                     </p>
                     <ul>
                         <li>
@@ -26,8 +25,8 @@
                         </li>
                         <li>
                             <strong>Show All</strong>
-                            - Shows all documents regardless of permissions held.
-                            Select this to grant new permissions to users/groups.
+                            - Shows all documents/folders regardless of permissions held.
+                            Select this to grant new permissions to this user/group.
                         </li>
                     </ul>
                 </form:HelpHTML>

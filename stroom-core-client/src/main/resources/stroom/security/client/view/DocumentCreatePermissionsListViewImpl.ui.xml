@@ -4,14 +4,16 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:MySplitLayoutPanel styleName="max default-min-sizes">
         <g:south size="200">
-            <form:FormGroup label="Document Create Permission Details" addStyleNames="max">
+            <form:FormGroup label="Document Create Permission Details" addStyleNames="max"
+                            helpText="Explains how the selected user or group holds permission to create the selected document type here: directly, through 'Create All', through ownership, or inherited from a group.">
                 <g:HTML ui:field="details"
                         styleName="max form-control-border form-control-background form-padding"/>
             </form:FormGroup>
         </g:south>
         <g:center>
             <g:FlowPanel styleName="max dock-container-vertical">
-                <form:FormGroup label="Document Create Permissions" addStyleNames="dock-max">
+                <form:FormGroup label="Document Create Permissions" addStyleNames="dock-max"
+                                helpText="The document types that can be created in this folder. Tick a type to let the user or group create it here; tick the box in the column header to grant 'Create All'.">
                     <g:SimplePanel ui:field="dataGrid" styleName="max form-control-border form-control-background"/>
                 </form:FormGroup>
             </g:FlowPanel>

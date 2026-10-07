@@ -10,19 +10,18 @@
             <g:FlowPanel styleName="max form form-padding">
                 <form:FormGroup
                         ui:field="descriptionFormGroup"
-                        identity="contentTemplateDescription"
+                        identity="contentTemplateTabDescription"
                         label="Description"
-                        helpText="The description of this Content Template.">
+                        helpText="The description of the selected content template.">
                     <g:HTML ui:field="description" addStyleNames="w-100"/>
                 </form:FormGroup>
 
                 <form:FormGroup
                         ui:field="expressionFormGroup"
-                        identity="contentTemplateExpression"
+                        identity="contentTemplateTabExpression"
                         label="Expression"
                         addStyleNames="dock-max"
-                        helpText="The expression to match received streams to this template.
-                        The stream header attributes will be used for matching.">
+                        helpText="When data arrives for a feed that does not exist yet, the first active template whose expression matches the data's header attributes is used. Attribute names are not case sensitive; an empty expression matches all data.">
                     <g:SimplePanel ui:field="expression" styleName="w-100"/>
                 </form:FormGroup>
             </g:FlowPanel>

@@ -6,15 +6,19 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="searchDownloadFileType" label="File Type">
+        <form:FormGroup identity="searchDownloadFileType" label="File Type"
+                        helpText="Format of the report file: Excel (.xlsx), CSV, TSV or Markdown. Default is Excel."
+                        screenReaderText="Excel, CSV, TSV or Markdown. Default is Excel.">
             <list:SelectionBox ui:field="fileType"/>
         </form:FormGroup>
         <form:FormGroup label="Send Empty Reports"
-                        helpText="If a report contains no data because none is found by the query then do you still want to send an empty report? In some cases you might want to so the recipient knows there is nothing to report rather than the possibility that the report just didn't execute.">
+                        helpText="Send the report even when the query finds no data, so recipients know it ran. If unticked, a report with no rows is not sent."
+                        screenReaderText="If unticked, reports with no rows are not sent.">
             <tickbox:CustomCheckBox ui:field="sendEmptyReports" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup label="AI Summary"
-                        helpText="Ask an AI model to summarise the report's data and deliver the summary with the report. The summary is added as a sheet for Excel reports, as a section for Markdown reports, and as a separate file for CSV and TSV reports. It is also available to email templates as {{ aiSummary }} and is written to the ReportAiSummary stream meta entry. If the model cannot be reached the report is still sent, without a summary.">
+                        helpText="Ask an AI model to summarise the report's data and send the summary with it: as a sheet in Excel, a section in Markdown, or a separate file for CSV and TSV. Email templates can use it as {{{{ aiSummary }}. If the model cannot be reached the report is sent without a summary."
+                        screenReaderText="Adds an AI summary. The report is still sent if this fails.">
             <tickbox:CustomCheckBox ui:field="aiSummaryEnabled" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup identity="aiSummaryModel" label="AI Summary Model"
@@ -22,12 +26,13 @@
             <g:SimplePanel ui:field="aiSummaryModel"/>
         </form:FormGroup>
         <form:FormGroup identity="aiSummaryPrompt" label="AI Summary Prompt"
-                        helpText="What to ask the model about the report&apos;s data. Leave this empty to use the default, which asks for a short summary of what the data shows and anything worth attention.">
+                        helpText="What to ask the model about the report&apos;s data. Leave this empty to use the default, which asks for a short summary of what the data shows and anything worth attention."
+                        screenReaderText="Leave blank to use the default summary prompt.">
             <g:TextArea ui:field="aiSummaryPrompt" width="100%" visibleLines="4"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingErrorFeed"
                         label="Feed For Errors"
-                        helpText="The Feed to write to for any errors that occur during execution.">
+                        helpText="Feed that errors from running this report are written to. If the report has none, the default error feed for reports is shown and used. A schedule cannot be enabled without an error feed. Administrators can select Set Default to make this feed the default for all reports.">
             <g:FlowPanel styleName="button-group">
                 <g:SimplePanel ui:field="errorFeed"/>
                 <b:Button ui:field="setDefaultErrorFeed"

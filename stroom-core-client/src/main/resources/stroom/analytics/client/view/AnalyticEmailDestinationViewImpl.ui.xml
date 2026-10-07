@@ -4,23 +4,31 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max form AnalyticEmailDestinationViewImpl">
-        <form:FormGroup identity="analyticEmailDestinationEmailAddress"
-                        label="To">
+        <form:FormGroup identity="analyticEmailDestinationTo"
+                        label="To"
+                        helpText="Email addresses to send the notification to. Separate several addresses with semicolons, e.g. a@example.com; b@example.com. At least one of To, Cc or Bcc must be given."
+                        screenReaderText="Separate addresses with semicolons. At least one of To, Cc or Bcc is required.">
             <g:TextBox ui:field="to"/>
         </form:FormGroup>
 
-        <form:FormGroup identity="analyticEmailDestinationEmailAddress"
-                        label="Cc">
+        <form:FormGroup identity="analyticEmailDestinationCc"
+                        label="Cc"
+                        helpText="Email addresses to copy the notification to. Separate several addresses with semicolons. Can be left blank if To or Bcc is set."
+                        screenReaderText="Separate addresses with semicolons. Can be blank if To or Bcc is set.">
             <g:TextBox ui:field="cc"/>
         </form:FormGroup>
 
-        <form:FormGroup identity="analyticEmailDestinationEmailAddress"
-                        label="Bcc">
+        <form:FormGroup identity="analyticEmailDestinationBcc"
+                        label="Bcc"
+                        helpText="Email addresses to send a blind copy to; other recipients cannot see them. Separate several addresses with semicolons. Can be left blank if To or Cc is set."
+                        screenReaderText="Hidden from other recipients. Separate addresses with semicolons.">
             <g:TextBox ui:field="bcc"/>
         </form:FormGroup>
 
         <form:FormGroup identity="analyticEmailDestinationSubjectTemplate"
-                        label="Email Subject Template">
+                        label="Email Subject Template"
+                        helpText="Jinja template for the email subject, e.g. Detector '{{{{ detectorName | escape }}' Alert. It must be a single line and cannot be blank. Select Test Template to see example output."
+                        screenReaderText="Jinja template on one line. Required.">
             <g:FlowPanel styleName="dock-min form">
                 <g:SimplePanel ui:field="subjectTemplatePanel"
                                addStyleNames="dock-max form-control-border"/>
@@ -31,7 +39,9 @@
         </form:FormGroup>
 
         <form:FormGroup identity="analyticEmailDestinationBodyTemplate"
-                        label="Email Body Template">
+                        label="Email Body Template"
+                        helpText="Jinja template for the email body. If the output contains HTML tags the email is sent as HTML, otherwise as plain text. It cannot be blank; select Test Template to see example output."
+                        screenReaderText="Jinja template. Required. Output containing HTML tags is sent as HTML.">
             <g:FlowPanel styleName="dock-min form">
                 <g:SimplePanel ui:field="bodyTemplatePanel"
                                addStyleNames="dock-max form-control-border"/>
@@ -41,7 +51,8 @@
             </g:FlowPanel>
         </form:FormGroup>
 
-        <form:FormGroup identity="analyticEmailDestinationTesting">
+        <form:FormGroup identity="analyticEmailDestinationTesting"
+                        helpText="Sends one test email to the To, Cc and Bcc recipients, using the current templates and an example detection. You are asked to confirm before it is sent.">
             <b:Button addStyleNames="dock-min allow-focus"
                       ui:field="sendTestEmailBtn"
                       text="Send Test Email"/>

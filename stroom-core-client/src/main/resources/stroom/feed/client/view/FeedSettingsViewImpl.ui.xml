@@ -7,48 +7,49 @@
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="feedSettingsClassification"
                         label="Classification"
-                        helpText="The classification or protective marking of the data in this Feed.">
+                        helpText="The classification or protective marking of the data in this feed, e.g. OFFICIAL. It is shown in upper case when the data is viewed."
+                        screenReaderText="Shown in upper case when viewing the feed's data.">
             <g:TextBox ui:field="classification" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsReferenceFeed"
                         label="Reference Feed"
-                        helpText="Marks the Feed as containing reference data, as used for reference data look-ups.
-                            It also ensures loaded data does not contain multiple sub-stream.">
+                        helpText="Tick if this feed contains reference data, used for reference data lookups.">
             <tickbox:CustomCheckBox ui:field="reference"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsFeedStatus"
                         label="Feed Status"
-                        helpText="If Stroom is configured to check Feed Status on receipt
-                        (receiptCheckMode = FEED_STATUS), then this value defines what happens to all data sent to this
-                        Feed. If receiptCheckMode is not FEED_STATUS then this will be disabled and its value will
-                        have no effect.">
+                        helpText="What happens to data sent to this feed: Receive, Reject or Drop. Only applies when receiptCheckMode is FEED_STATUS (the default); otherwise this is disabled. Default is Receive."
+                        screenReaderText="Receive, Reject or Drop. Disabled unless receipt checking uses feed status.">
             <l:SelectionBox ui:field="feedStatus"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsReceivedType"
                         label="Received Type"
-                        helpText="The stream type that will be assigned to received data.">
+                        helpText="The stream type that will be assigned to received data."
+                        screenReaderText="Stream type given to received data, e.g. Raw Events.">
             <l:SelectionBox ui:field="receivedType"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsDataEncoding"
                         label="Data Encoding"
-                        helpText="The character encoding of the data part of streams received into this Feed.">
+                        helpText="The character encoding of the data part of raw streams received into this feed. Default is UTF-8."
+                        screenReaderText="Default is UTF-8.">
             <l:SelectionBox ui:field="dataEncoding"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsContextEncoding"
                         label="Context Encoding"
-                        helpText="The character encoding of the context part of streams received into this Feed.">
+                        helpText="The character encoding of the context part of streams received into this feed. Default is UTF-8."
+                        screenReaderText="Default is UTF-8.">
             <l:SelectionBox ui:field="contextEncoding"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsDataFormat"
                         label="Data Format"
-                        helpText="The format of the data part of streams received into this Feed,
-                        e.g. XML, JSON, CSV, etc.">
+                        helpText="The format of the data part of streams received into this feed, e.g. XML, JSON or CSV."
+                        screenReaderText="For example XML, JSON or CSV.">
             <l:SelectionBox ui:field="dataFormat"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsContextFormat"
                         label="Context Format"
-                        helpText="The format of the context part of streams received into this Feed,
-                        e.g. XML, JSON, CSV, etc.">
+                        helpText="The format of the context part of streams received into this feed, e.g. XML, JSON or CSV."
+                        screenReaderText="For example XML, JSON or CSV.">
             <l:SelectionBox ui:field="contextFormat"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsSchema"
@@ -63,7 +64,8 @@
         </form:FormGroup>
         <form:FormGroup identity="feedVolumeGroup"
                         label="Volume Group"
-                        helpText="The volume group that this Feed's data will be stored in.">
+                        helpText="The volume group that this feed's data is stored in. Leave blank to use the default volume group."
+                        screenReaderText="Leave blank to use the default volume group.">
             <l:SelectionBox ui:field="volumeGroup"/>
         </form:FormGroup>
     </g:FlowPanel>

@@ -6,19 +6,24 @@
              xmlns:valuespinner="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="dataRetentionRuleRuleName" label="Rule Name (optional)">
+        <form:FormGroup identity="dataRetentionRuleRuleName" label="Rule Name (optional)"
+                        helpText="An optional name to help you tell rules apart. It does not affect which data the rule matches."
+                        screenReaderText="For your reference only.">
                 <g:TextBox ui:field="name" />
         </form:FormGroup>
         <form:FormGroup>
             <tickbox:CustomCheckBox ui:field="forever" identity="dataRetentionRuleKeepForever" label="Keep Forever"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="retainLabel" identity="dataRetentionRuleRetainFor" label="Retain For">
+        <form:FormGroup ui:field="retainLabel" identity="dataRetentionRuleRetainFor" label="Retain For"
+                        helpText="How long to keep data matching this rule, measured from when it was created. Enter a number from 1 to 9999 and choose a unit from minutes to years. Older data is deleted."
+                        screenReaderText="Number from 1 to 9999 and a unit; older data is deleted.">
             <g:FlowPanel>
                 <valuespinner:ValueSpinner ui:field="age"/>
                 <i:SelectionBox ui:field="timeUnit" addStyleNames="allow-focus"/>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="dataRetentionRuleExpression" label="Expression" addStyleNames="dock-max">
+        <form:FormGroup identity="dataRetentionRuleExpression" label="Expression" addStyleNames="dock-max"
+                        helpText="Selects the data this rule applies to, using stream meta fields. Only the matching rule highest in the list (the highest rule number) applies; data that matches no rule is kept.">
             <g:SimplePanel ui:field="expression" styleName="max"/>
         </form:FormGroup>
     </g:FlowPanel>

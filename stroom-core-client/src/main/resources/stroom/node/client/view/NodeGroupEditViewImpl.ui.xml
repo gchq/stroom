@@ -5,18 +5,24 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:l="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="nodeGroupName" label="Node Group Name">
+        <form:FormGroup identity="nodeGroupName" label="Node Group Name"
+                        helpText="The name of this node group. It cannot be changed here."
+                        screenReaderText="Read only.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="nodeGroupEnabled" label="Enabled">
+        <form:FormGroup identity="nodeGroupEnabled" label="Enabled"
+                        helpText="Untick to stop all processing for processor profiles that use this node group."
+                        screenReaderText="When unticked, profiles using this group do no processing.">
             <tickbox:CustomCheckBox ui:field="enabled"/>
         </form:FormGroup>
         <form:FormGroup identity="nodeInclusionBehaviour"
                         label="Node Inclusion Behaviour"
-                        helpText="Choose whether checked nodes are included or excluded.">
+                        helpText="Include Selected puts only the ticked nodes in the group. Exclude Selected puts every node except the ticked ones in the group."
+                        screenReaderText="Include or exclude the ticked nodes.">
             <l:SelectionBox ui:field="nodeInclusionBehaviour"/>
         </form:FormGroup>
-        <form:FormGroup identity="nodeList" label="Nodes" addStyleNames="dock-max">
+        <form:FormGroup identity="nodeList" label="Nodes" addStyleNames="dock-max"
+                        helpText="Tick the nodes to include in or exclude from this group, depending on Node Inclusion Behaviour.">
             <g:SimplePanel ui:field="list" styleName="dock-max form-control-border form-control-background"/>
         </form:FormGroup>
     </g:FlowPanel>

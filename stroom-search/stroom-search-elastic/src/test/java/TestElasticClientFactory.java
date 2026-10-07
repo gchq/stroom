@@ -15,7 +15,9 @@
  */
 
 import stroom.search.elastic.ElasticClientFactory;
+import stroom.search.elastic.shared.ElasticConnectionConfig;
 
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.core5.http.HttpHost;
 import org.junit.jupiter.api.Test;
 
@@ -56,5 +58,20 @@ public class TestElasticClientFactory {
         assertThat(host)
                 .as("No host is returned for an invalid URL")
                 .isNull();
+    }
+
+    @Test
+    public void testSetTimeouts() {
+        final ElasticConnectionConfig config = new ElasticConnectionConfig();
+        config.setConnectionTimeoutMillis(3000);
+        config.setResponseTimeoutMillis(60000);
+
+        final RequestConfig.Builder builder = RequestConfig.custom();
+        ElasticClientFactory.setTimeouts(builder, config);
+        final RequestConfig requestConfig = builder.build();
+
+        assertThat(requestConfig.getConnectionRequestTimeout().toMilliseconds()).isEqualTo(3000);
+        // The response timeout is its own setting, not the connection timeout
+        assertThat(requestConfig.getResponseTimeout().toMilliseconds()).isEqualTo(60000);
     }
 }

@@ -3,7 +3,9 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="searchDownloadFileType" label="Event">
+        <form:FormGroup identity="searchDownloadFileType" label="Event"
+                        helpText="The ID of the event to link, as stream ID and event ID separated by a colon, e.g. 1234:5."
+                        screenReaderText="Stream ID and event ID separated by a colon, e.g. 1234:5.">
             <g:TextBox ui:field="event"/>
         </form:FormGroup>
     </g:FlowPanel>

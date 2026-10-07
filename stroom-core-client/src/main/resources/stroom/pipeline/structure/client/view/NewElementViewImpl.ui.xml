@@ -4,10 +4,13 @@
         xmlns:g="urn:import:com.google.gwt.user.client.ui"
         xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="newElementId" label="Name">
+        <form:FormGroup identity="newElementId" label="Name"
+                        helpText="The name shown for this element in the pipeline structure. A unique name is suggested; the element ID is set automatically."
+                        screenReaderText="Shown in the pipeline structure. The element ID is set automatically.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="newElementDesc" label="Description (optional)">
+        <form:FormGroup identity="newElementDesc" label="Description (optional)"
+                        helpText="Optional notes about what this element does.">
             <g:TextArea ui:field="description" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

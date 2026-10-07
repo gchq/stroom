@@ -862,6 +862,9 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
   A group with several controls is `role="group"`, named by its label (find it with
   `getByRole("group", label)`), and its controls are named by `controlNames` in the order shown
   (e.g. `getByRole("textbox", "Amount")`); the label isn't for any one of them.
+* A FormGroup with `required="true"` marks its control `aria-required`, so a screen reader says
+  "required" in its usual place; screen reader text should describe the field, not say "Required"
+  or "Optional".
 * Stories that open screens using `UiConfigCache` defaults Stroom always sends (e.g. the execution
   schedule dialog's `analyticUiDefaultConfig`) set them with `.uiConfig(...)`.
 * **The 'Ask Stroom AI' chat opened by another screen** (a results table's 'Ask Stroom AI' button
