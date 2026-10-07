@@ -142,7 +142,7 @@ public final class EditAccountDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText("Create Account");
-                    play.type(screen.getByLabelText("User Id"), "ab");
+                    play.type(screen.getByLabelText("User ID"), "ab");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.getByText("A user id must be at least 3 characters."))
                             .toBeInTheDocument());

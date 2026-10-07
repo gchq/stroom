@@ -169,7 +169,7 @@ public final class IndexEditorStories {
                             .toBeInTheDocument());
                     play.expect(screen.getByText("Embedding Model", "label")).toBeInTheDocument();
                     play.expect(screen.getByText("Nearest Neighbour Count", "label")).toBeInTheDocument();
-                    play.expect(screen.getByText("Minimum rerank score", "label")).toBeInTheDocument();
+                    play.expect(screen.getByText("Minimum Rerank Score", "label")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 });
     }
