@@ -20,7 +20,7 @@
         <form:FormGroup identity="analyticProcessingMaxMetaCreateTimeMs" label="Max Stream Create Time">
             <c:MyDateBox ui:field="maxMetaCreateTimeMs"/>
         </form:FormGroup>
-        <form:FormGroup identity="analyticRuleSettingsTimeToWaitForData" label="Aggregation Period">
+        <form:FormGroup identity="analyticRuleSettingsTimeToWaitForData" label="Time To Wait For Data">
             <d:DurationPicker ui:field="timeToWaitForData"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticRuleSettingsDataRetention" label="Time To Keep Data In The Table">

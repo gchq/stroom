@@ -6,8 +6,8 @@
         xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup identity="newPropertyElementId"
-                        label="Element Id"
-                        helpText="The unique ID of the pipeline element that this property relates to.">
+                        label="Element"
+                        helpText="The pipeline element that this property relates to.">
             <g:Label ui:field="element" addStyleNames="stroom-control-label"/>
         </form:FormGroup>
         <form:FormGroup identity="newPropertyName"

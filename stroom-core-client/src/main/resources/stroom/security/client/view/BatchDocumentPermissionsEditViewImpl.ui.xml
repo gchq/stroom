@@ -10,13 +10,13 @@
         <form:FormGroup ui:field="docTypeLabel" label="Document Type">
             <i:SelectionBox ui:field="docType"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="userRefLabel" label="For User">
+        <form:FormGroup ui:field="userRefLabel" label="For User Or Group">
             <g:SimplePanel ui:field="userRef"/>
         </form:FormGroup>
         <form:FormGroup ui:field="docRefLabel" label="From Document">
             <g:SimplePanel ui:field="docRef"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="permissionLabel" label="To">
+        <form:FormGroup ui:field="permissionLabel" label="Permission">
             <i:SelectionBox ui:field="permission"/>
         </form:FormGroup>
     </g:FlowPanel>
