@@ -17,11 +17,19 @@
 package stroom.hyperlink.client;
 
 public enum HyperlinkType {
+    /// Open the URL in a Stroom tab
     TAB,
+    /// Open the URL in an iFrame dialog
     DIALOG,
+    /// Open the URL as a Dashboard
+    BROWSER,
+    /// Open the URL in a new browser tab
     DASHBOARD,
+    /// Opens the stepper using the URL parameters
     STEPPING,
+    /// Opens the data view using the URL parameters
     DATA,
+    /// Opens or creates the annotation view using the URL parameters
     ANNOTATION,
-    BROWSER
+    ;
 }

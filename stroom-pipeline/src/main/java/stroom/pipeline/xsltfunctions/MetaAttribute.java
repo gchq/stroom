@@ -33,11 +33,11 @@ import java.util.Map;
         name = MetaAttribute.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.PIPELINE,
         commonDescription = """
-                Reads one attribute from the current stream's manifest. This opens the stream's source, unlike `meta()`
-                which reads metadata for the current part.
+                Reads one attribute from the current stream's manifest. This opens the manifest from the stream's
+                source, unlike `meta()` which reads metadata for the current part.
                 """,
         commonReturnType = XsltDataType.STRING,
-        commonReturnDescription = "The manifest attribute value, or an empty sequence if the key is absent.",
+        commonReturnDescription = "The manifest attribute value, or an empty sequence if the key is not found.",
         signatures = {
                 @XsltFunctionSignature(
                         args = {

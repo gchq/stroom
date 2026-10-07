@@ -36,7 +36,10 @@ import java.util.regex.Pattern;
         name = CidrToNumericIPRange.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.NETWORK,
         commonDescription = """
-                Converts a CIDR range to an array containing the numeric start and end IP addresses.
+                Converts a CIDR IP address range to an array of numeric IP addresses representing the start
+                and end (broadcast) of the range.
+
+                When storing the result in a variable, ensure you indicate the type as a string array (`xs:string*`).
                 """,
         commonReturnType = XsltDataType.SEQUENCE,
         commonReturnDescription = "An array containing the start and end addresses as numeric strings.",

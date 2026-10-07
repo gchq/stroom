@@ -38,8 +38,11 @@ import java.time.Instant;
         name = Lookup.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.PIPELINE,
         commonDescription = """
-                Looks up a key in reference or context data and returns the matching string or XML. A map path separated
-                by `/` performs chained lookups; numeric keys can also match reference-data ranges.
+                Looks up a key in reference or context data and return the matching string or XML.
+                A map path separated by `/` performs chained lookups.
+                Numeric keys can also match key ranges in the reference data.
+
+                If the look up fails no result will be returned.
                 """,
         commonReturnType = XsltDataType.SEQUENCE,
         commonReturnDescription = "The matching value or XML nodes, or an empty sequence if no value is found.",
@@ -49,34 +52,35 @@ import java.time.Instant;
                                 @XsltFunctionArg(
                                         name = "map",
                                         description = "The reference data map name, or `/`-separated map path.",
-                                        argType = XsltDataType.STRING
-                                ),
+                                        argType = XsltDataType.STRING),
                                 @XsltFunctionArg(
                                         name = "key",
                                         description = "The lookup key.",
-                                        argType = XsltDataType.STRING
-                                ),
+                                        argType = XsltDataType.STRING),
                                 @XsltFunctionArg(
                                         name = "time",
-                                        description = "The effective time in `yyyy-MM-dd'T'HH:mm:ss.SSSXX` " +
-                                                "format. Omit to use " +
-                                        "the stream's receive time.",
+                                        description = "Set the time to use when determining which reference data " +
+                                                      "stream to use based on its effective time. which set of " +
+                                                      "reference data was effective at the requested time. The " +
+                                                      "reference data stream with the latest effective time that " +
+                                                      "is before this value will be used. If no reference data " +
+                                                      "exists with an effective time before the requested time " +
+                                                      "then the lookup will fail. Time is in the format " +
+                                                      "`yyyy-MM-dd'T'HH:mm:ss.SSSXX`, " +
+                                                      "e.g. `2010-01-01T00:00:00.000Z`.",
                                         argType = XsltDataType.STRING,
-                                        isOptional = true
-                                ),
+                                        isOptional = true),
                                 @XsltFunctionArg(
                                         name = "ignoreWarnings",
                                         description = "Suppress warnings for failed lookups when `true`.",
                                         argType = XsltDataType.BOOLEAN,
-                                        isOptional = true
-                                ),
+                                        isOptional = true),
                                 @XsltFunctionArg(
                                         name = "trace",
                                         description = "Output additional trace information as `INFO` messages " +
-                                                "when `true`.",
+                                                      "when `true`.",
                                         argType = XsltDataType.BOOLEAN,
-                                        isOptional = true
-                                )
+                                        isOptional = true)
                         }
                 )
         })

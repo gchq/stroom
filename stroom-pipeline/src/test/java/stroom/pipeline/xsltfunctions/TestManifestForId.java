@@ -18,7 +18,6 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.data.store.api.DataException;
 import stroom.data.store.api.DataService;
-import stroom.pipeline.state.MetaHolder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -33,31 +32,27 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestManifest extends AbstractXsltFunctionTest<Manifest> {
+class TestManifestForId extends AbstractXsltFunctionTest<ManifestForId> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestManifest.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestManifestForId.class);
 
     @Mock
     private DataService mockDataService;
-    @Mock
-    private MetaHolder mockMetaHolder;
     @InjectMocks
-    private Manifest manifest;
+    private ManifestForId manifestForId;
 
     @Test
     void call() {
         Mockito.when(getMockXPathContext().getConfiguration()).thenReturn(Configuration.newConfiguration());
 
         final long streamId = 1234L;
-        Mockito.when(mockMetaHolder.getMetaId())
-                .thenReturn(streamId);
 
         Mockito.when(mockDataService.metaAttributes(streamId))
                 .thenReturn(Map.of(
                         "key1", "value1",
                         "key2", "value2"));
 
-        final Sequence sequence = callFunctionWithSimpleArgs();
+        final Sequence sequence = callFunctionWithSimpleArgs(streamId);
         assertThat(sequence).isNotNull();
 
         final String xml = getAsSerialisedXmlString(sequence).orElseThrow();
@@ -75,13 +70,10 @@ class TestManifest extends AbstractXsltFunctionTest<Manifest> {
         Mockito.when(getMockXPathContext().getConfiguration()).thenReturn(Configuration.newConfiguration());
 
         final long streamId = 1234L;
-        Mockito.when(mockMetaHolder.getMetaId())
-                .thenReturn(streamId);
 
-        Mockito.when(mockDataService.metaAttributes(1234L))
-                .thenThrow(new DataException("error"));
+        Mockito.when(mockDataService.metaAttributes(1234L)).thenThrow(new DataException("error"));
 
-        final Sequence sequence = callFunctionWithSimpleArgs();
+        final Sequence sequence = callFunctionWithSimpleArgs(streamId);
         assertThat(sequence).isNotNull();
 
         final String xml = getAsSerialisedXmlString(sequence).orElseThrow();
@@ -92,12 +84,12 @@ class TestManifest extends AbstractXsltFunctionTest<Manifest> {
     }
 
     @Override
-    Manifest getXsltFunction() {
-        return manifest;
+    ManifestForId getXsltFunction() {
+        return manifestForId;
     }
 
     @Override
     String getFunctionName() {
-        return Manifest.FUNCTION_NAME;
+        return ManifestForId.FUNCTION_NAME;
     }
 }

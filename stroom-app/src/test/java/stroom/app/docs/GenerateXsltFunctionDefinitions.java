@@ -155,31 +155,6 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                 throw new RuntimeException(LogUtil.message("File {} does not exist",
                         indexDocFilePath.toAbsolutePath()));
             }
-            final String docFileNameWithoutExtension = index.getDocFilename()
-                    .replaceAll("\\.md$", "");
-            final String indexDocContent = Files.readString(indexDocFilePath);
-            final Set<String> missingLinks = index.functionNames
-                    .stream()
-                    .sorted()
-                    .map(functionName -> "[`" + functionName + "`]({{< relref \""
-                                         + docFileNameWithoutExtension
-                                         + "#" + functionName + "\" >}})")
-                    .collect(Collectors.toCollection(HashSet::new));
-
-            missingLinks.removeIf(indexDocContent::contains);
-
-            if (!missingLinks.isEmpty()) {
-                LOGGER.error("File {} is missing content for the following functions in category {}. " +
-                             "Each function should have a link a bit like '[hash](conversion#hash)'.\n{}",
-                        indexDocFilePath.toAbsolutePath(),
-                        index.category,
-                        missingLinks.stream()
-                                .sorted()
-                                .map(link -> "  * " + link)
-                                .collect(Collectors.joining("\n")));
-            }
-            int errorCount = 0;
-            errorCount += missingLinks.size();
 
             // Check the appropriate category file (e.g. conversion.md) contains a shortcode
             // for each of the funcs in that category.
@@ -212,8 +187,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                                 .map(FuncAndShortCode::toString)
                                 .collect(Collectors.joining("\n\n")));
             }
-            errorCount += missingLinks.size();
-            return errorCount;
+            return missingShortCodes.size();
         } catch (final IOException e) {
             throw new RuntimeException(e);
         }
@@ -221,8 +195,6 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
     private void generate() {
         StroomDocsUtil.doWithClassScanResult(this::generateAll);
-//        final ObjectMapper mapper = JsonUtil.getMapper();
-//        final ListXsltFunctionDef functionDefinitions = XsltFunctionFactory.getFunctionDefinitions;
     }
 
     private List<AnnotatedClass<XsltFunctionDef>> getAllFunctionDefs(final ScanResult scanResult) {

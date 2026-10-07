@@ -38,8 +38,13 @@ import java.util.Optional;
         name = Dictionary.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.PIPELINE,
         commonDescription = """
-                Returns the contents of a Dictionary document for use during translation. The dictionary may be
-                identified by name or UUID.
+                Returns the contents of a Dictionary document for use during translation.
+                The dictionary may be identified by name or UUID.
+
+                The main use for this function is to allow users to abstract the management of a set of
+                keywords from the XSLT so that it is easier for some users to make quick alterations
+                to a dictionary that is used by some XSLT, without the need for the user to
+                understand the complexities of XSLT.
                 """,
         commonReturnType = XsltDataType.STRING,
         commonReturnDescription = "The dictionary contents, if the document is found.",
@@ -95,14 +100,17 @@ class Dictionary extends StroomExtensionFunctionCall {
                             final List<DocRef> list = wordListProvider.findByName(name);
 
                             if (list == null || list.isEmpty()) {
-                                log(context, Severity.WARNING, "Dictionary not found with name '" + name
-                                        + "'. You might not have permission to access this dictionary", null);
+                                log(context,
+                                        Severity.WARNING,
+                                        "Dictionary not found with name '" + name
+                                        + "'. You might not have permission to access this dictionary",
+                                        null);
                                 docRef = null;
 
                             } else {
                                 if (list.size() > 1) {
                                     log(context, Severity.INFO, "Multiple dictionaries found with name '" + name
-                                            + "' - using the first one that was created", null);
+                                                                + "' - using the first one that was created", null);
                                 }
 
                                 docRef = list.getFirst();

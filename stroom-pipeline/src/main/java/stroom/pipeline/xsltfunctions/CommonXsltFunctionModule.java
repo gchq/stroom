@@ -586,7 +586,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         ManifestFunction(final Provider<Manifest> functionCallProvider) {
             super(
-                    Manifest.FUNCTION_NAME_NO_ARGS,
+                    Manifest.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -595,12 +595,12 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class ManifestForIdFunction extends StroomExtensionFunctionDefinition<Manifest> {
+    private static class ManifestForIdFunction extends StroomExtensionFunctionDefinition<ManifestForId> {
 
         @Inject
-        ManifestForIdFunction(final Provider<Manifest> functionCallProvider) {
+        ManifestForIdFunction(final Provider<ManifestForId> functionCallProvider) {
             super(
-                    Manifest.FUNCTION_NAME_FOR_ID,
+                    ManifestForId.FUNCTION_NAME,
                     1,
                     1,
                     new SequenceType[]{SequenceType.SINGLE_STRING},
@@ -656,7 +656,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         @Inject
         MetaStreamFunction(final Provider<MetaStream> functionCallProvider) {
             super(
-                    MetaStream.FUNCTION_NAME_NO_ARGS,
+                    MetaStream.FUNCTION_NAME,
                     0,
                     0,
                     new SequenceType[]{},
@@ -665,12 +665,12 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
-    private static class MetaStreamForIdFunction extends StroomExtensionFunctionDefinition<MetaStream> {
+    private static class MetaStreamForIdFunction extends StroomExtensionFunctionDefinition<MetaStreamForId> {
 
         @Inject
-        MetaStreamForIdFunction(final Provider<MetaStream> functionCallProvider) {
+        MetaStreamForIdFunction(final Provider<MetaStreamForId> functionCallProvider) {
             super(
-                    MetaStream.FUNCTION_NAME_FOR_ID,
+                    MetaStreamForId.FUNCTION_NAME,
                     2,
                     2,
                     new SequenceType[]{

@@ -22,8 +22,8 @@ public enum XsltFunctionCategory implements HasDisplayValue {
             "Value",
             "Functions that simply supply a value."),
     NETWORK(
-            "Functions relating to networking (host names, IP addresses, etc.) or making remote calls.",
-            ""),
+            "Network",
+            "Functions relating to networking (host names, IP addresses, etc.) or making remote calls."),
     PIPELINE(
             "Pipeline",
             "Functions for obtaining information about the current pipeline process."),

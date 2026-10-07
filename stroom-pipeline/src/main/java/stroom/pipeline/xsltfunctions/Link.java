@@ -27,8 +27,9 @@ import org.slf4j.LoggerFactory;
         name = Link.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.STRING,
         commonDescription = """
-                Builds a Markdown-style link for display in a dashboard table. The optional type suffix controls whether
-                Stroom opens it in a dialog, tab, browser tab or dashboard.
+                Builds a Markdown-style link for display in a dashboard table.
+                The optional type suffix controls whether Stroom opens it in a dialog, tab,
+                browser tab or dashboard.
                 """,
         commonReturnType = XsltDataType.STRING,
         commonReturnDescription = "The formatted link string.",
@@ -47,24 +48,7 @@ import org.slf4j.LoggerFactory;
                 ),
                 @XsltFunctionSignature(
                         description = """
-                                Uses a separate title and target URL.
-                                """,
-                        args = {
-                                @XsltFunctionArg(
-                                        name = "title",
-                                        description = "The text to display.",
-                                        argType = XsltDataType.STRING
-                                ),
-                                @XsltFunctionArg(
-                                        name = "url",
-                                        description = "The link target.",
-                                        argType = XsltDataType.STRING
-                                )
-                        }
-                ),
-                @XsltFunctionSignature(
-                        description = """
-                                Adds a Stroom link type suffix.
+                                Uses a separate title and target URL, with optional target type.
                                 """,
                         args = {
                                 @XsltFunctionArg(
@@ -79,9 +63,12 @@ import org.slf4j.LoggerFactory;
                                 ),
                                 @XsltFunctionArg(
                                         name = "type",
-                                        description = "The target type, such as `dialog`, `tab`, `browser` or " +
-                                                "`dashboard`.",
-                                        argType = XsltDataType.STRING
+                                        description = "The target display type.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true,
+                                        allowedValues = {
+                                                "tab", "dialog", "dashboard", "stepping", "data",
+                                                "annotation", "browser"}
                                 )
                         }
                 )

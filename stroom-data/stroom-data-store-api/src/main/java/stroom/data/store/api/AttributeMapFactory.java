@@ -24,5 +24,8 @@ public interface AttributeMapFactory {
 
     Map<String, String> getAttributes(long metaId);
 
+    /// Get the {@link AttributeMap} for the given stream and part number
+    ///
+    /// @param partNo One based
     AttributeMap getAttributeMapForPart(final long streamId, final long partNo);
 }

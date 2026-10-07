@@ -18,7 +18,6 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.data.store.api.AttributeMapFactory;
 import stroom.meta.api.AttributeMap;
-import stroom.pipeline.state.MetaHolder;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -31,26 +30,22 @@ import org.mockito.Mockito;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestMetaStream extends AbstractXsltFunctionTest<MetaStream> {
+class TestMetaStreamForId extends AbstractXsltFunctionTest<MetaStreamForId> {
 
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaStream.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestMetaStreamForId.class);
 
     @Mock
     private AttributeMapFactory attributeMapFactory;
-    @Mock
-    private MetaHolder mockMetaHolder;
     @InjectMocks
-    private MetaStream metaStream;
+    private MetaStreamForId metaStream;
 
     @Test
-    void call_noArgs() throws Exception {
+    void call_withArgs() throws Exception {
         Mockito.when(getMockXPathContext().getConfiguration())
                 .thenReturn(Configuration.newConfiguration());
 
         final long streamId = 123L;
         final long partNo = 1L;
-        Mockito.when(mockMetaHolder.getPartNo()).thenReturn(partNo);
-        Mockito.when(mockMetaHolder.getMetaId()).thenReturn(streamId);
 
         final AttributeMap attributeMap = new AttributeMap();
         attributeMap.put("Feed", "myFeed");
@@ -59,7 +54,7 @@ class TestMetaStream extends AbstractXsltFunctionTest<MetaStream> {
         Mockito.when(attributeMapFactory.getAttributeMapForPart(streamId, partNo))
                 .thenReturn(attributeMap);
 
-        final Sequence sequence = callFunctionWithSimpleArgs();
+        final Sequence sequence = callFunctionWithSimpleArgs(streamId, partNo);
         assertThat(sequence).isNotNull();
 
         final String xml = getAsSerialisedXmlString(sequence).orElseThrow();
@@ -73,12 +68,12 @@ class TestMetaStream extends AbstractXsltFunctionTest<MetaStream> {
     }
 
     @Override
-    MetaStream getXsltFunction() {
+    MetaStreamForId getXsltFunction() {
         return metaStream;
     }
 
     @Override
     String getFunctionName() {
-        return MetaStream.FUNCTION_NAME;
+        return MetaStreamForId.FUNCTION_NAME;
     }
 }

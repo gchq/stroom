@@ -27,8 +27,13 @@ import net.sf.saxon.trans.XPathException;
         name = Log.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.PIPELINE,
         commonDescription = """
-                Writes a message to the processing log. `ERROR` and `FATAL` messages can cause a `RecordOutputFilter` to
-                omit the record.
+                The log() function writes a message to the processing log with the specified severity.
+                Severities of INFO, WARN, ERROR and FATAL can be used.
+                Severities of ERROR and FATAL will result in records being omitted from the output if a
+                RecordOutputFilter is used in the pipeline.
+
+                The counts for RecWarn, RecError will be affected by warnings or errors generated in
+                this way therefore this function is useful for adding business rules to XML output.
                 """,
         commonReturnType = XsltDataType.EMPTY_SEQUENCE,
         commonReturnDescription = "An empty sequence.",
@@ -44,7 +49,7 @@ import net.sf.saxon.trans.XPathException;
                                 ),
                                 @XsltFunctionArg(
                                         name = "message",
-                                        description = "The message to write.",
+                                        description = "The message to output to the log.",
                                         argType = XsltDataType.STRING
                                 )
                         }

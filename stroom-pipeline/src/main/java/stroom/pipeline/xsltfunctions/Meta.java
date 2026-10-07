@@ -31,17 +31,23 @@ import net.sf.saxon.value.StringValue;
         aliases = {Meta.FUNCTION_NAME_FEED_ATTRIBUTE},
         commonCategory = XsltFunctionCategory.PIPELINE,
         commonDescription = """
-                Returns a metadata value for the current stream part. `feed-attribute()` is a deprecated alias.
+                Looks up a metadata value for the current stream part.
+
+                The key can be `Feed`, `StreamType`, `CreatedTime`, `EffectiveTime`, `Pipeline`
+                or any other attribute supplied when the stream was sent to Stroom, e.g. `meta('System')`.
+
+                `feed-attribute()` is a deprecated alias.
                 """,
         commonReturnType = XsltDataType.STRING,
-        commonReturnDescription = "The value for the key, or an empty sequence if it is absent.",
+        commonReturnDescription = "The value for the key, or an empty sequence if the key is not found.",
         signatures = {
                 @XsltFunctionSignature(
                         args = {
                                 @XsltFunctionArg(
                                         name = "key",
-                                        description = "The metadata key, such as `Feed`, `StreamType` or a " +
-                                                "supplied attribute.",
+                                        description = "The metadata key (case-insensitive), such as `Feed`, " +
+                                                      "`StreamType` or a " +
+                                                      "supplied attribute.",
                                         argType = XsltDataType.STRING
                                 )
                         }

@@ -36,12 +36,13 @@ import java.net.URI;
         name = ParseUri.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.URI,
         commonDescription = """
-                Parses a URI and returns XML in the `uri` namespace with its components, including scheme, host, path,
-                query and fragment.
+                The parse-uri() function takes a Uniform Resource Identifier (URI) in string form and returns
+                an XML node with a namespace of `uri` containing the URI's individual components of `authority`,
+                `fragment`, `host`, `path`, `port`, `query`, `scheme`, `schemeSpecificPart` and `userInfo`.
                 """,
         commonReturnType = XsltDataType.SEQUENCE,
         commonReturnDescription = "An XML document containing the URI components, or an empty sequence for an " +
-                "invalid URI.",
+                                  "invalid URI.",
         signatures = {
                 @XsltFunctionSignature(
                         args = {

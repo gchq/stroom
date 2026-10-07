@@ -33,6 +33,7 @@ import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.TextRange;
 import stroom.util.shared.UserRef;
 import stroom.widget.popup.client.event.RenamePopupEvent;
@@ -273,7 +274,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     private void openDialog(final Hyperlink hyperlink, final String customTitle) {
         final PopupSize popupSize = PopupSize.resizable(800, 600);
         final IFramePresenter presenter = iFramePresenterProvider.get();
-        final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(event1 ->
+        final HandlerRegistration handlerRegistration = presenter.addDirtyHandler(ignored ->
                 RenamePopupEvent.builder(presenter).caption(presenter.getLabel()).fire());
         presenter.setUrl(hyperlink.getHref());
         presenter.setCustomTitle(customTitle);
@@ -282,7 +283,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 .popupType(PopupType.CLOSE_DIALOG)
                 .popupSize(popupSize)
                 .caption(presenter.getLabel())
-                .onHide(e -> {
+                .onHide(ignored -> {
                     handlerRegistration.removeHandler();
                     presenter.close();
                 })
@@ -314,7 +315,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                            final Function<String, T> parseFunction,
                            final T defaultValue) {
         final String value = getParam(href, paramName);
-        if (value == null || value.length() == 0) {
+        if (NullSafe.isEmptyString(value)) {
             return defaultValue;
         } else {
             return parseFunction.apply(value);
@@ -325,7 +326,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                                     final String paramName,
                                     final boolean defaultValue) {
         final String value = getParam(href, paramName);
-        if (value == null || value.length() == 0) {
+        if (NullSafe.isEmptyString(value)) {
             return defaultValue;
         } else {
             return Boolean.parseBoolean(value);
@@ -334,7 +335,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     private long getParam(final String href, final String paramName, final long def) {
         final String value = getParam(href, paramName);
-        if (value == null || value.length() == 0) {
+        if (NullSafe.isEmptyString(value)) {
             return def;
         }
         return Long.parseLong(value);
@@ -342,7 +343,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
     private Long getLongParam(final String href, final String paramName) {
         final String value = getParam(href, paramName);
-        if (value == null || value.length() == 0) {
+        if (NullSafe.isEmptyString(value)) {
             return null;
         }
         return Long.valueOf(value);

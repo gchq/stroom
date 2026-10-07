@@ -32,8 +32,15 @@ import java.util.List;
         commonCategory = XsltFunctionCategory.OTHER,
         commonSubCategories = {"Maths", "Geometry"},
         commonDescription = """
-                Tests whether a point is inside a polygon. The X and Y coordinate sequences must correspond, contain at
-                least three points and list the vertices in order.
+                Tests whether a point is inside a polygon.
+                Useful for determining if a user is inside a physical zone based on their location and
+                the boundary of that zone.
+
+                The list of values supplied for `xPolyData` must correspond with the list of values
+                supplied for `yPolyData` and both must contain at least three points.
+                The points that define the polygon must be provided in order, i.e. starting from one
+                point on the polygon and then travelling round the path of the polygon until it gets
+                back to the beginning.
                 """,
         commonReturnType = XsltDataType.BOOLEAN,
         commonReturnDescription = "`true` if the point is inside the polygon; otherwise `false`.",
@@ -77,7 +84,7 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
             final Double yPos = getSafeDouble(functionName, context, arguments, 1);
             final Double[] xPolyData = getSafeDoubleArray(functionName, context, arguments, 2);
             final Double[] yPolyData = getSafeDoubleArray(functionName, context, arguments, 3);
-            final Point [] polyData = createPolygon(functionName, xPolyData, yPolyData);
+            final Point[] polyData = createPolygon(functionName, xPolyData, yPolyData);
 
             boolean inside = false;
             if (xPos != null && yPos != null) {
@@ -94,22 +101,22 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
         return BooleanValue.FALSE;
     }
 
-    Point [] createPolygon(final String functionName, final Double[] xPolyData, final Double[] yPolyData) {
+    Point[] createPolygon(final String functionName, final Double[] xPolyData, final Double[] yPolyData) {
         if (xPolyData == null || xPolyData.length == 0) {
             throw new IllegalArgumentException("No x values for polygon" +
-                    " in XSLT function " + functionName);
+                                               " in XSLT function " + functionName);
         }
         if (yPolyData == null || yPolyData.length == 0) {
             throw new IllegalArgumentException("No x values for polygon" +
-                    " in XSLT function " + functionName);
+                                               " in XSLT function " + functionName);
         }
         if (xPolyData.length < 3) {
             throw new IllegalArgumentException("Too few points for polygon" +
-                    " in XSLT function " + functionName);
+                                               " in XSLT function " + functionName);
         }
         if (xPolyData.length != yPolyData.length) {
             throw new IllegalArgumentException("Different numbers of x and y values for polygon provided to" +
-                    " XSLT function " + functionName);
+                                               " XSLT function " + functionName);
         }
 
         final Point[] result = new Point[xPolyData.length];
@@ -147,10 +154,10 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
     }
 
     Double[] getSafeDelimitedDoubleArray(final String functionName,
-                         final String delimiter,
-                         final XPathContext context,
-                         final Sequence[] arguments,
-                         final int index) throws XPathException {
+                                         final String delimiter,
+                                         final XPathContext context,
+                                         final Sequence[] arguments,
+                                         final int index) throws XPathException {
         String string = null;
         final Sequence sequence = arguments[index];
         if (sequence != null) {
@@ -189,9 +196,9 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
     }
 
     Double[] getSafeDoubleArray(final String functionName,
-                                         final XPathContext context,
-                                         final Sequence[] arguments,
-                                         final int index) throws XPathException {
+                                final XPathContext context,
+                                final Sequence[] arguments,
+                                final int index) throws XPathException {
         final List<Double> result = new ArrayList<>();
         final Sequence sequence = arguments[index];
         if (sequence != null) {
@@ -216,10 +223,10 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
 
     //Attribution: https://stackoverflow.com/questions/217578/how-can-i-determine-whether-a-2d-point-is-within-a-polygon
     private boolean isPointInPolygon(final Point p, final Point[] polygon) {
-        double minX = polygon[ 0 ].x;
-        double maxX = polygon[ 0 ].x;
-        double minY = polygon[ 0 ].y;
-        double maxY = polygon[ 0 ].y;
+        double minX = polygon[0].x;
+        double maxX = polygon[0].x;
+        double minY = polygon[0].y;
+        double maxY = polygon[0].y;
         for (int i = 1; i < polygon.length; i++) {
             final Point q = polygon[i];
             minX = Math.min(q.x, minX);
@@ -234,9 +241,9 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
 
         boolean inside = false;
         for (int i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-            if ((polygon[ i ].y > p.y) != (polygon[ j ].y > p.y) &&
-                    p.x < (polygon[ j ].x - polygon[ i ].x) * (p.y - polygon[ i ].y) /
-                            (polygon[ j ].y - polygon[ i ].y) + polygon[ i ].x) {
+            if ((polygon[i].y > p.y) != (polygon[j].y > p.y) &&
+                p.x < (polygon[j].x - polygon[i].x) * (p.y - polygon[i].y) /
+                      (polygon[j].y - polygon[i].y) + polygon[i].x) {
                 inside = !inside;
             }
         }
@@ -245,6 +252,7 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
     }
 
     static class Point {
+
         public Point(final double x, final double y) {
             this.x = x;
             this.y = y;
