@@ -40,13 +40,12 @@ aws-sqs = { module = "software.amazon.awssdk:sqs" } # version controlled by AWS 
 aws-sts = { module = "software.amazon.awssdk:sts" } # version controlled by AWS BOM
 #aws-apache-client = { module = "software.amazon.awssdk:apache-client" } # version controlled by AWS BOM
 aws-apache5-client = { module = "software.amazon.awssdk:apache5-client" } # version controlled by AWS BOM
-bcrypt = { module = "de.svenkubiak:jBCrypt", version = "0.4.3" }
 bouncy-castle = { module = "org.bouncycastle:bcprov-jdk18on", version = "1.78.1" }
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine" } # version controlled by dropwizard-dependencies
 commons-codec = { module = "commons-codec:commons-codec" } # version controlled by dropwizard-dependencies
 commons-compress = { module = "org.apache.commons:commons-compress", version = "1.27.1" }
 commons-csv = { module = "org.apache.commons:commons-csv", version = "1.14.1" }
-commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta-servlet6", version = "2.0.0-M4" }
+commons-fileupload = { module = "org.apache.commons:commons-fileupload2-jakarta-servlet6", version = "2.0.0-M5" }
 commons-io = { module = "commons-io:commons-io", version.ref = "commons-io" }
 commons-lang = { module = "org.apache.commons:commons-lang3" } # version controlled by dropwizard-dependencies
 commons-pool2 = { module = "org.apache.commons:commons-pool2", version = "2.13.1" }
@@ -180,6 +179,9 @@ simple-java-mail = { module = "org.simplejavamail:simple-java-mail", version.ref
 simple-java-mail-batch-module = { module = "org.simplejavamail:batch-module", version.ref = "simple-java-mail" }
 slf4j-api = { module = "org.slf4j:slf4j-api" } # version controlled by dropwizard-dependencies
 solrj = { module = "org.apache.solr:solr-solrj", version = "9.10.1" }
+# Yes, I know it's Spring, but it doesn't pull in any other deps and is more up to date than github.com/patrickfav/bcrypt
+# and it provides a drop in replacement for JBcrypt that we used to use. Currently only used for BCrypt hashing.
+spring-security-crypto = { module = "org.springframework.security:spring-security-crypto", version = "7.1.1" }
 swagger-annotations = { module = "io.swagger.core.v3:swagger-annotations-jakarta", version.ref = "swagger" }
 swagger-core = { module = "io.swagger.core.v3:swagger-core-jakarta", version.ref = "swagger" }
 swagger-jaxrs = { module = "io.swagger.core.v3:swagger-jaxrs2-jakarta", version.ref = "swagger" }
