@@ -51,7 +51,8 @@ public final class FieldValidity {
         if (NullSafe.isBlankString(feedbackElement.getId())) {
             feedbackElement.setId(DOM.createUniqueId());
         }
-        field.getElement().setAttribute(ARIA_DESCRIBED_BY, feedbackElement.getId());
+        // The message is read first, before any help the field also has
+        addDescribedBy(field.getElement(), feedbackElement.getId(), true);
     }
 
     /// Marks a field valid, clearing its feedback.
@@ -61,7 +62,27 @@ public final class FieldValidity {
     public static void setValid(final Widget field, final Label feedback) {
         feedback.setText("");
         setInvalid(field.getElement(), false);
-        field.getElement().removeAttribute(ARIA_DESCRIBED_BY);
+        removeDescribedBy(field.getElement(), feedback.getElement().getId());
+    }
+
+    /// Adds an element to those describing a field (its `aria-describedby`), keeping the others.
+    ///
+    /// @param field The field.
+    /// @param id    The id of the element describing it.
+    /// @param first Whether it is read first, rather than last.
+    public static void addDescribedBy(final Element field, final String id, final boolean first) {
+        setOrRemove(field, ARIA_DESCRIBED_BY, AriaIdRefs.add(field.getAttribute(ARIA_DESCRIBED_BY), id, first));
+    }
+
+    /// Removes an element from those describing a field (its `aria-describedby`), keeping the
+    /// others.
+    ///
+    /// @param field The field.
+    /// @param id    The id of the element describing it, or null or empty for none.
+    public static void removeDescribedBy(final Element field, final String id) {
+        if (!NullSafe.isBlankString(id)) {
+            setOrRemove(field, ARIA_DESCRIBED_BY, AriaIdRefs.remove(field.getAttribute(ARIA_DESCRIBED_BY), id));
+        }
     }
 
     /// Moves focus to the first of the fields that is marked invalid, so that the user goes straight
@@ -97,6 +118,14 @@ public final class FieldValidity {
         } else {
             field.removeClassName(INVALID_CLASS);
             field.removeAttribute(ARIA_INVALID);
+        }
+    }
+
+    private static void setOrRemove(final Element element, final String name, final String value) {
+        if (value == null) {
+            element.removeAttribute(name);
+        } else {
+            element.setAttribute(name, value);
         }
     }
 }

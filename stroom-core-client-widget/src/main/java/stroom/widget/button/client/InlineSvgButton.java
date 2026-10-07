@@ -46,6 +46,8 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
      * or container elements.
      */
     private boolean allowClickPropagation;
+    // Whether pressing the button focuses it
+    private boolean focusOnMouseDown = true;
 
     public InlineSvgButton() {
         super(Document.get().createPushButtonElement());
@@ -54,6 +56,14 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
         getElement().setClassName("inline-svg-button icon-button");
         getElement().setInnerSafeHtml(BACKGROUND_DIV);
         setEnabled(true);
+    }
+
+    /// Sets whether pressing the button with the mouse focuses it (the default), or leaves the focus
+    /// where it was, e.g. for a button beside a field that shouldn't take the focus from it.
+    ///
+    /// @param focusOnMouseDown Whether pressing the button focuses it.
+    public void setFocusOnMouseDown(final boolean focusOnMouseDown) {
+        this.focusOnMouseDown = focusOnMouseDown;
     }
 
     public void setSvg(final SvgImage svgImage) {
@@ -95,7 +105,9 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
                 break;
             case Event.ONMOUSEDOWN:
                 if (MouseUtil.isPrimary(event)) {
-                    setFocus(true);
+                    if (focusOnMouseDown) {
+                        setFocus(true);
+                    }
                     isCapturing = true;
                     // Prevent dragging (on some browsers);
                     event.preventDefault();

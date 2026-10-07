@@ -616,6 +616,19 @@ final class Dom {
     }-*/;
 
     /// @param element The element.
+    /// @return The element's accessible description: the text of the elements its
+    /// `aria-describedby` names (even hidden ones), in order and separated by spaces, with
+    /// whitespace collapsed, or an empty string if it has none.
+    static native String getAccessibleDescription(Element element) /*-{
+        var ids = (element.getAttribute('aria-describedby') || '').split(/\s+/);
+        var texts = ids.map(function (id) {
+            var described = id ? element.ownerDocument.getElementById(id) : null;
+            return described ? (described.textContent || '') : '';
+        });
+        return texts.join(' ').replace(/\s+/g, ' ').trim();
+    }-*/;
+
+    /// @param element The element.
     /// @return The element's raw `textContent`.
     static native String getRawTextContent(Element element) /*-{
         return element.textContent;

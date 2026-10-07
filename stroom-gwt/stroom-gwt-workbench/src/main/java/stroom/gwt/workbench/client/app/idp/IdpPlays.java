@@ -122,7 +122,8 @@ final class IdpPlays {
         play.click(dialog.getByRole("button", OK));
         play.expect(dialog.findByText(message)).toBeInTheDocument();
         play.expect(field).toHaveAttribute("aria-invalid", "true");
-        play.expect(field).toHaveAttribute("aria-describedby");
+        // The message is read first, then any help
+        play.expect(field).toHaveAccessibleDescription(TextMatch.containing(message));
         play.expect(field).toHaveFocus();
     }
 }

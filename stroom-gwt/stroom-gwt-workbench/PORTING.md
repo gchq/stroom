@@ -854,6 +854,10 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
   area, even inside a panel or composite such as a tick box or password box), so find it with
   `getByLabelText(label)`. A group with several controls labels none of them; its child has the
   group's `identity` as its id.
+* A FormGroup's plain help text is also in the page, hidden, as its control's description
+  (`aria-describedby`, with `aria-keyshortcuts="F1"`), so a help popup's text appears twice: find
+  it in the popup with `screen.findByText(text, ".help-button-tooltip *")`, and check the control
+  with `toHaveAccessibleDescription(...)`. Clicking a help button leaves the focus where it was.
 * Stories that open screens using `UiConfigCache` defaults Stroom always sends (e.g. the execution
   schedule dialog's `analyticUiDefaultConfig`) set them with `.uiConfig(...)`.
 * **The 'Ask Stroom AI' chat opened by another screen** (a results table's 'Ask Stroom AI' button

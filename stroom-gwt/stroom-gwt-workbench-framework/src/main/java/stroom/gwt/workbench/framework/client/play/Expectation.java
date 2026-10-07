@@ -101,6 +101,31 @@ public final class Expectation {
         add("toHaveTextContent(" + match.describe() + ")", element -> match.matches(Dom.getTextContent(element)));
     }
 
+    /// Expects the element to have an accessible description (the text of the elements its
+    /// `aria-describedby` names), as jest-dom's `toHaveAccessibleDescription()` does.
+    public void toHaveAccessibleDescription() {
+        add("toHaveAccessibleDescription()", element -> !Dom.getAccessibleDescription(element).isEmpty());
+    }
+
+    /// Expects the element's accessible description to be the text, as jest-dom's
+    /// `toHaveAccessibleDescription("text")` does.
+    ///
+    /// @param description The whole description, with whitespace collapsed.
+    public void toHaveAccessibleDescription(final String description) {
+        Objects.requireNonNull(description, "description");
+        add("toHaveAccessibleDescription(" + quote(description) + ")",
+                element -> description.equals(Dom.getAccessibleDescription(element)));
+    }
+
+    /// Expects the element's accessible description to match, as jest-dom's
+    /// `toHaveAccessibleDescription(/regex/)` does.
+    ///
+    /// @param match How to match, e.g. `TextMatch.containing("required")`.
+    public void toHaveAccessibleDescription(final TextMatch match) {
+        add("toHaveAccessibleDescription(" + match.describe() + ")",
+                element -> match.matches(Dom.getAccessibleDescription(element)));
+    }
+
     /// Expects the element to have all the CSS classes. As in jest-dom, `not().toHaveClass()` with
     /// no classes expects the element to have no classes at all, and `toHaveClass()` with none is
     /// an error.

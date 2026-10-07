@@ -97,6 +97,9 @@ public class FormGroup extends Composite implements HasWidgets {
     // The elements that are form controls a label can name
     private static final List<String> FORM_CONTROL_TAGS = List.of("input", "select", "textarea");
     // The inputs a label doesn't name: hidden ones, and buttons, which their own text names
+    private static final String ARIA_KEY_SHORTCUTS = "aria-keyshortcuts";
+    // The key that shows a group's help (see handleKeyEvent)
+    private static final String HELP_SHORTCUT = "F1";
     private static final Set<String> NON_LABELLED_INPUT_TYPES = Set.of(
             "hidden", "button", "submit", "reset", "image");
 
@@ -106,6 +109,13 @@ public class FormGroup extends Composite implements HasWidgets {
     private final FlowPanel labelPanel = new FlowPanel();
     private final FlowPanel descriptionPanel = new FlowPanel();
     private final Label feedbackLabel = new Label();
+    // The plain help text, hidden (the help button shows it), as the description of the control the
+    // label is for, so that a screen reader reads it when the control is focused
+    private final Label helpDescription = new Label();
+    // The form control the label is for, or null if there is none (or several)
+    private Element labelledControl;
+    // The control that has the help as its description and F1 as its shortcut, or null for none
+    private Element describedControl;
 
     private String id;
     private Widget childWidget = null;
@@ -122,6 +132,8 @@ public class FormGroup extends Composite implements HasWidgets {
 
     public FormGroup() {
         feedbackLabel.setStyleName("invalid-feedback");
+        helpDescription.getElement().setId(DOM.createUniqueId());
+        helpDescription.setVisible(false);
         formGroupPanel.addStyleName("form-group");
         labelPanel.addStyleName("form-group-label-container");
         formLabel.addStyleName("form-group-label");
@@ -178,6 +190,32 @@ public class FormGroup extends Composite implements HasWidgets {
                 target.setId(DOM.createUniqueId());
             }
             formLabel.setIdentity(target.getId());
+        }
+        labelledControl = target;
+        updateHelpDescription();
+    }
+
+    // Tells assistive technology about the help on the control the label is for: F1 shows it (as
+    // the help button isn't in the tab order), and plain help text is read as the control's
+    // description. Rich help (HTML) may be long, so it is only shown by F1 or the help button.
+    private void updateHelpDescription() {
+        final String helpDescriptionId = helpDescription.getElement().getId();
+        if (describedControl != null) {
+            FieldValidity.removeDescribedBy(describedControl, helpDescriptionId);
+            describedControl.removeAttribute(ARIA_KEY_SHORTCUTS);
+            describedControl = null;
+        }
+        final String plainHelpText = helpTextOverride == null && NullSafe.isNonBlankString(helpText)
+                ? helpText
+                : "";
+        helpDescription.setText(plainHelpText);
+        if (labelledControl != null && helpButton.hasHelpContent()) {
+            describedControl = labelledControl;
+            describedControl.setAttribute(ARIA_KEY_SHORTCUTS, HELP_SHORTCUT);
+            if (!plainHelpText.isEmpty()) {
+                // After any validation feedback, which is read first
+                FieldValidity.addDescribedBy(describedControl, helpDescriptionId, false);
+            }
         }
     }
 
@@ -316,6 +354,7 @@ public class FormGroup extends Composite implements HasWidgets {
         }
 
         helpButton.setHelpContent(effectiveHelpText);
+        updateHelpDescription();
 
 //        if (haveHelpText) {
 //            helpButton.setHelpContent(effectiveHelpText);
@@ -426,6 +465,7 @@ public class FormGroup extends Composite implements HasWidgets {
             formGroupPanel.add(childWidget);
         }
         formGroupPanel.add(feedbackLabel);
+        formGroupPanel.add(helpDescription);
 
     }
 

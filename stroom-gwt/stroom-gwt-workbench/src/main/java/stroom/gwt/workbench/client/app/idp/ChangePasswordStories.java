@@ -122,7 +122,7 @@ public final class ChangePasswordStories {
                     play.click(dialog.getByRole("button", IdpPlays.OK));
                     // Differs from React: the dialog is on the page's body, not in the canvas
                     play.expect(dialog.findByText("Password is weak")).toBeInTheDocument();
-                    expectInvalid(dialog, "Password");
+                    expectInvalid(dialog, "Password", "Password is weak");
                     expectNoChange(play);
                 })
                 // The confirmation doesn't match
@@ -131,7 +131,7 @@ public final class ChangePasswordStories {
                     final Play dialog = IdpPlays.fillPasswords(play, CAPTION, STRONG, "Different&3xtra");
                     play.click(dialog.getByRole("button", IdpPlays.OK));
                     play.expect(dialog.findByText("Passwords must match")).toBeInTheDocument();
-                    expectInvalid(dialog, "Confirm Password");
+                    expectInvalid(dialog, "Confirm Password", "Passwords must match");
                     // The new password itself is fine
                     play.expect(dialog.getByLabelText("Password")).not().toHaveAttribute("aria-invalid");
                     expectNoChange(play);
@@ -142,7 +142,7 @@ public final class ChangePasswordStories {
                     final Play dialog = IdpPlays.fillPasswords(play, CAPTION, "ab1", "ab1");
                     play.click(dialog.getByRole("button", IdpPlays.OK));
                     play.expect(dialog.findByText("Password is short")).toBeInTheDocument();
-                    expectInvalid(dialog, "Password");
+                    expectInvalid(dialog, "Password", "Password is short");
                     expectNoChange(play);
                 })
                 // The server refuses the change
@@ -242,11 +242,11 @@ public final class ChangePasswordStories {
         return harness.asWidget();
     }
 
-    /// Expects the field with the label to be marked invalid, described by its message, and focused
-    /// (as the first field that needs fixing).
-    private static void expectInvalid(final Play dialog, final String label) {
+    /// Expects the field with the label to be marked invalid, described by its message (then its
+    /// help), and focused (as the first field that needs fixing).
+    private static void expectInvalid(final Play dialog, final String label, final String message) {
         dialog.expect(dialog.getByLabelText(label)).toHaveAttribute("aria-invalid", "true");
-        dialog.expect(dialog.getByLabelText(label)).toHaveAttribute("aria-describedby");
+        dialog.expect(dialog.getByLabelText(label)).toHaveAccessibleDescription(TextMatch.containing(message));
         dialog.expect(dialog.getByLabelText(label)).toHaveFocus();
     }
 }

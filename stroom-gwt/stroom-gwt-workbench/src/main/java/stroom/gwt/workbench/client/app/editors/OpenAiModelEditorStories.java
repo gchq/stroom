@@ -141,8 +141,10 @@ public final class OpenAiModelEditorStories {
                     play.expect(play.getAllByRole("button", TextMatch.endingWith("- Click for help")))
                             .toHaveLength(6);
                     play.click(play.getByRole("button", "Base URL (optional) - Click for help"));
-                    // Differs from React: the help is a popup on the page's body
-                    play.expect(screen.findByText("The URL of the AI service")).toBeInTheDocument();
+                    // Differs from React: the help is a popup on the page's body (the help is also in
+                    // the page, hidden, as the field's description)
+                    play.expect(screen.findByText("The URL of the AI service", ".help-button-tooltip *"))
+                            .toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })
                 .story("EditEnablesSave", context -> render(context, null, false))

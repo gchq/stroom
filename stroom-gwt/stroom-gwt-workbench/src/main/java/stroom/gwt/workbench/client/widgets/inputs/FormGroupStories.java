@@ -16,7 +16,9 @@
 
 package stroom.gwt.workbench.client.widgets.inputs;
 
+import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -53,12 +55,32 @@ public final class FormGroupStories {
                 })
                 // With a ? help popup (help text) and an always-visible description
                 .story("WithHelp", context -> {
+                    // As Stroom shows a help button's popup
+                    StoryPopups.create(context).withHelp();
                     final FormGroup formGroup = formGroup("fg-email", "Email address");
                     formGroup.setHelpText("The email address used for notifications. Must be a valid address "
                                           + "in the format user@domain.com.");
                     formGroup.add(description("Used to send pipeline failure notifications."));
                     formGroup.add(InputWidgets.textBox(context, "", "user@example.com"));
                     return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
+                })
+                .withPlay(play -> {
+                    // The help is the text box's description, and F1 shows it, as the help button
+                    // isn't in the tab order
+                    final Query email = play.getByLabelText("Email address");
+                    play.expect(email).toHaveAccessibleDescription("The email address used for notifications. "
+                                                                   + "Must be a valid address in the format "
+                                                                   + "user@domain.com.");
+                    play.expect(email).toHaveAttribute("aria-keyshortcuts", "F1");
+                    final Query help = play.getByTitle("Email address - Click for help");
+                    play.expect(help).toHaveAttribute("tabindex", "-2");
+                    // Clicking the help button shows the help, leaving the focus in the text box
+                    play.click(email);
+                    play.click(help);
+                    play.expect(play.screen().findByText(TextMatch.containing("used for notifications"),
+                                    ".help-button-tooltip *"))
+                            .toBeInTheDocument();
+                    play.expect(email).toHaveFocus();
                 })
                 // Validation feedback - the message updates when the value changes
                 .story("Feedback", context -> {
@@ -85,7 +107,7 @@ public final class FormGroupStories {
                     // described by its feedback
                     final Query username = play.getByLabelText("Username");
                     play.expect(username).toHaveAttribute("aria-invalid", "true");
-                    play.expect(username).toHaveAttribute("aria-describedby");
+                    play.expect(username).toHaveAccessibleDescription("This field is required.");
                     play.expect(play.getByText("This field is required.")).toBeInTheDocument();
                     // A text box reports its new value on leaving it
                     play.type(username, "alice");

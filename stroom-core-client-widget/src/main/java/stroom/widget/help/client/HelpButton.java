@@ -41,6 +41,8 @@ public class HelpButton extends InlineSvgButton {
         setTitle(NullSafe.nonBlankStringElse(title, "Help"));
         setEnabled(true);
         addStyleName("help-button info");
+        // Showing help leaves the focus where it was (e.g. in the field the help is for)
+        setFocusOnMouseDown(false);
         addClickHandler(event -> showHelpPopup());
         addKeyDownHandler(event -> {
             if (Action.SELECT == KeyBinding.test(event.getNativeEvent())) {
