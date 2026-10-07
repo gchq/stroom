@@ -13,7 +13,7 @@
         <form:FormGroup identity="newPipelineReferenceFeed" label="Feed">
             <g:SimplePanel ui:field="feed" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="newPipelineReferenceType" label="Type">
+        <form:FormGroup identity="newPipelineReferenceType" label="Stream Type">
             <g:SimplePanel ui:field="type" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

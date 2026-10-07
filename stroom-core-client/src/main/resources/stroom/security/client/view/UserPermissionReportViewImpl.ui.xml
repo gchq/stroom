@@ -6,7 +6,7 @@
 >
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="form dock-min form-padding">
-            <form:FormGroup label="Permission Visibility:">
+            <form:FormGroup label="Permission Visibility">
                 <form:HelpHTML>
                     <p>This dropdown controls which users/groups are shown in the
                         <em>Users and Groups</em>

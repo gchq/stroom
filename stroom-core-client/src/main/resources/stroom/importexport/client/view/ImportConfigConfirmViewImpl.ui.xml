@@ -10,7 +10,8 @@
             <tickbox:CustomCheckBox ui:field="enableFilters" identity="importConfigConfirmEnableProcessorFilters" label="Enable Processor Filters"/>
         </form:FormGroup>
         <form:FormGroup identity="importConfigConfirmFromThisdate"
-                        label="From this date (or leave blank to process from first stream)">
+                        label="Process From"
+                        helpText="Imported processor filters only process streams created on or after this date. Leave blank to process from the first stream.">
             <c:MyDateBox ui:field="enableFrom"/>
         </form:FormGroup>
         <form:FormGroup>

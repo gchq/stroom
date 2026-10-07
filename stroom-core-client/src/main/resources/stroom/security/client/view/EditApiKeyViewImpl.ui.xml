@@ -70,7 +70,7 @@
             <form:HelpHTML>
                 <p>You can temporarily disable a key which will prevent anyone from authenticating with that key.</p>
             </form:HelpHTML>
-            <tickbox:CustomCheckBox ui:field="enabledCheckBox" identity="enabledCheckBox" label="Enabled"/>
+            <tickbox:CustomCheckBox ui:field="enabledCheckBox" identity="enabledCheckBox"/>
         </form:FormGroup>
         <form:FormGroup identity="comments" label="Comments">
             <form:HelpHTML>

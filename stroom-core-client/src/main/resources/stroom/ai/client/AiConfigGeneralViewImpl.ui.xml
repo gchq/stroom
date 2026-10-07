@@ -22,7 +22,7 @@
         <form:FormGroup identity="historySummaryPrompt" label="History Summary Prompt">
             <g:TextArea ui:field="historySummaryPrompt" width="100%" visibleLines="3"/>
         </form:FormGroup>
-        <form:FormGroup identity="maxHistorySafetyCapMessages" label="Max History Safety Cap">
+        <form:FormGroup identity="maxHistorySafetyCapMessages" label="Maximum History Messages">
             <v:ValueSpinner ui:field="maxHistorySafetyCapMessages" width="200px"/>
         </form:FormGroup>
         <form:FormGroup>

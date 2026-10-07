@@ -16,9 +16,9 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfRuleEnabledState"
-                        label="Rule Enabled State"
+                        label="Enabled"
                         helpText="Enables or disables this rule. When disabled this rule will be ignored.">
-            <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
+            <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"

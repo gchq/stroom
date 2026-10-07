@@ -5,7 +5,7 @@
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max dock-container-vertical form">
-        <form:FormGroup identity="accountUserId" label="User Id">
+        <form:FormGroup identity="accountUserId" label="User ID">
             <g:TextBox ui:field="userId" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="accountEmail" label="Email">

@@ -12,10 +12,12 @@
         <g:center>
             <g:FlowPanel styleName="max form">
                 <g:Label ui:field="nameLabel" addStyleNames="form-heading"/>
-                <form:FormGroup identity="steppingSeverity" label="Jump to where message severity is at least:">
+                <form:FormGroup identity="steppingSeverity" label="Minimum Severity"
+                                helpText="Stops stepping at the next record where the selected element produced a message of this severity or higher: Info, Warning, Error or Fatal Error. Leave blank to turn this condition off.">
                     <l:SelectionBox ui:field="skipToErrors"/>
                 </form:FormGroup>
-                <form:FormGroup identity="steppingErrors" label="Jump to where output is:">
+                <form:FormGroup identity="steppingErrors" label="Output"
+                                helpText="Stops stepping at the next record where the output of the selected element is empty, or not empty. Leave blank to turn this condition off.">
                     <l:SelectionBox ui:field="skipToOutput"/>
                 </form:FormGroup>
                 <form:FormGroup identity="steppingConditions"

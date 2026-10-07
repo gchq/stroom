@@ -46,7 +46,7 @@
             <v:ValueSpinner ui:field="rerankBatchSize" width="200px"/>
         </form:FormGroup>
         <form:FormGroup identity="rerankScoreMinimum"
-                        label="Minimum rerank score"
+                        label="Minimum Rerank Score"
                         helpText="Choose the minimum score for reranking KNN results (default 0.8).">
             <g:TextBox ui:field="rerankScoreMinimum"/>
         </form:FormGroup>

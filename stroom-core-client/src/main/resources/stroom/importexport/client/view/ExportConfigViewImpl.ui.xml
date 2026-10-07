@@ -4,7 +4,8 @@
              xmlns:v="urn:import:stroom.widget.dropdowntree.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form overflow-hidden">
-        <form:FormGroup identity="exportConfigSelect" label="Select the items to export" addStyleNames="max overflow-hidden">
+        <form:FormGroup identity="exportConfigSelect" label="Items To Export"
+                        helpText="Tick the documents and folders to include in the export. Type in the filter box to find items by name." addStyleNames="max overflow-hidden">
             <g:FlowPanel styleName="dock-container-vertical dock-max quickFilter-container overflow-hidden">
                 <g:FlowPanel styleName="dock-min dock-container-horizontal exportConfigViewImpl-filter">
                     <v:QuickFilter ui:field="nameFilter" addStyleNames="dock-max"/>

@@ -44,8 +44,7 @@
         <form:FormGroup identity="runAsUser" label="Run As User">
             <g:SimplePanel ui:field="runAsUser"/>
         </form:FormGroup>
-        <form:FormGroup identity="processorEditFeedDependencies"
-                        label="Set Feed Dependencies">
+        <form:FormGroup identity="processorEditFeedDependencies">
             <b:Button addStyleNames="dock-min allow-focus"
                       ui:field="editFeedDependencies"
                       text="Set Feed Dependencies"/>

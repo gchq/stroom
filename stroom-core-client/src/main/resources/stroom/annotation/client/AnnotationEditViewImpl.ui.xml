@@ -68,7 +68,7 @@
                         </form:FormGroup>
                     </annotation:SettingBlock>
                     <annotation:SettingBlock ui:field="annotationRetentionPeriodBlock" title="Change Retention Period">
-                        <form:FormGroup identity="annotationRetentionPeriod" label="Retain">
+                        <form:FormGroup identity="annotationRetentionPeriod" label="Retain For">
                             <g:FlowPanel addStyleNames="annotationSettingHeading clickable">
                                 <g:Label ui:field="retentionPeriod" styleName="annotationLabel"/>
                             </g:FlowPanel>

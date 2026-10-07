@@ -41,8 +41,7 @@
             </g:FlowPanel>
         </form:FormGroup>
 
-        <form:FormGroup identity="analyticEmailDestinationTesting"
-                        label="Test Email Notification">
+        <form:FormGroup identity="analyticEmailDestinationTesting">
             <b:Button addStyleNames="dock-min allow-focus"
                       ui:field="sendTestEmailBtn"
                       text="Send Test Email"/>

@@ -53,7 +53,7 @@ The original text field value is obtained by removing the vector field suffix (e
 This field is set to the relevance score when comparing the original text field against the user's search term.&#10;
 This field can be referenced in dashboard expressions, e.g. $\{BaseField.score\}."/>
         </form:FormGroup>
-        <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum rerank score">
+        <form:FormGroup identity="elasticIndexSettingsRerankScoreMinimum" label="Minimum Rerank Score">
             <g:TextBox ui:field="rerankScoreMinimum" width="80px"
                        title="Only include results with a rerank score greater than or equal to this value (in the range 0.0 to 1.0)"/>
         </form:FormGroup>

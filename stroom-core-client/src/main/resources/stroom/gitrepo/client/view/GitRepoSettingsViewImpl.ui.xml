@@ -16,7 +16,7 @@
                      ui:field="lblContentStore">Lorem ipsum</g:Label>
         </form:FormGroup>
         <form:FormGroup identity="lblContentPack"
-                        label="Content Pack name"
+                        label="Content Pack Name"
                         helpText="Name of this Content Pack"
                         ui:field="fgContentPack">
             <g:Label title="The name of this Content Pack"
