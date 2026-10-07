@@ -51,7 +51,6 @@ import stroom.util.shared.PermissionException;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserDesc;
 import stroom.util.shared.UserRef;
-import stroom.util.string.Base58;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -60,24 +59,13 @@ import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.core.HttpHeaders;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.bouncycastle.crypto.generators.Argon2BytesGenerator;
-import org.bouncycastle.crypto.params.Argon2Parameters;
-import org.bouncycastle.crypto.params.Argon2Parameters.Builder;
-import org.mindrot.jbcrypt.BCrypt;
 
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Singleton // Has a cache
 @EntityEventHandler(type = ApiKeyService.ENTITY_TYPE, action = {
@@ -95,23 +83,23 @@ public class ApiKeyService implements Clearable, EntityEvent.Handler {
 
     private static final String CACHE_NAME = "API Key Cache";
     private static final int MAX_CREATION_ATTEMPTS = 100;
-    private static final Map<HashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
-                    new ShaThree256ApiKeyHasher(),
-                    new ShaTwo256ApiKeyHasher(),
-                    new BCryptApiKeyHasher(),
-                    new Argon2ApiKeyHasher(),
-                    new ShaTwo512ApiKeyHasher())
-            .collect(Collectors.toMap(ApiKeyHasher::getType, Function.identity()));
+//    private static final Map<HashAlgorithm, ApiKeyHasher> API_KEY_HASHER_MAP = Stream.of(
+//                    new ShaThree256ApiKeyHasher(),
+//                    new ShaTwo256ApiKeyHasher(),
+//                    new BCryptApiKeyHasher(),
+//                    new Argon2ApiKeyHasher(),
+//                    new ShaTwo512ApiKeyHasher())
+//            .collect(Collectors.toMap(ApiKeyHasher::getType, Function.identity()));
 
-    static {
-        // Make sure all enum values have an associated impl
-        final Set<HashAlgorithm> keySet = API_KEY_HASHER_MAP.keySet();
-        for (final HashAlgorithm hashAlgorithm : HashAlgorithm.values()) {
-            if (!keySet.contains(hashAlgorithm)) {
-                throw new RuntimeException("No ApiKeyHasher implementation defined for algorithm " + hashAlgorithm);
-            }
-        }
-    }
+//    static {
+//        // Make sure all enum values have an associated impl
+//        final Set<HashAlgorithm> keySet = API_KEY_HASHER_MAP.keySet();
+//        for (final HashAlgorithm hashAlgorithm : HashAlgorithm.values()) {
+//            if (!keySet.contains(hashAlgorithm)) {
+//                throw new RuntimeException("No ApiKeyHasher implementation defined for algorithm " + hashAlgorithm);
+//            }
+//        }
+//    }
 
     private final ApiKeyDao apiKeyDao;
     private final SecurityContext securityContext;
@@ -122,6 +110,7 @@ public class ApiKeyService implements Clearable, EntityEvent.Handler {
     private final Provider<AuthenticationConfig> authenticationConfigProvider;
     private final UserCache userCache;
     private final EntityEventBus entityEventBus;
+    private final ApiKeyHasherFactoryImpl apiKeyHasherFactory;
 
     @Inject
     public ApiKeyService(final ApiKeyDao apiKeyDao,
@@ -130,13 +119,15 @@ public class ApiKeyService implements Clearable, EntityEvent.Handler {
                          final CacheManager cacheManager,
                          final Provider<AuthenticationConfig> authenticationConfigProvider,
                          final UserCache userCache,
-                         final EntityEventBus entityEventBus) {
+                         final EntityEventBus entityEventBus,
+                         final ApiKeyHasherFactoryImpl apiKeyHasherFactory) {
         this.apiKeyDao = apiKeyDao;
         this.securityContext = securityContext;
         this.apiKeyGenerator = apiKeyGenerator;
         this.authenticationConfigProvider = authenticationConfigProvider;
         this.userCache = userCache;
         this.entityEventBus = entityEventBus;
+        this.apiKeyHasherFactory = apiKeyHasherFactory;
 
         apiKeyToAuthenticatedUserCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
@@ -454,14 +445,8 @@ public class ApiKeyService implements Clearable, EntityEvent.Handler {
     String computeApiKeyHash(final String apiKeyStr, final HashAlgorithm hashAlgorithm) {
         Objects.requireNonNull(apiKeyStr);
         Objects.requireNonNull(hashAlgorithm);
-        final ApiKeyHasher apiKeyHasher = getApiKeyHasher(hashAlgorithm);
+        final ApiKeyHasher apiKeyHasher = apiKeyHasherFactory.getApiKeyHasher(hashAlgorithm);
         return apiKeyHasher.hash(apiKeyStr.trim());
-    }
-
-    private static ApiKeyHasher getApiKeyHasher(final HashAlgorithm hashAlgorithm) {
-        final ApiKeyHasher apiKeyHasher = API_KEY_HASHER_MAP.get(hashAlgorithm);
-        Objects.requireNonNull(apiKeyHasher, () -> "No ApiKeyHasher implementation for algorithm " + hashAlgorithm);
-        return apiKeyHasher;
     }
 
     boolean verifyApiKeyHash(final String apiKeyStr,
@@ -470,7 +455,7 @@ public class ApiKeyService implements Clearable, EntityEvent.Handler {
         Objects.requireNonNull(apiKeyStr);
         Objects.requireNonNull(hash);
         Objects.requireNonNull(hashAlgorithm);
-        final ApiKeyHasher apiKeyHasher = getApiKeyHasher(hashAlgorithm);
+        final ApiKeyHasher apiKeyHasher = apiKeyHasherFactory.getApiKeyHasher(hashAlgorithm);
         try {
             return apiKeyHasher.verify(apiKeyStr, hash);
         } catch (final Exception e) {
@@ -558,150 +543,147 @@ public class ApiKeyService implements Clearable, EntityEvent.Handler {
     // --------------------------------------------------------------------------------
 
 
-    /**
-     * These hashers were written before {@link stroom.security.api.HashFunction} and differ
-     * slightly (even though they both share the same, so they can stay here just for api key use.
-     */
-    private interface ApiKeyHasher {
-
-        String hash(String apiKeyStr);
-
-        default boolean verify(final String apiKeyStr, final String hash) {
-            final String computedHash = hash(Objects.requireNonNull(apiKeyStr));
-            return Objects.equals(Objects.requireNonNull(hash), computedHash);
-        }
-
-        HashAlgorithm getType();
-    }
-
-
     // --------------------------------------------------------------------------------
 
 
-    private static class ShaThree256ApiKeyHasher implements ApiKeyHasher {
-
-        @Override
-        public String hash(final String apiKeyStr) {
-            return DigestUtils.sha3_256Hex(apiKeyStr.trim())
-                    .trim();
-        }
-
-        @Override
-        public HashAlgorithm getType() {
-            return HashAlgorithm.SHA3_256;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class ShaTwo256ApiKeyHasher implements ApiKeyHasher {
-
-        @Override
-        public String hash(final String apiKeyStr) {
-            return DigestUtils.sha256Hex(apiKeyStr.trim())
-                    .trim();
-        }
-
-        @Override
-        public HashAlgorithm getType() {
-            return HashAlgorithm.SHA2_256;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class ShaTwo512ApiKeyHasher implements ApiKeyHasher {
-
-        @Override
-        public String hash(final String value) {
-            return DigestUtils.sha512Hex(value);
-        }
-
-        @Override
-        public HashAlgorithm getType() {
-            return HashAlgorithm.SHA2_512;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class BCryptApiKeyHasher implements ApiKeyHasher {
-
-        @Override
-        public String hash(final String apiKeyStr) {
-            return BCrypt.hashpw(Objects.requireNonNull(apiKeyStr), BCrypt.gensalt());
-        }
-
-        @Override
-        public boolean verify(final String apiKeyStr, final String hash) {
-            if (apiKeyStr == null) {
-                return false;
-            } else {
-                return BCrypt.checkpw(apiKeyStr, hash);
-            }
-        }
-
-        @Override
-        public HashAlgorithm getType() {
-            return HashAlgorithm.BCRYPT;
-        }
-    }
-
-
-    // --------------------------------------------------------------------------------
-
-
-    private static class Argon2ApiKeyHasher implements ApiKeyHasher {
-
-        // WARNING!!!
-        // Do not change any of these otherwise it will break hash verification of existing
-        // keys. If you want to tune it, make a new ApiKeyHasher impl with a new getType()
-        // 48, 2, 65_536, 1 => ~90ms per hash
-        private static final int HASH_LENGTH = 48;
-        private static final int ITERATIONS = 2;
-        private static final int MEMORY_KB = 65_536;
-        private static final int PARALLELISM = 1;
-
-        private final Argon2Parameters argon2Parameters;
-
-        public Argon2ApiKeyHasher() {
-            // No salt given the length of api keys being hashed
-            this.argon2Parameters = new Builder(Argon2Parameters.ARGON2_id)
-                    .withVersion(Argon2Parameters.ARGON2_VERSION_13)
-                    .withIterations(ITERATIONS)
-                    .withMemoryAsKB(MEMORY_KB)
-                    .withParallelism(PARALLELISM)
-                    .build();
-        }
-
-        @Override
-        public String hash(final String apiKeyStr) {
-            Objects.requireNonNull(apiKeyStr);
-            final Argon2BytesGenerator generate = new Argon2BytesGenerator();
-            generate.init(argon2Parameters);
-            final byte[] result = new byte[HASH_LENGTH];
-            generate.generateBytes(
-                    apiKeyStr.trim().getBytes(StandardCharsets.UTF_8),
-                    result,
-                    0,
-                    result.length);
-
-            // Base58 is a bit less nasty than base64 and widely supported in other languages
-            // due to use in bitcoin.
-            return Base58.encode(result);
-        }
-
-        @Override
-        public HashAlgorithm getType() {
-            return HashAlgorithm.ARGON_2;
-        }
-    }
+//    private static class ShaThree256ApiKeyHasher implements ApiKeyHasher {
+//
+//        @Override
+//        public String hash(final String apiKeyStr) {
+//            return DigestUtils.sha3_256Hex(apiKeyStr.trim())
+//                    .trim();
+//        }
+//
+//        @Override
+//        public HashAlgorithm getType() {
+//            return HashAlgorithm.SHA3_256;
+//        }
+//    }
+//
+//
+//    // --------------------------------------------------------------------------------
+//
+//
+//    private static class ShaTwo256ApiKeyHasher implements ApiKeyHasher {
+//
+//        @Override
+//        public String hash(final String apiKeyStr) {
+//            return DigestUtils.sha256Hex(apiKeyStr.trim())
+//                    .trim();
+//        }
+//
+//        @Override
+//        public HashAlgorithm getType() {
+//            return HashAlgorithm.SHA2_256;
+//        }
+//    }
+//
+//
+//    // --------------------------------------------------------------------------------
+//
+//
+//    private static class ShaTwo512ApiKeyHasher implements ApiKeyHasher {
+//
+//        @Override
+//        public String hash(final String value) {
+//            return DigestUtils.sha512Hex(value);
+//        }
+//
+//        @Override
+//        public HashAlgorithm getType() {
+//            return HashAlgorithm.SHA2_512;
+//        }
+//    }
+//
+//
+//    // --------------------------------------------------------------------------------
+//
+//
+//    private static class BCryptApiKeyHasher implements ApiKeyHasher {
+//
+//        private static final int MAX_LENGTH = 72;
+//
+//        @Override
+//        public String hash(final String apiKeyStr) {
+//            Objects.requireNonNull(apiKeyStr, "apiKeyStr cannot be null");
+//
+//            // Bcrypt can only handle 72 bytes of input. JBcrypt (that we used before spring-security-crypto)
+//            // would just ignore the rest of the bytes, but Spring throws an exception if the input is
+//            // too long. To preserve backwards compatibility, we truncate the input to 72 bytes.
+//            // This is not an issue for API keys as we enforce uniqueness on the hash in the DB table,
+//            // so we will never have two API keys with the same hash.
+//            byte[] valueBytes = apiKeyStr.getBytes(StandardCharsets.UTF_8);
+//            if (valueBytes.length > MAX_LENGTH) {
+//                valueBytes = Arrays.copyOfRange(valueBytes, 0, MAX_LENGTH);
+//            }
+//
+//            return BCrypt.hashpw(valueBytes, BCrypt.gensalt());
+//        }
+//
+//        @Override
+//        public boolean verify(final String apiKeyStr, final String hash) {
+//            if (apiKeyStr == null) {
+//                return false;
+//            } else {
+//                return BCrypt.checkpw(apiKeyStr, hash);
+//            }
+//        }
+//
+//        @Override
+//        public HashAlgorithm getType() {
+//            return HashAlgorithm.BCRYPT;
+//        }
+//    }
+//
+//
+//    // --------------------------------------------------------------------------------
+//
+//
+//    private static class Argon2ApiKeyHasher implements ApiKeyHasher {
+//
+//        // WARNING!!!
+//        // Do not change any of these otherwise it will break hash verification of existing
+//        // keys. If you want to tune it, make a new ApiKeyHasher impl with a new getType()
+//        // 48, 2, 65_536, 1 => ~90ms per hash
+//        private static final int HASH_LENGTH = 48;
+//        private static final int ITERATIONS = 2;
+//        private static final int MEMORY_KB = 65_536;
+//        private static final int PARALLELISM = 1;
+//
+//        private final Argon2Parameters argon2Parameters;
+//
+//        public Argon2ApiKeyHasher() {
+//            // No salt given the length of api keys being hashed
+//            this.argon2Parameters = new Builder(Argon2Parameters.ARGON2_id)
+//                    .withVersion(Argon2Parameters.ARGON2_VERSION_13)
+//                    .withIterations(ITERATIONS)
+//                    .withMemoryAsKB(MEMORY_KB)
+//                    .withParallelism(PARALLELISM)
+//                    .build();
+//        }
+//
+//        @Override
+//        public String hash(final String apiKeyStr) {
+//            Objects.requireNonNull(apiKeyStr);
+//            final Argon2BytesGenerator generate = new Argon2BytesGenerator();
+//            generate.init(argon2Parameters);
+//            final byte[] result = new byte[HASH_LENGTH];
+//            generate.generateBytes(
+//                    apiKeyStr.trim().getBytes(StandardCharsets.UTF_8),
+//                    result,
+//                    0,
+//                    result.length);
+//
+//            // Base58 is a bit less nasty than base64 and widely supported in other languages
+//            // due to use in bitcoin.
+//            return Base58.encode(result);
+//        }
+//
+//        @Override
+//        public HashAlgorithm getType() {
+//            return HashAlgorithm.ARGON_2;
+//        }
+//    }
 
 
     // --------------------------------------------------------------------------------
