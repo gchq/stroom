@@ -21,7 +21,7 @@
             <g:TextArea ui:field="comments" addStyleNames="w-100"/>
         </form:FormGroup>
 
-        <form:FormGroup ui:field="neverExpiresGroup" identity="accountNeverExpires" label="Never Expires">
+        <form:FormGroup ui:field="neverExpiresGroup" identity="accountNeverExpires" label="Never Deactivate When Unused">
             <tickbox:CustomCheckBox ui:field="neverExpires" identity="accountNeverExpiresCheckBox"/>
         </form:FormGroup>
         <form:FormGroup ui:field="enabledGroup" identity="accountEnabled" label="Enabled">
