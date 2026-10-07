@@ -20,6 +20,7 @@ import stroom.item.client.EventBinder;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -62,6 +63,9 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         flowPanel.add(time);
         flowPanel.add(timeUnit);
         initWidget(flowPanel);
+        // Named by the part they are, as the label of the field (a FormGroup) names the duration
+        AccessibleName.set(time, "Amount");
+        AccessibleName.set(timeUnit, "Unit");
     }
 
     public void smallTimeMode() {

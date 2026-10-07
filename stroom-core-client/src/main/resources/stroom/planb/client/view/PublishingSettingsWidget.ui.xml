@@ -8,7 +8,8 @@
         <form:FormGroup identity="maxWaitForDataPanel"
                         label="Max Wait For Data"
                         helpText="The longest that incomplete data is held back waiting for the rest of it to arrive; complete data does not wait. After this, whatever has arrived is published. Enter 1 to 9999 and choose Minutes to Months; if retention is enabled it must be shorter than Retain For. Default is 12 hours."
-                        screenReaderText="Number and unit; shorter than Retain For if retention is on. Default is 12 hours.">
+                        screenReaderText="Number and unit; shorter than Retain For if retention is on. Default is 12 hours."
+                        controlNames="Amount, Unit">
             <g:FlowPanel styleName="durationSetting">
                 <v:ValueSpinner ui:field="maxWaitForData"/>
                 <i:SelectionBox ui:field="maxWaitForDataTimeUnit" addStyleNames="allow-focus"/>

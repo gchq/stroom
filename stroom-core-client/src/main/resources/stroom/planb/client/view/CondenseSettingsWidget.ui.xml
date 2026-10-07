@@ -17,7 +17,8 @@
                         identity="condenseAgePanel"
                         label="Condense Age"
                         helpText="How old data must be before it is condensed. Enter a number from 1 to 9999 and choose Days, Weeks, Months or Years. Default is 1 day. Only used when condense is enabled."
-                        screenReaderText="Number from 1 to 9999 and a unit, days to years. Default is 1 day.">
+                        screenReaderText="Number from 1 to 9999 and a unit, days to years. Default is 1 day."
+                        controlNames="Amount, Unit">
             <g:FlowPanel styleName="durationSetting">
                 <valuespinner:ValueSpinner ui:field="condenseAge"/>
                 <i:SelectionBox ui:field="condenseTimeUnit" addStyleNames="allow-focus"/>

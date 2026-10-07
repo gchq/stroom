@@ -21,6 +21,7 @@ import stroom.item.client.SelectionBox;
 import stroom.query.api.UserTimeZone;
 import stroom.query.api.UserTimeZone.Use;
 import stroom.widget.customdatebox.client.MomentJs;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -52,6 +53,9 @@ public final class TimeZoneWidget extends Composite {
     @Inject
     public TimeZoneWidget(final Binder binder) {
         final Widget widget = binder.createAndBindUi(this);
+        // Named by the part they are, as the Time Zone Offset label names the pair
+        AccessibleName.set(timeZoneOffsetHours, "Hours");
+        AccessibleName.set(timeZoneOffsetMinutes, "Minutes");
 
         timeZoneUse.addItem(Use.LOCAL);
         timeZoneUse.addItem(Use.UTC);

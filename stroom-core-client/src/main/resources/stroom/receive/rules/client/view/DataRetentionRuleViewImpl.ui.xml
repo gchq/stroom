@@ -16,7 +16,8 @@
         </form:FormGroup>
         <form:FormGroup ui:field="retainLabel" identity="dataRetentionRuleRetainFor" label="Retain For"
                         helpText="How long to keep data matching this rule, measured from when it was created. Enter a number from 1 to 9999 and choose a unit from minutes to years. Older data is deleted."
-                        screenReaderText="Number from 1 to 9999 and a unit; older data is deleted.">
+                        screenReaderText="Number from 1 to 9999 and a unit; older data is deleted."
+                        controlNames="Amount, Unit">
             <g:FlowPanel>
                 <valuespinner:ValueSpinner ui:field="age"/>
                 <i:SelectionBox ui:field="timeUnit" addStyleNames="allow-focus"/>

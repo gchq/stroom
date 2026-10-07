@@ -162,6 +162,10 @@ public final class ProcessorFilterEditDialogStories {
                     // A filter with no delay opens unticked
                     play.expect(screen.querySelector(DELAY_ENABLED)).not().toBeChecked();
                     play.expect(screen.getByText("Max Task Creation Delay", "label")).toBeInTheDocument();
+                    // A duration is a group of an amount and its unit, which the duration picker names
+                    final Play delay = screen.within(screen.getByRole("group", "Max Task Creation Delay"));
+                    play.expect(delay.getByRole("textbox", "Amount")).toBeInTheDocument();
+                    play.expect(delay.getByRole("textbox", "Unit")).toBeInTheDocument();
                     saveExistingFilter(play, screen);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/processorFilter/v1/9")

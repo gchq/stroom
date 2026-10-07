@@ -101,6 +101,10 @@ public final class PlanBEditorStories {
                     play.expect(play.getByText("State Value Type", "label")).toBeInTheDocument();
                     // maxStoreSize is shown as an IEC byte size; GWT strips the ".0"
                     play.expect(maxStoreSize(play)).toHaveValue("1G");
+                    // Retain For is a group of an amount and its unit, each named
+                    final Play retainFor = play.within(play.getByRole("group", "Retain For"));
+                    play.expect(retainFor.getByRole("textbox", "Amount")).toBeInTheDocument();
+                    play.expect(retainFor.getByRole("textbox", "Unit")).toBeInTheDocument();
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
                     DocumentEditors.expectNoProblems(play);
                 })
