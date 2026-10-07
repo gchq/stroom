@@ -1154,7 +1154,10 @@ public class DataPresenter
     }
 
     public void setNavigationControlsVisible(final boolean visible) {
-        if (visible) {
+        // A specific range of the data (e.g. a preview from DataDisplaySupport) has nothing to
+        // navigate, so its navigator stays hidden (as fetchData hides it)
+        final boolean isDataRange = currentSourceLocation != null && currentSourceLocation.getDataRange() != null;
+        if (visible && !isDataRange) {
             dataView.setNavigatorView(itemNavigatorPresenter.getView());
         } else {
             dataView.setNavigatorView(null);

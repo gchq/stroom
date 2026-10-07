@@ -807,7 +807,9 @@ one closest to your screen.
   (`MetaRow.getAttributeValue`) and a selection summary's age range (`SelectionSummaryPresenter`:
   `MetaBrowser`), a layout's preferred size (`MutableConfigUtil`, which `FlexLayout` needs:
   `DashboardLayout`'s `SplitterKeepsThirdPanel`), and an Embedded Query's `automate` and
-  `queryTablePreferences` (`EmbeddedQueryPresenter`: every Embedded Query story).
+  `queryTablePreferences` (`EmbeddedQueryPresenter`: every Embedded Query story). And a data
+  preview of a range showing its item navigator again when the data arrived
+  (`DataPresenter.setNavigationControlsVisible`: `SourceViewer`'s `HighlightedRange`).
 * In compiled GWT, a `String` field that was never set can be `undefined` rather than `null`, and
   `Objects.equals(null, undefined)` is false (it compares two `String`s strictly), while `x == null`
   is true for both. `DataPresenter.refreshHighlights` hit this; check with `== null` when a value

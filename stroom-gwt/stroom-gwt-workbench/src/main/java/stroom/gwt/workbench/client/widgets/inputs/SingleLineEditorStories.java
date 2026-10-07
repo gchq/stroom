@@ -20,6 +20,7 @@ import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.SingleLineEditorPresenter;
 import stroom.editor.client.view.SingleLineEditorViewImpl;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -93,7 +94,7 @@ public final class SingleLineEditorStories {
     /// The editor preferences of the workbench's (dark) Stroom theme, with Stroom's defaults.
     private static CurrentPreferences currentPreferences() {
         final CurrentPreferences currentPreferences = new CurrentPreferences();
-        currentPreferences.setTheme("Dark");
+        currentPreferences.setTheme(StroomThemeDecorator.getStroomThemeName());
         currentPreferences.setEditorKeyBindings("STANDARD");
         currentPreferences.setEditorLiveAutoCompletion(Toggle.OFF);
         return currentPreferences;

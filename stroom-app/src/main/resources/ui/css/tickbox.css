@@ -31,12 +31,6 @@
   height: 100%;
 }
 
-.tickBox-text {
-    display: inline-block;
-    margin-left: 4px;
-    cursor: pointer;
-}
-
 .tickBox-tick {
     background-color: var(--primary);
     border: 3px solid transparent;

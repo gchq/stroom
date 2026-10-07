@@ -29,4 +29,12 @@ public interface StoryDecorator {
     /// @param story The widget created by the story.
     /// @return The widget to show in the preview, which may be the story's widget itself.
     Widget decorate(Widget story);
+
+    /// Applies the theme to the preview page before a story is rendered, e.g. by setting the
+    /// classes that select it. Does nothing by default.
+    ///
+    /// @param theme The theme chosen in the workbench's toolbar.
+    default void applyTheme(final StoryTheme theme) {
+        // Nothing to do
+    }
 }

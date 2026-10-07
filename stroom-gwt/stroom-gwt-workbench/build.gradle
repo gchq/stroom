@@ -589,6 +589,19 @@ tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)
 //                            -PworkbenchTestSkipSelfTest (don't run test-runner/selftest/selftest.mjs)
 //                            Reports are written to build/workbench-test. The previous run's are
 //                            deleted before any task runs, so they can't be mistaken for this run's.
+//   workbenchPresenterCoverage
+//                            Prints which of Stroom's screens and dialogs no story covers (a static
+//                            analysis of the source; see PresenterCoverage).
+//   workbenchScreenshotBaseline
+//                            Runs workbenchTest with a screenshot of every story, and makes them the
+//                            baseline in screenshots/ (git-ignored), replacing the previous one.
+//   workbenchScreenshotDiff  Runs workbenchTest with a screenshot of every story, and compares them
+//                            with the baseline using ImageMagick's 'compare' (which must be
+//                            installed). Writes each changed story's expected, actual and diff PNGs
+//                            to build/workbench-screenshot-diff. It reports, rather than fails on,
+//                            changes. -PworkbenchScreenshotFuzz=2% (default 1%) and
+//                            -PworkbenchScreenshotMaxVisiblePixels=N (default 0) tune it. Both take
+//                            workbenchTest's options, e.g. -PworkbenchSkipCompile.
 //   workbenchCoverage        Prints how many of the React stories have been ported, by group.
 //                            -PworkbenchCoverageList=<id or title prefix> also lists the remaining
 //                            stories matching it (or all of them with -PworkbenchCoverageList=).
@@ -809,6 +822,21 @@ def runSelfTest = { String testUrl ->
             : "The browser self-test (test-runner/selftest/selftest.mjs) failed (exit code ${exitCode})"
 }
 
+// The stories' clock for workbenchScreenshotBaseline and workbenchScreenshotDiff (run.mjs
+// --fixed-time)
+def SCREENSHOT_FIXED_TIME = '2026-01-01T12:00:00Z'
+
+// Whether workbenchScreenshotBaseline or workbenchScreenshotDiff is to be run, which need a
+// screenshot of every story (set once the task graph is ready)
+def screenshotTaskRequested = false
+gradle.taskGraph.whenReady { graph ->
+    // Strings, not GStrings, which never equal a task's path
+    def screenshotTasks = ['workbenchScreenshotBaseline', 'workbenchScreenshotDiff'].collect {
+        "${project.path}:${it}".toString()
+    }
+    screenshotTaskRequested = graph.allTasks.any { it.path in screenshotTasks }
+}
+
 // Runs the test runner (run.mjs), then the browser self-test, against the workbench at testUrl,
 // failing if any story or the self-test fails
 def runTestRunner = { String testUrl ->
@@ -820,8 +848,15 @@ def runTestRunner = { String testUrl ->
     if (findProperty('workbenchTestWorkers')) {
         command += ['--workers', findProperty('workbenchTestWorkers').toString()]
     }
-    if (findProperty('workbenchTestScreenshots') != null) {
+    if (findProperty('workbenchTestScreenshots') != null || screenshotTaskRequested) {
         command += ['--screenshots']
+    }
+    if (screenshotTaskRequested) {
+        // So that the times the stories show are the same in the baseline and each comparison. A
+        // story that fails once under the load of a full run with screenshots is retried (and
+        // reported as flaky), so that one flaky story doesn't stop the screenshots being used.
+        // A longer settle lets a story's last asynchronous updates finish before its screenshot.
+        command += ['--fixed-time', SCREENSHOT_FIXED_TIME, '--retries', '1', '--settle', '750']
     }
     if (findProperty('workbenchTestArgs')) {
         command += splitArgs(findProperty('workbenchTestArgs').toString())
@@ -1056,6 +1091,71 @@ tasks.register('workbenchTest') {
     }
 }
 
+// Whether workbenchTest is only to run some stories
+def storiesFiltered = { ->
+    findProperty('workbenchTestFilter') != null || findProperty('workbenchTestArgs') != null
+}
+
+// The local (git-ignored) baseline of story screenshots, and where workbenchScreenshotDiff writes
+// its results
+def screenshotBaselineDir = file('screenshots')
+def screenshotDiffDir = layout.buildDirectory.dir('workbench-screenshot-diff').get().asFile
+
+tasks.register('workbenchScreenshotBaseline') {
+    group = "workbench"
+    description = "Runs every story (workbenchTest) and makes their screenshots the baseline in screenshots/"
+    dependsOn 'workbenchTest'
+    doLast {
+        def screenshots = new File(workbenchTestDir, 'screenshots')
+        if (!screenshots.isDirectory()) {
+            throw new GradleException("workbenchTest saved no screenshots (${screenshots})")
+        }
+        // Replaces the baseline, so that stories that no longer exist leave none behind, unless only
+        // some stories were run, when just theirs are replaced. A retried story's attempts
+        // (<id>.attempt-<n>.png) aren't part of it.
+        if (storiesFiltered()) {
+            println("Only some stories were run (-PworkbenchTestFilter/-PworkbenchTestArgs), so only "
+                    + "their screenshots are replaced")
+        } else {
+            delete fileTree(screenshotBaselineDir) { include '*.png' }
+        }
+        copy {
+            from screenshots
+            into screenshotBaselineDir
+            include '*.png'
+            exclude '*.attempt-*.png'
+        }
+        def count = fileTree(screenshotBaselineDir) { include '*.png' }.files.size()
+        println "The baseline in ${screenshotBaselineDir} has ${count} screenshots"
+    }
+}
+
+tasks.register('workbenchScreenshotDiff') {
+    group = "workbench"
+    description = "Runs every story (workbenchTest) and compares their screenshots with the baseline"
+    dependsOn 'workbenchTest'
+    doLast {
+        def command = ['node', 'screenshot-diff.mjs',
+                       '--baseline', screenshotBaselineDir.toString(),
+                       '--actual', new File(workbenchTestDir, 'screenshots').toString(),
+                       '--output', screenshotDiffDir.toString()]
+        if (storiesFiltered()) {
+            // The stories that weren't run aren't missing
+            command += ['--ignore-missing']
+        }
+        if (findProperty('workbenchScreenshotFuzz')) {
+            command += ['--fuzz', findProperty('workbenchScreenshotFuzz').toString()]
+        }
+        if (findProperty('workbenchScreenshotMaxVisiblePixels')) {
+            command += ['--max-visible-pixels', findProperty('workbenchScreenshotMaxVisiblePixels').toString()]
+        }
+        def exitCode = runInTestRunnerDir(command)
+        if (exitCode != 0) {
+            throw new GradleException("test-runner/screenshot-diff.mjs failed (exit code ${exitCode})")
+        }
+    }
+}
+
 tasks.register('workbenchCoverage', JavaExec) {
     group = "workbench"
     description = "Prints how many of the React Storybook's stories have been ported to the workbench"
@@ -1065,6 +1165,15 @@ tasks.register('workbenchCoverage', JavaExec) {
     if (findProperty('workbenchCoverageList') != null) {
         args = ["--list=${findProperty('workbenchCoverageList')}".toString()]
     }
+}
+
+tasks.register('workbenchPresenterCoverage', JavaExec) {
+    group = "workbench"
+    description = "Prints which of Stroom's screens and dialogs the workbench's stories cover"
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'stroom.gwt.workbench.client.PresenterCoverage'
+    systemProperty 'workbench.repoRoot', rootDir.absolutePath
 }
 
 // Runs react-manifest.mjs with the given options, and -PworkbenchReactDir

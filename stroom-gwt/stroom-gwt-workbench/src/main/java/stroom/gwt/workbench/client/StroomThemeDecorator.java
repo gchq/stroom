@@ -17,15 +17,52 @@
 package stroom.gwt.workbench.client;
 
 import stroom.gwt.workbench.framework.client.story.StoryDecorator;
+import stroom.gwt.workbench.framework.client.story.StoryTheme;
+import stroom.ui.config.shared.Theme;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Shows each story on the Stroom theme's background, the equivalent of the `ThemeFrame`
-/// decorator in the React Storybook's `.storybook/preview.tsx`. The theme itself is selected by
-/// the classes on the `<html>` element of iframe.html.
+/// decorator in the React Storybook's `.storybook/preview.tsx`. The theme is selected by the
+/// classes on the `<html>` element of iframe.html, which [#applyTheme(StoryTheme)] sets to the
+/// workbench's chosen theme.
+///
+/// Some of Stroom's code doesn't follow the page's classes but the user's preferences (an Ace
+/// editor's theme, a visualisation's or Markdown preview's frame), so stories give Stroom the same
+/// theme with [#getStroomThemeName()], as `ScreenHarness` does for the user's preferences.
 public class StroomThemeDecorator implements StoryDecorator {
+
+    // The theme applied to the page, one story being shown per page
+    private static StoryTheme theme = StoryTheme.DEFAULT;
+
+    /// @return The name of the Stroom theme the stories are shown in, e.g. `Dark`, for Stroom's
+    /// user preferences (`UserPreferences.theme`, `CurrentPreferences.setTheme`).
+    public static String getStroomThemeName() {
+        return toStroomTheme(theme).getThemeName();
+    }
+
+    /// Sets the page's Stroom theme class (e.g. `stroom-theme-light`) for the workbench's theme.
+    ///
+    /// @param theme The theme chosen in the workbench's toolbar.
+    @Override
+    public void applyTheme(final StoryTheme theme) {
+        StroomThemeDecorator.theme = theme;
+        final Element html = Document.get().getDocumentElement();
+        for (final Theme stroomTheme : Theme.values()) {
+            html.removeClassName(stroomTheme.getCssClass());
+        }
+        html.addClassName(toStroomTheme(theme).getCssClass());
+    }
+
+    private static Theme toStroomTheme(final StoryTheme theme) {
+        return theme == StoryTheme.LIGHT
+                ? Theme.LIGHT
+                : Theme.DARK;
+    }
 
     @Override
     public Widget decorate(final Widget story) {

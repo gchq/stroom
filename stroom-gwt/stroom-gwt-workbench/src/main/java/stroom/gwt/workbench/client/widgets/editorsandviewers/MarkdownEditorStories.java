@@ -23,6 +23,7 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownPreviewPresenter;
 import stroom.entity.client.view.MarkdownEditViewImpl;
 import stroom.entity.client.view.MarkdownPreviewViewImpl;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -144,7 +145,7 @@ public final class MarkdownEditorStories {
         // which the harness doesn't do, and the Markdown converter needs their theme (for the
         // preview's frame), so the story's manager reports the workbench page's theme
         final CurrentPreferences currentPreferences = harness.getInjector().getCurrentPreferences();
-        currentPreferences.setTheme("Dark");
+        currentPreferences.setTheme(StroomThemeDecorator.getStroomThemeName());
         final UserPreferencesManager userPreferencesManager = new PageThemeUserPreferencesManager(
                 harness.getRestFactory(), currentPreferences);
         final MarkdownConverter markdownConverter = new MarkdownConverter(userPreferencesManager);

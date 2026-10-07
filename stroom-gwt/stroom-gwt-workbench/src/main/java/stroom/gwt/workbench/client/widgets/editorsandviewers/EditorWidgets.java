@@ -23,6 +23,7 @@ import stroom.editor.client.presenter.DelegatingAceCompleter;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.view.EditorMenuPresenter;
 import stroom.editor.client.view.EditorViewImpl;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.ui.config.shared.UserPreferences.Toggle;
 import stroom.widget.util.client.GlobalKeyHandler;
 
@@ -100,10 +101,10 @@ final class EditorWidgets {
         return delegatingAceCompleter;
     }
 
-    /// The editor preferences of the workbench's (dark) Stroom theme, with Stroom's defaults.
+    /// The editor preferences of the workbench's Stroom theme, with Stroom's defaults.
     private static CurrentPreferences currentPreferences() {
         final CurrentPreferences currentPreferences = new CurrentPreferences();
-        currentPreferences.setTheme("Dark");
+        currentPreferences.setTheme(StroomThemeDecorator.getStroomThemeName());
         currentPreferences.setEditorKeyBindings("STANDARD");
         currentPreferences.setEditorLiveAutoCompletion(Toggle.OFF);
         return currentPreferences;

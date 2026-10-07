@@ -25,6 +25,7 @@ import stroom.alert.client.presenter.CommonAlertPresenter;
 import stroom.alert.client.view.CommonAlertViewImpl;
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
+import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.rest.FixtureDispatcher;
 import stroom.gwt.workbench.client.app.rest.FixtureUploads;
 import stroom.gwt.workbench.client.app.rest.RecordedRequest;
@@ -329,11 +330,16 @@ public final class ScreenHarness {
         }, taskMonitorFactory);
     }
 
-    // As Stroom does when the user logs in, but keeping the page's theme
+    // As Stroom does when the user logs in, but keeping the page's classes and giving Stroom the
+    // workbench's theme. The editor theme is left out, so that Ace follows the theme (as Stroom's
+    // default editor theme does), rather than e.g. the fixture's light 'chrome'.
     private void applyUserPreferences(final UserPreferences preferences) {
         final Element html = Document.get().getDocumentElement();
         final String pageClasses = html.getClassName();
-        getUserPreferencesManager().setCurrentPreferences(preferences);
+        getUserPreferencesManager().setCurrentPreferences(preferences.copy()
+                .theme(StroomThemeDecorator.getStroomThemeName())
+                .editorTheme(null)
+                .build());
         html.setClassName(pageClasses);
     }
 

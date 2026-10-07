@@ -147,6 +147,13 @@ public final class DashboardDocs {
             query("q1", "Q", ", \"automate\": {\"open\": true}"),
             table("t1", "T", "q1", NAME_FIELD, ""));
 
+    /// GWT-only: a component of a type Stroom doesn't know (e.g. from a newer version), with no
+    /// settings, which Stroom shows as an `UnknownComponentPresenter`.
+    public static final String UNKNOWN_COMPONENT_DASHBOARD = doc("dash-unknown", "Unknown Component", null,
+            "\"designMode\": false",
+            tabs(0, "m1"),
+            "{\"type\": \"mystery\", \"id\": \"m1\", \"name\": \"Mystery\"}");
+
     /// React's `SIZELESS_THREE_PANEL`: three text inputs side by side with no preferred sizes.
     public static final String SIZELESS_THREE_PANEL = doc("dash-11", "Sizeless Three", null, "\"designMode\": false",
             unsized(split(0, tabs(0, "p0"), tabs(0, "p1"), tabs(0, "p2"))),

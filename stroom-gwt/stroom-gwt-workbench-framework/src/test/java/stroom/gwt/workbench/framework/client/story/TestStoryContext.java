@@ -44,6 +44,9 @@ class TestStoryContext {
         assertThat(Spies.get("onTestStoryContext").getCalls()).containsExactly(List.of("a"));
         assertThat(context.getStory()).isSameAs(story);
         assertThat(context.getArgs().getString("text", null)).isEqualTo("Hi");
+        // The default theme unless one is given
+        assertThat(context.getTheme()).isEqualTo(StoryTheme.DEFAULT);
+        assertThat(new StoryContext(story, Args.empty(), StoryTheme.LIGHT).getTheme()).isEqualTo(StoryTheme.LIGHT);
     }
 
     @Test

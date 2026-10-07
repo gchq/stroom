@@ -212,6 +212,9 @@ public final class SourceViewerStories {
                     // Differs from React: the data preview hides the line numbers (it formats the
                     // data), so there is no gutter numbered from the returned first line
                     play.expect(play.querySelector(".ace_gutter")).not().toBeVisible();
+                    // A range has nothing to navigate, so there is no item navigator (it was once
+                    // shown again when the data arrived)
+                    play.expect(play.querySelector(".itemNavigator")).toBeNull();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // No location: nothing is fetched

@@ -20,7 +20,8 @@ package stroom.gwt.workbench.framework.client.story;
 ///
 /// * Manager: `/?path=/story/<story id>`
 /// * Settings pages: `/?path=/settings/<page>`, e.g. `about` or `shortcuts`
-/// * Preview: `/iframe.html?id=<story id>&viewMode=story`
+/// * Preview: `/iframe.html?id=<story id>&viewMode=story`, with `&globals=theme:light` for a theme
+///   other than the default
 public final class StoryUrls {
 
     /// The name of the manager's query parameter that holds the path.
@@ -30,6 +31,10 @@ public final class StoryUrls {
     /// The name of the query parameter that holds the args the user has changed, as encoded by
     /// [stroom.gwt.workbench.framework.client.args.ArgsCodec].
     public static final String ARGS_PARAM = "args";
+    /// The name of the preview's query parameter that holds the globals, e.g. `theme:light`.
+    public static final String GLOBALS_PARAM = "globals";
+
+    private static final String THEME_GLOBAL = "theme";
 
     private static final String STORY_PATH_PREFIX = "/story/";
     private static final String SETTINGS_PATH_PREFIX = "/settings/";
@@ -62,7 +67,34 @@ public final class StoryUrls {
     /// @param encodedArgs The args the user has changed, may be null or empty.
     /// @return The relative preview URL for the story with the args.
     public static String previewUrl(final String storyId, final String encodedArgs) {
-        return PREVIEW_PAGE + "?" + ID_PARAM + "=" + storyId + "&viewMode=story" + argsParam(encodedArgs);
+        return previewUrl(storyId, encodedArgs, StoryTheme.DEFAULT);
+    }
+
+    /// @param storyId     The id of a story.
+    /// @param encodedArgs The args the user has changed, may be null or empty.
+    /// @param theme       The theme to show it in; the default (or null) adds no globals.
+    /// @return The relative preview URL for the story with the args and theme, e.g.
+    /// `iframe.html?id=widgets-buttons-button--default&viewMode=story&globals=theme:light`.
+    public static String previewUrl(final String storyId, final String encodedArgs, final StoryTheme theme) {
+        return PREVIEW_PAGE + "?" + ID_PARAM + "=" + storyId + "&viewMode=story" + argsParam(encodedArgs)
+               + (theme == null || theme == StoryTheme.DEFAULT
+                ? ""
+                : "&" + GLOBALS_PARAM + "=" + THEME_GLOBAL + ":" + theme.getId());
+    }
+
+    /// @param globals The value of the preview's [#GLOBALS_PARAM], e.g. `theme:light`, as
+    ///                `name:value` pairs separated by `;`; may be null.
+    /// @return The theme it gives, or [StoryTheme#DEFAULT] if it gives none.
+    public static StoryTheme themeFromGlobals(final String globals) {
+        if (globals != null) {
+            for (final String global : globals.split(";")) {
+                final int colon = global.indexOf(':');
+                if (colon > 0 && THEME_GLOBAL.equals(global.substring(0, colon).trim())) {
+                    return StoryTheme.fromId(global.substring(colon + 1).trim());
+                }
+            }
+        }
+        return StoryTheme.DEFAULT;
     }
 
     /// @param storyId     The id of a story.

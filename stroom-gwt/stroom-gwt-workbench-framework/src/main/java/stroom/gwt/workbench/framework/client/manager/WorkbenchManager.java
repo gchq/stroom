@@ -154,6 +154,8 @@ public class WorkbenchManager {
         });
         addonPanel = new AddonPanel(List.of(controlsAddon, actionsAddon, interactionsAddon, accessibilityAddon));
         previewTools = new PreviewTools(iframe, shortcutHandler);
+        // Stories read the theme as they render, so it loads the story again
+        previewTools.setThemeChangeHandler(this::reloadPreview);
 
         layout.setChangeHandler(this::onLayoutChange);
     }
@@ -327,7 +329,7 @@ public class WorkbenchManager {
             actionsAddon.clear();
             interactionsAddon.reset(getSourceFileName(story));
             accessibilityAddon.reset();
-            BrowserUtil.replaceLocation(iframe, StoryUrls.previewUrl(storyId, encodedArgs));
+            BrowserUtil.replaceLocation(iframe, StoryUrls.previewUrl(storyId, encodedArgs, previewTools.getTheme()));
         }
         Document.get().setTitle(story.getTitle().replace("/", " / ")
                                 + " - " + story.getName() + TITLE_SUFFIX);
@@ -549,10 +551,19 @@ public class WorkbenchManager {
         BrowserUtil.reload(iframe);
     }
 
+    // Loads the selected story again, e.g. in a different theme, with the args the user has changed
+    private void reloadPreview() {
+        final String storyId = getStoryId(sidebarModel.getSelectedId());
+        if (storyId != null && iframe.hasAttribute("src")) {
+            BrowserUtil.replaceLocation(iframe,
+                    StoryUrls.previewUrl(storyId, getEncodedArgs(storyId), previewTools.getTheme()));
+        }
+    }
+
     private void openInIsolation() {
         final String storyId = sidebarModel.getSelectedId();
         if (storyId != null) {
-            Window.open(StoryUrls.previewUrl(storyId), "_blank", "");
+            Window.open(StoryUrls.previewUrl(storyId, null, previewTools.getTheme()), "_blank", "");
         }
     }
 

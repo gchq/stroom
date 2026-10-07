@@ -47,7 +47,6 @@ class TestPopupCase {
         assertThat(popupCase.isPartnersExempt()).isTrue();
         assertThat(popupCase.isTriggerToggles()).isTrue();
         assertThat(popupCase.isEscapeCloses()).isTrue();
-        assertThat(popupCase.isReopenAfterAutoHide()).isFalse();
         assertThat(popupCase.isReactTriggerToggles()).isTrue();
         assertThat(popupCase.isReactEscapeClosesViaHook()).isTrue();
         assertThat(popupCase.getPlacement()).isNull();
@@ -60,13 +59,11 @@ class TestPopupCase {
                 .partnersExempt(false)
                 .triggerToggles(false)
                 .escapeCloses(false)
-                .reopenAfterAutoHide(true)
                 .react(false, false)
                 .placement("input", PopupLocation.BELOW, 4, "call site");
         assertThat(popupCase.isPartnersExempt()).isFalse();
         assertThat(popupCase.isTriggerToggles()).isFalse();
         assertThat(popupCase.isEscapeCloses()).isFalse();
-        assertThat(popupCase.isReopenAfterAutoHide()).isTrue();
         assertThat(popupCase.isReactTriggerToggles()).isFalse();
         assertThat(popupCase.isReactEscapeClosesViaHook()).isFalse();
         assertThat(popupCase.getPlacement().getAnchor()).isEqualTo("input");

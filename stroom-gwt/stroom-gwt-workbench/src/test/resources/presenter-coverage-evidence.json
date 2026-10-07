@@ -1,0 +1,13 @@
+{
+  "description": "Screens and dialogs that no story names but whose play opens them, each with the id of a story that does. PresenterCoverage counts them as covered by a story; TestPresenterCoverage fails if a story is missing.",
+  "covered": {
+    "AiAttachmentDataPresenter": "app-ai-askaichatpanel--attachment-ready",
+    "CreateNewGroupPresenter": "app-main-usergroupsscreen--edit-group",
+    "CredentialEditPresenter": "app-main-credentialsscreen--credentials",
+    "NewFsVolumeGroupPresenter": "app-main-datavolumesscreen--volumes",
+    "NewIndexVolumeGroupPresenter": "app-main-indexvolumesscreen--volumes",
+    "NewNodeGroupPresenter": "app-main-nodegroupsscreen--crud-flow",
+    "SelectionSummaryPresenter": "app-data-metabrowser--default",
+    "SettingsPresenter": "app-editors-dashboardeditor--embedded-query-settings-fields"
+  }
+}

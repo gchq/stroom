@@ -109,6 +109,9 @@ Options:
   --output-dir <dir>       Where to write results.json, junit.xml and screenshots
                            (default: ${path.relative(process.cwd(), DEFAULT_OUTPUT_DIR) || '.'})
   --screenshots            Save a PNG of every story (failed stories are always saved)
+  --fixed-time <iso>       Fix the stories' clock (Date) at this time, e.g. 2026-01-01T12:00:00Z,
+                           so that times they show are the same every run (for comparing
+                           screenshots). Timers still run
   --headed                 Show the browser
   --list                   List the stories that would run, then exit
   -v, --verbose            Show every story, not just failed ones
@@ -119,6 +122,18 @@ the run failed part way (the reports are still written, with the stories not run
 no stories match the patterns and tags, and 128 + the signal's number (e.g. 130 for Ctrl-C) if the
 run was cancelled.
 `;
+
+// The time given with --fixed-time, or null
+function fixedTime(text) {
+  if (text === undefined) {
+    return null;
+  }
+  const time = new Date(text);
+  if (Number.isNaN(time.getTime())) {
+    throw new Error(`--fixed-time must be a date and time, e.g. 2026-01-01T12:00:00Z, not '${text}'`);
+  }
+  return time;
+}
 
 function parseOptions() {
   const { values, positionals } = parseArgs({
@@ -138,6 +153,7 @@ function parseOptions() {
       'fail-on-console': { type: 'boolean', default: false },
       'output-dir': { type: 'string', default: DEFAULT_OUTPUT_DIR },
       screenshots: { type: 'boolean', default: false },
+      'fixed-time': { type: 'string' },
       headed: { type: 'boolean', default: false },
       list: { type: 'boolean', default: false },
       verbose: { type: 'boolean', short: 'v', default: false },
@@ -167,6 +183,7 @@ function parseOptions() {
     failOnConsole: values['fail-on-console'],
     outputDir: path.resolve(values['output-dir']),
     screenshots: values.screenshots,
+    fixedTime: fixedTime(values['fixed-time']),
     headed: values.headed,
     list: values.list,
     verbose: values.verbose,
@@ -275,6 +292,9 @@ async function runStoryOnce(browser, story, options, attempt) {
   try {
     context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
     await context.addInitScript(DOCUMENT_COUNTER_SCRIPT);
+    if (options.fixedTime) {
+      await context.clock.setFixedTime(options.fixedTime);
+    }
     const page = await context.newPage();
     watchPage(page, seen);
     // Some Playwright calls (e.g. evaluate) never time out if the page is stuck, e.g. in an
@@ -400,7 +420,16 @@ async function takeScreenshot(page, file, result, seen) {
   const pageErrorCount = seen.pageErrors.length;
   const consoleErrorCount = seen.consoleErrors.length;
   const saved = await withDeadline(
-    page.screenshot({ path: file, fullPage: true, timeout: SCREENSHOT_TIMEOUT_MILLIS }).then(() => true, () => false),
+    // Animations are stopped (at their end) and text carets hidden (Ace's is its own blinking
+    // element), as they would make each screenshot of the story differ
+    page.screenshot({
+      path: file,
+      fullPage: true,
+      timeout: SCREENSHOT_TIMEOUT_MILLIS,
+      animations: 'disabled',
+      caret: 'hide',
+      style: '.ace_cursor { visibility: hidden !important; }',
+    }).then(() => true, () => false),
     SCREENSHOT_TIMEOUT_MILLIS + 2000);
   if (saved === true) {
     // The result matters more than the screenshot, so a failure to take one is ignored

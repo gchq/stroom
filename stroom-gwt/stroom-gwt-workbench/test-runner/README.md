@@ -247,6 +247,49 @@ story under it, e.g. `App/AI`), with a reason:
 `TestReactStoryCoverage` fails if a key matches no React story, a status isn't `n/a` or `blocked`
 or a reason is missing.
 
+## Screenshots
+
+`stroom-gwt/stroom-gwt-workbench/screenshots/` holds a baseline screenshot of every story
+(`<story id>.png`; git-ignored, so local to each checkout), so that a change to Stroom's widgets
+(e.g. for accessibility) can be reviewed for its effect on every story's appearance:
+
+```bash
+# Replace the baseline with a screenshot of every story (all must pass)
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchScreenshotBaseline
+# After a change: screenshot every story again, and compare them with the baseline
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchScreenshotDiff
+```
+
+Both run `workbenchTest` (so take its options, e.g. `-PworkbenchSkipCompile`), with `--screenshots`
+and, so that the screenshots are the same each run:
+
+* `--fixed-time 2026-01-01T12:00:00Z`: the stories' clock (`Date`) is fixed (Playwright's
+  `clock.setFixedTime`), so the times they show don't change. Timers still run, and the play engine
+  measures its timeouts with `performance.now()`, which it doesn't affect.
+* `--settle 750`: a longer wait after each play, for its last asynchronous updates.
+* `--retries 1`: a story that fails once under the load of a full run is retried (and reported as
+  flaky), so that the screenshots can still be used.
+
+Every screenshot is taken with animations stopped and text carets (including Ace's) hidden, and the
+preview always waits for Stroom's fonts to load before it renders a story, as Stroom's widgets
+measure text as they render.
+
+`workbenchScreenshotDiff` compares each story's screenshot with its baseline using ImageMagick's
+`compare -metric AE` (as the React port's `compare/pixel-diff.mjs` does), so ImageMagick must be
+installed. It counts the differing pixels twice: `raw` (any difference, including sub-level
+anti-aliasing, which ImageMagick 7 counts as fractions of a pixel) and `visible` (differences
+over the fuzz, 1%). A story has changed if it has a whole visible pixel more than the allowance
+(0), or its size changed (ImageMagick 7 would only compare where two sizes overlap). The report
+lists the changed, new (no baseline) and missing (baseline only) stories, and the changed stories'
+`<id>.expected.png`, `<id>.actual.png` and `<id>.diff.png` are written to
+`build/workbench-screenshot-diff` with `report.json`. It reports, rather than fails on, changes.
+`-PworkbenchScreenshotFuzz=2%` and `-PworkbenchScreenshotMaxVisiblePixels=N` tune it. With
+`-PworkbenchTestFilter` only the stories run are compared (and replaced in the baseline).
+
+A few stories' final states still vary between runs (e.g. which row ends up selected, or a hover
+left by the play), so expect a handful of small differences even without a change; run the diff
+again to check a surprising one.
+
 ## Coverage
 
 `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchCoverage` prints, for each top level group
@@ -292,6 +335,8 @@ for a new React component in its sidebar position when it is ported.
 
 * `run.mjs` - the test runner.
 * `react-manifest.mjs` - generates the React story manifest.
+* `screenshot-diff.mjs` - compares a run's screenshots with the baseline (see
+  [Screenshots](#screenshots)); `lib/screenshot-diff.mjs` does the comparison.
 * `lib/` - Storybook's id rules, the `*.stories.tsx` parser, story selection, deciding a story's
   outcome (and retrying it), the shared browser (relaunched if it stops), screenshot file names,
   deadlines and the JUnit XML writer, with tests (`node --test lib/`). `lib/run.test.mjs` tests

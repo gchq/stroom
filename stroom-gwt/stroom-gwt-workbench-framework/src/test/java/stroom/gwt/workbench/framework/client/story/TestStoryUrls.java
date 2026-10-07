@@ -88,4 +88,36 @@ class TestStoryUrls {
     void testIsPreviewPage_null() {
         assertThat(StoryUrls.isPreviewPage(null)).isFalse();
     }
+
+    @Test
+    void testPreviewUrlWithTheme() {
+        assertThat(StoryUrls.previewUrl("a--b", null, StoryTheme.LIGHT))
+                .isEqualTo("iframe.html?id=a--b&viewMode=story&globals=theme:light");
+        // The default theme (or none) adds no globals
+        assertThat(StoryUrls.previewUrl("a--b", null, StoryTheme.DARK))
+                .isEqualTo("iframe.html?id=a--b&viewMode=story");
+        assertThat(StoryUrls.previewUrl("a--b", null, null))
+                .isEqualTo(StoryUrls.previewUrl("a--b"));
+    }
+
+    @Test
+    void testThemeFromGlobals() {
+        assertThat(StoryUrls.themeFromGlobals("theme:light")).isEqualTo(StoryTheme.LIGHT);
+        assertThat(StoryUrls.themeFromGlobals("other:x;theme:light")).isEqualTo(StoryTheme.LIGHT);
+        assertThat(StoryUrls.themeFromGlobals(" theme : dark ")).isEqualTo(StoryTheme.DARK);
+        // Missing, unknown or malformed: the default
+        assertThat(StoryUrls.themeFromGlobals(null)).isEqualTo(StoryTheme.DEFAULT);
+        assertThat(StoryUrls.themeFromGlobals("")).isEqualTo(StoryTheme.DEFAULT);
+        assertThat(StoryUrls.themeFromGlobals("theme:purple")).isEqualTo(StoryTheme.DEFAULT);
+        assertThat(StoryUrls.themeFromGlobals("theme")).isEqualTo(StoryTheme.DEFAULT);
+        assertThat(StoryUrls.themeFromGlobals(":light")).isEqualTo(StoryTheme.DEFAULT);
+    }
+
+    @Test
+    void testStoryTheme() {
+        assertThat(StoryTheme.DEFAULT).isEqualTo(StoryTheme.DARK);
+        assertThat(StoryTheme.fromId("light")).isEqualTo(StoryTheme.LIGHT);
+        assertThat(StoryTheme.fromId(null)).isEqualTo(StoryTheme.DEFAULT);
+        assertThat(StoryTheme.LIGHT.getLabel()).isEqualTo("Light");
+    }
 }

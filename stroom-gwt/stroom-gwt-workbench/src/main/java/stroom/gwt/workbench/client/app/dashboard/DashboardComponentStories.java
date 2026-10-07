@@ -333,6 +333,18 @@ public final class DashboardComponentStories {
                             .querySelector("input")).toHaveValue("Chart");
                     DashboardPlays.expectNoProblems(play);
                 })
+                // GWT-only: a component of a type Stroom doesn't know is shown as a placeholder
+                // naming its type (UnknownComponentPresenter), and the rest of the dashboard works
+                .story("UnknownComponent", DashboardSupport.story(DashboardDocs.UNKNOWN_COMPONENT_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    DashboardPlays.opened(play);
+                    play.waitFor(() -> play.expect(play.getByText("Unknown component type: mystery"))
+                            .toBeInTheDocument());
+                    play.expect(DashboardPlays.tab(play, "Mystery")).toBeInTheDocument();
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // A Text component shows the source of the row selected in its table
                 .story("TextFollowsSelection", DashboardSupport.story(DashboardDocs.QUERY_TABLE_TEXT_DASHBOARD,
                         DashboardComponentStories::textRoutes))

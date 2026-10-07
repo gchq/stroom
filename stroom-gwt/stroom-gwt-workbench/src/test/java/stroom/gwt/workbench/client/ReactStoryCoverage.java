@@ -45,9 +45,10 @@ import java.util.Set;
 ///   covers every story whose title is, or starts with, that title followed by `/`. Stories are
 ///   `ported` simply by existing in [AllStories].
 ///
-/// [TestReactStoryCoverage] fails if the workbench has a story the React Storybook doesn't (i.e.
-/// its title or export name is wrong) or the status file is invalid. Run [#main] (the Gradle task
-/// `workbenchCoverage`) to print the coverage by group.
+/// The workbench may have stories the React Storybook doesn't (GWT-only stories, e.g. for a screen
+/// or dialog React has no story for); the report lists them, which also shows a ported story whose
+/// title or export name is wrong. [TestReactStoryCoverage] fails if the status file is invalid.
+/// Run [#main] (the Gradle task `workbenchCoverage`) to print the coverage by group.
 public final class ReactStoryCoverage {
 
     /// The resource listing every React story.
@@ -133,8 +134,8 @@ public final class ReactStoryCoverage {
         return reactStories;
     }
 
-    /// @return The ids of workbench stories that aren't in the React Storybook, e.g. because their
-    /// title or export name doesn't match the React story's.
+    /// @return The ids of workbench stories that aren't in the React Storybook: GWT-only stories, or
+    /// ported stories whose title or export name doesn't match the React story's.
     public List<String> getUnknownGwtStoryIds() {
         return gwtStoriesById.keySet()
                 .stream()
@@ -281,7 +282,8 @@ public final class ReactStoryCoverage {
 
         final List<String> unknown = getUnknownGwtStoryIds();
         sb.append('\n').append("Workbench stories: ").append(gwtStoriesById.size())
-                .append(", not in the React Storybook: ").append(unknown.size()).append('\n');
+                .append(", not in the React Storybook (GWT-only, or a misnamed port): ")
+                .append(unknown.size()).append('\n');
         unknown.forEach(id -> sb.append("  ").append(id).append('\n'));
         appendList(sb, "Status file problems", getStatusProblems());
         appendList(sb, "Warnings", getWarnings());

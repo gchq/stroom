@@ -37,6 +37,7 @@ public final class StoryContext {
 
     private final Story story;
     private final Args args;
+    private final StoryTheme theme;
     private final List<Runnable> cleanUps = new ArrayList<>();
     // The generation of spies (see Spies) this rendering started
     private final int generation;
@@ -44,11 +45,25 @@ public final class StoryContext {
     /// @param story The story being rendered.
     /// @param args  The story's current args.
     public StoryContext(final Story story, final Args args) {
+        this(story, args, StoryTheme.DEFAULT);
+    }
+
+    /// @param story The story being rendered.
+    /// @param args  The story's current args.
+    /// @param theme The theme it is shown in.
+    public StoryContext(final Story story, final Args args, final StoryTheme theme) {
         this.story = Objects.requireNonNull(story);
         this.args = Objects.requireNonNull(args);
+        this.theme = Objects.requireNonNull(theme);
         // A new rendering, so the play function's spies start afresh, and those of the previous
         // rendering stop recording
         this.generation = Spies.startRendering();
+    }
+
+    /// @return The theme the story is shown in (see [StoryTheme]), e.g. for the theme of the code it
+    /// shows.
+    public StoryTheme getTheme() {
+        return theme;
     }
 
     /// @return The story being rendered.

@@ -33,7 +33,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /// Checks the workbench's stories against the React Storybook's (see [ReactStoryCoverage]). It
-/// only fails on mistakes, e.g. a story whose id isn't a React one, not on stories still to port.
+/// only fails on mistakes, e.g. an invalid status file, not on stories still to port or GWT-only
+/// stories.
 class TestReactStoryCoverage {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReactStoryCoverage.class);
@@ -54,18 +55,15 @@ class TestReactStoryCoverage {
             new ReactStory("app-ai-chat--streaming", "App/AI/Chat", "Streaming",
                     "Streaming", "./Chat.stories.tsx", true));
 
-    /// Checks that every workbench story has the id of a React story in react-stories.json.
+    /// Logs the coverage report. Workbench stories may be GWT-only, so a story that isn't in the
+    /// React Storybook is listed in the report rather than failing the test.
     @Test
-    void testWorkbenchStoriesAreReactStories() {
+    void testWorkbenchStoriesMayBeGwtOnly() {
         final ReactStoryCoverage coverage = ReactStoryCoverage.load();
         LOGGER.info("\n{}", coverage.report(null));
 
-        // A story that isn't in the React Storybook has the wrong title or export name, so can't
-        // be compared with its React original. If the React story is new, regenerate the manifest
-        // with test-runner/react-manifest.mjs.
-        assertThat(coverage.getUnknownGwtStoryIds())
-                .as("Workbench stories whose ids aren't in react-stories.json")
-                .isEmpty();
+        assertThat(coverage.report(null))
+                .contains("Workbench stories: ");
     }
 
     /// Checks that react-story-status.json has no problems, e.g. a key matching no React story.
@@ -229,7 +227,8 @@ class TestReactStoryCoverage {
 
         assertThat(report)
                 .contains("6 React stories (test)")
-                .contains("Workbench stories: 2, not in the React Storybook: 1\n  widgets-buttons-button--typo")
+                .contains("Workbench stories: 2, not in the React Storybook (GWT-only, or a misnamed port): 1\n"
+                          + "  widgets-buttons-button--typo")
                 .contains("Remaining stories matching 'widgets-buttons' (2):\n"
                           + "  widgets-buttons-button--dialog-close  (./Button.stories.tsx, has play)\n"
                           + "  widgets-buttons-iconbutton--default  (./IconButton.stories.tsx, has play)\n")

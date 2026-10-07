@@ -34,6 +34,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryDecorator;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.gwt.workbench.framework.client.story.StoryTheme;
 import stroom.gwt.workbench.framework.client.story.StoryUrls;
 import stroom.gwt.workbench.framework.client.tools.VisionFilter;
 
@@ -83,6 +84,8 @@ public class StoryPreview {
     private final StoryDecorator decorator;
     private Story story;
     private Args args;
+    // The theme chosen in the workbench's toolbar (the 'theme' global)
+    private StoryTheme theme = StoryTheme.DEFAULT;
     private PlayRunner playRunner;
     // The context of the current rendering, to clean up before the next
     private StoryContext context;
@@ -146,9 +149,15 @@ public class StoryPreview {
 
         args = story.getInitialArgs().merge(
                 typedArgs(story, ArgsCodec.decode(BrowserUtil.getQueryParameter(StoryUrls.ARGS_PARAM))));
-        if (renderStory()) {
-            startPlay();
-        }
+        theme = StoryUrls.themeFromGlobals(BrowserUtil.getQueryParameter(StoryUrls.GLOBALS_PARAM));
+        decorator.applyTheme(theme);
+        // Stroom's widgets measure text as they render (e.g. a link tab's width), so the story is
+        // only rendered once its fonts have loaded, so that it looks the same every time
+        whenFontsLoaded(() -> {
+            if (renderStory()) {
+                startPlay();
+            }
+        });
     }
 
     /// Converts args from a URL or message into their types, ignoring unknown args.
@@ -223,7 +232,7 @@ public class StoryPreview {
         // Highlights outline elements of the old rendering
         A11yRunner.clearHighlights();
         try {
-            context = new StoryContext(story, args);
+            context = new StoryContext(story, args, theme);
             final Widget widget = decorator.decorate(story.getRenderer().render(context));
             rootPanel.add(widget);
             return true;
@@ -245,6 +254,33 @@ public class StoryPreview {
             playRunner.reportError(text);
         }
     }
+
+    /// Runs a task once the fonts that stories use have loaded (Stroom's Roboto, in its regular,
+    /// medium and bold weights), or after a few seconds if they haven't (e.g. a font is missing),
+    /// or at once if the browser can't tell.
+    ///
+    /// @param task What to do.
+    private static native void whenFontsLoaded(Runnable task) /*-{
+        var done = false;
+        var finish = $entry(function () {
+            if (!done) {
+                done = true;
+                task.@java.lang.Runnable::run()();
+            }
+        });
+        var fonts = $doc.fonts;
+        if (!fonts || !fonts.load || !$wnd.Promise) {
+            finish();
+            return;
+        }
+        $wnd.setTimeout(finish, 3000);
+        $wnd.Promise.all([
+            fonts.load('400 14px Roboto'),
+            fonts.load('italic 400 14px Roboto'),
+            fonts.load('500 14px Roboto'),
+            fonts.load('700 14px Roboto')
+        ]).then(finish, finish);
+    }-*/;
 
     private static native void consoleError(String message) /*-{
         if ($wnd.console && $wnd.console.error) {

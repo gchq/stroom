@@ -19,7 +19,6 @@ package stroom.gwt.workbench.framework.client.play;
 import stroom.gwt.workbench.framework.client.play.PlayRunner.Cancellable;
 import stroom.gwt.workbench.framework.client.play.PlayRunner.Environment;
 
-import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -42,11 +41,13 @@ final class GwtPlayEnvironment implements Environment {
     // The window listeners, to remove them
     private JavaScriptObject listeners;
 
-    /// @return The current time in milliseconds, from GWT's `Duration`.
+    /// @return The time in milliseconds from the page's `performance.now()`: unlike `Date`, it
+    /// only goes forwards, and the test runner's fixed time (for stable screenshots) doesn't stop
+    /// it.
     @Override
-    public double now() {
-        return Duration.currentTimeMillis();
-    }
+    public native double now() /*-{
+        return $wnd.performance.now();
+    }-*/;
 
     /// Runs a task after a delay with a GWT `Timer`.
     ///

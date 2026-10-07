@@ -23,6 +23,9 @@ stroom-util-build.properties
 
 stroom-core/src/test/resources/transientContentPacks/
 
+# GWT workbench screenshot baseline (workbenchScreenshotBaseline)
+stroom-gwt/stroom-gwt-workbench/screenshots/
+
 # Cached content store GIT repos
 content-cache/
 

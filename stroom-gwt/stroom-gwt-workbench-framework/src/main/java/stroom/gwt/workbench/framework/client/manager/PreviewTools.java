@@ -18,6 +18,8 @@ package stroom.gwt.workbench.framework.client.manager;
 
 import stroom.gwt.workbench.framework.client.BrowserUtil;
 import stroom.gwt.workbench.framework.client.shortcuts.KeyCombo;
+import stroom.gwt.workbench.framework.client.story.StoryTheme;
+import stroom.gwt.workbench.framework.client.story.StoryUrls;
 import stroom.gwt.workbench.framework.client.tools.ViewportPreset;
 import stroom.gwt.workbench.framework.client.tools.VisionFilter;
 import stroom.gwt.workbench.framework.client.tools.ZoomLevels;
@@ -34,10 +36,13 @@ import com.google.gwt.user.client.Event;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /// The preview tools in the toolbar, as in React Storybook: measure, outline, viewport size,
-/// vision filter and zoom. The measure, outline and vision tools work inside the preview, so their
-/// state is sent to it each time it loads.
+/// vision filter and zoom, and the theme. The measure, outline and vision tools work inside the
+/// preview, so their state is sent to it each time it loads. The theme is given in the preview's
+/// URL (see [StoryUrls#previewUrl(String, String, StoryTheme)]), as stories need it before they
+/// render, so choosing one loads the story again; it is remembered in the browser's local storage.
 public class PreviewTools {
 
     private static final String PREVIEW_ID = "workbench-preview-wrapper";
@@ -48,6 +53,7 @@ public class PreviewTools {
     private static final String CLASS_DRAGGING = "wbm-preview--dragging";
 
     private static final String RESET = "reset";
+    private static final String THEME_STORAGE_KEY = "wbm-theme";
     private static final String ZOOM_IN = "zoom-in";
     private static final String ZOOM_OUT = "zoom-out";
     private static final String ZOOM_PREFIX = "zoom-";
@@ -62,6 +68,9 @@ public class PreviewTools {
     private final InputElement widthInput;
     private final InputElement heightInput;
 
+    private StoryTheme theme = StoryTheme.fromId(BrowserUtil.getLocalStorage(THEME_STORAGE_KEY));
+    private Runnable themeChangeHandler = () -> {
+    };
     private boolean outline;
     private boolean measure;
     private VisionFilter vision;
@@ -100,6 +109,8 @@ public class PreviewTools {
         });
         onClick("wbm-viewport-button", this::toggleViewportMenu);
         onClick("wbm-vision-button", this::toggleVisionMenu);
+        onClick("wbm-theme-button", this::toggleThemeMenu);
+        showTheme();
         onClick("wbm-zoom", this::toggleZoomMenu);
         onClick("wbm-viewport-rotate", () -> setViewportSize(viewportHeight, viewportWidth, customViewport));
         bindSizeInput(widthInput, true);
@@ -117,6 +128,17 @@ public class PreviewTools {
         BrowserUtil.addListener(iframe, "load", event -> sendStateToPreview());
         applyZoom();
         applyViewport();
+    }
+
+    /// @return The theme chosen for the stories.
+    public StoryTheme getTheme() {
+        return theme;
+    }
+
+    /// @param themeChangeHandler What to do when a different theme is chosen, e.g. load the story
+    ///                           again in it.
+    public void setThemeChangeHandler(final Runnable themeChangeHandler) {
+        this.themeChangeHandler = Objects.requireNonNull(themeChangeHandler);
     }
 
     private void sendStateToPreview() {
@@ -317,6 +339,39 @@ public class PreviewTools {
             builder.appendHtmlConstant("<small>").appendEscaped(description).appendHtmlConstant("</small>");
         }
         builder.appendHtmlConstant("</span></button></li>");
+    }
+
+    // ---------- Theme ----------
+
+    private void toggleThemeMenu() {
+        final Element button = Document.get().getElementById("wbm-theme-button");
+        final List<MenuItem> items = new ArrayList<>();
+        for (final StoryTheme option : StoryTheme.values()) {
+            items.add(MenuItem.of(option.getId(), option.getLabel())
+                    .icon("wbm-icon-theme")
+                    .active(option == theme));
+        }
+        Popover.toggle(button, MenuHtml.render(MenuItem.groups(items)), Popover.Align.START, target -> {
+            final String id = MenuHtml.getClickedItemId(target);
+            if (id == null) {
+                return;
+            }
+            Popover.hideCurrent();
+            final StoryTheme chosen = StoryTheme.fromId(id);
+            if (chosen != theme) {
+                theme = chosen;
+                BrowserUtil.setLocalStorage(THEME_STORAGE_KEY, theme == StoryTheme.DEFAULT
+                        ? null
+                        : theme.getId());
+                showTheme();
+                themeChangeHandler.run();
+            }
+        });
+    }
+
+    private void showTheme() {
+        Document.get().getElementById("wbm-theme-label").setInnerText(theme.getLabel());
+        Document.get().getElementById("wbm-theme-button").setAttribute("aria-label", "Theme " + theme.getLabel());
     }
 
     // ---------- Zoom ----------
