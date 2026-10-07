@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.widgets.inputs;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
@@ -52,10 +53,13 @@ public final class TextInputStories {
                 // Invalid state - sets aria-invalid and the invalid class
                 .story("Invalid", context -> {
                     final TextBox textBox = InputWidgets.textBox(context, "not-an-email", "Email");
-                    // Differs from React: Stroom's views mark an invalid field with the invalid class
-                    // only (e.g. LoginViewImpl); React also sets aria-invalid="true".
-                    textBox.addStyleName("invalid");
+                    // As Stroom's views (e.g. LoginViewImpl) mark an invalid field
+                    FieldValidity.setInvalid(textBox.getElement(), true);
                     return textBox;
+                })
+                .withPlay(play -> {
+                    play.expect(play.getByRole("textbox")).toHaveAttribute("aria-invalid", "true");
+                    play.expect(play.getByRole("textbox")).toHaveClass("invalid");
                 })
                 // Disabled and read-only variants
                 .story("DisabledAndReadonly", context -> {

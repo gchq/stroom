@@ -138,25 +138,19 @@ public final class ChangePasswordDialogStories {
         // Step 1: the current password
         play.type(currentPassword(screen), "oldpass");
         play.click(screen.getByRole("button", StroomDom.button("OK")));
-        // Step 2: the new password, once the policy has loaded.
-        // Differs from React: the 'Password' and 'Confirm Password' labels are for the fields'
-        // containers, not the fields, so they are found by their classes (React's
-        // '#change-pwd-new-input' and '#change-pwd-confirm-input')
+        // Step 2: the new password, once the policy has loaded
         final Play dialog = screen.within(screen.findByText("Change Password").closest(StroomDom.DIALOG));
         dialog.findByText(TextMatch.containingIgnoreCase("at least 4 characters"));
-        play.type(dialog.querySelector(".passwordTextBox"), "newpass123");
-        play.type(dialog.querySelector(".confirmPasswordTextBox"), "newpass123");
+        play.type(dialog.getByLabelText("Password"), "newpass123");
+        play.type(dialog.getByLabelText("Confirm Password"), "newpass123");
         play.click(dialog.getByRole("button", StroomDom.button("OK")));
         return screen;
     }
 
-    /// Differs from React: the 'Current Password' label is for the field's container, not the
-    /// field, so it is found by its class (React's '#current-password-input').
-    ///
     /// @return The 'Enter Your Current Password' dialog's password field, once it is shown.
     private static Query currentPassword(final Play screen) {
         return screen.within(screen.findByText("Enter Your Current Password").closest(StroomDom.DIALOG))
-                .querySelector(".passwordTextBox");
+                .getByLabelText("Current Password");
     }
 
     private static void expectNoProblems(final Play play) {

@@ -72,7 +72,16 @@ public final class CurrentPasswordStories {
                 .withPlay(CurrentPasswordStories::expectEmptyDialog)
                 // Every password is rejected
                 .story("Invalid", context -> render(context, false))
-                .withPlay(CurrentPasswordStories::expectEmptyDialog);
+                .withPlay(CurrentPasswordStories::expectEmptyDialog)
+                // GWT-only: OK with no password marks the field invalid and focuses it, without
+                // asking the server
+                .story("MissingPassword", context -> render(context, true))
+                .withPlay(play -> {
+                    expectEmptyDialog(play);
+                    IdpPlays.expectOkFocusesInvalid(play, IdpPlays.passwordDialog(play, CAPTION),
+                            "Current Password", "Password is required");
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalled();
+                });
     }
 
     // The dialog, with its password field focused and empty

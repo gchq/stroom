@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.idp;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 
 /// The REST paths, fixtures and play steps shared by the `App/IdP/*` stories.
@@ -95,8 +96,8 @@ final class IdpPlays {
 
     /// Waits for the strength meter to rate the password (React's `waitForStrengthScored`).
     /// Differs from React: Stroom's meter has no `meter` role; its bar's class is
-    /// `strength-meter-<score + 1>`, set when the password field changes (on blur), with zxcvbn
-    /// loaded by the page, so there is nothing to wait for but the class.
+    /// `strength-meter-<score + 1>`, set as the password is typed (and when the field changes),
+    /// with zxcvbn loaded by the page, so there is nothing to wait for but the class.
     ///
     /// @param play   The play.
     /// @param dialog The change password dialog.
@@ -104,5 +105,24 @@ final class IdpPlays {
     static void waitForStrengthScored(final Play play, final Play dialog, final String levels) {
         play.waitFor(8000, () -> play.expect(dialog.querySelector(".strength-meter-bar").className())
                 .toMatch(TextMatch.regex("strength-meter-[" + levels + "]")));
+    }
+
+    /// Clicks a dialog's OK button with the focus away from the field, as a user who clicks it after
+    /// leaving the field, then expects the field to be marked invalid, described by its message, and
+    /// focused, as the first field that needs fixing.
+    ///
+    /// @param play    The play.
+    /// @param dialog  The dialog.
+    /// @param label   The field's label.
+    /// @param message The field's message.
+    static void expectOkFocusesInvalid(final Play play, final Play dialog, final String label, final String message) {
+        final Query field = dialog.getByLabelText(label);
+        play.tab();
+        play.expect(field).not().toHaveFocus();
+        play.click(dialog.getByRole("button", OK));
+        play.expect(dialog.findByText(message)).toBeInTheDocument();
+        play.expect(field).toHaveAttribute("aria-invalid", "true");
+        play.expect(field).toHaveAttribute("aria-describedby");
+        play.expect(field).toHaveFocus();
     }
 }

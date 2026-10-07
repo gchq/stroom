@@ -24,6 +24,7 @@ import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
+import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -66,7 +67,7 @@ public class ScheduleBox
             }));
             registerHandler(textBox.addBlurHandler(event -> validate()));
             registerHandler(textBox.addFocusHandler(event ->
-                    textBox.getElement().removeClassName("invalid")));
+                    FieldValidity.setInvalid(textBox.getElement(), false)));
         }
     };
 
@@ -81,9 +82,9 @@ public class ScheduleBox
         if (popup != null) {
             schedulePresenterProvider.get().validate(schedule, scheduleRestriction, scheduledTimes -> {
                 if (isEnabled() && (scheduledTimes == null || scheduledTimes.isError())) {
-                    textBox.getElement().addClassName("invalid");
+                    FieldValidity.setInvalid(textBox.getElement(), true);
                 } else {
-                    textBox.getElement().removeClassName("invalid");
+                    FieldValidity.setInvalid(textBox.getElement(), false);
                 }
                 if (scheduledTimes != null && scheduledTimes.getSchedule() != null) {
                     value = scheduledTimes.getSchedule();
@@ -91,7 +92,7 @@ public class ScheduleBox
                 consumer.accept(scheduledTimes);
             });
         } else {
-            textBox.getElement().removeClassName("invalid");
+            FieldValidity.setInvalid(textBox.getElement(), false);
             consumer.accept(new ScheduledTimes(schedule, null,
                     "No schedule presenter has been configured"));
         }

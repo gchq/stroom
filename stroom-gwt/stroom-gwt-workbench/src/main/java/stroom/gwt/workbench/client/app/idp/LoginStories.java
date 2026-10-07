@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.app.idp;
 
+import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
@@ -75,6 +76,11 @@ public final class LoginStories {
                 .withPlay(play -> {
                     expectSignInForm(play);
                     play.waitFor(() -> play.expect(play.getByText("Forgot password?")).toBeVisible());
+                    // The password's help points to the link
+                    play.click(play.getByTitle("Password - Click for help"));
+                    play.expect(play.screen().findByText("Enter your Stroom account password. If you have "
+                                                         + "forgotten it, use the 'Forgot password?' link."))
+                            .toBeInTheDocument();
                 })
                 // The policy forbids resets: 'Forgot password?' is hidden
                 .story("ForgotLinkHidden", context -> render(context, false,
@@ -83,11 +89,39 @@ public final class LoginStories {
                     expectSignInForm(play);
                     // Differs from React: the link is in the page but hidden, not left out
                     play.expect(play.getByText("Forgot password?")).not().toBeVisible();
+                    // The password's help points to the administrator, not the hidden link
+                    play.click(play.getByTitle("Password - Click for help"));
+                    play.expect(play.screen().findByText("Enter your Stroom account password. If you have "
+                                                         + "forgotten it, ask your administrator to reset it."))
+                            .toBeInTheDocument();
                 })
                 // The sign in request never completes
                 .story("Loading", context -> render(context, false,
                         RestReply.json("{\"loginSuccessful\": true}"), NEVER_MILLIS))
-                .withPlay(LoginStories::expectSignInForm);
+                .withPlay(LoginStories::expectSignInForm)
+                // GWT-only: signing in with nothing entered marks both fields invalid, describes
+                // each with its message and focuses the first, without sending a request
+                .story("MissingCredentials", context -> render(context, false,
+                        RestReply.json("{\"loginSuccessful\": true}")))
+                .withPlay(play -> {
+                    expectSignInForm(play);
+                    play.click(play.getByRole("button", IdpPlays.SIGN_IN));
+                    play.expect(play.findByText("User name is required")).toBeInTheDocument();
+                    play.expect(play.getByText("Password is required")).toBeInTheDocument();
+                    for (final String label : new String[]{"User Name", "Password"}) {
+                        play.expect(play.getByLabelText(label)).toHaveAttribute("aria-invalid", "true");
+                        play.expect(play.getByLabelText(label)).toHaveAttribute("aria-describedby");
+                    }
+                    play.expect(play.getByLabelText("User Name")).toHaveFocus();
+                    // With a user name, the password is the first field that needs fixing
+                    play.type(play.getByLabelText("User Name"), "admin");
+                    play.click(play.getByRole("button", IdpPlays.SIGN_IN));
+                    play.waitFor(() -> play.expect(play.getByLabelText("Password")).toHaveFocus());
+                    play.expect(play.getByLabelText("User Name")).not().toHaveAttribute("aria-invalid");
+                    play.expect(play.queryByText("User name is required")).toBeNull();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post(IdpPlays.LOGIN_PATH).toSpyMatcher());
+                });
     }
 
     // The empty form, with the user name focused, once the policy has loaded

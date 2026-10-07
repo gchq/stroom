@@ -68,7 +68,18 @@ public final class EmailResetPasswordStories {
                 .withPlay(EmailResetPasswordStories::expectEmptyDialog)
                 // The server can't reset the password
                 .story("ResetFailed", context -> render(context, RestReply.json("false")))
-                .withPlay(EmailResetPasswordStories::expectEmptyDialog);
+                .withPlay(EmailResetPasswordStories::expectEmptyDialog)
+                // GWT-only: OK with no email, then with an invalid one, marks the field invalid and
+                // focuses it, without asking the server
+                .story("InvalidEmailFocus", context -> render(context, null))
+                .withPlay(play -> {
+                    expectEmptyDialog(play);
+                    final Play dialog = IdpPlays.passwordDialog(play, CAPTION);
+                    IdpPlays.expectOkFocusesInvalid(play, dialog, "Email Address", "Email is required");
+                    play.type(dialog.getByLabelText("Email Address"), "not-an-email");
+                    IdpPlays.expectOkFocusesInvalid(play, dialog, "Email Address", "Invalid email address");
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalled();
+                });
     }
 
     // The dialog, with its email field focused and empty

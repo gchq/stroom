@@ -95,6 +95,16 @@ public final class ResetPasswordStories {
                             "INFO: Your password has been reset. Please sign in with your new password.");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
+                // GWT-only: OK with only the confirmation entered marks the new password invalid and
+                // focuses it, without asking the server
+                .story("MissingPassword", context -> render(context, "good-token", RESET_OK))
+                .withPlay(play -> {
+                    final Play dialog = IdpPlays.passwordDialog(play, CAPTION);
+                    play.type(dialog.getByLabelText("Confirm Password"), STRONG);
+                    IdpPlays.expectOkFocusesInvalid(play, dialog, "Password", "Password is required");
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post(IdpPlays.RESET_PASSWORD_PATH).toSpyMatcher());
+                })
                 // No token: the form is never shown, the invalid link alert is
                 .story("InvalidLink", context -> render(context, null, RESET_OK))
                 .withPlay(play -> {

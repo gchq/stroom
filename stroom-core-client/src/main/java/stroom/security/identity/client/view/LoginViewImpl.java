@@ -21,6 +21,8 @@ import stroom.security.identity.client.presenter.LoginUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -39,6 +41,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
 public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implements LoginView {
 
+    private static final String PASSWORD_HELP = "Enter your Stroom account password.";
+
     private final Widget widget;
 
     @UiField
@@ -47,6 +51,8 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     TextBox userName;
     @UiField
     Label userNameFeedback;
+    @UiField
+    FormGroup passwordGroup;
     @UiField
     PasswordTextBox password;
     @UiField
@@ -73,7 +79,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
 
         password.getElement().setAttribute("placeholder", "Enter Password");
 
-        forgotPasswordLink.setVisible(false);
+        setAllowPasswordResets(false);
     }
 
     @Override
@@ -101,22 +107,22 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     public boolean validate() {
         boolean valid = true;
 
-        userName.removeStyleName("invalid");
         if (userName.getValue().length() == 0) {
-            userNameFeedback.setText("User name is required");
-            userName.addStyleName("invalid");
+            FieldValidity.setInvalid(userName, userNameFeedback, "User name is required");
             valid = false;
         } else {
-            userNameFeedback.setText("");
+            FieldValidity.setValid(userName, userNameFeedback);
         }
 
-        password.removeStyleName("invalid");
         if (password.getValue().length() == 0) {
-            passwordFeedback.setText("Password is required");
-            password.addStyleName("invalid");
+            FieldValidity.setInvalid(password, passwordFeedback, "Password is required");
             valid = false;
         } else {
-            passwordFeedback.setText("");
+            FieldValidity.setValid(password, passwordFeedback);
+        }
+
+        if (!valid) {
+            FieldValidity.focusFirstInvalid(userName, password);
         }
 
         return valid;
@@ -131,6 +137,10 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     @Override
     public void setAllowPasswordResets(final boolean allowPasswordResets) {
         forgotPasswordLink.setVisible(allowPasswordResets);
+        // Point to the 'Forgot password?' link only when it is shown
+        passwordGroup.setHelpText(allowPasswordResets
+                ? PASSWORD_HELP + " If you have forgotten it, use the 'Forgot password?' link."
+                : PASSWORD_HELP + " If you have forgotten it, ask your administrator to reset it.");
     }
 
     @UiHandler("userName")

@@ -16,10 +16,12 @@
 
 package stroom.gwt.workbench.client.app.idp;
 
+import stroom.event.client.StaticEventBus;
 import stroom.gwt.workbench.client.app.gin.idp.IdpScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
+import stroom.widget.help.client.presenter.HelpManager;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -68,6 +70,10 @@ final class SignInPages {
             builder.uiConfig(uiConfig);
         }
         final ScreenHarness harness = builder.build();
+        // As Stroom's app does at start-up (eager singletons): form help buttons fire their
+        // events on the static event bus, which the help manager shows
+        new StaticEventBus(harness.getEventBus());
+        new HelpManager(harness.getEventBus());
         final Presenter<?, ?>[] shown = new Presenter<?, ?>[1];
         IdpPage.setUp(harness, parameters, url -> {
             if (replacePage && shown[0] != null) {

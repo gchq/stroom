@@ -16,10 +16,12 @@
 
 package stroom.gwt.workbench.client.widgets.inputs;
 
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.DescriptionHTML;
+import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -58,15 +60,16 @@ public final class FormGroupStories {
                     formGroup.add(InputWidgets.textBox(context, "", "user@example.com"));
                     return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
                 })
-                // Reactive validation feedback - the message updates as you type
+                // Validation feedback - the message updates when the value changes
                 .story("Feedback", context -> {
                     final FormGroup formGroup = formGroup("fg-validated", "Username");
                     final TextBox textBox = InputWidgets.textBox(context, "", "Choose a username…");
                     // Differs from React: GWT's FormGroup has no feedback setter (its invalid-feedback
                     // label is private and always empty). Stroom's views (e.g. ChangePasswordViewImpl)
-                    // add their own "feedback" label under the control and the "invalid" class to the
-                    // control, so this story does the same. React also sets aria-invalid and
-                    // aria-describedby, which Stroom's views don't.
+                    // add their own "feedback" label under the control and mark the control with
+                    // FieldValidity, so this story does the same.
+                    // Differs from React: the message updates when the text box reports its value,
+                    // on leaving it (React's updates as you type)
                     final Label feedback = new Label();
                     feedback.setStyleName("feedback");
                     textBox.addValueChangeHandler(event -> validate(textBox, feedback));
@@ -76,6 +79,28 @@ public final class FormGroupStories {
                     control.add(feedback);
                     formGroup.add(control);
                     return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
+                })
+                .withPlay(play -> {
+                    // The label names the text box in the panel, which is marked invalid and
+                    // described by its feedback
+                    final Query username = play.getByLabelText("Username");
+                    play.expect(username).toHaveAttribute("aria-invalid", "true");
+                    play.expect(username).toHaveAttribute("aria-describedby");
+                    play.expect(play.getByText("This field is required.")).toBeInTheDocument();
+                    // A text box reports its new value on leaving it
+                    play.type(username, "alice");
+                    play.tab();
+                    play.waitFor(() -> play.expect(username).not().toHaveAttribute("aria-invalid"));
+                    play.expect(username).not().toHaveAttribute("aria-describedby");
+                    play.expect(username).not().toHaveClass("invalid");
+                    // Ends invalid, so the screenshot shows how an invalid field looks
+                    play.clear(username);
+                    play.type(username, "ab");
+                    play.tab();
+                    play.waitFor(() -> play.expect(play.getByText("Must be at least 3 characters."))
+                            .toBeInTheDocument());
+                    play.expect(username).toHaveAttribute("aria-invalid", "true");
+                    play.expect(username).toHaveClass("invalid");
                 })
                 // Disabled state - greys out the label and description
                 .story("Disabled", context -> {
@@ -110,11 +135,10 @@ public final class FormGroupStories {
                 : value.length() < 3
                         ? "Must be at least 3 characters."
                         : "";
-        feedback.setText(message);
         if (message.isEmpty()) {
-            textBox.removeStyleName("invalid");
+            FieldValidity.setValid(textBox, feedback);
         } else {
-            textBox.addStyleName("invalid");
+            FieldValidity.setInvalid(textBox, feedback, message);
         }
     }
 }

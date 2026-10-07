@@ -16,12 +16,14 @@
 
 package stroom.gwt.workbench.client.widgets.inputs;
 
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.PasswordTextBox;
@@ -61,10 +63,14 @@ public final class PasswordInputStories {
                 // Invalid state - sets aria-invalid and the invalid class
                 .story("Invalid", context -> {
                     final PasswordTextBox password = passwordTextBox(context, "123");
-                    // Differs from React: Stroom's views mark an invalid password with the invalid
-                    // class only; React also sets aria-invalid="true".
-                    password.addStyleName("invalid");
+                    // As Stroom's views (e.g. ChangePasswordViewImpl) mark an invalid password
+                    FieldValidity.setInvalid(password.getElement(), true);
                     return InputWidgets.maxWidth(passwordInput(password, null), MAX_WIDTH);
+                })
+                .withPlay(play -> {
+                    final Query password = play.querySelector("input[type='password']");
+                    play.expect(password).toHaveAttribute("aria-invalid", "true");
+                    play.expect(password).toHaveClass("invalid");
                 })
                 // With an overlay prefix badge (e.g. the GWT password-length badge)
                 .story("WithOverlayPrefix", context -> {

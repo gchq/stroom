@@ -850,8 +850,10 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
   `explorer/v2/decorate` and `getFromDocRef` (document selection boxes, e.g. a feed or cluster) with
   the document asked about.
 * Text boxes report their change (and so make the document dirty) on blur: type, then
-  `play.tab()`. FormGroup controls have the group's `identity` as their id (query those, with a
-  `// Differs from React:` constant).
+  `play.tab()`. A FormGroup's label names the one form control in it (an input, select or text
+  area, even inside a panel or composite such as a tick box or password box), so find it with
+  `getByLabelText(label)`. A group with several controls labels none of them; its child has the
+  group's `identity` as its id.
 * Stories that open screens using `UiConfigCache` defaults Stroom always sends (e.g. the execution
   schedule dialog's `analyticUiDefaultConfig`) set them with `.uiConfig(...)`.
 * **The 'Ask Stroom AI' chat opened by another screen** (a results table's 'Ask Stroom AI' button

@@ -20,6 +20,7 @@ import stroom.security.identity.client.presenter.ChangePasswordPresenter.ChangeP
 import stroom.security.identity.shared.InternalIdpPasswordPolicyConfig;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.form.client.FieldValidity;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
@@ -27,6 +28,7 @@ import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -111,34 +113,31 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
     public boolean validate() {
         boolean valid = true;
 
-        password.removeStyleName("invalid");
         if (password.getValue().length() == 0) {
-            passwordFeedback.setText("Password is required");
-            password.addStyleName("invalid");
+            FieldValidity.setInvalid(password, passwordFeedback, "Password is required");
             valid = false;
         } else if (password.getValue().length() < passwordPolicyConfig.getMinimumPasswordLength()) {
-            passwordFeedback.setText("Password is short");
-            password.addStyleName("invalid");
+            FieldValidity.setInvalid(password, passwordFeedback, "Password is short");
             valid = false;
         } else if (getPasswordStrength(password.getValue()) < passwordPolicyConfig.getMinimumPasswordStrength()) {
-            passwordFeedback.setText("Password is weak");
-            password.addStyleName("invalid");
+            FieldValidity.setInvalid(password, passwordFeedback, "Password is weak");
             valid = false;
         } else {
-            passwordFeedback.setText("");
+            FieldValidity.setValid(password, passwordFeedback);
         }
 
-        confirmPassword.removeStyleName("invalid");
         if (confirmPassword.getValue().length() == 0) {
-            confirmPasswordFeedback.setText("Password confirmation is required");
-            confirmPassword.addStyleName("invalid");
+            FieldValidity.setInvalid(confirmPassword, confirmPasswordFeedback, "Password confirmation is required");
             valid = false;
         } else if (!confirmPassword.getValue().equals(password.getValue())) {
-            confirmPasswordFeedback.setText("Passwords must match");
-            confirmPassword.addStyleName("invalid");
+            FieldValidity.setInvalid(confirmPassword, confirmPasswordFeedback, "Passwords must match");
             valid = false;
         } else {
-            confirmPasswordFeedback.setText("");
+            FieldValidity.setValid(confirmPassword, confirmPasswordFeedback);
+        }
+
+        if (!valid) {
+            FieldValidity.focusFirstInvalid(password, confirmPassword);
         }
 
         return valid;
@@ -199,6 +198,16 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
 
     @UiHandler("password")
     public void onPassword(final ValueChangeEvent<String> e) {
+        updateStrength();
+    }
+
+    @UiHandler("password")
+    public void onPasswordKeyUp(final KeyUpEvent e) {
+        // Shows the password's strength and length as it is typed
+        updateStrength();
+    }
+
+    private void updateStrength() {
         final int passwordLength = password.getValue().length();
         final int passwordStrength = getPasswordStrength(password.getText());
 

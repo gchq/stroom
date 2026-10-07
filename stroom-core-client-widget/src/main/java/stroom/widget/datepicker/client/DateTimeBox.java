@@ -19,6 +19,7 @@ package stroom.widget.datepicker.client;
 import stroom.item.client.EventBinder;
 import stroom.svg.client.SvgIconBox;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
@@ -160,7 +161,7 @@ public class DateTimeBox
             this.stringValue = null;
         }
         textBox.setValue(stringValue);
-        textBox.getElement().removeClassName("invalid");
+        FieldValidity.setInvalid(textBox.getElement(), false);
         if (fireEvents) {
             ValueChangeEvent.fire(this, null);
         }
@@ -182,7 +183,7 @@ public class DateTimeBox
     }
 
     private void onFocus() {
-        textBox.getElement().removeClassName("invalid");
+        FieldValidity.setInvalid(textBox.getElement(), false);
     }
 
     private void onBlur() {
@@ -194,9 +195,9 @@ public class DateTimeBox
             || !isEnabled()
             || isValid()
         ) {
-            textBox.getElement().removeClassName("invalid");
+            FieldValidity.setInvalid(textBox.getElement(), false);
         } else {
-            textBox.getElement().addClassName("invalid");
+            FieldValidity.setInvalid(textBox.getElement(), true);
         }
     }
 

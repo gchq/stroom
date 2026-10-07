@@ -14,7 +14,8 @@
                 </g:SimplePanel>
 
                 <!-- User Name -->
-                <form:FormGroup identity="userName" label="User Name">
+                <form:FormGroup identity="userName" label="User Name"
+                                helpText="Enter your Stroom account user name. This is the name you were given when your account was created.">
                     <g:FlowPanel>
                         <!-- Add user name text box -->
                         <g:FlowPanel addStyleNames="userNameTextBoxOuter">
@@ -27,7 +28,7 @@
                 </form:FormGroup>
 
                 <!-- Password -->
-                <form:FormGroup identity="password" label="Password">
+                <form:FormGroup ui:field="passwordGroup" identity="password" label="Password">
                     <g:FlowPanel>
                         <!-- Add password text box -->
                         <g:FlowPanel addStyleNames="passwordTextBoxOuter">

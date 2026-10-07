@@ -19,6 +19,7 @@ package stroom.security.identity.client.view;
 import stroom.security.identity.client.presenter.CurrentPasswordPresenter.CurrentPasswordView;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.form.client.FieldValidity;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
@@ -75,13 +76,15 @@ public class CurrentPasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHan
     public boolean validate() {
         boolean valid = true;
 
-        password.removeStyleName("invalid");
         if (password.getValue().length() == 0) {
-            passwordFeedback.setText("Password is required");
-            password.addStyleName("invalid");
+            FieldValidity.setInvalid(password, passwordFeedback, "Password is required");
             valid = false;
         } else {
-            passwordFeedback.setText("");
+            FieldValidity.setValid(password, passwordFeedback);
+        }
+
+        if (!valid) {
+            FieldValidity.focusFirstInvalid(password);
         }
 
         return valid;

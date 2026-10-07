@@ -22,10 +22,13 @@ import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasWidgets;
@@ -34,7 +37,10 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Composite to show a labelled form field or group of form fields.
@@ -87,6 +93,12 @@ public class FormGroup extends Composite implements HasWidgets {
     public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER = "form-group-description-container";
     public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED =
             STYLE_FORM_GROUP_DESCRIPTION_CONTAINER + "--disabled";
+
+    // The elements that are form controls a label can name
+    private static final List<String> FORM_CONTROL_TAGS = List.of("input", "select", "textarea");
+    // The inputs a label doesn't name: hidden ones, and buttons, which their own text names
+    private static final Set<String> NON_LABELLED_INPUT_TYPES = Set.of(
+            "hidden", "button", "submit", "reset", "image");
 
     private final FlowPanel formGroupPanel = new FlowPanel();
     private final FormLabel formLabel = new FormLabel();
@@ -151,14 +163,57 @@ public class FormGroup extends Composite implements HasWidgets {
         updateLabelTarget();
     }
 
-    // Makes the label for the child's labelled element: an element inside it for a widget with one
-    // (e.g. a tick box's input), otherwise the child itself, whose id is the group's identity
+    // Makes the label for the control the child takes input with, so that the label names it (and
+    // clicking the label acts on it): the child itself if it is a form control, otherwise the one
+    // form control inside it (e.g. a tick box's input, or a password box in a panel). Otherwise
+    // (no form control, or several) the label is for the child, whose id is the group's identity.
     private void updateLabelTarget() {
-        if (childWidget instanceof HasLabelTarget) {
-            formLabel.setIdentity(((HasLabelTarget) childWidget).getLabelTargetId());
-        } else {
+        final Element target = childWidget == null
+                ? null
+                : findLabelTarget(childWidget.getElement());
+        if (target == null || target == childWidget.getElement()) {
             formLabel.setIdentity(id);
+        } else {
+            if (NullSafe.isBlankString(target.getId())) {
+                target.setId(DOM.createUniqueId());
+            }
+            formLabel.setIdentity(target.getId());
         }
+    }
+
+    /// @param root The child's element.
+    /// @return The form control a label for the child should be for: the element if it is one,
+    /// otherwise the only one inside it, or null if there are none or several.
+    static Element findLabelTarget(final Element root) {
+        if (isFormControl(root)) {
+            return root;
+        }
+        Element found = null;
+        for (final String tagName : FORM_CONTROL_TAGS) {
+            final NodeList<Element> elements = root.getElementsByTagName(tagName);
+            for (int i = 0; i < elements.getLength(); i++) {
+                final Element element = elements.getItem(i);
+                if (isFormControl(element)) {
+                    if (found != null) {
+                        return null;
+                    }
+                    found = element;
+                }
+            }
+        }
+        return found;
+    }
+
+    // Whether the element is a form control a label can name and that takes input (so not a
+    // hidden input, or a button, which is named by its own text)
+    private static boolean isFormControl(final Element element) {
+        final String tagName = element.getTagName().toLowerCase(Locale.ROOT);
+        if ("input".equals(tagName)) {
+            // GWT gives "" for a missing attribute
+            final String type = element.getAttribute("type").toLowerCase(Locale.ROOT);
+            return !NON_LABELLED_INPUT_TYPES.contains(type);
+        }
+        return FORM_CONTROL_TAGS.contains(tagName);
     }
 
     public void setLabel(final String label) {

@@ -81,9 +81,7 @@ public final class CredentialsScreenStories {
                     final Play dialog = openNewCredentials(play);
                     play.type(dialog.getByLabelText("Name"), "CI Token");
                     play.type(dialog.getByLabelText("User Name"), "bob");
-                    // Differs from React: the 'Password' label is for the field's container, so the
-                    // field is found by its class
-                    play.type(dialog.querySelector(".confirmPasswordTextBox"), "s3cret");
+                    play.type(dialog.getByLabelText("Password"), "s3cret");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/credentials/store")

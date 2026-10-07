@@ -24,6 +24,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -98,6 +99,21 @@ public final class ChangePasswordStories {
                                     .toSpyMatcher());
                     IdpPage.expectNoProblems(play);
                 })
+                // GWT-only: the strength meter and length badge update as the password is typed,
+                // before the field is left
+                .story("StrengthWhileTyping", context -> render(context, POLICY, SUCCEEDS))
+                .withPlay(play -> {
+                    final Play dialog = IdpPlays.passwordDialog(play, CAPTION);
+                    final Query password = dialog.getByLabelText("Password");
+                    play.type(password, "ab");
+                    play.expect(password).toHaveFocus();
+                    play.expect(dialog.querySelector(".badge")).toHaveTextContent("2");
+                    play.type(password, "c1Tr0ub4dour&3xtra");
+                    play.expect(password).toHaveFocus();
+                    IdpPlays.waitForStrengthScored(play, dialog, "2-5");
+                    play.expect(dialog.querySelector(".badge")).toHaveTextContent("9+");
+                    IdpPage.expectNoProblems(play);
+                })
                 // Long enough but scores below the minimum strength
                 .story("WeakPassword", context -> render(context, POLICY, SUCCEEDS))
                 .withPlay(play -> {
@@ -106,6 +122,7 @@ public final class ChangePasswordStories {
                     play.click(dialog.getByRole("button", IdpPlays.OK));
                     // Differs from React: the dialog is on the page's body, not in the canvas
                     play.expect(dialog.findByText("Password is weak")).toBeInTheDocument();
+                    expectInvalid(dialog, "Password");
                     expectNoChange(play);
                 })
                 // The confirmation doesn't match
@@ -114,6 +131,9 @@ public final class ChangePasswordStories {
                     final Play dialog = IdpPlays.fillPasswords(play, CAPTION, STRONG, "Different&3xtra");
                     play.click(dialog.getByRole("button", IdpPlays.OK));
                     play.expect(dialog.findByText("Passwords must match")).toBeInTheDocument();
+                    expectInvalid(dialog, "Confirm Password");
+                    // The new password itself is fine
+                    play.expect(dialog.getByLabelText("Password")).not().toHaveAttribute("aria-invalid");
                     expectNoChange(play);
                 })
                 // A stricter policy: too short
@@ -122,6 +142,7 @@ public final class ChangePasswordStories {
                     final Play dialog = IdpPlays.fillPasswords(play, CAPTION, "ab1", "ab1");
                     play.click(dialog.getByRole("button", IdpPlays.OK));
                     play.expect(dialog.findByText("Password is short")).toBeInTheDocument();
+                    expectInvalid(dialog, "Password");
                     expectNoChange(play);
                 })
                 // The server refuses the change
@@ -219,5 +240,13 @@ public final class ChangePasswordStories {
             }
         });
         return harness.asWidget();
+    }
+
+    /// Expects the field with the label to be marked invalid, described by its message, and focused
+    /// (as the first field that needs fixing).
+    private static void expectInvalid(final Play dialog, final String label) {
+        dialog.expect(dialog.getByLabelText(label)).toHaveAttribute("aria-invalid", "true");
+        dialog.expect(dialog.getByLabelText(label)).toHaveAttribute("aria-describedby");
+        dialog.expect(dialog.getByLabelText(label)).toHaveFocus();
     }
 }
