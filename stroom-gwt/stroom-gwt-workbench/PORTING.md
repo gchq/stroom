@@ -858,6 +858,10 @@ yours (from `App.gwt.xml`) when GIN or the compiler says a class isn't available
   (`aria-describedby`, with `aria-keyshortcuts="F1"`), so a help popup's text appears twice: find
   it in the popup with `screen.findByText(text, ".help-button-tooltip *")`, and check the control
   with `toHaveAccessibleDescription(...)`. Clicking a help button leaves the focus where it was.
+* A FormGroup's `screenReaderText` (if set) is its control's description instead of the plain help.
+  A group with several controls is `role="group"`, named by its label (find it with
+  `getByRole("group", label)`), and its controls are named by `controlNames` in the order shown
+  (e.g. `getByRole("textbox", "Amount")`); the label isn't for any one of them.
 * Stories that open screens using `UiConfigCache` defaults Stroom always sends (e.g. the execution
   schedule dialog's `analyticUiDefaultConfig`) set them with `.uiConfig(...)`.
 * **The 'Ask Stroom AI' chat opened by another screen** (a results table's 'Ask Stroom AI' button

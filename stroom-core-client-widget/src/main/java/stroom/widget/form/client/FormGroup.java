@@ -35,6 +35,7 @@ import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -98,6 +99,10 @@ public class FormGroup extends Composite implements HasWidgets {
     private static final List<String> FORM_CONTROL_TAGS = List.of("input", "select", "textarea");
     // The inputs a label doesn't name: hidden ones, and buttons, which their own text names
     private static final String ARIA_KEY_SHORTCUTS = "aria-keyshortcuts";
+    private static final String ARIA_LABEL = "aria-label";
+    private static final String ARIA_LABELLED_BY = "aria-labelledby";
+    private static final String ROLE = "role";
+    private static final String GROUP_ROLE = "group";
     // The key that shows a group's help (see handleKeyEvent)
     private static final String HELP_SHORTCUT = "F1";
     private static final Set<String> NON_LABELLED_INPUT_TYPES = Set.of(
@@ -109,12 +114,18 @@ public class FormGroup extends Composite implements HasWidgets {
     private final FlowPanel labelPanel = new FlowPanel();
     private final FlowPanel descriptionPanel = new FlowPanel();
     private final Label feedbackLabel = new Label();
-    // The plain help text, hidden (the help button shows it), as the description of the control the
-    // label is for, so that a screen reader reads it when the control is focused
+    // The short screen reader description (or else the plain help text), hidden, as the description
+    // of the control the label is for, so that a screen reader reads it when the control is focused
     private final Label helpDescription = new Label();
+    // The short description a screen reader reads, or null to use the plain help text
+    private String screenReaderText;
+    // The names of the controls in a group of several, in the order they are shown
+    private List<String> controlNames = List.of();
     // The form control the label is for, or null if there is none (or several)
     private Element labelledControl;
-    // The control that has the help as its description and F1 as its shortcut, or null for none
+    // The child, when it holds several form controls, marked as a group labelled by the label
+    private Element groupElement;
+    // The control (or group) that has the description and F1 as its shortcut, or null for none
     private Element describedControl;
 
     private String id;
@@ -133,6 +144,8 @@ public class FormGroup extends Composite implements HasWidgets {
     public FormGroup() {
         feedbackLabel.setStyleName("invalid-feedback");
         helpDescription.getElement().setId(DOM.createUniqueId());
+        // So that a group of several controls can be labelled by it
+        formLabel.getElement().setId(DOM.createUniqueId());
         helpDescription.setVisible(false);
         formGroupPanel.addStyleName("form-group");
         labelPanel.addStyleName("form-group-label-container");
@@ -180,24 +193,53 @@ public class FormGroup extends Composite implements HasWidgets {
     // form control inside it (e.g. a tick box's input, or a password box in a panel). Otherwise
     // (no form control, or several) the label is for the child, whose id is the group's identity.
     private void updateLabelTarget() {
-        final Element target = childWidget == null
-                ? null
-                : findLabelTarget(childWidget.getElement());
-        if (target == null || target == childWidget.getElement()) {
-            formLabel.setIdentity(id);
-        } else {
-            if (NullSafe.isBlankString(target.getId())) {
-                target.setId(DOM.createUniqueId());
+        final List<Element> controls = childWidget == null
+                ? List.of()
+                : findFormControls(childWidget.getElement());
+        clearGroup();
+        labelledControl = null;
+        if (controls.size() == 1) {
+            final Element target = controls.get(0);
+            if (target == childWidget.getElement()) {
+                formLabel.setIdentity(id);
+            } else {
+                if (NullSafe.isBlankString(target.getId())) {
+                    target.setId(DOM.createUniqueId());
+                }
+                formLabel.setIdentity(target.getId());
             }
-            formLabel.setIdentity(target.getId());
+            labelledControl = target;
+        } else {
+            formLabel.setIdentity(id);
+            if (controls.size() > 1 && NullSafe.isNonBlankString(getLabel())) {
+                // One label can't be for several controls, so the child is a group that the label
+                // names, and each control is named by controlNames, e.g. 'Retain For, group, Unit'
+                groupElement = childWidget.getElement();
+                groupElement.setAttribute(ROLE, GROUP_ROLE);
+                groupElement.setAttribute(ARIA_LABELLED_BY, formLabel.getElement().getId());
+            }
         }
-        labelledControl = target;
+        for (int i = 0; i < controls.size() && i < controlNames.size(); i++) {
+            if (!controlNames.get(i).isEmpty()) {
+                controls.get(i).setAttribute(ARIA_LABEL, controlNames.get(i));
+            }
+        }
         updateHelpDescription();
     }
 
-    // Tells assistive technology about the help on the control the label is for: F1 shows it (as
-    // the help button isn't in the tab order), and plain help text is read as the control's
-    // description. Rich help (HTML) may be long, so it is only shown by F1 or the help button.
+    private void clearGroup() {
+        if (groupElement != null) {
+            groupElement.removeAttribute(ROLE);
+            groupElement.removeAttribute(ARIA_LABELLED_BY);
+            groupElement = null;
+        }
+    }
+
+    // Tells assistive technology about the control the label is for (or the group of controls): its
+    // short description is read when it is focused, and F1 shows its help (as the help button isn't
+    // in the tab order). The description is the screen reader text, or else the plain help text;
+    // rich help (HTML) may be long, so without screen reader text it is only shown by F1 or the
+    // help button.
     private void updateHelpDescription() {
         final String helpDescriptionId = helpDescription.getElement().getId();
         if (describedControl != null) {
@@ -205,42 +247,54 @@ public class FormGroup extends Composite implements HasWidgets {
             describedControl.removeAttribute(ARIA_KEY_SHORTCUTS);
             describedControl = null;
         }
-        final String plainHelpText = helpTextOverride == null && NullSafe.isNonBlankString(helpText)
-                ? helpText
-                : "";
-        helpDescription.setText(plainHelpText);
-        if (labelledControl != null && helpButton.hasHelpContent()) {
-            describedControl = labelledControl;
-            describedControl.setAttribute(ARIA_KEY_SHORTCUTS, HELP_SHORTCUT);
-            if (!plainHelpText.isEmpty()) {
+        final String description = getDescription();
+        helpDescription.setText(description);
+        final Element target = labelledControl != null
+                ? labelledControl
+                : groupElement;
+        if (target != null && (helpButton.hasHelpContent() || !description.isEmpty())) {
+            describedControl = target;
+            if (helpButton.hasHelpContent()) {
+                describedControl.setAttribute(ARIA_KEY_SHORTCUTS, HELP_SHORTCUT);
+            }
+            if (!description.isEmpty()) {
                 // After any validation feedback, which is read first
                 FieldValidity.addDescribedBy(describedControl, helpDescriptionId, false);
             }
         }
     }
 
-    /// @param root The child's element.
-    /// @return The form control a label for the child should be for: the element if it is one,
-    /// otherwise the only one inside it, or null if there are none or several.
-    static Element findLabelTarget(final Element root) {
-        if (isFormControl(root)) {
-            return root;
+    // The screen reader text, or else the plain help text, or else nothing
+    private String getDescription() {
+        if (NullSafe.isNonBlankString(screenReaderText)) {
+            return screenReaderText.trim();
         }
-        Element found = null;
-        for (final String tagName : FORM_CONTROL_TAGS) {
-            final NodeList<Element> elements = root.getElementsByTagName(tagName);
-            for (int i = 0; i < elements.getLength(); i++) {
-                final Element element = elements.getItem(i);
-                if (isFormControl(element)) {
-                    if (found != null) {
-                        return null;
-                    }
-                    found = element;
-                }
+        return helpTextOverride == null && NullSafe.isNonBlankString(helpText)
+                ? helpText
+                : "";
+    }
+
+    /// @param root The child's element.
+    /// @return The form controls a label for the child could be for, in the order they are shown: the
+    /// element itself if it is one, otherwise those inside it.
+    static List<Element> findFormControls(final Element root) {
+        if (isFormControl(root)) {
+            return List.of(root);
+        }
+        final List<Element> controls = new ArrayList<>();
+        final NodeList<Element> elements = querySelectorAll(root, String.join(", ", FORM_CONTROL_TAGS));
+        for (int i = 0; i < elements.getLength(); i++) {
+            final Element element = elements.getItem(i);
+            if (isFormControl(element)) {
+                controls.add(element);
             }
         }
-        return found;
+        return controls;
     }
+
+    private static native NodeList<Element> querySelectorAll(Element root, String selectors) /*-{
+        return root.querySelectorAll(selectors);
+    }-*/;
 
     // Whether the element is a form control a label can name and that takes input (so not a
     // hidden input, or a button, which is named by its own text)
@@ -270,6 +324,26 @@ public class FormGroup extends Composite implements HasWidgets {
 
     public String getLabel() {
         return formLabel.getLabel();
+    }
+
+    /// Sets the short description a screen reader reads each time the control (or group of
+    /// controls) is focused, e.g. its format or units. Without it, plain help text is read instead.
+    /// Bound to the `screenReaderText` attribute in ui.xml.
+    ///
+    /// @param screenReaderText The description, or null or blank for none.
+    public void setScreenReaderText(final String screenReaderText) {
+        this.screenReaderText = screenReaderText;
+        updateHelpDescription();
+    }
+
+    /// Names the controls of a group that has several (e.g. a number and its unit), which the label
+    /// can't name, as they are shown. The group itself is named by the label. Bound to the
+    /// `controlNames` attribute in ui.xml.
+    ///
+    /// @param controlNames The names, separated by commas, e.g. `Amount, Unit`.
+    public void setControlNames(final String controlNames) {
+        this.controlNames = ControlNames.parse(controlNames);
+        updateLabelTarget();
     }
 
     /**

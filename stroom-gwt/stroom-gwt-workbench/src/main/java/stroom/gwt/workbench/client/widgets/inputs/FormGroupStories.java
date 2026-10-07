@@ -28,6 +28,7 @@ import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
 /// Stories for [FormGroup], matching `Widgets/Inputs/FormGroup` in the React Storybook.
@@ -36,6 +37,12 @@ import com.google.gwt.user.client.ui.TextBox;
 public final class FormGroupStories {
 
     private static final String MAX_WIDTH = "400px";
+    private static final String STORE_SIZE_HELP = "The largest the store may grow to on each node, e.g. 10GiB "
+                                                  + "or 500MiB. When it is reached, writes to the store fail "
+                                                  + "until data is removed. Invalid values are replaced with "
+                                                  + "10GiB.";
+    private static final String STORE_SIZE_SR = "Size with units, e.g. 10GiB";
+    private static final String RETAIN_FOR_SR = "How long to keep the data";
 
     private FormGroupStories() {
         // Static utility
@@ -133,6 +140,48 @@ public final class FormGroupStories {
                     formGroup.add(textBox);
                     formGroup.setDisabled(true);
                     return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
+                })
+                // GWT-only: a short screen reader description, read on each focus, beside fuller help
+                .story("ScreenReaderText", context -> {
+                    StoryPopups.create(context).withHelp();
+                    final FormGroup formGroup = formGroup("fg-store-size", "Max Store Size");
+                    formGroup.setHelpText(STORE_SIZE_HELP);
+                    formGroup.setScreenReaderText(STORE_SIZE_SR);
+                    formGroup.add(InputWidgets.textBox(context, "10GiB", null));
+                    return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
+                })
+                .withPlay(play -> {
+                    // The short text is read, not the fuller help, which F1 or the help button shows
+                    final Query size = play.getByLabelText("Max Store Size");
+                    play.expect(size).toHaveAccessibleDescription(STORE_SIZE_SR);
+                    play.expect(size).toHaveAttribute("aria-keyshortcuts", "F1");
+                    play.click(play.getByTitle("Max Store Size - Click for help"));
+                    play.expect(play.screen().findByText(STORE_SIZE_HELP, ".help-button-tooltip *"))
+                            .toBeInTheDocument();
+                })
+                // GWT-only: a group of several controls (an amount and its unit), which one label can't
+                // name: the label names the group and each control has its own name
+                .story("SeveralControls", context -> {
+                    final FormGroup formGroup = formGroup("fg-retain-for", "Retain For");
+                    formGroup.setScreenReaderText(RETAIN_FOR_SR);
+                    formGroup.setControlNames("Amount, Unit");
+                    final TextBox amount = InputWidgets.textBox(context, "30", null);
+                    final ListBox unit = new ListBox();
+                    unit.addItem("Days");
+                    unit.addItem("Weeks");
+                    final FlowPanel control = new FlowPanel();
+                    control.add(amount);
+                    control.add(unit);
+                    formGroup.add(control);
+                    return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
+                })
+                .withPlay(play -> {
+                    final Query group = play.getByRole("group", "Retain For");
+                    play.expect(group).toHaveAccessibleDescription(RETAIN_FOR_SR);
+                    play.expect(play.within(group).getByRole("textbox", "Amount")).toHaveValue("30");
+                    play.expect(play.within(group).getByRole("combobox", "Unit")).toHaveValue("Days");
+                    // The label names the group, not either control
+                    play.expect(play.queryByRole("textbox", "Retain For")).toBeNull();
                 });
     }
 
