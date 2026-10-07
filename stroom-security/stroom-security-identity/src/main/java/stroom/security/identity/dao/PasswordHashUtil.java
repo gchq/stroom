@@ -16,7 +16,7 @@
 
 package stroom.security.identity.dao;
 
-import org.mindrot.jbcrypt.BCrypt;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.util.Objects;
 

@@ -66,6 +66,7 @@ dependencies {
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.classgraph
     testRuntimeOnly libs.bundles.common.test.runtime
 }
 
