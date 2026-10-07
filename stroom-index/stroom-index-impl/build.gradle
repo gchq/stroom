@@ -59,6 +59,7 @@ dependencies {
     testImplementation project(':stroom-docstore:stroom-docstore-mock')
     testImplementation project(':stroom-index:stroom-index-mock')
     testImplementation project(':stroom-node:stroom-node-mock')
+    testImplementation project(':stroom-security:stroom-security-mock')
     testImplementation project(':stroom-test-common')
 
     testImplementation libs.bundles.common.test.implementation
