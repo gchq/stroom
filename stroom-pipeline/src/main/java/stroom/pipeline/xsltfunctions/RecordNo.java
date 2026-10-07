@@ -47,7 +47,10 @@ class RecordNo extends AbstractLocationFunction {
 
     @Override
     String getValue(final SourceLocation location) {
-        return NullSafe.get(location, SourceLocation::getRecordIndex, i -> String.valueOf(i + 1));
+        return NullSafe.get(
+                location,
+                SourceLocation::getRecordNumber,
+                String::valueOf);
     }
 
     @Override

@@ -26,10 +26,17 @@ import net.sf.saxon.trans.XPathException;
 
 @XsltFunctionDef(
         name = Put.FUNCTION_NAME,
-        helpAnchor = "put-and-get",
         commonCategory = XsltFunctionCategory.PIPELINE,
         commonDescription = """
                 Stores a string under a key for retrieval by `get()` during the current pipeline process.
+
+                Values are stored against a key name so that multiple values can be stored.
+                These functions can be used for many purposes but are most commonly used to count a number
+                of records that meet certain criteria.
+
+                The map is in the scope of the current pipeline process so values do not live after the stream
+                has been processed.
+                Also, the map will only contain entries that were `put()` within the current pipeline process.
                 """,
         commonReturnType = XsltDataType.EMPTY_SEQUENCE,
         commonReturnDescription = "An empty sequence.",

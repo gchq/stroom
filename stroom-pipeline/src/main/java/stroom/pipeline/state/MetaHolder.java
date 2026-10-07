@@ -42,6 +42,13 @@ public class MetaHolder implements Holder {
         return NullSafe.get(meta, Meta::getId);
     }
 
+    /// Convenience method instead of calling `getMeta().getParentId()`
+    ///
+    /// @return The parent meta ID or null if no meta is set
+    public Long getParentMetaId() {
+        return NullSafe.get(meta, Meta::getParentMetaId);
+    }
+
     public void setMeta(final Meta meta) {
         this.meta = meta;
     }

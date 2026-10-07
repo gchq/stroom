@@ -18,6 +18,7 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.feed.api.FeedProperties;
 import stroom.pipeline.state.FeedHolder;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -71,9 +72,9 @@ class Classification extends StroomExtensionFunctionCall {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 }

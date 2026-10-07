@@ -20,6 +20,7 @@ import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -80,7 +81,7 @@ class Dictionary extends StroomExtensionFunctionCall {
 
         try {
             final String name = getSafeString(functionName, context, arguments, 0);
-            if (name != null && !name.isEmpty()) {
+            if (NullSafe.isNonEmptyString(name)) {
                 if (cachedData == null) {
                     cachedData = new HashMap<>();
                 }
@@ -141,9 +142,9 @@ class Dictionary extends StroomExtensionFunctionCall {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 }

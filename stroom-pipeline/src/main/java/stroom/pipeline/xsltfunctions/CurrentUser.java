@@ -38,26 +38,22 @@ import java.util.function.Function;
         commonDescription = """
                 Returns the identity of the user Stroom is processing as. This is mainly useful in interactive
                 processing, such as a search.
+
+                The form of the user's identity returned is controlled by the optional `form` argument.
+                By default, the display name is used, falling back to the subject identifier if there is no
+                display name.
                 """,
         commonReturnType = XsltDataType.STRING,
         commonReturnDescription = "The requested user identity, or an empty sequence if unavailable.",
         signatures = {
                 @XsltFunctionSignature(
-                        description = """
-                                Returns the user's display name, falling back to the subject identifier.
-                                """,
-                        args = {}
-                ),
-                @XsltFunctionSignature(
-                        description = """
-                                Returns the selected form of the user's identity.
-                                """,
                         args = {
                                 @XsltFunctionArg(
                                         name = "form",
-                                        description = "`display` (default), `subject` or `full`. Unknown or empty " +
-                                                "values use " +
-                                        "`display`.",
+                                        description = "The form of the user's identity to return. If not provided " +
+                                                      "'display name is used, falling back to the subject " +
+                                                      "identifier if there is no display name.",
+                                        isOptional = true,
                                         argType = XsltDataType.STRING,
                                         allowedValues = {"display", "subject", "full"}
                                 )

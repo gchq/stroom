@@ -16,8 +16,8 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -59,17 +59,16 @@ class SourceId extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            final Meta meta = metaHolder.getMeta();
-            if (meta != null) {
-                result = String.valueOf(meta.getId());
-            }
+            result = NullSafe.get(metaHolder.getMetaId(), String::valueOf);
         } catch (final Exception e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        // TODO I have no idea why this is returning a StringValue rather than an Int64Value,
+        //  as it is coming from a long
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 }

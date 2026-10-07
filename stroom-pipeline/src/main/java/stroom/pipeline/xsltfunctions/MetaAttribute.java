@@ -18,6 +18,7 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.data.store.api.DataService;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -75,7 +76,7 @@ public class MetaAttribute extends StroomExtensionFunctionCall {
                 key = getSafeString(functionName, context, arguments, 0);
 
                 if (metaAttributes == null) {
-                    metaAttributes = dataService.metaAttributes(metaHolder.getMeta().getId());
+                    metaAttributes = dataService.metaAttributes(metaHolder.getMetaId());
                 }
                 result = metaAttributes.get(key);
             } catch (final XPathException | RuntimeException e) {
@@ -85,9 +86,9 @@ public class MetaAttribute extends StroomExtensionFunctionCall {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 }

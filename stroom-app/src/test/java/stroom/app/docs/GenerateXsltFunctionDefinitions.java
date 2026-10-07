@@ -2,8 +2,10 @@ package stroom.app.docs;
 
 
 import stroom.docs.shared.NotDocumented;
+import stroom.pipeline.xsltfunctions.XsltDataType;
 import stroom.pipeline.xsltfunctions.XsltFunctionCategory;
 import stroom.pipeline.xsltfunctions.XsltFunctionDef;
+import stroom.pipeline.xsltfunctions.XsltFunctionSignature;
 import stroom.test.common.docs.StroomDocsUtil;
 import stroom.test.common.docs.StroomDocsUtil.GeneratesDocumentation;
 import stroom.util.exception.ThrowingConsumer;
@@ -13,6 +15,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.NullSafe;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -21,7 +24,6 @@ import io.github.classgraph.ScanResult;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -91,7 +93,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                         }));
             }
 
-            final List<AnnotatedClass<XsltFunctionDef>> annotatedClasses = getAllFunctionDefs(scanResult);
+            final List<AnnotatedClass> annotatedClasses = getAllFunctionDefs(scanResult);
             annotatedClasses.forEach(this::processFunction);
             produceIndexFile(annotatedClasses);
             LOGGER.info("All XSLT functions present in the documentation content");
@@ -100,13 +102,14 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         }
     }
 
-    private void produceIndexFile(final List<AnnotatedClass<XsltFunctionDef>> annotatedClasses) {
-        final Map<XsltFunctionCategory, List<AnnotatedClass<XsltFunctionDef>>> groups = annotatedClasses.stream()
+    private void produceIndexFile(final List<AnnotatedClass> annotatedClasses) {
+
+        final Map<XsltFunctionCategory, List<AnnotatedClass>> groups = annotatedClasses.stream()
                 .collect(Collectors.groupingBy(annotatedClass -> {
-                    final XsltFunctionCategory[] categories = annotatedClass.annotation().commonCategory();
+                    final XsltFunctionCategory[] categories = annotatedClass.getAnnotation().commonCategory();
                     Objects.requireNonNull(categories, () -> LogUtil.message(
-                            "functions {} should have a commonCategory",
-                            annotatedClass.clazz().getName()));
+                            "function class {} should have a commonCategory",
+                            annotatedClass.getClazz().getName()));
                     return categories[0];
                 }));
 
@@ -118,14 +121,14 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                         entry.getKey().name()))
                 .forEach(entry -> {
                     final XsltFunctionCategory category = entry.getKey();
-                    final List<AnnotatedClass<XsltFunctionDef>> classesGroup = entry.getValue();
+                    final List<AnnotatedClass> classesGroup = entry.getValue();
                     final String docFilename = category.name()
                                                        .toLowerCase()
                                                        .replace("[^a-zA-Z0-9-]", "-") + ".md";
                     final XsltFunctionCategoryIndex index = map.computeIfAbsent(category,
                             k -> new XsltFunctionCategoryIndex(null, k, docFilename));
                     classesGroup.forEach(annotatedClass -> {
-                        final String functionName = annotatedClass.annotation().name();
+                        final String functionName = annotatedClass.getEffectiveName();
                         index.addFunction(functionName);
                     });
                     final int errorCount = checkDocPage(index);
@@ -197,7 +200,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         StroomDocsUtil.doWithClassScanResult(this::generateAll);
     }
 
-    private List<AnnotatedClass<XsltFunctionDef>> getAllFunctionDefs(final ScanResult scanResult) {
+    private List<AnnotatedClass> getAllFunctionDefs(final ScanResult scanResult) {
         try {
             // Ideally we would look for all subclasses of StroomExtensionFunctionCall but that is not
             // visible from here.  However, TestXsltFunctions will check that all subclasses of that
@@ -209,7 +212,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                     .filter(Predicate.not(ClassInfo::isInterface))
                     .filter(Predicate.not(ClassInfo::isAbstract))
                     .map(ClassInfo::loadClass)
-                    .map(clazz -> {
+                    .flatMap(clazz -> {
                         final XsltFunctionDef anno = clazz.getAnnotation(XsltFunctionDef.class);
                         if (anno == null) {
                             LOGGER.error("XSLT Function {} is missing annotation {}",
@@ -217,7 +220,12 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                                     XsltFunctionDef.class.getName());
                             return null;
                         } else {
-                            return new AnnotatedClass<>(clazz, anno);
+                            final String[] aliases = anno.aliases();
+                            // Duplicate for each alias present
+                            return Stream.concat(
+                                            Stream.of(anno.name()),
+                                            NullSafe.stream(aliases))
+                                    .map(name -> new AnnotatedClass(clazz, anno, name));
                         }
                     })
                     .filter(Objects::nonNull)
@@ -236,14 +244,15 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         return StroomDocsUtil.resolveStroomDocsFile(DOCS_SUB_PATH.resolve(filename), false);
     }
 
-    private void processFunction(final AnnotatedClass<XsltFunctionDef> annotatedClass) {
+    private void processFunction(final AnnotatedClass annotatedClass) {
         try {
-            final XsltFunctionDef functionDef = annotatedClass.annotation();
-            final String json = objectMapper.writeValueAsString(functionDef);
-            final String filename = annotatedClass.annotation().name() + ".json";
+            final XsltFunctionDefPojo xsltFunctionDefPojo = annotatedClass.getXsltFunctionDefPojo();
+            // Use the XsltFunctionDefPojo as that has the mutated name/aliases
+            final String json = objectMapper.writeValueAsString(xsltFunctionDefPojo);
+            final String filename = annotatedClass.getEffectiveName() + ".json";
             final Path filePath = buildDataFilePath(filename);
             LOGGER.debug("{} - {} - {}\n{}",
-                    annotatedClass.clazz().getName(),
+                    annotatedClass.getClazz().getName(),
                     filename,
                     filePath.toAbsolutePath(),
                     json);
@@ -257,8 +266,76 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
     // --------------------------------------------------------------------------------
 
 
-    private record AnnotatedClass<T extends Annotation>(Class<?> clazz, T annotation) {
+    ///
+    private static final class AnnotatedClass {
 
+        private final Class<?> clazz;
+        private final XsltFunctionDef annotation;
+        private final XsltFunctionDefPojo xsltFunctionDefPojo;
+//        private final String effectiveName;
+//        private final List<String> effectiveAlises;
+
+
+        private AnnotatedClass(final Class<?> clazz,
+                               final XsltFunctionDef annotation,
+                               final String effectiveName) {
+            this.clazz = clazz;
+            this.annotation = annotation;
+            this.xsltFunctionDefPojo = XsltFunctionDefPojo.create(annotation, effectiveName);
+//            this.effectiveName = effectiveName;
+//            if (Objects.equals(effectiveName, annotation.name())) {
+//                this.effectiveAlises = NullSafe.asList(annotation.aliases());
+//            } else {
+//                // Acting under an alias so re-jig the aliases list to include the main
+//                // name and exclude the alias we are under.
+//                this.effectiveAlises = Stream.concat(
+//                                Stream.of(effectiveName),
+//                                NullSafe.stream(annotation.aliases()))
+//                        .filter(name ->
+//                                !Objects.equals(name, effectiveName))
+//                        .toList();
+//            }
+        }
+
+        public Class<?> getClazz() {
+            return clazz;
+        }
+
+        public XsltFunctionDef getAnnotation() {
+            return annotation;
+        }
+
+        public String getEffectiveName() {
+            return xsltFunctionDefPojo.getName();
+        }
+
+        public XsltFunctionDefPojo getXsltFunctionDefPojo() {
+            return xsltFunctionDefPojo;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            final AnnotatedClass that = (AnnotatedClass) o;
+            return Objects.equals(clazz, that.clazz) && Objects.equals(annotation,
+                    that.annotation) && Objects.equals(xsltFunctionDefPojo, that.xsltFunctionDefPojo);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(clazz, annotation, xsltFunctionDefPojo);
+        }
+
+        @Override
+        public String toString() {
+            return "AnnotatedClass{" +
+                   "clazz=" + clazz +
+                   ", annotation=" + annotation +
+                   ", xsltFunctionDefPojo=" + xsltFunctionDefPojo +
+                   '}';
+        }
     }
 
 
@@ -368,6 +445,142 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
                     {}
                     """, funcName, shortCode);
+        }
+    }
+
+
+    /// We need this class, which is basically the same as {@link XsltFunctionDef} so that
+    /// we can instantiate a new one as a modified copy of an {@link XsltFunctionDef} instance.
+    private static class XsltFunctionDefPojo {
+
+        @JsonProperty("name")
+        private final String name;
+
+        @JsonProperty("aliasOf")
+        private final String aliasOf;
+
+        @JsonProperty("helpAnchor")
+        private final String helpAnchor;
+
+        @JsonProperty("aliases")
+        private final String[] aliases;
+
+        @JsonProperty("commonCategory")
+        private final XsltFunctionCategory[] commonCategory;
+
+        @JsonProperty("commonSubCategories")
+        private final String[] commonSubCategories;
+
+        @JsonProperty("commonDescription")
+        private final String commonDescription;
+
+        @JsonProperty("commonReturnType")
+        private final XsltDataType[] commonReturnType;
+
+        @JsonProperty("commonReturnDescription")
+        private final String commonReturnDescription;
+
+        @JsonProperty("signatures")
+        private final XsltFunctionSignature[] signatures;
+
+        @JsonCreator
+        private XsltFunctionDefPojo(@JsonProperty("name") final String name,
+                                    @JsonProperty("name") final String aliasOf,
+                                    @JsonProperty("helpAnchor") final String helpAnchor,
+                                    @JsonProperty("aliases") final String[] aliases,
+                                    @JsonProperty("commonCategory") final XsltFunctionCategory[] commonCategory,
+                                    @JsonProperty("commonSubCategories") final String[] commonSubCategories,
+                                    @JsonProperty("commonDescription") final String commonDescription,
+                                    @JsonProperty("commonReturnType") final XsltDataType[] commonReturnType,
+                                    @JsonProperty("commonReturnDescription") final String commonReturnDescription,
+                                    @JsonProperty("signatures") final XsltFunctionSignature[] signatures) {
+            this.name = name;
+            this.aliasOf = aliasOf;
+            this.helpAnchor = helpAnchor;
+            this.aliases = aliases;
+            this.commonCategory = commonCategory;
+            this.commonSubCategories = commonSubCategories;
+            this.commonDescription = commonDescription;
+            this.commonReturnType = commonReturnType;
+            this.commonReturnDescription = commonReturnDescription;
+            this.signatures = signatures;
+        }
+
+        private static XsltFunctionDefPojo create(final XsltFunctionDef annotaion, final String effectiveName) {
+            if (Objects.equals(effectiveName, annotaion.name())) {
+                return new XsltFunctionDefPojo(
+                        annotaion.name(),
+                        null, // Not an alias, this is primary name
+                        annotaion.helpAnchor(),
+                        annotaion.aliases(),
+                        annotaion.commonCategory(),
+                        annotaion.commonSubCategories(),
+                        annotaion.commonDescription(),
+                        annotaion.commonReturnType(),
+                        annotaion.commonReturnDescription(),
+                        annotaion.signatures());
+            } else {
+                final boolean foundAlias = NullSafe.stream(annotaion.aliases())
+                        .anyMatch(aName -> Objects.equals(aName, effectiveName));
+                if (!foundAlias) {
+                    throw new IllegalArgumentException(
+                            "effectiveName '" + effectiveName + "' not found for function '" + annotaion.name() + "'");
+                }
+                final String[] newAliases = Stream.concat(
+                                Stream.of(annotaion.name()),
+                                NullSafe.stream(annotaion.aliases()))
+                        .filter(name ->
+                                !Objects.equals(name, effectiveName))
+                        .toArray(String[]::new);
+
+                return new XsltFunctionDefPojo(
+                        effectiveName,
+                        annotaion.name(), // This is an alias so record the primary name
+                        "", // Clear the help anchor as it is an alias
+                        newAliases,
+                        annotaion.commonCategory(),
+                        annotaion.commonSubCategories(),
+                        annotaion.commonDescription(),
+                        annotaion.commonReturnType(),
+                        annotaion.commonReturnDescription(),
+                        annotaion.signatures());
+            }
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public String getHelpAnchor() {
+            return helpAnchor;
+        }
+
+        public String[] getAliases() {
+            return aliases;
+        }
+
+        public XsltFunctionCategory[] getCommonCategory() {
+            return commonCategory;
+        }
+
+        public String[] getCommonSubCategories() {
+            return commonSubCategories;
+        }
+
+        public String getCommonDescription() {
+            return commonDescription;
+        }
+
+        public XsltDataType[] getCommonReturnType() {
+            return commonReturnType;
+        }
+
+        public String getCommonReturnDescription() {
+            return commonReturnDescription;
+        }
+
+        public XsltFunctionSignature[] getSignatures() {
+            return signatures;
         }
     }
 }
