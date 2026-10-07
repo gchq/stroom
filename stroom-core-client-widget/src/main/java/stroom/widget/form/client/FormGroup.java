@@ -138,9 +138,26 @@ public class FormGroup extends Composite implements HasWidgets {
 
     public void setIdentity(final String id) {
         this.id = id;
-        formLabel.setIdentity(id);
         if (childWidget != null) {
             childWidget.getElement().setId(id);
+        }
+        updateLabelTarget();
+    }
+
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        // The child may have changed its labelled element's id since it was added
+        updateLabelTarget();
+    }
+
+    // Makes the label for the child's labelled element: an element inside it for a widget with one
+    // (e.g. a tick box's input), otherwise the child itself, whose id is the group's identity
+    private void updateLabelTarget() {
+        if (childWidget instanceof HasLabelTarget) {
+            formLabel.setIdentity(((HasLabelTarget) childWidget).getLabelTargetId());
+        } else {
+            formLabel.setIdentity(id);
         }
     }
 
@@ -291,6 +308,7 @@ public class FormGroup extends Composite implements HasWidgets {
                 widget.getElement().setId(id);
             }
             widget.addStyleName("allow-focus");
+            updateLabelTarget();
         }
         updateFormGroupPanel();
 //
@@ -330,6 +348,7 @@ public class FormGroup extends Composite implements HasWidgets {
     @Override
     public void clear() {
         childWidget = null;
+        updateLabelTarget();
         helpHTML = null;
         helpText = null;
         descriptionHTML = null;

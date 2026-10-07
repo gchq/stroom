@@ -74,6 +74,10 @@ public final class TickBoxCellStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getAllByTitle(TICKED)).toHaveLength(2));
                     play.expect(play.querySelectorAll(".tickBox-noBorder")).toHaveLength(NAMES.size());
+                    // To assistive technology, each is a check box that can't be changed
+                    play.expect(play.getAllByRole("checkbox")).toHaveLength(NAMES.size());
+                    play.expect(rowTickBox(play, "Bravo")).toBeChecked();
+                    play.expect(rowTickBox(play, "Bravo")).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.querySelectorAll(HEADER_TICK_BOX)).toHaveLength(0);
                     play.click(rowTickBox(play, "Alpha"));
                     play.expect(play.getAllByTitle(TICKED)).toHaveLength(2);
@@ -86,11 +90,18 @@ public final class TickBoxCellStories {
         play.waitFor(() -> play.expect(play.querySelector(HEADER_TICK_BOX))
                 .toHaveAttribute("title", HALF_TICKED));
         play.expect(rowTickBox(play, "Bravo")).toHaveAttribute("title", TICKED);
+        // To assistive technology, each is a check box: the half-ticked header is 'mixed'
+        play.expect(play.getAllByRole("checkbox")).toHaveLength(NAMES.size() + 1);
+        play.expect(play.querySelector(HEADER_TICK_BOX)).toHaveAttribute("aria-checked", "mixed");
+        play.expect(rowTickBox(play, "Bravo")).toBeChecked();
+        play.expect(rowTickBox(play, "Alpha")).not().toBeChecked();
+        play.expect(rowTickBox(play, "Alpha")).toHaveAttribute("aria-disabled", "false");
 
         // A half-ticked header ticks every row
         play.click(play.querySelector(HEADER_TICK_BOX));
         play.waitFor(() -> play.expect(onChange).toHaveBeenLastCalledWith("Alpha,Bravo,Charlie,Delta"));
         play.expect(play.querySelector(HEADER_TICK_BOX)).toHaveAttribute("title", TICKED);
+        play.expect(play.querySelector(HEADER_TICK_BOX)).toBeChecked();
         play.expect(play.getAllByTitle(TICKED)).toHaveLength(NAMES.size() + 1);
 
         // A ticked header unticks them all

@@ -21,7 +21,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
-import stroom.widget.util.client.SvgImageUtil;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.cell.client.AbstractEditableCell;
 import com.google.gwt.cell.client.Cell;
@@ -140,7 +140,7 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                     }
 
                     // Update the tick image immediately.
-                    final SafeHtml html = appearance.getHTML(state);
+                    final SafeHtml html = appearance.getHTML(state, clickable);
                     parent.setInnerHTML(html.asString());
                 }
 
@@ -158,6 +158,11 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                 }
             }
         }
+    }
+
+    /// @return Whether the tick can be changed by clicking it (or pressing Enter or Space).
+    public boolean isClickable() {
+        return clickable;
     }
 
     private boolean isTickBox(final NativeEvent event) {
@@ -202,7 +207,13 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                     TickBoxState value,
                     SafeHtmlBuilder sb);
 
-        SafeHtml getHTML(TickBoxState value);
+        /**
+         * The tick box for a state.
+         *
+         * @param value     the state
+         * @param clickable whether the tick can be changed by clicking it
+         */
+        SafeHtml getHTML(TickBoxState value, boolean clickable);
     }
 
 
@@ -242,36 +253,41 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             }
 
             if (value != null) {
-                sb.append(getHTML(value));
+                sb.append(getHTML(value, cell.isClickable()));
             }
         }
 
         @Override
-        public SafeHtml getHTML(final TickBoxState value) {
+        public SafeHtml getHTML(final TickBoxState value, final boolean clickable) {
             if (template == null) {
                 template = GWT.create(Template.class);
             }
 
+            // The tick box is a check box to assistive technology: half-ticked is 'mixed', and one
+            // that can't be clicked is disabled
+            final String ariaDisabled = String.valueOf(!clickable);
             final SafeHtml safeHtml;
             switch (value) {
                 case TICK:
-                    safeHtml = SvgImageUtil.toSafeHtml(
+                    safeHtml = template.tick(
                             "Ticked",
-                            SvgImage.TICK,
-                            TICKBOX_CLASSNAME,
-                            additionalClassNames,
-                            TICK);
+                            SvgImage.BASE_CLASS_NAME + " " + SvgImage.TICK.getClassName() + " "
+                            + TICKBOX_CLASSNAME + additionalClassNames + TICK,
+                            ariaDisabled,
+                            SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.TICK.getSvg()));
                     break;
                 case HALF_TICK:
                     safeHtml = template.halfTick(
                             "Half-Ticked",
                             TICKBOX_CLASSNAME + additionalClassNames + HALF_TICK,
+                            ariaDisabled,
                             HALF_TICK_INNER);
                     break;
                 case UNTICK:
                     safeHtml = template.untick(
                             "Not Ticked",
-                            TICKBOX_CLASSNAME + additionalClassNames + UNTICK);
+                            TICKBOX_CLASSNAME + additionalClassNames + UNTICK,
+                            ariaDisabled);
                     break;
                 default:
                     safeHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
@@ -288,11 +304,17 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
 
     public interface Template extends SafeHtmlTemplates {
 
-        @Template("<div title=\"{0}\" class=\"{1}\"><div class=\"{2}\"></div></div>")
-        SafeHtml halfTick(String title, String outerClassName, String innerClassName);
+        @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"true\" "
+                  + "aria-disabled=\"{2}\">{3}</div>")
+        SafeHtml tick(String title, String className, String ariaDisabled, SafeHtml svg);
 
-        @Template("<div title=\"{0}\" class=\"{1}\"></div>")
-        SafeHtml untick(String title, String outerClassName);
+        @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"mixed\" "
+                  + "aria-disabled=\"{2}\"><div class=\"{3}\"></div></div>")
+        SafeHtml halfTick(String title, String outerClassName, String ariaDisabled, String innerClassName);
+
+        @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"false\" "
+                  + "aria-disabled=\"{2}\"></div>")
+        SafeHtml untick(String title, String outerClassName, String ariaDisabled);
     }
 
 

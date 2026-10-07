@@ -33,9 +33,11 @@
 package stroom.widget.tickbox.client.view;
 
 import stroom.widget.form.client.FormLabel;
+import stroom.widget.form.client.HasLabelTarget;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.WhiteSpace;
@@ -97,7 +99,7 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Boolean>, Focus,
         HasWordWrap, HasDirectionalSafeHtml, HasDirectionEstimator,
-        IsEditor<LeafValueEditor<Boolean>> {
+        IsEditor<LeafValueEditor<Boolean>>, HasLabelTarget {
 
     private static final String CHECK = "<svg aria-hidden=\"true\" focusable=\"false\" data-prefix=\"fas\" data-icon=\"check\" class=\"svg-inline--fa fa-check fa-w-16 fa-lg \" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 512 512\"><path fill=\"currentColor\" d=\"M173.898 439.404l-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0L192 312.69 432.095 72.596c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z\"></path></svg>";
 
@@ -130,9 +132,11 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
 
         getElement().appendChild(label.getElement());
 
-//        String uid = DOM.createUniqueId();
-//        inputElem.setPropertyString("id", uid);
-//        labelElem.setHtmlFor(uid);
+        // The label is for the input, so that it names the tick box and clicking it toggles the tick,
+        // until setIdentity gives them an id of their own
+        final String uid = DOM.createUniqueId();
+        inputElem.setId(uid);
+        label.setIdentity(uid);
 
         directionalTextHelper = new DirectionalTextHelper(checkmarkElem, true);
 
@@ -193,6 +197,12 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     public void setIdentity(final String identity) {
         this.label.setIdentity(identity);
         this.inputElem.setId(identity);
+    }
+
+    /// @return The id of the tick box's input, which is what a label for the tick box is for.
+    @Override
+    public String getLabelTargetId() {
+        return inputElem.getId();
     }
 
     @Override
@@ -438,10 +448,15 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         addClickHandler(new ClickHandler() {
             @Override
             public void onClick(final ClickEvent event) {
-                // Checkboxes always toggle their value, no need to compare
-                // with old value. Radio buttons are not so lucky, see
-                // overrides in RadioButton
-                ValueChangeEvent.fire(CustomCheckBox.this, getValue());
+                // Only a click on the input toggles it. A click on the label is followed by the
+                // browser's click on the input, and a click elsewhere in the widget changes nothing.
+                final EventTarget target = event.getNativeEvent().getEventTarget();
+                if (Element.is(target) && inputElem.isOrHasChild(Element.as(target))) {
+                    // Checkboxes always toggle their value, no need to compare
+                    // with old value. Radio buttons are not so lucky, see
+                    // overrides in RadioButton
+                    ValueChangeEvent.fire(CustomCheckBox.this, getValue());
+                }
             }
         });
     }

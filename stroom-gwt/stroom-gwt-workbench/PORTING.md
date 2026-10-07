@@ -731,7 +731,8 @@ one closest to your screen.
   `play.click(play.within(play.getByTitle("Edit schedule")).querySelector(StroomDom.COMMAND_LINK_OPEN))`.
   To keep a multi-selection, `play.fireEvent().mouseDown(...)` on the icon (the grid then leaves the
   selection alone).
-* Grid tick boxes are `TickBoxCell` divs (`.tickBox`), not inputs; list boxes (`<select multiple>`)
+* Grid tick boxes are `TickBoxCell` divs (`.tickBox`) with the `checkbox` role, not inputs, so
+  `getAllByRole("checkbox")` finds them too; list boxes (`<select multiple>`)
   are driven with `play.selectOptions(...)`; context menus with `play.rightClick(cell)`.
 * Dialogs and menus are on the body: `play.screen()`. A React `findByText` in the canvas for a
   dialog becomes a `screen` query with a `// Differs from React:` comment.

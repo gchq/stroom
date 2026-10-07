@@ -244,14 +244,11 @@ public final class EditAccountDialogStories {
                 });
     }
 
-    /// Differs from React: the 'Enabled' label is for the tick box's container (a `div`), not its
-    /// input, so the tick box has no accessible name; it is found in the label's form group (by
-    /// type, not role, as a hidden one has no role).
+    /// Found by its label, not its role, as a hidden one has no role.
     ///
     /// @return The 'Enabled' tick box.
     private static Query enabledTickBox(final Play screen) {
-        return screen.within(screen.getByText("Enabled", "label").closest(".form-group"))
-                .querySelector("input[type='checkbox']");
+        return screen.getByLabelText("Enabled");
     }
 
     private static void expectNoProblems(final Play play) {
