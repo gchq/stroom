@@ -27,10 +27,18 @@ import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.TypeLiteral;
+import com.google.inject.multibindings.MapBinderBinding;
+import com.google.inject.multibindings.MultibinderBinding;
+import com.google.inject.multibindings.MultibindingsTargetVisitor;
+import com.google.inject.multibindings.OptionalBinderBinding;
 import com.google.inject.spi.ConstructorBinding;
+import com.google.inject.spi.DefaultBindingTargetVisitor;
+import com.google.inject.spi.Element;
 import com.google.inject.spi.ElementSource;
+import com.google.inject.spi.Elements;
 import com.google.inject.spi.InstanceBinding;
 import com.google.inject.spi.LinkedKeyBinding;
 import com.google.inject.spi.ProviderBinding;
@@ -52,6 +60,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class GuiceTestUtil {
 
@@ -95,7 +104,7 @@ public class GuiceTestUtil {
         return new MockBinderBuilder(binder);
     }
 
-    public static String dumpGuiceModuleHierarchy(final com.google.inject.Module... modules) {
+    public static String dumpGuiceModuleHierarchy(final Module... modules) {
         final Map<String, ModuleInfo> allModuleInfoMap = buildModuleInfoMap(modules);
 
         final StringBuilder stringBuilder = new StringBuilder();
@@ -108,7 +117,7 @@ public class GuiceTestUtil {
         return stringBuilder.toString();
     }
 
-    public static String dumpBindsSortedByKey(final com.google.inject.Module... modules) {
+    public static String dumpBindsSortedByKey(final Module... modules) {
         final Map<String, ModuleInfo> allModuleInfoMap = buildModuleInfoMap(modules);
 
         final StringBuilder stringBuilder = new StringBuilder();
@@ -124,6 +133,50 @@ public class GuiceTestUtil {
                             .append(")\n");
                 });
         return stringBuilder.toString();
+    }
+
+    /// Get the targets for a Guice multibinder, given its key and the modules that bind those targets.
+    public static Set<? extends Class<?>> getMultibindTargets(final Key<?> multibindKey,
+                                                              final Module... modules) {
+        Objects.requireNonNull(multibindKey);
+        final List<Element> allElements = Elements.getElements(modules);
+        MultibinderBinding<?> multibinderBinding = null;
+        for (final Element element : allElements) {
+            if (element instanceof ProviderInstanceBinding<?> binding) {
+                if (Objects.equals(binding.getKey(), multibindKey)) {
+                    System.out.println("ProviderInstanceBinding: " + element);
+                    multibinderBinding = binding.acceptTargetVisitor(new MyMultibindingVisitor());
+                    break;
+                }
+            }
+        }
+        Objects.requireNonNull(multibinderBinding);
+
+        final List<Element> mapElements = getMultibindElements(multibinderBinding, allElements);
+        final Set<? extends Class<?>> targets = mapElements.stream()
+                .peek(element -> LOGGER.debug("element: {}", element))
+                .filter(LinkedKeyBinding.class::isInstance)
+                .map(element -> (LinkedKeyBinding<?>) element)
+                .map(LinkedKeyBinding::getLinkedKey)
+                .map(Key::getTypeLiteral)
+                .map(TypeLiteral::getRawType)
+                .collect(Collectors.toSet());
+        LOGGER.debug("getMultibindTargets() - multibindKey: {}, targets: {}", multibindKey, targets);
+        return targets;
+    }
+
+    private static List<Element> getMultibindElements(final MultibinderBinding<?> binding,
+                                                      final List<Element> allElements) {
+//        final List<Element> elements = new ArrayList<>();
+//        for (final Element element : Elements.getElements(modules)) {
+//            if (binding.containsElement(element)) {
+//                elements.add(element);
+//            }
+//        }
+//        return elements;
+        return allElements.stream()
+                .filter(binding::containsElement)
+                .toList();
     }
 
     private static Map<String, ModuleInfo> buildModuleInfoMap(final com.google.inject.Module[] modules) {
@@ -493,6 +546,27 @@ public class GuiceTestUtil {
             final T mock = Mockito.mock(interfaceType);
             binder.bind(interfaceType).toInstance(mock);
             return this;
+        }
+    }
+
+    private static class MyMultibindingVisitor
+            extends DefaultBindingTargetVisitor<Object, MultibinderBinding<?>>
+            implements MultibindingsTargetVisitor<Object, MultibinderBinding<?>> {
+
+        @Override
+        public MultibinderBinding<?> visit(final MultibinderBinding<?> multibinding) {
+            System.out.println(" MultiBind Set Key: " + multibinding.getSetKey());
+            return multibinding;
+        }
+
+        @Override
+        public MultibinderBinding<?> visit(final MapBinderBinding<?> mapbinding) {
+            return null;
+        }
+
+        @Override
+        public MultibinderBinding<?> visit(final OptionalBinderBinding<?> optionalbinding) {
+            return null;
         }
     }
 }

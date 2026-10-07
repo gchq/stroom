@@ -41,9 +41,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
-@EntityEventHandler(
-        type = S3ConfigDoc.TYPE,
-        action = {EntityAction.DELETE, EntityAction.UPDATE, EntityAction.CLEAR_CACHE})
+@EntityEventHandler(type = S3ConfigDoc.TYPE, action = {
+        EntityAction.DELETE,
+        EntityAction.UPDATE,
+        EntityAction.CLEAR_CACHE})
 public class S3ClientConfigCache implements Clearable, EntityEvent.Handler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(S3ClientConfigCache.class);
@@ -96,22 +97,24 @@ public class S3ClientConfigCache implements Clearable, EntityEvent.Handler {
     @Override
     public void onChange(final EntityEvent event) {
         LOGGER.debug("Received event {}", event);
-        final EntityAction eventAction = event.getAction();
+        if (event != null) {
+            final EntityAction eventAction = event.getAction();
 
-        switch (eventAction) {
-            case CLEAR_CACHE -> {
-                LOGGER.debug("Clearing cache");
-                clear();
+            switch (eventAction) {
+                case CLEAR_CACHE -> {
+                    LOGGER.debug("Clearing cache");
+                    clear();
+                }
+                case UPDATE, DELETE -> {
+                    NullSafe.consume(
+                            event.getDocRef(),
+                            docRef -> {
+                                LOGGER.debug("Invalidating docRef {}", docRef);
+                                cache.invalidate(docRef);
+                            });
+                }
+                default -> LOGGER.debug("Unexpected event action {}", eventAction);
             }
-            case UPDATE, DELETE -> {
-                NullSafe.consume(
-                        event.getDocRef(),
-                        docRef -> {
-                            LOGGER.debug("Invalidating docRef {}", docRef);
-                            cache.invalidate(docRef);
-                        });
-            }
-            default -> LOGGER.debug("Unexpected event action {}", eventAction);
         }
     }
 }
