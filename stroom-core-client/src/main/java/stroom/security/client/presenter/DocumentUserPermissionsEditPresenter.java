@@ -66,6 +66,7 @@ public class DocumentUserPermissionsEditPresenter
 
     private UserRef relatedUser;
     private DocRef relatedDoc;
+    private Runnable onPermissionsChanged = () -> {};
 
     @Inject
     public DocumentUserPermissionsEditPresenter(final EventBus eventBus,
@@ -89,6 +90,7 @@ public class DocumentUserPermissionsEditPresenter
                      final TaskMonitorFactory taskMonitorFactory) {
         relatedDoc = docRef;
         relatedUser = permissions.getUserRef();
+        onPermissionsChanged = onClose;
 
         // Fetch detailed permissions report.
         docPermissionClient.getDocUserPermissionsReport(relatedDoc, relatedUser, response ->
@@ -151,8 +153,8 @@ public class DocumentUserPermissionsEditPresenter
 
     @Override
     public void onEditCreatePermissions(final TaskMonitorFactory taskMonitorFactory) {
-        documentUserCreatePermissionsEditPresenterProvider.get().show(relatedDoc, relatedUser, () -> {
-        }, taskMonitorFactory);
+        documentUserCreatePermissionsEditPresenterProvider.get().show(
+                relatedDoc, relatedUser, onPermissionsChanged, taskMonitorFactory);
     }
 
     @Override
