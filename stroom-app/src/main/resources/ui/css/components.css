@@ -1827,6 +1827,13 @@ button.main-menu svg {
     margin-bottom: 0rem;
 }
 
+/* The help button is a little taller than the label text. Let it overlap the label row rather than
+   make the row taller, so that adding help to a field doesn't make every form longer. Equal negative
+   margins keep it centred on the label without counting towards the row's height. */
+.form-group-label-container > .help-button {
+    margin-block: -50px;
+}
+
 .form-label-padding .form-group-label,
 .form-label-padding .help-button {
     margin-top: var(--control__gap--vertical);
