@@ -36,7 +36,7 @@ import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.security.api.HashFunction;
-import stroom.security.common.impl.HashFunctionFactoryImpl;
+import stroom.security.common.impl.hash.HashFunctionFactoryImpl;
 import stroom.security.mock.MockCommonSecurityContext;
 import stroom.security.shared.HashAlgorithm;
 import stroom.test.common.TemporaryPathCreator;
