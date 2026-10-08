@@ -75,6 +75,9 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
         renderBox = new SimplePanel();
         renderBox.addStyleName("SelectionBox-renderBox stroom-control allow-focus");
+        // A picture of the value, which the text box (the named control) also holds, so screen
+        // readers don't read it twice
+        renderBox.getElement().setAttribute("aria-hidden", "true");
 
         final FlowPanel outer = new FlowPanel();
         outer.addStyleName("SelectionBox-outer");

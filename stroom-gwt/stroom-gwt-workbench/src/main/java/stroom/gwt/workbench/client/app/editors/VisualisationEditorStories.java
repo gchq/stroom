@@ -128,8 +128,12 @@ public final class VisualisationEditorStories {
                     // Differs from React: GWT's Tree expands an item from its open/close image
                     play.click(play.within(play.getByText("src").closest("tr")).querySelector("img"));
                     play.waitFor(() -> play.expect(play.getByText("main.js")).toBeVisible());
+                    // Until a file is selected, the editor's area asks for one (it was blank)
+                    final Query placeholder = play.getByText("Select a file to view or edit it");
+                    play.expect(placeholder).toBeVisible();
                     play.click(play.getByText("main.js"));
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
+                    play.expect(placeholder).not().toBeVisible();
                     // 'Add file' opens a menu (Add New Folder, Add New File, Upload File); 'Add New
                     // File' opens the name dialog
                     play.click(play.getByRole("button", "Add file"));

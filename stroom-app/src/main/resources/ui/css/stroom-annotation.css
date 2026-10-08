@@ -175,6 +175,13 @@
     text-decoration: underline;
 }
 
+/* Already assigned to you, or read only: shown, but greyed and not underlined */
+.annotationAssignYourself.disabled {
+    color: var(--text-color--disabled);
+    cursor: default;
+    text-decoration: none;
+}
+
 .annotationDurationLabel {
 }
 

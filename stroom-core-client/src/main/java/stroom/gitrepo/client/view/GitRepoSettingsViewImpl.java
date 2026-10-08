@@ -48,6 +48,9 @@ public class GitRepoSettingsViewImpl
      */
     private final Widget widget;
 
+    private static final String AUTO_PUSH_TITLE = "Automatically push changes to the Git repository";
+    private static final String PUSH_TITLE = "Push any changes into the Git repository";
+
     @UiField
     FormGroup fgContentStore;
     @UiField
@@ -210,25 +213,28 @@ public class GitRepoSettingsViewImpl
             txtGitCommitToPull.setVisible(true);
             txtGitCommitToPull.setEnabled(true);
 
-            // Is commit specified? If not can push to Git
-            // as long as the URL is specified
-            if (txtGitCommitToPull.getText().isEmpty()) {
-                fgGitAutoPush.setVisible(true);
-                btnGitRepoPush.setVisible(true);
-
-                if (!txtGitUrl.getText().isEmpty()) {
-                    chkGitAutoPush.setEnabled(true);
-                    // Pushing changes the repository, so not allowed for a read-only document
-                    btnGitRepoPush.setEnabled(!readOnly);
-                } else {
-                    chkGitAutoPush.setEnabled(false);
-                    btnGitRepoPush.setEnabled(false);
-                }
-
+            // Pushing needs a URL, and isn't possible while pinned to a commit. The controls stay
+            // shown, disabled with the reason, so it is clear that pushing exists
+            final String pushUnavailableReason;
+            if (!txtGitCommitToPull.getText().isEmpty()) {
+                pushUnavailableReason = "Not available while a commit hash is set";
+            } else if (txtGitUrl.getText().isEmpty()) {
+                pushUnavailableReason = "Set the Git URL first";
             } else {
-                fgGitAutoPush.setVisible(false);
-                btnGitRepoPush.setVisible(false);
+                pushUnavailableReason = null;
             }
+            fgGitAutoPush.setVisible(true);
+            btnGitRepoPush.setVisible(true);
+            final boolean canPush = pushUnavailableReason == null;
+            chkGitAutoPush.setEnabled(canPush);
+            // Pushing changes the repository, so not allowed for a read-only document
+            btnGitRepoPush.setEnabled(canPush && !readOnly);
+            chkGitAutoPush.setTitle(canPush
+                    ? AUTO_PUSH_TITLE
+                    : pushUnavailableReason);
+            btnGitRepoPush.setTitle(canPush
+                    ? PUSH_TITLE
+                    : pushUnavailableReason);
         }
 
         // Can pull and check for updates if URL is set

@@ -392,11 +392,15 @@ public final class DashboardComponentStories {
                     // Differs from React: the button is titled 'Enter Stepping Mode'
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-                    // Hidden until a row is selected, as there is nothing to step (it was once shown
-                    // with the component's empty text, and then alerted 'No stream id')
-                    play.expect(play.getByTitle(STEP)).not().toBeVisible();
+                    // Disabled until a row is selected, as there is nothing to step, saying why (it was
+                    // once enabled and alerted 'No stream id', then hidden). It is named for screen
+                    // readers by its tooltip, and stays focusable
+                    final Query waiting = play.getByRole("button", "Select a row to step through its source");
+                    play.expect(waiting).toBeVisible();
+                    play.expect(waiting).toHaveAttribute("aria-disabled", "true");
                     play.click(play.getByText("alpha"));
-                    play.waitFor(() -> play.expect(play.getByTitle(STEP)).toBeVisible());
+                    play.waitFor(() -> play.expect(play.getByRole("button", STEP))
+                            .not().toHaveAttribute("aria-disabled"));
                     play.click(play.getByTitle(STEP));
                     // Differs from React: the play checks the app's stepping event (React's no-op
                     // appActions), for the selected row's stream

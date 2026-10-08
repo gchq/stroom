@@ -150,12 +150,17 @@ public final class ScreenHarness {
     private final Map<String, Spy> spies = new HashMap<>();
     private final FlowPanel host = new FlowPanel();
     private boolean disposed;
+    // TEMPORARY memory probe (see MemoryProbe): the presenters shown, held only until the probe
+    // closes them, rather than until the story renders again
+    private boolean probe;
+    private final List<PresenterWidget<?>> probeShown = new ArrayList<>();
 
     private ScreenHarness(final Builder builder) {
         this.context = builder.context;
         // Register the clean up first, so that if anything below fails the partly built harness
         // is still undone
         context.addCleanUp(this::dispose);
+        probe = MemoryProbe.isRequested();
 
         // Spies must be registered as the story renders, for plays to check they weren't called
         for (final String name : new String[]{
@@ -324,6 +329,10 @@ public final class ScreenHarness {
                     if (!disposed) {
                         applyUserPreferences(preferences);
                         action.run();
+                        // TEMPORARY memory probe: lets the page close and reopen the screen
+                        if (probe) {
+                            MemoryProbe.install(this, action);
+                        }
                     }
                 }, taskMonitorFactory);
             }
@@ -362,7 +371,38 @@ public final class ScreenHarness {
         widget.getElement().getStyle().setProperty("inset", "0");
         content.setWidget(widget);
         add(content);
+        if (probe) {
+            probeShown.add(presenter);
+            return presenter;
+        }
         return unbindOnCleanUp(presenter);
+    }
+
+    /// @return Whether the harness is probing.
+    public boolean isProbe() {
+        return probe;
+    }
+
+    /// TEMPORARY memory probe: removes what is shown, as closing a Stroom content tab does
+    /// (`removeFromParent()`), and forgets its presenters, unbinding them first if asked (the
+    /// proposed fix).
+    ///
+    /// @param unbind Whether to unbind the presenters.
+    public void probeCloseAll(final boolean unbind) {
+        // Popups (dialogs) are hidden as Stroom hides them, which unbinds their presenters
+        for (final PresenterWidget<?> popup : List.copyOf(popups.getOpenPopups())) {
+            HidePopupEvent.builder(popup).autoClose(true).ok(false).fire();
+        }
+        host.clear();
+        if (unbind) {
+            probeShown.forEach(PresenterWidget::unbind);
+        }
+        probeShown.clear();
+    }
+
+    /// @return The number of widgets and popups shown.
+    public int probeShownCount() {
+        return host.getWidgetCount() + popups.getOpenPopups().size();
     }
 
     /// @return The story's widget, which holds any widgets added. Dialogs are shown on the

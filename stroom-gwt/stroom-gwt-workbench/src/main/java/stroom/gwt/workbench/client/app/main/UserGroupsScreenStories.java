@@ -94,12 +94,12 @@ public final class UserGroupsScreenStories {
                 .story("UserGroups", UserGroupsScreenStories::render)
                 .withPlay(play -> {
                     play.findAllByText("Administrators");
-                    // Differs from React: both membership panes are labelled 'No Selection' (the
-                    // Members pane's label is hidden with it)
-                    play.expect(play.getAllByText("No Selection").nth(0)).toBeInTheDocument();
+                    // Differs from React: both membership panes are labelled 'No Selection'
+                    play.expect(play.getAllByText("No Selection")).toHaveLength(2);
                     play.expect(play.queryByText(TextMatch.startingWith("Members of "))).toBeNull();
-                    // The dimmed Member Of pane is inert, so it can't be reached or used (it once
-                    // only looked unavailable)
+                    // Both panes are shown dimmed and inert, so they can't be reached or used (the
+                    // Member Of pane once only looked unavailable, and the Members pane was hidden)
+                    play.expect(play.querySelectorAll("[inert]")).toHaveLength(2);
                     play.expect(play.querySelector("[inert]")).toHaveTextContent(TextMatch.containing("No Selection"));
                     // Select the group: both panes name it, and its members (Alice) load
                     play.click(play.getAllByText("Administrators").nth(0));

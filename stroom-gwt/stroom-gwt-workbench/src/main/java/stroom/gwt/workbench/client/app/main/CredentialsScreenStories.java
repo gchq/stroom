@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.app.security.SecurityPlays;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -79,6 +80,14 @@ public final class CredentialsScreenStories {
                     play.findByText("My Creds");
                     play.expect(play.getByText("Username / Password")).toBeInTheDocument();
                     final Play dialog = openNewCredentials(play);
+                    // Expires is shown but disabled until 'Credentials expire' is ticked (it was
+                    // hidden, so the dialog changed shape)
+                    final Query expires = dialog.getByLabelText("Expires");
+                    play.expect(expires).toBeVisible();
+                    play.expect(expires).toBeDisabled();
+                    play.click(dialog.getByRole("checkbox", "Credentials expire"));
+                    play.waitFor(() -> play.expect(expires).toBeEnabled());
+                    play.click(dialog.getByRole("checkbox", "Credentials expire"));
                     play.type(dialog.getByLabelText("Name"), "CI Token");
                     play.type(dialog.getByLabelText("User Name"), "bob");
                     play.type(dialog.getByLabelText("Password"), "s3cret");

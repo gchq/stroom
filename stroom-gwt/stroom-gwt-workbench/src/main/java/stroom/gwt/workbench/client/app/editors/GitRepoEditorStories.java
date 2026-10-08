@@ -134,13 +134,15 @@ public final class GitRepoEditorStories {
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
                     DocEditors.expectNoProblems(play);
                 })
-                // A commit hash makes the repository pull-only: Auto-push and Push are hidden
-                .story("CommitHidesPush", context -> render(context, new Fixtures().commit("abc123")))
+                // A commit hash makes the repository pull-only: Auto-push and Push are shown but
+                // disabled, saying why (they were once hidden, so it wasn't clear pushing exists)
+                .story("CommitDisablesPush", context -> render(context, new Fixtures().commit("abc123")))
                 .withPlay(play -> {
                     play.findByRole("button", StroomDom.button("Pull from Git"));
-                    play.expect(play.queryByRole("button", StroomDom.button("Push to Git"))).toBeNull();
-                    // Differs from React: GWT hides the group (display: none) rather than removing it
-                    play.expect(play.getByText("Automatically push", "label")).not().toBeVisible();
+                    final Query push = play.getByRole("button", StroomDom.button("Push to Git"));
+                    play.expect(push).toBeDisabled();
+                    play.expect(push).toHaveAttribute("title", "Not available while a commit hash is set");
+                    play.expect(play.getByRole("checkbox", "Automatically push")).toBeDisabled();
                     play.expect(play.getByRole("button", StroomDom.button("Pull from Git"))).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })

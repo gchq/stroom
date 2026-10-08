@@ -180,8 +180,14 @@
 	opacity: 0;
 }
 
-.curveTab:hover .curveTab-close {
+.curveTab:hover .curveTab-close,
+.curveTab-keyboardSelected:focus .curveTab-close {
 	opacity: 1;
+}
+
+/* The close cross replaces the spinner while the tab has keyboard focus, as it does on hover */
+.curveTab-keyboardSelected:focus .curveTab-spinner {
+	opacity: 0;
 }
 
 .curveTab .curveTab-close svg {
@@ -2488,7 +2494,11 @@ button.main-menu svg {
     opacity: 0;
 }
 
-/* The icon gets displayed the same whether the row is disabled or not */
+/* Shown on hover, and on the row with keyboard focus so keyboard users see them too; the same
+   whether the row is disabled or not */
+.dataGridKeyboardSelectedRow:focus-within .userRefLinkContainer .svg-image.hoverIcon,
+.dataGridKeyboardSelectedRow:focus-within .docRefLinkContainer .svg-image.hoverIcon,
+.dataGridKeyboardSelectedRow:focus-within .commandLinkContainer .svg-image,
 .dataGridCell:hover .userRefLinkContainer .svg-image.hoverIcon,
 .dataGridCell:hover .docRefLinkContainer .svg-image.hoverIcon,
 .userRefLinkContainer:hover .svg-image.hoverIcon,
@@ -2940,4 +2950,22 @@ button.main-menu svg {
 /* In the chip's colour rather than the lock's usual orange, which would read as a warning */
 .docTab-readOnlyIcon svg path {
     fill: currentColor !important;
+}
+
+/* The visualisation asset editor's area: the editor, or a message while no file is selected */
+.visualisationAssets-editorArea {
+    display: flex;
+    flex-direction: column;
+}
+
+.visualisationAssets-editorArea > * {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.visualisationAssets-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-color--disabled);
 }

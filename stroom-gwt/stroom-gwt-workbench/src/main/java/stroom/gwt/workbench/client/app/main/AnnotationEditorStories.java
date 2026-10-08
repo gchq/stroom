@@ -263,7 +263,10 @@ public final class AnnotationEditorStories {
                     play.expect(screen.queryByText("Closed")).toBeNull();
                     play.expect(play.getByRole("button", StroomDom.button("Comment"))).toBeDisabled();
                     play.expect(play.getByRole("button", StroomDom.button("Delete Annotation"))).toBeDisabled();
-                    play.expect(play.queryByText("Assign yourself")).toBeNull();
+                    // Shown, but disabled, saying why (it was hidden)
+                    final Query assignYourself = play.getByRole("button", "Assign Yourself");
+                    play.expect(assignYourself).toHaveAttribute("aria-disabled", "true");
+                    play.expect(assignYourself).toHaveAttribute("title", "You don't have permission to change this");
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     // The status is at the end of the tab bar's row, not on the toolbar, and says why
                     // the annotation is read only, in a tooltip and to screen readers

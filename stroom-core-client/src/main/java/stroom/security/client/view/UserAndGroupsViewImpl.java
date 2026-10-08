@@ -76,22 +76,32 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     }
 
     @Override
-    public void setParentsVisible(final boolean visible) {
-        parents.getElement().getStyle().setOpacity(visible
-                ? 1
-                : 0.4);
-        // Dimmed, it doesn't apply (nothing is selected), so it is also inert: out of the tab
-        // order, unclickable and hidden from screen readers, rather than only looking unavailable
-        if (visible) {
-            parents.getElement().removeAttribute("inert");
-        } else {
-            parents.getElement().setAttribute("inert", "");
-        }
+    public void setParentsEnabled(final boolean enabled) {
+        setPaneEnabled(parents, enabled);
     }
 
     @Override
     public void setChildrenView(final View view) {
         children.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setChildrenEnabled(final boolean enabled) {
+        setPaneEnabled(children, enabled);
+    }
+
+    // A pane that waits for a selection is shown dimmed, saying 'No Selection', rather than hidden,
+    // so the screen doesn't change shape. It is also inert: out of the tab order, unclickable and
+    // hidden from screen readers, rather than only looking unavailable
+    private static void setPaneEnabled(final Widget pane, final boolean enabled) {
+        pane.getElement().getStyle().setOpacity(enabled
+                ? 1
+                : 0.4);
+        if (enabled) {
+            pane.getElement().removeAttribute("inert");
+        } else {
+            pane.getElement().setAttribute("inert", "");
+        }
     }
 
     @Override

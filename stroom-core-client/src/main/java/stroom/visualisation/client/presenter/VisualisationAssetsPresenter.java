@@ -970,7 +970,7 @@ public class VisualisationAssetsPresenter
     private void disableEditor() {
         editorPresenter.setText("");
         editorPresenter.setReadOnly(true);
-        editorPresenter.getWidget().setVisible(false);
+        getView().setEditorVisible(false);
     }
 
     /**
@@ -1002,7 +1002,7 @@ public class VisualisationAssetsPresenter
                             editorMode = AceEditorMode.PLAIN_TEXT;
                         }
 
-                        editorPresenter.getWidget().setVisible(true);
+                        getView().setEditorVisible(true);
                         editorPresenter.setText(result.getContent());
                         editorPresenter.setReadOnly(isReadOnly());
                         editorPresenter.setMode(editorMode);
@@ -1140,5 +1140,10 @@ public class VisualisationAssetsPresenter
          * Sets the cell tree within the view.
          */
         void setTreeAndEditor(final Tree cellTree, final EditorPresenter editor);
+
+        /// Shows the editor, or in its place a message asking for a file to be selected.
+        ///
+        /// @param visible Whether the editor is shown.
+        void setEditorVisible(boolean visible);
     }
 }

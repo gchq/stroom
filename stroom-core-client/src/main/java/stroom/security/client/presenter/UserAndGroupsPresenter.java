@@ -314,7 +314,9 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
             setParentsListExtraTerm(selected);
             setChildrenListAdditionalTerm(selected);
 
-            getView().setParentsVisible(true);
+            getView().setParentsEnabled(true);
+            getView().setChildrenEnabled(true);
+            // A user has no members, so the members pane only applies to a group
             getView().setChildrenVisible(selected.isGroup());
 
             if (selected.isGroup()) {
@@ -334,8 +336,13 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
         } else {
             parentsList.getView().setLabel("No Selection");
             childrenList.getView().setLabel("No Selection");
-            getView().setParentsVisible(false);
-            getView().setChildrenVisible(false);
+            // The panes stay shown (dimmed), so empty them rather than leave the last selection's
+            // groups and members under 'No Selection'
+            parentsList.clear();
+            childrenList.clear();
+            getView().setParentsEnabled(false);
+            getView().setChildrenEnabled(false);
+            getView().setChildrenVisible(true);
             editButton.setTitle("No Selection");
             editButton.setEnabled(false);
             deleteButton.setTitle("No Selection");
@@ -588,10 +595,18 @@ public class UserAndGroupsPresenter extends ContentTabPresenter<UserAndGroupsVie
 
         void setParentsView(View view);
 
-        void setParentsVisible(boolean visible);
+        /// Enables the Member Of pane, or dims it and makes it inert while nothing is selected.
+        ///
+        /// @param enabled Whether the pane is enabled.
+        void setParentsEnabled(boolean enabled);
 
         void setChildrenView(View view);
 
         void setChildrenVisible(boolean visible);
+
+        /// Enables the members pane, or dims it and makes it inert while nothing is selected.
+        ///
+        /// @param enabled Whether the pane is enabled.
+        void setChildrenEnabled(boolean enabled);
     }
 }

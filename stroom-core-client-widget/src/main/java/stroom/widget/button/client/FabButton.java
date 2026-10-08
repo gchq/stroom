@@ -56,10 +56,27 @@ public class FabButton extends ButtonBase {
     @Override
     public void setEnabled(final boolean enabled) {
         super.setEnabled(enabled);
+        // The face is the real button: disabled, it stays focusable so its name and tooltip can
+        // still be reached, and says it is disabled (onBrowserEvent ignores it while disabled)
         if (enabled) {
             face.removeClassName("face--disabled");
+            face.removeAttribute("aria-disabled");
         } else {
             face.addClassName("face--disabled");
+            face.setAttribute("aria-disabled", "true");
+        }
+    }
+
+    /// Sets the tooltip, which also names the button for screen readers (it has only an icon).
+    ///
+    /// @param title The tooltip and name.
+    @Override
+    public void setTitle(final String title) {
+        super.setTitle(title);
+        if (title == null || title.isEmpty()) {
+            face.removeAttribute("aria-label");
+        } else {
+            face.setAttribute("aria-label", title);
         }
     }
 
