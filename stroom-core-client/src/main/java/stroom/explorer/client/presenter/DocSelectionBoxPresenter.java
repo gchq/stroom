@@ -295,11 +295,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
 
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
-        if (!enabled) {
-            getView().asWidget().getElement().addClassName("disabled");
-        } else {
-            getView().asWidget().getElement().removeClassName("disabled");
-        }
+        getView().setEnabled(enabled);
     }
 
     private String getErrorMsg() {

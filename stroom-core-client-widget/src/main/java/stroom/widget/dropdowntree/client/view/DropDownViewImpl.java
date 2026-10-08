@@ -64,11 +64,17 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
             }
         }, MouseDownEvent.getType());
         widget.addDomHandler(event -> {
-            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+            // As a button: Enter or Space opens the dialog
+            if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER || event.getNativeKeyCode() == KeyCodes.KEY_SPACE) {
+                event.preventDefault();
                 showPopup(event.getNativeEvent());
             }
         }, KeyDownEvent.getType());
         widget.getElement().setTabIndex(0);
+        // To assistive technology it is a button that opens a dialog to choose the value it shows.
+        // A FormGroup names it with its label, followed by the value.
+        widget.getElement().setAttribute("role", "button");
+        widget.getElement().setAttribute("aria-haspopup", "dialog");
 
         SvgImageUtil.setSvgAsInnerHtml(ellipsesBtnPanel, SvgImage.ELLIPSES_HORIZONTAL);
     }
@@ -95,6 +101,17 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
         return warningButton.addMouseDownHandler(mouseDownHandler);
 //        return warningPanel.asWidget()
 //                .addDomHandler(mouseDownHandler, MouseDownEvent.getType());
+    }
+
+    @Override
+    public void setEnabled(final boolean enabled) {
+        if (enabled) {
+            widget.getElement().removeClassName("disabled");
+            widget.getElement().removeAttribute("aria-disabled");
+        } else {
+            widget.getElement().addClassName("disabled");
+            widget.getElement().setAttribute("aria-disabled", "true");
+        }
     }
 
     private void showPopup(final NativeEvent e) {

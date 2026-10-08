@@ -17,7 +17,9 @@
 
 package stroom.gwt.workbench.client.widgets.selectors;
 
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -53,14 +55,31 @@ public final class DropDownSelectorStories {
                     final DropDownViewImpl view = view(context, "My Pipeline", false, true);
                     return minWidth(view.asWidget());
                 })
+                .withPlay(play -> {
+                    // A button that opens a dialog, named by the value it shows
+                    final Query picker = play.getByRole("button", TextMatch.containing("My Pipeline"));
+                    play.expect(picker).toHaveAttribute("aria-haspopup", "dialog");
+                    // Space opens it, as for any button
+                    play.tab();
+                    play.expect(picker).toHaveFocus();
+                    play.keyboard(" ");
+                    play.expect(play.spy(ON_OPEN)).toHaveBeenCalledTimes(1);
+                })
                 // Disabled - non-interactive, greyed out
                 .story("Disabled", context -> {
                     final DropDownViewImpl view = view(context, "Disabled", false, false);
-                    // Differs from React: the view has no enabled state; Stroom's presenters (e.g.
-                    // DocSelectionBoxPresenter.setEnabled) add the `disabled` class and ignore the
-                    // view's showPopup, as this story does. It stays focusable.
-                    view.asWidget().addStyleName("disabled");
+                    // As Stroom's presenters (e.g. DocSelectionBoxPresenter.setEnabled) do: the view
+                    // greys out and tells assistive technology, and the presenter ignores the view's
+                    // showPopup. Differs from React: it stays focusable.
+                    view.setEnabled(false);
                     return minWidth(view.asWidget());
+                })
+                .withPlay(play -> {
+                    final Query picker = play.getByRole("button", TextMatch.containing("Disabled"));
+                    play.expect(picker).toHaveAttribute("aria-disabled", "true");
+                    play.expect(picker).toHaveClass("disabled");
+                    play.click(picker);
+                    play.expect(play.spy(ON_OPEN)).not().toHaveBeenCalled();
                 })
                 // Warning indicator - shows the alert triangle
                 .story("Warning", context -> minWidth(view(context, "Selected item", true, true).asWidget()));

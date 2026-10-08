@@ -23,6 +23,7 @@ import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -90,6 +91,12 @@ public final class ViewEditorStories {
                     play.expect(play.getByText("Meta Filter")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.getByText("My DataSource")).toBeInTheDocument());
                     play.expect(play.getByText("My Pipeline")).toBeInTheDocument();
+                    // Each picker is a button that opens a dialog, named by its label then its value
+                    final Query dataSource = play.getByRole("button",
+                            TextMatch.startingWith("Data Source My DataSource"));
+                    play.expect(dataSource).toHaveAttribute("aria-haspopup", "dialog");
+                    play.expect(play.getByRole("button", TextMatch.startingWith("Pipeline My Pipeline")))
+                            .toHaveAttribute("aria-haspopup", "dialog");
                     // Save starts disabled (clean on load)
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
                     DocumentEditors.expectNoProblems(play);

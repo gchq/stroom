@@ -104,6 +104,10 @@ public class FormGroup extends Composite implements HasWidgets {
     private static final String ARIA_LABELLED_BY = "aria-labelledby";
     private static final String ROLE = "role";
     private static final String GROUP_ROLE = "group";
+    private static final String BUTTON_ROLE = "button";
+    private static final String ARIA_HAS_POPUP = "aria-haspopup";
+    // A control that opens a dialog to choose a value (see isPicker)
+    private static final String PICKER_SELECTOR = "[role=\"button\"][aria-haspopup]";
     // The key that shows a group's help (see handleKeyEvent)
     private static final String HELP_SHORTCUT = "F1";
     private static final Set<String> NON_LABELLED_INPUT_TYPES = Set.of(
@@ -128,6 +132,9 @@ public class FormGroup extends Composite implements HasWidgets {
     private List<String> controlNames = List.of();
     // The form control the label is for, or null if there is none (or several)
     private Element labelledControl;
+    // A control that isn't a form element (e.g. a document picker), named by the label with
+    // aria-labelledby, or null for none
+    private Element ariaLabelledControl;
     // The child, when it holds several form controls, marked as a group labelled by the label
     private Element groupElement;
     // The control (or group) that has the description and F1 as its shortcut, or null for none
@@ -202,16 +209,21 @@ public class FormGroup extends Composite implements HasWidgets {
                 ? List.of()
                 : findFormControls(childWidget.getElement());
         clearGroup();
+        clearAriaLabelledControl();
         labelledControl = null;
         if (controls.size() == 1) {
             final Element target = controls.get(0);
-            if (target == childWidget.getElement()) {
+            if (!isLabelable(target)) {
+                // A label element can't be for it, so it is named by the label then its own text
+                // (e.g. a picker's chosen document), e.g. 'Pipeline, My Pipeline, button'
+                formLabel.setIdentity(id);
+                ariaLabelledControl = target;
+                ariaLabelledControl.setAttribute(ARIA_LABELLED_BY,
+                        formLabel.getElement().getId() + " " + ensureId(target));
+            } else if (target == childWidget.getElement()) {
                 formLabel.setIdentity(id);
             } else {
-                if (NullSafe.isBlankString(target.getId())) {
-                    target.setId(DOM.createUniqueId());
-                }
-                formLabel.setIdentity(target.getId());
+                formLabel.setIdentity(ensureId(target));
             }
             labelledControl = target;
         } else {
@@ -241,6 +253,20 @@ public class FormGroup extends Composite implements HasWidgets {
         if (required && labelledControl != null) {
             requiredControl = labelledControl;
             requiredControl.setAttribute(ARIA_REQUIRED, "true");
+        }
+    }
+
+    private static String ensureId(final Element element) {
+        if (NullSafe.isBlankString(element.getId())) {
+            element.setId(DOM.createUniqueId());
+        }
+        return element.getId();
+    }
+
+    private void clearAriaLabelledControl() {
+        if (ariaLabelledControl != null) {
+            ariaLabelledControl.removeAttribute(ARIA_LABELLED_BY);
+            ariaLabelledControl = null;
         }
     }
 
@@ -299,7 +325,8 @@ public class FormGroup extends Composite implements HasWidgets {
             return List.of(root);
         }
         final List<Element> controls = new ArrayList<>();
-        final NodeList<Element> elements = querySelectorAll(root, String.join(", ", FORM_CONTROL_TAGS));
+        final NodeList<Element> elements = querySelectorAll(root,
+                String.join(", ", FORM_CONTROL_TAGS) + ", " + PICKER_SELECTOR);
         for (int i = 0; i < elements.getLength(); i++) {
             final Element element = elements.getItem(i);
             if (isFormControl(element) && !isHidden(element, root)) {
@@ -326,9 +353,13 @@ public class FormGroup extends Composite implements HasWidgets {
         return root.querySelectorAll(selectors);
     }-*/;
 
-    // Whether the element is a form control a label can name and that takes input (so not a
-    // hidden input, or a button, which is named by its own text)
+    // Whether the element is a form control a label can name and that takes input: a form element
+    // (but not a hidden input, or a button, which is named by its own text), or a control that opens
+    // a dialog to choose a value (e.g. a document picker)
     private static boolean isFormControl(final Element element) {
+        if (isPicker(element)) {
+            return true;
+        }
         final String tagName = element.getTagName().toLowerCase(Locale.ROOT);
         if ("input".equals(tagName)) {
             // GWT gives "" for a missing attribute
@@ -336,6 +367,17 @@ public class FormGroup extends Composite implements HasWidgets {
             return !NON_LABELLED_INPUT_TYPES.contains(type);
         }
         return FORM_CONTROL_TAGS.contains(tagName);
+    }
+
+    // Whether a label element can be for the element: only form elements can
+    private static boolean isLabelable(final Element element) {
+        return FORM_CONTROL_TAGS.contains(element.getTagName().toLowerCase(Locale.ROOT));
+    }
+
+    // A control that opens a dialog to choose a value, e.g. a document picker (DropDownViewImpl)
+    private static boolean isPicker(final Element element) {
+        return BUTTON_ROLE.equals(element.getAttribute(ROLE))
+               && !NullSafe.isBlankString(element.getAttribute(ARIA_HAS_POPUP));
     }
 
     public void setLabel(final String label) {
