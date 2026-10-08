@@ -320,6 +320,20 @@ class TestQuickFilterPrinter {
         }
     }
 
+    /**
+     * The client cannot see the printer, so it decides what to offer in the tree editor from
+     * {@link stroom.query.api.datasource.QuickFilterFields#isQuickFilterCondition}. The two must
+     * agree for every condition or the dialog offers something OK cannot write.
+     */
+    @Test
+    void testClientSideSpellabilityMatchesThePrinter() {
+        for (final Condition condition : Condition.values()) {
+            assertThat(stroom.query.api.datasource.QuickFilterFields.isQuickFilterCondition(condition))
+                    .describedAs(condition.name())
+                    .isEqualTo(QuickFilterPrinter.isPrintable(condition));
+        }
+    }
+
     @Test
     void testUnknownFieldIsRefused() {
         final ExpressionTerm term = ExpressionTerm.builder().field("nope").condition(Condition.CONTAINS).value("x")

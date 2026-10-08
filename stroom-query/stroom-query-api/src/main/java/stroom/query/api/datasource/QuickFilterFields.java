@@ -16,6 +16,7 @@
 
 package stroom.query.api.datasource;
 
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.util.shared.filter.FilterFieldDefinition;
 
 import java.util.List;
@@ -64,6 +65,23 @@ public final class QuickFilterFields {
                 .filter(FilterFieldDefinition::isDefaultField)
                 .map(QuickFilterFields::uiText)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Whether the quick filter syntax can spell {@code condition} - i.e. whether it has a sigil
+     * ({@code ^}, {@code !=}, {@code =/} ...) rather than a keyword ({@code in}, {@code between},
+     * {@code is null}). Every spellable condition has a symbolic operator and every unspellable
+     * one a word, and {@code TestQuickFilterPrinter} pins this to the printer's own list, so the
+     * client can offer only what the server can write back.
+     */
+    public static boolean isQuickFilterCondition(final Condition condition) {
+        if (condition == null) {
+            return false;
+        }
+        final String operator = condition.getOperator();
+        return operator != null
+               && !operator.isEmpty()
+               && !Character.isLetter(operator.charAt(0));
     }
 
     /**

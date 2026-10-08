@@ -88,3 +88,15 @@
 .quickFilter-tooltip th, .quickFilter-tooltip td {
     padding-right: 1em;
 }
+
+/* Advanced Query dialog */
+.advancedQuickFilter-message {
+	padding: var(--control__padding--vertical) var(--control__padding--horizontal);
+	margin-bottom: var(--control__padding--vertical);
+	color: var(--warning);
+	white-space: pre-wrap;
+}
+
+.advancedQuickFilter-expression {
+	min-height: 200px;
+}

@@ -18,6 +18,7 @@ package stroom.quickfilter.client;
 
 import stroom.dispatch.client.QuietTaskMonitorFactory;
 import stroom.dispatch.client.RestFactory;
+import stroom.quickfilter.client.presenter.AdvancedQuickFilterPresenter;
 import stroom.quickfilter.shared.QuickFilterContext;
 import stroom.quickfilter.shared.QuickFilterHistoryKey;
 import stroom.quickfilter.shared.QuickFilterHistoryResource;
@@ -28,6 +29,7 @@ import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.InfoMenuItem;
 import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.Separator;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
@@ -37,6 +39,7 @@ import stroom.widget.util.client.SafeHtmlUtil;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,10 +60,14 @@ public class QuickFilterContextHandlerFactory {
     private static final QuickFilterHistoryResource RESOURCE = GWT.create(QuickFilterHistoryResource.class);
 
     private final RestFactory restFactory;
+    private final Provider<AdvancedQuickFilterPresenter> advancedQuickFilterPresenterProvider;
 
     @Inject
-    public QuickFilterContextHandlerFactory(final RestFactory restFactory) {
+    public QuickFilterContextHandlerFactory(final RestFactory restFactory,
+                                            final Provider<AdvancedQuickFilterPresenter>
+                                                    advancedQuickFilterPresenterProvider) {
         this.restFactory = restFactory;
+        this.advancedQuickFilterPresenterProvider = advancedQuickFilterPresenterProvider;
     }
 
     /**
@@ -71,7 +78,7 @@ public class QuickFilterContextHandlerFactory {
     public QuickFilterContextHandler create(final QuickFilterContext context,
                                             final HasHandlers hasHandlers,
                                             final TaskMonitorFactory taskMonitorFactory) {
-        return new Handler(context.toHistoryKey(), hasHandlers, taskMonitorFactory);
+        return new Handler(context, hasHandlers, taskMonitorFactory);
     }
 
 
@@ -80,14 +87,16 @@ public class QuickFilterContextHandlerFactory {
 
     private class Handler implements QuickFilterContextHandler {
 
+        private final QuickFilterContext context;
         private final QuickFilterHistoryKey key;
         private final HasHandlers hasHandlers;
         private final TaskMonitorFactory taskMonitorFactory;
 
-        Handler(final QuickFilterHistoryKey key,
+        Handler(final QuickFilterContext context,
                 final HasHandlers hasHandlers,
                 final TaskMonitorFactory taskMonitorFactory) {
-            this.key = key;
+            this.context = context;
+            this.key = context.toHistoryKey();
             this.hasHandlers = hasHandlers;
             this.taskMonitorFactory = taskMonitorFactory;
         }
@@ -130,6 +139,24 @@ public class QuickFilterContextHandlerFactory {
                             .command(() -> onSelect.accept(filter))
                             .build());
                 }
+            }
+
+            // Only where the surface declares its fields: a history-only context has nothing
+            // to build a tree editor from.
+            if (context.hasFields()) {
+                items.add(new Separator(items.size()));
+                items.add(new IconMenuItem.Builder()
+                        .priority(items.size())
+                        .text("Advanced Query...")
+                        .tooltip("Build this filter as an expression tree")
+                        .command(() -> advancedQuickFilterPresenterProvider.get().show(
+                                context,
+                                quickFilter.getText(),
+                                // OK writes the text back through the same path as picking a
+                                // recent filter: set it, fire the change, record the use.
+                                onSelect,
+                                taskMonitorFactory))
+                        .build());
             }
 
             final Rect relativeRect = new Rect(quickFilter.getElement()).grow(3);

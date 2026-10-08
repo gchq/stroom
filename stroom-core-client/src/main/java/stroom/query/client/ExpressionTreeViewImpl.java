@@ -21,6 +21,7 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.pipeline.structure.client.view.DraggableTreePanel;
 import stroom.preferences.client.UserPreferencesManager;
+import stroom.query.api.ExpressionTerm.Condition;
 import stroom.query.client.ExpressionTreePresenter.ExpressionTreeView;
 import stroom.query.client.presenter.FieldSelectionListModel;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
@@ -35,6 +36,8 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
+
+import java.util.function.Predicate;
 
 public class ExpressionTreeViewImpl
         extends ViewWithUiHandlers<ExpressionUiHandlers>
@@ -121,6 +124,11 @@ public class ExpressionTreeViewImpl
                      final DocRef dataSource,
                      final FieldSelectionListModel fieldSelectionListModel) {
         treePanel.init(restFactory, dataSource, fieldSelectionListModel);
+    }
+
+    @Override
+    public void setConditionFilter(final Predicate<Condition> conditionFilter) {
+        treePanel.setConditionFilter(conditionFilter);
     }
 
     @Override

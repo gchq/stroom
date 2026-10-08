@@ -54,6 +54,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class TermEditor extends Composite {
 
@@ -87,6 +89,9 @@ public class TermEditor extends Composite {
 
     private final AsyncSuggestOracle suggestOracle;
     private FieldSelectionListModel fieldSelectionListModel;
+    // Narrows what the condition list offers beyond the field's own ConditionSet. The quick
+    // filter's Advanced Query dialog uses it to offer only conditions its syntax can write back.
+    private Predicate<Condition> conditionFilter = condition -> true;
 
     public TermEditor(final Provider<DocSelectionBoxPresenter> docRefProvider,
                       final Provider<UserRefSelectionBoxPresenter> userRefProvider,
@@ -172,6 +177,10 @@ public class TermEditor extends Composite {
 
         this.fieldSelectionListModel = fieldSelectionListModel;
         fieldListBox.setModel(fieldSelectionListModel);
+    }
+
+    public void setConditionFilter(final Predicate<Condition> conditionFilter) {
+        this.conditionFilter = Objects.requireNonNullElse(conditionFilter, condition -> true);
     }
 
     public void startEdit(final Term term) {
@@ -332,7 +341,10 @@ public class TermEditor extends Composite {
                     return ConditionSet.getUiDefaultConditions(fieldType);
                 }
         );
-        return conditions.getConditionList();
+        return conditions.getConditionList()
+                .stream()
+                .filter(conditionFilter)
+                .collect(Collectors.toList());
     }
 
     private void changeCondition(final QueryField field,

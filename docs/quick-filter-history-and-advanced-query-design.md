@@ -7,7 +7,13 @@
 Properties. **A4 rolled out 2026-09-18** to every surface in the table in §4 (the ones marked
 *history only* use `QuickFilterContext.historyOnly`). **B built 2026-09-18**: `QuickFilterPrinter`
 (+ `QuickFilterPrintException`) beside the parser with 85 round-trip tests, and
-`parseQuickFilter` / `formatQuickFilter` on `ExpressionResource`. C not started.
+`parseQuickFilter` / `formatQuickFilter` on `ExpressionResource`. **C built 2026-09-18**:
+`AdvancedQuickFilterPresenter` + view + `QuickFilterModule` (GIN), the "Advanced Query..." menu
+entry in `QuickFilterContextHandlerFactory` (shown only when `context.hasFields()`), and a
+`Predicate<Condition>` filter threaded through `EditExpressionPresenter` → `ExpressionTreePresenter`
+→ `ExpressionTreePanel` → `TermEditor`, fed by the GWT-visible
+`QuickFilterFields.isQuickFilterCondition` (pinned equal to `QuickFilterPrinter.isPrintable` for every
+condition by `TestQuickFilterPrinter`). All of A–C implemented.
 
 **Builds on:** `docs/query-filter-surface-syntax-spec.md` (recoverable from commit `739c927737`;
 untracked in this checkout) and the gh-5720 work on `gh-5740_quick_filter`. The decisions
@@ -459,17 +465,21 @@ collapse the default-field `OR` group (§6.1).
      ("The current filter could not be converted: …"). OK from here *does* overwrite, because the
      user has built something new; Cancel leaves the box untouched. This satisfies spec §10.3's
      explicit-message rule without a dead end.
-2. **Fields offered:** `SimpleFieldSelectionListModel` over `ctx.qualifiedFields`, each
-   `QueryField` copied with its `ConditionSet` **intersected with the printable set** (the 15
-   parser sigils + `NOT_EQUALS` pair). Without this, `TermEditor` would happily offer `IN` on a
-   `SQL_TEXT` field (the spec deliberately keeps `IN` in that set) and OK would then fail. Doing
-   the intersection on the client is a few lines over GWT-visible types; the server `format` is
-   still the backstop.
-3. **OK:** `write()` → if unchanged from the tree parsed on open, hide with no change (spec §10.1
-   — cancel-by-OK leaves comments and spacing intact). Otherwise `formatQuickFilter` →
-   `onOk(text)` → widget `setText(text, true)` → normal change event → `recordUse` via §5.4.
-   If the text is already non-blank and differs from what will be written, a one-line warning
-   above the tree: "OK will replace the current filter text" (spec §10.2).
+2. **Fields offered:** `SimpleFieldSelectionListModel` over `ctx.qualifiedFields`. **As built:**
+   `ConditionSet` is an enum, so an intersected set cannot be put on a `QueryField`; instead the
+   tree editor takes a `Predicate<Condition>` (`EditExpressionPresenter.setConditionFilter`, threaded
+   down to `TermEditor.getConditions`) and the dialog passes `QuickFilterFields::isQuickFilterCondition`
+   — "has a symbolic operator", which is exactly the printable set and is pinned to
+   `QuickFilterPrinter.isPrintable` by a test. Without this, `TermEditor` would offer `IN` on a
+   `SQL_TEXT` field (the spec deliberately keeps `IN` in that set) and OK would then fail. The
+   server `format` is still the backstop.
+3. **OK:** `write()` → `formatQuickFilter`. **As built**, "unchanged" is decided by comparing the
+   canonical spelling of the written tree with the canonical spelling of the tree opened with
+   (fetched before the dialog shows), not by tree equality — the editor rewrites incidental
+   details such as `enabled` flags. Equal → hide with no change (spec §10.1). Otherwise, if the
+   box was non-blank, a `ConfirmEvent` shows the old and new text (spec §10.2); confirmed →
+   `onOk(text)` → the same path as picking a recent filter: widget `setText(text, true)`, change
+   event, `recordUse`.
 4. **Cancel:** nothing.
 
 The `dataSource` argument to `EditExpressionPresenter.init` is `null` — these surfaces are not

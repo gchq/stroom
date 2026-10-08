@@ -79,7 +79,13 @@ final class QuickFilterHistoryTracker {
      * recorded straight away rather than waiting to be told so again.
      */
     void chosen(final String text) {
-        record(trim(text));
+        final String trimmed = trim(text);
+        if (trimmed.isEmpty()) {
+            // Advanced Query can write an empty filter; that is a clear, not a use.
+            pendingRecord = null;
+            return;
+        }
+        record(trimmed);
     }
 
     /**

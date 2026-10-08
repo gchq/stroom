@@ -101,6 +101,17 @@ class TestQuickFilterHistoryTracker {
         assertThat(recorded).containsExactly("abc");
     }
 
+    @Test
+    void testChoosingBlankIsAClearNotAUse() {
+        tracker.commit("abc");
+        tracker.chosen("");
+
+        assertThat(recorded).isEmpty();
+        // ...and the earlier commit is forgotten rather than recorded by a later verdict.
+        tracker.verdict("abc", true);
+        assertThat(recorded).isEmpty();
+    }
+
     /**
      * The defect the audit found: clearing the box used to be treated as an acceptance of
      * whatever was last sent, so retyping a rejected filter and pressing Enter recorded it.
