@@ -41,9 +41,9 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    // TODO - Why not 'lucene-analysis-common:10.3.2', see https://github.com/gchq/stroom/issues/5819
-    implementation "org.apache.lucene:lucene-analyzers-common:8.11.4"
-    // All these pull in lucene-core transitively
+    // All these pull in lucene-core transitively.
+    // lucene-analyzers-common was renamed to lucene-analysis-common in v9.0.0
+    implementation "org.apache.lucene:lucene-analysis-common:10.3.2"
     implementation "org.apache.lucene:lucene-memory:10.3.2"
     implementation "org.apache.lucene:lucene-queryparser:10.3.2"
     implementation "org.apache.lucene:lucene-highlighter:10.3.2"
