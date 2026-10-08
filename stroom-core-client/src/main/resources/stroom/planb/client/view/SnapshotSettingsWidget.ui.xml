@@ -4,20 +4,20 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup label="Use Snapshots For Lookup"
+        <form:FormGroup
                         helpText="Uses a local snapshot of the store for reference data lookups in pipelines, instead of asking the node that holds the store. Default is unticked."
                         screenReaderText="Pipeline lookups read a local copy instead of the store's node.">
-            <tickbox:CustomCheckBox ui:field="useSnapshotsForLookup" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="useSnapshotsForLookup" addStyleNames="allow-focus" label="Use Snapshots For Lookup"/>
         </form:FormGroup>
-        <form:FormGroup label="Use Snapshots For Get"
+        <form:FormGroup
                         helpText="Uses a local snapshot of the store for the getState() function, instead of asking the node that holds the store. Default is unticked."
                         screenReaderText="getState() reads a local copy instead of the store's node.">
-            <tickbox:CustomCheckBox ui:field="useSnapshotsForGet" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="useSnapshotsForGet" addStyleNames="allow-focus" label="Use Snapshots For Get"/>
         </form:FormGroup>
-        <form:FormGroup label="Use Snapshots For Query"
+        <form:FormGroup
                         helpText="Uses local snapshots of the store for searches, so a query can run on any node instead of only the node that holds the store. Default is unticked."
                         screenReaderText="Searches read a local copy instead of the store's node.">
-            <tickbox:CustomCheckBox ui:field="useSnapshotsForQuery" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="useSnapshotsForQuery" addStyleNames="allow-focus" label="Use Snapshots For Query"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

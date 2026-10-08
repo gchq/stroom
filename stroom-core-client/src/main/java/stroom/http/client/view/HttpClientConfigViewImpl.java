@@ -85,18 +85,18 @@ public class HttpClientConfigViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        timeout.setEnabled(!readOnly);
-        connectionTimeout.setEnabled(!readOnly);
-        connectionRequestTimeout.setEnabled(!readOnly);
-        timeToLive.setEnabled(!readOnly);
-        cookiesEnabled.setEnabled(!readOnly);
-        followRedirects.setEnabled(!readOnly);
-        maxConnections.setEnabled(!readOnly);
-        maxConnectionsPerRoute.setEnabled(!readOnly);
-        keepAlive.setEnabled(!readOnly);
-        retries.setEnabled(!readOnly);
-        userAgent.setEnabled(!readOnly);
-        validateAfterInactivityPeriod.setEnabled(!readOnly);
+        timeout.setReadOnly(readOnly);
+        connectionTimeout.setReadOnly(readOnly);
+        connectionRequestTimeout.setReadOnly(readOnly);
+        timeToLive.setReadOnly(readOnly);
+        cookiesEnabled.setReadOnly(readOnly);
+        followRedirects.setReadOnly(readOnly);
+        maxConnections.setReadOnly(readOnly);
+        maxConnectionsPerRoute.setReadOnly(readOnly);
+        keepAlive.setReadOnly(readOnly);
+        retries.setReadOnly(readOnly);
+        userAgent.setReadOnly(readOnly);
+        validateAfterInactivityPeriod.setReadOnly(readOnly);
     }
 
     @Override

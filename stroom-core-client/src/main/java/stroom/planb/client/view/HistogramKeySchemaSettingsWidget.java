@@ -52,8 +52,6 @@ public class HistogramKeySchemaSettingsWidget
     @UiField
     SimplePanel timeZone;
 
-    private boolean readOnly;
-
     @Inject
     public HistogramKeySchemaSettingsWidget(final Binder binder,
                                             final TimeZoneWidget timeZoneWidget) {
@@ -100,18 +98,17 @@ public class HistogramKeySchemaSettingsWidget
     }
 
     public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        keyType.setEnabled(!readOnly);
-        hashLength.setEnabled(!readOnly);
-        temporalResolution.setEnabled(!readOnly);
+        keyType.setReadOnly(readOnly);
+        hashLength.setReadOnly(readOnly);
+        temporalResolution.setReadOnly(readOnly);
         timeZoneWidget.onReadOnly(readOnly);
     }
 
     private void onKeyTypeChange() {
         final KeyType value = keyType.getValue();
-        hashLength.setEnabled(!readOnly &&
-                              (Objects.equals(value, KeyType.HASH_LOOKUP) ||
-                               Objects.equals(value, KeyType.VARIABLE)));
+        // Hash length only applies to some types; read only is set separately in onReadOnly()
+        hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
+                              Objects.equals(value, KeyType.VARIABLE));
     }
 
     @UiHandler("keyType")

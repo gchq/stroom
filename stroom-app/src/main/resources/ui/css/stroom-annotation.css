@@ -449,3 +449,15 @@
     resize: none;
 }
 
+/* A read-only annotation's settings: their values greyed, no ellipsis hint, no pointer */
+.setting-block.setting-block--readonly {
+    cursor: default;
+}
+
+.setting-block.setting-block--readonly .gwt-Label {
+    color: var(--control__text-color--readonly);
+}
+
+.setting-block.setting-block--readonly .setting-block-icon {
+    display: none;
+}

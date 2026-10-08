@@ -47,6 +47,9 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
     private final Widget widget;
 
+    private boolean readOnly;
+    private boolean assignYourselfVisible;
+
     @UiField
     Label annotationId;
     @UiField
@@ -227,7 +230,25 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
     @Override
     public void setAssignYourselfVisible(final boolean visible) {
-        assignYourself.setVisible(visible);
+        this.assignYourselfVisible = visible;
+        assignYourself.setVisible(visible && !readOnly);
+    }
+
+    @Override
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        titleTextBox.setReadOnly(readOnly);
+        subjectTextBox.setReadOnly(readOnly);
+        comment.setReadOnly(readOnly);
+        commentButton.setEnabled(!readOnly);
+        create.setEnabled(!readOnly);
+        delete.setEnabled(!readOnly);
+        statusBlock.setReadOnly(readOnly);
+        assignedToBlock.setReadOnly(readOnly);
+        annotationLabelBlock.setReadOnly(readOnly);
+        annotationCollectionBlock.setReadOnly(readOnly);
+        annotationRetentionPeriodBlock.setReadOnly(readOnly);
+        assignYourself.setVisible(assignYourselfVisible && !readOnly);
     }
 
     @Override

@@ -126,7 +126,9 @@ public class SolrIndexSettingsPresenter
         fieldSelectionBoxModel.setDataSourceRefConsumer(consumer -> consumer.accept(docRef));
         editExpressionPresenter.init(restFactory, docRef, fieldSelectionBoxModel);
         editExpressionPresenter.read(retentionExpression);
+        editExpressionPresenter.setReadOnly(readOnly);
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
+        pipelinePresenter.setReadOnly(readOnly);
     }
 
     @Override

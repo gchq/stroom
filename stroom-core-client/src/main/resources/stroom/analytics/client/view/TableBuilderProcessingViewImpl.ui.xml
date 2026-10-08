@@ -8,9 +8,9 @@
              xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="analyticProcessingEnabled" label="Enabled"
+        <form:FormGroup identity="analyticProcessingEnabled"
                         helpText="Whether the table builder runs for this rule.">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
+            <tickbox:CustomCheckBox ui:field="enabled" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingNode" label="Processing Node"
                         helpText="Node that runs the table builder for this rule; it does not run on any other node."

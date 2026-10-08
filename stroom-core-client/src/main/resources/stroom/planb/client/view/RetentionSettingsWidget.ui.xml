@@ -7,11 +7,10 @@
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup
-                label="Enabled"
                 helpText="Deletes data once it is older than the Retain For period. Default is unticked."
                 screenReaderText="Deletes data older than Retain For. Default is unticked.">
             <tickbox:CustomCheckBox ui:field="retentionEnabled"
-                                    identity="retentionEnabled"/>
+                                    identity="retentionEnabled" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup ui:field="retentionCheckIntervalPanel"
                         identity="retentionCheckIntervalPanel"
@@ -37,11 +36,10 @@
         </form:FormGroup>
         <form:FormGroup ui:field="useStateTimePanel"
                         identity="useStateTimePanel"
-                        label="Use State Time"
                         helpText="Measures the age of data from its own state time rather than from when it was added to the store. Default is unticked."
                         screenReaderText="Age is measured from state time, not insert time.">
             <tickbox:CustomCheckBox ui:field="useStateTime"
-                                    identity="useStateTime"/>
+                                    identity="useStateTime" label="Use State Time"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

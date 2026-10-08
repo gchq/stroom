@@ -74,7 +74,7 @@ public class VisualisationSettingsPresenter extends DocPresenter<VisualisationSe
 
     @Override
     protected void onRead(final DocRef docRef, final VisualisationDoc visualisation, final boolean readOnly) {
-        scriptPresenter.setEnabled(!readOnly);
+        scriptPresenter.setReadOnly(readOnly);
         editorPresenter.setReadOnly(readOnly);
         editorPresenter.getFormatAction().setAvailable(!readOnly);
 

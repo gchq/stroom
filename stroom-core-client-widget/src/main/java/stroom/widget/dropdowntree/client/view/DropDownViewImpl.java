@@ -19,6 +19,7 @@ package stroom.widget.dropdowntree.client.view;
 import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.SvgButton;
+import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.SvgImageUtil;
 
@@ -49,6 +50,9 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
     SvgButton warningButton;
     @UiField
     SimplePanel ellipsesBtnPanel;
+
+    private boolean enabled = true;
+    private boolean readOnly;
 
     @Inject
     public DropDownViewImpl(final Binder binder) {
@@ -105,12 +109,22 @@ public class DropDownViewImpl extends ViewWithUiHandlers<DropDownUiHandlers>
 
     @Override
     public void setEnabled(final boolean enabled) {
-        if (enabled) {
-            widget.getElement().removeClassName("disabled");
-            widget.getElement().removeAttribute("aria-disabled");
-        } else {
-            widget.getElement().addClassName("disabled");
-            widget.getElement().setAttribute("aria-disabled", "true");
+        this.enabled = enabled;
+        updateState();
+    }
+
+    @Override
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        updateState();
+    }
+
+    private void updateState() {
+        DisabledState.set(widget.getElement(), !enabled);
+        widget.setStyleName("readonly", readOnly && enabled);
+        // A button can't be read only, so a read-only picker is a button that does nothing
+        if (readOnly) {
+            widget.getElement().setAttribute(DisabledState.ARIA_DISABLED, "true");
         }
     }
 

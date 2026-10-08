@@ -28,6 +28,7 @@ public class InlineSvgToggleButton extends InlineSvgButton implements ToggleButt
         } else {
             getElement().removeClassName("on");
         }
+        getElement().setAttribute("aria-pressed", String.valueOf(on));
     }
 
     @Override

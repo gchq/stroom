@@ -99,7 +99,7 @@ body,table td,select {
 
 .gwt-CheckBox-disabled {
 	vertical-align: top;
-	color: #888;
+	color: var(--text-color--disabled);
 }
 
 .gwt-DialogBox .Caption {

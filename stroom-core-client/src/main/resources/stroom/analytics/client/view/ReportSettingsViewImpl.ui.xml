@@ -11,15 +11,15 @@
                         screenReaderText="Excel, CSV, TSV or Markdown. Default is Excel.">
             <list:SelectionBox ui:field="fileType"/>
         </form:FormGroup>
-        <form:FormGroup label="Send Empty Reports"
+        <form:FormGroup
                         helpText="Send the report even when the query finds no data, so recipients know it ran. If unticked, a report with no rows is not sent."
                         screenReaderText="If unticked, reports with no rows are not sent.">
-            <tickbox:CustomCheckBox ui:field="sendEmptyReports" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="sendEmptyReports" addStyleNames="allow-focus" label="Send Empty Reports"/>
         </form:FormGroup>
-        <form:FormGroup label="AI Summary"
+        <form:FormGroup
                         helpText="Ask an AI model to summarise the report's data and send the summary with it: as a sheet in Excel, a section in Markdown, or a separate file for CSV and TSV. Email templates can use it as {{{{ aiSummary }}. If the model cannot be reached the report is sent without a summary."
                         screenReaderText="Adds an AI summary. The report is still sent if this fails.">
-            <tickbox:CustomCheckBox ui:field="aiSummaryEnabled" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="aiSummaryEnabled" addStyleNames="allow-focus" label="AI Summary"/>
         </form:FormGroup>
         <form:FormGroup identity="aiSummaryModel" label="AI Summary Model"
                         helpText="The model to ask. If this is not set the model configured for Ask Stroom AI is used.">

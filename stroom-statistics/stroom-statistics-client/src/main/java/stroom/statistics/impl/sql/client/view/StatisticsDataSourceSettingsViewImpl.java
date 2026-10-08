@@ -114,10 +114,11 @@ public class StatisticsDataSourceSettingsViewImpl extends ViewWithUiHandlers<Sta
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        statisticType.setEnabled(!readOnly);
-        precision.setEnabled(!readOnly);
-        rollUpType.setEnabled(!readOnly);
-        enabled.setEnabled(!readOnly);
+        // Read only, not disabled: the settings can be read and copied but not changed
+        statisticType.setReadOnly(readOnly);
+        precision.setReadOnly(readOnly);
+        rollUpType.setReadOnly(readOnly);
+        enabled.setReadOnly(readOnly);
     }
 
     @UiHandler("statisticType")

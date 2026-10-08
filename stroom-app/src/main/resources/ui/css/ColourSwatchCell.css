@@ -26,5 +26,5 @@
 }
 
 .dataGridDisabledCell .colourSwatchCell-swatch {
-    opacity: 0.3;
+    opacity: var(--disabled-opacity);
 }

@@ -166,6 +166,16 @@ public class TableBuilderProcessingViewImpl
         this.info.setWidget(new HTML(info));
     }
 
+    @Override
+    public void setReadOnly(final boolean readOnly) {
+        enabled.setReadOnly(readOnly);
+        node.setReadOnly(readOnly);
+        minMetaCreateTimeMs.setReadOnly(readOnly);
+        maxMetaCreateTimeMs.setReadOnly(readOnly);
+        timeToWaitForData.setReadOnly(readOnly);
+        dataRetention.setReadOnly(readOnly);
+    }
+
     @UiHandler("enabled")
     public void onEnabled(final ValueChangeEvent<Boolean> event) {
         getUiHandlers().onChange();

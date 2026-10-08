@@ -17,10 +17,9 @@
 
         <form:FormGroup addStyleNames="dock-min"
                         identity="cfRuleEnabledState"
-                        label="Enabled"
                         helpText="Tick to enable this rule. When unticked, this rule is ignored."
                         screenReaderText="When unticked, this rule is ignored.">
-            <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled"/>
+            <tickbox:CustomCheckBox ui:field="enabled" identity="cfRuleEnabled" label="Enabled"/>
         </form:FormGroup>
 
         <form:FormGroup addStyleNames="dock-min"

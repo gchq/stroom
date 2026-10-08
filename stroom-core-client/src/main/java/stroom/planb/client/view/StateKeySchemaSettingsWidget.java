@@ -39,8 +39,6 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
     @UiField
     SelectionBox<HashLength> hashLength;
 
-    private boolean readOnly;
-
     @Inject
     public StateKeySchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -72,16 +70,15 @@ public class StateKeySchemaSettingsWidget extends AbstractSettingsWidget impleme
     }
 
     public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        keyType.setEnabled(!readOnly);
-        hashLength.setEnabled(!readOnly);
+        keyType.setReadOnly(readOnly);
+        hashLength.setReadOnly(readOnly);
     }
 
     private void onStateKeyTypeChange() {
         final KeyType value = keyType.getValue();
-        hashLength.setEnabled(!readOnly &&
-                              (Objects.equals(value, KeyType.HASH_LOOKUP) ||
-                               Objects.equals(value, KeyType.VARIABLE)));
+        // Hash length only applies to some types; read only is set separately in onReadOnly()
+        hashLength.setEnabled(Objects.equals(value, KeyType.HASH_LOOKUP) ||
+                              Objects.equals(value, KeyType.VARIABLE));
     }
 
     @UiHandler("keyType")

@@ -411,9 +411,9 @@ public final class QueryEditorStories {
                     execute(play);
                     play.findByText("alpha");
                     play.waitFor(() -> play.expect(play.getByRole("button", "Execute Query")).toBeInTheDocument());
-                    // Differs from React: GWT's 'Show Errors' button is always there, and is
-                    // highlighted only when there are errors
-                    play.expect(play.getByRole("button", "Show Errors")).not().toHaveClass("error");
+                    // With no errors, GWT's 'Show Errors' button holds its place in the toolbar but
+                    // is hidden: it can't be seen, reached or read (it was once only transparent)
+                    play.expect(play.queryByRole("button", "Show Errors")).toBeNull();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Download: the Download Options dialog asks for the current search's results

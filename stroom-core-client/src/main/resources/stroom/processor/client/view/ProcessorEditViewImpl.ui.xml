@@ -37,10 +37,9 @@
             <l:SelectionBox ui:field="profile"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditMaxTaskCreationDelayEnabled"
-                        label="Limit Task Creation Delay"
                         helpText="Tick to give this filter its own maximum task creation delay instead of the cluster-wide limit. Useful for filters that must react quickly to data that only arrives occasionally."
                         screenReaderText="When unticked, the cluster-wide limit is used.">
-            <tickbox:CustomCheckBox ui:field="maxTaskCreationDelayEnabled"/>
+            <tickbox:CustomCheckBox ui:field="maxTaskCreationDelayEnabled" label="Limit Task Creation Delay"/>
         </form:FormGroup>
         <form:FormGroup identity="processorEditMaxTaskCreationDelay"
                         label="Max Task Creation Delay"
@@ -48,10 +47,10 @@
                         screenReaderText="Longest wait between checks for new data. Default is 30 seconds.">
             <c:DurationPicker ui:field="maxTaskCreationDelay"/>
         </form:FormGroup>
-        <form:FormGroup identity="processorEditExport" label="Include in Export"
+        <form:FormGroup identity="processorEditExport"
                         helpText="Tick to include this processor filter when its pipeline is exported. Default is unticked."
                         screenReaderText="Exported with its pipeline when ticked.">
-            <tickbox:CustomCheckBox ui:field="export"/>
+            <tickbox:CustomCheckBox ui:field="export" label="Include in Export"/>
         </form:FormGroup>
         <form:FormGroup identity="runAsUser" label="Run As User"
                         helpText="The user whose permissions are used when this filter's processing runs. Default is you, for a new filter.">

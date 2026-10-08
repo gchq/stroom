@@ -30,6 +30,7 @@ import stroom.util.client.RedirectUrlUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -175,6 +176,8 @@ public class LoginPresenter extends MyPresenter<LoginView, LoginProxy> implement
         RevealRootContentEvent.fire(this, this);
         getView().focus();
         loading.getStyle().setOpacity(0);
+        // Hidden, not just transparent, so screen readers stop reading "Loading..."
+        loading.getStyle().setVisibility(Visibility.HIDDEN);
     }
 
 

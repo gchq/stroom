@@ -34,4 +34,11 @@ public interface DropDownView extends View, Focus, HasUiHandlers<DropDownUiHandl
     ///
     /// @param enabled Whether the value can be changed.
     void setEnabled(boolean enabled);
+
+    /// Shows that the value can be read but not changed: the normal field with its value greyed
+    /// (the `readonly` class). It stays focusable and is `aria-disabled`, as a button can't be
+    /// read only; the presenter ignores the popup being requested while read only.
+    ///
+    /// @param readOnly Whether the value is read only.
+    void setReadOnly(boolean readOnly);
 }

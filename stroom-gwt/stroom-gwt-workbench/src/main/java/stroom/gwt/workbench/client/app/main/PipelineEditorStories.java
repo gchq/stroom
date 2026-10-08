@@ -465,7 +465,51 @@ public final class PipelineEditorStories {
                     play.waitFor(() -> play.expect(play.queryByText("xslt")).toBeNull());
                     play.waitFor(() -> play.expect(play.spy(ON_DIRTY)).toHaveBeenCalledWith(true));
                     expectNoProblems(play);
+                })
+                // The Structure tab, nothing selected, as an editable partner for StructureReadOnly
+                .story("StructureEditable", context -> render(context, FIXTURES, false))
+                .withPlay(play -> {
+                    waitForStructure(play);
+                    expectNoProblems(play);
+                })
+                // The Structure tab, nothing selected, when the user may only view the pipeline
+                .story("StructureReadOnly", context -> render(context, FIXTURES, true))
+                .withPlay(play -> {
+                    waitForStructure(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    expectNoProblems(play);
+                })
+                // The xslt element's properties and reference loaders, as an editable partner for
+                // PropertiesReadOnly
+                .story("PropertiesEditable", context -> render(context, FIXTURES, false))
+                .withPlay(play -> {
+                    selectXslt(play);
+                    expectNoProblems(play);
+                })
+                // The xslt element's properties and reference loaders, when the user may only view the
+                // pipeline
+                .story("PropertiesReadOnly", context -> render(context, FIXTURES, true))
+                .withPlay(play -> {
+                    selectXslt(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    expectNoProblems(play);
                 });
+    }
+
+    // Opens the Structure tab and waits for its elements
+    private static void waitForStructure(final Play play) {
+        openStructure(play);
+        play.findByText("Source");
+        play.findByText("parser");
+        play.findByText("xslt");
+    }
+
+    // Opens the Structure tab and selects the xslt element, showing its properties and references
+    private static void selectXslt(final Play play) {
+        waitForStructure(play);
+        play.click(play.getByText("xslt"));
+        play.waitFor(() -> play.expect(play.getByText("The XSLT to use")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByText("Ref Pipeline")).toBeInTheDocument());
     }
 
     // Differs from React: Stroom's Data tab is the default (for a user who may view data), so the
@@ -544,12 +588,18 @@ public final class PipelineEditorStories {
     }
 
     private static Widget render(final StoryContext context, final RestFixtures fixtures) {
+        return render(context, fixtures, false);
+    }
+
+    private static Widget render(final StoryContext context, final RestFixtures fixtures, final boolean readOnly) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .realAlerts()
                 .build();
-        harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+        harness.getSecurityContext().setDocumentPermission(readOnly
+                ? DocumentPermission.VIEW
+                : DocumentPermission.EDIT);
         final Spy onDirty = harness.fn(ON_DIRTY);
         harness.fn(ON_EMBED);
         // Opened once Stroom has started, as PipelinePlugin opens a document: load it, check the
@@ -562,7 +612,7 @@ public final class PipelineEditorStories {
                     .method(res -> res.fetch(UUID))
                     .onSuccess(doc -> {
                         harness.addRegistration(presenter.addDirtyHandler(event -> onDirty.call(event.isDirty())));
-                        presenter.read(DOC_REF, doc, false);
+                        presenter.read(DOC_REF, doc, readOnly);
                         harness.addContent(presenter);
                     })
                     .taskMonitorFactory(presenter)

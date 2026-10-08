@@ -186,6 +186,35 @@ public final class AnalyticRuleEditorStories {
                     play.click(play.findByRole("button", "Add Execution Schedule"));
                     play.waitFor(() -> play.expect(screen.getByDisplayValue("node9")).toBeInTheDocument());
                     expectNoProblems(play);
+                })
+                // Settings, editable: the partner of SettingsReadOnly
+                .story("SettingsEditable", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> showSettings(play, false))
+                // Settings, read only: the partner of SettingsEditable
+                .story("SettingsReadOnly", context -> render(context, FIXTURES, UI_CONFIG, DocumentPermission.VIEW))
+                .withPlay(play -> showSettings(play, true))
+                // Notifications, editable: the partner of NotificationsReadOnly
+                .story("NotificationsEditable", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> showNotifications(play, false))
+                // Notifications, read only: the partner of NotificationsEditable
+                .story("NotificationsReadOnly", context -> render(context, FIXTURES, UI_CONFIG,
+                        DocumentPermission.VIEW))
+                .withPlay(play -> showNotifications(play, true))
+                // Execution (a scheduled query), editable: the partner of ExecutionReadOnly
+                .story("ExecutionEditable", context -> render(context, FIXTURES, UI_CONFIG))
+                .withPlay(play -> showExecution(play, false))
+                // Execution (a scheduled query), read only: the partner of ExecutionEditable
+                .story("ExecutionReadOnly", context -> render(context, FIXTURES, UI_CONFIG, DocumentPermission.VIEW))
+                .withPlay(play -> showExecution(play, true))
+                // Duplicate Management, read only: the partner of DuplicateManagement
+                .story("DuplicateManagementReadOnly", context -> render(context, FIXTURES, UI_CONFIG,
+                        DocumentPermission.VIEW))
+                .withPlay(play -> {
+                    openTab(play, "Duplicate Management");
+                    play.waitFor(() -> play.expect(play.getByText("host")).toBeInTheDocument());
+                    play.expect(play.getByText("carol")).toBeInTheDocument();
+                    expectReadOnlyNote(play, true);
+                    expectNoProblems(play);
                 });
     }
 
@@ -258,6 +287,39 @@ public final class AnalyticRuleEditorStories {
         play.click(play.screen().findByText(type, ".SelectionPopup *"));
     }
 
+    // Opens the Settings tab and waits for its fields
+    private static void showSettings(final Play play, final boolean readOnly) {
+        openTab(play, "Settings");
+        play.waitFor(() -> play.expect(play.getByText("Feed For Errors", "label")).toBeInTheDocument());
+        play.expect(play.getByText("Include Rule Documentation", "label")).toBeInTheDocument();
+        expectReadOnlyNote(play, readOnly);
+        expectNoProblems(play);
+    }
+
+    // Opens the Notifications tab and waits for its list
+    private static void showNotifications(final Play play, final boolean readOnly) {
+        openTab(play, "Notifications");
+        play.waitFor(() -> play.expect(play.getByRole("button", "Add Notification")).toBeInTheDocument());
+        expectReadOnlyNote(play, readOnly);
+        expectNoProblems(play);
+    }
+
+    // Opens the Execution tab and waits for the process type
+    private static void showExecution(final Play play, final boolean readOnly) {
+        openTab(play, "Execution");
+        play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByRole("button", "Add Execution Schedule")).toBeInTheDocument());
+        expectReadOnlyNote(play, readOnly);
+        expectNoProblems(play);
+    }
+
+    // A read-only document's tab says so
+    private static void expectReadOnlyNote(final Play play, final boolean readOnly) {
+        if (readOnly) {
+            play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+        }
+    }
+
     private static void openTab(final Play play, final String label) {
         play.waitFor(() -> play.expect(DocumentEditors.tab(play, label)).toBeInTheDocument());
         play.click(DocumentEditors.tab(play, label));
@@ -268,12 +330,19 @@ public final class AnalyticRuleEditorStories {
     }
 
     private static Widget render(final StoryContext context, final RestFixtures fixtures, final String uiConfig) {
+        return render(context, fixtures, uiConfig, DocumentPermission.EDIT);
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final String uiConfig,
+                                 final DocumentPermission permission) {
         final QueryScreenGinjector injector = GWT.create(QueryScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .uiConfig(uiConfig)
                 .build();
-        harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+        harness.getSecurityContext().setDocumentPermission(permission);
         final AnalyticRuleResource resource = GWT.create(AnalyticRuleResource.class);
         // Opened once Stroom has started, as AnalyticsPlugin opens a document
         harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getAnalyticRulePresenter(), DOC_REF,

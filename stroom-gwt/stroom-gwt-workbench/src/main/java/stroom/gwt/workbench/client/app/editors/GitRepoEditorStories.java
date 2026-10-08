@@ -302,6 +302,15 @@ public final class GitRepoEditorStories {
                             .toBeDisabled());
                     play.expect(play.getByRole("button", StroomDom.button("Check for updates"))).toBeDisabled();
                     DocEditors.expectNoProblems(play);
+                })
+                // Settings, read only: the partner of Default
+                .story("SettingsReadOnly", context -> render(context, new Fixtures(), true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("Git repository URL", "label")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.querySelector(URL_INPUT))
+                            .toHaveValue("https://github.com/example/repo.git"));
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
                 });
     }
 
@@ -314,8 +323,12 @@ public final class GitRepoEditorStories {
     }
 
     private static Widget render(final StoryContext context, final Fixtures fixtures) {
+        return render(context, fixtures, false);
+    }
+
+    private static Widget render(final StoryContext context, final Fixtures fixtures, final boolean readOnly) {
         final GitRepoResource resource = GWT.create(GitRepoResource.class);
-        return DocEditors.render(context, fixtures.build(), false, (harness, injector) -> {
+        return DocEditors.render(context, fixtures.build(), readOnly, (harness, injector) -> {
             harness.fn(REFRESH_EXPLORER);
             harness.addRegistration(harness.getEventBus().addHandler(RefreshExplorerTreeEvent.getType(),
                     event -> harness.spy(REFRESH_EXPLORER, "refresh")));

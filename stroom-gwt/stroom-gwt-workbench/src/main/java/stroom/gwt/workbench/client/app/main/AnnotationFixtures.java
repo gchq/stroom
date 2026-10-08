@@ -133,9 +133,23 @@ public final class AnnotationFixtures {
     public static void open(final ContentScreenGinjector injector,
                             final ScreenHarness harness,
                             final long annotationId) {
+        open(injector, harness, annotationId, false);
+    }
+
+    /// Opens an annotation as [#open(ContentScreenGinjector, ScreenHarness, long)] does, read only
+    /// or not (as Stroom opens it for a user without Edit permission on it).
+    ///
+    /// @param injector     The screen's injector.
+    /// @param harness      The story's harness.
+    /// @param annotationId The annotation to open.
+    /// @param readOnly     Whether the annotation is read only.
+    public static void open(final ContentScreenGinjector injector,
+                            final ScreenHarness harness,
+                            final long annotationId,
+                            final boolean readOnly) {
         injector.getAnnotationResourceClient().getAnnotationById(annotationId, annotation -> {
             final AnnotationPresenter presenter = injector.getAnnotationPresenter();
-            presenter.read(annotation, false);
+            presenter.read(annotation, readOnly);
             harness.addContent(presenter);
         }, new DefaultTaskMonitorFactory(harness.getHasHandlers()));
     }

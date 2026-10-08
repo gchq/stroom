@@ -69,7 +69,8 @@ public final class TickBoxCellStories {
                 // Some rows ticked, so the header is half-ticked
                 .story("InGrid", context -> grid(context, true, "Bravo"))
                 .withPlay(TickBoxCellStories::playInGrid)
-                // A grid the user can't change: no borders, no header tick box, and clicks do nothing
+                // A grid the user can't change: read-only tick boxes (the normal box with a grey tick), no
+                // header tick box, and clicks do nothing
                 .story("ReadOnly", context -> grid(context, false, "Bravo", "Delta"))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getAllByTitle(TICKED)).toHaveLength(2));
@@ -77,7 +78,7 @@ public final class TickBoxCellStories {
                     // To assistive technology, each is a check box that can't be changed
                     play.expect(play.getAllByRole("checkbox")).toHaveLength(NAMES.size());
                     play.expect(rowTickBox(play, "Bravo")).toBeChecked();
-                    play.expect(rowTickBox(play, "Bravo")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(rowTickBox(play, "Bravo")).toHaveAttribute("aria-readonly", "true");
                     play.expect(play.querySelectorAll(HEADER_TICK_BOX)).toHaveLength(0);
                     play.click(rowTickBox(play, "Alpha"));
                     play.expect(play.getAllByTitle(TICKED)).toHaveLength(2);
@@ -95,7 +96,7 @@ public final class TickBoxCellStories {
         play.expect(play.querySelector(HEADER_TICK_BOX)).toHaveAttribute("aria-checked", "mixed");
         play.expect(rowTickBox(play, "Bravo")).toBeChecked();
         play.expect(rowTickBox(play, "Alpha")).not().toBeChecked();
-        play.expect(rowTickBox(play, "Alpha")).toHaveAttribute("aria-disabled", "false");
+        play.expect(rowTickBox(play, "Alpha")).toHaveAttribute("aria-readonly", "false");
 
         // A half-ticked header ticks every row
         play.click(play.querySelector(HEADER_TICK_BOX));

@@ -74,10 +74,13 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<SettingsUiHandler
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        fileType.setEnabled(!readOnly);
-        sendEmptyReports.setEnabled(!readOnly);
-        aiSummaryEnabled.setEnabled(!readOnly);
+        fileType.setReadOnly(readOnly);
+        sendEmptyReports.setReadOnly(readOnly);
+        aiSummaryEnabled.setReadOnly(readOnly);
         aiSummaryPrompt.setReadOnly(readOnly);
+        // Setting the default from a document the user can't change would be odd, so it is
+        // disabled too
+        setDefaultErrorFeed.setEnabled(!readOnly);
     }
 
     @Override

@@ -663,19 +663,25 @@ select option:disabled {
 	height: 80px;
 }
 
-.gwt-TextArea-readonly {
-  color: var(--text-color--disabled);
-  /* background-color: rgba(255, 255, 255, 0.5); */
+/*
+The one read-only look for every control: the normal field (its border and background) with its
+value greyed. Disabled controls use the --control__*--disabled look above instead: a filled field
+with no border. (input[readonly] also beats input[type="text"], which once kept read-only text boxes
+looking editable.)
+*/
+.gwt-TextArea-readonly,
+.gwt-TextBox-readonly,
+.gwt-PasswordTextBox-readonly,
+input[readonly],
+textarea[readonly],
+.stroom-control.readonly {
+  color: var(--control__text-color--readonly);
 }
 
-.gwt-TextBox-readonly {
-  color: var(--text-color--disabled);
-  /* background-color: rgba(255, 255, 255, 0.5); */
-}
-
-.gwt-PasswordTextBox-readonly {
-  color: var(--text-color--disabled);
-  /* background-color: rgba(255, 255, 255, 0.5); */
+/* A read-only or disabled control's icons are greyed with its value */
+.stroom-control.readonly svg,
+.stroom-control.disabled svg {
+  opacity: var(--disabled-opacity);
 }
 
 .gwt-Label-disabled {
@@ -862,7 +868,7 @@ select option:disabled {
 }
 
 .clickableLabel.disabled {
-    color: #8f8f8f;
+    color: var(--text-color--disabled);
     cursor: default;
 }
 textarea.clipboardCopy {
@@ -907,4 +913,62 @@ input.invalid:focus-visible {
 select.invalid,
 input.invalid {
   border: thin solid var(--focus-border--invalid) !important;
+}
+
+/*
+Radio buttons, drawn like Stroom's tick box (CustomCheckBox): a round box with the control's
+border, filled blue with a white dot when chosen, and a gap before the label. Disabled: the filled
+box with no border and a grey dot, as every disabled control has.
+*/
+input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--control__border-color);
+    border-radius: 50%;
+    background-color: var(--control__background-color);
+    vertical-align: middle;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+input[type="radio"]:checked {
+    border-color: #2196F3;
+    background: radial-gradient(circle, white 0 3.5px, #2196F3 4px);
+}
+
+input[type="radio"]:focus-visible {
+    outline: 0;
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+input[type="radio"]:disabled {
+    background-color: var(--control__background-color--disabled);
+    border-color: var(--control__border-color--disabled);
+    cursor: default;
+}
+
+input[type="radio"]:disabled:checked {
+    background: radial-gradient(circle, var(--control__text-color--disabled) 0 3.5px, transparent 4px),
+                var(--control__background-color--disabled);
+}
+
+.gwt-RadioButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gwt-RadioButton label {
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.gwt-RadioButton-disabled label {
+    color: var(--control__text-color--disabled);
+    cursor: default;
 }

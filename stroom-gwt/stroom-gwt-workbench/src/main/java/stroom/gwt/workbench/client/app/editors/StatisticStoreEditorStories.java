@@ -88,6 +88,35 @@ public final class StatisticStoreEditorStories {
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Read only: the Settings tab, as 'Default' shows it
+                .story("SettingsReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("Statistic Type", "label")).toBeInTheDocument());
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // The Fields tab, to compare with 'ReadOnly'
+                .story("FieldsEditable", context -> render(context, false))
+                .withPlay(play -> {
+                    openTab(play, "Fields");
+                    play.waitFor(() -> play.expect(play.getByText("host")).toBeInTheDocument());
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // The Custom Roll-ups tab, to compare with its read only partner
+                .story("CustomRollUpsEditable", context -> render(context, false))
+                .withPlay(play -> {
+                    openTab(play, "Custom Roll-ups");
+                    play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // Read only: the Custom Roll-ups tab, as 'CustomRollUpsEditable' shows it
+                .story("CustomRollUpsReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    openTab(play, "Custom Roll-ups");
+                    play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // The Fields tab: the fields, sorted; adding one with the dialog makes the document
                 // dirty
                 .story("AddField", context -> render(context, false))

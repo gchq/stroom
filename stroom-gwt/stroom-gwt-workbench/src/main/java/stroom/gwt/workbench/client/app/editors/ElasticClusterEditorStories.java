@@ -132,8 +132,30 @@ public final class ElasticClusterEditorStories {
                 .withPlay(play -> {
                     final Query save = play.findByRole("button",
                             "Save is not available as this document is read only");
-                    play.waitFor(() -> play.expect(play.querySelector(URLS)).toBeDisabled());
+                    // Read only, not disabled: every field can be read and copied, none changed (the
+                    // API key fields were once left editable)
+                    play.waitFor(() -> play.expect(play.querySelector(URLS)).toHaveAttribute("readonly"));
+                    play.expect(play.querySelector(URLS)).not().toBeDisabled();
+                    play.expect(play.querySelector(API_KEY_ID)).toHaveAttribute("readonly");
+                    play.expect(play.querySelector(API_KEY_SECRET)).toHaveAttribute("readonly");
+                    play.type(play.querySelector(API_KEY_ID), "-2");
+                    play.expect(play.querySelector(API_KEY_ID)).toHaveValue("key-abc");
+                    play.expect(play.getByRole("checkbox", "Use authentication"))
+                            .toHaveAttribute("aria-readonly", "true");
                     play.expect(save).toHaveClass("disabled");
+                    // The tab says it is read only, as a status that screen readers announce
+                    final Query note = play.getByText("Read only", ".docTab-readOnlyNote");
+                    play.expect(note).toBeVisible();
+                    play.expect(note).toHaveAttribute("role", "status");
+                    DocEditors.expectNoProblems(play);
+                })
+                // Settings, read only, with nothing typed (ReadOnly types into a field): the partner
+                // of Default
+                .story("SettingsReadOnly", context -> render(context, fixtures(true, null), true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("Connection URLs", "label")).toBeInTheDocument());
+                    play.expect(play.querySelector(URLS)).toHaveValue("https://es-1:9200\nhttps://es-2:9200");
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 });
     }

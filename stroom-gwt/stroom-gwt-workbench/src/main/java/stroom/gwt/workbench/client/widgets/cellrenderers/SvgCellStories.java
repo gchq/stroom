@@ -96,27 +96,36 @@ public final class SvgCellStories {
         clicked.getElement().getStyle().setProperty("fontSize", "12px");
         final Spy onClick = context.fn(ON_CLICK);
 
-        final CellWidget<Preset> info = new CellWidget<>(new SvgCell(true),
-                new Preset(SvgImage.INFO, "View info", true));
-        info.addValueChangeHandler(event -> {
+        final CellWidget<Preset> info = pressable(new Preset(SvgImage.INFO, "View info", true), () -> {
             onClick.call("info");
             clicked.setText("info clicked");
         });
-        final CellWidget<Preset> delete = new CellWidget<>(new SvgCell(true),
-                new Preset(SvgImage.DELETE, "Delete", true));
-        delete.addValueChangeHandler(event -> {
+        final CellWidget<Preset> delete = pressable(new Preset(SvgImage.DELETE, "Delete", true), () -> {
             onClick.call("delete");
             clicked.setText("delete clicked");
         });
-        // A disabled preset greys the icon (svgCell-disabled) and ignores clicks, so its handler
-        // never runs
-        final CellWidget<Preset> copy = new CellWidget<>(new SvgCell(true),
-                new Preset(SvgImage.COPY, "Copy (disabled)", false));
-        copy.addValueChangeHandler(event -> {
+        // A disabled preset greys the icon (svgCell-disabled) and ignores clicks, so this never runs
+        final CellWidget<Preset> copy = pressable(new Preset(SvgImage.COPY, "Copy (disabled)", false), () -> {
             onClick.call("copy");
             clicked.setText("copy clicked");
         });
 
         return StoryPanels.row(12, info, delete, copy, clicked);
+    }
+
+    // A clickable icon cell that runs onPress when it is pressed. A pressed SvgCell updates its value
+    // with the same preset, and CellWidget only reports a value that changes, so the cell's updates
+    // are caught here instead.
+    private static CellWidget<Preset> pressable(final Preset preset, final Runnable onPress) {
+        return new CellWidget<>(new SvgCell(true), preset) {
+            @Override
+            public void setValue(final Preset value, final boolean fireEvents, final boolean redraw) {
+                if (fireEvents) {
+                    onPress.run();
+                } else {
+                    super.setValue(value, false, redraw);
+                }
+            }
+        };
     }
 }

@@ -80,6 +80,13 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
         parents.getElement().getStyle().setOpacity(visible
                 ? 1
                 : 0.4);
+        // Dimmed, it doesn't apply (nothing is selected), so it is also inert: out of the tab
+        // order, unclickable and hidden from screen readers, rather than only looking unavailable
+        if (visible) {
+            parents.getElement().removeAttribute("inert");
+        } else {
+            parents.getElement().setAttribute("inert", "");
+        }
     }
 
     @Override

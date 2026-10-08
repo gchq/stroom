@@ -171,7 +171,7 @@ public final class PathwaysEditorStories {
                     // initial read only state), so the New Constraint dialog and its validation
                     // can't be reached
                     play.expect(dialog.getByRole("button", "New constraint disabled as read only"))
-                            .toBeDisabled();
+                            .toHaveAttribute("aria-disabled", "true");
                     play.expect(dialog.queryByRole("button", "New Constraint")).toBeNull();
                     // Cancel the pathway's dialog
                     play.click(dialog.getByRole("button", StroomDom.button("Cancel")));

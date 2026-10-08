@@ -188,13 +188,13 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        instanceType.setEnabled(!readOnly);
-        solrUrls.setEnabled(!readOnly);
-        useZk.setEnabled(!readOnly);
-        zkHosts.setEnabled(!readOnly);
-        zkPath.setEnabled(!readOnly);
-        collection.setEnabled(!readOnly);
-        timeField.setEnabled(!readOnly);
+        instanceType.setReadOnly(readOnly);
+        solrUrls.setReadOnly(readOnly);
+        useZk.setReadOnly(readOnly);
+        zkHosts.setReadOnly(readOnly);
+        zkPath.setReadOnly(readOnly);
+        collection.setReadOnly(readOnly);
+        timeField.setReadOnly(readOnly);
     }
 
     @UiHandler("testConnection")

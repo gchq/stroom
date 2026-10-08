@@ -27,11 +27,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestStroomDom {
 
     @Test
-    void testButtonMatchesTheTextOnceOrTwice() {
+    void testButtonMatchesTheTextOnce() {
         final TextMatch ok = StroomDom.button("OK");
 
         assertThat(ok.matches("OK")).isTrue();
-        assertThat(ok.matches("OK OK")).isTrue();
+        assertThat(ok.matches("OK OK")).isFalse();
         assertThat(ok.matches("OK OK OK")).isFalse();
         assertThat(ok.matches("OKAY")).isFalse();
         assertThat(ok.matches("Not OK")).isFalse();
@@ -41,7 +41,7 @@ class TestStroomDom {
     void testButtonQuotesTheText() {
         final TextMatch saveAs = StroomDom.button("Save As...");
 
-        assertThat(saveAs.matches("Save As... Save As...")).isTrue();
+        assertThat(saveAs.matches("Save As...")).isTrue();
         assertThat(saveAs.matches("Save As!!!")).isFalse();
     }
 

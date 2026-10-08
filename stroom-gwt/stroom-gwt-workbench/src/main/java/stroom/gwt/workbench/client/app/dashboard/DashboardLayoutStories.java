@@ -143,22 +143,22 @@ public final class DashboardLayoutStories {
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     final Query save = play.getByRole("button", "Save");
-                    play.expect(save).toBeDisabled();
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DashboardPlays.designMode(play, true);
                     play.expect(play.getByRole("button", "Exit Design Mode")).toBeInTheDocument();
                     // Differs from React: React checks the working document; GWT's toggle makes the
                     // document dirty (Save is enabled), and saving it sends the flag
-                    play.waitFor(() -> play.expect(save).toBeEnabled());
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/dashboard/v1/dash-1")
                                     .withJsonBodyContaining("{\"dashboardConfig\": {\"designMode\": true}}")
                                     .toSpyMatcher()));
-                    play.waitFor(() -> play.expect(save).toBeDisabled());
+                    play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
                     // Differs from React: GWT has no compare with the saved document (any change
                     // makes it dirty until it is saved), so toggling back is saved as well
                     DashboardPlays.designMode(play, false);
-                    play.waitFor(() -> play.expect(save).toBeEnabled());
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/dashboard/v1/dash-1")

@@ -131,12 +131,12 @@ public class OpenAIModelSettingsViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        baseUrl.setEnabled(!readOnly);
-        apiKey.setEnabled(!readOnly);
-        modelId.setEnabled(!readOnly);
-        maxContextWindowTokens.setEnabled(!readOnly);
-        reasoningEffort.setEnabled(!readOnly);
-        embeddingModelDimensions.setEnabled(!readOnly);
+        baseUrl.setReadOnly(readOnly);
+        apiKey.setReadOnly(readOnly);
+        modelId.setReadOnly(readOnly);
+        maxContextWindowTokens.setReadOnly(readOnly);
+        reasoningEffort.setReadOnly(readOnly);
+        embeddingModelDimensions.setReadOnly(readOnly);
     }
 
     private void fireChange() {

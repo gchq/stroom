@@ -63,6 +63,7 @@ public class ScheduledProcessHistoryListPresenter
     private ExecutionHistoryRequest request;
     private final ButtonView replayButton;
     private ScheduledProcessingPresenter scheduledProcessingPresenter;
+    private boolean readOnly;
 
     @Inject
     public ScheduledProcessHistoryListPresenter(final EventBus eventBus,
@@ -147,6 +148,9 @@ public class ScheduledProcessHistoryListPresenter
     }
 
     private void replay() {
+        if (readOnly) {
+            return;
+        }
         final ExecutionHistory executionHistory = selectionModel.getSelected();
         scheduledProcessingPresenter.replay(executionHistory);
     }
@@ -193,8 +197,17 @@ public class ScheduledProcessHistoryListPresenter
     }
 
     private void enableButtons() {
-        replayButton.setEnabled(selectionModel.hasSelectedItems());
+        // Replaying adds a new schedule, which isn't allowed if the owning document is read only
+        replayButton.setEnabled(!readOnly && selectionModel.hasSelectedItems());
         replayButton.setTitle("Replay Execution");
+    }
+
+    /// Sets whether the owning document is read only. When it is, executions can't be replayed.
+    ///
+    /// @param readOnly True if the owning document is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
     }
 
     public HandlerRegistration addSelectionHandler(final MultiSelectEvent.Handler handler) {

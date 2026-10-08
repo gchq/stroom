@@ -389,21 +389,21 @@ public final class AppShellStories {
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     // Freshly loaded: Save is disabled
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeDisabled());
+                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toHaveAttribute("aria-disabled", "true"));
                     // Remove an import (confirmed), which makes the document dirty
                     play.click(play.getByText("Imports", StroomDom.LINK_TAB_LABEL));
                     removeImport(play, "Alpha");
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeEnabled());
+                    play.waitFor(() -> play.expect(play.getByTitle("Save")).not().toHaveAttribute("aria-disabled"));
                     // Save: the server echoes, so the document is clean again
                     play.click(play.getByTitle("Save"));
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeDisabled());
+                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toHaveAttribute("aria-disabled", "true"));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(DICTIONARY_PATH + "dict-countries")
                                     .withJsonBodyContaining("{\"imports\": [{\"name\": \"Beta\"}]}")
                                     .toSpyMatcher());
                     // Edit again, then close: the unsaved changes are confirmed
                     removeImport(play, "Beta");
-                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeEnabled());
+                    play.waitFor(() -> play.expect(play.getByTitle("Save")).not().toHaveAttribute("aria-disabled"));
                     // Differs from React: the tab's close icon has no title
                     play.click(play.within(play.getByText(TextMatch.containing("Countries"), TAB_LABEL)
                                     .closest(".curveTab"))
@@ -625,9 +625,9 @@ public final class AppShellStories {
                     final Play screen = play.screen();
                     final Play nav = navTree(play);
                     final Query delete = nav.getByRole("button", "Delete");
-                    play.expect(delete).toBeDisabled();
+                    play.expect(delete).toHaveAttribute("aria-disabled", "true");
                     play.click(nav.getByText("Countries"));
-                    play.waitFor(() -> play.expect(delete).toBeEnabled());
+                    play.waitFor(() -> play.expect(delete).not().toHaveAttribute("aria-disabled"));
                     play.click(delete);
                     play.expect(screen.findByText(TextMatch.containingIgnoreCase(
                             "are you sure you want to delete this item"))).toBeInTheDocument();
@@ -647,9 +647,9 @@ public final class AppShellStories {
                     final Play screen = play.screen();
                     final Play nav = navTree(play);
                     final Query newButton = nav.getByRole("button", "New");
-                    play.waitFor(() -> play.expect(newButton).toBeDisabled());
+                    play.waitFor(() -> play.expect(newButton).toHaveAttribute("aria-disabled", "true"));
                     play.click(nav.getByText("Dictionaries"));
-                    play.waitFor(() -> play.expect(newButton).toBeEnabled());
+                    play.waitFor(() -> play.expect(newButton).not().toHaveAttribute("aria-disabled"));
                     play.click(newButton);
                     play.click(screen.findByText("Dictionary", StroomDom.MENU_ITEM_TEXT));
                     final Query dialog = screen.findByText("New Dictionary", StroomDom.DIALOG_TITLE)

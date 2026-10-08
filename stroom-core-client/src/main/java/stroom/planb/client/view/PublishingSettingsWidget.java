@@ -108,10 +108,9 @@ public class PublishingSettingsWidget
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        final boolean editable = !readOnly;
-        granularity.setEnabled(editable);
-        maxWaitForData.setEnabled(editable);
-        maxWaitForDataTimeUnit.setEnabled(editable);
+        granularity.setReadOnly(readOnly);
+        maxWaitForData.setReadOnly(readOnly);
+        maxWaitForDataTimeUnit.setReadOnly(readOnly);
     }
 
     @UiHandler("granularity")

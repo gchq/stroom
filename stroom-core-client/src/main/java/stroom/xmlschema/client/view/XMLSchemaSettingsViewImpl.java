@@ -72,10 +72,10 @@ public class XMLSchemaSettingsViewImpl extends ViewImpl implements XMLSchemaSett
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        namespaceURI.setEnabled(!readOnly);
-        systemId.setEnabled(!readOnly);
-        schemaGroup.setEnabled(!readOnly);
-        deprecated.setEnabled(!readOnly);
+        namespaceURI.setReadOnly(readOnly);
+        systemId.setReadOnly(readOnly);
+        schemaGroup.setReadOnly(readOnly);
+        deprecated.setReadOnly(readOnly);
     }
 
     public interface Binder extends UiBinder<Widget, XMLSchemaSettingsViewImpl> {

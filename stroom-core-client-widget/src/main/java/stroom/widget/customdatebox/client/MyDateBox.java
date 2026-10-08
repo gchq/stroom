@@ -49,6 +49,7 @@ public class MyDateBox extends Composite implements DateBoxView {
     private final DatePicker datePicker;
     private final TextBox textBox;
     private boolean isEnabled;
+    private boolean readOnly;
 
     public MyDateBox() {
         isEnabled = true;
@@ -97,6 +98,19 @@ public class MyDateBox extends Composite implements DateBoxView {
         textBox.setEnabled(isEnabled);
     }
 
+    /// Makes the value read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed, and its calendar doesn't open. It looks like the normal field
+    /// with its value greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        textBox.setReadOnly(readOnly);
+        if (readOnly) {
+            hideDatePicker();
+        }
+    }
+
     @Override
     public boolean isEnabled() {
         return isEnabled;
@@ -133,7 +147,7 @@ public class MyDateBox extends Composite implements DateBoxView {
     }
 
     public void showDatePicker() {
-        if (!popup.isShowing() && isEnabled) {
+        if (!popup.isShowing() && isEnabled && !readOnly) {
             Date current = parseDate();
             if (current == null) {
                 current = new Date();

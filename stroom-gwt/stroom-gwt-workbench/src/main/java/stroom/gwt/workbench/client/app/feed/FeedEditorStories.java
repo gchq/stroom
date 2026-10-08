@@ -138,7 +138,7 @@ public final class FeedEditorStories {
         registry.component("App/Feed/FeedEditor", FeedEditorStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // The full editor: Data, Active Tasks, Settings, Documentation and Permissions
-                .story("Default", FeedEditorStories::render)
+                .story("Default", context -> render(context, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     for (final String label : new String[]{
@@ -180,12 +180,35 @@ public final class FeedEditorStories {
                     play.click(play.getAllByText("Events Task Pipeline").nth(0));
                     play.waitFor(() -> play.expect(play.getByText("node1")).toBeInTheDocument());
                     DocEditors.expectNoProblems(play);
+                })
+                // The Settings tab, to compare with its read only partner
+                .story("SettingsEditable", context -> render(context, false))
+                .withPlay(play -> {
+                    openTab(play, "Settings");
+                    play.expect(play.findByText("Classification", "label")).toBeInTheDocument();
+                    play.waitFor(() -> play.expect(play.querySelector(CLASSIFICATION)).toHaveValue("OFFICIAL"));
+                    DocEditors.expectNoProblems(play);
+                })
+                // Read only: the Settings tab, as 'SettingsEditable' shows it
+                .story("SettingsReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    openTab(play, "Settings");
+                    play.expect(play.findByText("Classification", "label")).toBeInTheDocument();
+                    play.waitFor(() -> play.expect(play.querySelector(CLASSIFICATION)).toHaveValue("OFFICIAL"));
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
                 });
     }
 
-    private static Widget render(final StoryContext context) {
+    // Opens one of the editor's sub-tabs
+    private static void openTab(final Play play, final String label) {
+        play.waitFor(() -> play.expect(DocEditors.tab(play, label)).toBeInTheDocument());
+        play.click(DocEditors.tab(play, label));
+    }
+
+    private static Widget render(final StoryContext context, final boolean readOnly) {
         final FeedResource resource = GWT.create(FeedResource.class);
-        return DocEditors.render(context, FIXTURES, false,
+        return DocEditors.render(context, FIXTURES, readOnly,
                 (harness, injector) -> DocEditors.open(harness,
                         DOC_REF,
                         injector.getFeedPresenter(),

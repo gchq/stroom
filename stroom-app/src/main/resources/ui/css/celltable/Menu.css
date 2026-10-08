@@ -65,7 +65,7 @@
 
 .menuItem-disabled {
 	cursor: default;
-	opacity: 0.4;
+	opacity: var(--disabled-opacity);
 }
 
 .menuItem-text {

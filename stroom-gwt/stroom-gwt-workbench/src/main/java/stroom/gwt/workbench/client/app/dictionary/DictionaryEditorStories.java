@@ -107,6 +107,9 @@ public final class DictionaryEditorStories {
               "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}
             }""";
 
+    // Stroom's Ace editor's text area
+    private static final String ACE_INPUT = ".ace_text-input";
+
     private static final String PERMISSION_REPORT_PATH = "/permission/doc/v1/getDocUserPermissionsReport";
 
     private static final RestFixtures FIXTURES = TreeFixtures.explorerRoutes(
@@ -178,6 +181,32 @@ public final class DictionaryEditorStories {
                     play.expect(tab(play, "Words")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
+                // The Words tab (the default), to compare with 'ReadOnly'
+                .story("WordsEditable", context -> render(context, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(tab(play, "Words")).toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
+                    expectNoProblems(play);
+                })
+                // The Imports tab, to compare with its read only partner
+                .story("ImportsEditable", context -> render(context, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(tab(play, "Imports")).toBeInTheDocument());
+                    play.click(tab(play, "Imports"));
+                    final Play grid = play.within(play.findByText("Document Name").closest(".dataGridWidget"));
+                    play.waitFor(() -> play.expect(grid.getByTitle("Open Dictionary 'Cities'.")).toBeInTheDocument());
+                    expectNoProblems(play);
+                })
+                // Read only: the Imports tab, as 'ImportsEditable' shows it
+                .story("ImportsReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(tab(play, "Imports")).toBeInTheDocument());
+                    play.click(tab(play, "Imports"));
+                    final Play grid = play.within(play.findByText("Document Name").closest(".dataGridWidget"));
+                    play.waitFor(() -> play.expect(grid.getByTitle("Open Dictionary 'Cities'.")).toBeInTheDocument());
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    expectNoProblems(play);
+                })
                 // The Imports tab is a grid (DocRefListPresenter.initTableColumns("Document Name",
                 // true)): the name opens the imported document, and Remove takes the selection
                 // after a confirmation
@@ -219,6 +248,12 @@ public final class DictionaryEditorStories {
     // Differs from React: Stroom's link tabs have no role="tab", so they're found by their label
     private static Query tab(final Play play, final String label) {
         return play.getByText(label, StroomDom.LINK_TAB_LABEL);
+    }
+
+    // Opens one of the editor's sub-tabs
+    private static void openTab(final Play play, final String label) {
+        play.waitFor(() -> play.expect(tab(play, label)).toBeInTheDocument());
+        play.click(tab(play, label));
     }
 
     private static void expectNoProblems(final Play play) {

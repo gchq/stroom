@@ -23,8 +23,12 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.tab.client.view.LinkTabBar;
+import stroom.widget.util.client.DisabledState;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Label;
@@ -63,6 +67,17 @@ public class DataViewImpl extends ViewImpl implements DataView {
         layerContainer.setFade(true);
         sourceLinkLabel.setText("View Source");
         sourceLinkLabel.setVisible(true);
+        // A link drawn as text: make it a button that the keyboard can reach and press
+        sourceLinkLabel.getElement().setAttribute("role", "button");
+        sourceLinkLabel.getElement().setTabIndex(0);
+        sourceLinkLabel.addDomHandler(event -> {
+            final int keyCode = event.getNativeKeyCode();
+            if (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_SPACE) {
+                event.preventDefault();
+                sourceLinkLabel.getElement().dispatchEvent(Document.get().createClickEvent(
+                        1, 0, 0, 0, 0, false, false, false, false));
+            }
+        }, KeyDownEvent.getType());
     }
 
     @Override
@@ -74,15 +89,9 @@ public class DataViewImpl extends ViewImpl implements DataView {
     public void setSourceLinkVisible(final boolean isVisible, final boolean isEnabled) {
         sourceLinkLabel.setVisible(isVisible);
 
-        if (isEnabled) {
-            sourceLinkEnabled = true;
-            sourceLinkLabel.addStyleName("enabled");
-            sourceLinkLabel.removeStyleName("disabled");
-        } else {
-            sourceLinkEnabled = false;
-            sourceLinkLabel.removeStyleName("enabled");
-            sourceLinkLabel.addStyleName("disabled");
-        }
+        sourceLinkEnabled = isEnabled;
+        sourceLinkLabel.setStyleName("enabled", isEnabled);
+        DisabledState.set(sourceLinkLabel.getElement(), !isEnabled);
     }
 
     @Override

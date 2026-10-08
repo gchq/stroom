@@ -47,6 +47,7 @@ public class ScheduledProcessingPresenter
     private final ScheduledProcessEditPresenter scheduledProcessEditPresenter;
     private DocPresenter<?, ?> documentEditPresenter;
     private DocRef ownerDocRef;
+    private boolean readOnly;
 
     @Inject
     public ScheduledProcessingPresenter(final EventBus eventBus,
@@ -72,8 +73,15 @@ public class ScheduledProcessingPresenter
         }));
     }
 
-    public void read(final DocRef ownerDocRef) {
+    /// Shows the execution schedules of a document.
+    ///
+    /// @param ownerDocRef The document that owns the execution schedules.
+    /// @param readOnly    Whether the document is read only, in which case its schedules can't be changed.
+    public void read(final DocRef ownerDocRef, final boolean readOnly) {
         this.ownerDocRef = ownerDocRef;
+        this.readOnly = readOnly;
+        scheduledProcessListPresenter.setReadOnly(readOnly);
+        scheduledProcessHistoryListPresenter.setReadOnly(readOnly);
         scheduledProcessListPresenter.read(ownerDocRef);
     }
 
@@ -120,6 +128,9 @@ public class ScheduledProcessingPresenter
     }
 
     private void add(final ExecutionSchedule newSchedule) {
+        if (readOnly) {
+            return;
+        }
         if (documentEditPresenter != null && documentEditPresenter.isDirty()) {
             AlertEvent.fireWarn(
                     this,
@@ -146,7 +157,7 @@ public class ScheduledProcessingPresenter
 
     public void edit() {
         final ExecutionSchedule selected = scheduledProcessListPresenter.getSelected();
-        if (selected != null) {
+        if (selected != null && !readOnly) {
             scheduledProcessEditPresenter.setTaskMonitorFactory(this);
             scheduledProcessEditPresenter.show(selected, executionSchedule -> {
                 if (executionSchedule != null) {
@@ -166,7 +177,7 @@ public class ScheduledProcessingPresenter
 
     public void remove() {
         final ExecutionSchedule selected = scheduledProcessListPresenter.getSelected();
-        if (selected != null) {
+        if (selected != null && !readOnly) {
             restFactory
                     .create(EXECUTION_SCHEDULE_RESOURCE)
                     .method(res -> res.deleteExecutionSchedule(selected))

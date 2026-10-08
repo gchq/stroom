@@ -143,10 +143,25 @@ public final class VisualisationEditorStories {
                 })
                 .story("ReadOnly", context -> render(context, true))
                 .withPlay(play -> {
-                    play.waitFor(() -> play.expect(play.querySelector(FUNCTION_NAME)).toBeDisabled());
+                    play.waitFor(() -> play.expect(play.querySelector(FUNCTION_NAME)).toHaveAttribute("readonly"));
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).toHaveAttribute("readonly"));
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
                             .toHaveClass("disabled");
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Assets tab, to compare with its read only partner
+                .story("AssetsEditable", context -> render(context, false))
+                .withPlay(play -> {
+                    openTab(play, "Assets");
+                    play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
+                    DocEditors.expectNoProblems(play);
+                })
+                // Read only: the Assets tab, as 'AssetsEditable' shows it
+                .story("AssetsReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    openTab(play, "Assets");
+                    play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // Saving the document publishes the asset draft (the editor's post save callback
@@ -174,6 +189,12 @@ public final class VisualisationEditorStories {
                     play.waitFor(() -> play.expect(screen.getByText("Error saving assets")).toBeInTheDocument());
                     DocEditors.expectNoUnhandledRequests(play);
                 });
+    }
+
+    // Opens one of the editor's sub-tabs
+    private static void openTab(final Play play, final String label) {
+        play.waitFor(() -> play.expect(DocEditors.tab(play, label)).toBeInTheDocument());
+        play.click(DocEditors.tab(play, label));
     }
 
     // Edits the function name and saves the document

@@ -54,7 +54,6 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     @UiField
     CustomCheckBox useStateTime;
 
-    private boolean readOnly;
     private boolean useStateTimeVisible = true;
     private boolean checkIntervalVisible;
 
@@ -151,31 +150,26 @@ public class RetentionSettingsWidget extends AbstractSettingsWidget implements R
     }
 
     private void updateStates() {
-        final boolean editable = !readOnly;
-        retentionEnabled.setEnabled(editable);
-
+        // Whether each field applies is independent of read only, which onReadOnly() handles
         final boolean retentionOn = retentionEnabled.getValue();
-        if (editable) {
-            if (retentionOn) {
-                retentionAgePanel.getElement().getStyle().setOpacity(1);
-            } else {
-                retentionAgePanel.getElement().getStyle().setOpacity(0.5);
-            }
+        retentionAgePanel.setStyleName("section--disabled", !retentionOn);
+        if (checkIntervalVisible) {
+            retentionCheckIntervalPanel.setStyleName("section--disabled", !retentionOn);
         }
-        if (editable && checkIntervalVisible) {
-            retentionCheckIntervalPanel.getElement().getStyle()
-                    .setOpacity(retentionOn ? 1 : 0.5);
-        }
-        retentionAge.setEnabled(editable && retentionOn);
-        retentionTimeUnit.setEnabled(editable && retentionOn);
-        retentionCheckInterval.setEnabled(editable && retentionOn && checkIntervalVisible);
-        retentionCheckIntervalTimeUnit.setEnabled(editable && retentionOn && checkIntervalVisible);
-        useStateTime.setEnabled(editable && retentionOn);
+        retentionAge.setEnabled(retentionOn);
+        retentionTimeUnit.setEnabled(retentionOn);
+        retentionCheckInterval.setEnabled(retentionOn && checkIntervalVisible);
+        retentionCheckIntervalTimeUnit.setEnabled(retentionOn && checkIntervalVisible);
+        useStateTime.setEnabled(retentionOn);
     }
 
     public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        updateStates();
+        retentionEnabled.setReadOnly(readOnly);
+        retentionAge.setReadOnly(readOnly);
+        retentionTimeUnit.setReadOnly(readOnly);
+        retentionCheckInterval.setReadOnly(readOnly);
+        retentionCheckIntervalTimeUnit.setReadOnly(readOnly);
+        useStateTime.setReadOnly(readOnly);
     }
 
     @UiHandler("retentionEnabled")

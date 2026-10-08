@@ -47,7 +47,6 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
     @UiField
     CustomCheckBox overwrite;
 
-    private boolean readOnly;
     private boolean writeOptionsVisible = true;
 
     @Inject
@@ -130,15 +129,16 @@ public class GeneralSettingsWidget extends AbstractSettingsWidget implements Gen
     }
 
     private void updateStates() {
-        final boolean enabled = !readOnly;
-        maxStoreSize.setEnabled(enabled);
-        synchroniseMerge.setEnabled(enabled && writeOptionsVisible);
-        overwrite.setEnabled(enabled && writeOptionsVisible);
+        // Whether the write options apply is independent of read only, which onReadOnly() handles
+        synchroniseMerge.setEnabled(writeOptionsVisible);
+        overwrite.setEnabled(writeOptionsVisible);
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
+        maxStoreSize.setReadOnly(readOnly);
+        synchroniseMerge.setReadOnly(readOnly);
+        overwrite.setReadOnly(readOnly);
         updateStates();
     }
 

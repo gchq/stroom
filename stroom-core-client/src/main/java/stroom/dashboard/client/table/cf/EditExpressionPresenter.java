@@ -139,10 +139,11 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
-            disableItemButton.setTitle("");
+            // The title is the button's name, so it stays when the button is disabled
+            disableItemButton.setTitle(getEnableDisableText());
 
             deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("");
+            deleteItemButton.setTitle("Delete");
 
             copyButton.setEnabled(false);
         } else {

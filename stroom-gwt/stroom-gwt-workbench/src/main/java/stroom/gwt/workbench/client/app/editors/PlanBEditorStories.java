@@ -175,9 +175,32 @@ public final class PlanBEditorStories {
                 // Read only: the settings are disabled and Save can never be enabled
                 .story("ReadOnly", context -> render(context, "planb-STATE", true))
                 .withPlay(play -> {
-                    play.waitFor(() -> play.expect(maxStoreSize(play)).toBeDisabled());
+                    play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveAttribute("readonly"));
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
                             .toHaveClass("disabled");
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // METRIC read only: the same settings as Metric, when the user may only view the store
+                .story("MetricReadOnly", context -> render(context, "planb-METRIC", true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("Temporal Resolution", "label"))
+                            .toBeInTheDocument());
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // SESSION read only: the same settings as Session, when the user may only view the store
+                .story("SessionReadOnly", context -> render(context, "planb-SESSION", true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("Condense Data", GROUP_LABEL))
+                            .toBeInTheDocument());
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // TRACE read only: the same settings as Trace, when the user may only view the store
+                .story("TraceReadOnly", context -> render(context, "planb-TRACE", true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("Storage", GROUP_LABEL)).toBeInTheDocument());
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Unset schema fields show the Java defaults of their schemas

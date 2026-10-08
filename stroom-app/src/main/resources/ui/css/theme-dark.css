@@ -96,6 +96,7 @@
     --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
     --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
     --expression-item-box__background-color--disabled: #333;
+    --expression-item-box__text-color--disabled: #a6a6a6;
     --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
 
     --pipeline-element-box__background-color: #454545;
@@ -171,11 +172,14 @@
 
     /* Controls */
     --control__background-color: #15161b;
-    --control__background-color--disabled: rgba(255, 255, 255, 0.1);
+    /* Barely lighter than the page, so a disabled field looks set back, not lighter (and so more
+       prominent) than an enabled one */
+    --control__background-color--disabled: rgba(255, 255, 255, 0.03);
     --control__border-color: #505050;
     --control__border-color--disabled: transparent;
     --control__text-color: var(--text-color);
     --control__text-color--disabled: var(--text-color--disabled);
+    --control__text-color--readonly: var(--text-color--disabled);
 
     /* Form Group */
     --form-group__label-color: #eee;

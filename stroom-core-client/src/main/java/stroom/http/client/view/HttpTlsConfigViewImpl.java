@@ -72,15 +72,15 @@ public class HttpTlsConfigViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        protocol.setEnabled(!readOnly);
-        provider.setEnabled(!readOnly);
-        keyStore.setEnabled(!readOnly);
-        trustStore.setEnabled(!readOnly);
-        trustSelfSignedCertificates.setEnabled(!readOnly);
-        verifyHostname.setEnabled(!readOnly);
-        supportedProtocols.setEnabled(!readOnly);
-        supportedCiphers.setEnabled(!readOnly);
-        certAlias.setEnabled(!readOnly);
+        protocol.setReadOnly(readOnly);
+        provider.setReadOnly(readOnly);
+        keyStore.setReadOnly(readOnly);
+        trustStore.setReadOnly(readOnly);
+        trustSelfSignedCertificates.setReadOnly(readOnly);
+        verifyHostname.setReadOnly(readOnly);
+        supportedProtocols.setReadOnly(readOnly);
+        supportedCiphers.setReadOnly(readOnly);
+        certAlias.setReadOnly(readOnly);
     }
 
     @Override

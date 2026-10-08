@@ -58,13 +58,19 @@
 }
 
 .icon-button.disabled {
-    opacity: .4;
+    opacity: var(--disabled-opacity);
     cursor: default;
 }
 
 .icon-button.disabled .background {
     background-color: transparent;
     border: none;
+}
+
+/* A disabled toggle that is on still shows that it is on (the whole button is dimmed) */
+.icon-button.on.disabled .background {
+    background-color: var(--icon-button__background-color--on);
+    border: thin solid var(--icon-button__border-color--on);
 }
 
 .icon-button .face {
@@ -155,7 +161,7 @@
 
 .stroom-button-fab .face--disabled {
 	cursor: default;
-	opacity: 0;
+	opacity: var(--disabled-opacity);
 }
 
 .stroom-button-fab .face--down {

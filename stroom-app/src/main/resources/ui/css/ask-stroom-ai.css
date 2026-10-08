@@ -61,8 +61,9 @@
     align-items: center;
 }
 
+/* Hidden until there is a context by the view (setVisible), not here: a display: none rule here
+   once kept it hidden for good, as showing it only clears the inline style */
 .askStroomAiViewImpl-contextChip {
-    display: none;
     font-size: 0.75rem;
     line-height: 1;
     padding: 3px 8px;
@@ -284,7 +285,9 @@
     opacity: 0;
 }
 
-.ai-message:hover > .ai-message-footer .ai-message-delete {
+.ai-message:hover > .ai-message-footer .ai-message-delete,
+/* Keyboard users can tab to it, so it shows when it or its message has focus */
+.ai-message:focus-within > .ai-message-footer .ai-message-delete {
     opacity: 1;
 }
 

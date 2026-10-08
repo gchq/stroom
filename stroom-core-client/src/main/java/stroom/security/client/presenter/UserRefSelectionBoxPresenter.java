@@ -37,6 +37,7 @@ public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView
 
     private final UserRefPopupPresenter userRefPopupPresenter;
     private boolean enabled = true;
+    private boolean readOnly;
 
     @Inject
     public UserRefSelectionBoxPresenter(final EventBus eventBus,
@@ -65,7 +66,7 @@ public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView
 
     @Override
     public void showPopup() {
-        if (enabled) {
+        if (enabled && !readOnly) {
             final UserRef initialSelection = userRefPopupPresenter.getSelected();
             userRefPopupPresenter.show(userRef -> {
                 final UserRef currentSelection = userRefPopupPresenter.getSelected();
@@ -87,6 +88,15 @@ public class UserRefSelectionBoxPresenter extends MyPresenterWidget<DropDownView
         } else {
             getView().setText(selection.toDisplayString(), false);
         }
+    }
+
+    /// Makes the selection read only: it can be read and stays in the tab order, but the
+    /// picker doesn't open. It looks like the normal field with its value greyed.
+    ///
+    /// @param readOnly Whether the selection is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        getView().setReadOnly(readOnly);
     }
 
     public void setEnabled(final boolean enabled) {

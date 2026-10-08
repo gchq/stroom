@@ -17,6 +17,7 @@
 package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
@@ -48,6 +49,7 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
     private boolean allowClickPropagation;
     // Whether pressing the button focuses it
     private boolean focusOnMouseDown = true;
+    private boolean enabled = true;
 
     public InlineSvgButton() {
         super(Document.get().createPushButtonElement());
@@ -73,22 +75,32 @@ public class InlineSvgButton extends ButtonBase implements ButtonView {
         getElement().setInnerSafeHtml(safeHtml);
     }
 
+    /// Disables the button with `aria-disabled` rather than the `disabled` attribute, so it stays
+    /// focusable: keyboard and screen reader users can still find it in its toolbar and hear its
+    /// name (its tooltip). While it is disabled it ignores clicks and keys.
+    ///
+    /// @param enabled Whether the button can be pressed.
     @Override
     public void setEnabled(final boolean enabled) {
-        super.setEnabled(enabled);
-        if (enabled) {
-            getElement().removeClassName("disabled");
-        } else {
-            getElement().addClassName("disabled");
-        }
+        this.enabled = enabled;
+        DisabledState.set(getElement(), !enabled);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Override
     public void onBrowserEvent(final Event event) {
         // Should not act on button if disabled.
         if (!isEnabled()) {
-            // This can happen when events are bubbled up from non-disabled
-            // children
+            // A disabled button can still be focused and pressed (it is aria-disabled), so its
+            // clicks, including those from Enter and Space, must go no further
+            if (DOM.eventGetType(event) == Event.ONCLICK) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
             isCapturing = false;
             return;
         }

@@ -51,6 +51,7 @@ public class ScheduleBox
             .build();
     private SchedulePopup popup;
     private boolean enabled = true;
+    private boolean readOnly;
     private ScheduleRestriction scheduleRestriction = new ScheduleRestriction(false, true, true);
 
     private Consumer<Consumer<ScheduleReferenceTime>> scheduleReferenceTimeConsumer = (consumer) ->
@@ -126,7 +127,7 @@ public class ScheduleBox
     }
 
     private void showPopup() {
-        if (!enabled) {
+        if (!enabled || readOnly) {
             return;
         }
         final SchedulePopup popup = getSchedulePresenter();
@@ -173,9 +174,20 @@ public class ScheduleBox
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
         textBox.setEnabled(enabled);
-        svgIconBox.setReadonly(!enabled);
+        svgIconBox.setReadonly(!enabled || readOnly);
         updateReadOnly();
         validate();
+    }
+
+    /// Makes the schedule read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed, and its dialog doesn't open. It looks like the normal field
+    /// with its value greyed.
+    ///
+    /// @param readOnly Whether the schedule is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        svgIconBox.setReadonly(!enabled || readOnly);
+        updateReadOnly();
     }
 
     public boolean isEnabled() {
@@ -189,7 +201,7 @@ public class ScheduleBox
     // An instant schedule has no expression to type, so the text is read-only, but it stays
     // focusable and Enter (or the icon) still opens the dialog to change the type.
     private void updateReadOnly() {
-        textBox.setReadOnly(enabled && isInstant());
+        textBox.setReadOnly(readOnly || (enabled && isInstant()));
     }
 
     public Schedule getValue() {

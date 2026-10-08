@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.ai;
 
 import stroom.ai.client.AskStroomAiPresenter;
+import stroom.ai.shared.GeneralTableContext;
 import stroom.data.client.event.ShowAskStroomAiEvent;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.gin.editors.EditorsScreenGinjector;
@@ -38,6 +39,8 @@ import stroom.main.client.view.MainToolbar;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.List;
 
 /// Stories matching `App/AI/AskStroomAiDialog` in the React Storybook, showing Stroom's real
 /// [AskStroomAiPresenter] as the 'Ask Stroom AI' dialog, opened by `ShowAskStroomAiEvent` as the
@@ -110,6 +113,18 @@ public final class AskStroomAiDialogStories {
                     play.expect(screen.findByText(CAPTION, StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                     send(screen, "hi there");
                     play.waitFor(() -> play.expect(screen.getByText("A fresh reply.")).toBeInTheDocument());
+                    DocEditors.expectNoProblems(play);
+                })
+                // Asked about a table, the chat shows the table as its context (the chip was once
+                // never shown, as its style hid it for good)
+                .story("WithContext", context -> DocEditors.render(context, FIXTURES, false,
+                        builder -> builder.startup(startup -> startup.userPreferences(AiFixtures.PREFERENCES)),
+                        AskStroomAiDialogStories::showDialogWithContext))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.expect(screen.findByText(CAPTION, StroomDom.DIALOG_TITLE)).toBeInTheDocument();
+                    play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing("Orders table")))
+                            .toBeVisible());
                     DocEditors.expectNoProblems(play);
                 })
                 // History: the past chats, filtered; selecting one and OK loads its messages
@@ -248,6 +263,16 @@ public final class AskStroomAiDialogStories {
     private static void showDialog(final ScreenHarness harness, final EditorsScreenGinjector injector) {
         final AskStroomAiPresenter presenter = showPresenter(harness, injector);
         harness.closeOnCleanUp(presenter);
+        ShowAskStroomAiEvent.fire(harness.getHasHandlers(), true);
+    }
+
+    private static void showDialogWithContext(final ScreenHarness harness,
+                                              final EditorsScreenGinjector injector) {
+        final AskStroomAiPresenter presenter = showPresenter(harness, injector);
+        harness.closeOnCleanUp(presenter);
+        presenter.setContext(new GeneralTableContext("Orders table",
+                List.of("Order", "Total"),
+                List.of(List.of("1", "42"))));
         ShowAskStroomAiEvent.fire(harness.getHasHandlers(), true);
     }
 

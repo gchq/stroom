@@ -98,6 +98,7 @@ public class IndexSettingsPresenter
         updateRetentionAge(SupportedRetentionAge.get(index.getRetentionDayAge()));
         updateGroupList(index.getVolumeGroupName());
         pipelinePresenter.setSelectedEntityReference(index.getDefaultExtractionPipeline(), true);
+        pipelinePresenter.setReadOnly(readOnly);
     }
 
     @Override

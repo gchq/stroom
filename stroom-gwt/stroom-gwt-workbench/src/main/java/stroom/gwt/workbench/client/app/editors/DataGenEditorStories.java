@@ -100,12 +100,15 @@ public final class DataGenEditorStories {
                     for (final String label : new String[]{"Settings", "Execution", "Documentation", "Permissions"}) {
                         play.waitFor(() -> play.expect(DocEditors.tab(play, label)).toBeInTheDocument());
                     }
-                    // Settings: the destination feed (selected) and the template's Ace editor
-                    play.waitFor(() -> play.expect(play.getByText("Destination Feed", "label")).toBeInTheDocument());
-                    play.expect(play.getByText("Template", "label")).toBeInTheDocument();
-                    play.waitFor(() -> play.expect(play.getByText("My Feed")).toBeInTheDocument());
-                    play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
+                    waitForSettings(play);
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    DocEditors.expectNoProblems(play);
+                })
+                // Settings, read only: the partner of Default
+                .story("SettingsReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    waitForSettings(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
                     DocEditors.expectNoProblems(play);
                 })
                 // The Execution tab lists the document's schedules; Add opens the Create dialog
@@ -140,7 +143,36 @@ public final class DataGenEditorStories {
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
                             .toHaveClass("disabled");
                     DocEditors.expectNoProblems(play);
+                })
+                // Execution, editable: the partner of ExecutionReadOnly
+                .story("ExecutionEditable", context -> render(context, false))
+                .withPlay(play -> {
+                    showExecution(play);
+                    DocEditors.expectNoProblems(play);
+                })
+                // Execution, read only: the partner of ExecutionEditable
+                .story("ExecutionReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    showExecution(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // Waits for the Settings tab: the destination feed (selected) and the template's Ace editor
+    private static void waitForSettings(final Play play) {
+        play.waitFor(() -> play.expect(play.getByText("Destination Feed", "label")).toBeInTheDocument());
+        play.expect(play.getByText("Template", "label")).toBeInTheDocument();
+        play.waitFor(() -> play.expect(play.getByText("My Feed")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
+    }
+
+    // Opens the Execution tab and waits for its schedules and the (empty) history list
+    private static void showExecution(final Play play) {
+        play.waitFor(() -> play.expect(DocEditors.tab(play, "Execution")).toBeInTheDocument());
+        play.click(DocEditors.tab(play, "Execution"));
+        play.waitFor(() -> play.expect(play.getByText("Nightly")).toBeInTheDocument());
+        play.expect(play.getByText("Execution Time")).toBeInTheDocument();
     }
 
     private static Widget render(final StoryContext context, final boolean readOnly) {

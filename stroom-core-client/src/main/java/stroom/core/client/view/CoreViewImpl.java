@@ -19,6 +19,7 @@ package stroom.core.client.view;
 import stroom.core.client.presenter.CorePresenter.CoreView;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -51,6 +52,7 @@ public class CoreViewImpl extends ViewImpl implements CoreView {
     @Override
     public void showWorking(final String message) {
         loading.getStyle().setOpacity(1);
+        loading.getStyle().setVisibility(Visibility.VISIBLE);
 
         if (message != null) {
             loadingText.setInnerText(message);
@@ -60,5 +62,7 @@ public class CoreViewImpl extends ViewImpl implements CoreView {
     @Override
     public void hideWorking() {
         loading.getStyle().setOpacity(0);
+        // Hidden, not just transparent, so screen readers stop reading "Loading..."
+        loading.getStyle().setVisibility(Visibility.HIDDEN);
     }
 }

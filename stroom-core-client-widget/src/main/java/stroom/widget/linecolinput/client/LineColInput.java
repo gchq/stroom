@@ -95,6 +95,14 @@ public class LineColInput extends Composite {
         valueBox.setEnabled(enabled);
     }
 
+    /// Makes the value read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed. It looks like the normal field with its value greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        valueBox.setReadOnly(readOnly);
+    }
+
     public void setValue(final Integer lineNo, final Integer colNo) {
         final StringBuilder sb = new StringBuilder();
         if (lineNo == null) {

@@ -1801,6 +1801,31 @@ button.main-menu svg {
     margin-bottom: 0.2rem;
 }
 
+/* A tick box that carries its own label: its help goes on the same line, right after that label,
+   and anything else in the group (description, feedback, help text) goes on the lines below */
+.form-group--inline-tick {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    column-gap: var(--control__gap--horizontal);
+}
+
+.form-group--inline-tick > * {
+    flex-basis: 100%;
+    order: 2;
+}
+
+.form-group--inline-tick > .SimpleTickBox {
+    flex-basis: auto;
+    order: 0;
+}
+
+.form-group--inline-tick > .form-group-label-container {
+    flex-basis: auto;
+    order: 1;
+    margin-bottom: 0;
+}
+
 .form-group-label-container:has(> label.form-group-label:empty) {
     margin-bottom: 0em;
 }
@@ -1925,6 +1950,18 @@ button.main-menu svg {
 
 .timeRange-selector:hover {
     text-decoration: underline;
+}
+
+/* Read only: the value greyed; disabled: greyed too, and neither opens the dialog */
+.timeRange-selector.readonly,
+.timeRange-selector.disabled {
+    color: var(--control__text-color--readonly);
+    cursor: default;
+    text-decoration: none;
+}
+
+.timeRange-selector.disabled {
+    color: var(--control__text-color--disabled);
 }
 
 .timeRange-popup {
@@ -2849,4 +2886,34 @@ button.main-menu svg {
 
 .visualisation-asset-tree .gwt-TreeItem-selected {
     background-color: var(--row__background-color--selected);
+}
+
+/* A part of a form that doesn't apply while another setting is off (its controls are disabled
+   too), set from Java with setStyleName("section--disabled", ...) rather than inline opacity */
+.section--disabled {
+    opacity: var(--disabled-opacity);
+}
+
+/* The "Read only" note beside a read-only document's Save buttons (DocTabPresenter) */
+.docTab-readOnlyNote {
+    /* After the tab's own buttons, wherever they were added */
+    order: 1;
+    align-self: center;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: .25rem;
+    font-size: var(--font-size-12);
+    line-height: 18px;
+    color: var(--control__text-color--readonly);
+    border: 1px solid var(--control__border-color);
+    white-space: nowrap;
+}
+
+/* Empty, it is out of the layout (no gap either) but stays in the page, so screen readers announce
+   it when it is filled */
+.docTab-readOnlyNote:empty {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    border: 0;
 }

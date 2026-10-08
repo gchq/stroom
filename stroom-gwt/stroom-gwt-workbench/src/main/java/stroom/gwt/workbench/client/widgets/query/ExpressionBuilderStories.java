@@ -168,7 +168,7 @@ public final class ExpressionBuilderStories {
         play.expect(play.getByTitle("Copy").className()).toMatch("disabled");
         // Differs from React: Stroom's InlineSvgButton.setEnabled(false) also sets the native
         // `disabled` property (GWT's FocusWidget), as well as the `disabled` class
-        play.expect(play.getByTitle("Copy")).toBeDisabled();
+        play.expect(play.getByTitle("Copy")).toHaveAttribute("aria-disabled", "true");
         play.expect(play.getByTitle("Add Term")).not().toHaveAttribute("disabled");
         // Focusable means focusable
         final Query addTerm = play.getByTitle("Add Term");
@@ -320,6 +320,28 @@ public final class ExpressionBuilderStories {
         treePresenter.read(populatedExpression());
         harness.add(frame(treePresenter.getWidget()));
         return harness.asWidget();
+    }
+
+    /// Stroom's expression editor ([EditExpressionPresenter]) showing these stories' expression
+    /// (whose last term is disabled), for the view states sheet. Its fields come from a fixed list,
+    /// so the harness needs no fixtures.
+    ///
+    /// @param harness  The harness it is shown in.
+    /// @param readOnly Whether the expression is read only.
+    /// @return The editor's widget.
+    public static Widget expressionEditor(final ScreenHarness harness, final boolean readOnly) {
+        final ExpressionTreePresenter treePresenter = treePresenter(harness);
+        final EditExpressionPresenter presenter = new EditExpressionPresenter(harness.getEventBus(),
+                new EditExpressionViewImpl(GWT.create(EditExpressionViewImpl.Binder.class)),
+                treePresenter);
+        harness.unbindOnCleanUp(presenter);
+        harness.unbindOnCleanUp(treePresenter);
+        presenter.bind();
+        treePresenter.bind();
+        presenter.init(harness.getRestFactory(), DATA_SOURCE, fieldModel(harness, false));
+        presenter.setReadOnly(readOnly);
+        presenter.read(populatedExpression());
+        return presenter.getWidget();
     }
 
     private static ExpressionTreePresenter treePresenter(final ScreenHarness harness) {

@@ -59,6 +59,16 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
             .appendHtmlConstant("</div>")
             .toSafeHtml();
 
+    // A read-only spinner's arrows, greyed and doing nothing
+    private static final SafeHtml readOnlyArrowsHtml = new SafeHtmlBuilder()
+            .appendHtmlConstant("<div class=\"valueSpinner-arrow valueSpinner-arrowUpDisabled\">")
+            .append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_UP))
+            .appendHtmlConstant("</div>")
+            .appendHtmlConstant("<div class=\"valueSpinner-arrow valueSpinner-arrowDownDisabled\">")
+            .append(SvgImageUtil.toSafeHtml(SvgImage.ARROW_DOWN))
+            .appendHtmlConstant("</div>")
+            .toSafeHtml();
+
     private static volatile Spinner spinner;
     private long min = 0;
     private long max = 100;
@@ -101,6 +111,11 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     public void onBrowserEvent(final Context context, final Element parent, final Number value, final NativeEvent event,
                                final ValueUpdater<Number> valueUpdater) {
         super.onBrowserEvent(context, parent, value, event, valueUpdater);
+
+        // A read-only value can't be changed
+        if (isReadOnly(value)) {
+            return;
+        }
 
         // Get the target element.
         final Element target = event.getEventTarget().cast();
@@ -268,9 +283,13 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
 
     @Override
     public void render(final Context context, final Number value, final SafeHtmlBuilder sb) {
-        // If the value isn't editable then just output the value.
+        // A plain number is shown as text; an editable value that can't be edited now is a
+        // read-only spinner (the normal field, its value and arrows greyed)
         if (value != null) {
-            if (!(value instanceof Editable) || !((Editable) value).isEditable()) {
+            if (isReadOnly(value)) {
+                sb.append(template.readOnlyInput(String.valueOf(value), readOnlyArrowsHtml));
+
+            } else if (!(value instanceof Editable)) {
                 sb.append(SafeHtmlUtils.fromString(String.valueOf(value)));
 
             } else {
@@ -423,6 +442,11 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
     }
 
 
+    private static boolean isReadOnly(final Number value) {
+        return value instanceof Editable && !((Editable) value).isEditable();
+    }
+
+
     // --------------------------------------------------------------------------------
 
 
@@ -433,6 +457,12 @@ public class ValueSpinnerCell extends AbstractEditableCell<Number, ValueSpinnerC
                 "<div class=\"arrows\">{1}{2}</div>" +
                 "</div>")
         SafeHtml input(String value, SafeHtml imgUp, SafeHtml imgDown);
+
+        @Template("<div class=\"valueSpinner\">" +
+                "<input class=\"gwt-TextBox\" type=\"text\" value=\"{0}\" tabindex=\"-1\" readonly></input>" +
+                "<div class=\"arrows\">{1}</div>" +
+                "</div>")
+        SafeHtml readOnlyInput(String value, SafeHtml arrows);
     }
 
 

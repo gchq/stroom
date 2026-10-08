@@ -34,16 +34,14 @@
             <item:SelectionBox ui:field="fontSize" addStyleNames="w-100"/>
         </form:FormGroup>
         <form:FormGroup identity="userPreferencesEnableTransparency"
-                        label="Enable Transparency"
                         helpText="Tick to give dialogs and popups a translucent background that blurs the page behind them. Default is ticked unless an administrator has changed the defaults."
                         screenReaderText="Gives dialogs and popups a translucent, blurred background.">
-            <tickbox:CustomCheckBox ui:field="enableTransparency"/>
+            <tickbox:CustomCheckBox ui:field="enableTransparency" label="Enable Transparency"/>
         </form:FormGroup>
         <form:FormGroup identity="userPreferencesHideConditionalStyles"
-                        label="Hide Conditional Styles"
                         helpText="Tick to turn off conditional formatting colours and styles in table rows. Default is unticked unless an administrator has changed the defaults."
                         screenReaderText="Turns off conditional formatting in tables.">
-            <tickbox:CustomCheckBox ui:field="hideConditionalStyles"/>
+            <tickbox:CustomCheckBox ui:field="hideConditionalStyles" label="Hide Conditional Styles"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

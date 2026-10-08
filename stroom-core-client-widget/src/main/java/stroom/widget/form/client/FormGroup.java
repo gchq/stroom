@@ -18,6 +18,7 @@ package stroom.widget.form.client;
 
 import stroom.util.shared.NullSafe;
 import stroom.widget.help.client.HelpButton;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -94,6 +95,8 @@ public class FormGroup extends Composite implements HasWidgets {
     public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER = "form-group-description-container";
     public static final String STYLE_FORM_GROUP_DESCRIPTION_CONTAINER_DISABLED =
             STYLE_FORM_GROUP_DESCRIPTION_CONTAINER + "--disabled";
+    // A group with no label of its own whose tick box has one: the help goes beside that label
+    public static final String STYLE_FORM_GROUP_INLINE_TICK = "form-group--inline-tick";
 
     // The elements that are form controls a label can name
     private static final List<String> FORM_CONTROL_TAGS = List.of("input", "select", "textarea");
@@ -221,7 +224,11 @@ public class FormGroup extends Composite implements HasWidgets {
                 ariaLabelledControl.setAttribute(ARIA_LABELLED_BY,
                         formLabel.getElement().getId() + " " + ensureId(target));
             } else if (target == childWidget.getElement()) {
-                formLabel.setIdentity(id);
+                // The child is the control: the label is for its id, given one if the group has no
+                // identity (it once had no 'for' then, so the control had no name)
+                formLabel.setIdentity(NullSafe.isNonBlankString(id)
+                        ? id
+                        : ensureId(target));
             } else {
                 formLabel.setIdentity(ensureId(target));
             }
@@ -383,15 +390,37 @@ public class FormGroup extends Composite implements HasWidgets {
     public void setLabel(final String label) {
         if (!Objects.equals(getLabel(), label)) {
             formLabel.setLabel(label);
-
-            if (NullSafe.isBlankString(label)) {
-                helpButton.setTitle("Click for help");
-            } else {
-                helpButton.setTitle(label + " - Click for help");
-                helpButton.setHelpContentHeading(label);
-            }
+            updateHelpTitle();
             updateLabelPanel();
+            updateInlineTick();
         }
+    }
+
+    // The help is for the group's label or, if it has none, the label beside its tick box
+    private void updateHelpTitle() {
+        final String label = NullSafe.isNonBlankString(getLabel())
+                ? getLabel()
+                : getTickBoxLabel();
+        if (NullSafe.isBlankString(label)) {
+            helpButton.setTitle("Click for help");
+        } else {
+            helpButton.setTitle(label + " - Click for help");
+            helpButton.setHelpContentHeading(label);
+        }
+    }
+
+    private String getTickBoxLabel() {
+        return childWidget instanceof final CustomCheckBox tickBox
+                ? tickBox.getLabel()
+                : null;
+    }
+
+    // A tick box with its own label and no group label has its help on the same line, after that
+    // label, rather than on a line of its own above it
+    private void updateInlineTick() {
+        final boolean inline = NullSafe.isBlankString(getLabel())
+                               && NullSafe.isNonBlankString(getTickBoxLabel());
+        formGroupPanel.setStyleName(STYLE_FORM_GROUP_INLINE_TICK, inline);
     }
 
     public String getLabel() {
@@ -622,7 +651,8 @@ public class FormGroup extends Composite implements HasWidgets {
         }
         formGroupPanel.add(feedbackLabel);
         formGroupPanel.add(helpDescription);
-
+        updateHelpTitle();
+        updateInlineTick();
     }
 
     private void updateLabelPanel() {

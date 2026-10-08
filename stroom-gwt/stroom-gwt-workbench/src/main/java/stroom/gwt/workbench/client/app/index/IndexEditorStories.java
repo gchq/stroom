@@ -171,12 +171,50 @@ public final class IndexEditorStories {
                     play.expect(screen.getByText("Nearest Neighbour Count", "label")).toBeInTheDocument();
                     play.expect(screen.getByText("Minimum Rerank Score", "label")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
+                })
+                // The Fields tab (the default) as an editable partner for FieldsReadOnly
+                .story("FieldsEditable", context -> render(context, false, false))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Fields tab (the default) when the user may only view the index
+                .story("FieldsReadOnly", context -> render(context, false, true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Settings tab as an editable partner for SettingsReadOnly
+                .story("SettingsEditable", context -> render(context, false, false))
+                .withPlay(play -> {
+                    openSettings(play);
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Settings tab when the user may only view the index
+                .story("SettingsReadOnly", context -> render(context, false, true))
+                .withPlay(play -> {
+                    openSettings(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
                 });
     }
 
+    // Opens the Settings tab and waits for its form
+    private static void openSettings(final Play play) {
+        play.waitFor(() -> play.expect(DocEditors.tab(play, "Settings")).toBeInTheDocument());
+        play.click(DocEditors.tab(play, "Settings"));
+        play.waitFor(() -> play.expect(play.getByText("Max Docs Per Shard", "label")).toBeInTheDocument());
+        play.expect(play.getByText("Volume Group", "label")).toBeInTheDocument();
+    }
+
     private static Widget render(final StoryContext context, final boolean manageShards) {
+        return render(context, manageShards, false);
+    }
+
+    private static Widget render(final StoryContext context, final boolean manageShards, final boolean readOnly) {
         final IndexResource resource = GWT.create(IndexResource.class);
-        return DocEditors.render(context, FIXTURES, false,
+        return DocEditors.render(context, FIXTURES, readOnly,
                 // React's fetchEffectiveAppPermissions: Manage Index Shards or nothing
                 builder -> {
                     if (manageShards) {

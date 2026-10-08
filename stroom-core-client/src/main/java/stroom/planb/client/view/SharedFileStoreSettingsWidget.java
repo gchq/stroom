@@ -49,7 +49,6 @@ public class SharedFileStoreSettingsWidget
     @UiField
     ValueSpinner shardCount;
 
-    private boolean readOnly;
     private boolean locked;
 
     @Inject
@@ -92,15 +91,15 @@ public class SharedFileStoreSettingsWidget
     }
 
     private void updateStates() {
-        final boolean editable = !readOnly;
-        sharedPath.setEnabled(editable && !locked);
-        shardCount.setEnabled(editable && !locked);
+        // Locking is independent of read only, which onReadOnly() handles
+        sharedPath.setEnabled(!locked);
+        shardCount.setEnabled(!locked);
     }
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        updateStates();
+        sharedPath.setReadOnly(readOnly);
+        shardCount.setReadOnly(readOnly);
     }
 
     @UiHandler("sharedPath")

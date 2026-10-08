@@ -68,8 +68,8 @@ public class TemporalRangeKeySchemaSettingsWidget
     }
 
     public void onReadOnly(final boolean readOnly) {
-        rangeType.setEnabled(!readOnly);
-        temporalPrecision.setEnabled(!readOnly);
+        rangeType.setReadOnly(readOnly);
+        temporalPrecision.setReadOnly(readOnly);
     }
 
     @UiHandler("rangeType")

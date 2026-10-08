@@ -25,10 +25,10 @@
             <g:Cell width="50px">
                 <tickbox:CustomCheckBox ui:field="enabledEnable"/>
             </g:Cell>
-            <form:FormGroup ui:field="enabledForm" label="Enabled"
+            <form:FormGroup ui:field="enabledForm"
                             helpText="Enables or disables the schedules. Only applied when this field's tick box is ticked, to the selected or the filtered schedules depending on the button used."
                             screenReaderText="Applied only if its tick box is ticked.">
-                <tickbox:CustomCheckBox ui:field="enabledBox"/>
+                <tickbox:CustomCheckBox ui:field="enabledBox" label="Enabled"/>
             </form:FormGroup>
         </g:HorizontalPanel>
 

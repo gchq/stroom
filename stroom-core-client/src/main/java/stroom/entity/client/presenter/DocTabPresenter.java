@@ -38,6 +38,7 @@ import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
@@ -57,6 +58,9 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     private TabData selectedTab;
     private String lastLabel;
     protected final ButtonPanel toolbar;
+    // Says that the document is read only, next to the Save buttons; a polite status, so screen
+    // readers announce it when a read-only document opens
+    private final Label readOnlyNote = new Label();
     private PresenterWidget<?> currentContent;
     protected DocRef docRef;
     private TabData defaultTab;
@@ -73,6 +77,9 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         saveAsButton.setEnabled(false);
 
         toolbar = createToolbar();
+        readOnlyNote.setStyleName("docTab-readOnlyNote");
+        readOnlyNote.getElement().setAttribute("role", "status");
+        toolbar.add(readOnlyNote);
 
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
@@ -221,6 +228,9 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         if (readOnly) {
             saveButton.setTitle("Save is not available as this document is read only");
         }
+        readOnlyNote.setText(readOnly
+                ? "Read only"
+                : "");
         tabContentProvider.read(docRef, document, readOnly);
         // The name may have changed (e.g. after a rename or Save As), and a clean document doesn't
         // become dirty to refresh the tab's label

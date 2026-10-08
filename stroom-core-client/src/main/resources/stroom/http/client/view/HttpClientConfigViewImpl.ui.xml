@@ -31,7 +31,8 @@
                         screenReaderText="Idle time before a pooled connection is closed. Default is 1 hour.">
             <d:DurationPicker ui:field="timeToLive"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether cookies set by a server are kept and sent back to it on later requests. Some endpoints use a cookie to hold a session, e.g. after signing in, so requests to them need cookies. Default is unticked."
+                        screenReaderText="Keeps and sends back server cookies. Default is unticked.">
             <tickbox:CustomCheckBox ui:field="cookiesEnabled"
                                     identity="httpClientCookiesEnabled"
                                     label="Cookies Enabled"/>

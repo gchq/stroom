@@ -71,8 +71,16 @@ public class TableBuilderProcessingPresenter
         this.nodeClient = nodeClient;
     }
 
+    /// Shows the table builder processing settings of a rule.
+    ///
+    /// @param ruleDocRef                        The rule the settings belong to.
+    /// @param tableBuilderAnalyticProcessConfig The settings to show.
+    /// @param readOnly                          Whether the rule is read only, in which case the settings
+    ///                                          can't be changed.
     public void read(final DocRef ruleDocRef,
-                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig) {
+                     final TableBuilderAnalyticProcessConfig tableBuilderAnalyticProcessConfig,
+                     final boolean readOnly) {
+        getView().setReadOnly(readOnly);
         nodeClient.listAllNodes(
                 list -> {
                     if (list != null && list.size() > 0) {
@@ -205,5 +213,10 @@ public class TableBuilderProcessingPresenter
         void setDataRetention(SimpleDuration dataRetention);
 
         void setInfo(SafeHtml info);
+
+        /// Sets whether the settings fields are read only.
+        ///
+        /// @param readOnly True if the settings can be seen but not changed.
+        void setReadOnly(boolean readOnly);
     }
 }

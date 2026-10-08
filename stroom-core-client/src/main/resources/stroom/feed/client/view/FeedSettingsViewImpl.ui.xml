@@ -12,9 +12,8 @@
             <g:TextBox ui:field="classification" width="400px"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsReferenceFeed"
-                        label="Reference Feed"
                         helpText="Tick if this feed contains reference data, used for reference data lookups.">
-            <tickbox:CustomCheckBox ui:field="reference"/>
+            <tickbox:CustomCheckBox ui:field="reference" label="Reference Feed"/>
         </form:FormGroup>
         <form:FormGroup identity="feedSettingsFeedStatus"
                         label="Feed Status"

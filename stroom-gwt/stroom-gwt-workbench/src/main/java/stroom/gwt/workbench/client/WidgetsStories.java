@@ -71,6 +71,7 @@ import stroom.gwt.workbench.client.widgets.inputs.SingleLineEditorStories;
 import stroom.gwt.workbench.client.widgets.inputs.TextInputStories;
 import stroom.gwt.workbench.client.widgets.inputs.TickBoxStories;
 import stroom.gwt.workbench.client.widgets.inputs.ValueSpinnerStories;
+import stroom.gwt.workbench.client.widgets.inputs.ViewStateStories;
 import stroom.gwt.workbench.client.widgets.layout.RoundedPanelStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitLayoutPanelStories;
 import stroom.gwt.workbench.client.widgets.layout.ThinSplitLayoutPanelStories;
@@ -283,6 +284,8 @@ public final class WidgetsStories {
         SplitLayoutPanelStories.addTo(registry);
         // Widgets/Layout/ThinSplitLayoutPanel
         ThinSplitLayoutPanelStories.addTo(registry);
+        // Widgets/Inputs/ViewStates (GWT only): every control as normal, read only and disabled
+        ViewStateStories.addTo(registry);
         return registry;
     }
 }

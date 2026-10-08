@@ -168,7 +168,7 @@ public class QuickFilter extends FlowPanel
 
     private void enableButtons() {
         final String text = textBox.getText();
-        final boolean isNotEmpty = !text.isEmpty();
+        final boolean isNotEmpty = !text.isEmpty() && textBox.isEnabled();
         clearButton.setEnabled(isNotEmpty);
         clearButton.setVisible(isNotEmpty);
     }
@@ -180,6 +180,15 @@ public class QuickFilter extends FlowPanel
         } else if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             onChange(true);
         }
+    }
+
+    /// Enables or disables the filter's text. Its syntax help stays available.
+    ///
+    /// @param enabled Whether the filter can be typed in.
+    public void setEnabled(final boolean enabled) {
+        textBox.setEnabled(enabled);
+        setStyleName("disabled", !enabled);
+        enableButtons();
     }
 
     public void reset() {

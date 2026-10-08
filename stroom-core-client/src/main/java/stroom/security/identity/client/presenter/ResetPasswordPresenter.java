@@ -28,6 +28,7 @@ import stroom.util.shared.NullSafe;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.inject.Inject;
@@ -82,6 +83,8 @@ public class ResetPasswordPresenter extends MyPresenter<ResetPasswordView, Reset
     protected void revealInParent() {
         RevealRootContentEvent.fire(this, this);
         loading.getStyle().setOpacity(0);
+        // Hidden, not just transparent, so screen readers stop reading "Loading..."
+        loading.getStyle().setVisibility(Visibility.HIDDEN);
         promptForNewPassword();
     }
 

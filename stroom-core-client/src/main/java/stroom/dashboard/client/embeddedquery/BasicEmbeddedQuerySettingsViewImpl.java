@@ -116,13 +116,9 @@ public class BasicEmbeddedQuerySettingsViewImpl
     }
 
     private void updateEnabledState() {
-        if (referenceExistingQuery.getValue()) {
-            queryRefFormGroup.getElement().getStyle().setOpacity(1);
-            copyQuery.setEnabled(false);
-        } else {
-            queryRefFormGroup.getElement().getStyle().setOpacity(0.5);
-            copyQuery.setEnabled(true);
-        }
+        final boolean reference = referenceExistingQuery.getValue();
+        queryRefFormGroup.setStyleName("section--disabled", !reference);
+        copyQuery.setEnabled(!reference);
     }
 
     @Override

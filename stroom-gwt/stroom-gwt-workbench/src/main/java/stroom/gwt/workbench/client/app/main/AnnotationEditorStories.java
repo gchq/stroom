@@ -252,6 +252,62 @@ public final class AnnotationEditorStories {
                     play.expect(tab(play, "Permissions")).toBeInTheDocument();
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // Read only (no Edit permission): everything can be read, nothing changed (the
+                // annotation once ignored read only, and each change went straight to the server)
+                .story("ReadOnly", context -> render(context, fixtures(ENTRIES).build(), true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query title = play.findByDisplayValue("Investigate alert");
+                    play.expect(title).toHaveAttribute("readonly");
+                    play.click(play.getByText("Status"));
+                    play.expect(screen.queryByText("Closed")).toBeNull();
+                    play.expect(play.getByRole("button", StroomDom.button("Comment"))).toBeDisabled();
+                    play.expect(play.getByRole("button", StroomDom.button("Delete Annotation"))).toBeDisabled();
+                    play.expect(play.queryByText("Assign yourself")).toBeNull();
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post(CHANGE_PATH).toSpyMatcher());
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // The Annotation tab (the default) as an editable partner for AnnotationReadOnly
+                .story("AnnotationEditable", context -> render(context, fixtures(ENTRIES).build(), false))
+                .withPlay(play -> {
+                    waitForAnnotation(play);
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // The Annotation tab (the default) when the user may only view the annotation
+                .story("AnnotationReadOnly", context -> render(context, fixtures(ENTRIES).build(), true))
+                .withPlay(play -> {
+                    waitForAnnotation(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // The Events tab as an editable partner for EventsReadOnly
+                .story("EventsEditable", context -> render(context, fixtures(ENTRIES).build(), false))
+                .withPlay(play -> {
+                    openTab(play, "Events", "Add Event Link");
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // The Events tab when the user may only view the annotation
+                .story("EventsReadOnly", context -> render(context, fixtures(ENTRIES).build(), true))
+                .withPlay(play -> {
+                    openTab(play, "Events", "Add Event Link");
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // The Link To tab as an editable partner for LinkToReadOnly
+                .story("LinkToEditable", context -> render(context, fixtures(ENTRIES).build(), false))
+                .withPlay(play -> {
+                    openTab(play, "Link To", "Add Annotation Link");
+                    ContentStorySupport.expectNoProblems(play);
+                })
+                // The Link To tab when the user may only view the annotation
+                .story("LinkToReadOnly", context -> render(context, fixtures(ENTRIES).build(), true))
+                .withPlay(play -> {
+                    openTab(play, "Link To", "Add Annotation Link");
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    ContentStorySupport.expectNoProblems(play);
+                })
                 // The Status block shows the current value; clicking it opens a chooser; picking a
                 // status sends a setTag change
                 .story("StatusSettingBlock", context -> render(context, fixtures(ENTRIES).build()))
@@ -268,6 +324,19 @@ public final class AnnotationEditorStories {
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
                 });
+    }
+
+    // Waits for the Annotation tab's title and history
+    private static void waitForAnnotation(final Play play) {
+        play.findByDisplayValue("Investigate alert");
+        play.findByText("Looking into it.");
+    }
+
+    // Opens a sub-tab of the annotation and waits for its button with this title
+    private static void openTab(final Play play, final String name, final String buttonTitle) {
+        play.findByDisplayValue("Investigate alert");
+        play.click(tab(play, name));
+        play.findByTitle(buttonTitle);
     }
 
     // A sub-tab of the annotation (Stroom's LinkTabPanel has no tab role)
@@ -301,6 +370,10 @@ public final class AnnotationEditorStories {
     }
 
     private static Widget render(final StoryContext context, final RestFixtures fixtures) {
+        return render(context, fixtures, false);
+    }
+
+    private static Widget render(final StoryContext context, final RestFixtures fixtures, final boolean readOnly) {
         final ContentScreenGinjector injector = GWT.create(ContentScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
@@ -311,7 +384,7 @@ public final class AnnotationEditorStories {
         final FindAnnotationPresenter findAnnotationPresenter = injector.getFindAnnotationPresenter();
         harness.addRegistration(harness.getEventBus().addHandler(ShowFindAnnotationEvent.getType(),
                 findAnnotationPresenter));
-        harness.afterStartUp(() -> AnnotationFixtures.open(injector, harness, 42L));
+        harness.afterStartUp(() -> AnnotationFixtures.open(injector, harness, 42L, readOnly));
         return harness.asWidget();
     }
 }

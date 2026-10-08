@@ -39,6 +39,7 @@ public class TimeBox
 
     private Provider<TimePopup> popupProvider;
     private final TextBox textBox;
+    private boolean readOnly;
     private final SvgIconBox svgIconBox;
     private Time value;
     private TimePopup popup;
@@ -92,6 +93,9 @@ public class TimeBox
     }
 
     private void showPopup() {
+        if (readOnly || !textBox.isEnabled()) {
+            return;
+        }
         final TimePopup popup = getPopup();
         if (popup != null) {
             final Time time = Time.parse(textBox.getValue());
@@ -116,7 +120,18 @@ public class TimeBox
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
         // So the clock icon can't open the dialog either
-        svgIconBox.setReadonly(!enabled);
+        svgIconBox.setReadonly(!enabled || readOnly);
+    }
+
+    /// Makes the value read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed, and its dialog doesn't open. It looks like the normal field
+    /// with its value greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        textBox.setReadOnly(readOnly);
+        svgIconBox.setReadonly(!textBox.isEnabled() || readOnly);
     }
 
     public Time getValue() {

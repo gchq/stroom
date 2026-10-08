@@ -25,6 +25,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
+import stroom.widget.util.client.DisabledState;
 import stroom.widget.util.client.SvgImageUtil;
 
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -141,6 +142,12 @@ public class PipelineElementBox extends Box<PipelineElement> {
 
     public void setDisabled(final boolean disabled) {
         toggleClass(DISABLED_CLASS, disabled);
+        // Tell assistive technology too, not only show it
+        if (disabled) {
+            getElement().setAttribute(DisabledState.ARIA_DISABLED, "true");
+        } else {
+            getElement().removeAttribute(DisabledState.ARIA_DISABLED);
+        }
     }
 
     private void updateFilterState() {

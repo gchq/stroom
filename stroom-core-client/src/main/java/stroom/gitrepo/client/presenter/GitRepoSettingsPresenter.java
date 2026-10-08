@@ -24,6 +24,7 @@ import stroom.credentials.shared.CredentialType;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.shared.GitRepoDoc;
@@ -353,7 +354,7 @@ public class GitRepoSettingsPresenter
     }
 
     public interface GitRepoSettingsView
-            extends View, HasUiHandlers<GitRepoSettingsUiHandlers> {
+            extends View, ReadOnlyChangeHandler, HasUiHandlers<GitRepoSettingsUiHandlers> {
 
         SelectionBox<Credential> getCredentialSelectionBox();
 

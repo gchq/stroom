@@ -12,10 +12,10 @@
                         helpText="Name of this schedule, shown in the list of schedules.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup label="Enabled"
+        <form:FormGroup
                         helpText="Whether this schedule runs. It can only be enabled when its processing node exists and an error feed is set on the rule or report, or as the default."
                         screenReaderText="Needs an existing node and an error feed to be enabled.">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
+            <tickbox:CustomCheckBox ui:field="enabled" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticProcessingNode" label="Processing Node"
                         helpText="Node that runs this schedule; it never runs on any other node. New schedules start with the default node, and administrators can select Set Default to change the default."

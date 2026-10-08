@@ -63,14 +63,14 @@ public final class StroomDom {
     }
 
     /// The accessible name of a Stroom `Button` (e.g. a dialog's OK), for
-    /// `getByRole("button", StroomDom.button("OK"))`. A Stroom button's name has its text twice
-    /// (`OK OK`), as the text of its background isn't hidden; this matches either.
+    /// `getByRole("button", StroomDom.button("OK"))`: exactly its text. (A Stroom button's name
+    /// once had its text twice, `OK OK`, as the copy of its text that sizes it wasn't hidden.)
     ///
     /// @param text The button's text, e.g. `OK`, `Cancel`, `Close`.
     /// @return A match of the button's name.
     public static TextMatch button(final String text) {
         final String quoted = quote(Objects.requireNonNull(text));
-        return TextMatch.regex("^" + quoted + "( " + quoted + ")?$", "");
+        return TextMatch.regex("^" + quoted + "$", "");
     }
 
     private static String quote(final String text) {

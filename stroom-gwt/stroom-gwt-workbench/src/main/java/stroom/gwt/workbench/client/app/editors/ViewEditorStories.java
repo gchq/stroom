@@ -122,8 +122,8 @@ public final class ViewEditorStories {
                             .toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByRole("button", TextMatch.startingWith("Pipeline My Pipeline")))
                             .toHaveAttribute("aria-disabled", "true");
-                    play.expect(play.getByTitle("Add Term")).toBeDisabled();
-                    play.expect(play.getByTitle("Add Operator")).toBeDisabled();
+                    play.expect(play.getByTitle("Add Term")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Add Operator")).toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 });
     }

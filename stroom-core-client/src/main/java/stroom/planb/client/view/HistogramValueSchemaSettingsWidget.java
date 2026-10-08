@@ -62,7 +62,7 @@ public class HistogramValueSchemaSettingsWidget
     }
 
     public void onReadOnly(final boolean readOnly) {
-        maxValue.setEnabled(!readOnly);
+        maxValue.setReadOnly(readOnly);
     }
 
     @UiHandler("maxValue")

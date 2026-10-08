@@ -71,7 +71,7 @@ public class TraceGeneralSettingsWidget extends AbstractSettingsWidget implement
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        maxSpansPerTrace.setEnabled(!readOnly);
+        maxSpansPerTrace.setReadOnly(readOnly);
     }
 
     @UiHandler("maxSpansPerTrace")

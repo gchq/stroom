@@ -178,9 +178,12 @@ public class PipelineStructurePresenter
 
     @Override
     protected void onRead(final DocRef docRef, final PipelineDoc document, final boolean readOnly) {
-        pipelinePresenter.setEnabled(!readOnly);
+        pipelinePresenter.setReadOnly(readOnly);
         propertyListPresenter.setReadOnly(readOnly);
         pipelineReferenceListPresenter.setReadOnly(readOnly);
+        // Dragging rearranges the pipeline, so it is only allowed in advanced mode on a document
+        // that can be changed
+        pipelineTreePresenter.setAllowDragging(advancedMode && !readOnly);
         propertyListPresenter.setTableName(
                 "Pipeline '" + docRef.getName() + "' Properties");
         pipelineReferenceListPresenter.setTableName(
@@ -520,7 +523,8 @@ public class PipelineStructurePresenter
     @Override
     public void setAdvancedMode(final boolean advancedMode) {
         this.advancedMode = advancedMode;
-        pipelineTreePresenter.setAllowDragging(advancedMode);
+        // Dragging rearranges the pipeline, so a read-only document can't be dragged
+        pipelineTreePresenter.setAllowDragging(advancedMode && !isReadOnly());
         if (advancedMode) {
             pipelineTreePresenter.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         } else {

@@ -25,6 +25,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.form.client.DescriptionHTML;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -43,6 +44,7 @@ public final class FormGroupStories {
                                                   + "10GiB.";
     private static final String STORE_SIZE_SR = "Size with units, e.g. 10GiB";
     private static final String RETAIN_FOR_SR = "How long to keep the data";
+    private static final String TICK_HELP = "Whether a redirect response is followed.";
 
     private FormGroupStories() {
         // Static utility
@@ -160,6 +162,29 @@ public final class FormGroupStories {
                     play.expect(size).toHaveAttribute("aria-required", "true");
                     play.click(play.getByTitle("Max Store Size - Click for help"));
                     play.expect(play.screen().findByText(STORE_SIZE_HELP, ".help-button-tooltip *"))
+                            .toBeInTheDocument();
+                })
+                // GWT-only: a tick box carries its own label, beside the box, so the group has none and
+                // its help goes on the same line, right after the tick box's label
+                .story("TickBoxWithHelp", context -> {
+                    StoryPopups.create(context).withHelp();
+                    final FormGroup formGroup = new FormGroup();
+                    formGroup.setIdentity("fg-tick");
+                    formGroup.setHelpText(TICK_HELP);
+                    final CustomCheckBox tickBox = new CustomCheckBox();
+                    tickBox.setLabel("Follow Redirects");
+                    formGroup.add(tickBox);
+                    formGroup.getElement().setAttribute("data-testid", "fg-tick-group");
+                    return InputWidgets.maxWidth(formGroup, MAX_WIDTH);
+                })
+                .withPlay(play -> {
+                    final Query group = play.getByTestId("fg-tick-group");
+                    play.expect(group).toHaveClass("form-group--inline-tick");
+                    play.expect(play.within(group).getByRole("checkbox", "Follow Redirects"))
+                            .toBeInTheDocument();
+                    // The help is for the tick box's label, as it would be for a group label
+                    play.click(play.within(group).getByTitle("Follow Redirects - Click for help"));
+                    play.expect(play.screen().findByText(TICK_HELP, ".help-button-tooltip *"))
                             .toBeInTheDocument();
                 })
                 // GWT-only: a group of several controls (an amount and its unit), which one label can't

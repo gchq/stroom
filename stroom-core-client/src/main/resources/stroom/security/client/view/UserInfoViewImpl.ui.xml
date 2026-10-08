@@ -59,10 +59,9 @@
 
         <form:FormGroup ui:field="enabledFormGroup"
                         identity="userInfoIsEnabled"
-                        label="Enabled"
                         helpText="Untick to stop the user signing in. The change is saved immediately. Their permissions and content are kept."
                         screenReaderText="Unticked users cannot sign in. Saved immediately.">
-            <tickbox:CustomCheckBox ui:field="isEnabledTickBox"/>
+            <tickbox:CustomCheckBox ui:field="isEnabledTickBox" label="Enabled"/>
         </form:FormGroup>
 
     </g:FlowPanel>

@@ -54,7 +54,7 @@ public class DataGenProcessingPresenter
 
     @Override
     protected void onRead(final DocRef docRef, final DataGenDoc document, final boolean readOnly) {
-        scheduledProcessingPresenter.read(docRef);
+        scheduledProcessingPresenter.read(docRef, readOnly);
     }
 
     @Override

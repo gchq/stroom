@@ -27,7 +27,8 @@
             <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-messagePane">
                     <g:Label ui:field="contextIndicator"
-                             styleName="askStroomAiViewImpl-contextChip"/>
+                             styleName="askStroomAiViewImpl-contextChip"
+                             visible="false"/>
                     <g:TextArea ui:field="message" addStyleNames="dock-max w-100"/>
                 </g:FlowPanel>
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">

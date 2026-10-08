@@ -126,4 +126,13 @@ public class DurationPicker extends Composite implements HasValue<SimpleDuration
         time.setEnabled(enabled);
         timeUnit.setEnabled(enabled);
     }
+
+    /// Makes the duration read only: it can be read and stays in the tab order, but neither the
+    /// amount nor the unit can be changed. It looks like the normal fields with their values greyed.
+    ///
+    /// @param readOnly Whether the duration is read only.
+    public void setReadOnly(final boolean readOnly) {
+        time.setReadOnly(readOnly);
+        timeUnit.setReadOnly(readOnly);
+    }
 }

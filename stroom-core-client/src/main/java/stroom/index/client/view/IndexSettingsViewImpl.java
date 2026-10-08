@@ -153,13 +153,13 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        maxDocsPerShard.setEnabled(!readOnly);
-        partitionBy.setEnabled(!readOnly);
-        partitionSize.setEnabled(!readOnly);
-        shardsPerPartition.setEnabled(!readOnly);
-        retentionAge.setEnabled(!readOnly);
-        volumeGroups.setEnabled(!readOnly);
-        timeField.setEnabled(!readOnly);
+        maxDocsPerShard.setReadOnly(readOnly);
+        partitionBy.setReadOnly(readOnly);
+        partitionSize.setReadOnly(readOnly);
+        shardsPerPartition.setReadOnly(readOnly);
+        retentionAge.setReadOnly(readOnly);
+        volumeGroups.setReadOnly(readOnly);
+        timeField.setReadOnly(readOnly);
     }
 
     @UiHandler("maxDocsPerShard")

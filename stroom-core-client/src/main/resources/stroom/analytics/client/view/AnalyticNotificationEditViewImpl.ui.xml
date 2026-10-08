@@ -15,16 +15,14 @@
         </form:FormGroup>
         <g:SimplePanel ui:field="destinationContainer" styleName="form-group"/>
         <form:FormGroup identity="analyticNotificationEnabled"
-                        label="Enabled"
                         helpText="Whether this notification is sent. Untick it to stop sending without losing its settings. Default is ticked."
                         screenReaderText="Untick to stop sending this notification.">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
+            <tickbox:CustomCheckBox ui:field="enabled" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticNotificationLimitNotifications"
-                        label="Limit Notifications"
                         helpText="Stop sending once Maximum Notifications have been sent. Sending starts again after the Resume Notifications After period, or when Stroom restarts. Default is unticked."
                         screenReaderText="Stops sending after Maximum Notifications is reached.">
-            <tickbox:CustomCheckBox ui:field="limitNotifications"/>
+            <tickbox:CustomCheckBox ui:field="limitNotifications" label="Limit Notifications"/>
         </form:FormGroup>
         <form:FormGroup identity="analyticNotificationMaxNotifications"
                         label="Maximum Notifications"

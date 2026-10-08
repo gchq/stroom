@@ -14,6 +14,10 @@
 ***************************************************/
 
 :root {
+    /* How see-through a disabled icon, icon button, menu item or tick box is: the one disabled look
+       for things drawn as icons (fields use the --control__*--disabled colours instead) */
+    --disabled-opacity: 0.4;
+
     /* Some bootstrap defaults */
     --bootstrap-error-rgb: 220, 53, 69;
     --bootstrap-warning-rgb: 255, 193, 7;
@@ -36,7 +40,8 @@
     --text-color: #151515;
     --text-color--hover: #111;
     --text-color--selected: #000;
-    --text-color--disabled: #777;
+    /* The darkest grey that still looks the same, and is 4.5:1 on white (#777 was 4.47:1) */
+    --text-color--disabled: #767676;
     --text-color--disabled--selected: #555;
     --text-color--red: var(--red-600);
     --text-color--red--selected: var(--red-400);
@@ -102,6 +107,8 @@
     --expression-item-box__background-color--selected: var(--row__background-color--selected);/*#454545;*/
     --expression-item-box__background-color--hover: var(--row__background-color--hovered);/*#555;*/
     --expression-item-box__background-color--disabled: #ccc;
+    /* 4.5:1 on that grey */
+    --expression-item-box__text-color--disabled: #555;
     --expression-item-box__background-color--hotspot: var(--row__background-color--selected--hovered);
 
     --pipeline-element-box__background-color: #f5f9fd;
@@ -184,6 +191,8 @@
     --control__border-color--disabled: transparent;
     --control__text-color: rgba(0, 0, 0, 0.8);
     --control__text-color--disabled: #666;
+    /* A read-only control's value: greyed, but still 4.5:1 on the control's white */
+    --control__text-color--readonly: #707070;
 
     /* Form Group */
     --form-group__label-color: #444;

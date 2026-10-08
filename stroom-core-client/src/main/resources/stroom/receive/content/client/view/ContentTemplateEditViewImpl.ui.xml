@@ -44,10 +44,9 @@
         <form:FormGroup
                 ui:field="copyDependenciesFormGroup"
                 identity="contentTemplateCopyDependencies"
-                label="Copy Pipeline Element Dependencies"
                 helpText="Tick to give the new pipeline its own copies of the documents set in the inherited pipeline's element properties. Documents set on ancestor pipelines are not copied. Only available when Template Type is INHERIT_PIPELINE."
                 screenReaderText="Only available when Template Type is INHERIT_PIPELINE.">
-            <tickbox:CustomCheckBox ui:field="copyDependenciesCheckBox" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="copyDependenciesCheckBox" addStyleNames="allow-focus" label="Copy Pipeline Element Dependencies"/>
         </form:FormGroup>
 
         <form:FormGroup

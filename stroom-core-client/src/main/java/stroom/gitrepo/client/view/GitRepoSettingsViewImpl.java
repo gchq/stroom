@@ -17,6 +17,7 @@
 package stroom.gitrepo.client.view;
 
 import stroom.credentials.shared.Credential;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.gitrepo.client.presenter.GitRepoSettingsPresenter.GitRepoSettingsView;
 import stroom.gitrepo.client.presenter.GitRepoSettingsUiHandlers;
 import stroom.item.client.SelectionBox;
@@ -77,6 +78,11 @@ public class GitRepoSettingsViewImpl
     Button btnCheckForUpdates;
     @UiField
     Button setHttpClientConfig;
+
+    /**
+     * Whether the document is read only, so the push and pull actions must stay disabled.
+     */
+    private boolean readOnly;
 
     @Inject
     public GitRepoSettingsViewImpl(final Binder binder) {
@@ -153,6 +159,20 @@ public class GitRepoSettingsViewImpl
         }
     }
 
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        // Read only is independent of the enabled state that setState() manages, so a later
+        // setState() can't make these fields editable
+        txtGitUrl.setReadOnly(readOnly);
+        txtGitBranch.setReadOnly(readOnly);
+        txtGitPath.setReadOnly(readOnly);
+        credentialSelectionBox.setReadOnly(readOnly);
+        txtGitCommitToPull.setReadOnly(readOnly);
+        chkGitAutoPush.setReadOnly(readOnly);
+        setState();
+    }
+
     /**
      * Sets the enabled/disabled state of widgets.
      * Called when the state of widgets changes.
@@ -198,7 +218,8 @@ public class GitRepoSettingsViewImpl
 
                 if (!txtGitUrl.getText().isEmpty()) {
                     chkGitAutoPush.setEnabled(true);
-                    btnGitRepoPush.setEnabled(true);
+                    // Pushing changes the repository, so not allowed for a read-only document
+                    btnGitRepoPush.setEnabled(!readOnly);
                 } else {
                     chkGitAutoPush.setEnabled(false);
                     btnGitRepoPush.setEnabled(false);
@@ -212,7 +233,8 @@ public class GitRepoSettingsViewImpl
 
         // Can pull and check for updates if URL is set
         if (!txtGitUrl.getText().isEmpty()) {
-            btnGitRepoPull.setEnabled(true);
+            // Pulling changes the document's content, so not allowed for a read-only document
+            btnGitRepoPull.setEnabled(!readOnly);
             btnCheckForUpdates.setEnabled(true);
         } else {
             btnGitRepoPull.setEnabled(false);

@@ -59,6 +59,8 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
     private final ButtonView editButton;
     private final ButtonView removeButton;
     private boolean initialised;
+    // Whether the tick box columns were last built as read only, so we know when to rebuild them
+    private boolean columnsReadOnly;
     private final Provider<AnalyticNotificationEditPresenter> editPresenterProvider;
     private final ListDataProvider<NotificationConfig> dataProvider;
     final List<NotificationConfig> list = new ArrayList<>();
@@ -100,13 +102,17 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         registerHandler(removeButton.addClickHandler(ignored -> remove()));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
+            // A read only document can't be edited, so double clicking does nothing
+            if (event.getSelectionType().isDoubleSelect() && !isReadOnly()) {
                 edit();
             }
         }));
     }
 
     private void add() {
+        if (isReadOnly()) {
+            return;
+        }
         final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
         // A new notification goes to a stream unless the user chooses otherwise; without a
         // destination type it would be added with none
@@ -132,7 +138,7 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
 
     private void edit() {
         final NotificationConfig selected = selectionModel.getSelected();
-        if (selected != null) {
+        if (selected != null && !isReadOnly()) {
             final AnalyticNotificationEditPresenter presenter = editPresenterProvider.get();
             presenter.read(docRef, analyticProcessType, selected);
             ShowPopupEvent
@@ -154,6 +160,9 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
     }
 
     private void remove() {
+        if (isReadOnly()) {
+            return;
+        }
         ConfirmEvent.fire(this, "Are you sure you want to remove this notification?",
                 result -> {
                     if (result) {
@@ -178,11 +187,19 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
     }
 
     private void addColumns() {
+        // The tick boxes can only be changed if the document isn't read only
+        columnsReadOnly = isReadOnly();
+        final boolean updatable = !columnsReadOnly;
+
         // Enable notifications
         dataGrid.addColumn(
                 DataGridUtil.updatableTickBoxColumnBuilder(
-                                TickBoxState.createTickBoxFunc(NotificationConfig::isEnabled))
+                                TickBoxState.createTickBoxFunc(NotificationConfig::isEnabled),
+                                updatable)
                         .withFieldUpdater((ignored, row, value) -> {
+                            if (isReadOnly()) {
+                                return;
+                            }
                             final NotificationConfig updated = row.copy()
                                     .enabled(TickBoxState.getAsBoolean(value))
                                     .build();
@@ -220,9 +237,13 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         // Limit notifications
         dataGrid.addColumn(
                 DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(
-                                NotificationConfig::isLimitNotifications))
+                                        NotificationConfig::isLimitNotifications),
+                                updatable)
                         .enabledWhen(NotificationConfig::isEnabled)
                         .withFieldUpdater((ignored, row, value) -> {
+                            if (isReadOnly()) {
+                                return;
+                            }
                             final NotificationConfig updated = row.copy()
                                     .limitNotifications(TickBoxState.getAsBoolean(value))
                                     .build();
@@ -252,6 +273,15 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
                 ColumnSizeConstants.MEDIUM_COL);
     }
 
+    private void rebuildColumnsIfReadOnlyChanged() {
+        if (columnsReadOnly != isReadOnly()) {
+            while (dataGrid.getColumnCount() > 0) {
+                dataGrid.removeColumn(dataGrid.getColumn(0));
+            }
+            addColumns();
+        }
+    }
+
     private String getDestinationAsString(final NotificationConfig row) {
         if (row.getDestination() instanceof final NotificationStreamDestination streamDest) {
             // Say where the detections will actually go, which for a streaming rule using the source feed is
@@ -279,9 +309,11 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
     }
 
     private void enableButtons() {
-        addButton.setEnabled(true);
-        editButton.setEnabled(NullSafe.hasItems(selectionModel.getSelectedItems()));
-        removeButton.setEnabled(NullSafe.hasItems(selectionModel.getSelectedItems()));
+        final boolean editable = !isReadOnly();
+        final boolean hasSelection = NullSafe.hasItems(selectionModel.getSelectedItems());
+        addButton.setEnabled(editable);
+        editButton.setEnabled(editable && hasSelection);
+        removeButton.setEnabled(editable && hasSelection);
         addButton.setTitle("Add Notification");
         editButton.setTitle("Edit Notification");
         removeButton.setTitle("Remove Notification");
@@ -314,6 +346,8 @@ public abstract class AbstractNotificationListPresenter<D extends AbstractAnalyt
         if (document.getNotifications() != null) {
             list.addAll(document.getNotifications());
         }
+        rebuildColumnsIfReadOnlyChanged();
+        enableButtons();
         refresh();
     }
 

@@ -26,6 +26,7 @@ import stroom.util.shared.Severity;
 import stroom.widget.button.client.InlineSvgButton;
 import stroom.widget.util.client.MouseUtil;
 
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -73,7 +74,11 @@ public class QueryToolbarViewImpl
 
     @Override
     public void setErrorsVisible(final boolean show) {
-        errors.getElement().getStyle().setOpacity(show ? 1 : 0);
+        // Hidden rather than removed, so the toolbar doesn't shift; visibility (not opacity) also
+        // takes it out of the tab order and away from screen readers
+        errors.getElement().getStyle().setVisibility(show
+                ? Visibility.VISIBLE
+                : Visibility.HIDDEN);
     }
 
     @Override

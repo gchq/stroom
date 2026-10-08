@@ -10,30 +10,30 @@
                         screenReaderText="Largest whole number per data point; larger limits need more storage.">
             <i:SelectionBox ui:field="maxValue" addStyleNames="allow-focus"/>
         </form:FormGroup>
-        <form:FormGroup label="Store Latest Value"
+        <form:FormGroup
                         helpText="Stores the most recent value received in each time period. Default is ticked."
                         screenReaderText="Most recent value in each period. Default is ticked.">
-            <tickbox:CustomCheckBox ui:field="storeLatestValue" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="storeLatestValue" addStyleNames="allow-focus" label="Store Latest Value"/>
         </form:FormGroup>
-        <form:FormGroup label="Store Min Value"
+        <form:FormGroup
                         helpText="Stores the smallest value received in each time period. Default is unticked."
                         screenReaderText="Smallest value in each period. Default is unticked.">
-            <tickbox:CustomCheckBox ui:field="storeMin" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="storeMin" addStyleNames="allow-focus" label="Store Min Value"/>
         </form:FormGroup>
-        <form:FormGroup label="Store Max Value"
+        <form:FormGroup
                         helpText="Stores the largest value received in each time period. Default is unticked."
                         screenReaderText="Largest value in each period. Default is unticked.">
-            <tickbox:CustomCheckBox ui:field="storeMax" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="storeMax" addStyleNames="allow-focus" label="Store Max Value"/>
         </form:FormGroup>
-        <form:FormGroup label="Store Count"
+        <form:FormGroup
                         helpText="Stores how many values were received in each time period. Needed, with Store Sum, to calculate averages. Default is unticked."
                         screenReaderText="Needed with Store Sum to calculate averages.">
-            <tickbox:CustomCheckBox ui:field="storeCount" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="storeCount" addStyleNames="allow-focus" label="Store Count"/>
         </form:FormGroup>
-        <form:FormGroup label="Store Sum"
+        <form:FormGroup
                         helpText="Stores the total of the values received in each time period. Needed, with Store Count, to calculate averages. Default is unticked."
                         screenReaderText="Needed with Store Count to calculate averages.">
-            <tickbox:CustomCheckBox ui:field="storeSum" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="storeSum" addStyleNames="allow-focus" label="Store Sum"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

@@ -130,6 +130,10 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
                                final XmlSchemaDoc document,
                                final boolean readOnly) {
                 presenter.setText(document.getData(), true);
+                // Applied on every read, not just when the editor is created, so a later read
+                // with a different read-only state takes effect
+                presenter.setReadOnly(readOnly);
+                presenter.getFormatAction().setAvailable(!readOnly);
                 if (!readOnly) {
                     // Enable controls based on user permission
                     registerHandler(presenter.addValueChangeHandler(event -> {

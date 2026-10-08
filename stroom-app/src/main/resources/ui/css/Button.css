@@ -92,8 +92,9 @@ Base for all buttons
 
 .Button--base.Button--disabled {
   /* .jr0u89w.j1p4cocs */
+  /* Not pointer-events: none, which would also stop its tooltip showing; a disabled button
+     doesn't get clicks anyway */
   cursor: default;
-  pointer-events: none;
 }
 
 /*

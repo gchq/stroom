@@ -235,14 +235,54 @@ public final class OpenAiModelEditorStories {
                 .withPlay(play -> {
                     final Query save = play.findByRole("button",
                             "Save is not available as this document is read only");
-                    play.waitFor(() -> play.expect(play.querySelector(BASE_URL)).toBeDisabled());
-                    // Differs from React: a disabled SelectionBox disables its text box (there is
+                    // Read only, not disabled: the fields can be read and copied but not changed
+                    play.waitFor(() -> play.expect(play.querySelector(BASE_URL)).toHaveAttribute("readonly"));
+                    play.expect(play.querySelector(BASE_URL)).not().toBeDisabled();
+                    // Differs from React: a read-only SelectionBox has the 'readonly' class (there is
                     // no 'selection-box--disabled' class)
-                    play.expect(play.within(play.querySelector(API_KEY)).querySelector(StroomDom.SELECTION_BOX))
-                            .toBeDisabled();
+                    play.expect(play.querySelector(API_KEY)).toHaveClass("readonly");
                     play.expect(save).toHaveClass("disabled");
                     DocEditors.expectNoProblems(play);
+                })
+                // Settings, read only: the partner of Default
+                .story("SettingsReadOnly", context -> render(context, null, true))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(play.getByText("Base URL (optional)", "label"))
+                            .toBeInTheDocument());
+                    play.waitFor(() -> play.expect(play.querySelector(MODEL_ID)).toHaveValue("gpt-4o"));
+                    play.waitFor(() -> play.expect(play.within(play.querySelector(API_KEY))
+                            .querySelector(StroomDom.SELECTION_BOX)).toHaveValue("openai-key"));
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
+                })
+                // The HTTP client configuration dialog, editable: the partner of
+                // HttpClientConfigReadOnly
+                .story("HttpClientConfigEditable", context -> render(context, null, false))
+                .withPlay(play -> {
+                    showHttpClientConfig(play);
+                    // Each tick box has help beside its label, as the dialog's other fields do
+                    play.expect(play.screen().getByTitle("Cookies Enabled - Click for help")).toBeVisible();
+                    play.expect(play.screen().getByTitle("Follow Redirects - Click for help")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
+                })
+                // The HTTP client configuration dialog, read only: the partner of
+                // HttpClientConfigEditable
+                .story("HttpClientConfigReadOnly", context -> render(context, null, true))
+                .withPlay(play -> {
+                    showHttpClientConfig(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // Opens the HTTP client configuration dialog once the server's default has seeded it
+    private static void showHttpClientConfig(final Play play) {
+        final Play screen = play.screen();
+        play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
+                RequestMatcher.post("/openAIModel/v1/getDefaultHttpClientConfig").toSpyMatcher()));
+        play.click(play.findByRole("button", StroomDom.button("Set Http Client Config")));
+        play.waitFor(() -> play.expect(screen.getByText("Edit HTTP Client Configuration")).toBeInTheDocument());
+        play.expect(screen.getByText("Max Connections", "label")).toBeInTheDocument();
     }
 
     // The validation request carries the form's model, and the result is the only alert

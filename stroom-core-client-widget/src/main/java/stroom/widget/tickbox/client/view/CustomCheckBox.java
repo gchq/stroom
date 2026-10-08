@@ -111,6 +111,7 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     final FormLabel label = new FormLabel();
     private LeafValueEditor<Boolean> editor;
     private boolean valueChangeHandlerInitialized;
+    private boolean readOnly;
 
     public CustomCheckBox() {
         super(DOM.createDiv());
@@ -145,6 +146,41 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
         // that this call is made, inputElem has not been created. So, we have
         // to call setTabIndex again, once inputElem has been created.
         setTabIndex(0);
+
+        // So that a read-only tick box can undo a click before the browser shows it
+        sinkEvents(Event.ONCLICK);
+    }
+
+    /// Makes the tick read only: the tick box can be focused and read, but clicking it, its
+    /// label or pressing Space doesn't change it. It looks like the normal tick box with a grey
+    /// tick and label.
+    ///
+    /// @param readOnly Whether the tick is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        if (readOnly) {
+            addStyleDependentName("readonly");
+            inputElem.setAttribute("aria-readonly", "true");
+        } else {
+            removeStyleDependentName("readonly");
+            inputElem.removeAttribute("aria-readonly");
+        }
+    }
+
+    /// @return Whether the tick is read only.
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    @Override
+    public void onBrowserEvent(final Event event) {
+        // A click (or Space) on a read-only tick box mustn't change it: cancelling the click undoes
+        // the tick, and its handlers aren't told
+        if (readOnly && DOM.eventGetType(event) == Event.ONCLICK) {
+            event.preventDefault();
+            return;
+        }
+        super.onBrowserEvent(event);
     }
 
     @Override
@@ -191,6 +227,11 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
 
     public void setLabel(final String label) {
         this.label.setLabel(label);
+    }
+
+    /// @return The label beside the tick box, or null or blank if it has none.
+    public String getLabel() {
+        return label.getLabel();
     }
 
     public void setIdentity(final String identity) {

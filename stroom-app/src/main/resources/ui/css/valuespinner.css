@@ -98,6 +98,13 @@
 .valueSpinner-arrowUp {
 }
 
+/* A disabled or read-only spinner's arrows are greyed with its value and do nothing */
+.valueSpinner-arrowUpDisabled,
+.valueSpinner-arrowDownDisabled {
+    opacity: var(--disabled-opacity);
+    cursor: default;
+}
+
 .valueSpinner-arrowUpHover {
 }
 

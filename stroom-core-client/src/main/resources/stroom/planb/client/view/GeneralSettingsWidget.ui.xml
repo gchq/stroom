@@ -11,16 +11,14 @@
             <g:TextBox ui:field="maxStoreSize" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup ui:field="synchroniseMergePanel"
-                        label="Synchronise Data Merges On Write"
                         helpText="When ticked, pipeline processing of a stream is not marked complete until its data has been fully merged into the Plan B store. Default is unticked."
                         screenReaderText="If ticked, processing waits until data is merged into the store.">
-            <tickbox:CustomCheckBox ui:field="synchroniseMerge" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="synchroniseMerge" addStyleNames="allow-focus" label="Synchronise Data Merges On Write"/>
         </form:FormGroup>
         <form:FormGroup ui:field="overwritePanel"
-                        label="Overwrite Existing Data"
                         helpText="When ticked, data loaded later replaces any existing value with the same key. When unticked, the existing value is kept. Default is ticked."
                         screenReaderText="If unticked, existing values for a key are kept. Default is ticked.">
-            <tickbox:CustomCheckBox ui:field="overwrite" addStyleNames="allow-focus"/>
+            <tickbox:CustomCheckBox ui:field="overwrite" addStyleNames="allow-focus" label="Overwrite Existing Data"/>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

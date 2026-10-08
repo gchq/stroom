@@ -20,7 +20,9 @@ import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.client.widgets.StoryArgs;
 import stroom.gwt.workbench.framework.client.args.ArgType;
 import stroom.gwt.workbench.framework.client.args.Args;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -87,11 +89,22 @@ public final class IconButtonStories {
                     final InlineSvgButton button = iconButton(context, SvgImage.DELETE, "Delete");
                     final InlineLabel counter = counter("Clicks: ", " (should stay 0)");
                     countClicks(button, counter, "Clicks: ", " (should stay 0)");
-                    // Differs from React: GWT's setEnabled(false) also sets the native disabled
-                    // property (FocusWidget), so the browser shows no tooltip on hover; React only
-                    // adds the disabled class, keeping the tooltip.
+                    // aria-disabled, not the native disabled property, so it keeps its tooltip and
+                    // can still be focused
                     button.setEnabled(false);
                     return StoryPanels.row(8, button, counter);
+                })
+                .withPlay(play -> {
+                    final Query button = play.getByRole("button", "Delete");
+                    play.expect(button).toHaveAttribute("aria-disabled", "true");
+                    // It stays in the tab order, so keyboard users find it and hear its name (it once
+                    // had the native disabled property, which took it out)
+                    play.tab();
+                    play.expect(button).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.keyboard(" ");
+                    play.click(button);
+                    play.expect(play.getByText(TextMatch.startingWith("Clicks: 0"))).toBeInTheDocument();
                 })
                 // Interactive - click to increment a counter
                 .story("Clickable", context -> {

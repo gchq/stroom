@@ -86,7 +86,7 @@ public class PlanBSettingsViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        stateType.setEnabled(!readOnly);
+        stateType.setReadOnly(readOnly);
     }
 
     @UiHandler("stateType")

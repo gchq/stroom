@@ -57,12 +57,11 @@
 
         <!-- Whether to automatically push to Git whenever something changes -->
         <form:FormGroup identity="chkGitAutoPush"
-                        label="Automatically push"
                         helpText="Tick to push any changes to Git automatically. The Git Repo Push job does this, every minute by default, with a generic commit message. Not available while a commit hash is set."
                         ui:field="fgGitAutoPush"
                         screenReaderText="Pushed by the Git Repo Push job, every minute by default.">
             <tickbox:CustomCheckBox title="Automatically push changes to the Git repository"
-                                    ui:field="chkGitAutoPush" />
+                                    ui:field="chkGitAutoPush" label="Automatically push" />
         </form:FormGroup>
 
         <!-- Button to set credentials -->

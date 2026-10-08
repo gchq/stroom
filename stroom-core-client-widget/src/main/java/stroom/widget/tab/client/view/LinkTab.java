@@ -36,6 +36,8 @@ public class LinkTab extends AbstractTab {
         background = DOM.createDiv();
         background.setClassName("linkTab-background");
         background.setInnerText(text);
+        // An invisible copy of the label that sizes the tab, so screen readers don't read it
+        background.setAttribute("aria-hidden", "true");
         element.appendChild(background);
 
         label = DOM.createDiv();

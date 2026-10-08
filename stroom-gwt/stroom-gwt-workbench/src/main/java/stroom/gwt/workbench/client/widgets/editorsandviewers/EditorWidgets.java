@@ -34,8 +34,8 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
-/// Widgets shared by the `Widgets/Editors & Viewers/*` stories.
-final class EditorWidgets {
+/// Widgets shared by the `Widgets/Editors & Viewers/*` stories (and the view states sheet).
+public final class EditorWidgets {
 
     /// The style of React's `EditorFrame`/`Frame` border.
     static final String FRAME_BORDER = "1px solid var(--code-editor__border-color, #444)";
@@ -52,7 +52,7 @@ final class EditorWidgets {
     ///
     /// @param eventBus The event bus, on which the editor's context menu is shown.
     /// @return The presenter.
-    static EditorPresenter editorPresenter(final EventBus eventBus) {
+    public static EditorPresenter editorPresenter(final EventBus eventBus) {
         return new EditorPresenter(
                 eventBus,
                 new EditorViewImpl(GWT.create(EditorViewImpl.Binder.class)),

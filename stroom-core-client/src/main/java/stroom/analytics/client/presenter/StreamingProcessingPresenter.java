@@ -71,7 +71,7 @@ public class StreamingProcessingPresenter
                 .onSuccess(expressionOperator -> {
                     processorPresenter.setDefaultExpression(expressionOperator);
                     processorPresenter.read(analyticRuleDoc.asDocRef(), analyticRuleDoc, readOnly);
-                    processorPresenter.setAllowUpdate(true);
+                    processorPresenter.setAllowUpdate(!readOnly);
                 })
                 .taskMonitorFactory(this)
                 .exec();

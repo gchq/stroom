@@ -10,10 +10,10 @@
                         screenReaderText="Read only.">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="nodeGroupEnabled" label="Enabled"
+        <form:FormGroup identity="nodeGroupEnabled"
                         helpText="Untick to stop all processing for processor profiles that use this node group."
                         screenReaderText="When unticked, profiles using this group do no processing.">
-            <tickbox:CustomCheckBox ui:field="enabled"/>
+            <tickbox:CustomCheckBox ui:field="enabled" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup identity="nodeInclusionBehaviour"
                         label="Node Inclusion Behaviour"

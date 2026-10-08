@@ -83,6 +83,10 @@ public class ScheduledProcessListPresenter
     private final Set<String> knownNodeNames = new HashSet<>();
     private ExecutionScheduleRequest request;
     private ScheduledProcessingPresenter scheduledProcessingPresenter;
+    // Most documents are editable, so start that way to avoid rebuilding the columns for them
+    private boolean readOnly;
+    // Whether the enabled tick box column was last built as read only, so we know when to rebuild it
+    private boolean columnsReadOnly;
 
     @Inject
     public ScheduledProcessListPresenter(final EventBus eventBus,
@@ -135,7 +139,8 @@ public class ScheduledProcessListPresenter
         registerHandler(removeButton.addClickHandler(e -> scheduledProcessingPresenter.remove()));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
-            if (event.getSelectionType().isDoubleSelect()) {
+            // A read only document's schedules can't be edited, so double clicking does nothing
+            if (event.getSelectionType().isDoubleSelect() && !readOnly) {
                 scheduledProcessingPresenter.edit();
             }
         }));
@@ -143,8 +148,12 @@ public class ScheduledProcessListPresenter
     }
 
     private void addColumns() {
+        // The enabled tick box can only be changed if the document isn't read only
+        columnsReadOnly = readOnly;
         dataGrid.addColumn(
-                DataGridUtil.updatableTickBoxColumnBuilder(TickBoxState.createTickBoxFunc(ExecutionSchedule::isEnabled))
+                DataGridUtil.updatableTickBoxColumnBuilder(
+                                TickBoxState.createTickBoxFunc(ExecutionSchedule::isEnabled),
+                                !columnsReadOnly)
                         .withSorting(ExecutionScheduleFields.ENABLED)
                         .withFieldUpdater((ignored, row, value) ->
                                 updateEnabledState(row, value))
@@ -238,6 +247,9 @@ public class ScheduledProcessListPresenter
     }
 
     private void updateEnabledState(final ExecutionSchedule row, final TickBoxState value) {
+        if (readOnly) {
+            return;
+        }
         restFactory
                 .create(EXECUTION_SCHEDULE_RESOURCE)
                 .method(resource ->
@@ -287,9 +299,10 @@ public class ScheduledProcessListPresenter
     }
 
     private void enableButtons() {
-        addButton.setEnabled(true);
-        editButton.setEnabled(selectionModel.hasSelectedItems());
-        removeButton.setEnabled(selectionModel.hasSelectedItems());
+        final boolean editable = !readOnly;
+        addButton.setEnabled(editable);
+        editButton.setEnabled(editable && selectionModel.hasSelectedItems());
+        removeButton.setEnabled(editable && selectionModel.hasSelectedItems());
         addButton.setTitle("Add Execution Schedule");
         editButton.setTitle("Edit Execution Schedule");
         removeButton.setTitle("Remove Execution Schedule");
@@ -298,6 +311,21 @@ public class ScheduledProcessListPresenter
     public void read(final DocRef ownerDocRef) {
         request = request.copy().ownerDocRef(ownerDocRef).build();
         refresh();
+    }
+
+    /// Sets whether the owning document is read only. When it is, schedules can't be added, edited, removed
+    /// or enabled/disabled.
+    ///
+    /// @param readOnly True if the owning document is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        if (columnsReadOnly != readOnly) {
+            while (dataGrid.getColumnCount() > 0) {
+                dataGrid.removeColumn(dataGrid.getColumn(0));
+            }
+            addColumns();
+        }
+        enableButtons();
     }
 
     public void clear() {

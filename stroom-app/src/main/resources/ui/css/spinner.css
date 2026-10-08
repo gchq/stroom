@@ -126,6 +126,7 @@
     animation: spinner-border .75s linear infinite;
 }
 
+/* Text for screen readers only, so it must not be display: none (which hides it from them too) */
 .sr-only {
     position: absolute;
     width: 1px;
@@ -136,5 +137,4 @@
     clip: rect(0,0,0,0);
     white-space: nowrap;
     border: 0;
-    display: none;
 }

@@ -29,15 +29,15 @@
             <g:TextArea ui:field="comments" addStyleNames="w-100"/>
         </form:FormGroup>
 
-        <form:FormGroup ui:field="neverExpiresGroup" identity="accountNeverExpires" label="Never Deactivate When Unused"
+        <form:FormGroup ui:field="neverExpiresGroup" identity="accountNeverExpires"
                         helpText="Tick to stop the account being marked inactive when it goes unused. Accounts that are never used, or not signed in to for a set time, are otherwise deactivated automatically."
                         screenReaderText="Stops the account being deactivated when unused.">
-            <tickbox:CustomCheckBox ui:field="neverExpires" identity="accountNeverExpiresCheckBox"/>
+            <tickbox:CustomCheckBox ui:field="neverExpires" identity="accountNeverExpiresCheckBox" label="Never Deactivate When Unused"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="enabledGroup" identity="accountEnabled" label="Enabled"
+        <form:FormGroup ui:field="enabledGroup" identity="accountEnabled"
                         helpText="Untick to stop the user signing in."
                         screenReaderText="Unticked accounts cannot sign in.">
-            <tickbox:CustomCheckBox ui:field="enabled" identity="accountEnabledCheckBox"/>
+            <tickbox:CustomCheckBox ui:field="enabled" identity="accountEnabledCheckBox" label="Enabled"/>
         </form:FormGroup>
 
         <!--

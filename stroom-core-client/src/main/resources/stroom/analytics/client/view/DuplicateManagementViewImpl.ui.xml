@@ -6,21 +6,18 @@
     <g:FlowPanel styleName="max dock-container-vertical">
         <g:FlowPanel styleName="dock-min form-padding form">
             <form:FormGroup identity="rememberNotifications"
-                            label="Remember Notifications"
                             helpText="Store the duplicate check column values of each notification in the duplicate check store so they can be viewed in the duplicates list."
                             screenReaderText="Stored values can be viewed in the duplicates list.">
-                <tickbox:CustomCheckBox ui:field="rememberNotifications"/>
+                <tickbox:CustomCheckBox ui:field="rememberNotifications" label="Remember Notifications"/>
             </form:FormGroup>
             <form:FormGroup identity="suppressDuplicateNotifications"
-                            label="Suppress Duplicate Notifications"
                             helpText="Do not send a notification if its values in the duplicate check columns match one already stored. Values are stored automatically while this is ticked."
                             screenReaderText="Skips notifications that match a stored one.">
-                <tickbox:CustomCheckBox ui:field="suppressDuplicateNotifications"/>
+                <tickbox:CustomCheckBox ui:field="suppressDuplicateNotifications" label="Suppress Duplicate Notifications"/>
             </form:FormGroup>
             <form:FormGroup identity="chooseColumns"
-                            label="Choose Columns"
                             screenReaderText="If unticked, grouped columns, or else all columns, are compared.">
-                <tickbox:CustomCheckBox ui:field="chooseColumns"/>
+                <tickbox:CustomCheckBox ui:field="chooseColumns" label="Choose Columns"/>
                 <form:HelpHTML>
                     <p>If ticked, enter the column names in the Columns field to define which columns will be
                         used for de-duplication of notifications. If unticked, the grouped columns are used, or all

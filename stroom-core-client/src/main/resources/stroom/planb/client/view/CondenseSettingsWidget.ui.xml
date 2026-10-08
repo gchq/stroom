@@ -7,11 +7,10 @@
              xmlns:i="urn:import:stroom.item.client">
     <g:FlowPanel styleName="max form">
         <form:FormGroup
-                label="Enabled"
                 helpText="Once data is older than the condense age, merges redundant entries for the same key to reduce store size: only the first of a run of identical values is kept, and overlapping or adjacent sessions are joined. Untick it while loading old or late-arriving data. Default is unticked."
                 screenReaderText="Merges repeated values or touching sessions once data passes the condense age.">
             <tickbox:CustomCheckBox ui:field="condenseEnabled"
-                                    identity="condenseEnabled"/>
+                                    identity="condenseEnabled" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup ui:field="condenseAgePanel"
                         identity="condenseAgePanel"

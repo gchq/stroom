@@ -173,7 +173,47 @@ public final class SolrIndexEditorStories {
                     play.click(play.getByRole("button", "Edit Field"));
                     play.waitFor(() -> play.expect(screen.querySelector(FIELD_NAME)).toHaveValue("Field100"));
                     DocEditors.expectNoProblems(play);
+                })
+                // The Fields tab (the default) as an editable partner for FieldsReadOnly
+                .story("FieldsEditable", context -> render(context, FIELDS, false))
+                .withPlay(play -> {
+                    waitForFields(play);
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Fields tab (the default) when the user may only view the index
+                .story("FieldsReadOnly", context -> render(context, FIELDS, true))
+                .withPlay(play -> {
+                    waitForFields(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Settings tab as an editable partner for SettingsReadOnly
+                .story("SettingsEditable", context -> render(context, FIELDS, false))
+                .withPlay(play -> {
+                    openSettings(play);
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Settings tab when the user may only view the index
+                .story("SettingsReadOnly", context -> render(context, FIELDS, true))
+                .withPlay(play -> {
+                    openSettings(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
                 });
+    }
+
+    // Waits for the Fields tab's fields and synchronisation state
+    private static void waitForFields(final Play play) {
+        play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
+        play.expect(play.getByText("Last synchronised:")).toBeInTheDocument();
+    }
+
+    // Opens the Settings tab and waits for its form
+    private static void openSettings(final Play play) {
+        play.waitFor(() -> play.expect(DocEditors.tab(play, "Settings")).toBeInTheDocument());
+        play.click(DocEditors.tab(play, "Settings"));
+        play.waitFor(() -> play.expect(play.getByText("Collection", "label")).toBeInTheDocument());
+        play.expect(play.getByText("Main Time Field Name", "label")).toBeInTheDocument();
     }
 
     // The names of the fields in a list of a JSON document
@@ -206,6 +246,10 @@ public final class SolrIndexEditorStories {
     }
 
     private static Widget render(final StoryContext context, final String fields) {
+        return render(context, fields, false);
+    }
+
+    private static Widget render(final StoryContext context, final String fields, final boolean readOnly) {
         final RestFixtures fixtures = DocEditors.permissionRoutes(RestFixtures.builder())
                 .get(UPDATE, RestReply.json(DOC.replace("FIELDS", fields)))
                 .put(UPDATE, request -> RestReply.json(request.getBody()))
@@ -214,7 +258,7 @@ public final class SolrIndexEditorStories {
                         "{\"ok\": true, \"message\": \"Solr reachable.\"}"))
                 .build();
         final SolrIndexResource resource = GWT.create(SolrIndexResource.class);
-        return DocEditors.render(context, fixtures, false, (harness, injector) -> DocEditors.open(harness,
+        return DocEditors.render(context, fixtures, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
                 injector.getSolrIndexPresenter(),
                 DocResource.of(

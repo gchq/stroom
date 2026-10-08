@@ -49,21 +49,32 @@
 .tickBox-untick {
 }
 
-.tickBox-tick.tickBox-noBorder,
-.tickBox-untick.tickBox-noBorder {
-    background: none !important;
+/*
+A read-only tick box in a grid (NoBorderAppearance, once drawn with no box at all): the read-only look
+of every control, the normal box with a grey tick, as a read-only CustomCheckBox has.
+*/
+.tickBox.tickBox-noBorder {
+    background-color: var(--control__background-color) !important;
+    border: 1px solid var(--control__border-color);
+    fill: var(--control__text-color--readonly);
+    color: var(--control__text-color--readonly);
 }
 
-.tickBox-tick + .tickBox-noBorder {
-    border: 3px solid transparent;
+.tickBox-tick.tickBox-noBorder {
+    padding: 2px !important;
 }
 
-.tickBox-noBorder {
-    border: 3px solid transparent;
+/* The tick's own fill is white (for the blue box), so it must be overridden */
+.tickBox-noBorder svg path {
+    fill: var(--control__text-color--readonly) !important;
+}
+
+.tickBox-noBorder .tickBox-halfTick-inner {
+    background-color: var(--control__text-color--readonly);
 }
 
 .tickBox-disabled {
-    opacity: 0.5;
+    opacity: var(--disabled-opacity);
 }
 
 
@@ -122,8 +133,29 @@
     background-color: #2196F3;
 }
 
+/* Disabled: the filled box with no border that every disabled control has, with a grey tick */
+.SimpleTickBox input:disabled ~ .checkmark,
 .SimpleTickBox input:disabled:checked ~ .checkmark {
     background-color: var(--control__background-color--disabled);
+    border-color: var(--control__border-color--disabled);
+}
+
+.SimpleTickBox input:disabled ~ .checkmark svg {
+    color: var(--control__text-color--disabled);
+}
+
+.SimpleTickBox-disabled .form-label,
+.SimpleTickBox-readonly .form-label {
+    color: var(--control__text-color--disabled);
+}
+
+/* Read only: the normal box, with a grey tick rather than a blue fill */
+.SimpleTickBox-readonly input:checked ~ .checkmark {
+    background-color: var(--control__background-color);
+}
+
+.SimpleTickBox-readonly input ~ .checkmark svg {
+    color: var(--control__text-color--readonly);
 }
 
 .SimpleTickBox input:checked ~ .checkmark svg {
@@ -146,8 +178,10 @@
 .SimpleTickBox-untick {
 }
 
-.SimpleTickBox-disabled {
-    opacity: 0.5;
+.SimpleTickBox-disabled,
+.SimpleTickBox-readonly .checkbox-container,
+.SimpleTickBox-readonly .form-label {
+    cursor: default;
 }
 
 .stroom-theme-dark .SimpleTickBox-halfTick {

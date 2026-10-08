@@ -73,9 +73,12 @@ public class AnalyticSettingsViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        level.setEnabled(!readOnly);
-        status.setEnabled(!readOnly);
-        includeRuleDocumentation.setEnabled(!readOnly);
+        level.setReadOnly(readOnly);
+        status.setReadOnly(readOnly);
+        includeRuleDocumentation.setReadOnly(readOnly);
+        // Setting the default from a document the user can't change would be odd, so it is
+        // disabled too
+        setDefaultErrorFeed.setEnabled(!readOnly);
     }
 
     @Override

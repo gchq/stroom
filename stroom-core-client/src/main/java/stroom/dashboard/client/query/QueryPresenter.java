@@ -83,6 +83,7 @@ import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -394,10 +395,11 @@ public class QueryPresenter
 
         if (selectedItem == null) {
             disableItemButton.setEnabled(false);
-            disableItemButton.setTitle("");
+            // The title is the button's name, so it stays when the button is disabled
+            disableItemButton.setTitle(getEnableDisableText());
 
             deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("");
+            deleteItemButton.setTitle("Delete");
 
             copyButton.setEnabled(false);
         } else {
@@ -414,7 +416,8 @@ public class QueryPresenter
 
         if (dataSourceRef == null) {
             downloadQueryButton.setEnabled(false);
-            downloadQueryButton.setTitle("");
+            // The title is the button's name, so it stays, and says why the button is disabled
+            downloadQueryButton.setTitle("Download Query (choose a data source first)");
         } else {
             downloadQueryButton.setEnabled(true);
             downloadQueryButton.setTitle("Download Query");
@@ -906,9 +909,11 @@ public class QueryPresenter
     }
 
     private void setErrorsVisible(final boolean show) {
-        errorsButton.asWidget().getElement().getStyle().setOpacity(show
-                ? 1
-                : 0);
+        // Hidden rather than removed, so the toolbar doesn't shift; visibility (not opacity) also
+        // takes it out of the tab order and away from screen readers
+        errorsButton.asWidget().getElement().getStyle().setVisibility(show
+                ? Visibility.VISIBLE
+                : Visibility.HIDDEN);
     }
 
     @Override

@@ -22,6 +22,7 @@ import stroom.gwt.workbench.client.app.editors.DocEditors.DocResource;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -89,12 +90,56 @@ public final class ElasticIndexEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
                     play.expect(play.getByText("UserId")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
+                })
+                // The Settings tab (the default) as an editable partner for SettingsReadOnly
+                .story("SettingsEditable", context -> render(context, false))
+                .withPlay(play -> {
+                    waitForSettings(play);
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Settings tab (the default) when the user may only view the index
+                .story("SettingsReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    waitForSettings(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Fields tab as an editable partner for FieldsReadOnly (the fields come from the
+                // index's mapping, so are never edited here)
+                .story("FieldsEditable", context -> render(context, false))
+                .withPlay(play -> {
+                    openFields(play);
+                    DocEditors.expectNoProblems(play);
+                })
+                // The Fields tab when the user may only view the index
+                .story("FieldsReadOnly", context -> render(context, true))
+                .withPlay(play -> {
+                    openFields(play);
+                    play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    DocEditors.expectNoProblems(play);
                 });
     }
 
+    // Waits for the Settings tab's form
+    private static void waitForSettings(final Play play) {
+        play.waitFor(() -> play.expect(play.getByRole("heading", "General settings")).toBeInTheDocument());
+        play.expect(play.getByText("Index name or pattern", "label")).toBeInTheDocument();
+    }
+
+    // Opens the Fields tab and waits for its fields
+    private static void openFields(final Play play) {
+        play.waitFor(() -> play.expect(DocEditors.tab(play, "Fields")).toBeInTheDocument());
+        play.click(DocEditors.tab(play, "Fields"));
+        play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
+    }
+
     private static Widget render(final StoryContext context) {
+        return render(context, false);
+    }
+
+    private static Widget render(final StoryContext context, final boolean readOnly) {
         final ElasticIndexResource resource = GWT.create(ElasticIndexResource.class);
-        return DocEditors.render(context, FIXTURES, false, (harness, injector) -> DocEditors.open(harness,
+        return DocEditors.render(context, FIXTURES, readOnly, (harness, injector) -> DocEditors.open(harness,
                 DOC_REF,
                 injector.getElasticIndexPresenter(),
                 DocResource.of(

@@ -24,8 +24,11 @@ import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 import stroom.widget.popup.client.view.OkCancelContent;
 import stroom.widget.popup.client.view.SimplePopupLayout;
+import stroom.widget.util.client.DisabledState;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -42,6 +45,8 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
     private final TimeRangePopup timeRangePopup;
     private TimeRange value = stroom.query.api.TimeRanges.ALL_TIME;
     private ParamValues paramValues;
+    private boolean enabled = true;
+    private boolean readOnly;
 
     public TimeRangeSelector() {
         timeRangePopup = GWT.create(TimeRangePopup.class);
@@ -73,12 +78,57 @@ public class TimeRangeSelector extends Composite implements HasValue<TimeRange>,
         popup.setWidget(simplePopupLayout);
         popup.setStyleName("timeRange-popup");
 
-        label.addClickHandler(event -> {
-            timeRangePopup.setValue(value, false);
-            popup.showRelativeTo(label);
-        });
+        label.addClickHandler(event -> showPopup());
+        // Text that opens a dialog: a button the keyboard can reach and press
+        label.getElement().setAttribute("role", "button");
+        label.getElement().setAttribute("aria-haspopup", "dialog");
+        label.getElement().setTabIndex(0);
+        label.addDomHandler(event -> {
+            final int keyCode = event.getNativeKeyCode();
+            if (keyCode == KeyCodes.KEY_ENTER || keyCode == KeyCodes.KEY_SPACE) {
+                event.preventDefault();
+                showPopup();
+            }
+        }, KeyDownEvent.getType());
 
         initWidget(label);
+    }
+
+    private void showPopup() {
+        if (enabled && !readOnly) {
+            timeRangePopup.setValue(value, false);
+            popup.showRelativeTo(label);
+        }
+    }
+
+    /// Enables or disables choosing the time range. A disabled one is greyed, announced as
+    /// disabled and doesn't open its dialog, but stays focusable.
+    ///
+    /// @param enabled Whether the time range can be chosen.
+    public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
+        updateState();
+    }
+
+    /// Makes the time range read only: it can be read and stays in the tab order, but its dialog
+    /// doesn't open. Its value is greyed, as a read-only field's is (a button can't be read only, so
+    /// it is `aria-disabled`).
+    ///
+    /// @param readOnly Whether the time range is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        updateState();
+    }
+
+    private void updateState() {
+        if (!enabled || readOnly) {
+            popup.hide();
+        }
+        DisabledState.set(label.getElement(), !enabled);
+        label.setStyleName("readonly", readOnly && enabled);
+        if (readOnly) {
+            label.getElement().setAttribute(DisabledState.ARIA_DISABLED, "true");
+        }
     }
 
     @Override

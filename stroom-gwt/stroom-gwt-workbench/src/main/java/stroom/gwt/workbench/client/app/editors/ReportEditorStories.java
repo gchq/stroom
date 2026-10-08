@@ -113,8 +113,10 @@ public final class ReportEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Settings");
                     play.waitFor(() -> play.expect(play.getByText("File Type", "label")).toBeInTheDocument());
-                    play.expect(fileType(play)).toBeDisabled();
-                    play.expect(play.getByRole("checkbox", "Send Empty Reports")).toBeDisabled();
+                    play.expect(play.within(play.getByText("File Type", "label").closest(".form-group"))
+                            .querySelector(".SelectionBox")).toHaveClass("readonly");
+                    play.expect(play.getByRole("checkbox", "Send Empty Reports"))
+                            .toHaveAttribute("aria-readonly", "true");
                     play.expect(picker(play, "Feed For Errors")).toHaveAttribute("aria-disabled", "true");
                     play.expect(picker(play, "AI Summary Model")).toHaveAttribute("aria-disabled", "true");
                     // Text stays readable and focusable
@@ -167,7 +169,51 @@ public final class ReportEditorStories {
                 })
                 // Table preferences are kept on the document: hiding a column makes it dirty
                 .story("TablePreferencesPersistOnTheDoc", context -> render(context, FIXTURES))
-                .withPlay(play -> AnalyticRuleEditorStories.hideCountColumn(play));
+                .withPlay(play -> AnalyticRuleEditorStories.hideCountColumn(play))
+                // Settings, editable, with nothing changed: the partner of SettingsReadOnly
+                .story("SettingsEditable", context -> render(context, FIXTURES))
+                .withPlay(play -> {
+                    openTab(play, "Settings");
+                    play.waitFor(() -> play.expect(play.getByText("File Type", "label")).toBeInTheDocument());
+                    play.expect(fileType(play)).toHaveValue("Excel");
+                    DocumentEditors.expectNoProblems(play);
+                })
+                // Notifications, editable: the partner of NotificationsReadOnly
+                .story("NotificationsEditable", context -> render(context, FIXTURES))
+                .withPlay(play -> showNotifications(play, false))
+                // Notifications, read only: the partner of NotificationsEditable
+                .story("NotificationsReadOnly", context -> render(context, FIXTURES, DocumentPermission.VIEW))
+                .withPlay(play -> showNotifications(play, true))
+                // Execution, editable: the partner of ExecutionReadOnly
+                .story("ExecutionEditable", context -> render(context, FIXTURES))
+                .withPlay(play -> showExecution(play, false))
+                // Execution, read only: the partner of ExecutionEditable
+                .story("ExecutionReadOnly", context -> render(context, FIXTURES, DocumentPermission.VIEW))
+                .withPlay(play -> showExecution(play, true));
+    }
+
+    // Opens the Notifications tab and waits for its list
+    private static void showNotifications(final Play play, final boolean readOnly) {
+        openTab(play, "Notifications");
+        play.waitFor(() -> play.expect(play.getByRole("button", "Add Notification")).toBeInTheDocument());
+        expectReadOnlyNote(play, readOnly);
+        DocumentEditors.expectNoProblems(play);
+    }
+
+    // Opens the Execution tab and waits for the process type and its schedules
+    private static void showExecution(final Play play, final boolean readOnly) {
+        openTab(play, "Execution");
+        play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
+        play.waitFor(() -> play.expect(play.getByRole("button", "Add Execution Schedule")).toBeInTheDocument());
+        expectReadOnlyNote(play, readOnly);
+        DocumentEditors.expectNoProblems(play);
+    }
+
+    // A read-only document's tab says so
+    private static void expectReadOnlyNote(final Play play, final boolean readOnly) {
+        if (readOnly) {
+            play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+        }
     }
 
     private static RestFixtures fixtures(final String doc) {

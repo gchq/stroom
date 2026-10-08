@@ -159,6 +159,8 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         addTermButton.setEnabled(!readOnly);
         addOperatorButton.setEnabled(!readOnly);
         setButtonsEnabled();
+        // The read-only look: the terms greyed, as a read-only field's value is
+        getWidget().setStyleName("editExpressionViewImpl-readonly", readOnly);
     }
 
     private void setButtonsEnabled() {

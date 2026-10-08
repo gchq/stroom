@@ -38,6 +38,7 @@ public class DateTimeBox
 
     private Provider<DateTimePopup> popupProvider;
     private final TextBox textBox;
+    private boolean readOnly;
     private final SvgIconBox svgIconBox;
     private String stringValue;
     private Long longValue;
@@ -96,6 +97,9 @@ public class DateTimeBox
     }
 
     private void showPopup() {
+        if (readOnly || !isEnabled()) {
+            return;
+        }
         final DateTimePopup popup = getPopup();
         if (popup != null) {
             final UTCDate date = UTCDate.create(textBox.getValue());
@@ -128,8 +132,19 @@ public class DateTimeBox
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
         // So the calendar icon can't open the dialog either
-        svgIconBox.setReadonly(!enabled);
+        svgIconBox.setReadonly(!enabled || readOnly);
         updateInvalidState();
+    }
+
+    /// Makes the value read only: it can be read, selected and copied, and stays in the tab
+    /// order, but can't be changed, and its dialog doesn't open. It looks like the normal field
+    /// with its value greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        textBox.setReadOnly(readOnly);
+        svgIconBox.setReadonly(!textBox.isEnabled() || readOnly);
     }
 
     public boolean isEnabled() {

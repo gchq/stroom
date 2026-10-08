@@ -60,6 +60,7 @@ public class DuplicateManagementListPresenter
     private final FindDuplicateCheckCriteria criteria;
     private final RestDataProvider<DuplicateCheckRow, ResultPage<DuplicateCheckRow>> dataProvider;
     private boolean initialised;
+    private boolean readOnly = true;
     private final List<Column<DuplicateCheckRow, ?>> columns = new ArrayList<>();
 
     @Inject
@@ -127,7 +128,8 @@ public class DuplicateManagementListPresenter
     }
 
     private void enableButtons() {
-        final boolean enabled = NullSafe.hasItems(selectionModel.getSelectedItems());
+        // Deleting rows changes what the rule will notify on, so isn't allowed if the document is read only
+        final boolean enabled = !readOnly && NullSafe.hasItems(selectionModel.getSelectedItems());
         deleteButton.setEnabled(enabled);
     }
 
@@ -147,7 +149,13 @@ public class DuplicateManagementListPresenter
         super.onBind();
     }
 
-    protected void read(final DocRef docRef) {
+    /// Shows the duplicate check rows for a rule.
+    ///
+    /// @param docRef   The rule to show the duplicate check rows for.
+    /// @param readOnly Whether the rule is read only, in which case rows can't be deleted.
+    protected void read(final DocRef docRef, final boolean readOnly) {
+        this.readOnly = readOnly;
+        enableButtons();
         criteria.setAnalyticDocUuid(docRef.getUuid());
         refresh();
     }
@@ -162,6 +170,9 @@ public class DuplicateManagementListPresenter
     }
 
     private void onDelete() {
+        if (readOnly) {
+            return;
+        }
         final List<DuplicateCheckRow> selected = selectionModel.getSelectedItems();
         if (NullSafe.hasItems(selected)) {
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected row" +

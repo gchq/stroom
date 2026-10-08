@@ -264,8 +264,8 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
             }
 
             // The tick box is a check box to assistive technology: half-ticked is 'mixed', and one
-            // that can't be clicked is disabled
-            final String ariaDisabled = String.valueOf(!clickable);
+            // that can't be clicked is read only (it shows a value, as a read-only tick box does)
+            final String ariaReadOnly = String.valueOf(!clickable);
             final SafeHtml safeHtml;
             switch (value) {
                 case TICK:
@@ -273,21 +273,21 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
                             "Ticked",
                             SvgImage.BASE_CLASS_NAME + " " + SvgImage.TICK.getClassName() + " "
                             + TICKBOX_CLASSNAME + additionalClassNames + TICK,
-                            ariaDisabled,
+                            ariaReadOnly,
                             SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.TICK.getSvg()));
                     break;
                 case HALF_TICK:
                     safeHtml = template.halfTick(
                             "Half-Ticked",
                             TICKBOX_CLASSNAME + additionalClassNames + HALF_TICK,
-                            ariaDisabled,
+                            ariaReadOnly,
                             HALF_TICK_INNER);
                     break;
                 case UNTICK:
                     safeHtml = template.untick(
                             "Not Ticked",
                             TICKBOX_CLASSNAME + additionalClassNames + UNTICK,
-                            ariaDisabled);
+                            ariaReadOnly);
                     break;
                 default:
                     safeHtml = SafeHtmlUtils.EMPTY_SAFE_HTML;
@@ -305,16 +305,16 @@ public class TickBoxCell extends AbstractEditableCell<TickBoxState, TickBoxState
     public interface Template extends SafeHtmlTemplates {
 
         @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"true\" "
-                  + "aria-disabled=\"{2}\">{3}</div>")
-        SafeHtml tick(String title, String className, String ariaDisabled, SafeHtml svg);
+                  + "aria-readonly=\"{2}\">{3}</div>")
+        SafeHtml tick(String title, String className, String ariaReadOnly, SafeHtml svg);
 
         @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"mixed\" "
-                  + "aria-disabled=\"{2}\"><div class=\"{3}\"></div></div>")
-        SafeHtml halfTick(String title, String outerClassName, String ariaDisabled, String innerClassName);
+                  + "aria-readonly=\"{2}\"><div class=\"{3}\"></div></div>")
+        SafeHtml halfTick(String title, String outerClassName, String ariaReadOnly, String innerClassName);
 
         @Template("<div title=\"{0}\" class=\"{1}\" role=\"checkbox\" aria-checked=\"false\" "
-                  + "aria-disabled=\"{2}\"></div>")
-        SafeHtml untick(String title, String outerClassName, String ariaDisabled);
+                  + "aria-readonly=\"{2}\"></div>")
+        SafeHtml untick(String title, String outerClassName, String ariaReadOnly);
     }
 
 

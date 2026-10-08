@@ -70,12 +70,12 @@
                 </g:FlowPanel>
             </g:FlowPanel>
         </form:FormGroup>
-        <form:FormGroup identity="enabled" label="Enabled"
+        <form:FormGroup identity="enabled"
                         screenReaderText="Unticked keys cannot be used to authenticate.">
             <form:HelpHTML>
                 <p>You can temporarily disable a key which will prevent anyone from authenticating with that key.</p>
             </form:HelpHTML>
-            <tickbox:CustomCheckBox ui:field="enabledCheckBox" identity="enabledCheckBox"/>
+            <tickbox:CustomCheckBox ui:field="enabledCheckBox" identity="enabledCheckBox" label="Enabled"/>
         </form:FormGroup>
         <form:FormGroup identity="comments" label="Comments">
             <form:HelpHTML>

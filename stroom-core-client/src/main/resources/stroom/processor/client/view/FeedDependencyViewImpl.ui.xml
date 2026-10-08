@@ -12,10 +12,9 @@
             <g:SimplePanel ui:field="feedDependencies" addStyleNames="max"/>
         </form:FormGroup>
         <form:FormGroup identity="minProcessingDelayEnabled"
-                        label="Enable Minimum Processing Delay"
                         helpText="Tick to make data wait a minimum time after it is created before it is processed, even when its feed dependencies are already met."
                         screenReaderText="Makes data wait a minimum time after creation.">
-            <tickbox:CustomCheckBox ui:field="minProcessingDelayEnabled"/>
+            <tickbox:CustomCheckBox ui:field="minProcessingDelayEnabled" label="Enable Minimum Processing Delay"/>
         </form:FormGroup>
         <form:FormGroup identity="minProcessingDelay"
                         label="Minimum Processing Delay"
@@ -24,10 +23,9 @@
             <d:DurationPicker ui:field="minProcessingDelay"/>
         </form:FormGroup>
         <form:FormGroup identity="maxProcessingDelayEnabled"
-                        label="Enable Maximum Processing Delay"
                         helpText="Tick to set a maximum wait, after which data is processed even if its feed dependencies have not been met."
                         screenReaderText="Processes data after a set time even if dependencies are unmet.">
-            <tickbox:CustomCheckBox ui:field="maxProcessingDelayEnabled"/>
+            <tickbox:CustomCheckBox ui:field="maxProcessingDelayEnabled" label="Enable Maximum Processing Delay"/>
         </form:FormGroup>
         <form:FormGroup identity="maxProcessingDelay"
                         label="Maximum Processing Delay"

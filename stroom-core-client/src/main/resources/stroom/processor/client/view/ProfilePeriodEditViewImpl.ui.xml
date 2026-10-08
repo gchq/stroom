@@ -26,10 +26,9 @@
             <datepicker:TimeBox ui:field="endTime"/>
         </form:FormGroup>
         <form:FormGroup identity="limitNodeThreads"
-                        label="Limit Single Node Threads"
                         helpText="Tick to limit how many threads each node can use for processing during this period. When unticked, there is no per-node limit."
                         screenReaderText="When unticked, nodes have no thread limit.">
-            <tickbox:CustomCheckBox ui:field="limitNodeThreads"/>
+            <tickbox:CustomCheckBox ui:field="limitNodeThreads" label="Limit Single Node Threads"/>
         </form:FormGroup>
         <form:FormGroup identity="maxNodeThreads"
                         label="Max Node Threads"
@@ -40,10 +39,9 @@
                                        wrapValues="true"/>
         </form:FormGroup>
         <form:FormGroup identity="limitClusterThreads"
-                        label="Limit Total Cluster Threads"
                         helpText="Tick to limit the total number of threads the cluster can use for processing during this period. When unticked, there is no cluster limit."
                         screenReaderText="When unticked, the cluster has no thread limit.">
-            <tickbox:CustomCheckBox ui:field="limitClusterThreads"/>
+            <tickbox:CustomCheckBox ui:field="limitClusterThreads" label="Limit Total Cluster Threads"/>
         </form:FormGroup>
         <form:FormGroup identity="maxClusterThreads"
                         label="Max Cluster Threads"

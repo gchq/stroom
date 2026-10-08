@@ -50,6 +50,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     private SelectionPopup<T, I> popup;
     private boolean allowTextEntry;
     private boolean isEnabled = true;
+    private boolean readOnly;
     private Supplier<SafeHtml> popupTextSupplier;
 
     private final EventBinder eventBinder = new EventBinder() {
@@ -90,7 +91,7 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
     public void setAllowTextEntry(final boolean allowTextEntry) {
         this.allowTextEntry = allowTextEntry;
-        textBox.setReadOnly(!allowTextEntry);
+        textBox.setReadOnly(readOnly || !allowTextEntry);
         textBox.getElement().getStyle().setOpacity(allowTextEntry
                 ? 1
                 : 0);
@@ -105,13 +106,13 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     }
 
     private void updatePointer() {
-        if (allowTextEntry || !isEnabled()) {
+        if (allowTextEntry || !isEnabled() || readOnly) {
             textBox.removeStyleName(POINTER_CLASS_NAME);
         } else {
             textBox.addStyleName(POINTER_CLASS_NAME);
         }
 
-        if (isEnabled()) {
+        if (isEnabled() && !readOnly) {
             svgIconBox.addStyleName(POINTER_CLASS_NAME);
         } else {
             svgIconBox.removeStyleName(POINTER_CLASS_NAME);
@@ -144,6 +145,9 @@ public class BaseSelectionBox<T, I extends SelectionItem>
     }
 
     private void showPopup() {
+        if (readOnly || !isEnabled()) {
+            return;
+        }
         if (popup != null) {
 //            GWT.log("Hiding popup");
             hidePopup();
@@ -203,11 +207,36 @@ public class BaseSelectionBox<T, I extends SelectionItem>
             hidePopup();
         }
         textBox.setEnabled(enabled);
-        svgIconBox.setReadonly(!enabled);
-        renderBox.getElement().getStyle().setOpacity(enabled
-                ? 1
-                : 0.2);
+        svgIconBox.setReadonly(!enabled || readOnly);
+        // The disabled look (SelectionBox.css), rather than fading the value
+        svgIconBox.setStyleName("disabled", !enabled);
         updatePointer();
+    }
+
+    /// Makes the value read only: it can be read and stays in the tab order, but the list
+    /// doesn't open and typing doesn't change it. It looks like the normal field with its value
+    /// greyed.
+    ///
+    /// @param readOnly Whether the value is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        if (readOnly && popup != null) {
+            hidePopup();
+        }
+        textBox.setReadOnly(readOnly || !allowTextEntry);
+        if (readOnly) {
+            textBox.getElement().setAttribute("aria-readonly", "true");
+        } else {
+            textBox.getElement().removeAttribute("aria-readonly");
+        }
+        svgIconBox.setReadonly(!isEnabled() || readOnly);
+        svgIconBox.setStyleName("readonly", readOnly);
+        updatePointer();
+    }
+
+    /// @return Whether the value is read only.
+    public boolean isReadOnly() {
+        return readOnly;
     }
 
     public T getValue() {
