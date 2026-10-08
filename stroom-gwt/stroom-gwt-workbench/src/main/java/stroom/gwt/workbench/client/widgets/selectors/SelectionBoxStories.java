@@ -30,6 +30,8 @@ import stroom.item.client.SimpleSelectionItemWrapper;
 import stroom.item.client.SimpleSelectionListModel;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
@@ -49,6 +51,7 @@ public final class SelectionBoxStories {
     // the render box has no click handler of its own
     private static final String OPENER = ".SelectionBox-textBox";
     private static final String POPUP = ".SelectionPopup";
+    private static final int KEY_F9 = 120;
 
     private SelectionBoxStories() {
         // Static utility
@@ -72,6 +75,29 @@ public final class SelectionBoxStories {
                     box.setValue("One");
                     box.setEnabled(false);
                     return minWidth(box);
+                })
+                // Disabling the box while its list is open closes the list (it once stayed open, so
+                // the value could still be changed)
+                .story("DisabledWhileOpen", context -> {
+                    final SelectionBox<String> box = selectionBox(context, List.of("One", "Two"));
+                    // Stands in for a screen that disables the box while its list is open (e.g.
+                    // when it learns that the document is read only): F9 disables it
+                    final HandlerRegistration registration = Event.addNativePreviewHandler(event -> {
+                        if (event.getTypeInt() == Event.ONKEYDOWN
+                                && event.getNativeEvent().getKeyCode() == KEY_F9) {
+                            box.setEnabled(false);
+                        }
+                    });
+                    context.addCleanUp(registration::removeHandler);
+                    return minWidth(box);
+                })
+                .withPlay(play -> {
+                    play.click(play.querySelector(OPENER));
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).not().toBeNull());
+                    play.keyboard("{F9}");
+                    play.waitFor(() -> play.expect(play.screen().querySelector(POPUP)).toBeNull());
+                    play.expect(play.querySelector(OPENER)).toBeDisabled();
+                    play.expect(play.spy(ON_CHANGE)).not().toHaveBeenCalled();
                 })
                 // Long list - shows the quick filter and (over 100 items) the pager
                 .story("LongList", context -> {

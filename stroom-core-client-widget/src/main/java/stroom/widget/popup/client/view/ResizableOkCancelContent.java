@@ -60,6 +60,11 @@ public class ResizableOkCancelContent extends Composite implements DialogButtons
 
     @Override
     public void onDialogAction(final DialogAction action) {
+        final Button button = action == DialogAction.OK ? ok : cancel;
+        if (!DialogButtonAction.canRun(button)) {
+            return;
+        }
+        final Runnable restoreFocus = DialogButtonAction.keepFocus(button);
         setEnabled(false);
         if (action == DialogAction.OK) {
             ok.setLoading(true);
@@ -70,6 +75,7 @@ public class ResizableOkCancelContent extends Composite implements DialogButtons
             setEnabled(true);
             ok.setLoading(false);
             cancel.setLoading(false);
+            restoreFocus.run();
         }));
     }
 

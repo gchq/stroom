@@ -71,6 +71,7 @@ public abstract class AbstractSettingsPresenter<V extends SettingsView, D extend
 
     @Override
     protected void onRead(final DocRef docRef, final D doc, final boolean readOnly) {
+        errorFeedPresenter.setEnabled(!readOnly);
         uiConfigCache.get(extendedUiConfig -> {
             if (extendedUiConfig != null) {
                 final boolean isReport = ReportDoc.TYPE.equals(docRef.getType());

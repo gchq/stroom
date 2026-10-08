@@ -237,6 +237,28 @@ public final class ExecutionSchedulesScreenStories {
                             RequestMatcher.post(UPDATE_PATH).toSpyMatcher());
                     expectNoErrors(play);
                 })
+                // Batch Edit's schedule box is disabled until its check box is ticked, icon included:
+                // the icon once still opened the schedule dialog and changed the value
+                .story("BatchScheduleDisabled", context -> render(context, FIXTURES, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Hourly rollup");
+                    play.click(play.getByTitle("Batch Edit Schedules"));
+                    final Play dialog = dialog(screen, "Batch Change Selected Schedules");
+                    final Query schedule = dialog.querySelector(".ScheduleBox-textBox");
+                    final Query icon = dialog.querySelector(".ScheduleBox .svgIconBox-icon-outer");
+                    play.expect(schedule).toBeDisabled();
+                    play.expect(dialog.querySelector(".ScheduleBox .svgIconBox-icon-inner"))
+                            .toHaveClass("svgIconBox-readonly");
+                    play.click(icon);
+                    play.expect(screen.queryByText("Change Schedule", StroomDom.DIALOG_TITLE)).toBeNull();
+                    // Ticking the schedule's check box (after Name, Enabled's two and Node) enables both
+                    play.click(dialog.getAllByRole("checkbox").nth(4));
+                    play.expect(schedule).toBeEnabled();
+                    play.expect(dialog.querySelector(".ScheduleBox .svgIconBox-icon-inner"))
+                            .not().toHaveClass("svgIconBox-readonly");
+                    expectNoErrors(play);
+                })
                 // Editing a schedule renames it, enables it and saves it
                 .story("Edit", context -> render(context, EDIT_FIXTURES, false))
                 .withPlay(play -> {

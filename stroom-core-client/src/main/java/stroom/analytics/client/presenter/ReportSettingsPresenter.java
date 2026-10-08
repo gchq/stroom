@@ -66,6 +66,7 @@ public class ReportSettingsPresenter
                           final ReportDoc document,
                           final boolean readOnly) {
         super.onRead(docRef, document, readOnly);
+        aiSummaryModelPresenter.setEnabled(!readOnly);
         getView().setFileType(NullSafe.getOrElse(
                 document,
                 ReportDoc::getReportSettings,

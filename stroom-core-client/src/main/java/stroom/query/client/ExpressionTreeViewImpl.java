@@ -104,6 +104,8 @@ public class ExpressionTreeViewImpl
     public void setSelectionModel(final MySingleSelectionModel<Item> selectionModel) {
         this.selectionModel = selectionModel;
         treePanel.setSelectionModel(selectionModel);
+        // Without a selection model the tree is only for reading, so it can't be rearranged either
+        layoutPanel.setAllowDragging(selectionModel != null);
     }
 
     @Override

@@ -198,6 +198,10 @@ public class BaseSelectionBox<T, I extends SelectionItem>
 
     public void setEnabled(final boolean enabled) {
         this.isEnabled = enabled;
+        // An open list would still let the value be changed
+        if (!enabled && popup != null) {
+            hidePopup();
+        }
         textBox.setEnabled(enabled);
         svgIconBox.setReadonly(!enabled);
         renderBox.getElement().getStyle().setOpacity(enabled

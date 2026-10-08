@@ -64,6 +64,14 @@ public final class SvgCellStories {
                 .args(Args.of(ICON, "INFO"))
                 // Clickable icons: info and delete fire; copy is disabled
                 .story("ClickableIcons", SvgCellStories::clickableIcons)
+                .withPlay(play -> {
+                    play.click(play.getByTitle("View info"));
+                    play.expect(play.spy(ON_CLICK)).toHaveBeenCalledWith("info");
+                    // The disabled icon does nothing (it once acted, though drawn as disabled)
+                    play.click(play.getByTitle("Copy (disabled)"));
+                    play.expect(play.spy(ON_CLICK)).not().toHaveBeenCalledWith("copy");
+                    play.expect(play.spy(ON_CLICK)).toHaveBeenCalledTimes(1);
+                })
                 // A static (non-button) icon, with no click handler
                 .story("StaticIcon", SvgCellStories::fromArgs)
                 .withArgs(Args.of(ICON, "INFO", TITLE, "Information"));
@@ -100,10 +108,14 @@ public final class SvgCellStories {
             onClick.call("delete");
             clicked.setText("delete clicked");
         });
-        // A disabled preset only greys the icon (svgCell-disabled); with no handler, as React's has no
-        // onClick, a click does nothing
+        // A disabled preset greys the icon (svgCell-disabled) and ignores clicks, so its handler
+        // never runs
         final CellWidget<Preset> copy = new CellWidget<>(new SvgCell(true),
                 new Preset(SvgImage.COPY, "Copy (disabled)", false));
+        copy.addValueChangeHandler(event -> {
+            onClick.call("copy");
+            clicked.setText("copy clicked");
+        });
 
         return StoryPanels.row(12, info, delete, copy, clicked);
     }

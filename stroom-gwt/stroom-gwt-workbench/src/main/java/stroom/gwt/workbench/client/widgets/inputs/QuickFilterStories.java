@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.widgets.inputs;
 
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -67,6 +68,14 @@ public final class QuickFilterStories {
                     quickFilter.addValueChangeHandler(event -> showItems(list, event.getValue()));
                     final FlowPanel column = StoryPanels.column(12, quickFilter, list);
                     return InputWidgets.maxWidth(column, MAX_WIDTH);
+                })
+                .withPlay(play -> {
+                    final Query textBox = play.querySelector(".quickFilter-textBox");
+                    play.type(textBox, "al");
+                    play.click(play.getByTitle("Clear Filter"));
+                    play.expect(textBox).toHaveValue("");
+                    // The clear button hides itself, so focus goes back to the text (it was once lost)
+                    play.expect(textBox).toHaveFocus();
                 })
                 // QuickFilter with the syntax-help popup populated. Click the ? button to open it.
                 .story("WithHelp", context -> {

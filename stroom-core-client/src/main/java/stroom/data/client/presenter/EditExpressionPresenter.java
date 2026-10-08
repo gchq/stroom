@@ -35,6 +35,7 @@ import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.util.client.MouseUtil;
+import stroom.widget.util.client.MySingleSelectionModel;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -50,6 +51,8 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         implements HasChangeHandlers, Focus {
 
     private final ExpressionTreePresenter expressionPresenter;
+    private final MySingleSelectionModel<stroom.query.client.Item> selectionModel;
+    private boolean readOnly;
 
     private final ButtonView addOperatorButton;
     private final ButtonView addTermButton;
@@ -63,6 +66,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
                                    final ExpressionTreePresenter expressionPresenter) {
         super(eventBus, view);
         this.expressionPresenter = expressionPresenter;
+        this.selectionModel = expressionPresenter.getSelectionModel();
 
         view.setExpressionView(expressionPresenter.getView());
 
@@ -92,6 +96,9 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
         registerHandler(expressionPresenter.addDataSelectionHandler(event -> setButtonsEnabled()));
         registerHandler(expressionPresenter.addContextMenuHandler(event -> {
+            if (readOnly) {
+                return;
+            }
             final List<Item> menuItems = addExpressionActionsToMenu();
             if (NullSafe.hasItems(menuItems)) {
                 showMenu(menuItems, event.getPopupPosition());
@@ -139,22 +146,29 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         expressionPresenter.init(restFactory, dataSource, fieldSelectionListModel);
     }
 
-    private void setButtonsEnabled() {
-        final stroom.query.client.Item selectedItem = getSelectedItem();
+    /// Stops the expression being changed, for a document the user can't change: terms can't be
+    /// selected, edited or dragged, and the add, copy, disable and delete buttons and the
+    /// context menu do nothing.
+    ///
+    /// @param readOnly Whether the expression can't be changed.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        expressionPresenter.setSelectionModel(readOnly
+                ? null
+                : selectionModel);
+        addTermButton.setEnabled(!readOnly);
+        addOperatorButton.setEnabled(!readOnly);
+        setButtonsEnabled();
+    }
 
-        if (selectedItem == null) {
-            copyButton.setEnabled(false);
-            disableItemButton.setEnabled(false);
-            disableItemButton.setTitle("");
-            deleteItemButton.setEnabled(false);
-            deleteItemButton.setTitle("");
-        } else {
-            copyButton.setEnabled(true);
-            disableItemButton.setEnabled(true);
-            disableItemButton.setTitle(getEnableDisableText());
-            deleteItemButton.setEnabled(true);
-            deleteItemButton.setTitle("Delete");
-        }
+    private void setButtonsEnabled() {
+        final boolean canChangeItem = !readOnly && getSelectedItem() != null;
+        copyButton.setEnabled(canChangeItem);
+        disableItemButton.setEnabled(canChangeItem);
+        // The titles are the buttons' names, so they stay when the buttons are disabled
+        disableItemButton.setTitle(getEnableDisableText());
+        deleteItemButton.setEnabled(canChangeItem);
+        deleteItemButton.setTitle("Delete");
     }
 
     public void read(final ExpressionOperator expressionOperator) {

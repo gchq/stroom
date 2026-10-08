@@ -50,6 +50,7 @@ public class ScheduleBox
             .type(ScheduleType.CRON)
             .build();
     private SchedulePopup popup;
+    private boolean enabled = true;
     private ScheduleRestriction scheduleRestriction = new ScheduleRestriction(false, true, true);
 
     private Consumer<Consumer<ScheduleReferenceTime>> scheduleReferenceTimeConsumer = (consumer) ->
@@ -81,13 +82,14 @@ public class ScheduleBox
         final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
             schedulePresenterProvider.get().validate(schedule, scheduleRestriction, scheduledTimes -> {
-                if (isEnabled() && (scheduledTimes == null || scheduledTimes.isError())) {
+                if (isEnabled() && !isInstant() && (scheduledTimes == null || scheduledTimes.isError())) {
                     FieldValidity.setInvalid(textBox.getElement(), true);
                 } else {
                     FieldValidity.setInvalid(textBox.getElement(), false);
                 }
                 if (scheduledTimes != null && scheduledTimes.getSchedule() != null) {
                     value = scheduledTimes.getSchedule();
+                    updateReadOnly();
                 }
                 consumer.accept(scheduledTimes);
             });
@@ -124,6 +126,9 @@ public class ScheduleBox
     }
 
     private void showPopup() {
+        if (!enabled) {
+            return;
+        }
         final SchedulePopup popup = getSchedulePresenter();
         if (popup != null) {
             value = value.copy().expression(textBox.getValue()).build();
@@ -162,13 +167,29 @@ public class ScheduleBox
         textBox.setName(name);
     }
 
+    /// Disables the whole box: the text and the icon that opens the schedule dialog.
+    ///
+    /// @param enabled Whether the schedule can be changed.
     public void setEnabled(final boolean enabled) {
+        this.enabled = enabled;
         textBox.setEnabled(enabled);
+        svgIconBox.setReadonly(!enabled);
+        updateReadOnly();
         validate();
     }
 
     public boolean isEnabled() {
-        return textBox.isEnabled();
+        return enabled;
+    }
+
+    private boolean isInstant() {
+        return ScheduleType.INSTANT.equals(value.getType());
+    }
+
+    // An instant schedule has no expression to type, so the text is read-only, but it stays
+    // focusable and Enter (or the icon) still opens the dialog to change the type.
+    private void updateReadOnly() {
+        textBox.setReadOnly(enabled && isInstant());
     }
 
     public Schedule getValue() {
@@ -187,6 +208,8 @@ public class ScheduleBox
             } else {
                 textBox.setValue("");
             }
+
+            updateReadOnly();
 
             if (fireEvents) {
                 ValueChangeEvent.fire(this, value);

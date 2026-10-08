@@ -65,6 +65,11 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
 
     @Override
     public void onDialogAction(final DialogAction action) {
+        final Button button = action == DialogAction.OK ? accept : reject;
+        if (!DialogButtonAction.canRun(button)) {
+            return;
+        }
+        final Runnable restoreFocus = DialogButtonAction.keepFocus(button);
         setEnabled(false);
         if (action == DialogAction.OK) {
             accept.setLoading(true);
@@ -75,6 +80,7 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
             setEnabled(true);
             accept.setLoading(false);
             reject.setLoading(false);
+            restoreFocus.run();
         }));
     }
 

@@ -96,7 +96,11 @@ public class QuickFilter extends FlowPanel
         textBox.addValueChangeHandler(event -> onValueChange());
         textBox.addKeyDownHandler(this::onKeyDown);
         helpButton.addClickHandler(event -> showHelpPopup());
-        clearButton.addClickHandler(event -> clear());
+        clearButton.addClickHandler(event -> {
+            clear();
+            // The button hides itself once the text is empty, which would leave focus nowhere
+            textBox.setFocus(true);
+        });
 
         enableButtons();
     }

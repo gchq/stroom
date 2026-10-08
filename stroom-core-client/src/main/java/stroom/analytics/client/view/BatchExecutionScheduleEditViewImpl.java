@@ -203,8 +203,8 @@ public final class BatchExecutionScheduleEditViewImpl
         nodeForm.setDisabled(!nodeEnable.getValue());
 
         final boolean instantSchedule = scheduleBox.getValue().getType().equals(ScheduleType.INSTANT);
-        scheduleBox.setEnabled(scheduleEnable.getValue() && !instantSchedule);
-        scheduleForm.setDisabled(!(scheduleEnable.getValue() && !instantSchedule));
+        scheduleBox.setEnabled(scheduleEnable.getValue());
+        scheduleForm.setDisabled(!scheduleEnable.getValue());
         scheduleForm.setLabel("Schedule (" + scheduleBox.getValue().getType().getDisplayValue() + ")");
 
         startTimeBox.setEnabled(startTimeEnable.getValue() && !instantSchedule);

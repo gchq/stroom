@@ -17,13 +17,16 @@
 package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.ContentPresenter;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
+import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -42,6 +45,7 @@ public final class ModalStories {
     // The React Modal's callback props
     private static final String ON_OK = "onOk";
     private static final String ON_CANCEL = "onCancel";
+    private static final String FAIL = "Fail the request";
 
     private ModalStories() {
         // Static utility
@@ -83,12 +87,65 @@ public final class ModalStories {
                         RenamePopupEvent.builder(presenter).caption("Edit XPath Filter").fire();
                     }));
                     return panel;
+                })
+                // OK's request is still running: OK and Cancel are disabled, so Ctrl+Enter and
+                // Escape do nothing (they once ran the action again). When the request fails the
+                // buttons come back and focus returns to OK.
+                .story("PendingRequest", context -> {
+                    final StoryPopups popups = StoryPopups.create(context);
+                    final Spy[] spies = spies(context);
+                    return DialogWidgets.button("Open modal", DialogWidgets.PRIMARY, event ->
+                            showPending(spies, popups));
+                })
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", StroomDom.button("Open modal")));
+                    final Query ok = play.screen().getByRole("button", StroomDom.button("OK"));
+                    play.click(ok);
+                    play.expect(play.spy(ON_OK)).toHaveBeenCalledTimes(1);
+                    play.expect(ok).toBeDisabled();
+                    play.keyboard("{Control>}{Enter}{/Control}");
+                    play.keyboard("{Escape}");
+                    play.expect(play.spy(ON_OK)).toHaveBeenCalledTimes(1);
+                    play.expect(play.spy(ON_CANCEL)).not().toHaveBeenCalled();
+                    // The request fails (without taking focus, as a reply wouldn't)
+                    play.fireEvent().click(play.screen().getByRole("button", StroomDom.button(FAIL)));
+                    play.expect(ok).toBeEnabled();
+                    play.expect(ok).toHaveFocus();
                 });
     }
 
     /// The React Modal's `onOk` and `onCancel`, registered as the story renders.
     private static Spy[] spies(final StoryContext context) {
         return new Spy[]{context.fn(ON_OK), context.fn(ON_CANCEL)};
+    }
+
+    // A dialog whose OK starts a request that stays pending until the content's button fails it.
+    private static void showPending(final Spy[] spies, final StoryPopups popups) {
+        final Spy onOk = spies[0];
+        final Spy onCancel = spies[1];
+        final HidePopupRequestEvent[] pending = new HidePopupRequestEvent[1];
+        final FlowPanel content = new FlowPanel();
+        content.add(new InlineLabel("Saving takes a while."));
+        content.add(DialogWidgets.button(FAIL, DialogWidgets.PRIMARY, event -> {
+            if (pending[0] != null) {
+                pending[0].reset();
+                pending[0] = null;
+            }
+        }));
+        ShowPopupEvent.builder(new ContentPresenter(popups.getEventBus(), content))
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .caption("Save")
+                .modal()
+                .onHideRequest(event -> {
+                    if (event.isOk()) {
+                        onOk.call();
+                        pending[0] = event;
+                    } else {
+                        onCancel.call();
+                        event.hide();
+                    }
+                })
+                .fire();
     }
 
     private static ContentPresenter show(final Spy[] spies,

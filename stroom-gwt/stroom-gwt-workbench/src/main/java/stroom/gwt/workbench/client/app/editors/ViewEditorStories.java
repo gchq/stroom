@@ -117,6 +117,13 @@ public final class ViewEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("My DataSource")).toBeInTheDocument());
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
                             .toHaveClass("disabled");
+                    // The settings can't be changed (they once could, and the edits were thrown away)
+                    play.expect(play.getByRole("button", TextMatch.startingWith("Data Source My DataSource")))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", TextMatch.startingWith("Pipeline My Pipeline")))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle("Add Term")).toBeDisabled();
+                    play.expect(play.getByTitle("Add Operator")).toBeDisabled();
                     DocumentEditors.expectNoProblems(play);
                 });
     }

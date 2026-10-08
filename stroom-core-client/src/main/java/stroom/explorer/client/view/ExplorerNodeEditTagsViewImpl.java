@@ -313,6 +313,8 @@ public class ExplorerNodeEditTagsViewImpl
 
     private void onClearInputClicked(final ClickEvent event) {
         clearInput();
+        // The button hides itself once the input is empty, which would leave focus nowhere
+        textBox.setFocus(true);
     }
 
     private void addTagsFromTextInput() {

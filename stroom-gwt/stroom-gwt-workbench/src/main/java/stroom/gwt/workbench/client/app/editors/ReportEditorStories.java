@@ -107,6 +107,20 @@ public final class ReportEditorStories {
                     play.waitFor(() -> play.expect(play.getByRole("button", "Save")).not().toHaveClass("disabled"));
                     DocumentEditors.expectNoProblems(play);
                 })
+                // Read only: the settings can't be changed (the shared analytic settings once
+                // ignored read only, so edits were made and then thrown away)
+                .story("SettingsReadOnly", context -> render(context, FIXTURES, DocumentPermission.VIEW))
+                .withPlay(play -> {
+                    openTab(play, "Settings");
+                    play.waitFor(() -> play.expect(play.getByText("File Type", "label")).toBeInTheDocument());
+                    play.expect(fileType(play)).toBeDisabled();
+                    play.expect(play.getByRole("checkbox", "Send Empty Reports")).toBeDisabled();
+                    play.expect(picker(play, "Feed For Errors")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(picker(play, "AI Summary Model")).toHaveAttribute("aria-disabled", "true");
+                    // Text stays readable and focusable
+                    play.expect(play.querySelector("#aiSummaryPrompt")).toHaveAttribute("readonly");
+                    DocumentEditors.expectNoProblems(play);
+                })
                 // A report has no 'Include Rule Documentation'; adding a notification shows a
                 // Stream row
                 .story("NotificationsNoIncludeDoc", context -> render(context, FIXTURES))
@@ -169,18 +183,30 @@ public final class ReportEditorStories {
     }
 
     // The File Type selection box
+    // The document picker in the form group with this label
+    private static Query picker(final Play play, final String label) {
+        return play.within(play.getByText(label, "label").closest(".form-group"))
+                .querySelector("[aria-haspopup]");
+    }
+
     private static Query fileType(final Play play) {
         return play.within(play.getByText("File Type", "label").closest(".form-group"))
                 .querySelector(StroomDom.SELECTION_BOX);
     }
 
     private static Widget render(final StoryContext context, final RestFixtures fixtures) {
+        return render(context, fixtures, DocumentPermission.EDIT);
+    }
+
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final DocumentPermission permission) {
         final QueryScreenGinjector injector = GWT.create(QueryScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .uiConfig(AnalyticRuleEditorStories.UI_CONFIG)
                 .build();
-        harness.getSecurityContext().setDocumentPermission(DocumentPermission.EDIT);
+        harness.getSecurityContext().setDocumentPermission(permission);
         final ReportResource resource = GWT.create(ReportResource.class);
         // Opened once Stroom has started, as ReportPlugin opens a document
         harness.afterStartUp(() -> DocumentEditors.open(harness, injector.getReportPresenter(), DOC_REF,

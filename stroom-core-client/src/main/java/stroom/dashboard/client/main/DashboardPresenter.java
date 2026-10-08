@@ -280,11 +280,14 @@ public class DashboardPresenter
         registerHandler(maximiseTabsButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 maximiseTabs(null);
+                // The button swaps for Restore, so focus goes with it rather than being lost
+                restoreTabsButton.setFocus(true);
             }
         }));
         registerHandler(restoreTabsButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {
                 restoreTabs();
+                maximiseTabsButton.setFocus(true);
             }
         }));
     }

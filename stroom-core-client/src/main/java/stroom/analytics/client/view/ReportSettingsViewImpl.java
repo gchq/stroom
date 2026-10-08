@@ -20,6 +20,7 @@ import stroom.analytics.client.presenter.ReportSettingsPresenter.ReportSettingsV
 import stroom.analytics.client.presenter.SettingsUiHandlers;
 import stroom.analytics.shared.ReportSettings;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
+import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.item.client.SelectionBox;
 import stroom.widget.button.client.Button;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
@@ -36,7 +37,8 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 
-public class ReportSettingsViewImpl extends ViewWithUiHandlers<SettingsUiHandlers> implements ReportSettingsView {
+public class ReportSettingsViewImpl extends ViewWithUiHandlers<SettingsUiHandlers> implements ReportSettingsView,
+        ReadOnlyChangeHandler {
 
     private final Widget widget;
 
@@ -68,6 +70,14 @@ public class ReportSettingsViewImpl extends ViewWithUiHandlers<SettingsUiHandler
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void onReadOnly(final boolean readOnly) {
+        fileType.setEnabled(!readOnly);
+        sendEmptyReports.setEnabled(!readOnly);
+        aiSummaryEnabled.setEnabled(!readOnly);
+        aiSummaryPrompt.setReadOnly(readOnly);
     }
 
     @Override
