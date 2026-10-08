@@ -75,5 +75,6 @@ dependencies {
     runtimeOnly libs.simple.java.mail.batch.module
 
     testImplementation libs.bundles.common.test.implementation
+    testImplementation libs.logback.classic
     testRuntimeOnly libs.bundles.common.test.runtime
 }
