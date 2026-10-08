@@ -63,7 +63,7 @@ public final class CurveTabBarStories {
     private static final String OVERFLOWED = ".curveTab[style*='visibility: hidden']";
     // The selector is only made visible when some tabs overflow
     private static final String SELECTOR_SHOWN = ".curveTabSelector[style*='visibility: visible']";
-    // Differs from React: Stroom's menu items have no `menuitem` role; each is a `menuItem-outer`
+    // Each menu item's content is a `menuItem-outer` (the item, with `role="menuitem"`, is its cell)
     private static final String MENU_ITEM = ".menuItem-outer";
     private static final int MEASURE_TIMEOUT_MILLIS = 5000;
 

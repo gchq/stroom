@@ -48,7 +48,7 @@ import java.util.function.Function;
 /// Storybook.
 public final class MenuPanelStories {
 
-    // Differs from React: Stroom's menu has no `menu` role; it is a cell table with this class.
+    // Stroom's menu is a cell table with this class and `role="menu"`.
     static final String MENU = ".menuCellTable";
     // Differs from React: the highlighted row is the cell table's keyboard-selected row.
     private static final String ACTIVE_ROW = ".menuCellTable tr[class*='KeyboardSelectedRow']";
@@ -111,6 +111,15 @@ public final class MenuPanelStories {
                                         MenuWidgets.simple("Detailed", () -> result.accept("View Detailed"))),
                                 MenuWidgets.separator(),
                                 MenuWidgets.icon("Delete", SvgImage.DELETE, () -> result.accept("Delete")).build())))
+                .withPlay(play -> {
+                    play.click(play.getByRole("button", TextMatch.containingIgnoreCase("open menu")));
+                    final Query menu = play.screen().findByRole("menu");
+                    // A parent item says it opens a sub menu; a plain item doesn't
+                    play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing("Export as")))
+                            .toHaveAttribute("aria-haspopup", "menu");
+                    play.expect(play.within(menu).getByRole("menuitem", TextMatch.containing("New")))
+                            .not().toHaveAttribute("aria-haspopup");
+                })
                 // Display-only info rows above interactive items
                 .story("Info", context -> demo(context, "Open Menu",
                         "Info (non-interactive) rows — display-only context rows",
@@ -156,10 +165,24 @@ public final class MenuPanelStories {
                                 MenuWidgets.simple("Close", () -> result.accept("Close")))))
                 .withPlay(play -> {
                     play.click(play.getByRole("button", TextMatch.containingIgnoreCase("open menu")));
-                    // Differs from React: the menu has no `menu` role (see MENU). Stroom's Menu
-                    // focuses the first selectable row when it is shown, so no focus() is needed.
-                    final Query menu = play.screen().findAllByText("Open").first().closest(MENU);
+                    // Stroom's Menu focuses the first enabled item when it is shown, so no focus()
+                    // is needed
+                    final Query menu = play.screen().findByRole("menu");
                     play.waitFor(() -> play.expect(menu).toBeVisible());
+                    // Every item, the disabled one too, is a menu item; the separators aren't
+                    play.expect(play.within(menu).getAllByRole("menuitem")).toHaveLength(5);
+                    final Query print = play.within(menu).getByRole("menuitem", "Print");
+                    play.expect(print).toHaveAttribute("aria-disabled", "true");
+                    // The arrow keys reach the disabled item, so it is read out (as disabled), but
+                    // Enter does nothing and the menu stays open
+                    play.keyboard("{End}");
+                    play.keyboard("{ArrowUp}");
+                    play.waitFor(() -> play.expect(play.screen().querySelector(ACTIVE_ROW))
+                            .toHaveTextContent(TextMatch.containing("Print")));
+                    play.expect(print).toHaveFocus();
+                    play.keyboard("{Enter}");
+                    play.expect(menu).toBeVisible();
+                    play.expect(play.getByText(NO_ACTION, "strong")).toBeInTheDocument();
                     // Home → first selectable row ("Open")
                     play.keyboard("{Home}");
                     play.waitFor(() -> play.expect(play.screen().querySelector(ACTIVE_ROW))

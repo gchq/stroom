@@ -49,8 +49,8 @@ public final class StroomDom {
     /// `getByText(label, StroomDom.LINK_TAB_LABEL)`. Stroom's link tabs have no `role="tab"`, and
     /// each label is repeated in a hidden sizer, so a plain `getByText` finds two.
     public static final String LINK_TAB_LABEL = ".linkTab-label";
-    /// The text of an item of a menu (`MenuItemCell`), shown on the page's body; the items have no
-    /// `role="menuitem"`.
+    /// The text of an item of a menu (`MenuItemCell`), shown on the page's body. The item itself
+    /// (the cell's focusable div) has `role="menuitem"`.
     public static final String MENU_ITEM_TEXT = ".menuItem-text";
     /// The file input of a `CustomFileUpload` (Stroom's file chooser), which it hides behind its
     /// 'Choose File' button. `play.upload(...)` chooses a file in it all the same.
