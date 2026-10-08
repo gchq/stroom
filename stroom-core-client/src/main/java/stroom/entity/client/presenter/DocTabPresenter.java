@@ -36,9 +36,11 @@ import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
@@ -58,9 +60,12 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     private TabData selectedTab;
     private String lastLabel;
     protected final ButtonPanel toolbar;
-    // Says that the document is read only, next to the Save buttons; a polite status, so screen
-    // readers announce it when a read-only document opens
-    private final Label readOnlyNote = new Label();
+    // Why a document is read only: it is only ever opened read only for a user who can't edit it
+    private static final String READ_ONLY_REASON = "You don't have permission to change this";
+
+    // Says that the document is read only, at the far right of the tab bar; a polite status, so
+    // screen readers announce it (and why) when a read-only document opens
+    private final HTML readOnlyStatus = new HTML();
     private PresenterWidget<?> currentContent;
     protected DocRef docRef;
     private TabData defaultTab;
@@ -77,9 +82,9 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         saveAsButton.setEnabled(false);
 
         toolbar = createToolbar();
-        readOnlyNote.setStyleName("docTab-readOnlyNote");
-        readOnlyNote.getElement().setAttribute("role", "status");
-        toolbar.add(readOnlyNote);
+        readOnlyStatus.setStyleName("docTab-readOnlyStatus");
+        readOnlyStatus.getElement().setAttribute("role", "status");
+        getView().setTabBarStatus(readOnlyStatus);
 
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
@@ -220,6 +225,29 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         }
     }
 
+    private void setReadOnlyStatus(final boolean readOnly) {
+        if (readOnly) {
+            final SafeHtmlBuilder html = new SafeHtmlBuilder();
+            html.appendHtmlConstant("<span class=\"docTab-readOnlyNote\">");
+            html.appendHtmlConstant("<span class=\"docTab-readOnlyIcon\" aria-hidden=\"true\">");
+            html.append(SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.LOCKED.getSvg()));
+            html.appendHtmlConstant("</span>");
+            html.appendEscaped("Read only");
+            html.appendHtmlConstant("</span>");
+            // The reason, which a tooltip doesn't give screen readers
+            html.appendHtmlConstant("<span class=\"sr-only\">");
+            html.appendEscaped(". " + READ_ONLY_REASON + ".");
+            html.appendHtmlConstant("</span>");
+            readOnlyStatus.setHTML(html.toSafeHtml());
+            readOnlyStatus.setTitle(READ_ONLY_REASON);
+        } else {
+            readOnlyStatus.setHTML("");
+            readOnlyStatus.setTitle(null);
+        }
+        // The status takes room from the tab bar, so it lays its tabs out again
+        getView().getTabBar().refresh();
+    }
+
     @Override
     protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
         this.docRef = docRef;
@@ -228,9 +256,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         if (readOnly) {
             saveButton.setTitle("Save is not available as this document is read only");
         }
-        readOnlyNote.setText(readOnly
-                ? "Read only"
-                : "");
+        setReadOnlyStatus(readOnly);
         tabContentProvider.read(docRef, document, readOnly);
         // The name may have changed (e.g. after a rename or Save As), and a clean document doesn't
         // become dirty to refresh the tab's label

@@ -25,49 +25,64 @@
                         screenReaderText="Used when a document has no value.">
             <g:TextBox ui:field="defaultValue" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the field's value is stored in Solr, so it can be returned in search results without extracting it from the original data."
+                        screenReaderText="Stored values can be returned in results.">
             <tickbox:CustomCheckBox ui:field="stored" identity="solrIndexStored" label="Stored"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the field can be searched. Only indexed fields can be used in query conditions."
+                        screenReaderText="Only indexed fields can be used in query conditions.">
             <tickbox:CustomCheckBox ui:field="indexed" identity="solrIndexIndexed" label="Indexed"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether Solr may build an in-memory copy of an indexed field without Doc Values when sorting or faceting on it. Doc Values are usually a better choice, as this copy uses a lot of memory."
+                        screenReaderText="Lets Solr sort without Doc Values, using a lot of memory.">
             <tickbox:CustomCheckBox ui:field="uninvertible" identity="solrIndexUninvertible" label="Uninvertible"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the field's values are also stored by column, which makes sorting, faceting and grouping on the field faster and use less memory."
+                        screenReaderText="Makes sorting and faceting faster.">
             <tickbox:CustomCheckBox ui:field="docValues" identity="solrIndexDocValues" label="Doc Values"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether a document can have more than one value for the field."
+                        screenReaderText="Allows several values per document.">
             <tickbox:CustomCheckBox ui:field="multiValued" identity="solrIndexMultiValued" label="Multi Valued"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether every document must have a value for the field. Solr rejects a document without one."
+                        screenReaderText="Solr rejects documents without a value.">
             <tickbox:CustomCheckBox ui:field="required" identity="solrIndexRequired" label="Required"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether to leave out the field's length normalisation, which favours matches in shorter values when ranking results. Saves memory; usually ticked for fields that aren't full text."
+                        screenReaderText="Saves memory; shorter values are no longer ranked higher.">
             <tickbox:CustomCheckBox ui:field="omitNorms" identity="solrIndexOmitNorms" label="Omit Norms"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether to leave out the position of each term. Saves space, but the field can no longer match phrases."
+                        screenReaderText="Saves space, but phrases can't be matched.">
             <tickbox:CustomCheckBox ui:field="omitPositions" identity="solrIndexOmitPositions" label="Omit Positions"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether to leave out how often each term occurs and where. Saves space, but the field can no longer match phrases, and a term repeated in a value doesn't rank it higher."
+                        screenReaderText="Saves space, but phrases can't be matched.">
             <tickbox:CustomCheckBox ui:field="omitTermFreqAndPositions" identity="solrIndexOmitTermFreqAndPositions" label="Omit Term Freq And Positions"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether to store a list of the field's terms for each document, used by highlighting and 'more like this' searches."
+                        screenReaderText="Used by highlighting and similar-document searches.">
             <tickbox:CustomCheckBox ui:field="termVectors" identity="solrIndexTermVectors" label="Term Vectors"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the stored term vectors include each term's position. Only used when Term Vectors is ticked."
+                        screenReaderText="Only used with Term Vectors.">
             <tickbox:CustomCheckBox ui:field="termPositions" identity="solrIndexTermPositions" label="Term Positions"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the stored term vectors include each term's start and end in the value, which speeds up highlighting. Only used when Term Vectors is ticked."
+                        screenReaderText="Only used with Term Vectors.">
             <tickbox:CustomCheckBox ui:field="termOffsets" identity="solrIndexTermOffsets" label="Term Offsets"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the stored term vectors include each term's payload, extra data some analysers attach to terms. Only used when Term Vectors is ticked."
+                        screenReaderText="Only used with Term Vectors.">
             <tickbox:CustomCheckBox ui:field="termPayloads" identity="solrIndexTermPayloads" label="Term Payloads"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether documents with no value for the field come first when sorting on it, whichever way the sort goes."
+                        screenReaderText="Documents without a value sort first.">
             <tickbox:CustomCheckBox ui:field="sortMissingFirst" identity="solrIndexSortMissingFirst" label="Sort Missing First"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether documents with no value for the field come last when sorting on it, whichever way the sort goes."
+                        screenReaderText="Documents without a value sort last.">
             <tickbox:CustomCheckBox ui:field="sortMissingLast" identity="solrIndexSortMissingLast" label="Sort Missing Last"/>
         </form:FormGroup>
 

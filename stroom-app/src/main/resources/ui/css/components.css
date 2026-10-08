@@ -2696,6 +2696,13 @@ button.main-menu svg {
 
 /* Credentials Manager */
 /* Text area needs to be big enough to display certificates */
+/* Space the groups out as a form does (also used by the processor profile's Edit Period) */
+.credentials-details-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: var(--control__gap--vertical);
+}
+
 .credentials-details-dialog textarea {
     width: 650px;
     height: 150px;
@@ -2894,26 +2901,43 @@ button.main-menu svg {
     opacity: var(--disabled-opacity);
 }
 
-/* The "Read only" note beside a read-only document's Save buttons (DocTabPresenter) */
-.docTab-readOnlyNote {
-    /* After the tab's own buttons, wherever they were added */
-    order: 1;
-    align-self: center;
-    margin-left: 6px;
-    padding: 0 6px;
-    border-radius: .25rem;
-    font-size: var(--font-size-12);
-    line-height: 18px;
-    color: var(--control__text-color--readonly);
-    border: 1px solid var(--control__border-color);
-    white-space: nowrap;
+/* The "Read only" status at the far right of a read-only document's tab bar (DocTabPresenter) */
+.docTab-readOnlyStatus {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: default;
 }
 
 /* Empty, it is out of the layout (no gap either) but stays in the page, so screen readers announce
    it when it is filled */
-.docTab-readOnlyNote:empty {
+.docTab-readOnlyStatus:empty {
     position: absolute;
-    margin: 0;
-    padding: 0;
-    border: 0;
+}
+
+.docTab-readOnlyNote {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 6px;
+    border-radius: .25rem;
+    font-size: var(--font-size-12);
+    line-height: 18px;
+    color: var(--text-color);
+    border: 1px solid var(--control__border-color);
+    white-space: nowrap;
+}
+
+.docTab-readOnlyIcon {
+    display: flex;
+}
+
+.docTab-readOnlyIcon svg {
+    width: 10px;
+    height: 10px;
+}
+
+/* In the chip's colour rather than the lock's usual orange, which would read as a warning */
+.docTab-readOnlyIcon svg path {
+    fill: currentColor !important;
 }

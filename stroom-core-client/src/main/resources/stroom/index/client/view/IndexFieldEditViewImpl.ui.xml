@@ -16,13 +16,16 @@
                         required="true">
             <g:TextBox ui:field="name" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the field's value is kept in the index. A stored value can be shown in search results straight from the index; a field that isn't stored has to be extracted from the original data, which is slower."
+                        screenReaderText="Stored values can be shown without extracting them from the data.">
             <tickbox:CustomCheckBox ui:field="stored" identity="indexFieldStored" label="Stored"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the field can be searched. Only indexed fields can be used in query conditions; an unindexed field can still be stored and shown in results."
+                        screenReaderText="Only indexed fields can be used in query conditions.">
             <tickbox:CustomCheckBox ui:field="indexed" identity="indexFieldIndexed" label="Indexed"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the position of each term in the value is kept, so a query can match a phrase, with its words together and in order. Without positions, each word of a query value is matched on its own. Makes the index larger."
+                        screenReaderText="Needed to match phrases. Makes the index larger.">
             <tickbox:CustomCheckBox ui:field="positions" identity="indexFieldPositions" label="Positions"/>
         </form:FormGroup>
         <form:FormGroup identity="indexFieldAnalyser" label="Analyser"
@@ -30,7 +33,8 @@
                         screenReaderText="How text is split into searchable terms. Keyword keeps the whole value.">
             <l:SelectionBox ui:field="analyser" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether matching takes account of upper and lower case. When unticked, values are indexed and searched in lower case, so 'Error' matches 'error'."
+                        screenReaderText="When unticked, 'Error' matches 'error'.">
             <tickbox:CustomCheckBox ui:field="caseSensitive" identity="indexFieldCaseSensitive" label="Case Sensitive"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="denseVectorOptions"/>

@@ -156,7 +156,9 @@ public final class AskStroomAiDialogStories {
                 .story("ToolbarEntryPoint", AskStroomAiDialogStories::renderToolbar)
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    final Query aiButton = play.getByRole("button", "Ask Stroom AI");
+                    // Waits for it: the toolbar is drawn after the story first shows, so under load
+                    // the button may not be there yet
+                    final Query aiButton = play.findByRole("button", "Ask Stroom AI");
                     play.click(aiButton);
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing("How can I help?")))
                             .toBeInTheDocument());

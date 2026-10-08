@@ -30,5 +30,10 @@ public interface LinkTabPanelView extends View {
 
     TabBar getTabBar();
 
+    /// Shows a status at the far right of the tab bar's row, e.g. that the document is read only.
+    ///
+    /// @param widget The status, replacing any shown before.
+    void setTabBarStatus(Widget widget);
+
     LayerContainer getLayerContainer();
 }

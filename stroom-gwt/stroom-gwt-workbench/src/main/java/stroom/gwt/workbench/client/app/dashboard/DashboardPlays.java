@@ -68,7 +68,9 @@ final class DashboardPlays {
     /// @param name The component's name.
     /// @return The label of the component's tab.
     static Query tab(final Play play, final String name) {
-        return play.getByText(name, COMPONENT_TAB);
+        // Waits for it: a nested split's tab bars are laid out after the first, so under load a
+        // tab may not be drawn yet when the dashboard first shows
+        return play.findByText(name, COMPONENT_TAB);
     }
 
     /// @param play The play.

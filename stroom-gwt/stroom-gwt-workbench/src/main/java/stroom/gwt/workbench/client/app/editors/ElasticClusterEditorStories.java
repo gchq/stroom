@@ -146,7 +146,7 @@ public final class ElasticClusterEditorStories {
                     // The tab says it is read only, as a status that screen readers announce
                     final Query note = play.getByText("Read only", ".docTab-readOnlyNote");
                     play.expect(note).toBeVisible();
-                    play.expect(note).toHaveAttribute("role", "status");
+                    play.expect(note.closest(".docTab-readOnlyStatus")).toHaveAttribute("role", "status");
                     DocEditors.expectNoProblems(play);
                 })
                 // Settings, read only, with nothing typed (ReadOnly types into a field): the partner

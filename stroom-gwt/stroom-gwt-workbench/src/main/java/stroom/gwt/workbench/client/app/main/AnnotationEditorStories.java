@@ -265,6 +265,12 @@ public final class AnnotationEditorStories {
                     play.expect(play.getByRole("button", StroomDom.button("Delete Annotation"))).toBeDisabled();
                     play.expect(play.queryByText("Assign yourself")).toBeNull();
                     play.expect(play.getByText("Read only", ".docTab-readOnlyNote")).toBeVisible();
+                    // The status is at the end of the tab bar's row, not on the toolbar, and says why
+                    // the annotation is read only, in a tooltip and to screen readers
+                    final Query status = play.querySelector(".linkTabPanelViewImpl > .docTab-readOnlyStatus");
+                    play.expect(status).toHaveAttribute("title", "You don't have permission to change this");
+                    play.expect(status).toHaveTextContent(
+                            TextMatch.containing("You don't have permission to change this."));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post(CHANGE_PATH).toSpyMatcher());
                     ContentStorySupport.expectNoProblems(play);

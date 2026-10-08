@@ -4,7 +4,8 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup addStyleNames="dock-min">
+        <form:FormGroup addStyleNames="dock-min" helpText="Whether this handler's expression is added to the query when other components on the dashboard have a selection."
+                        screenReaderText="When unticked, the expression below isn't used.">
             <tickbox:CustomCheckBox ui:field="enabled" identity="selectionHandlerEnabled" label="Enabled"/>
         </form:FormGroup>
         <g:MySplitLayoutPanel vSplits="0.5" styleName="dock-max">

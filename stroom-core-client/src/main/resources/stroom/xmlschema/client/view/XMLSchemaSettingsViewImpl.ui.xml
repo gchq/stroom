@@ -19,7 +19,8 @@
                         screenReaderText="Lets a schema filter use only schemas in this group.">
             <g:TextBox ui:field="schemaGroup" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether the schema is out of date. Data that names a deprecated schema is still validated against it, but each use gives a warning, so it can be moved to a newer schema."
+                        screenReaderText="Still used, but gives a warning.">
             <tickbox:CustomCheckBox ui:field="deprecated" identity="xmlSchemaSettingDeprecated" label="Deprecated"/>
         </form:FormGroup>
     </g:FlowPanel>

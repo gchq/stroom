@@ -6,7 +6,8 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form overflow-hidden default-min-sizes">
         <g:SimplePanel ui:field="dataGridView" styleName="dock-max form-control-border form-control-background"/>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether imported processor filters are switched on. When unticked they are imported switched off, so nothing is processed until they are enabled."
+                        screenReaderText="When unticked, imported filters are switched off.">
             <tickbox:CustomCheckBox ui:field="enableFilters" identity="importConfigConfirmEnableProcessorFilters" label="Enable Processor Filters"/>
         </form:FormGroup>
         <form:FormGroup identity="importConfigConfirmFromThisdate"
@@ -15,10 +16,12 @@
                         screenReaderText="ISO 8601 date, e.g. 2024-01-31T00:00:00.000Z.">
             <c:MyDateBox ui:field="enableFrom"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether an item that already exists is renamed to its name in the import file. When unticked, it keeps its current name."
+                        screenReaderText="When unticked, existing items keep their names.">
             <tickbox:CustomCheckBox ui:field="useImportNames" identity="importConfigConfirmUseImportNames" label="Use Import Names"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether an item that already exists is moved to its folder in the import file. When unticked, it stays where it is."
+                        screenReaderText="When unticked, existing items stay in their folders.">
             <tickbox:CustomCheckBox ui:field="useImportFolders" identity="importConfigConfirmUseImportFolders" label="Use Import Folders"/>
         </form:FormGroup>
         <form:FormGroup identity="importConfigConfirmImportToRootFolder" label="Import To Root Folder"

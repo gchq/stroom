@@ -15,7 +15,8 @@
                         screenReaderText="PEM text. Only used for https URLs.">
             <g:TextArea ui:field="caCertificate" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether to sign in to Elasticsearch with the API key below. Untick for a cluster that doesn't need authentication."
+                        screenReaderText="Uses the API key below.">
             <t:CustomCheckBox ui:field="useAuthentication" identity="elasticClusterSettingsUseauthentication" label="Use authentication"/>
         </form:FormGroup>
         <form:FormGroup identity="elasticClusterSettingsAPIKeyId" label="API key ID"

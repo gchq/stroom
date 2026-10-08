@@ -175,7 +175,12 @@ public final class MenuPanelStories {
                     play.expect(print).toHaveAttribute("aria-disabled", "true");
                     // The arrow keys reach the disabled item, so it is read out (as disabled), but
                     // Enter does nothing and the menu stays open
+                    // Wait for the menu to focus its first item, or the keys may go elsewhere
+                    play.waitFor(() -> play.expect(play.within(menu).getByRole("menuitem", "Open"))
+                            .toHaveFocus());
                     play.keyboard("{End}");
+                    play.waitFor(() -> play.expect(play.screen().querySelector(ACTIVE_ROW))
+                            .toHaveTextContent(TextMatch.containing("Close")));
                     play.keyboard("{ArrowUp}");
                     play.waitFor(() -> play.expect(play.screen().querySelector(ACTIVE_ROW))
                             .toHaveTextContent(TextMatch.containing("Print")));

@@ -32,6 +32,7 @@
 
 package stroom.widget.tickbox.client.view;
 
+import stroom.util.shared.NullSafe;
 import stroom.widget.form.client.FormLabel;
 
 import com.google.gwt.dom.client.Document;
@@ -232,6 +233,19 @@ public class CustomCheckBox extends ButtonBase implements HasName, HasValue<Bool
     /// @return The label beside the tick box, or null or blank if it has none.
     public String getLabel() {
         return label.getLabel();
+    }
+
+    /// Names the tick box for screen readers when it has no label of its own, e.g. a tick box that
+    /// chooses whether the field beside it is changed. Bound to the `ariaLabel` attribute in
+    /// ui.xml.
+    ///
+    /// @param ariaLabel The name, or null or blank for none.
+    public void setAriaLabel(final String ariaLabel) {
+        if (NullSafe.isBlankString(ariaLabel)) {
+            inputElem.removeAttribute("aria-label");
+        } else {
+            inputElem.setAttribute("aria-label", ariaLabel);
+        }
     }
 
     public void setIdentity(final String identity) {

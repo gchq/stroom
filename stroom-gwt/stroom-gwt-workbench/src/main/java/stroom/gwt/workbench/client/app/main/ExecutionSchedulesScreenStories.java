@@ -213,8 +213,14 @@ public final class ExecutionSchedulesScreenStories {
                     play.findByText("Hourly rollup");
                     play.click(play.getByTitle("Batch Edit Schedules"));
                     final Play dialog = dialog(screen, "Batch Change Selected Schedules");
-                    // Enable only the Name field (its check box is the first) and set a value
-                    play.click(dialog.getAllByRole("checkbox").nth(0));
+                    // Each field's tick box, which has no visible label, is named for screen
+                    // readers by the field it changes
+                    for (final String field : List.of("Schedule Name", "Enabled", "Processing Node",
+                            "Schedule", "Start Time", "End Time", "Run As User")) {
+                        play.expect(dialog.getByRole("checkbox", "Change " + field)).toBeInTheDocument();
+                    }
+                    // Enable only the Name field and set a value
+                    play.click(dialog.getByRole("checkbox", "Change Schedule Name"));
                     play.type(dialog.getAllByRole("textbox").nth(0), "Renamed batch");
                     play.click(dialog.getByRole("button", StroomDom.button("Apply to Filtered")));
                     final Play confirm = dialogWith(screen, TextMatch.containing("You are about to edit"));

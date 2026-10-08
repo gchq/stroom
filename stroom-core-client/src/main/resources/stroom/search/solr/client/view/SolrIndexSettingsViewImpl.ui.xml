@@ -21,7 +21,8 @@
                         screenReaderText="One per line. Single Node needs exactly one.">
             <g:TextArea ui:field="solrUrls" width="400px"/>
         </form:FormGroup>
-        <form:FormGroup>
+        <form:FormGroup helpText="Whether to find the Solr Cloud cluster through its ZooKeeper hosts rather than the Solr URLs. Only used when the instance type is Solr Cloud."
+                        screenReaderText="Solr Cloud only. Uses the ZooKeeper hosts below.">
             <t:CustomCheckBox ui:field="useZk" identity="solrIndexSettingsUseZK" label="Use ZK"/>
         </form:FormGroup>
         <form:FormGroup identity="solrIndexSettingsZKHosts" label="ZooKeeper Hosts"
