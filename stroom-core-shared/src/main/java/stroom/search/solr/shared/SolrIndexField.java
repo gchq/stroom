@@ -129,41 +129,41 @@ public class SolrIndexField implements IndexField {
             @JsonProperty("fldType") final FieldType fldType,
             @JsonProperty("nativeType") final String nativeType,
             @JsonProperty("defaultValue") final String defaultValue,
-            @JsonProperty("indexed") final boolean indexed,
-            @JsonProperty("stored") final boolean stored,
-            @JsonProperty("uninvertible") final boolean uninvertible,
-            @JsonProperty("docValues") final boolean docValues,
-            @JsonProperty("multiValued") final boolean multiValued,
-            @JsonProperty("required") final boolean required,
-            @JsonProperty("omitNorms") final boolean omitNorms,
-            @JsonProperty("omitTermFreqAndPositions") final boolean omitTermFreqAndPositions,
-            @JsonProperty("omitPositions") final boolean omitPositions,
-            @JsonProperty("termVectors") final boolean termVectors,
-            @JsonProperty("termPositions") final boolean termPositions,
-            @JsonProperty("termOffsets") final boolean termOffsets,
-            @JsonProperty("termPayloads") final boolean termPayloads,
-            @JsonProperty("sortMissingFirst") final boolean sortMissingFirst,
-            @JsonProperty("sortMissingLast") final boolean sortMissingLast,
+            @JsonProperty("indexed") final Boolean indexed,
+            @JsonProperty("stored") final Boolean stored,
+            @JsonProperty("uninvertible") final Boolean uninvertible,
+            @JsonProperty("docValues") final Boolean docValues,
+            @JsonProperty("multiValued") final Boolean multiValued,
+            @JsonProperty("required") final Boolean required,
+            @JsonProperty("omitNorms") final Boolean omitNorms,
+            @JsonProperty("omitTermFreqAndPositions") final Boolean omitTermFreqAndPositions,
+            @JsonProperty("omitPositions") final Boolean omitPositions,
+            @JsonProperty("termVectors") final Boolean termVectors,
+            @JsonProperty("termPositions") final Boolean termPositions,
+            @JsonProperty("termOffsets") final Boolean termOffsets,
+            @JsonProperty("termPayloads") final Boolean termPayloads,
+            @JsonProperty("sortMissingFirst") final Boolean sortMissingFirst,
+            @JsonProperty("sortMissingLast") final Boolean sortMissingLast,
             @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
         this.fldType = Objects.requireNonNullElse(convertLegacyType(fldType, fieldUse), FieldType.TEXT);
         this.nativeType = convertLegacyNativeType(nativeType, fieldType);
-        this.stored = stored;
-        this.indexed = indexed;
+        this.stored = Objects.requireNonNullElse(stored, false);
+        this.indexed = Objects.requireNonNullElse(indexed, false);
         this.defaultValue = defaultValue;
-        this.uninvertible = uninvertible;
-        this.docValues = docValues;
-        this.multiValued = multiValued;
-        this.required = required;
-        this.omitNorms = omitNorms;
-        this.omitTermFreqAndPositions = omitTermFreqAndPositions;
-        this.omitPositions = omitPositions;
-        this.termVectors = termVectors;
-        this.termPositions = termPositions;
-        this.termOffsets = termOffsets;
-        this.termPayloads = termPayloads;
-        this.sortMissingFirst = sortMissingFirst;
-        this.sortMissingLast = sortMissingLast;
+        this.uninvertible = Objects.requireNonNullElse(uninvertible, false);
+        this.docValues = Objects.requireNonNullElse(docValues, false);
+        this.multiValued = Objects.requireNonNullElse(multiValued, false);
+        this.required = Objects.requireNonNullElse(required, false);
+        this.omitNorms = Objects.requireNonNullElse(omitNorms, false);
+        this.omitTermFreqAndPositions = Objects.requireNonNullElse(omitTermFreqAndPositions, false);
+        this.omitPositions = Objects.requireNonNullElse(omitPositions, false);
+        this.termVectors = Objects.requireNonNullElse(termVectors, false);
+        this.termPositions = Objects.requireNonNullElse(termPositions, false);
+        this.termOffsets = Objects.requireNonNullElse(termOffsets, false);
+        this.termPayloads = Objects.requireNonNullElse(termPayloads, false);
+        this.sortMissingFirst = Objects.requireNonNullElse(sortMissingFirst, false);
+        this.sortMissingLast = Objects.requireNonNullElse(sortMissingLast, false);
         this.denseVectorFieldConfig = denseVectorFieldConfig;
     }
 

@@ -66,9 +66,9 @@ class TestStagePlanner {
                                     final String xsltFp,
                                     final String writerFp) {
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("parser"), parserFp, ed());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("xslt"), xsltFp, ed());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("writer"), writerFp, ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("parser"), parserFp, ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("xslt"), xsltFp, ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("writer"), writerFp, ed());
         return store;
     }
 
@@ -85,10 +85,10 @@ class TestStagePlanner {
     private StepDataStore storeWithPartialXslt(final Path tempDir, final long from, final long to) {
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
         for (long r = 0; r <= 9; r++) {
-            store.putElementData(new StepLocation(META, 0, r), new ElementId("parser"), "p1", ed());
+            store.putElementData(new StepLocation((long) META, 0L, (long) r), new ElementId("parser"), "p1", ed());
         }
         for (long r = from; r <= to; r++) {
-            store.putElementData(new StepLocation(META, 0, r), new ElementId("xslt"), "x1", ed());
+            store.putElementData(new StepLocation((long) META, 0L, (long) r), new ElementId("xslt"), "x1", ed());
         }
         return store;
     }
@@ -126,11 +126,11 @@ class TestStagePlanner {
         // demand must be held individually.
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
         for (long r = 0; r <= 9; r++) {
-            store.putElementData(new StepLocation(META, 0, r), new ElementId("parser"), "p1", ed());
+            store.putElementData(new StepLocation((long) META, 0L, (long) r), new ElementId("parser"), "p1", ed());
         }
         // Materialised on demand - which is exactly how an element comes to have holes.
         for (final long r : new long[]{2, 5}) {
-            store.putRecord(new StepLocation(META, 0, r),
+            store.putRecord(new StepLocation((long) META, 0L, (long) r),
                     List.of(new StepDataStore.ElementRecord(new ElementId("xslt"), "x1", ed())),
                     null, Map.of(), null, StepDataStore.RecordOrder.ON_DEMAND);
         }
@@ -202,8 +202,8 @@ class TestStagePlanner {
         // reverting to the original fingerprints reuses everything.
         final StepDataStore store = storeWith(tempDir, "p1", "x1", "w1");
         // The edited fingerprints are separate files, so their first record is index 0.
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("xslt"), "x2", ed());
-        store.putElementData(new StepLocation(META, 0, 0), new ElementId("writer"), "w2", ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("xslt"), "x2", ed());
+        store.putElementData(new StepLocation((long) META, 0L, 0L), new ElementId("writer"), "w2", ed());
 
         final StagePlan reverted = planner.plan(elements, store, fingerprints("p1", "x1", "w1"));
         assertThat(reverted.fullRecapture()).isFalse();

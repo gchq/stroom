@@ -26,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public class SearchTaskProgress {
@@ -52,15 +54,15 @@ public class SearchTaskProgress {
                               @JsonProperty("userRef") final UserRef userRef,
                               @JsonProperty("threadName") final String threadName,
                               @JsonProperty("nodeName") final String nodeName,
-                              @JsonProperty("submitTimeMs") final long submitTimeMs,
-                              @JsonProperty("timeNowMs") final long timeNowMs) {
+                              @JsonProperty("submitTimeMs") final Long submitTimeMs,
+                              @JsonProperty("timeNowMs") final Long timeNowMs) {
         this.taskName = taskName;
         this.taskInfo = taskInfo;
         this.userRef = userRef;
         this.threadName = threadName;
         this.nodeName = nodeName;
-        this.submitTimeMs = submitTimeMs;
-        this.timeNowMs = timeNowMs;
+        this.submitTimeMs = Objects.requireNonNullElse(submitTimeMs, 0L);
+        this.timeNowMs = Objects.requireNonNullElse(timeNowMs, 0L);
     }
 
     public String getTaskName() {

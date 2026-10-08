@@ -37,6 +37,12 @@ public interface ApiKeyDao {
      */
     List<HashedApiKey> fetchValidApiKeysByPrefix(final String prefix);
 
+    /**
+     * Fetch API Keys by their prefix, regardless of enabled/expired state.
+     * Chance of multiple keys for a given prefix is low, ~1:1,000,000 odds, but possible.
+     */
+    List<HashedApiKey> fetchApiKeysByPrefix(final String prefix);
+
     HashedApiKey create(final CreateHashedApiKeyRequest createHashedApiKeyRequest,
                         final HashedApiKeyParts hashedApiKeyParts) throws DuplicateApiKeyException;
 

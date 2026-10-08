@@ -62,20 +62,20 @@ public class RefStreamDefinition {
     public RefStreamDefinition(final DocRef pipelineDocRef,
                                final String pipelineVersion,
                                final long streamId) {
-        this(pipelineDocRef, pipelineVersion, streamId, DEFAULT_PART_INDEX);
+        this(pipelineDocRef, pipelineVersion, streamId, (long) DEFAULT_PART_INDEX);
     }
 
     @JsonCreator
     public RefStreamDefinition(@JsonProperty("pipelineDocRef") final DocRef pipelineDocRef,
                                @JsonProperty("pipelineVersion") final String pipelineVersion,
-                               @JsonProperty("streamId") final long streamId,
-                               @JsonProperty("partIndex") final long partIndex) {
+                               @JsonProperty("streamId") final Long streamId,
+                               @JsonProperty("partIndex") final Long partIndex) {
         this.pipelineDocRef = pipelineDocRef;
         this.pipelineVersion = pipelineVersion;
-        this.streamId = streamId;
-        this.partIndex = partIndex;
+        this.streamId = Objects.requireNonNullElse(streamId, 0L);
+        this.partIndex = Objects.requireNonNullElse(partIndex, 0L);
         // pre-compute the hash
-        this.hashCode = Objects.hash(pipelineDocRef, pipelineVersion, streamId, partIndex);
+        this.hashCode = Objects.hash(pipelineDocRef, pipelineVersion, this.streamId, this.partIndex);
     }
 
     public DocRef getPipelineDocRef() {

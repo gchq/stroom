@@ -264,7 +264,7 @@ public class SteppingPresenter
                 if (selectedRow != null) {
 
                     final Meta selectedMeta = selectedRow.getMeta();
-                    beginStepping(StepType.REFRESH, new StepLocation(selectedMeta.getId(), 0, 0),
+                    beginStepping(StepType.REFRESH, new StepLocation(selectedMeta.getId(), 0L, 0L),
                             selectedMeta, null);
                 }
             } else {
@@ -276,12 +276,12 @@ public class SteppingPresenter
             if (event.getData().size() == 1) {
                 final MetaRow metaRow = event.getData().getFirst();
                 steppingMetaListPresenter.getSelectionModel().setSelected(metaRow, new SelectionType(), false);
-                stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0, 0));
+                stepLocationLinkPresenter.setStepLocation(new StepLocation(metaRow.getMeta().getId(), 0L, 0L));
                 // Begin stepping if not already stepping on this stream. This handles the case where the user
                 // changes the filter expression and a single result is auto-selected
                 if (!busyTranslating && (meta == null || meta.getId() != metaRow.getMeta().getId())) {
                     beginStepping(StepType.REFRESH,
-                            new StepLocation(metaRow.getMeta().getId(), 0, 0),
+                            new StepLocation(metaRow.getMeta().getId(), 0L, 0L),
                             metaRow.getMeta(),
                             null);
                 }
@@ -715,7 +715,7 @@ public class SteppingPresenter
 
         beginStepping(StepType.REFRESH,
                 Objects.requireNonNullElse(requestBuilder.build().getStepLocation(),
-                        new StepLocation(meta.getId(), 0, 0)),
+                        new StepLocation(meta.getId(), 0L, 0L)),
                 meta, childStreamType);
     }
 

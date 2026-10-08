@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -56,25 +57,25 @@ public class SelectionSummary {
     private final Long readOnlyCount;
 
     @JsonCreator
-    public SelectionSummary(@JsonProperty("itemCount") final long itemCount,
-                            @JsonProperty("feedCount") final long feedCount,
+    public SelectionSummary(@JsonProperty("itemCount") final Long itemCount,
+                            @JsonProperty("feedCount") final Long feedCount,
                             @JsonProperty("distinctFeeds") final Set<String> distinctFeeds,
-                            @JsonProperty("typeCount") final long typeCount,
+                            @JsonProperty("typeCount") final Long typeCount,
                             @JsonProperty("distinctTypes") final Set<String> distinctTypes,
-                            @JsonProperty("processorCount") final long processorCount,
-                            @JsonProperty("pipelineCount") final long pipelineCount,
-                            @JsonProperty("statusCount") final long statusCount,
+                            @JsonProperty("processorCount") final Long processorCount,
+                            @JsonProperty("pipelineCount") final Long pipelineCount,
+                            @JsonProperty("statusCount") final Long statusCount,
                             @JsonProperty("distinctStatuses") final Set<String> distinctStatuses,
                             @JsonProperty("ageRange") final Range<Long> ageRange,
                             @JsonProperty("readOnlyCount") final Long readOnlyCount) {
-        this.itemCount = itemCount;
-        this.feedCount = feedCount;
+        this.itemCount = Objects.requireNonNullElse(itemCount, 0L);
+        this.feedCount = Objects.requireNonNullElse(feedCount, 0L);
         this.distinctFeeds = distinctFeeds;
-        this.typeCount = typeCount;
+        this.typeCount = Objects.requireNonNullElse(typeCount, 0L);
         this.distinctTypes = distinctTypes;
-        this.processorCount = processorCount;
-        this.pipelineCount = pipelineCount;
-        this.statusCount = statusCount;
+        this.processorCount = Objects.requireNonNullElse(processorCount, 0L);
+        this.pipelineCount = Objects.requireNonNullElse(pipelineCount, 0L);
+        this.statusCount = Objects.requireNonNullElse(statusCount, 0L);
         this.distinctStatuses = distinctStatuses;
         this.ageRange = ageRange;
         this.readOnlyCount = readOnlyCount;

@@ -36,8 +36,8 @@ public final class ValLong implements ValNumber {
     private final long value;
 
     @JsonCreator
-    private ValLong(@JsonProperty("value") final long value) {
-        this.value = value;
+    private ValLong(@JsonProperty("value") final Long value) {
+        this.value = Objects.requireNonNullElse(value, 0L);
     }
 
     public static ValLong create(final long value) {
@@ -129,7 +129,7 @@ public final class ValLong implements ValNumber {
 
         static {
             for (int i = 0; i < cache.length; i++) {
-                cache[i] = new ValLong(i - 128);
+                cache[i] = new ValLong((long) i - 128);
             }
         }
 

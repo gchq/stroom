@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
 public final class CompletionValue implements CompletionItem {
@@ -80,12 +82,12 @@ public final class CompletionValue implements CompletionItem {
     @JsonCreator
     public CompletionValue(@JsonProperty("caption") final String caption,
                            @JsonProperty("value") final String value,
-                           @JsonProperty("score") final int score,
+                           @JsonProperty("score") final Integer score,
                            @JsonProperty("meta") final String meta,
                            @JsonProperty("tooltip") final String tooltip) {
         this.caption = caption;
         this.value = value;
-        this.score = score;
+        this.score = Objects.requireNonNullElse(score, 0);
         this.meta = meta;
         this.tooltip = tooltip;
     }

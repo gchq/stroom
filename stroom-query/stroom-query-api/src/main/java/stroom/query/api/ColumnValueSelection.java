@@ -43,9 +43,9 @@ public class ColumnValueSelection {
 
     @JsonCreator
     public ColumnValueSelection(@JsonProperty("values") final Set<String> values,
-                                @JsonProperty("invert") final boolean invert) {
+                                @JsonProperty("invert") final Boolean invert) {
         this.values = values;
-        this.invert = invert;
+        this.invert = Objects.requireNonNullElse(invert, false);
     }
 
     public Set<String> getValues() {

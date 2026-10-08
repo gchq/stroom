@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_NULL)
@@ -56,16 +57,16 @@ public class CompletionsRequest {
     public CompletionsRequest(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                               @JsonProperty("textType") final TextType textType,
                               @JsonProperty("text") final String text,
-                              @JsonProperty("row") final int row,
-                              @JsonProperty("column") final int column,
+                              @JsonProperty("row") final Integer row,
+                              @JsonProperty("column") final Integer column,
                               @JsonProperty("pattern") final String pattern,
                               @JsonProperty("includedTypes") final Set<QueryHelpType> includedTypes,
                               @JsonProperty("maxCompletions") final Integer maxCompletions) {
         this.dataSourceRef = dataSourceRef;
         this.textType = textType;
         this.text = text;
-        this.row = row;
-        this.column = column;
+        this.row = Objects.requireNonNullElse(row, 0);
+        this.column = Objects.requireNonNullElse(column, 0);
         this.pattern = pattern;
         this.includedTypes = includedTypes;
         this.maxCompletions = maxCompletions;

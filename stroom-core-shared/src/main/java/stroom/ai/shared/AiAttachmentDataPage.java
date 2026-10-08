@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A page of parsed attachment table data. Contains the column headers
@@ -44,12 +45,12 @@ public class AiAttachmentDataPage {
     @JsonCreator
     public AiAttachmentDataPage(@JsonProperty("headers") final List<String> headers,
                                 @JsonProperty("rows") final List<List<String>> rows,
-                                @JsonProperty("totalRowCount") final int totalRowCount,
-                                @JsonProperty("offset") final int offset) {
+                                @JsonProperty("totalRowCount") final Integer totalRowCount,
+                                @JsonProperty("offset") final Integer offset) {
         this.headers = headers;
         this.rows = rows;
-        this.totalRowCount = totalRowCount;
-        this.offset = offset;
+        this.totalRowCount = Objects.requireNonNullElse(totalRowCount, 0);
+        this.offset = Objects.requireNonNullElse(offset, 0);
     }
 
     public List<String> getHeaders() {

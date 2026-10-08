@@ -218,6 +218,18 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
     }
 
     @Override
+    public List<HashedApiKey> fetchApiKeysByPrefix(final String prefix) {
+        Objects.requireNonNull(prefix);
+        // Prefix is not unique, so we may get a few keys back, however in most cases it will be one.
+        // In tests creating 10mil keys, there were only 50 odd prefixes clashes.
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
+                        context.selectFrom(API_KEY)
+                                .where(API_KEY.API_KEY_PREFIX.eq(prefix))
+                                .fetch())
+                .map(this::mapRecordToApiKey);
+    }
+
+    @Override
     public HashedApiKey create(final CreateHashedApiKeyRequest createHashedApiKeyRequest,
                                final HashedApiKeyParts hashedApiKeyParts) throws DuplicateApiKeyException {
 

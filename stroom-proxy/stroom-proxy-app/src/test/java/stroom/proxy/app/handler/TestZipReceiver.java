@@ -447,7 +447,8 @@ public class TestZipReceiver extends StroomUnitTest {
                 mockLogStream,
                 mockZipSplitter,
                 () -> mockReceiveDataConfig,
-                feedKeyInterner);
+                feedKeyInterner,
+                new FsyncConfig());
 
         final List<Path> consumedPaths = new ArrayList<>();
         final AtomicLong counter = new AtomicLong();

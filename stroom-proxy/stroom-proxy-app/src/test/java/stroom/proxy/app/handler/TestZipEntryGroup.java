@@ -53,10 +53,10 @@ public class TestZipEntryGroup extends StroomUnitTest {
         try (final StringWriter writer = new StringWriter()) {
             for (int i = 0; i < ENTRIES; i++) {
                 final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
-                zipEntryGroup.setManifestEntry(new Entry(i + ".mf", 123));
-                zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234));
-                zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345));
-                zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456));
+                zipEntryGroup.setManifestEntry(new Entry(i + ".mf", 123L));
+                zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234L));
+                zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345L));
+                zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456L));
                 zipEntryGroup.write(writer);
             }
             writer.flush();
@@ -119,10 +119,10 @@ public class TestZipEntryGroup extends StroomUnitTest {
             writer.write("\n");
             for (int i = 0; i < ENTRIES; i++) {
                 final ZipEntryGroup zipEntryGroup = new ZipEntryGroup(feedKey);
-                zipEntryGroup.setManifestEntry(new Entry(i + ".mf", 123));
-                zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234));
-                zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345));
-                zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456));
+                zipEntryGroup.setManifestEntry(new Entry(i + ".mf", 123L));
+                zipEntryGroup.setMetaEntry(new Entry(i + ".meta", 234L));
+                zipEntryGroup.setContextEntry(new Entry(i + ".ctx", 345L));
+                zipEntryGroup.setDataEntry(new Entry(i + ".dat", 456L));
                 zipEntryGroup.write(writer);
             }
             // Wack in a few blank lines to make sure it copes with it

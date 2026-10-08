@@ -35,6 +35,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -223,9 +224,9 @@ public class ZipEntryGroup {
 
         @JsonCreator
         public Entry(@JsonProperty("name") final String name,
-                     @JsonProperty("uncompressedSize") final long uncompressedSize) {
+                     @JsonProperty("uncompressedSize") final Long uncompressedSize) {
             this.name = name;
-            this.uncompressedSize = uncompressedSize;
+            this.uncompressedSize = Objects.requireNonNullElse(uncompressedSize, 0L);
         }
 
         public String getName() {

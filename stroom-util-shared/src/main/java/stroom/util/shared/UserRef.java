@@ -58,9 +58,12 @@ public final class UserRef {
                    @JsonProperty("subjectId") final String subjectId,
                    @JsonProperty("displayName") final String displayName,
                    @JsonProperty("fullName") final String fullName,
-                   @JsonProperty("group") final boolean group,
-                   @JsonProperty("enabled") final boolean enabled) {
-        if (group && !enabled) {
+                   @JsonProperty("group") final Boolean group,
+                   @JsonProperty("enabled") final Boolean enabled) {
+        this.group = Objects.requireNonNullElse(group, false);
+        this.enabled = Objects.requireNonNullElse(enabled, false);
+
+        if (this.group && !this.enabled) {
             throw new IllegalArgumentException("Groups cannot be disabled");
         }
 
@@ -68,8 +71,6 @@ public final class UserRef {
         this.subjectId = subjectId;
         this.displayName = displayName;
         this.fullName = fullName;
-        this.group = group;
-        this.enabled = enabled;
     }
 
     /**

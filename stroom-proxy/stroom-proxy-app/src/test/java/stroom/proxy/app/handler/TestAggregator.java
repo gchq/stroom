@@ -78,7 +78,8 @@ public class TestAggregator extends StroomUnitTest {
         final AtomicInteger aggregateCount = new AtomicInteger();
         final Aggregator aggregator = new Aggregator(
                 cleanupDirQueue,
-                dataDirProvider);
+                dataDirProvider,
+                new FsyncConfig());
         aggregator.setDestination(aggregatorDir -> {
             try {
                 aggregateCount.getAndIncrement();

@@ -66,8 +66,8 @@ public class TaskProgress implements TreeRow {
                         @JsonProperty("userRef") final UserRef userRef,
                         @JsonProperty("threadName") final String threadName,
                         @JsonProperty("nodeName") final String nodeName,
-                        @JsonProperty("submitTimeMs") final long submitTimeMs,
-                        @JsonProperty("timeNowMs") final long timeNowMs,
+                        @JsonProperty("submitTimeMs") final Long submitTimeMs,
+                        @JsonProperty("timeNowMs") final Long timeNowMs,
                         @JsonProperty("expander") final Expander expander,
                         @JsonProperty("filterMatchState") final FilterMatchState filterMatchState) {
         this.id = id;
@@ -76,8 +76,8 @@ public class TaskProgress implements TreeRow {
         this.userRef = userRef;
         this.threadName = threadName;
         this.nodeName = nodeName;
-        this.submitTimeMs = submitTimeMs;
-        this.timeNowMs = timeNowMs;
+        this.submitTimeMs = Objects.requireNonNullElse(submitTimeMs, 0L);
+        this.timeNowMs = Objects.requireNonNullElse(timeNowMs, 0L);
         this.expander = expander;
         this.filterMatchState = filterMatchState;
     }

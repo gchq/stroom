@@ -34,12 +34,12 @@ public class BuildInfo {
     private final String buildVersion;
 
     @JsonCreator
-    public BuildInfo(@JsonProperty("upTime") final long upTime,
+    public BuildInfo(@JsonProperty("upTime") final Long upTime,
                      @JsonProperty("buildVersion") final String buildVersion,
-                     @JsonProperty("buildTime") final long buildTime) {
-        this.upTime = upTime;
+                     @JsonProperty("buildTime") final Long buildTime) {
+        this.upTime = Objects.requireNonNullElse(upTime, 0L);
         this.buildVersion = buildVersion;
-        this.buildTime = buildTime;
+        this.buildTime = Objects.requireNonNullElse(buildTime, 0L);
     }
 
     public String getBuildVersion() {

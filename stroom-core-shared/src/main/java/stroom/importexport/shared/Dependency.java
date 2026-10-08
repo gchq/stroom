@@ -24,6 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"from", "to", "ok"})
 @JsonInclude(Include.NON_NULL)
 public class Dependency {
@@ -38,10 +40,10 @@ public class Dependency {
     @JsonCreator
     public Dependency(@JsonProperty("from") final DocRef from,
                       @JsonProperty("to") final DocRef to,
-                      @JsonProperty("ok") final boolean ok) {
+                      @JsonProperty("ok") final Boolean ok) {
         this.from = from;
         this.to = to;
-        this.ok = ok;
+        this.ok = Objects.requireNonNullElse(ok, false);
     }
 
     public DocRef getFrom() {

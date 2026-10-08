@@ -63,14 +63,14 @@ public class Search {
                   @JsonProperty("componentSettingsMap") final Map<String, ComponentSettings> componentSettingsMap,
                   @JsonProperty("params") final List<Param> params,
                   @JsonProperty("timeRange") final TimeRange timeRange,
-                  @JsonProperty("incremental") final boolean incremental,
+                  @JsonProperty("incremental") final Boolean incremental,
                   @JsonProperty("queryInfo") final String queryInfo) {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
         this.params = params;
         this.timeRange = timeRange;
-        this.incremental = incremental;
+        this.incremental = Objects.requireNonNullElse(incremental, false);
         this.queryInfo = queryInfo;
     }
 

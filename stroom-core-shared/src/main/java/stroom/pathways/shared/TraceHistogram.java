@@ -51,20 +51,20 @@ public class TraceHistogram {
     private final boolean drillable;
 
     @JsonCreator
-    public TraceHistogram(@JsonProperty("available") final boolean available,
-                          @JsonProperty("fromMs") final long fromMs,
-                          @JsonProperty("toMs") final long toMs,
-                          @JsonProperty("bucketWidthMs") final long bucketWidthMs,
-                          @JsonProperty("maxWindowMs") final long maxWindowMs,
+    public TraceHistogram(@JsonProperty("available") final Boolean available,
+                          @JsonProperty("fromMs") final Long fromMs,
+                          @JsonProperty("toMs") final Long toMs,
+                          @JsonProperty("bucketWidthMs") final Long bucketWidthMs,
+                          @JsonProperty("maxWindowMs") final Long maxWindowMs,
                           @JsonProperty("counts") final List<Long> counts,
-                          @JsonProperty("drillable") final boolean drillable) {
-        this.available = available;
-        this.fromMs = fromMs;
-        this.toMs = toMs;
-        this.bucketWidthMs = bucketWidthMs;
-        this.maxWindowMs = maxWindowMs;
+                          @JsonProperty("drillable") final Boolean drillable) {
+        this.available = Objects.requireNonNullElse(available, false);
+        this.fromMs = Objects.requireNonNullElse(fromMs, 0L);
+        this.toMs = Objects.requireNonNullElse(toMs, 0L);
+        this.bucketWidthMs = Objects.requireNonNullElse(bucketWidthMs, 0L);
+        this.maxWindowMs = Objects.requireNonNullElse(maxWindowMs, 0L);
         this.counts = counts;
-        this.drillable = drillable;
+        this.drillable = Objects.requireNonNullElse(drillable, false);
     }
 
     public static TraceHistogram unavailable(final long maxWindowMs) {

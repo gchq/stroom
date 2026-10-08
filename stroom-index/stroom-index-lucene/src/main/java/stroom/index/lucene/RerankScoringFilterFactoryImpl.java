@@ -36,6 +36,7 @@ import stroom.query.language.functions.ValuesConsumer;
 import stroom.query.language.functions.ref.ErrorConsumer;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.Severity;
 
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatModel;
@@ -50,6 +51,7 @@ import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -85,7 +87,9 @@ public class RerankScoringFilterFactoryImpl implements RerankScoringFilterFactor
         try {
             // Get score and value field sets.
             final String[] fields = fieldIndex.getFields();
-            final Map<String, FieldRef> fieldRefMap = new HashMap<>();
+            // Insertion ordered so that the field ref we pick below is deterministic when a
+            // query uses more than one dense vector field.
+            final Map<String, FieldRef> fieldRefMap = new LinkedHashMap<>();
             for (int i = 0; i < fields.length; i++) {
                 final String field = fields[i];
                 final int scoreFieldIndex = field.indexOf(SCORE_FIELD_SUFFIX);
@@ -116,12 +120,23 @@ public class RerankScoringFilterFactoryImpl implements RerankScoringFilterFactor
             }
 
             if (!fieldRefMap.isEmpty()) {
-                // Just use the first field ref for now.
-                final Entry<String, FieldRef> entry = fieldRefMap.entrySet().iterator().next();
-                final String denseVectorFieldName = entry.getKey();
-                final FieldRef fieldRef = entry.getValue();
+                // Just use the first complete field ref for now.
+                final Optional<Entry<String, FieldRef>> optionalEntry = fieldRefMap
+                        .entrySet()
+                        .stream()
+                        .filter(candidate -> candidate.getValue().isComplete())
+                        .findFirst();
 
-                if (fieldRef.scoreField.index != -1 && fieldRef.valueField.index != -1) {
+                // Tell the user about every score field we are not going to populate, and why.
+                // These are reported rather than thrown so that a problem with one dense vector
+                // field does not stop us reranking another one that is properly specified.
+                reportUnscoredFields(fieldRefMap, optionalEntry.orElse(null), errorConsumer);
+
+                if (optionalEntry.isPresent()) {
+                    final Entry<String, FieldRef> entry = optionalEntry.get();
+                    final String denseVectorFieldName = entry.getKey();
+                    final FieldRef fieldRef = entry.getValue();
+
                     final IndexField denseVectorField = indexFieldCache.get(indexDocRef, denseVectorFieldName);
                     if (denseVectorField == null) {
                         throw new UnsupportedOperationException(
@@ -187,6 +202,53 @@ public class RerankScoringFilterFactoryImpl implements RerankScoringFilterFactor
         }
 
         return Optional.empty();
+    }
+
+    /// Reports each rerank score field that will be left empty, so the user is not faced with a
+    /// blank column and no explanation.
+    ///
+    /// A score field can only be populated by the filter created here, so one that is not part of
+    /// the chosen pair will never be given a value. A value field on its own is not reported, as it
+    /// is populated by extraction and needs no reranking.
+    ///
+    /// @param selectedEntry The field ref that will be reranked, or null if there is not one.
+    private void reportUnscoredFields(final Map<String, FieldRef> fieldRefMap,
+                                      final Entry<String, FieldRef> selectedEntry,
+                                      final ErrorConsumer errorConsumer) {
+        final String selectedFieldName = selectedEntry == null
+                ? null
+                : selectedEntry.getKey();
+
+        for (final Entry<String, FieldRef> entry : fieldRefMap.entrySet()) {
+            final String denseVectorFieldName = entry.getKey();
+            final FieldRef fieldRef = entry.getValue();
+
+            if (denseVectorFieldName.equals(selectedFieldName) || fieldRef.scoreField == null) {
+                continue;
+            }
+
+            if (fieldRef.valueField == null) {
+                final String valueFieldName = denseVectorFieldName + VALUE_FIELD_SUFFIX;
+                errorConsumer.add(() ->
+                        "Field '" +
+                        fieldRef.scoreField.name +
+                        "' cannot be scored because the query does not include '" +
+                        valueFieldName +
+                        "', which supplies the value to rerank. Either add '" +
+                        valueFieldName +
+                        "' to the query or remove '" +
+                        fieldRef.scoreField.name +
+                        "'.");
+            } else {
+                errorConsumer.add(Severity.WARNING, () ->
+                        "Field '" +
+                        fieldRef.scoreField.name +
+                        "' will not be scored because only one dense vector field can be reranked " +
+                        "per query and '" +
+                        selectedFieldName +
+                        "' was used. Remove one of the fields to avoid this.");
+            }
+        }
     }
 
     private ContentAggregator createContentAggregator(final DenseVectorFieldConfig denseVectorFieldConfig) {
@@ -312,6 +374,12 @@ public class RerankScoringFilterFactoryImpl implements RerankScoringFilterFactor
     record FieldRef(NameAndIndex scoreField,
                     NameAndIndex valueField) {
 
+        /// A dense vector field can only be reranked when the query includes both its score and
+        /// its value field. The value field supplies the text to rerank and the score field
+        /// receives the result, so neither is any use without the other.
+        private boolean isComplete() {
+            return scoreField != null && valueField != null;
+        }
     }
 
     record NameAndIndex(String name,
