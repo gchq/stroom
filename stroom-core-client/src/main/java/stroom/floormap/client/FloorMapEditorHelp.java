@@ -221,7 +221,8 @@ public final class FloorMapEditorHelp {
                 + "speed; click it to pick a different speed.</li>"
                 + "<li><strong>Settings</strong> (gear) — loop on/off, the visible "
                 + "start/end date range, and <em>Show All</em> (widen the range to cover all the "
-                + "data).</li>"
+                + "data). If a new range leaves the current time outside it, the time moves onto "
+                + "the range.</li>"
                 + "<li><strong>&#171; / &#187;</strong> — warn that a selected object's time is "
                 + "before or after the visible range; widen the range to see it.</li>"
                 + "</ul>");

@@ -270,7 +270,7 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         // Wire the Show All button: disabled until we have histogram data with a valid range.
         settingsPresenter.setShowAllEnabled(false);
         settingsPresenter.setShowAllHandler(() -> {
-            if (dataRangeMin < dataRangeMax) {
+            if (FloorMapPlaybackRange.canFitTo(dataRangeMin, dataRangeMax)) {
                 // Apply a small 5% padding on each side so the first/last events are not
                 // flush against the edges of the histogram.
                 final long padding = Math.max(1, (dataRangeMax - dataRangeMin) / 20);
@@ -280,6 +280,10 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
                 if (timeRangeChangeHandler != null) {
                     timeRangeChangeHandler.run();
                 }
+                // Onto the data itself, not merely into the padded range: a playhead parked on
+                // the padding past the last event can still be far enough from it for the event
+                // expiry to hide every entity, which is the blank map Show All is pressed to fix.
+                reconcilePlayhead(dataRangeMin, dataRangeMax);
             }
         });
 
@@ -344,6 +348,40 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         if (timeRangeChangeHandler != null) {
             timeRangeChangeHandler.run();
         }
+        reconcilePlayhead(start, end);
+    }
+
+    /// Moves the playhead into the range from `lower` to `upper` after a user-initiated range
+    /// change, and re-reads if it moved.
+    ///
+    /// Without this a range change left the playhead where it was — outside the new range, with
+    /// the thumb clamped to the edge so it looked parked at the end of the data, and the canvas
+    /// still showing the read taken at the old position. Setting the range to span the data, or
+    /// pressing Show All, then appeared to do nothing.
+    ///
+    /// A playhead already inside the range is left alone and nothing is re-read: the user only
+    /// changed what is visible around it.
+    ///
+    /// Only for the user's own range changes ([#applyRange] and Show All), not
+    /// [#setTimeRange]. That is also how the owning tabs initialise the timeline, and they set
+    /// the time themselves straight afterwards; a read fired from inside it would be for a
+    /// position about to be replaced.
+    ///
+    /// @param lower the earliest time the playhead may be left at, in epoch milliseconds
+    /// @param upper the latest time the playhead may be left at, in epoch milliseconds
+    private void reconcilePlayhead(final long lower, final long upper) {
+        final long newTime = FloorMapPlaybackRange.clampInto(currentTime, lower, upper);
+        if (newTime == currentTime) {
+            return;
+        }
+        // The same jump a step makes, so it discards in-flight animation and is classified the
+        // same way by the discontinuity handler.
+        if (clearAnimationStateHandler != null) {
+            clearAnimationStateHandler.run();
+        }
+        fireDiscontinuity();
+        setCurrentTime(newTime);
+        TimeChangeEvent.fire(this, newTime);
     }
 
     /// Sets the total time range visible on the timeline.
@@ -443,9 +481,10 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     /// Fired **before** the `TimeChangeEvent` at each site, so a handler that arms state
     /// has done so by the time the read for the new position is decided.
     ///
-    /// Not fired by Show All, `applyRange` or `setTimeRange`: they change the visible
-    /// *range*, never `currentTime`, and raise no `TimeChangeEvent` — so there is
-    /// no read to classify.
+    /// Also fired when Show All or a range edited in the settings popup moves a playhead that the
+    /// new range left outside it — see `reconcilePlayhead`. A range change that leaves the
+    /// playhead where it was fires nothing, and neither does `setTimeRange`: no
+    /// `TimeChangeEvent` is raised in either case, so there is no read to classify.
     ///
     /// @param handler the callback, or `null` to remove it
     public void setDiscontinuityHandler(final Runnable handler) {
@@ -673,18 +712,44 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         getView().setHistogramData(binCounts);
     }
 
-    /// Records the actual min/max timestamps seen in the current histogram data.
-    /// Called by `FloorMapMapPresenter` after each histogram query completes.
-    /// Enables the "Show All" button once a valid range is known.
+    /// Records the earliest and latest event times in the data, which is the range "Show All"
+    /// fits the timeline to, and enables the button.
     ///
-    /// @param min Earliest event timestamp in the queried data (milliseconds).
-    /// @param max Latest event timestamp in the queried data (milliseconds).
+    /// Called by `FloorMapMapPresenter` when its extent query completes and by
+    /// `FloorMapEditorPresenter` from the facts store's range.
+    ///
+    /// An extent Show All cannot fit to — a store whose events share one timestamp — is
+    /// treated as no extent at all: the button is disabled rather than offered as a no-op.
+    ///
+    /// @param min Earliest event timestamp in the data (milliseconds).
+    /// @param max Latest event timestamp in the data (milliseconds).
     public void setDataRange(final long min, final long max) {
-        if (min <= max) {
+        if (FloorMapPlaybackRange.canFitTo(min, max)) {
             this.dataRangeMin = min;
             this.dataRangeMax = max;
             settingsPresenter.setShowAllEnabled(true);
+        } else {
+            clearDataRange();
         }
+    }
+
+    /// Forgets the data extent and disables "Show All" until a new one is supplied.
+    ///
+    /// For a document (re-)read: the store behind it may have changed, and an extent left over
+    /// from the previous read would keep Show All enabled and fit the timeline to data that is no
+    /// longer there.
+    public void clearDataRange() {
+        this.dataRangeMin = Long.MAX_VALUE;
+        this.dataRangeMax = Long.MIN_VALUE;
+        settingsPresenter.setShowAllEnabled(false);
+    }
+
+    /// Whether a data extent is known, i.e. whether "Show All" is enabled.
+    ///
+    /// @return `true` once [#setDataRange(long, long)] has been given an extent Show All can
+    ///         fit to, and until [#clearDataRange()] is next called
+    public boolean hasDataRange() {
+        return FloorMapPlaybackRange.canFitTo(dataRangeMin, dataRangeMax);
     }
 
     /// Adds a help button to the timeline's right-hand controls.

@@ -281,6 +281,16 @@ public class FloorMapMapPresenter
     private final HistogramQueryHelper extentQueryHelper;
     private final HistogramDataModel histogramDataModel;
 
+    /// Whether the last extent query has come back, with a result or a failure, since it was
+    /// started.
+    ///
+    /// The extent query runs once per read, so an answer with no extent in it — the events had
+    /// not reached the store yet when the document was opened, say, or the read failed — used to
+    /// leave "Show All" disabled until the next read. This flag is what lets it be asked again
+    /// without cancelling a query still in flight: a retry waits for the previous answer, so a
+    /// query that keeps answering empty is re-run no more often than its triggers fire.
+    private boolean extentAnswered;
+
     /// The bucket width the last histogram query grouped by.
     ///
     /// Set when the query is issued and read when its result lands, so a result is always placed
@@ -433,20 +443,23 @@ public class FloorMapMapPresenter
 
         // Histogram data model — buckets timestamps and notifies the timeline.
         this.histogramDataModel = new HistogramDataModel(HISTOGRAM_BINS);
-        this.histogramDataModel.setDataHandler(
-                floorMapTimelinePresenter::setHistogramData);
+        this.histogramDataModel.setDataHandler(this::applyHistogramData);
 
         // Histogram query helper. One, for events: the density bars count event activity, and
         // the events store is the only store this tab reads them from.
         this.histogramQueryHelper = new HistogramQueryHelper(
                 eventBus, restFactory, dateTimeSettingsFactory, resultStoreModel,
+                "Histogram",
                 // The width the in-flight query grouped by, not a constant: it is chosen from the
                 // visible range, so a result has to be placed at the width it was counted at.
                 result -> histogramDataModel.processBuckets(result, histogramBucketWidthMs));
 
         this.extentQueryHelper = new HistogramQueryHelper(
                 eventBus, restFactory, dateTimeSettingsFactory, resultStoreModel,
+                "Timeline extent",
                 this::applyDataExtent);
+        // A failure is an answer too: no extent is coming, so a later retry must not wait for one.
+        this.extentQueryHelper.setFailureHandler(() -> extentAnswered = true);
 
         this.eventsQueryHelper = new FloorMapFullReadQueryHelper(
                 eventBus, restFactory, dateTimeSettingsFactory, resultStoreModel,
@@ -699,7 +712,9 @@ public class FloorMapMapPresenter
         // the underlying queries or stores.
         // Ask what the data's own extent is. Once per read, not per range change: it is unbounded,
         // so the answer does not depend on what is currently shown — which is exactly why "Show All"
-        // cannot be served from the bars.
+        // cannot be served from the bars. The previous read's extent is forgotten first, because
+        // the store behind it may have changed.
+        floorMapTimelinePresenter.clearDataRange();
         runExtentQuery();
 
         if (!timelineInitialised) {
@@ -1612,7 +1627,42 @@ public class FloorMapMapPresenter
     /// store is. It is not cheap on the server, though: Plan B iterates the whole store whatever
     /// range is asked for, so this costs a full scan — the same scan the bars already pay.
     private void runExtentQuery() {
+        extentAnswered = false;
         extentQueryHelper.run(extentQuery(), queryParams());
+    }
+
+    /// Runs the extent query again if the timeline still has no extent, so "Show All" is not left
+    /// disabled by one read that found nothing or failed.
+    ///
+    /// Not while the previous extent query is still in flight. Re-running would cancel it and pay
+    /// for the same full-store scan twice — which is what a save would otherwise do, as it both
+    /// re-reads the document (starting one) and refreshes this tab.
+    private void runExtentQueryIfUnknown() {
+        if (extentAnswered && !floorMapTimelinePresenter.hasDataRange()) {
+            runExtentQuery();
+        }
+    }
+
+    /// Draws the density bars, and asks for the extent again where they show events the last
+    /// extent answer did not know about.
+    ///
+    /// @param binCounts the event count in each bar
+    private void applyHistogramData(final int[] binCounts) {
+        floorMapTimelinePresenter.setHistogramData(binCounts);
+        if (hasAnyCount(binCounts)) {
+            runExtentQueryIfUnknown();
+        }
+    }
+
+    private static boolean hasAnyCount(final int[] binCounts) {
+        if (binCounts != null) {
+            for (final int count : binCounts) {
+                if (count > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /// The document's histogram query, or the generated default where it sets none.
@@ -1637,9 +1687,11 @@ public class FloorMapMapPresenter
 
     /// Hands the timeline the data's own extent, so "Show All" can reach beyond the visible range.
     ///
-    /// A null extent — an empty store, or a read that failed — leaves the previous range alone
-    /// rather than collapsing the timeline to nothing.
+    /// A null extent — an empty store, or a result that would not parse — leaves the visible range
+    /// alone rather than collapsing the timeline to nothing, and leaves Show All disabled. It is
+    /// asked for again when the density bars find events or the tab is revisited.
     private void applyDataExtent(final TableResult result) {
+        extentAnswered = true;
         final long[] extent = HistogramDataModel.extentOf(result);
         if (extent != null) {
             floorMapTimelinePresenter.setDataRange(extent[0], extent[1]);
@@ -1695,6 +1747,9 @@ public class FloorMapMapPresenter
             // about to look at the map. So re-read now rather than waiting out the interval.
             factHistory.requestRead();
             onTimeChange(selectedTime);
+            // The same catch-up for the extent: if the read's extent query found nothing or
+            // failed, this is the point at which Show All can still be brought back to life.
+            runExtentQueryIfUnknown();
         }
     }
 

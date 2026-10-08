@@ -22,6 +22,7 @@ import stroom.floormap.shared.FloorMapGeometry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,14 +51,18 @@ public final class FloorMapEntityAnimator {
     /// How long (wall-clock ms) a trail takes to fade out after the entity stops.
     private static final double TRAIL_FADE_DURATION_MS = 2000.0;
 
-    /// How much recent movement a trail shows, in scheduler milliseconds.
+    /// The oldest a trail point may be when it is drawn, in scheduler milliseconds.
     ///
-    /// Trails are trimmed by age as well as by [#TRAIL_MAX_PTS]. Without this the only
-    /// things that ever discarded trail data were a teleport and a fade that ran to completion -
-    /// and the fade is cancelled the moment the entity moves again, so an entity that moves
-    /// intermittently never lost any. The point cap alone is not a substitute: it bounds recorded
-    /// frames, not elapsed time, so roughly a hundred movements were retained and sections minutes
-    /// old were still drawn.
+    /// A backstop rather than the thing that bounds a trail: [#startAnimation] scopes a
+    /// trail to one movement, and a movement lasts [#ANIMATION_DURATION_MS], so a trail
+    /// reaches this age only if frames stop arriving mid-movement and then resume - a backgrounded
+    /// tab. It is kept because it is the one bound that does not depend on movements continuing to
+    /// arrive, and because [#TRAIL_MAX_PTS] cannot stand in for it: the cap bounds recorded
+    /// frames, not elapsed time.
+    ///
+    /// The trim runs once per frame over every trail rather than only over the one a point was
+    /// just appended to, so the window bounds what is *drawn* and not merely what is
+    /// written - see [#ageTrails].
     private static final double TRAIL_MAX_AGE_MS = 20_000.0;
 
     /// `true` while the timeline is actively playing.
@@ -164,12 +169,17 @@ public final class FloorMapEntityAnimator {
 
     /// Advances all in-flight animations and trail fades by one frame.
     ///
+    /// A trail belongs to the movement that is happening now - see [#startAnimation] -
+    /// so the only thing this has to end is the fade that follows a movement, and ending it
+    /// discards the trail with it.
+    ///
     /// @param timestampMs the current scheduler timestamp (ms), for trail fade timing
     /// @param deltaMs      elapsed time since the previous frame (ms), for progress
     /// @return `true` if anything is still animating or fading (the caller
     ///         should keep the loop running)
     public boolean advanceFrame(final double timestampMs, final double deltaMs) {
         lastFrameTimestampMs = timestampMs;
+
         final List<String> finished = new ArrayList<>();
         for (final Map.Entry<String, EntityAnimation> entry : activeAnimations.entrySet()) {
             final EntityAnimation anim = entry.getValue();
@@ -186,21 +196,50 @@ public final class FloorMapEntityAnimator {
             activeAnimations.remove(id);
         }
 
+        // Expiry is the only way out of a fade here: an entity that starts moving again has
+        // already had its fade entry and its trail dropped by startAnimation, so a fade and a
+        // live animation never coexist for one id.
+        //
+        // There used to be a second way out - "moving again, cancel the fade" - which dropped the
+        // fade but kept the trail. The new movement then appended to the old trail, which came
+        // back at full opacity: the faded trails reappearing when a person moved again.
         final List<String> doneFading = new ArrayList<>();
         for (final Map.Entry<String, Double> fade : trailFadeStartTimes.entrySet()) {
-            final String id = fade.getKey();
-            if (activeAnimations.containsKey(id)) {
-                doneFading.add(id); // moving again — cancel the fade
-            } else if (timestampMs - fade.getValue() >= TRAIL_FADE_DURATION_MS) {
-                entityTrails.remove(id); // fully faded
-                doneFading.add(id);
+            if (timestampMs - fade.getValue() >= TRAIL_FADE_DURATION_MS) {
+                entityTrails.remove(fade.getKey()); // fully faded
+                doneFading.add(fade.getKey());
             }
         }
         for (final String id : doneFading) {
             trailFadeStartTimes.remove(id);
         }
 
+        ageTrails(timestampMs);
+
         return isActive();
+    }
+
+    /// Drops trail sections older than [#TRAIL_MAX_AGE_MS] from *every* trail, and
+    /// forgets the buffers that empty.
+    ///
+    /// Per frame rather than per recorded point: a trail that is not gaining points is still
+    /// being drawn, and the age window is a claim about what the viewer is shown. Trimming on
+    /// append alone made that claim hold only while the entity happened to be moving.
+    ///
+    /// Cheap: one pass over the live trails, each of which walks its own head forward only past
+    /// points that have actually expired, so a steady state costs one comparison per entity.
+    private void ageTrails(final double timestampMs) {
+        final double cutoffMs = timestampMs - TRAIL_MAX_AGE_MS;
+        final Iterator<Map.Entry<String, TrailBuffer>> it = entityTrails.entrySet().iterator();
+        while (it.hasNext()) {
+            final TrailBuffer trail = it.next().getValue();
+            trail.dropOlderThan(cutoffMs);
+            if (trail.isEmpty()) {
+                // Nothing left to draw, and a buffer is three arrays of TRAIL_MAX_PTS doubles -
+                // worth handing back rather than holding per entity that ever moved.
+                it.remove();
+            }
+        }
     }
 
     /// Builds the event-overlay draw list: the non-animated entities plus each
@@ -340,12 +379,36 @@ public final class FloorMapEntityAnimator {
             if (FloorMapGeometry.distanceSquared(refX, refY, obj.getX(), obj.getY()) > 0.0001) {
                 final double fromX = existing != null ? existing.currentX() : last.getX();
                 final double fromY = existing != null ? existing.currentY() : last.getY();
-                activeAnimations.put(obj.getId(), new EntityAnimation(
+                startAnimation(new EntityAnimation(
                         obj.getId(), obj.getType(), fromX, fromY, obj.getX(), obj.getY()));
                 return false;
             }
         }
         return false;
+    }
+
+    /// Starts an entity's movement, replacing any movement it was already making - and with it,
+    /// the trail.
+    ///
+    /// **A trail shows the movement in progress and nothing else.** It used to span every
+    /// movement inside [#TRAIL_MAX_AGE_MS], which sounds like recent history and is not:
+    /// playback runs the timeline at a multiple of real time (a thousandfold at x1) while the
+    /// events query is throttled to a fixed wall-clock interval, so the number of movements inside
+    /// a wall-clock window is a property of the playback speed, not of the data. At x1 over a store
+    /// whose entities move every couple of minutes, a twenty-second window held something like
+    /// sixty-six of them - drawn as one polyline, which joins each movement's end to the next one's
+    /// start and covers the map in lines nobody walked.
+    ///
+    /// The consequence to know about: a trail is now a single interpolated leg, so it is always
+    /// straight and never shows a turn. That was a deliberate property of the old behaviour - see
+    /// the decimation note in [#attachTrail] - and it has been traded for a trail that states
+    /// something true at any playback speed.
+    private void startAnimation(final EntityAnimation animation) {
+        activeAnimations.put(animation.id, animation);
+        // The previous movement is over, so its points and any fade of them go now rather than
+        // being extended into this one.
+        entityTrails.remove(animation.id);
+        trailFadeStartTimes.remove(animation.id);
     }
 
     /// Attaches an `{x, y, alpha}` trail to `obj`: alpha runs 0 (oldest)
@@ -376,6 +439,11 @@ public final class FloorMapEntityAnimator {
         // 12-leg path decimated 13:1, ten of the twelve corners were dropped and the trail cut
         // across them instead of following the route the entity took. Any future decimation has to
         // be shape-preserving (Ramer-Douglas-Peucker or similar), not positional.
+        //
+        // A trail is a single interpolated leg now (see startAnimation), so it has no corners left
+        // to lose and the budget could not be reached anyway - one movement is ANIMATION_DURATION_MS
+        // of frames. The rule is kept because it is about how to reduce a path, and a trail that
+        // spans more than one leg again would bring the corners back with it.
         final int size = raw.size();
         final int last = size - 1;
         final List<double[]> trailWithAlpha = new ArrayList<>(size);
@@ -386,8 +454,10 @@ public final class FloorMapEntityAnimator {
         obj.setTrail(trailWithAlpha);
     }
 
-    /// Appends `(x, y)` to the entity's trail, overwriting the oldest once at the cap and
-    /// dropping anything older than [#TRAIL_MAX_AGE_MS].
+    /// Appends `(x, y)` to the entity's trail, overwriting the oldest once at the cap.
+    ///
+    /// Ageing is not done here. It belongs to the frame rather than to the append - see
+    /// [#ageTrails] - so that a trail nobody is adding to is aged as well.
     private void recordTrailPoint(final String id,
                                   final double x,
                                   final double y,
@@ -395,7 +465,6 @@ public final class FloorMapEntityAnimator {
         //noinspection unused k
         final TrailBuffer trail = entityTrails.computeIfAbsent(id, k -> new TrailBuffer(TRAIL_MAX_PTS));
         trail.add(x, y, timestampMs);
-        trail.dropOlderThan(timestampMs - TRAIL_MAX_AGE_MS);
     }
 
     // -----------------------------------------------------------------------

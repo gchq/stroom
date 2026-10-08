@@ -58,4 +58,32 @@ public final class FloorMapPlaybackRange {
         }
         return start < end;
     }
+
+    /// Whether a data extent from `min` to `max` is one "Show All" can fit the timeline to.
+    ///
+    /// The one rule both the button's enabled state and its click handler apply, so the two
+    /// cannot disagree. They used to: the button was enabled on `min <= max` while the handler
+    /// required `min < max`, so a store whose events all share one timestamp got a button that
+    /// looked live and did nothing when pressed.
+    ///
+    /// @param min the earliest event time in the data, in epoch milliseconds
+    /// @param max the latest event time in the data, in epoch milliseconds
+    /// @return `true` if Show All should be offered for this extent
+    public static boolean canFitTo(final long min, final long max) {
+        return min < max;
+    }
+
+    /// Where the playhead belongs once the range around it has changed.
+    ///
+    /// A time inside the range from `start` to `end` stays where it is; one outside is
+    /// moved to the nearer boundary. The caller compares the answer with the time it passed in
+    /// to decide whether the playhead actually moved, and so whether a re-read is due.
+    ///
+    /// @param time  the playhead's current time, in epoch milliseconds
+    /// @param start the start of the range, in epoch milliseconds
+    /// @param end   the end of the range, in epoch milliseconds; not before `start`
+    /// @return `time`, clamped into the range
+    public static long clampInto(final long time, final long start, final long end) {
+        return Math.max(start, Math.min(end, time));
+    }
 }

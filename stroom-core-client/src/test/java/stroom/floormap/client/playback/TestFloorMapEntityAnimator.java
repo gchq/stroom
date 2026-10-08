@@ -201,10 +201,15 @@ class TestFloorMapEntityAnimator {
         assertThat(trail.getLast()[2]).isCloseTo(1.0, within(TOL));
     }
 
-    /// A direction change must survive into the rendered trail. Drives the entity right, then up,
-    /// and asserts the turning point itself is present rather than being cut across.
+    /// A direction change ends the trail rather than bending it: the leg the entity is now making
+    /// is the whole trail, and the leg it just finished is gone.
+    ///
+    /// Replaces a test that asserted the opposite - that the corner survived into a trail
+    /// spanning both legs. That was the deliberate behaviour until the trail was scoped to one
+    /// movement; see [FloorMapEntityAnimator] on why a multi-leg trail is unreadable at
+    /// playback speed.
     @Test
-    void testTurningPointSurvivesIntoTheRenderedTrail() {
+    void testATurnEndsTheTrailRatherThanBendingIt() {
         animator.setPlaying(true);
         animator.onEventObjects(List.of(obj("a", 0, 0)));
         animator.onEventObjects(List.of(obj("a", 500, 0)));      // leg 1: rightwards
@@ -220,8 +225,11 @@ class TestFloorMapEntityAnimator {
         final List<double[]> trail = drawn(animator.buildDrawList(0)).getTrail();
 
         assertThat(trail)
-                .as("the turning point must be in the trail, not cut across")
-                .anyMatch(p -> Math.abs(p[0] - corner[0]) < 1e-6 && Math.abs(p[1] - corner[1]) < 1e-6);
+                .as("leg 1 ran along y=0 and is over - none of it may still be drawn")
+                .allMatch(p -> p[1] > 0.0);
+        assertThat(trail)
+                .as("the trail is leg 2, which is vertical at the corner's x")
+                .allMatch(p -> Math.abs(p[0] - corner[0]) < 1e-6);
     }
 
     /// The ring buffer must wrap correctly: past its capacity the oldest points are overwritten
@@ -322,6 +330,138 @@ class TestFloorMapEntityAnimator {
         final List<double[]> trail = drawn(animator.buildDrawList(50 * 100.0)).getTrail();
 
         assertThat(trail).hasSize(50);
+    }
+
+    // -----------------------------------------------------------------------
+    // Trail lifecycle across a pause
+    // -----------------------------------------------------------------------
+
+    /// Movement that resumes after a pause starts a fresh trail rather than resurrecting the one
+    /// that was fading.
+    ///
+    /// Regression test for trails "becoming activated again when a person moves". Cancelling a
+    /// fade used to leave the points in place, and with the fade entry gone the fade factor reverts
+    /// to 1.0 - so the trail from before the pause reappeared at full opacity and joined up with
+    /// the new movement, drawing a journey that was never made in one go. Repeated pauses
+    /// accumulated that across the map.
+    @Test
+    void testResumedMovementStartsAFreshTrail() {
+        animator.setPlaying(true);
+        animator.onEventObjects(List.of(obj("a", 0, 0)));
+        animator.onEventObjects(List.of(obj("a", 10, 0)));       // leg 1: rightwards along y=0
+        for (int frame = 1; frame <= 4; frame++) {
+            animator.advanceFrame(frame * 200.0, 200.0);         // completes at t=800, fade starts
+        }
+        assertThat(drawn(animator.buildDrawList(800)).getTrail()).hasSize(4);
+
+        // Part way through the fade, still visible, then the entity moves again.
+        animator.advanceFrame(1000, 200);
+        animator.onEventObjects(List.of(obj("a", 10, 50)));      // leg 2: upwards from the pause
+        animator.advanceFrame(1200, 200);
+
+        final List<double[]> trail = drawn(animator.buildDrawList(1200)).getTrail();
+
+        assertThat(trail)
+                .as("only the movement that is happening now")
+                .hasSize(1);
+        assertThat(trail)
+                .as("no point from before the pause may return")
+                .noneMatch(p -> p[0] < 10.0 - TOL);
+        assertThat(trail.getLast()[2])
+                .as("the new trail is not still wearing the cancelled fade")
+                .isCloseTo(1.0, within(TOL));
+    }
+
+    /// A move whose next target arrives before it finishes starts a new trail, because that next
+    /// target is a new movement.
+    ///
+    /// This is the *normal* case during playback rather than an edge: the timeline runs at a
+    /// multiple of real time while the events query is throttled to a fixed wall-clock interval,
+    /// so a fresh position lands every few hundred milliseconds and a move is almost always
+    /// replaced before it completes. Keeping the points across that accumulated tens of legs into
+    /// one polyline, which joins each leg's end to the next one's start.
+    @Test
+    void testAnInterruptingMoveStartsANewTrail() {
+        animator.setPlaying(true);
+        animator.onEventObjects(List.of(obj("a", 0, 0)));
+        animator.onEventObjects(List.of(obj("a", 800, 0)));      // leg 1 along y=0
+        animator.advanceFrame(100, 100);                          // in flight, one point recorded
+        animator.onEventObjects(List.of(obj("a", 800, 800)));    // leg 2 before leg 1 finished
+        animator.advanceFrame(200, 100);
+
+        final List<double[]> trail = drawn(animator.buildDrawList(200)).getTrail();
+
+        assertThat(trail)
+                .as("only the leg being made now")
+                .hasSize(1);
+        assertThat(trail.getFirst()[1])
+                .as("leg 1's point ran along y=0 and must not have been carried over")
+                .isGreaterThan(0.0);
+    }
+
+    /// The tangle seen in playback, at the cadence that produced it: a new desk every 300ms of
+    /// wall clock, indefinitely. However long that runs, an entity carries one leg's worth of
+    /// trail - the count must not grow with the number of desks visited.
+    @Test
+    void testTrailDoesNotGrowAcrossAHundredHops() {
+        animator.setPlaying(true);
+        animator.onEventObjects(List.of(obj("a", 80, 90)));
+        final double[][] desks = {{80, 90}, {200, 90}, {320, 90}, {80, 240}, {200, 240}, {320, 240}};
+
+        double nowMs = 0;
+        int largest = 0;
+        for (int hop = 1; hop <= 100; hop++) {
+            animator.onEventObjects(List.of(obj("a", desks[hop % desks.length][0],
+                    desks[hop % desks.length][1])));
+            // ~300ms of frames at 60fps before the next position lands, so the 800ms move never
+            // completes and no fade ever starts - the condition the old trail accumulated under.
+            for (int frame = 0; frame < 18; frame++) {
+                nowMs += 16.0;
+                animator.advanceFrame(nowMs, 16.0);
+            }
+            largest = Math.max(largest, drawn(animator.buildDrawList(nowMs)).getTrail().size());
+        }
+
+        assertThat(largest)
+                .as("one leg is 18 frames here; 100 hops must not accumulate into one polyline")
+                .isLessThanOrEqualTo(18);
+    }
+
+    /// A fade that runs to completion still clears the trail (unchanged behaviour).
+    @Test
+    void testCompletedFadeStillClearsTheTrail() {
+        animator.setPlaying(true);
+        animator.onEventObjects(List.of(obj("a", 0, 0)));
+        animator.onEventObjects(List.of(obj("a", 10, 0)));
+        animator.advanceFrame(DURATION_MS, DURATION_MS);          // lands; fade starts
+        assertThat(drawn(animator.buildDrawList(DURATION_MS)).getTrail()).isNotNull();
+
+        animator.advanceFrame(DURATION_MS + 2000 + 1, 16);        // fade runs out
+
+        assertThat(animator.isActive()).isFalse();
+        assertThat(drawn(animator.buildDrawList(DURATION_MS + 2000 + 1)).getTrail())
+                .as("a spent fade leaves nothing behind to be revived")
+                .isNull();
+    }
+
+    /// Nothing older than the age window is ever drawn, whether or not the trail is currently
+    /// gaining points - the window bounds what is on screen, not merely what is written.
+    @Test
+    void testNoDrawnPointIsOlderThanTheWindow() {
+        animator.setPlaying(true);
+        animator.onEventObjects(List.of(obj("a", 0, 0)));
+        animator.onEventObjects(List.of(obj("a", 100000, 0)));
+
+        // 40s of movement in 100ms frames, sampling the drawn trail as it goes.
+        for (int frame = 1; frame <= 400; frame++) {
+            final double nowMs = frame * 100.0;
+            animator.advanceFrame(nowMs, 1.0);
+            final List<double[]> trail = drawn(animator.buildDrawList(nowMs)).getTrail();
+            // One point is recorded per 100ms frame, so a 20s window holds at most 201 of them.
+            assertThat(trail.size())
+                    .as("at t=%s the drawn trail must not exceed the 20s window", nowMs)
+                    .isLessThanOrEqualTo(201);
+        }
     }
 
     /// Ageing must keep the trail contiguous and ordered - it drops from the old end only, never

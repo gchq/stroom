@@ -730,9 +730,10 @@ public class FloorMapEditorPresenter
     /// min and max already are the extent Show All should fit to. Without this the button sits
     /// permanently greyed, which is how it behaved until 2026-09-11.
     ///
-    /// Deliberately not called from the `min == max` branch. `setDataRange` would
-    /// accept it, but the Show All handler guards on `dataRangeMin < dataRangeMax`, so arming
-    /// it for a single-instant store would light the button up and do nothing when pressed.
+    /// Every other branch clears the extent instead, so a re-read whose store is now empty, or
+    /// holds a single instant, does not keep a Show All left over from the previous read. A
+    /// single-instant extent is not one Show All can fit to, and arming the button for it would
+    /// light it up and do nothing when pressed.
     ///
     /// @param range the time range returned by the server; never `null`
     private void initTimeline(final TemporalStoreTimeRange range) {
@@ -740,6 +741,7 @@ public class FloorMapEditorPresenter
 
         if (range.getMinEffectiveTimeMs() == null || range.getMaxEffectiveTimeMs() == null) {
             floorMapTimelinePresenter.setTimeRange(now - ONE_DAY_MS, now + ONE_DAY_MS);
+            floorMapTimelinePresenter.clearDataRange();
             floorMapTimelinePresenter.setCurrentTime(now);
             model.setSelectedTime(now);
         } else {
@@ -755,6 +757,7 @@ public class FloorMapEditorPresenter
                 // frame. Show a window around that instant instead, matching what the
                 // no-data branch above does.
                 floorMapTimelinePresenter.setTimeRange(min - ONE_DAY_MS, max + ONE_DAY_MS);
+                floorMapTimelinePresenter.clearDataRange();
             }
             floorMapTimelinePresenter.setCurrentTime(max);
             model.setSelectedTime(max);

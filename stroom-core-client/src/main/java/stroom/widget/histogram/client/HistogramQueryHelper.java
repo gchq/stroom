@@ -64,11 +64,30 @@ public class HistogramQueryHelper {
      */
     private boolean errorReported;
 
+    /**
+     * What this helper's query is for, as the user would recognise it — the name its failures are
+     * reported under. One class serves more than one query, so a fixed name misattributed a failed
+     * timeline-extent read to the density bars.
+     */
+    private final String name;
+
+    /**
+     * Called on every failure, reported or not; {@code null} when the owner does not need to know.
+     */
+    private Runnable failureHandler;
+
+    /**
+     * @param name          what the query is for, e.g. {@code "Histogram"}; names it in failure
+     *                      reports and in the query info the server logs
+     * @param resultHandler receives each table result the query produces
+     */
     public HistogramQueryHelper(final EventBus eventBus,
                                 final RestFactory restFactory,
                                 final DateTimeSettingsFactory dateTimeSettingsFactory,
                                 final ResultStoreModel resultStoreModel,
+                                final String name,
                                 final Consumer<TableResult> resultHandler) {
+        this.name = name;
         this.queryModel = new QueryModel(
                 eventBus,
                 restFactory,
@@ -123,22 +142,40 @@ public class HistogramQueryHelper {
         // Only ERROR and above. A WARNING does not empty the bars, and the histogram has no state
         // to protect, so there is nothing to be gained by reporting one.
         queryModel.addSearchErrorListener(errors -> {
-            if (errors == null || errorReported) {
+            if (errors == null) {
                 return;
             }
             for (final ErrorMessage error : errors) {
                 if (error != null
                     && error.getSeverity() != null
                     && error.getSeverity().greaterThanOrEqual(Severity.ERROR)) {
+                    if (failureHandler != null) {
+                        failureHandler.run();
+                    }
+                    if (errorReported) {
+                        return;
+                    }
                     errorReported = true;
-                    Console.error("Histogram: the query failed, so the timeline shows no density"
-                                  + " bars. This is not the same as there being no data."
+                    Console.error(name + ": the query failed, so it has no result to show."
+                                  + " This is not the same as there being no data."
                                   + " Cause: " + error.getMessage()
                                   + " Further failures are not reported.");
                     return;
                 }
             }
         });
+    }
+
+    /**
+     * Sets a handler called whenever a search fails, so an owner waiting on a result can tell the
+     * result is not coming. A failure never reaches the result handler.
+     *
+     * <p>Called on every failure, unlike the console report, which is made once.</p>
+     *
+     * @param failureHandler the handler, or {@code null} to remove it
+     */
+    public void setFailureHandler(final Runnable failureHandler) {
+        this.failureHandler = failureHandler;
     }
 
     /**
@@ -219,7 +256,7 @@ public class HistogramQueryHelper {
                                 toMs == null ? null : String.valueOf(toMs + 1)),
                 false,  // incremental
                 false,  // storeHistory
-                "Histogram Query",  // queryInfo
+                name + " Query",  // queryInfo
                 null);  // additionalQueryExpression
     }
 }
