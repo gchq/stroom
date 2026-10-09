@@ -1,10 +1,10 @@
 {
- "generated": "2026-10-09T04:46:22.084Z",
+ "generated": "2026-10-09T15:24:06.370Z",
  "declared": 1546,
- "exercised": 734,
+ "exercised": 744,
  "presenters": {
   "declared": 805,
-  "exercised": 467
+  "exercised": 471
  },
  "byKind": {
   "command": {
@@ -29,11 +29,11 @@
   },
   "value": {
    "declared": 314,
-   "exercised": 69
+   "exercised": 70
   },
   "key": {
    "declared": 82,
-   "exercised": 11
+   "exercised": 20
   },
   "hide": {
    "declared": 33,
@@ -82,8 +82,8 @@
  },
  "why": {
   "unreached": 250,
-  "needs-value": 245,
-  "needs-key": 71,
+  "needs-value": 244,
+  "needs-key": 62,
   "ok-blocked": 16,
   "view": 66,
   "widget": 89,
@@ -754,7 +754,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -976,7 +977,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "nothing"
+    "nothing",
+    "closed"
    ]
   },
   {
@@ -2127,7 +2129,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -2801,7 +2804,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -2842,8 +2846,11 @@
    "label": "Type",
    "line": 120,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "CredentialSettingsViewImpl",
@@ -3882,7 +3889,8 @@
    "exercised": true,
    "join": "label",
    "outcomes": [
-    "changed"
+    "changed",
+    "vanished"
    ]
   },
   {
@@ -4899,7 +4907,8 @@
    "exercised": true,
    "join": "label",
    "outcomes": [
-    "changed"
+    "changed",
+    "vanished"
    ]
   },
   {
@@ -5481,7 +5490,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "vanished"
    ]
   },
   {
@@ -7046,7 +7056,7 @@
    "kind": "dirty",
    "receiver": "registerHandler(provider",
    "label": null,
-   "line": 100,
+   "line": 93,
    "exercised": false,
    "why": "needs-dirty"
   },
@@ -7056,7 +7066,7 @@
    "kind": "dirty",
    "receiver": "registerHandler(currentTabProvider",
    "label": null,
-   "line": 119,
+   "line": 112,
    "exercised": true,
    "join": "dirty-chain",
    "outcomes": [
@@ -8455,7 +8465,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -8548,7 +8559,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -9120,7 +9132,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -9855,7 +9868,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "vanished"
    ]
   },
   {
@@ -10513,7 +10527,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "nothing"
+    "nothing",
+    "vanished"
    ]
   },
   {
@@ -11246,7 +11261,7 @@
    "kind": "selection",
    "receiver": "registerHandler(getView().getTabBar()",
    "label": null,
-   "line": 77,
+   "line": 78,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11259,7 +11274,7 @@
    "kind": "value",
    "receiver": "registerHandler(themePreferencesPresenter",
    "label": null,
-   "line": 79,
+   "line": 80,
    "exercised": false,
    "why": "needs-value"
   },
@@ -11269,7 +11284,7 @@
    "kind": "value",
    "receiver": "registerHandler(editorPreferencesPresenter",
    "label": null,
-   "line": 80,
+   "line": 81,
    "exercised": false,
    "why": "needs-value"
   },
@@ -11279,7 +11294,7 @@
    "kind": "value",
    "receiver": "registerHandler(timePreferencesPresenter",
    "label": null,
-   "line": 81,
+   "line": 82,
    "exercised": false,
    "why": "needs-value"
   },
@@ -11289,7 +11304,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 165,
+   "line": 166,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11305,7 +11320,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 165,
+   "line": 166,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11896,7 +11911,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "unclickable"
    ]
   },
   {
@@ -14279,8 +14295,11 @@
    "label": "Collection",
    "line": 198,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "SolrIndexSettingsViewImpl",
@@ -14304,8 +14323,11 @@
    "label": "Solr URLs",
    "line": 208,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "SolrIndexSettingsViewImpl",
@@ -14326,8 +14348,11 @@
    "label": "ZooKeeper Hosts",
    "line": 218,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "SolrIndexSettingsViewImpl",
@@ -14337,8 +14362,11 @@
    "label": "ZooKeeper Path",
    "line": 223,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "SolrIndexSettingsViewImpl",
@@ -14348,8 +14376,11 @@
    "label": "Main Time Field Name",
    "line": 228,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ApiKeysPlugin",
@@ -15764,7 +15795,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "unclickable"
    ]
   },
   {
@@ -16076,7 +16108,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -16282,8 +16315,11 @@
    "receiver": "registerHandler(getView().getFunctionName()",
    "label": null,
    "line": 55,
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "XMLSchemaPresenter",
@@ -16322,8 +16358,11 @@
    "receiver": "registerHandler(getView().getNamespaceURI()",
    "label": null,
    "line": 36,
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "XMLSchemaSettingsPresenter",
@@ -16332,8 +16371,11 @@
    "receiver": "registerHandler(getView().getSystemId()",
    "label": null,
    "line": 37,
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "XMLSchemaSettingsPresenter",
@@ -16342,8 +16384,11 @@
    "receiver": "registerHandler(getView().getSchemaGroup()",
    "label": null,
    "line": 38,
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "MyDataGrid",
@@ -18598,7 +18643,7 @@
  ],
  "messages": {
   "declared": 276,
-  "observed": 66,
+  "observed": 69,
   "list": [
    {
     "class": "ActivityEditPresenter",
@@ -18906,7 +18951,7 @@
     "kind": "warn",
     "template": "Choose a … before setting it as the default.",
     "line": 54,
-    "observed": false
+    "observed": true
    },
    {
     "class": "ConfigDefaultSetter",
@@ -18914,7 +18959,7 @@
     "kind": "warn",
     "template": "Choose a … before setting it as the default.",
     "line": 71,
-    "observed": false
+    "observed": true
    },
    {
     "class": "ConfigDefaultSetter",
@@ -18922,7 +18967,7 @@
     "kind": "confirm",
     "template": "Set '…' as the default … for all users?",
     "line": 86,
-    "observed": false
+    "observed": true
    },
    {
     "class": "ConfigDefaultSetter",
@@ -19982,7 +20027,7 @@
     "classKind": "presenter",
     "kind": "confirm",
     "template": "Are you sure you want to set the current preferences as the defaults for ALL users? This will not change individual users' saved preferences.",
-    "line": 128,
+    "line": 129,
     "observed": false
    },
    {
