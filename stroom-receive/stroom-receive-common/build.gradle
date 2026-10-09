@@ -43,6 +43,7 @@ dependencies {
     implementation libs.dropwizard.metrics.healthchecks
     implementation libs.dropwizard.validation
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.restygwt

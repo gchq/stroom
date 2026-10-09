@@ -191,7 +191,8 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
 
     private static class NonPooledByteBuffer implements PooledByteBuffer {
 
-        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(stroom.bytebuffer.impl6.NonPooledByteBuffer.class);
+        private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(
+                stroom.bytebuffer.impl6.NonPooledByteBuffer.class);
 
         private ByteBuffer byteBuffer;
 
@@ -217,8 +218,10 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
          */
         @Override
         public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
-            try (this) {
+            try {
                 byteBufferConsumer.accept(byteBuffer);
+            } finally {
+                close();
             }
         }
 
@@ -258,8 +261,8 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
         @Override
         public String toString() {
             return "NonPooledByteBuffer{" +
-                    "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
-                    '}';
+                   "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
+                   '}';
         }
     }
 
@@ -294,8 +297,10 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
         @Override
         public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
             Objects.requireNonNull(byteBuffer, "Already released");
-            try (this) {
+            try {
                 byteBufferConsumer.accept(byteBuffer);
+            } finally {
+                close();
             }
         }
 
@@ -331,8 +336,8 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
         @Override
         public String toString() {
             return "PooledByteBuffer{" +
-                    "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
-                    '}';
+                   "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
+                   '}';
         }
     }
 }

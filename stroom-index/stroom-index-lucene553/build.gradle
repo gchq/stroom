@@ -45,7 +45,10 @@ dependencies {
 }
 
 tasks.register("printRuntimeClasspath") {
-    sourceSets.main.runtimeClasspath.each { println it}
+    logger.debug("Dumping 'sourceSets.main.runtimeClasspath'")
+    sourceSets.main.runtimeClasspath.each { 
+        logger.debug(it.toString())
+    }
 }
 
 tasks.printRuntimeClasspath.dependsOn compileJava

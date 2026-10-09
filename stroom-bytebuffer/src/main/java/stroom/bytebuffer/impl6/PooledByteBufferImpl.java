@@ -53,8 +53,10 @@ class PooledByteBufferImpl implements PooledByteBuffer {
     @Override
     public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
         Objects.requireNonNull(byteBuffer, "Already released");
-        try (this) {
+        try {
             byteBufferConsumer.accept(byteBuffer);
+        } finally {
+            close();
         }
     }
 
@@ -88,7 +90,7 @@ class PooledByteBufferImpl implements PooledByteBuffer {
     @Override
     public String toString() {
         return "PooledByteBuffer{" +
-                "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
-                '}';
+               "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
+               '}';
     }
 }

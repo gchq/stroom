@@ -25,6 +25,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jooq
     implementation libs.mysql.connector.java
     implementation libs.restygwt

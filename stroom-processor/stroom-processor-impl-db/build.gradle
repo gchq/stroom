@@ -23,6 +23,7 @@ apply from: "${rootDir}/gradle/jooq-codegen.gradle"
 dependencies {
     implementation libs.flyway.mysql
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jaxb.api
     implementation libs.jooq
     implementation libs.slf4j.api
