@@ -67,8 +67,7 @@ public class LmdbLibraryConfig extends AbstractConfig implements IsStroomConfig 
     @JsonProperty(SYSTEM_LIBRARY_PATH_PROP_NAME)
     @JsonPropertyDescription(
             "The path to a provided LMDB native library file. If unset the LMDB binary " +
-            "bundled with Stroom will be extracted to 'systemLibraryExtractDir'. This property can be used if " +
-            "you already have LMDB installed or want to make use of a package manager provided instance. " +
+            "bundled with Stroom will be extracted to 'systemLibraryExtractDir'. This property can be used if you already have LMDB installed or want to make use of a package manager provided instance. " +
             "If you set this property care needs to be taken over version compatibility between the version " +
             "of LMDBJava (that Stroom uses to interact with LMDB) and the version of the LMDB binary. " +
             "By default this is unset.")

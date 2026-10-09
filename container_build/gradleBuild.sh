@@ -43,8 +43,8 @@ GRADLE_ARGS=(
 
 GWT_ARGS=(
   "-PgwtCompilerWorkers=${MAX_WORKERS:-6}"
-  "-PgwtCompilerMinHeap=${GWT_MIN_HEAP:-50M}"
-  "-PgwtCompilerMaxHeap=${GWT_MAX_HEAP:-2G}"
+  "-PgwtCompilerMinHeap=${GWT_MIN_HEAP:-1G}"
+  "-PgwtCompilerMaxHeap=${GWT_MAX_HEAP:-4G}"
 )
 
 determine_host_address() {
@@ -128,10 +128,12 @@ main() {
   # so better to fail early. Also not running CS alonside the other tasks
   # may help to stop out of memory issues.
   # This will implicitly run the java compile too
+  # Run with --quiet so it is easier to see CS issues.
   echo "::group::Run checkstyle"
   echo -e "${GREEN}Run checkstyle${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
+    --quiet \
     --scan \
     --stacktrace \
     -PdumpFailedTestXml=true \
@@ -151,9 +153,10 @@ main() {
   # content pack zips
   # Fully qualify the shadowJar tasks as we want to run lucene553 shadowJar
   echo "::group::Basic Java build"
-  echo -e "${GREEN}Do the basic java build${NC}"
+  echo -e "${GREEN}Do the basic java build (compilation & tests)${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
+    --info \
     --scan \
     --stacktrace \
     -PdumpFailedTestXml=true \
@@ -175,6 +178,7 @@ main() {
   echo -e "${GREEN}Do the GWT UI build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
+    --info \
     --scan \
     --stacktrace \
     "${GWT_ARGS[@]}" \
@@ -185,6 +189,7 @@ main() {
   echo -e "${GREEN}Do the dashboard GWT UI build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
+    --info \
     --scan \
     --stacktrace \
     "${GWT_ARGS[@]}" \
@@ -198,6 +203,7 @@ main() {
     "${BLUE}${BUILD_VERSION:-SNAPSHOT}${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
+    --info \
     --scan \
     --stacktrace \
     -PdumpFailedTestXml=true \
