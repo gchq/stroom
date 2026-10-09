@@ -110,7 +110,7 @@ if (localYamlFile.exists()) {
         ext.jdbcUrl = yamlVal
         // Extract the schema name from the url
         ext.dbSchema = (yamlVal =~ /jdbc:mysql:\/\/[^:]+:[0-9]+\/([^?]+)\?.*/)[0][1]
-        println "Using jdbc url [${jdbcUrl}] and dbSchema [${dbSchema}] from local.yml"
+        logger.info("Using jdbc url [${jdbcUrl}] and dbSchema [${dbSchema}] from local.yml")
     }
 }
 
@@ -542,7 +542,7 @@ subprojects {
 
 // configures only those projects in publishedProjectsPaths
 configure(projectsToBePublished) {
-    println "Configuring ${project.name} for publishing"
+    logger.info("Configuring ${project.name} for publishing")
 
     apply plugin: 'maven-publish'
 

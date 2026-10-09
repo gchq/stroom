@@ -52,6 +52,7 @@ dependencies {
     implementation libs.dropwizard.client
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.restygwt
     implementation libs.saxon.he

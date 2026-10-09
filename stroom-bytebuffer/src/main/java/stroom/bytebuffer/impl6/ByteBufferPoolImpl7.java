@@ -217,8 +217,10 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
          */
         @Override
         public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
-            try (this) {
+            try {
                 byteBufferConsumer.accept(byteBuffer);
+            } finally {
+                close();
             }
         }
 
@@ -294,8 +296,10 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
         @Override
         public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
             Objects.requireNonNull(byteBuffer, "Already released");
-            try (this) {
+            try {
                 byteBufferConsumer.accept(byteBuffer);
+            } finally {
+                close();
             }
         }
 

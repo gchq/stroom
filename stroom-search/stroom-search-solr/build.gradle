@@ -42,6 +42,7 @@ dependencies {
     implementation libs.dropwizard.metrics.annotation
     implementation libs.guice
     implementation project(path: ":stroom-index:lucene553-shaded", configuration: 'shadow') // Use shadow JAR
+    implementation libs.jackson.annotations
     implementation libs.restygwt
     implementation libs.saxon.he
     implementation libs.solrj

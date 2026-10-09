@@ -37,6 +37,7 @@ dependencies {
     implementation libs.dropwizard.client
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jooq
     implementation libs.jose4j
     implementation libs.restygwt

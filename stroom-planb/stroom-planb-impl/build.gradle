@@ -46,6 +46,7 @@ dependencies {
     implementation libs.dropwizard.client
     implementation libs.fast.infoset
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.kryo
     implementation libs.lmdbjava
     implementation libs.restygwt

@@ -54,8 +54,10 @@ class NonPooledByteBuffer implements PooledByteBuffer {
      */
     @Override
     public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
-        try (this) {
+        try {
             byteBufferConsumer.accept(byteBuffer);
+        } finally {
+            close();
         }
     }
 
@@ -95,7 +97,7 @@ class NonPooledByteBuffer implements PooledByteBuffer {
     @Override
     public String toString() {
         return "NonPooledByteBuffer{" +
-                "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
-                '}';
+               "byteBuffer=" + ByteBufferUtils.byteBufferInfo(byteBuffer) +
+               '}';
     }
 }
