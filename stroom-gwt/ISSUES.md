@@ -357,19 +357,6 @@ Fix: a message for the actual problem, e.g. "An expiry date must be provided for
 * `stroom-core-client/src/main/java/stroom/security/client/presenter/EditApiKeyPresenter.java`
   (lines 264-266)
 
-### A request that gets no response is reported as a Java class name
-
-**Reproduced.** (gwt-bugs #39) When a request gets no response (the server is down, a proxy timed
-out, the connection dropped), the alert's whole message is
-`org.fusesource.restygwt.client.FailedResponseException`.
-
-`DefaultErrorHandler` (lines 92-93) uses the exception's class name when it has no message.
-
-Fix: a message a user can act on, such as "The server did not respond. Check that Stroom is running
-and try again.", keeping the class name and URL in the details, where they already are.
-
-* `stroom-core-client/src/main/java/stroom/dispatch/client/DefaultErrorHandler.java`
-
 ## Memory
 
 ### Closed screens are never released
@@ -983,6 +970,13 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   marked invalid as the sign-in views mark theirs (`FieldValidity`: `aria-invalid` and a
   description), and moves the focus to it (`TestTextBoxPopup`, the workbench's
   `Widgets/Dialogs/TextBoxPopupDialog` `Basic`).
+* #39: a request that got no response (the server down, a proxy timeout, a dropped connection) was
+  reported with `org.fusesource.restygwt.client.FailedResponseException` as the alert's whole
+  message, as `DefaultErrorHandler` fell back to the exception's class name. Such a failure (status
+  code 0) now says "The server did not respond. Check that Stroom is running and try again.", with
+  the URL and the exception still in the details; other failures are reported as before
+  (`TestDefaultErrorHandler`). The suite classes the new message as `environment`
+  (`lib/alerts.mjs`).
 * #36: in stepping, Refresh Current Step (and Set Location then OK) before a stream was chosen sent
   a step request with no `criteria`, which failed on the server with a `NullPointerException`.
   `StepControlPresenter.initButtons()` now starts Refresh disabled like the other step buttons, the

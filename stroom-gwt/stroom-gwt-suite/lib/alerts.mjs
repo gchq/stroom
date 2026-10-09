@@ -97,6 +97,8 @@ const EXCEPTION = [
 const ENVIRONMENT = [
   /Connection refused/i, /Unable to connect to/i, /Could not resolve host/i, /has no URL set/i, /from all nodes/i,
   /No such (file|host)/i, /UnknownHost/i, /timed? ?out/i,
+  // Stroom's message for a request that got no response at all (gwt-bugs #39)
+  /The server did not respond/i,
 ];
 
 /**

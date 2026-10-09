@@ -116,6 +116,11 @@ test('alerts: a dialog is an alert when its CAPTION says so', () => {
 
 test('alerts: the classes that cost a bug report to get right', () => {
   assert.equal(classifyAlert({ text: 'anything', blocked: ['POST /api/x'] }), 'guard');
+  // A request with no response is the instance (gwt-bugs #39), though its detail names an exception
+  assert.equal(classifyAlert({
+    text: 'The server did not respond. Check that Stroom is running and try again.',
+    detail: 'http://localhost/api/x\n\norg.fusesource.restygwt.client.FailedStatusCodeException',
+  }), 'environment');
   // A question icon is a Confirm the presenter asked on purpose.
   assert.equal(classifyAlert({ text: 'Unable to delete', icon: 'question' }), 'validation');
   assert.equal(classifyAlert({ text: 'Ambiguous URI path separator' }), 'exception');
