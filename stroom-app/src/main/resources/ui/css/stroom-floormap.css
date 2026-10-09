@@ -1,0 +1,1369 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/* ============================================================
+ * Floor Map Grid — theme-aware colours
+ *
+ * These variables are used by the SVG grid background
+ * (FloorMapGridBackground.java) so that the grid respects
+ * the current light/dark theme.
+ * ============================================================ */
+
+:root {
+    --floormap-grid__background-color: var(--dashboard-panel__grid-background-color);
+    --floormap-grid__major-stroke:     var(--vis-axis__color);
+    --floormap-grid__minor-stroke:     var(--vis-text__color--faint);
+    --floormap-grid__highlight-color:  var(--blue-600);
+
+    /* Out-of-range chevron. This is a meaningful non-text indicator — it is the
+       only thing that says the tracked object is outside the timeline range — so
+       it has to clear 3:1 against the page background (WCAG 1.4.11). The obvious
+       Material Orange 700 (#f57c00) is only 2.7:1 on white, so the light theme
+       needs the darker 900; the dark theme needs a *lighter* orange for the same
+       reason, hence the per-theme value rather than one shared constant. */
+    --floormap-out-of-range__color: #e65100; /* 3.8:1 on white */
+
+    /* Accent for the map's small text: tooltips, readouts, the speed badge, and the
+       borders and caret that go with them. Aliased to the primary button colour because
+       that is the one accent in the palette held to the 4.5:1 text threshold rather than
+       the 3:1 non-text one — --blue-500 is 3.12:1 on white and fails as text. The alias
+       exists so these are not silently restyled by a future button redesign: if the
+       button family moves to white-on-blue, point this at a value of its own instead. */
+    --floormap-accent__color: var(--button-default-primary__color);
+
+    /* Warning text on the FloorMap Event Store's settings tab, where enabling condense is
+       offered. It is body text explaining a consequence, not a status badge, so it is held to
+       the 4.5:1 text threshold rather than the 3:1 non-text one. Material Orange is nowhere
+       near that on white at any usable weight, so this is a red-brown that reads as a caution
+       without shouting. */
+    --floormap-warning__color: #b3261e; /* 6.4:1 on white */
+}
+
+.stroom-theme-dark {
+    --floormap-out-of-range__color: #ffa726; /* 7.9:1 on the dark page background */
+    --floormap-warning__color:      #f2b8b5; /* 8.9:1 on the dark page background */
+}
+
+/* ============================================================
+ * Floor Map Timeline
+ * ============================================================ */
+
+/* Grid: the histogram and date-label rows share the middle column with the scrubber bar,
+   so they stay exactly in line with it whatever width the flanking control groups take
+   (e.g. when the Editor tab appends a help button to the right controls). */
+.stroom-floormap-timeline-container {
+    position: relative; /* anchor for absolutely-positioned out-of-range chevrons */
+    padding: 6px 12px 8px 12px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        ".    histogram ."
+        "left bar       right"
+        ".    labels    .";
+    column-gap: 8px;
+    align-items: center;
+    /* Rows keep their natural heights, packed at the top — without this the default
+       align-content: stretch spreads the rows out to fill the panel height. */
+    align-content: start;
+}
+
+/* Left control group: step-back | play/pause | step-forward */
+.stroom-floormap-timeline-left-controls {
+    grid-area: left;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Play / pause button — slightly larger than step buttons */
+.stroom-floormap-timeline-play-button {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Step-back / step-forward buttons — compact, flanking the play button.
+   24px is the floor rather than a design choice: WCAG 2.5.8 minimum target
+   size. If you shrink these, the out-of-range chevron offsets below must be
+   recomputed — they are measured from the same run of controls. */
+.stroom-floormap-timeline-step-button {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+}
+
+.stroom-floormap-timeline-step-button:hover {
+    opacity: 1;
+}
+
+/* The center section holds the scrubber bar */
+.stroom-floormap-timeline-centre {
+    grid-area: bar;
+    min-width: 0;
+    cursor: pointer;
+}
+
+/* Right control group: speed badge | settings gear */
+.stroom-floormap-timeline-right-controls {
+    grid-area: right;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Speed badge — clickable button showing current playback speed (e.g. "×1");
+   clicking it opens the playback-speed menu */
+.stroom-floormap-timeline-speed-badge {
+    font-size: 10px;
+    font-weight: 600;
+    /* This is 10px text, so it owes 4.5:1 (WCAG 1.4.3) — not the 3:1 the icon buttons
+       either side of it owe. Take the colour from the primary *text* token, whose
+       contract is that threshold, rather than a raw palette entry: --blue-500 measures
+       only 3.12:1 on this theme's white page background. There is deliberately no
+       `opacity` here either — fading the text multiplied away what headroom was left
+       (0.85 dropped it to 4.29:1). De-emphasis, if wanted, belongs in the colour. */
+    color: var(--floormap-accent__color);
+    width: 44px;         /* Fixed — wide enough for the longest label (×10,000) */
+    flex-shrink: 0;
+    text-align: center;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    padding: 3px 0;
+    border-radius: 3px;
+    transition: background-color 0.15s ease;
+}
+
+/* Neutral hover wash, matching the step and settings buttons beside it — NOT the
+   accent-tinted --button-default-primary__background-color--hover. That tint is the same
+   hue as the text (40% blue-300 in the dark theme), so it collapses the label to 3.03:1
+   on hover; no choice of blue fixes it, because lightening the text lightens the tint
+   with it. The neutral wash holds 5.13:1 in both themes. */
+.stroom-floormap-timeline-speed-badge:hover,
+.stroom-floormap-timeline-speed-badge:focus-visible {
+    background-color: var(--icon-button__background-color--hover);
+}
+
+/* Settings gear button */
+.stroom-floormap-timeline-settings-button {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
+}
+
+.stroom-floormap-timeline-settings-button:hover {
+    opacity: 1;
+}
+
+/* ============================================================
+ * Histogram hover pop-up
+ * ============================================================ */
+
+/* Container that wraps the histogram canvas — always visible.
+   Occupies the same grid column as the scrubber bar, so its edges are always
+   exactly in line with the bar ends. */
+.stroom-floormap-timeline-histogram-container {
+    grid-area: histogram;
+    height: 48px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Date labels row below the bar — same grid column as the bar, so the labels
+   sit exactly under the bar ends. */
+.stroom-floormap-timeline-date-labels-row {
+    grid-area: labels;
+    display: flex;
+    justify-content: space-between;
+    margin-top: 3px;
+    pointer-events: none;
+}
+
+.stroom-floormap-timeline-date-label {
+    font-size: 10px;
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
+    user-select: none;
+}
+
+.stroom-floormap-timeline-date-label-end {
+    text-align: right;
+}
+
+/* The progress bar track */
+.stroom-floormap-timeline-outer-bar {
+    position: relative;
+    background-color: var(--control__background-color);
+    width: 100%;
+    height: 5px;
+    border: 1px solid var(--control__border-color);
+    border-radius: 3px;
+}
+
+/* The bar is a role="slider" with tabindex="0", so it takes a tab stop and must
+   show one. stroom.css sets `outline: none` on every div app-wide, so the UA
+   default focus ring is gone and this has to be drawn explicitly; a class
+   selector out-specifies that element-list rule without needing !important.
+   Matches the .icon-button:focus-visible treatment in stroom-button.css so
+   keyboard focus looks the same across the whole timeline strip. */
+.stroom-floormap-timeline-outer-bar:focus-visible {
+    border-color: var(--focus-border);
+    box-shadow: var(--focus-shadow);
+}
+
+/* Grows the 7px-tall track (5px + 2 × 1px border) to a 24px pointer/touch
+   target — WCAG 2.5.8 — without changing how it looks. The extra height is
+   transparent, and because a pseudo-element is not its own event target the
+   mousedown still reports the bar itself, so computeBarPct() (which reads only
+   the bar's own left edge and width) is unaffected.
+
+   Biased downward: below the bar is the date-labels row, which is
+   `pointer-events: none`, so those 11px are free. Above the bar is the
+   histogram, whose bottom few pixels are already faded out by its mask — and
+   both a histogram click and a bar press seek to the same place, so the small
+   overlap changes nothing the user can perceive. */
+.stroom-floormap-timeline-outer-bar::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -6px;
+    bottom: -11px;
+}
+
+/* The filled portion of the bar */
+.stroom-floormap-timeline-inner-bar {
+    position: absolute;
+    background-color: #1e88e5; /* Stroom Blue */
+    height: 100%;
+    border-radius: 3px 0 0 3px;
+    pointer-events: none;
+}
+
+/* The draggable circle handle */
+.stroom-floormap-timeline-handle {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background-color: #1e88e5;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Datetime pill shown above the handle while scrubbing */
+.stroom-floormap-timeline-scrub-tooltip {
+    position: absolute;
+    bottom: calc(100% + 12px); /* sit above the handle (bar height / 2 + handle radius + gap) */
+    left: 0;
+    transform: translateX(-50%);
+    background-color: var(--page__background-color);
+    color: var(--floormap-accent__color);
+    font-size: 10px; /* matches start/end date labels */
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 3px 7px;
+    border: 1px solid var(--floormap-accent__color);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    z-index: 20;
+}
+
+/* Caret — outer (border colour) layer */
+.stroom-floormap-timeline-scrub-tooltip::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: var(--floormap-accent__color);
+}
+
+/* Caret — inner (background colour) layer, sits 1px higher to mask the fill */
+.stroom-floormap-timeline-scrub-tooltip::after {
+    content: '';
+    position: absolute;
+    top: calc(100% - 1px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--page__background-color);
+}
+
+.stroom-floormap-timeline-scrub-tooltip--visible {
+    opacity: 1;
+}
+
+/* -----------------------------------------------------------------------
+   Out-of-range indicators (« / »)
+   Shown next to the start/end date labels when the selected time
+   falls outside the visible timeline range.
+   ----------------------------------------------------------------------- */
+.stroom-floormap-timeline-out-of-range {
+    position: absolute;
+    bottom: 4px; /* sit in the date-labels row at the foot of the container */
+    color: var(--floormap-out-of-range__color);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+    pointer-events: auto;
+    user-select: none;
+    /* Resting glow — kept for reduced-motion users where the pulse is disabled.
+       currentColor so the glow follows the per-theme chevron colour rather than
+       being pinned to one orange. */
+    text-shadow: 0 0 4px currentColor;
+}
+
+/* Left chevron: centred under the Step-Forward button.
+   12px container padding + 60px (step-back 24 + gap 4 + play 28 + gap 4)
+   + 24px/2 (half the step-forward button) = 84px.
+   The pulse keyframes carry the same translateX so the chevron stays centred while it scales;
+   the static transform below is the fallback when animation is disabled. */
+.stroom-floormap-timeline-out-of-range--left {
+    left: 84px;
+    transform: translateX(-50%);
+    animation:
+        floormap-chevron-fade-in 0.3s ease-out both,
+        floormap-chevron-pulse-left 1.6s ease-in-out infinite;
+}
+
+/* Right chevron: centred under the speed badge.
+   12px container padding + 28px (settings + gap) + 44px/2 (half the badge) = 62px from the right. */
+.stroom-floormap-timeline-out-of-range--right {
+    right: 62px;
+    transform: translateX(50%);
+    animation:
+        floormap-chevron-fade-in 0.3s ease-out both,
+        floormap-chevron-pulse-right 1.6s ease-in-out infinite;
+}
+
+/* Fade the chevron in when it first appears (opacity only, so it never fights the pulse). */
+@keyframes floormap-chevron-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Gentle "breathing" pulse — scales up slightly and brightens the glow, then relaxes.
+   translateX is repeated in every keyframe so the centring offset is preserved throughout. */
+@keyframes floormap-chevron-pulse-left {
+    0%, 100% {
+        transform: translateX(-50%) scale(1);
+        text-shadow: 0 0 3px currentColor;
+    }
+    50% {
+        transform: translateX(-50%) scale(1.18);
+        text-shadow: 0 0 11px currentColor;
+    }
+}
+
+@keyframes floormap-chevron-pulse-right {
+    0%, 100% {
+        transform: translateX(50%) scale(1);
+        text-shadow: 0 0 3px currentColor;
+    }
+    50% {
+        transform: translateX(50%) scale(1.18);
+        text-shadow: 0 0 11px currentColor;
+    }
+}
+
+/* -----------------------------------------------------------------------
+   Reduced motion
+
+   The chevron pulse is indefinite (`infinite`), so without this it is
+   moving content the user cannot stop — WCAG 2.2.2, not merely the AAA
+   2.3.3. Dropping the animation falls the chevrons back to the static
+   translateX and resting text-shadow declared on the rules above, which is
+   exactly what those declarations are there for.
+
+   The remaining transitions are opacity/background-colour only (no
+   movement), but they are all purely decorative, so they go too: a user
+   asking for less motion gains nothing from a 150ms cross-fade.
+
+   Deliberately NOT disabled: entity movement on the canvas and timeline
+   playback. Those are the information the map exists to convey rather than
+   decoration, and both are already fully under user control — playback
+   never autostarts and the pause button is always available.
+   ----------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .stroom-floormap-timeline-out-of-range--left,
+    .stroom-floormap-timeline-out-of-range--right {
+        animation: none;
+    }
+
+    .stroom-floormap-timeline-speed-badge,
+    .stroom-floormap-timeline-step-button,
+    .stroom-floormap-timeline-settings-button,
+    .stroom-floormap-timeline-scrub-tooltip {
+        transition: none;
+    }
+}
+
+/* Flex containers for left/right date label groups */
+.stroom-floormap-timeline-date-labels-left,
+.stroom-floormap-timeline-date-labels-right {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.stroom-floormap-background-grid {
+    flex-grow: 1;
+    min-height: 250px;
+    height: 100%;
+}
+
+/* ============================================================
+ * Settings tab — section separation
+ *
+ * The Settings tab mixes simple single-control rows (stores, value
+ * format) with two much heavier grid controls (Value Schema and Type
+ * Styles). Give those heavy sections a subtle top divider plus extra
+ * breathing room so they read as distinct blocks rather than just more
+ * rows. The compound selector out-specifies the default inter-group
+ * spacing (.form-group:not(:first-child), specificity 0,2,0) so this wins.
+ * ============================================================ */
+.form .form-group.stroom-floormap-settings-section {
+    margin-top: 1em;
+    padding-top: 1em;
+    border-top: 1px solid var(--border-color);
+}
+
+/* The consequence of enabling condense, stated beside the setting that causes it: a
+   stationary entity's repeats are collapsed to the earliest, so its last-seen time stops
+   advancing and expiry removes it from the map while it is still emitting. Sited with the
+   control rather than in the help text because it is the kind of thing a reader needs at
+   the moment of the decision. */
+.floorMapEventStoreCondenseWarning {
+    display: block;
+    margin-bottom: 0.5em;
+    color: var(--floormap-warning__color);
+    font-weight: 500;
+}
+
+/* ============================================================
+ * Timeline settings popup panel
+ * ============================================================ */
+
+.stroom-floormap-timeline-settings-popup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 14px;
+    min-width: 280px;
+}
+
+.stroom-floormap-timeline-settings-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.stroom-floormap-timeline-settings-label {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.stroom-floormap-timeline-settings-date-box {
+    flex: 1;
+    min-width: 160px;
+}
+
+/* Show All button row — right-aligned, separated from the date pickers by a divider */
+.stroom-floormap-timeline-settings-show-all-row {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 6px;
+    margin-top: 2px;
+    border-top: 1px solid var(--border-color);
+}
+
+.stroom-floormap-timeline-settings-show-all-button {
+    font-size: 0.85em;
+    padding: 3px 14px;
+    height: 26px;
+    white-space: nowrap;
+}
+
+/* -----------------------------------------------------------------------
+   Canvas keyboard focus
+
+   The map's FocusPanel is a div, so stroom.css's app-wide `outline: none`
+   strips its focus ring. Without this, tabbing into the map — where arrow
+   keys pan, +/- zoom and Tab walks the entities — gives no indication that
+   the map is now listening, which is the difference between "the keys do
+   nothing" and "the keys do nothing *yet*".
+
+   Drawn inset so it reads as a border around the map rather than a ring
+   around a control, and so it cannot be clipped by the panel's own edge.
+   ----------------------------------------------------------------------- */
+.stroom-floormap-canvas-focus:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--focus-border);
+}
+
+/* -----------------------------------------------------------------------
+   Visually-hidden live region
+
+   Carries the map's spoken commentary (time changes, selection, tracking,
+   entities leaving the timeline range). Must stay in the accessibility tree,
+   so it cannot use `display: none` or `visibility: hidden` — hence the
+   clip-rect technique. 1px rather than 0px because some screen readers skip
+   zero-area nodes.
+   ----------------------------------------------------------------------- */
+.stroom-floormap-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* -----------------------------------------------------------------------
+   Area drawing mode
+   ----------------------------------------------------------------------- */
+
+/* Positioning context for the drawing-mode hint overlaid on the canvas */
+.stroom-floormap-canvas-container {
+    position: relative;
+}
+
+/* Instruction pill shown while the area-drawing mode is active — same
+   visual language as the timeline scrub tooltip (blue text/border pill on
+   the page background, theme-aware) */
+.stroom-floormap-area-draw-hint {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--page__background-color);
+    color: var(--floormap-accent__color);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border: 1px solid var(--floormap-accent__color);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    pointer-events: none;
+    z-index: 20;
+    display: none;
+}
+
+.stroom-floormap-area-draw-hint--visible {
+    display: block;
+}
+
+/* -----------------------------------------------------------------------
+   Gesture readout
+
+   Follows the cursor while an object is being moved or resized, showing its
+   position or size in real-world units. Same visual language as the timeline
+   scrub tooltip (blue text/border pill on the page background), because it
+   answers the same kind of question about the thing under the pointer.
+
+   Positioned from the left/top by the view, which offsets it clear of the
+   cursor and keeps it inside the canvas.
+   ----------------------------------------------------------------------- */
+
+.stroom-floormap-gesture-readout {
+    position: absolute;
+    background-color: var(--page__background-color);
+    color: var(--floormap-accent__color);
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 3px 7px;
+    border: 1px solid var(--floormap-accent__color);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    pointer-events: none;
+    z-index: 25;
+    display: none;
+}
+
+.stroom-floormap-gesture-readout--visible {
+    display: block;
+}
+
+/* -----------------------------------------------------------------------
+   Hover tooltip
+
+   Describes the glyph under the pointer: the members of a cluster — the
+   answer to "who are those ten?", which the count alone cannot give — or a
+   single entity's name, type, containing areas and position. One panel for
+   both, because only one thing can be under the pointer. Same visual
+   language as the gesture readout and the timeline scrub tooltip, because
+   it answers the same kind of question about the thing under the pointer.
+
+   Anchored to the glyph by the view, not to the cursor, so it holds still
+   while the pointer moves across the glyph.
+   ----------------------------------------------------------------------- */
+
+.stroom-floormap-hover-tooltip {
+    position: absolute;
+    background-color: var(--page__background-color);
+    color: var(--text-color);
+    font-size: 11px;
+    padding: 5px 9px;
+    border: 1px solid var(--floormap-accent__color);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    /* The pointer must never enter it: this is driven by mousemove over the
+       canvas, and a panel that could take the pointer would hide the very
+       glyph it describes and then never receive a leave event. */
+    pointer-events: none;
+    z-index: 26;
+    display: none;
+    max-width: 260px;
+}
+
+.stroom-floormap-hover-tooltip--visible {
+    display: block;
+}
+
+.stroom-floormap-hover-tooltip__caption {
+    color: var(--floormap-accent__color);
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+/* One member name, or one line of detail. Kept to a single line: the panel
+   is capped in width, and a name or an area list that wrapped would push the
+   lines below it away from the glyph being described. */
+.stroom-floormap-hover-tooltip__line {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* -----------------------------------------------------------------------
+   Cluster dialog filter bar
+
+   The search box and the two dropdowns on one line, above the member grid.
+
+   Its own class rather than the usual `dock-container-horizontal form` pair:
+   `.form` sets flex-direction: column and, sitting on the same element, wins —
+   which stacks the controls. Declaring the direction here states the intent
+   once and cannot be undone by a class added beside it.
+   ----------------------------------------------------------------------- */
+
+.stroom-floormap-cluster-filters {
+    display: flex;
+    flex-direction: row;
+    /* Each control sits under its own label, so aligning the bottom edges is
+       what actually lines the inputs up with each other. */
+    align-items: flex-end;
+    gap: var(--control__gap--horizontal);
+}
+
+/* Takes the slack: what is typed here is the only unbounded value on the bar.
+   min-width lets it yield to the dropdowns on a narrowed dialog rather than
+   pushing them off the end — a flex item's floor is its content otherwise. */
+.stroom-floormap-cluster-filters__search {
+    flex: 1 1 auto;
+    min-width: 8rem;
+}
+
+/* Fixed width, so choosing a long area name does not resize the bar and move
+   the other controls out from under the pointer. */
+.stroom-floormap-cluster-filters__filter {
+    flex: 0 0 12rem;
+}
+
+/* -----------------------------------------------------------------------
+   Glyph caption
+
+   The text under a point glyph: an entity's name, or a cluster's "10 users"
+   / "Alice + 9 others". One style for both, because naming one entity and
+   naming ten are the same job.
+
+   It is drawn OUTSIDE the glyph, so it has no controlled backdrop the way
+   text on top of a coloured shape would: it sits over whatever floor plan
+   happens to be beneath it, in either theme.
+
+   Hence the halo: paint-order puts the stroke under the fill, so the outline
+   is drawn behind the letterforms rather than eating into them. The fill
+   follows the theme's text colour and the halo is the page background, so
+   the pair inverts correctly in dark mode.
+   ----------------------------------------------------------------------- */
+
+.stroom-floormap-glyph-caption {
+    fill: var(--text-color);
+    stroke: var(--page__background-color);
+    stroke-width: 3px;
+    paint-order: stroke;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: sans-serif;
+}
+
+/* -----------------------------------------------------------------------
+   Scale bar
+
+   A conventional map scale bar pinned to the bottom-left of the canvas —
+   clear of the area-drawing hint pill (top centre) and of the dock (right).
+   Fixed to the viewport rather than to map space, so it answers "how big is
+   this?" wherever the map has been panned to. The grid draws no text of its
+   own, so this is the canvas's only standing statement of scale.
+   ----------------------------------------------------------------------- */
+
+/*
+ * Line naming why the map is empty, top-centre.
+ *
+ * Two registers, and the split is the point of the whole thing. The default is quiet, because the
+ * most common cause - the timeline sitting outside the data - is not a fault, and a map that is
+ * correctly empty must not look broken. --fault is for the three causes that really are
+ * misconfiguration. One uniform warning style would teach people to ignore the line that matters.
+ *
+ * Top-centre is shared with the area-draw / set-scale hint, and they cannot collide: both of those
+ * modes exist only on the Editor tab, which has its own canvas instance, and this line is only ever
+ * set by the Map tab. The lower z-index settles it in that order anyway if that ever changes -
+ * a modal mode's instructions matter more than an explanation of emptiness.
+ *
+ * Not bottom-centre, which would run into the scale bar on a narrow pane; the pane is resizable and
+ * routinely narrow with the dock open.
+ *
+ * pointer-events: none so it can never intercept a click meant for the map; the text is still
+ * selectable by dragging from outside it, and reachable by a screen reader either way.
+ */
+.stroom-floormap-empty-status {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: calc(100% - 20px);
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 12px;
+    color: var(--vis-text__color--faint);
+    background-color: var(--page__background-color);
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    pointer-events: none;
+    z-index: 16;
+    display: none;
+}
+
+.stroom-floormap-empty-status--visible {
+    display: block;
+}
+
+.stroom-floormap-empty-status--fault {
+    color: var(--floormap-accent__color);
+    border-color: var(--floormap-accent__color);
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.stroom-floormap-scale-bar {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.stroom-floormap-scale-bar__label {
+    color: var(--floormap-grid__highlight-color);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    margin-bottom: 2px;
+    /* The bar sits over whatever the floor plan happens to be; a soft halo keeps
+       the text legible on light and dark imagery alike without a solid panel. */
+    text-shadow: 0 0 3px var(--page__background-color),
+                 0 0 3px var(--page__background-color);
+}
+
+/* The rule itself: a baseline with an end tick at each end (├────┤). Its width
+   is set per frame from the chosen distance. */
+.stroom-floormap-scale-bar__line {
+    height: 6px;
+    border-left: 2px solid var(--floormap-grid__highlight-color);
+    border-right: 2px solid var(--floormap-grid__highlight-color);
+    border-bottom: 2px solid var(--floormap-grid__highlight-color);
+    box-sizing: border-box;
+}
+
+/* -----------------------------------------------------------------------
+   Layers panel (dock tab)
+   ----------------------------------------------------------------------- */
+
+.floormap-layers-list {
+    padding: 4px;
+}
+
+/* One layer row: [reorder handle via drag] eye [lock] name */
+.floormap-layer-row {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    height: 28px;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.floormap-layer-row:hover {
+    background-color: rgba(128, 128, 128, 0.12);
+}
+
+/* Whole row is a drag handle for reordering (Editor tab) */
+.floormap-layer-row[draggable="true"] {
+    cursor: grab;
+}
+
+.floormap-layer-row[draggable="true"]:active {
+    cursor: grabbing;
+}
+
+/* Layer name fills the row and truncates rather than wrapping */
+.floormap-layer-name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 4px;
+    font-size: 12px;
+    color: var(--text-color);
+}
+
+/* The eye / lock icon buttons keep the standard icon-button sizing; nudge
+   spacing so they sit tightly at the start of the row */
+/* The eye / lock / add icon buttons. `.icon-button` in stroom-button.css sizes
+   every icon button in the app at 22 × 22, which is under the WCAG 2.5.8 minimum
+   of 24. Widening it there would move every toolbar in Stroom, so it is raised
+   locally for the layer panel's buttons — the row is 28px tall, so there is room
+   without disturbing the layout. */
+.floormap-layer-eye,
+.floormap-layer-lock,
+.floormap-layer-add {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+}
+
+/* Drag handle (Editor): the classic six-dot grip, drawn with a tiled radial
+   gradient so no icon asset is needed. Signals the row can be grabbed to
+   reorder; the whole row is the drag source, and focusing the grip lets the
+   arrow keys do the same job without a pointer.
+
+   It is a real <button> (see FloorMapLayersPresenter), so the first block
+   strips the UA button chrome — border, background, font — that would
+   otherwise draw a box around the dots.
+
+   Sized 24 × 24 for WCAG 2.5.8 while the dot grid itself stays 10 × 16: the
+   padding supplies the extra target area, and background-origin/-clip:
+   content-box keep the `background-repeat: round` tiling inside that 10 × 16
+   box so the larger button does not simply grow more dots. */
+.floormap-layer-grip {
+    flex: 0 0 auto;
+    box-sizing: border-box;
+    width: 24px;
+    height: 24px;
+    padding: 4px 7px;
+    border: 0;
+    margin-right: 2px;
+    font: inherit;
+    color: var(--text-color--low-emphasis);
+    opacity: 0.75;
+    background-color: transparent;
+    background-image: radial-gradient(circle, currentColor 1px, transparent 1.5px);
+    background-size: 4px 5px;
+    background-position: center;
+    background-repeat: round;
+    background-origin: content-box;
+    background-clip: content-box;
+    cursor: grab;
+}
+
+.floormap-layer-row:hover .floormap-layer-grip {
+    opacity: 1;
+}
+
+/* stroom.css removes the outline from every element, so the grip needs its own
+   focus ring — and it needs it more than most, because "which layer will the
+   arrow keys move?" is answerable only from where focus is. */
+.floormap-layer-grip:focus-visible {
+    opacity: 1;
+    box-shadow: var(--focus-shadow);
+    outline: thin solid var(--focus-border);
+}
+
+/* Appearance swatch (Editor): previews the layer's shape in its colour and
+   opens the style dialog. A real <button> (see FloorMapLayersPresenter), so it
+   is focusable and Enter/Space-activatable; these rules strip the UA button
+   chrome that would otherwise box the preview in.
+
+   24 × 24 is the WCAG 2.5.8 minimum target size, not a visual choice — the
+   graphic inside stays SWATCH_SIZE_PX and is centred in the larger box. */
+.floormap-layer-swatch {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    margin-left: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+/* stroom.css kills the outline on every element, so the swatch needs its own
+   focus ring — same treatment as .icon-button in stroom-button.css. */
+.floormap-layer-swatch:focus-visible {
+    box-shadow: var(--focus-shadow);
+    outline: thin solid var(--focus-border);
+}
+
+.floormap-layer-swatch:hover {
+    background-color: rgba(128, 128, 128, 0.15);
+}
+
+/* Layer appearance dialog — align the graphic/shape/image/colour rows */
+.floormap-layer-style-dialog {
+    border-spacing: 8px 10px;
+    /* Shared by the two wide rows below — five icon columns plus their gaps. */
+    --floormap-style-control-width: 388px;
+}
+
+.floormap-layer-style-dialog td {
+    vertical-align: middle;
+}
+
+.floormap-layer-style-dialog td:first-child {
+    text-align: right;
+    white-space: nowrap;
+    color: var(--text-color--low-emphasis);
+}
+
+.floormap-layer-style-dialog td:last-child > * {
+    width: 260px;
+}
+
+/* Whichever of the Shape / Image rows the current mode does not use. */
+.floormap-layer-style-row-dimmed td {
+    opacity: 0.45;
+}
+
+/* Shape | Image mode radios, side by side */
+.floormap-layer-style-modes {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+/* Asset picker + Upload button on one line, picker taking the slack */
+.floormap-layer-style-image {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+/*
+ * The two wide rows — the icon grid and the picker-plus-Upload pair — share one
+ * width, so the dialog has a single edge down its right-hand side rather than a
+ * ragged one.
+ *
+ * It has to be a *definite* width, not 100%. These sit in an auto-layout table,
+ * where a column stretches to its content: sized to fit, the drop-down's label
+ * pulled the whole dialog past 1200px on a deeply nested asset path. A definite
+ * width caps the column, and the label truncates instead, which is what its own
+ * `overflow: hidden` was always for.
+ */
+.floormap-layer-style-dialog td:last-child > .floormap-layer-style-image,
+.floormap-layer-style-dialog td:last-child > .floormap-icon-picker {
+    width: var(--floormap-style-control-width);
+}
+
+.floormap-layer-style-image > :first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.floormap-layer-style-image > :last-child {
+    flex: 0 0 auto;
+}
+
+/*
+ * The platform's drop-down carries a hard width and hangs its ellipsis button
+ * off the right edge with absolute positioning, so when the row is narrower than
+ * that width the button does not travel with the shrinking box — it sits on top
+ * of whatever follows, which here was Upload. Letting the drop-down fill its
+ * flex slot keeps the ellipsis inside the control at any row width, and hands it
+ * the leftover space rather than a fixed 200px, so longer asset paths stay
+ * readable.
+ */
+.floormap-layer-style-image .dropDownView-container {
+    width: 100%;
+    min-width: 0;
+}
+
+/*
+ * Lets the path truncate instead of pushing the control open. A flex item's
+ * default `min-width: auto` is its content size, so without this the label
+ * refuses to shrink below the full path and overflows the drop-down it is meant
+ * to sit inside — the `overflow: hidden` it already carries never gets to bite.
+ * (The dialog's overall width is capped by the definite width above, not here.)
+ */
+.floormap-layer-style-image .dropDownView-label {
+    flex: 1 1 0;
+    min-width: 0;
+    /*
+     * The control's own ellipsis button is pinned inside its right edge, so the
+     * path has to stop before it rather than run underneath. The reserved strip
+     * is the button's 15px plus its 4px offset.
+     */
+    padding-right: 22px;
+    text-overflow: ellipsis;
+}
+
+/* Preview graphic beside its explanatory hint */
+.floormap-layer-style-preview-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.floormap-layer-style-preview {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 3px;
+    background-color: rgba(128, 128, 128, 0.12);
+}
+
+.floormap-layer-style-hint {
+    flex: 1 1 auto;
+    font-size: 0.85em;
+    line-height: 1.3;
+    color: var(--text-color--low-emphasis);
+    white-space: normal;
+}
+
+/* Events Query tab: says why the column dropdowns hold only the mapped columns before a run. */
+.floormap-query-columns-hint {
+    flex: 0 0 auto;
+    margin-left: 10px;
+    font-size: 0.85em;
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
+}
+
+/*
+ * Built-in icon grid. Wider than the 260px the dialog gives its single-control
+ * rows — five columns is what lets every icon's name sit under it unabbreviated,
+ * and a grid of unlabelled pictograms would make the user guess which is which.
+ * Its width comes from --floormap-style-control-width above.
+ */
+.floormap-icon-picker {
+    display: grid;
+    grid-template-columns: repeat(5, 76px);
+    gap: 2px;
+    max-height: 340px;
+    overflow-y: auto;
+}
+
+.floormap-icon-picker--disabled {
+    pointer-events: none;
+}
+
+.floormap-icon-picker__cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 3px 5px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.floormap-icon-picker__cell:hover {
+    background-color: rgba(128, 128, 128, 0.14);
+}
+
+.floormap-icon-picker__cell--selected {
+    border-color: var(--focus-border);
+    background-color: rgba(128, 128, 128, 0.2);
+}
+
+.floormap-icon-picker__glyph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+}
+
+.floormap-icon-picker__label {
+    font-size: 0.72rem;
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
+    color: var(--text-color--low-emphasis);
+}
+
+/* Discovered-but-unsaved type: muted + italic, with an add button */
+.floormap-layer-row--provisional .floormap-layer-name {
+    font-style: italic;
+    color: var(--text-color--low-emphasis);
+}
+
+/* Shown when the panel has no rows at all. Low emphasis on purpose: an empty layer set is an
+   ordinary state, not a fault, and this only exists so that a blank panel does not read as one. */
+.floormap-layer-empty {
+    padding: 8px;
+    color: var(--text-color--low-emphasis);
+    font-style: italic;
+    white-space: normal;
+}
+
+/* .floormap-layer-add is sized with the other layer-row icon buttons above; a
+   second rule here would win on source order and silently undo the 24px target
+   size. */
+
+/* Discover action footer at the foot of the layer list */
+.floormap-layers-footer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 4px 4px 0;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Same 24px minimum target size as the layer-row buttons — the Discover button
+   carries no class of its own, so it is reached through the footer. */
+.floormap-layers-footer .icon-button {
+    width: 24px;
+    height: 24px;
+}
+
+.floormap-layers-footer-label {
+    font-size: 12px;
+    color: var(--text-color--low-emphasis);
+    cursor: pointer;
+}
+
+/* ==========================================================================
+   Groups panel (Map tab dock) and its edit dialog
+   ========================================================================== */
+
+/* Grid cell carrying a leading swatch: keeps the swatch and the text on one
+   line so the cell still ellipsises rather than wrapping. */
+.floormap-cell-with-swatch {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.floormap-cell-swatch {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* --- Set Scale dialog ----------------------------------------------------- */
+
+.floormap-set-scale {
+    display: flex;
+    flex-direction: column;
+    width: 420px;
+    padding: 4px;
+}
+
+.floormap-set-scale-fields {
+    border-spacing: 8px 10px;
+}
+
+.floormap-set-scale-fields td {
+    vertical-align: middle;
+}
+
+.floormap-set-scale-fields td:first-child {
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
+}
+
+.floormap-set-scale-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.floormap-set-scale-distance {
+    width: 110px;
+}
+
+/* --- Group edit dialog --------------------------------------------------- */
+
+.floormap-group-edit {
+    display: flex;
+    flex-direction: column;
+    width: 420px;
+    padding: 4px;
+}
+
+.floormap-group-edit-fields {
+    border-spacing: 8px 10px;
+}
+
+.floormap-group-edit-fields td {
+    vertical-align: middle;
+}
+
+.floormap-group-edit-fields td:first-child {
+    color: var(--text-color--low-emphasis);
+    white-space: nowrap;
+}
+
+.floormap-group-edit-fields input[type="text"] {
+    width: 300px;
+}
+
+.floormap-group-edit-label {
+    margin: 6px 0 4px 8px;
+    color: var(--text-color--low-emphasis);
+}
+
+.floormap-group-edit-filter {
+    margin: 0 8px 6px;
+}
+
+.floormap-group-edit-scroll {
+    height: 240px;
+    margin: 0 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+}
+
+.floormap-group-edit-members {
+    padding: 4px;
+}
+
+/* One candidate row: [checkbox + name] type */
+.floormap-group-edit-member {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 24px;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.floormap-group-edit-member:hover {
+    background-color: rgba(128, 128, 128, 0.12);
+}
+
+/* GWT renders a CheckBox as <span><input><label>, and those two align on the
+   text baseline rather than on their centres — so the label reads a couple of
+   pixels high against the box, which Stroom's global input rules make taller
+   still by giving it a border and vertical padding. Centre them with flex
+   instead of leaning on baseline alignment. */
+.floormap-group-edit-member .gwt-CheckBox {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+}
+
+.floormap-group-edit-member .gwt-CheckBox input[type="checkbox"] {
+    flex: 0 0 auto;
+    /* Breathing room between the box and the name it labels. */
+    margin: 0 6px 0 0;
+}
+
+/* min-width:0 is what lets a long name ellipsise inside the flex line rather
+   than pushing the type label out of the row. */
+.floormap-group-edit-member .gwt-CheckBox label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.floormap-group-edit-member-detail {
+    flex: 0 0 auto;
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-color--low-emphasis);
+}
+
+/* A member the roster has not seen this session — kept, but flagged. */
+.floormap-group-edit-member-detail--absent {
+    font-style: italic;
+}
+
+.floormap-group-edit-empty {
+    padding: 8px;
+    font-style: italic;
+    color: var(--text-color--low-emphasis);
+}
+
+.floormap-group-edit-summary {
+    margin: 6px 8px 2px;
+    font-size: 11px;
+    color: var(--text-color--low-emphasis);
+}

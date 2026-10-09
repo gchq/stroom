@@ -55,6 +55,7 @@ import static org.assertj.core.api.Assertions.within;
 /**
  * Unit test class for <code>XMLTransformer</code>.
  */
+@SuppressWarnings("SequencedCollectionMethodCanBeUsed")
 class TestStatisticsFilter implements Statistics {
 
     private static final String INPUT_DIR = "TestStatisticsFilter/";

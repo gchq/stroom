@@ -22,6 +22,57 @@ public class QuotedStringUtil {
     }
 
     /**
+     * Escapes a value for inclusion in a quoted string literal, so that
+     * {@link #unescape} returns the original value.
+     *
+     * <p>The escape character makes the following character literal, so only two
+     * characters need escaping: the escape character itself, and the quote that
+     * would otherwise end the literal. Backslashes must be doubled <em>before</em>
+     * quotes are escaped, or the backslash introduced by escaping a quote gets
+     * doubled in turn.</p>
+     *
+     * <p>Use this wherever a value is interpolated into generated query text. A
+     * value carrying a quote character otherwise terminates the literal early and
+     * produces malformed query text — a store name or a schema path is quite
+     * capable of containing one, and an XPath legitimately may
+     * ({@code /entry[@type="gate"]}).</p>
+     *
+     * @param value      the raw value; {@code null} yields an empty string so
+     *                   callers can append unconditionally
+     * @param quoteChar  the quote character the literal is delimited by
+     * @param escapeChar the escape character, normally a backslash
+     * @return the escaped value, without surrounding quotes
+     */
+    public static String escape(final String value,
+                                final char quoteChar,
+                                final char escapeChar) {
+        if (value == null) {
+            return "";
+        }
+        final StringBuilder sb = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            final char c = value.charAt(i);
+            if (c == escapeChar || c == quoteChar) {
+                sb.append(escapeChar);
+            }
+            sb.append(c);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Escapes a value for a double-quoted literal using the standard backslash
+     * escape character — the form StroomQL's {@code from} clause and function
+     * arguments use.
+     *
+     * @param value the raw value; {@code null} yields an empty string
+     * @return the escaped value, without surrounding quotes
+     */
+    public static String escapeDoubleQuoted(final String value) {
+        return escape(value, '"', '\\');
+    }
+
+    /**
      * Remove the outer quotes (first and last char in the array) and unescape all
      * escaped characters.
      *

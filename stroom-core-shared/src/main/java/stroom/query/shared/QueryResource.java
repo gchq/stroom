@@ -20,6 +20,7 @@ import stroom.dashboard.shared.ColumnValues;
 import stroom.dashboard.shared.DashboardSearchResponse;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
+import stroom.query.api.ExpressionOperator;
 import stroom.util.shared.FetchWithUuid;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourcePaths;
@@ -178,5 +179,13 @@ public interface QueryResource extends RestResource, DirectRestService, FetchWit
             summary = "Fetch a data source from a query string",
             operationId = "fetchDataSourceFromQueryString")
     DocRef fetchDataSourceFromQueryString(
+            @Parameter(description = "query", required = true) String query);
+
+    @POST
+    @Path("/parseQuery")
+    @Operation(
+            summary = "Parse a query string into an ExpressionOperator",
+            operationId = "parseQuery")
+    ExpressionOperator parseQuery(
             @Parameter(description = "query", required = true) String query);
 }

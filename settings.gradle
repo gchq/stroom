@@ -105,10 +105,13 @@ include 'stroom-credentials:stroom-credentials-impl-db'
 include 'stroom-dashboard-gwt'
 include 'stroom-dashboard:stroom-dashboard-client'
 include 'stroom-dashboard:stroom-dashboard-impl'
-include 'stroom-dashboard:stroom-dashboard-impl-db'
 include 'stroom-dashboard:stroom-storedquery-api'
 include 'stroom-dashboard:stroom-storedquery-impl'
 include 'stroom-dashboard:stroom-storedquery-impl-db'
+
+// Document Asset
+include 'stroom-document-asset:stroom-document-asset-impl'
+include 'stroom-document-asset:stroom-document-asset-impl-db'
 
 // Data projects
 include 'stroom-data:stroom-data-retention-api'
@@ -123,6 +126,9 @@ include 'stroom-data:stroom-data-zip'
 
 // DataGen
 include 'stroom-datagen:stroom-datagen-impl'
+
+// Floor Map
+include 'stroom-floormap:stroom-floormap-impl'
 
 // DB Utilities
 include 'stroom-db-util'
@@ -282,6 +288,13 @@ include 'stroom-security:stroom-security-impl-db'
 include 'stroom-security:stroom-security-mock'
 include 'stroom-security:stroom-security-openid-api'
 include 'stroom-security:stroom-security-user-api'
+
+// SQL Store
+include 'stroom-sqlstore:stroom-sqlstore-api'
+include 'stroom-sqlstore:stroom-sqlstore-shared'
+include 'stroom-sqlstore:stroom-sqlstore-impl'
+include 'stroom-sqlstore:stroom-sqlstore-impl-db'
+include 'stroom-sqlstore:stroom-sqlstore-impl-db-jooq'
 
 // SSL Tests
 include 'stroom-ssl-test'

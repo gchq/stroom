@@ -204,6 +204,9 @@ public class SessionDb extends AbstractDb<Session, Session> {
             case DOUBLE -> new DoubleSessionSerde(byteBuffers, timeSerde);
             case STRING -> new LimitedStringSessionSerde(byteBuffers,
                     Db.MAX_KEY_LENGTH - timeSerde.getSize(), timeSerde);
+            // See KeyPrefixSerdeFactory: prefix-freeness only buys anything where the read seeks.
+            case TERMINATED_STRING -> throw new IllegalArgumentException(
+                    "TERMINATED_STRING keys are only supported by temporal state stores");
             case UID_LOOKUP -> {
                 final UidLookupDb uidLookupDb = new UidLookupDb(
                         env,

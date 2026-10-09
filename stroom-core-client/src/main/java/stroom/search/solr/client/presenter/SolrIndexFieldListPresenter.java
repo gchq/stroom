@@ -285,6 +285,7 @@ public class SolrIndexFieldListPresenter extends DocPresenter<SolrIndexFieldList
 
     private void onRemove() {
         final List<SolrIndexField> list = selectionModel.getSelectedItems();
+        //noinspection SizeReplaceableByIsEmpty
         if (list != null && list.size() > 0) {
             String message = "Are you sure you want to delete the selected field?";
             if (list.size() > 1) {

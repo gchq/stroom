@@ -465,6 +465,55 @@ appConfig:
       refreshAfterWrite: null
       statisticsMode: "INTERNAL"
     physicalDeleteAge: "P30D"
+  documentAsset:
+    aceEditorModes:
+      css: "CSS"
+      htm: "HTML"
+      html: "HTML"
+      js: "JAVASCRIPT"
+      svg: "XML"
+      txt: "TEXT"
+      xml: "XML"
+    assetCacheDir: "asset_cache"
+    clearAssetCacheOnStartup: false
+    default: "application/octet-stream"
+    defaultAceEditorMode: "TEXT"
+    maxUploadSize: "50M"
+    mimetypes:
+      apng: "image/apng"
+      avif: "image/avif"
+      bmp: "image/bmp"
+      css: "text/css"
+      gif: "image/gif"
+      htm: "text/html"
+      html: "text/html"
+      ico: "image/vnd.microsoft.icon"
+      jpeg: "image/jpeg"
+      jpg: "image/jpeg"
+      js: "text/javascript"
+      png: "image/png"
+      svg: "image/svg+xml"
+      tif: "image/tiff"
+      tiff: "image/tiff"
+      txt: "text/plain"
+      webp: "image/webp"
+      xml: "application/xml"
+  documentAssetDb:
+    connection:
+      jdbcDriverClassName: null
+      jdbcDriverPassword: null
+      jdbcDriverUrl: null
+      jdbcDriverUsername: null
+    connectionPool:
+      cachePrepStmts: false
+      connectionTimeout: "PT30S"
+      idleTimeout: "PT10M"
+      leakDetectionThreshold: "PT0S"
+      maxLifetime: "PT30M"
+      maxPoolSize: 30
+      minimumIdle: 10
+      prepStmtCacheSize: 25
+      prepStmtCacheSqlLimit: 256
   elastic:
     client:
       maxConnections: 30
@@ -1279,6 +1328,23 @@ appConfig:
     search:
       maxBooleanClauseCount: 1024
       maxStoredDataQueueSize: 1000
+  sqlStore:
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverPassword: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+      connectionPool:
+        cachePrepStmts: false
+        connectionTimeout: "PT30S"
+        idleTimeout: "PT10M"
+        leakDetectionThreshold: "PT0S"
+        maxLifetime: "PT30M"
+        maxPoolSize: 30
+        minimumIdle: 10
+        prepStmtCacheSize: 25
+        prepStmtCacheSqlLimit: 256
   statistics:
     internal:
       benchmarkCluster:
@@ -1470,52 +1536,6 @@ appConfig:
     pathPrefix: null
     port: null
     scheme: "https"
-  visualisationAsset:
-    aceEditorModes:
-      css: "CSS"
-      htm: "HTML"
-      html: "HTML"
-      js: "JAVASCRIPT"
-      svg: "XML"
-      txt: "TEXT"
-      xml: "XML"
-    assetCacheDir: "asset_cache"
-    clearAssetCacheOnStartup: false
-    default: "application/octet-stream"
-    defaultAceEditorMode: "TEXT"
-    mimetypes:
-      apng: "image/apng"
-      bmp: "image/bmp"
-      css: "text/css"
-      gif: "image/jpeg"
-      htm: "text/html"
-      html: "text/html"
-      jpeg: "image/jpeg"
-      jpg: "image/jpeg"
-      js: "text/javascript"
-      png: "image/png"
-      svg: "image/svg+xml"
-      tif: "image/tiff"
-      tiff: "image/tiff"
-      txt: "text/plain"
-      webp: "image/webp"
-      xml: "application/xml"
-  visualisationAssetDb:
-    connection:
-      jdbcDriverClassName: null
-      jdbcDriverPassword: null
-      jdbcDriverUrl: null
-      jdbcDriverUsername: null
-    connectionPool:
-      cachePrepStmts: false
-      connectionTimeout: "PT30S"
-      idleTimeout: "PT10M"
-      leakDetectionThreshold: "PT0S"
-      maxLifetime: "PT30M"
-      maxPoolSize: 30
-      minimumIdle: 10
-      prepStmtCacheSize: 25
-      prepStmtCacheSqlLimit: 256
   volumes:
     createDefaultIndexVolumesOnStart: true
     defaultIndexVolumeFilesystemUtilisation: 0.9

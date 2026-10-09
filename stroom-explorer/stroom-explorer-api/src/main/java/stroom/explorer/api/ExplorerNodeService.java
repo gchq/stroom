@@ -59,6 +59,12 @@ public interface ExplorerNodeService {
 
     Optional<ExplorerNode> getNode(DocRef docRef);
 
+    /**
+     * Get a node by its document UUID alone, for callers that do not know the document type.
+     * Only returns a node the current user has permission to use.
+     */
+    Optional<ExplorerNode> getNodeByUuid(String uuid);
+
     List<ExplorerNode> getPath(DocRef docRef);
 
     Optional<ExplorerNode> getParent(DocRef docRef);

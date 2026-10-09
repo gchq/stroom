@@ -16,7 +16,6 @@
 
 package stroom.processor.impl.dao;
 
-import stroom.processor.impl.db.jooq.tables.ProcessorTask;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;

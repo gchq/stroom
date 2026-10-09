@@ -16,17 +16,24 @@
 
 package stroom.widget.popup.client.event;
 
+import stroom.widget.popup.client.view.DialogAction;
+
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master.
+// Part of "Dialog box validation now supports disabling only the OK button" - a local addition
+// upstream does not have. FloorMap's edit dialogs rely on it, so keep this side on merge.
 public class DisablePopupEvent extends GwtEvent<DisablePopupEvent.Handler> {
 
     private static Type<Handler> TYPE;
     private final PresenterWidget<?> presenterWidget;
+    private final DialogAction action;
 
-    private DisablePopupEvent(final PresenterWidget<?> presenterWidget) {
+    private DisablePopupEvent(final PresenterWidget<?> presenterWidget, final DialogAction action) {
         this.presenterWidget = presenterWidget;
+        this.action = action;
     }
 
     public static Builder builder(final PresenterWidget<?> presenterWidget) {
@@ -54,6 +61,10 @@ public class DisablePopupEvent extends GwtEvent<DisablePopupEvent.Handler> {
         return presenterWidget;
     }
 
+    public DialogAction getAction() {
+        return action;
+    }
+
     public interface Handler extends EventHandler {
 
         void onDisable(DisablePopupEvent event);
@@ -62,13 +73,19 @@ public class DisablePopupEvent extends GwtEvent<DisablePopupEvent.Handler> {
     public static class Builder {
 
         private final PresenterWidget<?> presenterWidget;
+        private DialogAction action;
 
         public Builder(final PresenterWidget<?> presenterWidget) {
             this.presenterWidget = presenterWidget;
         }
 
+        public Builder action(final DialogAction action) {
+            this.action = action;
+            return this;
+        }
+
         public void fire() {
-            presenterWidget.fireEvent(new DisablePopupEvent(presenterWidget));
+            presenterWidget.fireEvent(new DisablePopupEvent(presenterWidget, action));
         }
     }
 }

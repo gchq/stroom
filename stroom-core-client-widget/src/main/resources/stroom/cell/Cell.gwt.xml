@@ -8,6 +8,7 @@
   <inherits name='stroom.cell.info.Info' />
   <inherits name='stroom.cell.valuespinner.ValueSpinner' />
   <inherits name='stroom.cell.list.CellList' />
+  <inherits name='stroom.cell.colour.Colour' />
 
   <source path="client" />
 </module>

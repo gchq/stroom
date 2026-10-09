@@ -1,0 +1,179 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:datetimebox="urn:import:stroom.widget.datepicker.client"
+             xmlns:colour="urn:import:stroom.widget.colour.client">
+
+    <ui:style>
+        .matrixBox {
+            width: 80px !important;
+            min-width: 80px !important;
+            margin-right: 8px;
+        }
+
+        .fillDefault {
+            margin-right: 12px;
+        }
+
+        .unitSuffix {
+            white-space: nowrap;
+        }
+    </ui:style>
+
+    <g:FlowPanel addStyleNames="max dock-container-vertical form overflow-y-auto">
+
+                <form:FormGroup label="Name" identity="floorMapObjectName">
+                    <form:HelpHTML>
+                        <p>The object's display name. It appears in the <em>Fact List</em> (the
+                            Name column) and the <em>Time List</em> summary. It is not drawn on
+                            the map: a shape (imageless) object is labelled on the map with its
+                            key, and image objects carry no text label.</p>
+                    </form:HelpHTML>
+                    <g:TextBox ui:field="nameBox" addStyleNames="stroom-control wide-control" />
+                </form:FormGroup>
+
+                <form:FormGroup label="Type" identity="floorMapObjectType">
+                    <form:HelpHTML>
+                        <p>The object's <strong>type</strong> — for example <code>gate</code>,
+                            <code>camera</code> or <code>person</code>. The type drives the paint
+                            (z) order and the default shape and colour used when the object has no
+                            image (see <em>Type Styles</em> on the Settings tab).</p>
+                        <p><strong>Required</strong> — the object cannot be saved without a
+                            type.</p>
+                    </form:HelpHTML>
+                    <g:TextBox ui:field="typeBox" addStyleNames="stroom-control wide-control" />
+                </form:FormGroup>
+
+                <form:FormGroup label="Image">
+                    <form:HelpHTML>
+                        <p>An optional image chosen from the Asset store. When set, the object is
+                            drawn as that image (a background is simply an image fact); leave it
+                            empty to draw the type's default shape instead.</p>
+                    </form:HelpHTML>
+                    <g:SimplePanel ui:field="chooseImgContainer" addStyleNames="wide-control" />
+                </form:FormGroup>
+
+                <form:FormGroup ui:field="fillGroup" label="Area Fill Colour">
+                    <form:HelpHTML>
+                        <p>The colour used to fill this area on the map. Leave
+                            <em>Default</em> ticked to use the colour configured for the
+                            <code>area</code> type on the Settings tab (see <em>Type
+                            Styles</em>) — the swatch shows that colour; untick it to give
+                            this area its own colour.</p>
+                    </form:HelpHTML>
+                    <g:FlowPanel ui:field="fillRow" addStyleNames="dock-container-horizontal align-center">
+                        <g:CheckBox ui:field="fillDefaultCheck" text="Default" addStyleNames="{style.fillDefault}" />
+                        <colour:ColourBox ui:field="fillBox" />
+                    </g:FlowPanel>
+                </form:FormGroup>
+
+                <form:FormGroup ui:field="opacityGroup" label="Area Fill Opacity" identity="floorMapObjectOpacity">
+                    <form:HelpHTML>
+                        <p>How translucent the area's fill is, from <code>0</code>
+                            (invisible) to <code>1</code> (opaque). Leave empty for the
+                            default (<code>0.3</code>).</p>
+                    </form:HelpHTML>
+                    <g:TextBox ui:field="opacityBox" addStyleNames="stroom-control wide-control" />
+                </form:FormGroup>
+
+                <form:FormGroup ui:field="verticesGroup" label="Vertices">
+                    <form:HelpHTML>
+                        <p>The number of corners in this area's polygon. The shape is
+                            drawn on the canvas ("Draw Area Here") and is not edited
+                            numerically here — move, scale and rotate it with the
+                            normal selection handles, or delete the area and draw it
+                            again to change its outline.</p>
+                    </form:HelpHTML>
+                    <g:Label ui:field="vertexCountLabel" />
+                </form:FormGroup>
+
+                <form:FormGroup label="Effective From Time">
+                    <form:HelpHTML>
+                        <p>The time from which this version of the object takes effect. The map
+                            shows the version in force at the timeline position, so an object can
+                            change over time.</p>
+                        <p>Changing this on an existing version asks whether to <em>move</em> the
+                            version to the new time or keep a <em>copy</em> at the old time.</p>
+                    </form:HelpHTML>
+                    <datetimebox:DateTimeBox ui:field="effectiveTimeBox" addStyleNames="timeline-date-box wide-control" />
+                </form:FormGroup>
+
+                <form:FormGroup label="Position (X, Y) in metres">
+                    <form:HelpHTML>
+                        <p>Where the object sits on the map, in <strong>metres</strong>, measured
+                            from the map's origin. X increases to the right and Y upwards.</p>
+                        <p>This is the same position you set by dragging the object on the map —
+                            which shows the identical figures in a label beside the cursor — so
+                            you only need to type here when you know the exact coordinates.</p>
+                        <p>For an <em>area</em> this is the centre of its outline; for a
+                            background or other image, the point the image is placed from.</p>
+                    </form:HelpHTML>
+                    <g:FlowPanel ui:field="positionRow" addStyleNames="dock-container-horizontal align-center">
+                        <g:TextBox ui:field="posX" addStyleNames="stroom-control {style.matrixBox}" />
+                        <g:TextBox ui:field="posY" addStyleNames="stroom-control {style.matrixBox}" />
+                        <g:Label ui:field="posUnit" text="m" addStyleNames="{style.unitSuffix}" />
+                    </g:FlowPanel>
+                </form:FormGroup>
+                <form:FormGroup ui:field="sizeGroup" label="Size (Width, Height) in metres">
+                    <form:HelpHTML>
+                        <p>How big the object is on the map, in <strong>metres</strong>: its own
+                            width and height, measured along its own axes rather than across the
+                            box it occupies once rotated.</p>
+                        <p>Width and height are set independently here, so typing them can stretch
+                            an object out of proportion; dragging a corner handle on the map always
+                            keeps its proportions.</p>
+                        <p>Shown for anything with a real extent — background and other images,
+                            measured across the image, and areas, measured across their outline.
+                            A plain shape marker is drawn at a fixed size on screen and has no
+                            size to set.</p>
+                    </form:HelpHTML>
+                    <g:FlowPanel ui:field="sizeRow" addStyleNames="dock-container-horizontal align-center">
+                        <g:TextBox ui:field="sizeW" addStyleNames="stroom-control {style.matrixBox}" />
+                        <g:TextBox ui:field="sizeH" addStyleNames="stroom-control {style.matrixBox}" />
+                        <g:Label ui:field="sizeUnit" text="m" addStyleNames="{style.unitSuffix}" />
+                    </g:FlowPanel>
+                </form:FormGroup>
+                <form:FormGroup ui:field="scaleGroup" label="Scale (X, Y)">
+                    <form:HelpHTML>
+                        <p>The <strong>scale</strong> part of the transform that places the object
+                            on the map, as a multiplier of its natural size.</p>
+                        <p>Shown only for objects whose size cannot be stated in metres — anything
+                            with a real extent offers a <em>Size</em> in metres above instead.</p>
+                    </form:HelpHTML>
+                    <g:FlowPanel ui:field="scaleRow" addStyleNames="dock-container-horizontal align-center">
+                        <g:TextBox ui:field="w2mSx" addStyleNames="stroom-control {style.matrixBox}" />
+                        <g:TextBox ui:field="w2mSy" addStyleNames="stroom-control {style.matrixBox}" />
+                    </g:FlowPanel>
+                </form:FormGroup>
+
+                <form:FormGroup label="Rotation (degrees)">
+                    <form:HelpHTML>
+                        <p>How far the object is turned on the map, in degrees, counter-clockwise
+                            about its own centre.</p>
+                        <p>Dragging the round handle above the object's selection frame sets this
+                            for you, holding <strong>Shift</strong> to snap to 15&#176; steps.</p>
+                    </form:HelpHTML>
+                    <g:FlowPanel ui:field="rotationRow" addStyleNames="dock-container-horizontal align-center">
+                        <g:TextBox ui:field="w2mRot" addStyleNames="stroom-control {style.matrixBox}" />
+                    </g:FlowPanel>
+                </form:FormGroup>
+
+    </g:FlowPanel>
+</ui:UiBinder>

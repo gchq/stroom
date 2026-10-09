@@ -44,7 +44,6 @@ import stroom.util.concurrent.UncheckedInterruptedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.NullSafe;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.SlicedScroll;
@@ -76,7 +75,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -182,6 +180,7 @@ public class ElasticSearchTaskHandler {
                                                   final AtomicLong hitCount,
                                                   final ElasticConnectionConfig connectionConfig) {
 
+        @SuppressWarnings("unchecked")
         final CompletableFuture<Void>[] futures = new CompletableFuture[elasticIndex.getSearchSlices()];
         final Executor executor = executorProvider.get(SCROLL_REQUEST_THREAD_POOL);
 
@@ -350,6 +349,7 @@ public class ElasticSearchTaskHandler {
             final boolean performRerank = rerankModel != null && !queryParams.getKnnFieldQueries().isEmpty();
             if (performRerank) {
                 for (final String fieldName : rerankScoreFieldNames) {
+                    @SuppressWarnings("unused")
                     final Map<String, Double> docIdToScoreMap = fieldToDocIdScores
                             .computeIfAbsent(fieldName, k -> new HashMap<>());
                     rerankSearchHits(elasticIndex, queryParams, rerankModel, searchHits, fieldName, docIdToScoreMap);

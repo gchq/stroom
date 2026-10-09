@@ -22,6 +22,8 @@ dependencies {
     implementation project(':stroom-query:stroom-query-api')
     implementation project(':stroom-query:stroom-query-common')
     implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-sqlstore:stroom-sqlstore-api')
+    implementation project(':stroom-sqlstore:stroom-sqlstore-shared')
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
     implementation project(':stroom-explorer:stroom-explorer-api')
@@ -36,6 +38,8 @@ dependencies {
     implementation libs.fast.infoset
     implementation libs.guice.assistedinject
     implementation libs.jackson.databind
+    implementation libs.jaxb.api
+    compileOnly libs.jaxb.api.gwt
     implementation libs.kryo
     implementation libs.langchain4j
     implementation libs.lmdbjava

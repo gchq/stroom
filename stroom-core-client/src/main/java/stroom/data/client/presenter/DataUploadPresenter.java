@@ -50,7 +50,6 @@ public class DataUploadPresenter
     private DocRef feedRef;
     private MetaPresenter metaPresenter;
     private final DataTypeUiManager dataTypeUiManager;
-    private final RestFactory restFactory;
     private final FeedClient feedClient;
     private HidePopupRequestEvent currentHideRequest;
 
@@ -62,7 +61,6 @@ public class DataUploadPresenter
                                final DataTypeUiManager dataTypeUiManager) {
         super(eventBus, view);
         this.dataTypeUiManager = dataTypeUiManager;
-        this.restFactory = restFactory;
         this.feedClient = feedClient;
 
         view.getFileUpload().setAction(ImportUtil.getImportFileURL());
@@ -79,6 +77,7 @@ public class DataUploadPresenter
                             getView().getMetaData(),
                             fileName);
 
+                    //noinspection unused
                     restFactory
                             .create(DATA_RESOURCE)
                             .method(res -> res.upload(request))
@@ -136,6 +135,7 @@ public class DataUploadPresenter
     private void fireShowPopup(final FeedDoc feedDoc) {
         final PopupSize popupSize = PopupSize.resizable(430, 480);
 
+        //noinspection unused
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
                 .popupSize(popupSize)

@@ -43,6 +43,10 @@ public class KeyPrefixSerdeFactory {
             case FLOAT -> new FloatKeySerde(byteBuffers);
             case DOUBLE -> new DoubleKeySerde(byteBuffers);
             case STRING -> new LimitedStringKeySerde(byteBuffers);
+            // Only temporal state stores read by seeking per key, so only they need a prefix-free
+            // encoding. Implementing it here would offer a key type with no reader that benefits.
+            case TERMINATED_STRING -> throw new IllegalArgumentException(
+                    "TERMINATED_STRING keys are only supported by temporal state stores");
             case UID_LOOKUP -> {
                 final UidLookupDb uidLookupDb = new UidLookupDb(
                         env,

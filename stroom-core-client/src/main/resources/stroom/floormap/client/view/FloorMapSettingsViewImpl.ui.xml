@@ -1,0 +1,122 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client">
+
+    <g:FlowPanel styleName="max dock-container-vertical form-padding form">
+        <!-- Events Store (FloorMap Event Store) Reference Selection -->
+        <form:FormGroup label="Events Store">
+            <form:HelpHTML>
+                <p>The temporal store supplying the map's time-varying <strong>events</strong> —
+                    for example people or vehicles whose position changes over time. Events are
+                    drawn as the overlay that moves (and leaves a fading trail) as the timeline
+                    plays.</p>
+                <p>Must be a <strong>FloorMap Event Store</strong>, which is the document type
+                    that fixes the key encoding the map's point-in-time read needs, and that carries
+                    the event expiry. Leave blank if the map has no moving events.</p>
+            </form:HelpHTML>
+            <g:SimplePanel ui:field="eventsStoreRefContainer" />
+        </form:FormGroup>
+        <!-- Facts Store (SQL Temporal Store) Reference Selection -->
+        <form:FormGroup label="Facts Store">
+            <form:HelpHTML>
+                <p>The temporal store supplying the map's <strong>facts</strong> — the
+                    longer-lived content such as background images, gates, desks and rooms, and
+                    static details about the entities on the map, such as a person's name.</p>
+                <p>Each fact is versioned over time, so the map shows how the space was arranged
+                    at the moment selected on the timeline. This is also the store the Editor tab
+                    reads and writes, and the one <strong>Discover</strong> (below) scans for
+                    types.</p>
+                <p>Must be an <strong>SQL Temporal Store</strong>.</p>
+            </form:HelpHTML>
+            <g:SimplePanel ui:field="factsStoreRefContainer" />
+        </form:FormGroup>
+        <!-- Value Format -->
+        <form:FormGroup label="Value Format">
+            <form:HelpHTML>
+                <p>How each stored entry's <em>value</em> is encoded. The <strong>Value
+                    Schema</strong> paths below are interpreted against this format.</p>
+                <ul>
+                    <li><strong>JSON</strong> — paths are JSON field names, e.g.
+                        <code>.type</code> or <code>.coords</code>.</li>
+                    <li><strong>XML</strong> — paths address elements/attributes within the XML
+                        value.</li>
+                </ul>
+                <p>Set this to match how your feed or pipeline writes the store. Changing it
+                    re-interprets every entry, so only change it if the stored format really
+                    changed.</p>
+            </form:HelpHTML>
+            <g:SimplePanel ui:field="valueFormatContainer" />
+        </form:FormGroup>
+        <!-- Value Schema -->
+        <form:FormGroup label="Value Schema" addStyleNames="stroom-floormap-settings-section">
+            <form:HelpHTML>
+                <p>Tells the map how to read each stored value by mapping a <strong>Role</strong>
+                    (what the renderer needs) to a <strong>Path</strong> within the value.
+                    <em>Display Name</em> is an optional label for the field and <em>Default</em>
+                    is used when the field is absent from an entry.</p>
+                <p>The main roles:</p>
+                <ul>
+                    <li><strong>Type</strong> — the fact's type; drives paint order and the
+                        default graphic (configured on the Layers panel).</li>
+                    <li><strong>Label</strong> — the name shown on the map.</li>
+                    <li><strong>Position</strong> — the world coordinates <code>[x, y]</code> of a
+                        point fact.</li>
+                    <li><strong>Image</strong> — an Asset Store image URL. A fact with an image is
+                        drawn as a scaled image; a background is simply an image fact.</li>
+                    <li><strong>World-to-Map</strong> — a 6-element affine matrix
+                        <code>[a, b, c, d, e, f]</code> that positions, scales and rotates the fact
+                        in map space.</li>
+                </ul>
+                <p>Use the toolbar to add or remove a mapping.</p>
+            </form:HelpHTML>
+            <g:FlowPanel>
+                <g:SimplePanel ui:field="schemaToolbarContainer" />
+                <g:SimplePanel ui:field="schemaGridContainer" height="250px" />
+            </g:FlowPanel>
+        </form:FormGroup>
+        <!-- The two generated reads, editable. Everything fragile about them - the store, the
+             bucket width, the time bounds and the read mode - is passed as a parameter or on the
+             request, so what is left here is filtering and field selection. -->
+        <form:FormGroup label="Histogram Query">
+            <form:HelpHTML>
+                <p>Counts the events behind the timeline's <strong>density bars</strong>. Returns one
+                    row per bucket, which is what keeps its size bounded by the visible range rather
+                    than by how many events the store holds.</p>
+                <p>The bucket width arrives as <code>param('bucketWidth')</code> and changes as you
+                    zoom, so leave that alone. Add a <code>where</code> clause to count only some
+                    events.</p>
+            </form:HelpHTML>
+            <g:TextArea ui:field="histogramQuery" addStyleNames="allow-focus w-100"
+                        visibleLines="5"/>
+        </form:FormGroup>
+        <form:FormGroup label="Show All Query">
+            <form:HelpHTML>
+                <p>Finds the first and last event times, which is what the timeline's
+                    <strong>Show All</strong> button fits to.</p>
+                <p>Deliberately unbounded: a time bound here could never reach data earlier than
+                    what is already shown, which is the one thing Show All exists to do. Note that a
+                    <code>where</code> clause narrows the extent, so Show All would fit to the
+                    filtered subset rather than to the store.</p>
+            </form:HelpHTML>
+            <g:TextArea ui:field="extentQuery" addStyleNames="allow-focus w-100"
+                        visibleLines="3"/>
+        </form:FormGroup>
+    </g:FlowPanel>
+</ui:UiBinder>

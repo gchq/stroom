@@ -53,6 +53,7 @@ import stroom.planb.shared.PlanBDocument;
 import stroom.planb.shared.TemporalPrecision;
 import stroom.planb.shared.TemporalStateSettings;
 import stroom.query.api.DateTimeSettings;
+import stroom.query.api.ExpressionUtil;
 import stroom.query.common.v2.ExpressionPredicateFactory;
 import stroom.query.language.functions.FieldIndex;
 import stroom.query.language.functions.Val;
@@ -73,6 +74,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
 
@@ -246,6 +248,180 @@ public class TemporalStateDb extends AbstractDb<TemporalKey, Val> {
                     valuesExtractor,
                     dbi);
             return null;
+        });
+    }
+
+    // STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master. Everything from here to
+    // getKeyExtractionFunction is this fork's, added for the FloorMap Event Store. origin/master has
+    // no equivalent, so an incoming version of this file will not contain it and must not be allowed
+    // to remove it. Nothing upstream calls it: search() above is untouched.
+
+    /// Emits the newest entry at or before `asAt` for each key, ignoring keys whose newest
+    /// entry in scope predates `notBefore`.
+    ///
+    /// **The caller states the read it wants.** Nothing here is inferred from the shape of the
+    /// expression: [#search] decides nothing, and this method is reached only by a caller that
+    /// asked for a snapshot and supplied the instant to take it at. That is the whole point of it
+    /// being separate — a read mode guessed from whether a time term happens to be `<` rather
+    /// than `>` is a guess that silently changes what a query means.
+    ///
+    /// **Precondition: the store's key encoding must be prefix-free.** Advancing past a key
+    /// jumps beyond `prefix + 0xFF...`, which is greater than every key sharing that prefix —
+    /// but **also greater than every longer key beginning with those bytes**. Where keys can
+    /// extend one another, as they can under `VARIABLE` or `STRING`, the longer key is
+    /// skipped and silently never emitted. `KeyType.TERMINATED_STRING` exists to satisfy this;
+    /// see `TerminatedStringKeySerde`. This class also serves stores with other encodings
+    /// through [#search], so the precondition belongs to the caller, not to the store.
+    ///
+    /// **Why seek rather than scan.** Entries are stored under `prefix + time`, so LMDB's
+    /// ordering groups every entry for one key together in ascending time order. A key's answer is
+    /// found by seeking straight to `prefix + asAt` and stepping back, rather than by reading
+    /// the key's whole history. The scan costs O(rows in the store); this costs O(keys × log n),
+    /// and the rows in between are never deserialised — so cost stops growing with retention.
+    ///
+    /// Two details worth knowing. **A predicate makes it a short backward walk, not a single
+    /// seek**, because the contract is the newest row that *satisfies* the expression; with
+    /// no predicate, the common case, it is one step. And **a coarse `TemporalPrecision` does
+    /// not affect the seek**, because stored times are truncated by the same serde that encodes
+    /// `asAt` here — though note `notBefore` is compared against those truncated stored
+    /// times without being truncated itself, so at a coarse precision a key can fall on the wrong
+    /// side of the floor by up to one tick. Moot at `MILLISECOND`.
+    ///
+    /// Unlike the inferred path this replaces, the expression is applied **whole**. Time terms
+    /// are not stripped: with the mode explicit there is no framework-injected range to remove, so
+    /// stripping could only discard a filter the user wrote themselves.
+    ///
+    /// @param asAt      the instant to take the snapshot at; required
+    /// @param notBefore the floor below which a key is considered to have nothing in scope, or
+    ///                  `null` for no floor. A key whose newest entry at or before `asAt`
+    ///                  predates this is omitted rather than returned stale, which is what makes
+    ///                  expiry a property of the read rather than a filter over its result
+    public void searchSnapshot(final ExpressionCriteria criteria,
+                               final FieldIndex fieldIndex,
+                               final DateTimeSettings dateTimeSettings,
+                               final ExpressionPredicateFactory expressionPredicateFactory,
+                               final ValuesConsumer consumer,
+                               final Instant asAt,
+                               final Instant notBefore) {
+        Objects.requireNonNull(asAt, "asAt is required for a snapshot read");
+
+        env.read(readTxn -> {
+            // Ensure we have fields for all expression criteria, and do so before the extractor
+            // snapshots the field list.
+            ExpressionUtil.fields(criteria.getExpression()).forEach(fieldIndex::create);
+
+            final ValuesExtractor valuesExtractor = createValuesExtractor(
+                    fieldIndex,
+                    getKeyExtractionFunction(readTxn),
+                    getValExtractionFunction(readTxn));
+            final Predicate<Values> predicate = expressionPredicateFactory
+                    .createOptional(
+                            criteria.getExpression(),
+                            PlanBSearchHelper.createValueFunctionFactories(fieldIndex),
+                            dateTimeSettings)
+                    .orElse(vals -> true);
+
+            // Walk the distinct key prefixes, seeking each one's answer.
+            ByteBuffer prefix = null;
+            while (true) {
+                final ByteBuffer next = nextPrefix(readTxn, prefix);
+                if (next == null) {
+                    break;
+                }
+                emitLatestAsAt(readTxn, next, asAt, notBefore, valuesExtractor, predicate, consumer);
+                prefix = next;
+            }
+
+            return null;
+        });
+    }
+
+    /// The key prefix of the first entry belonging to a key after `afterPrefix`, or
+    /// `null` when none remains.
+    ///
+    /// A prefix followed by `0xFF` across the time field is the greatest key that prefix can
+    /// take — the comparator is unsigned — so the first key beyond it belongs to another key. That
+    /// avoids needing to know anything about the time encoding's range.
+    ///
+    /// @param afterPrefix the prefix just handled, or `null` to start at the first entry
+    private ByteBuffer nextPrefix(final Txn<ByteBuffer> readTxn, final ByteBuffer afterPrefix) {
+        if (afterPrefix == null) {
+            return firstPrefix(readTxn, LmdbKeyRange.all());
+        }
+        // Pooled and direct: LMDB will not accept a heap buffer as a cursor bound.
+        return byteBuffers.use(afterPrefix.remaining() + timeSerde.getSize(), buffer -> {
+            buffer.put(afterPrefix.duplicate());
+            for (int i = 0; i < timeSerde.getSize(); i++) {
+                buffer.put((byte) 0xFF);
+            }
+            buffer.flip();
+            return firstPrefix(readTxn, LmdbKeyRange.builder().start(buffer, false).build());
+        });
+    }
+
+    /// The key prefix of the first entry in `keyRange`, copied to the heap so it outlives the
+    /// cursor, or `null` where the range is empty.
+    private ByteBuffer firstPrefix(final Txn<ByteBuffer> readTxn, final LmdbKeyRange keyRange) {
+        try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi, keyRange)) {
+            for (final LmdbEntry entry : iterable) {
+                final ByteBuffer key = entry.getKey();
+                final int prefixLength = key.remaining() - timeSerde.getSize();
+                final ByteBuffer prefix = ByteBuffer.allocate(prefixLength);
+                prefix.put(key.slice(key.position(), prefixLength));
+                return prefix.flip();
+            }
+        }
+        return null;
+    }
+
+    /// The effective time of a stored key, read from its trailing time field.
+    ///
+    /// Keys are `prefix + time` with the time last and of fixed width, which is what makes
+    /// this a slice rather than a decode.
+    private Instant timeAt(final ByteBuffer key) {
+        return timeSerde.read(key.slice(
+                key.position() + key.remaining() - timeSerde.getSize(),
+                timeSerde.getSize()));
+    }
+
+    /// Emits the newest entry for `prefix` at or before `asAt` that satisfies
+    /// `predicate`, if there is one in scope.
+    private void emitLatestAsAt(final Txn<ByteBuffer> readTxn,
+                                final ByteBuffer prefix,
+                                final Instant asAt,
+                                final Instant notBefore,
+                                final ValuesExtractor valuesExtractor,
+                                final Predicate<Values> predicate,
+                                final ValuesConsumer consumer) {
+        // Pooled and direct: LMDB will not accept a heap buffer as a cursor bound.
+        byteBuffers.use(prefix.remaining() + timeSerde.getSize(), seekTo -> {
+            seekTo.put(prefix.duplicate());
+            timeSerde.write(seekTo, asAt);
+            seekTo.flip();
+
+            // Reversed, so `start` is the upper bound: iteration begins at the greatest key at or
+            // below seekTo and walks down. Leaving the prefix means this key had no entry at or
+            // before asAt.
+            final LmdbKeyRange keyRange = LmdbKeyRange.builder().start(seekTo).reverse().build();
+            try (final LmdbIterable iterable = LmdbIterable.create(readTxn, dbi, keyRange)) {
+                for (final LmdbEntry entry : iterable) {
+                    if (!ByteBufferUtils.containsPrefix(entry.getKey(), prefix)) {
+                        return;
+                    }
+                    // Below the caller's floor, and entries only get older from here, so this key
+                    // has nothing in scope at all. The time is sliced off the end of the key rather
+                    // than decoded through keySerde, which would allocate the key's value to read a
+                    // field that is already in hand - and this runs once per key per read.
+                    if (notBefore != null && timeAt(entry.getKey()).isBefore(notBefore)) {
+                        return;
+                    }
+                    final Values values = valuesExtractor.apply(readTxn, entry.getKey(), entry.getVal());
+                    if (predicate.test(values)) {
+                        consumer.accept(values.toArray());
+                        return;
+                    }
+                }
+            }
         });
     }
 

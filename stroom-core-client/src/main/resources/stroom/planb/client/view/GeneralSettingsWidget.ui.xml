@@ -4,9 +4,18 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
+        <!--
+          STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
+          Local change, confirmed deliberate by the author: the Max Store Size help text states that
+          only increases take effect and what a decrease actually does. Verified against LMDB rather
+          than assumed - reopening an environment with a map size below the file's current size does
+          not fail and does not shrink anything: LMDB clamps the map size back up to the file size,
+          reads keep working, and every write then fails as full. Without this the setting looks
+          adjustable in both directions and a lowered value reads as a capacity problem.
+        -->
         <form:FormGroup ui:field="maxStoreSizePanel"
                         label="Max Store Size"
-                        helpText="How big this store's data file may grow. Writes fail once it is full, so leave some headroom.">
+                        helpText="How big this store's data file may grow. Writes fail once it is full, so leave some headroom. Only increases take effect: the data file never shrinks, because space freed by retention is reused rather than returned to the disk. Lowering this below the file's current size therefore reclaims nothing - the store keeps the size it has already reached and simply stops accepting new data, failing every write as full while the data already in it stays readable. Raising the value again restores writing.">
             <g:TextBox ui:field="maxStoreSize" addStyleNames="allow-focus"/>
         </form:FormGroup>
         <form:FormGroup ui:field="synchroniseMergePanel"

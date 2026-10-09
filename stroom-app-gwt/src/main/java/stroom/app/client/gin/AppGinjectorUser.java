@@ -54,6 +54,8 @@ import stroom.datagen.client.gin.DataGenModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
 import stroom.dispatch.client.RestModule;
+import stroom.document.asset.client.gin.DocumentAssetGinjector;
+import stroom.document.asset.client.gin.DocumentAssetModule;
 import stroom.documentation.client.gin.DocumentationGinjector;
 import stroom.documentation.client.gin.DocumentationModule;
 import stroom.entity.client.gin.EntityGinjector;
@@ -66,6 +68,8 @@ import stroom.explorer.client.presenter.NavigationPresenter;
 import stroom.explorer.client.presenter.RecentItemsPresenter;
 import stroom.feed.client.gin.FeedGinjector;
 import stroom.feed.client.gin.FeedModule;
+import stroom.floormap.client.gin.FloorMapGinjector;
+import stroom.floormap.client.gin.FloorMapModule;
 import stroom.folder.client.gin.FolderGinjector;
 import stroom.folder.client.gin.FolderModule;
 import stroom.gitrepo.client.gin.GitRepoGinjector;
@@ -107,6 +111,8 @@ import stroom.security.client.gin.SecurityGinjector;
 import stroom.security.client.gin.SecurityModule;
 import stroom.security.identity.client.gin.ChangePasswordGinjector;
 import stroom.security.identity.client.gin.ChangePasswordModule;
+import stroom.sqlstore.client.gin.SqlTemporalStoreGinjector;
+import stroom.sqlstore.client.gin.SqlTemporalStoreModule;
 import stroom.statistics.impl.sql.client.gin.StatisticsGinjector;
 import stroom.statistics.impl.sql.client.gin.StatisticsModule;
 import stroom.task.client.gin.TaskGinjector;
@@ -143,6 +149,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         RestModule.class,
         DashboardModule.class,
         DictionaryModule.class,
+        DocumentAssetModule.class,
         DocumentationModule.class,
         EntityModule.class,
         FsVolumeModule.class,
@@ -169,6 +176,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         AnalyticsModule.class,
         DataGenModule.class,
         ReportModule.class,
+        FloorMapModule.class,
         SolrIndexModule.class,
         StatisticsModule.class,
         StreamStoreModule.class,
@@ -181,6 +189,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
         XMLSchemaModule.class,
         S3ConfigModule.class,
         PlanBModule.class,
+        SqlTemporalStoreModule.class,
         GitRepoModule.class
 })
 public interface AppGinjectorUser extends
@@ -192,6 +201,7 @@ public interface AppGinjectorUser extends
         ContentTemplateGinjector,
         DashboardGinjector,
         DictionaryGinjector,
+        DocumentAssetGinjector,
         DocumentationGinjector,
         EntityGinjector,
         FsVolumeGinjector,
@@ -215,10 +225,12 @@ public interface AppGinjectorUser extends
         ChangePasswordGinjector,
         AnalyticsGinjector,
         DataGenGinjector,
+        FloorMapGinjector,
         ElasticClusterGinjector,
         ElasticIndexGinjector,
         ReportGinjector,
         SolrIndexGinjector,
+        SqlTemporalStoreGinjector,
         StatisticsGinjector,
         StreamStoreGinjector,
         TaskGinjector,
@@ -234,28 +246,39 @@ public interface AppGinjectorUser extends
         CredentialsGinjector*/ {
 
     // Default implementation of standard resources
+    @SuppressWarnings("unused")
     EventBus getEventBus();
 
+    @SuppressWarnings("unused")
     PlaceManager getPlaceManager();
 
     // Presenters
     Provider<CorePresenter> getCorePresenter();
 
+    @SuppressWarnings("unused")
     AsyncProvider<MainPresenter> getMainPresenter();
 
+    @SuppressWarnings("unused")
     AsyncProvider<NavigationPresenter> getExplorerTabPanePresenter();
 
+    @SuppressWarnings("unused")
     AsyncProvider<ContentTabPanePresenter> getContentTabPanePresenter();
 
+    @SuppressWarnings("unused")
     AsyncProvider<FindPresenter> getFindPresenter();
 
+    @SuppressWarnings("unused")
     AsyncProvider<RecentItemsPresenter> getRecentItemsPresenter();
 
+    @SuppressWarnings("unused")
     AsyncProvider<FindInContentPresenter> getFindInContentPresenter();
 
+    @SuppressWarnings("unused")
     Provider<FullScreenPresenter> getFullScreenPresenter();
 
+    @SuppressWarnings("unused")
     AsyncProvider<ExplorerNodeEditTagsPresenter> getExplorerNodeEditPresenter();
 
+    @SuppressWarnings("unused")
     AsyncProvider<ExplorerNodeRemoveTagsPresenter> getExplorerNodeRemovePresenter();
 }

@@ -123,6 +123,7 @@
     <inherits name="stroom.importexport.ImportExport" />
     <inherits name="stroom.analytics.Analytics" />
     <inherits name="stroom.view.View" />
+    <inherits name="stroom.sqlstore.SqlTemporalStore" />
 
     <!-- Include new data controls -->
     <inherits name="stroom.data.Data"/>

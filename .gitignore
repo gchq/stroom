@@ -64,3 +64,9 @@ gradle-app.setting
 # gradle/wrapper/gradle-wrapper.properties
 
 #END OF Gradle stuff
+
+# MCP server config - may contain credentials, keep local
+.mcp.json
+
+# Dev container config - local dev environment, keep local
+.devcontainer/

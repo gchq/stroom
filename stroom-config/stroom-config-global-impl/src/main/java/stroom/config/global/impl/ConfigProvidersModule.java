@@ -261,15 +261,6 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
-    stroom.dashboard.impl.visualisation.VisualisationAssetConfig getVisualisationAssetConfig(
-            final ConfigMapper configMapper) {
-        return configMapper.getConfigObject(
-                stroom.dashboard.impl.visualisation.VisualisationAssetConfig.class);
-    }
-
-    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
-    @Provides
-    @SuppressWarnings("unused")
     stroom.data.retention.api.DataRetentionConfig getDataRetentionConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
@@ -301,6 +292,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.docstore.impl.DocStoreConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.document.asset.impl.DocumentAssetConfig getDocumentAssetConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.document.asset.impl.DocumentAssetConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
@@ -842,6 +842,15 @@ public class ConfigProvidersModule extends AbstractModule {
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.security.impl.StroomOpenIdConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.sqlstore.impl.SqlStoreConfig getSqlStoreConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.sqlstore.impl.SqlStoreConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

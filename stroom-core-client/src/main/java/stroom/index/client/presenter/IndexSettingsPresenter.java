@@ -16,6 +16,8 @@
 
 package stroom.index.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
+import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
@@ -25,6 +27,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.index.client.presenter.IndexSettingsPresenter.IndexSettingsView;
+import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.index.shared.LuceneIndexDoc;
@@ -51,6 +54,8 @@ public class IndexSettingsPresenter
 
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE =
             GWT.create(IndexVolumeGroupResource.class);
+    private static final IndexResource INDEX_RESOURCE =
+            GWT.create(IndexResource.class);
 
     private final RestFactory restFactory;
     private final DocSelectionBoxPresenter pipelinePresenter;
@@ -118,6 +123,30 @@ public class IndexSettingsPresenter
                 .volumeGroupName(volumeGroupName)
                 .defaultExtractionPipeline(pipelinePresenter.getSelectedEntityReference())
                 .build();
+    }
+
+    @Override
+    public void onReset() {
+        if (getEntity() != null) {
+            ConfirmEvent.fire(this,
+                    "This will remove all entries from the index. Are you sure you want to do this?",
+                    ok -> {
+                        if (ok) {
+                            restFactory
+                                    .create(INDEX_RESOURCE)
+                                    .method(res -> res.reset(getEntity().getUuid()))
+                                    .onSuccess(r -> AlertEvent.fireInfo(
+                                            IndexSettingsPresenter.this,
+                                            "Index reset successfully. Shards are marked for deletion.",
+                                            null))
+                                    .onFailure(throwable -> AlertEvent.fireError(
+                                            IndexSettingsPresenter.this,
+                                            "Failed to reset index: " + throwable.getMessage(),
+                                            null))
+                                    .exec();
+                        }
+                    });
+        }
     }
 
     private void updateRetentionAge(final SupportedRetentionAge selected) {

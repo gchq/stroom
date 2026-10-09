@@ -131,7 +131,9 @@ public final class TimePreferencesViewImpl
     @Override
     public void setPattern(final String pattern) {
         String text = pattern;
+        //noinspection SizeReplaceableByIsEmpty
         if (text == null || text.trim().length() == 0) {
+            //noinspection SequencedCollectionMethodCanBeUsed
             text = STANDARD_FORMATS.get(0);
         }
 

@@ -45,7 +45,12 @@ public enum KeyType implements HasDisplayValue {
     // Use string, UID lookup or hash lookup depending on the length of the string.
     VARIABLE("Variable"),
     // Use a set of tags to describe the key.
-    TAGS("Tags");
+    TAGS("Tags"),
+    // Treat all keys as bytes followed by a null terminator, so that no key's encoded bytes can be
+    // a prefix of another key's. Deliberately absent from ORDERED_LIST: it exists for stores whose
+    // reads seek per key, and only those stores set it. The usable key length is the store's limit
+    // less the terminator and the trailing time field, and a key may not contain a null byte.
+    TERMINATED_STRING("Terminated string");
 
     public static final List<KeyType> ORDERED_LIST = List.of(
             BOOLEAN,

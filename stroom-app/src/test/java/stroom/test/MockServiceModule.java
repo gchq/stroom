@@ -129,6 +129,8 @@ public class MockServiceModule extends AbstractModule {
         install(new MockAiModule());
         install(new stroom.core.entity.event.EntityEventModule());
 
+        bind(stroom.pipeline.xsltfunctions.SqlStoreLookup.class).toProvider(() -> null);
+
         bind(DocDependencyService.class).to(MockDocDependencyService.class);
         bind(AiDao.class).to(MockAiDao.class);
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);

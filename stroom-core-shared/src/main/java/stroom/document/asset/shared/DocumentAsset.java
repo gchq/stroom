@@ -1,0 +1,109 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.document.asset.shared;
+
+import stroom.docs.shared.Description;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.util.Objects;
+
+/**
+ * Holds the data about a web asset within a document.
+ */
+@Description(
+        "Holds the data on a web asset within a document."
+)
+@JsonPropertyOrder({
+        "id",
+        "path",
+        "folder"
+})
+@JsonInclude(Include.NON_NULL)
+public class DocumentAsset {
+
+    @JsonProperty
+    private String id;
+
+    @JsonProperty
+    private String path;
+
+    @JsonProperty
+    private boolean folder;
+
+    @JsonCreator
+    public DocumentAsset(@JsonProperty("id") final String id,
+                              @JsonProperty("path") final String path,
+                              @JsonProperty("folder") final Boolean folder) {
+        Objects.requireNonNull(id);
+        this.id = id;
+        this.path = path;
+        this.folder = Objects.requireNonNullElse(folder, false);
+    }
+
+    public String getId() {
+        Objects.requireNonNull(id);
+        return id;
+    }
+
+    public void setId(final String id) {
+        this.id = id;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(final String path) {
+        this.path = path;
+    }
+
+    public boolean isFolder() {
+        return folder;
+    }
+
+    public void setFolder(final boolean folder) {
+        this.folder = folder;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final DocumentAsset that = (DocumentAsset) o;
+        return folder == that.folder && Objects.equals(id, that.id) && Objects.equals(path, that.path);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, path, folder);
+    }
+
+    @Override
+    public String toString() {
+        return "DocumentAsset{" +
+               "id='" + id + '\'' +
+               ", path='" + path + '\'' +
+               ", isFolder=" + folder +
+               '}';
+    }
+}

@@ -1,0 +1,53 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ext.moduleName = 'stroom.floormap.impl'
+
+dependencies {
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-docref')
+    implementation project(':stroom-docstore:stroom-docstore-api')
+    implementation project(':stroom-document-asset:stroom-document-asset-impl')
+    implementation project(':stroom-event-logging-rs:stroom-event-logging-rs-api')
+    implementation project(':stroom-event-logging:stroom-event-logging-api')
+    implementation project(':stroom-explorer:stroom-explorer-api')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    // The FloorMap Event Store is a Plan B store: its document registers with PlanBDocumentTypes and
+    // its read calls TemporalStateDb.searchSnapshot. stroom-pathways-impl depends on Plan B the same
+    // way for TracesDoc.
+    implementation project(':stroom-planb:stroom-planb-impl')
+    implementation project(':stroom-cluster:stroom-cluster-lock-api')
+    implementation project(':stroom-query:stroom-query-api')
+    implementation project(':stroom-query:stroom-query-common')
+    // Not imported directly, but needed to resolve FieldIndex/ValuesConsumer in the
+    // TemporalStateDb.searchSnapshot signature the provider calls.
+    implementation project(':stroom-query:stroom-query-language')
+    implementation project(':stroom-task:stroom-task-api')
+    implementation project(':stroom-security:stroom-security-api')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+
+    implementation libs.eventLogging
+    implementation libs.guice
+    implementation libs.restygwt
+    implementation libs.slf4j.api
+
+    testImplementation project(':stroom-docstore:stroom-docstore-impl')
+    testImplementation project(':stroom-docstore:stroom-docstore-impl-memory')
+    testImplementation project(':stroom-security:stroom-security-mock')
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
+}

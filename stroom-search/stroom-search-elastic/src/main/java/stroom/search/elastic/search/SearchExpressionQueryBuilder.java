@@ -394,6 +394,7 @@ public class SearchExpressionQueryBuilder {
                     throw new IllegalArgumentException(
                             "Two values needed for between query. Only " + fieldValues.size() + " provided");
                 }
+                //noinspection SequencedCollectionMethodCanBeUsed
                 return wrapInNested(nestedPaths, QueryBuilders
                         .range(q -> q.untyped(UntypedRangeQuery.of(r -> r
                                 .field(fieldName)

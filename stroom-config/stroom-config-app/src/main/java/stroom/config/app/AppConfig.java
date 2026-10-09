@@ -34,9 +34,9 @@ import stroom.contentstore.impl.ContentStoreConfig;
 import stroom.core.receive.AutoContentCreationConfig;
 import stroom.credentials.impl.CredentialsConfig;
 import stroom.dashboard.impl.DashboardConfig;
-import stroom.dashboard.impl.db.VisualisationAssetDbConfig;
-import stroom.dashboard.impl.visualisation.VisualisationAssetConfig;
 import stroom.docstore.impl.DocStoreConfig;
+import stroom.document.asset.impl.DocumentAssetConfig;
+import stroom.document.asset.impl.db.DocumentAssetDbConfig;
 import stroom.event.logging.impl.LoggingConfig;
 import stroom.explorer.impl.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
@@ -59,6 +59,7 @@ import stroom.receive.rules.impl.StroomReceiptPolicyConfig;
 import stroom.search.elastic.ElasticConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
+import stroom.sqlstore.impl.SqlStoreConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.StroomPathConfig;
@@ -76,6 +77,13 @@ import jakarta.validation.constraints.AssertTrue;
 
 import java.util.Objects;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
+// Local change, and not the upstream merge it resembles. Semantically the diff is exactly:
+// visualisationAssetConfig / visualisationAssetDbConfig and their getters removed, and
+// documentAssetConfig / documentAssetDbConfig / sqlStoreConfig plus getters added. That is the
+// "Make the Visualisation Asset system generic" rename (VisualisationAsset* generalised into
+// stroom.document.asset) together with the new SQL Temporal Store config. A merge will try to
+// reinstate the VisualisationAsset* entries; they are superseded, not missing.
 @JsonRootName(AppConfig.NAME)
 @JsonPropertyOrder(alphabetic = true)
 public class AppConfig extends AbstractConfig implements IsStroomConfig {
@@ -137,12 +145,25 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
     public static final String PROP_NAME_SESSION = "session";
     public static final String PROP_NAME_SOLR = "solr";
+    public static final String PROP_NAME_SQL_STORE = "sqlStore";
     public static final String PROP_NAME_PLANB = "planb";
+
     public static final String PROP_NAME_STATISTICS = "statistics";
     public static final String PROP_NAME_UI = "ui";
     public static final String PROP_NAME_UI_URI = "uiUri";
-    public static final String PROP_NAME_VISUALISATION_ASSET = "visualisationAsset";
-    public static final String PROP_NAME_VISUALISATION_ASSET_DB = "visualisationAssetDb";
+    public static final String PROP_NAME_DOCUMENT_ASSET = "documentAsset";
+    public static final String PROP_NAME_DOCUMENT_ASSET_DB = "documentAssetDb";
+    // The former names of the two properties above - visualisationAsset and visualisationAssetDb,
+    // from before the visualisation-asset subsystem was generalised into stroom.document.asset -
+    // are REJECTED at boot by StroomConfigurationSourceProvider.rejectRenamedKeys, which names the
+    // new spelling.
+    //
+    // They were briefly accepted via @JsonAlias here instead, and that could never have worked:
+    // StroomConfigurationSourceProvider merges the compiled defaults into the operator's YAML under
+    // the NEW name before Dropwizard parses it, and an alias is only another spelling of the same
+    // property - so last-one-wins gave the injected default the win and the operator's value was
+    // silently discarded on every boot. Accepted-and-ignored is worse than either alternative, so
+    // the alias is gone and the old name is now an error naming its replacement.
     public static final String PROP_NAME_VOLUMES = "volumes";
 
     private final boolean haltBootOnConfigValidationFailure;
@@ -191,74 +212,76 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
     private final SessionCookieConfig sessionCookieConfig;
     private final SessionConfig sessionConfig;
     private final SolrConfig solrConfig;
+    private final SqlStoreConfig sqlStoreConfig;
     private final PlanBConfig planBConfig;
     private final StatisticsConfig statisticsConfig;
     private final StoredQueryConfig storedQueryConfig;
     private final StroomPathConfig pathConfig;
     private final UiConfig uiConfig;
     private final UiUriConfig uiUri;
-    private final VisualisationAssetConfig visualisationAssetConfig;
-    private final VisualisationAssetDbConfig visualisationAssetDbConfig;
+    private final DocumentAssetConfig documentAssetConfig;
+    private final DocumentAssetDbConfig documentAssetDbConfig;
     private final VolumeConfig volumeConfig;
 
     /**
      * Will construct a full immutable AppConfig tree will ALL defaults set.
      */
     public AppConfig() {
-        this.haltBootOnConfigValidationFailure = DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE;
-        this.crossModuleConfig = new CrossModuleConfig();
-        this.activityConfig = new ActivityConfig();
-        this.aiConfig = new AiConfig();
-        this.analyticsConfig = new AnalyticsConfig();
-        this.annotationConfig = new AnnotationConfig();
-        this.askStroomAIConfig = new AskStroomAiConfig();
-        this.contentIndexConfig = new ContentIndexConfig();
-        this.contentStoreConfig = new ContentStoreConfig();
-        this.autoContentCreationConfig = new AutoContentCreationConfig();
-        this.byteBufferPoolConfig = new ByteBufferPoolConfig();
-        this.clusterConfig = new ClusterConfig();
-        this.clusterLockConfig = new ClusterLockConfig();
-        this.commonDbConfig = new CommonDbConfig();
-        this.contentPackImportConfig = new ContentPackImportConfig();
-        this.credentialsConfig = new CredentialsConfig();
-        this.dashboardConfig = new DashboardConfig();
-        this.dataConfig = new DataConfig();
-        this.docStoreConfig = new DocStoreConfig();
-        this.elasticConfig = new ElasticConfig();
-        this.explorerConfig = new ExplorerConfig();
-        this.exportConfig = new ExportConfig();
-        this.feedConfig = new FeedConfig();
-        this.gitRepoConfig = new GitRepoConfig();
-        this.indexConfig = new IndexConfig();
-        this.jobSystemConfig = new JobSystemConfig();
-        this.kafkaConfig = new KafkaConfig();
-        this.lifecycleConfig = new LifecycleConfig();
-        this.lmdbLibraryConfig = new LmdbLibraryConfig();
-        this.loggingConfig = new LoggingConfig();
-        this.nodeConfig = new NodeConfig();
-        this.nodeUri = new NodeUriConfig();
-        this.pipelineConfig = new PipelineConfig();
-        this.processorConfig = new ProcessorConfig();
-        this.propertyServiceConfig = new PropertyServiceConfig();
-        this.publicUri = new PublicUriConfig();
-        this.queryDataSourceConfig = new IndexFieldDbConfig();
-        this.receiveDataConfig = new ReceiveDataConfig();
-        this.receiptPolicyConfig = new StroomReceiptPolicyConfig();
-        this.s3Config = new S3Config();
-        this.searchConfig = new SearchConfig();
-        this.securityConfig = new SecurityConfig();
-        this.sessionCookieConfig = new SessionCookieConfig();
-        this.sessionConfig = new SessionConfig();
-        this.solrConfig = new SolrConfig();
-        this.planBConfig = new PlanBConfig();
-        this.statisticsConfig = new StatisticsConfig();
-        this.storedQueryConfig = new StoredQueryConfig();
-        this.pathConfig = new StroomPathConfig();
-        this.uiConfig = new UiConfig();
-        this.uiUri = new UiUriConfig();
-        this.visualisationAssetConfig = new VisualisationAssetConfig();
-        this.visualisationAssetDbConfig = new VisualisationAssetDbConfig();
-        this.volumeConfig = new VolumeConfig();
+        this(true,
+                new CrossModuleConfig(),
+                new ActivityConfig(),
+                new AiConfig(),
+                new AnalyticsConfig(),
+                new AnnotationConfig(),
+                new AskStroomAiConfig(),
+                new AutoContentCreationConfig(),
+                new ByteBufferPoolConfig(),
+                new ClusterConfig(),
+                new ClusterLockConfig(),
+                new CommonDbConfig(),
+                new ContentPackImportConfig(),
+                new ContentIndexConfig(),
+                new ContentStoreConfig(),
+                new CredentialsConfig(),
+                new DashboardConfig(),
+                new DataConfig(),
+                new DocStoreConfig(),
+                new ElasticConfig(),
+                new ExplorerConfig(),
+                new ExportConfig(),
+                new FeedConfig(),
+                new GitRepoConfig(),
+                new IndexConfig(),
+                new JobSystemConfig(),
+                new KafkaConfig(),
+                new LifecycleConfig(),
+                new LmdbLibraryConfig(),
+                new LoggingConfig(),
+                new NodeConfig(),
+                new NodeUriConfig(),
+                new PipelineConfig(),
+                new ProcessorConfig(),
+                new PropertyServiceConfig(),
+                new PublicUriConfig(),
+                new IndexFieldDbConfig(),
+                new ReceiveDataConfig(),
+                new StroomReceiptPolicyConfig(),
+                new S3Config(),
+                new SearchConfig(),
+                new SecurityConfig(),
+                new SessionCookieConfig(),
+                new SessionConfig(),
+                new SolrConfig(),
+                new SqlStoreConfig(),
+                new PlanBConfig(),
+                new StatisticsConfig(),
+                new StoredQueryConfig(),
+                new StroomPathConfig(),
+                new UiConfig(),
+                new UiUriConfig(),
+                new DocumentAssetConfig(),
+                new DocumentAssetDbConfig(),
+                new VolumeConfig());
     }
 
     @SuppressWarnings("checkstyle:linelength")
@@ -308,14 +331,17 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
                      @JsonProperty(PROP_NAME_SESSION_COOKIE) final SessionCookieConfig sessionCookieConfig,
                      @JsonProperty(PROP_NAME_SESSION) final SessionConfig sessionConfig,
                      @JsonProperty(PROP_NAME_SOLR) final SolrConfig solrConfig,
+                     @JsonProperty(PROP_NAME_SQL_STORE) final SqlStoreConfig sqlStoreConfig,
                      @JsonProperty(PROP_NAME_PLANB) final PlanBConfig planBConfig,
                      @JsonProperty(PROP_NAME_STATISTICS) final StatisticsConfig statisticsConfig,
                      @JsonProperty(PROP_NAME_QUERY_HISTORY) final StoredQueryConfig storedQueryConfig,
                      @JsonProperty(PROP_NAME_PATH) final StroomPathConfig pathConfig,
                      @JsonProperty(PROP_NAME_UI) final UiConfig uiConfig,
                      @JsonProperty(PROP_NAME_UI_URI) final UiUriConfig uiUri,
-                     @JsonProperty(PROP_NAME_VISUALISATION_ASSET) final VisualisationAssetConfig visualisationAssetConfig,
-                     @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB) final VisualisationAssetDbConfig visualisationAssetDbConfig,
+                     @JsonProperty(PROP_NAME_DOCUMENT_ASSET)
+                     final DocumentAssetConfig documentAssetConfig,
+                     @JsonProperty(PROP_NAME_DOCUMENT_ASSET_DB)
+                     final DocumentAssetDbConfig documentAssetDbConfig,
                      @JsonProperty(PROP_NAME_VOLUMES) final VolumeConfig volumeConfig) {
         this.haltBootOnConfigValidationFailure = Objects.requireNonNullElse(haltBootOnConfigValidationFailure,
                 DEFAULT_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE);
@@ -363,14 +389,15 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         this.sessionCookieConfig = sessionCookieConfig;
         this.sessionConfig = sessionConfig;
         this.solrConfig = solrConfig;
+        this.sqlStoreConfig = sqlStoreConfig;
         this.planBConfig = planBConfig;
         this.statisticsConfig = statisticsConfig;
         this.storedQueryConfig = storedQueryConfig;
         this.pathConfig = pathConfig;
         this.uiConfig = uiConfig;
         this.uiUri = uiUri;
-        this.visualisationAssetConfig = visualisationAssetConfig;
-        this.visualisationAssetDbConfig = visualisationAssetDbConfig;
+        this.documentAssetConfig = documentAssetConfig;
+        this.documentAssetDbConfig = documentAssetDbConfig;
         this.volumeConfig = volumeConfig;
     }
 
@@ -632,6 +659,12 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return sessionConfig;
     }
 
+    @JsonProperty(PROP_NAME_SQL_STORE)
+    @SuppressWarnings("unused")
+    public SqlStoreConfig getSqlStoreConfig() {
+        return sqlStoreConfig;
+    }
+
     @JsonProperty(PROP_NAME_PLANB)
     @JsonPropertyDescription("Configuration for the stroom Plan B state service")
     public PlanBConfig getPlanBConfig() {
@@ -656,14 +689,14 @@ public class AppConfig extends AbstractConfig implements IsStroomConfig {
         return uiUri;
     }
 
-    @JsonProperty(PROP_NAME_VISUALISATION_ASSET)
-    public VisualisationAssetConfig getVisualisationAsset() {
-        return visualisationAssetConfig;
+    @JsonProperty(PROP_NAME_DOCUMENT_ASSET)
+    public DocumentAssetConfig getDocumentAsset() {
+        return documentAssetConfig;
     }
 
-    @JsonProperty(PROP_NAME_VISUALISATION_ASSET_DB)
-    public VisualisationAssetDbConfig getVisualisationAssetDbConfig() {
-        return visualisationAssetDbConfig;
+    @JsonProperty(PROP_NAME_DOCUMENT_ASSET_DB)
+    public DocumentAssetDbConfig getDocumentAssetDbConfig() {
+        return documentAssetDbConfig;
     }
 
     @JsonProperty(PROP_NAME_VOLUMES)

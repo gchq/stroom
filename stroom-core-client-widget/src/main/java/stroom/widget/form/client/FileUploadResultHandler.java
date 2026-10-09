@@ -32,8 +32,10 @@ import java.util.function.Consumer;
  */
 class FileUploadResultHandler implements FileUploadCallback {
 
+    @SuppressWarnings("unused")
     private Consumer<ResourceKey> successConsumer = resourceKey -> {
     };
+    @SuppressWarnings("unused")
     private Consumer<String> failureConsumer = message -> {
     };
     private TaskMonitorFactory taskMonitorFactory;

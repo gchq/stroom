@@ -1,0 +1,68 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<!--
+  ~ Copyright 2026 Crown Copyright
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui">
+    <!-- The FocusPanel is the map's keyboard host: GWT gives it tabindex="0", and
+         the presenter binds pan/zoom/traversal keys to it. It therefore needs a
+         focus ring of its own, which stroom-floormap.css draws off this class. -->
+    <g:FocusPanel ui:field="focusPanel" styleName="max"
+                  addStyleNames="stroom-floormap-canvas-focus">
+        <g:FlowPanel addStyleNames="max stroom-floormap-canvas-container">
+            <g:HTML ui:field="svgContainer" addStyleNames="max"/>
+            <g:Label ui:field="areaDrawHint" addStyleNames="stroom-floormap-area-draw-hint"/>
+            <!-- Follows the cursor during a move or resize, reporting the
+                 position or size being dragged out in real-world units. -->
+            <g:Label ui:field="gestureReadout" addStyleNames="stroom-floormap-gesture-readout"/>
+            <!-- Describes the glyph under the pointer: the members of a cluster,
+                 or one entity's details. Anchored to the glyph rather than the
+                 cursor: a panel that slid about while the pointer moved across a
+                 single glyph would read as unstable, and a fixed anchor lets the
+                 contents be rebuilt only when the hovered glyph changes. -->
+            <g:FlowPanel ui:field="hoverTooltip"
+                         addStyleNames="stroom-floormap-hover-tooltip"/>
+            <!-- Always-on scale bar: the origin indicator only helps while (0,0)
+                 is on screen, which is not the normal state of a map being read. -->
+            <g:FlowPanel ui:field="scaleBar" addStyleNames="stroom-floormap-scale-bar">
+                <g:Label ui:field="scaleBarLabel"
+                         addStyleNames="stroom-floormap-scale-bar__label"/>
+                <g:SimplePanel ui:field="scaleBarLine"
+                               addStyleNames="stroom-floormap-scale-bar__line"/>
+            </g:FlowPanel>
+            <!-- Says why the map is empty, when it is persistently empty for a
+                 reason worth naming. A DOM element rather than text painted into
+                 the SVG: painted text cannot be selected, copied, or reached by a
+                 screen reader, and this is the one thing on the canvas whose
+                 whole purpose is to be read. Top-centre, which it shares with the
+                 area-draw hint without ever colliding: that hint belongs to modes
+                 that exist only on the Editor tab, and this line is only ever set
+                 by the Map tab. -->
+            <g:Label ui:field="emptyStatus"
+                     addStyleNames="stroom-floormap-empty-status"/>
+            <!-- The map's spoken commentary: selection, tracking, time changes and
+                 entities leaving the timeline range. Everything the canvas says
+                 visually is otherwise invisible to a screen reader, because the SVG
+                 is marked aria-hidden (its text captions are laid out for the eye
+                 and read as noise in DOM order).
+
+                 Visually hidden rather than display:none — a hidden live region is
+                 removed from the accessibility tree and never announces. -->
+            <g:Label ui:field="statusRegion"
+                     addStyleNames="stroom-floormap-visually-hidden"/>
+        </g:FlowPanel>
+    </g:FocusPanel>
+</ui:UiBinder>

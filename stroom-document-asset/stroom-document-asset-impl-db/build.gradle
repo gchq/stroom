@@ -1,0 +1,29 @@
+ext.moduleName = 'stroom.document.asset.impl.db'
+
+ext.jooqMigrationLocation = 'stroom/document/asset/impl/db/migration'
+ext.jooqFlywayTable = 'visualisation_assets_schema_history'
+apply from: "${rootDir}/gradle/jooq-codegen.gradle"
+
+dependencies {
+    implementation project(':stroom-config:stroom-config-common')
+    implementation project(':stroom-core-shared')
+    implementation project(':stroom-document-asset:stroom-document-asset-impl')
+    implementation project(':stroom-importexport:stroom-importexport-api')
+    implementation project(':stroom-db-util')
+    implementation project(':stroom-util')
+    implementation project(':stroom-util-shared')
+    implementation libs.flyway.core
+    implementation libs.flyway.mysql
+    implementation libs.guice
+    implementation libs.jackson.annotations
+    implementation libs.jackson.core
+    implementation libs.jackson.databind
+    implementation libs.jakarta.inject
+    implementation libs.jooq
+    implementation libs.slf4j.api
+
+    runtimeOnly libs.mysql.connector.java
+
+    testImplementation project(':stroom-test-common')
+    testImplementation libs.bundles.common.test.implementation
+}

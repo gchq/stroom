@@ -22,6 +22,8 @@
 @import url("stroom-control.css");
 @import url("stroom-button.css");
 @import url("stroom-annotation.css");
+@import url("stroom-floormap.css");
+@import url("stroom-histogram.css");
 @import url("stroom-dashboard.css");
 @import url("editor.css");
 @import url("tickbox.css");
@@ -66,6 +68,7 @@
 @import url("markdown.css");
 @import url("icon-colours.css");
 @import url("ColourSwatchCell.css");
+@import url("ColourInputCell.css");
 @import url("PercentBarCell.css");
 @import url("RedGreenTextCell.css");
 @import url("conditional-formatting.css");

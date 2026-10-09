@@ -213,6 +213,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
+                        null,
                         null);
 
                 final Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
@@ -316,6 +317,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
+                        null,
                         null);
 
                 final Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
@@ -562,6 +564,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
+                        null,
                         null);
 
                 final Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();
@@ -644,6 +647,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         pipelineStore,
                         new MockSecurityContext(),
                         taskContextFactory,
+                        null,
                         null);
 
                 final Map<RefStreamDefinition, Runnable> mockLoaderActionsMap = new HashMap<>();

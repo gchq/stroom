@@ -73,6 +73,13 @@ public class ResizableCloseContent extends Composite implements DialogButtons {
         close.setEnabled(enabled);
     }
 
+    @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (DialogAction.CLOSE.equals(action)) {
+            close.setEnabled(enabled);
+        }
+    }
+
     public interface Binder extends UiBinder<Widget, ResizableCloseContent> {
 
     }

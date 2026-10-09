@@ -1,0 +1,659 @@
+/*
+ * Copyright 2025 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.document.asset.impl;
+
+import stroom.docref.DocRef;
+import stroom.explorer.api.ExplorerNodeService;
+import stroom.explorer.shared.ExplorerNode;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
+import stroom.util.io.FileUtil;
+import stroom.util.io.PathCreator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.IsServlet;
+import stroom.util.shared.PermissionException;
+
+import com.google.common.util.concurrent.Striped;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
+import jakarta.inject.Singleton;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Instant;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.locks.Lock;
+
+/**
+ * Allows access to the document assets over HTTP, so that the UI can pull in assets as necessary.
+ * <p>
+ * Implementation notes:
+ * <li>
+ * <li>
+ * The Servlet has a cache so it doesn't pull large files out of the database
+ * for every request. The client is always served from the file in the cache.
+ * </li>
+ * <li>
+ * The cache file is created if it is out of date by streaming the file from the database.
+ * The date of the asset is held in the database, and the same timestamp is held in
+ * </li>
+ * </li>
+ * </p>
+ * <p>
+ * <b>Residual risk.</b> Anything served from here that a browser treats as a document runs on the
+ * Stroom origin with the viewing user's session - cookie, REST API, localStorage and the parent DOM.
+ * Uploaded HTML and JS are therefore executable <i>by design</i>: a visualisation's {@code index.html}
+ * is the document inside the dashboard's visualisation iframe and has to run its own scripts to
+ * implement the {@code visualisationManager} postMessage contract. {@link #setSecurityHeaders} closes
+ * the accidental case (an SVG reached by top-level navigation) and removes capabilities no asset needs,
+ * but it cannot close the deliberate one, because a same-origin frame can simply call back into its
+ * parent. So a user who can edit a document can upload content that executes with any viewing user's
+ * session. Preconditions are edit permission on the document plus VIEW for the victim, which makes it
+ * an authenticated-insider vector rather than an anonymous one - but shared visualisations and shared
+ * floor maps are exactly the case where one user authors content that others open.
+ * </p>
+ * <p>
+ * Genuinely closing it needs the asset store to stop being same-origin, or the frame to be sandboxed.
+ * Note that sandboxing is not free: the session cookie defaults to {@code SameSite=STRICT}, and a
+ * sandboxed frame has an opaque origin, so requests it initiates are not same-site and arrive here
+ * with no session. An {@code index.html} that pulls in any further asset would break. Serving assets
+ * under a signed capability path prefix, so relative subresource URLs inherit the capability, would
+ * make a sandbox viable.
+ * </p>
+ */
+@Singleton
+public class DocumentAssetServlet extends HttpServlet implements IsServlet {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentAssetServlet.class);
+
+    /**
+     * The URL path to this servlet
+     */
+    public static final String PATH_PART = "/assets/*";
+
+    /**
+     * Set of paths to access this servlet
+     */
+    private static final Set<String> PATH_SPECS = Set.of(PATH_PART);
+
+    /**
+     * Prefix for temporary files, so we can delete them if necessary
+     */
+    private static final String ASSET_CACHE_TEMP_PREFIX = "asset-temp-";
+
+    /**
+     * Suffix for temporary files
+     */
+    private static final String ASSET_CACHE_TEMP_SUFFIX = ".tmp";
+
+    /**
+     * Name of metadata directory within each document's cache
+     */
+    private static final String METADATA_DIR = ".meta";
+
+    /**
+     * Name of the cache control header
+     */
+    private static final String CACHE_CONTROL_HEADER = "Cache-Control";
+
+    /**
+     * Value of the cache control header. Asks browser to revalidate after 2s.
+     */
+    private static final String CACHE_CONTROL_VALUE_2S = "max-age=2, must-revalidate";
+
+    /**
+     * Name of the header in request from client to see if cache is valid
+     */
+    private static final String ETAG_VALID_HEADER = "If-None-Match";
+
+    /**
+     * Name of the header in response that says whether the cache is valid
+     */
+    private static final String ETAG_HEADER = "ETag";
+
+    /**
+     * Name of the header used to stop a response being rendered as a document
+     */
+    private static final String CONTENT_DISPOSITION_HEADER = "Content-Disposition";
+
+    /**
+     * Value of the content disposition header. Makes the browser download rather than render.
+     */
+    private static final String CONTENT_DISPOSITION_ATTACHMENT = "attachment";
+
+    /**
+     * Name of the content security policy header
+     */
+    private static final String CONTENT_SECURITY_POLICY_HEADER = "Content-Security-Policy";
+
+    /**
+     * Name of the header that stops the browser guessing a content type other than the one we sent
+     */
+    private static final String CONTENT_TYPE_OPTIONS_HEADER = "X-Content-Type-Options";
+
+    /**
+     * Value of the content type options header
+     */
+    private static final String CONTENT_TYPE_OPTIONS_NOSNIFF = "nosniff";
+
+    /**
+     * The mimetype that assets are served with when they carry scriptable image markup
+     */
+    static final String SVG_MIMETYPE = "image/svg+xml";
+
+    /**
+     * Policy for assets that no browser should ever execute. An SVG served as a document can run
+     * its own {@code <script>} elements against the Stroom origin, so scripting is denied outright
+     * and the response is sandboxed into an opaque origin. Inline styles stay allowed because SVGs
+     * routinely carry a {@code <style>} block. This is only a backstop: the content disposition
+     * header should stop the response becoming a document in the first place.
+     */
+    static final String CONTENT_SECURITY_POLICY_INERT = "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+
+    /**
+     * Policy for every other asset. Visualisations legitimately serve executable HTML from this
+     * store, so scripting cannot be denied here. What is denied is the set of capabilities no asset
+     * needs: plugins, form submission, and - the valuable one - re-pointing the document base, which
+     * would otherwise let an asset resolve its own relative URLs against another origin.
+     */
+    static final String CONTENT_SECURITY_POLICY_ASSET = "default-src 'self'; " +
+                                                        "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+                                                        "style-src 'self' 'unsafe-inline'; " +
+                                                        "img-src 'self' data:; " +
+                                                        "object-src 'none'; " +
+                                                        "base-uri 'none'; " +
+                                                        "form-action 'none'; " +
+                                                        "frame-ancestors 'self'";
+
+    /**
+     * Number of locks to use to control access to the cache
+     */
+    private static final int NUMBER_OF_LOCKS = 1024;
+
+    /**
+     * The service that provides the backend to this servlet
+     */
+    private final DocumentAssetService service;
+
+    /**
+     * Security checks
+     */
+    private final SecurityContext securityContext;
+
+    /**
+     * The service to resolve DocRefs
+     */
+    private final ExplorerNodeService explorerNodeService;
+
+    /**
+     * File extension to mimetype
+     */
+    private final Map<String, String> mimetypes;
+
+    /**
+     * Default mimetype if nothing else matches
+     */
+    private final String defaultMimetype;
+
+    /**
+     * Where we're caching assets
+     */
+    private final Path assetCacheDir;
+
+    /**
+     * Whether we're wiping the cache on startup
+     */
+    private final boolean clearAssetCacheOnStartup;
+
+    /**
+     * Google utility for creating striped locks from hashed paths
+     */
+    private final Striped<Lock> locks = Striped.lazyWeakLock(NUMBER_OF_LOCKS);
+
+    @Inject
+    public DocumentAssetServlet(final DocumentAssetService service,
+                                final SecurityContext securityContext,
+                                final ExplorerNodeService explorerNodeService,
+                                final Provider<DocumentAssetConfig> configProvider,
+                                final PathCreator pathCreator) {
+        this.service = service;
+        this.securityContext = securityContext;
+        this.explorerNodeService = explorerNodeService;
+        final DocumentAssetConfig config = configProvider.get();
+        this.mimetypes = config.getMimetypes();
+        this.defaultMimetype = config.getDefaultMimetype();
+        this.assetCacheDir = pathCreator.toAppPath(config.getAssetCacheDir());
+        this.clearAssetCacheOnStartup = config.isClearAssetCacheOnStartup();
+        if (clearAssetCacheOnStartup) {
+            LOGGER.info("Clearing document asset cache on startup");
+        }
+
+        try {
+            if (!this.assetCacheDir.toFile().exists()) {
+                Files.createDirectory(this.assetCacheDir);
+            }
+        } catch (final IOException e) {
+            LOGGER.error("Error creating asset cache directory: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Returns the asset cache path for the given document ID.
+     *
+     * @param docId Document ID of the document that owns the assets. Must not be null.
+     * @return The path to the root of the cache for that document. Probably doesn't exist on disk.
+     */
+    private Path getCachePathForDoc(final String docId) throws IOException {
+        checkPathIsSafe(assetCacheDir, docId);
+        return assetCacheDir.resolve(docId);
+    }
+
+    /**
+     * Gets the path to the asset within the cache.
+     *
+     * @param docId     ID of the document
+     * @param assetPath Path to the asset within the document
+     * @return Path to the asset. May not exist on disk.
+     */
+    private Path getCachePathForAsset(final String docId,
+                                      String assetPath) throws IOException {
+        assetPath = stripLeadingSlash(assetPath);
+        final Path docPath = getCachePathForDoc(docId);
+        checkPathIsSafe(docPath, assetPath);
+        return docPath.resolve(assetPath);
+    }
+
+    /**
+     * Returns the path within the asset cache to the metadata (timestamp) about the file.
+     */
+    private Path getCachePathForMetadata(final String docId,
+                                         String assetPath) throws IOException {
+        assetPath = stripLeadingSlash(assetPath);
+        final Path docPath = getCachePathForDoc(docId);
+        final Path metaPath = docPath.resolve(METADATA_DIR);
+        checkPathIsSafe(metaPath, assetPath);
+        return metaPath.resolve(assetPath);
+    }
+
+    /**
+     * Ensures that the servlet cache is up to date. Pulls data from the
+     * database via an InputStream, if the date of the record in the database
+     * is after the cacheTimestamp.
+     *
+     * @param docId          The ID of the owner document.
+     * @param assetPath      The path to the asset under the owner document
+     * @param metaPath       The path in the servlet cache to the metadata about the asset
+     * @param cacheTimestamp The timestamp for the servlet cache asset
+     * @throws IOException If something goes wrong.
+     */
+    private Instant ensureCacheUpToDate(final String docId,
+                                        final String assetPath,
+                                        final Path metaPath,
+                                        final Instant cacheTimestamp) throws IOException {
+
+        final Path cachedAssetPath = getCachePathForAsset(docId, assetPath);
+
+        final Instant dbTimestamp = service.writeLiveToServletCache(
+                ASSET_CACHE_TEMP_PREFIX,
+                ASSET_CACHE_TEMP_SUFFIX,
+                docId,
+                assetPath,
+                cacheTimestamp,
+                cachedAssetPath);
+
+        if (dbTimestamp != null) {
+            // Cache was updated so write the dbTimestamp to disk
+            FileUtil.saveDataSafely(metaPath,
+                    ASSET_CACHE_TEMP_PREFIX,
+                    ASSET_CACHE_TEMP_SUFFIX,
+                    Long.toString(dbTimestamp.toEpochMilli()).getBytes(StandardCharsets.UTF_8));
+            return dbTimestamp;
+        }
+        return cacheTimestamp;
+    }
+
+    /**
+     * Returns the timestamp of the file in the cache for the given asset.
+     *
+     * @param metaPath The path to the meta-file for the asset we're interested in.
+     * @return The timestamp of the file in the cache.
+     * @throws IOException If something goes wrong.
+     */
+    private Instant getCacheTimestamp(final Path metaPath) throws IOException {
+        Instant cacheTimestamp = Instant.EPOCH;
+        if (metaPath.toFile().exists()) {
+            final String cacheVersion = Files.readString(metaPath);
+            cacheTimestamp = Instant.ofEpochMilli(Long.parseLong(cacheVersion));
+        }
+        return cacheTimestamp;
+    }
+
+    /**
+     * Returns an input stream reading from a cached copy of the asset.
+     *
+     * @param docId     The document ID that owns the asset
+     * @param assetPath The path of the asset within the owning document
+     * @return InputStream (buffered) that reads the file. Must be closed by the caller.
+     * @throws IOException         If something goes wrong.
+     * @throws java.io.IOException if the cached file cannot be opened. This method performs no
+     *         permission check of its own; doGet authorises the request before calling it.
+     */
+    private InputStream getInputStreamForAsset(final String docId,
+                                               final String assetPath)
+            throws IOException, PermissionException {
+
+        // Cached file must exist now and must be up-to-date, so return an InputStream attached to it
+        // Note: UNIX allows a valid read from a file that was deleted after we opened it
+        //       as the reference to the file contents keeps the contents in existence.
+        // Note: Writing a new version is atomic, so the either old version or new version is always there
+        // Note: If the asset doesn't exist then this will throw a FileNotFoundException
+        final Path cachedAssetPath = getCachePathForAsset(docId, assetPath);
+        return new BufferedInputStream(new FileInputStream(cachedAssetPath.toFile()));
+    }
+
+    /**
+     * Called to return an asset via HTTP.
+     */
+    @Override
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+
+        final DocIdAndPath docIdAndPath = splitIntoDocIdAndPath(request.getPathInfo());
+        final String docId = docIdAndPath.docId();
+        final String path = docIdAndPath.path();
+
+        final DocRef docRef = explorerNodeService.getNodeByUuid(docId)
+                .map(ExplorerNode::getDocRef)
+                .orElseThrow(() -> new EntityServiceException("Unknown document " + docId));
+
+        if (securityContext.hasDocumentPermission(docRef, DocumentPermission.VIEW)) {
+            // Lock on the metaPath
+            final Path metaPath = getCachePathForMetadata(docId, path);
+            final Lock lock = locks.get(metaPath);
+            lock.lock();
+            try {
+                final Instant initialCacheTimestamp = getCacheTimestamp(metaPath);
+                final Instant cacheTimestamp = ensureCacheUpToDate(docId, path, metaPath, initialCacheTimestamp);
+                final String cacheVersion = String.valueOf(cacheTimestamp.toEpochMilli());
+                final String eTag = "\"" + cacheVersion + "\"";
+
+                // Is the client asking for cache validation?
+                final String etagValid = request.getHeader(ETAG_VALID_HEADER);
+
+                final String mimetype = getMimetype(path, mimetypes, defaultMimetype);
+
+                if (etagValid != null && (etagValid.equals(eTag))) {
+                    response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+                    response.setHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE_2S);
+                    response.setHeader(ETAG_HEADER, eTag);
+                    // A client updates the headers it has cached from a revalidation response, so these
+                    // have to be sent here too. Omitting them lets an entry cached before this code
+                    // existed carry on being served without them.
+                    setSecurityHeaders(response, mimetype);
+                } else {
+                    try (final InputStream dataStream = getInputStreamForAsset(docId, path)) {
+                        response.setContentType(mimetype);
+                        response.setStatus(HttpServletResponse.SC_OK);
+                        response.setHeader(CACHE_CONTROL_HEADER, CACHE_CONTROL_VALUE_2S);
+                        response.setHeader(ETAG_HEADER, eTag);
+                        setSecurityHeaders(response, mimetype);
+                        try (final ServletOutputStream responseStream = response.getOutputStream()) {
+                            dataStream.transferTo(responseStream);
+                        }
+                    } catch (final FileNotFoundException e) {
+                        LOGGER.error("Asset {}/{} does not exist", docId, path);
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                    } catch (final IOException e) {
+                        LOGGER.error("Error retrieving asset for docId {}, path '{}': {}",
+                                docId,
+                                path,
+                                e.getMessage(),
+                                e);
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    } catch (final PermissionException e) {
+                        LOGGER.warn("Service does not permit access to asset");
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    }
+                }
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            LOGGER.warn("User does not have permission to view assets");
+            throw new PermissionException(securityContext.getUserRef(),
+                    "You do not have permission to edit this asset");
+        }
+    }
+
+    /**
+     * Takes the pathInfo and splits it into the docId and the path information.
+     *
+     * @param pathInfo Request.getPathInfo(). Can be null.
+     * @return a DocIdAndPath record; neither component will be null.
+     */
+    private DocIdAndPath splitIntoDocIdAndPath(String pathInfo) {
+        String docId = "";
+        String path = "";
+        if (pathInfo != null) {
+            if (pathInfo.startsWith("/")) {
+                pathInfo = pathInfo.substring(1);
+            }
+            final int firstSlash = pathInfo.indexOf('/');
+            if (firstSlash != -1) {
+                docId = pathInfo.substring(0, firstSlash);
+                path = pathInfo.substring(firstSlash);
+            }
+        }
+        return new DocIdAndPath(docId, path);
+    }
+
+    /**
+     * Given a path to a file, including the filename, uses the extension to
+     * find a suitable mimetype.
+     *
+     * @param path            The path to the file, including the filename and extension.
+     *                        Must not be null.
+     * @param mimetypes       Map of lower-cased filename extension to mimetype. Must not be null.
+     * @param defaultMimetype Mimetype to return when the extension is absent or unknown.
+     * @return The mimetype. Never returns null.
+     */
+    static String getMimetype(final String path,
+                              final Map<String, String> mimetypes,
+                              final String defaultMimetype) {
+        String mimetype = defaultMimetype;
+        final int dotIndex = path.lastIndexOf('.');
+        if (dotIndex != -1) {
+            // Got an extension - look it up. Match case-insensitively, and look up
+            // with the SAME lower-cased key we tested, so an upper-case extension
+            // (IMAGE.PNG) resolves rather than yielding a null content type.
+            final String extension = path.substring(dotIndex + 1).toLowerCase(Locale.ROOT);
+            final String mapped = mimetypes.get(extension);
+            if (mapped != null) {
+                mimetype = mapped;
+            }
+        }
+
+        return mimetype;
+    }
+
+    /**
+     * Adds the headers that stop an asset being executed as a document on the Stroom origin.
+     * <p>
+     * Anything this servlet serves that a browser treats as a document runs with the viewing user's
+     * Stroom session. The app-wide policy written by {@code ContentSecurityFilter} allows
+     * {@code 'unsafe-inline'} because the UI needs it, and an asset response inherits that, so a
+     * narrower policy is set here. {@code setHeader} replaces rather than appends, and this servlet
+     * runs after the filter, so these values win for asset responses.
+     * </p>
+     *
+     * @param response The response to add the headers to. Must not be null.
+     * @param mimetype The mimetype the asset is being served with. Must not be null.
+     */
+    static void setSecurityHeaders(final HttpServletResponse response, final String mimetype) {
+        response.setHeader(CONTENT_TYPE_OPTIONS_HEADER, CONTENT_TYPE_OPTIONS_NOSNIFF);
+
+        if (SVG_MIMETYPE.equals(mimetype)) {
+            // Force a download rather than a render. Browsers ignore this header for subresource
+            // loads, so an <img> or an SVG <image> referencing the asset is unaffected - those render
+            // in the SVG image context, where scripts never run. It only bites where the asset would
+            // have become a document, which is the case we are closing.
+            response.setHeader(CONTENT_DISPOSITION_HEADER, CONTENT_DISPOSITION_ATTACHMENT);
+            response.setHeader(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_INERT);
+        } else {
+            response.setHeader(CONTENT_SECURITY_POLICY_HEADER, CONTENT_SECURITY_POLICY_ASSET);
+        }
+    }
+
+    /**
+     * Deletes all the temporary files. These should only exist if something went wrong.
+     * Called when the Servlet is created and destroyed to ensure the filesystem stays clean.
+     */
+    private void deleteTempFiles() {
+        try {
+            Files.walkFileTree(assetCacheDir,
+                    new SimpleFileVisitor<>() {
+                        @Override
+                        public @NonNull FileVisitResult visitFile(final @NonNull Path file,
+                                                                  final @NonNull BasicFileAttributes attrs)
+                                throws IOException {
+
+                            if (Files.isRegularFile(file)) {
+                                final String filename = file.getFileName().toString();
+                                if (filename.startsWith(ASSET_CACHE_TEMP_PREFIX)
+                                    && filename.endsWith(ASSET_CACHE_TEMP_SUFFIX)) {
+                                    LOGGER.warn("Deleting document asset cache temporary file '{}'", file);
+                                    Files.delete(file);
+                                }
+                            }
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
+        } catch (final IOException e) {
+            LOGGER.error("Error deleting temporary files from document asset cache: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Deletes all the files from the cache. Called on startup if the config tells us to do so.
+     */
+    private void clearCache() {
+        try {
+            Files.walkFileTree(assetCacheDir,
+                    new SimpleFileVisitor<>() {
+                        @Override
+                        public @NonNull FileVisitResult visitFile(final @NonNull Path file,
+                                                                  final @NonNull BasicFileAttributes attrs)
+                                throws IOException {
+                            LOGGER.info("Clearing file '{}' from document asset cache", file);
+                            Files.delete(file);
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Override
+                        public @NonNull FileVisitResult postVisitDirectory(@NonNull final Path dir,
+                                                                           final IOException exc)
+                                throws IOException {
+
+                            // Don't delete the cache root directory
+                            if (!dir.toAbsolutePath().equals(assetCacheDir.toAbsolutePath())) {
+                                LOGGER.info("Clearing directory '{}' from document asset cache", dir);
+                                Files.delete(dir);
+                            }
+                            return FileVisitResult.CONTINUE;
+                        }
+                    });
+        } catch (final IOException e) {
+            LOGGER.error("Error clearing document asset cache: {}", e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        if (clearAssetCacheOnStartup) {
+            LOGGER.info("Clearing document asset cache");
+            clearCache();
+        } else {
+            LOGGER.info("Deleting document asset cache temporary files");
+            deleteTempFiles();
+        }
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        deleteTempFiles();
+    }
+
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
+    }
+
+    /**
+     * Checks that a path is safe and does not escape from the cache.
+     * Throws an exception if an escape is attempted via ../ or / paths.
+     */
+    private void checkPathIsSafe(final Path baseDir, String in) throws IOException {
+        in = stripLeadingSlash(in);
+
+        // Check resolved path is within the baseDir
+        final Path resolvedPath = baseDir.resolve(in).normalize();
+        if (!resolvedPath.startsWith(baseDir)) {
+            LOGGER.error("Illegal path given to Document Asset Servlet: '{}' which resolves to '{}'. " +
+                         "Resolved path must start with '{}'", in, resolvedPath, baseDir);
+            throw new IOException("Illegal path: '" + in + "'");
+        }
+    }
+
+    /**
+     * Strips one leading slash from the input value.
+     */
+    private String stripLeadingSlash(String in) {
+        if (in.startsWith("/")) {
+            in = in.substring(1);
+        }
+
+        return in;
+    }
+
+    /**
+     * Record class to return from parsing the path given in the request from the client.
+     */
+    private record DocIdAndPath(String docId, String path) {
+
+    }
+
+}
