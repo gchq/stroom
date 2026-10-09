@@ -50,7 +50,8 @@ import java.util.concurrent.atomic.AtomicReference;
                 (which can be an XML node set) for each set bit position and adds it to the resultant XML.
 
                 If the look up fails no result will be returned.
-
+                """,
+        extendedCommonDescription = """
                 The key is a bitmap expressed as either a decimal integer or a hexidecimal value, \
                 e.g. `14`/`0xE` is `1110` as a binary bitmap.
                 For each bit position that is set, (i.e. has a binary value of `1`) a lookup will be performed \

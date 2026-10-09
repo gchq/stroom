@@ -32,16 +32,15 @@ import java.util.HexFormat;
 @XsltFunctionDef(
         name = Hash.FUNCTION_NAME,
         commonCategory = XsltFunctionCategory.CONVERSION,
-        commonDescription = "Generates a hash of the passed value.",
+        commonDescription = """
+                Generates a hash of the supplied value using the named hash algorithm.
+                The SHA-256 algorithm will be used if not supplied.
+
+                You can optionally supply a salt value to prepend to the hash.""",
         commonReturnType = XsltDataType.STRING,
         commonReturnDescription = "The hash of the value",
         signatures = {
                 @XsltFunctionSignature(
-                        description = """
-                                Generates a hash of the supplied value using the named hash algorithm.
-                                The SHA-256 algorithm will be used if not supplied.
-
-                                You can optionally supply a salt value to prepend to the hash.""",
                         args = {
                                 @XsltFunctionArg(
                                         name = "value",

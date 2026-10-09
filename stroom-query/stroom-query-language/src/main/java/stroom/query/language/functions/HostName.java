@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 @FunctionDef(
         name = HostName.NAME,
         commonCategory = FunctionCategory.STRING,
+        commonDescription = "Returns the host name for the supplied host name or address.",
         commonReturnType = ValString.class,
         signatures = @FunctionSignature(
                 description = "Returns the host name for the given host string.",

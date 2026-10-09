@@ -29,8 +29,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,9 +57,9 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(GenerateXsltFunctionDefinitions.class);
 
     private static final Path DOCS_SUB_PATH = Paths.get(
-            "content/en/docs/reference-section/xslt-functions");
+            "content/en/docs/reference-section/xslt-function-reference");
     private static final Path DATA_SUB_PATH = Paths.get(
-            "assets/data/xslt-functions");
+            "assets/data/xslt-function-reference");
     private static final String INDEX_DATA_FILENAME = "_index.json";
     private static final String INDEX_DOC_FILENAME = "_index.md";
 
@@ -113,7 +113,8 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                     return categories[0];
                 }));
 
-        final Map<XsltFunctionCategory, XsltFunctionCategoryIndex> map = new HashMap<>();
+        // Use a LinkedHashMap to for a consistent order in the json
+        final Map<XsltFunctionCategory, XsltFunctionCategoryDetails> categoryToDetailsMap = new LinkedHashMap<>();
         final AtomicInteger errorCounter = new AtomicInteger();
         groups.entrySet()
                 .stream()
@@ -125,18 +126,22 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                     final String docFilename = category.name()
                                                        .toLowerCase()
                                                        .replace("[^a-zA-Z0-9-]", "-") + ".md";
-                    final XsltFunctionCategoryIndex index = map.computeIfAbsent(category,
-                            k -> new XsltFunctionCategoryIndex(null, k, docFilename));
-                    classesGroup.forEach(annotatedClass -> {
-                        final String functionName = annotatedClass.getEffectiveName();
-                        index.addFunction(functionName);
-                    });
+
+                    final XsltFunctionCategoryDetails index = categoryToDetailsMap.computeIfAbsent(
+                            category,
+                            k -> new XsltFunctionCategoryDetails(null, k, docFilename));
+
+                    classesGroup.stream()
+                            .map(AnnotatedClass::getEffectiveName)
+                            .sorted()
+                            .forEach(index::addFunction);
+
                     final int errorCount = checkDocPage(index);
                     errorCounter.addAndGet(errorCount);
                 });
 
         try {
-            final String json = JsonUtil.getMapper().writeValueAsString(map);
+            final String json = JsonUtil.getMapper().writeValueAsString(categoryToDetailsMap);
             LOGGER.debug("Index:\n{}", json);
 
             final Path outputFile = buildDataFilePath(INDEX_DATA_FILENAME);
@@ -150,7 +155,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         }
     }
 
-    private int checkDocPage(final XsltFunctionCategoryIndex index) {
+    private int checkDocPage(final XsltFunctionCategoryDetails index) {
         try {
             // Check the _index.md file contains a link for each func with the appropriate category
             final Path indexDocFilePath = buildDocsFilePath(INDEX_DOC_FILENAME);
@@ -398,7 +403,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
 
 
     @JsonInclude(Include.NON_NULL)
-    private static class XsltFunctionCategoryIndex {
+    private static class XsltFunctionCategoryDetails {
 
         @JsonProperty
         private final List<String> functionNames;
@@ -407,9 +412,9 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         @JsonProperty
         private final String docFilename;
 
-        private XsltFunctionCategoryIndex(@JsonProperty("name") final List<String> functionNames,
-                                          @JsonProperty("category") final XsltFunctionCategory category,
-                                          @JsonProperty("docFilename") final String docFilename) {
+        private XsltFunctionCategoryDetails(@JsonProperty("name") final List<String> functionNames,
+                                            @JsonProperty("category") final XsltFunctionCategory category,
+                                            @JsonProperty("docFilename") final String docFilename) {
             this.functionNames = NullSafe.mutableList(functionNames);
             this.category = category;
             this.docFilename = docFilename;
@@ -474,6 +479,9 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         @JsonProperty("commonDescription")
         private final String commonDescription;
 
+        @JsonProperty("extendedCommonDescription")
+        private final String extendedCommonDescription;
+
         @JsonProperty("commonReturnType")
         private final XsltDataType[] commonReturnType;
 
@@ -491,6 +499,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                                     @JsonProperty("commonCategory") final XsltFunctionCategory[] commonCategory,
                                     @JsonProperty("commonSubCategories") final String[] commonSubCategories,
                                     @JsonProperty("commonDescription") final String commonDescription,
+                                    @JsonProperty("extendedCommonDescription") final String extendedCommonDescription,
                                     @JsonProperty("commonReturnType") final XsltDataType[] commonReturnType,
                                     @JsonProperty("commonReturnDescription") final String commonReturnDescription,
                                     @JsonProperty("signatures") final XsltFunctionSignature[] signatures) {
@@ -501,6 +510,7 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
             this.commonCategory = commonCategory;
             this.commonSubCategories = commonSubCategories;
             this.commonDescription = commonDescription;
+            this.extendedCommonDescription = extendedCommonDescription;
             this.commonReturnType = commonReturnType;
             this.commonReturnDescription = commonReturnDescription;
             this.signatures = signatures;
@@ -516,9 +526,9 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                         annotaion.commonCategory(),
                         annotaion.commonSubCategories(),
                         annotaion.commonDescription(),
+                        annotaion.extendedCommonDescription(),
                         annotaion.commonReturnType(),
-                        annotaion.commonReturnDescription(),
-                        annotaion.signatures());
+                        annotaion.commonReturnDescription(), annotaion.signatures());
             } else {
                 final boolean foundAlias = NullSafe.stream(annotaion.aliases())
                         .anyMatch(aName -> Objects.equals(aName, effectiveName));
@@ -541,9 +551,9 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                         annotaion.commonCategory(),
                         annotaion.commonSubCategories(),
                         annotaion.commonDescription(),
+                        annotaion.extendedCommonDescription(),
                         annotaion.commonReturnType(),
-                        annotaion.commonReturnDescription(),
-                        annotaion.signatures());
+                        annotaion.commonReturnDescription(), annotaion.signatures());
             }
         }
 

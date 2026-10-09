@@ -93,15 +93,15 @@ class TestFunctionFactory {
             if (Modifier.isAbstract(functionClass.getModifiers())) {
                 softAssertions.assertThat(optFuncDef)
                         .withFailMessage("Function class " +
-                                className +
-                                " should not have @FunctionDef as it is abstract")
+                                         className +
+                                         " should not have @FunctionDef as it is abstract")
                         .isEmpty();
             } else {
                 softAssertions.assertThat(optFuncDef)
                         .withFailMessage("Function class " +
-                                className +
-                                " is not in FunctionFactory. " +
-                                "Add an @FunctionDef annotation to it or mark is as @ArchitecturalFunction")
+                                         className +
+                                         " is not in FunctionFactory. " +
+                                         "Add an @FunctionDef annotation to it or mark is as @ArchitecturalFunction")
                         .isNotEmpty();
 
                 optFuncDef.ifPresent(functionDef -> {
@@ -120,7 +120,12 @@ class TestFunctionFactory {
         softAssertions.assertThat(functionDef.name())
                 .withFailMessage(
                         "Function " + className + " needs a name")
-                .isNotEmpty();
+                .isNotBlank();
+
+//        softAssertions.assertThat(functionDef.commonDescription())
+//                .withFailMessage(
+//                        "Function " + className + " needs a commonDescription")
+//                .isNotBlank();
 
         assertMaxOneItemInArray(
                 softAssertions,
@@ -174,37 +179,37 @@ class TestFunctionFactory {
                 signature.returnType());
 
         final boolean hasCategory = functionDef.commonCategory().length > 0
-                || signature.category().length > 0;
+                                    || signature.category().length > 0;
 
         softAssertions.assertThat(hasCategory)
                 .withFailMessage(
                         classAndSigName + " - Either FunctionDef.commonCategory or " +
-                                "FunctionSignature.category must be set")
+                        "FunctionSignature.category must be set")
                 .isTrue();
 
         final boolean hasDescription = !functionDef.commonDescription().isEmpty()
-                || !signature.description().isEmpty();
+                                       || !signature.description().isEmpty();
 
         softAssertions.assertThat(hasDescription)
                 .withFailMessage(
                         classAndSigName + " - Either FunctionDef.commonDescription or " +
-                                "FunctionSignature.description must be set")
+                        "FunctionSignature.description must be set")
                 .isTrue();
 
         final boolean hasReturnType = functionDef.commonReturnType().length > 0
-                || signature.returnType().length > 0;
+                                      || signature.returnType().length > 0;
 
         softAssertions.assertThat(hasReturnType)
                 .withFailMessage(
                         classAndSigName + " - Either FunctionDef.commonReturnType or " +
-                                "FunctionSignature.returnType must be set")
+                        "FunctionSignature.returnType must be set")
                 .isTrue();
 
         softAssertions.assertThat(Arrays.stream(signature.args())
                         .filter(FunctionArg::isVarargs)
                         .count())
                 .withFailMessage(classAndSigName +
-                        " - Only one argument can be a varargs argument.")
+                                 " - Only one argument can be a varargs argument.")
                 .isLessThanOrEqualTo(1);
 
         assertOptionalArgs(softAssertions, classAndSigName, signature.args());
@@ -212,7 +217,7 @@ class TestFunctionFactory {
         if (Arrays.stream(signature.args())
                 .anyMatch(arg -> arg.isOptional() && arg.isVarargs())) {
             softAssertions.fail(classAndSigName +
-                    " - Found an argument that is both optional and varargs. They are mutually exclusive.");
+                                " - Found an argument that is both optional and varargs. They are mutually exclusive.");
         }
     }
 
@@ -230,9 +235,9 @@ class TestFunctionFactory {
             if (args[i].isOptional()) {
                 if (foundOptArg && !args[i].isOptional()) {
                     softAssertions.fail(classAndSigName +
-                            " - found mandatory argument " + args[i].name() +
-                            " at index " + i + " after optional arguments. All arguments after an optional one" +
-                            " must also be optional");
+                                        " - found mandatory argument " + args[i].name() +
+                                        " at index " + i + " after optional arguments. All arguments after an optional one" +
+                                        " must also be optional");
                 }
                 foundOptArg = true;
             }
@@ -246,9 +251,9 @@ class TestFunctionFactory {
                                              final T[] arr) {
         softAssertions.assertThat(arr.length)
                 .withFailMessage(className +
-                        " - " +
-                        name +
-                        " is only allowed to have zero or one items.")
+                                 " - " +
+                                 name +
+                                 " is only allowed to have zero or one items.")
                 .isLessThanOrEqualTo(1);
     }
 }

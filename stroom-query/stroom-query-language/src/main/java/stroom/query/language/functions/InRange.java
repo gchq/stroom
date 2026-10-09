@@ -24,6 +24,8 @@ import java.util.function.Supplier;
 @FunctionDef(
         name = InRange.NAME,
         commonCategory = FunctionCategory.LOGIC,
+        commonDescription = "Returns true if the value is between the lower and upper bounds, inclusive. " +
+                "All parameters must be either numbers or ISO date strings.",
         commonReturnType = ValBoolean.class,
         signatures = @FunctionSignature(
                 description = "Returns true if the value is between lower and upper (inclusive). " +
