@@ -21,6 +21,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.index.api.IndexVolumeGroupService;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -43,6 +44,7 @@ class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
 
     @Override
     public IndexVolumeGroup create(final String name) {
+        RestUtil.checkPathSafeName(name);
         return indexVolumeGroupServiceProvider.get().getOrCreate(name);
     }
 
@@ -58,6 +60,7 @@ class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
 
     @Override
     public IndexVolumeGroup update(final Integer id, final IndexVolumeGroup indexVolumeGroup) {
+        RestUtil.checkPathSafeName(indexVolumeGroup.getName());
         return indexVolumeGroupServiceProvider.get().update(indexVolumeGroup);
     }
 

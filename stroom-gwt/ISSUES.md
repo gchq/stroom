@@ -177,27 +177,6 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
 * Plan B session stores (not confirmed): `SessionDb.condense()` takes the later session's end, so a
   session nested inside an earlier one could shorten the merged session.
 
-### A name with `/` in it can't be used for volume groups, node groups or processor profiles
-
-**Reproduced.** (gwt-bugs #42) Administration, Data Volumes, New, then `A/B volumes` and OK, shows
-an alert reading `Ambiguous URI path separator`. The same happens for Index Volumes, Node Groups and
-a Processor Profile's name.
-
-Each dialog checks the name isn't taken with `fetchByName`, which takes the name as a path
-parameter: `@Path("/fetchByName/{name}")`. RestyGWT encodes `/` as `%2F`, and Jetty rejects `%2F`
-in a path segment before the resource sees it (`400 Ambiguous URI path separator`; sent unencoded
-it is a 404). Nothing else forbids `/`; the name is only unusable because of how it's looked up.
-
-Fix: take the name as a `@QueryParam("name")`, or look it up with a POST with the name in the body,
-on all four resources. Failing that, reject `/` in the dialogs with a message that says so.
-
-* `stroom-core-shared/src/main/java/stroom/data/store/impl/fs/shared/FsVolumeGroupResource.java` (line 77)
-* `stroom-core-shared/src/main/java/stroom/index/shared/IndexVolumeGroupResource.java` (line 68)
-* `stroom-core-shared/src/main/java/stroom/node/shared/NodeGroupResource.java` (line 65)
-* `stroom-core-shared/src/main/java/stroom/processor/shared/ProcessorProfileResource.java` (line 67)
-* Callers: `NewFsVolumeGroupPresenter:93`, `NewIndexVolumeGroupPresenter:92`, `NodeGroupClient:67`
-  and `:117`, `ProcessorProfileClient:89`
-
 ### A deleted annotation tag's name can't be reused by renaming
 
 **Reproduced.** (gwt-bugs #44) In Annotation Comments, make a tag `X` and delete it. Then rename
@@ -896,6 +875,15 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
 * A search that failed, or whose results couldn't be shown, was left running on the server until
   its idle timeout, as the client only stopped polling it. It is now stopped there too (its results
   are kept, as when the user stops a search) (`TestQueryModel`, `TestSearchModel`).
+* #42: a data or index volume group, node group or processor profile named with a `/` (e.g.
+  `A/B volumes`) failed with `Ambiguous URI path separator`, as each is looked up by name in a URL's
+  path (`fetchByName/{name}`), where the server refuses an encoded `/`. Such names are now refused:
+  the create and rename dialogs say "A name can't contain '/'." before anything is sent, and the
+  four resources' create and update answer 400 with the same message, so the API can't make one
+  either (`PathSafeNames`, `RestUtil.checkPathSafeName`; `TestPathSafeNames`, `TestRestUtil`, the
+  four resources' tests and the workbench's `App/Main/NodeGroupsScreen` `NameWithSlash`). Groups
+  made internally (e.g. the default volume groups from the configuration) aren't checked, so an
+  existing configuration still starts.
 * A blank result store duration failed when saved (`StroomDuration.parse("")` on the server), and
   any failed save closed the Result Store Settings dialog with nothing said and nothing changed,
   as `ResultStoreModel.updateSettings` turned a failure into `false`. A blank duration is now

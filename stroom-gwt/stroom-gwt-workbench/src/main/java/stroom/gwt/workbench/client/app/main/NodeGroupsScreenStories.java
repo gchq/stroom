@@ -23,6 +23,7 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -141,6 +142,24 @@ public final class NodeGroupsScreenStories {
                     // GWT then opens the new group's members dialog
                     screen.findByText("Edit Node Group - Reporting");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
+                    play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // A name with a '/' is refused before anything is sent: such a name is looked up in
+                // the URL's path (fetchByName/{name}), where the server refuses it (gwt-bugs #42)
+                .story("NameWithSlash", NodeGroupsScreenStories::render)
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("All Nodes");
+                    play.click(play.getByTitle("New"));
+                    screen.findByText("New", StroomDom.DIALOG_TITLE);
+                    play.type(screen.querySelector("#nameDocumentName"), "A/B nodes");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith(ValueMatcher.stringContaining("contain")));
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.get("/node/nodeGroup/v2/fetchByName/*").toSpyMatcher());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/node/nodeGroup/v2").toSpyMatcher());
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
     }

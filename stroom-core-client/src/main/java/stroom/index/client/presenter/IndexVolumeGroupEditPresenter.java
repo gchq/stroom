@@ -31,6 +31,7 @@ import stroom.query.api.ExpressionOperator;
 import stroom.query.api.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.PathSafeNames;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -246,6 +247,11 @@ public class IndexVolumeGroupEditPresenter
             AlertEvent.fireError(
                     IndexVolumeGroupEditPresenter.this,
                     "You must provide a name for the index volume group.",
+                    event::reset);
+        } else if (PathSafeNames.validate(groupName) != null) {
+            AlertEvent.fireError(
+                    IndexVolumeGroupEditPresenter.this,
+                    PathSafeNames.validate(groupName),
                     event::reset);
         } else {
             restFactory

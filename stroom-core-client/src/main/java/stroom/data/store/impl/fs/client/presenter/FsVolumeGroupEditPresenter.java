@@ -26,6 +26,7 @@ import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.PathSafeNames;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -233,7 +234,12 @@ public class FsVolumeGroupEditPresenter
         if (groupName == null || groupName.isEmpty()) {
             AlertEvent.fireError(
                     FsVolumeGroupEditPresenter.this,
-                    "You must provide a name for the index volume group.",
+                    "You must provide a name for the data volume group.",
+                    event::reset);
+        } else if (PathSafeNames.validate(groupName) != null) {
+            AlertEvent.fireError(
+                    FsVolumeGroupEditPresenter.this,
+                    PathSafeNames.validate(groupName),
                     event::reset);
         } else {
             restFactory

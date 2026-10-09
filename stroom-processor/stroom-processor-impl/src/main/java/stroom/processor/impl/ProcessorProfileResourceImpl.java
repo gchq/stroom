@@ -20,6 +20,7 @@ import stroom.event.logging.rs.api.AutoLogged;
 import stroom.processor.shared.FindProcessorProfileRequest;
 import stroom.processor.shared.ProcessorProfile;
 import stroom.processor.shared.ProcessorProfileResource;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResultPage;
 
 import jakarta.inject.Inject;
@@ -42,6 +43,7 @@ class ProcessorProfileResourceImpl implements ProcessorProfileResource {
 
     @Override
     public ProcessorProfile create(final ProcessorProfile processorProfile) {
+        RestUtil.checkPathSafeName(processorProfile.getName());
         return processorProfileServiceProvider.get().create(processorProfile);
     }
 
@@ -57,6 +59,7 @@ class ProcessorProfileResourceImpl implements ProcessorProfileResource {
 
     @Override
     public ProcessorProfile update(final Integer id, final ProcessorProfile processorProfile) {
+        RestUtil.checkPathSafeName(processorProfile.getName());
         return processorProfileServiceProvider.get().update(processorProfile);
     }
 

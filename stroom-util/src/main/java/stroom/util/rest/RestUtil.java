@@ -19,6 +19,7 @@ package stroom.util.rest;
 import stroom.docref.HasUuid;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.HasIntegerId;
+import stroom.util.shared.PathSafeNames;
 
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.NotFoundException;
@@ -162,5 +163,16 @@ public class RestUtil {
                         .entity(message)
                         .type(MediaType.TEXT_PLAIN)
                         .build());
+    }
+
+    /// Checks a name that is looked up by name in a REST URL's path (see [PathSafeNames]).
+    ///
+    /// @param name The name, which may be null.
+    /// @throws BadRequestException If the name can't be used, saying why.
+    public static void checkPathSafeName(final String name) {
+        final String problem = PathSafeNames.validate(name);
+        if (problem != null) {
+            throw badRequest(problem);
+        }
     }
 }
