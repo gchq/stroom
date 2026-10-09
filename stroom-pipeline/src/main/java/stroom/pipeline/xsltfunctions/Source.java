@@ -34,7 +34,22 @@ import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+@XsltFunctionDef(
+        name = Source.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns an XML document in the `stroom-meta` namespace describing the current source location.
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "The XML source location, or an empty sequence if no location is available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class Source extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "source";
 
     private static final AttributesImpl EMPTY_ATTS = new AttributesImpl();
     private static final String URI = "stroom-meta";

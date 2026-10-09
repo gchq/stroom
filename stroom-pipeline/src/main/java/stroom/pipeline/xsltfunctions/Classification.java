@@ -18,6 +18,7 @@ package stroom.pipeline.xsltfunctions;
 
 import stroom.feed.api.FeedProperties;
 import stroom.pipeline.state.FeedHolder;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -26,7 +27,22 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = Classification.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the display classification of the feed for the data being processed.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The feed's display classification, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class Classification extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "classification";
 
     private final FeedHolder feedHolder;
     private final FeedProperties feedProperties;
@@ -56,9 +72,9 @@ class Classification extends StroomExtensionFunctionCall {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 }

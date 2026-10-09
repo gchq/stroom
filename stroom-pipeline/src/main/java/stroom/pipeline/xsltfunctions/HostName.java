@@ -25,6 +25,31 @@ import net.sf.saxon.value.StringValue;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+@XsltFunctionDef(
+        name = HostName.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.NETWORK,
+        commonDescription = """
+                Resolves an IP address to a host name.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The resolved host name, or an empty sequence if resolution fails.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "ipAddress",
+                                        description = "The IP address to resolve.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "ignoreWarnings",
+                                        description = "Suppress resolution warnings when `true`.",
+                                        argType = XsltDataType.BOOLEAN,
+                                        isOptional = true
+                                )
+                        }
+                )
+        })
 class HostName extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "host-name";

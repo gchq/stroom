@@ -53,6 +53,38 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+@XsltFunctionDef(
+        name = ParseDateTime.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.DATE,
+        commonDescription = """
+                Parses a date string to an XPath date-time value. Without a pattern it expects Stroom's standard
+                date-time format; the default time zone is UTC.
+                """,
+        commonReturnType = XsltDataType.DATE_TIME,
+        commonReturnDescription = "The parsed date-time value, or an empty sequence if parsing fails.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "inputDate",
+                                        description = "The date string to parse.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "pattern",
+                                        description = "Optional input date pattern.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                ),
+                                @XsltFunctionArg(
+                                        name = "timeZone",
+                                        description = "The input time zone; defaults to UTC.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                )
+                        }
+                )
+        })
 class ParseDateTime extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "parse-dateTime";

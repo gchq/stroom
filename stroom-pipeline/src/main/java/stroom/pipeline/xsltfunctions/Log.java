@@ -23,6 +23,38 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 
+@XsltFunctionDef(
+        name = Log.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                The log() function writes a message to the processing log with the specified severity.
+                Severities of INFO, WARN, ERROR and FATAL can be used.
+                Severities of ERROR and FATAL will result in records being omitted from the output if a
+                RecordOutputFilter is used in the pipeline.
+
+                The counts for RecWarn, RecError will be affected by warnings or errors generated in
+                this way therefore this function is useful for adding business rules to XML output.
+                """,
+        commonReturnType = XsltDataType.EMPTY_SEQUENCE,
+        commonReturnDescription = "An empty sequence.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "severity",
+                                        description = "The message severity, such as `INFO`, `WARN`, `ERROR` or " +
+                                                      "`FATAL`.",
+                                        argType = XsltDataType.STRING,
+                                        allowedValues = {"INFO", "WARN", "ERROR", "FATAL"}
+                                ),
+                                @XsltFunctionArg(
+                                        name = "message",
+                                        description = "The message to output to the log.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class Log extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "log";

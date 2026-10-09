@@ -32,7 +32,31 @@ import org.xml.sax.SAXException;
 
 import java.net.URI;
 
+@XsltFunctionDef(
+        name = ParseUri.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.URI,
+        commonDescription = """
+                The parse-uri() function takes a Uniform Resource Identifier (URI) in string form and returns
+                an XML node with a namespace of `uri` containing the URI's individual components of `authority`,
+                `fragment`, `host`, `path`, `port`, `query`, `scheme`, `schemeSpecificPart` and `userInfo`.
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "An XML document containing the URI components, or an empty sequence for an " +
+                                  "invalid URI.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "uri",
+                                        description = "The URI string to parse.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class ParseUri extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "parse-uri";
     private static final Logger LOGGER = LoggerFactory.getLogger(ParseUri.class);
 
     private static final String EMPTY_STRING = "";

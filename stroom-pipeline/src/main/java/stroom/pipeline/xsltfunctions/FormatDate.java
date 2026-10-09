@@ -53,6 +53,86 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
+@XsltFunctionDef(
+        name = FormatDate.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.DATE,
+        commonDescription = """
+                Parses a date and formats it as a string. A single argument is interpreted as milliseconds since the
+                Unix epoch; other forms parse an input pattern and may specify input and output time zones.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The formatted date string, or an empty sequence if parsing or formatting fails.",
+        signatures = {
+                @XsltFunctionSignature(
+                        description = """
+                                Formats milliseconds since the Unix epoch in Stroom's standard date-time format.
+                                """,
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "epochMillis",
+                                        description = "The number of milliseconds since the Unix epoch.",
+                                        argType = XsltDataType.INTEGER
+                                )
+                        }
+                ),
+                @XsltFunctionSignature(
+                        description = """
+                                Parses a date string and returns Stroom's standard date-time format.
+                                """,
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "inputDate",
+                                        description = "The date string to parse.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "inputPattern",
+                                        description = "The pattern describing the input date.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "inputTimeZone",
+                                        description = "The input time zone; defaults to UTC. `GMT/BST` handles " +
+                                                      "British Summer Time.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                )
+                        }
+                ),
+                @XsltFunctionSignature(
+                        description = """
+                                Parses a date string and formats it with a custom output pattern.
+                                """,
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "inputDate",
+                                        description = "The date string to parse.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "inputPattern",
+                                        description = "The pattern describing the input date.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "inputTimeZone",
+                                        description = "The input time zone; defaults to UTC.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "outputPattern",
+                                        description = "The pattern for the output string.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "outputTimeZone",
+                                        description = "The output time zone; defaults to UTC.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                )
+                        }
+                )
+        })
 class FormatDate extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "format-date";

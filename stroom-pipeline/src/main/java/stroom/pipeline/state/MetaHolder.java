@@ -20,6 +20,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.meta.shared.Meta;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.NullSafe;
 
 @PipelineScoped
 public class MetaHolder implements Holder {
@@ -32,6 +33,20 @@ public class MetaHolder implements Holder {
 
     public Meta getMeta() {
         return meta;
+    }
+
+    /// Convenience method instead of calling `getMeta().getId()`
+    ///
+    /// @return The meta ID or null if no meta is set
+    public Long getMetaId() {
+        return NullSafe.get(meta, Meta::getId);
+    }
+
+    /// Convenience method instead of calling `getMeta().getParentId()`
+    ///
+    /// @return The parent meta ID or null if no meta is set
+    public Long getParentMetaId() {
+        return NullSafe.get(meta, Meta::getParentMetaId);
     }
 
     public void setMeta(final Meta meta) {
@@ -56,17 +71,17 @@ public class MetaHolder implements Holder {
         return inputStreamProvider;
     }
 
-    /**
-     * One based
-     */
+    /// The number of the part within the stream, one based
     public long getPartNo() {
         return partIndex + 1;
     }
 
+    /// The index of the part within the stream, zero based
     public long getPartIndex() {
         return partIndex;
     }
 
+    /// @param partIndex Zero based
     public void setPartIndex(final long partIndex) {
         this.partIndex = partIndex;
     }

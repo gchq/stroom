@@ -19,6 +19,7 @@ package stroom.pipeline.xsltfunctions;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -31,6 +32,25 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Optional;
 
+@XsltFunctionDef(
+        name = ParentForId.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the parent stream ID of the specified input stream.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The parent stream ID, if one exists.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "streamId",
+                                        description = "The ID of the input stream.",
+                                        argType = XsltDataType.STRING
+                                )
+                        }
+                )
+        })
 class ParentForId extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "parent-for-id";
@@ -62,10 +82,10 @@ class ParentForId extends StroomExtensionFunctionCall {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 
 

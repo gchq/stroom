@@ -51,6 +51,53 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
+@XsltFunctionDef(
+        name = HttpCall.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.NETWORK,
+        commonDescription = """
+                Sends an HTTP _POST_ request and returns a `stroom-http` XML response containing the status, headers
+                and body. The request body is optional.
+                """,
+        commonReturnType = XsltDataType.SEQUENCE,
+        commonReturnDescription = "An XML response document containing the response or an error.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "url",
+                                        description = "The URL to request.",
+                                        argType = XsltDataType.STRING
+                                ),
+                                @XsltFunctionArg(
+                                        name = "headers",
+                                        description = "Optional newline-separated HTTP headers in `name:value` form.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                ),
+                                @XsltFunctionArg(
+                                        name = "mediaType",
+                                        description = "The request media type; defaults to `application/json; " +
+                                                      "charset=utf-8`.",
+                                        argType = XsltDataType.STRING,
+                                        defaultValue = HttpCall.DEFAULT_MEDIA_TYPE,
+                                        isOptional = true
+                                ),
+                                @XsltFunctionArg(
+                                        name = "data",
+                                        description = "Optional request body.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                ),
+                                @XsltFunctionArg(
+                                        name = "clientConfig",
+                                        description = "Optional JSON HTTP client configuration, including SSL " +
+                                                      "settings.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true
+                                )
+                        }
+                )
+        })
 class HttpCall extends StroomExtensionFunctionCall {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpCall.class);
@@ -60,6 +107,7 @@ class HttpCall extends StroomExtensionFunctionCall {
     private static final String URI = "stroom-http";
     private static final String HEADER_DELIMITER = "\n";
     private static final String HEADER_KV_DELIMITER = ":";
+    static final String DEFAULT_MEDIA_TYPE = "application/json; charset=utf-8";
 
     private final CommonHttpClient commonHttpClient;
 
@@ -75,7 +123,7 @@ class HttpCall extends StroomExtensionFunctionCall {
 
         final String url = getOptionalString(arguments, 0).orElse("");
         final String headers = getOptionalString(arguments, 1).orElse("");
-        final String mediaType = getOptionalString(arguments, 2).orElse("application/json; charset=utf-8");
+        final String mediaType = getOptionalString(arguments, 2).orElse(DEFAULT_MEDIA_TYPE);
         final String data = getOptionalString(arguments, 3).orElse("");
         final String clientConfigStr = getOptionalString(arguments, 4).orElse("");
 

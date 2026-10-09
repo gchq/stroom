@@ -393,7 +393,8 @@ class TestStoreImpl {
             when(mockFsVolume.getVolumeType()).thenReturn(FsVolumeType.STANDARD);
             when(mockStreamStore.openSource(meta, mockDataVolume))
                     .thenReturn(source);
-            when(source.get(partNo))
+            final long partIdx = partNo - 1;
+            when(source.get(partIdx))
                     .thenReturn(provider);
 
             // When

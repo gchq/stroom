@@ -25,6 +25,7 @@ import java.time.format.DateTimeParseException;
         name = FloorTime.NAME,
         commonCategory = FunctionCategory.DATE,
         commonSubCategories = AbstractRoundDateTime.ROUND_SUB_CATEGORY,
+        commonDescription = "Floors the supplied time to the nearest duration.",
         commonReturnType = ValDate.class,
         commonReturnDescription = "The result date and time.",
         signatures =

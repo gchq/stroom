@@ -226,11 +226,15 @@ public class StoreImpl implements Store, AttributeMapFactory {
 
     @Override
     public AttributeMap getAttributeMapForPart(final long streamId, final long partNo) {
+        if (partNo < 1) {
+            throw new IllegalArgumentException("Part number is one based");
+        }
         try (final Source source = openSource(streamId)) {
             final AttributeMap attributeMap = new AttributeMap();
 
             // Setup meta data.
-            final InputStreamProvider provider = source.get(partNo);
+            final long partIndex = partNo - 1;
+            final InputStreamProvider provider = source.get(partIndex);
             if (provider != null) {
                 // Get the input stream.
                 final SizeAwareInputStream inputStream = provider.get(StreamTypeNames.META);

@@ -16,8 +16,8 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -26,6 +26,19 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = ParentId.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the parent stream ID of the current input stream.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The parent stream ID, if one exists.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class ParentId extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "parent-id";
@@ -44,17 +57,16 @@ class ParentId extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            final Meta meta = metaHolder.getMeta();
-            if (meta != null && meta.getParentMetaId() != null) {
-                result = String.valueOf(meta.getParentMetaId());
-            }
+            result = NullSafe.get(metaHolder.getParentMetaId(), String::valueOf);
         } catch (final Exception e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        // TODO I have no idea why this is returning a StringValue rather than an Int64Value,
+        //  as it is coming from a long
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 }

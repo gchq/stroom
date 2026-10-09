@@ -16,8 +16,8 @@
 
 package stroom.pipeline.xsltfunctions;
 
-import stroom.meta.shared.Meta;
 import stroom.pipeline.state.MetaHolder;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
 import jakarta.inject.Inject;
@@ -26,7 +26,24 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.StringValue;
 
+@XsltFunctionDef(
+        name = SourceId.FUNCTION_NAME,
+        aliases = {SourceId.FUNCTION_NAME_STREAM_ID},
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the ID of the current input stream. `stream-id()` is an alias retained for compatibility.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The current input stream ID, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class SourceId extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "source-id";
+    public static final String FUNCTION_NAME_STREAM_ID = "stream-id";
 
     private final MetaHolder metaHolder;
 
@@ -42,17 +59,16 @@ class SourceId extends StroomExtensionFunctionCall {
         String result = null;
 
         try {
-            final Meta meta = metaHolder.getMeta();
-            if (meta != null) {
-                result = String.valueOf(meta.getId());
-            }
+            result = NullSafe.get(metaHolder.getMetaId(), String::valueOf);
         } catch (final Exception e) {
             log(context, Severity.ERROR, e.getMessage(), e);
         }
 
-        if (result == null) {
-            return EmptyAtomicSequence.getInstance();
-        }
-        return StringValue.makeStringValue(result);
+        // TODO I have no idea why this is returning a StringValue rather than an Int64Value,
+        //  as it is coming from a long
+        return NullSafe.getOrElseGet(
+                result,
+                StringValue::makeStringValue,
+                EmptyAtomicSequence::getInstance);
     }
 }

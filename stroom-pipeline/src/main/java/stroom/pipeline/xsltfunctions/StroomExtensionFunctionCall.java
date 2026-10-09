@@ -92,14 +92,14 @@ abstract class StroomExtensionFunctionCall {
     }
 
     DateTimeValue getSafeDateTime(final String functionName,
-                                       final XPathContext context,
-                                       final Sequence[] arguments,
-                                       final int index) throws XPathException {
+                                  final XPathContext context,
+                                  final Sequence[] arguments,
+                                  final int index) throws XPathException {
         DateTimeValue dateTime = null;
         final Sequence sequence = arguments[index];
         if (sequence != null) {
             final Item item = sequence.iterate().next();
-            if (item != null && item instanceof DateTimeValue) {
+            if (item instanceof DateTimeValue) {
                 dateTime = ((DateTimeValue) item);
             }
         }
