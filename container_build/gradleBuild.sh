@@ -124,6 +124,21 @@ main() {
     #:stroom-proxy:stroom-proxy-app:test
   #echo "::endgroup::"
 
+  echo "::group::Run Java compile"
+  echo -e "${GREEN}Run Java compile${NC}"
+  ./gradlew \
+    "${GRADLE_ARGS[@]}" \
+    --info \
+    --scan \
+    --stacktrace \
+    -PdumpFailedTestXml=true \
+    -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
+    classes \
+    testClasses \
+    :stroom-proxy:stroom-proxy-app:test --tests '*TestProxyYamlUtil' \
+    :stroom-config:stroom-config-app:test --tests '*TestStroomYamlUtil'
+  echo "::endgroup::"
+
   # Run just the checkstyle and the two config test as these often fail
   # so better to fail early. Also not running CS alonside the other tasks
   # may help to stop out of memory issues.
@@ -138,9 +153,7 @@ main() {
     -PdumpFailedTestXml=true \
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
     checkstyleMain \
-    checkstyleTest \
-    :stroom-proxy:stroom-proxy-app:test --tests '*TestProxyYamlUtil' \
-    :stroom-config:stroom-config-app:test --tests '*TestStroomYamlUtil'
+    checkstyleTest
   echo "::endgroup::"
 
   # Do the gradle build
