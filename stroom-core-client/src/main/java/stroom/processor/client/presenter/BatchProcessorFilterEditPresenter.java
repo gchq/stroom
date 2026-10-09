@@ -18,7 +18,6 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.config.global.client.presenter.ErrorEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
 import stroom.processor.shared.BulkProcessorFilterChangeRequest;
@@ -115,19 +114,13 @@ public class BatchProcessorFilterEditPresenter
                        final Runnable onClose) {
 
         if (getView().getChange() == null) {
-            ErrorEvent.fire(
-                    this,
-                    "No change selected.");
-            event.reset();
+            AlertEvent.fireWarn(this, "No change selected.", event::reset);
             return;
         }
 
         if (ProcessorFilterChange.SET_RUN_AS_USER.equals(getView().getChange())) {
             if (userRefSelectionBoxPresenter.getSelected() == null) {
-                ErrorEvent.fire(
-                        this,
-                        "No user selected.");
-                event.reset();
+                AlertEvent.fireWarn(this, "No user selected.", event::reset);
                 return;
             }
         }
@@ -141,10 +134,7 @@ public class BatchProcessorFilterEditPresenter
         }
 
         if (docCount == 0) {
-            ErrorEvent.fire(
-                    this,
-                    "No processors are included in the current filter.");
-            event.reset();
+            AlertEvent.fireWarn(this, "No processors are included in the current filter.", event::reset);
             return;
         }
 

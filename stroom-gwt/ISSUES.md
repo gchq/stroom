@@ -344,25 +344,6 @@ basic use:
 All of these were found the same way: OK must close the dialog, show a message, or be disabled.
 Leaving the dialog open and saying nothing is the bug.
 
-### The batch edit dialogs' validation messages are never shown
-
-**Reproduced.** (gwt-bugs #41) Batch Edit Current Processors, then OK, on a Folder or Pipeline with
-no processors does nothing. So does OK with no change chosen, and Security, Document Permissions,
-Batch Edit Permissions For Filtered Documents when the filter matches nothing.
-
-The four messages (`No change selected.`, `No user selected.`, `No processors are included in the
-current filter.` and `No documents are included in the current filter for this permission change.`)
-are fired as `stroom.config.global.client.presenter.ErrorEvent`. That's the Properties screen's own
-event, and only `ManageGlobalPropertyListPresenter` handles it, so they go nowhere. `event.reset()`
-then re-enables the buttons.
-
-Fix: `AlertEvent.fireWarn(this, message, event::reset)`, as other dialogs do; four call sites.
-
-* `stroom-core-client/src/main/java/stroom/processor/client/presenter/BatchProcessorFilterEditPresenter.java`
-  (lines 118, 127, 144)
-* `stroom-core-client/src/main/java/stroom/security/client/presenter/BatchDocumentPermissionsEditPresenter.java`
-  (line 190)
-
 ### Save Tab Session with a blank name does nothing
 
 **Reproduced.** (gwt-bugs #46) Main Menu, Navigation, Save Tab Session, leave Name blank and press
@@ -1004,6 +985,12 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   name" and returns `null`, as the Solr version does, and both `onAdd()` and `onEdit()` let the
   dialog be used again (`TestIndexFieldEditPresenter`, the workbench's `App/Index/IndexEditor`
   `NewFieldWithoutName`).
+* #41: the batch edit dialogs' validation messages were never shown, so OK did nothing and said
+  nothing for Batch Edit Current Processors with no change, no Run As user or no processors in the
+  filter, and for Batch Edit Permissions For Filtered Documents with no documents in the filter.
+  The four messages were fired as the Properties screen's own `ErrorEvent`, which nothing else
+  handles. They are now warning alerts, and the dialog can be used again once one is closed
+  (`TestBatchProcessorFilterEditPresenter`, `TestBatchDocumentPermissionsEditPresenter`).
 * #36: in stepping, Refresh Current Step (and Set Location then OK) before a stream was chosen sent
   a step request with no `criteria`, which failed on the server with a `NullPointerException`.
   `StepControlPresenter.initButtons()` now starts Refresh disabled like the other step buttons, the

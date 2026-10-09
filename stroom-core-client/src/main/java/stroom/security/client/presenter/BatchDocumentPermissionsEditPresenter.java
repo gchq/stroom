@@ -18,7 +18,6 @@ package stroom.security.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.config.global.client.presenter.ErrorEvent;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docstore.shared.DocumentType;
@@ -187,10 +186,10 @@ public class BatchDocumentPermissionsEditPresenter
         }
 
         if (docCount == 0) {
-            ErrorEvent.fire(
+            AlertEvent.fireWarn(
                     this,
-                    "No documents are included in the current filter for this permission change.");
-            event.reset();
+                    "No documents are included in the current filter for this permission change.",
+                    event::reset);
         } else {
             String message = "Are you sure you want to change permissions on this document?";
             if (docCount > 1) {
