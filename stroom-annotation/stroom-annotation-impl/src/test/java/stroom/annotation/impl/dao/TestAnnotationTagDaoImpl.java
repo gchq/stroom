@@ -36,6 +36,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
 class TestAnnotationTagDaoImpl {
@@ -216,6 +217,55 @@ class TestAnnotationTagDaoImpl {
                 .findAnnotationTag(AnnotationTagType.COMMENT, "Phishing");
         assertThat(found).isPresent();
         assertThat(found.get().getTagText()).isEqualTo("Updated phishing comment text.");
+    }
+
+    @Test
+    void testRenameToDeletedTagNameIsRefused() {
+        final AnnotationTag deleted = createComment("X", "Deleted text.");
+        annotationTagDao.deleteAnnotationTag(deleted);
+        final AnnotationTag other = createComment("Y", "Other text.");
+
+        assertThatThrownBy(() -> annotationTagDao.updateAnnotationTag(other.copy().name("X").build()))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("A deleted tag is called 'X'. Create a tag called 'X' to restore it, "
+                            + "or choose another name.");
+
+        // The renamed tag is unchanged and the deleted one stays deleted.
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.COMMENT, "Y"))
+                .hasValueSatisfying(tag -> assertThat(tag.getUuid()).isEqualTo(other.getUuid()));
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.COMMENT, "X")).isEmpty();
+
+        // Creating the name still restores the deleted tag.
+        final AnnotationTag restored = createComment("X", "Restored text.");
+        assertThat(restored.getUuid()).isEqualTo(deleted.getUuid());
+    }
+
+    @Test
+    void testRenameToLiveTagNameIsRefused() {
+        createLabel("One");
+        final AnnotationTag two = createLabel("Two");
+
+        // The name index ignores case, so this clashes too.
+        assertThatThrownBy(() -> annotationTagDao.updateAnnotationTag(two.copy().name("ONE").build()))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("A tag called 'ONE' already exists.");
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.LABEL, "Two")).isPresent();
+    }
+
+    @Test
+    void testRenameAllowedForOwnNameAndOtherTypes() {
+        createStatus("Shared");
+        final AnnotationTag label = createLabel("Label");
+
+        // A tag of another type may share the name.
+        annotationTagDao.updateAnnotationTag(label.copy().name("Shared").build());
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.LABEL, "Shared"))
+                .hasValueSatisfying(tag -> assertThat(tag.getUuid()).isEqualTo(label.getUuid()));
+
+        // A tag may change the case of its own name.
+        annotationTagDao.updateAnnotationTag(label.copy().name("SHARED").build());
+        assertThat(annotationTagDao.findAnnotationTag(AnnotationTagType.LABEL, "SHARED"))
+                .hasValueSatisfying(tag -> assertThat(tag.getName()).isEqualTo("SHARED"));
     }
 
     private AnnotationTag createStatus(final String name) {

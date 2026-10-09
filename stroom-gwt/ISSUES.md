@@ -177,25 +177,6 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
 * Plan B session stores (not confirmed): `SessionDb.condense()` takes the later session's end, so a
   session nested inside an earlier one could shorten the merged session.
 
-### A deleted annotation tag's name can't be reused by renaming
-
-**Reproduced.** (gwt-bugs #44) In Annotation Comments, make a tag `X` and delete it. Then rename
-another tag to `X`: the edit dialog stays open behind an alert showing the raw SQL and
-`Duplicate entry '3-X' for key 'annotation_tag.annotation_tag_type_id_name_idx'`. The same applies
-to Collections, Labels and Statuses, which share the table.
-
-Deleting a tag only sets `deleted`, but the unique index on `(type_id, name)` doesn't know that, so
-the deleted row keeps the name. `createAnnotationTag` (line 109) handles this by finding the
-existing row whatever its `deleted` flag and reviving it, which is why creating `X` again works.
-`updateAnnotationTag` (line 162) writes the new name straight into the index.
-
-Fix: in a transaction, look for a row with the target `(type_id, name)` first. If it's deleted,
-hard-delete it (or merge into it); if it's live, report "A tag with that name already exists"
-instead of letting the constraint throw. The edit dialog should show a sentence, not SQL.
-
-* `stroom-annotation/stroom-annotation-impl/src/main/java/stroom/annotation/impl/dao/AnnotationTagDaoImpl.java`
-  (line 162)
-
 ### The Pathways editor can't create a pathway or add a constraint
 
 **Confirmed.** Found by the workbench's Pathways stories. Pathways is experimental (see
@@ -884,6 +865,14 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   four resources' tests and the workbench's `App/Main/NodeGroupsScreen` `NameWithSlash`). Groups
   made internally (e.g. the default volume groups from the configuration) aren't checked, so an
   existing configuration still starts.
+* #44: renaming an annotation tag to the name of a deleted tag of the same type left the edit
+  dialog open behind the raw SQL `Duplicate entry '3-X' for key
+  'annotation_tag.annotation_tag_type_id_name_idx'`, as a deleted tag keeps its name in the unique
+  index. Deleted tags keep their name on purpose (creating a tag of that name restores the deleted
+  one and its links), so the rename is now refused with "A deleted tag is called 'X'. Create a tag
+  called 'X' to restore it, or choose another name.", and a rename onto a live tag's name (in any
+  case) with "A tag called 'X' already exists."; the dialog stays open to choose another name
+  (`AnnotationTagDaoImpl.updateAnnotationTag`; `TestAnnotationTagDaoImpl`).
 * A blank result store duration failed when saved (`StroomDuration.parse("")` on the server), and
   any failed save closed the Result Store Settings dialog with nothing said and nothing changed,
   as `ResultStoreModel.updateSettings` turned a failure into `false`. A blank duration is now
@@ -1044,7 +1033,8 @@ reproduce them. They drive Stroom at `http://localhost:8080` (set `URL=` to chan
 | Unknown rule status (#35) | `TestAnalyticRuleDoc` (Jackson reading `{"status":"ENABLED"}`) | the rule reads with `status` `null` |
 
 * `cycles.mjs` writes to Stroom (and removes what it makes); without `MUTATE=1` it only prints its
-  plan. #44 also needs a tag deleted and then a rename onto its name, as described in its entry.
+  plan. For #44, also delete a tag `X` and rename another to `X`: an alert should say the
+  deleted tag is called `X`, with no SQL.
 * `probe-loadfail.mjs` fakes the #35 500 in the browser, so it checks how the UI reports a failed
   load, not the server fix.
 * The rest (#37, #38, #39, #41, #42) are found by the suite's walker; the steps in each entry are the
