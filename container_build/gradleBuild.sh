@@ -138,20 +138,8 @@ main() {
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
     checkstyleMain \
     checkstyleTest \
-    -x :stroom-bytebuffer:checkstyleMain \
     :stroom-proxy:stroom-proxy-app:test --tests '*TestProxyYamlUtil' \
     :stroom-config:stroom-config-app:test --tests '*TestStroomYamlUtil'
-  echo "::endgroup::"
-
-  echo "::group::Run checkstyle (stroom-bytebuffer)"
-  echo -e "${GREEN}Run checkstyle (stroom-bytebuffer)${NC}"
-  ./gradlew \
-    "${GRADLE_ARGS[@]}" \
-    --scan \
-    --stacktrace \
-    -PdumpFailedTestXml=true \
-    -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
-    :stroom-bytebuffer:checkstyleMain \
   echo "::endgroup::"
 
   # Do the gradle build
