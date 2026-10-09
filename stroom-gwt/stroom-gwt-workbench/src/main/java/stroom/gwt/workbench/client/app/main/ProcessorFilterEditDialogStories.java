@@ -50,20 +50,20 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories matching `App/Main/ProcessorFilterEditDialog` in the React Storybook, showing Stroom's
-/// real [ProcessorEditPresenter] (the 'Add Filter'/'Edit Filter' dialog, as `ProcessorPresenter`
-/// shows it) with fake REST replies.
+/// Stories of `App/Main/ProcessorFilterEditDialog`, showing Stroom's real [ProcessorEditPresenter]
+/// (the 'Add Filter'/'Edit Filter' dialog, as `ProcessorPresenter` shows it) with fake REST
+/// replies.
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `validateExpression` | `POST /expression/v1/validate` |
-/// | `api.update` | `PUT /processorFilter/v1/{id}` (echoes the filter) |
-/// | `api.create` | `POST /processorFilter/v1` |
-/// | `streamTypes` | `GET /meta/v1/getTypes` |
-/// | (the feed picker) | the explorer tree's `POST /explorer/v2/fetchExplorerNodes` |
+/// | `POST /expression/v1/validate` | validating the expression |
+/// | `PUT /processorFilter/v1/{id}` (echoes the filter) | updating a filter |
+/// | `POST /processorFilter/v1` | creating a filter |
+/// | `GET /meta/v1/getTypes` | stream types |
+/// | the explorer tree's `POST /explorer/v2/fetchExplorerNodes` | the feed picker |
 ///
-/// React's `onSaved` is a spy on the dialog's consumer, and `api.update`'s checks are checks on the
-/// request spy. The confirmations are Stroom's real dialogs (`realAlerts()`).
+/// `onSaved` is a spy called by the dialog's consumer, with the saved filter's id, and updates are
+/// checked on the request spy. The confirmations are Stroom's real dialogs (`realAlerts()`).
 public final class ProcessorFilterEditDialogStories {
 
     /// The name of the spy recording the filter the dialog returns (its consumer).
@@ -130,7 +130,7 @@ public final class ProcessorFilterEditDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText("Edit Filter", StroomDom.DIALOG_TITLE);
-                    // Differs from React: GWT's ValueSpinner is a text box, holding the text "1"
+                    // GWT's ValueSpinner is a text box, holding the text "1"
                     final Query input = screen.querySelector(MAX_TASKS);
                     play.expect(input).toHaveValue("1");
                     play.clear(input);
@@ -213,12 +213,12 @@ public final class ProcessorFilterEditDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText("Add Filter", StroomDom.DIALOG_TITLE);
-                    // Differs from React: the dialog is on the page's body
+                    // The dialog is on the page's body
                     play.click(screen.getByRole("button", TextMatch.startingWith("Set Feed Dependencies")));
                     final Play deps = dialog(screen, "Set Feed Dependencies");
                     // GWT's two columns, and Remove disabled until a row is selected.
-                    // Differs from React: GWT's FeedDependencyListPresenter.enableButtons enables Edit
-                    // whenever the filter isn't read only, with or without a selection
+                    // FeedDependencyListPresenter.enableButtons enables Edit whenever the filter isn't
+                    // read only, with or without a selection
                     play.expect(deps.getByRole("columnheader", "Feed")).toBeInTheDocument();
                     play.expect(deps.getByRole("columnheader", "Type")).toBeInTheDocument();
                     play.expect(deps.getByTitle("Edit Reference")).not().toHaveClass("disabled");
@@ -231,13 +231,13 @@ public final class ProcessorFilterEditDialogStories {
                     final Play alert = screen.within(
                             screen.findByText("You must specify a feed to use.").closest(StroomDom.DIALOG));
                     play.click(alert.getByRole("button", StroomDom.button("Close")));
-                    // Differs from React: the feed is a document picker (DocSelectionBoxPresenter),
-                    // not a text field: open it and choose MY_FEED from the explorer tree
+                    // The feed is a document picker (DocSelectionBoxPresenter): open it and choose
+                    // MY_FEED from the explorer tree
                     play.fireEvent().mouseDown(editor.querySelector(".dropDownView-container"), EventInit.create());
                     final Play picker = dialog(screen, "Choose item");
                     play.click(picker.findByText("MY_FEED"));
                     play.click(picker.getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: GWT also requires a stream type
+                    // GWT also requires a stream type
                     play.click(editor.querySelector(StroomDom.SELECTION_BOX));
                     play.click(screen.findByText("Events"));
                     play.click(editor.getByRole("button", StroomDom.button("OK")));

@@ -36,13 +36,12 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [TooltipPresenter] shown at a point, matching
-/// `Widgets/Overlays/TooltipWidget` in the React Storybook.
+/// Stories for Stroom's [TooltipPresenter] shown at a point.
 public final class TooltipWidgetStories {
 
     private static final int CURSOR_OFFSET = 12;
 
-    // Arg names, the same as the React TooltipWidget's props
+    // Arg names
     private static final String TEXT = "text";
     private static final String VISIBLE = "visible";
     private static final String X = "x";
@@ -86,7 +85,7 @@ public final class TooltipWidgetStories {
                             ? 0
                             : y.intValue()));
         }
-        // React's TooltipWidget renders nothing in place
+        // The tooltip is a popup, so nothing is rendered in place
         return new FlowPanel();
     }
 

@@ -31,10 +31,8 @@ import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for [CustomFileUpload], matching `Widgets/Inputs/FileChooser` in the React Storybook.
-///
-/// The React `FileChooser` is a port of [CustomFileUpload]: a "Choose File" button that clicks
-/// a hidden file input, and a label showing the chosen file's name.
+/// Stories for [CustomFileUpload]: a "Choose File" button that clicks a hidden file input, and a
+/// label showing the chosen file's name.
 public final class FileChooserStories {
 
     private static final String ON_FILE = "onFile";
@@ -59,8 +57,7 @@ public final class FileChooserStories {
                 })
                 // With an accept filter and a callback reporting the chosen file name
                 .story("WithCallback", context -> {
-                    // Differs from React: CustomFileUpload has no accept filter or button label
-                    // (React's accept=".json,.xml" and label="Choose config"), so the button says
+                    // CustomFileUpload has no accept filter or button label, so the button says
                     // "Choose File" and any file can be chosen.
                     final CustomFileUpload fileUpload = fileUpload();
                     final InlineLabel selected = StoryPanels.note("Selected: —", "#dce4e5", "12px");

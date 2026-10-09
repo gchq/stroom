@@ -21,8 +21,8 @@ import stroom.gwt.workbench.client.app.rest.JsonValues;
 import java.math.BigDecimal;
 import java.util.Map;
 
-/// Builds the JSON of the data resource's replies (`DataResource.fetch()`), the GWT equivalent of
-/// the React stories' `loadSource` seams, for the `Widgets/Editors & Viewers/*` stories.
+/// Builds the JSON of the data resource's replies (`DataResource.fetch()`) for the
+/// `Widgets/Editors & Viewers/*` stories.
 ///
 /// Plain Java, so the fixtures work both in GWT and on the JVM.
 final class DataFixtures {

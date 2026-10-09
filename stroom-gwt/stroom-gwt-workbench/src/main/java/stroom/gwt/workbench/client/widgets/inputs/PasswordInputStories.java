@@ -30,13 +30,13 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `Widgets/Inputs/PasswordInput` in the React Storybook.
+/// Stories for the password field of Stroom's password views.
 ///
-/// Stroom has no password input widget: the React `PasswordInput` is a port of the markup that
-/// Stroom's password views (`ChangePasswordViewImpl`, `LoginViewImpl`) build in their UiBinder
-/// templates, a [PasswordTextBox] with an overlay holding an optional length badge and an
-/// [InlineSvgButton] that shows or hides the password. These stories build the same widgets in
-/// the same way, with the views' show/hide and badge code.
+/// Stroom has no password input widget: it is the markup that Stroom's password views
+/// (`ChangePasswordViewImpl`, `LoginViewImpl`) build in their UiBinder templates, a
+/// [PasswordTextBox] with an overlay holding an optional length badge and an [InlineSvgButton] that
+/// shows or hides the password. These stories build the same widgets in the same way, with the
+/// views' show/hide and badge code.
 public final class PasswordInputStories {
 
     private static final String MAX_WIDTH = "360px";
@@ -56,7 +56,7 @@ public final class PasswordInputStories {
                 .layout(StoryLayout.CENTERED)
                 // Show/hide toggle - click the eye button to reveal the value
                 .story("Basic", context -> {
-                    // React's autoComplete prop: Stroom's views don't set autocomplete
+                    // Stroom's views don't set autocomplete
                     final PasswordTextBox password = passwordTextBox(context, "supersecret");
                     return InputWidgets.maxWidth(passwordInput(password, null), MAX_WIDTH);
                 })
@@ -75,9 +75,8 @@ public final class PasswordInputStories {
                 // With an overlay prefix badge (e.g. the GWT password-length badge)
                 .story("WithOverlayPrefix", context -> {
                     final PasswordTextBox password = passwordTextBox(context, "hunter2");
-                    // Differs from React: this is ChangePasswordViewImpl's length badge, a Bootstrap
-                    // pill ("badge badge-pill badge-danger") showing up to "9+" and hidden when
-                    // empty; React's story passes its own plain, faded passwordLengthBadge span.
+                    // ChangePasswordViewImpl's length badge, a Bootstrap pill
+                    // ("badge badge-pill badge-danger") showing up to "9+" and hidden when empty.
                     // The badge's colour depends on the password policy in Stroom, which isn't
                     // part of this widget, so it stays badge-danger.
                     final SimplePanel badge = new SimplePanel();
@@ -107,8 +106,8 @@ public final class PasswordInputStories {
         showPassword.setSvg(SvgImage.EYE);
         showPassword.setTitle(SHOW_PASSWORD);
         showPassword.setEnabled(true);
-        // Differs from React: like Stroom's views, the toggle has no aria-label or aria-pressed
-        // (React sets both); its accessible name is its title.
+        // As in Stroom's views, the toggle has no aria-label or aria-pressed; its accessible name
+        // is its title.
         showPassword.addClickHandler(event -> toggleShowPassword(password, showPassword));
 
         final FlowPanel overlay = new FlowPanel();

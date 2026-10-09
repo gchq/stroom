@@ -48,16 +48,15 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/DependenciesScreen` in the React Storybook, showing Stroom's real
-/// [DependenciesTabPresenter] (the 'Dependencies' tab) with fake REST replies.
+/// Stories of `App/Main/DependenciesScreen`, showing Stroom's real [DependenciesTabPresenter] (the
+/// 'Dependencies' tab) with fake REST replies.
 ///
-/// The React story's `DependencyApi.fetch` becomes `POST /content/v1/fetchDependencies`
-/// (`ContentResource.fetchDependencies`), answered by a handler that, as React's fixture does,
-/// stands in for the server: it applies the criteria's `partialName` (`fromuuid:`/`touuid:` or a
-/// partial name), sort and page. React's `onLocate`/`onProperties`/`onDelete` are spies on
-/// Stroom's `LocateDocEvent`, `ShowDependenciesInfoDialogEvent` and `DeleteDocumentEvent`, and
-/// 'Show dependants' (`ShowDocRefDependenciesEvent`) is handled as `DependenciesPlugin` does,
-/// writing the filter into the quick filter.
+/// The dependencies (`POST /content/v1/fetchDependencies`, `ContentResource.fetchDependencies`) are
+/// answered by a handler that stands in for the server: it applies the criteria's `partialName`
+/// (`fromuuid:`/`touuid:` or a partial name), sort and page. `onLocate`/`onProperties`/`onDelete`
+/// are spies on Stroom's `LocateDocEvent`, `ShowDependenciesInfoDialogEvent` and
+/// `DeleteDocumentEvent`, and 'Show dependants' (`ShowDocRefDependenciesEvent`) is handled as
+/// `DependenciesPlugin` does, writing the filter into the quick filter.
 public final class DependenciesScreenStories {
 
     /// The name of the spy recording the documents located (Stroom's `LocateDocEvent`).
@@ -115,7 +114,7 @@ public final class DependenciesScreenStories {
                     // the quick filter and lets the server apply it
                     play.click(play.getAllByTitle(StroomDom.ACTIONS_TITLE).nth(1));
                     play.click(screen.findByText("Show dependants"));
-                    // Differs from React: GWT's quick filter has no label, only a placeholder
+                    // GWT's quick filter has no label, only a placeholder
                     final Query filter = play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
                     play.waitFor(() -> play.expect(filter).toHaveValue("touuid:x-1"));
                     play.waitFor(3000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -136,7 +135,7 @@ public final class DependenciesScreenStories {
                     play.expect(play.getByText("Missing Feed")).toBeInTheDocument();
                     play.expect(play.getByText("OK")).toBeInTheDocument();
                     play.expect(play.getByText("Missing")).toBeInTheDocument();
-                    // Differs from React: GWT's quick filter has no label, only a placeholder
+                    // GWT's quick filter has no label, only a placeholder
                     play.type(play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER), "Missing");
                     play.waitFor(3000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(PATH).withJsonBodyContaining("{\"partialName\": \"Missing\"}")

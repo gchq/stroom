@@ -38,16 +38,15 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/Activity Chooser` in the React Storybook: the current activity's
-/// summary button and Stroom's real activity chooser (`ManageActivityPresenter`, opened by
-/// [CurrentActivity]) with fake REST replies.
+/// Stories of `App/Main/Activity Chooser`: the current activity's summary button and Stroom's real
+/// activity chooser (`ManageActivityPresenter`, opened by [CurrentActivity]) with fake REST
+/// replies.
 ///
 /// Stroom has no separate badge widget: the summary button is built by `NavigationPresenter`
 /// (`activityButton`, `updateActivitySummary`), whose code the story copies; clicking it opens the
 /// chooser (`CurrentActivity.showActivityChooser`), and choosing an activity fires
-/// `ActivityChangedEvent`, which updates the summary. The React fixture's activities are the
-/// `GET /activity/v1` reply (see [ActivityFixtures]). The React stories have no play functions;
-/// these check what each renders.
+/// `ActivityChangedEvent`, which updates the summary. The activities are the `GET /activity/v1`
+/// reply (see [ActivityFixtures]). The plays check what each story renders.
 public final class ActivityChooserStories {
 
     private static final String[] ACTIVITIES = {

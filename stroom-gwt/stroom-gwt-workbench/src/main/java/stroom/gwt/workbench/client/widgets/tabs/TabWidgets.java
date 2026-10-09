@@ -49,7 +49,7 @@ final class TabWidgets {
         return harness;
     }
 
-    /// Equivalent of the React stories' `pane(text)`: `<div style={{padding: 16, fontSize: '0.85rem'}}>`.
+    /// A tab's content: the text, padded.
     ///
     /// @param text The text.
     /// @param padding The CSS padding, e.g. `16px`.
@@ -79,7 +79,7 @@ final class TabWidgets {
     // --------------------------------------------------------------------------------
 
 
-    /// A story tab: the React stories' `CurveTabItem`/`LinkTab`, as Stroom's [TabData].
+    /// A story tab, as Stroom's [TabData].
     static final class StoryTab implements TabData {
 
         private final String id;
@@ -89,7 +89,7 @@ final class TabWidgets {
         private final boolean closeable;
         private boolean dirty;
 
-        /// @param id        The React tab's id.
+        /// @param id        The tab's id.
         /// @param label     The label.
         /// @param type      The document type.
         /// @param icon      The icon, or null for none.
@@ -115,7 +115,7 @@ final class TabWidgets {
             return this;
         }
 
-        /// @return The React tab's id.
+        /// @return The tab's id.
         String getId() {
             return id;
         }

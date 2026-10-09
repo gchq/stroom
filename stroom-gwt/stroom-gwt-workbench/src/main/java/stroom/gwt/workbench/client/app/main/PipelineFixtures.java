@@ -21,8 +21,8 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 
 /// Pipeline fixtures shared by the pipeline stories (`PipelineEditor`, `PipelineTree`,
 /// `SteppingScreen`, `StepFilterDialog`): the element types Stroom's `PipelineElementTypesFactory`
-/// fetches (`GET /pipeline/v1/propertyTypes`), shaped as the gwt-suite corpus records them, with the
-/// React stories' element types and property descriptions, and a stepper's replies.
+/// fetches (`GET /pipeline/v1/propertyTypes`), shaped as the gwt-suite corpus records them, and a
+/// stepper's replies.
 final class PipelineFixtures {
 
     /// The path of `PipelineResource.getPropertyTypes()`.

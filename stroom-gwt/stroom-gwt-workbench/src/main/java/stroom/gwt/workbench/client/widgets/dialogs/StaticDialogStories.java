@@ -31,15 +31,14 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 
 /// Stories for the dialogs of Stroom's identity provider screens (change password, current
-/// password, reset password), matching `Widgets/Dialogs/StaticDialog` in the React Storybook.
+/// password, reset password).
 ///
-/// Differs from React: Stroom shows these screens (`ChangePasswordPresenter`,
-/// `CurrentPasswordPresenter`, `EmailResetPasswordPresenter`) as ordinary modal `OK_CANCEL_DIALOG`
-/// popups with a `PASSWORD` icon, which is what this story does; React's `StaticDialog` is a
-/// static, non-modal card that only looks like one.
+/// Stroom shows these screens (`ChangePasswordPresenter`, `CurrentPasswordPresenter`,
+/// `EmailResetPasswordPresenter`) as ordinary modal `OK_CANCEL_DIALOG` popups with a `PASSWORD`
+/// icon, which is what this story does.
 public final class StaticDialogStories {
 
-    // The React StaticDialog's callback props
+    // Spy names
     private static final String ON_OK = "onOk";
     private static final String ON_CANCEL = "onCancel";
 
@@ -51,7 +50,6 @@ public final class StaticDialogStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's decorator only gives the card a full-height page background to sit on
         registry.component("Widgets/Dialogs/StaticDialog", StaticDialogStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // A centred dialog with a title bar and OK/Cancel
@@ -66,7 +64,7 @@ public final class StaticDialogStories {
                     style.setProperty("color", "var(--text-color)");
                     final ContentPresenter presenter = new ContentPresenter(popups.getEventBus(), body);
 
-                    // As the IdP presenters show themselves (titleOverride and okLabel are React-only)
+                    // As the IdP presenters show themselves
                     ShowPopupEvent.builder(presenter)
                             .popupType(PopupType.OK_CANCEL_DIALOG)
                             .icon(SvgImage.PASSWORD)

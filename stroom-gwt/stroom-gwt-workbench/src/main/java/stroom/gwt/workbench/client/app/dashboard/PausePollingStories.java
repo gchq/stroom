@@ -46,14 +46,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/// Stories matching `App/Dashboard/PausePolling` in the React Storybook: a dashboard search whose
-/// paused component is polled for no data.
+/// The `App/Dashboard/PausePolling` stories: a dashboard search whose paused component is polled
+/// for no data.
 ///
-/// The React story drives the port's search coordinator with two result sinks, one paused; this
-/// drives Stroom's real dashboard `SearchModel` with two `ResultComponent`s, one paused (as a
-/// paused table or visualisation reports), and checks the `componentResultRequests` of its
-/// `POST /dashboard/v1/search/{node}` request, as React's recorder does. Like React's, the
-/// story shows only an empty host.
+/// The story drives Stroom's real dashboard `SearchModel` with two `ResultComponent`s, one paused
+/// (as a paused table or visualisation reports), and checks the `componentResultRequests` of its
+/// `POST /dashboard/v1/search/{node}` request. The story shows only an empty host.
 public final class PausePollingStories {
 
     // DashboardSearchResponse: complete, with no results
@@ -127,7 +125,7 @@ public final class PausePollingStories {
     // --------------------------------------------------------------------------------
 
 
-    // A result component (React's result sink) that may be paused
+    // A result component that may be paused
     private static final class Sink implements ResultComponent {
 
         private final String id;

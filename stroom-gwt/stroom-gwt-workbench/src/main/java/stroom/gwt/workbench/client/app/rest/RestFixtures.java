@@ -22,9 +22,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-/// The fake REST API of a story: the replies to the requests a screen makes, the GWT equivalent
-/// of the fixture `api` objects passed to the React screen stories (or of an msw handler list),
-/// e.g.
+/// The fake REST API of a story: the replies to the requests a screen makes, e.g.
 /// ```
 /// RestFixtures.builder()
 ///         .post("/explorer/v2/find", RestReply.json("{\"values\": []}"))

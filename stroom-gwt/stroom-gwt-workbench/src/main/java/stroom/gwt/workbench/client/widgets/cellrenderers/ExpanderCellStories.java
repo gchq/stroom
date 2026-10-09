@@ -28,10 +28,10 @@ import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [ExpanderCell], matching `Widgets/Cell Renderers/ExpanderCell` in the React
-/// Storybook. Each cell is a `CellWidget` whose value is the row's [Expander]. The cell reports a
-/// click on a branch by updating the value, which the `CellWidget` reports as a value change; as
-/// in Stroom's trees, the story then gives the cell the toggled expander.
+/// Stories for Stroom's [ExpanderCell]. Each cell is a `CellWidget` whose value is the row's
+/// [Expander]. The cell reports a click on a branch by updating the value, which the `CellWidget`
+/// reports as a value change; as in Stroom's trees, the story then gives the cell the toggled
+/// expander.
 public final class ExpanderCellStories {
 
     private static final String ON_TOGGLE = "onToggle";
@@ -46,7 +46,7 @@ public final class ExpanderCellStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Cell Renderers/ExpanderCell", ExpanderCellStories.class)
                 .layout(StoryLayout.CENTERED)
-                // No args: React's meta only sets the `expander`, and every story has its own render
+                // No args: every story has its own render
                 // Click the expander to toggle the expand/collapse state
                 .story("Toggle", ExpanderCellStories::toggle)
                 // A tree of nodes at various depths, showing leaf, expanded and collapsed icons

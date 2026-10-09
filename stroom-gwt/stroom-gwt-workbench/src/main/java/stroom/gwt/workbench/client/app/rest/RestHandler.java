@@ -16,8 +16,7 @@
 
 package stroom.gwt.workbench.client.app.rest;
 
-/// Creates the fake reply to a REST request, the equivalent of a method of a React story's
-/// fixture `api` object.
+/// Creates the fake reply to a REST request from the request, e.g. one that echoes its body.
 @FunctionalInterface
 public interface RestHandler {
 

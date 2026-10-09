@@ -39,34 +39,33 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.function.Supplier;
 
-/// Stories matching `App/Editors/GitRepoEditor` in the React Storybook, showing Stroom's real
+/// The `App/Editors/GitRepoEditor` stories, showing Stroom's real
 /// [GitRepoPresenter] (a Git Repository's tab: Settings, Documentation and Permissions) with fake
 /// REST replies.
 ///
 /// As `GitRepoPlugin` does, the story fetches the document (`GET /gitRepo/v1/{uuid}`) and reads it
-/// into the editor ([DocEditors#open]); Save sends it to `PUT /gitRepo/v1/{uuid}`. React's seams
-/// become routes:
+/// into the editor ([DocEditors#open]); Save sends it to `PUT /gitRepo/v1/{uuid}`. The other routes:
 ///
-/// | React seam | Stroom endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `api.push` | `POST /gitRepo/v1/pushToGit` |
-/// | `api.pull` | `POST /gitRepo/v1/pullFromGit` |
-/// | `api.checkUpdates` | `POST /gitRepo/v1/areUpdatesAvailable` |
-/// | `api.getDefaultHttpClientConfig` | `POST /gitRepo/v1/getDefaultHttpClientConfig` |
-/// | `loadCredentials` | `POST /credentials/findCredentialsWithPermissions` |
-/// | `resolveCredential` | `POST /credentials/getByName` |
-/// | `refreshExplorer` | a spy on `RefreshExplorerTreeEvent` |
+/// | `POST /gitRepo/v1/pushToGit` | Push |
+/// | `POST /gitRepo/v1/pullFromGit` | Pull |
+/// | `POST /gitRepo/v1/areUpdatesAvailable` | checking for updates |
+/// | `POST /gitRepo/v1/getDefaultHttpClientConfig` | the default HTTP client config |
+/// | `POST /credentials/findCredentialsWithPermissions` | the credentials list |
+/// | `POST /credentials/getByName` | the saved credential |
 ///
-/// React's `CRED_LOADS` and `DEFAULT_CONFIG_FETCHES` counters are the request spy's calls.
+/// A spy records `RefreshExplorerTreeEvent`, and the plays count the credential and default config
+/// requests with the request spy.
 public final class GitRepoEditorStories {
 
-    /// The name of the spy recording the explorer tree refreshes (React's `refreshExplorer`).
+    /// The name of the spy recording the explorer tree refreshes.
     static final String REFRESH_EXPLORER = "refreshExplorer";
 
     private static final DocRef DOC_REF = new DocRef(GitRepoDoc.TYPE, "git-1", "My Repo");
 
-    // GitRepoResource.fetch(): React's GIT_DOC (no HTTP client configuration, so the editor seeds
-    // it from the server's default)
+    // GitRepoResource.fetch(): the repository (no HTTP client configuration, so the editor seeds it
+    // from the server's default)
     private static final String DOC = """
             {"type": "GitRepo", "uuid": "git-1", "name": "My Repo", URL
               "branch": "main", "path": "content", "credentialName": "my-token", COMMIT
@@ -74,7 +73,7 @@ public final class GitRepoEditorStories {
 
     private static final String GIT_URL = "\"url\": \"https://github.com/example/repo.git\",";
 
-    // GitRepoResource.getDefaultHttpClientConfig() (the gwt-suite corpus's, trimmed), with React's
+    // GitRepoResource.getDefaultHttpClientConfig() (the gwt-suite corpus's, trimmed), with a
     // recognisable maxConnections of 77
     private static final String DEFAULT_HTTP_CLIENT_CONFIG = """
             {"connectionRequestTimeout": {"time": 2, "timeUnit": "MINUTES"},
@@ -86,7 +85,7 @@ public final class GitRepoEditorStories {
                 "supportedCiphers": ["TLS_AES_256_GCM_SHA384"], "trustSelfSignedCertificates": false,
                 "verifyHostname": true}}""";
 
-    // CredentialsResource.findCredentials(): React's credentialsFixture
+    // CredentialsResource.findCredentials(): the credentials
     private static final String CREDENTIALS = """
             {"values": [{"uuid": "c1", "name": "my-ssh-key", "credentialType": "SSH_KEY"},
                 {"uuid": "c2", "name": "my-token", "credentialType": "ACCESS_TOKEN"}],
@@ -102,8 +101,8 @@ public final class GitRepoEditorStories {
     private static final String GET_DEFAULT_CONFIG = "/gitRepo/v1/getDefaultHttpClientConfig";
     private static final String UPDATE = "/gitRepo/v1/git-1";
 
-    // Differs from React: a FormGroup gives its control the group's identity as its id
-    // (GitRepoSettingsViewImpl.ui.xml), not React's '<name>-input'
+    // A FormGroup gives its control the group's identity as its id
+    // (GitRepoSettingsViewImpl.ui.xml)
     private static final String URL_INPUT = "#txtGitUrl";
     private static final String COMMIT_MESSAGE = "#commitMessage";
 
@@ -152,7 +151,7 @@ public final class GitRepoEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(play.findByRole("button", StroomDom.button("Push to Git")));
-                    // Differs from React: the dialog is a popup on the page's body
+                    // The dialog is a popup on the page's body
                     final Query ok = screen.findByRole("button", StroomDom.button("OK"));
                     play.expect(ok).not().toBeDisabled();
                     play.click(ok);
@@ -204,14 +203,14 @@ public final class GitRepoEditorStories {
                     // ... and the list hasn't been fetched
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post(FIND_CREDENTIALS).toSpyMatcher());
-                    // Differs from React: the box is a text box showing the credential's name
+                    // The box is a text box showing the credential's name
                     play.click(box);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(FIND_CREDENTIALS)
                                     .withJsonBodyContaining("{\"credentialTypes\": "
                                             + "[\"SSH_KEY\", \"USERNAME_PASSWORD\", \"ACCESS_TOKEN\"]}")
                                     .toSpyMatcher()));
-                    // Differs from React: the list is a popup on the page's body
+                    // The list is a popup on the page's body
                     play.waitFor(() -> play.expect(screen.getByText("my-ssh-key")).toBeInTheDocument());
                     play.expect(screen.getByText("[ none ]")).toBeInTheDocument();
                     play.expect(countFinds(play)).toBe(1);
@@ -221,7 +220,7 @@ public final class GitRepoEditorStories {
                 .story("SelectedCredentialShownWithoutTheList", context -> render(context, new Fixtures()
                         .credentials(NO_CREDENTIALS)))
                 .withPlay(play -> {
-                    // Differs from React: the box is a text box showing the credential's name
+                    // The box is a text box showing the credential's name
                     play.expect(play.findByDisplayValue("my-token")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })
@@ -234,8 +233,8 @@ public final class GitRepoEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/credentials/getByName").toSpyMatcher()));
                     final Query label = play.findByText("Credentials", "label");
-                    // Differs from React: GWT's box shows nothing for no credential; '[ none ]' is
-                    // only the list's first item
+                    // The box shows nothing for no credential; '[ none ]' is only the list's first
+                    // item
                     play.waitFor(() -> play.expect(play.querySelector(StroomDom.SELECTION_BOX)).toHaveValue(""));
                     play.expect(play.queryByDisplayValue("my-token")).toBeNull();
                     play.expect(label).toBeInTheDocument();
@@ -264,9 +263,8 @@ public final class GitRepoEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(GET_DEFAULT_CONFIG).toSpyMatcher()));
                     play.type(play.getByLabelText("Git repository URL"), "/x");
-                    // Differs from React: the text box reports its change when it loses the focus,
-                    // and the document React records on each change is the one GWT writes when it
-                    // is saved, so the play saves it and checks the request
+                    // The text box reports its change when it loses the focus, and Stroom writes the
+                    // document when it is saved, so the play saves it and checks the request
                     play.tab();
                     final Query save = play.getByRole("button", "Save");
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
@@ -288,9 +286,9 @@ public final class GitRepoEditorStories {
                     screen.findByText("Edit HTTP Client Configuration");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP Client Configuration")).toBeNull());
-                    // Differs from React: OK with the configuration unchanged doesn't make the
-                    // document dirty (onSetHttpClientConfiguration only calls onChange() when the
-                    // edited configuration differs from the seeded one), so Save stays disabled
+                    // OK with the configuration unchanged doesn't make the document dirty
+                    // (onSetHttpClientConfiguration only calls onChange() when the edited
+                    // configuration differs from the seeded one), so Save stays disabled
                     play.sleep(300);
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
                     DocEditors.expectNoProblems(play);
@@ -344,7 +342,7 @@ public final class GitRepoEditorStories {
         });
     }
 
-    // A story's fixtures: React's Harness props
+    // A story's fixtures
     private static final class Fixtures {
 
         private final RestFixtures.Builder builder = RestFixtures.builder();

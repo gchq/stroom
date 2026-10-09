@@ -46,24 +46,22 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories matching `App/Main/PipelineEditor` in the React Storybook, showing Stroom's real
-/// [PipelinePresenter] (a Pipeline's editor tab: Data, Structure, Processors, Active Tasks,
-/// Documentation and Permissions), opened as `PipelinePlugin` opens a document, with fake REST
-/// replies.
+/// Stories of `App/Main/PipelineEditor`, showing Stroom's real [PipelinePresenter] (a Pipeline's
+/// editor tab: Data, Structure, Processors, Active Tasks, Documentation and Permissions), opened as
+/// `PipelinePlugin` opens a document, with fake REST replies.
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `api.fetch` | `GET /pipeline/v1/{uuid}` |
-/// | `api.save` | `PUT /pipeline/v1/{uuid}` |
-/// | `api.fetchLayers` | `POST /pipeline/v1/fetchPipelineLayers` (by the pipeline asked for) |
-/// | `api.fetchPropertyTypes` | `GET /pipeline/v1/propertyTypes` |
-/// | `api.fetchJson` | `POST /pipeline/v1/fetchPipelineJson` |
-/// | `meta`, `data` | `POST /meta/v1/find` (no streams) |
-/// | `processorFilter.find` | `POST /processorFilter/v1/find` |
-/// | `processorTask` | `POST /processorTask/v1/find`, `POST /processorTask/v1/summary` |
-/// | `loadNodes` | the explorer tree's `POST /explorer/v2/fetchExplorerNodes` |
-/// | `steppingApi` | `SteppingResource` (`PipelineFixtures.stepping`) |
-/// | the other tab's document (`MultiDocumentSave`) | `GET`, `PUT /xslt/v1/x1` (through Stroom's `XsltPlugin`) |
+/// | `GET`, `PUT /pipeline/v1/{uuid}` | fetching and saving the pipeline |
+/// | `POST /pipeline/v1/fetchPipelineLayers` (by the pipeline asked for) | its layers |
+/// | `GET /pipeline/v1/propertyTypes` | element property types |
+/// | `POST /pipeline/v1/fetchPipelineJson` | View Source |
+/// | `POST /meta/v1/find` (no streams) | the Data tab's streams |
+/// | `POST /processorFilter/v1/find` | the Processors tab |
+/// | `POST /processorTask/v1/find`, `POST /processorTask/v1/summary` | the Active Tasks tab |
+/// | `POST /explorer/v2/fetchExplorerNodes` | the document pickers (e.g. the Inherit From pipeline) |
+/// | `SteppingResource` (`PipelineFixtures.stepping`) | stepping |
+/// | `GET`, `PUT /xslt/v1/x1` (through Stroom's `XsltPlugin`) | the other document (`MultiDocumentSave`) |
 ///
 /// `MultiDocumentSave` opens the pipeline through Stroom's document plugins ([StoryDocumentPlugins]):
 /// `PipelinePlugin` saves it with its 'Save Pipeline' picker, and `XsltPlugin` loads and saves the
@@ -246,7 +244,7 @@ public final class PipelineEditorStories {
                     // Double clicking the property opens the Edit Property dialog for it
                     play.dblClick(play.getByText("My XSLT"));
                     final Play property = dialog(screen, "Edit Property");
-                    // Differs from React: GWT shows the element id and name as text, not as fields
+                    // GWT shows the element id and name as text, not as fields
                     play.expect(property.getAllByText("xslt").count()).toBeGreaterThan(0);
                     play.click(property.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit Property", StroomDom.DIALOG_TITLE))
@@ -256,7 +254,7 @@ public final class PipelineEditorStories {
                     play.expect(play.getByText("MY_FEED")).toBeInTheDocument();
                     play.expect(play.getByTitle("New Reference")).toBeInTheDocument();
                     // View Source opens the pipeline's JSON, captioned 'Pipeline Source'.
-                    // Differs from React: 'View Source' is a GWT Hyperlink (a link, not a button)
+                    // 'View Source' is a GWT Hyperlink (a link, not a button)
                     play.click(play.getByText("View Source"));
                     final Play source = dialog(screen, "Pipeline Source");
                     play.click(source.getByRole("button", StroomDom.button("Cancel")));
@@ -289,9 +287,9 @@ public final class PipelineEditorStories {
                     // The value names the embedded document that OK would create
                     play.waitFor(() -> play.expect(property.getByDisplayValue("EMBEDDED XSLT (xslt)"))
                             .toBeInTheDocument());
-                    // Differs from React: OK creates the embedded XSLT with the XSLT DocumentPlugin
-                    // (PropertyListPresenter.createEmbeddedDocument), which this story doesn't
-                    // register (see StoryDocumentPlugins), so the story stops before OK
+                    // OK creates the embedded XSLT with the XSLT DocumentPlugin
+                    // (PropertyListPresenter.createEmbeddedDocument), which this story doesn't register
+                    // (see StoryDocumentPlugins), so the story stops before OK
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // The Structure tab toggles into stepping mode with a stream list
@@ -301,7 +299,7 @@ public final class PipelineEditorStories {
                     play.findByText("parser");
                     play.click(play.findByTitle("Enter Stepping Mode"));
                     // The stream list shows; selecting a stream mounts the stepper.
-                    // Differs from React: GWT's stream list is a grid of streams, not a listbox
+                    // The stream list is a grid of streams
                     play.click(play.findAllByText("MY_FEED").nth(0));
                     play.findByTitle("Step Forward");
                     expectNoProblems(play);
@@ -310,9 +308,8 @@ public final class PipelineEditorStories {
                 .story("Processors", context -> render(context, PROCESSOR_FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // Differs from React: the wire discriminator checks of React's processorFilterApi
-                    // (asFilterRow/asProcessorRow) have no GWT code to check; Jackson's 'type' names
-                    // are what this story's fixture sends, and the rows below only show if they decode
+                    // The fixture sends Jackson's 'type' names, and the rows below only show if they
+                    // decode
                     play.click(play.findByText("Processors", StroomDom.LINK_TAB_LABEL));
                     // The filter grid shows the filter (status Complete) and an Add button
                     play.findByText("Complete");
@@ -326,8 +323,8 @@ public final class PipelineEditorStories {
                     play.click(play.getByTitle("Batch Edit Current Processors"));
                     final Play batch = dialog(screen, "Batch Change All Filtered Processors");
                     play.click(batch.getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: GWT counts the processor row as well as its filter, so it
-                    // asks to 'change 2 processors' rather than 'this processor'
+                    // GWT counts the processor row as well as its filter, so it asks to 'change 2
+                    // processors'
                     final Play confirm = dialogWith(screen,
                             TextMatch.exact("Are you sure you want to change 2 processors?"));
                     play.click(confirm.getByRole("button", StroomDom.button("Cancel")));
@@ -337,7 +334,7 @@ public final class PipelineEditorStories {
                     final Play filter = dialog(screen, "Filter Processors");
                     play.click(filter.getByRole("button", StroomDom.button("Cancel")));
                     // The Info popover shows the filter's details.
-                    // Differs from React: GWT's info cell is titled 'Info'
+                    // The info cell is titled 'Info'
                     play.click(play.getAllByTitle("Info").nth(1));
                     screen.findByText("Total Tasks Created");
                     // The processor row is expanded: collapsing it hides the filter
@@ -354,7 +351,7 @@ public final class PipelineEditorStories {
                 // With data access, the Data tab is there (the default) and Structure is reachable
                 .story("WithDataTab", context -> render(context, FIXTURES))
                 .withPlay(play -> {
-                    // Differs from React: GWT's tabs are link tabs with no 'tab' role
+                    // The tabs are link tabs with no 'tab' role
                     play.findByText("Data", StroomDom.LINK_TAB_LABEL);
                     play.findByText("Structure", StroomDom.LINK_TAB_LABEL);
                     openStructure(play);
@@ -387,11 +384,11 @@ public final class PipelineEditorStories {
                 .story("MultiDocumentSave", PipelineEditorStories::renderWithPlugins)
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // Differs from React: GWT's other dirty document can only be the code of an
-                    // element edited while stepping (SteppingPresenter.getDirtyDocs), and the
-                    // pipeline is dirtied by an edit, so the play makes both dirty first: it
-                    // removes the xslt element's reference loader, steps a stream and edits the
-                    // element's code (the XSLT 'My XSLT', loaded by Stroom's XsltPlugin)
+                    // The other dirty document can only be the code of an element edited while stepping
+                    // (SteppingPresenter.getDirtyDocs), and the pipeline is dirtied by an edit, so the
+                    // play makes both dirty first: it removes the xslt element's reference loader, steps
+                    // a stream and edits the element's code (the XSLT 'My XSLT', loaded by Stroom's
+                    // XsltPlugin)
                     openStructure(play);
                     play.click(play.findByText("xslt"));
                     play.click(play.findByText("Ref Pipeline"));
@@ -412,8 +409,8 @@ public final class PipelineEditorStories {
                     play.expect(picker.getByText("My Pipeline")).toBeInTheDocument();
                     play.expect(picker.getByText("My XSLT")).toBeInTheDocument();
                     // OK saves both (both ticked by default).
-                    // Differs from React: the saves are checked as the PUT requests of the
-                    // pipeline (PipelinePlugin) and of the XSLT (XsltPlugin), not as spies
+                    // The saves are checked as the PUT requests of the pipeline (PipelinePlugin) and of
+                    // the XSLT (XsltPlugin)
                     play.click(picker.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Save Pipeline: My Pipeline",
                             StroomDom.DIALOG_TITLE)).toBeNull());
@@ -432,14 +429,14 @@ public final class PipelineEditorStories {
                     play.click(play.findByText("xslt"));
                     play.findByText("Inherited Ref");
                     // The 'Inherited From' column names the ancestor the reference comes from.
-                    // Differs from React: GWT's grid rows are <tr> elements
+                    // The grid's rows are <tr> elements
                     play.expect(play.within(play.getByText("Inherited Ref").closest("tr")).getByText("Parent"))
                             .toBeInTheDocument();
                     // Select the row and Remove it: it stays, struck through (a cell class)
                     play.click(play.getByText("REF_FEED"));
                     play.click(play.getByTitle("Remove Reference"));
                     play.findByText("Inherited Ref");
-                    // Differs from React: GWT puts the class on the cell's text, not on the cell
+                    // GWT puts the class on the cell's text, not on the cell
                     play.waitFor(() -> play.expect(play.getByText("REF_FEED"))
                             .toHaveClass("pipelineStructureViewImpl-property-removed"));
                     // Remove again restores it
@@ -455,8 +452,7 @@ public final class PipelineEditorStories {
                     final Play screen = play.screen();
                     openStructure(play);
                     play.findByText("xslt");
-                    // Differs from React: the dirty state is a spy on the editor's DirtyEvent (React
-                    // shows a 'dirty-probe')
+                    // The dirty state is a spy on the editor's DirtyEvent
                     play.expect(play.spy(ON_DIRTY)).not().toHaveBeenCalledWith(true);
                     play.click(play.getByText("xslt"));
                     play.click(play.getByTitle("Remove Pipeline Element"));
@@ -512,8 +508,8 @@ public final class PipelineEditorStories {
         play.waitFor(() -> play.expect(play.getByText("Ref Pipeline")).toBeInTheDocument());
     }
 
-    // Differs from React: Stroom's Data tab is the default (for a user who may view data), so the
-    // Structure link tab is chosen first
+    // Stroom's Data tab is the default (for a user who may view data), so the Structure link tab is
+    // chosen first
     private static void openStructure(final Play play) {
         play.click(play.findByText("Structure", StroomDom.LINK_TAB_LABEL));
     }

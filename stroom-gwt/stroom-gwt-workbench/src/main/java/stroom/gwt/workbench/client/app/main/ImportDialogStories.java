@@ -38,15 +38,15 @@ import stroom.importexport.client.presenter.ImportConfigPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/ImportDialog` in the React Storybook, showing Stroom's real
-/// [ImportConfigPresenter] (the 'Import' dialog, which uploads the chosen file) and
-/// [ImportConfigConfirmPresenter] (the 'Confirm Import' dialog) with fake REST replies.
+/// Stories of `App/Main/ImportDialog`, showing Stroom's real [ImportConfigPresenter] (the 'Import'
+/// dialog, which uploads the chosen file) and [ImportConfigConfirmPresenter] (the 'Confirm Import'
+/// dialog) with fake REST replies.
 ///
-/// | React seam | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `uploadImportFile` | the file's upload (`importfile.rpc`): an upload reply, key `res-1` |
-/// | `importContent` (its recorder) | `POST /content/v1/import`, by import mode (the request spy) |
-/// | `abortImport` (its recorder) | `POST /content/v1/abortImport` (the request spy) |
+/// | the file's upload (`importfile.rpc`): an upload reply, key `res-1` | uploading the file |
+/// | `POST /content/v1/import`, by import mode (the request spy) | the import |
+/// | `POST /content/v1/abortImport` (the request spy) | aborting the import |
 ///
 /// The story fires `ImportConfigEvent` (as the main menu's 'Import' item does) with both dialogs
 /// registered as their events' handlers, as their GWTP proxies would be. The confirm dialog's root
@@ -57,7 +57,7 @@ public final class ImportDialogStories {
     private static final String UPLOAD_URL = "importfile.rpc";
     private static final String RESOURCE_KEY = "{\"key\": \"res-1\", \"name\": \"import.zip\"}";
 
-    // React's uploadFile: the file chosen in each story but NothingToImport
+    // The file chosen in each story but NothingToImport
     private static final String FILE_NAME = "import.zip";
     private static final String FILE_CONTENT = "<config/>";
     private static final String FILE_TYPE = "application/zip";
@@ -111,7 +111,7 @@ public final class ImportDialogStories {
                                     .withJsonBodyContaining("{\"importSettings\": {\"importMode\": "
                                             + "\"ACTION_CONFIRMATION\"}, \"confirmList\": [{}, {}]}")
                                     .toSpyMatcher()));
-                    // Both tell the user the import is complete (React's play doesn't check it)
+                    // Stroom tells the user the import is complete
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("INFO: Import Complete"));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
@@ -175,20 +175,20 @@ public final class ImportDialogStories {
                             RequestMatcher.post("/content/v1/abortImport")
                                     .withJsonBodyContaining("{\"key\": \"res-1\"}")
                                     .toSpyMatcher()));
-                    // Both tell the user the import was aborted (React's play doesn't check it)
+                    // Stroom tells the user the import was aborted
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("WARN: Import Aborted"));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
     }
 
-    /// React's `uploadFile`: chooses `import.zip` in the 'Import' dialog, waits for its name, then
+    /// Chooses `import.zip` in the 'Import' dialog, waits for its name, then
     /// OK uploads it, and the confirm grid opens with the parsed items. Also checks the upload and
     /// that the confirmation was asked for the uploaded file's resource key.
     private static void uploadFile(final Play play) {
         final Play screen = play.screen();
         final Play dialog = importDialog(screen);
-        // React sets the file with fireEvent.change; userEvent.upload fires the same change event
+        // Chooses the file as a user does, which fires the input's change event
         play.upload(dialog.querySelector(StroomDom.FILE_INPUT), FILE_NAME, FILE_CONTENT, FILE_TYPE);
         // CustomFileUpload shows the chosen name
         dialog.findByText(FILE_NAME);
@@ -215,7 +215,7 @@ public final class ImportDialogStories {
     private static Widget render(final StoryContext context, final String confirmList) {
         // The dialog's root folder picker gets its folder's node from the explorer
         final RestFixtures fixtures = TreeFixtures.explorerRoutes(TreeFixtures.fixtureTree())
-                // React's uploadImportFile
+                // The file's upload
                 .upload(UploadReply.success("res-1", FILE_NAME))
                 .route(RequestMatcher.post(IMPORT_PATH).withJsonBodyContaining(
                                 "{\"importSettings\": {\"importMode\": \"ACTION_CONFIRMATION\"}}"),

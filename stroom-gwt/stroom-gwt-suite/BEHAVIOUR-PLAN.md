@@ -3,7 +3,7 @@
 Companion to [COVERAGE-PLAN.md](./COVERAGE-PLAN.md) (how every screen and dialog came to be
 reachable) and [BRANCHING-PLAN.md](./BRANCHING-PLAN.md) (the graph the walk descends). This plan is
 about what happens *after* a door is opened: whether the thing behind it does what the source says
-it does. The subject is the **GWT UI**, tested on its own terms; the React port is not in scope here.
+it does. The subject is the **GWT UI**, tested on its own terms.
 
 > **Status (2026-09-22, afternoon): B0 done for the round (1,111 alerts read, 3 exceptions, all
 > filed); B1 at 32.9% / presenters 47.3%; B2's seven checkers in (sort, pager, Refresh, OK, Filter,
@@ -23,7 +23,7 @@ and the ledger has always said so. What we hold, and have not used:
 | blocked mutations | **442** | clicks whose request the read-only guard aborted (`POST /api/…/create`, `PUT`, `DELETE`) | anything about what the mutation would have done — every OK path is untested |
 | capability specs, `oracles/capability-specs.json` | **421** presenters; 218 declare toolbar buttons, 60 grid columns, 102 a PopupType, 200 name server resources; `SvgPresets` gives disabled-at-rest for 72 presets | an oracle mined from the source for what a presenter SHOULD offer; **132** have crawl data to diff against today, and the diff is read as a test of the miner, not of the UI |
 | the corpus, `stroom-gwt-suite/corpus/default` | 185 screens, 1,593 API exchanges, re-recorded 2026-09-21 | pixel baselines for screens as they OPEN; nothing about what a click does |
-| `stroom-gwt/ISSUES.md` | **36** entries | defects found while porting — by reading, by probes, and lately by the walk (#36) |
+| `stroom-gwt/ISSUES.md` | **41** open entries | defects found by reading the code, by probes, by the workbench's stories and by the walk (#36) |
 
 The walker's model is one click deep by design: click, classify, pop, next. Behaviour is what a
 click DOES, and that needs (a) something to compare the outcome against and (b) sequences longer
@@ -89,7 +89,7 @@ Ordered by how soon each finds a GWT bug, and by what each needs from the phase 
 4. **Make it standing:** `coverage.mjs` gains an *alerts* section (counts by class, the exception
    list by route), so a new exception in a future run is a visible delta and not a line in a log.
 
-*Exit:* every alert classified; every `exception` either in gwt-bugs.md or shown to be
+*Exit:* every alert classified; every `exception` either in [ISSUES.md](../ISSUES.md) or shown to be
 `environment`. Expected yield (author's guess): 3–8 new entries — #36 was found by the first probe
 that read an alert, and 719 have never been read.
 
@@ -138,7 +138,7 @@ filed as `walker-bug` or `gwt-bug` after triage, never left as a count.
 | control | checker | oracle | today's evidence it is needed |
 | --- | --- | --- | --- |
 | a sortable header | rows are ordered by that column, in the direction the sort icon shows; a second click reverses; Ctrl-click adds a secondary sort (`nextSortWithDefault`) | the cell texts before and after, parsed by the column's type (`headingBuilder` in the spec says text / number / date) | 189 `grid-reordered` outcomes, never checked for order |
-| a pager button | the "x to y of z" label moves by the page size; First / Last disable at the ends; the rows change | the pager label before/after; `PageRequest` length from the spec's resource | batch 2 of the port work found 84 grids that "never said how many" — the GWT side was never asserted either |
+| a pager button | the "x to y of z" label moves by the page size; First / Last disable at the ends; the rows change | the pager label before/after; `PageRequest` length from the spec's resource | 84 grids were once found that "never said how many", and pager labels have never been asserted |
 | Filter › OK | rows after are a subset of rows before (or the total falls); an empty filter restores; the quick-filter syntax help lists what the field parser accepts | the grid before/after | `Filter Streams`, `Filter Documents`, 30 `Filter '…'` column dialogs |
 | select a row | the set of buttons that became enabled equals the spec's disabled-at-rest set for that presenter; deselect (Ctrl-click) disables them again | `capability-specs` `disabledAtRest` | the generic selection rule records what enabled; the spec says what should have |
 | a tick box / tri-state header | ticking N rows enables the batch buttons; the header cycles none → all → none; the count in `Selection summary` matches | the tick states + the summary dialog's text | the `TickBoxCell` trap (a click checks without selecting) cost a pass; the reverse — batch buttons on a tick — was never checked |
@@ -147,11 +147,11 @@ filed as `walker-bug` or `gwt-bug` after triage, never left as a count.
 | Refresh | the grid's rows are the same set (a read is idempotent); the pager label does not move | rows before/after | 3,603 `nothing` outcomes, most of them Refresh, all unverified |
 
 The last row matters more than it looks: a Refresh that changes the rows on a screen with no live
-data is a bug (an unstable sort, a non-deterministic query), and the port work found exactly that
-class twice (`screens-that-lie`).
+data is a bug (an unstable sort, a non-deterministic query), and that class has been found twice
+before (`screens-that-lie`).
 
 *Exit:* every `changed` / `grid-reordered` / `nothing` outcome carries a checker verdict or an
-explicit `unchecked: <why>`; the verdicts are in the ledger; gwt-bugs.md has what failed.
+explicit `unchecked: <why>`; the verdicts are in the ledger; [ISSUES.md](../ISSUES.md) has what failed.
 
 ### B3 — value and key handlers: driving the forms (two weeks)
 
@@ -208,8 +208,8 @@ half no walk has tested, and #31 (`create` → 403, four document types) lived e
    before and after (the `have` reads of `seed-data.mjs`, generalised), and a difference fails the
    run and names what leaked. A `mysqldump` of `stroom_stroom_react` (the `bounceit_stroom-all-dbs`
    container, mysql 8.4) is taken by hand before the FIRST run of each new cycle type, and never
-   relied on by the suite. Both nodes share the DB, so the port's `:10080` backend stays down
-   during Stage C runs.
+   relied on by the suite. Any other Stroom using the same database stays down during Stage C
+   runs.
 6. The guard's allow-list gains a third class, `cycle`, enabled only under `MUTATE=1` and only
    for the request shapes a registered cycle makes.
 
@@ -247,16 +247,19 @@ walk of the screens it changes. B4's property cycle (set → record → set back
 
 ## 4. How a finding becomes a bug
 
-The port work's rule holds: **never bury a GWT defect in a commit**. `stroom-gwt/ISSUES.md` is the
-list, with the status key it already has (🟢 fixed upstream · 🔵 port diverges · ⚪ undecided · ⚫
-expected). What changes for this work:
+The rule holds: **never bury a GWT defect in a commit**. `stroom-gwt/ISSUES.md` is the list: each
+entry says how sure it is (**Reported** from reading the code, **Confirmed** in the code,
+**Reproduced** in a running Stroom), fixed entries move to its Fixed section, and what was checked
+and found not to be a bug goes under "Checked and not bugs". What changes for this work:
 
 - every entry carries the **route** that reproduces it as the walk recorded it (`docType` /
   `menu` / `select-row` / … steps), so the repro is a seed anyone can run, not prose;
 - the classification rules of B0 and the checkers of B2 are the *only* source of new entries —
   a bug the suite cannot re-find on the next run is not fixed, it is hidden;
-- an entry's fix is verified by the same run, so the status column is evidence, not memory;
-- the `experimental` caveat stays: Pathways is known half-built and its failures are ⚫.
+- an entry's fix is verified by the same run, so its move to Fixed is evidence, not memory;
+- Pathways is experimental and half-built: its known failures are the ISSUES.md entry "The
+  Pathways editor can't create a pathway or add a constraint", and its expected gaps are under
+  "Checked and not bugs".
 
 ## 5. Metrics — what "done" reads as
 
@@ -269,7 +272,7 @@ expected). What changes for this work:
 | validation matrix rows | B3 | — | every form's rows have a verdict |
 | OK paths exercised | B4 | 57/98 ok, 18 `ok-blocked` | every `ok-blocked` handler in a cycle, or `irreversible` / `outside-db` |
 | replayable share | B5 | screens only | every non-live group replays with equal verdicts |
-| gwt-bugs.md | all | #46 | grows by what is found; entries carry routes |
+| ISSUES.md (gwt-bugs) | all | #46 | grows by what is found; entries carry routes |
 
 ## 6. Order and effort (author's estimates)
 
@@ -299,7 +302,7 @@ become tests, and everything after it reuses its checkers.
    the `environment` class in B0, and the cluster screens (Nodes, Caches, Server Tasks, Search
    Result Stores) are tested one node wide, and say so.
 4. **Whose bugs they are** — the list is for upstream; the decision per entry (fix upstream /
-   replicate / diverge) stays with the owner, as in the port work.
+   replicate / diverge) stays with the owner.
 5. **Start** — B0 and B1 together.
 
 ## 8. Research before B2 (small, and to be answered by reading, not building)

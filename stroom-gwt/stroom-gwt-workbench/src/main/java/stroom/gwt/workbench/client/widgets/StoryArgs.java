@@ -46,8 +46,7 @@ public final class StoryArgs {
         return null;
     }
 
-    /// Gets a boolean arg that defaults to true, e.g. React's `enabled = true` or `visible = true`
-    /// props.
+    /// Gets a boolean arg that defaults to true, e.g. `enabled` or `visible`.
     ///
     /// @param args The story's args.
     /// @param name The name of the arg.

@@ -36,18 +36,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Editors/FolderEditor` in the React Storybook, showing Stroom's real
-/// [FolderPresenter] (a folder's tab: Data, Processors, Active Tasks and Permissions) and, for the
-/// System root, [FolderRootPresenter], with fake REST replies.
+/// The `App/Editors/FolderEditor` stories, showing Stroom's real [FolderPresenter] (a folder's tab:
+/// Data, Processors, Active Tasks and Permissions) and, for the System root, [FolderRootPresenter],
+/// with fake REST replies.
 ///
 /// As `FolderPlugin` (and `FolderRootPlugin`) do, the story reads the folder's DocRef into the
-/// presenter and shows it; there is no document to fetch. React's seams become routes: the Data
-/// tab's browser → Stroom's real `MetaPresenter` (`POST /meta/v1/findMetaRow`, no streams),
-/// `processorFilter.find` → `POST /processorFilter/v1/find`, `processorTask` →
-/// `POST /processorTask/v1/find` and `summary`, `docPermission` → the Permissions tab's routes.
-/// React's `PROCESSOR_FIND_CRITERIA` is the request spy's `processorFilter/v1/find` calls.
-/// The app permissions are React's: `ADMINISTRATOR` (the harness's default), which implies
-/// View Data and Manage Processors.
+/// presenter and shows it; there is no document to fetch. The Data tab is Stroom's real
+/// `MetaPresenter` (`POST /meta/v1/findMetaRow`, no streams), the Processors tab asks
+/// `POST /processorFilter/v1/find` (checked with the request spy), Active Tasks
+/// `POST /processorTask/v1/find` and `summary`, and the Permissions tab has its own routes. The
+/// user is `ADMINISTRATOR` (the harness's default), which implies View Data and Manage Processors.
 public final class FolderEditorStories {
 
     private static final DocRef FOLDER = new DocRef(ExplorerConstants.FOLDER_TYPE, "folder-uuid-1", "My Folder");
@@ -82,8 +80,8 @@ public final class FolderEditorStories {
                     play.expect(DocEditors.tab(play, "Active Tasks")).toBeInTheDocument();
                     play.expect(DocEditors.tab(play, "Permissions")).toBeInTheDocument();
                     // Data is the default tab.
-                    // Differs from React: it is Stroom's real data browser (MetaPresenter), not a
-                    // placeholder, so the play checks its stream list's Feed column
+                    // It is Stroom's real data browser (MetaPresenter), so the play checks its
+                    // stream list's Feed column
                     play.waitFor(() -> play.expect(play.getAllByText("Feed").nth(0)).toBeVisible());
                     // Processors: an administrator may edit but not add or duplicate (a folder has
                     // no single pipeline)
@@ -99,9 +97,8 @@ public final class FolderEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Data")).toBeInTheDocument());
                     play.expect(DocEditors.tab(play, "Permissions")).toBeInTheDocument();
-                    // Differs from React: Stroom's FolderRootPresenter also shows the Processors and
-                    // Active Tasks tabs to users who may manage processors (React leaves them out
-                    // for the root)
+                    // Stroom's FolderRootPresenter also shows the Processors and Active Tasks tabs
+                    // to users who may manage processors
                     play.expect(DocEditors.tab(play, "Processors")).toBeInTheDocument();
                     play.expect(DocEditors.tab(play, "Active Tasks")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
@@ -129,7 +126,7 @@ public final class FolderEditorStories {
                && !ids.contains("Pipeline");
     }
 
-    // Every 'field' anywhere in a nested expression (React's fieldIds)
+    // Every 'field' anywhere in a nested expression
     private static List<String> fieldIds(final Object node, final List<String> ids) {
         if (node instanceof final Map<?, ?> map) {
             if (map.get("field") instanceof final String field) {

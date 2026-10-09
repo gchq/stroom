@@ -43,16 +43,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Stories for Stroom's [DocumentTypeCell], matching `Widgets/Cell Renderers/DocumentTypeCell` in
-/// the React Storybook.
+/// Stories for Stroom's [DocumentTypeCell].
 ///
 /// The cell is shown as Stroom's type filter (`TypeFilterPresenter`) shows it: as the one column of
 /// a [MyCellTable] with the `menuCellTable` class, one row per type, whose tick boxes are toggled by
 /// a [CheckListSelectionEventManager]. The cell's [DocumentTypeSelectionModel] gives each type's
-/// tick box state; a null state (React's omitted `tickState`) renders no tick box.
+/// tick box state; a null state renders no tick box.
 public final class DocumentTypeCellStories {
 
-    // Arg names, the same as the React DocumentTypeCell's props
+    // Arg names
     private static final String DOCUMENT_TYPE = "documentType";
     private static final String ON_TOGGLE = "onToggle";
 
@@ -69,8 +68,8 @@ public final class DocumentTypeCellStories {
                 .argType(ArgType.text(DOCUMENT_TYPE)
                         .description("The document type's key, resolved with DocumentTypeRegistry.get(...).")
                         .typeName("DocumentType | string"))
-                // React's tickState, onToggle and showDivider props are left out: GWT's tick box state
-                // comes from the selection model (see WithTickBoxes), and the divider is only drawn
+                // No tick state, toggle or divider args: the tick box state comes from the selection
+                // model (see WithTickBoxes), and the divider is only drawn
                 // for TypeFilterPresenter's own 'Select all or none' type
                 .args(Args.of(DOCUMENT_TYPE, "Feed"))
                 // A single document type resolved from its API type-key string
@@ -117,15 +116,14 @@ public final class DocumentTypeCellStories {
         return typeList(context, states, false);
     }
 
-    /// Resolves a type's key, as React's `getDocumentType(key)`.
+    /// Resolves a type's key.
     private static DocumentType resolve(final String key) {
         final DocumentType documentType = DocumentTypeRegistry.get(key);
         if (documentType != null) {
             return documentType;
         }
-        // Differs from React: DocumentTypeRegistry has no fallback for an unknown key (Stroom never
-        // shows one), so the story makes the type React falls back to: the searchable icon and the
-        // key as its name
+        // DocumentTypeRegistry has no fallback for an unknown key (Stroom never shows one), so the
+        // story makes one: the searchable icon and the key as its name
         return new DocumentType(DocumentTypeGroup.SEARCH, key, key, SvgImage.DOCUMENT_SEARCHABLE);
     }
 

@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TestAppShellFixtures {
 
     @Test
-    void testDictTree_hasReactsUuids() {
+    void testDictTree_hasFixedUuids() {
         final ExplorerFixture tree = AppShellFixtures.dictTree();
 
         assertThat(tree.get("Dictionaries").getUuid()).isEqualTo("folder-root");

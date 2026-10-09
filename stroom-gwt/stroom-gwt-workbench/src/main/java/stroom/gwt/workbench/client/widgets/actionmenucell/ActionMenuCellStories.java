@@ -34,12 +34,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/// Stories for Stroom's [ActionMenuCell], matching `Widgets/ActionMenuCell` in the React Storybook.
+/// Stories for Stroom's [ActionMenuCell].
 ///
 /// The cell is a `CellWidget` whose value is the row. On a mouse down on its "Actions..." ellipsis
 /// it fires `ShowMenuEvent` with the row's menu items, which the story shows with Stroom's real
-/// menu ([StoryPopups#withMenus()]). React's `clicked` array of the menu items' actions becomes the
-/// `clicked` spy.
+/// menu ([StoryPopups#withMenus()]). The menu items' actions are reported to the `clicked` spy.
 public final class ActionMenuCellStories {
 
     private static final String CLICKED = "clicked";
@@ -55,8 +54,8 @@ public final class ActionMenuCellStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/ActionMenuCell", ActionMenuCellStories.class)
                 .layout(StoryLayout.CENTERED)
-                // No arg types: React's items are functions, its title is ActionMenuCell's tooltip
-                // extractor (left as Stroom's default, "Actions...") and GWT has no enabled state
+                // No arg types: the items are functions, the title is ActionMenuCell's tooltip
+                // extractor (left as Stroom's default, "Actions...") and the cell has no enabled state
                 // The "Actions..." ellipsis opens the row menu on a left-click
                 .story("Actions", context -> {
                     final Spy clicked = context.fn(CLICKED);
@@ -73,7 +72,6 @@ public final class ActionMenuCellStories {
                     play.expect(body.getByText("Add new rule above")).toBeVisible();
 
                     play.click(body.getByText("Copy Rule"));
-                    // React: expect(clicked).toEqual(['copy'])
                     play.waitFor(() -> play.expect(play.spy(CLICKED)).toHaveBeenCalledTimes(1));
                     play.expect(play.spy(CLICKED)).toHaveBeenCalledWith("copy");
                 })
@@ -83,8 +81,8 @@ public final class ActionMenuCellStories {
                     return actionMenuCell(context, Collections.emptyList());
                 })
                 .withPlay(play -> {
-                    // Differs from React: GWT's ActionMenuCell renders its ellipsis for every row (React
-                    // renders nothing with no items); a mouse down on it shows no menu
+                    // ActionMenuCell renders its ellipsis for every row, even with no items; a mouse
+                    // down on it then shows no menu
                     play.expect(play.getByTitle("Actions...")).toBeInTheDocument();
                     play.click(play.getByTitle("Actions..."));
                     play.expect(play.screen().querySelector(".menuCellTable")).toBeNull();

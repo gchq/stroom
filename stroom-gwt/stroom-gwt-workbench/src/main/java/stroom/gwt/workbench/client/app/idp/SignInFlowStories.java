@@ -34,20 +34,20 @@ import com.gwtplatform.mvp.client.Presenter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/// Stories matching `App/IdP/SignInFlow` in the React Storybook: Stroom's sign in host page for
+/// The `App/IdP/SignInFlow` stories: Stroom's sign in host page for
 /// `/signIn?error=…&redirect_uri=…`, as Stroom's `App.onModuleLoad` shows it (the sign in page,
 /// `LoginPresenter`, for `error=login_required`, otherwise the authentication error page,
 /// `AuthenticationErrorPresenter`), through to the navigation after signing in.
 ///
-/// | React | Stroom |
+/// | Stroom | Used for |
 /// |---|---|
-/// | `error`, `redirectUri` props | the URL's `error` and `redirect_uri` parameters (see `IdpPage`) |
-/// | `authErrorMessage` | the UI config's `authErrorMessage` |
-/// | `api.fetchPasswordPolicy` | `GET /authentication/v1/fetchPasswordPolicy` |
-/// | `api.login` | `POST /authentication/v1/login` |
-/// | `api.changePassword` | `POST /authentication/v1/changePassword` |
-/// | `api.resetEmail` | `POST /authentication/v1/reset` |
-/// | `onRedirect` | `Window.Location.replace(redirect_uri)`, recorded by `IdpPage.ON_NAVIGATE` |
+/// | the URL's `error` and `redirect_uri` parameters (see `IdpPage`) | which page shows, and where to go |
+/// | the UI config's `authErrorMessage` | the authentication error page's message |
+/// | `GET /authentication/v1/fetchPasswordPolicy` | the password policy |
+/// | `POST /authentication/v1/login` | signing in |
+/// | `POST /authentication/v1/changePassword` | a forced password change |
+/// | `POST /authentication/v1/reset` | 'Forgot password?' |
+/// | `Window.Location.replace(redirect_uri)`, recorded by `IdpPage.ON_NAVIGATE` | the redirect after signing in |
 public final class SignInFlowStories {
 
     private static final String POLICY = IdpPlays.policy(true, 8, 2,
@@ -92,7 +92,7 @@ public final class SignInFlowStories {
                     play.click(play.getByRole("button", IdpPlays.SIGN_IN));
                     // 2) The change password dialog (on the page's body, over the sign in page)
                     final Play dialog = IdpPlays.fillPasswords(play, "Change Password", STRONG, STRONG);
-                    // Differs from React: no meter role; aria-valuenow >= 2 is a bar level >= 3
+                    // The meter has no role; a score of 2 or more is a bar level of 3 or more
                     IdpPlays.waitForStrengthScored(play, dialog, "3-5");
                     play.click(dialog.getByRole("button", IdpPlays.OK));
                     // 3) The change succeeds: the redirect. The typed password is the current one.
@@ -113,8 +113,8 @@ public final class SignInFlowStories {
                     play.type(play.findByPlaceholderText("Enter User Name"), "admin");
                     play.type(play.getByPlaceholderText("Enter Password"), "wrong");
                     play.click(play.getByRole("button", IdpPlays.SIGN_IN));
-                    // Differs from React: Stroom shows the message in an error alert
-                    // (AlertEvent.fireError) on the page's body, not inline in the form
+                    // Stroom shows the message in an error alert (AlertEvent.fireError) on the
+                    // page's body, not inline in the form
                     play.expect(play.screen().findByText("Invalid credentials.")).toBeInTheDocument();
                     play.expect(play.queryByText(TextMatch.containingIgnoreCase("redirected to"))).toBeNull();
                     play.expect(play.spy(IdpPage.ON_NAVIGATE)).not().toHaveBeenCalled();
@@ -126,7 +126,7 @@ public final class SignInFlowStories {
                         RestReply.json("{\"loginSuccessful\": true}"),
                         "Your account is not permitted to access this application."))
                 .withPlay(play -> {
-                    // React has no play: this checks the page shows the error and the message
+                    // The page shows the error and the message
                     play.expect(play.findByText("access_denied")).toBeInTheDocument();
                     play.expect(play.getByText("Your account is not permitted to access this application."))
                             .toBeInTheDocument();

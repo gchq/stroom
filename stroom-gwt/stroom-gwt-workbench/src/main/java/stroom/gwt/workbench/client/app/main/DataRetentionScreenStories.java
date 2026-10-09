@@ -41,18 +41,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/DataRetentionScreen` in the React Storybook, showing Stroom's real
-/// [DataRetentionPresenter] (the 'Data Retention' tab, as `DataRetentionPlugin` opens it: the Rules
-/// and Impact Summary sub-tabs) with fake REST replies.
+/// Stories of `App/Main/DataRetentionScreen`, showing Stroom's real [DataRetentionPresenter] (the
+/// 'Data Retention' tab, as `DataRetentionPlugin` opens it: the Rules and Impact Summary sub-tabs)
+/// with fake REST replies.
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `fetch` | `GET /dataRetentionRules/v1` |
-/// | `update` | `PUT /dataRetentionRules/v1` (echoes the rules) |
-/// | `impactSummary` | `POST /dataRetentionRules/v1/impactSummary` (echoes the request's `queryId`) |
-/// | `stopImpactSummary` | `DELETE /dataRetentionRules/v1/impactSummary/{queryId}` |
+/// | `GET /dataRetentionRules/v1` | the rules |
+/// | `PUT /dataRetentionRules/v1` (echoes the rules) | saving the rules |
+/// | `POST /dataRetentionRules/v1/impactSummary` (echoes the request's `queryId`) | the impact summary |
+/// | `DELETE /dataRetentionRules/v1/impactSummary/{queryId}` | stopping the impact summary |
 ///
-/// The recorder's checks become checks on the request spy.
+/// The requests made are checked on the request spy.
 public final class DataRetentionScreenStories {
 
     private static final String RULES_PATH = "/dataRetentionRules/v1";
@@ -98,7 +98,7 @@ public final class DataRetentionScreenStories {
     private static final String ABORT_QUERY = "Abort Query";
     private static final String SET_FILTER = "Set Query Filter";
 
-    // Differs from React: the expression panel has no class of its own; it is the expression tree's
+    // The expression panel has no class of its own; it is the expression tree's
     // view (ExpressionTreeViewImpl)
     private static final String EXPRESSION_PANEL = ".ExpressionTreeViewImpl-layoutPanel";
 
@@ -124,7 +124,7 @@ public final class DataRetentionScreenStories {
                     // Double click the user rule -> "Edit Rule" -> rename -> OK
                     play.dblClick(play.getByText("Keep 30 days"));
                     final Play dialog = dialog(screen, "Edit Rule");
-                    // Differs from React: the field's id is its FormGroup's identity
+                    // The field's id is its FormGroup's identity
                     final Query name = dialog.querySelector("#dataRetentionRuleRuleName");
                     play.clear(name);
                     play.type(name, "Keep a month");
@@ -145,7 +145,7 @@ public final class DataRetentionScreenStories {
                 .story("ExpressionPanel", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     play.findByText("Keep 30 days");
-                    // Differs from React: the panel is the ExpressionTreePresenter's view under the
+                    // The panel is the ExpressionTreePresenter's view under the
                     // grid (DataRetentionPolicyViewImpl's split panel), with no class of its own
                     final Play panel = play.within(play.querySelector(EXPRESSION_PANEL));
                     // Nothing selected -> no term is shown
@@ -193,7 +193,7 @@ public final class DataRetentionScreenStories {
                 .withPlay(play -> {
                     openImpactSummary(play);
                     play.click(play.getByTitle(RUN_QUERY));
-                    // Differs from React: GWT's nested view (its default) shows the feeds once
+                    // GWT's nested view (its default) shows the feeds once
                     // expanded; the rules start expanded down to their types
                     play.click(play.findByTitle("Expand all"));
                     play.findByText("TEST_FEED");
@@ -230,7 +230,7 @@ public final class DataRetentionScreenStories {
                 .withPlay(play -> {
                     openImpactSummary(play);
                     play.click(play.getByTitle(RUN_QUERY));
-                    // Differs from React: GWT's default nested view shows the feeds once expanded
+                    // GWT's default nested view shows the feeds once expanded
                     play.click(play.findByTitle("Expand all"));
                     play.findByText("LONG_FEED");
                     // Ascending by Rule Age -> 30 Days (rule 1) before 5 Years (rule 2)
@@ -247,17 +247,17 @@ public final class DataRetentionScreenStories {
                 .withPlay(play -> {
                     openImpactSummary(play);
                     play.click(play.getByTitle(RUN_QUERY));
-                    // Differs from React: GWT's Impact Summary starts nested (isTableNested = true),
+                    // GWT's Impact Summary starts nested (isTableNested = true),
                     // so the toggle isn't needed; the rule and type rows show the subtotal (42 + 8)
                     play.waitFor(() -> play.expect(play.getAllByText("50").count())
                             .toBeGreaterThanOrEqual(1));
                     // The full column set, behind an expander column.
-                    // Differs from React: GWT's sortable headers have role="button", so the headers
+                    // GWT's sortable headers have role="button", so the headers
                     // are the table's <th> cells
                     play.expect(play.querySelectorAll("thead th").textContents()).toEqual(List.of(
                             "", "Rule No.", "Rule Name", "Rule Age", "Type", "Feed", "Stream Delete Count"));
                     // An active rule with no deletes still shows, as a 0 count row.
-                    // Differs from React: GWT builds the rows from the fetched rules' active rules,
+                    // GWT builds the rows from the fetched rules' active rules,
                     // which don't include the UI only 'Default Retain All Forever Rule', so its 0 count
                     // row is 'Keep 5 years' (an active rule nothing is deleted by)
                     play.expect(play.queryByText("Default Retain All Forever Rule")).toBeNull();
@@ -275,8 +275,8 @@ public final class DataRetentionScreenStories {
                     openImpactSummary(play);
                     play.click(play.getByTitle(SET_FILTER));
                     play.click(dialog(screen, "Query Filter").getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: GWT's filter only sets the criteria (it doesn't re-run the
-                    // query, and there is no 'Clear Filter' button); the next Run sends it
+                    // GWT's filter only sets the criteria (it doesn't re-run the query); the next Run
+                    // sends it
                     play.click(play.getByTitle(RUN_QUERY));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(IMPACT_PATH)
@@ -292,12 +292,12 @@ public final class DataRetentionScreenStories {
 
     private static void openImpactSummary(final Play play) {
         play.findByText("Keep 30 days");
-        // Differs from React: GWT's tabs are link tabs with no 'tab' role
+        // GWT's tabs are link tabs with no 'tab' role
         play.click(play.getByText("Impact Summary", StroomDom.LINK_TAB_LABEL));
         play.findByTitle(RUN_QUERY);
     }
 
-    // Differs from React: GWT's grid rows are <tr> elements with no role attribute
+    // GWT's grid rows are <tr> elements with no role attribute
     private static Query row(final Play play, final String text) {
         return play.getAllByText(text).nth(0).closest("tr");
     }

@@ -22,8 +22,8 @@ import java.util.Map;
 import java.util.Objects;
 
 /// The fake response to a REST request: a status code, a body, its content type and any other
-/// headers, in the same form as the responses recorded in the gwt-suite corpus of the React
-/// repository. It can also be a network failure ([#networkError(String)]) or a timeout
+/// headers, in the same form as the responses recorded in the GWT behaviour suite's corpus
+/// (`stroom-gwt-suite`). It can also be a network failure ([#networkError(String)]) or a timeout
 /// ([#timeout()]), which RestyGWT reports through `RequestCallback.onError` rather than as a
 /// response. Replies are immutable, so can be shared by stories.
 ///

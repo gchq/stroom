@@ -36,14 +36,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collections;
 
-/// Stories matching `App/Main/TabSessionChooserDialog` in the React Storybook, showing Stroom's real
+/// Stories of `App/Main/TabSessionChooserDialog`, showing Stroom's real
 /// `TabSessionChooserPresenter`, as Stroom's [TabSessionManager] shows it for 'Open Tab Session',
 /// with fake REST replies.
 ///
-/// The React story's `sessions` prop becomes `GET /tabSession/v1` (`TabSessionResource
-/// .getForCurrentUser`), and its `onPick` is a spy on what picking a session does in Stroom: it
-/// opens the session's documents (`OpenDocumentEvent`). The manager (from GIN) is the real one; the
-/// story answers its `GetCurrentTabsEvent` (no tabs open) as the content pane would.
+/// The sessions come from `GET /tabSession/v1` (`TabSessionResource.getForCurrentUser`), and the
+/// `onPick` spy records what picking a session does in Stroom: it opens the session's documents
+/// (`OpenDocumentEvent`). The manager (from GIN) is the real one; the story answers its
+/// `GetCurrentTabsEvent` (no tabs open) as the content pane would.
 public final class TabSessionChooserDialogStories {
 
     /// The name of the spy recording the documents of the session picked.
@@ -78,7 +78,7 @@ public final class TabSessionChooserDialogStories {
                     screen.findByText("Select Tab Session To Open:");
                     play.click(screen.getByText("Pipeline work"));
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: picking a session in GWT opens its documents
+                    // Picking a session opens its documents
                     play.waitFor(() -> play.expect(play.spy(ON_PICK)).toHaveBeenCalledWith("Pipeline Pipe A"));
                     play.expect(play.spy(ON_PICK)).not().toHaveBeenCalledWith("Feed Feed A");
                     ContentStorySupport.expectNoProblems(play);

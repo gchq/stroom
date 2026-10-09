@@ -34,15 +34,15 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories for [ValueSpinner], matching `Widgets/Inputs/ValueSpinner` in the React Storybook.
+/// Stories for [ValueSpinner].
 ///
-/// [ValueSpinner]'s field is a text input (role `textbox`), where the React port's is a number
-/// input (role `spinbutton`), so the plays find it as a text box and compare its value as text.
+/// [ValueSpinner]'s field is a text input (role `textbox`), so the plays find it as a text box
+/// and compare its value as text.
 /// [ValueSpinner] parses what is typed with `Long.valueOf` when the field loses the focus (or
 /// on Enter), and puts the previous value back if it isn't a whole number within the bounds.
 public final class ValueSpinnerStories {
 
-    // Arg names, the same as the React ValueSpinner's props
+    // Arg names
     private static final String VALUE = "value";
     private static final String MIN = "min";
     private static final String MAX = "max";
@@ -64,8 +64,7 @@ public final class ValueSpinnerStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Inputs/ValueSpinner", ValueSpinnerStories.class)
                 .layout(StoryLayout.CENTERED)
-                // React's maxStep, delta and inputId props are omitted: ValueSpinner has setters for
-                // the first two (not shown in React's stories) and no way to set its field's id
+                // ValueSpinner's maximum step and delta setters aren't shown by these stories
                 .argType(ArgType.number(VALUE).description("The value (GWT setValue(...))."))
                 .argType(ArgType.number(MIN).description("The minimum value (GWT setMin(...)).").defaultSummary("0"))
                 .argType(ArgType.number(MAX).description("The maximum value (GWT setMax(...)).")
@@ -107,8 +106,7 @@ public final class ValueSpinnerStories {
                     final Query input = spinnerInput(play);
                     play.clear(input);
                     play.type(input, "1.5");
-                    // Differs from React: the field is a text input, so of course it holds "1.5"; in
-                    // React this proves that the number input accepts it before it is rejected.
+                    // The field is a text input, so it holds "1.5" until it is rejected on blur
                     play.expect(input).toHaveValue("1.5");
                     play.tab();
                     play.expect(input).toHaveValue(String.valueOf(CONTRACT_INITIAL));
@@ -141,7 +139,7 @@ public final class ValueSpinnerStories {
                     play.tab();
                     play.expect(input).toHaveValue("42");
                     play.expect(play.spy(ON_CHANGE)).toHaveBeenCalledWith(42);
-                    // Not "42" - the emitted value is a number (React checks typeof is 'number')
+                    // Not "42" - the emitted value is a number
                     final Value<List<Object>> lastCall = play.spy(ON_CHANGE).lastCall();
                     play.expect("the emitted value", () -> lastCall.get().get(0))
                             .toSatisfy("is a Long", value -> value instanceof Long);
@@ -193,7 +191,7 @@ public final class ValueSpinnerStories {
         return spinner;
     }
 
-    /// React's `ContractHarness`: a spinner from 0 to 100, starting at 10, recording every change.
+    /// A spinner from 0 to 100, starting at 10, recording every change.
     private static Widget contractHarness(final StoryContext context) {
         return contractHarness(context, CONTRACT_INITIAL);
     }
@@ -218,7 +216,7 @@ public final class ValueSpinnerStories {
 
     /// The spinner's field.
     private static Query spinnerInput(final Play play) {
-        // Differs from React: a text box, not a spinbutton (see the class comment)
+        // A text box, not a spinbutton (see the class comment)
         return play.getByRole("textbox");
     }
 }

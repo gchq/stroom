@@ -1,18 +1,16 @@
-# Stroom GWT Workbench test runner and React story coverage
+# Stroom GWT Workbench test runner
 
-The workbench's equivalent of the React project's `npm run test:storybook` (Storybook's
-`test-storybook`), plus the tools that track the porting of the React Storybook's stories
-(`stroom-ui-react`) to the GWT workbench.
+Runs every workbench story and its play function in headless Chromium, the workbench's equivalent
+of Storybook's test-runner (`test-storybook`). A separate task reports which of Stroom's screens and
+dialogs the stories cover (see [Coverage](#coverage)). See
+[../WRITING-STORIES.md](../WRITING-STORIES.md) for writing stories.
 
 | What                                   | Command (from the repository root)                                            |
 |----------------------------------------|-------------------------------------------------------------------------------|
 | Run every story and play function      | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest`                    |
 | Run against a running workbench        | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchUrl=http://localhost:6008` |
-| Coverage of the React stories, by group | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchCoverage`               |
-| List the stories still to port         | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchCoverage -PworkbenchCoverageList=Widgets/Buttons` |
-| Check the ported story ids             | `./gradlew :stroom-gwt:stroom-gwt-workbench:test` (`TestReactStoryCoverage`)  |
-| Regenerate the React story manifest    | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchReactManifest`           |
-| Check the React story manifest is current | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchReactManifestCheck`   |
+| Run a title's stories                  | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchTestFilter=Widgets/Buttons/Button` |
+| Stroom's screens and dialogs no story covers | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchPresenterCoverage` |
 
 None of these are part of `build`/`check`, so normal builds don't need Node, npm or Playwright.
 The test runner needs Node.js 20+ (with npm). `workbenchTest` fails if npm isn't available, so
@@ -190,62 +188,16 @@ These work whether the preview is opened on its own or in the manager's canvas, 
 used from any Playwright test, e.g.
 `await page.waitForSelector('html[data-play-status=COMPLETED]')`.
 
-## Porting a React story
+## Adding a story
 
-The goal is a GWT story for each of the React Storybook's stories (831 at the time of writing, 595
-of which have play functions), with the **same id**, so that the two can be compared at the same
-URL and the play functions ported step by step.
-
-1. Find the story in the React project, e.g. `src/widgets/Button/Button.stories.tsx`. Its id is
-   derived from the `title` of the file's `meta` and the story's **export name**, exactly as
-   Storybook does: `Widgets/Buttons/Button` + `WithIcons` = `widgets-buttons-button--with-icons`.
-   A story's `name:` changes only its display name, not its id.
-2. Write (or add to) the GWT stories class for the component, in the package for its group:
-   `stroom.gwt.workbench.client.widgets.<group>` (`Widgets/<Group>/*`, e.g. `widgets.buttons`),
-   `...client.app` (`App/*`) or
-   `...client.screens` (`Screens/*`). See `widgets/buttons/ButtonStories.java`:
-   ```java
-   public static void addTo(final StoryRegistry registry) {
-       registry.component("Widgets/Buttons/Button", ButtonStories.class)    // the React title
-               .story("WithIcons", context -> ...)                          // the React export name
-               .story("DialogClose", "Dialog — Close button", context -> ...) // if it has a name:
-               .withPlay(play -> { ... });                                  // if it has a play:
-   }
-   ```
-3. Register the class in the group's registrar - `WidgetsStories`, `AppStories` or
-   `ScreensStories` in `stroom.gwt.workbench.client` - on the line after the comment holding its
-   React title:
-   ```java
-   // Widgets/Buttons/Button
-   ButtonStories.addTo(registry);
-   ```
-   Every React component has its own comment line, in the React sidebar's order, so people porting
-   different components edit different lines and rarely conflict. Don't register stories in
-   `AllStories`, which only calls the registrars.
-4. Run `./gradlew :stroom-gwt:stroom-gwt-workbench:test`. `TestReactStoryCoverage` fails if a
-   workbench story's id isn't in the React manifest (a wrong title or export name), and logs
-   warnings for e.g. a display name that differs from the React one.
-5. Run the story's tests with
-   `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchTestFilter=Widgets/Buttons/Button`.
-
-### Stories that won't be ported
-
-Stories are counted as **ported** simply by being registered. A React story that doesn't make
-sense in GWT, or can't be ported yet, is recorded in
-`src/test/resources/react-story-status.json`, keyed by story id or by title (a title covers every
-story under it, e.g. `App/AI`), with a reason:
-
-```json
-{
-  "stories": {
-    "widgets-buttons-button--loading": { "status": "n/a", "reason": "GWT Button has no loading state" },
-    "App/AI": { "status": "blocked", "reason": "Needs the AI REST resources faked" }
-  }
-}
-```
-
-`TestReactStoryCoverage` fails if a key matches no React story, a status isn't `n/a` or `blocked`
-or a reason is missing.
+A story's id comes from its title and export name, as Storybook makes them:
+`Widgets/Buttons/Button` + `WithIcons` = `widgets-buttons-button--with-icons` (a display name given
+with `.story(exportName, name, ...)` changes only the name shown, not the id). Write the stories
+class, register it in its group's registrar (`WidgetsStories`, `AppStories` or `ScreensStories`) on
+the line after the comment holding its title (for a new title, add a comment with the title next to
+the related ones), and run its tests with
+`./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchTestFilter=<title>`. See
+[../WRITING-STORIES.md](../WRITING-STORIES.md).
 
 ## Screenshots
 
@@ -275,7 +227,7 @@ preview always waits for Stroom's fonts to load before it renders a story, as St
 measure text as they render.
 
 `workbenchScreenshotDiff` compares each story's screenshot with its baseline using ImageMagick's
-`compare -metric AE` (as the React port's `compare/pixel-diff.mjs` does), so ImageMagick must be
+`compare -metric AE`, so ImageMagick must be
 installed. It counts the differing pixels twice: `raw` (any difference, including sub-level
 anti-aliasing, which ImageMagick 7 counts as fractions of a pixel) and `visible` (differences
 over the fuzz, 1%). A story has changed if it has a whole visible pixel more than the allowance
@@ -313,52 +265,18 @@ classes grow, and what keeps them) against the full app.
 
 ## Coverage
 
-`./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchCoverage` prints, for each top level group
-(`App`, `Screens`, `Widgets`) and its child groups, the number of React stories, how many are
-ported, `n/a`, `blocked` and still to do, and how many of the React play functions have been
-ported. `-PworkbenchCoverageList=<id or title prefix>` also lists the remaining stories matching
-it (`-PworkbenchCoverageList=` lists them all), and ported stories still missing their play
-function. The same report is logged by `TestReactStoryCoverage`.
-
-### The React story manifest
-
-`src/test/resources/react-stories.json` lists every React story (id, title, name, export name,
-file and whether it has a play function), in the React sidebar's order. It is generated by
-`react-manifest.mjs`, which reads the first available of:
-
-1. the running React Storybook's `http://localhost:6006/index.json` (`--index-url`),
-2. the built React Storybook's `storybook-static/index.json`,
-3. the React `src/**/*.stories.tsx` files, parsed with Storybook's id rules (`lib/csf-parser.mjs`).
-
-When an index is used the files are parsed too and any differences reported, to keep the parser
-honest. The parser handles the usual CSF forms, including `export { A, B as C }` lists (and
-`export { meta as default }`), several statements on one line, and values followed by comments or
-`as const`/`satisfies ...`; exports it can't handle (e.g. `export * from '...'` or
-`export { A } from '...'`) are reported as warnings. A file the parser can't handle (e.g. one using Storybook's auto-titles, which depend on
-the Storybook configuration) is reported as a difference; without an index it stops the manifest
-being generated, as its stories would be missing. Regenerate the manifest when the React stories
-change:
-
-```bash
-node react-manifest.mjs [--react-dir ../../../../stroom-ui-react] [--source auto|url|static|parse]
-node react-manifest.mjs --check    # exit 1 if it is out of date
-```
-
-`--check` (and `workbenchReactManifestCheck`) never reads a running Storybook unless given
-`--source url`, as that may be another branch's: it checks against the built index
-(`storybook-static/index.json`), or the parsed files if there isn't one.
-
-The React checkout defaults to `stroom-ui-react` next to this repository (or
-`$STROOM_UI_REACT_DIR`). The group registrars' title comments come from the manifest; add a comment
-for a new React component in its sidebar position when it is ported.
+`./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchPresenterCoverage` reports which of Stroom's
+screens (content tabs, e.g. document editors) and dialogs the stories cover, by a static analysis
+of the source (`PresenterCoverage`): a screen or dialog is **covered** if a story's source names it
+or `src/test/resources/presenter-coverage-evidence.json` names a story whose play opens it,
+**reached** if only a covered presenter or plugin names it, and otherwise **not covered**.
 
 ## Files
 
 * `run.mjs` - the test runner.
-* `react-manifest.mjs` - generates the React story manifest.
 * `screenshot-diff.mjs` - compares a run's screenshots with the baseline (see
   [Screenshots](#screenshots)); `lib/screenshot-diff.mjs` does the comparison.
-* `lib/` - Storybook's id rules, the `*.stories.tsx` parser, story selection, deciding a story's
+* `lib/` - story selection, deciding a story's
   outcome (and retrying it), the shared browser (relaunched if it stops), screenshot file names,
   deadlines, the leak check and the JUnit XML writer, with tests (`node --test lib/`). `lib/run.test.mjs` tests
   `run.mjs` itself against a fake workbench whose stories misbehave (endless loops, reloads,

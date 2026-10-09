@@ -32,13 +32,13 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/DataVolumesScreen` in the React Storybook, showing Stroom's real
-/// [FsVolumeGroupPresenter] (the 'Data Volumes' tab, its 'Edit Volume Group' dialog and 'Add
-/// Volume' dialog) with fake REST replies.
+/// Stories of `App/Main/DataVolumesScreen`, showing Stroom's real [FsVolumeGroupPresenter] (the
+/// 'Data Volumes' tab, its 'Edit Volume Group' dialog and 'Add Volume' dialog) with fake REST
+/// replies.
 ///
-/// The React story's `FsVolumeApi` becomes routes for Stroom's `FsVolumeGroupResource`
-/// (`/fsVolume/volumeGroup/v2`: `findExtended`, `fetch`) and `FsVolumeResource` (`/fsVolume/v1`:
-/// `find`, `validate`, `create`). Its recorder becomes a check on the request spy.
+/// The stories answer Stroom's `FsVolumeGroupResource` (`/fsVolume/volumeGroup/v2`: `findExtended`,
+/// `fetch`) and `FsVolumeResource` (`/fsVolume/v1`: `find`, `validate`, `create`), and the requests
+/// made are checked on the request spy.
 public final class DataVolumesScreenStories {
 
     private static final String GROUP = "{\"id\": 1, \"name\": \"Default\"}";
@@ -90,7 +90,7 @@ public final class DataVolumesScreenStories {
                     final Play volumeDialog = screen.within(screen.findByText("Add Volume").closest(StroomDom.DIALOG));
                     play.type(volumeDialog.getByLabelText("Path"), "/data2");
                     play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: GWT's volume holds its group, not a group id
+                    // GWT's volume holds its group, not a group id
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/fsVolume/v1")
                                     .withJsonBodyContaining("{\"path\": \"/data2\", \"volumeGroup\": {\"id\": 1}}")

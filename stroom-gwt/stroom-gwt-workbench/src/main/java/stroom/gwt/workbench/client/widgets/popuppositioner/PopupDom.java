@@ -23,17 +23,17 @@ import com.google.gwt.dom.client.Element;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Reads the page as the React popup contract's helpers do (`panelOf`, `openPopupCount`,
-/// `getBoundingClientRect`, `getComputedStyle`), for the plays' value suppliers. The popups are
-/// on the page's body, so every selector is resolved against the whole document.
+/// Reads the page for the popup contract plays' value suppliers (whether a popup is open, how many
+/// are, and their rects and styles). The popups are on the page's body, so every selector is
+/// resolved against the whole document.
 final class PopupDom {
 
     private PopupDom() {
         // Static utility
     }
 
-    /// React's `panelOf(c) !== null`: is there an element matching the selector that isn't
-    /// `display: none` or `visibility: hidden`?
+    /// Is there an element matching the selector that isn't `display: none` or
+    /// `visibility: hidden`?
     ///
     /// @param selector A CSS selector.
     /// @return True if a matching element is shown.
@@ -153,7 +153,7 @@ final class PopupDom {
         return $doc.querySelector(selector);
     }-*/;
 
-    /// React's `overlaps(a, b)`: do two rects overlap by more than a rounding error?
+    /// Do two rects overlap by more than a rounding error?
     ///
     /// @param a A rect from [#rect(String)].
     /// @param b Another.
@@ -163,7 +163,7 @@ final class PopupDom {
         return a[0] < b[2] - eps && a[2] > b[0] + eps && a[1] < b[3] - eps && a[3] > b[1] + eps;
     }
 
-    /// React's `NoShieldBehindAnyPopup` search: the shown, hittable, fixed or absolute elements
+    /// The `NoShieldBehindAnyPopup` search: the shown, hittable, fixed or absolute elements
     /// covering 95% of the viewport that are neither the panel, in it, nor around it.
     ///
     /// @param panelSelector The open panel's selector.
@@ -198,9 +198,9 @@ final class PopupDom {
         return result;
     }-*/;
 
-    /// React's `MenuPaintsExactlyOneBorder` walk: the menu's chrome wrappers that paint a top
-    /// border, starting at the element matching the selector and descending only into children
-    /// whose class names look like chrome (`simplePopup`, `popupContent`, `background`, `content`).
+    /// The `MenuPaintsExactlyOneBorder` walk: the menu's chrome wrappers that paint a top border,
+    /// starting at the element matching the selector and descending only into children whose class
+    /// names look like chrome (`simplePopup`, `popupContent`, `background`, `content`).
     ///
     /// @param selector The menu popup's selector.
     /// @return `className (width colour)` for each element painting a border.

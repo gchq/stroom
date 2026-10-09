@@ -47,7 +47,7 @@ public final class DocumentEditors {
     /// The path of `ExplorerResource.decorate()`.
     public static final String DECORATE_PATH = "/explorer/v2/decorate";
 
-    // React's docPermissionFixture: the admin user owns the document
+    // The admin user owns the document
     private static final String OWNER_PERMISSIONS = """
             {
               "values": [
@@ -61,8 +61,7 @@ public final class DocumentEditors {
         // Static utility
     }
 
-    /// Adds the routes of an editor's Permissions tab, as React's `docPermissionFixture` (the
-    /// `admin` user owns the document).
+    /// Adds the routes of an editor's Permissions tab, in which the `admin` user owns the document.
     ///
     /// @param builder The story's fixtures.
     /// @return The builder.
@@ -135,7 +134,7 @@ public final class DocumentEditors {
     }
 
     /// Finds a sub-tab of a document editor by its label.
-    /// Differs from React: Stroom's link tabs have no `role="tab"`, so they're found by their label.
+    /// Stroom's link tabs have no `role="tab"`, so they're found by their label.
     ///
     /// @param play  The play (or a part of it).
     /// @param label The tab's label, e.g. `Settings`.

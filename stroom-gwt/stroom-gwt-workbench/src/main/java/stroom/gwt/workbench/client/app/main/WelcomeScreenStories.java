@@ -29,14 +29,14 @@ import stroom.welcome.client.view.WelcomeViewImpl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/WelcomeScreen` in the React Storybook, showing Stroom's real
-/// [WelcomePresenter] (the start-up Welcome tab) with fake REST replies.
+/// Stories of `App/Main/WelcomeScreen`, showing Stroom's real [WelcomePresenter] (the start-up
+/// Welcome tab) with fake REST replies.
 ///
 /// The screen only makes Stroom's start-up requests (the session info and the UI config's
-/// `welcomeHtml`), so the story has no fixtures of its own: the harness's start-up fixtures
-/// answer them, and their defaults (the `admin` user, build `SNAPSHOT`, node `node1a`, the usual
-/// "About Stroom" HTML) are the same as React's `appApiFixture` and `fetchWelcomeHtml`. The
-/// presenter's UI config cache and date formatter come from the harness's injector.
+/// `welcomeHtml`), so the story has no fixtures of its own: the harness's start-up fixtures answer
+/// them with their defaults (the `admin` user, build `SNAPSHOT`, node `node1a`, the usual "About
+/// Stroom" HTML). The presenter's UI config cache and date formatter come from the harness's
+/// injector.
 public final class WelcomeScreenStories {
 
     private WelcomeScreenStories() {

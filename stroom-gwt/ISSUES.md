@@ -4,12 +4,10 @@ Bugs found while reviewing the help text of every form field (FormGroup) in Stro
 review read each field's view, presenter, stored model and server-side use, so most of these come
 from reading the code.
 
-Also merged in: the bugs found by the GWT behaviour suite, which drives a running Stroom through its
-UI. It began in `stroom-ui-react` and now runs from `stroom-gwt-suite`. Their entries end in
-**(gwt-bugs #N)**. Up to #47, that is the number they have in `stroom-ui-react/porting/gwt-bugs.md`,
-which keeps the full evidence (measurements, probe output and how each was found); they were seen at
-`783d672e40` and checked again against this branch's code on 2026-10-08. From #48, they are
-numbered here. The file and line references are this branch's. [Checking a fix](#checking-a-fix)
+Also merged in: the bugs found by the GWT behaviour suite (`stroom-gwt-suite`), which drives a
+running Stroom through its UI. Their entries end in **(gwt-bugs #N)**, a number kept so that each
+bug can be referred to; #1 to #47 were seen at `783d672e40` and checked again against this branch's
+code on 2026-10-08. The file and line references are this branch's. [Checking a fix](#checking-a-fix)
 says how to reproduce each one.
 
 Each entry says how sure we are:
@@ -109,6 +107,9 @@ isn't clear whether a typed 0 is clamped when saved.
 * Elastic and Lucene dense vector Minimum rerank score: invalid text becomes 0.8.
 * Plan B Max Store Size: an invalid entry becomes 10 GiB.
 * Plan B Max Spans Per Trace: an invalid entry becomes 100,000.
+* Date boxes (`MyDateBox`): text that can't be parsed is saved as no date, as `getMilliseconds()`
+  (line 107) returns what `ClientDateUtil.fromISOString` gives, `null` for such text; nothing marks
+  the box as wrong (`CustomDateBox`'s `dateBoxFormatError` style is never used by Stroom's views).
 
 ### Thread count spinners wrap round
 
@@ -280,6 +281,49 @@ instead of letting the constraint throw. The edit dialog should show a sentence,
 * `stroom-annotation/stroom-annotation-impl/src/main/java/stroom/annotation/impl/dao/AnnotationTagDaoImpl.java`
   (line 162)
 
+### A search polls forever if handling its results fails
+
+**Confirmed.** Found while writing the workbench's dashboard stories. Both search loops
+(`QueryModel.poll` for StroomQL queries, `SearchModel.poll` for dashboards) call `update(response)`
+in a `try` whose `catch` only does `GWT.log(...)`, then poll again while `polling` is true. It is
+`update` that sets `polling = false` once the response is complete, so if anything in it throws
+(e.g. a result component's `setData`), the search is never seen to finish: the client keeps
+requesting the completed search, the spinner keeps going and the Query button stays at Stop, with
+no error shown. Two causes of this have been fixed (a search whose `update` threw, and
+`QueryPresenter.getCurrentErrors` throwing for a Query that hadn't searched), but any other
+exception would still do it.
+
+Fix: on an exception from `update`, stop polling, end the search (`endSearch`, `setSearching(false)`)
+and show the error through `setErrors`, as the `onFailure` handler does.
+
+* `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryModel.java` (lines 332-340)
+* `stroom-core-client/src/main/java/stroom/dashboard/client/main/SearchModel.java` (lines 355-363)
+
+### The Pathways editor can't create a pathway or add a constraint
+
+**Confirmed.** Found by the workbench's Pathways stories. Pathways is experimental (see
+[Checked and not bugs](#checked-and-not-bugs) for the gaps that are expected), but these stop its
+basic use:
+
+* New Pathway throws (`TypeError` reading `getUuid`) and the dialog never opens:
+  `PathwayTreePresenter.read` calls `addNode(pathway.getRoot())` for a new pathway, whose root is
+  `null`. Fix: only add and draw nodes when `pathway.getRoot() != null`. The workbench has no
+  New Pathway story until this is fixed (`PathwaysEditorStories`).
+* A node with no constraints can never get one: `ConstraintListPresenter` starts with
+  `readOnly = true`, and `setData` (line 283) updates it but never calls `enableButtons()`, so New,
+  Edit and Remove stay disabled ("New constraint disabled as read only") until a constraint is
+  selected, which only then enables them (the selection handler, lines 121-123).
+* A read-only pathways document can still be edited: `PathwaysSettingsViewImpl.onReadOnly` only
+  disables the ordering tolerance, leaving Processing Node and the Allow tick boxes enabled (edits
+  can't make the document dirty, so they are silently lost).
+
+* `stroom-core-client/src/main/java/stroom/pathways/client/presenter/PathwayTreePresenter.java`
+  (line 179)
+* `stroom-core-client/src/main/java/stroom/pathways/client/presenter/ConstraintListPresenter.java`
+  (line 283)
+* `stroom-core-client/src/main/java/stroom/pathways/client/view/PathwaysSettingsViewImpl.java`
+  (`onReadOnly`, line 138)
+
 ## Controls that stay enabled but do nothing
 
 **Reported.**
@@ -380,7 +424,7 @@ and try again.", keeping the class name and URL in the details, where they alrea
 
 ### Closed screens are never released
 
-**Reproduced.** (gwt-bugs #47) Found by the full-app GWT suite (then `stroom-ui-react/gwt-suite`), whose
+**Reproduced.** (gwt-bugs #47) Found by the full-app GWT suite (`stroom-gwt-suite`), whose
 browser reached 5.1 GB and was killed for running out of memory. Almost every document, screen
 and dialog that is made per use stays in memory, with its detached DOM, after it is closed, until
 the page is reloaded.
@@ -658,6 +702,44 @@ best done in `ShowMenuEvent` with a named opener rather than one place at a time
   (`NodeViewImpl`).
 * Time Zone Offset: the hours and minutes spinners share one label (`TimeZoneWidget.ui.xml`, and the
   time preferences); the minutes spinner is also hidden by a FIXME.
+* The explorer's Stroom logo (`navigation-logo`, a `Button` holding an SVG) has no name and is a tab
+  stop (`NavigationViewImpl`).
+* Ask Stroom AI: the Send/Cancel button is an `InlineSvgButton` given its name with `setText`, which
+  doesn't show, so it has no name; the message box has only a placeholder ("How can I help?")
+  (`AskStroomAiViewImpl`).
+* Quick filters have only a "Quick Filter" placeholder, no label, e.g. the Find dialog's,
+  Dependencies, User Access and Export (`QuickFilter`).
+* Find In Content's pattern box has no label (`FindInContentViewImpl.ui.xml`).
+* A content tab's close cross (`.curveTab-close`, a `div`) has no name and isn't a button
+  (`CurveTab`).
+* The grid's group expander has no name or title (`ExpanderCell`).
+* Every row's action button on the Dependencies screen is named "Actions...", not for its row.
+* Properties: the Database Value text area and password box have no names of their own. When the
+  group loads both are shown, so the label names the panel holding them (`role="group"`), and the
+  group sets no `controlNames` for them (`GlobalPropertyEditViewImpl.ui.xml`).
+* Iframes have no title: the Documentation editor's markdown preview (`#markdown-frame`,
+  `MarkdownEditPresenter`) and dashboard visualisations (`VisFrame`).
+* The Create permissions grid's tick boxes are named by their state ("Ticked", "Not Ticked"), not by
+  their row (e.g. "Create Pipeline").
+
+### Missing roles and states
+
+**Confirmed** (checked in the code; found by the workbench's plays).
+
+* Grids (`MyDataGrid`): the table has no `grid` role; selected rows have only the
+  `dataGridSelectedRow` class, no `aria-selected`; sortable headers get `role="button"` from GWT's
+  `AbstractCellTable`, so they aren't column headers to assistive technology (other headers are
+  `<th>`s, so they are); the sorted column has no `aria-sort`.
+* Dialogs have no `role="dialog"`, `aria-modal` or `aria-labelledby` (`Dialog`).
+* Tabs: neither the content tabs (`CurveTabBar`) nor link tabs (`LinkTabPanelView`, e.g. document
+  sub-tabs and dashboard component tabs) have `tablist`/`tab` roles or `aria-selected`.
+* `ValueSpinner`: the field is a plain text box (no `spinbutton` role, `aria-valuemin`/`-max` or
+  `-now`), and its arrows are `div`s with no role or name that step on mousedown.
+* The sign-in page (`LoginViewImpl`) has no `<h1>`, no `main` landmark, no `aria-live` region for
+  its messages and no `autocomplete` hints on its fields.
+* The password strength meter has no `meter` role or `aria-valuenow`, and the policy message no role
+  (`ChangePasswordViewImpl`).
+* The maintenance banner has no `role="alert"`, so it isn't announced (`MainViewImpl.setBanner`).
 
 ### Dialogs larger than the window
 
@@ -701,6 +783,19 @@ editors. Dialogs aren't limited to the window's size, and long forms rely on scr
   the presenter overwrites it.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
   has no effect: `ParserFactoryPoolImpl` always builds a Data Splitter for None.
+* `MySplitLayoutPanel` doesn't give its dragger's container the `gwt-SplitLayoutPanel-Dragger-Outer`
+  class (only `ThinSplitLayoutPanel` adds its own), so the 7px dragger isn't painted in
+  `--splitter__background-color` and the background shows through.
+* `ActionMenuCell` shows its "Actions..." icon on every row, even one with no actions, where pressing
+  it does nothing.
+* The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
+  found when it opens, only when the filter changes, so OK straight away warns "No annotation has
+  been selected" (`FindAnnotationListPresenter`).
+* A new or duplicated dashboard component follows the mouse until it is dropped; Escape doesn't
+  cancel it (`FlexLayout.enterNewComponentDestinationMode`).
+* Rejecting the splash screen's terms warns "You must accept the terms to use this system" and then
+  leaves a blank page: the app is never shown and only a reload offers the terms again
+  (`SplashPresenter`, `CurrentUser.showSplash`).
 
 ## Fixed
 
@@ -867,8 +962,7 @@ These were found by the review and fixed in the same change:
   as showing it only cleared the inline style; it now starts hidden in its markup instead
   (`app-ai-askstroomaidialog--with-context`).
 
-Found by the GWT behaviour suite and the React port, and already fixed (in this branch). The
-evidence is in `stroom-ui-react/porting/gwt-bugs.md` under the same number:
+Found by the GWT behaviour suite, and already fixed (in this branch):
 
 * #1, #1b: the OpenAPI spec's discriminators had no mappings, and three subtypes didn't compose.
 * #3: a column format's Use Preferences was saved but never read back.
@@ -927,9 +1021,78 @@ evidence is in `stroom-ui-react/porting/gwt-bugs.md` under the same number:
   location link is disabled too, and `SteppingPresenter.beginStepping` enables both once a stream is
   chosen (`TestStepControlPresenter`, `TestStepLocationLinkPresenter`).
 
+Found while writing the workbench's stories, and fixed. Each story named is its regression test
+(`stroom-gwt-workbench`):
+
+* Quick filter terms built from names with spaces weren't quoted
+  (`UserAndGroupHelper.buildDisplayNameFilterInput`, now `QuickFilterExpressionParser.quote`):
+  `UsersScreen` `FocusedOpen`.
+* `UiConfigCache.get` called its consumer with null at once: `UsersScreen` (most of its stories
+  deliberately open the screen before start-up has loaded the config).
+* The Server Tasks screen's Open Feed made a doc ref with a null UUID; it now looks the feed up by
+  name: `ServerTasksScreen` `InfoActions`.
+* Confirmations that ignored `ok`, so Cancel still ran the job or terminated the task
+  (`JobNodeListHelper.executeJobNow`, `UserTaskManagerPresenter.onTerminate`): `JobsScreen`
+  `JobSchedule`, `UserTaskManagerDialog` `Tasks`.
+* A cancelled delete never called its `ResultCallback` (`DocumentPluginEventManager`):
+  `DeleteConfirmation` `CancelIsReported`.
+* The credential picker returned the credential's UUID as its name
+  (`CredentialsManagerViewImpl.getCredentialName`): `CredentialPickerDialog` `Pick`.
+* A user's dependencies always had a blank Document Name (`UserDependenciesListPresenter`):
+  `UserTabScreen` `DependenciesTab`.
+* Java's `XXX` offset was shown as the Unix time (`DateTimeFormatter.convertJavaDateTimePattern`):
+  `FormatDateTime` `Default`.
+* A batch schedule confirmation was missing its closing quote (`JobNodeListHelper.setSchedule`):
+  `JobsScreen` `BatchSchedule`.
+* A document tab kept its old label after a rename or Save As (`DocTabPresenter.onRead`): `AppShell`
+  `RenameDocument`, `SaveAsDocument`.
+* The time dialog's minute and second spinners couldn't be hidden (`TimeViewImpl`): `TimePicker`
+  `HourMinute`.
+* A disabled date-time or time box's icon still opened its dialog (`DateTimeBox`, `TimeBox`):
+  `DateTimePicker` `Disabled`.
+* An open button was shown for a broken (empty UUID) doc ref (`DocRefCell`): `DocRefCell` `Basic`.
+* A dashboard text's stepping button showed before a row was selected (`TextPresenter.showData`):
+  `DashboardComponent` `TextSteppingButton`.
+* A new notification had no destination type (`AbstractNotificationListPresenter.add`, now Stream):
+  `AnalyticRuleEditor` `AddNotification`, `ReportEditor` `NotificationsNoIncludeDoc`.
+* An account's long lock or activity line pushed its button out of the dialog
+  (`EditAccountViewImpl`): `EditAccountDialog` `LockedUntilState`.
+* A user tab was captioned `User: {null}`, and `setUserRef(null)` threw (`UserTabPresenter`,
+  `UserInfoViewImpl`): `AppPermissions` `UserProfileTabCaption`.
+* A chat's first message left the chat without Download or Delete All, and messages sent in the
+  session had no Delete button (`AskStroomAiPresenter`): `AskStroomAiDialog` `DownloadChat`,
+  `AskAiChatPanel` `DeleteMessageConfirm`.
+* A malformed schema was shown as the partial schema the browser recovers, and the parse error never
+  shown (`XSDModel`): `XsdBrowser` `ParseError`.
+* An Embedded Query's static selection filter wasn't sent with its first search
+  (`EmbeddedQueryPresenter`): `DashboardSearch` `EmbeddedQuerySelectionFilter`.
+* A copied query's selection handlers had no data source (`EmbeddedQuerySettingsPresenter`):
+  `DashboardComponent` `EmbeddedQuerySettingsFields`.
+* A data preview's highlight was never shown, and a ranged preview showed its item navigator again
+  when the data arrived (`DataPresenter.refreshHighlights`, `setNavigationControlsVisible`):
+  `SourceViewer` `HighlightedRange`.
+* The data upload sent the browser's `C:\fakepath\<name>` as the file name (`DataUploadPresenter`):
+  `DataUploadDialog` `Upload`.
+* Popups and menus (`PopupContract`, `InfoPopoverCell` and `SelectionBox` stories): help popups and
+  an `InfoColumn`'s popover reopened on a second click instead of closing; `QuickFilter` needed two
+  clicks to reopen its help; help popups ignored Escape; Escape closed only the innermost menu; a
+  click on the parent row of an open submenu didn't close it; a `SelectionBox`'s list ignored Escape
+  unless it had the focus, and let the key through to the window.
+* Null checks for data the server always sends, so that a missing member doesn't throw: a processor
+  filter tracker's status (`ProcessorStatusUtil`), a schedule's bounds
+  (`BatchExecutionScheduleEditViewImpl`), a meta row's attributes (`MetaRow.getAttributeValue`), a
+  selection summary's age range (`SelectionSummaryPresenter`), a layout's preferred size
+  (`MutableConfigUtil`, which `FlexLayout` needs: `DashboardLayout` `SplitterKeepsThirdPanel`), and
+  an Embedded Query's `automate` and `queryTablePreferences` (`EmbeddedQueryPresenter`).
+* A dashboard search whose `update` threw polled forever, and `QueryPresenter.getCurrentErrors` threw
+  for a Query that hadn't searched (the dashboard selection stories check every search completes;
+  see also [A search polls forever](#a-search-polls-forever-if-handling-its-results-fails)).
+* `MySingleSelectionModel` counted two quick list refreshes as a double select, which closed the
+  Query Favourites dialog: `DashboardComponent` `QueryHistoryAndFavourites`.
+
 ## Checked and not bugs
 
-From `gwt-bugs.md`, kept so they aren't reported again:
+Reported by the suite and found not to be bugs, kept so they aren't reported again:
 
 * #2, #22, #23: Pathways range constraints can't round-trip through their editor; the constraints
   list heads two columns "Type"; `AnyBoolean` prints as a Java object. Pathways is experimental and

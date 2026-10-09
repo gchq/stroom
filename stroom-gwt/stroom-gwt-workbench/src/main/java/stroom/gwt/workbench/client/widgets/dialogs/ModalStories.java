@@ -35,14 +35,13 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's modal OK/Cancel dialog, matching `Widgets/Dialogs/Modal` in the React
-/// Storybook.
+/// Stories for Stroom's modal OK/Cancel dialog.
 ///
-/// The React `Modal` is the port of a presenter shown with `ShowPopupEvent` as a modal
-/// `OK_CANCEL_DIALOG`, with `onHideRequest` telling OK from Cancel, as these stories do.
+/// Each story shows a presenter with `ShowPopupEvent` as a modal `OK_CANCEL_DIALOG`, with
+/// `onHideRequest` telling OK from Cancel.
 public final class ModalStories {
 
-    // The React Modal's callback props
+    // Spy names
     private static final String ON_OK = "onOk";
     private static final String ON_CANCEL = "onCancel";
     private static final String FAIL = "Fail the request";
@@ -76,8 +75,8 @@ public final class ModalStories {
                     final Spy[] spies = spies(context);
                     final FlowPanel panel = new FlowPanel();
                     panel.add(DialogWidgets.button("Open editor", DialogWidgets.PRIMARY, event -> {
-                        // Differs from React: Stroom's OK_CANCEL_DIALOG has no label option, so the
-                        // OK button says OK, not Save.
+                        // Stroom's OK_CANCEL_DIALOG has no label option, so the OK button says OK, not the
+                        // "Save" the text describes.
                         final ContentPresenter presenter = show(spies, popups, "Editor", null,
                                 "A modal with a \"Save\" OK button and a dynamic title override.",
                                 ok -> {
@@ -114,7 +113,7 @@ public final class ModalStories {
                 });
     }
 
-    /// The React Modal's `onOk` and `onCancel`, registered as the story renders.
+    /// The `onOk` and `onCancel` spies, registered as the story renders.
     private static Spy[] spies(final StoryContext context) {
         return new Spy[]{context.fn(ON_OK), context.fn(ON_CANCEL)};
     }

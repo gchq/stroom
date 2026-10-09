@@ -28,15 +28,14 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [ClassificationLabel], matching `Widgets/Display/ClassificationLabel` in
-/// the React Storybook.
+/// Stories for Stroom's [ClassificationLabel].
 ///
-/// Stroom's label reads the label colours from the theme's `labelColours` in the UI config (the
-/// React port takes them as its `labelColoursCsv` prop), so each story serves them in the UI
-/// config fixture of a [ScreenHarness], and creates the label once the config has been fetched.
+/// Stroom's label reads the label colours from the theme's `labelColours` in the UI config, so each
+/// story serves them in the UI config fixture of a [ScreenHarness], and creates the label once the
+/// config has been fetched.
 public final class ClassificationLabelStories {
 
-    // Arg names, the same as the React ClassificationLabel's props
+    // Arg names
     private static final String TEXT = "text";
     private static final String LABEL_COLOURS_CSV = "labelColoursCsv";
 

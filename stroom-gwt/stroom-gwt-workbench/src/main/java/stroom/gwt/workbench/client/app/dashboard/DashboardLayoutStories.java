@@ -39,14 +39,13 @@ import java.util.List;
 /// `DashboardPlays.drag`.
 public final class DashboardLayoutStories {
 
-    // React's DASHBOARD_DOC with no design mode flag (a dashboard saved before it existed)
+    // A dashboard with no design mode flag (a dashboard saved before it existed)
     private static final String DESIGN_MODE_ABSENT = DashboardDocs.DASHBOARD_DOC.replace(
             "\"designMode\": false, ", "");
 
-    // React's root(row) = [groupA[a1, a2], inner(col)[groupB[b1], groupC[c1]]].
-    // Differs from React: the root is a column (inner below groupA): GWT finds a drop target on the
-    // outer splits first, and with a row root the inner split's top edge would be the root's top
-    // edge too, so the drop would dock onto the root
+    // The root is a column: [groupA[a1, a2], inner(col)[groupB[b1], groupC[c1]]], with inner below
+    // groupA. Stroom finds a drop target on the outer splits first, and with a row root the inner
+    // split's top edge would be the root's top edge too, so the drop would dock onto the root
     private static final String INNER_SPLIT_DASHBOARD = DashboardDocs.doc("dash-inner", "Inner Split", null,
             "\"designMode\": false",
             DashboardDocs.split(1,
@@ -79,7 +78,7 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Params")).toBeInTheDocument());
                     play.expect(DashboardPlays.tab(play, "The Query")).toBeInTheDocument();
-                    // Differs from React: the input has no id; it is the Key/Value Input's text box
+                    // The input has no id; it is the Key/Value Input's text box
                     final Query input = play.querySelector(".KeyValueInputView input");
                     play.expect(input).toBeInTheDocument();
                     play.expect(input).toHaveValue("user=jbloggs feed=MY_FEED");
@@ -91,12 +90,12 @@ public final class DashboardLayoutStories {
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     for (final String tab : List.of("Dashboard", "Documentation", "Permissions")) {
-                        // Differs from React: Stroom's link tabs have no role="tab"
+                        // Stroom's link tabs have no role="tab"
                         play.expect(play.getByText(tab, ".linkTabPanelViewImpl .linkTab-label")).toBeInTheDocument();
                     }
                     play.expect(DashboardPlays.tab(play, "My Panel")).toBeInTheDocument();
-                    // Differs from React: GWT's Embedded Query shows only its results, with no
-                    // Execute button of its own; the dashboard's toolbar runs it
+                    // An Embedded Query shows only its results, with no Execute button of its own;
+                    // the dashboard's toolbar runs it
                     play.expect(DashboardPlays.toolbarButton(play, "Execute Query")).toBeInTheDocument();
                     play.expect(play.getAllByText("All time").count()).toBeGreaterThanOrEqual(1);
                     DashboardPlays.expectNoProblems(play);
@@ -108,9 +107,8 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     play.expect(DashboardPlays.tab(play, "Left Panel")).toBeInTheDocument();
                     play.expect(DashboardPlays.tab(play, "Right Panel")).toBeInTheDocument();
-                    // Differs from React: GWT's Embedded Queries have no Execute buttons, so the play
-                    // checks that both panels show their (results) views, and that the reference
-                    // panel loaded its query
+                    // Embedded Queries have no Execute buttons, so the play checks that both panels
+                    // show their (results) views, and that the reference panel loaded its query
                     play.waitFor(() -> play.expect(play.querySelectorAll(".tabLayout-content .TableViewImpl"))
                             .toHaveLength(2));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -146,8 +144,8 @@ public final class DashboardLayoutStories {
                     play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DashboardPlays.designMode(play, true);
                     play.expect(play.getByRole("button", "Exit Design Mode")).toBeInTheDocument();
-                    // Differs from React: React checks the working document; GWT's toggle makes the
-                    // document dirty (Save is enabled), and saving it sends the flag
+                    // The toggle makes the document dirty (Save is enabled), and saving it sends the
+                    // flag
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -155,8 +153,8 @@ public final class DashboardLayoutStories {
                                     .withJsonBodyContaining("{\"dashboardConfig\": {\"designMode\": true}}")
                                     .toSpyMatcher()));
                     play.waitFor(() -> play.expect(save).toHaveAttribute("aria-disabled", "true"));
-                    // Differs from React: GWT has no compare with the saved document (any change
-                    // makes it dirty until it is saved), so toggling back is saved as well
+                    // Stroom has no compare with the saved document (any change makes it dirty until
+                    // it is saved), so toggling back is saved as well
                     DashboardPlays.designMode(play, false);
                     play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
@@ -195,24 +193,23 @@ public final class DashboardLayoutStories {
                     DashboardPlays.designMode(play, true);
                     play.click(play.findByRole("button", "Add Component"));
                     play.click(DashboardPlays.simpleMenuItem(screen, "Text"));
-                    // Differs from React: GWT shows no 'place the new component' banner; the
-                    // component follows the mouse until it is dropped onto a panel
+                    // The new component follows the mouse until it is dropped onto a panel
                     play.click(play.querySelectorAll(DashboardPlays.PANEL).nth(0));
-                    // Differs from React: the dialog's caption is 'Settings'
+                    // The dialog's caption is 'Settings'
                     final Play settings = DashboardPlays.dialog(screen, "Settings");
                     play.click(settings.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Text")).toBeInTheDocument());
                     DashboardPlays.openTabMenu(play, "Text");
                     play.click(DashboardPlays.menuItem(screen, "Rename"));
                     final Play rename = DashboardPlays.dialog(screen, "Rename Tab");
-                    // Differs from React: the name box has no id
+                    // The name box has no id
                     play.clear(rename.querySelector("input"));
                     play.type(rename.querySelector("input"), "My Text");
                     play.click(rename.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "My Text")).toBeInTheDocument());
                     DashboardPlays.openTabMenu(play, "My Text");
                     play.click(DashboardPlays.menuItem(screen, "Remove"));
-                    // Differs from React: Stroom's confirmation has no 'Confirm' caption
+                    // Stroom's confirmation has no 'Confirm' caption
                     play.click(screen.findByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.queryByText("My Text", DashboardPlays.COMPONENT_TAB))
                             .toBeNull());
@@ -224,7 +221,7 @@ public final class DashboardLayoutStories {
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     DashboardPlays.designMode(play, true);
-                    // Differs from React: a panel is a tab layout (React's split children)
+                    // A panel is a tab layout
                     play.waitFor(() -> play.expect(play.querySelectorAll(DashboardPlays.PANEL)).toHaveLength(1));
                     DashboardPlays.drag(play, DashboardPlays.tab(play, "The Table"),
                             play.querySelectorAll(DashboardPlays.PANEL).nth(0), 1, 0.5, -12, 0);
@@ -284,8 +281,8 @@ public final class DashboardLayoutStories {
                         }))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    // Differs from React: GWT's canvas is the design surface, sized in pixels both
-                    // ways (the height fits the panel), inside a horizontally scrolling panel
+                    // The canvas is the design surface, sized in pixels both ways (the height fits
+                    // the panel), inside a horizontally scrolling panel
                     final Query canvas = play.querySelector(".dashboard-designSurface");
                     play.waitFor(() -> play.expect(canvas.attribute("style")).toMatch("width: 1200px"));
                     play.expect(play.querySelector(".dashboard-scrollPanel"))
@@ -315,8 +312,7 @@ public final class DashboardLayoutStories {
                 }))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    // Differs from React: a selected link tab has the 'linkTab-selected' class (no
-                    // aria-selected)
+                    // A selected link tab has the 'linkTab-selected' class (no aria-selected)
                     play.waitFor(() -> play.expect(DashboardPlays.linkTab(play, "The Query"))
                             .toHaveClass(DashboardPlays.SELECTED_TAB));
                     play.expect(DashboardPlays.linkTab(play, "The Table"))
@@ -351,8 +347,8 @@ public final class DashboardLayoutStories {
                     DashboardPlays.designMode(play, true);
                     DashboardPlays.openTabMenu(play, "The Table");
                     play.click(DashboardPlays.menuItem(screen, "Duplicate"));
-                    // Differs from React: GWT's copy follows the mouse until it is dropped onto a
-                    // panel, as a new component does
+                    // The copy follows the mouse until it is dropped onto a panel, as a new
+                    // component does
                     play.click(play.querySelectorAll(DashboardPlays.PANEL).nth(0));
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "The Table 2")).toBeInTheDocument());
                     DashboardPlays.openTabMenu(play, "The Query");
@@ -382,9 +378,8 @@ public final class DashboardLayoutStories {
                     DashboardPlays.opened(play);
                     play.waitFor(() -> play.expect(DashboardPlays.tab(play, "Bravo")).toBeInTheDocument());
                     play.expect(play.queryByText("Alpha", DashboardPlays.COMPONENT_TAB)).toBeNull();
-                    // Differs from React: GWT's 'selected' is the index of a visible tab
-                    // (FlexLayout.layout), so 2 is out of range and the first visible tab, Bravo, is
-                    // selected
+                    // 'selected' is the index of a visible tab (FlexLayout.layout), so 2 is out of
+                    // range and the first visible tab, Bravo, is selected
                     play.expect(DashboardPlays.linkTab(play, "Bravo")).toHaveClass(DashboardPlays.SELECTED_TAB);
                     play.expect(DashboardPlays.linkTab(play, "Charlie")).not().toHaveClass(DashboardPlays.SELECTED_TAB);
                     DashboardPlays.expectNoProblems(play);
@@ -395,9 +390,8 @@ public final class DashboardLayoutStories {
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     DashboardPlays.designMode(play, true);
-                    // Differs from React: React calls the port's layout function; GWT's is FlexLayout's
-                    // drop, so the play drags A1 to the top edge of the nested (column) split and checks
-                    // the layout that is saved
+                    // The play drags A1 onto the top edge of the nested (column) split, for FlexLayout's
+                    // drop to handle, and checks the layout that is saved
                     DashboardPlays.drag(play, DashboardPlays.tab(play, "A1"),
                             DashboardPlays.tab(play, "B1").closest(DashboardPlays.PANEL), 0.5, 0, 0, 2);
                     play.waitFor(() -> play.expect(play.getByRole("button", "Save")).toBeEnabled());
@@ -421,9 +415,8 @@ public final class DashboardLayoutStories {
                     DashboardPlays.designMode(play, true);
                     play.click(play.findByRole("button", "Add Component"));
                     play.click(DashboardPlays.simpleMenuItem(screen, "Text"));
-                    // Differs from React: GWT shows no placement banner and has no Escape to cancel
-                    // the placement (the component keeps following the mouse until it is dropped); the
-                    // play checks that Escape places nothing
+                    // Escape doesn't cancel the placement (the component keeps following the mouse
+                    // until it is dropped; see ISSUES.md); the play checks that Escape places nothing
                     play.keyboard("{Escape}");
                     play.sleep(300);
                     play.expect(play.queryByText("Text", DashboardPlays.COMPONENT_TAB)).toBeNull();

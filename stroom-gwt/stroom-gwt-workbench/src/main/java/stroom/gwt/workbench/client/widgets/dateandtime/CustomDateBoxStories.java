@@ -27,8 +27,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [MyDateBox] (a text box for an ISO date-time, with a calendar popup to
-/// pick the day, used by e.g. the processor and API key dialogs), matching
-/// `Widgets/Date & Time/CustomDateBox` in the React Storybook.
+/// pick the day, used by e.g. the processor and API key dialogs).
 ///
 /// The popup opens when the box gets the focus, is clicked or on the down arrow, and closes on
 /// Enter, Tab, Escape or the up arrow. Picking a day keeps the box's time, or adds
@@ -46,7 +45,7 @@ public final class CustomDateBoxStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's value arg is only a default for its Controls; the stories render their own state
+        // No args: the stories render their own state
         registry.component("Widgets/Date & Time/CustomDateBox", CustomDateBoxStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Type an ISO date-time, or click the box to pick a day from the calendar popup
@@ -56,9 +55,8 @@ public final class CustomDateBoxStories {
                 // Not UTC: a newly picked day gets the `T00:00:00.000` (no `Z`) suffix
                 .story("LocalTime", context -> withValueLabel(context, "2024-01-15T00:00:00.000", false))
                 // A value that can't be parsed.
-                // Differs from React: MyDateBox doesn't mark a value it can't parse (React shows the
-                // `dateBoxFormatError` red background of GWT's DateBox-based CustomDateBox, which
-                // Stroom doesn't use); its popup shows today
+                // MyDateBox doesn't mark a value it can't parse (see stroom-gwt/ISSUES.md); its popup
+                // shows today
                 .story("FormatError", context -> withValueLabel(context, "not-a-date", true))
                 // Disabled: greyed out, and the popup doesn't open
                 .story("Disabled", context -> {
@@ -86,7 +84,7 @@ public final class CustomDateBoxStories {
     }
 
     private static String valueText(final String value) {
-        // React's onChange gives null for an empty box; MyDateBox gives an empty string
+        // MyDateBox gives an empty string for an empty box
         return "Value: " + (value == null || value.isEmpty()
                 ? "(empty)"
                 : value);

@@ -41,22 +41,20 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.stream.Collectors;
 
-/// Stories matching `App/Editors/PathwaysEditor` in the React Storybook, showing Stroom's real
-/// [PathwaysPresenter] (a Pathways document's tab: Pathways, Settings, Documentation and
-/// Permissions) with fake REST replies.
+/// The `App/Editors/PathwaysEditor` stories, showing Stroom's real [PathwaysPresenter] (a Pathways
+/// document's tab: Pathways, Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `PathwaysPlugin` does, the story fetches the document (`GET /pathways/v2/{uuid}`) and reads
-/// it into the editor ([DocEditors#open]). React's `PathwaysApi` seam is Stroom's
-/// `PathwaysResource`: `findPathways` → `POST /pathways/v2/findPathways`, `addPathway` →
-/// `POST /pathways/v2/addPathway`, `updatePathway` and `deletePathway` likewise; `loadNodes` → the
-/// trace store and feed selection boxes' explorer routes; `onViewTraces` → a spy on
-/// `ShowTracesEvent` (the trace store's UUID and the pruned pathway's root and target UUIDs).
+/// it into the editor ([DocEditors#open]). The pathways are Stroom's `PathwaysResource`
+/// (`POST /pathways/v2/findPathways`, `addPathway`, `updatePathway` and `deletePathway`); the trace
+/// store and feed selection boxes have their explorer routes; and a spy records `ShowTracesEvent`
+/// (the trace store's UUID and the pruned pathway's root and target UUIDs).
 public final class PathwaysEditorStories {
 
-    /// The name of the spy recording the traces asked for (React's `onViewTraces`).
+    /// The name of the spy recording the traces asked for.
     static final String ON_VIEW_TRACES = "onViewTraces";
 
-    // PathwaysResource.fetch(): React's PATHWAYS_DOC
+    // PathwaysResource.fetch(): the Pathways document
     private static final String DOC = """
             {"type": "Pathways", "uuid": "UUID", "name": "My Pathways",
               "tracesDocRef": {"type": "PlanB", "uuid": "planb-1", "name": "My Traces"},
@@ -65,7 +63,7 @@ public final class PathwaysEditorStories {
               "allowPathwayCreation": true, "allowPathwayMutation": true, "allowConstraintCreation": true,
               "allowConstraintMutation": true, "processingNode": "node1", "description": "# Pathways docs"}""";
 
-    // PathwaysResource.findPathways(): React's two pathways ('login-flow' with a constraint on Auth)
+    // PathwaysResource.findPathways(): two pathways ('login-flow' with a constraint on Auth)
     private static final String PATHWAYS = """
             {"values": [
                 {"name": "login-flow", "createTime": {"seconds": 1700000000, "nanos": 0},
@@ -78,7 +76,7 @@ public final class PathwaysEditorStories {
                   "root": {"uuid": "c1", "name": "Cart", "targets": []}}],
               "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}}""";
 
-    // React's branchingApi: Start → [A, B]
+    // A branching pathway: Start → [A, B]
     private static final String BRANCHING = """
             {"values": [
                 {"name": "branchy", "createTime": {"seconds": 1700000000, "nanos": 0},
@@ -87,8 +85,8 @@ public final class PathwaysEditorStories {
                     {"uuid": "sb", "nodes": [{"uuid": "b", "name": "B", "targets": []}]}]}}],
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}""";
 
-    // Differs from React: a FormGroup gives its control the group's identity as its id
-    // (PathwaysSettingsViewImpl.ui.xml and its dialogs), not React's '<name>-input'
+    // A FormGroup gives its control the group's identity as its id
+    // (PathwaysSettingsViewImpl.ui.xml and its dialogs)
     private static final String PROCESSING_NODE = "#pathwaysProcessingNode";
 
     private PathwaysEditorStories() {
@@ -109,8 +107,7 @@ public final class PathwaysEditorStories {
                     }
                     play.waitFor(() -> play.expect(play.getByText("login-flow")).toBeInTheDocument());
                     play.expect(play.getByText("checkout")).toBeInTheDocument();
-                    // Differs from React: the graph pane has no 'select a pathway' prompt; it shows
-                    // no nodes until a pathway is selected
+                    // The graph pane shows no nodes until a pathway is selected
                     play.expect(play.querySelector(".pathway-nodeName")).toBeNull();
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
                     DocEditors.expectNoProblems(play);
@@ -124,9 +121,9 @@ public final class PathwaysEditorStories {
                     play.expect(play.getByText("Auth")).toBeInTheDocument();
                     play.click(play.getByText("Auth"));
                     play.waitFor(() -> play.expect(play.getByText("Auth")).toHaveClass("pathway-nodeName--selected"));
-                    // Differs from React: the main graph has no node detail panel; a node's
-                    // constraints are shown, as a grid (ConstraintListPresenter), in the Edit
-                    // Pathway dialog, so the play opens it and selects the node there
+                    // The main graph has no node detail panel; a node's constraints are shown, as a
+                    // grid (ConstraintListPresenter), in the Edit Pathway dialog, so the play opens
+                    // it and selects the node there
                     play.click(play.getByRole("button", "Edit Pathway"));
                     final Play dialog = play.within(screen.findByText("Edit Pathway", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
@@ -135,7 +132,7 @@ public final class PathwaysEditorStories {
                     final Play constraints = play.within(dialog.getByText("host").closest(".dataGridWidget"));
                     play.expect(constraints.getByText("Name")).toBeInTheDocument();
                     play.expect(constraints.getByText("Optional")).toBeInTheDocument();
-                    // Differs from React: the value's type is shown as Stroom's ConstraintValueType
+                    // The value's type is shown as Stroom's ConstraintValueType
                     play.expect(constraints.getByText("Any")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })
@@ -151,11 +148,11 @@ public final class PathwaysEditorStories {
                     play.expect(play.spy(ON_VIEW_TRACES)).toHaveBeenCalledWith("planb-1", "r", "sb");
                     DocEditors.expectNoProblems(play);
                 })
-                // NewPathway is blocked by a GWT bug (see react-story-status.json): New Pathway
-                // reads a pathway with no root into the dialog's graph, and
-                // PathwayTreePresenter.read calls addNode(null), which throws
-                // Edit Pathway: the dialog's graph and a node's constraints (React goes on to add a
-                // constraint, which GWT doesn't allow, see below)
+                // No NewPathway story yet: New Pathway reads a pathway with no root into the
+                // dialog's graph, and PathwayTreePresenter.read calls addNode(null), which throws
+                // (see ISSUES.md)
+                // Edit Pathway: the dialog's graph and a node's constraints (a constraint can't be
+                // added, see below)
                 .story("EditConstraints", context -> render(context, "pathways-1", PATHWAYS, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
@@ -165,8 +162,8 @@ public final class PathwaysEditorStories {
                             .closest(StroomDom.DIALOG));
                     play.click(dialog.findByText("Auth"));
                     play.waitFor(() -> play.expect(dialog.getByText("host")).toBeInTheDocument());
-                    // Differs from React: the constraint list's buttons stay disabled, titled
-                    // 'New constraint disabled as read only' (a GWT bug: ConstraintListPresenter.setData
+                    // The constraint list's buttons stay disabled, titled 'New constraint disabled
+                    // as read only' (a Stroom bug, see ISSUES.md: ConstraintListPresenter.setData
                     // sets readOnly but never calls enableButtons(), so the buttons keep their
                     // initial read only state), so the New Constraint dialog and its validation
                     // can't be reached
@@ -192,7 +189,7 @@ public final class PathwaysEditorStories {
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveClass("disabled");
                     play.type(play.querySelector(PROCESSING_NODE), "-x");
-                    // Differs from React: the text box reports its change when it loses the focus
+                    // The text box reports its change when it loses the focus
                     play.tab();
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
                     DocEditors.expectNoProblems(play);
@@ -203,7 +200,7 @@ public final class PathwaysEditorStories {
                             "Save is not available as this document is read only");
                     play.click(DocEditors.tab(play, "Settings"));
                     final Query processingNode = play.findByDisplayValue("node1");
-                    // Differs from React: the Processing Node text box stays enabled (a GWT bug:
+                    // The Processing Node text box stays enabled (a Stroom bug, see ISSUES.md:
                     // PathwaysSettingsViewImpl.onReadOnly only disables the ordering tolerance), but
                     // an edit can't make the read only document dirty, so Save stays disabled
                     play.expect(processingNode).not().toBeDisabled();

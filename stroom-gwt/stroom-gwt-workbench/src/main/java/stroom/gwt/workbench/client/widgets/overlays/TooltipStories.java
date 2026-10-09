@@ -38,11 +38,10 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's tooltips, matching `Widgets/Overlays/Tooltip` in the React Storybook.
+/// Stories for Stroom's tooltips.
 ///
-/// Stroom has two kinds: a [TooltipPresenter] popup shown next to a widget at a `PopupLocation`
-/// (the React `Tooltip`'s positions), and the native `title` that Stroom gives its toolbar
-/// buttons ([InlineSvgButton]).
+/// Stroom has two kinds: a [TooltipPresenter] popup shown next to a widget at a `PopupLocation`,
+/// and the native `title` that Stroom gives its toolbar buttons ([InlineSvgButton]).
 public final class TooltipStories {
 
     private TooltipStories() {
@@ -72,8 +71,8 @@ public final class TooltipStories {
                 })
                 // Tooltip — on icon buttons (GWT pattern for toolbar items)
                 .story("OnIcon", context -> {
-                    // Differs from React: Stroom's toolbar buttons show their title as the
-                    // browser's own tooltip, so it has no position or styling.
+                    // Stroom's toolbar buttons show their title as the browser's own tooltip, so it
+                    // has no position or styling.
                     final FlowPanel row = StoryPanels.row(16,
                             iconButton(SvgImage.ADD, "Add a new item"),
                             iconButton(SvgImage.DELETE, "Delete selected item"),
@@ -84,7 +83,7 @@ public final class TooltipStories {
                 })
                 // Tooltip — disabled (no tooltip shown)
                 .story("Disabled", context -> {
-                    // Stroom's equivalent of React's enabled={false}: no tooltip is shown
+                    // A disabled tooltip: none is shown
                     final FlowPanel panel = new FlowPanel();
                     panel.getElement().getStyle().setProperty("padding", "24px");
                     panel.add(button("No tooltip (disabled)"));

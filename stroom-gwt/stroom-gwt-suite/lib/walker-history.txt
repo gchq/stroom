@@ -1,5 +1,5 @@
-# The history of stroom-ui-react/gwt-suite, where the walker was written, newest first (git log --format=%h
-# at 4b2dbd2, 2026-10-08), so that shards walked there can still be ordered against lib/vintage.mjs's rules.
+# The walker's commits from before it moved to this repository, newest first (git log --format=%h at
+# 4b2dbd2, 2026-10-08), so that shards walked then can still be ordered against lib/vintage.mjs's rules.
 4b2dbd2
 67d6d61
 66cbc93

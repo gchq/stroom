@@ -31,13 +31,12 @@ import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/DatabaseTablesScreen` in the React Storybook, showing Stroom's real
+/// Stories of `App/Main/DatabaseTablesScreen`, showing Stroom's real
 /// [DatabaseTablesMonitoringPresenter] (the 'Database Tables' tab) with fake REST replies.
 ///
-/// The React story's `DbStatusApi.findTables` becomes `POST /dbStatus/v1`
-/// (`DbStatusResource.findSystemTableStatus`). Stroom sorts server side, so, as the React
-/// fixture does, the reply honours the criteria's sort: a request sorted by `Table` gets the
-/// tables in name order.
+/// The tables come from `POST /dbStatus/v1` (`DbStatusResource.findSystemTableStatus`). Stroom
+/// sorts server side, so the reply honours the criteria's sort: a request sorted by `Table` gets
+/// the tables in name order.
 public final class DatabaseTablesScreenStories {
 
     private static final String PATH = "/dbStatus/v1";
@@ -77,7 +76,7 @@ public final class DatabaseTablesScreenStories {
                     // Data size 5,000,000 bytes is "4.8M" (IEC)
                     play.expect(play.getByText("4.8M")).toBeInTheDocument();
                     // Sort by Table ascending: "annotation" is the first data row.
-                    // Differs from React: GWT's grid rows are <tr> elements without a role
+                    // GWT's grid rows are <tr> elements without a role
                     // attribute, and its header is not a row of the body
                     play.click(play.getByText("Table"));
                     play.waitFor(() -> play.expect(play.querySelectorAll(StroomDom.GRID_ROW).nth(0))

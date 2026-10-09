@@ -46,14 +46,14 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// Stories for Stroom's Markdown editor ([MarkdownEditPresenter], as used for documentation
-/// tabs), matching `Widgets/Editors & Viewers/MarkdownEditor` in the React Storybook.
+/// tabs).
 ///
 /// The presenter's toolbar (Edit and Documentation help), which Stroom shows in the document
 /// tab's tool bar, is shown above it. The presenter reads the help URL from the UI config, so
 /// the stories use a [ScreenHarness].
 public final class MarkdownEditorStories {
 
-    // Spy names, the same as the React MarkdownEditor's props
+    // Spy names
     private static final String ON_CHANGE = AceEditorStories.ON_CHANGE;
     private static final String ON_DIRTY = "onDirty";
 
@@ -109,7 +109,7 @@ public final class MarkdownEditorStories {
         registry.component("Widgets/Editors & Viewers/MarkdownEditor", MarkdownEditorStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // Edit and preview split: GWT opens a non-blank document in preview mode, so the
-                // story clicks the Edit button once, as the React story does
+                // story clicks the Edit button once
                 .story("EditPreviewSplit", context -> {
                     final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
                     final Widget widget = markdownEditor(harness, SAMPLE_MARKDOWN, false);
@@ -180,7 +180,7 @@ public final class MarkdownEditorStories {
         presenter.setReadOnly(readOnly);
         presenter.setText(text);
 
-        // React's Frame: {height: 520, display: 'flex', flexDirection: 'column'}
+        // A 520px high flex column
         final FlowPanel frame = new FlowPanel();
         frame.getElement().getStyle().setProperty("height", "520px");
         frame.getElement().getStyle().setProperty("display", "flex");
@@ -198,8 +198,7 @@ public final class MarkdownEditorStories {
         return harness.asWidget();
     }
 
-    /// Clicks the toolbar's Edit button, as React's story does on mount (GWT: the user clicks
-    /// `editModeButton`).
+    /// Clicks the toolbar's Edit button (`editModeButton`) when the story renders.
     private static void clickEditButton(final Widget widget) {
         final NodeList<Element> buttons = widget.getElement().getElementsByTagName("button");
         for (int i = 0; i < buttons.getLength(); i++) {

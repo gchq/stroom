@@ -29,20 +29,15 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/IdP/EmailResetPassword` in the React Storybook, showing Stroom's real
-/// 'Reset Your Password' dialog (`EmailResetPasswordPresenter` with `EmailResetPasswordViewImpl`),
-/// as the sign in page's 'Forgot password?' link shows it, with fake REST replies.
+/// The `App/IdP/EmailResetPassword` stories, showing Stroom's real 'Reset Your Password' dialog
+/// (`EmailResetPasswordPresenter` with `EmailResetPasswordViewImpl`), as the sign in page's
+/// 'Forgot password?' link shows it, with fake REST replies. The email is sent with
+/// `POST /authentication/v1/reset` (`true` or `false`); the dialog closes with Cancel (or OK once
+/// the email is sent).
 ///
-/// | React seam | Stroom REST endpoint |
-/// |---|---|
-/// | `resetEmail` | `POST /authentication/v1/reset` (`true` or `false`) |
-/// | `onClose` | the dialog's Cancel (or OK once the email is sent) |
+/// `InvalidEmail` has no route for the request, so a request would fail the story.
 ///
-/// `InvalidEmail` has no route for the request, so a request would fail the story, as React's
-/// fixture throws.
-///
-/// React's stories have no play functions: their plays here check the empty dialog, so it can still
-/// be tried by hand.
+/// The plays only check the empty dialog, so it can still be tried by hand.
 public final class EmailResetPasswordStories {
 
     private static final String CAPTION = "Reset Your Password";

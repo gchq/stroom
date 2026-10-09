@@ -32,19 +32,18 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Data/MetaBrowser` in the React Storybook, showing Stroom's real
-/// [MetaPresenter] (the stream browser of a 'Data' tab: the stream list, its relations and the
-/// data preview) with fake REST replies, read with no document (all unlocked streams), as
-/// `MetaPresenter.read` does for the data browser.
+/// The `App/Data/MetaBrowser` stories, showing Stroom's real [MetaPresenter] (the stream browser of
+/// a 'Data' tab: the stream list, its relations and the data preview) with fake REST replies, read
+/// with no document (all unlocked streams), as `MetaPresenter.read` does for the data browser.
 ///
-/// | React | Stroom |
+/// | Stroom REST endpoint | Used for |
 /// |---|---|
-/// | `meta.find` | `POST /meta/v1/find` (the relations when the criteria's `fetchRelationships` is set) |
-/// | `meta.getSelectionSummary` | `POST /meta/v1/getSelectionSummary` |
-/// | `meta.getReprocessSelectionSummary` | `POST /meta/v1/getReprocessSelectionSummary` |
-/// | `data.fetch` | `POST /data/v1/fetch` |
-/// | `reprocess` | `POST /processorFilter/v1/reprocess` |
-/// | (the selection's validation) | `POST /expression/v1/validate` |
+/// | `POST /meta/v1/find` | the streams (the relations when the criteria's `fetchRelationships` is set) |
+/// | `POST /meta/v1/getSelectionSummary` | the selection summary |
+/// | `POST /meta/v1/getReprocessSelectionSummary` | the reprocess summary |
+/// | `POST /data/v1/fetch` | the data preview |
+/// | `POST /processorFilter/v1/reprocess` | reprocessing |
+/// | `POST /expression/v1/validate` | the selection's validation |
 public final class MetaBrowserStories {
 
     private static final String FIND_PATH = "/meta/v1/find";
@@ -72,8 +71,8 @@ public final class MetaBrowserStories {
               "pageResponse": {"offset": 0, "length": 3, "total": 3, "exact": true}
             }""".replace("ATTRIBUTES", ATTRIBUTES);
 
-    // The selected stream's parent/child chain. The child has no attributes, as React's (the meta
-    // list once read them without a null check)
+    // The selected stream's parent/child chain. The child has no attributes (the meta list once
+    // read them without a null check)
     private static final String RELATIONS = """
             {
               "values": [
@@ -85,8 +84,8 @@ public final class MetaBrowserStories {
               "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}
             }""".replace("ATTRIBUTES", ATTRIBUTES);
 
-    // The selection summary, with no age range, as React's (Stroom's summary dialog once read it
-    // without a null check)
+    // The selection summary, with no age range (Stroom's summary dialog once read it without a null
+    // check)
     private static final String SUMMARY = """
             {"itemCount": 3, "feedCount": 2, "typeCount": 3, "processorCount": 0, "pipelineCount": 1,
               "statusCount": 2, "distinctFeeds": ["EVENTS", "REFERENCE"],
@@ -139,9 +138,8 @@ public final class MetaBrowserStories {
                     play.expect(play.getByText("REFERENCE")).toBeInTheDocument();
                     play.expect(play.getAllByText("2.0K").count()).toBeGreaterThan(0);
                     // Rich cells: Pipeline and Feed are document links, Created and Type copy text.
-                    // Differs from React: GWT's cells have no 'feedRefCell'/'copyTextCell' classes; the
-                    // feed is a document link (titled 'Open Feed ... in new tab') and the copy text
-                    // cells have a 'Copy value' icon
+                    // The feed is a document link (titled 'Open Feed ... in new tab') and the copy
+                    // text cells have a 'Copy value' icon
                     play.expect(play.getByText("Events Pipeline").closest(".docRefLinkContainer")).not().toBeNull();
                     play.expect(play.getAllByTitle("Open Feed EVENTS in new tab").count()).toBeGreaterThan(0);
                     play.expect(play.getAllByTitle("Copy value 'Raw Events' to clipboard").count())
@@ -150,8 +148,7 @@ public final class MetaBrowserStories {
                     play.expect(play.getAllByText("Events Pipeline").count()).toBe(1);
                     // Created is formatted with the user's date time pattern
                     play.expect(play.getAllByText(TextMatch.regex(ISO_DATE, "")).count()).toBeGreaterThan(0);
-                    // Differs from React: GWT's preview shows no 'Select a stream to preview its
-                    // data.' text before a stream is selected; it is empty, so no data is fetched
+                    // The preview is empty before a stream is selected, so no data is fetched
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post("/data/v1/fetch").toSpyMatcher());
                     // Before selection the parent stream appears once, in the top grid
@@ -165,8 +162,7 @@ public final class MetaBrowserStories {
                     play.click(play.getAllByTitle("Not Ticked").nth(0));
                     play.waitFor(() -> play.expect(play.getAllByTitle("Ticked").count()).toBeGreaterThan(0));
                     // Info summarises the ticked selection.
-                    // Differs from React: GWT's icon buttons have no accessible name (their title
-                    // is on the button), so they are found by title
+                    // Stroom's icon buttons are found by their title
                     play.click(play.getByTitle("Selection summary"));
                     final Play summary = dialog(screen, "Selection Summary");
                     play.expect(summary.getByText(TextMatch.containing("That are associated with:")))
@@ -219,9 +215,9 @@ public final class MetaBrowserStories {
                 });
     }
 
-    // Differs from React: before its selection summary, GWT's AbstractMetaListPresenter.confirmSelection
-    // asks 'Are you sure you want to <action> the selected items?' and, for a select all, warns that
-    // every stream matching the filter is included; both are answered OK
+    // Before its selection summary, Stroom's AbstractMetaListPresenter.confirmSelection asks 'Are you
+    // sure you want to <action> the selected items?' and, for a select all, warns that every stream
+    // matching the filter is included; both are answered OK
     private static void confirmSelectAll(final Play play, final Play screen, final String action) {
         final Play sure = screen.within(screen.findByText(
                 "Are you sure you want to " + action + " the selected items?").closest(StroomDom.DIALOG));

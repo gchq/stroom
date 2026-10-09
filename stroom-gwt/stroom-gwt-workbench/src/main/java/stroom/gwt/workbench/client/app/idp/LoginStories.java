@@ -30,19 +30,19 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories matching `App/IdP/Login` in the React Storybook, showing Stroom's real sign in page
-/// (`LoginPresenter` with `LoginViewImpl`) with fake REST replies.
+/// The `App/IdP/Login` stories, showing Stroom's real sign in page (`LoginPresenter` with
+/// `LoginViewImpl`) with fake REST replies.
 ///
-/// | React seam | Stroom REST endpoint |
+/// | Stroom | Used for |
 /// |---|---|
-/// | `login` | `POST /authentication/v1/login` (replies after 600ms, as React's fixtures) |
-/// | `fetchPolicy` | `GET /authentication/v1/fetchPasswordPolicy` |
-/// | `onSuccess` | `Window.Location.replace(redirect_uri)`, recorded by `IdpPage.ON_NAVIGATE` |
-/// | `onRequirePasswordChange` | Stroom's 'Change Password' dialog (`POST /authentication/v1/changePassword`) |
-/// | `onForgotPassword` | Stroom's 'Reset Your Password' dialog (`POST /authentication/v1/reset`) |
+/// | `POST /authentication/v1/login` (replies after 600ms) | signing in |
+/// | `GET /authentication/v1/fetchPasswordPolicy` | the password policy |
+/// | `Window.Location.replace(redirect_uri)`, recorded by `IdpPage.ON_NAVIGATE` | the redirect after signing in |
+/// | 'Change Password' dialog (`POST /authentication/v1/changePassword`) | a required password change |
+/// | 'Reset Your Password' dialog (`POST /authentication/v1/reset`) | 'Forgot password?' |
 ///
-/// React's stories have no play functions: their plays here only check what the page shows before
-/// anyone signs in, so the page can still be tried by hand.
+/// The plays only check what the page shows before anyone signs in, so the page can still be tried
+/// by hand.
 public final class LoginStories {
 
     private static final int LOGIN_DELAY_MILLIS = 600;
@@ -54,7 +54,7 @@ public final class LoginStories {
                                                        + "forgotten it, use the 'Forgot password?' link.";
     private static final String PASSWORD_HELP_NO_RESETS = "Enter your Stroom account password. If you have "
                                                           + "forgotten it, ask your administrator to reset it.";
-    // React's loginPending never resolves
+    // A sign in that never replies
     private static final int NEVER_MILLIS = 24 * 60 * 60 * 1000;
 
     private LoginStories() {
@@ -100,7 +100,7 @@ public final class LoginStories {
                         RestReply.json("{\"loginSuccessful\": true}")))
                 .withPlay(play -> {
                     expectSignInForm(play);
-                    // Differs from React: the link is in the page but hidden, not left out
+                    // The link is in the page but hidden, not left out
                     play.expect(play.getByText("Forgot password?")).not().toBeVisible();
                     // The password's help points to the administrator, not the hidden link
                     play.expect(play.getByLabelText("Password")).toHaveAccessibleDescription(

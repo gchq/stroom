@@ -24,7 +24,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 /// Helpers shared by the `Widgets/Display/*` stories.
 final class DisplayWidgets {
 
-    /// The React stories' `labelColoursCsv`.
+    /// The label colours, as `theme.labelColours` in the UI config.
     static final String COLOURS = "OFFICIAL=green,SECRET=#ff9800,TOP SECRET=#f44336";
 
     private static final String EMPTY_THEME = "\"theme\": {}";
@@ -34,8 +34,7 @@ final class DisplayWidgets {
     }
 
     /// Creates a harness whose UI config has a theme with the given label colours, which Stroom's
-    /// `ClassificationLabel` reads from the `UiConfigCache` (React passes them as the
-    /// `labelColoursCsv` prop).
+    /// `ClassificationLabel` reads from the `UiConfigCache`.
     ///
     /// @param context         The story's context.
     /// @param labelColoursCsv The label colours, e.g. `OFFICIAL=green,SECRET=#ff9800`, or null for

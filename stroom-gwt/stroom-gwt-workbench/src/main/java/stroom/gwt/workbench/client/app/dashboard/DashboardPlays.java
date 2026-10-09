@@ -37,19 +37,19 @@ import java.util.Map;
 final class DashboardPlays {
 
     /// The label of a component's tab.
-    /// Differs from React: a dashboard's component tabs are Stroom link tabs, with no `role="tab"`.
+    /// A dashboard's component tabs are Stroom link tabs, with no `role="tab"`.
     static final String COMPONENT_TAB = ".tabLayout-tabBar .linkTab-label";
 
-    /// The class of a selected link tab (React's `aria-selected="true"`).
+    /// The class of a selected link tab.
     static final String SELECTED_TAB = "linkTab-selected";
 
-    /// A tab layout (React's panel, `[data-panel-path]`).
+    /// A tab layout (a panel).
     static final String PANEL = ".tabLayout";
 
-    /// A splitter between panels (React's `.flexLayout-splitter`, the same class).
+    /// A splitter between panels.
     static final String SPLITTER = ".flexLayout-splitter";
 
-    /// A Query component's own Execute Query button (React's `componentRunButton`).
+    /// A Query component's own Execute Query button.
     static final String QUERY_RUN_BUTTON = ".QueryViewImpl .QueryButtons-button";
 
     private DashboardPlays() {
@@ -57,7 +57,7 @@ final class DashboardPlays {
     }
 
     /// Waits for the dashboard to open: Stroom fetches it and lays out its components after the
-    /// story has rendered (React's editor renders at once).
+    /// story has rendered.
     ///
     /// @param play The play.
     static void opened(final Play play) {
@@ -82,12 +82,12 @@ final class DashboardPlays {
 
     /// @param play  The play.
     /// @param title The button's title, e.g. `Execute Query`.
-    /// @return A button of the dashboard's own query toolbar (React's `dashToolbarButton`).
+    /// @return A button of the dashboard's own query toolbar.
     static Query toolbarButton(final Play play, final String title) {
         return play.within(play.querySelector(".QueryToolbarViewImpl-inner")).getByTitle(title);
     }
 
-    /// Clicks a Query component's own Execute Query button (React's `componentRunButton`).
+    /// Clicks a Query component's own Execute Query button.
     ///
     /// @param play  The play.
     /// @param index The index of the Query component on the page.
@@ -99,8 +99,8 @@ final class DashboardPlays {
     }
 
     /// Clicks the dashboard toolbar's Execute Query, which runs every query of the dashboard.
-    /// Differs from React: an Embedded Query has no Execute button of its own in GWT (its panel shows
-    /// only its results), so the stories run it with the dashboard's.
+    /// An Embedded Query has no Execute button of its own (its panel shows only its results), so the
+    /// stories run it with the dashboard's.
     ///
     /// @param play The play.
     static void runAll(final Play play) {
@@ -137,9 +137,9 @@ final class DashboardPlays {
     }
 
     /// Opens a component's tab menu.
-    /// Differs from React: Stroom opens a tab's menu when its selected tab is clicked
-    /// (`FlexLayout.finishSelection`), not on a context menu; a click on a tab that isn't selected
-    /// selects it, so the tab is selected first.
+    /// Stroom opens a tab's menu when its selected tab is clicked (`FlexLayout.finishSelection`), not
+    /// on a context menu; a click on a tab that isn't selected selects it, so the tab is selected
+    /// first.
     ///
     /// @param play The play.
     /// @param name The component's name.
@@ -151,7 +151,7 @@ final class DashboardPlays {
 
     /// @param screen The play of the page's body.
     /// @param text   The item's text.
-    /// @return A menu item (Stroom's menu items have no `menuitem` role).
+    /// @return A menu item's text (`StroomDom.MENU_ITEM_TEXT`).
     static Query menuItem(final Play screen, final String text) {
         return screen.findByText(text, StroomDom.MENU_ITEM_TEXT);
     }
@@ -195,7 +195,6 @@ final class DashboardPlays {
     /// captured from anywhere on the page): presses the main button at the centre of `from`, moves
     /// in steps to a point of `to`, and releases it there. The point is given as fractions of the
     /// target's size plus an offset in pixels, read when the step runs.
-    /// Differs from React: React's port drags with pointer events.
     ///
     /// @param play The play.
     /// @param from The element to press, e.g. a tab.
@@ -259,7 +258,6 @@ final class DashboardPlays {
 
     /// Fires the window's `beforeunload` event, as closing the browser's tab or window does, which
     /// Stroom's `LocationManager` reports as a `WindowCloseEvent`.
-    /// Differs from React: React's port listens for `pagehide`.
     ///
     /// @param play The play.
     static void closeWindow(final Play play) {
@@ -352,7 +350,7 @@ final class DashboardPlays {
     }
 
     /// @param item An expression item (JSON).
-    /// @return The value of its first term, depth first (React's `firstTermValue`), or null.
+    /// @return The value of its first term, depth first, or null.
     static String firstTermValue(final Object item) {
         if (at(item, "children") instanceof final List<?> children) {
             for (final Object child : children) {

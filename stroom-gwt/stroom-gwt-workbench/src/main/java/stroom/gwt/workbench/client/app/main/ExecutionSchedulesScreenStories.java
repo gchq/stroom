@@ -41,23 +41,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/ExecutionSchedulesScreen` in the React Storybook, showing Stroom's
-/// real [ExecutionScheduleManager] (the 'Execution Schedule Manager' tab, as
-/// `ExecutionScheduleManagerPlugin` opens it) with fake REST replies.
+/// Stories of `App/Main/ExecutionSchedulesScreen`, showing Stroom's real [ExecutionScheduleManager]
+/// (the 'Execution Schedule Manager' tab, as `ExecutionScheduleManagerPlugin` opens it) with fake
+/// REST replies.
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `find` | `POST /executionSchedule/v1/fetchExecutionSchedule` |
-/// | `update` | `POST /executionSchedule/v1/updateExecutionSchedule` (echoes the schedule) |
-/// | `remove` | `POST /executionSchedule/v1/deleteExecutionSchedules` |
-/// | `executeNow` | `POST /executionSchedule/v1/executeSchedulesNow` |
-/// | `listNodes` | `GET /node/v1/all` |
-/// | `fetchTracker` | `POST /executionSchedule/v1/fetchTracker` |
-/// | `getScheduledTimes` | `POST /scheduledTime/v1` (the schedule box's validation) |
-/// | (the filter's validation) | `POST /expression/v1/validate` |
-/// | `configApi.setConfigValue` | `POST /config/v1/setConfigValue` |
+/// | `POST /executionSchedule/v1/fetchExecutionSchedule` | the schedules |
+/// | `POST /executionSchedule/v1/updateExecutionSchedule` (echoes the schedule) | saving a schedule |
+/// | `POST /executionSchedule/v1/deleteExecutionSchedules` | deleting schedules |
+/// | `POST /executionSchedule/v1/executeSchedulesNow` | Run Now |
+/// | `GET /node/v1/all` | the nodes |
+/// | `POST /executionSchedule/v1/fetchTracker` | a schedule's tracker |
+/// | `POST /scheduledTime/v1` | the schedule box's validation |
+/// | `POST /expression/v1/validate` | the filter's validation |
+/// | `POST /config/v1/setConfigValue` | Set Default |
 ///
-/// The recorder's checks become checks on the request spy. The confirmations and alerts are
+/// The requests made are checked on the request spy. The confirmations and alerts are
 /// Stroom's real dialogs (`realAlerts()`).
 public final class ExecutionSchedulesScreenStories {
 
@@ -68,8 +68,8 @@ public final class ExecutionSchedulesScreenStories {
     private static final String RUN_NOW_PATH = BASE + "/executeSchedulesNow";
     private static final String SET_CONFIG_PATH = "/config/v1/setConfigValue";
 
-    // The schedules have no scheduleBounds, as React's (BatchExecutionScheduleEditViewImpl once read
-    // them without a null check)
+    // The schedules have no scheduleBounds (BatchExecutionScheduleEditViewImpl once read them
+    // without a null check)
     private static final String HOURLY = """
             {"uuid": "s1", "name": "Hourly rollup", "enabled": true, "nodeName": "node1",
               "owningDoc": {"type": "AnalyticRule", "uuid": "a1", "name": "Suspicious logins"},
@@ -121,7 +121,7 @@ public final class ExecutionSchedulesScreenStories {
                     final Query delete = play.getByTitle("Delete Schedules");
                     play.waitFor(() -> play.expect(delete).not().toHaveClass("disabled"));
                     play.click(delete);
-                    // Differs from React: GWT's message is 'You are about to delete 1 schedule.'
+                    // GWT's message is 'You are about to delete 1 schedule.'
                     final Play confirm = dialogWith(screen, TextMatch.containing("You are about to delete 1 schedule"));
                     play.click(confirm.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -143,7 +143,7 @@ public final class ExecutionSchedulesScreenStories {
                     play.click(warning.getByRole("button", StroomDom.button("Close")));
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post(RUN_NOW_PATH).toSpyMatcher());
-                    // Differs from React: GWT's 'Run Now' dialog stays open (a Close dialog) until
+                    // GWT's 'Run Now' dialog stays open (a Close dialog) until
                     // closed, so it is closed before selecting a row
                     play.click(dialog(screen, "Run Now").getByRole("button", StroomDom.button("Close")));
                     // Select the enabled schedule -> confirm -> it runs
@@ -199,9 +199,9 @@ public final class ExecutionSchedulesScreenStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Filter Schedules", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.findByText("Hourly rollup");
-                    // Differs from React: GWT's Clear Filter button is always there, but only enabled
+                    // GWT's Clear Filter button is always there, but only enabled
                     // for an expression with terms (setButtonState), so an empty filter leaves it
-                    // disabled and React's Clear Filter step can't be taken
+                    // disabled
                     play.expect(play.getByTitle("Clear Filter")).toHaveClass("disabled");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     expectNoErrors(play);
@@ -272,7 +272,7 @@ public final class ExecutionSchedulesScreenStories {
                     play.findByText("Daily report");
                     openEditor(play);
                     final Play dialog = dialog(screen, "Edit Schedule");
-                    // Differs from React: the field's id is its FormGroup's identity, 'name'
+                    // The field's id is its FormGroup's identity, 'name'
                     final Query name = dialog.querySelector("#name");
                     play.clear(name);
                     play.type(name, "Daily digest");
@@ -302,7 +302,7 @@ public final class ExecutionSchedulesScreenStories {
                 .story("UnknownNodeIsMarked", context -> render(context, ONE_NODE_FIXTURES, false))
                 .withPlay(play -> {
                     play.findByText("Daily report");
-                    // Differs from React: the Execution Schedule Manager's node column is plain text
+                    // The Execution Schedule Manager's node column is plain text
                     // (only an analytic rule's own schedule list, ScheduledProcessListPresenter, marks
                     // a node that no longer exists), so no row is marked
                     play.expect(play.getByText("node2")).toBeInTheDocument();
@@ -438,7 +438,7 @@ public final class ExecutionSchedulesScreenStories {
                                  final RestFixtures fixtures,
                                  final boolean canManageProperties) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
-        // React's fixture grants no app permissions; Stroom needs Manage Processors to show the screen
+        // Stroom needs Manage Processors to show the screen
         final AppPermission[] permissions;
         if (canManageProperties) {
             permissions = new AppPermission[]{

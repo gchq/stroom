@@ -10,8 +10,8 @@
   },
   "scripts": {
     "test": "node run.mjs",
-    "manifest": "node react-manifest.mjs",
-    "test:self": "node --test lib/"
+    "test:self": "node --test lib/",
+    "selftest:reference": "npm install --no-save --no-package-lock --prefix selftest/reference storybook@10.4.6"
   },
   "devDependencies": {
     "playwright": "1.61.1"

@@ -32,15 +32,14 @@ import com.google.gwt.user.client.Command;
 import java.util.Arrays;
 import java.util.List;
 
-/// Builds Stroom's menu items as the React stories' `menuIcon`, `menuSimple`, ... helpers do,
-/// shared by the `Widgets/Menu/*` stories.
+/// Builds Stroom's menu items for the `Widgets/Menu/*` stories.
 final class MenuWidgets {
 
     private MenuWidgets() {
         // Static utility
     }
 
-    /// React's `menuIcon(text, icon, command)`.
+    /// An item with an icon and a command.
     ///
     /// @param text    The item's text.
     /// @param icon    The item's icon.
@@ -53,7 +52,7 @@ final class MenuWidgets {
                 .command(command);
     }
 
-    /// React's `menuIconDisabled(text, icon)`.
+    /// A disabled item with an icon.
     ///
     /// @param text The item's text.
     /// @param icon The item's icon.
@@ -66,7 +65,7 @@ final class MenuWidgets {
                 .enabled(false);
     }
 
-    /// React's `menuSimple(text, command)`.
+    /// An item with no icon.
     ///
     /// @param text    The item's text.
     /// @param command What choosing it does.
@@ -78,7 +77,7 @@ final class MenuWidgets {
                 .build();
     }
 
-    /// React's `menuInfo(text)`.
+    /// A row of information, which can't be chosen.
     ///
     /// @param text The row's text.
     /// @return The item.
@@ -88,14 +87,14 @@ final class MenuWidgets {
                 .build();
     }
 
-    /// React's `menuSeparator()`.
+    /// A separator.
     ///
     /// @return The item.
     static Item separator() {
         return new Separator(0);
     }
 
-    /// React's `menuParent(text, icon, children)`.
+    /// An item that opens a submenu of its children.
     ///
     /// @param text     The item's text.
     /// @param icon     The item's icon, or null for none.

@@ -1,10 +1,10 @@
 # Play API self-test
 
 Checks the browser side of the workbench's play API (the JSNI in the workbench framework's
-`client/play` package: `Dom`, `UserEventHelpers`, `Aria`) against the code React Storybook plays
-really use: Testing Library, user-event 14 and jest-dom, from the `storybook/test` bundle in the
-React project's `node_modules`. Both run in the same headless Chromium, on the same preview page,
-and the results must be identical.
+`client/play` package: `Dom`, `UserEventHelpers`, `Aria`) against the code Storybook plays really
+use: Testing Library, user-event 14 and jest-dom, from the `storybook` package's `storybook/test`
+bundle. Both run in the same headless Chromium, on the same preview page, and the results must be
+identical.
 
 It checks:
 
@@ -17,7 +17,7 @@ It checks:
   Tab, typing, keys and `fireEvent`, comparing every event fired (type, target, button, buttons,
   detail, key, code, modifiers, inputType, data, relatedTarget) and the resulting focus, values,
   field selections, document selection and content editable markup. Coordinates and the legacy
-  `keyCode` aren't compared: the workbench deliberately differs there (see PORTING.md).
+  `keyCode` aren't compared: the workbench deliberately differs there (see WRITING-STORIES.md).
 
 ## Running
 
@@ -43,25 +43,32 @@ Options:
 * `--url URL` - the workbench (default `http://localhost:6008`, or `$WORKBENCH_URL`). The page
   used is `iframe.html?id=widgets-buttons-button--default&viewMode=story&selftest`; the `selftest`
   parameter makes the preview expose `window.__workbenchDom` (see `SelfTestHooks`).
-* `--react-modules DIR` - the React project's `node_modules` (default
-  `../stroom-ui-react/node_modules` next to this repository, or `$STROOM_UI_REACT_MODULES`).
+* `--storybook-modules DIR` - a `node_modules` holding the `storybook` package (default
+  `selftest/reference/node_modules`, or `$STORYBOOK_MODULES`).
 * `--update-golden` - also write the reference's results to `golden/reference.json`.
 * `--only TEXT` - only run the scenarios whose name contains `TEXT`.
 * `--verbose` - list each scenario that passes.
 
 ## The reference, and the golden file
 
-Nothing from the React project is copied here. `reference.mjs` serves
+The reference isn't a dependency of the test runner, so normal runs don't download it. To compare
+with it live (e.g. to add checks), install it, git-ignored, in `selftest/reference`:
+
+```
+npm run selftest:reference
+```
+
+Nothing from it is copied into this repository. `reference.mjs` serves
 `storybook/dist/test/index.js` (and the chunks it imports) to the page with Playwright's request
 routing, replacing `process.env.NODE_ENV` as Storybook's builder does and stubbing its two imports
 of Storybook internals (the instrumenter, which only wraps functions for the Interactions panel,
 and the client logger), and exports a few of its internal functions (`computeAccessibleName`,
 the implicit roles, `isInaccessible`).
 
-When the React project isn't there (e.g. on a build machine without it), the workbench's results
-are compared with `golden/reference.json` instead: the reference's results, written by
-`--update-golden`. Regenerate it whenever `corpus.mjs` changes or the React project upgrades
-Storybook:
+When the reference isn't installed (e.g. on a build machine), the workbench's results are
+compared with `golden/reference.json` instead: the reference's results, written by
+`--update-golden` (from Storybook 10.4.6). Regenerate it whenever `corpus.mjs` changes, or after
+moving `selftest:reference` to a newer Storybook:
 
 ```
 node selftest/selftest.mjs --url http://localhost:6008 --update-golden

@@ -36,10 +36,9 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [DocSelectionBoxPresenter], matching `Widgets/Selectors/DocSelectionBox`
-/// in the React Storybook: a drop-down showing the chosen document, which opens Stroom's explorer
-/// popup to choose another. The popup's tree is fetched from an [ExplorerFixture] of the React
-/// stories' tree.
+/// Stories for Stroom's [DocSelectionBoxPresenter]: a drop-down showing the chosen document, which
+/// opens Stroom's explorer popup to choose another. The popup's tree is fetched from an
+/// [ExplorerFixture].
 public final class DocSelectionBoxStories {
 
     private static final String ON_CHANGE = "onChange";
@@ -53,8 +52,7 @@ public final class DocSelectionBoxStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's onClick (a legacy hook) has no equivalent. The explorer popup always offers a
-        // "None" row in Stroom (React's includeNullSelection).
+        // The explorer popup always offers a "None" row.
         registry.component("Widgets/Selectors/DocSelectionBox", DocSelectionBoxStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Click the box (or press Enter) to open the explorer popup, open a folder, pick a
@@ -92,8 +90,8 @@ public final class DocSelectionBoxStories {
                 .story("WarningAndDisabled", context -> {
                     final ScreenHarness harness = harness(context, TreeFixtures.fixtureTree());
                     final DocSelectionBoxPresenter warning = box(context, harness, null);
-                    // Differs from React: the warning comes from Stroom checking the document
-                    // (`decorate` finds no such feed), so its message is Stroom's, not the story's
+                    // The warning comes from Stroom checking the document (`decorate` finds no
+                    // such feed), so its message is Stroom's
                     warning.setSelectedEntityReference(new DocRef("Feed", "deleted-feed", "Deleted Feed"), true);
                     final DocSelectionBoxPresenter disabled = box(context, harness, null);
                     disabled.setSelectedEntityReference(new DocRef("Pipeline", "locked-pipeline", "Locked Pipeline"),
@@ -118,7 +116,7 @@ public final class DocSelectionBoxStories {
                 .withPlay(play -> {
                     // Open the popup, which fetches the tree with the node flags filter
                     play.fireEvent().mouseDown(play.querySelector(".dropDownView-container"), EventInit.create());
-                    // Differs from React: the request is Stroom's, checked with the request spy
+                    // The request is Stroom's, checked with the request spy
                     // (NodeFlag DATA_SOURCE is sent as its short form, "D")
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             ValueMatcher.stringContaining("\"nodeFlags\":[\"D\"]")));

@@ -26,16 +26,14 @@ import com.google.gwt.user.client.ui.Widget;
 /// Widgets shared by the `Widgets/Inputs/*` stories.
 final class InputWidgets {
 
-    /// The name of the spy for React's `onChange` callback props.
+    /// The name of the spy that the input stories report changes to.
     static final String ON_CHANGE = "onChange";
 
     private InputWidgets() {
         // Static utility
     }
 
-    /// Creates a Stroom text box (the GWT equivalent of React's `TextInput` with
-    /// `inputClass="gwt-TextBox"`), reporting each change (as the user types) to the `onChange`
-    /// spy.
+    /// Creates a Stroom text box, reporting each change (as the user types) to the `onChange` spy.
     ///
     /// @param context     The story's context.
     /// @param value       The initial value.

@@ -27,11 +27,10 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
-/// Stories for Stroom's [HtmlPresenter] (with its `HtmlViewImpl`, an `info-page` scroll panel),
-/// matching `Widgets/Display/HtmlPresenter` in the React Storybook.
+/// Stories for Stroom's [HtmlPresenter] (with its `HtmlViewImpl`, an `info-page` scroll panel).
 public final class HtmlPresenterStories {
 
-    // Arg names, the same as the React HtmlPresenter's props
+    // Arg names
     private static final String HTML_CONTENT = "htmlContent";
 
     private HtmlPresenterStories() {

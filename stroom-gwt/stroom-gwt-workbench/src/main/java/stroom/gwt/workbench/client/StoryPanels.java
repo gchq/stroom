@@ -21,8 +21,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Helpers for laying out the widgets in a story, equivalent to the inline-styled `<div>`s and
-/// `<span>`s used by the React stories.
+/// Helpers for laying out the widgets in a story, e.g. in rows or columns, with notes beside them.
 public final class StoryPanels {
 
     private StoryPanels() {

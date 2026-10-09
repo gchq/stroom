@@ -37,14 +37,13 @@ import stroom.util.shared.UserRef;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/UsersScreen` in the React Storybook, showing Stroom's real
-/// [UsersPresenter] (the 'Users' tab) with fake REST replies.
+/// Stories of `App/Main/UsersScreen`, showing Stroom's real [UsersPresenter] (the 'Users' tab) with
+/// fake REST replies.
 ///
-/// The React story's `UserApi` fixture becomes routes for Stroom's `UserResource` (`findUsers` →
-/// `POST /users/v1/find`, `createUser` → `POST /users/v1/createUser`, `createUsers` →
-/// `POST /users/v1/createUsers`) and its recorder becomes checks on the request spy. The user holds
-/// `MANAGE_USERS_PERMISSION` (and not `ADMINISTRATOR`), as React's app permissions fixture. React's
-/// `openScreen` is a spy on Stroom's `OpenAppPermissionsScreenEvent`. The presenter comes from GIN.
+/// The fixtures answer Stroom's `UserResource` (`POST /users/v1/find`, `POST /users/v1/createUser`,
+/// `POST /users/v1/createUsers`), and the requests are checked on the request spy. The user holds
+/// `MANAGE_USERS_PERMISSION` (and not `ADMINISTRATOR`). The `openScreen` spy records Stroom's
+/// `OpenAppPermissionsScreenEvent`. The presenter comes from GIN.
 public final class UsersScreenStories {
 
     /// The name of the spy recording the screens opened from the action menu.
@@ -92,8 +91,8 @@ public final class UsersScreenStories {
                     play.findByText("Alice Anderson");
                     play.expect(play.getByText("alice")).toBeInTheDocument();
                     // Create User: the dialog, the unique user id, OK.
-                    // Differs from React: Stroom's dialogs have no role="dialog"; the dialog is the
-                    // caption's closest '.dialog-container'
+                    // Stroom's dialogs have no role="dialog"; the dialog is the caption's closest
+                    // '.dialog-container'
                     play.click(play.getByTitle("Create User"));
                     final Play dialog = screen.within(
                             screen.findByText("Add External User(s)").closest(StroomDom.DIALOG));
@@ -114,8 +113,7 @@ public final class UsersScreenStories {
                     final Play dialog = screen.within(
                             screen.findByText("Add External User(s)").closest(StroomDom.DIALOG));
                     // Switch the type SelectionBox to 'Add Multiple Identity Provider Users'.
-                    // Differs from React: GWT's SelectionBox opens when its text box is clicked
-                    // (React's '.selection-box__display')
+                    // GWT's SelectionBox opens when its text box is clicked
                     play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
                     play.click(screen.findByText("Add Multiple Identity Provider Users"));
                     play.type(dialog.getByLabelText("Users to add"), "carol{Enter}dave");
@@ -151,9 +149,8 @@ public final class UsersScreenStories {
                 .story("FocusedOpen", context -> render(context, ALICE_REF))
                 .withPlay(play -> {
                     play.findByText("Alice Anderson");
-                    // Differs from React: GWT's OpenUsersScreenEvent carries the user, and
-                    // UserListPresenter.showUser filters by its display name with the 'display' field
-                    // ('"display:Alice Anderson"'), not the React focus's free text ('alice'). The quick
+                    // OpenUsersScreenEvent carries the user, and UserListPresenter.showUser filters by
+                    // its display name with the 'display' field ('"display:Alice Anderson"'). The quick
                     // filter has no label, only a placeholder
                     play.expect(play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))
                             .toHaveValue("\"display:Alice Anderson\"");

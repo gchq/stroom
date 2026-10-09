@@ -40,9 +40,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-/// Stories for [QuickFilter], matching `Widgets/Inputs/QuickFilter` in the React Storybook.
+/// Stories for [QuickFilter].
 ///
-/// Unlike the React port, Stroom's [QuickFilter] always waits 400ms after the last key press
+/// Stroom's [QuickFilter] always waits 400ms after the last key press
 /// before reporting a change (or reports it at once on Enter or when cleared).
 public final class QuickFilterStories {
 
@@ -96,8 +96,8 @@ public final class QuickFilterStories {
                 })
                 // QuickFilter with no debounce - onChange fires on every keystroke
                 .story("NoDebounce", context -> {
-                    // Differs from React: QuickFilter's 400ms debounce can't be turned off (React's
-                    // debounceMs={0}), so the value below changes 400ms after typing stops.
+                    // QuickFilter's 400ms debounce can't be turned off, so the value below changes
+                    // 400ms after typing stops.
                     final QuickFilter quickFilter = quickFilter(context);
                     final InlineLabel value = StoryPanels.note("Value: (empty)", "#aaa", "0.8rem");
                     quickFilter.addValueChangeHandler(event -> value.setText("Value: "
@@ -137,7 +137,7 @@ public final class QuickFilterStories {
         }
     }
 
-    /// Equivalent of the React story's `<li>` rows.
+    /// A row of the filtered list.
     private static Widget row(final String item) {
         final Label row = new Label(item);
         final Style style = row.getElement().getStyle();

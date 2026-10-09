@@ -38,8 +38,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Collections;
 
-/// Stories for Stroom's [InfoColumn], matching `Widgets/Popover/InfoPopoverCell` in the React
-/// Storybook.
+/// Stories for Stroom's [InfoColumn].
 ///
 /// An `InfoColumn` is a grid column of info icons; clicking one shows the row's details in a
 /// [TooltipPresenter] to the right of the cell, as Stroom's monitoring screens (e.g.
@@ -47,7 +46,7 @@ import java.util.Collections;
 public final class InfoPopoverCellStories {
 
     private static final String BODY = "Popover body content";
-    // Differs from React: the trigger is an icon in a table cell, found by its cell's class
+    // The trigger is an icon in a table cell, found by its cell's class
     private static final String ICON = ".svgCell-icon";
     private static final String NEIGHBOUR = "popover-neighbour";
 
@@ -59,8 +58,7 @@ public final class InfoPopoverCellStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's title (the icon's tooltip), icon, maxWidth and maxHeight props have no
-        // InfoColumn equivalent: its icon is always SvgPresets.INFO
+        // InfoColumn's icon is always SvgPresets.INFO
         registry.component("Widgets/Popover/InfoPopoverCell", InfoPopoverCellStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Clicking the info icon opens the anchored popover; clicking outside closes it
@@ -118,8 +116,8 @@ public final class InfoPopoverCellStories {
         table.setRowData(0, Collections.singletonList("row"));
         table.setRowCount(1);
 
-        // React's play adds this button to the page itself; it is added here so that the spy
-        // that counts its clicks is registered as the story renders
+        // The neighbour button is added as the story renders, so that the spy that counts its
+        // clicks is registered then
         final Spy neighbourClicks = context.fn(NEIGHBOUR);
         final Button neighbour = new Button("Neighbour");
         neighbour.getElement().setId(NEIGHBOUR);

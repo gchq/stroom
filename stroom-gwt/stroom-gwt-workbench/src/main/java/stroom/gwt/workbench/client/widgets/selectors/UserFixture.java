@@ -25,9 +25,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/// A fake of Stroom's user search (`POST /userRef/v1/find`), the equivalent of the React stories'
-/// `fixtureLoadUsers`: a case-insensitive contains match of the quick filter's text on the users'
-/// display names and subject ids.
+/// A fake of Stroom's user search (`POST /userRef/v1/find`): a case-insensitive contains match of
+/// the quick filter's text on the users' display names and subject ids.
 ///
 /// Plain Java, so it is unit tested on the JVM.
 public final class UserFixture {
@@ -42,7 +41,7 @@ public final class UserFixture {
         this.users = users;
     }
 
-    /// The React stories' `FIXTURE_USERS`.
+    /// The stories' users.
     ///
     /// @return The fixture.
     public static UserFixture fixtureUsers() {

@@ -36,28 +36,27 @@ import stroom.security.shared.AppPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Index/IndexEditor` in the React Storybook, showing Stroom's real
-/// [IndexPresenter] (a Lucene index's tab: Shards for users with Manage Index Shards, Fields,
-/// Settings, Documentation and Permissions) with fake REST replies.
+/// The `App/Index/IndexEditor` stories, showing Stroom's real [IndexPresenter] (a Lucene index's
+/// tab: Shards for users with Manage Index Shards, Fields, Settings, Documentation and Permissions)
+/// with fake REST replies.
 ///
 /// As `IndexPlugin` does, the story fetches the document (`GET /index/v2/{uuid}`) and reads it into
-/// the editor ([DocEditors#open]). React's `LuceneIndexApi` seam is Stroom's `IndexResource`:
-/// `findFields` → `POST /index/v2/findFields`, `findShards` → `POST /index/v2/shard/find`;
-/// `fetchVolumeGroups` → `POST /index/volumeGroup/v2/find`; the app permissions React reads
-/// (`MANAGE_INDEX_SHARDS`) → the harness's app permissions. React's `lastFindCriteria` is the
-/// request spy's last `findFields` call.
+/// the editor ([DocEditors#open]). The fields are `POST /index/v2/findFields` (the plays check the
+/// last request with the request spy), the shards `POST /index/v2/shard/find` and the volume groups
+/// `POST /index/volumeGroup/v2/find`; the Shards tab needs the `MANAGE_INDEX_SHARDS` app
+/// permission, set with the harness's app permissions.
 public final class IndexEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(LuceneIndexDoc.TYPE, "index-events", "Events Index");
 
-    // IndexResource.fetch(): React's INITIAL_DOC
+    // IndexResource.fetch(): the index
     private static final String DOC = """
             {"type": "Index", "uuid": "index-events", "name": "Events Index", "description": "# Events index",
               "maxDocsPerShard": 1000000000, "shardsPerPartition": 1, "partitionBy": "MONTH",
               "partitionSize": 1, "timeField": "EventTime", "retentionDayAge": 365,
               "volumeGroupName": "Default"}""";
 
-    // IndexResource.findFields(): React's fields
+    // IndexResource.findFields(): the fields
     private static final String FIELDS = """
             {"values": [
                 {"fldName": "EventTime", "fldType": "DATE", "indexed": true, "stored": true,
@@ -68,7 +67,7 @@ public final class IndexEditorStories {
                   "denseVectorFieldConfig": {"vectorSimilarityFunction": "COSINE", "segmentSize": 1500}}],
               "pageResponse": {"offset": 0, "length": 3, "total": 3, "exact": true}}""";
 
-    // IndexResource.find() (shards): React's shard, with 2024-02-01T09:33:20Z as its commit time
+    // IndexResource.find() (shards): a shard, with 2024-02-01T09:33:20Z as its commit time
     private static final String SHARDS = """
             {"values": [{"id": 1, "nodeName": "node1", "partition": "2024-01", "status": "OPEN",
                 "documentCount": 12345, "fileSize": 500000, "volume": {"id": 1, "path": "/data/index/1"},
@@ -76,7 +75,7 @@ public final class IndexEditorStories {
                 "indexVersion": "9.11.1", "indexUuid": "index-events"}],
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}""";
 
-    // IndexVolumeGroupResource.find(): React's fetchVolumeGroups
+    // IndexVolumeGroupResource.find(): the volume groups
     private static final String VOLUME_GROUPS = """
             {"values": [{"id": 1, "name": "Default"}, {"id": 2, "name": "Fast"}, {"id": 3, "name": "Archive"}],
               "pageResponse": {"offset": 0, "length": 3, "total": 3, "exact": true}}""";
@@ -134,7 +133,7 @@ public final class IndexEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("2024-01")).toBeInTheDocument());
                     play.expect(play.getByRole("button", "Flush Selected Shards")).toHaveClass("disabled");
                     play.expect(play.getByRole("button", "Delete Selected Shards")).toHaveClass("disabled");
-                    // Differs from React: shards are selected with their row's tick box
+                    // Shards are selected with their row's tick box
                     play.click(play.within(play.getByText("2024-01").closest("tr")).querySelector(".tickBox"));
                     play.waitFor(() -> play.expect(play.getByRole("button", "Flush Selected Shards"))
                             .not().toHaveClass("disabled"));
@@ -215,7 +214,7 @@ public final class IndexEditorStories {
     private static Widget render(final StoryContext context, final boolean manageShards, final boolean readOnly) {
         final IndexResource resource = GWT.create(IndexResource.class);
         return DocEditors.render(context, FIXTURES, readOnly,
-                // React's fetchEffectiveAppPermissions: Manage Index Shards or nothing
+                // The app permissions: Manage Index Shards or nothing
                 builder -> {
                     if (manageShards) {
                         builder.appPermissions(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION);

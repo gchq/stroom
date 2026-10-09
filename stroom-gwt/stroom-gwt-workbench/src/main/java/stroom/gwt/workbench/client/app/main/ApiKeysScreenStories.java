@@ -34,13 +34,12 @@ import stroom.security.shared.AppPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/ApiKeysScreen` in the React Storybook, showing Stroom's real
-/// [ApiKeysPresenter] (the 'Manage API Keys' tab) with fake REST replies.
+/// Stories of `App/Main/ApiKeysScreen`, showing Stroom's real [ApiKeysPresenter] (the 'Manage API
+/// Keys' tab) with fake REST replies.
 ///
-/// The React story's `ApiKeyApi` becomes routes for Stroom's `ApiKeyResource`: `find` →
-/// `POST /apikey/v2/find` and `update` → `PUT /apikey/v2/{id}` (an echo; its recorder becomes a
-/// check on the request spy). The user holds `MANAGE_USERS_PERMISSION`, so the Owner column is
-/// shown, as React's fixture. The presenter comes from GIN and is opened as `ApiKeysPlugin` opens it
+/// The stories answer Stroom's `ApiKeyResource`: `POST /apikey/v2/find` and `PUT /apikey/v2/{id}`
+/// (an echo, checked on the request spy). The user holds `MANAGE_USERS_PERMISSION`, so the Owner
+/// column is shown. The presenter comes from GIN and is opened as `ApiKeysPlugin` opens it
 /// (refreshed).
 public final class ApiKeysScreenStories {
 
@@ -76,7 +75,7 @@ public final class ApiKeysScreenStories {
                     play.expect(play.getByText("Alice Anderson")).toBeInTheDocument();
                     play.expect(play.getByText("SHA3-256")).toBeInTheDocument();
                     // Double-click the key: 'Edit API key', rename, OK.
-                    // Differs from React: Stroom's dialogs have no role="dialog"
+                    // Stroom's dialogs have no role="dialog"
                     play.dblClick(play.getByText("CI pipeline key"));
                     final Play dialog = screen.within(screen.findByText("Edit API key").closest(StroomDom.DIALOG));
                     final Query name = dialog.getByLabelText("API Key Name");

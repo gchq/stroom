@@ -44,12 +44,12 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Stories for Stroom's [DocRefCell], matching `Widgets/Cell Renderers/DocRefCell` in the React
-/// Storybook. Each cell is a `CellWidget` in React's `CellBox` (see [CellRendererWidgets]).
+/// Stories for Stroom's [DocRefCell]. Each cell is a `CellWidget` in a box (see
+/// [CellRendererWidgets]).
 ///
-/// React's `onOpen` is Stroom's [OpenDocumentEvent], which the cell fires on its event bus. React's
-/// `onCopy` has no GWT equivalent: the cell copies the name to the clipboard itself, so the story
-/// reports a mouse down on the copy button (as the cell sees it) to the `onCopy` spy.
+/// The `onOpen` spy reports Stroom's [OpenDocumentEvent], which the cell fires on its event bus.
+/// The cell copies the name to the clipboard itself, so the story reports a mouse down on the copy
+/// button (as the cell sees it) to the `onCopy` spy.
 public final class DocRefCellStories {
 
     private static final String ON_OPEN = "onOpen";
@@ -74,7 +74,7 @@ public final class DocRefCellStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Cell Renderers/DocRefCell", DocRefCellStories.class)
                 .layout(StoryLayout.CENTERED)
-                // No args: React's meta only sets `docRef: null`, and every story has its own render
+                // No args: every story has its own render
                 // A feed, a pipeline and a dictionary reference (with type icons). Hover a row to
                 // reveal the copy / open buttons. The broken ref has no uuid.
                 .story("Basic", DocRefCellStories::basic)
@@ -123,8 +123,8 @@ public final class DocRefCellStories {
         final FlowPanel column = StoryPanels.column(8);
         for (final DocRef docRef : List.of(FEED_REF, PIPELINE_REF, DICTIONARY_REF, BROKEN_REF)) {
             final FlowPanel box = cellBox(cell, docRef);
-            // Differs from React: there is no onCopy callback (the cell copies to the clipboard), so the
-            // story reports the mouse down that the cell copies on
+            // The cell copies to the clipboard itself, so the story reports the mouse down that the
+            // cell copies on
             box.addDomHandler(event -> {
                 if (CellRendererWidgets.targetHasClassName(event.getNativeEvent(), COPY_CLASS_NAME)) {
                     onCopy.call(docRef.getName());
@@ -141,7 +141,7 @@ public final class DocRefCellStories {
         return CellRendererWidgets.cellBox(new CellWidget<>(cell, docRef), CELL_WIDTH_PX);
     }
 
-    /// React's monospace list of `docRefContextMenuItems(FEED_REF)`.
+    /// A monospace list of the context menu items of `FEED_REF`.
     private static Widget contextMenuItems() {
         final DocRefCell<DocRef> cell = new DocRefCell.Builder<DocRef>()
                 .eventBus(new SimpleEventBus())
@@ -175,7 +175,7 @@ public final class DocRefCellStories {
         return panel;
     }
 
-    /// The label of a menu item, as React's story shows it (HTML, as GWT's menu shows the text).
+    /// The label of a menu item (HTML, as GWT's menu shows the text).
     private static String label(final Item item) {
         if (item instanceof MenuItem) {
             return ((MenuItem) item).getText().asString();

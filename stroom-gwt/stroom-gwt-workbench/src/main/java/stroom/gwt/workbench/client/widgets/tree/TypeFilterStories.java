@@ -41,14 +41,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-/// Stories for Stroom's [TypeFilterPresenter], matching `Widgets/Tree/TypeFilter` in the React
-/// Storybook: the explorer's popup of document types to show, each with a tick box, under an
-/// "All / None" row.
+/// Stories for Stroom's [TypeFilterPresenter]: the explorer's popup of document types to show, each
+/// with a tick box, under an "All / None" row.
 public final class TypeFilterStories {
 
     private static final String ON_INCLUDED_TYPES_CHANGE = "onIncludedTypesChange";
     private static final String ON_CLOSE = "onClose";
-    // The React stories' FIXTURE_DOC_TYPES
+    // The document types the stories offer
     private static final String[] FIXTURE_DOC_TYPES = {
             "Folder", "Feed", "Pipeline", "XSLT", "Dashboard", "Query", "Dictionary", "Index"};
 
@@ -89,7 +88,7 @@ public final class TypeFilterStories {
             }
         }
 
-        // Differs from React: a GWT button with the React story's `icon-button` class
+        // A GWT button with the `icon-button` class
         final Button button = new Button("Type filter");
         button.setStyleName("icon-button");
         final Label echo = new Label();
@@ -123,8 +122,8 @@ public final class TypeFilterStories {
             update.run();
             onIncludedTypesChange.call(echo.getText());
         }));
-        // As NavigationPresenter shows it: by its button, hidden by clicking outside it or (here,
-        // as the React story toggles it) the button
+        // As NavigationPresenter shows it: by its button, hidden by clicking outside it or (here)
+        // the button
         final boolean[] showing = {false};
         harness.addRegistration(harness.getEventBus().addHandler(HidePopupEvent.getType(), event -> {
             if (event.getPresenterWidget() == presenter) {

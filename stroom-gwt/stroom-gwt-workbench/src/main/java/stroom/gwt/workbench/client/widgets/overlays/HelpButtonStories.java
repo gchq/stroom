@@ -28,8 +28,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [HelpButton], matching `Widgets/Overlays/HelpButton` in the React
-/// Storybook. Its help popup is shown by Stroom's `HelpManager`.
+/// Stories for Stroom's [HelpButton]. Its help popup is shown by Stroom's `HelpManager`.
 public final class HelpButtonStories {
 
     private HelpButtonStories() {
@@ -54,8 +53,8 @@ public final class HelpButtonStories {
                 });
     }
 
-    /// A help button as React's `<HelpButton heading content>` makes one: its title falls back to
-    /// the heading, as `HelpButton.create(title)` is given in Stroom.
+    /// A help button with a heading and content: its title is the heading, as
+    /// `HelpButton.create(title)` is given in Stroom.
     private static HelpButton helpButton(final String heading, final String html) {
         final HelpButton helpButton = HelpButton.create(heading);
         helpButton.setHelpContent(heading, SafeHtmlUtils.fromTrustedString(html));

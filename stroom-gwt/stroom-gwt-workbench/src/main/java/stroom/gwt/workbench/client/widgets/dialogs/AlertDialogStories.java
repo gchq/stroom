@@ -32,12 +32,11 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's alert, confirmation and prompt dialogs, matching
-/// `Widgets/Dialogs/AlertDialog` in the React Storybook.
+/// Stories for Stroom's alert, confirmation and prompt dialogs.
 ///
 /// A Stroom screen shows these by firing `AlertEvent`, `ConfirmEvent` or `PromptEvent`, which
-/// Stroom's `AlertPlugin` (with `CommonAlertPresenter`) and `PromptPresenter` handle; the React
-/// `useAlerts()` controller is the port of that. The stories fire the same events.
+/// Stroom's `AlertPlugin` (with `CommonAlertPresenter`) and `PromptPresenter` handle. The stories
+/// fire the same events.
 public final class AlertDialogStories {
 
     private static final String DETAIL = "java.lang.RuntimeException: boom\n"
@@ -52,7 +51,6 @@ public final class AlertDialogStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // The React meta's `alerts` arg is a stub that only satisfies the component's types
         registry.component("Widgets/Dialogs/AlertDialog", AlertDialogStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Info / Warning / Error alerts (Close button only)
@@ -113,7 +111,7 @@ public final class AlertDialogStories {
         final HasHandlers handlers = DialogWidgets.handlers(popups.getEventBus());
 
         final InlineLabel result = DialogWidgets.result();
-        // Differs from React: Stroom's PromptViewImpl uses the browser's own prompt
+        // Stroom's PromptViewImpl uses the browser's own prompt
         // (Window.prompt), not a styled dialog, and so accepts blank input.
         final Widget button = DialogWidgets.button("Show prompt", DialogWidgets.PRIMARY, event -> PromptEvent.fire(
                 handlers,

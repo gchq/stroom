@@ -27,15 +27,14 @@ import stroom.svg.shared.SvgImage;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for the Stroom infinity logo, shown at the top of the login form, matching
-/// `Widgets/Display/InfinityLogo` in the React Storybook.
+/// Stories for the Stroom infinity logo, shown at the top of the login form.
 ///
 /// There is no logo widget in GWT: the stories build it as Stroom's `LoginViewImpl` does, an
 /// [SvgImage#INFINITY_LOGO] in a `LoginViewUserImage` panel inside a
 /// `LoginViewUserImageContainer` panel.
 public final class InfinityLogoStories {
 
-    // Arg names, the same as the React InfinityLogo's props
+    // Arg names
     private static final String SIZE = "size";
 
     private InfinityLogoStories() {

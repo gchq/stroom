@@ -23,19 +23,18 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 /// The panes and frame shared by the `Widgets/Layout/SplitLayoutPanel` and
-/// `Widgets/Layout/ThinSplitLayoutPanel` stories, and the ways the React stories configure the
-/// split, applied to Stroom's split panels (both [DockLayoutPanel]s) as Stroom's `.ui.xml` files
-/// do.
+/// `Widgets/Layout/ThinSplitLayoutPanel` stories, and the ways the stories configure the split,
+/// applied to Stroom's split panels (both [DockLayoutPanel]s) as Stroom's `.ui.xml` files do.
 final class SplitPanes {
 
-    /// React's default `initialFirstSize`.
+    /// The docked pane's default size.
     static final double DEFAULT_SIZE = 300;
 
     private SplitPanes() {
         // Static utility
     }
 
-    /// The React stories' left (first) pane.
+    /// The left (first) pane.
     ///
     /// @param hint The second line of text, which differs between the two components' stories.
     /// @return The pane.
@@ -45,14 +44,14 @@ final class SplitPanes {
         return pane;
     }
 
-    /// The React stories' right (second) pane.
+    /// The right (second) pane.
     ///
     /// @return The pane.
     static Widget rightPane() {
         return pane("Right panel", "Content goes here");
     }
 
-    /// Equivalent of the React stories' `frame`: 300px high with a rounded border.
+    /// The stories' frame: 300px high with a rounded border.
     ///
     /// @param split The split panel, which fills the frame.
     /// @return The frame.
@@ -70,13 +69,13 @@ final class SplitPanes {
         return frame;
     }
 
-    /// Lays the two panes out as the React story's props say, as a `.ui.xml` would with
+    /// Lays the two panes out as a story asks, as a `.ui.xml` would with
     /// `<g:west size="N">`/`<g:north>`/`<g:east>` and `<g:center>`.
     ///
     /// @param split       The split panel.
-    /// @param vertical    React's `orientation="vertical"`.
-    /// @param anchorEnd   React's `anchorEnd`: the second pane is the docked one.
-    /// @param size        React's `initialFirstSize` in pixels.
+    /// @param vertical    Whether the panes are one above the other.
+    /// @param anchorEnd   Whether the second pane is the docked one.
+    /// @param size        The docked pane's size in pixels.
     /// @param leftHint    The second line of the left pane's text.
     /// @return The docked pane, e.g. for setting its minimum size.
     static Widget layout(final DockLayoutPanel split,

@@ -36,13 +36,13 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Editors/StatisticStoreEditor` in the React Storybook, showing Stroom's
-/// real `StatisticsDataSourcePresenter` (a statistic store's editor tab: Settings, Fields, Custom
+/// The `App/Editors/StatisticStoreEditor` stories, showing Stroom's real
+/// `StatisticsDataSourcePresenter` (a statistic store's editor tab: Settings, Fields, Custom
 /// Roll-ups, Documentation and Permissions) with fake REST replies.
 ///
 /// As `StatisticsPlugin` does, the story fetches the document (`GET /statistic/v1/{uuid}`), checks
-/// the user may edit it and reads it into the editor. React's `docPermission` seam is the
-/// Permissions tab's `POST /permission/doc/v1/fetchDocumentUserPermissions`.
+/// the user may edit it and reads it into the editor. The Permissions tab asks
+/// `POST /permission/doc/v1/fetchDocumentUserPermissions`.
 public final class StatisticStoreEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(StatisticStoreDoc.TYPE, "stat-1", "My Statistic");
@@ -128,7 +128,7 @@ public final class StatisticStoreEditorStories {
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveClass("disabled");
                     play.click(play.getByRole("button", "New Field"));
-                    // Differs from React: the name's text box is identified as 'statisticsFieldName'
+                    // The name's text box is identified as 'statisticsFieldName'
                     final Query input = nameInput(screen);
                     play.type(input, "app");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
@@ -177,7 +177,7 @@ public final class StatisticStoreEditorStories {
                 .story("CustomRollUps", context -> render(context, false))
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
-                    // Differs from React: GWT's headers are <th> without a columnheader role
+                    // The headers are found by their text in the <th> cells
                     play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
                     play.expect(play.getByText("user", "th, th *")).toBeInTheDocument();
                     final Query save = play.getByRole("button", "Save");
@@ -202,7 +202,7 @@ public final class StatisticStoreEditorStories {
                 .story("RemovingTheLastRollUpReSeedsIt", context -> render(context, false))
                 .withPlay(play -> {
                     openTab(play, "Custom Roll-ups");
-                    // Differs from React: GWT's rows are the grid's <tr>s
+                    // The rows are the grid's <tr>s
                     play.waitFor(() -> play.expect(play.querySelectorAll(StroomDom.GRID_ROW)).toHaveLength(1));
                     play.click(play.querySelectorAll(StroomDom.GRID_ROW + " td").nth(0));
                     play.click(play.getByRole("button", "Remove roll-up permutation"));

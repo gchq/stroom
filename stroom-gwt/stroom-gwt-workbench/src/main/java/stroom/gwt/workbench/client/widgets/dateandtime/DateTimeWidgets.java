@@ -28,14 +28,14 @@ import com.google.gwt.user.client.ui.Widget;
 /// Helpers shared by the `Widgets/Date & Time/*` stories.
 final class DateTimeWidgets {
 
-    /// The name of the spy for React's `onChange` callback props.
+    /// The name of the spy for the widgets' value changes.
     static final String ON_CHANGE = "onChange";
 
     private DateTimeWidgets() {
         // Static utility
     }
 
-    /// Equivalent of React's `<p style={{marginTop: 8, fontSize: 12}}>`, showing the value.
+    /// A small paragraph (`margin-top: 8px`, `font-size: 12px`) showing the value.
     ///
     /// @param text The text.
     /// @return A label.

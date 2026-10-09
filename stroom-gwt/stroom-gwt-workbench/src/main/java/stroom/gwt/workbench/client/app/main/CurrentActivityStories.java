@@ -35,16 +35,16 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/currentActivity` in the React Storybook: whether a query needs the
-/// query info popup, given the current activity (GWT's `QueryInfoPresenter.isRequired`: required
-/// unless the activity has a `requireQueryInfo` property equal, ignoring case, to "false").
+/// Stories of `App/Main/currentActivity`: whether a query needs the query info popup, given the
+/// current activity (GWT's `QueryInfoPresenter.isRequired`: required unless the activity has a
+/// `requireQueryInfo` property equal, ignoring case, to "false").
 ///
-/// The React story calls the port's `requiresQueryInfo` function directly. Stroom's is a private
-/// method of [QueryInfoPresenter], used by its `show` method, so the story asks six real
-/// `QueryInfoPresenter`s (each with its own [CurrentActivity]) to show the popup, with the query
-/// info popup enabled in the UI config, and records, in the `requiresQueryInfo` spy, whether each
-/// shows the popup (required) or goes straight on (not required). The current activities are a
-/// sequence of replies to `GET /activity/v1/current`, in the order the presenters ask for them.
+/// Stroom's rule is a private method of [QueryInfoPresenter] (`isRequired`), used by its `show`
+/// method, so the story asks six real `QueryInfoPresenter`s (each with its own
+/// [CurrentActivity]) to show the popup, with the query info popup enabled in the UI config, and
+/// records, in the `requiresQueryInfo` spy, whether each shows the popup (required) or goes
+/// straight on (not required). The current activities are a sequence of replies to
+/// `GET /activity/v1/current`, in the order the presenters ask for them.
 public final class CurrentActivityStories {
 
     /// The name of the spy recording each case's result.
@@ -108,7 +108,7 @@ public final class CurrentActivityStories {
                 .build();
         harness.fn(REQUIRES_QUERY_INFO);
 
-        // As the React story renders
+        // A heading for the cases
         final HTML text = new HTML("requiresQueryInfo &mdash; required unless the activity sets "
                 + "<code>requireQueryInfo=false</code>.");
         text.getElement().getStyle().setProperty("fontFamily", "monospace");

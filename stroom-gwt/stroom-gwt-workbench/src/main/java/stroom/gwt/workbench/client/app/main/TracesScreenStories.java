@@ -31,14 +31,12 @@ import stroom.pathways.client.presenter.TracesPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/TracesScreen` in the React Storybook, showing Stroom's real
-/// [TracesPresenter] (the 'Traces' tab: the trace list and the selected trace's span waterfall) with
-/// fake REST replies.
+/// Stories of `App/Main/TracesScreen`, showing Stroom's real [TracesPresenter] (the 'Traces' tab:
+/// the trace list and the selected trace's span waterfall) with fake REST replies.
 ///
-/// The React story's `TracesApi` becomes routes for Stroom's `TracesResource` (`/traces/v2`):
-/// `findTraces` → `POST /findTracesWithHistogram`, `findTrace` → `POST /getSpans` (GWT pages a
-/// rooted trace's spans in tree order rather than fetching the whole trace). The tab is opened as
-/// `TracesPlugin` does for `ShowTracesEvent`, with the React story's `dataSourceRef`.
+/// The fixtures answer Stroom's `TracesResource` (`/traces/v2`): the traces
+/// (`POST /findTracesWithHistogram`) and a trace's spans (`POST /getSpans`, paged in tree order).
+/// The tab is opened as `TracesPlugin` does for `ShowTracesEvent`, with the story's data source.
 public final class TracesScreenStories {
 
     private static final DocRef DATA_SOURCE = new DocRef("PlanB", "ds1", "My PlanB store");

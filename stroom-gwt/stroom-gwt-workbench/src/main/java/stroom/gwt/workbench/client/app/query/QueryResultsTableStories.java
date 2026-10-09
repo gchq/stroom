@@ -22,19 +22,18 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// Stories matching `App/Query/QueryResultsTable` in the React Storybook, showing Stroom's real
-/// `QueryResultTablePresenter` (the results table) in a Query editor, as `App/Editors/QueryEditor`
-/// does, with fake REST replies: the React story's `result` is the table result of the search's
-/// reply (`POST /query/v1/search/{node}`).
+/// The `App/Query/QueryResultsTable` stories, showing Stroom's real `QueryResultTablePresenter`
+/// (the results table) in a Query editor, as `App/Editors/QueryEditor` does, with fake REST
+/// replies: the table's result is the table result of the search's reply
+/// (`POST /query/v1/search/{node}`).
 ///
-/// React's `columnMode: 'dashboard'` is the dashboard's `TablePresenter`, which shares the query
-/// table's header and cells (`ColumnHeaderCell` with its `FilterCell`, `TableRow` decoration); the
-/// story uses the query's table, as no story harness provides a dashboard yet.
-/// `DashboardExpressionEditor` is recorded as blocked in `react-story-status.json`.
+/// The dashboard's `TablePresenter` shares the query table's header and cells (`ColumnHeaderCell`
+/// with its `FilterCell`, `TableRow` decoration), so these stories use the query's table.
+/// `DashboardExpressionEditor` is in [stroom.gwt.workbench.client.app.dashboard.QueryResultsTableDashboardStories].
 public final class QueryResultsTableStories {
 
-    // React's ColumnFilterRow result: a wrapped, grouped Name column and a Count column with a
-    // column filter
+    // The ColumnFilterRow result: a wrapped, grouped Name column and a Count column with a column
+    // filter
     private static final RestFixtures FIXTURES = QueryEditorStories.searchFixtures(QueryFixtures.tableResult("table",
             """
                     [{"id": "f-name", "name": "Name", "format": {"type": "TEXT", "wrap": true}, "group": 0,
@@ -58,7 +57,7 @@ public final class QueryResultsTableStories {
                 // at or above their group level
                 .story("ColumnFilterRow", context -> QueryEditorStories.renderEditor(context, FIXTURES))
                 .withPlay(play -> {
-                    // Differs from React: the table is the query's, so the query is run first
+                    // The table is the query's, so the query is run first
                     play.click(play.findByRole("button", "Execute Query"));
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
                     final Query inputs = play.querySelectorAll(".dashboard-table-filter-cell-text");
@@ -67,7 +66,7 @@ public final class QueryResultsTableStories {
                     play.expect(play.querySelectorAll(".dashboard-table-filter-cell-disable-button")).toHaveLength(2);
                     final Query nameCell = play.getByText("alpha");
                     play.expect(nameCell).toHaveAttribute("title", "alpha");
-                    // React checks the cells' inline styles (el.style), as these do
+                    // The cells' inline styles (el.style) are checked
                     play.expect(nameCell.attribute("style")).toMatch("white-space:normal");
                     play.expect(nameCell.attribute("style")).toMatch("font-weight:bold");
                     play.expect(play.getByText("5").attribute("style")).not().toMatch("font-weight:bold");

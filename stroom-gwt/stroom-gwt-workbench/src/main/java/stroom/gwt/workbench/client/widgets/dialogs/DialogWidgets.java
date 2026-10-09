@@ -27,16 +27,16 @@ import com.google.web.bindery.event.shared.EventBus;
 /// Widgets shared by the `Widgets/Dialogs/*` stories.
 final class DialogWidgets {
 
-    /// The React stories' `Button variant="contained-primary"`.
+    /// The class of a primary button.
     static final String PRIMARY = "Button--contained-primary";
-    /// The React stories' `Button variant="contained-secondary"`.
+    /// The class of a secondary button.
     static final String SECONDARY = "Button--contained-secondary";
 
     private DialogWidgets() {
         // Static utility
     }
 
-    /// A Stroom button that opens a dialog, as the React stories' trigger buttons.
+    /// A Stroom button that opens a dialog.
     ///
     /// @param text         The button's text.
     /// @param variantClass The variant's style name, e.g. [#PRIMARY].
@@ -50,7 +50,7 @@ final class DialogWidgets {
         return button;
     }
 
-    /// The React stories' result echo, `<span style={{fontSize: '0.85rem'}}>`, hidden until set.
+    /// The result echo, a small (`0.85rem`) label, hidden until set.
     ///
     /// @return The label.
     static InlineLabel result() {

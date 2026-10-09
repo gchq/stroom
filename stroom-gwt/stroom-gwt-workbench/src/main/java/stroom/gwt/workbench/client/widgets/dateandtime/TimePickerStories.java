@@ -35,8 +35,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [TimeBox] (a text box for a time, whose clock icon opens the "Set Time"
-/// dialog, [TimePopup], used by e.g. the processing profile period dialog), matching
-/// `Widgets/Date & Time/TimePicker` in the React Storybook.
+/// dialog, [TimePopup], used by e.g. the processing profile period dialog).
 ///
 /// The dialog is shown with Stroom's `ShowPopupEvent`, so the stories use a [ScreenHarness] for
 /// its event bus and popup manager (no REST requests are made).
@@ -52,7 +51,7 @@ public final class TimePickerStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's value arg is only a default for its Controls; the stories render their own state
+        // No args: the stories render their own state
         registry.component("Widgets/Date & Time/TimePicker", TimePickerStories.class)
                 .layout(StoryLayout.CENTERED)
                 // A full HH:MM:SS time

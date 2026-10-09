@@ -33,11 +33,9 @@ import com.google.web.bindery.event.shared.SimpleEventBus;
 import java.util.Locale;
 
 /// Stories for Stroom's stepping controls, [StepControlPresenter] and [StepControlViewImpl],
-/// matching `Widgets/Buttons/StepControls` in the React Storybook.
-///
-/// The real presenter and view are used. React's `states` prop is the view's per-button enabled
-/// state (`StepControlView.setStepXxxEnabled`), and its `onStep`/`onFilter` callbacks are the
-/// presenter's `StepControlEvent` and `ChangeFilterEvent`.
+/// using the real presenter and view. Each story sets the view's per-button enabled state
+/// (`StepControlView.setStepXxxEnabled`), and the `onStep`/`onFilter` spies report the presenter's
+/// `StepControlEvent` and `ChangeFilterEvent`.
 public final class StepControlsStories {
 
     private static final String ON_STEP = "onStep";
@@ -68,18 +66,17 @@ public final class StepControlsStories {
                 // Initial state - every step button disabled until a stream is chosen (GWT initButtons)
                 .story("Initial", context -> {
                     final StepControlPresenter presenter = stepControls(context, false);
-                    // Differs from React: refresh is disabled too. React mirrors the old initButtons,
-                    // whose enabled refresh sent a step request with no stream (gwt-bugs #36).
+                    // Refresh is disabled too, as there is nothing to step until a stream is chosen
+                    // (gwt-bugs #36)
                     presenter.initButtons();
                     return presenter.getWidget();
                 })
                 // Busy - every button suppresses clicks while a step is in flight
                 .story("Busy", context -> {
                     final StepControlPresenter presenter = stepControls(context, true);
-                    // Differs from React: the GWT step controls have no busy state. While a step is
-                    // in flight Stroom's SteppingPresenter ignores step events (busyTranslating),
-                    // but the buttons stay enabled, so they don't get React's disabled class, and the
-                    // filter button still works.
+                    // The step controls have no busy state. While a step is in flight Stroom's
+                    // SteppingPresenter ignores step events (busyTranslating), but the buttons stay
+                    // enabled, and the filter button still works.
                     enableAll(presenter.getView());
                     return presenter.getWidget();
                 });
@@ -104,7 +101,7 @@ public final class StepControlsStories {
         return presenter;
     }
 
-    /// React's `ALL_ENABLED` states.
+    /// Enables every step button.
     private static void enableAll(final StepControlView view) {
         view.setStepFirstEnabled(true);
         view.setStepBackwardEnabled(true);

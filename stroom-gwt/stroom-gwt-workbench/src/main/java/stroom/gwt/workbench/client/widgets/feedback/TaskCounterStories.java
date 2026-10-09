@@ -38,16 +38,15 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Stories for Stroom's task counting, matching `Widgets/Feedback/TaskCounter` in the React
-/// Storybook.
+/// Stories for Stroom's task counting.
 ///
 /// Stroom has no task counter widget: a `TaskMonitorFactory` such as [SpinnerSmall] counts the
 /// tasks its [TaskMonitor]s start and end, and shows its spinner while the count is above zero.
 /// The stories start and end tasks with a [SpinnerSmall]'s monitor and show the count (kept by
-/// the story, as the spinner's is private) beside it as React's `TaskCounter` does.
+/// the story, as the spinner's is private) beside it.
 public final class TaskCounterStories {
 
-    // Arg names, the same as the React TaskCounter's props
+    // Arg names
     private static final String COUNT = "count";
 
     private TaskCounterStories() {
@@ -58,7 +57,6 @@ public final class TaskCounterStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's noun prop is omitted: it is only the React display's wording
         registry.component("Widgets/Feedback/TaskCounter", TaskCounterStories.class)
                 .layout(StoryLayout.CENTERED)
                 .argType(ArgType.number(COUNT).description("The number of tasks running (started with the "
@@ -90,7 +88,7 @@ public final class TaskCounterStories {
         final Runnable update = () -> isLoading.setText("isLoading: " + (counter.getCount() > 0));
         update.run();
 
-        // React's plain <button>s
+        // Plain buttons
         final Button start = new Button("Start task");
         start.addClickHandler(event -> {
             counter.start();
@@ -121,7 +119,7 @@ public final class TaskCounterStories {
 
         private TaskCounter() {
             panel.getElement().getStyle().setProperty("flexWrap", "nowrap");
-            // React's <span aria-live="polite">
+            // Announced by screen readers when it changes
             label.getElement().setAttribute("aria-live", "polite");
             updateLabel();
         }

@@ -16,7 +16,7 @@
 
 // Injected into the preview page by selftest.mjs: mounts each snippet, records the events fired
 // and reads the resulting state, the same way for the workbench's port (window.__workbenchDom) and
-// for the reference (window.__ref, React Storybook's storybook/test).
+// for the reference (window.__ref, Storybook's storybook/test).
 (function () {
   'use strict';
 

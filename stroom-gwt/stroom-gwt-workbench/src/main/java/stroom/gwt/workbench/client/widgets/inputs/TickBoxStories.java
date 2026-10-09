@@ -23,12 +23,10 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
-/// Stories matching `Widgets/Inputs/TickBox` in the React Storybook.
-///
-/// The React `TickBox` is a port of [CustomCheckBox] (the `SimpleTickBox` used in Stroom's
-/// forms), so that is what these stories show. A form's tick box is ticked or not (e.g. whether
-/// something is enabled), so it has no half-ticked state: that belongs to the tick box of Stroom's
-/// grids, which is smaller and has its own stories (`Widgets/Cell Renderers/TickBoxCell`).
+/// Stories for [CustomCheckBox], the `SimpleTickBox` used in Stroom's forms. A form's tick box is
+/// ticked or not (e.g. whether something is enabled), so it has no half-ticked state: that belongs
+/// to the tick box of Stroom's grids, which is smaller and has its own stories
+/// (`Widgets/Cell Renderers/TickBoxCell`).
 public final class TickBoxStories {
 
     private static final String ON_CHANGE = InputWidgets.ON_CHANGE;
@@ -46,8 +44,7 @@ public final class TickBoxStories {
         registry.component("Widgets/Inputs/TickBox", TickBoxStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Basic states - unchecked and checked (click to toggle)
-                // Differs from React: no indeterminate tick box, as a form's tick box has no
-                // half-ticked state
+                // No indeterminate tick box, as a form's tick box has no half-ticked state
                 .story("Basic", context -> StoryPanels.column(10,
                         checkBox(context, false, UNCHECKED),
                         checkBox(context, true, CHECKED)))

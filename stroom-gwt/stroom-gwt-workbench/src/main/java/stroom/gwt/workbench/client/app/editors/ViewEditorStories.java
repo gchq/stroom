@@ -35,18 +35,15 @@ import stroom.view.shared.ViewResource;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Editors/ViewEditor` in the React Storybook, showing Stroom's real
-/// [ViewPresenter] (a View's editor tab: Settings, Documentation and Permissions) with fake REST
-/// replies.
+/// The `App/Editors/ViewEditor` stories, showing Stroom's real [ViewPresenter] (a View's editor
+/// tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
-/// The React story passes the document and its seams as props; in Stroom, `ViewPlugin` fetches the
-/// document (`GET /view/v1/{uuid}`), checks the user may edit it and reads it into the editor, which
-/// the story does as the plugin does. React's `docPermission` seam is the Permissions tab's
-/// `POST /permission/doc/v1/fetchDocumentUserPermissions`; its empty `loadNodes` is never called
-/// (the doc pickers aren't opened), nor is the explorer's.
+/// `ViewPlugin` fetches the document (`GET /view/v1/{uuid}`), checks the user may edit it and reads
+/// it into the editor, which the story does as the plugin does. The Permissions tab asks
+/// `POST /permission/doc/v1/fetchDocumentUserPermissions`; the doc pickers and the explorer aren't
+/// opened.
 ///
-/// React's stateful harness (Save enabling as the document changes) is Stroom's own
-/// `DocTabPresenter` here; no story saves.
+/// Save is enabled by Stroom's own `DocTabPresenter` as the document changes; no story saves.
 public final class ViewEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(ViewDoc.TYPE, "view-1", "My View");
@@ -85,7 +82,7 @@ public final class ViewEditorStories {
                         play.waitFor(() -> play.expect(DocumentEditors.tab(play, label)).toBeInTheDocument());
                     }
                     // Settings shows the three GWT groups and the selected data source and pipeline.
-                    // Differs from React: the groups' captions are FormGroup labels
+                    // The groups' captions are FormGroup labels
                     play.expect(play.getByText("Data Source", "label")).toBeInTheDocument();
                     play.expect(play.getByText("Pipeline", "label")).toBeInTheDocument();
                     play.expect(play.getByText("Meta Filter")).toBeInTheDocument();

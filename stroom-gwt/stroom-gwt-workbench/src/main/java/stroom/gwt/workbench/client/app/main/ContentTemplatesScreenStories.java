@@ -36,14 +36,13 @@ import stroom.receive.content.client.presenter.ContentTemplateTabPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/ContentTemplatesScreen` in the React Storybook, showing Stroom's real
-/// [ContentTemplateTabPresenter] (the 'Content Templates' tab, with its 'Edit Template' dialog) with
-/// fake REST replies.
+/// Stories of `App/Main/ContentTemplatesScreen`, showing Stroom's real
+/// [ContentTemplateTabPresenter] (the 'Content Templates' tab, with its 'Edit Template' dialog)
+/// with fake REST replies.
 ///
-/// The React story's `ContentTemplateApi` becomes routes for Stroom's `ContentTemplateResource`
-/// (`/contentTemplates/v1/`): `fetch` → `GET`, `update` → `PUT` (an echo), `fetchFields` →
-/// `GET /fields`, and the pipeline picker's explorer requests ([TreeFixtures], `decorate`). Its recorder becomes checks
-/// on the request spy.
+/// The stories answer Stroom's `ContentTemplateResource` (`/contentTemplates/v1/`): `GET` (the
+/// templates), `PUT` (an echo) and `GET /fields`, checked on the request spy, and the pipeline
+/// picker's explorer requests ([TreeFixtures], `decorate`).
 public final class ContentTemplatesScreenStories {
 
     private static final String PATH = "/contentTemplates/v1";
@@ -119,9 +118,8 @@ public final class ContentTemplatesScreenStories {
                 .story("DetailPanels", ContentTemplatesScreenStories::render)
                 .withPlay(play -> {
                     play.findByText("My template");
-                    // Differs from React: GWT hides a FormGroup (display: none) rather than removing
-                    // it, and the panel has no 'contentTemplateDetail' class; its groups are found by
-                    // their labels
+                    // GWT hides a FormGroup (display: none) rather than removing it, so its groups
+                    // are found by their labels
                     final Query description = play.getByText("Description", "label");
                     final Query expression = play.getByText("Expression", "label");
                     // Nothing selected: both groups hidden

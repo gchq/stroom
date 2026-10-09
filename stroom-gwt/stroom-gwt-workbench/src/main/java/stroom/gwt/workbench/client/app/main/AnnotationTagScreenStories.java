@@ -37,17 +37,15 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories matching `App/Main/AnnotationTagScreen` in the React Storybook, showing Stroom's real
-/// [AnnotationTagPresenter] (the 'Annotation Labels/Statuses/Comments' tabs, with their create and
-/// edit dialogs) with fake REST replies.
+/// Stories of `App/Main/AnnotationTagScreen`, showing Stroom's real [AnnotationTagPresenter] (the
+/// 'Annotation Labels/Statuses/Comments' tabs, with their create and edit dialogs) with fake REST
+/// replies.
 ///
-/// The React story's `AnnotationTagApi` becomes routes for Stroom's `AnnotationResource`:
-/// `find` → `POST /annotation/v1/findAnnotationTags` (a sequence where a tag is created),
-/// `create` → `POST /annotation/v1/createAnnotationTag` (replying with the new tag),
-/// `update` → `PUT /annotation/v1/updateAnnotationTag` (an echo); its recorder becomes checks on
-/// the request spy. The `docPermission` seam is the permissions popup's
-/// `POST /permission/doc/v1/fetchDocumentUserPermissions` (no permissions). The tab is opened as
-/// `AnnotationPlugin` does: label, tag type, `refresh()`.
+/// The stories answer Stroom's `AnnotationResource`: `POST /annotation/v1/findAnnotationTags` (a
+/// sequence where a tag is created), `POST /annotation/v1/createAnnotationTag` (replying with the
+/// new tag) and `PUT /annotation/v1/updateAnnotationTag` (an echo), checked on the request spy, and
+/// the permissions popup's `POST /permission/doc/v1/fetchDocumentUserPermissions` (no permissions).
+/// The tab is opened as `AnnotationPlugin` does: label, tag type, `refresh()`.
 public final class AnnotationTagScreenStories {
 
     private static final String FIND_PATH = "/annotation/v1/findAnnotationTags";
@@ -104,7 +102,7 @@ public final class AnnotationTagScreenStories {
                     play.click(play.getByText("Open"));
                     play.click(play.getByTitle("Edit"));
                     final Play edit = screen.within(screen.findByText("Edit Status - Open").closest(StroomDom.DIALOG));
-                    // Differs from React: GWT's button reads 'Change Permissions', as does the
+                    // GWT's button reads 'Change Permissions', as does the
                     // popup's caption, so the popup is found by its title
                     play.click(edit.getByRole("button", StroomDom.button("Change Permissions")));
                     play.waitFor(() -> play.expect(screen.getByText("Change Permissions", StroomDom.DIALOG_TITLE))

@@ -33,26 +33,24 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Editors/DataGenEditor` in the React Storybook, showing Stroom's real
-/// [DataGenPresenter] (a Data Generator's tab: Settings, Execution, Documentation and
-/// Permissions) with fake REST replies.
+/// The `App/Editors/DataGenEditor` stories, showing Stroom's real [DataGenPresenter] (a Data
+/// Generator's tab: Settings, Execution, Documentation and Permissions) with fake REST replies.
 ///
 /// As `DataGenPlugin` does, the story fetches the document (`GET /datagen/v1/{uuid}`) and reads it
-/// into the editor ([DocEditors#open]). React's `scheduleApi` seam is Stroom's
-/// `ExecutionScheduleResource`: `find` → `POST /executionSchedule/v1/fetchExecutionSchedule`,
-/// `fetchHistory` → `fetchExecutionHistory`, `fetchTracker` → `fetchTracker`; `docPermission` →
-/// the Permissions tab's routes.
+/// into the editor ([DocEditors#open]). The Execution tab asks Stroom's `ExecutionScheduleResource`
+/// (`POST /executionSchedule/v1/fetchExecutionSchedule`, `fetchExecutionHistory` and
+/// `fetchTracker`), and the Permissions tab has its own routes.
 public final class DataGenEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(DataGenDoc.TYPE, "datagen-1", "My Generator");
 
-    // DataGenResource.fetch(): React's DATAGEN_DOC
+    // DataGenResource.fetch(): the data generator
     private static final String DOC = """
             {"type": "DataGen", "uuid": "datagen-1", "name": "My Generator",
               "feed": {"type": "Feed", "uuid": "feed-1", "name": "My Feed"},
               "template": "line1\\nline2\\n", "description": "# DataGen docs"}""";
 
-    // React's SCHEDULE
+    // An execution schedule
     private static final String SCHEDULE = """
             {"uuid": "sched-1", "name": "Nightly", "enabled": true, "nodeName": "node1",
               "schedule": {"type": "CRON", "expression": "0 0 0 * * ?"},
@@ -75,14 +73,14 @@ public final class DataGenEditorStories {
             .put("/datagen/v1/datagen-1", request -> RestReply.json(request.getBody()))
             .post("/executionSchedule/v1/fetchExecutionSchedule", RestReply.json(SCHEDULES))
             .post("/executionSchedule/v1/fetchExecutionHistory", RestReply.json(HISTORY))
-            // NodeResource.listAllNodes(): React's listNodes
+            // NodeResource.listAllNodes()
             .get("/node/v1/all", RestReply.json("[\"node1\", \"node2\"]"))
             .post("/scheduledTime/v1", RestReply.json("{\"nextScheduledTimeMs\": 1700086400000}"))
             .post("/executionSchedule/v1/fetchTracker",
                     RestReply.json("{\"lastEffectiveExecutionTimeMs\": 1700000000000}"))
             .build();
 
-    // Differs from React: Stroom's Ace editor's text area, which React's port copies
+    // Stroom's Ace editor's text area
     private static final String ACE_INPUT = ".ace_text-input";
 
     private DataGenEditorStories() {
@@ -118,10 +116,10 @@ public final class DataGenEditorStories {
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Execution")).toBeInTheDocument());
                     play.click(DocEditors.tab(play, "Execution"));
                     play.waitFor(() -> play.expect(play.getByText("Nightly")).toBeInTheDocument());
-                    // Differs from React: there is no 'Execution history' heading; the history
-                    // list is the second grid, headed by its columns
+                    // There is no 'Execution history' heading; the history list is the second grid,
+                    // headed by its columns
                     play.expect(play.getByText("Execution Time")).toBeInTheDocument();
-                    // Differs from React: the button's name is its title, 'Add Execution Schedule'
+                    // The button's name is its title, 'Add Execution Schedule'
                     play.click(play.getByRole("button", "Add Execution Schedule"));
                     play.waitFor(() -> play.expect(screen.getByText("Create Schedule", StroomDom.DIALOG_TITLE))
                             .toBeInTheDocument());

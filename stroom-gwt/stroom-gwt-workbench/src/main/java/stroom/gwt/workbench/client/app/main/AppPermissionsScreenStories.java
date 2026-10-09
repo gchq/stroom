@@ -37,19 +37,18 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories matching `App/Main/AppPermissionsScreen` in the React Storybook, showing Stroom's real
-/// [AppPermissionsPresenter] (the 'Application Permissions' tab) with fake REST replies.
+/// Stories of `App/Main/AppPermissionsScreen`, showing Stroom's real [AppPermissionsPresenter] (the
+/// 'Application Permissions' tab) with fake REST replies.
 ///
-/// | React seam | Stroom REST endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `fetchAppUserPermissions` | `POST /permission/app/v1/fetchAppUserPermissions` (none for a quick filter of 'zzz') |
-/// | `getReport` | `POST /permission/app/v1/getAppUserPermissionsReport` |
-/// | `changeAppPermission` (its recorder) | `POST /permission/app/v1/changeAppPermission` (the request spy) |
-/// | `openScreen` | a spy on Stroom's `OpenApiKeysScreenEvent` |
+/// | `POST /permission/app/v1/fetchAppUserPermissions` | the users (none for a quick filter of 'zzz') |
+/// | `POST /permission/app/v1/getAppUserPermissionsReport` | a user's permissions |
+/// | `POST /permission/app/v1/changeAppPermission` (the request spy) | changing a permission |
+/// | a spy on Stroom's `OpenApiKeysScreenEvent` | opening a user's API keys |
 ///
-/// The user holds `MANAGE_USERS_PERMISSION` (none for `ReadOnlyWithoutManageUsers`), as React's
-/// app permissions fixture. The presenter comes from GIN and is opened as `AppPermissionsPlugin`
-/// opens it (refreshed).
+/// The user holds `MANAGE_USERS_PERMISSION` (none for `ReadOnlyWithoutManageUsers`). The presenter
+/// comes from GIN and is opened as `AppPermissionsPlugin` opens it (refreshed).
 public final class AppPermissionsScreenStories {
 
     /// The name of the spy recording the screens opened from the action menu.
@@ -140,8 +139,7 @@ public final class AppPermissionsScreenStories {
                 });
     }
 
-    /// Differs from React: the edit grid has no class of its own ('.appPermissionsEditGrid'); it
-    /// is the form group holding the 'Granted' column.
+    /// The edit grid has no class of its own; it is the form group holding the 'Granted' column.
     ///
     /// @return The grid of the selected principal's permissions.
     private static Play editGrid(final Play play) {

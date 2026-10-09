@@ -23,9 +23,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [MySplitLayoutPanel], matching `Widgets/Layout/SplitLayoutPanel` in the React Storybook.
-///
-/// The React `SplitLayoutPanel` is a port of [MySplitLayoutPanel], the split panel with a wide (7px) dragger.
+/// Stories for Stroom's [MySplitLayoutPanel], the split panel with a wide (7px) dragger.
 public final class SplitLayoutPanelStories {
 
     private static final String HINT = "Wide 7px dragger →";
@@ -38,8 +36,8 @@ public final class SplitLayoutPanelStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's maxFirstSize (default 800px) has no GWT equivalent: Stroom's split panels only
-        // limit a drag to the panel's own size. None of the React stories set it.
+        // Stroom's split panels have no maximum size: they only limit a drag to the panel's own
+        // size.
         registry.component("Widgets/Layout/SplitLayoutPanel", SplitLayoutPanelStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 .story("Horizontal", context -> {

@@ -39,15 +39,15 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.SortIcon;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/AccountsScreen` in the React Storybook, showing Stroom's real
-/// [AccountsPresenter] (the 'Manage Accounts' tab) with fake REST replies.
+/// Stories of `App/Main/AccountsScreen`, showing Stroom's real [AccountsPresenter] (the 'Manage
+/// Accounts' tab) with fake REST replies.
 ///
-/// | React seam | Stroom REST endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `AccountApi.find` (its recorder of the criteria) | `POST /account/v1/search` (the request spy) |
-/// | `AccountApi.update` (its recorder of the changes) | `PUT /account/v1/{id}` (the request spy) |
-/// | `users.fetchBySubjectId` | `GET /users/v1/fetchBySubjectId/{subjectId}` |
-/// | `openScreen` | a spy on Stroom's `OpenUsersAndGroupsScreenEvent` |
+/// | `POST /account/v1/search` (the request spy) | the accounts, by the criteria |
+/// | `PUT /account/v1/{id}` (the request spy) | changing an account |
+/// | `GET /users/v1/fetchBySubjectId/{subjectId}` | an account's user |
+/// | a spy on Stroom's `OpenUsersAndGroupsScreenEvent` | opening the user |
 ///
 /// The user holds `MANAGE_USERS_PERMISSION`, which `AccountsPlugin` requires. The presenter comes
 /// from GIN and is opened as `AccountsPlugin.open` opens it (refreshed).
@@ -106,14 +106,13 @@ public final class AccountsScreenStories {
                             RequestMatcher.get("/users/v1/fetchBySubjectId/admin").toSpyMatcher());
                     expectNoProblems(play);
                 })
-                // React: with no openScreen the cell is plain text
+                // The User Id cell always has its open icon
                 .story("UserIdPlainWithoutTarget", AccountsScreenStories::render)
                 .withPlay(play -> {
                     play.findByText("admin");
                     final Play row = play.within(play.getByText("admin").closest("tr"));
-                    // Differs from React: Stroom's grid always has somewhere to open the user (the
-                    // Users and Groups screen), so the User Id cell always has its open icon; React's
-                    // plain-text cell (no openScreen) has no GWT equivalent
+                    // Stroom's grid always has somewhere to open the user (the
+                    // Users and Groups screen), so the User Id cell always has its open icon
                     play.expect(row.querySelector(StroomDom.COMMAND_LINK_OPEN)).toBeInTheDocument();
                     expectNoProblems(play);
                 })
@@ -128,7 +127,7 @@ public final class AccountsScreenStories {
                     play.expect(play.getByText("admin@example.com")).toBeInTheDocument();
 
                     // Double-click the account: 'Edit Account', rename, OK.
-                    // Differs from React: Stroom's dialogs have no role="dialog"
+                    // Stroom's dialogs have no role="dialog"
                     play.dblClick(row.getByText("admin@example.com"));
                     final Play screen = play.screen();
                     final Play dialog = screen.within(screen.findByText("Edit Account").closest(StroomDom.DIALOG));
@@ -137,7 +136,7 @@ public final class AccountsScreenStories {
                     play.type(first, "Administrator");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     // Only the changed value is sent.
-                    // Differs from React: RestyGWT sends the members left alone as null
+                    // RestyGWT sends the members left alone as null
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             SecurityPlays.withOnlyValues(RequestMatcher.put("/account/v1/1"),
                                     "{\"firstName\": \"Administrator\"}")
@@ -165,7 +164,7 @@ public final class AccountsScreenStories {
                             .toSatisfy("sorts by User Id, ascending", body -> body != null
                                     && JsonValues.jsonContains((String) body,
                                     "{\"sortList\": [{\"id\": \"userid\", \"desc\": false}]}")));
-                    // Differs from React: GWT's headers have no aria-sort; the sorted header shows
+                    // GWT's headers have no aria-sort; the sorted header shows
                     // the 'Sort Ascending' icon
                     play.expect(play.within(play.getByText("User Id").closest("th"))
                             .getByTitle(SortIcon.SORT_ASCENDING)).toBeInTheDocument();

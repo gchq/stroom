@@ -38,19 +38,15 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.EnumSet;
 
-/// Stories matching `App/IdP/CurrentPassword` in the React Storybook, showing Stroom's real 'Enter
-/// Your Current Password' dialog (`CurrentPasswordPresenter` with `CurrentPasswordViewImpl`), the
-/// first step of changing a signed in user's password from the user menu, with fake REST replies.
-///
-/// | React seam | Stroom |
-/// |---|---|
-/// | `confirmPassword` | `POST /authentication/v1/confirmPassword` (after 200ms) |
-/// | `onConfirmed` | none: Stroom goes on to the 'Change Password' dialog itself |
-/// | `onCancel` | the dialog's Cancel |
+/// The `App/IdP/CurrentPassword` stories, showing Stroom's real 'Enter Your Current Password'
+/// dialog (`CurrentPasswordPresenter` with `CurrentPasswordViewImpl`), the first step of changing a
+/// signed in user's password from the user menu, with fake REST replies. The password is checked
+/// with `POST /authentication/v1/confirmPassword` (replying after 200ms); once it is confirmed,
+/// Stroom goes on to the 'Change Password' dialog itself.
 ///
 /// As in `App/Main/ChangePasswordDialog`, the presenter is created with `new`, with Stroom's
-/// `CurrentUser` holding the `admin` user. React's stories have no play functions: their plays here
-/// check the empty dialog, so it can still be tried by hand.
+/// `CurrentUser` holding the `admin` user. The plays only check the empty dialog, so it can still
+/// be tried by hand.
 public final class CurrentPasswordStories {
 
     private static final String CAPTION = "Enter Your Current Password";

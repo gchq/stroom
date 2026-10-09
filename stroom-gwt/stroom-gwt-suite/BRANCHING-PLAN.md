@@ -8,17 +8,17 @@ This is the plan for everything else. **It is research-first on purpose**: the n
 measured against `oracles/gwt-inventory.csv` and the GWT client source, not estimated, because a plan
 built on a tilde produces a suite that stops where the tilde was.
 
-Its companion is [oracles/reachability-graph.md](../oracles/reachability-graph.md) — **generated** by
+Its companion is [oracles/reachability-graph.md](oracles/reachability-graph.md) — **generated** by
 `tools/build-reachability-graph.mjs`, so it is re-derived rather than maintained.
 
 ## The target is 414 — and 414 decomposes into 196 doors
 
 `gwt-inventory.csv` holds **414 presenters** in `Screen/Dialog` + `Shared Screen/Dialog` across 45
-areas, essentially all ported (395 `ported`, 7 `done`, 12 `n/a`). That is the coverage target.
+areas. That is the coverage target.
 
 It is **not** 414 doors, and planning as though it were would send the crawler looking for 218 screens
 that do not exist as destinations. Joined against the source
-([reachability-graph.md](../oracles/reachability-graph.md)):
+([reachability-graph.md](oracles/reachability-graph.md)):
 
 | what it is | count | what the crawler does with it |
 | --- | ---: | --- |
@@ -72,7 +72,7 @@ They are not a random tail — most are reached by a mechanism the crawler does 
   `ContentStoreContentPackDetailsPresenter` opens `CredentialsManagerDialogPresenter`, a different
   class with a similar name. So it is **bound but unwired**: a screen that cannot be covered because
   nothing opens it, and no crawler will ever find it. Logged as
-  [gwt-bugs.md](../stroom-gwt/ISSUES.md) **#32** and excluded from the denominator rather than carried
+  [ISSUES.md](../ISSUES.md) gwt-bugs **#32** and excluded from the denominator rather than carried
   as a permanent false negative.
 * **`SslConfigPresenter`, `IndexVolumeListPresenter`, `ReportDuplicateManagementPresenter`** — all
   `MyPresenterWidget`, i.e. embedded panels whose host does not name them textually. Almost certainly
@@ -198,8 +198,8 @@ run or only when those features change.
 A screenshot proves a screen renders. It says nothing about what happens when you select a row, sort
 a column, type in a filter, or press one of the buttons that is currently greyed out.
 
-[stroom-ui-react/porting/screen-profiles.md](../../../stroom-ui-react/porting/screen-profiles.md) — **generated** by
-`tools/build-screen-profiles.mjs` — derives that per screen from the recorded DOM, because
+A screen profile, generated from the recorded DOM (the generator, `build-screen-profiles.mjs`, wasn't
+brought into this repository), derives that per screen, because
 the machinery is in the markup: `button[disabled]` is a selection-gated action, `.dataGridWidget` is
 sorting and selection, `.pager` is paging, `.tickBox` is multi-select, `.quickFilter-textBox` is
 filtering, `.form-group` is validation and dirty state, `.ace_editor` is an editable pane.
@@ -658,7 +658,7 @@ prevented at once. No list to write, and none to keep current.
 whitelist of read-ish POST paths — and that list is incomplete by construction: its own comments record
 three incidents where a legitimate read was blocked, the screen showed an error, and the error was then
 misdiagnosed as a UI difference (`processorTask/v1/summary` broke every editor's Active Tasks tab;
-`userAccess/v1/sessions` was read as GWT having a dialog the port lacked). It grows by triage.
+`userAccess/v1/sessions` was read as a dialog that had failed to open). It grows by triage.
 
 So for the crawler, **a blocked request is a worklist item, not a verdict**. Each one is either "this
 affordance mutates" or "the whitelist is missing a read", and only a human can tell them apart. The

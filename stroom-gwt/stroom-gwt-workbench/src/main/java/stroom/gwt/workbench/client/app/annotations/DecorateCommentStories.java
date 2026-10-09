@@ -40,16 +40,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/// Stories matching `App/Annotations/decorateComment` in the React Storybook: Stroom's
+/// The `App/Annotations/decorateComment` stories: Stroom's
 /// `AnnotationEditPresenter.decorateComment`, which turns `#<digits>` at the start of a word into
 /// an annotation link and `<streamId>:<eventId>` into an event link.
 ///
-/// The React stories call the port's `decorateComment` function directly. Stroom's is a
-/// package-private static method of `AnnotationEditPresenter`, used only to render the comments in
-/// an annotation's history, so these stories show the real annotation editor with the comments as
-/// its history entries (see [AnnotationFixtures]) and check the links it renders (`<u>` elements),
-/// and what pressing them does (`EditAnnotationEvent` and `ShowDataEvent`, recorded by the spy
-/// `opened`).
+/// `decorateComment` is a package-private static method of `AnnotationEditPresenter`, used only to
+/// render the comments in an annotation's history, so these stories show the real annotation editor
+/// with the comments as its history entries (see [AnnotationFixtures]) and check the links it
+/// renders (`<u>` elements), and what pressing them does (`EditAnnotationEvent` and
+/// `ShowDataEvent`, recorded by the spy `opened`).
 public final class DecorateCommentStories {
 
     /// The name of the spy recording the links opened.
@@ -77,7 +76,7 @@ public final class DecorateCommentStories {
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Annotations/decorateComment", DecorateCommentStories.class)
-                // Differs from React: the stories show the annotation editor, so they fill the page
+                // The stories show the annotation editor, so they fill the page
                 .layout(StoryLayout.FULLSCREEN)
                 // Annotation (#id) and event (stream:event) references become links; text between them
                 // is plain. Each comment's rendering is shown as its text with each link in brackets
@@ -102,7 +101,7 @@ public final class DecorateCommentStories {
                     play.findByText("#7");
                     final Query links = play.querySelectorAll("u.annotationLink");
                     play.expect(links).toHaveLength(2);
-                    // Differs from React: GWT opens a link on a mousedown on it
+                    // Stroom opens a link on a mousedown on it
                     play.fireEvent().mouseDown(links.nth(0));
                     play.fireEvent().mouseDown(links.nth(1));
                     play.waitFor(() -> play.expect(play.spy(OPENED).callCount()).toBe(2));

@@ -44,9 +44,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Stories for Stroom's [LinkTabPanelPresenter] (with its [LinkTabPanelViewImpl]), matching
-/// `Widgets/Tabs/LinkTabPanel` in the React Storybook: a link tab bar, an optional toolbar and the
-/// selected tab's content.
+/// Stories for Stroom's [LinkTabPanelPresenter] (with its [LinkTabPanelViewImpl]): a link tab bar,
+/// an optional toolbar and the selected tab's content.
 ///
 /// The presenter is abstract (Stroom's document and data screens extend it), so the stories
 /// extend it with tabs showing fixed content. The toolbars are handled as Stroom's

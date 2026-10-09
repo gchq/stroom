@@ -29,13 +29,13 @@ import stroom.widget.popup.client.presenter.PopupType;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's dialogs, matching `Widgets/Dialogs/Dialog` in the React Storybook.
+/// Stories for Stroom's dialogs.
 ///
 /// Stroom has no dialog widget that a screen creates itself: a presenter is shown in a dialog
 /// with `ShowPopupEvent`, whose `PopupType` picks the buttons (`CloseContent`, `OkCancelContent`,
 /// `AcceptRejectContent`, ...) and whose `PopupSize` makes it a `ResizableDialog` rather than a
-/// `Dialog`. Each story shows a stand-in presenter holding the React story's text in the dialog
-/// the React story describes, with Stroom's `PopupManager`.
+/// `Dialog`. Each story shows a stand-in presenter holding some text in a kind of dialog, with
+/// Stroom's `PopupManager`.
 public final class DialogStories {
 
     private DialogStories() {
@@ -46,8 +46,7 @@ public final class DialogStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // The React meta's args (show, title, children) only satisfy the component's types: every
-        // story renders its own dialog
+        // No args: every story renders its own dialog
         registry.component("Widgets/Dialogs/Dialog", DialogStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Dialog — Close button only (non-resizable, draggable)
@@ -85,7 +84,7 @@ public final class DialogStories {
                 // Resizable Dialog — Save / Cancel
                 .story("SaveCancel", "Resizable Dialog — Save / Cancel",
                         context -> trigger(context, "Open Save/Cancel dialog", dialog(
-                            // Differs from React: Stroom has no Save/Cancel dialog type; a screen that
+                            // Stroom has no Save/Cancel dialog type; a screen that
                             // saves uses OK_CANCEL_DIALOG, whose buttons are OK and Cancel.
                             PopupType.OK_CANCEL_DIALOG, "Edit Document")
                             .size(600, 420)
@@ -145,7 +144,7 @@ public final class DialogStories {
         return new DialogSpec(popupType, caption);
     }
 
-    /// The React stories' `<Trigger>`: a primary button that opens the dialog.
+    /// A primary button that opens the dialog.
     private static Widget trigger(final StoryContext context, final String label, final DialogSpec spec) {
         final StoryPopups popups = StoryPopups.create(context);
         final FlowPanel panel = new FlowPanel();
@@ -157,7 +156,7 @@ public final class DialogStories {
     // --------------------------------------------------------------------------------
 
 
-    /// What the React story passes to its `Dialog`, as `ShowPopupEvent` options.
+    /// The dialog a story shows, as `ShowPopupEvent` options.
     private static final class DialogSpec {
 
         private final PopupType popupType;
@@ -172,7 +171,7 @@ public final class DialogStories {
             this.caption = caption;
         }
 
-        /// React's `resizable width height`: Stroom's dialogs are resizable when given a size.
+        /// Stroom's dialogs are resizable when given a size.
         private DialogSpec size(final int width, final int height) {
             this.popupSize = PopupSize.resizable(width, height);
             return this;

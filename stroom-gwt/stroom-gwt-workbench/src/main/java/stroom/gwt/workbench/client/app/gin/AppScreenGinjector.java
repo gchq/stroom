@@ -47,8 +47,8 @@ import com.google.gwt.inject.client.GinModules;
 ///
 /// To add a screen: add a getter for its presenter here, under its area's comment, and, if GIN
 /// reports a missing binding, add the mirror of the Stroom module that binds it to the
-/// `@GinModules` list (one module per line, so that ports rarely touch the same lines). See
-/// PORTING.md.
+/// `@GinModules` list (one module per line, so that parallel work rarely touches the same lines).
+/// See WRITING-STORIES.md.
 @GinModules({
         ScreenViewsModule.class,
         CredentialsScreenModule.class,

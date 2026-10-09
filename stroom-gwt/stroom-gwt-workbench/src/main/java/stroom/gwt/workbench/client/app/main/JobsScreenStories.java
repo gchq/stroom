@@ -46,25 +46,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/// Stories matching `App/Main/JobsScreen` in the React Storybook, showing Stroom's real
-/// [JobPresenter] (the 'Jobs' tab: the jobs list and the selected job's per-node list) with fake
-/// REST replies.
+/// Stories of `App/Main/JobsScreen`, showing Stroom's real [JobPresenter] (the 'Jobs' tab: the jobs
+/// list and the selected job's per-node list) with fake REST replies.
 ///
-/// The React story's `JobApi` fixture becomes routes for Stroom's `JobResource`, `JobNodeResource`,
-/// `NodeResource` and `ScheduledTimeResource`:
+/// The stories answer Stroom's `JobResource`, `JobNodeResource`, `NodeResource` and
+/// `ScheduledTimeResource`:
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `listJobs` | `GET /job/v1` |
-/// | `findJobNodes` | `POST /jobNode/v1/find` (by the criteria's `jobName`) |
-/// | `jobNodeInfo` | `GET /jobNode/v1/info?jobName=&nodeName=` |
-/// | `listEnabledNodes` | `GET /node/v1/enabled` |
-/// | `getScheduledTimes` | `POST /scheduledTime/v1` |
-/// | `executeJobNode` | `POST /jobNode/v1/{id}/execute` |
-/// | `setJobNodeSchedule` | `PUT /jobNode/v1/{id}/schedule` |
-/// | `setJobNodeScheduleBatch` | `PUT /jobNode/v1/schedule` |
+/// | `GET /job/v1` | the jobs |
+/// | `POST /jobNode/v1/find` (by the criteria's `jobName`) | a job's nodes |
+/// | `GET /jobNode/v1/info?jobName=&nodeName=` | a job node's info |
+/// | `GET /node/v1/enabled` | the enabled nodes |
+/// | `POST /scheduledTime/v1` | the scheduled times |
+/// | `POST /jobNode/v1/{id}/execute` | running a job node now |
+/// | `PUT /jobNode/v1/{id}/schedule` | setting a job node's schedule |
+/// | `PUT /jobNode/v1/schedule` | setting several job nodes' schedules |
 ///
-/// and its recorder becomes checks on the request spy. React's `onOpenNode`/`onShowTasks` are spies
+/// The requests made are checked on the request spy. `onOpenNode`/`onShowTasks` are spies
 /// on Stroom's `OpenNodeEvent`/`OpenTaskManagerEvent`. The presenter comes from GIN.
 public final class JobsScreenStories {
 
@@ -76,7 +75,7 @@ public final class JobsScreenStories {
     // The title of a schedule link's 'open' icon
     private static final String EDIT_SCHEDULE = "Edit schedule";
     // The schedule editor's expression field (its FormGroup's identity is scheduleExpression).
-    // Differs from React: the field's id is the identity itself, not React's 'scheduleExpression-input'
+    // The field's id is the identity itself
     private static final String EXPRESSION_INPUT = "#scheduleExpression";
 
     private static final String JOB_NODE_FIND_PATH = "/jobNode/v1/find";
@@ -205,7 +204,7 @@ public final class JobsScreenStories {
                     play.findByText("node1");
                     play.findByText("node3");
                     // Multi-select the two CRON nodes: select node1, then Ctrl-mousedown node3.
-                    // Differs from React: a selected row has GWT's 'dataGridSelectedRow' class, not
+                    // A selected row has GWT's 'dataGridSelectedRow' class, not
                     // aria-selected="true"
                     play.fireEvent().mouseDown(play.getByText("node1"));
                     play.waitFor(() -> play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW));
@@ -213,12 +212,12 @@ public final class JobsScreenStories {
                     play.waitFor(() -> play.expect(row(play, "node3")).toHaveClass(StroomDom.SELECTED_ROW));
                     play.expect(row(play, "node1")).toHaveClass(StroomDom.SELECTED_ROW);
                     // Open the schedule editor from a selected row's link.
-                    // Differs from React: GWT's CommandLinkCell runs its command on a mousedown on
+                    // GWT's CommandLinkCell runs its command on a mousedown on
                     // its 'open' icon (not a click on its text) and the grid then leaves the
                     // selection alone, so the multi-selection is kept
                     play.fireEvent().mouseDown(openIcon(play.within(play.getAllByTitle(EDIT_SCHEDULE).nth(0))));
-                    // Differs from React: GWT asks to confirm the batch change (naming the nodes) before
-                    // it shows the schedule editor; React asks after the editor's OK. The job's name is
+                    // GWT asks to confirm the batch change (naming the nodes) before
+                    // it shows the schedule editor. The job's name is
                     // quoted (it once lacked the closing quote)
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing(
                                     "change the schedule of job 'Data Retention' for 2 nodes?")))
@@ -245,7 +244,7 @@ public final class JobsScreenStories {
                     play.click(play.getByText("Data Retention"));
                     play.findByText("node1");
                     // The Node cell is a link that opens the Nodes screen.
-                    // Differs from React: GWT's CommandLink isn't a button; pressing its 'open' icon,
+                    // GWT's CommandLink isn't a button; pressing its 'open' icon,
                     // titled with what it opens, runs its command
                     play.click(openIcon(play.within(
                             play.getByTitle("Open node 'node1' and job 'Data Retention' on the Nodes screen."))));
@@ -255,7 +254,7 @@ public final class JobsScreenStories {
                     play.expect(screen.findByText("Edit Schedule")).toBeInTheDocument();
                     play.expect(screen.getByText("Run Job on 'node1' Now")).toBeInTheDocument();
                     play.click(screen.findByText("Show in Server Tasks (node1)"));
-                    // Differs from React: the spy records OpenTaskManagerEvent's node and task names;
+                    // The spy records OpenTaskManagerEvent's node and task names;
                     // the 'node:node1 name:"Data Retention"' filter is built from them by the Server
                     // Tasks screen (TaskManagerPresenter.changeNameFilter)
                     play.waitFor(() -> play.expect(play.spy(ON_SHOW_TASKS))
@@ -269,7 +268,7 @@ public final class JobsScreenStories {
                     play.findByText("Data Retention");
                     play.click(play.getByText("Data Retention"));
                     // node1 (CRON) has a Schedule link showing its expression.
-                    // Differs from React: GWT's CommandLinkCell runs its command when its 'open'
+                    // GWT's CommandLinkCell runs its command when its 'open'
                     // icon (titled 'Edit schedule') is pressed, not its text
                     play.findByText("0 0 * * ?");
                     play.click(openIcon(play.within(play.getByTitle(EDIT_SCHEDULE))));
@@ -286,7 +285,7 @@ public final class JobsScreenStories {
                 });
     }
 
-    // Differs from React: GWT's grid rows are <tr> elements with no role attribute (their role is
+    // GWT's grid rows are <tr> elements with no role attribute (their role is
     // implicit), so a cell's row is its closest <tr>, not its closest [role="row"]
     private static Query row(final Play play, final String text) {
         return play.getByText(text).closest("tr");

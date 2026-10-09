@@ -35,19 +35,17 @@ import stroom.search.elastic.shared.ElasticClusterResource;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Editors/ElasticClusterEditor` in the React Storybook, showing Stroom's
-/// real [ElasticClusterPresenter] (an Elastic Cluster's tab: Settings, Documentation and
-/// Permissions) with fake REST replies.
+/// The `App/Editors/ElasticClusterEditor` stories, showing Stroom's real [ElasticClusterPresenter]
+/// (an Elastic Cluster's tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `ElasticClusterPlugin` does, the story fetches the document
-/// (`GET /elasticCluster/v1/{uuid}`) and reads it into the editor ([DocEditors#open]). React's
-/// `testCluster` seam → `POST /elasticCluster/v1/testCluster`, `docPermission` → the Permissions
-/// tab's routes.
+/// (`GET /elasticCluster/v1/{uuid}`) and reads it into the editor ([DocEditors#open]). Testing the
+/// cluster is `POST /elasticCluster/v1/testCluster`, and the Permissions tab has its own routes.
 public final class ElasticClusterEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(ElasticClusterDoc.TYPE, "cluster-1", "My Cluster");
 
-    // ElasticClusterResource.fetch(): React's CLUSTER_DOC
+    // ElasticClusterResource.fetch(): the cluster
     private static final String DOC = """
             {"type": "ElasticCluster", "uuid": "cluster-1", "name": "My Cluster",
               "description": "# Cluster docs",
@@ -57,8 +55,8 @@ public final class ElasticClusterEditorStories {
 
     private static final String TEST_CLUSTER = "/elasticCluster/v1/testCluster";
 
-    // Differs from React: a FormGroup gives its control the group's identity as its id
-    // (ElasticClusterSettingsViewImpl.ui.xml), not React's '<name>-input'
+    // A FormGroup gives its control the group's identity as its id
+    // (ElasticClusterSettingsViewImpl.ui.xml)
     private static final String URLS = "#elasticClusterSettingsConnectionURLs";
     private static final String API_KEY_ID = "#elasticClusterSettingsAPIKeyId";
     private static final String API_KEY_SECRET = "#elasticClusterSettingsAPIKeySecret";
@@ -94,8 +92,8 @@ public final class ElasticClusterEditorStories {
                     play.waitFor(() -> play.expect(play.querySelector(API_KEY_ID)).toHaveValue("key-abc"));
                     play.expect(save).toHaveClass("disabled");
                     play.type(play.querySelector(API_KEY_ID), "-2");
-                    // Differs from React: the text box reports its change (ValueChangeEvent) when it
-                    // loses the focus, not as each key is typed
+                    // The text box reports its change (ValueChangeEvent) when it loses the focus,
+                    // not as each key is typed
                     play.tab();
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
                     DocEditors.expectNoProblems(play);
@@ -105,7 +103,7 @@ public final class ElasticClusterEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(play.findByRole("button", StroomDom.button("Test Connection")));
-                    // Differs from React: Stroom's alert is a popup on the page's body
+                    // Stroom's alert is a popup on the page's body
                     play.waitFor(() -> play.expect(screen.getByText("Connection Success")).toBeInTheDocument());
                     play.expect(screen.getByText("Connected to 3 nodes.")).toBeInTheDocument();
                     expectTested(play);

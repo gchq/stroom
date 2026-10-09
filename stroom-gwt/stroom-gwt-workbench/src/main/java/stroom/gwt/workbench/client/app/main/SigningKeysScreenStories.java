@@ -34,14 +34,14 @@ import stroom.security.client.presenter.SigningKeyPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/SigningKeysScreen` in the React Storybook, showing Stroom's real
-/// [SigningKeyPresenter] (the 'Signing Keys' tab) with fake REST replies.
+/// Stories of `App/Main/SigningKeysScreen`, showing Stroom's real [SigningKeyPresenter] (the
+/// 'Signing Keys' tab) with fake REST replies.
 ///
-/// The React story's `SigningKeyApi` becomes routes for Stroom's `SigningKeyResource`: `list` →
-/// `GET /signingKey/v1/list`, `revoke` → `POST /signingKey/v1/revoke?id=N` and `revokeAll` →
-/// `POST /signingKey/v1/revokeAll`; its recorder of the calls becomes checks on the request spy.
-/// The user is an administrator, as `SigningKeyPlugin` requires. Confirmations are Stroom's real
-/// dialogs. The presenter comes from GIN and is opened as `SigningKeyPlugin` opens it (refreshed).
+/// The fixtures answer Stroom's `SigningKeyResource`: the keys (`GET /signingKey/v1/list`),
+/// revoking one (`POST /signingKey/v1/revoke?id=N`) and revoking all
+/// (`POST /signingKey/v1/revokeAll`); the calls are checked on the request spy. The user is an
+/// administrator, as `SigningKeyPlugin` requires. Confirmations are Stroom's real dialogs. The
+/// presenter comes from GIN and is opened as `SigningKeyPlugin` opens it (refreshed).
 public final class SigningKeysScreenStories {
 
     private static final String REVOKE_TITLE = "Revoke the selected signing key";

@@ -1,6 +1,6 @@
 # Route recipes — the clicks that reach each presenter
 
-**Generated** by `stroom-stroom-gwt-suite/tools/build-route-recipes.mjs`. Do not hand-edit.
+**Generated** by `stroom-gwt-suite/tools/build-route-recipes.mjs`. Do not hand-edit.
 
 `reachability-graph.md` gives the topology; this gives the words to click. Mined from GWT's own
 declarative menu registration, so it re-derives instead of rotting.

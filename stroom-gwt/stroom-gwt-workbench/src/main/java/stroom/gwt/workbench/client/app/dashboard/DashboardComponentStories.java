@@ -42,25 +42,25 @@ import java.util.List;
 /// The component stories of `App/Editors/DashboardEditor` (see `DashboardEditorStories`): the
 /// settings, tables, visualisations, text and stored queries of a dashboard's components.
 ///
-/// | React seam | Stroom endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `DashboardApi.downloadSearchResults` | `POST /dashboard/v1/downloadSearchResults/{node}` |
-/// | `DashboardApi.columnValues` | `POST /dashboard/v1/columnValues/{node}` |
-/// | `VisRuntimeApi.fetchVisualisation` | `GET /visualisation/v1/{uuid}` |
-/// | `VisRuntimeApi.fetchLinkedScripts` | `POST /script/v1/fetchLinkedScripts` |
-/// | `LoadSource` | `POST /data/v1/fetch` |
-/// | `StoredQueryApi` | `POST /storedQuery/v1/find`, `create`, `DELETE /storedQuery/v1/delete` |
-/// | `AskAiApi` | `POST /ai/v1/...` (`AiFixtures.chatRoutes`; the chat is shown by `AskStroomAiChat`) |
+/// | `POST /dashboard/v1/downloadSearchResults/{node}` | a table's download |
+/// | `POST /dashboard/v1/columnValues/{node}` | a column's values filter |
+/// | `GET /visualisation/v1/{uuid}` | a visualisation |
+/// | `POST /script/v1/fetchLinkedScripts` | a visualisation's scripts |
+/// | `POST /data/v1/fetch` | a Text component's source |
+/// | `POST /storedQuery/v1/find`, `create`, `DELETE /storedQuery/v1/delete` | query history and favourites |
+/// | `POST /ai/v1/...` (`AiFixtures.chatRoutes`; the chat is shown by `AskStroomAiChat`) | Ask Stroom AI |
 public final class DashboardComponentStories {
 
-    // React's dashboardApiFixtureWithStream: a table result with stream and event ids
+    // A table result with stream and event ids
     private static final String STREAM_RESPONSE = DashboardSupport.tableResponse("t1",
             "[" + DashboardDocs.NAME_FIELD + ", " + DashboardDocs.field("f-stream", "StreamId") + ", "
             + DashboardDocs.field("f-event", "EventId") + "]",
             "[{\"values\": [\"alpha\", \"1001\", \"1\"], \"depth\": 0}, "
             + "{\"values\": [\"beta\", \"1002\", \"2\"], \"depth\": 0}]", 2);
 
-    // React's column values fixture: the Name column's values
+    // The Name column's values
     private static final String COLUMN_VALUES = "{\"values\": [{\"value\": \"alpha\"}, {\"value\": \"beta\"}], "
                                                 + "\"pageResponse\": {\"offset\": 0, \"length\": 2, \"total\": 2, "
                                                 + "\"exact\": true}}";
@@ -68,11 +68,11 @@ public final class DashboardComponentStories {
     private static final RequestMatcher COLUMN_VALUES_REQUEST = RequestMatcher.post(
             "/dashboard/v1/columnValues/" + RequestMatcher.PATH_WILDCARD);
 
-    // React's visRuntimeFixture: a visualisation with no settings of its own
+    // A visualisation with no settings of its own
     private static final String VISUALISATION = "{\"type\": \"Visualisation\", \"uuid\": \"vis-1\", \"name\": \"Bar\", "
                                                 + "\"functionName\": \"stub\", \"settings\": \"{}\"}";
 
-    // React's visSchemaFixture: a visualisation whose settings have a tab of controls
+    // A visualisation whose settings have a tab of controls
     private static final String VISUALISATION_WITH_CONTROLS = "{\"type\": \"Visualisation\", \"uuid\": \"vis-1\", "
             + "\"name\": \"Bar\", \"functionName\": \"bar\", "
             + "\"settings\": \"{\\\"tabs\\\": [{\\\"name\\\": \\\"Axes\\\", "
@@ -85,7 +85,7 @@ public final class DashboardComponentStories {
                                          + "\"componentId\": \"q1\", \"dashboardUuid\": \"dash-3\", \"query\": "
                                          + "{\"dataSource\": " + DashboardDocs.INDEX + "}}";
 
-    // React's storedQueryFixture's history: a query of 'Name = alpha'
+    // The query history: a query of 'Name = alpha'
     private static final String HISTORY = "{\"id\": 1, \"favourite\": false, \"componentId\": \"q1\", "
                                           + "\"dashboardUuid\": \"dash-3\", \"createTimeMs\": 0, \"query\": "
                                           + "{\"dataSource\": " + DashboardDocs.INDEX + ", \"expression\": "
@@ -98,7 +98,7 @@ public final class DashboardComponentStories {
     // The spy of the app's stepping event
     private static final String BEGIN_STEPPING = "beginStepping";
 
-    // The Text component's Step button (React's title 'Step')
+    // The Text component's Step button
     private static final String STEP = "Enter Stepping Mode";
 
     private DashboardComponentStories() {
@@ -122,10 +122,9 @@ public final class DashboardComponentStories {
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
                     play.click(play.getByRole("button", "Ask Stroom AI"));
-                    // Differs from React: the chat is Stroom's 'Ask Stroom AI' dialog, and its 'How
-                    // can I help?' greeting is hidden once the table is attached as the chat's
-                    // context, so the play checks the message box's placeholder, which is the same
-                    // text
+                    // The chat is Stroom's 'Ask Stroom AI' dialog, and its 'How can I help?'
+                    // greeting is hidden once the table is attached as the chat's context, so the
+                    // play checks the message box's placeholder, which is the same text
                     play.expect(screen.findByText("Ask Stroom AI", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                     play.waitFor(() -> play.expect(screen.getByPlaceholderText("How can I help?")).toBeVisible());
                     // The chat is titled with the table's context, which is sent to the server
@@ -145,7 +144,7 @@ public final class DashboardComponentStories {
                     for (final String tab : List.of("Q", "T", "Chart")) {
                         play.expect(DashboardPlays.tab(play, tab)).toBeInTheDocument();
                     }
-                    // Differs from React: GWT's visualisation frame (VisFrame) has no title
+                    // The visualisation frame (VisFrame) has no title
                     play.waitFor(() -> play.expect(play.screen().querySelector("iframe.VisFrame-frame"))
                             .toBeInTheDocument());
                     DashboardPlays.expectNoProblems(play);
@@ -156,13 +155,12 @@ public final class DashboardComponentStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     DashboardPlays.opened(play);
-                    // Differs from React: the settings are an item of the tab's menu, in a dialog
-                    // captioned 'Settings'
+                    // The settings are an item of the tab's menu, in a dialog captioned 'Settings'
                     DashboardPlays.openTabMenu(play, "The Table");
                     play.click(DashboardPlays.menuItem(screen, "Settings"));
                     final Play dialog = DashboardPlays.dialog(screen, "Settings");
                     play.expect(dialog.getByText("Query", "label")).toBeInTheDocument();
-                    // Differs from React: the name box has no id; it is the Name form group's
+                    // The name box has no id; it is the Name form group's
                     final Query name = dialog.getByLabelText("Name");
                     play.clear(name);
                     play.type(name, "Renamed Table");
@@ -185,8 +183,8 @@ public final class DashboardComponentStories {
                     play.click(play.getByRole("button", "Download"));
                     final Play dialog = DashboardPlays.dialog(screen, "Download Options");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: GWT opens the resource with the location manager (React's
-                    // window.open), recorded by the download spy
+                    // Stroom opens the resource with the location manager, recorded by the download
+                    // spy
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.DOWNLOAD_SPY)).toHaveBeenCalledWith(
                             ValueMatcher.stringContaining("resourcestore/results")));
                     DashboardPlays.expectNoProblems(play);
@@ -199,7 +197,7 @@ public final class DashboardComponentStories {
                     DashboardPlays.opened(play);
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-                    // Differs from React: GWT opens a column's menu when its header is clicked
+                    // Stroom opens a column's menu when its header is clicked
                     DashboardPlays.clickHeader(play, DashboardPlays.header(play, "Name"));
                     play.waitFor(() -> play.expect(screen.getByText("Rename", StroomDom.MENU_ITEM_TEXT))
                             .toBeInTheDocument());
@@ -266,11 +264,10 @@ public final class DashboardComponentStories {
                     DashboardPlays.openTabMenu(play, "My Panel");
                     play.click(DashboardPlays.menuItem(screen, "Settings"));
                     final Play settings = DashboardPlays.dialog(screen, "Settings");
-                    // Differs from React: the selection query's handlers are a tab of the settings
+                    // The selection query's handlers are a tab of the settings
                     play.click(settings.getByText("Selection Query", StroomDom.LINK_TAB_LABEL));
-                    // Differs from React: the grid's Enabled column has no header text, and the
-                    // toolbar's buttons have Stroom's plain titles (Add, Edit, Copy, Delete, Enable, Up,
-                    // Down)
+                    // The grid's Enabled column has no header text, and the toolbar's buttons have
+                    // Stroom's plain titles (Add, Edit, Copy, Delete, Enable, Up, Down)
                     play.waitFor(() -> play.expect(settings.getByText("Expression", "th")).toBeInTheDocument());
                     play.expect(settings.querySelectorAll("th")).toHaveLength(2);
                     for (final String title : List.of("Add", "Edit", "Copy", "Delete", "Up", "Down")) {
@@ -278,7 +275,7 @@ public final class DashboardComponentStories {
                     }
                     play.expect(settings.getAllByTitle("Edit").nth(0)).toHaveClass("disabled");
                     play.click(settings.getAllByTitle("Add").nth(0));
-                    // Differs from React: GWT's caption is 'Add New Selection Handler'
+                    // The caption is 'Add New Selection Handler'
                     play.expect(screen.findByText("Add New Selection Handler", StroomDom.DIALOG_TITLE))
                             .toBeInTheDocument();
                     // Add a term and open its field list, which asks for the query's data source
@@ -307,8 +304,7 @@ public final class DashboardComponentStories {
                     DashboardPlays.openTabMenu(play, "The Table");
                     play.click(DashboardPlays.menuItem(screen, "Settings"));
                     final Play settings = DashboardPlays.dialog(screen, "Settings");
-                    // Differs from React: the rules are a tab of the settings dialog, not a dialog
-                    // of their own
+                    // The rules are a tab of the settings dialog, not a dialog of their own
                     play.click(settings.getByText("Conditional Formatting", StroomDom.LINK_TAB_LABEL));
                     play.waitFor(() -> play.expect(settings.getByTitle("Add")).toBeInTheDocument());
                     DashboardPlays.expectNoProblems(play);
@@ -324,11 +320,11 @@ public final class DashboardComponentStories {
                     DashboardPlays.openTabMenu(play, "Chart");
                     play.click(DashboardPlays.menuItem(screen, "Settings"));
                     final Play dialog = DashboardPlays.dialog(screen, "Settings");
-                    // Differs from React: the controls are on a tab of their own, named after their tab
+                    // The controls are on a tab of their own, named after their tab
                     play.click(dialog.findByText("Axes", StroomDom.LINK_TAB_LABEL));
                     play.waitFor(() -> play.expect(dialog.getByText("X Axis", "label")).toBeInTheDocument());
                     play.expect(dialog.getByText("Title", "label")).toBeInTheDocument();
-                    // Differs from React: the control has no id; it is the Title form group's
+                    // The control has no id; it is the Title form group's
                     play.expect(dialog.within(dialog.getByText("Title", "label").closest(".form-group"))
                             .querySelector("input")).toHaveValue("Chart");
                     DashboardPlays.expectNoProblems(play);
@@ -375,7 +371,7 @@ public final class DashboardComponentStories {
                 // A Text component's Step button steps the selected row's source
                 .story("TextSteppingButton", DashboardSupport.story(DashboardDocs.QUERY_TABLE_TEXT_STEP_DASHBOARD,
                         DashboardComponentStories::textRoutes,
-                        // Differs from React: GWT also needs VIEW_DATA_PERMISSION to show the source
+                        // Stroom also needs VIEW_DATA_PERMISSION to show the source
                         options -> options.harness(builder -> builder.appPermissions(
                                         AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION,
                                         AppPermission.STEPPING_PERMISSION,
@@ -389,7 +385,7 @@ public final class DashboardComponentStories {
                                 })))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    // Differs from React: the button is titled 'Enter Stepping Mode'
+                    // The button is titled 'Enter Stepping Mode'
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
                     // Disabled until a row is selected, as there is nothing to step, saying why (it was
@@ -402,8 +398,7 @@ public final class DashboardComponentStories {
                     play.waitFor(() -> play.expect(play.getByRole("button", STEP))
                             .not().toHaveAttribute("aria-disabled"));
                     play.click(play.getByTitle(STEP));
-                    // Differs from React: the play checks the app's stepping event (React's no-op
-                    // appActions), for the selected row's stream
+                    // The play checks the app's stepping event, for the selected row's stream
                     play.expect(play.spy(BEGIN_STEPPING)).toHaveBeenCalledWith("1001");
                     DashboardPlays.expectNoProblems(play);
                 })
@@ -421,7 +416,7 @@ public final class DashboardComponentStories {
                                             DashboardPlays.componentRequest(body, "t1"),
                                             "tableSettings", "conditionalFormattingRules", 0, "id")))
                                     .toSpyMatcher()));
-                    // Differs from React: GWT's rows are the grid's <tr>s
+                    // The rows are the grid's <tr>s
                     play.expect(play.getByText("beta").closest("tr")).toHaveClass("cf-red");
                     play.expect(play.getByText("alpha").closest("tr")).not().toHaveClass("cf-red");
                     DashboardPlays.expectNoProblems(play);
@@ -436,8 +431,8 @@ public final class DashboardComponentStories {
                     DashboardPlays.runQuery(play, 0);
                     DashboardPlays.selectTab(play, "T");
                     play.waitFor(() -> play.expect(play.getByText("beta")).toBeInTheDocument());
-                    // Differs from React: GWT styles the row with a generated class, not inline, so the
-                    // play checks the row's computed background
+                    // Stroom styles the row with a generated class, not inline, so the play checks
+                    // the row's computed background
                     play.waitFor(() -> play.expect(play.getByText("beta").closest("tr"))
                             .toHaveStyle("backgroundColor", "rgb(200, 100, 50)"));
                     DashboardPlays.expectNoProblems(play);
@@ -448,7 +443,7 @@ public final class DashboardComponentStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     DashboardPlays.opened(play);
-                    // Differs from React: the Query's toolbar button is titled 'History'
+                    // The Query's toolbar button is titled 'History'
                     play.click(play.getByRole("button", "History"));
                     final Play history = DashboardPlays.dialog(screen, "Query History");
                     // The first query is selected as the dialog opens, so clicking it again chooses it
@@ -458,7 +453,7 @@ public final class DashboardComponentStories {
                     play.waitFor(() -> play.expect(play.getByText("Name = alpha")).toBeInTheDocument());
                     play.click(play.getByRole("button", "Favourites"));
                     final Play favourites = DashboardPlays.dialog(screen, "Query Favourites");
-                    // Differs from React: a favourite is named in a dialog of its own
+                    // A favourite is named in a dialog of its own
                     play.click(favourites.getByTitle("Create Favourite From Current Query"));
                     final Play name = DashboardPlays.dialog(screen, "Create New Favourite");
                     play.type(name.querySelector("input"), "My Fav");
@@ -487,8 +482,8 @@ public final class DashboardComponentStories {
 
     // Filters the table's Name column to 'alpha' with its values filter: run the query, open the
     // header's values filter, Select None, then tick 'alpha'.
-    // Differs from React: GWT opens the values filter with the header's filter icon (not a 'Filter
-    // Values' menu item), and a choice applies at once (the popup has no OK)
+    // Stroom opens the values filter with the header's filter icon, and a choice applies at once
+    // (the popup has no OK)
     private static void filterAlpha(final Play play) {
         final Play screen = play.screen();
         DashboardPlays.runQuery(play, 0);
@@ -535,26 +530,26 @@ public final class DashboardComponentStories {
         return true;
     }
 
-    // React's CF search fixtures: beta matches the rule
+    // Conditional formatting searches: beta matches the rule
     private static String cfResponse(final String ruleId) {
         return DashboardSupport.tableResponse("t1", "[" + DashboardDocs.NAME_FIELD + "]",
                 "[{\"values\": [\"alpha\"], \"depth\": 0}, {\"values\": [\"beta\"], \"depth\": 0, "
                 + "\"matchingRule\": \"" + ruleId + "\"}]", 2);
     }
 
-    // React's visRuntimeFixture
+    // A visualisation's routes
     private static void visRoutes(final RestFixtures.Builder routes) {
         routes.get("/visualisation/v1/vis-1", RestReply.json(VISUALISATION))
                 .post("/script/v1/fetchLinkedScripts", RestReply.json("[]"));
     }
 
-    // React's dashboardApiFixtureWithStream and loadSourceFixture
+    // A table result with stream and event ids, and the stream's source
     private static void textRoutes(final RestFixtures.Builder routes) {
         routes.route(DashboardSupport.SEARCH, RestReply.json(STREAM_RESPONSE))
                 .post("/data/v1/fetch", RestReply.json(sourceData("sample source data")));
     }
 
-    // React's loadSourceHtmlFixture: the source piped to HTML
+    // The source piped to HTML
     private static void htmlRoutes(final RestFixtures.Builder routes) {
         routes.route(DashboardSupport.SEARCH, RestReply.json(STREAM_RESPONSE))
                 .post("/data/v1/fetch", RestReply.json(sourceData("<b>Piped HTML</b>")
@@ -570,7 +565,7 @@ public final class DashboardComponentStories {
                + "\"html\": false, \"dataType\": \"NON_SEGMENTED\", \"displayMode\": \"TEXT\"}";
     }
 
-    // React's storedQueryFixture: a fixed history and favourites that are added and deleted
+    // Stored queries: a fixed history and favourites that are added and deleted
     private static void storedQueryRoutes(final RestFixtures.Builder routes) {
         routes.route(RequestMatcher.post("/storedQuery/v1/find").withJsonBodyContaining("{\"favourite\": false}"),
                         RestReply.json(page(HISTORY)))

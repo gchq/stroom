@@ -26,20 +26,20 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Widgets shared by the `Widgets/Cell Renderers/*` stories.
 ///
-/// The React cells are components; Stroom's are GWT `Cell`s that are only ever rendered in a
-/// table. The stories render each cell with a GWT `CellWidget` inside React's `CellBox`, so the
-/// cell's own events (e.g. its mouse down on the copy and open buttons) reach it as in a grid.
+/// Stroom's cells are GWT `Cell`s that are only ever rendered in a table. The stories render each
+/// cell with a GWT `CellWidget` inside a bordered box ([#cellBox]), so the cell's own events (e.g.
+/// its mouse down on the copy and open buttons) reach it as in a grid.
 final class CellRendererWidgets {
 
-    /// The text of React's `Last action` echo before anything is done.
+    /// The text of the `Last action` echo before anything is done.
     static final String NO_ACTION = "—";
 
     private CellRendererWidgets() {
         // Static utility
     }
 
-    /// Equivalent of React's `CellBox`:
-    /// `<div style={{width, padding: '2px 6px', border: '1px solid var(--panel__border-color,#555)'}}>`.
+    /// A box for a cell: a `div` of the given width with `padding: 2px 6px` and a
+    /// `1px solid var(--panel__border-color,#555)` border.
     ///
     /// @param widget  The cell's widget.
     /// @param widthPx The width of the box in pixels.
@@ -50,10 +50,9 @@ final class CellRendererWidgets {
         style.setProperty("width", widthPx + "px");
         style.setProperty("padding", "2px 6px");
         style.setProperty("border", "1px solid var(--panel__border-color,#555)");
-        // As React's global box-sizing
         style.setProperty("boxSizing", "border-box");
-        // Differs from React: Stroom's cells don't ellipsise their text (React's do), so the box clips
-        // a long name as a grid's fixed width cell would
+        // Stroom's cells don't ellipsise their text, so the box clips a long name as a grid's fixed
+        // width cell would
         style.setProperty("overflow", "hidden");
         box.add(widget);
         return box;

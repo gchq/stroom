@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// READ-ONLY GUARD — enforces the comparison plan's governing constraint (§1.1) mechanically.
+// READ-ONLY GUARD — keeps a recording run from changing Stroom.
 //
-// Both instances share ONE database, so any mutation on either side mutates both, invalidates every
-// baseline captured before it in the run, and cannot be A/B compared naively ("create Foo" on GWT
-// then "create Foo" on React is a create followed by a name clash). Stages A and B are therefore
-// strictly read-only — and "be careful" is not a control when a dialog sweep involves clicking
-// hundreds of buttons.
+// Any mutation invalidates every baseline captured before it in the run, and makes a rerun differ
+// from the run before it ("create Foo" twice is a create followed by a name clash). Stages A and B
+// are therefore strictly read-only — and "be careful" is not a control when a dialog sweep involves
+// clicking hundreds of buttons.
 //
 // This attaches to the page and ABORTS any request that would mutate, recording it as a violation
 // so the run fails loudly rather than silently corrupting the corpus. Set MUTATE=1 (Stage C) to
@@ -55,14 +54,15 @@ const POST_READ_PATTERNS = [
   //   /userAccess/v1/sessions – "List one user's sessions", per UserAccessResource. A POST that
   //   READS, like `find` next to it; only its sibling `/revoke` mutates, and that stays blocked.
   //   Blocked the A5 sweep on the User Access screen (new in #5656, so it postdates this list) and
-  //   the resulting error Alert then diffed as GWT having a dialog the port lacked.
+  //   the resulting error Alert was then read as a dialog that shouldn't be there.
   /\/api\/userAccess\/v\d+\/sessions$/i,
-  // Search polling + result-store lifecycle: transient server state, allowed (plan §1.2).
+  // Search polling + result-store lifecycle: transient server state, so allowed (the guard only
+  // blocks what would change stored content).
   /\/api\/(dashboard|query)\/[^/]+\/(search|poll|destroy|keepAlive)/i,
   /\/api\/(dashboard|query)\/v\d+\/(search|poll|destroy|downloadSearchResults)?$/i,
   //   /result-store/v1/destroy/<node> — the SAME lifecycle under its own resource. Blocking it is
   //   backwards: the store was created by a search this sweep itself ran, and destroy is how the UI
-  //   gives it back. A5c tripped it on the port's dashboard and, because the request was aborted,
+  //   gives it back. A5c tripped it on a dashboard and, because the request was aborted,
   //   the run ENDED having leaked the store it was trying to clean up. Its siblings that touch the
   //   corpus (nothing on this resource does) would still be blocked by the default.
   /\/api\/result-store\/v\d+\/(destroy|terminate|exists|list|find)\b/i,

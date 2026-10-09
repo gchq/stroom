@@ -30,15 +30,14 @@ import stroom.widget.popup.client.event.HidePopupEvent;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [ExplorerPopupPresenter] (the explorer tree dialog that a document
-/// selection box opens, with a quick filter above the tree), matching
-/// `Widgets/Dialogs/ExplorerDropdownPopup` in the React Storybook.
+/// selection box opens, with a quick filter above the tree).
 ///
 /// The presenter fetches its tree from the explorer service, which the harness answers from the
-/// React stories' `FIXTURE_TREE` (`TreeFixtures.fixtureTree()`); it is created with
+/// fixture tree (`TreeFixtures.fixtureTree()`); it is created with
 /// `SelectorWidgets.explorerPopup`, as its constructor is only visible to GIN.
 public final class ExplorerDropdownPopupStories {
 
-    // The React ExplorerDropdownPopup's callback prop
+    // Spy names
     private static final String ON_CLOSE = "onClose";
 
     private ExplorerDropdownPopupStories() {
@@ -49,8 +48,7 @@ public final class ExplorerDropdownPopupStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's defaultOpenItems has no GWT equivalent: Stroom's explorer tree opens the
-        // folders the explorer service says are open
+        // Stroom's explorer tree opens the folders the explorer service says are open
         registry.component("Widgets/Dialogs/ExplorerDropdownPopup", ExplorerDropdownPopupStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Explorer dropdown popup, open from the start; type in the filter to narrow the tree
@@ -66,7 +64,7 @@ public final class ExplorerDropdownPopupStories {
         final ScreenHarness harness = ScreenHarness.create(context,
                 TreeFixtures.explorerRoutes(TreeFixtures.fixtureTree()).build());
         final ExplorerPopupPresenter popup = SelectorWidgets.explorerPopup(harness);
-        // Differs from React: the tree starts with Stroom's "None" row (the presenter's
+        // The tree starts with Stroom's "None" row (the presenter's
         // default setIncludeNullSelection(true))
         if (includedTypes.length > 0) {
             popup.setIncludedTypes(includedTypes);
@@ -77,14 +75,14 @@ public final class ExplorerDropdownPopupStories {
             }
         }));
         harness.add(DialogWidgets.button(buttonText, DialogWidgets.PRIMARY, event -> show(popup)));
-        // React's `useState(true)`: the popup is shown from the start
+        // The popup is shown from the start
         show(popup);
         return harness.asWidget();
     }
 
     private static void show(final ExplorerPopupPresenter popup) {
         popup.show(docRef -> {
-            // The React story only closes the popup
+            // The story only closes the popup
         });
     }
 }

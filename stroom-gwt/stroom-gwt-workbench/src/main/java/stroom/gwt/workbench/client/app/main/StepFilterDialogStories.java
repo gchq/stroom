@@ -38,11 +38,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/StepFilterDialog` in the React Storybook, showing Stroom's real
-/// [SteppingFilterPresenter] (the 'Change Step Filters' dialog, as `SteppingPresenter` shows it).
+/// Stories of `App/Main/StepFilterDialog`, showing Stroom's real [SteppingFilterPresenter] (the
+/// 'Change Step Filters' dialog, as `SteppingPresenter` shows it).
 ///
-/// The element icons come from `GET /pipeline/v1/propertyTypes`. React's `onApply` is a spy on the
-/// dialog's consumer (the element id → settings map), described as `element: n filter(s) TYPES`.
+/// The element icons come from `GET /pipeline/v1/propertyTypes`. The `onApply` spy records what the
+/// dialog's consumer is given (the element id → settings map), described as
+/// `element: n filter(s) TYPES`.
 public final class StepFilterDialogStories {
 
     /// The name of the spy recording the settings applied (the dialog's consumer).
@@ -70,8 +71,8 @@ public final class StepFilterDialogStories {
                     final Play screen = play.screen();
                     screen.findByText("Change Step Filters", StroomDom.DIALOG_TITLE);
                     // No active filters yet.
-                    // Differs from React: GWT's 'Has active filter(s)' icon is in every element's row,
-                    // shown by the cell's 'filterOn' class (hidden by 'filterOff')
+                    // The 'Has active filter(s)' icon is in every element's row, shown by the cell's
+                    // 'filterOn' class (hidden by 'filterOff')
                     play.expect(screen.querySelector(FILTER_ON)).toBeNull();
                     // Add an XPath filter: the default match type (Exists) needs no value
                     play.click(screen.getByTitle("Add XPath Filter"));
@@ -85,8 +86,8 @@ public final class StepFilterDialogStories {
                         play.expect(xpathList.getByRole("columnheader", heading)).toBeInTheDocument();
                     }
                     // Per element: xmlWriter has no filters; switching back keeps xsltFilter's.
-                    // Differs from React: GWT's empty filter list shows no 'No filters' text, so the
-                    // list is checked for having no 'Exists' row
+                    // An empty filter list shows no text, so the list is checked for having no 'Exists'
+                    // row
                     final Play elements = screen.within(screen.querySelector(".pipelineElementChooser"));
                     play.click(elements.getByText("xmlWriter"));
                     play.waitFor(() -> play.expect(xpathList.queryByText("Exists")).toBeNull());
@@ -96,7 +97,7 @@ public final class StepFilterDialogStories {
                     play.click(dialog(screen, "Change Step Filters").getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ON_APPLY)).toHaveBeenCalledTimes(1));
                     play.expect(play.spy(ON_APPLY)).toHaveBeenCalledWith("xsltFilter: 1 filter(s) EXISTS");
-                    // Differs from React: there is no onClose; GWT's dialog closes itself on OK
+                    // The dialog closes itself on OK
                     play.waitFor(() -> play.expect(screen.queryByText("Change Step Filters", StroomDom.DIALOG_TITLE))
                             .toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();

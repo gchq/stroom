@@ -53,13 +53,12 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Arrays;
 import java.util.List;
 
-/// The real Stroom widgets that the popup contract stories open, each rendered closed, as the
-/// React registry's harnesses render theirs.
+/// The real Stroom widgets that the popup contract stories open, each rendered closed.
 final class PopupHarnesses {
 
-    /// The time React's CustomDateBox harness starts at, 2026-08-12T00:00:00.000Z.
+    /// The time the date box starts at, 2026-08-12T00:00:00.000Z.
     private static final long DATE_MILLIS = 1786492800000L;
-    // Where React's portal cascade harness puts its panels (position: fixed, so viewport pixels)
+    // Where the portal cascade puts its panels (position: fixed, so viewport pixels)
     private static final int OUTER_LEFT = 400;
     private static final int INNER_LEFT = 640;
     private static final int CASCADE_TOP = 40;
@@ -68,7 +67,7 @@ final class PopupHarnesses {
         // Static utility
     }
 
-    /// React's `<HelpButton heading content>`: Stroom's `HelpButton`, shown by `HelpManager`.
+    /// Stroom's `HelpButton`, shown by `HelpManager`.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
@@ -78,7 +77,7 @@ final class PopupHarnesses {
         return helpButton;
     }
 
-    /// React's QuickFilter harness: Stroom's `QuickFilter`, whose help button shows its own popup.
+    /// Stroom's `QuickFilter`, whose help button shows its own popup.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
@@ -86,7 +85,7 @@ final class PopupHarnesses {
         return new QuickFilter();
     }
 
-    /// React's `<FormGroup label helpOverride>`: Stroom's `FormGroup`, whose help is a `HelpButton`.
+    /// Stroom's `FormGroup`, whose help is a `HelpButton`.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
@@ -100,8 +99,7 @@ final class PopupHarnesses {
         return formGroup;
     }
 
-    /// React's TypeFilter harness: a button that shows Stroom's `TypeFilterPresenter`, as the
-    /// explorer's filter button does.
+    /// A button that shows Stroom's `TypeFilterPresenter`, as the explorer's filter button does.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
@@ -121,8 +119,8 @@ final class PopupHarnesses {
         return button;
     }
 
-    /// React's `<SettingBlock renderEditor>`: Stroom's `SettingBlock`, whose click shows a chooser
-    /// below it as `AnnotationEditPresenter.showStatusChooser` does.
+    /// Stroom's `SettingBlock`, whose click shows a chooser below it as
+    /// `AnnotationEditPresenter.showStatusChooser` does.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
@@ -144,21 +142,21 @@ final class PopupHarnesses {
         return settingBlock;
     }
 
-    /// React's SelectionBox harness: Stroom's `SelectionBox`.
+    /// Stroom's `SelectionBox`.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
     static Widget selectionBox(final StoryPopups popups) {
         final SelectionBox<String> selectionBox = new SelectionBox<>();
-        // Differs from React: Stroom's selection popup only has a quick filter (whose help popup
+        // Stroom's selection popup only has a quick filter (whose help popup
         // NestedRealWidgetsRouteEscapeToTheInnermost opens) for more than 10 items, so there are
-        // 11, not React's three.
+        // 11.
         selectionBox.addItems(new String[]{
                 "Alpha", "Beta", "Gamma", "Delta", "Epsilon", "Zeta", "Eta", "Theta", "Iota", "Kappa", "Lambda"});
         return selectionBox;
     }
 
-    /// React's CustomDateBox harness: Stroom's `MyDateBox` (whose popup is `dateBoxPopup`).
+    /// Stroom's `MyDateBox` (whose popup is `dateBoxPopup`).
     ///
     /// @param popups The story's popups.
     /// @return The widget.
@@ -169,8 +167,8 @@ final class PopupHarnesses {
         return dateBox;
     }
 
-    /// React's `MenuHarness`: a button showing a menu nested two levels deep, as Stroom's toolbar
-    /// buttons show theirs (`ShowMenuEvent` below the button, which is the auto-hide partner).
+    /// A button showing a menu nested two levels deep, as Stroom's toolbar buttons show theirs
+    /// (`ShowMenuEvent` below the button, which is the auto-hide partner).
     ///
     /// @param popups The story's popups.
     /// @return The widget.
@@ -191,10 +189,9 @@ final class PopupHarnesses {
         return button;
     }
 
-    /// React's `PortalCascadeHarness`: two popups, the child's trigger inside the parent's panel
-    /// and its panel outside it (on the body, as every Stroom popup is). Each is shown with
-    /// `ShowPopupEvent` as an auto-hiding `POPUP` with its trigger as the auto-hide partner, as
-    /// `MenuPresenter` shows a submenu.
+    /// Two popups, the child's trigger inside the parent's panel and its panel outside it (on the
+    /// body, as every Stroom popup is). Each is shown with `ShowPopupEvent` as an auto-hiding
+    /// `POPUP` with its trigger as the auto-hide partner, as `MenuPresenter` shows a submenu.
     ///
     /// @param popups The story's popups.
     /// @return The widget.
@@ -242,7 +239,7 @@ final class PopupHarnesses {
         return new SimpleMenuItem.Builder()
                 .text(text)
                 .command(() -> {
-                    // React's no-op command
+                    // Does nothing
                 })
                 .build();
     }

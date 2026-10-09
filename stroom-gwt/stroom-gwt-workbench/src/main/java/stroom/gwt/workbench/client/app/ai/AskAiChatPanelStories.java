@@ -34,12 +34,12 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/AI/AskAiChatPanel` in the React Storybook, showing the chat panel of
-/// Stroom's real [AskStroomAiPresenter] (its view, which Stroom shows docked or in the 'Ask Stroom
-/// AI' dialog) in a 480 by 560 pixel box, as React does, with fake REST replies ([AiFixtures]).
+/// The `App/AI/AskAiChatPanel` stories, showing the chat panel of Stroom's real
+/// [AskStroomAiPresenter] (its view, which Stroom shows docked or in the 'Ask Stroom AI' dialog) in
+/// a 480 by 560 pixel box, with fake REST replies ([AiFixtures]).
 ///
-/// React's `onViewAttachment` callback is Stroom's attachment data dialog, which the presenter
-/// opens itself; the play checks the data it asks for.
+/// Viewing an attachment opens Stroom's attachment data dialog, which the presenter opens itself;
+/// the play checks the data it asks for.
 public final class AskAiChatPanelStories {
 
     private static final String EMPTY_PROMPT = "How can I help?";
@@ -75,8 +75,8 @@ public final class AskAiChatPanelStories {
                 .withPlay(play -> {
                     send(play, "What is the answer?");
                     play.waitFor(() -> play.expect(play.getByText("42")).toBeInTheDocument());
-                    // Differs from React: GWT also titles the conversation with the first message,
-                    // so the message is counted in the conversation, not the whole panel
+                    // Stroom also titles the conversation with the first message, so the message is
+                    // counted in the conversation, not the whole panel
                     play.expect(play.within(play.querySelector(MESSAGES)).getAllByText("What is the answer?"))
                             .toHaveLength(1);
                     play.waitFor(() -> play.expect(play.querySelector(AiFixtures.RUN)).toBeInTheDocument());
@@ -86,15 +86,14 @@ public final class AskAiChatPanelStories {
                 .story("StopWhileWorking", context -> render(context, AiFixtures.builder(
                         // The question is still being answered (the request is in flight)
                         RestReply.json("{\"message\": \"\"}").delayed(60000),
-                        // Differs from React: GWT shows what the server is working on from the
-                        // poll's workingMessage, not from a WORKING message in its new messages
+                        // Stroom shows what the server is working on from the poll's
+                        // workingMessage, not from a WORKING message in its new messages
                         AiFixtures.poll("\"workingMessage\": {\"id\": 5, \"chatId\": 1, "
                                         + "\"messageType\": \"WORKING\", \"message\": \"Analysing the table...\"}",
                                 false)).build()))
                 .withPlay(play -> {
                     send(play, "Analyse this");
-                    // Differs from React: the working line shows the server's message, not a
-                    // 'Working...' label
+                    // The working line shows the server's message
                     play.waitFor(() -> play.expect(play.getByText("Analysing the table...")).toBeInTheDocument());
                     play.waitFor(() -> play.expect(play.querySelector(AiFixtures.STOP)).toBeInTheDocument());
                     play.click(play.querySelector(AiFixtures.STOP));
@@ -120,9 +119,8 @@ public final class AskAiChatPanelStories {
                     final Query view = play.getByRole("button", "View data");
                     play.expect(view).toBeEnabled();
                     play.click(view);
-                    // Differs from React: React reports the attachment to its onViewAttachment
-                    // callback; Stroom opens the attachment's data itself, so the play checks the
-                    // data it asks for
+                    // Stroom opens the attachment's data itself, so the play checks the data it
+                    // asks for
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/ai/v1/getAttachmentData")
                                     .withJsonBodyContaining("{\"attachmentId\": 100}")
@@ -171,7 +169,7 @@ public final class AskAiChatPanelStories {
     }
 
     // Types a message and presses Run.
-    // Differs from React: the message box has no 'Message' label; it is found by its placeholder
+    // The message box has no label; it is found by its placeholder
     private static void send(final Play play, final String message) {
         play.type(play.findByPlaceholderText(EMPTY_PROMPT), message);
         play.click(play.querySelector(AiFixtures.RUN));
@@ -183,7 +181,7 @@ public final class AskAiChatPanelStories {
                 AskAiChatPanelStories::showPanel);
     }
 
-    // The chat's view in React's panel box: 480 by 560 pixels, with a border
+    // The chat's view in a panel box: 480 by 560 pixels, with a border
     private static void showPanel(final ScreenHarness harness, final EditorsScreenGinjector injector) {
         final AskStroomAiPresenter presenter = injector.getAskStroomAiPresenter();
         final SimplePanel box = new SimplePanel(presenter.getWidget());

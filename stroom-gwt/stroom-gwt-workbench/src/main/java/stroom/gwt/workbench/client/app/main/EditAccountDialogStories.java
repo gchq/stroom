@@ -35,16 +35,14 @@ import stroom.security.identity.shared.Account;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/EditAccountDialog` in the React Storybook, showing Stroom's real
-/// [EditAccountPresenter] (the 'Edit Account' and 'Create Account' dialogs of the 'Manage Accounts'
-/// tab) with fake REST replies.
+/// Stories of `App/Main/EditAccountDialog`, showing Stroom's real [EditAccountPresenter] (the 'Edit
+/// Account' and 'Create Account' dialogs of the 'Manage Accounts' tab) with fake REST replies.
 ///
-/// The React story's `AccountApi` becomes routes for Stroom's `AccountResource`: `update` →
-/// `PUT /account/v1/{id}` (its recorder of the changes sent becomes checks on the request spy),
-/// `fetch` (the re-read after Unlock/Reactivate) → `GET /account/v1/{id}` and `create` →
-/// `POST /account/v1/`. The account is given to the dialog as `AccountsListPresenter` gives it (the
-/// selected row), and React's `onChanged` is a spy on the dialog's change handler (which Stroom
-/// gives the grid's `refresh`). The presenter comes from GIN.
+/// The stories answer Stroom's `AccountResource`: `PUT /account/v1/{id}` (an update; the changes
+/// sent are checked on the request spy), `GET /account/v1/{id}` (the re-read after
+/// Unlock/Reactivate) and `POST /account/v1/` (a create). The account is given to the dialog as
+/// `AccountsListPresenter` gives it (the selected row), and `onChanged` is a spy on the dialog's
+/// change handler (which Stroom gives the grid's `refresh`). The presenter comes from GIN.
 public final class EditAccountDialogStories {
 
     /// The name of the spy recording the dialog's change handler (the host grid's refresh).
@@ -82,8 +80,8 @@ public final class EditAccountDialogStories {
                     final Play screen = play.screen();
                     screen.findByText("Edit Account");
                     final Query first = screen.getByLabelText("First Name");
-                    // Differs from React: RestyGWT sends the members left alone as null (and no
-                    // actions as []), where React leaves them out
+                    // RestyGWT sends the members left alone as null (and no
+                    // actions as [])
                     play.clear(first);
                     play.type(first, "Administrator");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
@@ -132,7 +130,7 @@ public final class EditAccountDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText("Create Account");
-                    // Differs from React: GWT hides the Enabled form group (setEnabledVisible(false))
+                    // GWT hides the Enabled form group (setEnabledVisible(false))
                     // rather than leaving it out, so its tick box is still in the document
                     play.expect(enabledTickBox(screen)).not().toBeVisible();
                     expectNoProblems(play);
@@ -292,7 +290,7 @@ public final class EditAccountDialogStories {
     // --------------------------------------------------------------------------------
 
 
-    /// React's `Account` fixture (the `admin` account) and its variations: the account given to
+    /// The `admin` account and its variations: the account given to
     /// the dialog and, as JSON, the one the server returns.
     private static final class AccountSpec {
 

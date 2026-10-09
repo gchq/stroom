@@ -31,13 +31,13 @@ import stroom.widget.popup.client.presenter.PopupType;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/ProcessorLimitsDialog` in the React Storybook, showing Stroom's real
-/// [ProcessorLimitsPresenter] (the 'Process Search Results' dialog), shown as
-/// `QueryPresenter.setProcessorLimits` shows it, with the UI config's process limits.
+/// Stories of `App/Main/ProcessorLimitsDialog`, showing Stroom's real [ProcessorLimitsPresenter]
+/// (the 'Process Search Results' dialog), shown as `QueryPresenter.setProcessorLimits` shows it,
+/// with the UI config's process limits.
 ///
 /// In Stroom the pipeline is chosen first, in its own 'Choose Pipeline To Process Results With'
-/// popup, so this dialog only has the limits. React's `create` (which `QueryPresenter` calls after
-/// OK, as `POST /processorFilter/v1`) isn't reached by the story.
+/// popup, so this dialog only has the limits. Creating the filter (which `QueryPresenter` does
+/// after OK, as `POST /processorFilter/v1`) isn't reached by the story.
 public final class ProcessorLimitsDialogStories {
 
     private ProcessorLimitsDialogStories() {
@@ -55,9 +55,9 @@ public final class ProcessorLimitsDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(screen.getByText("Process Search Results")).toBeInTheDocument());
-                    // Differs from React: GWT's dialog has no pipeline picker (the pipeline is chosen
-                    // before it, in a 'Choose Pipeline To Process Results With' popup), so OK is
-                    // enabled; the dialog holds the record and time limits, from the UI config
+                    // The dialog has no pipeline picker (the pipeline is chosen before it, in a 'Choose
+                    // Pipeline To Process Results With' popup), so OK is enabled; the dialog holds the
+                    // record and time limits, from the UI config
                     play.expect(screen.queryByText("Pipeline", "label")).toBeNull();
                     play.expect(screen.getByText("Record Limit", "label")).toBeInTheDocument();
                     play.expect(screen.querySelector("#processorLimitsRecordLimit input")).toHaveValue("1000000");

@@ -50,47 +50,45 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-/// Stories matching `App/Main/AppShell` in the React Storybook: Stroom's app shell put together by
-/// [ShellScreen] from Stroom's real presenters and plugins: the main view (its main menu), the
-/// explorer (`NavigationPresenter`: the tree, its toolbar and the current activity), the document
-/// tabs (`ContentTabPanePresenter`), the explorer's and tabs' menus and document actions
-/// (`DocumentPluginEventManager`), keyboard shortcuts (`GlobalKeyHandlerImpl`), and the Dictionary,
-/// Feed and Folder editors.
+/// Stories of `App/Main/AppShell`: Stroom's app shell put together by [ShellScreen] from Stroom's
+/// real presenters and plugins: the main view (its main menu), the explorer (`NavigationPresenter`:
+/// the tree, its toolbar and the current activity), the document tabs (`ContentTabPanePresenter`),
+/// the explorer's and tabs' menus and document actions (`DocumentPluginEventManager`), keyboard
+/// shortcuts (`GlobalKeyHandlerImpl`), and the Dictionary, Feed and Folder editors.
 ///
-/// React's seams become Stroom's REST endpoints:
+/// The Stroom endpoints the stories answer:
 ///
-/// | React seam | Stroom endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `explorerNodes`, `explorerLoadNodes` | `POST /explorer/v2/fetchExplorerNodes` ([ExplorerFixture]) |
-/// | `appApi` | the start-up fixtures (session, UI config, preferences, app permissions) |
-/// | `explorerCrud.fetchDocumentTypes` | `GET /explorer/v2/fetchDocumentTypes` |
-/// | `explorerCrud.fetchPermissions` | `POST /explorer/v2/fetchExplorerPermissions` |
-/// | `explorerCrud` create, rename, copy, move, remove, info | `/explorer/v2/` + `create`, `rename`, ... |
-/// | `explorerCrud.fetchDeleteConfirmation` | `POST /explorer/v2/fetchDeleteConfirmation` |
-/// | `decorate`, `deepLink` | `POST /explorer/v2/decorate`; the deep link is `ShowMainEvent`'s document |
-/// | `dictionaryApi`, `wordListApi` | `GET`/`PUT /dictionary/v1/{uuid}`, `GET /wordList/v1/{uuid}` |
-/// | `feedApi`, `feedOptionsApi` | `/feed/v1/...`, `GET /meta/v1/getTypes`, `POST /fsVolume/volumeGroup/v2/find` |
-/// | `metaApi`, `processorTaskApi` | `POST /meta/v1/find`, `/processorTask/v1/...` |
-/// | `docPermissionApi` | the Permissions tab's `/permission/doc/v1/...` |
-/// | `activityApi` | `/activity/v1/...` (`setCurrent` is checked on the request spy) |
-/// | `content.exportContent`, `downloadResource` | `POST /content/v1/export`, the download spy |
-/// | `appApi.terminateOtherSessions` | `POST /session/v1/terminateOther` |
+/// | `POST /explorer/v2/fetchExplorerNodes` ([ExplorerFixture]) | the explorer's tree |
+/// | the start-up fixtures | the session, UI config, preferences and app permissions |
+/// | `GET /explorer/v2/fetchDocumentTypes` | the document types |
+/// | `POST /explorer/v2/fetchExplorerPermissions` | the explorer's permissions |
+/// | `/explorer/v2/` + `create`, `rename`, ... | create, rename, copy, move, remove and info |
+/// | `POST /explorer/v2/fetchDeleteConfirmation` | the delete confirmation |
+/// | `POST /explorer/v2/decorate` | naming the deep-linked document (`ShowMainEvent`'s document) |
+/// | `GET`/`PUT /dictionary/v1/{uuid}`, `GET /wordList/v1/{uuid}` | the Dictionary editor |
+/// | `/feed/v1/...`, `GET /meta/v1/getTypes`, `POST /fsVolume/volumeGroup/v2/find` | the Feed editor |
+/// | `POST /meta/v1/find`, `/processorTask/v1/...` | the streams and processor tasks |
+/// | the Permissions tab's `/permission/doc/v1/...` | document permissions |
+/// | `/activity/v1/...` (`setCurrent` is checked on the request spy) | the current activity |
+/// | `POST /content/v1/export`, the download spy | exporting content |
+/// | `POST /session/v1/terminateOther` | ending the user's other sessions |
 public final class AppShellStories {
 
     /// The name of the spy recording the registry's answers in `LocateOnlyForExplorerTabs`.
     static final String LOCATE_SPY = "getExplorerDocRef";
 
-    // Differs from React: the explorer panel is NavigationViewImpl's '.navigation' (React's class)
+    // The explorer panel is NavigationViewImpl's '.navigation'
     private static final String NAVIGATION = ".navigation";
-    // Differs from React: GWT's document tabs have no 'tab' role; their labels are '.curveTab-text'
+    // GWT's document tabs have no 'tab' role; their labels are '.curveTab-text'
     private static final String TAB_LABEL = ".curveTab-text";
-    // Differs from React: menu items have no 'menuitem' role or aria-disabled; a disabled item has
+    // Menu items have no 'menuitem' role or aria-disabled; a disabled item has
     // the 'menuItem-disabled' class
     private static final String MENU_ITEM = ".menuItem-outer";
     private static final String MENU_ITEM_DISABLED = "menuItem-disabled";
     private static final String MENU_SHORTCUT = ".menuItem-shortcut";
-    // Differs from React: the main menu button is the explorer's 'Main Menu' (React's 'Application
-    // menu')
+    // The main menu button is the explorer's 'Main Menu'
     private static final String MAIN_MENU = "Main Menu";
 
     private static final String DICTIONARY_PATH = "/dictionary/v1/";
@@ -108,27 +106,27 @@ public final class AppShellStories {
     private static final String EMPTY_PAGE = """
             {"values": [], "pageResponse": {"offset": 0, "length": 0, "total": 0, "exact": true}}""";
 
-    // React's dictionaryFixture: fixed words and two imports (so the lifecycle story can edit by
+    // A dictionary with fixed words and two imports (so the lifecycle story can edit by
     // removing them)
     private static final String COUNTRIES = """
             {"type": "Dictionary", "uuid": "dict-countries", "name": "Countries",
               "description": "ISO country names", "data": "England\\nScotland\\nWales",
               "imports": [{"type": "Dictionary", "uuid": "dict-alpha", "name": "Alpha"},
                           {"type": "Dictionary", "uuid": "dict-beta", "name": "Beta"}]}""";
-    // React's wordListFixture
+    // Its word list
     private static final String WORDS = """
             {"wordList": [{"word": "sample", "sourceUuid": "dict-countries"}], "sourceUuidToDocRefMap": {}}""";
 
-    // React's feedFixture
+    // A feed
     private static final String FEED = """
             {"type": "Feed", "uuid": "feed-events", "name": "EVENTS", "status": "RECEIVE",
               "encoding": "UTF-8", "dataFormat": "JSON", "streamType": "Raw Events", "reference": false}""";
-    // React's metaFixture
+    // The feed's streams
     private static final String STREAMS = """
             {"values": [{"meta": {"id": 101, "feedName": "EVENTS", "typeName": "Raw Events",
                 "status": "UNLOCKED", "createMs": 1700000000000}, "attributes": {}}],
               "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}""";
-    // React's crudFixture.info
+    // The explorer's Info for the dictionary
     private static final String INFO = """
             {"explorerNode": {"type": "Dictionary", "uuid": "dict-countries", "name": "Countries",
                 "tags": ["stroom"]},
@@ -136,14 +134,14 @@ public final class AppShellStories {
                   {"time": 1700000000000, "user": {"displayName": "admin"}, "action": "CREATE"},
                   {"time": 1700100000000, "user": {"displayName": "admin"}, "action": "UPDATE"}],
                 "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}}}""";
-    // React's typedCrud and crudFixture document types
+    // The document types
     private static final String FEED_TYPE = """
             {"group": "DATA_PROCESSING", "type": "Feed", "displayType": "Feed", "icon": "DOCUMENT_FEED"}""";
     private static final String DICTIONARY_TYPE = """
             {"group": "STRUCTURE", "type": "Dictionary", "displayType": "Dictionary", "icon": "DOCUMENT_DICTIONARY"}""";
     private static final String FEED_AND_DICTIONARY_TYPES = documentTypes(FEED_TYPE + ", " + DICTIONARY_TYPE);
     private static final String DICTIONARY_TYPES = documentTypes(DICTIONARY_TYPE);
-    // React's DeleteWithDependantsWarns fixture
+    // A delete confirmation for a folder with dependants
     private static final String DELETE_WITH_DEPENDANTS = """
             {"totalChildCount": 2, "childTypeCounts": {"Dictionary": 2},
               "childItems": [{"type": "Dictionary", "uuid": "d1", "name": "Contained One"},
@@ -185,7 +183,7 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play nav = navTree(play);
                     final Query filter = nav.getByRole("button", "Filter Types");
-                    // Differs from React: the toggle button shows its state with the 'on' class,
+                    // The toggle button shows its state with the 'on' class,
                     // not aria-pressed
                     play.expect(filter).not().toHaveClass("on");
                     play.click(filter);
@@ -216,9 +214,9 @@ public final class AppShellStories {
                 // A document opened on its own, without the explorer or toolbar
                 .story("Embedded", AppShellStories::renderEmbedded)
                 .withPlay(play -> {
-                    // Differs from React: Stroom shows a document without the shell for a URL that
-                    // names it without the open-doc action (CorePresenter); with open-doc (React's
-                    // deep link) it shows the whole shell, embedded or not. So the story opens the
+                    // Stroom shows a document without the shell for a URL that
+                    // names it without the open-doc action (CorePresenter); with open-doc (a deep
+                    // link) it shows the whole shell, embedded or not. So the story opens the
                     // document as Stroom's embedded view does: its editor, without the explorer or
                     // the Ask Stroom AI button
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
@@ -231,7 +229,7 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     play.findByRole("button", TextMatch.regex("expand all", "i"));
                     play.keyboard("{Shift}{Shift}");
-                    // Differs from React: GWT's Find dialog's quick filter has no label; the
+                    // GWT's Find dialog's quick filter has no label; the
                     // dialog's caption is 'Find'
                     play.waitFor(() -> play.expect(play.screen().getByText("Find", StroomDom.DIALOG_TITLE))
                             .toBeInTheDocument());
@@ -257,7 +255,7 @@ public final class AppShellStories {
                     play.findByText("Dictionaries");
                     play.click(play.getByTitle(MAIN_MENU));
                     play.waitFor(() -> play.expect(menuItem(screen, "User")).toBeInTheDocument());
-                    // Differs from React: GWT shows a group's items (with their shortcuts) only
+                    // GWT shows a group's items (with their shortcuts) only
                     // while the group is hovered, so each group is hovered in turn
                     play.hover(menuItem(screen, "User"));
                     play.waitFor(() -> play.expect(shortcuts(play)).toContain("gu"));
@@ -269,7 +267,7 @@ public final class AppShellStories {
                     play.expect(shortcuts(play)).toContain("Ctrl+e");
                     play.expect(shortcuts(play)).toContain("Alt+l");
                     play.keyboard("{Escape}");
-                    // Differs from React: GWT's key sequences complete on the keys' release, so
+                    // GWT's key sequences complete on the keys' release, so
                     // the keys are pressed and released rather than only pressed
                     play.keyboard("gu");
                     play.waitFor(() -> play.expect(screen.getByText("User Preferences", StroomDom.DIALOG_TITLE))
@@ -281,7 +279,7 @@ public final class AppShellStories {
                 }, builder -> builder.uiConfig(QueryFixtures.uiConfigWith("\"maintenanceMessage\": "
                         + "\"System maintenance scheduled for 22:00 UTC — expect brief downtime.\"")), null))
                 .withPlay(play -> {
-                    // Differs from React: GWT's banner has no 'alert' role
+                    // GWT's banner has no 'alert' role
                     play.waitFor(() -> play.expect(play.querySelector(".mainViewImpl-banner"))
                             .toHaveTextContent(TextMatch.containingIgnoreCase("system maintenance")));
                     expectNoProblems(play);
@@ -293,7 +291,7 @@ public final class AppShellStories {
                         builder -> builder.uiConfig(ActivityFixtures.uiConfig(ACTIVITY_TITLE)), null))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // Differs from React: GWT's summary is a button with no title
+                    // GWT's summary is a button with no title
                     final Query summary = play.findByRole("button", TextMatch.startingWith("Current Activity"));
                     play.expect(play.within(summary).getByText("none")).toBeInTheDocument();
                     play.click(play.within(summary).getByText("Current Activity"));
@@ -301,7 +299,7 @@ public final class AppShellStories {
                     play.click(screen.findByText(TextMatch.containing("INV-1002")));
                     play.click(screen.getByRole("button", StroomDom.button("Close")));
                     play.waitFor(() -> play.expect(summary).toHaveTextContent(TextMatch.containing("INV-1002")));
-                    // The chosen activity was made current (React's ACTIVITY_STATE)
+                    // The chosen activity was made current
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(ActivityFixtures.CURRENT_PATH)
                                     .withJsonBodyContaining("{\"id\": 2}")
@@ -316,7 +314,7 @@ public final class AppShellStories {
                                 .replace("\"chooseOnStartup\": false", "\"chooseOnStartup\": true")), null))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // Differs from React: Stroom asks for the activity before it shows the shell, so
+                    // Stroom asks for the activity before it shows the shell, so
                     // the explorer (and its current activity summary) isn't shown yet
                     play.waitFor(() -> play.expect(screen.getByText(ACTIVITY_TITLE, StroomDom.DIALOG_TITLE))
                             .toBeInTheDocument());
@@ -338,7 +336,7 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(screen.getByText("You must accept the terms to use this system"))
                             .toBeInTheDocument());
                     play.click(screen.getByRole("button", TextMatch.regex("close|ok", "i")));
-                    // Differs from React: once the warning is closed, Stroom closes the splash screen
+                    // Once the warning is closed, Stroom closes the splash screen
                     // and never shows the app (SplashPresenter hides it and passes the rejection on),
                     // so the terms can't then be accepted in the same story: nothing was acknowledged
                     play.waitFor(() -> play.expect(screen.queryByText("Accept to continue.")).toBeNull());
@@ -354,16 +352,14 @@ public final class AppShellStories {
                 }, builder -> builder.appPermissions(AppPermission.VIEW_DATA_PERMISSION), null))
                 .withPlay(play -> {
                     final Play nav = navTree(play);
-                    // Differs from React: GWT's empty tab pane shows nothing (React's 'No document
-                    // open'), so the play checks there are no tabs
+                    // GWT's empty tab pane shows nothing, so the play checks there are no tabs
                     play.expect(tabs(play)).toHaveLength(0);
                     play.dblClick(nav.getByText("Countries"));
                     play.expect(play.findByText("Words", StroomDom.LINK_TAB_LABEL)).toBeInTheDocument();
                     play.expect(tabs(play)).toHaveLength(1);
                     // A folder opens the same way (FolderPlugin), with its Data tab.
-                    // Differs from React: GWT's Data tab lists the folder's streams (no 'Select a
-                    // stream to preview' prompt), so the play checks the folder's tab and its stream
-                    // (React's metaFixture)
+                    // GWT's Data tab lists the folder's streams, so the play checks the folder's tab
+                    // and its stream
                     play.dblClick(nav.getByText("Dictionaries"));
                     play.waitFor(5000, () -> play.expect(tabs(play)).toHaveLength(2));
                     play.expect(play.getByText("Dictionaries", TAB_LABEL)).toBeInTheDocument();
@@ -404,7 +400,7 @@ public final class AppShellStories {
                     // Edit again, then close: the unsaved changes are confirmed
                     removeImport(play, "Beta");
                     play.waitFor(() -> play.expect(play.getByTitle("Save")).not().toHaveAttribute("aria-disabled"));
-                    // Differs from React: the tab's close icon has no title
+                    // The tab's close icon has no title
                     play.click(play.within(play.getByText(TextMatch.containing("Countries"), TAB_LABEL)
                                     .closest(".curveTab"))
                             .querySelector(".curveTab-close"));
@@ -480,7 +476,7 @@ public final class AppShellStories {
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.dblClick(nav.getByText("Colours"));
                     play.waitFor(5000, () -> play.expect(tabs(play)).toHaveLength(2));
-                    // Differs from React: the menu is shown on a secondary button's mouseup on a tab
+                    // The menu is shown on a secondary button's mouseup on a tab
                     play.fireEvent().mouseUp(play.getByText("Countries", TAB_LABEL), EventInit.create().button(2));
                     play.waitFor(() -> play.expect(menuItem(screen, "Close Others")).toBeInTheDocument());
                     for (final String name : List.of("Close", "Close Others", "Close Saved", "Close All",
@@ -517,7 +513,7 @@ public final class AppShellStories {
                     final Play screen = play.screen();
                     rightClick(play, navTree(play).getByText("Countries"));
                     play.click(screen.findByText("Info", StroomDom.MENU_ITEM_TEXT));
-                    // Differs from React: GWT bolds the key and appends the ': ' after it
+                    // GWT bolds the key and appends the ': ' after it
                     play.waitFor(() -> play.expect(screen.getByText("UUID")).toBeInTheDocument());
                     play.expect(screen.getByText("Type")).toBeInTheDocument();
                     play.expect(screen.getByText("Tags")).toBeInTheDocument();
@@ -540,13 +536,13 @@ public final class AppShellStories {
                     rightClick(play, navTree(play).getByText("Countries"));
                     play.click(screen.findByText("Export", StroomDom.MENU_ITEM_TEXT));
                     final Query dialog = screen.findByText("Export", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG);
-                    // Differs from React: the quick filter has no label, only its placeholder
+                    // The quick filter has no label, only its placeholder
                     play.expect(play.within(dialog).findByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))
                             .toBeInTheDocument();
                     final Query typeFilter = play.within(dialog).getByRole("button", "Filter Types");
                     play.expect(typeFilter).not().toHaveClass("on");
                     // The Filter Types button is beside the quick filter, in the same row.
-                    // Differs from React: the row is ExportConfigViewImpl's '.exportConfigViewImpl-filter'
+                    // The row is ExportConfigViewImpl's '.exportConfigViewImpl-filter'
                     play.expect(typeFilter.closest(".exportConfigViewImpl-filter")).not().toBeNull();
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -667,7 +663,7 @@ public final class AppShellStories {
                     final Play screen = play.screen();
                     final Play nav = navTree(play);
                     play.click(nav.getByText("Countries"));
-                    // Differs from React: GWT's tree selects on mousedown, so Ctrl is held on the
+                    // GWT's tree selects on mousedown, so Ctrl is held on the
                     // mousedown
                     play.fireEvent().mouseDown(nav.getByText("Colours"), EventInit.create().ctrlKey());
                     rightClick(play, nav.getByText("Countries"));
@@ -852,7 +848,7 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(menuItem(screen, "Locate in Explorer"))
                             .not().toHaveClass(MENU_ITEM_DISABLED));
                     play.keyboard("{Escape}");
-                    // Differs from React: the rule is Stroom's DocumentPluginRegistry.getExplorerDocRef,
+                    // The rule is Stroom's DocumentPluginRegistry.getExplorerDocRef,
                     // checked with the shell's registry (the Dictionary plugin is registered, no
                     // plugin is registered for a User screen's tab or an unknown type)
                     play.expect(play.spy(LOCATE_SPY)).toHaveBeenCalledWith("Dictionary: Countries");
@@ -926,10 +922,9 @@ public final class AppShellStories {
         return shell.asWidget();
     }
 
-    // What the shell asks for whatever the story (React's shared fixtures): the explorer's tree,
-    // decorations and permissions (React's crudFixture: the user owns every node and may create
-    // dictionaries), the explorer's actions, the activities (none), and the Dictionary, Feed and
-    // Folder editors' data
+    // What the shell asks for whatever the story: the explorer's tree, decorations and
+    // permissions (the user owns every node and may create dictionaries), the explorer's
+    // actions, the activities (none), and the Dictionary, Feed and Folder editors' data
     private static RestFixtures commonRoutes(final ExplorerFixture tree) {
         final Map<String, String> names = new HashMap<>();
         for (final String name : List.of("Countries", "Colours", "EVENTS", "Dictionaries")) {
@@ -950,7 +945,7 @@ public final class AppShellStories {
                 // The main menu's result stores (ResultStoreModel lists the nodes when it is built)
                 .get("/node/v1/all", RestReply.json("[\"node1a\"]"))
                 .route(RequestMatcher.post("/result-store/v1/find/*"), RestReply.json(EMPTY_PAGE))
-                // The explorer's actions (React's crudFixture)
+                // The explorer's actions
                 .post(CREATE_PATH, request -> RestReply.json(AppShellFixtures.created(request.getBody())))
                 .put(RENAME_PATH, request -> RestReply.json(AppShellFixtures.renamed(request.getBody())))
                 .delete(DELETE_PATH, request -> RestReply.json(AppShellFixtures.deleted(request.getBody())))
@@ -1015,7 +1010,7 @@ public final class AppShellStories {
         return play.screen().querySelectorAll(MENU_SHORTCUT).textContents();
     }
 
-    // Differs from React: the explorer's menu is shown on a secondary button's mousedown, not a
+    // The explorer's menu is shown on a secondary button's mousedown, not a
     // contextmenu event
     private static void rightClick(final Play play, final Query node) {
         play.rightClick(node);

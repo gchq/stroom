@@ -27,39 +27,39 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// The fake REST replies of the `App/AI/*` stories: React's `AskAiApi` seam as Stroom's
-/// `AskStroomAiResource` (`/ai/v1/...`).
+/// The fake REST replies of the `App/AI/*` stories, answering Stroom's `AskStroomAiResource`
+/// (`/ai/v1/...`).
 ///
-/// | React seam | Stroom endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `createChat` | `POST /ai/v1/createChat` |
-/// | `sendMessage` | `POST /ai/v1/askStroomAi` |
-/// | `poll` | `POST /ai/v1/pollMessages/{chatId}` (the messages after the request's last seen one) |
-/// | `getMessages` | `POST /ai/v1/getMessages/{chatId}` |
-/// | `cancel` | `POST /ai/v1/cancelProcessing/{chatId}` |
-/// | `deleteMessage` | `POST /ai/v1/deleteMessage/{chatId}/{messageId}` |
-/// | `updateTitle` | `POST /ai/v1/updateChatTitle/{chatId}` |
-/// | `listChats` | `POST /ai/v1/listChats` |
-/// | `getDefaultConfig` | `POST /ai/v1/getDefaultConfig` |
-/// | `getAttachmentData` | `POST /ai/v1/getAttachmentData` |
-/// | `downloadChat` | `POST /ai/v1/downloadChatHistory` |
+/// | `POST /ai/v1/createChat` | a new chat |
+/// | `POST /ai/v1/askStroomAi` | sending a message |
+/// | `POST /ai/v1/pollMessages/{chatId}` | polling (the messages after the request's last seen one) |
+/// | `POST /ai/v1/getMessages/{chatId}` | a chat's messages |
+/// | `POST /ai/v1/cancelProcessing/{chatId}` | Stop |
+/// | `POST /ai/v1/deleteMessage/{chatId}/{messageId}` | deleting a message |
+/// | `POST /ai/v1/updateChatTitle/{chatId}` | renaming a chat |
+/// | `POST /ai/v1/listChats` | the conversation history |
+/// | `POST /ai/v1/getDefaultConfig` | the default config |
+/// | `POST /ai/v1/getAttachmentData` | an attachment's data |
+/// | `POST /ai/v1/downloadChatHistory` | Download |
 ///
 /// Other batches' stories that open the chat (e.g. a table's 'Ask Stroom AI' button) add its routes
 /// with [#chatRoutes(RestFixtures.Builder)] and show it with [AskStroomAiChat].
 public final class AiFixtures {
 
-    // AskStroomAiResource.getDefaultConfig(). Differs from React: React's is empty; GWT's empty
-    // config docks the chat into the app's main layout (DockType.DOCK), which a story doesn't
-    // have, so the stories' config shows it as a dialog
+    // AskStroomAiResource.getDefaultConfig(). An empty config docks the chat into the app's main
+    // layout (DockType.DOCK), which a story doesn't have, so the stories' config shows it as a
+    // dialog
     public static final String CONFIG = """
             {"dockType": "DIALOG", "dockLocation": "RIGHT"}""";
 
     /// The chat's Run button.
-    /// Differs from React: it has no title or accessible name (`AskStroomAiViewImpl` sets its text,
-    /// which `InlineSvgButton` doesn't show), so it is found by its 'play' class.
+    /// It has no title or accessible name (`AskStroomAiViewImpl` sets its text, which
+    /// `InlineSvgButton` doesn't show), so it is found by its 'play' class.
     static final String RUN = "button.play";
 
-    /// The Run button while the chat is working (React's 'Stop'), with the 'stop' class.
+    /// The Run button while the chat is working (a Stop button), with the 'stop' class.
     static final String STOP = "button.stop";
 
     /// The user's preferences, with the workbench's (dark) theme: the chat saves its config into the
@@ -111,9 +111,8 @@ public final class AiFixtures {
         return builder(RestReply.json("{\"message\": \"\"}"), poll);
     }
 
-    /// A poll of React's poll script: the messages, as the server returns them, are those after the
-    /// request's `lastSeenMessageId` (React's client dedupes a repeated reply; GWT relies on the
-    /// server not repeating messages).
+    /// A poll of a script of messages: the messages, as the server returns them, are those after
+    /// the request's `lastSeenMessageId` (Stroom relies on the server not repeating messages).
     ///
     /// @param extra    Other members of the reply, e.g. `"attachments": [...]` or
     ///                 `"workingMessage": {...}`, or empty.

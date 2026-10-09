@@ -33,21 +33,19 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/CachesScreen` in the React Storybook, showing Stroom's real
-/// [CachePresenter] (the 'Caches' tab: the caches list and the selected cache's per-node
-/// statistics) with fake REST replies.
+/// Stories of `App/Main/CachesScreen`, showing Stroom's real [CachePresenter] (the 'Caches' tab:
+/// the caches list and the selected cache's per-node statistics) with fake REST replies.
 ///
-/// The React story's `CacheApi` fixture becomes routes for Stroom's `NodeResource` and
-/// `CacheResource`:
+/// The stories answer Stroom's `NodeResource` and `CacheResource`:
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `listNodes` | `GET /node/v1/all` |
-/// | `listCaches` | `GET /cache/v1/list?nodeName=` (once per node) |
-/// | `cacheInfo` | `GET /cache/v1/info?cacheName=&nodeName=` |
-/// | `clear` | `DELETE /cache/v1?cacheName=&nodeName=` |
+/// | `GET /node/v1/all` | the nodes |
+/// | `GET /cache/v1/list?nodeName=` (once per node) | the caches |
+/// | `GET /cache/v1/info?cacheName=&nodeName=` | a cache's info |
+/// | `DELETE /cache/v1?cacheName=&nodeName=` | clearing a cache |
 ///
-/// and its recorder becomes a check on the request spy. The presenter comes from GIN, and is
+/// The requests made are checked on the request spy. The presenter comes from GIN, and is
 /// shown as `CacheMonitoringPlugin` opens it.
 public final class CachesScreenStories {
 

@@ -40,7 +40,7 @@ const DOCTYPE = env('DOCTYPE', 'AnalyticRule');
 /** The path whose fetch gets the injected 500. */
 const ENDPOINT = env('ENDPOINT', '/api/analyticRule/v1/');
 
-/** Verbatim from the real 500 recorded in gwt-bugs.md #35. */
+/** Verbatim from the real 500 recorded for gwt-bugs #35 (stroom-gwt/ISSUES.md). */
 const JACKSON = 'Cannot deserialize value of type `stroom.analytics.shared.AnalyticRuleStatus`'
   + ' from String "ENABLED": not one of the values accepted for Enum class:'
   + ' [TESTING, STABLE, EXPERIMENTAL, DEPRECATED]';

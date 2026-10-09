@@ -35,15 +35,15 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
-/// Stories for Stroom's [UserRefCell], matching `Widgets/Cell Renderers/UserRefCell` in the React
-/// Storybook. Each cell is a `CellWidget` in React's `CellBox` (see [CellRendererWidgets]).
+/// Stories for Stroom's [UserRefCell]. Each cell is a `CellWidget` in a box (see
+/// [CellRendererWidgets]).
 ///
-/// React's `canOpen` prop is Stroom's permission check: the cell shows the open button for the
-/// current user, or to a user with the 'Manage Users' permission. The stories give the cell a
-/// [StorySecurityContext] with no app permissions, whose current user is the user React lets open
-/// (or nobody). React's `onOpen` is Stroom's [OpenUserEvent], which the cell fires on its event
-/// bus. React's `onCopy` has no GWT equivalent: the cell copies to the clipboard itself, so the
-/// story reports a mouse down on the copy button.
+/// Whether a user can be opened is Stroom's permission check: the cell shows the open button for
+/// the current user, or to a user with the 'Manage Users' permission. The stories give the cell a
+/// [StorySecurityContext] with no app permissions, whose current user is the user who can be
+/// opened (or nobody). The `onOpen` spy reports Stroom's [OpenUserEvent], which the cell fires on
+/// its event bus. The cell copies to the clipboard itself, so the story reports a mouse down on the
+/// copy button.
 public final class UserRefCellStories {
 
     private static final String ON_OPEN = "onOpen";
@@ -85,7 +85,7 @@ public final class UserRefCellStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Cell Renderers/UserRefCell", UserRefCellStories.class)
                 .layout(StoryLayout.CENTERED)
-                // No args: React's meta only sets `userRef: null`, and every story has its own render
+                // No args: every story has its own render
                 // A named user, a group, and a disabled user. Hover a row to reveal the copy / open
                 // buttons
                 .story("Basic", UserRefCellStories::basic)
@@ -111,13 +111,13 @@ public final class UserRefCellStories {
             lastAction.setText("Last action: open " + event.getUserRef().getSubjectId());
         });
 
-        // React's canOpen: only Alice can be opened, as she is the current user
+        // Only Alice can be opened, as she is the current user
         final UserRefCell<UserRef> cell = cell(eventBus, ALICE, true, DisplayType.AUTO);
         final FlowPanel column = StoryPanels.column(8);
         for (final UserRef userRef : new UserRef[]{ALICE, ADMINS, DISABLED_USER}) {
             final FlowPanel box = cellBox(cell, userRef);
-            // Differs from React: there is no onCopy callback (the cell copies to the clipboard), so the
-            // story reports the mouse down that the cell copies on
+            // The cell copies to the clipboard itself, so the story reports the mouse down that the
+            // cell copies on
             box.addDomHandler(event -> {
                 if (CellRendererWidgets.targetHasClassName(event.getNativeEvent(), COPY_CLASS_NAME)) {
                     final String text = userRef.toDisplayString(DisplayType.AUTO);
@@ -133,7 +133,7 @@ public final class UserRefCellStories {
 
     /// The cell.
     ///
-    /// @param currentUser The user the cell may open (React's `canOpen`), or null for none.
+    /// @param currentUser The user the cell may open, or null for none.
     private static UserRefCell<UserRef> cell(final EventBus eventBus,
                                              final UserRef currentUser,
                                              final boolean showIcon,

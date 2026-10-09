@@ -39,15 +39,13 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 
 import java.util.List;
 
-/// Stories for Stroom's Ace based editor ([EditorPresenter] with `EditorViewImpl`), matching
-/// `Widgets/Editors & Viewers/AceEditor` in the React Storybook.
+/// Stories for Stroom's Ace based editor ([EditorPresenter] with `EditorViewImpl`).
 ///
-/// The React port's props map to the presenter's options: `mode` → `setMode`, `readOnly` →
-/// `setReadOnly`, `showGutter` → the line numbers option, `wrapLines` → the line wrap option,
-/// `formatAvailable` → the format action and `annotations` → `setIndicators`.
+/// The stories set the presenter's options: `setMode`, `setReadOnly`, the line numbers and line
+/// wrap options, the format action and `setIndicators`.
 public final class AceEditorStories {
 
-    /// The name of the spy for React's `onChange` prop.
+    /// The name of the spy for the editor's text changes.
     static final String ON_CHANGE = "onChange";
 
     private static final String WIDTH = "720px";
@@ -95,7 +93,7 @@ public final class AceEditorStories {
                 .story("EditableXml", context -> {
                     final EditorPresenter editor = editor(context, "<root><a>1</a><b><c>2</c></b></root>",
                             AceEditorMode.XML, false);
-                    // React's formatAvailable
+                    // Make the format action available
                     editor.getFormatAction().setAvailable(true);
                     final Label note = new Label("Ctrl+Shift+F to format.");
                     note.getElement().getStyle().setProperty("marginTop", "8px");
@@ -107,7 +105,7 @@ public final class AceEditorStories {
                 .withPlay(play -> {
                     final Query input = play.querySelector(".ace_text-input");
                     play.waitFor(() -> play.expect(input).toBeInTheDocument());
-                    // React's typeIntoAce: focus Ace's hidden text area, then send real keystrokes
+                    // Focus Ace's hidden text area, then send real keystrokes
                     play.run("focus the editor", () -> input.element().get().focus());
                     play.keyboard("hello world");
                     // onChange fired, so the probe holds the typed text, and Ace's lines show it
@@ -140,7 +138,7 @@ public final class AceEditorStories {
 
     private static Widget editableTyping(final StoryContext context) {
         final EditorPresenter editor = editor(context, "", AceEditorMode.TEXT, false);
-        // React's <pre data-testid="typed">{value}</pre>
+        // A probe showing the typed value
         final HTML probe = new HTML();
         probe.getElement().setAttribute("data-testid", "typed");
         final PreElement pre = PreElement.as(probe.getElement().appendChild(
@@ -149,17 +147,17 @@ public final class AceEditorStories {
         return StoryPanels.column(0, framed(editor), probe);
     }
 
-    /// The editor, as React's `<AceEditor text mode readOnly showGutter />`.
+    /// The editor, with the given text, mode and read only state, and line numbers.
     private static EditorPresenter editor(final StoryContext context,
                                           final String text,
                                           final AceEditorMode mode,
                                           final boolean readOnly) {
-        // Differs from React: no context menu, as only screen stories (with a popup manager) show
+        // No context menu, as only screen stories (with a popup manager) show
         // Stroom's menus
         final EditorPresenter editor = EditorWidgets.editorPresenter(new SimpleEventBus());
         editor.setMode(mode);
         editor.setReadOnly(readOnly);
-        // React's showGutter
+        // Show line numbers
         editor.getLineNumbersOption().setOn(true);
         editor.setText(text);
         final Spy onChange = context.fn(ON_CHANGE);
@@ -172,7 +170,7 @@ public final class AceEditorStories {
         return EditorWidgets.frame(editor.getWidget(), WIDTH, HEIGHT);
     }
 
-    /// React's annotations (rows are zero based, Stroom's lines one based).
+    /// The annotations, as Stroom's indicators (lines are one based).
     private static IndicatorLines annotations() {
         final Indicators indicators = new Indicators();
         indicators.add(new StoredError(Severity.ERROR, DefaultLocation.of(3, 5), null,

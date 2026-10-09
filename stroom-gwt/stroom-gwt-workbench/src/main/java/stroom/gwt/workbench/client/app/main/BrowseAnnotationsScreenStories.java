@@ -30,12 +30,12 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/BrowseAnnotationsScreen` in the React Storybook, showing Stroom's real
-/// [BrowseAnnotationPresenter] (the 'Annotations' tab) with fake REST replies.
+/// Stories of `App/Main/BrowseAnnotationsScreen`, showing Stroom's real [BrowseAnnotationPresenter]
+/// (the 'Annotations' tab) with fake REST replies.
 ///
-/// The React story's `AnnotationApi.find` becomes `POST /annotation/v1/findAnnotations`, and its
-/// `onOpenAnnotation` is a spy on Stroom's `EditAnnotationEvent`. The tab is opened as
-/// `AnnotationBrowsePlugin` does (`refresh()`).
+/// The annotations come from `POST /annotation/v1/findAnnotations`, and `onOpenAnnotation` is a spy
+/// on Stroom's `EditAnnotationEvent`. The tab is opened as `AnnotationBrowsePlugin` does
+/// (`refresh()`).
 public final class BrowseAnnotationsScreenStories {
 
     /// The name of the spy recording the annotations opened (Stroom's `EditAnnotationEvent`).

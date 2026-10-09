@@ -33,13 +33,12 @@ import stroom.importexport.client.presenter.DependenciesInfoPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/DependencyInfoDialog` in the React Storybook, showing Stroom's real
-/// [DependenciesInfoPresenter] (the Dependencies screen's 'Properties' dialog).
+/// Stories of `App/Main/DependencyInfoDialog`, showing Stroom's real [DependenciesInfoPresenter]
+/// (the Dependencies screen's 'Properties' dialog).
 ///
-/// The React story passes the `DocRef` as a prop; in Stroom the Dependencies screen's action menu
-/// fires `ShowDependenciesInfoDialogEvent`, which the presenter's GWTP proxy passes on to it. The
-/// story fires the event, with the presenter (from GIN) registered as its handler. The dialog
-/// makes no requests.
+/// In Stroom the Dependencies screen's action menu fires `ShowDependenciesInfoDialogEvent`, which
+/// the presenter's GWTP proxy passes on to it. The story fires the event, with the presenter (from
+/// GIN) registered as its handler. The dialog makes no requests.
 public final class DependencyInfoDialogStories {
 
     private DependencyInfoDialogStories() {
@@ -58,7 +57,7 @@ public final class DependencyInfoDialogStories {
                     final Play screen = play.screen();
                     screen.findByText("Dependency Information");
                     // One block, exactly GWT's three lines.
-                    // Differs from React: GWT shows them in a read only text area (its value, not text)
+                    // GWT shows them in a read only text area (its value, not text)
                     play.expect(info(screen)).toBe("Type: XSLT\nUUID: x-1\nName: Alpha XSLT");
                     expectNoRequests(play);
                 })

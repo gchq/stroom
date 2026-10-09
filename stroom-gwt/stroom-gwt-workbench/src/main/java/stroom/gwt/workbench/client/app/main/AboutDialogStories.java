@@ -31,14 +31,14 @@ import stroom.ui.config.client.UiConfigCache;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/AboutDialog` in the React Storybook, showing Stroom's real
-/// [AboutPresenter] with fake REST replies. It needs two endpoints, the session info and the UI
-/// config, which are both start-up fixtures, and through its [UiConfigCache] and
-/// [DateTimeFormatter] a small graph of Stroom services, which come from the harness's injector.
+/// Stories of `App/Main/AboutDialog`, showing Stroom's real [AboutPresenter] with fake REST
+/// replies. It needs two endpoints, the session info and the UI config, which are both start-up
+/// fixtures, and through its [UiConfigCache] and [DateTimeFormatter] a small graph of Stroom
+/// services, which come from the harness's injector.
 public final class AboutDialogStories {
 
     // The uiConfig part of GlobalConfigResource.fetchExtendedUiConfig(), with only what the dialog
-    // uses, as in React's fetchUiConfig fixture
+    // uses
     private static final String UI_CONFIG = """
             {"aboutHtml": "<p class=\\"about-marker\\">Stroom is a data processing platform.</p>"}
             """;
@@ -72,7 +72,7 @@ public final class AboutDialogStories {
     }
 
     private static Widget render(final StoryContext context) {
-        // Only the start-up fixtures are needed, with React's session info and uiConfig
+        // Only the start-up fixtures are needed, with this session info and uiConfig
         final ScreenHarness harness = ScreenHarness.builder(context, RestFixtures.none())
                 .startup(startup -> startup.buildVersion("v7.5-test").nodeName("node1a"))
                 .uiConfig(UI_CONFIG)

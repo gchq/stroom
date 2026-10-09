@@ -36,16 +36,16 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.HashMap;
 import java.util.Map;
 
-/// Stories matching `App/Data/ProcessChoiceDialog` in the React Storybook, showing Stroom's real
-/// [ProcessChoicePresenter] (the 'Create Processors' dialog), as the data browser's meta list
-/// (`AbstractMetaListPresenter`) shows it for a selection of streams.
+/// The `App/Data/ProcessChoiceDialog` stories, showing Stroom's real [ProcessChoicePresenter] (the
+/// 'Create Processors' dialog), as the data browser's meta list (`AbstractMetaListPresenter`) shows
+/// it for a selection of streams.
 ///
-/// React's `onOk` is a spy on the dialog's [ProcessChoice]. In Stroom the pipeline is chosen after
-/// the dialog's OK (for a process, not a reprocess), in a 'Choose Pipeline To Process Data With'
-/// popup, so the dialog itself has no pipeline picker and needs no explorer tree.
+/// A spy records the dialog's [ProcessChoice]. In Stroom the pipeline is chosen after the dialog's
+/// OK (for a process, not a reprocess), in a 'Choose Pipeline To Process Data With' popup, so the
+/// dialog itself has no pipeline picker and needs no explorer tree.
 public final class ProcessChoiceDialogStories {
 
-    /// The name of the spy recording the choice made (React's `onOk`).
+    /// The name of the spy recording the choice made.
     static final String ON_OK = "onOk";
 
     private ProcessChoiceDialogStories() {
@@ -63,8 +63,8 @@ public final class ProcessChoiceDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(screen.getByText("Create Processors")).toBeInTheDocument());
-                    // Differs from React: GWT's dialog has no pipeline picker and OK is enabled; the
-                    // meta list asks for the pipeline after OK when the choice isn't a reprocess
+                    // The dialog has no pipeline picker and OK is enabled; the meta list asks for
+                    // the pipeline after OK when the choice isn't a reprocess
                     play.expect(screen.queryByText("Pipeline", "label")).toBeNull();
                     play.expect(screen.getByRole("button", StroomDom.button("OK"))).toBeEnabled();
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
@@ -99,8 +99,8 @@ public final class ProcessChoiceDialogStories {
                 });
     }
 
-    // The choice's create time range isn't part of React's choice (GWT sets the max create time to
-    // now when Reprocess data is ticked), so only the other members are compared
+    // Only the choice's members other than its create time range are compared, as Stroom sets the
+    // max create time to now when Reprocess data is ticked
     private static ValueMatcher matchesChoice(final int priority,
                                               final boolean autoPriority,
                                               final boolean reprocess,

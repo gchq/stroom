@@ -32,14 +32,13 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Editors/DocumentationEditor` in the React Storybook, showing Stroom's real
-/// [DocumentationPresenter] (a Documentation document's tab: Documentation and Permissions, with
-/// Save, Save As and Download) with fake REST replies.
+/// The `App/Editors/DocumentationEditor` stories, showing Stroom's real [DocumentationPresenter] (a
+/// Documentation document's tab: Documentation and Permissions, with Save, Save As and Download)
+/// with fake REST replies.
 ///
-/// The React story passes the document and its seams as props; in Stroom, `DocumentationPlugin`
-/// fetches the document (`GET /documentation/v1/{uuid}`), which the story does as the plugin does
-/// ([DocEditors#open]). `docPermission` → the Permissions tab's routes
-/// ([DocEditors#permissionRoutes]) and `download` → `POST /documentation/v1/download`.
+/// `DocumentationPlugin` fetches the document (`GET /documentation/v1/{uuid}`), which the story
+/// does as the plugin does ([DocEditors#open]). The Permissions tab has its routes
+/// ([DocEditors#permissionRoutes]), and Download is `POST /documentation/v1/download`.
 public final class DocumentationEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(DocumentationDoc.TYPE, "documentation-1", "My Notes");
@@ -55,11 +54,11 @@ public final class DocumentationEditorStories {
                     "{\"resourceKey\": {\"key\": \"k1\", \"name\": \"my-notes.md\"}, \"messageList\": []}"))
             .build();
 
-    // Differs from React: the preview is an iframe with no title, identified by its id
-    // (MarkdownEditPresenter's MARKDOWN_FRAME_ID)
+    // The preview is an iframe with no title, identified by its id (MarkdownEditPresenter's
+    // MARKDOWN_FRAME_ID)
     private static final String PREVIEW = "iframe#markdown-frame";
 
-    // Differs from React: Stroom's Ace editor has a text area with the class ace_text-input too
+    // Stroom's Ace editor has a text area with the class ace_text-input too
     private static final String ACE_INPUT = ".ace_text-input";
 
     private DocumentationEditorStories() {

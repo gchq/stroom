@@ -37,7 +37,7 @@ import com.google.web.bindery.event.shared.EventBus;
 /// Widgets shared by the `Widgets/Editors & Viewers/*` stories (and the view states sheet).
 public final class EditorWidgets {
 
-    /// The style of React's `EditorFrame`/`Frame` border.
+    /// The style of an editor frame's border.
     static final String FRAME_BORDER = "1px solid var(--code-editor__border-color, #444)";
 
     // Shared by every rendering: it is a singleton in Stroom, and creating one adds a completion
@@ -73,7 +73,7 @@ public final class EditorWidgets {
                 editorPresenter(eventBus));
     }
 
-    /// Equivalent of React's `EditorFrame`/`Frame`, a `<div>` with a fixed size and a
+    /// An editor frame, a `<div>` with a fixed size and a
     /// [#FRAME_BORDER], as Ace needs a laid-out box.
     ///
     /// @param widget The widget to frame.

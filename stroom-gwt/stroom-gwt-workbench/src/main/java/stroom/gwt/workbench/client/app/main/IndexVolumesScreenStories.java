@@ -34,14 +34,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/IndexVolumesScreen` in the React Storybook, showing Stroom's real
-/// [IndexVolumeGroupPresenter] (the 'Index Volumes' tab, its 'Edit Volume Group' dialog and 'Add
-/// Volume' dialog) with fake REST replies.
+/// Stories of `App/Main/IndexVolumesScreen`, showing Stroom's real [IndexVolumeGroupPresenter] (the
+/// 'Index Volumes' tab, its 'Edit Volume Group' dialog and 'Add Volume' dialog) with fake REST
+/// replies.
 ///
-/// The React story's `IndexVolumeApi` becomes routes for Stroom's `IndexVolumeGroupResource`
-/// (`/index/volumeGroup/v2`: `find`, `fetch`, `update`) and `IndexVolumeResource`
-/// (`/index/volume/v2`: `find`, `validate`, `create`), plus `NodeResource`'s `GET /node/v1/all`
-/// (`listNodes`). Its recorder becomes checks on the request spy.
+/// The stories answer Stroom's `IndexVolumeGroupResource` (`/index/volumeGroup/v2`: `find`,
+/// `fetch`, `update`) and `IndexVolumeResource` (`/index/volume/v2`: `find`, `validate`, `create`),
+/// plus `NodeResource`'s `GET /node/v1/all` (the nodes), and the requests made are checked on the
+/// request spy.
 public final class IndexVolumesScreenStories {
 
     private static final String GROUP = "{\"id\": 1, \"name\": \"Default\"}";

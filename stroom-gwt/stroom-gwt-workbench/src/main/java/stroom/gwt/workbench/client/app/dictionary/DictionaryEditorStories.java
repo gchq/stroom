@@ -41,21 +41,19 @@ import stroom.security.shared.DocumentPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Dictionary/DictionaryEditor` in the React Storybook, showing Stroom's real
-/// [DictionaryPresenter] (a Dictionary's editor tab: Words, Imports, Effective Words, Documentation
-/// and Permissions, with Save, Save As and Download) with fake REST replies.
+/// The `App/Dictionary/DictionaryEditor` stories, showing Stroom's real [DictionaryPresenter] (a
+/// Dictionary's editor tab: Words, Imports, Effective Words, Documentation and Permissions, with
+/// Save, Save As and Download) with fake REST replies.
 ///
-/// The React story passes the document and its seams as props; in Stroom, `DictionaryPlugin`
-/// fetches the document (`GET /dictionary/v1/{uuid}`), checks the user may edit it and reads it
-/// into the editor, which the story does as the plugin does. The seams become routes:
-/// `wordList` → `GET /wordList/v1/{uuid}`, `docPermission` →
-/// `POST /permission/doc/v1/fetchDocumentUserPermissions` and `getDocUserPermissionsReport`,
-/// `loadNodes` → the explorer tree's `POST /explorer/v2/fetchExplorerNodes` (Phase 1's
-/// [ExplorerFixture]) and `ctx.openDoc` → a spy on `OpenDocumentEvent`. The presenter comes from GIN.
+/// `DictionaryPlugin` fetches the document (`GET /dictionary/v1/{uuid}`), checks the user may edit
+/// it and reads it into the editor, which the story does as the plugin does. The effective words
+/// are `GET /wordList/v1/{uuid}`, the Permissions tab asks
+/// `POST /permission/doc/v1/fetchDocumentUserPermissions` and `getDocUserPermissionsReport`, the
+/// explorer tree `POST /explorer/v2/fetchExplorerNodes` ([ExplorerFixture]), and a spy records
+/// `OpenDocumentEvent`. The presenter comes from GIN.
 ///
-/// React's stateful harness (Save enabling as the words change) is Stroom's own `DocTabPresenter`
-/// here; saving goes through Stroom's `DocumentPluginEventManager`, which the stories don't have,
-/// and no story saves.
+/// Save is enabled by Stroom's own `DocTabPresenter` as the words change; saving goes through
+/// Stroom's `DocumentPluginEventManager`, which the stories don't have, and no story saves.
 public final class DictionaryEditorStories {
 
     /// The name of the spy recording the documents opened.
@@ -167,7 +165,7 @@ public final class DictionaryEditorStories {
                     play.click(play.getByText("admin"));
                     play.waitFor(() -> play.expect(editButton).not().toHaveClass("disabled"));
                     play.click(editButton);
-                    // Differs from React: the dialog is a popup on the page's body, not in the canvas
+                    // The dialog is a popup on the page's body, not in the canvas
                     play.expect(screen.findByText("Set Permissions")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
@@ -217,7 +215,7 @@ public final class DictionaryEditorStories {
                     play.click(tab(play, "Imports"));
                     final Play grid = play.within(play.findByText("Document Name").closest(".dataGridWidget"));
                     // The imported dictionary is a command link (hasOpenLink) that opens the doc.
-                    // Differs from React: its 'open' icon, titled with what it opens, runs it
+                    // Its 'open' icon, titled with what it opens, runs it
                     play.click(grid.within(grid.getByTitle("Open Dictionary 'Cities'."))
                             .querySelector(StroomDom.COMMAND_LINK_OPEN));
                     play.waitFor(() -> play.expect(play.spy(OPEN_DOC)).toHaveBeenCalledWith("dict-cities"));
@@ -234,18 +232,17 @@ public final class DictionaryEditorStories {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(tab(play, "Imports")).toBeInTheDocument());
                     play.click(tab(play, "Imports"));
-                    // The React port's invented field isn't there; the button GWT has is
-                    play.expect(play.queryByText("Add an imported dictionary")).toBeNull();
+                    // Imports are added with the 'Add Import' button
                     play.click(play.getByRole("button", "Add Import"));
-                    // Differs from React: Stroom's dialogs have no role="dialog", so the caption is
-                    // found as the dialog's title text
+                    // Stroom's dialogs have no role="dialog", so the caption is found as the
+                    // dialog's title text
                     play.expect(screen.findByText("Import a dictionary", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                     expectNoProblems(play);
                 });
     }
 
     // A sub-tab of the editor.
-    // Differs from React: Stroom's link tabs have no role="tab", so they're found by their label
+    // Stroom's link tabs have no role="tab", so they're found by their label
     private static Query tab(final Play play, final String label) {
         return play.getByText(label, StroomDom.LINK_TAB_LABEL);
     }

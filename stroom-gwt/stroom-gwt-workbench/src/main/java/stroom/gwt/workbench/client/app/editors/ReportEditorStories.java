@@ -37,9 +37,9 @@ import stroom.security.shared.DocumentPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Editors/ReportEditor` in the React Storybook, showing Stroom's real
-/// `ReportPresenter` (a report's editor tab: Query, Settings, Notifications, Execution,
-/// Documentation and Permissions) with fake REST replies.
+/// The `App/Editors/ReportEditor` stories, showing Stroom's real `ReportPresenter` (a report's
+/// editor tab: Query, Settings, Notifications, Execution, Documentation and Permissions) with fake
+/// REST replies.
 ///
 /// As `ReportPlugin` does, the story fetches the document (`GET /report/v1/{uuid}`), checks the
 /// user may edit it and reads it into the editor. The query pane's requests are answered by
@@ -128,16 +128,16 @@ public final class ReportEditorStories {
                 .story("NotificationsNoIncludeDoc", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // Differs from React: GWT's 'Feed For Errors' (and a rule's 'Include Rule
-                    // Documentation') are on the Settings tab, not the Notifications tab
+                    // 'Feed For Errors' (and a rule's 'Include Rule Documentation') are on the
+                    // Settings tab, not the Notifications tab
                     openTab(play, "Settings");
                     play.waitFor(() -> play.expect(play.getByText("Feed For Errors")).toBeInTheDocument());
                     play.expect(play.queryByText(TextMatch.containingIgnoreCase("include rule documentation")))
                             .toBeNull();
                     openTab(play, "Notifications");
                     play.click(play.findByRole("button", "Add Notification"));
-                    // Differs from React: GWT's dialog is captioned 'Add Notification'. A new
-                    // notification defaults to Stream
+                    // The dialog is captioned 'Add Notification'. A new notification defaults to
+                    // Stream
                     final Play dialog = AnalyticRuleEditorStories.dialog(screen, "Add Notification");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.getByText("Stream", "td *")).toBeInTheDocument());
@@ -149,8 +149,7 @@ public final class ReportEditorStories {
                     play.expect(play.findByRole("button", "Save")).toHaveClass("disabled");
                     openTab(play, "Notifications");
                     play.waitFor(() -> play.expect(play.getByRole("button", "Add Notification")).toBeInTheDocument());
-                    // Differs from React: 'Feed For Errors' is on GWT's Settings tab, so the play
-                    // shows that too
+                    // 'Feed For Errors' is on the Settings tab, so the play shows that too
                     openTab(play, "Settings");
                     play.waitFor(() -> play.expect(play.getByText("Feed For Errors")).toBeInTheDocument());
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");

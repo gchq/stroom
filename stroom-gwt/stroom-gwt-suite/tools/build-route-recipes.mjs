@@ -18,7 +18,7 @@
 //
 // How do you CLICK your way to each presenter? Executable route recipes, mined from the GWT source.
 //
-//   node stroom-stroom-gwt-suite/tools/build-route-recipes.mjs
+//   node stroom-gwt-suite/tools/build-route-recipes.mjs
 //     -> oracles/route-recipes.json   (machine-readable, consumed by stroom-gwt-suite/crawl.mjs)
 //     -> oracles/route-recipes.md     (the same thing, readable)
 //
@@ -759,7 +759,7 @@ const unrouted = presenters.filter((p) => !routed.has(p));
 writeFileSync(OUT_JSON, JSON.stringify({ recipes, captionOf, showEdges, eventEdgesAmbiguous, tabsOf, unrouted }, null, 1));
 
 const lines = ['# Route recipes — the clicks that reach each presenter', '',
-  '**Generated** by `stroom-stroom-gwt-suite/tools/build-route-recipes.mjs`. Do not hand-edit.', '',
+  '**Generated** by `stroom-gwt-suite/tools/build-route-recipes.mjs`. Do not hand-edit.', '',
   '`reachability-graph.md` gives the topology; this gives the words to click. Mined from GWT\'s own',
   'declarative menu registration, so it re-derives instead of rotting.', '',
   '## Totals', '', '| | count |', '| --- | ---: |',

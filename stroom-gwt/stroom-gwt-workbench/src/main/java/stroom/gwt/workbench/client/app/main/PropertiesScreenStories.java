@@ -35,23 +35,20 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/PropertiesScreen` in the React Storybook, showing Stroom's real
-/// [GlobalPropertyTabPresenter] (the 'Properties' tab and its property edit dialog) with fake
-/// REST replies.
+/// Stories of `App/Main/PropertiesScreen`, showing Stroom's real [GlobalPropertyTabPresenter] (the
+/// 'Properties' tab and its property edit dialog) with fake REST replies, for Stroom's
+/// `GlobalConfigResource` and `NodeResource`:
 ///
-/// The React story's `PropertyApi` fixture becomes routes for Stroom's `GlobalConfigResource` and
-/// `NodeResource`:
-///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `list` | `POST /config/v1/properties` |
-/// | `listNodes` | `GET /node/v1/enabled` |
-/// | `listByNode` | `POST /config/v1/nodeProperties/{node}` (for the nodes `list` didn't answer for) |
-/// | `getPropertyByName` | `GET /config/v1/properties/{name}` |
-/// | (the dialog's per-node YAML values) | `GET /config/v1/clusterProperties/{name}/yamlOverrideValue/{node}` |
-/// | `update` | `PUT /config/v1/clusterProperties/{name}` |
+/// | `POST /config/v1/properties` | the properties |
+/// | `GET /node/v1/enabled` | the enabled nodes |
+/// | `POST /config/v1/nodeProperties/{node}` (nodes the properties request didn't cover) | a node's properties |
+/// | `GET /config/v1/properties/{name}` | a property |
+/// | `GET /config/v1/clusterProperties/{name}/yamlOverrideValue/{node}` | the dialog's per-node YAML values |
+/// | `PUT /config/v1/clusterProperties/{name}` | updating a property |
 ///
-/// and its recorder becomes a check on the request spy.
+/// The update is checked on the request spy.
 public final class PropertiesScreenStories {
 
     private static final String NODE_PROP = """
@@ -115,11 +112,11 @@ public final class PropertiesScreenStories {
                     final Query multiple = play.findByText("[Multiple values]");
                     play.expect(multiple).toHaveStyle("color", "rgb(255, 0, 0)");
                     // Double-click stroom.path.home's row: the edit dialog
-                    // Differs from React: GWT's grid handles the events of its cells, so the row's
-                    // name is pressed rather than the row (a <tr> with no role)
+                    // GWT's grid handles the events of its cells, so the row's name is pressed rather
+                    // than the row (a <tr> with no role)
                     play.click(play.getByText(HOME_NAME));
                     play.dblClick(play.getByText(HOME_NAME));
-                    // Differs from React: GWT's dialog has no role="dialog"; it's found by its caption
+                    // The dialog has no role="dialog"; it's found by its caption
                     screen.findByText("Application Property - " + HOME_NAME);
                     final Play dialog = screen.within(screen.getByText("Application Property - " + HOME_NAME)
                             .closest(StroomDom.DIALOG));
@@ -140,8 +137,8 @@ public final class PropertiesScreenStories {
                     play.waitFor(() -> play.expect(screen.queryByText("Cluster values - " + HOME_NAME)).toBeNull());
                     // Enable the database override, set a value, OK: the property is updated
                     play.click(dialog.getByLabelText("Set Database value"));
-                    // Differs from React: GWT's 'Database Value' label is for the panel holding the
-                    // text area (and a password box), not the text area itself
+                    // The 'Database Value' label is for the panel holding the text area (and a password
+                    // box), not the text area itself
                     final Query dbValue = dialog.within(dialog.getByText("Database Value", "label")
                             .closest(".form-group")).querySelector("textarea");
                     play.clear(dbValue);

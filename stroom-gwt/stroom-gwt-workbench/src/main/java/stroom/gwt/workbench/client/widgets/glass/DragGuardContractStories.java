@@ -33,13 +33,12 @@ import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for the glass that Stroom's [ThinSplitLayoutPanel] puts over the page while a splitter
-/// is dragged, so that the drag isn't lost when the pointer crosses an iframe, matching
-/// `Widgets/Glass/Drag guard contract` in the React Storybook.
+/// is dragged, so that the drag isn't lost when the pointer crosses an iframe.
 public final class DragGuardContractStories {
 
-    // Differs from React: the splitter's glass has no class (React's is `.popupPanel-dragGlass`,
-    // which is the class of the glass Stroom's dialogs raise while they are dragged). It is a div
-    // on the body with an inline opacity of 0 and a resize cursor, so is found by those.
+    // The splitter's glass has no class (unlike the glass Stroom's dialogs raise while they are
+    // dragged, `.popupPanel-dragGlass`). It is a div on the body with an inline opacity of 0 and a
+    // resize cursor, so is found by those.
     private static final String GLASS = "body > div[style*='opacity: 0'][style*='resize']";
     private static final String DRAGGER = ".thinSplitLayoutPanel-Dragger";
     private static final int FIRST_SIZE = 300;
@@ -57,8 +56,7 @@ public final class DragGuardContractStories {
                 // Nothing is over the page until a drag starts
                 .story("NoGlassWhenIdle", context -> splitOverIframe())
                 .withPlay(play -> {
-                    // React's isGlassShowing() and its glass element are the same check here: the
-                    // glass is only on the page while it is up
+                    // The glass is only on the page while it is up
                     play.expect(play.screen().querySelector(GLASS)).toBeNull();
                 })
                 // A splitter drag raises the glass for its duration and drops it on mouseup
@@ -83,7 +81,8 @@ public final class DragGuardContractStories {
                     final Query glass = play.screen().querySelector(GLASS);
                     play.fireEvent().mouseDown(play.querySelector(DRAGGER), EventInit.create().at(300, 150));
                     play.waitFor(() -> play.expect(glass).toBeInTheDocument());
-                    // React: the widget's unmount clean up runs the same teardown as mouseup
+                    // A mouseup away from the dragger (here on the body) stands in for the interruption,
+                    // and takes the glass down
                     play.fireEvent().mouseUp(play.body());
                     play.waitFor(() -> play.expect(glass).toBeNull());
                     play.expect(play.screen().querySelectorAll(GLASS)).toHaveLength(0);
@@ -98,13 +97,13 @@ public final class DragGuardContractStories {
         play.expect("glass must receive events, not pass them through", glass.computedStyle("pointer-events"))
                 .not().toBe("none");
         play.expect("glass must be visible to hit-testing", glass.computedStyle("visibility")).toBe("visible");
-        // Differs from React: the glass doesn't tint the page because it is white with an opacity
-        // of 0 (as GWT's own SplitLayoutPanel's is), not because its background is transparent.
+        // The glass doesn't tint the page because it is white with an opacity of 0 (as GWT's own
+        // SplitLayoutPanel's is).
         play.expect("glass must not tint the page", glass.computedStyle("opacity")).toBe("0");
         play.expect(glass.computedStyle("background-color")).toBe("rgb(255, 255, 255)");
         play.expect("glass carries the drag cursor", glass.computedStyle("cursor")).toBe("col-resize");
-        // Differs from React: the glass is sized to the body's scroll size less 1px, so is 1px
-        // short of the viewport in each direction.
+        // The glass is sized to the body's scroll size less 1px, so is 1px short of the viewport
+        // in each direction.
         play.expect("glass must span the viewport width", glass.width())
                 .toBeGreaterThanOrEqual(Window.getClientWidth() - 1);
         play.expect("glass must span the viewport height", glass.height())

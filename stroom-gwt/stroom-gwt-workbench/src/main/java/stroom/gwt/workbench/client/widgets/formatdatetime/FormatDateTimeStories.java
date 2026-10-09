@@ -28,13 +28,11 @@ import com.google.gwt.dom.client.UListElement;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [DateTimeFormatter], the GWT equivalent of the React port's
-/// `formatDateTime(ms, pattern, zone)` function, matching `Widgets/formatDateTime` in the React
-/// Storybook.
+/// Stories for Stroom's [DateTimeFormatter], which formats a time for display.
 ///
 /// Stroom formats a time with the user's date/time pattern (a Java pattern, converted to a
 /// moment.js one) and time zone, from their preferences. Each case uses its own formatter with
-/// fixed preferences holding React's pattern and zone, so the results don't depend on the
+/// fixed preferences holding the case's pattern and zone, so the results don't depend on the
 /// browser's zone or the current time.
 public final class FormatDateTimeStories {
 
@@ -64,7 +62,7 @@ public final class FormatDateTimeStories {
                 });
     }
 
-    /// React's `Demo`: a `<ul>` with an `<li data-testid={label}>` holding each case's result.
+    /// A `<ul>` with an `<li data-testid={label}>` holding each case's result.
     private static Widget render() {
         final UListElement list = Document.get().createULElement();
         addCase(list, "default-utc", UserPreferences.DEFAULT_DATE_TIME_PATTERN, UserTimeZone.utc());

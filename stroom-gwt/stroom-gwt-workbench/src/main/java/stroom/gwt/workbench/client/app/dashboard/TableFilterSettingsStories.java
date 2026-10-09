@@ -28,18 +28,17 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Dashboard/TableFilterSettings` in the React Storybook: the settings of a
-/// dashboard's Table Filter (`BasicTableFilterSettingsPresenter` with its `ColumnSelectionPresenter`),
-/// which list the columns of the table it filters as tick boxes.
+/// The `App/Dashboard/TableFilterSettings` stories: the settings of a dashboard's Table Filter
+/// (`BasicTableFilterSettingsPresenter` with its `ColumnSelectionPresenter`), which list the
+/// columns of the table it filters as tick boxes.
 ///
-/// React shows the settings dialog alone, with a context of the linked table; GWT's settings read
-/// the table from the dashboard's components, so the story opens a dashboard with the table and the
-/// filter (Stroom's real `DashboardPresenter`, see `DashboardSupport`) and opens the filter's
-/// settings from its tab's menu. React's recorded `onComponentChange` becomes the filter's settings in
-/// the dashboard that is saved (`PUT /dashboard/v1/{uuid}`).
+/// The settings read the table from the dashboard's components, so the story opens a dashboard with
+/// the table and the filter (Stroom's real `DashboardPresenter`, see `DashboardSupport`) and opens
+/// the filter's settings from its tab's menu. The plays check the filter's settings in the dashboard
+/// that is saved (`PUT /dashboard/v1/{uuid}`).
 public final class TableFilterSettingsStories {
 
-    // React's TABLE (Name and Count columns) with a Query, and the Table Filter of it with no columns
+    // A table (Name and Count columns) with a Query, and the Table Filter of it with no columns
     private static final String DASHBOARD = DashboardDocs.doc("dash-tf", "Table Filter Settings", null,
             "\"designMode\": false",
             DashboardDocs.split(0, DashboardDocs.sized(DashboardDocs.tabs(0, "tf1"), 300, 100),
@@ -73,9 +72,8 @@ public final class TableFilterSettingsStories {
                     DashboardPlays.openTabMenu(play, "Filter");
                     play.click(DashboardPlays.menuItem(screen, "Settings"));
                     final Play dialog = DashboardPlays.dialog(screen, "Settings");
-                    // Differs from React: the tick boxes are a grid's (TickBoxCell), found by their
-                    // column's row; the select-all tick box is the grid's header (React's 'All'
-                    // label)
+                    // The tick boxes are a grid's (TickBoxCell), found by their column's row; the
+                    // select-all tick box is the grid's header
                     play.waitFor(() -> play.expect(dialog.getByText("Count")).toBeInTheDocument());
                     play.expect(dialog.querySelector("th .tickBox")).toBeInTheDocument();
                     play.expect(tickBox(dialog, "Name")).toBeInTheDocument();
@@ -84,7 +82,7 @@ public final class TableFilterSettingsStories {
                     play.click(count);
                     play.waitFor(() -> play.expect(tickBox(dialog, "Count")).toHaveClass(TICKED));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: the choice is saved with the dashboard
+                    // The choice is saved with the dashboard
                     play.waitFor(() -> play.expect(play.getByRole("button", "Save")).toBeEnabled());
                     play.click(play.getByRole("button", "Save"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(

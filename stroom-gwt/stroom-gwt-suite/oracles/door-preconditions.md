@@ -1,6 +1,6 @@
 # Door preconditions — how to reach every presenter the walk has not
 
-**Generated** by `stroom-stroom-gwt-suite/tools/build-door-preconditions.mjs` from the Stroom source, the
+**Generated** by `stroom-gwt-suite/tools/build-door-preconditions.mjs` from the Stroom source, the
 reachability graph, the mined show edges and the current coverage ledger. Do not hand-edit.
 
 8 doors unreached. Each is classified by the EASIEST of its opener sites — one create path

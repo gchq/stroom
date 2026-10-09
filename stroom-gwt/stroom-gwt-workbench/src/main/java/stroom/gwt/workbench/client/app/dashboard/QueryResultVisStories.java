@@ -25,14 +25,13 @@ import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// Stories matching `App/Dashboard/QueryResultVis` in the React Storybook, showing Stroom's real
-/// `QueryResultVisPresenter` (a query's visualisation pane) in its Query editor, as
-/// `App/Editors/QueryEditor` does, with fake REST replies.
+/// The `App/Dashboard/QueryResultVis` stories, showing Stroom's real `QueryResultVisPresenter` (a
+/// query's visualisation pane) in its Query editor, as `App/Editors/QueryEditor` does, with fake
+/// REST replies.
 ///
-/// React's `onPausedChange` callback has no GWT equivalent: the presenter keeps its pause state
-/// and shows it on its refresh button (titled 'Pause Update' while updating, 'Resume Update' and
-/// marked `paused` when paused), which the play checks instead. The button can only be pressed
-/// while the search is updating, so the search's last reply is delayed.
+/// The presenter keeps its pause state and shows it on its refresh button (titled 'Pause Update'
+/// while updating, 'Resume Update' and marked `paused` when paused), which the play checks. The
+/// button can only be pressed while the search is updating, so the search's last reply is delayed.
 public final class QueryResultVisStories {
 
     // A first reply with the visualisation's data, then (later) the complete search
@@ -54,8 +53,7 @@ public final class QueryResultVisStories {
                 .withPlay(play -> {
                     play.click(play.findByRole("button", "Execute Query"));
                     play.waitFor(8000, () -> play.expect(DocumentEditors.tab(play, "Visualisation")).toBeVisible());
-                    // Differs from React: the state is the button's, not reported by a callback.
-                    // Not paused at first
+                    // The pause state is the button's. Not paused at first
                     final Query button = pauseButton(play);
                     play.waitFor(() -> play.expect(button).toHaveAttribute("title", "Pause Update"));
                     play.expect(button).not().toHaveClass("paused");

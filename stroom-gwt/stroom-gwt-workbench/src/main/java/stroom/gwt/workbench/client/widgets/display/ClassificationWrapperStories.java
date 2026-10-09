@@ -30,8 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 /// Stories for Stroom's [ClassificationWrapperViewImpl] (the view that docks a
-/// [ClassificationLabel] banner below some content, e.g. the data viewer), matching
-/// `Widgets/Display/ClassificationWrapper` in the React Storybook.
+/// [ClassificationLabel] banner below some content, e.g. the data viewer).
 ///
 /// As for `ClassificationLabelStories`, the label colours are served in the UI config fixture of
 /// a [ScreenHarness], and the view is created once the config has been fetched.
@@ -45,8 +44,7 @@ public final class ClassificationWrapperStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's args (classification, labelColoursCsv, children) are only defaults for its Controls;
-        // both stories render fixed content, so no args are declared
+        // No args: both stories render fixed content
         registry.component("Widgets/Display/ClassificationWrapper", ClassificationWrapperStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // Content with the classification banner docked at the bottom

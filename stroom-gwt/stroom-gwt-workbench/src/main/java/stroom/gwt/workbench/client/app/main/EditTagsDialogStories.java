@@ -40,18 +40,18 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Arrays;
 import java.util.List;
 
-/// Stories matching `App/Main/EditTagsDialog` in the React Storybook, showing Stroom's real
-/// [ExplorerNodeEditTagsPresenter] ('Edit Tags'/'Add Tags') and [ExplorerNodeRemoveTagsPresenter]
-/// ('Remove Tags') with fake REST replies.
+/// Stories of `App/Main/EditTagsDialog`, showing Stroom's real [ExplorerNodeEditTagsPresenter]
+/// ('Edit Tags'/'Add Tags') and [ExplorerNodeRemoveTagsPresenter] ('Remove Tags') with fake REST
+/// replies.
 ///
-/// The React story's `ExplorerCrudApi` fixture becomes routes for Stroom's `ExplorerResource`:
-/// `fetchAllTags` → `GET /explorer/v2/fetchExplorerNodeTags`, `fetchNodeTags` →
-/// `POST /explorer/v2/fetchExplorerNodeTagsByDocRefs`, `updateNodeTags` → `PUT /explorer/v2/tags`,
-/// `addTags` → `PUT /explorer/v2/addTags` and `removeTags` → `DELETE /explorer/v2/removeTags`; its
-/// recorder becomes checks on the request spy. The dialogs are opened as the explorer's menu does,
-/// by firing their events, with the presenters (from GIN) registered as the events' handlers in
-/// place of their GWTP proxies. A chained request: the edit dialog fetches all tags, then the
-/// node's own tags, before it shows.
+/// The stories answer Stroom's `ExplorerResource`: all tags
+/// (`GET /explorer/v2/fetchExplorerNodeTags`), a node's tags
+/// (`POST /explorer/v2/fetchExplorerNodeTagsByDocRefs`), and setting (`PUT /explorer/v2/tags`),
+/// adding (`PUT /explorer/v2/addTags`) and removing (`DELETE /explorer/v2/removeTags`) tags,
+/// checked on the request spy. The dialogs are opened as the explorer's menu does, by firing their
+/// events, with the presenters (from GIN) registered as the events' handlers in place of their GWTP
+/// proxies. A chained request: the edit dialog fetches all tags, then the node's own tags, before
+/// it shows.
 public final class EditTagsDialogStories {
 
     private static final String ALL_TAGS_PATH = "/explorer/v2/fetchExplorerNodeTags";
@@ -61,8 +61,7 @@ public final class EditTagsDialogStories {
     private static final String REMOVE_TAGS_PATH = "/explorer/v2/removeTags";
 
     // The explorer's node for 'MyDict' holds its tags, as the server's tree does, so that an
-    // untouched set is seen as unchanged (the React fixture's node has none, but its dialog reads
-    // the node's tags from fetchNodeTags)
+    // untouched set is seen as unchanged
     private static final List<ExplorerNode> SINGLE = List.of(node("MyDict", "u1", "alpha"));
     private static final List<ExplorerNode> MULTIPLE = List.of(node("A", "u1"), node("B", "u2"));
 
@@ -85,7 +84,7 @@ public final class EditTagsDialogStories {
                     play.waitFor(() -> play.expect(nodeTags(screen).textContents())
                             .toEqual(Arrays.asList("alpha")));
                     // Add a new tag via the input.
-                    // Differs from React: the input has no placeholder; it is found by its title
+                    // The input has no placeholder; it is found by its title
                     play.type(screen.getByTitle("Enter tags manually or filter 'All Known Tags'"), "gamma{enter}");
                     play.click(okButton(screen));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -119,8 +118,8 @@ public final class EditTagsDialogStories {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(screen.getByText("Add Tags to 2 Documents")).toBeInTheDocument());
                     // Pick a known tag.
-                    // Differs from React: there is no '+ x' suggestion button; the known tags are a
-                    // list box, whose selected tags are added with the arrow button
+                    // The known tags are a list box, whose selected tags are added with the arrow
+                    // button
                     play.selectOptions(screen.getByTitle("All tags currently in use across all documents"), "x");
                     play.click(screen.getByTitle("Add selected tags from 'All Known Tags'"));
                     play.click(okButton(screen));
@@ -138,7 +137,7 @@ public final class EditTagsDialogStories {
                     play.waitFor(() -> play.expect(screen.getByText("Remove Tags from 2 Documents"))
                             .toBeInTheDocument());
                     play.waitFor(() -> play.expect(screen.getByText("drop")).toBeInTheDocument());
-                    // Differs from React: the tags are options of a multi-select list box, not
+                    // The tags are options of a multi-select list box, not
                     // labelled check boxes, so 'drop' is selected rather than ticked
                     play.selectOptions(screen.getByRole("listbox"), "drop");
                     play.click(okButton(screen));

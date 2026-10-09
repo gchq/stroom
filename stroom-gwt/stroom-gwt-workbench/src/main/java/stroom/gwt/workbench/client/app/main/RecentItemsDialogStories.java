@@ -41,11 +41,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/// Stories matching `App/Main/RecentItemsDialog` in the React Storybook, showing Stroom's real
-/// [RecentItemsPresenter] (the 'Recent Items' dialog) with fake REST replies.
+/// Stories of `App/Main/RecentItemsDialog`, showing Stroom's real [RecentItemsPresenter] (the
+/// 'Recent Items' dialog) with fake REST replies.
 ///
-/// The React story's `find` fixture becomes a [RestFixtures] route for `POST /explorer/v2/find`
-/// and its `onOpenDoc: fn()` arg becomes a spy on [OpenDocumentEvent].
+/// A [RestFixtures] route answers `POST /explorer/v2/find`, and the `onOpenDoc` spy records
+/// [OpenDocumentEvent].
 public final class RecentItemsDialogStories {
 
     /// The name of the spy recording the documents opened.
@@ -58,9 +58,8 @@ public final class RecentItemsDialogStories {
     private static final DocRef OLDER_FEED = new DocRef("Feed", "f-1", "Older Feed");
 
     // The reply of ExplorerResource.find(), in the order of recency.
-    // Differs from React: the React fixture returns the results in the wrong order to prove that
-    // the React dialog reorders them by recency; the GWT dialog shows them in the order the server
-    // returns them (the server orders them by recency), so this fixture is already in that order
+    // The dialog shows the results in the order the server returns them (the server orders them by
+    // recency), so this fixture is already in that order
     private static final String FIND_RESULTS = """
             {
               "values": [
@@ -90,7 +89,7 @@ public final class RecentItemsDialogStories {
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
         registry.component("App/Main/RecentItemsDialog", RecentItemsDialogStories.class)
-                // As React's 'centered'; the dialog itself is shown on the page's body
+                // Centred; the dialog itself is shown on the page's body
                 .layout(StoryLayout.CENTERED)
                 // Recent items load; double-click opens the document
                 .story("Recent", context -> render(context, Arrays.asList(RECENT_DICTIONARY, OLDER_FEED)))
@@ -120,8 +119,7 @@ public final class RecentItemsDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     screen.findByText("Recent Items");
-                    // Differs from React: the React dialog shows "There are no recent items."; the
-                    // GWT dialog shows an empty result list with no message
+                    // The dialog shows an empty result list with no message
                     play.expect(screen.querySelectorAll(RESULT_ROWS)).toHaveLength(0);
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();

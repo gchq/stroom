@@ -42,16 +42,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Supplier;
 
-/// Stories matching `App/Main/ServerTasksScreen` in the React Storybook, showing Stroom's real
-/// [TaskManagerPresenter] (the 'Server Tasks' tab) with fake REST replies.
+/// Stories of `App/Main/ServerTasksScreen`, showing Stroom's real [TaskManagerPresenter] (the
+/// 'Server Tasks' tab) with fake REST replies.
 ///
-/// The React story's `ServerTaskApi` fixture becomes routes for Stroom's `NodeResource`
-/// (`fetchNodes` → `POST /node/v1/find`) and `TaskResource` (`findTasks` →
-/// `POST /task/v1/find/{node}`, `terminate` → `POST /task/v1/terminate/{node}`). As in React, the
-/// server works out which tasks match the name filter: a route for a request filtering on
-/// 'Processor A' marks only that task `MATCHED`. Its recorder becomes checks on the request spy and
-/// its `onOpenDoc`/`onOpenData`/`onShowFilterTasks` callbacks are spies on Stroom's
-/// `OpenDocumentEvent`, `ShowDataEvent` and `OpenProcessorTaskEvent`. The presenter comes from GIN.
+/// The fixtures answer Stroom's `NodeResource` (the nodes, `POST /node/v1/find`) and `TaskResource`
+/// (the tasks, `POST /task/v1/find/{node}`, and terminating them,
+/// `POST /task/v1/terminate/{node}`). The server works out which tasks match the name filter: a
+/// route for a request filtering on 'Processor A' marks only that task `MATCHED`. The requests are
+/// checked on the request spy, and the `onOpenDoc`/`onOpenData`/`onShowFilterTasks` spies record
+/// Stroom's `OpenDocumentEvent`, `ShowDataEvent` and `OpenProcessorTaskEvent`. The presenter comes
+/// from GIN.
 ///
 /// The list refreshes when Stroom's content pane asks it to (`Refreshable`), which the stories
 /// don't do, so there is no polling here; see `UserTaskManagerDialogStories` for a screen that
@@ -155,9 +155,8 @@ public final class ServerTasksScreenStories {
                     final Play screen = play.screen();
                     play.findByText("Pipeline Processor");
                     play.rightClick(infoCell(play, "Pipeline Processor"));
-                    // Differs from React: GWT has no per-callback wiring, so every item the task
-                    // info's keys allow is shown (React shows only the doc-opening ones here); the
-                    // per-cell items come first, before the grid's own items
+                    // Every item the task info's keys allow is shown; the per-cell items come first,
+                    // before the grid's own items
                     play.waitFor(() -> play.expect(firstMenuItems(screen, 4)).toEqual(
                             Arrays.asList("Open Feed", "Show Filter Tasks", "Open Pipeline", "Open Stream")));
                     play.click(screen.getByText("Open Pipeline"));
@@ -192,7 +191,7 @@ public final class ServerTasksScreenStories {
                     play.waitFor(() -> play.expect(play.spy(ON_SHOW_FILTER_TASKS))
                             .toHaveBeenCalledWith("filterTasks:7"));
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
-                    // Not in React: a feed that can't be found by name is reported, and nothing opens
+                    // A feed that can't be found by name is reported, and nothing opens
                     play.rightClick(infoCell(play, "Pipeline Processor"));
                     play.click(screen.findByText("Open Feed"));
                     // The alert's text is HTML (the quotes are escaped)
@@ -210,9 +209,8 @@ public final class ServerTasksScreenStories {
                     play.findByText("Pipeline Processor");
                     play.click(play.querySelector(".expanderIcon.active"));
                     play.findByText("Stream Processor A");
-                    // Differs from React: GWT has no '...' button on any row (React checks that some
-                    // rows lack one, which can't fail); the items are in the Info cell's context
-                    // menu, which has none of the task info items for a row whose info has no keys
+                    // No row has a '...' button: the items are in the Info cell's context menu, which
+                    // has none of the task info items for a row whose info has no keys
                     play.rightClick(infoCell(play, "Stream Processor A"));
                     play.sleep(200);
                     play.expect(screen.queryByText("Open Stream")).toBeNull();
@@ -224,7 +222,7 @@ public final class ServerTasksScreenStories {
                 .story("QuickFilter", context -> render(context, FIXTURES, null))
                 .withPlay(play -> {
                     play.findByText("Pipeline Processor");
-                    // Differs from React: the quick filter has no label ('Filter'), only a placeholder
+                    // The quick filter has no label, only a placeholder
                     play.type(play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER), "Processor A");
                     // Debounced fetch: the matched task's ancestor expands so it appears; its
                     // sibling B stays hidden
@@ -238,7 +236,7 @@ public final class ServerTasksScreenStories {
                 // Tasks' cross navigation), so the results arrive filtered without typing
                 .story("SeededFilter", context -> render(context, FIXTURES, "Processor A"))
                 .withPlay(play -> {
-                    // Differs from React: the quick filter has no label ('Filter'), only a placeholder
+                    // The quick filter has no label, only a placeholder
                     play.waitFor(() -> play.expect(play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))
                             .toHaveValue("Processor A"));
                     play.waitFor(3000, () -> play.expect(play.getByText("Stream Processor A")).toBeInTheDocument());
@@ -255,8 +253,8 @@ public final class ServerTasksScreenStories {
                     play.expect(play.within(play.getByText("Orphan Task").closest("tr")).getByText("?"))
                             .toBeInTheDocument();
                     // Nothing is expandable, so the expander column (the second) collapses.
-                    // Differs from React: GWT's grid is a table, so this checks the expander column's
-                    // <col>, and GWT gives it 1px rather than none
+                    // The grid is a table, so this checks the expander column's <col>, which GWT gives
+                    // 1px
                     play.expect(play.querySelector("colgroup col:nth-child(2)").attribute("style")).toBe("width: 1px;");
                     expectNoProblems(play);
                 })

@@ -35,29 +35,29 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/VisualisationAssets` in the React Storybook, showing Stroom's real
-/// [VisualisationAssetsPresenter] (a Visualisation's 'Assets' tab: the asset tree with its
-/// toolbar) and its 'Add File' upload dialog with fake REST replies.
+/// Stories of `App/Main/VisualisationAssets`, showing Stroom's real [VisualisationAssetsPresenter]
+/// (a Visualisation's 'Assets' tab: the asset tree with its toolbar) and its 'Add File' upload
+/// dialog with fake REST replies.
 ///
-/// | React seam | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `api.fetchDraft` | `GET /visualisationAssets/fetchDraftAssets/{uuid}` (a sequence, see below) |
-/// | `upload` (its `uploaded` recorder) | the file's upload (`importfile.rpc`, the upload spy) |
-/// | `api.createFile` (its `created` recorder) | `PUT /visualisationAssets/updateNewUploadedFile/{uuid}` |
+/// | `GET /visualisationAssets/fetchDraftAssets/{uuid}` (a sequence, see below) | the draft assets |
+/// | the file's upload (`importfile.rpc`, the upload spy) | uploading a file |
+/// | `PUT /visualisationAssets/updateNewUploadedFile/{uuid}` | creating the uploaded file |
 ///
-/// The draft assets are the seed (`chart.js`), then the seed and the uploaded file, as React's
-/// store grows. Each file name has its own upload reply, with the key `rk-<name>`.
+/// The draft assets are the seed (`chart.js`), then the seed and the uploaded file. Each file name
+/// has its own upload reply, with the key `rk-<name>`.
 ///
 /// The presenter (from the editors batch's ginjector) is read as `VisualisationPresenter` reads
 /// its tabs, and shown with its toolbar above it, as the document's tab shows them, filling the
-/// page (React's `100vh` box).
+/// page.
 public final class VisualisationAssetsStories {
 
     private static final String OWNER_UUID = "vis-1";
     private static final String CREATE_PATH = "/visualisationAssets/updateNewUploadedFile/" + OWNER_UUID;
     private static final String UPLOAD_URL = "importfile.rpc";
 
-    // React's SEED, then the store with the uploaded file
+    // The seed, then the assets with the uploaded file
     private static final String ASSETS = """
             {"ownerId": "vis-1", "dirty": false, "assets": [
                 {"id": "a1", "path": "chart.js", "folder": false}MORE],
@@ -82,10 +82,10 @@ public final class VisualisationAssetsStories {
                     play.upload(dialog.querySelector(StroomDom.FILE_INPUT), "my-vis.js", "(function(){})",
                             "text/javascript");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    // React's uploaded recorder
+                    // The file is uploaded
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.UPLOAD_SPY))
                             .toHaveBeenCalledWith(UPLOAD_URL, "my-vis.js", "(function(){})"));
-                    // React's created recorder: the path and the upload's resource key
+                    // The file is created with its path and the upload's resource key
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(CREATE_PATH)
                                     .withJsonBodyContaining(
@@ -100,8 +100,7 @@ public final class VisualisationAssetsStories {
                 .story("UploadDeduplicatesName", context -> render(context, "chart-1.js"))
                 .withPlay(play -> {
                     final Play dialog = openUploadDialog(play);
-                    // chart.js already exists at the root (React's SEED), so the upload becomes
-                    // chart-1.js
+                    // chart.js already exists at the root (the seed), so the upload becomes chart-1.js
                     play.upload(dialog.querySelector(StroomDom.FILE_INPUT), "chart.js", "x", "text/javascript");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -123,8 +122,7 @@ public final class VisualisationAssetsStories {
         // GWT reaches Upload File through the toolbar's 'Add file' button's menu
         play.click(play.findByTitle("Add file"));
         play.click(screen.findByText("Upload File", StroomDom.MENU_ITEM_TEXT));
-        // Differs from React: the dialog's caption is 'Add File' (React: 'Upload File'), and
-        // Stroom's dialogs have no role="dialog"
+        // The dialog's caption is 'Add File', and Stroom's dialogs have no role="dialog"
         return screen.within(screen.findByText("Add File", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
     }
 
@@ -134,10 +132,10 @@ public final class VisualisationAssetsStories {
                         RestReply.json(ASSETS.replace("MORE", "")),
                         RestReply.json(ASSETS.replace("MORE",
                                 ", {\"id\": \"a2\", \"path\": \"" + createdPath + "\", \"folder\": false}")))
-                // React's upload: the resource key is named after the file
+                // Each upload's resource key is named after the file
                 .upload("my-vis.js", UploadReply.success("rk-my-vis.js", "my-vis.js"))
                 .upload("chart.js", UploadReply.success("rk-chart.js", "chart.js"))
-                // React's createFile
+                // Creating the uploaded file
                 .put(CREATE_PATH, RestReply.json("true"))
                 .build();
         final EditorsScreenGinjector injector = GWT.create(EditorsScreenGinjector.class);
@@ -148,8 +146,7 @@ public final class VisualisationAssetsStories {
         final DocRef docRef = new DocRef(VisualisationDoc.TYPE, OWNER_UUID, "My Vis");
         final VisualisationDoc doc = VisualisationDoc.builder().uuid(OWNER_UUID).name("My Vis").build();
 
-        // The toolbar above the tab's content, as the document's tab shows them, in React's
-        // 100vh box
+        // The toolbar above the tab's content, as the document's tab shows them, filling the page
         final FlowPanel frame = new FlowPanel();
         frame.getElement().getStyle().setProperty("height", "100vh");
         frame.getElement().getStyle().setProperty("display", "flex");

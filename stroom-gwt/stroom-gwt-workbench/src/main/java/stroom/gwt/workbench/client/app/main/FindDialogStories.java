@@ -39,13 +39,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/FindDialog` in the React Storybook, showing Stroom's real
-/// [FindPresenter] (the 'Find' dialog) with fake REST replies.
+/// Stories of `App/Main/FindDialog`, showing Stroom's real [FindPresenter] (the 'Find' dialog) with
+/// fake REST replies.
 ///
-/// The React story's `find` seam becomes `POST /explorer/v2/find`, answered by a handler that, as
-/// the React fixture does, filters a small fixed set by the request's `nameFilter`. The dialog is
-/// shown by firing `ShowFindEvent`, with the presenter (from GIN) registered as its handler in place
-/// of its GWTP proxy.
+/// `POST /explorer/v2/find` is answered by a handler that filters a small fixed set by the
+/// request's `nameFilter`. The dialog is shown by firing `ShowFindEvent`, with the presenter (from
+/// GIN) registered as its handler in place of its GWTP proxy.
 public final class FindDialogStories {
 
     // {type, uuid, name, path}
@@ -75,13 +74,13 @@ public final class FindDialogStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.expect(screen.findByText("Find")).toBeInTheDocument();
-                    // A blank filter shows nothing (GWT's empty guard: no request is made).
-                    // Differs from React: GWT shows an empty list, with no 'Type to find documents.'
+                    // A blank filter shows nothing (GWT's empty guard: no request is made), so GWT
+                    // shows an empty list
                     play.expect(screen.queryByText("Countries")).toBeNull();
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             RequestMatcher.post(FIND_PATH).toSpyMatcher());
                     // Type a filter: the matching documents appear (debounced).
-                    // Differs from React: GWT's quick filter has no id, only a placeholder
+                    // GWT's quick filter has no id, only a placeholder
                     play.type(screen.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER), "Events");
                     play.waitFor(3000, () -> play.expect(screen.getByText("EVENTS")).toBeInTheDocument());
                     play.expect(screen.getByText("Events Pipeline")).toBeInTheDocument();

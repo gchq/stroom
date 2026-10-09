@@ -40,19 +40,19 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Stories matching `App/Main/UserGroupsScreen` in the React Storybook, showing Stroom's real
-/// [UserAndGroupsPresenter] (the 'User Groups' tab) with fake REST replies.
+/// Stories of `App/Main/UserGroupsScreen`, showing Stroom's real [UserAndGroupsPresenter] (the
+/// 'User Groups' tab) with fake REST replies.
 ///
-/// | React seam | Stroom REST endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `findUsers` (all; `ParentsOf`; `ChildrenOf`) | `POST /users/v1/find`, routed by the term's field |
-/// | `findUserRefs` (the user picker) | `POST /userRef/v1/find` |
-/// | `updateUser` (its recorder) | `POST /users/v1/updateUser` (the request spy) |
-/// | `openScreen` | a spy on Stroom's `OpenUsersScreenEvent` |
+/// | `POST /users/v1/find`, routed by the term's field | users and groups (all; `ParentsOf`; `ChildrenOf`) |
+/// | `POST /userRef/v1/find` | the user picker |
+/// | `POST /users/v1/updateUser` | updating a user (checked on the request spy) |
+/// | a spy on Stroom's `OpenUsersScreenEvent` | opening a user |
 ///
 /// The user holds `MANAGE_USERS_PERMISSION`, which `UsersAndGroupsPlugin` requires to open the
-/// screen (React's fixture holds none). The presenter comes from GIN and is opened as
-/// `UsersAndGroupsPlugin.open` opens it (refreshed).
+/// screen. The presenter comes from GIN and is opened as `UsersAndGroupsPlugin.open` opens it
+/// (refreshed).
 public final class UserGroupsScreenStories {
 
     /// The name of the spy recording the screens opened from the action menus.
@@ -94,7 +94,7 @@ public final class UserGroupsScreenStories {
                 .story("UserGroups", UserGroupsScreenStories::render)
                 .withPlay(play -> {
                     play.findAllByText("Administrators");
-                    // Differs from React: both membership panes are labelled 'No Selection'
+                    // Both membership panes are labelled 'No Selection'
                     play.expect(play.getAllByText("No Selection")).toHaveLength(2);
                     play.expect(play.queryByText(TextMatch.startingWith("Members of "))).toBeNull();
                     // Both panes are shown dimmed and inert, so they can't be reached or used (the
@@ -104,7 +104,7 @@ public final class UserGroupsScreenStories {
                     // Select the group: both panes name it, and its members (Alice) load
                     play.click(play.getAllByText("Administrators").nth(0));
                     play.waitFor(() -> play.expect(play.querySelector("[inert]")).toBeNull());
-                    // Differs from React: the label starts with 'Group' (UserRef.getType(SENTENCE))
+                    // The label starts with 'Group' (UserRef.getType(SENTENCE))
                     play.findByText("Group \"Administrators\" is a member of:");
                     play.findByText("Members of group \"Administrators\":");
                     play.waitFor(() -> play.expect(play.getAllByText("Alice Anderson").count())
@@ -119,8 +119,8 @@ public final class UserGroupsScreenStories {
                     play.findByText("Alice A Anderson");
                     // The master grid: the user/group icon column ('/'), Display Name (sorted
                     // ascending) and Full Name.
-                    // Differs from React: GWT's sortable headers have role="button", not
-                    // "columnheader", so their names are read from the header cells' name holders
+                    // GWT's sortable headers have role="button", not "columnheader", so their names are
+                    // read from the header cells' name holders
                     final Play master = masterGrid(play);
                     final Value<List<String>> names = master.querySelectorAll(".dataGridSortableHeaderNameHolder")
                             .textContents();
@@ -187,11 +187,10 @@ public final class UserGroupsScreenStories {
                     play.findByText("Alice Anderson");
                     final Play row = play.within(play.getByText("Alice Anderson").closest("tr"));
                     play.click(row.getByTitle(StroomDom.ACTIONS_TITLE));
-                    // Differs from React: GWT's item ends with three dots, not an ellipsis
+                    // The item ends with three dots, not an ellipsis
                     play.click(screen.findByText("Copy user groups and permissions from..."));
                     screen.findByText("Select User");
-                    // Differs from React: the picker has no 'Copy groups and permissions to ... from:'
-                    // line; it lists the users (not groups) to copy from
+                    // The picker lists the users (not groups) to copy from
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/userRef/v1/find")
                                     .withBody("a find of users (isgroup false)", body -> body != null

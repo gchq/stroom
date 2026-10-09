@@ -33,11 +33,9 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
-/// Stories for [SingleLineEditorPresenter], matching `Widgets/Inputs/SingleLineEditor` in the
-/// React Storybook.
+/// Stories for [SingleLineEditorPresenter].
 ///
-/// The real presenter and view are used: a one-line Ace editor. The React port is a plain text
-/// input styled to look like it.
+/// The real presenter and view are used: a one-line Ace editor.
 public final class SingleLineEditorStories {
 
     // Shared by every rendering: it is a singleton in Stroom, and creating one adds a completion
@@ -56,8 +54,7 @@ public final class SingleLineEditorStories {
                 .layout(StoryLayout.PADDED)
                 // A single-line, code-styled editor input
                 .story("Basic", context -> {
-                    // Differs from React: the Ace based editor has no placeholder (React's
-                    // "Enter an expression"), which only shows when the value is empty anyway.
+                    // The Ace based editor has no placeholder.
                     final SingleLineEditorPresenter presenter = singleLineEditor(context, "${feed}");
                     return presenter.getWidget();
                 })

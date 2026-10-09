@@ -34,13 +34,10 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-/// Stories for [InlineSvgButton], matching `Widgets/Buttons/IconButton` in the React Storybook.
-///
-/// The React `IconButton` is a port of [InlineSvgButton] (and its subclass `SvgButton`), Stroom's
-/// icon-only button.
+/// Stories for [InlineSvgButton] (and its subclass `SvgButton`), Stroom's icon-only button.
 public final class IconButtonStories {
 
-    // Arg names, the same as the React IconButton's props
+    // Arg names
     private static final String ICON = "icon";
     private static final String TITLE = "title";
     private static final String ENABLED = "enabled";
@@ -58,7 +55,7 @@ public final class IconButtonStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Buttons/IconButton", IconButtonStories.class)
                 .layout(StoryLayout.CENTERED)
-                // React's icon arg is the SVG markup; here it is the name of an SvgImage
+                // The icon arg is the name of an SvgImage
                 .argType(ArgType.select(ICON, "ADD", "EDIT", "DELETE", "FIND", "AUTO_REFRESH")
                         .description("The glyph (GWT InlineSvgButton.setSvg(...)).")
                         .typeName("SvgImage"))
@@ -77,8 +74,7 @@ public final class IconButtonStories {
                 .withArgs(Args.of(ICON, "ADD", TITLE, "Add"))
                 // The full set of shared glyphs, each with a tooltip
                 .story("Icons", context -> StoryPanels.row(8,
-                        // Differs from React: React also sets aria-label; InlineSvgButton has no
-                        // equivalent, so the accessible name comes from the title (the same text).
+                        // InlineSvgButton has no aria-label; its accessible name comes from its title
                         iconButton(context, SvgImage.ADD, "Add"),
                         iconButton(context, SvgImage.EDIT, "Edit"),
                         iconButton(context, SvgImage.DELETE, "Delete"),

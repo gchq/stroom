@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-// Loads the reference implementation - React Storybook's `storybook/test` bundle (Testing Library,
+// Loads the reference implementation - Storybook's `storybook/test` bundle (Testing Library,
 // user-event 14, jest-dom, dom-accessibility-api and aria-query) - into a page, unmodified apart
 // from replacing process.env.NODE_ENV (as Storybook's builder does), stubbing its two imports of
 // Storybook internals (the instrumenter, which only wraps the
 // functions for the Interactions panel, and the client logger) and exporting a few of its internal
-// functions, so the self-test can call the very code React Storybook plays use.
+// functions, so the self-test can call the very code Storybook plays use.
 //
-// Nothing is copied into this repository: the files are read from the React project's
-// node_modules (see --react-modules) and served to the page with Playwright's request routing.
+// Nothing is copied into this repository: the files are read from a node_modules holding the
+// storybook package (see --storybook-modules) and served to the page with Playwright's request
+// routing.
 
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -47,10 +48,10 @@ const STUBS = {
     + 'export const logger = once;\n',
 };
 
-/// @param reactModules The React project's node_modules directory.
+/// @param storybookModules A node_modules directory holding the storybook package.
 /// @return The directory of Storybook's browser build, or null if it isn't there.
-export function referenceDir(reactModules) {
-  const dir = path.join(reactModules, 'storybook', 'dist');
+export function referenceDir(storybookModules) {
+  const dir = path.join(storybookModules, 'storybook', 'dist');
   return existsSync(path.join(dir, 'test', 'index.js')) ? dir : null;
 }
 

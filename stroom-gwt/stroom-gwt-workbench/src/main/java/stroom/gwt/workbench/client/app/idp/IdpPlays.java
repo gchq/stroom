@@ -41,9 +41,9 @@ final class IdpPlays {
     /// The request fetching the password policy.
     static final RequestMatcher FETCH_POLICY = RequestMatcher.get(FETCH_POLICY_PATH);
 
-    /// The sign in page's 'Sign In' button (React's `/^sign in$/i`).
+    /// The sign in page's 'Sign In' button.
     static final TextMatch SIGN_IN = StroomDom.button("Sign In");
-    /// A dialog's OK button (React's `/^ok$/i`).
+    /// A dialog's OK button.
     static final TextMatch OK = StroomDom.button("OK");
 
     private IdpPlays() {
@@ -68,9 +68,8 @@ final class IdpPlays {
     /// Waits for the change password dialog (`ChangePasswordPresenter`, shown once the policy has
     /// loaded) and types the new password and its confirmation.
     ///
-    /// Differs from React: the dialog is on the page's body, and is found by its caption; its
-    /// 'Enter Password' field is looked for in the dialog, as the sign in page beneath it has one
-    /// too.
+    /// The dialog is on the page's body, and is found by its caption; its 'Enter Password' field is
+    /// looked for in the dialog, as the sign in page beneath it has one too.
     ///
     /// @param play     The play.
     /// @param caption  The dialog's caption, e.g. `Change Password`.
@@ -79,7 +78,7 @@ final class IdpPlays {
     /// @return The dialog.
     static Play fillPasswords(final Play play, final String caption, final String password, final String confirm) {
         final Play dialog = passwordDialog(play, caption);
-        // React waits for the policy's message (role="note"): the dialog shows it
+        // The dialog shows the policy's message
         play.expect(dialog.querySelector(".passwordPolicyMessage")).not().toHaveTextContent("");
         play.type(dialog.getByPlaceholderText("Enter Password"), password);
         play.type(dialog.getByPlaceholderText("Confirm Password"), confirm);
@@ -94,10 +93,9 @@ final class IdpPlays {
         return screen.within(screen.findByText(caption, StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
     }
 
-    /// Waits for the strength meter to rate the password (React's `waitForStrengthScored`).
-    /// Differs from React: Stroom's meter has no `meter` role; its bar's class is
-    /// `strength-meter-<score + 1>`, set as the password is typed (and when the field changes),
-    /// with zxcvbn loaded by the page, so there is nothing to wait for but the class.
+    /// Waits for the strength meter to rate the password. Stroom's meter has no `meter` role; its
+    /// bar's class is `strength-meter-<score + 1>`, set as the password is typed (and when the
+    /// field changes), with zxcvbn loaded by the page, so there is nothing to wait for but the class.
     ///
     /// @param play   The play.
     /// @param dialog The change password dialog.

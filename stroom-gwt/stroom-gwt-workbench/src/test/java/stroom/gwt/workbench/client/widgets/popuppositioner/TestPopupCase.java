@@ -47,8 +47,8 @@ class TestPopupCase {
         assertThat(popupCase.isPartnersExempt()).isTrue();
         assertThat(popupCase.isTriggerToggles()).isTrue();
         assertThat(popupCase.isEscapeCloses()).isTrue();
-        assertThat(popupCase.isReactTriggerToggles()).isTrue();
-        assertThat(popupCase.isReactEscapeClosesViaHook()).isTrue();
+        assertThat(popupCase.isInTriggerStory()).isTrue();
+        assertThat(popupCase.isInEscapeStory()).isTrue();
         assertThat(popupCase.getPlacement()).isNull();
         assertThat(popupCase.getPartners()).isEmpty();
     }
@@ -59,13 +59,13 @@ class TestPopupCase {
                 .partnersExempt(false)
                 .triggerToggles(false)
                 .escapeCloses(false)
-                .react(false, false)
+                .storyCases(false, false)
                 .placement("input", PopupLocation.BELOW, 4, "call site");
         assertThat(popupCase.isPartnersExempt()).isFalse();
         assertThat(popupCase.isTriggerToggles()).isFalse();
         assertThat(popupCase.isEscapeCloses()).isFalse();
-        assertThat(popupCase.isReactTriggerToggles()).isFalse();
-        assertThat(popupCase.isReactEscapeClosesViaHook()).isFalse();
+        assertThat(popupCase.isInTriggerStory()).isFalse();
+        assertThat(popupCase.isInEscapeStory()).isFalse();
         assertThat(popupCase.getPlacement().getAnchor()).isEqualTo("input");
         assertThat(popupCase.getPlacement().getLocation()).isEqualTo(PopupLocation.BELOW);
         assertThat(popupCase.getPlacement().getShadow()).isEqualTo(4);

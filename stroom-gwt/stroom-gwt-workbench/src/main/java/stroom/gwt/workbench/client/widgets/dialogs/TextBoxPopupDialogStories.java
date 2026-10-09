@@ -31,11 +31,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 
-/// Stories for Stroom's [TextBoxPopup], matching `Widgets/Dialogs/TextBoxPopupDialog` in the
-/// React Storybook.
+/// Stories for Stroom's [TextBoxPopup].
 public final class TextBoxPopupDialogStories {
 
-    // The React TextBoxPopupDialog's callback props
+    // Spy names
     private static final String ON_OK = "onOk";
     private static final String ON_CANCEL = "onCancel";
 
@@ -56,7 +55,7 @@ public final class TextBoxPopupDialogStories {
                     final StoryPopups popups = StoryPopups.create(context);
                     final TextBoxPopup textBoxPopup = new TextBoxPopup(popups.getEventBus(),
                             new TextBoxViewImpl(GWT.create(TextBoxViewImpl.Binder.class)));
-                    // Differs from React: TextBoxPopup has no cancel callback (it just hides), so
+                    // TextBoxPopup has no cancel callback (it just hides), so
                     // the story reports Cancel from the popup's HidePopupEvent.
                     popups.addCleanUp(popups.getEventBus().addHandler(HidePopupEvent.getType(), event -> {
                         if (event.getPresenterWidget() == textBoxPopup && !event.isOk()) {

@@ -18,8 +18,8 @@ package stroom.gwt.workbench.client.app.rest;
 
 import java.util.Objects;
 
-/// The key of a request in the gwt-suite corpus of the React repository
-/// (`gwt-suite/corpus/api/manifest.json`, written by `gwt-suite/lib/corpus.mjs`), e.g.
+/// The key of a request in the GWT behaviour suite's corpus
+/// (`stroom-gwt-suite/corpus/<name>/api/manifest.json`, written by `stroom-gwt-suite/lib/corpus.mjs`), e.g.
 /// `POST /api/explorer/v2/find #0123456789abcdef`: the method, the path with the `/api` root and
 /// any query string, then `#` and the first 16 hex digits of the SHA-1 of the request body (of
 /// an empty string if there is no body).

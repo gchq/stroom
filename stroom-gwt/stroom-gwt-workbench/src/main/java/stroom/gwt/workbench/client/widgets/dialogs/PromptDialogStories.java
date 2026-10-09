@@ -20,7 +20,7 @@ package stroom.gwt.workbench.client.widgets.dialogs;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// Stories for Stroom's prompt, matching `Widgets/Dialogs/PromptDialog` in the React Storybook.
+/// Stories for Stroom's prompt.
 ///
 /// The same prompt as `Widgets/Dialogs/AlertDialog`'s `Prompt` story: a `PromptEvent` handled by
 /// Stroom's `PromptPresenter`.
@@ -34,7 +34,6 @@ public final class PromptDialogStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // The React meta's `alerts` arg is a stub that only satisfies the component's types
         registry.component("Widgets/Dialogs/PromptDialog", PromptDialogStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Prompt dialog (text input with OK / Cancel)

@@ -32,12 +32,10 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
 /// Stories for Stroom's XSD browser ([XSDBrowserPresenter], the box diagram shown by the XML
-/// schema editor), matching `Widgets/Editors & Viewers/XsdBrowser` in the React Storybook.
-///
-/// React's `Tree` story (an expandable tree of the schema) has no GWT equivalent, so is `n/a`.
+/// schema editor).
 public final class XsdBrowserStories {
 
-    // Arg names, the same as the React XsdBrowserNav's props
+    // Arg names
     private static final String XSD_TEXT = "xsdText";
 
     // A small but representative sample schema: named types, documentation, an enumeration
@@ -153,8 +151,7 @@ public final class XsdBrowserStories {
         presenter.setModel(model);
         model.setContents(context.getArgs().getString(XSD_TEXT, ""));
 
-        // React's frame: {height: 480, border: '1px solid var(--border-color,#444)', borderRadius: 4,
-        // overflow: 'hidden'}
+        // A 480px high frame with a rounded border
         final FlowPanel frame = new FlowPanel();
         frame.getElement().getStyle().setProperty("height", "480px");
         frame.getElement().getStyle().setProperty("border", "1px solid var(--border-color,#444)");

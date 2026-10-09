@@ -38,29 +38,28 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories matching `App/Editors/VisualisationEditor` in the React Storybook, showing Stroom's
-/// real [VisualisationPresenter] (a Visualisation's tab: Settings, Assets, Documentation and
-/// Permissions) with fake REST replies.
+/// The `App/Editors/VisualisationEditor` stories, showing Stroom's real [VisualisationPresenter] (a
+/// Visualisation's tab: Settings, Assets, Documentation and Permissions) with fake REST replies.
 ///
 /// As `VisualisationPlugin` does, the story fetches the document (`GET /visualisation/v1/{uuid}`)
-/// and reads it into the editor ([DocEditors#open]); Save sends it to `PUT /visualisation/v1/{uuid}`
-/// and then runs the editor's post save callback, which publishes the assets. React's
-/// `assetsApi` seam is Stroom's `VisualisationAssetResource`: `fetchDraft` →
-/// `GET /visualisationAssets/fetchDraftAssets/{uuid}`, `getContent` →
-/// `GET /visualisationAssets/getContent/{uuid}?path=`, `saveToLive` →
-/// `PUT /visualisationAssets/saveDraftToLive/{uuid}`; `loadNodes` → the script selection box's
-/// explorer routes.
+/// and reads it into the editor ([DocEditors#open]); Save sends it to
+/// `PUT /visualisation/v1/{uuid}` and then runs the editor's post save callback, which publishes
+/// the assets. The assets are Stroom's `VisualisationAssetResource`: the drafts
+/// `GET /visualisationAssets/fetchDraftAssets/{uuid}`, a file's content
+/// `GET /visualisationAssets/getContent/{uuid}?path=` and publishing
+/// `PUT /visualisationAssets/saveDraftToLive/{uuid}`; the script selection box has its explorer
+/// routes.
 public final class VisualisationEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(VisualisationDoc.TYPE, "vis-1", "My Vis");
 
-    // VisualisationResource.fetch(): React's VIS_DOC
+    // VisualisationResource.fetch(): the visualisation
     private static final String DOC = """
             {"type": "Visualisation", "uuid": "vis-1", "name": "My Vis", "functionName": "D3.Bar",
               "scriptRef": {"type": "Script", "uuid": "script-1", "name": "My Script"},
               "settings": "{\\n  \\"tabs\\": []\\n}", "description": "# Vis docs"}""";
 
-    // VisualisationAssetResource.fetchDraftAssets(): React's fetchDraft
+    // VisualisationAssetResource.fetchDraftAssets(): the draft assets
     private static final String ASSETS = """
             {"ownerId": "vis-1", "dirty": true, "assets": [
                 {"id": "a1", "path": "src", "folder": true},
@@ -70,12 +69,12 @@ public final class VisualisationEditorStories {
 
     private static final String SAVE_TO_LIVE = "/visualisationAssets/saveDraftToLive/vis-1";
 
-    // Differs from React: a FormGroup gives its control the group's identity as its id
-    // (VisualisationSettingsViewImpl.ui.xml), not React's '<name>-input'
+    // A FormGroup gives its control the group's identity as its id
+    // (VisualisationSettingsViewImpl.ui.xml)
     private static final String FUNCTION_NAME = "#visualisationSettingsFunctionName";
     private static final String ASSET_NAME = "#visualisationAssetsName";
 
-    // Differs from React: Stroom's Ace editor's text area, which React's port copies
+    // Stroom's Ace editor's text area
     private static final String ACE_INPUT = ".ace_text-input";
 
     private VisualisationEditorStories() {
@@ -109,7 +108,7 @@ public final class VisualisationEditorStories {
                     play.waitFor(() -> play.expect(play.querySelector(FUNCTION_NAME)).toHaveValue("D3.Bar"));
                     play.expect(save).toHaveClass("disabled");
                     play.type(play.querySelector(FUNCTION_NAME), "Chart");
-                    // Differs from React: the text box reports its change when it loses the focus
+                    // The text box reports its change when it loses the focus
                     play.tab();
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
                     DocEditors.expectNoProblems(play);
@@ -122,10 +121,10 @@ public final class VisualisationEditorStories {
                     play.click(DocEditors.tab(play, "Assets"));
                     play.waitFor(() -> play.expect(play.getByText("style.css")).toBeInTheDocument());
                     play.expect(play.getByText("src")).toBeInTheDocument();
-                    // Differs from React: the tree holds the collapsed folder's items, hidden
+                    // The tree holds the collapsed folder's items, hidden
                     play.expect(play.getByText("main.js")).not().toBeVisible();
                     // Expand the folder, then open the file in the editor.
-                    // Differs from React: GWT's Tree expands an item from its open/close image
+                    // GWT's Tree expands an item from its open/close image
                     play.click(play.within(play.getByText("src").closest("tr")).querySelector("img"));
                     play.waitFor(() -> play.expect(play.getByText("main.js")).toBeVisible());
                     // Until a file is selected, the editor's area asks for one (it was blank)
@@ -137,7 +136,7 @@ public final class VisualisationEditorStories {
                     // 'Add file' opens a menu (Add New Folder, Add New File, Upload File); 'Add New
                     // File' opens the name dialog
                     play.click(play.getByRole("button", "Add file"));
-                    // Differs from React: the menu items have no menuitem role
+                    // The menu's items, by their text
                     final Value<List<String>> items = screen.querySelectorAll(StroomDom.MENU_ITEM_TEXT).textContents();
                     play.waitFor(() -> play.expect("the menu's items", items)
                             .toEqual(List.of("Add New Folder", "Add New File", "Upload File")));
@@ -180,9 +179,9 @@ public final class VisualisationEditorStories {
                     play.expect(play.queryByRole("button", "Save assets to live")).toBeNull();
                     play.expect(play.queryByRole("button", "Revert assets to live")).toBeNull();
 
-                    // Differs from React: React calls its publish helper directly; GWT's is the
-                    // post save callback, so the play saves the document (after an edit) and checks
-                    // the request, twice: the first publish succeeds, the second replies false
+                    // Publishing is the post save callback, so the play saves the document (after an
+                    // edit) and checks the request, twice: the first publish succeeds, the second
+                    // replies false
                     play.click(DocEditors.tab(play, "Settings"));
                     saveAfterEdit(play, "Chart");
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -220,7 +219,7 @@ public final class VisualisationEditorStories {
                 .get("/visualisationAssets/fetchDraftAssets/vis-1", RestReply.json(ASSETS))
                 .get("/visualisationAssets/getContent/vis-1", RestReply.json(
                         "{\"content\": \"// src/main.js\\nconsole.log(1);\", \"editorMode\": \"JAVASCRIPT\"}"))
-                // React's saveToLive: true, then false for the second save
+                // Publishing: true, then false for the second save
                 .put(SAVE_TO_LIVE, RestReply.json("true"), RestReply.json("false"))
                 .build();
         final VisualisationResource resource = GWT.create(VisualisationResource.class);

@@ -18,7 +18,7 @@
 //
 // How do you get to every presenter the walk has NOT reached — and what has to be true first?
 //
-//   node stroom-stroom-gwt-suite/tools/build-door-preconditions.mjs
+//   node stroom-gwt-suite/tools/build-door-preconditions.mjs
 //     -> oracles/door-preconditions.json
 //     -> oracles/door-preconditions.md
 //
@@ -328,7 +328,7 @@ for (const d of out) byClass[d.class] = (byClass[d.class] ?? 0) + 1;
 const lines = [];
 lines.push('# Door preconditions — how to reach every presenter the walk has not');
 lines.push('');
-lines.push('**Generated** by `stroom-stroom-gwt-suite/tools/build-door-preconditions.mjs` from the Stroom source, the');
+lines.push('**Generated** by `stroom-gwt-suite/tools/build-door-preconditions.mjs` from the Stroom source, the');
 lines.push('reachability graph, the mined show edges and the current coverage ledger. Do not hand-edit.');
 lines.push('');
 lines.push(`${missing.length} doors unreached. Each is classified by the EASIEST of its opener sites — one create path`);

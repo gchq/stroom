@@ -36,8 +36,8 @@ import java.util.function.Function;
 /// presenter from an [IdpScreenGinjector], filling the canvas, revealed once the harness has
 /// started up, with the URL's query parameters and navigation handled by [IdpPage].
 ///
-/// When Stroom navigates away (e.g. after signing in), a message says where it went, as React's
-/// stories do: in place of the page (React's `FlowDemo`) or beside it (the `ResetPassword` marker).
+/// When Stroom navigates away (e.g. after signing in), a message says where it went: in place of
+/// the page (the sign in flow) or beside it (the `ResetPassword` marker).
 final class SignInPages {
 
     private SignInPages() {

@@ -45,22 +45,22 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories matching `App/Editors/CodeDocumentEditor` in the React Storybook, showing Stroom's real
-/// code document editors with fake REST replies: `XsltPresenter`, `TextConverterPresenter`,
-/// `ScriptPresenter`, `KafkaConfigPresenter`, `S3ConfigPresenter` and `XMLSchemaPresenter`.
+/// The `App/Editors/CodeDocumentEditor` stories, showing Stroom's real code document editors with
+/// fake REST replies: `XsltPresenter`, `TextConverterPresenter`, `ScriptPresenter`,
+/// `KafkaConfigPresenter`, `S3ConfigPresenter` and `XMLSchemaPresenter`.
 ///
 /// As their plugins do, each story fetches its document (`GET /xslt/v1/{uuid}`,
 /// `/textConverter/v1/...`, `/script/v1/...`, `/kafkaConfig/v1/...`, `/s3/v1/...`,
-/// `/xmlSchema/v1/...`) and reads it into the editor ([DocEditors#open]). React's seams: `download`
-/// → `POST /kafkaConfig/v1/download` (and S3's), XML Schema's `validate` →
-/// `POST /xmlSchema/v1/validate`, `docPermission` → the Permissions tab's routes.
+/// `/xmlSchema/v1/...`) and reads it into the editor ([DocEditors#open]). Download is
+/// `POST /kafkaConfig/v1/download` (and S3's), XML Schema's validation
+/// `POST /xmlSchema/v1/validate`, and the Permissions tab has its own routes.
 public final class CodeDocumentEditorStories {
 
-    // Differs from React: Stroom's Ace editor's text area, which React's port copies
+    // Stroom's Ace editor's text area
     private static final String ACE_INPUT = ".ace_text-input";
 
-    // Differs from React: a FormGroup gives its control the group's identity as its id
-    // (XMLSchemaSettingsViewImpl.ui.xml), not React's '<name>-input'
+    // A FormGroup gives its control the group's identity as its id
+    // (XMLSchemaSettingsViewImpl.ui.xml)
     private static final String NAMESPACE_URI = "#xmlSchemaSettingsNamespaceURI";
 
     private static final String DOWNLOAD_REPLY = """
@@ -225,7 +225,7 @@ public final class CodeDocumentEditorStories {
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveClass("disabled");
                     play.type(play.querySelector(NAMESPACE_URI), "/v2");
-                    // Differs from React: the text box reports its change when it loses the focus
+                    // The text box reports its change when it loses the focus
                     play.tab();
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
                     DocEditors.expectNoProblems(play);
@@ -280,8 +280,7 @@ public final class CodeDocumentEditorStories {
                     final Query save = play.findByRole("button", "Save");
                     play.waitFor(() -> play.expect(play.querySelector(".ace_content")).toBeInTheDocument());
                     play.expect(save).toHaveClass("disabled");
-                    // Differs from React: the menu opens on a secondary mousedown (EditorViewImpl),
-                    // on the page's body
+                    // The menu opens on a secondary mousedown (EditorViewImpl), on the page's body
                     play.rightClick(play.querySelector(".ace_content"));
                     play.click(play.screen().findByText("Format", StroomDom.MENU_ITEM_TEXT));
                     final Value<List<String>> lines = play.querySelectorAll(".ace_line").textContents();
@@ -377,7 +376,7 @@ public final class CodeDocumentEditorStories {
     private static Widget schema(final StoryContext context, final boolean readOnly) {
         final DocRef docRef = new DocRef(XmlSchemaDoc.TYPE, "schema-1", "My Schema");
         final XmlSchemaResource resource = GWT.create(XmlSchemaResource.class);
-        // React's validate seam: the schema is valid
+        // XML Schema validation: the schema is valid
         final RestFixtures fixtures = fixtures("/xmlSchema/v1/schema-1", SCHEMA)
                 .post("/xmlSchema/v1/validate", RestReply.json("{\"ok\": true}"))
                 .build();

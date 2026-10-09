@@ -36,20 +36,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-/// Stories matching `Widgets/Inputs/QuickFilterPanel` in the React Storybook.
-///
-/// The React `QuickFilterPanel` is a port of Stroom's two quick filter layouts, the page layout
-/// ([QuickFilterPageViewImpl]) and the dialog layout ([QuickFilterDialogViewImpl]): a quick
-/// filter above a data panel. These stories use the real views, with a list of rows as the data
-/// view.
+/// Stories for Stroom's two quick filter layouts, the page layout ([QuickFilterPageViewImpl]) and
+/// the dialog layout ([QuickFilterDialogViewImpl]): a quick filter above a data panel. These
+/// stories use the real views, with a list of rows as the data view.
 public final class QuickFilterPanelStories {
 
     private static final List<String> ROWS = Arrays.asList(
             "England", "Scotland", "Wales", "Northern Ireland", "Isle of Man", "Jersey", "Guernsey");
 
-    // Differs from React: the GWT views have no quickFilterPanel or quickFilterPanel__results
-    // classes (the port's own), so the plays find the panel by the views' outermost class (max)
-    // and the results by their position (the data panel, the panel's dock-max child).
+    // The plays find the panel by the views' outermost class (max) and the results by their
+    // position (the data panel, the panel's dock-max child).
     private static final String PANEL = ".max";
     private static final String RESULTS = ":scope > .dock-max";
 
@@ -109,7 +105,7 @@ public final class QuickFilterPanelStories {
                 });
     }
 
-    /// The React `Harness`'s filtering: rows containing the trimmed filter, ignoring case.
+    /// The stories' filtering: rows containing the trimmed filter, ignoring case.
     private static QuickFilterUiHandlers filterHandler(final StoryContext context, final RowsView rows) {
         final Spy onChange = context.fn(InputWidgets.ON_CHANGE);
         return text -> {
@@ -134,7 +130,7 @@ public final class QuickFilterPanelStories {
     // --------------------------------------------------------------------------------
 
 
-    /// The data view: the React story's `hoverable-row` rows, filtered.
+    /// The data view: `hoverable-row` rows, filtered.
     private static class RowsView extends ViewImpl {
 
         private final FlowPanel panel = new FlowPanel();

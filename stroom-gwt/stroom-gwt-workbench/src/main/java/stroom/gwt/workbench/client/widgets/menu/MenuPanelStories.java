@@ -44,13 +44,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 /// Stories for Stroom's menus (`ShowMenuEvent`, handled by Stroom's `Menu` with a
-/// `MenuPresenter` per menu and submenu), matching `Widgets/Menu/MenuPanel` in the React
-/// Storybook.
+/// `MenuPresenter` per menu and submenu).
 public final class MenuPanelStories {
 
     // Stroom's menu is a cell table with this class and `role="menu"`.
     static final String MENU = ".menuCellTable";
-    // Differs from React: the highlighted row is the cell table's keyboard-selected row.
+    // The highlighted row is the cell table's keyboard-selected row.
     private static final String ACTIVE_ROW = ".menuCellTable tr[class*='KeyboardSelectedRow']";
     private static final String NO_ACTION = "(no action yet)";
 
@@ -62,8 +61,7 @@ public final class MenuPanelStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // The React meta's args (items, anchor, visible, onClose) only satisfy the component's
-        // types: every story renders its own demo
+        // Every story renders its own demo
         registry.component("Widgets/Menu/MenuPanel", MenuPanelStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // Icon + text items, a disabled item, and separators
@@ -71,9 +69,9 @@ public final class MenuPanelStories {
                         "Basic context menu — icon + text items, disabled item, separator",
                         true,
                         result -> Arrays.asList(
-                                // Differs from React: a Stroom menu item's shortcut is the key
-                                // binding of its action, and there are no copy/cut actions, so
-                                // Ctrl+C and Ctrl+X aren't shown.
+                                // A Stroom menu item's shortcut is the key binding of its action,
+                                // and there are no copy/cut actions, so Ctrl+C and Ctrl+X aren't
+                                // shown.
                                 MenuWidgets.icon("Copy", SvgImage.COPY, () -> result.accept("Copy")).build(),
                                 MenuWidgets.icon("Cut", SvgImage.CLEAR, () -> result.accept("Cut")).build(),
                                 MenuWidgets.iconDisabled("Paste", SvgImage.CLIPBOARD)
@@ -95,7 +93,7 @@ public final class MenuPanelStories {
                         "Cascading submenus — hover a parent row (or press Arrow Right) to reveal",
                         true,
                         result -> Arrays.asList(
-                                // Differs from React: no Ctrl+N (Stroom has no "new" action)
+                                // No shortcut, as Stroom has no "new" action
                                 MenuWidgets.icon("New", SvgImage.ADD, () -> result.accept("New")).build(),
                                 MenuWidgets.separator(),
                                 MenuWidgets.parent("Export as…", SvgImage.ADD_BELOW,
@@ -129,18 +127,18 @@ public final class MenuPanelStories {
                                 MenuWidgets.info("Type: RAW_EVENTS"),
                                 MenuWidgets.separator(),
                                 MenuWidgets.simple("Open", () -> {
-                                    // React's no-op command
+                                    // Does nothing
                                 }),
                                 MenuWidgets.simple("Close", () -> {
-                                    // React's no-op command
+                                    // Does nothing
                                 }))))
                 // A highlighted (bold accent) menu item
                 .story("Highlighted", context -> demo(context, "Open Menu",
                         "Highlighted (bold accent) menu item",
                         true,
                         result -> Arrays.asList(
-                                // Differs from React: no Ctrl+A shortcut (Stroom's SELECT_ALL action
-                                // would be misleading here)
+                                // No Ctrl+A shortcut (Stroom's SELECT_ALL action would be
+                                // misleading here)
                                 MenuWidgets.icon("Normal action", SvgImage.ADD, () -> result.accept("Normal")).build(),
                                 MenuWidgets.icon("Dangerous action!", SvgImage.DELETE, () -> result.accept("Danger!"))
                                         .highlight(true)
@@ -157,7 +155,7 @@ public final class MenuPanelStories {
                                 MenuWidgets.icon("Save", SvgImage.SAVE, () -> result.accept("Save"))
                                         .action(Action.ITEM_SAVE)
                                         .build(),
-                                // Differs from React: no F5 shortcut (Stroom has no reload action)
+                                // No shortcut, as Stroom has no reload action
                                 MenuWidgets.icon("Reload", SvgImage.REFRESH, () -> result.accept("Reload")).build(),
                                 MenuWidgets.separator(),
                                 MenuWidgets.iconDisabled("Print", SvgImage.CANCEL).build(),
@@ -198,8 +196,8 @@ public final class MenuPanelStories {
                 });
     }
 
-    /// The React stories' `MenuDemo`: a description, a button that toggles the menu below it, and
-    /// (when `showResult`) the last action.
+    /// A description, a button that toggles the menu below it, and (when `showResult`) the last
+    /// action.
     private static Widget demo(final StoryContext context,
                                final String buttonLabel,
                                final String description,
@@ -220,7 +218,7 @@ public final class MenuPanelStories {
         strong.setInnerText(NO_ACTION);
         final List<Item> items = itemsFactory.apply(strong::setInnerText);
 
-        // Differs from React: a Stroom Button rather than a plain `btn btn--default` button
+        // A Stroom Button, as Stroom's dialogs and forms use
         final Button button = new Button();
         button.setText(buttonLabel + " ▾");
         button.getElement().getStyle().setProperty("margin", "4px");

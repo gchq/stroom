@@ -18,19 +18,12 @@ package stroom.gwt.workbench.client;
 
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// Registers every story in the workbench, i.e. the GWT ports of the React Storybook's stories
-/// (see the stroom-ui-react repository).
+/// Registers every story in the workbench.
 ///
-/// There is a class for each top level group of the React sidebar, called in the same order as
-/// the React sidebar: [AppStories] (`App/*`), [ScreensStories] (`Screens/*`) and
-/// [WidgetsStories] (`Widgets/*`). **Don't add story classes here**; add them to the class for
-/// their group, after the comment holding their React title (see [WidgetsStories]).
-///
-/// A story must have the same title and export name as its React original so that its id is the
-/// same, letting the two be compared at the same URL and the React story's play function be
-/// ported step by step. `TestReactStoryCoverage` checks this against
-/// `src/test/resources/react-stories.json`, and `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchCoverage`
-/// reports how many of the React stories have been ported. See `test-runner/README.md`.
+/// There is a class for each top level group of the sidebar: [AppStories] (`App/*`),
+/// [ScreensStories] (`Screens/*`) and [WidgetsStories] (`Widgets/*`). **Don't add story classes
+/// here**; add them to the class for their group, after the comment holding their title (see
+/// [WidgetsStories]). See `WRITING-STORIES.md` and `test-runner/README.md`.
 public final class AllStories {
 
     private AllStories() {

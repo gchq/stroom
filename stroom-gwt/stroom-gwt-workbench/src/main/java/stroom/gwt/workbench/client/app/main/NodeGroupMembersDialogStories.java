@@ -41,17 +41,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/// Stories matching `App/Main/NodeGroupMembersDialog` in the React Storybook, showing Stroom's real
-/// [NodeGroupEditPresenter] (the 'Edit Node Group - name' dialog, as `NodeGroupPresenter` opens
-/// it) with fake REST replies.
+/// Stories of `App/Main/NodeGroupMembersDialog`, showing Stroom's real [NodeGroupEditPresenter]
+/// (the 'Edit Node Group - name' dialog, as `NodeGroupPresenter` opens it) with fake REST replies.
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `nodeApi.fetchNodes` | `POST /node/v1/find` |
-/// | `groupApi.getMembers` | `GET /node/nodeGroup/v2/getNodeGroupStates/{id}` |
-/// | `groupApi.setMembers` | `POST /node/nodeGroup/v2/updateNodeGroupState` |
+/// | `POST /node/v1/find` | the nodes |
+/// | `GET /node/nodeGroup/v2/getNodeGroupStates/{id}` | the group's members |
+/// | `POST /node/nodeGroup/v2/updateNodeGroupState` | setting the members |
 ///
-/// The recorder's checks become checks on the request spy.
+/// The requests are checked on the request spy.
 public final class NodeGroupMembersDialogStories {
 
     private static final String UPDATE_PATH = "/node/nodeGroup/v2/updateNodeGroupState";
@@ -89,14 +88,14 @@ public final class NodeGroupMembersDialogStories {
                     screen.findByText("Edit Node Group - Indexers");
                     screen.findByText("node1");
                     // GWT column order: tickbox, Status, Name, Cluster Base Endpoint
-                    // Differs from React: GWT's sortable headers (Name, Cluster Base Endpoint) have
-                    // role="button", so the headers are the table's <th> cells
+                    // GWT's sortable headers (Name, Cluster Base Endpoint) have role="button", so the
+                    // headers are the table's <th> cells
                     play.expect(screen.querySelectorAll("thead th").textContents())
                             .toEqual(List.of("", "Status", "Name", "Cluster Base Endpoint"));
-                    // Differs from React: GWT's grid rows are <tr> elements with no role attribute
+                    // The grid's rows are <tr> elements with no role attribute
                     play.expect(screen.within(row(screen, "node1")).getByText("http://node1:8080/stroom"))
                             .toBeInTheDocument();
-                    // Differs from React: the row's tick is a TickBoxCell div, not a checkbox
+                    // The row's tick is a TickBoxCell div, not a checkbox input
                     play.click(screen.within(row(screen, "node1")).querySelector(".tickBox"));
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -116,9 +115,9 @@ public final class NodeGroupMembersDialogStories {
                     // The "Node Inclusion Behaviour" drop-down (NodeInclusionBehaviour)
                     play.click(screen.querySelector("#nodeInclusionBehaviour " + StroomDom.SELECTION_BOX));
                     play.click(screen.findByText("Exclude Selected"));
-                    // Differs from React: GWT's onInvertSelectionChange inverts the set of ticked
-                    // nodes as it inverts their meaning, so each node keeps its status: node2 stays
-                    // 'Included' (now unticked) and node1 'Excluded' (now ticked)
+                    // onInvertSelectionChange inverts the set of ticked nodes as it inverts their
+                    // meaning, so each node keeps its status: node2 stays 'Included' (now unticked) and
+                    // node1 'Excluded' (now ticked)
                     play.waitFor(() -> play.expect(screen.within(row(screen, "node1")).getByText("Excluded"))
                             .toBeInTheDocument());
                     play.expect(screen.within(row(screen, "node2")).getByText("Included")).toBeInTheDocument();
@@ -132,7 +131,7 @@ public final class NodeGroupMembersDialogStories {
                 });
     }
 
-    // Differs from React: GWT's grid rows are <tr> elements with no role attribute
+    // The grid's rows are <tr> elements with no role attribute
     private static Query row(final Play screen, final String text) {
         return screen.getByText(text).closest("tr");
     }

@@ -33,16 +33,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories matching `Screens/SignIn/redirectUrl` in the React Storybook, which tests the React
-/// port's post sign in redirect guard as pure functions. Here they check Stroom's own code, which
-/// the React port copies:
+/// The `Screens/SignIn/redirectUrl` stories, which check Stroom's post sign in redirect guard:
 ///
 /// * `isSafeRootRelativePath` is Stroom's `RedirectUrlUtil.isSafeRootRelativePath` (GWT client code,
 ///   `stroom-core-client`), called directly;
 /// * `isSameOrigin` is Stroom's `LoginPresenter.isSameOrigin` (private, called with JSNI by
 ///   `IdpPage.isSameOrigin`) on a real sign in page, created (not shown) as the story renders. It
-///   compares with the page's own origin (`Window.Location`), which a story can't change, so React's
-///   `https://stroom.example.com` is the story page's origin in these checks.
+///   compares with the page's own origin (`Window.Location`), which a story can't change, so the
+///   story page's origin stands for Stroom's in these checks.
 public final class RedirectUrlStories {
 
     // The rendering's sign in page, for isSameOrigin (a play's checks run after it renders)
@@ -90,13 +88,13 @@ public final class RedirectUrlStories {
                     expectSafe(play, "javascript:alert(1)", false);
                     expectSafe(play, "relative/path", false);
                     expectSafe(play, "", false);
-                    // Differs from React: Java has one null for JavaScript's null and undefined
+                    // A null redirect
                     expectSafe(play, null, false);
                 })
                 // An absolute URL back into this origin: the ordinary round trip
                 .story("SameOriginAbsoluteUrlAllowed", RedirectUrlStories::renderSignInPage)
                 .withPlay(play -> {
-                    // Differs from React: the page's origin in place of 'https://stroom.example.com'
+                    // The page's origin stands for Stroom's
                     expectSameOrigin(play, "${ORIGIN}", true);
                     expectSameOrigin(play, "${ORIGIN}/", true);
                     expectSameOrigin(play, "${ORIGIN}/stroom/ui", true);
@@ -112,8 +110,8 @@ public final class RedirectUrlStories {
                     // Same host, other scheme: a downgrade (here, or an upgrade) isn't the same origin
                     expectSameOrigin(play, "${OTHER_SCHEME_ORIGIN}/x", false);
                     expectSameOrigin(play, "", false);
-                    // Differs from React: Stroom's isSameOrigin isn't null safe, as afterLogin()
-                    // reloads the page for a missing redirect_uri without calling it
+                    // Stroom's isSameOrigin isn't null safe, as afterLogin() reloads the page for a
+                    // missing redirect_uri without calling it
                     play.expect("isSameOrigin(null) throws a NullPointerException", () -> {
                         try {
                             IdpPage.isSameOrigin(loginPresenter, null);

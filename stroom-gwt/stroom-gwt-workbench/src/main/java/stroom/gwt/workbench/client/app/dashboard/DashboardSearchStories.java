@@ -38,14 +38,13 @@ import java.util.List;
 /// dashboard's Query, Embedded Query and input components running Stroom's real searches
 /// (`SearchModel`, `QueryModel`) against fake replies.
 ///
-/// | React seam | Stroom endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `DashboardApi.search` | `POST /dashboard/v1/search/{node}` (a Query component's search) |
-/// | `QueryApi.search` | `POST /query/v1/search/{node}` (an Embedded Query's search) |
-/// | `DashboardApi.destroy` | `POST /result-store/v1/destroy/{node}` |
-/// | `StoredQueryApi` | `POST /storedQuery/v1/find`, `create`, `delete` |
-/// | `LoadFields` | `POST /dataSource/v1/findFields` |
-/// | `WordListApi.getWords` | `GET /wordList/v1/{dictionaryUuid}` |
+/// | `POST /dashboard/v1/search/{node}` | a Query component's search |
+/// | `POST /query/v1/search/{node}` | an Embedded Query's search |
+/// | `POST /result-store/v1/destroy/{node}` | destroying a search's results |
+/// | `POST /dataSource/v1/findFields` | a data source's fields |
+/// | `GET /wordList/v1/{dictionaryUuid}` | a dictionary's words |
 public final class DashboardSearchStories {
 
     private DashboardSearchStories() {
@@ -65,7 +64,7 @@ public final class DashboardSearchStories {
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     play.findByText("The Query", DashboardPlays.COMPONENT_TAB);
-                    // Differs from React: the warning is Stroom's alert dialog
+                    // The warning is Stroom's alert dialog
                     play.screen().findByText("No data source has been chosen to search");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("WARN: No data source has been chosen to search");
@@ -77,8 +76,8 @@ public final class DashboardSearchStories {
                         }))
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
-                    // Differs from React: the table is the panel's second tab, which GWT only shows
-                    // when it is selected, so the play waits for the search's reply instead
+                    // The table is the panel's second tab, which Stroom only shows when it is
+                    // selected, so the play waits for the search's reply instead
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             DashboardSupport.SEARCH.toSpyMatcher()));
                     DashboardPlays.closeWindow(play);
@@ -216,7 +215,7 @@ public final class DashboardSearchStories {
                     // A plain parameter change applies to the next search
                     play.clear(play.querySelector(".TextInputView input"));
                     play.type(play.querySelector(".TextInputView input"), "omega");
-                    // Differs from React: the text box reports its value when it loses the focus
+                    // The text box reports its value when it loses the focus
                     play.tab();
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("param name = omega")).toBeInTheDocument());
@@ -255,7 +254,7 @@ public final class DashboardSearchStories {
                     final Play dialog = DashboardPlays.dialog(screen, "Current Selection");
                     play.expect(dialog.getByText("Time Range")).toBeInTheDocument();
                     play.expect(dialog.getByText("${timeRange.from}")).toBeInTheDocument();
-                    // Differs from React: GWT heads a component's block with its name and id
+                    // Stroom heads a component's block with its name and id
                     play.expect(dialog.getByText("Master Table (t1)")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(dialog.getByText("${component.t1.selection.Name}"))
                             .toBeInTheDocument());
@@ -268,9 +267,9 @@ public final class DashboardSearchStories {
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     final Play screen = play.screen();
-                    // Differs from React: GWT's Table Filter is a list of the column's values to tick
-                    // (ColumnValuesFilterPresenter), not a text box, so the play chooses 'red' and
-                    // 'green' there; the values are the table's, so the query is run first
+                    // The Table Filter is a list of the column's values to tick
+                    // (ColumnValuesFilterPresenter), so the play chooses 'red' and 'green' there;
+                    // the values are the table's, so the query is run first
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("red")).toBeInTheDocument());
                     play.click(play.getByText("Select None"));
@@ -287,8 +286,7 @@ public final class DashboardSearchStories {
                 .withPlay(play -> {
                     DashboardPlays.opened(play);
                     final Play screen = play.screen();
-                    // Differs from React: the words are the choices of Stroom's selection box (shown
-                    // when it is opened), not a datalist's options
+                    // The words are the choices of Stroom's selection box (shown when it is opened)
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/wordList/v1/d1").toSpyMatcher()));
                     // A selection box that allows free text opens with its drop down button
@@ -340,7 +338,7 @@ public final class DashboardSearchStories {
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     DashboardPlays.runQuery(play, 0);
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
-                    // Differs from React: only the table has a pager here (GWT's Query has none)
+                    // Only the table has a pager here (the Query has none)
                     play.click(play.within(play.querySelector(".TableViewImpl")).getByTitle("Forward"));
                     play.waitFor(() -> play.expect("a request for a later page of t1",
                             () -> offsets(requests).stream().anyMatch(offset -> offset > 0)).toBe(true));
@@ -358,11 +356,11 @@ public final class DashboardSearchStories {
                 });
     }
 
-    // Runs only the master query (q1), as React does, while the detail query (q2) hasn't searched,
-    // and checks that its search completes. DashboardPresenter.getCombinedErrors asks every Query for
-    // its errors as any search reports them, and QueryPresenter.getCurrentErrors once threw for a
-    // Query that hadn't searched, which SearchModel.update swallowed before it marked the search
-    // complete, so the master search polled forever
+    // Runs only the master query (q1), while the detail query (q2) hasn't searched, and checks that
+    // its search completes. DashboardPresenter.getCombinedErrors asks every Query for its errors as
+    // any search reports them, and QueryPresenter.getCurrentErrors once threw for a Query that
+    // hadn't searched, which SearchModel.update swallowed before it marked the search complete, so
+    // the master search polled forever
     private static void runMaster(final Play play) {
         DashboardPlays.runQuery(play, 0);
         play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
@@ -400,8 +398,8 @@ public final class DashboardSearchStories {
         return offsets;
     }
 
-    // React's dashboardApiFixtureSelectionDriven: t1 has two rows; t2 has a row for the selection
-    // value in the request's expression
+    // Selection driven searches: t1 has two rows; t2 has a row for the selection value in the
+    // request's expression
     private static void selectionDrivenRoutes(final RestFixtures.Builder routes) {
         routes.route(DashboardSupport.SEARCH, request -> {
             final String body = request.getBody();
@@ -428,8 +426,8 @@ public final class DashboardSearchStories {
         });
     }
 
-    // React's dashboardApiFixtureFilterEcho: t1 has a row for the first term's value of the request's
-    // expression; and the Colour column's values for the Table Filter
+    // Filter echoing searches: t1 has a row for the first term's value of the request's expression;
+    // and the Colour column's values for the Table Filter
     private static void tableFilterRoutes(final RestFixtures.Builder routes) {
         routes.route(DashboardSupport.SEARCH, request -> {
             final String match = DashboardPlays.firstTermValue(DashboardPlays.at(request.getBody(),
@@ -450,7 +448,7 @@ public final class DashboardSearchStories {
                                + "\"pageResponse\": {\"offset\": 0, \"length\": 3, \"total\": 3, \"exact\": true}}"));
     }
 
-    // React's wordList fixture: the dictionary's words
+    // WordListResource: the dictionary's words
     private static void wordListRoutes(final RestFixtures.Builder routes) {
         routes.get("/wordList/v1/d1", RestReply.json("{\"wordList\": [{\"word\": \"red\", \"sourceUuid\": \"d1\"}, "
                                                      + "{\"word\": \"green\", \"sourceUuid\": \"d1\"}, "

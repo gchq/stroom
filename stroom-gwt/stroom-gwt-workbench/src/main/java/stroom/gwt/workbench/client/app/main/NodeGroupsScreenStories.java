@@ -31,20 +31,18 @@ import stroom.node.client.presenter.NodeGroupPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/NodeGroupsScreen` in the React Storybook, showing Stroom's real
-/// [NodeGroupPresenter] (the 'Node Groups' tab, as `NodeGroupsPlugin` opens it) with fake REST
-/// replies.
+/// Stories of `App/Main/NodeGroupsScreen`, showing Stroom's real [NodeGroupPresenter] (the 'Node
+/// Groups' tab, as `NodeGroupsPlugin` opens it) with fake REST replies, for Stroom's
+/// `NodeGroupResource`:
 ///
-/// The React story's `NodeGroupApi` fixture becomes routes for Stroom's `NodeGroupResource`:
-///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `findGroups` | `POST /node/nodeGroup/v2/find` (a sequence: the list as it changes) |
-/// | `update` | `PUT /node/nodeGroup/v2/{id}` (echoes the group) |
-/// | `create` | `GET /node/nodeGroup/v2/fetchByName/{name}` (the name check), then `POST /node/nodeGroup/v2` |
-/// | `getMembers` | `GET /node/nodeGroup/v2/getNodeGroupStates/{id}` (the members dialog GWT opens next) |
+/// | `POST /node/nodeGroup/v2/find` (a sequence: the list as it changes) | the groups |
+/// | `PUT /node/nodeGroup/v2/{id}` (echoes the group) | updating a group |
+/// | `GET /node/nodeGroup/v2/fetchByName/{name}` (the name check), then `POST /node/nodeGroup/v2` | creating a group |
+/// | `GET /node/nodeGroup/v2/getNodeGroupStates/{id}` (the members dialog GWT opens next) | a group's members |
 ///
-/// and its recorder becomes checks on the request spy.
+/// The requests are checked on the request spy.
 public final class NodeGroupsScreenStories {
 
     private static final String FIND_PATH = "/node/nodeGroup/v2/find";
@@ -123,25 +121,24 @@ public final class NodeGroupsScreenStories {
                     play.findByText("All Nodes");
                     play.findByText("Processing");
                     // Toggle "Processing" enabled -> update. GWT's grid tick is a TickBoxCell div.
-                    // Differs from React: GWT's grid rows are <tr> elements with no role attribute
+                    // The grid's rows are <tr> elements with no role attribute
                     play.click(play.within(play.getByText("Processing").closest("tr")).querySelector(".tickBox"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put("/node/nodeGroup/v2/2")
                                     .withJsonBodyContaining("{\"id\": 2, \"enabled\": true}")
                                     .toSpyMatcher()));
                     // New group via the create dialog.
-                    // Differs from React: the 'New' button is an icon button titled 'New'
+                    // The 'New' button is an icon button titled 'New'
                     play.click(play.getByTitle("New"));
                     screen.findByText("New", StroomDom.DIALOG_TITLE);
-                    // Differs from React: the name field is Stroom's shared NameDocumentViewImpl
-                    // ('nameDocumentName'), not a 'newNodeGroupName' field
+                    // The name field is Stroom's shared NameDocumentViewImpl ('nameDocumentName')
                     play.type(screen.querySelector("#nameDocumentName"), "Reporting");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/node/nodeGroup/v2").withBodyContaining("Reporting")
                                     .toSpyMatcher()));
                     play.findByText("Reporting");
-                    // Differs from React: GWT then opens the new group's members dialog
+                    // GWT then opens the new group's members dialog
                     screen.findByText("Edit Node Group - Reporting");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();

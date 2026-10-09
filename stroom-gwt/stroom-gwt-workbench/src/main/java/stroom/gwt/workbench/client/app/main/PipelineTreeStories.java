@@ -42,22 +42,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/PipelineTree` in the React Storybook, showing Stroom's real
-/// [PipelineTreePresenter] (the pipeline structure's element tree) with the [PipelineModel] Stroom
-/// builds for an inheritance stack (`PipelineModelFactory`): a parent layer adding `parser` under
-/// `Source`, and the edited child layer adding `xslt` under `parser`.
+/// Stories of `App/Main/PipelineTree`, showing Stroom's real [PipelineTreePresenter] (the pipeline
+/// structure's element tree) with the [PipelineModel] Stroom builds for an inheritance stack
+/// (`PipelineModelFactory`): a parent layer adding `parser` under `Source`, and the edited child
+/// layer adding `xslt` under `parser`.
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `buildElementTypes(TYPE_RESULTS)` | `GET /pipeline/v1/propertyTypes` (`PipelineElementTypesFactory`) |
-/// | `mergeLayers([BASE, CHILD])` | `POST /pipeline/v1/fetchPipelineLayers`, then `PipelineModel.build()` |
+/// | `GET /pipeline/v1/propertyTypes` (`PipelineElementTypesFactory`) | the element types |
+/// | `POST /pipeline/v1/fetchPipelineLayers`, then `PipelineModel.build()` | the layers |
 ///
-/// React's pure model checks (`mergeLayers`, `diffPipelineData`, `addElementToLayer`,
-/// `removeElementFromLayer`) are made on Stroom's `PipelineModel` (`getChildMap`, `diff`,
-/// `addElement`, `removeElement`), each on a model built afresh from the fetched layers.
+/// The model checks are made on Stroom's `PipelineModel` (`getChildMap`, `diff`, `addElement`,
+/// `removeElement`), each on a model built afresh from the fetched layers.
 public final class PipelineTreeStories {
 
-    /// The name of the spy recording the element selected (React's `onSelect`).
+    /// The name of the spy recording the element selected.
     static final String ON_SELECT = "onSelect";
 
     private static final String LAYERS = """
@@ -119,11 +118,9 @@ public final class PipelineTreeStories {
                     // Removing xslt hides it
                     play.expect("the elements after removing xslt", () -> elementIds(withoutXslt()))
                             .toEqual(List.of("Source", "parser"));
-                    // Differs from React: property and reference edits (applyPropertyEdit,
-                    // toggleReferenceRemoval, ...) are not PipelineModel methods in Stroom but the
-                    // property and reference list presenters' (see PipelineEditor's stories), and
-                    // Stroom always adds Source (fixSourceNodes), so the React port's model-only
-                    // regression checks have no equivalent here
+                    // Property and reference edits are made by the property and reference list
+                    // presenters, not PipelineModel (see PipelineEditor's stories), and Stroom always
+                    // adds Source (fixSourceNodes), so this story makes no model checks of those
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });

@@ -15,9 +15,8 @@
  */
 
 // The workbench of Stroom's GWT widgets and screens. The stories are added to the workbench
-// framework (stroom-gwt-workbench-framework), which mimics React Storybook (see the stroom-ui-react repository), so
-// that the real GWT widgets can be viewed in isolation and compared side by side with their
-// React ports.
+// framework (stroom-gwt-workbench-framework), which mimics Storybook, so that the real GWT widgets
+// and screens can be viewed and tested in isolation.
 //
 // Tasks (deliberately NOT named gwtCompile etc. so that `./gradlew gwtCompile` and the CI
 // build are unaffected by this module):
@@ -57,7 +56,7 @@ def warDir = layout.buildDirectory.dir('workbench-war').get().asFile.toString()
 def stroomResourcesDir = project(':stroom-app').file('src/main/resources')
 def workbenchPort = findProperty('workbenchPort') ?: '6008'
 // axe-core runs the Accessibility addon's checks. It is downloaded with npm rather than added to
-// the repository. Use the same version as the React Storybook by default.
+// the repository.
 def axeVersion = findProperty('workbenchAxeVersion') ?: '4.12.1'
 // Kept outside the build dir, keyed by version, so that `clean` doesn't force a re-download.
 // This is a static root for workbenchServe, which serves it as /__workbench/axe.min.js
@@ -572,12 +571,12 @@ tasks.clean.dependsOn(tasks.workbenchClean)
 tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)
 
 // ------------------------------------------------------------------------------------------------
-// Testing the stories, and tracking the porting of the React stories (see test-runner/README.md).
+// Testing the stories (see test-runner/README.md).
 // None of these are part of build/check, so normal builds don't need npm, Node or Playwright.
 //
 //   workbenchTest            Runs every story (and its play function) in headless Chromium, like
-//                            the React project's `npm run test:storybook`. Starts a workbench
-//                            server on a free port (after a draft compile) for the duration, or
+//                            Storybook's test-runner. Starts a workbench server on a free port
+//                            (after a draft compile) for the duration, or
 //                            tests a running one given by -PworkbenchUrl=http://localhost:6008.
 //                            -PworkbenchTestFilter=<id/title prefix or glob>[,...]
 //                            -PworkbenchTestWorkers=N  -PworkbenchTestScreenshots
@@ -604,17 +603,10 @@ tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)
 //                            changes. -PworkbenchScreenshotFuzz=2% (default 1%) and
 //                            -PworkbenchScreenshotMaxVisiblePixels=N (default 0) tune it. Both take
 //                            workbenchTest's options, e.g. -PworkbenchSkipCompile.
-//   workbenchCoverage        Prints how many of the React stories have been ported, by group.
-//                            -PworkbenchCoverageList=<id or title prefix> also lists the remaining
-//                            stories matching it (or all of them with -PworkbenchCoverageList=).
-//   workbenchReactManifest   Regenerates src/test/resources/react-stories.json from the React
-//                            Storybook (see test-runner/react-manifest.mjs).
-//   workbenchReactManifestCheck
-//                            Fails if react-stories.json is out of date with the React checkout.
 // ------------------------------------------------------------------------------------------------
 
 dependencies {
-    // For reading react-stories.json in TestReactStoryCoverage
+    // For reading the coverage evidence in PresenterCoverage
     testImplementation libs.jackson.databind
     testImplementation libs.slf4j.api
 }
@@ -1161,17 +1153,6 @@ tasks.register('workbenchScreenshotDiff') {
     }
 }
 
-tasks.register('workbenchCoverage', JavaExec) {
-    group = "workbench"
-    description = "Prints how many of the React Storybook's stories have been ported to the workbench"
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'stroom.gwt.workbench.client.ReactStoryCoverage'
-    if (findProperty('workbenchCoverageList') != null) {
-        args = ["--list=${findProperty('workbenchCoverageList')}".toString()]
-    }
-}
-
 tasks.register('workbenchPresenterCoverage', JavaExec) {
     group = "workbench"
     description = "Prints which of Stroom's screens and dialogs the workbench's stories cover"
@@ -1181,36 +1162,3 @@ tasks.register('workbenchPresenterCoverage', JavaExec) {
     systemProperty 'workbench.repoRoot', rootDir.absolutePath
 }
 
-// Runs react-manifest.mjs with the given options, and -PworkbenchReactDir
-def runReactManifest = { List options ->
-    def command = ['node', 'react-manifest.mjs'] + options
-    if (findProperty('workbenchReactDir')) {
-        command += ['--react-dir', findProperty('workbenchReactDir').toString()]
-    }
-    return runInTestRunnerDir(command)
-}
-
-tasks.register('workbenchReactManifest') {
-    group = "workbench"
-    description = "Regenerates src/test/resources/react-stories.json from the React Storybook"
-    doLast {
-        def exitCode = runReactManifest([])
-        if (exitCode != 0) {
-            throw new GradleException("react-manifest.mjs failed (exit code ${exitCode})")
-        }
-    }
-}
-
-tasks.register('workbenchReactManifestCheck') {
-    group = "workbench"
-    description = "Checks that src/test/resources/react-stories.json is up to date with the React checkout"
-    doLast {
-        // Checks against the built React Storybook index, or the parsed *.stories.tsx files, never a
-        // running Storybook, which may be another branch's
-        def exitCode = runReactManifest(['--check'])
-        if (exitCode != 0) {
-            throw new GradleException("react-stories.json is out of date or couldn't be checked "
-                    + "(exit code ${exitCode}). Run workbenchReactManifest.")
-        }
-    }
-}

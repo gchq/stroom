@@ -18,7 +18,7 @@
 //
 // The behaviour denominator — BEHAVIOUR-PLAN.md § 2 and § B1.
 //
-//   node stroom-stroom-gwt-suite/tools/build-handler-inventory.mjs
+//   node stroom-gwt-suite/tools/build-handler-inventory.mjs
 //     -> oracles/handler-inventory.json   (every handler registration, its label, whether the walk fired it)
 //     -> oracles/handler-inventory.md     (handlers exercised / declared, and the unexercised by what would fire them)
 //
@@ -940,7 +940,7 @@ writeFileSync(oracle('handler-inventory.json'), JSON.stringify({
 
 const L = [];
 L.push('# Handler inventory — the behaviour denominator', '');
-L.push('**Generated** by `stroom-stroom-gwt-suite/tools/build-handler-inventory.mjs`. Do not hand-edit. BEHAVIOUR-PLAN.md § B1.', '');
+L.push('**Generated** by `stroom-gwt-suite/tools/build-handler-inventory.mjs`. Do not hand-edit. BEHAVIOUR-PLAN.md § B1.', '');
 L.push('A behaviour is a handler registration in the GWT client, attributed to the class that DECLARES it. A');
 L.push('handler is *exercised* when the walk fired it: a click handler when an affordance with its label was');
 L.push('clicked on a node the coverage ledger attributes to the declaring class or a subclass; OK / Cancel when');

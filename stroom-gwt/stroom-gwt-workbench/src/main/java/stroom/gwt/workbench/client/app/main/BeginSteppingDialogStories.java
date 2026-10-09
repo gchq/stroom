@@ -43,22 +43,22 @@ import stroom.widget.popup.client.presenter.PopupType;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/BeginSteppingDialog` in the React Storybook, showing what Stroom
-/// shows for a `BeginPipelineSteppingEvent` with no pipeline: the real [DocSelectionPopup]
-/// captioned 'Choose Pipeline To Step With', with the pipeline the server guesses for the stream
-/// selected, as `PipelinePlugin.onBeginStepping` shows it (the story does the same as the plugin,
-/// which needs the whole app to be created).
+/// Stories of `App/Main/BeginSteppingDialog`, showing what Stroom shows for a
+/// `BeginPipelineSteppingEvent` with no pipeline: the real [DocSelectionPopup] captioned 'Choose
+/// Pipeline To Step With', with the pipeline the server guesses for the stream selected, as
+/// `PipelinePlugin.onBeginStepping` shows it (the story does the same as the plugin, which needs
+/// the whole app to be created).
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `getPipelineForStepping` | `POST /stepping/v1/getPipelineForStepping` |
-/// | (the chooser) | the explorer tree (`POST /explorer/v2/fetchExplorerNodes`, `getFromDocRef`) |
-/// | `fetchPipelineDoc` | `POST /meta/v1/find` (`PipelinePlugin.step` finds the stream before opening the pipeline) |
+/// | `POST /stepping/v1/getPipelineForStepping` | the pipeline the server guesses |
+/// | `POST /explorer/v2/fetchExplorerNodes`, `getFromDocRef` | the chooser's explorer tree |
+/// | `POST /meta/v1/find` | the stream, which `PipelinePlugin.step` finds before opening the pipeline |
 ///
-/// React's `onBegin` is a spy on what `PipelinePlugin` would then open stepping with.
+/// `onBegin` is a spy on what `PipelinePlugin` would then open stepping with.
 public final class BeginSteppingDialogStories {
 
-    /// The name of the spy recording the stepping begun (React's `onBegin`).
+    /// The name of the spy recording the stepping begun.
     static final String ON_BEGIN = "onBegin";
 
     private static final String PIPELINE_UUID = "p1";
@@ -107,7 +107,7 @@ public final class BeginSteppingDialogStories {
                             "pipeline=" + PIPELINE_UUID + ", childStreamType=RAW, metaId=42");
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/meta/v1/find").withBodyContaining("42").toSpyMatcher());
-                    // Differs from React: there is no onClose; the chooser closes itself on OK
+                    // The chooser closes itself on OK
                     play.waitFor(() -> play.expect(screen.queryByText(CAPTION, StroomDom.DIALOG_TITLE)).toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();

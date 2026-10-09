@@ -15,16 +15,12 @@
  */
 // Normalised STRUCTURE trees — the breadth-first comparison axis alongside the /api trace.
 //
-// Probed against both live UIs (2026-07-27) before this was written, which changed the design:
-//
-//  - **GWT emits NO ARIA roles.** No `role=menu`, `role=tab`, `role=columnheader` anywhere. An
-//    extractor written against roles works on the React port and silently returns nothing on GWT.
-//  - **But both share the Stroom CSS class vocabulary** — the port vendors GWT's stylesheet, so
-//    `.menuItem-outer / -text / -disabled / -separator / -shortcut / -expandArrow`, `.menuCellTable`
-//    and the `inline-svg-button` toolbar classes exist on BOTH sides.
-//
-// So extraction is keyed on CLASSES (works on both) and the adapters supply only the *affordances*
-// — which element opens the menu, where a toolbar lives. Output shape is identical either way:
+// When this was written (2026-07-27) GWT emitted few ARIA roles (no `role=tab` or
+// `role=columnheader`), so an extractor written against roles would silently return nothing.
+// Extraction is keyed on Stroom's CSS CLASSES instead (`.menuItem-outer / -text / -disabled /
+// -separator / -shortcut / -expandArrow`, `.menuCellTable`, the `inline-svg-button` toolbar
+// classes), and the adapter supplies only the *affordances* — which element opens the menu, where
+// a toolbar lives. The output shape is:
 //
 //   { kind, label, order, enabled, visible, separatorBefore?, shortcut?, selected?, children?, extra? }
 //
@@ -33,8 +29,8 @@
 //    "Duplicate To..." and the casing of "Set As Default" are exactly the defects this must catch.
 //  - `order` is the index within the parent, so a pure reorder still diffs (the dashboard tab menu's
 //    Remove/Maximise swap would pass a set comparison).
-//  - React pre-mounts hidden menus (`.stroom-menu--hidden`), so EVERY query filters on real
-//    visibility — an unfiltered `querySelectorAll` picks up the wrong menu entirely.
+//  - EVERY query filters on real visibility — an unfiltered `querySelectorAll` can pick up a
+//    hidden menu.
 
 // NB the import back into settle.mjs is a deliberate CYCLE (settle.mjs reads dialogs from here).
 // Both modules export only hoisted function declarations, so ESM resolves it; keep it that way —
@@ -88,8 +84,8 @@ const HELPERS = `
     if (r.width <= 0 || r.height <= 0) return false;
     const st = getComputedStyle(el);
     if (st.visibility === 'hidden' || st.display === 'none' || st.opacity === '0') return false;
-    // React pre-mounts menus with a --hidden modifier; GWT detaches them. Honour both.
-    return !el.closest('.stroom-menu--hidden');
+    // GWT detaches closed menus, so a visible element is a shown one.
+    return true;
   };
 `;
 
@@ -107,24 +103,22 @@ export async function readVisibleMenuItems(page) {
       const shortcut = shortcutEl ? norm(shortcutEl.textContent) : null;
       let label = norm(textEl ? textEl.textContent : el.textContent);
       if (!textEl && shortcut && label.endsWith(shortcut)) label = norm(label.slice(0, -shortcut.length));
-      // GWT marks disabled with .menuItem-disabled; the port also sets aria-disabled.
+      // A disabled item has .menuItem-disabled and aria-disabled.
       const cls = String(el.className || '');
       const ariaDisabled = el.getAttribute('aria-disabled');
       const enabled = !/menuItem-disabled/.test(cls) && ariaDisabled !== 'true';
       // A separator sits in the PRECEDING SIBLING of this item's row container.
       // NB closest() starts at the element itself, so a selector list including '.menuItem-outer'
       // returns el and the sibling walk never reaches GWT's row. GWT renders each entry as its own
-      // cellTable row (separator = a div.menuItem-separator in its own row); React renders siblings
-      // directly. Resolve the row explicitly: prefer the tr, else the item itself.
+      // cellTable row (separator = a div.menuItem-separator in its own row). Resolve the row
+      // explicitly: prefer the tr, else the item itself.
       const row = el.closest('tr') || el;
       const prevRow = row.previousElementSibling;
-      // The descendant search must not reach into the previous ITEM's own subtree. React pre-mounts
-      // hidden submenus, so a top-level group's element CONTAINS its children — and any separator
-      // among them was being read as a separator before the NEXT group. That reported three
-      // separators the port does not render (before Monitoring, Security and Help — each preceded by
-      // a group whose children have one), and, as ever, it made the PORT look wrong. So a previous
-      // row only counts when it is a separator ROW: it carries the class itself, or it contains a
-      // separator and no menu text of its own (GWT's tr / td / div.menuItem-separator shape).
+      // The descendant search must not reach into the previous ITEM's own subtree: if a group's
+      // element contains its children, a separator among them would be read as a separator before
+      // the NEXT group. So a previous row only counts when it is a separator ROW: it carries the
+      // class itself, or it contains a separator and no menu text of its own (GWT's tr / td /
+      // div.menuItem-separator shape).
       // NB this whole block is inside a page.evaluate template literal — no backticks in here.
       const isSeparatorRow = (r) => {
         if (!r) return false;
@@ -190,7 +184,7 @@ export async function countVisibleMenuItems(page) {
   })()`);
 }
 
-/** Read toolbar buttons within a scope selector (both UIs use `inline-svg-button` + `title`). */
+/** Read toolbar buttons within a scope selector (`inline-svg-button`s, named by their `title`). */
 export async function readButtons(page, scopeSelector) {
   return page.evaluate(
     `(() => {
@@ -206,10 +200,8 @@ export async function readButtons(page, scopeSelector) {
         const cls = String(el.className || '');
         const isVisible = visible(el) && !/(^|\\s)invisible(\\s|$)/.test(cls);
         // Skip hidden buttons, as the menu reader already does. GWT builds its toolbar eagerly and
-        // HIDES what the config gates off (Toggle Alerts, when dependencyWarningsEnabled is false);
-        // React renders no element at all. Reporting the hidden one made the port look like it was
-        // MISSING a button when both UIs show the user the same toolbar. A hidden control is not
-        // structure; if its gating is the thing under test, test the gate.
+        // HIDES what the config gates off (Toggle Alerts, when dependencyWarningsEnabled is false).
+        // A hidden control is not structure; if its gating is the thing under test, test the gate.
         if (!isVisible) continue;
         const enabled = !el.disabled && el.getAttribute('aria-disabled') !== 'true' && !/(^|\\s)disabled(\\s|$)/.test(cls);
         const pressed = el.getAttribute('aria-pressed');
@@ -220,9 +212,8 @@ export async function readButtons(page, scopeSelector) {
           order: order++,
           enabled,
           visible: true,
-          // Only ever recorded when ON. The two UIs signal "off" differently - React writes
-          // aria-pressed="false", GWT just omits its "on" class - so recording the off state
-          // diffed as null-vs-false on every toggle while both sides agreed it was off.
+          // Only ever recorded when ON: "off" may be aria-pressed="false" or just a missing "on"
+          // class, so recording the off state would diff as null-vs-false for the same state.
           ...(pressed === 'true' || on ? { extra: { pressed: true } } : {}),
         });
       }
@@ -233,9 +224,9 @@ export async function readButtons(page, scopeSelector) {
 
 /**
  * Read buttons matching a selector DIRECTLY (not scoped to a container).
- * Toolbar containers differ between the two UIs, but the button classes are shared (the port
- * vendors GWT's stylesheet), so selecting the buttons themselves is the portable way to scope a
- * toolbar — e.g. `.navigation-header-button` for the explorer toolbar.
+ * Toolbar containers vary from screen to screen, but the button classes don't, so selecting the
+ * buttons themselves is the reliable way to scope a toolbar — e.g. `.navigation-header-button` for
+ * the explorer toolbar.
  */
 export async function readButtonsBySelector(page, buttonSelector) {
   return page.evaluate(
@@ -250,10 +241,8 @@ export async function readButtonsBySelector(page, buttonSelector) {
         const cls = String(el.className || '');
         const isVisible = visible(el) && !/(^|\\s)invisible(\\s|$)/.test(cls);
         // Skip hidden buttons, as the menu reader already does. GWT builds its toolbar eagerly and
-        // HIDES what the config gates off (Toggle Alerts, when dependencyWarningsEnabled is false);
-        // React renders no element at all. Reporting the hidden one made the port look like it was
-        // MISSING a button when both UIs show the user the same toolbar. A hidden control is not
-        // structure; if its gating is the thing under test, test the gate.
+        // HIDES what the config gates off (Toggle Alerts, when dependencyWarningsEnabled is false).
+        // A hidden control is not structure; if its gating is the thing under test, test the gate.
         if (!isVisible) continue;
         const enabled = !el.disabled && el.getAttribute('aria-disabled') !== 'true' && !/(^|\\s)disabled(\\s|$)/.test(cls);
         const pressed = el.getAttribute('aria-pressed');
@@ -264,9 +253,8 @@ export async function readButtonsBySelector(page, buttonSelector) {
           order: order++,
           enabled,
           visible: true,
-          // Only ever recorded when ON. The two UIs signal "off" differently - React writes
-          // aria-pressed="false", GWT just omits its "on" class - so recording the off state
-          // diffed as null-vs-false on every toggle while both sides agreed it was off.
+          // Only ever recorded when ON: "off" may be aria-pressed="false" or just a missing "on"
+          // class, so recording the off state would diff as null-vs-false for the same state.
           ...(pressed === 'true' || on ? { extra: { pressed: true } } : {}),
         });
       }
@@ -285,9 +273,8 @@ export async function readButtonsBySelector(page, buttonSelector) {
  *    "List of 'words' held in this Dictionary." etc. Never fall back to `title` for a tab.
  *
  * Pass `scopeSelector = null` with a specific `tabSelector` when several panels are mounted at once:
- * the React port keeps previously-opened editors in the DOM, so a container query returns the FIRST
- * (hidden) panel and every later capture reads zero tabs. Relying on the visibility filter instead
- * is what makes the two UIs comparable.
+ * a container query returns the FIRST (possibly hidden) panel and every later capture reads zero
+ * tabs; the visibility filter picks the shown one instead.
  */
 export async function readTabs(page, scopeSelector, tabSelector = '.linkTab, .curveTab, [role=tab]') {
   return page.evaluate(
@@ -327,8 +314,8 @@ export async function readGridStructure(page, scopeSelector, { inVisibleDialog =
   return page.evaluate(
     `(() => {
       ${HELPERS}
-      // Scope by VISIBILITY when no container is given: the port keeps previously-opened screens
-      // mounted, so a container query would find a hidden one (same trap as readTabs).
+      // Scope by VISIBILITY when no container is given: a hidden screen (e.g. another tab's) may
+      // still be in the page, so a container query could find it (same trap as readTabs).
       //
       // inVisibleDialog: when a leaf opens a DIALOG, the screen behind it stays visible, so a
       // document-wide read captures THAT screen's grid instead of (or as well as) the dialog's.
@@ -344,15 +331,15 @@ export async function readGridStructure(page, scopeSelector, { inVisibleDialog =
         if (dlg) root = dlg;
       }
       if (!root) return null;
-      // GWT emits th.dataGridHeader (+ dataGridSortableHeader when sortable) and NO ARIA; the port
-      // emits [role=columnheader].cellTable__headerCell (+ --sortable, + aria-sort).
+      // GWT emits th.dataGridHeader (+ dataGridSortableHeader when sortable). [role=columnheader]
+      // and .cellTable__headerCell are kept as fallbacks for other grid markup.
       const heads = [...root.querySelectorAll('[role=columnheader], th.dataGridHeader, .cellTable__headerCell')]
         .filter(visible)
         // VISUAL order (top band, then left), not DOM order. On a two-pane screen the DOM order is
         // an accident of the layout widget: GWT's AppPermissionsViewImpl.ui.xml declares its
         // <g:south> pane BEFORE <g:center>, so the bottom pane's columns come first in the DOM even
         // though it renders underneath. Diffing DOM order reported the two panes as reordered on a
-        // screen where both UIs look identical. Within a single grid every header shares a top, so
+        // screen whose layout hadn't changed. Within a single grid every header shares a top, so
         // this leaves real column order untouched.
         .sort((a, b) => {
           const ra = a.getBoundingClientRect();
@@ -361,10 +348,9 @@ export async function readGridStructure(page, scopeSelector, { inVisibleDialog =
           return ra.left - rb.left;
         });
       // A SORTED header carries the 1-based sort-order badge next to its arrow — GWT's SortIcon
-      // appends it unconditionally and the port copies the class. Reading it as part of the label
-      // turns "Display Name" into GWT's "Display Name 1" vs the port's "Display Name1" (the two
-      // DOMs differ only in whitespace), so the column reads as missing on BOTH sides at once.
-      // That was ~22 of the column-set findings, across every grid that opens sorted.
+      // appends it unconditionally. Reading it as part of the label turns "Display Name" into
+      // "Display Name 1", so the column reads as missing. That was ~22 of the column-set findings,
+      // across every grid that opens sorted.
       const headLabel = (el) => {
         const c = el.cloneNode(true);
         c.querySelectorAll('.column-sortOrder').forEach((n) => n.remove());
@@ -375,20 +361,13 @@ export async function readGridStructure(page, scopeSelector, { inVisibleDialog =
         const cls = String(el.className || '');
         return {
           kind: 'column',
-          // TEXT first, title only as a fallback for icon columns with no text. A column header's
-          // title is its TOOLTIP in both UIs (the port's CellColumn.headerTitle), so preferring it
-          // labelled columns "Name of credentials" / "When these credentials expire" — their help
-          // text — which then failed to match GWT's real headers and manufactured column-set,
-          // order and attribute findings on top. Same trap as readTabs.
-          // NOT aria-label: the port deliberately sets CellColumn.headerAriaLabel on its blank
-          // action columns (the a11y empty-table-header work) and GWT has no equivalent, so reading
-          // it here turns a deliberate accessibility IMPROVEMENT into a phantom "extra column".
-          // TEXT ONLY. The title fallback that used to sit here fired on ONE SIDE: GWT's
-          // withToolTip renders a custom popup, not a title attribute, so its glyph-only headers
-          // read as "" while the port's read as their tooltip ("Users"). That is an instrument
-          // asymmetry, not a column-set difference — and per the plan's §2 rule, a finding class
-          // that appears on one side only is a harness suspect. Glyph-only columns now read as ""
-          // on both sides and are matched by occurrence (see structure-diff's withKeys).
+          // TEXT ONLY: not the title (a header's title can be its help text, e.g. "Name of
+          // credentials", which then fails to match the real header; same trap as readTabs), and
+          // not aria-label (a blank action column may be given one for accessibility, which would
+          // read as an extra column). GWT's withToolTip renders a custom popup, not a title
+          // attribute, so glyph-only headers read as "" and are matched by occurrence (see
+          // structure-diff's withKeys). A finding that only a harness quirk could produce is a
+          // harness suspect, not a UI difference.
           label: headLabel(el),
           order: i,
           enabled: true,
@@ -487,17 +466,18 @@ async function pointOf(page, containerSelector, label) {
  * "Edit Field" — so a sweep that never selects captures a toolbar of greyed-out buttons and no
  * dialogs at all. A5b's first run did exactly that: 0 dialogs across 32 screens.
  *
- * Located via the first visible column HEADER on the page — the explorer tree has no column headers,
- * so this cannot hit it (the §1.4 trap that has bitten twice) — then geometrically: a row of that
- * grid sits below the header and overlaps its column. It clicks the WIDEST header's column, never a
- * fixed offset from the row edge, because the leftmost column of several grids is a tick box and
- * clicking one would MUTATE.
+ * Located via the first visible column HEADER on the page — the explorer tree has no column
+ * headers, so this cannot hit it (selecting an explorer row instead has bitten twice) — then
+ * geometrically: a row of that grid sits below the header and overlaps its column. It clicks the
+ * WIDEST header's column, never a fixed offset from the row edge, because the leftmost column of
+ * several grids is a tick box and clicking one would MUTATE.
  *
  * Shared by A5b, A5c and A7. It was deliberately duplicated when A5b was written — A7's baseline was
  * blessed and refactoring under it risked changing evidence — with the note that a third caller
  * should extract it. A5c is the third, so this is that extraction, and the two copies had already
  * drifted: A7 waited for the detail grid to settle, A5b slept a flat 1200ms. The MEASURED wait wins
- * (§1.5); both journeys are re-run and re-blessed in the same commit.
+ * (wait for the condition, with a ceiling, never a flat sleep); both journeys are re-run and
+ * re-blessed in the same commit.
  */
 export async function selectFirstMasterRow(page, { label = 'master row' } = {}) {
   // Resolve the point in-page: the widest header on the topmost header row, then the first data row
@@ -510,7 +490,7 @@ export async function selectFirstMasterRow(page, { label = 'master row' } = {}) 
         // .dataGridHeader pulls in GWT's non-cell header elements, which changes which header is
         // "widest", which changes which row is clicked: merging the two copies with the superset
         // moved A7 off its blessed baseline (Application Permissions' detail grid stopped appearing,
-        // its Granted/Permission/Description columns reading as a port gap).
+        // its Granted/Permission/Description columns reading as missing).
         const headers = [...document.querySelectorAll('[role=columnheader], th.dataGridHeader, .cellTable__headerCell')].filter(visible);
         if (!headers.length) return null;
         const top = Math.min(...headers.map((h) => h.getBoundingClientRect().top));
@@ -523,8 +503,8 @@ export async function selectFirstMasterRow(page, { label = 'master row' } = {}) 
         // the doc-editor Permissions tabs one of those overlapped the grid's column band and was
         // picked instead of the single permission row. The click then selected nothing, GWT's
         // "Edit Permissions For Selected User" stayed disabled, and A5c reported 20 findings on 4
-        // tabs where the port — which DID select — looked like it was inventing a dialog. Clicking
-        // the same grid's row text by hand enables the button, which is what proved it.
+        // tabs as dialogs that never opened. Clicking the same grid's row text by hand enables the
+        // button, which is what proved it.
         //
         // So climb from the header to the nearest ancestor that also contains candidate rows, and
         // search only inside it. Shape-agnostic: it needs no per-UI container class.
@@ -548,13 +528,13 @@ export async function selectFirstMasterRow(page, { label = 'master row' } = {}) 
       })()`,
     );
 
-  // Wait for that POINT, not for "some rows exist somewhere" — measured, with a ceiling (§1.5).
+  // Wait for that POINT, not for "some rows exist somewhere" — measured, with a ceiling, never a
+  // flat sleep.
   //
   // A grid paints its header before its data arrives, so headers-exist is not row-exists. A7 selected
-  // on the header alone and clicked nothing: the port's Application Permissions list populates a
-  // little after its header, and the detail grid the sweep never opened was reported as the port
-  // MISSING Granted / Permission / Description — three columns that render perfectly well a moment
-  // later. GWT's list was already up, so the capture blamed the port for the harness's impatience.
+  // on the header alone and clicked nothing: the Application Permissions list populates a little
+  // after its header, and the detail grid the sweep never opened was reported as MISSING Granted /
+  // Permission / Description — three columns that render perfectly well a moment later.
   //
   // The first attempt at this counted rows page-wide, which the EXPLORER TREE satisfies instantly
   // (500+ rows, no column headers) — 6ms, and no wait at all. The condition has to be the same
@@ -579,9 +559,8 @@ export async function selectFirstMasterRow(page, { label = 'master row' } = {}) 
 /**
  * Read every VISIBLE dialog: caption, size, button set, sub-tabs and form-field labels.
  *
- * Both UIs share the Stroom dialog vocabulary — GWT's Dialog.java sets `dialog-popup` and its CSS
- * defines `.dialog-titleBar` / `.dialog-titleText`; the port's DialogTitle emits the same classes —
- * so the caption reads identically on both sides.
+ * GWT's Dialog.java sets `dialog-popup` and its CSS defines `.dialog-titleBar` /
+ * `.dialog-titleText`, so every dialog's caption is read the same way.
  */
 export async function readDialogs(page) {
   return page.evaluate(`(() => {
@@ -592,8 +571,8 @@ export async function readDialogs(page) {
       // RESIZABLE one whose root is .resizableDialog-popup — a selector with only .dialog-popup
       // matches neither for the resizable kind, and closest() then returns null. Falling back to
       // t.parentElement lands on .dialog-titleBar: exactly 65px tall, containing no buttons and no
-      // fields, which reads as "GWT's dialog is empty and the port invented everything in it".
-      // Prefer role=dialog (the port), else the nearest GWT dialog container.
+      // fields, which reads as an empty dialog.
+      // [role=dialog] is an ARIA fallback; Stroom's dialogs match the container classes.
       const root =
         t.closest('[role=dialog]') ||
         t.closest('.dialog-background, .resizableDialog-popup, .dialog-popup, .popupContent') ||
@@ -604,11 +583,9 @@ export async function readDialogs(page) {
           kind: 'button',
           label: labelOf(b) || norm(b.getAttribute('aria-label')),
           order: i,
-          // Disabled is a CSS CLASS plus a click guard in both UIs' button widgets, not the
-          // native attribute (IconButton: setEnabled toggles the disabled CLASS, not the native
-          // disabled attribute). Checking only the attribute reported every disabled
-          // button in a PORT dialog as enabled — which is what made the Search Results and
-          // Recent Items pagers look like a port defect.
+          // Disabled is a CSS CLASS (with aria-disabled) plus a click guard in Stroom's button
+          // widgets, not the native attribute. Checking only the attribute reports disabled
+          // buttons (e.g. the Search Results and Recent Items pagers) as enabled.
           enabled:
             !b.disabled &&
             b.getAttribute('aria-disabled') !== 'true' &&
@@ -636,7 +613,8 @@ export async function readDialogs(page) {
 }
 
 /**
- * Close every open dialog: Escape, then the dialog's own Cancel/Close button. NEVER OK — plan §1.1.
+ * Close every open dialog: Escape, then the dialog's own Cancel/Close button. NEVER OK, which
+ * could save or create something.
  *
  * Lives here, not in a journey, because it duplicated the dialog-root selector and then DRIFTED:
  * readDialogs was fixed to know about GWT's `.resizableDialog-popup` root while the journey's copy
@@ -709,9 +687,8 @@ async function clickInertPoint(page) {
  * when a `.menuItem-outer` is visible. The tooltip simply stayed up, physically over the next
  * button, and `elementFromPoint` at the resolved centre returned the tooltip.
  *
- * That is the THIRD time a help popup has eaten the click aimed at the next button in this suite —
- * twice on the port, now once on GWT — and every time the capture read as "that side raises no
- * dialog here" rather than as an instrument failure.
+ * That is the THIRD time a help popup has eaten the click aimed at the next button in this suite,
+ * and every time the capture read as "no dialog opens here" rather than as an instrument failure.
  */
 export async function dismissPopups(page, { toggle } = {}) {
   const stillUp = async () =>
@@ -784,8 +761,8 @@ export async function resolveButtonPoint(page, buttonSelector, label) {
       //
       // This decides whether a blocked click may be attempted anyway, and both answers have already
       // cost captures. Refusing to click lost Properties > Edit, covered by an unclassed element that
-      // swallows nothing (26 GWT dialogs became 24). Clicking regardless lost SEVENTEEN on the port,
-      // where the dashboard toolbar resolves under the link-tab bar: the click landed on a TAB,
+      // swallows nothing (26 GWT dialogs became 24). Clicking regardless lost SEVENTEEN where the
+      // dashboard toolbar resolved under the link-tab bar: the click landed on a TAB,
       // switched the editor out from under the sweep, and everything after it captured the wrong
       // panel. So: click through inert cover, never through a control.
       const interactiveBlocker =
@@ -816,13 +793,13 @@ export async function dismissMenus(page) {
 /**
  * Double-click an explorer node by name and report WHICH node was actually opened.
  *
- * Both adapters previously did `locator('.explorerCell', { hasText: name }).first()`. Playwright's
+ * The adapter previously did `locator('.explorerCell', { hasText: name }).first()`. Playwright's
  * `hasText` is a SUBSTRING match, so that silently opens the first node merely *containing* the
- * name — and `.first()` hides the ambiguity entirely. B3 asked for "Example Solr Index" and both
- * UIs opened a GitRepo document; because the miss was symmetric it manufactured no finding, but the
- * trace was filed under the wrong document's name. The general rule from §2 applies to the thing
- * being identified as much as to the finding: prefer an EXACT match, and return what was matched so
- * the journey records evidence instead of the name it asked for.
+ * name — and `.first()` hides the ambiguity entirely. B3 asked for "Example Solr Index" and opened
+ * a GitRepo document; it manufactured no finding, but the trace was filed under the wrong
+ * document's name. Distrusting a result the harness could have produced applies to the thing being
+ * identified as much as to the finding: prefer an EXACT match, and return what was matched so the
+ * journey records evidence instead of the name it asked for.
  *
  * Returns `{ label, exact }`. THROWS when nothing matches — A4 relies on that to tell "this document
  * has no tabs" apart from "this document never opened", and a silent null would let it read the
@@ -834,9 +811,9 @@ export async function dismissMenus(page) {
  * `type` matters, and omitting it has already cost a whole doc type's coverage. Stroom's test
  * content gives a feed and the text converter that parses it the SAME NAME (`BITMAP-REFERENCE`), and
  * A5c discovers its target as (type, name) from one row but used to open by NAME ALONE — so the
- * "Text Converter" unit opened the FEED, on both adapters, and reported a Feed editor's five tabs as
- * a Text Converter's. Identical on both sides, so it produced no false findings; it simply meant the
- * type was never measured while appearing covered.
+ * "Text Converter" unit opened the FEED, and reported a Feed editor's five tabs as a Text
+ * Converter's. It produced no false findings; it simply meant the type was never measured while
+ * appearing covered.
  *
  * So: prefer the row whose `.explorerCell-icon[title]` is the wanted TYPE, and fall back to
  * name-only when no type is given or nothing matches.
@@ -918,19 +895,17 @@ export async function openExplorerDoc(page, name, type) {
  * Content tabs whose document is DIRTY (unsaved changes) — the client-state counterpart to the
  * read-only guard.
  *
- * The read-only guard watches the SERVER: it aborts a mutating request. Nothing watched the port or
- * GWT being left with unsaved edits, and plan §1.4 is a list of what that costs. It bit again in
- * Stage B3: a probe pressed "Add Term" in a dashboard's INLINE query pane, where — unlike a dialog —
- * there is no Cancel to throw the term away. The guard stayed silent and was right to; nothing had
- * been written. The tab title, meanwhile, read `* Imp_exp_test_dashboard`, one mis-click from a save
- * prompt.
+ * The read-only guard watches the SERVER: it aborts a mutating request. Nothing watched the UI
+ * being left with unsaved edits, which has cost captures before (a stray edit, then a save prompt).
+ * It bit again in Stage B3: a probe pressed "Add Term" in a dashboard's INLINE query pane, where —
+ * unlike a dialog — there is no Cancel to throw the term away. The guard stayed silent and was
+ * right to; nothing had been written. The tab title, meanwhile, read `* Imp_exp_test_dashboard`,
+ * one mis-click from a save prompt.
  *
- * Both UIs paint the same marker: a literal `"* "` prefix on the tab label (GWT's tab label
- * decoration, and the port's `curveTabBarModel` — `tab.dirty ? '* ' + tab.label : tab.label`). It is
- * TEXT, not a class, so this reader needs no shared CSS vocabulary and cannot under-report one side
- * the way a class selector would.
+ * The marker is a literal `"* "` prefix on the tab label (GWT's tab label decoration). It is TEXT,
+ * not a class, so this reader can't miss it the way a class selector could.
  *
- * Content tabs are `.curveTab` on both DOMs (`.linkTab` is an editor's own sub-tab strip and never
+ * Content tabs are `.curveTab`s (`.linkTab` is an editor's own sub-tab strip and never
  * carries a document's dirty state).
  */
 export async function readDirtyTabs(page) {

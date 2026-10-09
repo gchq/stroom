@@ -33,17 +33,16 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/ManageActivityDialog` in the React Storybook, showing Stroom's real
-/// [ManageActivityPresenter] (the 'Choose Activity' dialog, with its `ActivityEditPresenter`) with
-/// fake REST replies.
+/// Stories of `App/Main/ManageActivityDialog`, showing Stroom's real [ManageActivityPresenter] (the
+/// 'Choose Activity' dialog, with its `ActivityEditPresenter`) with fake REST replies.
 ///
-/// The React story's in-memory `ActivityApi` becomes routes for Stroom's `ActivityResource`
-/// (`/activity/v1`, see [ActivityFixtures]): `list` (`GET ?filter=`, a sequence where the list
-/// changes), `create` (`POST`), `update` (`PUT /{id}`), `remove` (`DELETE /{id}`), `validate`
-/// (`POST /validate`, checking each property's regex as the server does), `getCurrent`/`setCurrent`
-/// (`GET`/`PUT /current`). Its recorder becomes checks on the request spy, and `onCommit` is a spy
-/// on the consumer Stroom passes to `ManageActivityPresenter.show`. The editor's form is the UI
-/// config's `activity.editorBody`.
+/// The fixtures answer Stroom's `ActivityResource` (`/activity/v1`, see [ActivityFixtures]): the
+/// list (`GET ?filter=`, a sequence where the list changes), creating (`POST`), updating
+/// (`PUT /{id}`), removing (`DELETE /{id}`), validating (`POST /validate`, checking each property's
+/// regex as the server does) and the current activity (`GET`/`PUT /current`). The requests are
+/// checked on the request spy, and `onCommit` is a spy called by the consumer Stroom passes to
+/// `ManageActivityPresenter.show`, with the chosen activity's id. The editor's form is the UI config's
+/// `activity.editorBody`.
 public final class ManageActivityDialogStories {
 
     /// The name of the spy recording the activity committed (the id of the activity chosen).
@@ -131,8 +130,7 @@ public final class ManageActivityDialogStories {
                     play.type(screen.querySelector("textarea[name=\"description\"]"), "short");
                     play.click(screen.within(screen.getByText("Edit Activity").closest(StroomDom.DIALOG))
                             .getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: GWT shows the server's messages in a warning alert
-                    // ('Validation Error'), not an inline role="alert" element
+                    // GWT shows the server's messages in a warning alert ('Validation Error')
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("WARN: Validation Error"));
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing("at least 10 characters")))
@@ -169,8 +167,8 @@ public final class ManageActivityDialogStories {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing("CASE-2")))
                             .toBeInTheDocument());
-                    // Differs from React: GWT's quick filter has no label, only a placeholder, and
-                    // filters as it's typed into (a change event alone doesn't filter)
+                    // The quick filter has no label, only a placeholder, and filters as it's typed into
+                    // (a change event alone doesn't filter)
                     play.type(screen.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER), "CASE-2");
                     play.waitFor(3000, () -> play.expect(screen.queryByText(TextMatch.containing("CASE-1")))
                             .toBeNull());

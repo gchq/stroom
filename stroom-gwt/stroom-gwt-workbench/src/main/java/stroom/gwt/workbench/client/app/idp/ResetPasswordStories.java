@@ -32,17 +32,17 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories matching `App/IdP/ResetPassword` in the React Storybook, showing Stroom's real password
-/// reset page (`ResetPasswordPresenter`, served for `/resetPassword?token=…` from an emailed link)
-/// with fake REST replies. It asks for the new password with the 'Change Password' dialog
-/// (captioned 'Reset Password').
+/// The `App/IdP/ResetPassword` stories, showing Stroom's real password reset page
+/// (`ResetPasswordPresenter`, served for `/resetPassword?token=…` from an emailed link) with fake
+/// REST replies. It asks for the new password with the 'Change Password' dialog (captioned 'Reset
+/// Password').
 ///
-/// | React seam | Stroom |
+/// | Stroom | Used for |
 /// |---|---|
-/// | `token` | the URL's `token` parameter (`Window.Location.getParameter`), see `IdpPage` |
-/// | `fetchPasswordPolicy` | `GET /authentication/v1/fetchPasswordPolicy` |
-/// | `resetPassword` | `POST /authentication/v1/resetPassword` (only for the token `good-token`) |
-/// | `onSignIn` | `Window.Location.replace("/signIn?error=login_required")`, recorded by `IdpPage.ON_NAVIGATE` |
+/// | the URL's `token` parameter (`Window.Location.getParameter`), see `IdpPage` | the reset token |
+/// | `GET /authentication/v1/fetchPasswordPolicy` | the password policy |
+/// | `POST /authentication/v1/resetPassword` (only for the token `good-token`) | the reset |
+/// | `Window.Location.replace("/signIn?error=login_required")` (`IdpPage.ON_NAVIGATE`) | back to sign in |
 public final class ResetPasswordStories {
 
     // ResetPasswordPresenter.SIGN_IN_URL
@@ -52,7 +52,7 @@ public final class ResetPasswordStories {
     private static final String POLICY = IdpPlays.policy(false, 8, 3,
             "Passwords must be at least 8 characters and be hard to guess.");
 
-    // React's resetOk accepts only 'good-token' (any other request is unhandled, failing the story)
+    // Only 'good-token' is accepted (any other request is unhandled, failing the story)
     private static final RequestMatcher RESET_GOOD_TOKEN = RequestMatcher.post(IdpPlays.RESET_PASSWORD_PATH)
             .withJsonBodyContaining("{\"token\": \"good-token\"}");
     private static final RestReply RESET_OK = RestReply.json("{\"changeSucceeded\": true, \"message\": \"\"}");
@@ -73,7 +73,7 @@ public final class ResetPasswordStories {
                 .story("Default", context -> render(context, "good-token", RESET_OK))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // Differs from React: the dialog is on the page's body
+                    // The dialog is on the page's body
                     play.expect(screen.findByText(CAPTION, StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                     final Play dialog = IdpPlays.fillPasswords(play, CAPTION, STRONG, STRONG);
                     IdpPlays.waitForStrengthScored(play, dialog, "1-5");
@@ -127,8 +127,8 @@ public final class ResetPasswordStories {
                     IdpPlays.waitForStrengthScored(play, dialog, "1-5");
                     play.click(dialog.getByRole("button", IdpPlays.OK));
 
-                    // Differs from React: Stroom shows the server's message in an error alert over
-                    // the form (AlertEvent.fireError), not inline
+                    // Stroom shows the server's message in an error alert over the form
+                    // (AlertEvent.fireError), not inline
                     play.expect(play.screen().findByText("This password reset link has expired."))
                             .toBeInTheDocument();
                     play.expect(dialog.getByPlaceholderText("Enter Password")).toBeInTheDocument();
@@ -148,13 +148,13 @@ public final class ResetPasswordStories {
                 });
     }
 
-    // React's '→ /signIn?error=login_required' marker: Stroom navigated to the sign in page
+    // The '→ /signIn?error=login_required' marker: Stroom navigated to the sign in page
     private static void expectSignIn(final Play play) {
         play.expect(play.findByText("→ " + SIGN_IN_URL)).toBeInTheDocument();
         play.expect(play.spy(IdpPage.ON_NAVIGATE)).toHaveBeenCalledWith(SIGN_IN_URL);
     }
 
-    // React's marker of the navigation back to sign in, beside the page
+    // The marker of the navigation back to sign in, beside the page
     private static Widget signInMarker(final String url) {
         final Label marker = new Label("→ " + url);
         marker.getElement().setAttribute("style", "position: fixed; bottom: 8px; left: 8px");

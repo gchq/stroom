@@ -36,26 +36,26 @@ import stroom.openai.shared.OpenAIModelResource;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Editors/OpenAiModelEditor` in the React Storybook, showing Stroom's real
-/// [OpenAIModelPresenter] (an OpenAI Model's tab: Settings, Documentation and Permissions) with
-/// fake REST replies.
+/// The `App/Editors/OpenAiModelEditor` stories, showing Stroom's real [OpenAIModelPresenter] (an
+/// OpenAI Model's tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `OpenAIModelPlugin` does, the story fetches the document (`GET /openAIModel/v1/{uuid}`) and
-/// reads it into the editor ([DocEditors#open]). React's seams become routes:
+/// reads it into the editor ([DocEditors#open]). The other routes:
 ///
-/// | React seam | Stroom endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `validate` | `POST /openAIModel/v1/validate` |
-/// | `listApiKeys` | `POST /credentials/findCredentials` (and `getByName` for the saved key) |
-/// | `getDefaultHttpClientConfig` | `POST /openAIModel/v1/getDefaultHttpClientConfig` |
-/// | `listKeyStores` | not used: the TLS dialog's key stores are text boxes in GWT |
-/// | `docPermission` | the Permissions tab's routes |
+/// | `POST /openAIModel/v1/validate` | validating the model |
+/// | `POST /credentials/findCredentials` (and `getByName` for the saved key) | the API keys |
+/// | `POST /openAIModel/v1/getDefaultHttpClientConfig` | the default HTTP client config |
+/// | the Permissions tab's routes | the Permissions tab |
+///
+/// The TLS dialog's key stores are text boxes, so no key stores are fetched.
 public final class OpenAiModelEditorStories {
 
     private static final String USER_AGENT = "Stroom-Test/1.0";
     private static final DocRef DOC_REF = new DocRef(OpenAIModelDoc.TYPE, "model-1", "GPT-4o");
 
-    // OpenAIModelResource.fetch(): React's MODEL_DOC
+    // OpenAIModelResource.fetch(): the model
     private static final String DOC = """
             {"type": "OpenAIModel", "uuid": "model-1", "name": "GPT-4o",
               "baseUrl": "https://api.openai.com/v1", "apiKeyName": "openai-key", "modelId": "gpt-4o",
@@ -73,7 +73,7 @@ public final class OpenAiModelEditorStories {
                 "supportedCiphers": ["TLS_AES_256_GCM_SHA384"], "trustSelfSignedCertificates": false,
                 "verifyHostname": true}}""";
 
-    // CredentialsResource.findCredentials(): React's API_KEYS (access tokens)
+    // CredentialsResource.findCredentials(): the API keys (access tokens)
     private static final String API_KEYS = """
             {"values": [{"uuid": "k1", "name": "openai-key", "credentialType": "ACCESS_TOKEN"},
                 {"uuid": "k2", "name": "azure-key", "credentialType": "ACCESS_TOKEN"}],
@@ -81,8 +81,8 @@ public final class OpenAiModelEditorStories {
 
     private static final String VALIDATE = "/openAIModel/v1/validate";
 
-    // Differs from React: a FormGroup gives its control the group's identity as its id
-    // (OpenAIModelSettingsViewImpl.ui.xml), not React's '<name>-input'
+    // A FormGroup gives its control the group's identity as its id
+    // (OpenAIModelSettingsViewImpl.ui.xml)
     private static final String BASE_URL = "#openAIModelBaseUrl";
     private static final String MODEL_ID = "#openAIModelId";
     private static final String API_KEY = "#openAIModelApiKey";
@@ -113,7 +113,7 @@ public final class OpenAiModelEditorStories {
                     play.expect(play.getByText("Embedding model dimensions", "label")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.querySelector(MODEL_ID)).toHaveValue("gpt-4o"));
                     // The API key's SelectionBox shows the saved key (fetched by name).
-                    // Differs from React: the box is a text box showing the key's name
+                    // The box is a text box showing the key's name
                     play.waitFor(() -> play.expect(play.within(play.querySelector(API_KEY))
                             .querySelector(StroomDom.SELECTION_BOX)).toHaveValue("openai-key"));
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
@@ -123,16 +123,15 @@ public final class OpenAiModelEditorStories {
                 .story("SpinnersAndHelpText", context -> render(context, null, false))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // Differs from React: a ValueSpinner's field is a plain text box, with no
-                    // spinbutton role or aria-valuemin/max (GWT bug), so the play checks its value
+                    // A ValueSpinner's field is a plain text box, with no spinbutton role or
+                    // aria-valuemin/max (see ISSUES.md), so the play checks its value
                     final Query context = play.within(play.querySelector(MAX_CONTEXT)).getByRole("textbox");
                     final Query dimensions = play.within(play.querySelector(EMBEDDING_DIMENSIONS))
                             .getByRole("textbox");
                     play.waitFor(() -> play.expect(context).toHaveValue("128000"));
                     play.expect(dimensions).toHaveValue("1536");
                     // The up arrow increments by one and makes the document dirty.
-                    // Differs from React: the arrow is a div with no button role or name, and steps
-                    // on its mousedown
+                    // The arrow is a div with no button role or name, and steps on its mousedown
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveClass("disabled");
                     play.click(play.within(play.querySelector(MAX_CONTEXT)).querySelector(".valueSpinner-arrowUp"));
@@ -142,8 +141,8 @@ public final class OpenAiModelEditorStories {
                     play.expect(play.getAllByRole("button", TextMatch.endingWith("- Click for help")))
                             .toHaveLength(6);
                     play.click(play.getByRole("button", "Base URL (optional) - Click for help"));
-                    // Differs from React: the help is a popup on the page's body (the help is also in
-                    // the page, hidden, as the field's description)
+                    // The help is a popup on the page's body (the help is also in the page, hidden,
+                    // as the field's description)
                     play.expect(screen.findByText(TextMatch.containing("The base URL of an OpenAI-compatible API"),
                                     ".help-button-tooltip *"))
                             .toBeInTheDocument();
@@ -155,7 +154,7 @@ public final class OpenAiModelEditorStories {
                     play.waitFor(() -> play.expect(play.querySelector(MODEL_ID)).toHaveValue("gpt-4o"));
                     play.expect(save).toHaveClass("disabled");
                     play.type(play.querySelector(MODEL_ID), "-mini");
-                    // Differs from React: the text box reports its change when it loses the focus
+                    // The text box reports its change when it loses the focus
                     play.tab();
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
                     DocEditors.expectNoProblems(play);
@@ -176,7 +175,7 @@ public final class OpenAiModelEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.click(play.findByRole("button", StroomDom.button("Test Model")));
-                    // Differs from React: Stroom's alert is a popup on the page's body
+                    // Stroom's alert is a popup on the page's body
                     play.waitFor(() -> play.expect(screen.getByText("Model Validation Successful"))
                             .toBeInTheDocument());
                     play.expect(screen.getByText("Model responded in 210ms.")).toBeInTheDocument();
@@ -214,7 +213,7 @@ public final class OpenAiModelEditorStories {
                     play.clear(protocol);
                     play.type(protocol, "TLSv1.2");
                     // OK the TLS dialog (both dialogs have an OK), then the HTTP dialog.
-                    // Differs from React: Stroom's dialogs have no role="dialog"
+                    // Stroom's dialogs have no role="dialog"
                     final Play tlsDialog = play.within(protocol.closest(StroomDom.DIALOG));
                     play.click(tlsDialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP TLS Configuration")).toBeNull());
@@ -238,8 +237,7 @@ public final class OpenAiModelEditorStories {
                     // Read only, not disabled: the fields can be read and copied but not changed
                     play.waitFor(() -> play.expect(play.querySelector(BASE_URL)).toHaveAttribute("readonly"));
                     play.expect(play.querySelector(BASE_URL)).not().toBeDisabled();
-                    // Differs from React: a read-only SelectionBox has the 'readonly' class (there is
-                    // no 'selection-box--disabled' class)
+                    // A read-only SelectionBox has the 'readonly' class
                     play.expect(play.querySelector(API_KEY)).toHaveClass("readonly");
                     play.expect(save).toHaveClass("disabled");
                     DocEditors.expectNoProblems(play);

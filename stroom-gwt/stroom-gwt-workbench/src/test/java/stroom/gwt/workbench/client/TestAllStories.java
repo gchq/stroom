@@ -38,10 +38,10 @@ class TestAllStories {
     }
 
     @Test
-    void testIdsMatchReactStorybook() {
+    void testIdsFollowStorybookRules() {
         final StoryRegistry registry = AllStories.create();
 
-        // Ids of stories in the React Storybook, so the two can be compared at the same URL
+        // Ids made from the title and export name, as Storybook makes them
         assertThat(registry.getStories())
                 .extracting(Story::getId)
                 .contains(

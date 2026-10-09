@@ -35,14 +35,14 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
-/// Stories for Stroom's [FeedRefCell], matching `Widgets/Cell Renderers/FeedRefCell` in the React
-/// Storybook. Each cell is a `CellWidget` in React's `CellBox` (see [CellRendererWidgets]).
+/// Stories for Stroom's [FeedRefCell]. Each cell is a `CellWidget` in a box (see
+/// [CellRendererWidgets]).
 ///
-/// The rows are the feed names; an empty name is a row with no feed, shown as `(no feed)` (React's
-/// `displayText`). React's `onOpen` and `onCopyLink` are Stroom's [OpenFeedEvent] and
-/// [CopyFeedUrlEvent], which the cell fires on its event bus (the latter from its right-click
-/// menu, which the story shows with Stroom's real menu). React's `onCopy` has no GWT equivalent:
-/// the cell copies to the clipboard itself, so the story reports a mouse down on the copy button.
+/// The rows are the feed names; an empty name is a row with no feed, shown as `(no feed)`. The
+/// `onOpen` and `onCopyLink` spies report Stroom's [OpenFeedEvent] and [CopyFeedUrlEvent], which
+/// the cell fires on its event bus (the latter from its right-click menu, which the story shows
+/// with Stroom's real menu). The cell copies to the clipboard itself, so the story reports a mouse
+/// down on the copy button to the `onCopy` spy.
 public final class FeedRefCellStories {
 
     private static final String ON_OPEN = "onOpen";
@@ -63,7 +63,7 @@ public final class FeedRefCellStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Cell Renderers/FeedRefCell", FeedRefCellStories.class)
                 .layout(StoryLayout.CENTERED)
-                // No args: React's meta only sets `name`, and every story has its own render
+                // No args: every story has its own render
                 // A feed row (icon + name, hover to reveal copy / open, right-click for the "Open
                 // Feed / Copy As" menu) and a non-feed row (no name: plain text and a "Copy" menu)
                 .story("Basic", FeedRefCellStories::basic)
@@ -93,8 +93,8 @@ public final class FeedRefCellStories {
         final FlowPanel column = StoryPanels.column(8);
         for (final String name : new String[]{"TEST_FEED", "ANOTHER_LONG_FEED_NAME_THAT_ELLIPSISES", ""}) {
             final FlowPanel box = cellBox(cell, name);
-            // Differs from React: there is no onCopy callback (the cell copies to the clipboard), so the
-            // story reports the mouse down that the cell copies on. A row with no feed has no copy button
+            // The cell copies to the clipboard itself, so the story reports the mouse down that the
+            // cell copies on. A row with no feed has no copy button
             box.addDomHandler(event -> {
                 if (CellRendererWidgets.targetHasClassName(event.getNativeEvent(), COPY_CLASS_NAME)) {
                     onCopy.call(name);

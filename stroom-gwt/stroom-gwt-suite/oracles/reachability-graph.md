@@ -1,6 +1,6 @@
 # Reachability graph — how every GWT screen and dialog is entered
 
-**Generated** by `stroom-stroom-gwt-suite/tools/build-reachability-graph.mjs`. Do not hand-edit.
+**Generated** by `stroom-gwt-suite/tools/build-reachability-graph.mjs`. Do not hand-edit.
 
 `gwt-inventory.csv` says what exists. This says how you get to it, which is what a test
 suite actually needs: a screen that cannot be reached cannot be photographed.

@@ -31,10 +31,9 @@ import stroom.widget.popup.client.view.Dialog;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for the title bar of Stroom's [Dialog] (its icon, caption and busy spinner), matching
-/// `Widgets/Dialogs/DialogTitle` in the React Storybook.
+/// Stories for the title bar of Stroom's [Dialog] (its icon, caption and busy spinner).
 ///
-/// Differs from React: the title bar is part of Stroom's `Dialog` (`Dialog.ui.xml`), not a widget
+/// The title bar is part of Stroom's `Dialog` (`Dialog.ui.xml`), not a widget
 /// of its own, so each story shows a whole (empty, non-modal) `Dialog` at the top left of the
 /// canvas.
 public final class DialogTitleStories {
@@ -42,7 +41,7 @@ public final class DialogTitleStories {
     private static final int LEFT = 16;
     private static final int TOP = 16;
 
-    // Arg names, the same as the React DialogTitle's props
+    // Arg names
     private static final String TITLE = "title";
     private static final String ICON_HTML = "iconHtml";
     private static final String BUSY = "busy";

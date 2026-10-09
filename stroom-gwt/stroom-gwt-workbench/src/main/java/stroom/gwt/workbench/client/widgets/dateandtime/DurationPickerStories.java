@@ -32,11 +32,10 @@ import stroom.widget.customdatebox.client.DurationPicker;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [DurationPicker] (a value spinner and a time unit selection box),
-/// matching `Widgets/Date & Time/DurationPicker` in the React Storybook.
+/// Stories for Stroom's [DurationPicker] (a value spinner and a time unit selection box).
 public final class DurationPickerStories {
 
-    // Arg names. React's value prop ({time, timeUnit}) is split into its two parts
+    // Arg names: the duration's two parts
     private static final String TIME = "time";
     private static final String TIME_UNIT = "timeUnit";
     private static final String SMALL_TIME_MODE = "smallTimeMode";
@@ -55,11 +54,10 @@ public final class DurationPickerStories {
         for (int i = 0; i < timeUnits.length; i++) {
             timeUnits[i] = TimeUnit.values()[i].getDisplayValue();
         }
-        // React's focusWhen prop is omitted: Stroom's views call focus() when shown
         registry.component("Widgets/Date & Time/DurationPicker", DurationPickerStories.class)
                 .layout(StoryLayout.CENTERED)
-                .argType(ArgType.number(TIME).description("The number of time units (React's value.time)."))
-                .argType(ArgType.select(TIME_UNIT, timeUnits).description("The time unit (React's value.timeUnit).")
+                .argType(ArgType.number(TIME).description("The number of time units."))
+                .argType(ArgType.select(TIME_UNIT, timeUnits).description("The time unit.")
                         .typeName("TimeUnit"))
                 .argType(ArgType.bool(SMALL_TIME_MODE)
                         .description("Nanoseconds to hours with a minimum of 0 (GWT smallTimeMode()), rather "

@@ -26,20 +26,16 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories matching `App/IdP/AuthenticationError` in the React Storybook, showing Stroom's real
-/// authentication error page (`AuthenticationErrorPresenter` with `AuthenticationErrorViewImpl`),
-/// which Stroom shows for `/signIn?error=…` with any error but `login_required`.
+/// The `App/IdP/AuthenticationError` stories, showing Stroom's real authentication error page
+/// (`AuthenticationErrorPresenter` with `AuthenticationErrorViewImpl`), which Stroom shows for
+/// `/signIn?error=…` with any error but `login_required`. The error is the URL's `error` parameter
+/// (see `IdpPage`) and the message the UI config's `authErrorMessage` (trusted HTML). The page has
+/// no way back to sign in.
 ///
-/// | React prop | Stroom |
-/// |---|---|
-/// | `error` | the URL's `error` parameter (see `IdpPage`) |
-/// | `message` | the UI config's `authErrorMessage` (trusted HTML) |
-/// | `onSignIn` | none: Stroom's page has no way back to sign in |
-///
-/// React's stories have no play functions: their plays here check what the page shows.
+/// The plays check what the page shows.
 public final class AuthenticationErrorStories {
 
-    // React's message, as a JSON string
+    // The operator's message, as a JSON string
     private static final String MESSAGE_JSON = "\"<p>Your session could not be established. Please contact "
                                                + "<a href=\\\"mailto:support@example.com\\\">support</a> "
                                                + "if this problem persists.</p>\"";

@@ -30,9 +30,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [DropDownViewImpl], matching `Widgets/Selectors/DropDownSelector` in the
-/// React Storybook: a label and an ellipsis button that open a popup (e.g. the explorer tree of a
-/// document selection box).
+/// Stories for Stroom's [DropDownViewImpl]: a label and an ellipsis button that open a popup (e.g.
+/// the explorer tree of a document selection box).
 public final class DropDownSelectorStories {
 
     private static final String ON_OPEN = "onOpen";
@@ -45,9 +44,8 @@ public final class DropDownSelectorStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's placeholder (shown for empty text) and onWarningClick have no equivalent on the
-        // view; Stroom's presenters always set the text ("None" when nothing is selected) and
-        // handle the warning button themselves.
+        // Stroom's presenters always set the text ("None" when nothing is selected) and handle
+        // the warning button themselves.
         registry.component("Widgets/Selectors/DropDownSelector", DropDownSelectorStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Basic drop-down whose label updates when "opened" (the popup is stubbed)
@@ -70,7 +68,7 @@ public final class DropDownSelectorStories {
                     final DropDownViewImpl view = view(context, "Disabled", false, false);
                     // As Stroom's presenters (e.g. DocSelectionBoxPresenter.setEnabled) do: the view
                     // greys out and tells assistive technology, and the presenter ignores the view's
-                    // showPopup. Differs from React: it stays focusable.
+                    // showPopup. It stays focusable.
                     view.setEnabled(false);
                     return minWidth(view.asWidget());
                 })

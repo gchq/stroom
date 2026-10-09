@@ -29,8 +29,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for the Stroom wordmark logo in the navigation header, matching
-/// `Widgets/Display/Logo` in the React Storybook.
+/// Stories for the Stroom wordmark logo in the navigation header.
 ///
 /// There is no logo widget in GWT: the stories build it as Stroom's `NavigationViewImpl` does, a
 /// `navigation-logo` button holding the [SvgImage#LOGO] image, whose click (with the primary

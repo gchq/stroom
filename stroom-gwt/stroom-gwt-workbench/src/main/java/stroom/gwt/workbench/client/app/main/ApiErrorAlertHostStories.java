@@ -36,14 +36,14 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/ApiErrorAlertHost` in the React Storybook: a failing request's error
-/// shown in an error dialog with no per-caller wiring.
+/// Stories of `App/Main/ApiErrorAlertHost`: a failing request's error shown in an error dialog with
+/// no per-caller wiring.
 ///
 /// Stroom has no separate host component: its `RestFactory` gives every request with no failure
 /// handler a `DefaultErrorHandler`, which fires an `AlertEvent`, which `AlertPlugin` shows in
 /// `CommonAlertPresenter`'s 'Alert' dialog. The story's button makes such a request
-/// (`NodeResource.listAllNodes`, `GET /node/v1/all`), answered with the React story's error, and the
-/// harness shows Stroom's real alert dialog.
+/// (`NodeResource.listAllNodes`, `GET /node/v1/all`), answered with an error, and the harness shows
+/// Stroom's real alert dialog.
 public final class ApiErrorAlertHostStories {
 
     private static final RestFixtures FIXTURES = RestFixtures.builder()
@@ -67,7 +67,7 @@ public final class ApiErrorAlertHostStories {
                     final Play screen = play.screen();
                     play.click(play.getByRole("button", TextMatch.containingIgnoreCase("trigger api error")));
                     // The error is shown in a dialog with the server's message and a Close button.
-                    // Differs from React: the dialog is on the page's body
+                    // The dialog is on the page's body
                     play.expect(screen.findByText(TextMatch.containing("Boom from the server"))).toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
                             ValueMatcher.stringContaining("Boom from the server"));

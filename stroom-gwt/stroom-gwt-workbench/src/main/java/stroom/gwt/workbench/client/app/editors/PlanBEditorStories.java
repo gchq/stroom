@@ -35,23 +35,22 @@ import stroom.security.shared.DocumentPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Editors/PlanBEditor` in the React Storybook, showing Stroom's real
-/// `PlanBPresenter` (a Plan B store's editor tab: Settings, Documentation and Permissions) with
-/// fake REST replies.
+/// The `App/Editors/PlanBEditor` stories, showing Stroom's real `PlanBPresenter` (a Plan B store's
+/// editor tab: Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `PlanBPlugin` does, the story fetches the document (`GET /planB/v1/{uuid}`), checks the user
-/// may edit it and reads it into the editor. React's `docPermission` seam is the Permissions tab's
-/// `POST /permission/doc/v1/fetchDocumentUserPermissions`. React's settings `type` names
-/// (`StateSettings`) are Stroom's JSON type names (`state`, `metric`, `session`, `trace`).
+/// may edit it and reads it into the editor. The Permissions tab asks
+/// `POST /permission/doc/v1/fetchDocumentUserPermissions`. The settings' types are Stroom's JSON
+/// type names (`state`, `metric`, `session`, `trace`).
 public final class PlanBEditorStories {
 
     // The caption of a settings group (SettingsGroup's FormLabel).
-    // Differs from React: the groups' captions are labels, not headings
+    // The groups' captions are labels, not headings
     private static final String GROUP_LABEL = "label.settings-group-label";
     private static final String GROUP = ".settings-group";
     private static final String FORM_GROUP = ".form-group";
 
-    // React's docOf(stateType, settingsType): PlanBDocResource.fetch()
+    // PlanBDocResource.fetch(): a store of a type with its settings
     private static final String DOC = """
             {
               "type": "PlanB", "uuid": "planb-STATE_TYPE", "name": "My STATE_TYPE",
@@ -126,9 +125,9 @@ public final class PlanBEditorStories {
                 // The Time Zone control shows the offset when Use is Offset (TimeZoneWidget)
                 .story("MetricTimeZoneOffset", context -> render(context, "planb-METRIC-OFFSET", false))
                 .withPlay(play -> {
-                    // Differs from React: GWT has one 'Time Zone Offset' group of two spinners, not
-                    // 'Offset (hours)' and 'Offset (minutes)', and hides the minutes spinner
-                    // (TimeZoneWidget: "Browsers don't support minute offsets so disable this for now")
+                    // Stroom has one 'Time Zone Offset' group of two spinners, and hides the minutes
+                    // spinner (TimeZoneWidget: "Browsers don't support minute offsets so disable
+                    // this for now")
                     final Query offset = play.findByText("Time Zone Offset", "label");
                     final Play group = play.within(offset.closest(FORM_GROUP));
                     play.expect(group.querySelectorAll("input").nth(0)).toHaveValue("-1");
@@ -148,8 +147,8 @@ public final class PlanBEditorStories {
                 // TRACE: only the common groups, no Key or Value Schema
                 .story("Trace", context -> render(context, "planb-TRACE", false))
                 .withPlay(play -> {
-                    // Differs from React: GWT's trace settings have no 'General' group; their
-                    // common groups are Shared File Store, Publishing, Storage and Data Retention
+                    // The trace settings have no 'General' group; their common groups are Shared
+                    // File Store, Publishing, Storage and Data Retention
                     play.waitFor(() -> play.expect(play.getByText("Storage", GROUP_LABEL)).toBeInTheDocument());
                     play.expect(play.queryByText("General", GROUP_LABEL)).toBeNull();
                     play.expect(play.getByText("Data Retention", GROUP_LABEL)).toBeInTheDocument();
@@ -166,8 +165,8 @@ public final class PlanBEditorStories {
                     play.click(maxStoreSize(play));
                     play.clear(maxStoreSize(play));
                     play.type(maxStoreSize(play), "512 M");
-                    // Differs from React: the GWT text box reports its value when it loses the
-                    // focus (a change event), not as it is typed
+                    // The text box reports its value when it loses the focus (a change event), not
+                    // as it is typed
                     play.tab();
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
                     DocumentEditors.expectNoProblems(play);
@@ -206,8 +205,8 @@ public final class PlanBEditorStories {
                 // Unset schema fields show the Java defaults of their schemas
                 .story("UnsetSchemaFieldsShowTheirJavaDefaults", context -> render(context, "planb-STATE", false))
                 .withPlay(play -> {
-                    // Differs from React: the selection box's value is its text box's value; 'Hash
-                    // Length' is in both schemas, so it is found within the Key Schema group
+                    // The selection box's value is its text box's value; 'Hash Length' is in both
+                    // schemas, so it is found within the Key Schema group
                     play.waitFor(() -> play.expect(selection(play, "Key Schema", "Key Type"))
                             .toHaveValue("Variable"));
                     play.expect(selection(play, "Value Schema", "State Value Type")).toHaveValue("Variable");
@@ -233,7 +232,7 @@ public final class PlanBEditorStories {
     }
 
     // The Max Store Size text box.
-    // Differs from React: its FormGroup has no identity, so there is no '#planbMaxStoreSize-input'
+    // Its FormGroup has no identity, so it has no id
     private static Query maxStoreSize(final Play play) {
         return play.within(play.getByText("Max Store Size", "label").closest(FORM_GROUP)).querySelector("input");
     }

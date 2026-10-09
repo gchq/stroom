@@ -23,7 +23,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [ThinSplitLayoutPanel], matching `Widgets/Layout/ThinSplitLayoutPanel` in the React Storybook.
+/// Stories for Stroom's [ThinSplitLayoutPanel].
 ///
 /// The thin (1px) dragger variant, used by most of Stroom's split screens.
 public final class ThinSplitLayoutPanelStories {
@@ -38,8 +38,8 @@ public final class ThinSplitLayoutPanelStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's maxFirstSize (default 800px) has no GWT equivalent: Stroom's split panels only
-        // limit a drag to the panel's own size. None of the React stories set it.
+        // Stroom's split panels have no maximum size: they only limit a drag to the panel's own
+        // size.
         registry.component("Widgets/Layout/ThinSplitLayoutPanel", ThinSplitLayoutPanelStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 .story("Horizontal", context -> {

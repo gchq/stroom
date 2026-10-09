@@ -44,9 +44,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/// Stories for Stroom's [EntityCheckTreePresenter], matching `Widgets/EntityCheckTree` in the
-/// React Storybook: an explorer tree with a tri-state tick box on each node (e.g. for choosing the
-/// documents to export). The tree is fetched from an [ExplorerFixture].
+/// Stories for Stroom's [EntityCheckTreePresenter]: an explorer tree with a tri-state tick box on
+/// each node (e.g. for choosing the documents to export). The tree is fetched from an [ExplorerFixture].
 public final class EntityCheckTreeStories {
 
     private static final String ON_CHECKED_CHANGE = "onCheckedChange";
@@ -68,8 +67,8 @@ public final class EntityCheckTreeStories {
 
     private static void playTriState(final Play play) {
         play.findByText("System");
-        // Differs from React: Stroom opens the root on the first fetch (minDepth 1), so 'My
-        // Folder' is shown without opening System
+        // Stroom opens the root on the first fetch (minDepth 1), so 'My Folder' is shown without
+        // opening System
         play.findByText("My Folder");
         play.click(expander(play, "My Folder"));
         play.waitFor(() -> play.expect(play.getByText("Alpha")).toBeInTheDocument());
@@ -88,7 +87,7 @@ public final class EntityCheckTreeStories {
         return play.within(play.getByText(name).closest(".explorerCell")).querySelector(".explorerCell-expander");
     }
 
-    /// The React story's `Harness`: the tree over the sorted uuids of the ticked nodes.
+    /// The tree over the sorted uuids of the ticked nodes.
     private static Widget harness(final StoryContext context) {
         final ExplorerFixture fixture = new ExplorerFixture(
                 ExplorerFixture.folder("System", "System",

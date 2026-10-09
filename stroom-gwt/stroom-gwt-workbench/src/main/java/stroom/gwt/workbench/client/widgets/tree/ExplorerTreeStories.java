@@ -46,11 +46,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/// Stories for Stroom's [ExplorerTree], matching `Widgets/Tree/ExplorerTree` in the React
-/// Storybook. The tree is Stroom's real explorer tree (its `ExplorerTreeModel` fetches the nodes
-/// from the explorer service), answered by an [ExplorerFixture] of the React stories' tree.
+/// Stories for Stroom's [ExplorerTree]. The tree is Stroom's real explorer tree (its
+/// `ExplorerTreeModel` fetches the nodes from the explorer service), answered by an
+/// [ExplorerFixture] of a fixed tree.
 ///
-/// The React tree's quick filter bar is the filter of Stroom's [EntityTreeViewImpl] (the explorer
+/// The quick filter bar is the filter of Stroom's [EntityTreeViewImpl] (the explorer
 /// tree with a quick filter, used in Stroom's explorer popups), shown with the stories' tree in it.
 public final class ExplorerTreeStories {
 
@@ -68,23 +68,22 @@ public final class ExplorerTreeStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's controlled openItems/selection props are internal state of Stroom's tree, and
-        // its static `nodes` (flattened in the browser) are always fetched from the explorer
-        // service in GWT; React's reloadNonce has no equivalent.
+        // The open items and selection are internal state of Stroom's tree, and its nodes are
+        // always fetched from the explorer service.
         registry.component("Widgets/Tree/ExplorerTree", ExplorerTreeStories.class)
                 .layout(StoryLayout.FULLSCREEN)
                 // `ensureVisible` reveals a deep, collapsed node: its ancestors open, and it is
                 // selected and scrolled into view
                 .story("EnsureVisible", ExplorerTreeStories::ensureVisible)
                 .withPlay(play -> {
-                    // Differs from React: Stroom opens the root on the first fetch (minDepth 1),
-                    // so 'Sub' is shown, but closed
+                    // Stroom opens the root on the first fetch (minDepth 1), so 'Sub' is shown, but
+                    // closed
                     play.findByText("Sub");
                     play.expect(play.queryByText("Deep Doc")).toBeNull();
                     play.click(play.getByRole("button", TextMatch.regex("reveal deep doc", "i")));
                     final Query deep = play.findByText("Deep Doc");
                     play.expect(deep).toBeInTheDocument();
-                    // Differs from React: the row is the cell table's <tr> (no data-row-idx)
+                    // The row is the cell table's <tr>
                     play.waitFor(() -> play.expect(deep.closest("tr")).toHaveClass(SELECTED_ROW));
                 })
                 // Basic tree - open/close folders, click to select, double-click to "open"
@@ -147,8 +146,7 @@ public final class ExplorerTreeStories {
                 .story("CollapseViaLoadNodesSeeded", context -> frame(
                         tree(context, TreeFixtures.fixtureTree().openToDepth(2), new Options().seedRoot())))
                 .withPlay(play -> playCollapse(play, "TEST_FEED"))
-                // Differs from React: the React story passes static nodes as well as the loader;
-                // Stroom's tree only fetches, so this is the seeded story again
+                // Stroom's tree only fetches its nodes, so this is the seeded story again
                 .story("CollapseViaLoadNodesWithStaticNodes", context -> frame(
                         tree(context, TreeFixtures.fixtureTree().openToDepth(2), new Options().seedRoot())))
                 .withPlay(play -> playCollapse(play, "TEST_FEED"));
@@ -271,7 +269,7 @@ public final class ExplorerTreeStories {
         return names;
     }
 
-    /// Equivalent of the React stories' `frame`.
+    /// The stories' frame around the tree.
     private static FlowPanel frame(final Widget tree) {
         final FlowPanel frame = new FlowPanel();
         final Style style = frame.getElement().getStyle();
@@ -326,7 +324,7 @@ public final class ExplorerTreeStories {
     // --------------------------------------------------------------------------------
 
 
-    /// The React tree's props that a story sets.
+    /// The tree's options that a story sets.
     private static final class Options {
 
         private ExplorerTree tree;

@@ -42,10 +42,10 @@ import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's horizontal tree (`stroom.widget.htree`), matching `Widgets/Tree/HTree` in
-/// the React Storybook: a tree laid out left to right by `AbegoTreeLayout` (Stroom's pipeline
-/// layout) or `CenteredParentTreeLayout` (its expression layout), drawn on a [LayeredCanvas] by
-/// [TreeRenderer] with [TextCellRenderer]'s shadow boxes and an arrow or bracket connector.
+/// Stories for Stroom's horizontal tree (`stroom.widget.htree`): a tree laid out left to right by
+/// `AbegoTreeLayout` (Stroom's pipeline layout) or `CenteredParentTreeLayout` (its expression
+/// layout), drawn on a [LayeredCanvas] by [TreeRenderer] with [TextCellRenderer]'s shadow boxes and
+/// an arrow or bracket connector.
 public final class HTreeStories {
 
     private static final String ON_SELECT = "onSelect";
@@ -62,9 +62,7 @@ public final class HTreeStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's renderNode, getKey, nodeClassFor/nodeTitleFor and drag and drop (onMove) are
-        // for the React port's own uses; Stroom's text tree draws each node's text in a shadow
-        // box, as React's default node does.
+        // Stroom's text tree draws each node's text in a shadow box.
         registry.component("Widgets/Tree/HTree", HTreeStories.class)
                 .layout(StoryLayout.PADDED)
                 // Pipeline layout with click-to-select and an arrow connector (the default)

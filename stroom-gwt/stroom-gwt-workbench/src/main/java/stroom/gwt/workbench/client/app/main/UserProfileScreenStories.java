@@ -29,10 +29,9 @@ import stroom.util.shared.UserRef;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/UserProfileScreen` in the React Storybook, showing Stroom's real
-/// [UserInfoPresenter] (the 'Info' sub-tab of a user's tab, which is what React's profile card
-/// shows) for a user and a group. It makes no requests; the signed in user holds no app
-/// permissions, as React's fixture.
+/// Stories of `App/Main/UserProfileScreen`, showing Stroom's real [UserInfoPresenter] (the 'Info'
+/// sub-tab of a user's tab) for a user and a group. It makes no requests; the signed in user holds
+/// no app permissions.
 public final class UserProfileScreenStories {
 
     private static final UserRef ALICE = new UserRef("u-1", "alice@corp", "Alice Anderson",
@@ -62,8 +61,8 @@ public final class UserProfileScreenStories {
                 .story("Group", context -> render(context, ADMINISTRATORS))
                 .withPlay(play -> {
                     play.findByLabelText("Group Name");
-                    // Differs from React: GWT hides the Display Name form group rather than leaving
-                    // it out, so its field is still in the document
+                    // GWT hides the Display Name form group rather than leaving it out, so its field is
+                    // still in the document
                     play.expect(play.getByLabelText("Display Name")).not().toBeVisible();
                     SecurityPlays.expectNoProblems(play);
                 });

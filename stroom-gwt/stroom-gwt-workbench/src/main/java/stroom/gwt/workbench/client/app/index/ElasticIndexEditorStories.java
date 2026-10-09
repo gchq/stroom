@@ -33,18 +33,17 @@ import stroom.search.elastic.shared.ElasticIndexResource;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Index/ElasticIndexEditor` in the React Storybook, showing Stroom's real
-/// [ElasticIndexPresenter] (an Elastic index's tab: Settings, Fields, Documentation and
-/// Permissions) with fake REST replies.
+/// The `App/Index/ElasticIndexEditor` stories, showing Stroom's real [ElasticIndexPresenter] (an
+/// Elastic index's tab: Settings, Fields, Documentation and Permissions) with fake REST replies.
 ///
-/// As `ElasticIndexPlugin` does, the story fetches the document (`GET /elasticIndex/v1/{uuid}`)
-/// and reads it into the editor ([DocEditors#open]). React's `api.testIndex` →
-/// `POST /elasticIndex/v1/testIndex`, `docPermission` → the Permissions tab's routes.
+/// As `ElasticIndexPlugin` does, the story fetches the document (`GET /elasticIndex/v1/{uuid}`) and
+/// reads it into the editor ([DocEditors#open]). Testing the index is
+/// `POST /elasticIndex/v1/testIndex`, and the Permissions tab has its own routes.
 public final class ElasticIndexEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(ElasticIndexDoc.TYPE, "el-events", "Events (Elastic)");
 
-    // ElasticIndexResource.fetch(): React's INITIAL_DOC
+    // ElasticIndexResource.fetch(): the index
     private static final String DOC = """
             {"type": "ElasticIndex", "uuid": "el-events", "name": "Events (Elastic)",
               "description": "# Elastic events index",

@@ -28,11 +28,10 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [XmlFormatter], what the Ace editor's Format action runs on XML (GWT
-/// `EditorViewImpl.formatAsIfXml` calls `new XmlFormatter().format(text)`), matching
-/// `Widgets/AceEditor/format` in the React Storybook.
+/// `EditorViewImpl.formatAsIfXml` calls `new XmlFormatter().format(text)`).
 ///
 /// Each story shows its cases (the name, the input, faded, and the formatted output), and its
-/// play checks the formatter's results, as React's plays check its port of the formatter.
+/// play checks the formatter's results.
 public final class FormatStories {
 
     private static final String NESTED = "<root><a><b>text</b></a></root>";
@@ -117,9 +116,8 @@ public final class FormatStories {
         return new Case(name, input, format(input));
     }
 
-    /// React's `Cases` component: `<div style={{display: 'flex', flexDirection: 'column', gap: 12,
-    /// fontFamily: 'monospace', fontSize: 12}}>` with a `<div>` per case holding its name (bold),
-    /// its input (a faded `<pre>`) and its output (a `<pre>`).
+    /// The cases, in a monospaced column, with a `<div>` per case holding its name (bold), its
+    /// input (a faded `<pre>`) and its output (a `<pre>`).
     private static Widget cases(final Case... cases) {
         final FlowPanel panel = new FlowPanel();
         final Style style = panel.getElement().getStyle();

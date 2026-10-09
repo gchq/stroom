@@ -37,11 +37,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/// Stories for the rows of Stroom's menus (`MenuItemCell`), matching
-/// `Widgets/Menu/MenuItemWidget` in the React Storybook.
+/// Stories for the rows of Stroom's menus (`MenuItemCell`).
 ///
-/// Differs from React: Stroom's menu rows are cells of a menu's cell table, not widgets, so each
-/// story shows a [MenuPresenter]'s view, with the rows, in place rather than as a popup.
+/// Stroom's menu rows are cells of a menu's cell table, not widgets, so each story shows a
+/// [MenuPresenter]'s view, with the rows, in place rather than as a popup.
 public final class MenuItemWidgetStories {
 
     private static final String LABEL = "label";
@@ -54,7 +53,7 @@ public final class MenuItemWidgetStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's iconHtml, shortcut, enabled and onClick props are shown by the Basic story; a
+        // A row's icon, shortcut, enabled state and command are shown by the Basic story; a
         // Stroom row's shortcut comes from its action's key binding
         registry.component("Widgets/Menu/MenuItemWidget", MenuItemWidgetStories.class)
                 .layout(StoryLayout.CENTERED)
@@ -66,8 +65,8 @@ public final class MenuItemWidgetStories {
                     final Style style = last.getElement().getStyle();
                     style.setProperty("padding", "4px 12px");
                     style.setProperty("fontSize", "12px");
-                    // Differs from React: no shortcuts are shown, as Stroom's EDIT action has no
-                    // key binding and there is no copy action
+                    // No shortcuts are shown, as Stroom's EDIT action has no key binding and there
+                    // is no copy action
                     final Widget menu = menu(context, Arrays.asList(
                             MenuWidgets.icon("Edit", SvgImage.EDIT, () -> last.setText("Last: edit"))
                                     .action(Action.EDIT)
@@ -86,7 +85,7 @@ public final class MenuItemWidgetStories {
                 // A bare item with no icon or shortcut
                 .story("Plain", context -> menu(context, Collections.singletonList(
                         MenuWidgets.simple(context.getArgs().getString(LABEL, ""), () -> {
-                            // No command in the React story
+                            // No command
                         }))))
                 .withArgs(Args.of(LABEL, "Just a label"));
     }

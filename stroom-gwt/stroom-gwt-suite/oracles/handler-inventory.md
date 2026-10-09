@@ -1,6 +1,6 @@
 # Handler inventory — the behaviour denominator
 
-**Generated** by `stroom-stroom-gwt-suite/tools/build-handler-inventory.mjs`. Do not hand-edit. BEHAVIOUR-PLAN.md § B1.
+**Generated** by `stroom-gwt-suite/tools/build-handler-inventory.mjs`. Do not hand-edit. BEHAVIOUR-PLAN.md § B1.
 
 A behaviour is a handler registration in the GWT client, attributed to the class that DECLARES it. A
 handler is *exercised* when the walk fired it: a click handler when an affordance with its label was

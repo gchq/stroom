@@ -19,7 +19,7 @@
 // What SHOULD each presenter offer? Capability specs mined from the GWT source, then diffed against
 // what the crawler actually observed.
 //
-//   node stroom-stroom-gwt-suite/tools/build-capability-specs.mjs
+//   node stroom-gwt-suite/tools/build-capability-specs.mjs
 //     -> oracles/capability-specs.json   (expected buttons + columns per presenter)
 //     -> oracles/capability-specs.md     (the same, plus the expected-vs-observed diff)
 //
@@ -311,7 +311,7 @@ writeFileSync(oracle('capability-specs.json'), JSON.stringify({ specs, diffs }, 
 
 const L = [];
 L.push('# Capability specs — what each presenter SHOULD offer', '');
-L.push('**Generated** by `stroom-stroom-gwt-suite/tools/build-capability-specs.mjs`. Do not hand-edit.', '');
+L.push('**Generated** by `stroom-gwt-suite/tools/build-capability-specs.mjs`. Do not hand-edit.', '');
 L.push('The suite records what it finds; nothing said what it should find. Mined from the two');
 L.push('declarative shapes GWT uses: `SvgPresets.X[.title("…")]` for toolbar buttons and');
 L.push('`headingBuilder("…")` for grid columns.', '');

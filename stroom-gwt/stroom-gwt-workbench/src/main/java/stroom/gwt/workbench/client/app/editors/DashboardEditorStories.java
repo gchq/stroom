@@ -22,9 +22,9 @@ import stroom.gwt.workbench.client.app.dashboard.DashboardLayoutStories;
 import stroom.gwt.workbench.client.app.dashboard.DashboardSearchStories;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// Stories matching `App/Editors/DashboardEditor` in the React Storybook: Stroom's real dashboard
-/// editor (`DashboardSuperPresenter` with its `DashboardPresenter`, opened as `DashboardPlugin`
-/// opens it) with React's dashboards, as Stroom's `DashboardDoc` JSON, and fake REST replies.
+/// The `App/Editors/DashboardEditor` stories: Stroom's real dashboard editor
+/// (`DashboardSuperPresenter` with its `DashboardPresenter`, opened as `DashboardPlugin` opens it)
+/// with dashboards as Stroom's `DashboardDoc` JSON, and fake REST replies.
 ///
 /// The stories are in the dashboard batch's package (`client.app.dashboard`), by what they show:
 /// `DashboardSearchStories` (searches, parameters and inputs), `DashboardLayoutStories` (tabs,

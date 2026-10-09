@@ -62,22 +62,20 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/// Stories for Stroom's [MyDataGrid], matching `Widgets/Data Grid/DataGrid` in the React
-/// Storybook.
+/// Stories for Stroom's [MyDataGrid].
 ///
 /// The grids are built as Stroom's list presenters build them: [MyDataGrid] with columns from
-/// [DataGridUtil], `addColumn`/`addResizableColumn`/`addAutoResizableColumn` for React's
-/// `ColumnDef.text`/`resizableText`/`fill`, and `addDefaultSelectionModel` for React's
-/// `selectionMode`. GWT's grid is a pair of tables, so the plays find the rows by the
-/// `__gwt_row` attribute GWT gives each body row (React: `data-row-index`) and a selected row by
-/// its `dataGridSelectedRow` class (React: `aria-selected="true"`), and the header cells as the
-/// `th` elements (React: `role="columnheader"`).
+/// [DataGridUtil] (`addColumn`, `addResizableColumn`, `addAutoResizableColumn`), and
+/// `addDefaultSelectionModel` for selection. GWT's grid is a pair of tables, so the plays find the
+/// rows by the `__gwt_row` attribute GWT gives each body row and a selected row by its
+/// `dataGridSelectedRow` class (rows have no `aria-selected`), and the header cells as the `th`
+/// elements.
 ///
-/// React's `virtual` prop (rendering only the rows in view) is the React port's own: GWT always
-/// renders the whole page, and pages long lists with a pager.
+/// GWT always renders the whole page, and pages long lists with a pager; there is no mode that
+/// renders only the rows in view.
 public final class DataGridStories {
 
-    // Callback props of the React DataGrid, recorded by spies
+    // Spies for what the grid reports
     private static final String ON_SELECTION_CHANGE = "onSelectionChange";
     private static final String ON_SORT_CHANGE = "onSortChange";
     private static final String ON_NAVIGATE = "onNavigate";
@@ -85,14 +83,13 @@ public final class DataGridStories {
     private static final String ON_ROW_CONTEXT = "onRowContext";
     private static final String ON_COLUMN_REORDER = "onColumnReorder";
 
-    // Differs from React: GWT's own markup in place of the React port's data-* attributes and
-    // classes (see the class comment)
+    // GWT's own markup (see the class comment)
     private static final String ROW = "tr[__gwt_row]";
     private static final String SELECTED_ROW_CLASS = "dataGridSelectedRow";
     private static final String GRID = ".dataGridWidget";
     private static final String HEADER_CELLS = "th";
 
-    // Field names of the sortable columns, as React's
+    // Field names of the sortable columns
     private static final String NAME_FIELD = "Name";
     private static final String ROLE_FIELD = "Role";
     private static final String AGE_FIELD = "Age";
@@ -117,8 +114,8 @@ public final class DataGridStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Data Grid/DataGrid", DataGridStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // React's meta args (columns, rows and sort) are objects and functions, which
-                // can't be controls; each story builds its own grid, as React's do
+                // No args: the columns, rows and sort are objects and functions, which can't be
+                // controls; each story builds its own grid
                 // Basic grid: no pager, no selection
                 .story("BasicGrid", context -> sized(paged(plainGrid(context)), "320px", null))
                 // Sortable columns: click a header to sort
@@ -129,8 +126,7 @@ public final class DataGridStories {
                 .story("EmptyState", context -> {
                     final MyDataGrid<Person> grid = personGrid();
                     addPlainColumns(grid);
-                    // Differs from React: MyDataGrid's empty table widget is blank (there is no
-                    // setter for a message), so "No data to display" isn't shown
+                    // MyDataGrid's empty table widget is blank (there is no setter for a message)
                     grid.setRowData(0, Collections.emptyList());
                     grid.setRowCount(0);
                     return sized(paged(grid), "200px", null);
@@ -186,11 +182,9 @@ public final class DataGridStories {
                     play.click(row(play, 1));
                     ctrlClick(play, 3);
 
-                    // Differs from React: GWT rows never carry aria-selected; no row has the
-                    // selected row class
+                    // No row has the selected row class (GWT rows never carry aria-selected)
                     play.expect(play.querySelectorAll("tr." + SELECTED_ROW_CLASS)).toHaveLength(0);
-                    // Differs from React: no data-grid__body--selectable class; MyDataGrid shows a
-                    // pointer over the rows only when it has a selection model
+                    // MyDataGrid shows a pointer over the rows only when it has a selection model
                     play.expect(row(play, 0).closest("tbody")).toHaveStyle("cursor", "default");
                     play.expect(play.getByText("onSelectionChange fired: 0 time(s)")).toBeInTheDocument();
                     play.expect(play.spy(ON_SELECTION_CHANGE)).not().toHaveBeenCalled();
@@ -219,7 +213,7 @@ public final class DataGridStories {
                     play.waitFor(() -> play.expect(row(play, 0)).toBeInTheDocument());
 
                     // The grid occupies the group rather than collapsing to nothing ...
-                    // Differs from React: the grid's own root (dataGridWidget), not data-grid__outer
+                    // Measured on the grid's own root (dataGridWidget)
                     final Value<Double> gridHeight = play.querySelector(GRID).height();
                     play.waitFor(() -> play.expect("the grid's height", gridHeight::get).toBeGreaterThan(50));
 
@@ -250,10 +244,10 @@ public final class DataGridStories {
                     final MyDataGrid<Note> grid = noteGrid(false);
                     return toggleFrame(grid, sized(paged(grid), "280px", null));
                 })
-                // Differs from React: GWT has no virtual mode, so this is GWT's grid of the same rows
+                // GWT has no virtual mode, so this is BasicGrid's grid in a 900px high frame
                 .story("FixedRowsVirtual", context -> sized(paged(plainGrid(context)), "320px", "900px"))
-                // Differs from React: GWT pages a long list (100 rows to a page, as Stroom's lists)
-                // rather than rendering only the rows in view
+                // GWT pages a long list (100 rows to a page, as Stroom's lists) rather than rendering
+                // only the rows in view
                 .story("FixedRowsManyRows", DataGridStories::manyRows)
                 // Headerless and multi-column
                 .story("HeaderlessMultiColumn", DataGridStories::headerless)
@@ -298,10 +292,9 @@ public final class DataGridStories {
                     final Value<Double> value = headers.nth(1).width();
                     final Value<Double> description = headers.nth(2).width();
                     play.waitFor(() -> {
-                        // Differs from React: MyDataGrid sets the table's width to the sum of its
-                        // columns' (resizeTableToFitColumns), so without a fill column the declared
-                        // 300/200/200 are kept and the table stops short of the 900px frame; React
-                        // scales every column by 900/700 to 386/257/257
+                        // MyDataGrid sets the table's width to the sum of its columns'
+                        // (resizeTableToFitColumns), so without a fill column the declared
+                        // 300/200/200 are kept and the table stops short of the 900px frame
                         play.expect("Name", () -> Math.round(name.get())).toBe(300L);
                         play.expect("Value", () -> Math.round(value.get())).toBe(200L);
                         play.expect("Description", () -> Math.round(description.get())).toBe(200L);
@@ -335,15 +328,11 @@ public final class DataGridStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.querySelector(ROW)).toBeInTheDocument());
                     // Multi-line won: cells wrap ...
-                    // Differs from React: MyDataGrid.setMultiLine adds `multiline` to the grid's root
-                    // (React: data-grid__container)
+                    // MyDataGrid.setMultiLine adds `multiline` to the grid's root
                     play.expect(play.querySelector(GRID)).toHaveClass("multiline");
                     // ... and the whole page is rendered
                     play.expect(play.querySelectorAll(ROW)).toHaveLength(DataGridRows.notes().size());
-                    // Differs from React: no check of the body's `position: static`, which is how the
-                    // React port tells its virtual body from its natural one; GWT has only the latter
                 })
-                // VirtualIsLive is n/a (react-story-status.json): GWT has no virtual mode to toggle
                 // Row column spans: as MarkerListPresenter spans its summary rows
                 .story("RowColumnSpans", DataGridStories::rowColumnSpans)
                 .withPlay(play -> {
@@ -352,12 +341,12 @@ public final class DataGridStories {
                             .toBeGreaterThan(1));
                     final Query spanned = play.within(rows.nth(0)).querySelectorAll("td");
                     final Query normal = play.within(rows.nth(1)).querySelectorAll("td");
-                    // Differs from React: GWT's setColSpan widens the first cell but still renders
+                    // GWT's setColSpan widens the first cell but still renders
                     // the cells it covers (pushed beyond the table's last column), so the spanning
                     // row has three cells, not one
                     play.expect(spanned).toHaveLength(3);
                     play.expect(normal).toHaveLength(3);
-                    // ... and the span is the cell's colspan (React: grid-column and aria-colspan)
+                    // ... and the span is the cell's colspan
                     play.expect(spanned.nth(0)).toHaveAttribute("colspan", "3");
                 })
                 // Toggling multi-line keeps the top visible row
@@ -368,8 +357,7 @@ public final class DataGridStories {
                     final Value<Element> rowElement = targetRow.element();
                     final Value<Element> scroller = Value.of("the grid's scroller",
                             () -> scroller(rowElement.get()));
-                    // Differs from React: GWT renders every row, so scroll to row 100's own offset
-                    // (React: 100 fixed 24px rows)
+                    // GWT renders every row, so scroll to row 100's own offset
                     play.run("scroll to row 100", () -> scroller.get().setScrollTop(rowOffset(rowElement.get())));
                     play.waitFor(() -> play.expect("row 100's offset from the top of the view",
                                     () -> Math.abs(rowOffset(rowElement.get()) - scroller.get().getScrollTop()))
@@ -392,8 +380,7 @@ public final class DataGridStories {
                     play.waitFor(() -> play.expect(headers).toHaveLength(2));
                     // No declared tooltip: no title anywhere in the header
                     play.expect(headers.nth(0)).not().toHaveAttribute("title");
-                    // Differs from React: no data-grid__header-tooltip class; GWT's tooltip is a
-                    // title on a div in the header cell (HeadingBuilder.withToolTip)
+                    // GWT's tooltip is a title on a div in the header cell (HeadingBuilder.withToolTip)
                     play.expect(play.within(headers.nth(0)).querySelector("[title]")).toBeNull();
                     // A declared tooltip sits on the inner div, not the header cell
                     play.expect(headers.nth(1)).not().toHaveAttribute("title");
@@ -411,7 +398,7 @@ public final class DataGridStories {
         final DataGridComparatorFactory<Person> comparators = addSortableColumns(grid);
         final Spy onSortChange = context.fn(ON_SORT_CHANGE);
         // As Stroom's FieldListPresenter: sort the rows on the grid's column sort list.
-        // Differs from React: GWT toggles ascending/descending; there is no unsorted third state
+        // GWT toggles ascending/descending; there is no unsorted third state
         // and no Ctrl-click multi-sort
         grid.addColumnSortHandler(event -> {
             rows.sort(comparators.create());
@@ -447,7 +434,7 @@ public final class DataGridStories {
         return sized(pagerView.asWidget(), "320px", "900px");
     }
 
-    /// React's `RowSelection` and `SingleSelection`.
+    /// The `RowSelection` and `SingleSelection` stories.
     private static Widget selectionStory(final StoryContext context,
                                          final boolean allowMultiSelect,
                                          final String prefix) {
@@ -494,8 +481,7 @@ public final class DataGridStories {
                     : join(indices, 0)));
         });
 
-        // Differs from React: GWT has no selection prop; the host sets the selection model, as
-        // Stroom's presenters do
+        // The host sets the selection model, as Stroom's presenters do
         final Button selectRow3 = new Button("select row 3");
         selectRow3.addClickHandler(event -> selectionModel.setSelected(rows.get(2)));
         final Button clear = new Button("clear");
@@ -541,7 +527,7 @@ public final class DataGridStories {
         grid.setRowData(rows);
         final Label label = note("Last double-clicked: (none)");
         final Spy onRowDoubleClick = context.fn(ON_ROW_DOUBLE_CLICK);
-        // Differs from React: Stroom's grids see a double-click as a double select of their
+        // Stroom's grids see a double-click as a double select of their
         // selection model, so the row is selected too
         final MultiSelectionModelImpl<Person> selectionModel = grid.addDefaultSelectionModel(false);
         selectionModel.addSelectionHandler(event -> {
@@ -562,9 +548,9 @@ public final class DataGridStories {
         grid.setRowData(rows);
         final Label label = note("Last right-clicked: (none)");
         final Spy onRowContext = context.fn(ON_ROW_CONTEXT);
-        // Differs from React: MyDataGrid has no row context callback; on a right-click it shows its
-        // own menu (Copy, Export Table, AI) with a ShowMenuEvent, which isn't shown here. The story
-        // reads the row from the event, as the React port's callback reports it
+        // MyDataGrid has no row context callback; on a right-click it shows its own menu (Copy,
+        // Export Table, AI) with a ShowMenuEvent, which isn't shown here. The story reads the row
+        // from the event
         grid.addDomHandler(event -> {
             final int index = rowIndexOf(Element.as(event.getNativeEvent().getEventTarget()));
             if (index >= 0 && index < rows.size()) {
@@ -612,7 +598,7 @@ public final class DataGridStories {
         table.addColumn(DataGridUtil.textColumnBuilder(Note::getDescription).build());
         table.setWidth("100%", true);
         table.setRowData(DataGridRows.notes());
-        // Differs from React: GWT's headerless grids are plain cell tables, not data grids, so
+        // Stroom's headerless grids are plain cell tables, not data grids, so
         // the Value and Description columns share the rest of the width rather than filling 30/70
         return sized(table, "320px", "900px");
     }
@@ -645,10 +631,7 @@ public final class DataGridStories {
         return grid;
     }
 
-    /// React's `plainColumns()`.
-    ///
-    /// React's `minWidth(50)` on ID and Age is omitted: MyDataGrid only has a minimum width for
-    /// its fill columns.
+    /// Adds the plain columns. MyDataGrid only has a minimum width for its fill columns.
     private static void addPlainColumns(final MyDataGrid<Person> grid) {
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> String.valueOf(person.getId()))
                         .rightAligned()
@@ -662,13 +645,13 @@ public final class DataGridStories {
                         .build(),
                 DataGridUtil.headingBuilder("Age").rightAligned().build(),
                 70);
-        // React's ColumnDef.text is not resizable
+        // Not resizable
         grid.addColumn(DataGridUtil.textColumnBuilder(Person::getActiveText).centerAligned().build(),
                 DataGridUtil.headingBuilder("Active").centerAligned().build(),
                 80);
     }
 
-    /// React's `sortableColumns()`, sorted as Stroom's list presenters sort, with a
+    /// Adds the sortable columns, sorted as Stroom's list presenters sort, with a
     /// [DataGridComparatorFactory].
     private static DataGridComparatorFactory<Person> addSortableColumns(final MyDataGrid<Person> grid) {
         grid.addResizableColumn(DataGridUtil.textColumnBuilder((Person person) -> String.valueOf(person.getId()))
@@ -708,7 +691,7 @@ public final class DataGridStories {
         return builder.build();
     }
 
-    /// React's `noteColumns()`: Name fixed at 300, then Value and Description filling 30/70 with
+    /// The notes grid: Name fixed at 300, then Value and Description filling 30/70 with
     /// a minimum of 200, as `PropertyListPresenter`'s.
     private static MyDataGrid<Note> noteGrid(final boolean multiLine) {
         final MyDataGrid<Note> grid = new MyDataGrid<>(new SimpleEventBus());
@@ -731,8 +714,7 @@ public final class DataGridStories {
     // --------------------------------------------------------------------------------
     // Layout
 
-    /// The grid in Stroom's [PagerViewImpl], as Stroom's list presenters show their grids (the
-    /// React DataGrid has the same pager built in).
+    /// The grid in Stroom's [PagerViewImpl], as Stroom's list presenters show their grids.
     private static Widget paged(final MyDataGrid<?> grid) {
         final PagerViewImpl pagerView = new PagerViewImpl(GWT.create(PagerViewImpl.Binder.class));
         pagerView.setDataWidget(grid);
@@ -749,7 +731,7 @@ public final class DataGridStories {
         return panel;
     }
 
-    /// React's 900px frame with a `Multi line`/`Single line` toggle button above the grid.
+    /// A 900px frame with a `Multi line`/`Single line` toggle button above the grid.
     private static Widget toggleFrame(final MyDataGrid<?> grid, final Widget sizedGrid) {
         final Button toggle = new Button(TOGGLE_MULTI_LINE);
         toggle.addClickHandler(event -> {
@@ -816,18 +798,18 @@ public final class DataGridStories {
     // --------------------------------------------------------------------------------
     // Play helpers
 
-    /// A cell of the row with the given index (React: `[data-row-index="i"]`). The cell, not the
+    /// A cell of the row with the given index. The cell, not the
     /// row, as GWT's grid only handles events on its cells.
     private static Query row(final Play play, final int index) {
         return play.querySelector(ROW + "[__gwt_row=\"" + index + "\"] td");
     }
 
-    /// React's `ctrlClick`: a mouse down with Control, which is what the grid's selection reads.
+    /// A mouse down with Control, which is what the grid's selection reads.
     private static void ctrlClick(final Play play, final int index) {
         play.fireEvent().mouseDown(row(play, index), EventInit.create().ctrlKey().button(0));
     }
 
-    /// React's `shiftClick`.
+    /// A mouse down with Shift.
     private static void shiftClick(final Play play, final int index) {
         play.fireEvent().mouseDown(row(play, index), EventInit.create().shiftKey().button(0));
     }
@@ -863,7 +845,7 @@ public final class DataGridStories {
         return -1;
     }
 
-    /// Whether the element at the row's centre (40px in, as React's play) is in the row.
+    /// Whether the element at the row's centre (40px in) is in the row.
     private static boolean isPaintedAt(final Element row) {
         final double left = row.getAbsoluteLeft() - Document.get().getScrollLeft();
         final double top = row.getAbsoluteTop() - Document.get().getScrollTop();
@@ -893,7 +875,7 @@ public final class DataGridStories {
 
     // --------------------------------------------------------------------------------
 
-    /// Records each column moved, as React's `onColumnReorder(from, to)`.
+    /// Records each column moved, as `(from, to)`.
     private static final class ReorderListener implements HeadingListener {
 
         private final Spy onColumnReorder;

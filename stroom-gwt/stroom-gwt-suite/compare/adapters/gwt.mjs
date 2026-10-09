@@ -115,20 +115,16 @@ export const gwt = {
   },
 
   /**
-   * The mirror of the react adapter's identity assertion, and it exists for the same reason: two
-   * captures of the SAME UI diff clean, so each adapter must prove which UI it drove. `#root` is the
-   * React mount point; `stroom.nocache.js` is the GWT bootstrap, present only on Stroom's host page.
+   * Proves the adapter is driving Stroom's GWT UI, not some other app served at the same address:
+   * `stroom.nocache.js` is the GWT bootstrap, present only on Stroom's host page.
    */
   async assertIsTheGwtUi(page) {
     const seen = await page.evaluate(() => ({
-      root: !!document.querySelector('#root'),
       gwt: !!document.querySelector('script[src*="nocache.js"]'),
       url: window.location.href,
     }));
-    if (!seen.gwt || seen.root) {
-      throw new Error(
-        `gwt adapter is not driving the GWT UI (at ${seen.url}: gwt-bootstrap=${seen.gwt}, #root=${seen.root})`,
-      );
+    if (!seen.gwt) {
+      throw new Error(`gwt adapter is not driving the GWT UI (at ${seen.url}: no GWT bootstrap)`);
     }
   },
 
@@ -149,15 +145,13 @@ export const gwt = {
   },
 
   // ── Stage-A enumerators ──────────────────────────────────────────────────────
-  // Extraction lives in lib/structure.mjs (class-based, works on both DOMs); an adapter supplies
-  // only the affordances — what to click to open a thing, and where a scope lives.
+  // Extraction lives in lib/structure.mjs (class-based); an adapter supplies only the affordances
+  // — what to click to open a thing, and where a scope lives.
 
   /**
-   * Open the application main menu. Both UIs title the hamburger "Main Menu".
+   * Open the application main menu (the hamburger is titled "Main Menu").
    *
-   * Waits for the menu to be POPULATED, not for a fixed 400ms — see the react adapter's copy. The
-   * two must stay in step: a wait that differs between adapters manufactures a difference between
-   * the UIs.
+   * Waits for the menu to be POPULATED, not for a fixed 400ms.
    */
   async openMainMenu(page) {
     await dismissMenus(page);

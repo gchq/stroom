@@ -33,8 +33,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.SimpleEventBus;
 
 /// Stories for Stroom's [ProgressPresenter] (with [ProgressViewImpl]), the sliding window
-/// progress bar of the source editor, matching `Widgets/Feedback/ProgressBar` in the React
-/// Storybook.
+/// progress bar of the source editor.
 public final class ProgressBarStories {
 
     private static final String ON_CLICK = "onClick";
@@ -48,7 +47,7 @@ public final class ProgressBarStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's progress arg is only a default for its Controls; the stories render fixed progress
+        // The stories render fixed progress
         registry.component("Widgets/Feedback/ProgressBar", ProgressBarStories.class)
                 .layout(StoryLayout.PADDED)
                 // A simple percentage progress bar at 65% (not clickable, so in the disabled colour)
@@ -69,8 +68,8 @@ public final class ProgressBarStories {
         display.getElement().getStyle().setProperty("marginTop", "8px");
         display.getElement().getStyle().setProperty("fontSize", "12px");
         final Spy onClick = context.fn(ON_CLICK);
-        // Differs from React: Stroom's click handler is given the clicked position in the
-        // progress's units (here 0-500), not a percentage, so it is turned back into one
+        // Stroom's click handler is given the clicked position in the progress's units (here
+        // 0-500), not a percentage, so it is turned back into one
         presenter.setClickHandler(value -> {
             final double percentage = value / CLICKABLE_UPPER_BOUND * 100;
             onClick.call(percentage);

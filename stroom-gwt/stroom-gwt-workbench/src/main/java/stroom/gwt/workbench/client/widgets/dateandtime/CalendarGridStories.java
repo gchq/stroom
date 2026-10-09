@@ -31,10 +31,9 @@ import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's calendar, the [CustomDatePicker] of `stroom.widget.datepicker.client`
 /// (its `DefaultMonthSelector`, `DefaultCalendarView` and `DateGrid`), as shown in the date and
-/// time dialog (`DateTimeViewImpl`), matching `Widgets/Date & Time/CalendarGrid` in the React
-/// Storybook.
+/// time dialog (`DateTimeViewImpl`).
 ///
-/// As in React, "today" is the current date (in Stroom's client time zone, UTC by default), so
+/// "Today" is the current date (in Stroom's client time zone, UTC by default), so
 /// the month shown depends on when the story is opened.
 public final class CalendarGridStories {
 
@@ -48,8 +47,8 @@ public final class CalendarGridStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's args (selected, today, onSelect) are only defaults for its Controls; the stories
-        // render their own state, and Stroom's picker always takes today from the clock
+        // No args: the stories render their own state, and Stroom's picker always takes today from
+        // the clock
         registry.component("Widgets/Date & Time/CalendarGrid", CalendarGridStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Click a day (or use the arrow keys and Enter over the grid) to select it
@@ -63,8 +62,8 @@ public final class CalendarGridStories {
     /// The calendar with `<p>Selected: ...</p>` below it.
     ///
     /// @param selected The selected day, or null for none.
-    /// @param padded   True to show the month and day with two digits (React's Basic story), false
-    ///                 for no padding (its other stories).
+    /// @param padded   True to show the month and day with two digits (the Basic story), false
+    ///                 for no padding (the other stories).
     private static Widget calendar(final StoryContext context, final UTCDate selected, final boolean padded) {
         final CustomDatePicker datePicker = new CustomDatePicker();
         // As DateTimeViewImpl sets it up

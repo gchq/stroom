@@ -37,19 +37,17 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
-/// Stories matching `App/Main/docPlugin` in the React Storybook: a document plugin transforms the
-/// document on its way to the server when it is saved, not as it is edited (GWT's
-/// `DocPresenter.onWrite`).
+/// Stories of `App/Main/docPlugin`: a document plugin transforms the document on its way to the
+/// server when it is saved, not as it is edited (GWT's `DocPresenter.onWrite`).
 ///
-/// The React story uses a stand-in plugin that mirrors the XML Schema plugin's `onWrite`. Here it is
-/// Stroom's real XML Schema plugin and editor (`XMLSchemaPlugin`, `XMLSchemaPresenter`): the story
-/// opens the document as the explorer does (`OpenDocumentEvent`, handled by Stroom's
-/// `DocumentPluginEventManager`, which decorates the reference and asks the plugin to load it) and
-/// shows the tab the plugin opens. Saving goes the same way (the tab's Save button fires
-/// `SaveDocumentEvent`). The React `DocApi` becomes `XmlSchemaResource` routes:
-/// `fetch` → `GET /xmlSchema/v1/x-1`, `update` → `PUT /xmlSchema/v1/x-1` (an echo, checked on the
-/// request spy), plus the editor's schema validation (`POST /xmlSchema/v1/validate`) and the
-/// explorer's `decorate` and `getFromDocRef`.
+/// The plugin is Stroom's real XML Schema plugin and editor (`XMLSchemaPlugin`,
+/// `XMLSchemaPresenter`): the story opens the document as the explorer does (`OpenDocumentEvent`,
+/// handled by Stroom's `DocumentPluginEventManager`, which decorates the reference and asks the
+/// plugin to load it) and shows the tab the plugin opens. Saving goes the same way (the tab's Save
+/// button fires `SaveDocumentEvent`). The stories answer `XmlSchemaResource`:
+/// `GET /xmlSchema/v1/x-1` and `PUT /xmlSchema/v1/x-1` (an echo, checked on the request spy), plus
+/// the editor's schema validation (`POST /xmlSchema/v1/validate`) and the explorer's `decorate` and
+/// `getFromDocRef`.
 public final class DocPluginStories {
 
     private static final DocRef DOC_REF = new DocRef("XMLSchema", "x-1", "MySchema");
@@ -60,7 +58,7 @@ public final class DocPluginStories {
 
     private static final String PATH = "/xmlSchema/v1/x-1";
 
-    // Differs from React: Stroom's schema text is edited in an Ace editor
+    // Stroom's schema text is edited in an Ace editor
     private static final String ACE_CONTENT = ".ace_content";
 
     // The explorer's requests: the plugin decorates the reference and gets the document's node
@@ -93,13 +91,13 @@ public final class DocPluginStories {
                     play.click(play.findByText("Text", StroomDom.LINK_TAB_LABEL));
                     play.waitFor(5000, () -> play.expect(play.querySelector(ACE_CONTENT)).toBeInTheDocument());
                     // Replace the schema text with padded text: the editor keeps it as typed.
-                    // Differs from React: the text is typed into the Ace editor (focused by a click
+                    // The text is typed into the Ace editor (focused by a click
                     // on its text) rather than a text area
                     play.click(play.querySelector(ACE_CONTENT));
                     play.keyboard("{Control>}a{/Control}  <xs:schema/>  ");
                     play.waitFor(() -> play.expect(play.querySelector(ACE_CONTENT).textContent())
                             .toMatch(TextMatch.containing("<xs:schema/>")));
-                    // Differs from React: GWT writes only the tabs that have been shown, and the
+                    // GWT writes only the tabs that have been shown, and the
                     // namespace URI and system id are on the Settings tab (its onWrite trims the URI), so
                     // the Settings tab is shown before saving
                     play.click(play.getByText("Settings", StroomDom.LINK_TAB_LABEL));

@@ -21,9 +21,9 @@ import stroom.gwt.workbench.framework.client.play.TextMatch;
 
 import java.util.Objects;
 
-/// How Stroom's GWT screens mark things up, for play functions to find them where the React port
-/// uses roles or class names of its own (e.g. `[role="dialog"]`, `[role="row"]`), so every screen
-/// story queries them the same way. Plain Java, so usable (and tested) on the JVM.
+/// How Stroom's GWT screens mark things up, for play functions to find what has no role or name to
+/// query by (e.g. a dialog, a grid row), so every screen story queries them the same way. Plain
+/// Java, so usable (and tested) on the JVM.
 public final class StroomDom {
 
     /// A dialog of any popup type (Stroom's `Dialog` and `ResizableDialog`, which have no
@@ -34,7 +34,7 @@ public final class StroomDom {
     /// The data rows of a `MyDataGrid`/`CellTable` (GWT marks each with `__gwt_row`; there is no
     /// `role="row"`). A cell's row is `play.getByText(x).closest("tr")`.
     public static final String GRID_ROW = "tr[__gwt_row]";
-    /// The class of a selected `MyDataGrid` row (React's `aria-selected="true"`).
+    /// The class of a selected `MyDataGrid` row (Stroom's grids have no `aria-selected`).
     public static final String SELECTED_ROW = "dataGridSelectedRow";
     /// The class of the header of a column that can be sorted.
     public static final String SORTABLE_HEADER = "dataGridSortableHeader";
@@ -43,7 +43,7 @@ public final class StroomDom {
     public static final String COMMAND_LINK_OPEN = ".commandLinkOpen";
     /// The text box of Stroom's `SelectionBox` (a drop-down), which opens its list when clicked.
     public static final String SELECTION_BOX = ".SelectionBox-textBox";
-    /// The placeholder of a `QuickFilter`'s text box, which has no label (React's 'Filter').
+    /// The placeholder of a `QuickFilter`'s text box, which has no label.
     public static final String QUICK_FILTER_PLACEHOLDER = "Quick Filter";
     /// The label of a link tab (e.g. a document editor's 'Words', 'Permissions' sub-tabs), for
     /// `getByText(label, StroomDom.LINK_TAB_LABEL)`. Stroom's link tabs have no `role="tab"`, and

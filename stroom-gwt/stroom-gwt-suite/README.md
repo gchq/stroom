@@ -9,17 +9,11 @@ nothing deployed. It drives the whole app as a user would, which complements the
 
 ## In this repository
 
-Copied here (October 2026) from `stroom-ui-react/gwt-suite`, where it began alongside a React port
-comparison. Only the suite came across:
-
-* the 16 scripts, `lib/`, and the four `compare/` modules they use (`adapters/gwt.mjs` and
-  `lib/credentials`, `readonly-guard`, `settle`, `structure`), now in this folder's `compare/`;
-* not the one-off `probe-*.mjs` investigation scripts, the React adapter (so `walk.mjs` no longer
-  takes `ADAPTER=react`), or the rest of `compare/`.
-
-Later, the probes that `stroom-gwt/ISSUES.md` names for checking a fix were copied too
-(`probe-stepping`, `probe-newfield`, `probe-apikey-expiry`, `probe-apikey-badtime`,
-`probe-ctrlenter`, `probe-loadfail`), and `probe-prefs-failsave` was added for #48. ISSUES.md's
+Moved here in October 2026: the 16 scripts, `lib/`, and the four `compare/` modules they use
+(`adapters/gwt.mjs` and `lib/credentials`, `readonly-guard`, `settle`, `structure`). Later, the
+probes that `stroom-gwt/ISSUES.md` names for checking a fix were added (`probe-stepping`,
+`probe-newfield`, `probe-apikey-expiry`, `probe-apikey-badtime`, `probe-ctrlenter`,
+`probe-loadfail`, and `probe-prefs-failsave` for #48). ISSUES.md's
 "Checking a fix" says what each shows.
 
 Paths are now relative to this folder, so the scripts can be run from anywhere (`lib/paths.mjs`);
@@ -31,8 +25,7 @@ The behaviour work came across too (October 2026), so a round runs entirely from
 * `tools/` - the miners (`enumerate`, `build-inventory`, `build-reachability-graph`,
   `build-route-recipes`, `build-capability-specs`, `build-door-preconditions`,
   `build-handler-inventory`, `build-crawl-coverage`), which mine THIS repository's GWT source
-  (`STROOM_SOURCE=<checkout>` mines another, `ORACLES=<dir>` writes elsewhere). The React port's
-  `port-status.tsv` is optional and not used.
+  (`STROOM_SOURCE=<checkout>` mines another, `ORACLES=<dir>` writes elsewhere).
 * `oracles/` - what they write, which the walk, `coverage.mjs` and the ledger read. Mined from this
   repository; re-mine after GWT changes that add or move screens, dialogs or handlers:
 
@@ -162,10 +155,9 @@ in [COVERAGE-PLAN.md](./COVERAGE-PLAN.md).
 | Explorer context menus | ~10 | Same as dialogs: an action, not a destination. |
 | Post-action states | ? | Only the searched dashboard so far. |
 
-So this is **not** yet everything in the port status. The reachability audit
-(`stroom-ui-react/porting/comparison-reachability.md`) counts 51 menu leaves, 38 screen plugins and 81 nested
-dialogs resolving to 192 React units; the menu, the editors and their tabs are the first half, and
-the dialogs are the long tail. [COVERAGE-PLAN.md](./COVERAGE-PLAN.md) is the plan for the rest.
+So this is **not** yet everything. The reachability audit counts 51 menu leaves, 38 screen plugins
+and 81 nested dialogs resolving to 192 units; the menu, the editors and their tabs are the first
+half, and the dialogs are the long tail. [COVERAGE-PLAN.md](./COVERAGE-PLAN.md) is the plan for the rest.
 
 ## Seeding the missing document types
 
@@ -294,11 +286,9 @@ Every screen's full markup is stored gzipped alongside its screenshot, in both t
 ground truth) and each run's output.
 
 The screenshot answers *did this change*; the DOM answers *what is this*, which is the question
-actually asked when diagnosing a port gap. A pixel diff can say a row is 4px tall of GWT's; only the
-markup says the cell holds a 22px `IconButton` where GWT emits a bare 17px `svgCell` div. Having
-GWT's real markup on disk, per screen, turns that from a live-probing exercise into a grep — the
-`.buttonPanel`, `icon-button--active` and `multiline` findings were all of that shape and each cost a
-round of live probing to establish.
+actually asked when diagnosing a difference. A pixel diff can say a row is 4px taller; only the
+markup says which element made it so (e.g. a 17px `svgCell` div holding the icon). Having GWT's
+real markup on disk, per screen, turns that from a live-probing exercise into a grep.
 
 Stored raw rather than summarised: the summaries worth having (class lists, geometry, cell contents)
 can all be derived later, and none of them can be un-derived from a summary that dropped the wrong

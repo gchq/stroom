@@ -46,10 +46,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/// Stories for Stroom's [CurveTabBar], matching `Widgets/Tabs/CurveTabBar` in the React Storybook.
-///
-/// The React `CurveTabBar` renders the tab bar row of `CurveTabLayoutViewImpl` (`tabBarContainer`
-/// > optional `navigation-menu-button` > `curveTabLayoutViewImpl-tabBarOuter` > `curveTabBar`).
+/// Stories for Stroom's [CurveTabBar], in the tab bar row of `CurveTabLayoutViewImpl`
+/// (`tabBarContainer` > optional `navigation-menu-button` > `curveTabLayoutViewImpl-tabBarOuter` >
+/// `curveTabBar`).
 /// The stories without the sidebar toggle build that row as the view does; the one with it uses
 /// the real [CurveTabLayoutViewImpl]. The overflow selector shows Stroom's real menu.
 public final class CurveTabBarStories {
@@ -58,8 +57,7 @@ public final class CurveTabBarStories {
     private static final String ON_CLOSE = "onClose";
     private static final String ON_TOGGLE_SIDEBAR = "onToggleSidebar";
 
-    // Differs from React: Stroom hides an overflowed tab with an inline `visibility: hidden` (and
-    // moves it off the bar), rather than a `curveTab--overflowed` class
+    // Stroom hides an overflowed tab with an inline `visibility: hidden` (and moves it off the bar)
     private static final String OVERFLOWED = ".curveTab[style*='visibility: hidden']";
     // The selector is only made visible when some tabs overflow
     private static final String SELECTOR_SHOWN = ".curveTabSelector[style*='visibility: visible']";
@@ -75,8 +73,7 @@ public final class CurveTabBarStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's onDragOut (a hook for a cross-pane tab engine) and onTabContextMenu have no
-        // equivalent on the GWT tab bar; dragging a tab within the bar reorders it.
+        // Dragging a tab within the bar reorders it.
         registry.component("Widgets/Tabs/CurveTabBar", CurveTabBarStories.class)
                 .layout(StoryLayout.PADDED)
                 // Several tabs with icons and labels - one selected, a dirty tab (`* ` prefix), a
@@ -110,8 +107,7 @@ public final class CurveTabBarStories {
         // selector chevron shows a count
         play.waitFor(MEASURE_TIMEOUT_MILLIS, () -> play.expect(play.querySelector(SELECTOR_SHOWN)).not().toBeNull());
         play.expect(play.querySelector(OVERFLOWED)).not().toBeNull();
-        // Differs from React: the selector has no title ('Show hidden tabs'); its aria-label is
-        // 'Tab Selector'
+        // The selector's aria-label is 'Tab Selector'
         final Query selector = play.getByLabelText("Tab Selector");
         final Query count = play.within(selector).querySelector(".curveTabSelector-text");
         play.expect("the overflow count", () -> Double.valueOf(count.textContent().get())).toBeGreaterThan(0);
@@ -122,7 +118,7 @@ public final class CurveTabBarStories {
         play.expect(selectedTab).toBeVisible();
 
         // Open the selector menu: it lists every tab, with the overflowed ones in bold.
-        // Differs from React: the menu is a popup on the page's body, not in the canvas.
+        // The menu is a popup on the page's body, not in the canvas.
         play.click(selector);
         play.waitFor(() -> play.expect(play.screen().querySelectorAll(MENU_ITEM)).toHaveLength(manyTabs().size()));
         final Query boldLabel = play.screen().querySelector(".menuItem-text b");
@@ -142,8 +138,8 @@ public final class CurveTabBarStories {
         final int shownCount = manyTabs().size();
         play.waitFor(MEASURE_TIMEOUT_MILLIS, () -> play.expect(play.querySelector(SELECTOR_SHOWN)).not().toBeNull());
 
-        // Differs from React: Stroom keeps a hidden tab's element in the bar, hidden in the same
-        // way as an overflowed tab, so its text is in the document but not visible
+        // Stroom keeps a hidden tab's element in the bar, hidden in the same way as an overflowed
+        // tab, so its text is in the document but not visible
         play.expect(play.getByText("SECRET_FEED")).not().toBeVisible();
         play.expect(play.querySelectorAll(".curveTabBar .curveTab")).toHaveLength(shownCount + 1);
         // The overflow count excludes the hidden tab
@@ -158,10 +154,9 @@ public final class CurveTabBarStories {
     }
 
     private static void playOverflowAlgorithm(final Play play) {
-        // Differs from React: the React play calls the port's pure computeOverflowIds. GWT's
-        // algorithm (AbstractTabBar.getDisplayableTabs) is private and measures the tabs, so this
-        // lays out real tab bars with tabs fixed at 100px and the selector at 40px, and reads
-        // which tabs the bar shows.
+        // GWT's overflow algorithm (AbstractTabBar.getDisplayableTabs) is private and measures the
+        // tabs, so this lays out real tab bars with tabs fixed at 100px and the selector at 40px,
+        // and reads which tabs the bar shows.
 
         // From centre 'a', only 'a','b' fit in 250px once 40px is reserved for the chevron
         play.expect("overflow from 'a'", () -> overflow(4, 250, "a", "a")).toEqual(List.of("c", "d"));
@@ -237,8 +232,8 @@ public final class CurveTabBarStories {
         return count;
     }
 
-    /// The React `Demo` harness: a bordered box holding the tab bar, which selects, closes and
-    /// reorders (by dragging) its tabs.
+    /// A bordered box holding the tab bar, which selects, closes and reorders (by dragging) its
+    /// tabs.
     private static Widget demo(final StoryContext context,
                                final List<StoryTab> tabs,
                                final String selectedId,
@@ -277,8 +272,7 @@ public final class CurveTabBarStories {
         }));
         harness.addRegistration(tabBar.addRequestCloseTabHandler(event -> {
             onClose.call(((StoryTab) event.getTabData()).getId());
-            // Differs from React: Stroom selects the tab to the left of a closed selected tab,
-            // React the one that takes its place
+            // Stroom selects the tab to the left of a closed selected tab
             tabBar.removeTab(event.getTabData());
         }));
         harness.addRegistration(tabBar.addShowMenuHandler(event -> harness.getEventBus().fireEvent(event)));

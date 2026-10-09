@@ -38,14 +38,13 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Arrays;
 
-/// Stories matching `App/Main/DocInfoDialog` in the React Storybook, showing Stroom's real
-/// [InfoDocumentPresenter] (a document's 'Info' dialog) with fake REST replies.
+/// Stories of `App/Main/DocInfoDialog`, showing Stroom's real [InfoDocumentPresenter] (a document's
+/// 'Info' dialog) with fake REST replies.
 ///
-/// The React story passes the `ExplorerNodeInfo` to the dialog as a prop. In Stroom the explorer's
-/// Info menu item (`DocumentPluginEventManager`) fetches it with `POST /explorer/v2/info` and fires
-/// `ShowInfoDocumentDialogEvent`, which the presenter's GWTP proxy passes on to it; the story does
-/// both, with the React fixture as the reply, and registers the presenter (from GIN) as the
-/// event's handler in place of the proxy.
+/// In Stroom the explorer's Info menu item (`DocumentPluginEventManager`) fetches the document's
+/// `ExplorerNodeInfo` with `POST /explorer/v2/info` and fires `ShowInfoDocumentDialogEvent`, which
+/// the presenter's GWTP proxy passes on to it; the story does both, with a fixture as the reply,
+/// and registers the presenter (from GIN) as the event's handler in place of the proxy.
 public final class DocInfoDialogStories {
 
     private static final DocRef DOC_REF = new DocRef("Dictionary", "dict-uuid-1", "Countries");
@@ -83,10 +82,10 @@ public final class DocInfoDialogStories {
                         "{\"explorerNode\": " + NODE + ", \"auditEntries\": " + AUDIT_ENTRIES + "}"))
                 .withPlay(play -> {
                     final Play screen = play.screen();
-                    // Differs from React: GWT bolds the key and appends the ': ' after it, so the key's
-                    // element holds 'UUID' (React's 'UUID:')
+                    // GWT bolds the key and appends the ': ' after it, so the key's
+                    // element holds 'UUID'
                     screen.findByText("UUID");
-                    // GWT reads identity off the explorer node, not a separate doc-ref-info block
+                    // GWT reads identity off the explorer node
                     play.expect(screen.getByText("dict-uuid-1")).toBeInTheDocument();
                     play.expect(screen.getByText("Dictionary")).toBeInTheDocument();
                     play.expect(screen.getByText("Countries")).toBeInTheDocument();
@@ -105,8 +104,7 @@ public final class DocInfoDialogStories {
                     expectInfoFetched(play);
                 })
                 // No audit entries: the whole Audit Info block is omitted, as GWT omits its table.
-                // Differs from React: the React fixture leaves auditEntries out; Stroom's
-                // ExplorerNodeInfo requires it (the server always sends a page, maybe empty), so
+                // Stroom's ExplorerNodeInfo requires auditEntries (the server always sends a page, maybe empty), so
                 // this reply has an empty page
                 .story("WithoutAuditHistory", context -> render(context, "{\"explorerNode\": " + NODE
                         + ", \"auditEntries\": {\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, "

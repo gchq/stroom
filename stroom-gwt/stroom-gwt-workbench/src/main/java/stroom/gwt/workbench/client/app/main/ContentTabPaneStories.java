@@ -45,15 +45,15 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
-/// Stories matching `App/Main/ContentTabPane` in the React Storybook, showing Stroom's real
-/// [ContentTabPanePresenter] (the document tabs) and its tab menu, built by Stroom's real
-/// `DocumentPluginEventManager` for a tab's `ShowTabMenuEvent`.
+/// Stories of `App/Main/ContentTabPane`, showing Stroom's real [ContentTabPanePresenter] (the
+/// document tabs) and its tab menu, built by Stroom's real `DocumentPluginEventManager` for a tab's
+/// `ShowTabMenuEvent`.
 ///
-/// As the React story does, the tabs hold stand-in editors (`DocumentTab`, showing the document's
-/// type and name) opened through Stroom's `ContentManager`; a Dashboard tab is `HasMultipleInstances`,
-/// as Stroom's `DashboardPresenter` is. 'Duplicate Tab' fires `OpenDocumentEvent` with `duplicate`
-/// set (for the document's plugin to open another instance), which the `onOpenDocument` spy
-/// records. No requests are made.
+/// The tabs hold stand-in editors (`DocumentTab`, showing the document's type and name) opened
+/// through Stroom's `ContentManager`; a Dashboard tab is `HasMultipleInstances`, as Stroom's
+/// `DashboardPresenter` is. 'Duplicate Tab' fires `OpenDocumentEvent` with `duplicate` set (for the
+/// document's plugin to open another instance), which the `onOpenDocument` spy records. No requests
+/// are made.
 public final class ContentTabPaneStories {
 
     /// The name of the spy recording the documents asked to be opened (Stroom's `OpenDocumentEvent`).
@@ -78,11 +78,11 @@ public final class ContentTabPaneStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(tabs(play, "My Dashboard")).toHaveLength(1));
-                    // Differs from React: GWT's tabs have no 'tab' role, and the menu is shown on a
+                    // GWT's tabs have no 'tab' role, and the menu is shown on a
                     // secondary button's mouseup on a tab rather than a contextmenu event
                     play.fireEvent().mouseUp(tabs(play, "My Dashboard").nth(0), EventInit.create().button(2));
                     play.click(screen.findByText("Duplicate Tab"));
-                    // Differs from React: opening the second tab is the document plugin's job (Stroom's
+                    // Opening the second tab is the document plugin's job (Stroom's
                     // DashboardPlugin opens another instance), so the play checks that the tab pane's
                     // menu asks for a duplicate of the tab's document
                     play.waitFor(() -> play.expect(play.spy(ON_OPEN_DOCUMENT))
@@ -142,7 +142,7 @@ public final class ContentTabPaneStories {
 
     // --------------------------------------------------------------------------------
 
-    /// A stand-in document editor tab, as the React story's fake editors are.
+    /// A stand-in document editor tab.
     private static class DocumentTab extends ContentTabPresenter<View> {
 
         private final DocRef docRef;

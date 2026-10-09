@@ -35,10 +35,10 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-/// Stories for [LineColInput], matching `Widgets/Inputs/LineColInput` in the React Storybook.
+/// Stories for [LineColInput].
 public final class LineColInputStories {
 
-    // Arg names, the same as the React LineColInput's props
+    // Arg names
     private static final String LINE = "line";
     private static final String COL = "col";
     private static final String ENABLED = "enabled";
@@ -54,7 +54,7 @@ public final class LineColInputStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Inputs/LineColInput", LineColInputStories.class)
                 .layout(StoryLayout.CENTERED)
-                // React's placeholder prop is omitted: LineColInput has no placeholder
+                // LineColInput has no placeholder
                 .argType(ArgType.number(LINE).description("The line number (GWT setValue(line, col))."))
                 .argType(ArgType.number(COL).description("The column number (GWT setValue(line, col))."))
                 .argType(ArgType.bool(ENABLED).description("GWT setEnabled(...).").defaultSummary("true"))
@@ -107,12 +107,11 @@ public final class LineColInputStories {
     }
 
     /// Calls the consumer with the input's location (null when it is empty) when the value is
-    /// committed, i.e. on Enter or blur, as the React port does.
+    /// committed, i.e. on Enter or blur.
     private static void onCommit(final LineColInput input, final Consumer<Location> consumer) {
-        // Differs from React: LineColInput has no change callback (Stroom reads getLocation() when
-        // it needs the value), and getLocation() throws for text that isn't a valid location, so
-        // invalid text reports nothing here. React also highlights invalid text on commit; GWT
-        // only highlights it as it is typed (on key up).
+        // LineColInput has no change callback (Stroom reads getLocation() when it needs the
+        // value), and getLocation() throws for text that isn't a valid location, so invalid text
+        // reports nothing here. GWT highlights invalid text as it is typed (on key up).
         final TextBox textBox = input.getTextBox();
         final Runnable commit = () -> {
             try {

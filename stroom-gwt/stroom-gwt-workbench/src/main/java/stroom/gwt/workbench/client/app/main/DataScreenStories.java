@@ -41,13 +41,13 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/DataScreen` in the React Storybook, showing Stroom's real data tabs
-/// for a query result's data link (`HyperlinkEventHandlerImpl.openData` with display type
-/// `STROOM_TAB`): [DataPreviewTabPresenter] for a `PREVIEW` link and [SourceTabPresenter] for a
-/// `SOURCE` link, as `DataDisplaySupport` opens them.
+/// Stories of `App/Main/DataScreen`, showing Stroom's real data tabs for a query result's data link
+/// (`HyperlinkEventHandlerImpl.openData` with display type `STROOM_TAB`): [DataPreviewTabPresenter]
+/// for a `PREVIEW` link and [SourceTabPresenter] for a `SOURCE` link, as `DataDisplaySupport` opens
+/// them.
 ///
-/// React's `loadSource` is `POST /data/v1/fetch` (with `GET /meta/v1/{id}` for the stream's
-/// details); its recorded requests are read back from the request spy.
+/// The data comes from `POST /data/v1/fetch` (with `GET /meta/v1/{id}` for the stream's details);
+/// the requests are read back from the request spy.
 public final class DataScreenStories {
 
     private static final String FETCH_PATH = "/data/v1/fetch";
@@ -102,8 +102,8 @@ public final class DataScreenStories {
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("the data fetched", () -> lastLocation(requests)).not().toBeNull());
                     // No data range window from the link: the range is a highlight only.
-                    // Differs from React: GWT's SourcePresenter asks for its own page of the stream
-                    // (from the first character), not for no range at all
+                    // GWT's SourcePresenter still asks for its own page of the stream (from the first
+                    // character)
                     play.expect("the data range's first line", () -> firstLine(lastLocation(requests)))
                             .not().toEqual(JsonValues.parse("2"));
                     play.waitFor(() -> play.expect(play.getAllByText(TextMatch.containing("line one")).count())
@@ -139,7 +139,7 @@ public final class DataScreenStories {
         play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
     }
 
-    // The source location HyperlinkEventHandlerImpl.openData builds for the React story's link
+    // The source location HyperlinkEventHandlerImpl.openData builds for the story's link
     // (id 1001, part 0, record 4, lines 2:1 to 3:9)
     private static SourceLocation sourceLocation(final DataViewType dataViewType) {
         final SourceLocation.Builder builder = SourceLocation.builder(1001)

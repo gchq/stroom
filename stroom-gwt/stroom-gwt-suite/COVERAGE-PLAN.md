@@ -21,8 +21,8 @@ backend with no live Stroom.
 
 **184 targets run, 167 pixel-identical, 17 known-limited, 0 corpus misses.**
 
-The ~81 comes from `stroom-ui-react/porting/comparison-reachability.md`, which bucketed 192 React units by entry
-point. It is the long tail and it is where nearly all the remaining work is.
+The ~81 comes from a reachability audit that bucketed the UI's 192 units by entry point. It is the
+long tail and it is where nearly all the remaining work is.
 
 ## Phase 1 — seeding (done)
 
@@ -96,7 +96,7 @@ instead of writing it:
 3. record what each click produced — a dialog, nothing, or a blocker — so the list is auditable.
 
 The classification in step 3 is the part worth doing properly: a click that opens nothing is not the
-same as a click that is disabled, and `stroom-ui-react/porting/audit`'s A5c sweep found that treating them alike hid
+same as a click that is disabled, and an earlier audit sweep (A5c) found that treating them alike hid
 real gaps. A dialog raised from *inside* another dialog is a second pass over the same machinery.
 
 Exit: the generated list of (screen, affordance) pairs is either photographed or carries a reason.
@@ -518,7 +518,7 @@ crawled blind.
 | **the AI dock open** | `Ask Stroom AI` is a TOGGLE (`InlineSvgToggleButton`, `.on`), and neither a closed tab nor a closed dialog turns it off — so the re-sync after the blocked `New Conversation` re-clicked it and CLOSED the dock (`Conversation History → present when surveyed, not locatable when clicked`). A toggle in a route is now a state to be in, not a click to be made, and the re-sync turns off any toggle the route ahead does not want on. | `AiChatHistoryPresenter` |
 | **a stream really selected** | `select-row` was clicking the first cell wider than 20px — on a stream grid that is the 24px `TickBoxCell`, which CHECKS the row (Process / Delete light up, `getSelectionSummary` fires) without SELECTING it, so the relation list and data preview never loaded. `probe-source.mjs` showed it: no `/api/data/v1/fetch` at all. A cell WITH TEXT selects; the preview loads; its `View Source` label (`DataViewImpl.sourceLinkLabel`, a `clickableLabel`, not a button — the `link:` affordance) fires `ShowDataEvent` as a content tab `Stream <id> : 1 : 1`. | `SourceTabPresenter` |
 | **a pipeline element selected** | the Structure canvas is not a GWT `Tree`: `DraggableTreePanel` selects on MOUSEUP when the target is the element the MOUSEDOWN landed on (movement between the two is a drag). `select-element` presses and releases on the LAST `.pipelineElementBox-label` — the box itself carries no class. With the seed's own steps not spending `POSTDEPTH` (`seedDepth`), the properties grid gets the generic row selection too. | `NewElementPresenter` (Add › Filter › `Create Element`), `NewPropertyPresenter` (a property row › `Edit Property`) |
-| **a query that RETURNS ROWS** | `Execute Query` is a search and the read-only guard allows it (plan §1.2) — the question in "The research pass" is answered. The seeded documents' queries all error; `probe-results.mjs` found `from "Example Index" limit 20 select StreamId, EventTime, UserId` answers 20 rows (`limit` goes BEFORE `select` — after it is `Unexpected token LIMIT`) and `from "Annotations" select Id, Title, Status` 10. A `set-ace` route step writes the query, client-side, nothing saved. `QueryResultTablePresenter` has `allowHeaderSelection` on by default (MyDataGrid's default; only the dashboard's TablePresenter ties it to design mode), so the column menu opens with no mode to enter — `columnMenus` takes a scope now. | `ColumnFilterPresenter`, `RulesPresenter` (Conditional Formatting), `DownloadPresenter`, and on a SELECTED annotation row's `Annotate` menu `ChangeStatusPresenter`, `ChangeAssignedToPresenter` |
+| **a query that RETURNS ROWS** | `Execute Query` is a search and the read-only guard allows it (a search only makes transient server state) — the question in "The research pass" is answered. The seeded documents' queries all error; `probe-results.mjs` found `from "Example Index" limit 20 select StreamId, EventTime, UserId` answers 20 rows (`limit` goes BEFORE `select` — after it is `Unexpected token LIMIT`) and `from "Annotations" select Id, Title, Status` 10. A `set-ace` route step writes the query, client-side, nothing saved. `QueryResultTablePresenter` has `allowHeaderSelection` on by default (MyDataGrid's default; only the dashboard's TablePresenter ties it to design mode), so the column menu opens with no mode to enter — `columnMenus` takes a scope now. | `ColumnFilterPresenter`, `RulesPresenter` (Conditional Formatting), `DownloadPresenter`, and on a SELECTED annotation row's `Annotate` menu `ChangeStatusPresenter`, `ChangeAssignedToPresenter` |
 
 **Naming what was reached** — the seed says whose surface it walks. The Query doc's result table is
 three embeds below `QueryDocPresenter` (QueryDocEdit → ResultTableSplit → ResultTable), and the
@@ -605,7 +605,7 @@ the guard's allow-list (`compare/lib/readonly-guard.mjs`); `getPipelineForSteppi
 
 | precondition | how the walk establishes it | what it opened |
 | --- | --- | --- |
-| **stepping mode at rest** | `Enter Stepping Mode` on the Structure tab (a toggle the document re-open resets). The meta list finds 100 streams; nothing is selected. `Refresh Current Step` is enabled here and answers a **500 NPE** (`criteria` is null) — a GWT defect, logged as gwt-bugs #36; the port cannot reach it. | `SteppingPresenter`; `Change Step Filters`, `Filter Streams` (already known) |
+| **stepping mode at rest** | `Enter Stepping Mode` on the Structure tab (a toggle the document re-open resets). The meta list finds 100 streams; nothing is selected. `Refresh Current Step` is enabled here and answers a **500 NPE** (`criteria` is null) — a GWT defect, logged as gwt-bugs #36. | `SteppingPresenter`; `Change Step Filters`, `Filter Streams` (already known) |
 | **the location LABEL** | `selector: .stepLocationLink` — a new affordance class for a clickable whose text is DATA (`[<metaId>:<part>:<record>]`, `[??:??:??]` at rest), so no label can name it | `StepLocationPresenter` (`Set Location`) |
 | **a stream the pipeline can PARSE** | `select-row` with `text: '^\\S+ Events '`: the list's first row is an Error stream — `step` runs (200) but `Content is not allowed in prolog` leaves `foundRecord:false` and the four step buttons disabled. An `Events` row steps to `[2054:1:1]`; Forward → `[2054:1:2]`; First/Backward/Last/Terminate all run for real. | the step controls, walked as post-action states (each is the toolbar again, POSTDEPTH-bounded) |
 | **a NON-SOURCE element, on that stream** | the same `select-element match: xslt` as the Structure canvas — the stepping tree is the same `PipelineTreePresenter` | `ElementPresenter` — created client-side by `SteppingPresenter.getContent`; its code, input and output panes (three Ace editors) carry the XSLT filter's real IO from the response's `elementMap` |
@@ -704,9 +704,8 @@ expectation for 320 of them (101 have none).
 > plugins, REST clients, view impls and cells that no crawl can reach as a surface, and a form-only
 > presenter could be missing from it entirely. Coverage now reads **DOORS 89/201 = 44.3%**, with
 > 93/397 across all presenters — the same crawl data, counted against the right list. The old 20.3%
-> was a percentage of the wrong thing in both the numerator and the denominator. See
-> `stroom-ui-react/porting/upstream-sync.md` for the full delta. Attribution work later the same day took DOORS to
-> **96/201 = 47.8%**; see the P2 attribution entry below.
+> was a percentage of the wrong thing in both the numerator and the denominator. Attribution work
+> later the same day took DOORS to **96/201 = 47.8%**; see the P2 attribution entry below.
 
 - **P0 — stop lying to yourself.** ✅ **DONE 2026-08-20.**
   - `compare/lib/credentials.mjs` resolves the user from `STROOM_USER`, warns when `USER` is merely
@@ -945,9 +944,9 @@ expectation for 320 of them (101 have none).
   capability specs are the oracle: expected toolbar buttons, disabled-at-rest, grid columns,
   `PopupType`, REST resources. Diff observed against expected per presenter; every mismatch is either
   a suite gap or a GWT finding, and both are worth having. 77 of 412 presenters have that diff today.
-  P4 is also where the pending upstream range gets found on the port side rather than hand-read into
-  it: the `Settings` tab on Analytic Rule, Report's AI Summary fields and `Follow Redirects` are all
-  spec-visible changes the diff should surface by itself.
+  P4 is also where new upstream changes get found rather than hand-read: the `Settings` tab on
+  Analytic Rule, Report's AI Summary fields and `Follow Redirects` are all spec-visible changes the
+  diff should surface by itself.
 - **P5 — only then turn the artefacts on.** `DEPTH=dom` / `pixel` and the replay corpus cost time and
   disk per node; capture them once the worklist is stable, not while it is still churning.
 

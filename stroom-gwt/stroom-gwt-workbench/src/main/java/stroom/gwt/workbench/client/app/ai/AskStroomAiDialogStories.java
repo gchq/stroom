@@ -42,12 +42,12 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories matching `App/AI/AskStroomAiDialog` in the React Storybook, showing Stroom's real
-/// [AskStroomAiPresenter] as the 'Ask Stroom AI' dialog, opened by `ShowAskStroomAiEvent` as the
-/// app's toolbar opens it, with fake REST replies ([AiFixtures]): a reply with an attachment, two
-/// past chats (`listChats`, filtered by the request's filter), a past chat's messages
-/// (`getMessages`), the attachment's data (`getAttachmentData`) and the chat's download
-/// (`downloadChatHistory`, recorded by `DOWNLOAD_SPY`).
+/// The `App/AI/AskStroomAiDialog` stories, showing Stroom's real [AskStroomAiPresenter] as the 'Ask
+/// Stroom AI' dialog, opened by `ShowAskStroomAiEvent` as the app's toolbar opens it, with fake
+/// REST replies ([AiFixtures]): a reply with an attachment, two past chats (`listChats`, filtered
+/// by the request's filter), a past chat's messages (`getMessages`), the attachment's data
+/// (`getAttachmentData`) and the chat's download (`downloadChatHistory`, recorded by
+/// `DOWNLOAD_SPY`).
 ///
 /// `ToolbarEntryPoint` shows Stroom's `MainToolbar` (the app's top bar) with its AI toggle wired
 /// as `MainPresenter` wires it.
@@ -55,7 +55,7 @@ public final class AskStroomAiDialogStories {
 
     private static final String CAPTION = "Ask Stroom AI";
 
-    // React's poll: a reply and a 3 row attachment
+    // The poll: a reply and a 3 row attachment
     private static final String REPLY = """
             {"id": 10, "chatId": 1, "messageType": "AI_RESPONSE", "message": "A fresh reply."}""";
     private static final String ATTACHMENT = """
@@ -64,7 +64,7 @@ public final class AskStroomAiDialogStories {
             "attachments": [{"id": 100, "chatId": 1, "status": "READY", "description": "Result set",
               "rowCount": 3, "truncated": false}]""";
 
-    // React's HISTORY
+    // The past chats
     private static final String OLD_CHAT = """
             {"id": 5, "title": "Old chat about feeds", "updateTimeMs": 1699996400000}""";
     private static final String PIPELINE_CHAT = """
@@ -73,7 +73,7 @@ public final class AskStroomAiDialogStories {
     private static final String CHATS = """
             {"values": [CHATS], "pageResponse": {"offset": 0, "length": COUNT, "total": COUNT, "exact": true}}""";
 
-    // React's LOADED
+    // A past chat's messages
     private static final String LOADED = """
             [{"id": 50, "chatId": 5, "messageType": "USER_MESSAGE", "message": "earlier question"},
               {"id": 51, "chatId": 5, "messageType": "AI_RESPONSE", "message": "A loaded reply about **feeds**."}]""";
@@ -136,7 +136,7 @@ public final class AskStroomAiDialogStories {
                     play.waitFor(() -> play.expect(screen.getByText("Chat History", StroomDom.DIALOG_TITLE))
                             .toBeInTheDocument());
                     screen.findByText("Old chat about feeds");
-                    // Differs from React: the filter is Stroom's quick filter, with no label
+                    // The filter is Stroom's quick filter, with no label
                     final Query filter = screen.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER);
                     play.type(filter, "pipeline");
                     play.waitFor(3000, () -> play.expect(screen.queryByText("Old chat about feeds")).toBeNull());
@@ -162,8 +162,7 @@ public final class AskStroomAiDialogStories {
                     play.click(aiButton);
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing("How can I help?")))
                             .toBeInTheDocument());
-                    // Differs from React: the toggle shows its state with the 'on' class, not
-                    // aria-pressed
+                    // The toggle shows its state with the 'on' class
                     play.expect(aiButton).toHaveClass("on");
                     play.click(aiButton);
                     play.waitFor(() -> play.expect(screen.queryByText(CAPTION, StroomDom.DIALOG_TITLE)).toBeNull());
@@ -179,7 +178,7 @@ public final class AskStroomAiDialogStories {
                     play.click(screen.findByRole("button", "View data"));
                     play.waitFor(() -> play.expect(screen.getAllByText("Result set").count())
                             .toSatisfy("more than none", count -> ((Integer) count) > 0));
-                    // Differs from React: the grid has no grid or columnheader roles
+                    // The grid has no grid role, so it is found by its class
                     final Play grid = play.within(screen.findByText("ALPHA").closest(".dataGridWidget"));
                     play.expect(grid.getByText("Feed")).toBeInTheDocument();
                     play.expect(grid.getByText("ALPHA")).toBeInTheDocument();
@@ -206,7 +205,7 @@ public final class AskStroomAiDialogStories {
                     play.expect(screen.getByText(TextMatch.containing("Include data contexts"))).toBeInTheDocument();
                     final Play dialog = play.within(screen.getByText("Download Options", StroomDom.DIALOG_TITLE)
                             .closest(StroomDom.DIALOG));
-                    // Differs from React: the dialog's button is Stroom's OK, not 'Download'
+                    // The dialog's button is Stroom's OK
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Download Options", StroomDom.DIALOG_TITLE))
                             .toBeNull());
@@ -236,7 +235,7 @@ public final class AskStroomAiDialogStories {
     }
 
     // Types a message and presses Run.
-    // Differs from React: the message box has no 'Message' label; it is found by its placeholder
+    // The message box has no label; it is found by its placeholder
     private static void send(final Play screen, final String message) {
         screen.type(screen.findByPlaceholderText("How can I help?"), message);
         screen.click(screen.querySelector(AiFixtures.RUN));

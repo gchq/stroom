@@ -35,7 +35,7 @@ public final class TreeFixtures {
         // Static utility
     }
 
-    /// The React stories' `FIXTURE_TREE`: a small folder/document hierarchy under a System root.
+    /// The stories' tree: a small folder/document hierarchy under a System root.
     ///
     /// @return A new fixture of the tree.
     public static ExplorerFixture fixtureTree() {

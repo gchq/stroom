@@ -17,20 +17,19 @@
 //
 // Why this file exists. Stage A accumulated a layer of blind `waitForTimeout(N)` calls in front of
 // every popup, dialog and editor — each one added when a capture came back empty and someone raised
-// the number until it stopped. That is the worst possible instrument for a parity harness:
+// the number until it stopped. That is the worst possible instrument for a test harness:
 //
 //  - a blind sleep ALWAYS costs N, so the sweep pays for the slowest case on every target;
 //  - it cannot distinguish "appeared in 40ms" from "appeared at 2.4s" from "never appeared" — the
 //    capture that follows reads the same in all three;
-//  - and when the port is genuinely slower than GWT, or opens nothing at all, raising the sleep
-//    HIDES exactly the defect the run exists to find. A5b lost 20 dialogs to a swallowed click and
+//  - and when a dialog is genuinely slow, or opens nothing at all, raising the sleep HIDES exactly
+//    the defect the run exists to find. A5b lost 20 dialogs to a swallowed click and
 //    the first instinct was to lengthen the wait; the number moved 6 → 5 and the real cause (a
 //    full-viewport backdrop eating the next click) survived another two rounds of triage.
 //
 // So: wait for the CONDITION, with a generous ceiling that costs nothing on the common path, and
 // record how long it actually took. The elapsed times are written to `latency.json` next to the
-// capture, and the two adapters' files are directly comparable — "the port's dialogs are slow" stops
-// being a hunch and becomes a column. A wait that TIMES OUT is recorded as `ok: false` rather than
+// capture, so "the dialogs are slow" stops being a hunch and becomes a column. A wait that TIMES OUT is recorded as `ok: false` rather than
 // being swallowed, because "nothing appeared" is a finding, not a reason to wait longer.
 // A deliberate cycle with structure.mjs (it imports the waits from here). Both modules export only
 // hoisted function declarations and touch each other's bindings at call time, never at load time,
@@ -89,8 +88,8 @@ export async function waitForVisible(page, selector, { budget = 5_000, label = s
 /**
  * Wait for a dialog to APPEAR, then for it to SETTLE. Two distinct conditions, and conflating them
  * cost A5b a whole run: GWT builds its dialogs progressively, so a capture taken the instant the
- * caption exists sees a 65px title bar with no buttons — which diffs as "the port invented every
- * control in this dialog".
+ * caption exists sees a 65px title bar with no buttons — which reads as a dialog missing every
+ * control.
  *
  * Returns the dialogs plus both timings. `appeared: false` means the click opened nothing within the
  * budget: report it as `no-dialog` and let the diff argue about it — do NOT raise the budget.
@@ -124,9 +123,9 @@ export async function waitForDialogs(page, { budget = 6_000, settleBudget = 4_00
 }
 
 /**
- * Wait for a menu popup to be up and populated. `.menuItem-outer` is the shared class (GWT's
- * cellTable rows and the port's items both carry it); visibility filtering matters because the port
- * pre-mounts menus hidden.
+ * Wait for a menu popup to be up and populated. GWT shows a menu's popup and renders its rows (a
+ * cellTable whose rows are `.menuItem-outer`) into it, so this waits until at least `min` of those
+ * rows are visible, rather than for the popup alone.
  */
 export async function waitForMenu(page, { budget = 4_000, label = 'main-menu', min = 1 } = {}) {
   return waitUntil(page, async () => (await countVisibleMenuItems(page)) >= min || null, {

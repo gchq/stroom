@@ -18,7 +18,7 @@
 //
 // Of the 414 presenters, which have we actually REACHED?
 //
-//   node stroom-stroom-gwt-suite/tools/build-crawl-coverage.mjs   -> oracles/crawl-coverage.md
+//   node stroom-gwt-suite/tools/build-crawl-coverage.mjs   -> oracles/crawl-coverage.md
 //
 // Every crawl so far has reported numbers about the crawler — "73 distinct places" — which cannot be
 // compared to the inventory and so never answered the only question that matters: what is left. This
@@ -124,7 +124,7 @@ for (const p of presenters) {
 }
 
 const lines = ['# Crawl coverage — how much of the 414 have we reached?', '',
-  '**Generated** by `stroom-stroom-gwt-suite/tools/build-crawl-coverage.mjs`. Do not hand-edit.', '',
+  '**Generated** by `stroom-gwt-suite/tools/build-crawl-coverage.mjs`. Do not hand-edit.', '',
   'Joins the crawl output to `gwt-inventory.csv` through the identifiers each side publishes: dialog',
   'captions (mined from the `ShowPopupEvent` site) and menu leaves (mined from the menu registration).', '',
   '## Totals', '', '| | count |', '| --- | ---: |',

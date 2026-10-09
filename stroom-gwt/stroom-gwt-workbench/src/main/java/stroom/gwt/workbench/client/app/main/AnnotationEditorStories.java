@@ -39,15 +39,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
-/// Stories matching `App/Main/AnnotationEditor` in the React Storybook, showing Stroom's real
-/// [AnnotationPresenter] (an annotation's tab: the editor with its history, settings and choosers,
-/// and the Events, Link To/From, Documentation and Permissions tabs) with fake REST replies.
+/// Stories of `App/Main/AnnotationEditor`, showing Stroom's real [AnnotationPresenter] (an
+/// annotation's tab: the editor with its history, settings and choosers, and the Events, Link
+/// To/From, Documentation and Permissions tabs) with fake REST replies.
 ///
-/// The React story's `AnnotationApi`/`AnnotationTagApi` seams become routes for Stroom's
-/// `AnnotationResource` (`/annotation/v1`, see [AnnotationFixtures]); its recorder becomes checks on
-/// the request spy (`POST /change` with the change's JSON type, e.g. `title`, `setTag`,
-/// `linkAnnotations`). The tab is opened as `AnnotationEditSupport` does for `EditAnnotationEvent`:
-/// the annotation is fetched (`GET ?annotationId=42`), read and shown.
+/// The stories answer Stroom's `AnnotationResource` (`/annotation/v1`, see [AnnotationFixtures]),
+/// and the changes made are checked on the request spy (`POST /change` with the change's JSON type,
+/// e.g. `title`, `setTag`, `linkAnnotations`). The tab is opened as `AnnotationEditSupport` does
+/// for `EditAnnotationEvent`: the annotation is fetched (`GET ?annotationId=42`), read and shown.
 public final class AnnotationEditorStories {
 
     private static final String CHANGE_PATH = "/annotation/v1/change";
@@ -77,8 +76,7 @@ public final class AnnotationEditorStories {
                     final Play screen = play.screen();
                     play.findByDisplayValue("Investigate alert");
                     final Query title = play.querySelector(".annotationTitleTextBox");
-                    // The history renders the entries.
-                    // Differs from React: GWT's history has no 'History' heading
+                    // The history renders the entries
                     play.findByText("Looking into it.");
                     play.clear(title);
                     play.type(title, "Investigate CPU alert");
@@ -88,7 +86,7 @@ public final class AnnotationEditorStories {
                                     .withJsonBodyContaining("{\"change\": {\"type\": \"title\", "
                                             + "\"title\": \"Investigate CPU alert\"}}")
                                     .toSpyMatcher()));
-                    // Differs from React: GWT's chooser button reads 'Choose Comment' and the comment
+                    // GWT's chooser button reads 'Choose Comment' and the comment
                     // box's label 'Add a comment'
                     play.click(play.getByRole("button", StroomDom.button("Choose Comment")));
                     play.click(screen.findByText("Escalate"));
@@ -110,7 +108,7 @@ public final class AnnotationEditorStories {
                     play.click(play.findByTitle("Add Annotation Link"));
                     play.waitFor(() -> play.expect(screen.getByText("Choose Annotation")).toBeInTheDocument());
                     final Play chooser = screen.within(screen.getByText("Choose Annotation").closest(StroomDom.DIALOG));
-                    // Differs from React: GWT doesn't select the first annotation found (its list only
+                    // GWT doesn't select the first annotation found (its list only
                     // selects the first result when the filter changes), so OK with nothing selected
                     // warns and keeps the chooser open; the annotation is then selected
                     play.expect(chooser.findByText("Related alert").closest("tr"))
@@ -183,8 +181,7 @@ public final class AnnotationEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Looking into it.");
-                    // Differs from React: GWT has no 'Entry actions' buttons; pressing an entry's
-                    // header (here the comment's) shows its menu
+                    // Pressing an entry's header (here the comment's) shows its menu
                     play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
                     play.click(screen.findByText("Edit Entry"));
                     final Play dialog = screen.within(screen.findByText("Edit Comment").closest(StroomDom.DIALOG));
@@ -240,7 +237,7 @@ public final class AnnotationEditorStories {
                     final Play screen = play.screen();
                     play.findByDisplayValue("Investigate alert");
                     // Click the Labels block to open its chooser, then tick P1.
-                    // Differs from React: GWT's label chooser is a multi-select list (no '+ add')
+                    // GWT's label chooser is a multi-select list
                     play.click(play.getByText("Labels"));
                     play.click(screen.findByText("P1"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -324,7 +321,7 @@ public final class AnnotationEditorStories {
                     final Play screen = play.screen();
                     play.findByDisplayValue("Investigate alert");
                     play.click(play.getByText("Status"));
-                    // Differs from React: GWT's status chooser is a list, with no selection box
+                    // GWT's status chooser is a list, with no selection box
                     play.click(screen.findByText("Closed"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(CHANGE_PATH)
@@ -363,7 +360,7 @@ public final class AnnotationEditorStories {
                 + "\"status\": \"UNLOCKED\", \"createMs\": 1700000000000, \"effectiveMs\": 1700000000000}");
     }
 
-    // As the React story's loadSource does: the data names the stream and record asked for
+    // The data names the stream and record asked for
     private static RestReply fetchData(final RecordedRequest request) {
         final Map<?, ?> body = (Map<?, ?>) JsonValues.parse(request.getBody());
         final Map<?, ?> location = (Map<?, ?>) body.get("sourceLocation");

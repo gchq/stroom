@@ -27,8 +27,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
-/// One popup of the React `CASES` registry: how to render it and drive it, and what GWT does for
-/// each clause of the contract (which is where these differ from the React registry's flags).
+/// One popup that the popup contract stories check: how to render it and drive it, what GWT does for
+/// each clause of the contract, and which of the stories run over it.
 final class PopupCase {
 
     private final String name;
@@ -40,8 +40,8 @@ final class PopupCase {
     private String insideTarget;
     private boolean triggerToggles = true;
     private boolean escapeCloses = true;
-    private boolean reactTriggerToggles = true;
-    private boolean reactEscapeClosesViaHook = true;
+    private boolean inTriggerStory = true;
+    private boolean inEscapeStory = true;
     private Placement placement;
 
     private PopupCase(final String name, final Function<StoryPopups, Widget> render) {
@@ -63,8 +63,8 @@ final class PopupCase {
         return this;
     }
 
-    /// @param partners The selectors (within the case's container) of the elements React's
-    ///                 registry lists as auto-hide partners, including inner children.
+    /// @param partners The selectors (within the case's container) of the elements that should be
+    ///                 the popup's auto-hide partners, including inner children.
     /// @return This.
     PopupCase partners(final String... partners) {
         Collections.addAll(this.partners, partners);
@@ -108,14 +108,16 @@ final class PopupCase {
         return this;
     }
 
-    /// The React registry's flags, which say which cases a story runs over.
+    /// Sets whether the `TriggerClickClosesAndStaysClosed` and `EscapeCloses` stories run over this
+    /// case (both do by default). What each expects of the case is set by [#triggerToggles(boolean)]
+    /// and [#escapeCloses(boolean)].
     ///
-    /// @param triggerToggles      React's `triggerToggles`.
-    /// @param escapeClosesViaHook React's `escapeClosesViaHook`.
+    /// @param inTriggerStory Whether `TriggerClickClosesAndStaysClosed` runs over the case.
+    /// @param inEscapeStory  Whether `EscapeCloses` runs over the case.
     /// @return This.
-    PopupCase react(final boolean triggerToggles, final boolean escapeClosesViaHook) {
-        this.reactTriggerToggles = triggerToggles;
-        this.reactEscapeClosesViaHook = escapeClosesViaHook;
+    PopupCase storyCases(final boolean inTriggerStory, final boolean inEscapeStory) {
+        this.inTriggerStory = inTriggerStory;
+        this.inEscapeStory = inEscapeStory;
         return this;
     }
 
@@ -153,7 +155,7 @@ final class PopupCase {
         return within(opener);
     }
 
-    /// @return React's partners' selectors, scoped to the case's container.
+    /// @return The partners' selectors, scoped to the case's container.
     List<String> getPartners() {
         final List<String> list = new ArrayList<>();
         for (final String partner : partners) {
@@ -187,14 +189,14 @@ final class PopupCase {
         return escapeCloses;
     }
 
-    /// @return React's `triggerToggles`, which says whether the trigger story runs over the case.
-    boolean isReactTriggerToggles() {
-        return reactTriggerToggles;
+    /// @return Whether `TriggerClickClosesAndStaysClosed` runs over the case.
+    boolean isInTriggerStory() {
+        return inTriggerStory;
     }
 
-    /// @return React's `escapeClosesViaHook`, which says whether the Escape story runs over the case.
-    boolean isReactEscapeClosesViaHook() {
-        return reactEscapeClosesViaHook;
+    /// @return Whether `EscapeCloses` runs over the case.
+    boolean isInEscapeStory() {
+        return inEscapeStory;
     }
 
     /// @return Where GWT places the popup, or null if it isn't placed with a `PopupLocation`.
@@ -206,7 +208,7 @@ final class PopupCase {
     // --------------------------------------------------------------------------------
 
 
-    /// React's `ExpectedPlacement`.
+    /// Where GWT places a popup: the side it asks for, against which anchor.
     static final class Placement {
 
         private final String anchor;

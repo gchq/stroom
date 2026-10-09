@@ -31,9 +31,8 @@ import com.google.web.bindery.event.shared.EventBus;
 
 import java.util.List;
 
-/// Stories for Stroom's [LinkTabsPresenter] (with its [LinkTabsLayoutViewImpl]), matching
-/// `Widgets/Tabs/LinkTabsWidget` in the React Storybook: a link tab bar over the selected tab's
-/// content.
+/// Stories for Stroom's [LinkTabsPresenter] (with its [LinkTabsLayoutViewImpl]): a link tab bar over
+/// the selected tab's content.
 public final class LinkTabsWidgetStories {
 
     private static final String ON_SELECT_TAB = "onSelectTab";
@@ -57,8 +56,7 @@ public final class LinkTabsWidgetStories {
                     harness.unbindOnCleanUp(presenter);
                     presenter.bind();
 
-                    // Differs from React: each Stroom tab has its own content (a layer), rather than
-                    // one content element whose text follows the selected tab
+                    // Each tab has its own content (a layer)
                     final List<String> labels = List.of("Overview", "Settings", "Advanced");
                     TabData first = null;
                     for (final String label : labels) {

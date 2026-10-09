@@ -46,8 +46,8 @@ public final class SecurityPlays {
     }
 
     /// The requests a request spy recorded that a matcher matches, in the order they were made, e.g.
-    /// for checking the first of several searches (React's `rec.finds[0]`). Call it while the
-    /// steps run (in a value's supplier), with a spy got while building the play.
+    /// for checking the first of several searches. Call it while the steps run (in a value's
+    /// supplier), with a spy got while building the play.
     ///
     /// @param requests The rendering's [ScreenHarness#REQUEST_SPY].
     /// @param matcher  The requests to keep.
@@ -76,8 +76,8 @@ public final class SecurityPlays {
     /// Narrows a matcher to requests whose JSON body holds exactly the given values once its null
     /// members and empty arrays are left out. RestyGWT doesn't honour `@JsonInclude(NON_NULL)`, so
     /// a change Stroom sends (e.g. `AccountChange`) has every member it leaves alone as `null`, and an
-    /// empty action set as `[]`, where React's port leaves them out: e.g. `{"firstName": "Bob"}`
-    /// matches `{"userId": null, "firstName": "Bob", "actions": []}`.
+    /// empty action set as `[]`: e.g. `{"firstName": "Bob"}` matches
+    /// `{"userId": null, "firstName": "Bob", "actions": []}`.
     ///
     /// @param matcher      The method and path.
     /// @param expectedJson The members expected to have a value.

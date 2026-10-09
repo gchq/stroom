@@ -37,13 +37,11 @@ import stroom.security.shared.DocumentPermissionFields;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/DocumentPermissionsScreen` in the React Storybook, showing Stroom's
-/// real [BatchDocumentPermissionsPresenter] (the 'Document Permissions' tab) with fake REST
-/// replies.
+/// Stories of `App/Main/DocumentPermissionsScreen`, showing Stroom's real
+/// [BatchDocumentPermissionsPresenter] (the 'Document Permissions' tab) with fake REST replies.
 ///
-/// The React story's `BatchDocPermissionApi` becomes routes for Stroom's `ExplorerResource`:
-/// `find` → `POST /explorer/v2/advancedFind` and `changeDocumentPermissions` →
-/// `POST /explorer/v2/changeDocumentPermissions` (its recorder becomes a check on the request spy).
+/// The stories answer Stroom's `ExplorerResource`: `POST /explorer/v2/advancedFind` (the documents)
+/// and `POST /explorer/v2/changeDocumentPermissions` (the change, checked on the request spy).
 /// Confirmations are Stroom's real dialogs. The presenter comes from GIN and is opened as
 /// `DocumentPermissionsPlugin.open` opens it (filtered to the descendants of System).
 public final class DocumentPermissionsScreenStories {
@@ -77,11 +75,11 @@ public final class DocumentPermissionsScreenStories {
                     play.findByText("Alpha Dictionary");
                     play.expect(play.getByText("Beta Feed")).toBeInTheDocument();
                     play.click(play.getByTitle("Batch Edit Permissions For Filtered Documents"));
-                    // Differs from React: Stroom's dialogs have no role="dialog"
+                    // Stroom's dialogs have no role="dialog"
                     final Play dialog = screen.within(screen.findByText(
                             "Batch Change Permissions For All Filtered Documents").closest(StroomDom.DIALOG));
                     // The change kind: 'Remove all permissions ...' needs nothing else.
-                    // Differs from React: GWT's SelectionBox opens when its text box is clicked
+                    // GWT's SelectionBox opens when its text box is clicked
                     play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
                     play.click(screen.findByText("Remove all permissions for all users [DANGEROUS]"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));

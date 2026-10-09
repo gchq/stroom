@@ -35,20 +35,20 @@ import stroom.security.client.presenter.DocumentUserPermissionsPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Security/DocumentPermissionsTab` in the React Storybook, showing Stroom's
-/// real [DocumentUserPermissionsPresenter] (a document's 'Permissions' tab) with fake REST replies.
+/// The `App/Security/DocumentPermissionsTab` stories, showing Stroom's real
+/// [DocumentUserPermissionsPresenter] (a document's 'Permissions' tab) with fake REST replies.
 ///
-/// | React seam | Stroom REST endpoint |
+/// | Stroom REST endpoint | Used for |
 /// |---|---|
-/// | `fetchPermissions` | `POST /permission/doc/v1/fetchDocumentUserPermissions` |
-/// | `fetchReport` | `POST /permission/doc/v1/getDocUserPermissionsReport` (by the user's UUID) |
-/// | `findDescendants` (its count) | `POST /explorer/v2/advancedFind` |
-/// | `applyToDescendants`, `changeCreatePermissions` | `POST /explorer/v2/changeDocumentPermissions` |
-/// | `fetchDocumentTypes` | `GET /explorer/v2/fetchDocumentTypes` (the three React types) |
+/// | `POST /permission/doc/v1/fetchDocumentUserPermissions` | the users' permissions |
+/// | `POST /permission/doc/v1/getDocUserPermissionsReport` | a user's report (by the user's UUID) |
+/// | `POST /explorer/v2/advancedFind` | counting the descendants |
+/// | `POST /explorer/v2/changeDocumentPermissions` | applying to descendants, create permissions |
+/// | `GET /explorer/v2/fetchDocumentTypes` | the document types (three) |
 ///
-/// React's recorder becomes checks on the request spy. The tab is opened as `DocumentPermissionsPlugin`
-/// opens it for a `ShowDocumentPermissionsEvent` (`setDocRef`). Confirmations are Stroom's real
-/// dialogs. The presenter comes from GIN.
+/// The plays check the requests with the request spy. The tab is opened as
+/// `DocumentPermissionsPlugin` opens it for a `ShowDocumentPermissionsEvent` (`setDocRef`).
+/// Confirmations are Stroom's real dialogs. The presenter comes from GIN.
 public final class DocumentPermissionsTabStories {
 
     private static final String EDIT_TITLE = "edit permissions";
@@ -116,8 +116,8 @@ public final class DocumentPermissionsTabStories {
                     expectCreateColumns(play);
                     play.waitFor(() -> play.expect(play.getByText("admin")).toBeInTheDocument());
                     // admin's explicit column shows type icons (Feed and Dictionary).
-                    // Differs from React: GWT's classes are 'create-document-types-container' and
-                    // '-icon' (React's '.create-document-types'); the icons are titled with the types
+                    // The type icons are in a 'create-document-types-container', each with the class
+                    // 'create-document-types-icon' and titled with its type
                     play.expect(play.querySelectorAll(".create-document-types-container").count())
                             .toBeGreaterThanOrEqual(1);
                     play.expect(play.getByTitle("Feed")).toHaveClass("create-document-types-icon");
@@ -146,8 +146,8 @@ public final class DocumentPermissionsTabStories {
                     final Query edit = play.getByRole("button", TextMatch.containingIgnoreCase(EDIT_TITLE));
                     play.waitFor(() -> play.expect(edit).not().toHaveClass("disabled"));
                     play.click(edit);
-                    // Differs from React: Stroom's dialogs have no role="dialog"; each is the
-                    // closest '.dialog-container' of its caption
+                    // Stroom's dialogs have no role="dialog"; each is the closest
+                    // '.dialog-container' of its caption
                     final Play parent = screen.within(screen.findByText("Set Permissions").closest(StroomDom.DIALOG));
                     // The parent dialog holds no create grid, only the button that raises it
                     play.expect(parent.queryByText("Document Type")).toBeNull();
@@ -162,7 +162,7 @@ public final class DocumentPermissionsTabStories {
                     play.expect(nested.getByRole("button", StroomDom.button("Apply To Descendants")))
                             .toBeInTheDocument();
                     // Pipeline is half ticked (inherited); ticking it makes it explicit.
-                    // Differs from React: the tick box is a TickBoxCell div with no label
+                    // The tick box is a TickBoxCell div with no label
                     play.click(nested.within(nested.getByText("Pipeline").closest("tr")).querySelector(".tickBox"));
                     play.click(nested.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -187,8 +187,8 @@ public final class DocumentPermissionsTabStories {
                     play.click(play.findByText("Analysts"));
                     play.click(play.getByRole("button", TextMatch.containingIgnoreCase(EDIT_TITLE)));
                     screen.findByText("Set Permissions");
-                    // Differs from React: GWT hides the folder-only buttons rather than leaving them
-                    // out, so they have no role (they are not accessible) but are still there
+                    // Stroom hides the folder-only buttons rather than leaving them out, so they
+                    // have no role (they are not accessible) but are still there
                     play.expect(screen.queryByRole("button", StroomDom.button("Apply To Descendants"))).toBeNull();
                     play.expect(screen.queryByRole("button", StroomDom.button("Set Document Create Permissions")))
                             .toBeNull();
@@ -203,8 +203,7 @@ public final class DocumentPermissionsTabStories {
         play.expect(play.getByRole("columnheader", "Effective Create Document Types")).toBeInTheDocument();
     }
 
-    /// @param withCreate Whether admin has create permissions (React's `createApi`), as well as the
-    ///                   permissions of React's `api`.
+    /// @param withCreate Whether admin has create permissions as well as the usual permissions.
     private static RestFixtures fixtures(final boolean withCreate) {
         final String adminRow = withCreate
                 ? """

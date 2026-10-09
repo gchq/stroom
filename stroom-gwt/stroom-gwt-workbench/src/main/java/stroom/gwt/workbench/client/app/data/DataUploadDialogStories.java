@@ -36,17 +36,16 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Data/DataUploadDialog` in the React Storybook, showing Stroom's real
-/// [DataUploadPresenter] (a feed's 'Upload' dialog, as the feed's data browser shows it) with fake
-/// REST replies.
+/// The `App/Data/DataUploadDialog` stories, showing Stroom's real [DataUploadPresenter] (a feed's
+/// 'Upload' dialog, as the feed's data browser shows it) with fake REST replies.
 ///
-/// | React | Stroom |
+/// | Stroom | Used for |
 /// |---|---|
-/// | `feedName` | `GET /feed/v1/{uuid}` (the feed, loaded before the dialog shows) |
-/// | `streamTypes` | `GET /meta/v1/getTypes` |
-/// | `uploadFile` (its `uploaded` recorder) | the file's upload (`importfile.rpc`, the upload spy) |
-/// | `upload` (its `requests` recorder) | `POST /data/v1/upload` (the request spy) |
-/// | `onUploaded` | the 'Uploaded file' message; its Close refreshes the data and closes the dialog |
+/// | `GET /feed/v1/{uuid}` | the feed, loaded before the dialog shows |
+/// | `GET /meta/v1/getTypes` | the stream types |
+/// | the file's upload (`importfile.rpc`, checked with the upload spy) | uploading the file |
+/// | `POST /data/v1/upload` (checked with the request spy) | adding the uploaded data to the feed |
+/// | the 'Uploaded file' message | its Close refreshes the data and closes the dialog |
 ///
 /// The dialog is shown as the feed's data browser (`MetaPresenter`) shows it, with that browser
 /// (from GIN, not shown) as the presenter it refreshes after an upload.
@@ -59,9 +58,9 @@ public final class DataUploadDialogStories {
             .get("/feed/v1/" + FEED_UUID, RestReply.json(
                     "{\"type\": \"Feed\", \"uuid\": \"" + FEED_UUID + "\", \"name\": \"TEST_FEED\"}"))
             .get("/meta/v1/getTypes", RestReply.json("[\"Raw Events\", \"Raw Reference\", \"Events\"]"))
-            // React's uploadFile: the resource key is named after the file
+            // The file's upload: the resource key is named after the file
             .upload(UploadReply.success("rk-stream.txt", "stream.txt"))
-            // React's upload
+            // DataResource.upload()
             .post(UPLOAD_PATH, RestReply.json("{\"key\": \"stored\", \"name\": \"stored\"}"))
             .build();
 
@@ -86,13 +85,13 @@ public final class DataUploadDialogStories {
                     play.expect(screen.queryByText("TEST_FEED")).toBeNull();
                     // The stream type defaults to Raw Events; choose Events
                     play.waitFor(() -> play.expect(dialog.getByDisplayValue("Raw Events")).toBeInTheDocument());
-                    // Differs from React: GWT's SelectionBox opens when its text box is clicked
+                    // Stroom's SelectionBox opens when its text box is clicked
                     play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
                     play.click(screen.findByText("Events"));
                     play.waitFor(() -> play.expect(dialog.getByDisplayValue("Events")).toBeInTheDocument());
                     play.upload(dialog.querySelector(StroomDom.FILE_INPUT), "stream.txt", "data", "text/plain");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    // React's uploaded recorder
+                    // The upload
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.UPLOAD_SPY))
                             .toHaveBeenCalledWith("importfile.rpc", "stream.txt", "data"));
                     // The file's name, not the file input's value, which browsers give as
@@ -103,8 +102,8 @@ public final class DataUploadDialogStories {
                                             {"key": {"key": "rk-stream.txt"}, "feedName": "TEST_FEED",
                                              "streamTypeName": "Events", "fileName": "stream.txt"}""")
                                     .toSpyMatcher()));
-                    // Differs from React: GWT says the file was uploaded, and closing the message
-                    // refreshes the feed's data browser and closes the dialog (React's onUploaded)
+                    // Stroom says the file was uploaded, and closing the message refreshes the
+                    // feed's data browser and closes the dialog
                     play.click(screen.findByRole("button", StroomDom.button("Close")));
                     play.waitFor(() -> play.expect(screen.queryByText("Upload", StroomDom.DIALOG_TITLE)).toBeNull());
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith("INFO: Uploaded file");

@@ -32,10 +32,9 @@
 //
 // The `ShowPopupEvent` edges are the interesting part: they form a directed graph whose roots are
 // screens and whose depth is how many clicks from a destination a dialog sits. That graph is the
-// shape a branching test plan has to follow, and it cannot be guessed from the React side because
-// the port collapses some presenters into one component.
+// shape a branching test plan has to follow.
 //
-// Run: node stroom-stroom-gwt-suite/tools/build-reachability-graph.mjs
+// Run: node stroom-gwt-suite/tools/build-reachability-graph.mjs
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { SOURCE, oracle } from '../lib/paths.mjs';
@@ -295,7 +294,7 @@ for (const line of csv) {
   const c = line.split(',');
   if (c[4] !== 'Presenter') continue;
   if (c[6] !== 'Screen/Dialog' && c[6] !== 'Shared Screen/Dialog') continue;
-  presenters.push({ name: cls(c[0]), area: c[7], status: c[8] });
+  presenters.push({ name: cls(c[0]), area: c[7] });
 }
 const byArea = new Map();
 for (const p of presenters) byArea.set(p.area, (byArea.get(p.area) ?? 0) + 1);
@@ -306,7 +305,7 @@ const parents = [...edges.keys()].sort();
 const lines = [];
 lines.push('# Reachability graph — how every GWT screen and dialog is entered');
 lines.push('');
-lines.push('**Generated** by `stroom-stroom-gwt-suite/tools/build-reachability-graph.mjs`. Do not hand-edit.');
+lines.push('**Generated** by `stroom-gwt-suite/tools/build-reachability-graph.mjs`. Do not hand-edit.');
 lines.push('');
 lines.push('`gwt-inventory.csv` says what exists. This says how you get to it, which is what a test');
 lines.push('suite actually needs: a screen that cannot be reached cannot be photographed.');
@@ -361,8 +360,8 @@ const unknown = routed.filter((r) => r.how === 'UNKNOWN');
 // screens at all, and excluded a presenter that is (a form-only tab declares no button and no grid).
 writeFileSync(OUT.replace(/\.md$/, '.json'), JSON.stringify({
   generated: new Date().toISOString(),
-  source: 'stroom-stroom-gwt-suite/tools/build-reachability-graph.mjs',
-  presenters: routed.map((r) => ({ name: r.name, area: r.area, status: r.status, how: r.how, via: r.via })),
+  source: 'stroom-gwt-suite/tools/build-reachability-graph.mjs',
+  presenters: routed.map((r) => ({ name: r.name, area: r.area, how: r.how, via: r.via })),
 }, null, 1) + '\n');
 
 lines.push(`## The crawler target list — all ${routed.length}, with a route`);

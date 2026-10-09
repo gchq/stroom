@@ -31,11 +31,10 @@ import stroom.widget.util.client.Rect;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.FlowPanel;
 
-/// Stories for Stroom's anchored popover, matching `Widgets/Popover/Popover` in the React
-/// Storybook.
+/// Stories for Stroom's anchored popover.
 ///
-/// The React `Popover` is the shell behind the info tooltips of Stroom's monitoring screens,
-/// which show a [TooltipPresenter] (an auto-hiding `POPUP`) at a `PopupPosition` beside a rect.
+/// The popover is the shell behind the info tooltips of Stroom's monitoring screens, which show a
+/// [TooltipPresenter] (an auto-hiding `POPUP`) at a `PopupPosition` beside a rect.
 public final class PopoverStories {
 
     private static final String ON_CLOSE = "onClose";
@@ -61,8 +60,8 @@ public final class PopoverStories {
                             onClose.call();
                         }
                     })::removeHandler);
-                    // React's anchor {left: 100, top: 100, right: 120, bottom: 120}, to the
-                    // right as InfoColumn asks
+                    // An anchor {left: 100, top: 100, right: 120, bottom: 120}, to the right as
+                    // InfoColumn asks
                     tooltipPresenter.show(SafeHtmlUtils.fromSafeConstant("<div>Anchored panel body</div>"),
                             new PopupPosition(new Rect(100, 120, 100, 120), PopupLocation.RIGHT));
                     return new FlowPanel();

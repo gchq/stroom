@@ -45,7 +45,7 @@ import java.util.function.Consumer;
 /// * navigation: they leave the page with `Window.Location.replace(url)` (after signing in, or back
 ///   to the sign in page), which would navigate the story away. The story page's `navigate` events
 ///   (the browser's Navigation API) are cancelled and their URLs given to a listener, so a play can
-///   check where Stroom would have gone (React's `onRedirect`/`onSignIn` seams);
+///   check where Stroom would have gone;
 /// * revealing: Stroom's `App.onModuleLoad` reveals the page's presenter with `forceReveal()`, which
 ///   needs a GWTP proxy and place manager; [#reveal] calls the presenter's own `revealInParent()`
 ///   instead, once its widget has been added to the story.
@@ -105,8 +105,8 @@ public final class IdpPage {
         return $wnd.location.protocol + "//" + $wnd.location.host;
     }-*/;
 
-    /// A message shown in place of the page once Stroom has navigated away, as React's `FlowDemo`
-    /// shows `✓ Signed in — redirected to: <strong>…</strong>`.
+    /// A message shown in place of the page once Stroom has navigated away, e.g.
+    /// `✓ Signed in — redirected to: <strong>…</strong>`.
     ///
     /// @param url The URL, shown in bold, or an empty string for a reload of the page.
     /// @return The message.

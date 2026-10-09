@@ -54,11 +54,11 @@ import java.util.function.Function;
 /// document's `update` endpoint, then the editor's post save callback (if any) runs, and the
 /// reply is read back into the editor.
 ///
-/// Also holds the fixtures the React stories share: the `docPermissionFixture` (the user `admin`
-/// is the document's OWNER) for each editor's Permissions tab.
+/// Also holds the fixtures the editor stories share: the Permissions tab's routes (the user
+/// `admin` is the document's OWNER).
 public final class DocEditors {
 
-    // DocPermissionResource.fetchDocumentUserPermissions(): React's docPermissionFixture
+    // DocPermissionResource.fetchDocumentUserPermissions(): admin is the document's OWNER
     private static final String DOC_PERMISSIONS = """
             {
               "values": [
@@ -72,8 +72,7 @@ public final class DocEditors {
         // Static utility
     }
 
-    /// Adds the routes of React's `docPermissionFixture`, which every editor's Permissions tab
-    /// uses: `admin` is the OWNER.
+    /// Adds the routes every editor's Permissions tab uses: `admin` is the OWNER.
     ///
     /// @param builder The story's fixtures.
     /// @return The builder.
@@ -106,7 +105,7 @@ public final class DocEditors {
                 .realAlerts();
         options.accept(builder);
         final ScreenHarness harness = builder.build();
-        // React's docPermissionFixture: the user owns the document (or may only view it)
+        // The user owns the document (or may only view it)
         harness.getSecurityContext().setDocumentPermission(readOnly
                 ? DocumentPermission.VIEW
                 : DocumentPermission.OWNER);
@@ -237,7 +236,7 @@ public final class DocEditors {
     }
 
     /// A sub-tab of a document editor.
-    /// Differs from React: Stroom's link tabs have no `role="tab"`, so they're found by their label.
+    /// Stroom's link tabs have no `role="tab"`, so they're found by their label.
     ///
     /// @param play  The play (or a scope of it).
     /// @param label The tab's label.

@@ -33,9 +33,9 @@ import { dismissMenus } from '../compare/lib/structure.mjs';
  * Settle, photograph, and dump the DOM.
  *
  * The screenshot answers "did this change"; the DOM answers "what IS this", which is the question
- * that actually gets asked when diagnosing a port gap. A pixel diff can say a row is 4px tall of
- * GWT's; only the markup says the cell holds a 22px button where GWT emits a bare 17px div. Having
- * GWT's real markup on disk, per screen, turns that from a live-probing exercise into a grep.
+ * that actually gets asked when diagnosing a difference. A pixel diff can say a row is 4px taller;
+ * only the markup says which element made it so. Having GWT's real markup on disk, per screen, turns
+ * that from a live-probing exercise into a grep.
  *
  * Stored gzipped — the raw ground truth rather than a summary, because the summaries worth having
  * (class lists, geometry, cell contents) can all be derived from it later and none of them can be

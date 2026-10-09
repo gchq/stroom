@@ -39,12 +39,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/// Stories matching `Widgets/CellList` in the React Storybook, whose `CellList` ports the shape of
-/// Stroom's find result lists: a [FindCellTable] (a [MyCellTable] with one bare column and no
-/// header, and single selection) in a [PagerViewImpl], as `FindDocResultListPresenter` builds it.
+/// Stories of a list shaped like Stroom's find result lists: a [FindCellTable] (a [MyCellTable]
+/// with one bare column and no header, and single selection) in a [PagerViewImpl], as
+/// `FindDocResultListPresenter` builds it.
 public final class CellListStories {
 
-    // Arg names, the same as the React story's Demo props
+    // Arg names
     private static final String EMPTY = "empty";
     private static final String ON_SELECTION_CHANGE = "onSelectionChange";
 
@@ -72,9 +72,8 @@ public final class CellListStories {
                         play.expect(play.getByText(fruit)).toBeInTheDocument();
                     }
                     // The first row is the (controlled) selection.
-                    // Differs from React: the rows are a CellTable's <tr>s (no role="row"), and the
-                    // selected class is the CellTable style's cellTableSelectedRow, not
-                    // data-grid__row--selected
+                    // The rows are a CellTable's <tr>s (no role="row"), and the selected class is the
+                    // CellTable style's cellTableSelectedRow
                     final MyCellTable.DefaultResources resources = GWT.create(MyCellTable.DefaultResources.class);
                     play.expect(play.getByText("Apple").closest("tr"))
                             .toHaveClass(resources.cellTableStyle().cellTableSelectedRow());
@@ -85,7 +84,7 @@ public final class CellListStories {
                 .withPlay(play -> play.expect(play.getByText(EMPTY_MESSAGE)).toBeInTheDocument());
     }
 
-    /// React's `Demo`: a list made from the story's args, so the Controls addon changes it.
+    /// A list made from the story's args, so the Controls addon changes it.
     private static Widget fromArgs(final StoryContext context) {
         final boolean empty = context.getArgs().getBoolean(EMPTY);
         final List<String> items = empty
@@ -99,8 +98,8 @@ public final class CellListStories {
                 return item;
             }
         });
-        // Differs from React: Stroom's find lists show nothing when empty; CellTable's empty table
-        // widget shows React's emptyMessage
+        // Stroom's find lists show nothing when empty; the story uses CellTable's empty table widget
+        // to show a message
         cellTable.setEmptyTableWidget(new Label(EMPTY_MESSAGE));
         cellTable.setRowData(0, items);
         cellTable.setRowCount(items.size(), true);
@@ -112,7 +111,7 @@ public final class CellListStories {
                     ? null
                     : items.indexOf(selected));
         });
-        // React's Demo starts with the first row selected
+        // Start with the first row selected
         if (!items.isEmpty()) {
             cellTable.getSelectionModel().setSelected(items.get(0));
         }
@@ -135,7 +134,7 @@ public final class CellListStories {
 
     // --------------------------------------------------------------------------------
 
-    /// React's `renderItem`: `<div style={{padding: '6px 10px'}}>{s}</div>`.
+    /// Renders an item as `<div style="padding: 6px 10px">item</div>`.
     private static final class ItemCell extends AbstractCell<String> {
 
         @Override

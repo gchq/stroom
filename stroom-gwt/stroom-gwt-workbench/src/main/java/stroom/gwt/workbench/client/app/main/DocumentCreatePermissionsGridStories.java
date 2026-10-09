@@ -43,15 +43,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-/// Stories matching `App/Main/DocumentCreatePermissionsGrid` in the React Storybook, showing
-/// Stroom's real [DocumentCreatePermissionsListPresenter] (the grid of document types a user may
-/// create in a folder, in the 'Set Document Create Permissions' dialog) with fake REST replies.
+/// Stories of `App/Main/DocumentCreatePermissionsGrid`, showing Stroom's real
+/// [DocumentCreatePermissionsListPresenter] (the grid of document types a user may create in a
+/// folder, in the 'Set Document Create Permissions' dialog) with fake REST replies.
 ///
-/// React's `report` is given to the grid with `setup(report)`, as
-/// `DocumentUserCreatePermissionsEditPresenter` gives it, and its `fetchTypes` is Stroom's document
-/// types (`GET /explorer/v2/fetchDocumentTypes`, here the three React types). GWT's grid has no
-/// change callback (Stroom reads `getExplicitCreatePermissions()` when the dialog's OK is pressed),
-/// so the story reports the working set to React's `onChange` spy after each click.
+/// The user's create permissions report is given to the grid with `setup(report)`, as
+/// `DocumentUserCreatePermissionsEditPresenter` gives it, and the document types come from
+/// `GET /explorer/v2/fetchDocumentTypes` (three types here). The grid has no change callback
+/// (Stroom reads `getExplicitCreatePermissions()` when the dialog's OK is pressed), so the story
+/// reports the working set to the `onChange` spy after each click.
 public final class DocumentCreatePermissionsGridStories {
 
     /// The name of the spy recording the working set (sorted) after each change.
@@ -81,7 +81,7 @@ public final class DocumentCreatePermissionsGridStories {
                 .story("ToggleType", context -> render(context, "Dictionary"))
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("Pipeline")).toBeInTheDocument());
-                    // Differs from React: GWT's grid tick is a TickBoxCell div, not a checkbox
+                    // GWT's grid tick is a TickBoxCell div, not a checkbox
                     play.click(play.within(play.getByText("Pipeline").closest("tr")).querySelector(".tickBox"));
                     final Spy onChange = play.spy(ON_CHANGE);
                     play.waitFor(() -> play.expect("the working set", () -> lastSet(onChange))
@@ -123,11 +123,11 @@ public final class DocumentCreatePermissionsGridStories {
         harness.afterStartUp(() -> {
             final DocumentCreatePermissionsListPresenter presenter =
                     harness.addContent(injector.getDocumentCreatePermissionsListPresenter());
-            // React's report: the explicit types, and Feed inherited from /System
+            // The report: the explicit types, and Feed inherited from /System
             final Set<String> explicitTypes = new HashSet<>(List.of(explicit));
             presenter.setup(new DocumentUserPermissionsReport(null, explicitTypes, Collections.emptyMap(),
                     Map.of("Feed", List.of("/System"))));
-            // Differs from React: no change callback; the working set is reported once the grid
+            // No change callback; the working set is reported once the grid
             // has handled the click
             harness.addRegistration(presenter.getWidget().addDomHandler(event ->
                             Scheduler.get().scheduleDeferred(() -> harness.spy(ON_CHANGE,

@@ -19,27 +19,22 @@ package stroom.gwt.workbench.client;
 import stroom.gwt.workbench.client.screens.signin.RedirectUrlStories;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 
-/// Registers the GWT ports of the React Storybook's `Screens/*` stories (1 component,
-/// 7 stories in the React Storybook), in the React sidebar's order.
+/// Registers the workbench's `Screens/*` stories.
 ///
 /// ## Adding a story class
 ///
-/// 1. Write the stories class in the `stroom.gwt.workbench.client.screens` package (see
-///    `widgets/buttons/ButtonStories` for an example), giving it a
-///    `public static void addTo(StoryRegistry registry)` method that calls
-///    `registry.component("<React title>", XxxStories.class)` with exactly the React `title`,
-///    and `.story("<React export name>", ...)` for each story, so that the story ids match the
-///    React ones (they are checked by `TestReactStoryCoverage`).
-/// 2. Call it in [#addTo] on the line after the comment holding its React title, e.g.
+/// 1. Write the stories class in a sub-package of `stroom.gwt.workbench.client.screens` (see
+///    `widgets/buttons/ButtonStories` for an example), giving it a `public static void
+///    addTo(StoryRegistry registry)` method that calls `registry.component("<title>",
+///    XxxStories.class)` and `.story("<export name>", ...)` for each story. The title and export
+///    name make the story's id and URL (see `WRITING-STORIES.md`).
+/// 2. Call it in [#addTo] on the line after the comment holding its title, e.g.
 ///    ```
 ///    // Screens/SignIn/redirectUrl
 ///    XxxStories.addTo(registry);
 ///    ```
-///    There is a comment for every React component, so each porter edits a different line, which
-///    keeps merge conflicts to a minimum. Leave the comments in place.
-///
-/// The comments are the titles in `src/test/resources/react-stories.json`. A React component
-/// added since then can be added in its sidebar position, or before `return registry;`.
+///    or, for a new title, add a comment for it next to the related titles. Each title has its
+///    own line, so that parallel work rarely touches the same lines. Leave the comments in place.
 public final class ScreensStories {
 
     private ScreensStories() {

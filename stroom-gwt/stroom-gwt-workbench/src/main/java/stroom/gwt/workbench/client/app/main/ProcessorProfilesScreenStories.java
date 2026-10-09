@@ -37,19 +37,18 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/ProcessorProfilesScreen` in the React Storybook, showing Stroom's
-/// real [ProcessorProfilePresenter] (the 'Processor Profiles' tab, as `ProcessorProfilePlugin`
-/// opens it) with fake REST replies.
+/// Stories of `App/Main/ProcessorProfilesScreen`, showing Stroom's real [ProcessorProfilePresenter]
+/// (the 'Processor Profiles' tab, as `ProcessorProfilePlugin` opens it) with fake REST replies.
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `findProfiles` | `POST /processorProfile/v1/find` (a sequence: the list as it changes) |
-/// | `fetchById` | `GET /processorProfile/v1/fetchById/{id}` |
-/// | `create` | `GET /processorProfile/v1/fetchByName/{name}` (the name check), then `POST /processorProfile/v1` |
-/// | `update` | `GET /processorProfile/v1/fetchByName/{name}`, then `PUT /processorProfile/v1/{id}` |
-/// | `nodeGroups.findGroups` | `POST /node/nodeGroup/v2/find`, `GET /node/nodeGroup/v2/fetchByName/{name}` |
+/// | `POST /processorProfile/v1/find` (a sequence: the list as it changes) | the profiles |
+/// | `GET /processorProfile/v1/fetchById/{id}` | a profile |
+/// | `GET /processorProfile/v1/fetchByName/{name}` (the name check), then `POST /processorProfile/v1` | creating |
+/// | `GET /processorProfile/v1/fetchByName/{name}`, then `PUT /processorProfile/v1/{id}` | updating |
+/// | `POST /node/nodeGroup/v2/find`, `GET /node/nodeGroup/v2/fetchByName/{name}` | node groups |
 ///
-/// The recorder's checks become checks on the request spy.
+/// The requests are checked on the request spy.
 public final class ProcessorProfilesScreenStories {
 
     private static final String FIND_PATH = "/processorProfile/v1/find";
@@ -97,8 +96,7 @@ public final class ProcessorProfilesScreenStories {
             .build();
 
     // The period editor's caption.
-    // Differs from React: GWT's ProfilePeriodEditPresenter captions it 'Edit Period' (even for a new
-    // period), not 'Processing Schedule'
+    // ProfilePeriodEditPresenter captions it 'Edit Period' (even for a new period)
     private static final String PERIOD_CAPTION = "Edit Period";
 
     private ProcessorProfilesScreenStories() {
@@ -121,9 +119,8 @@ public final class ProcessorProfilesScreenStories {
                     final Play profile = screen.within(screen.findByText(
                             TextMatch.containing("Edit Processor Profile")).closest(StroomDom.DIALOG));
                     final Query periodRow = periodRow(play, profile);
-                    // Differs from React: p1 has no days, and GWT shows 'None' (ProfilePeriod's
-                    // constructor defaults null days to an empty Days, whose toString is 'None'), not
-                    // an empty cell
+                    // p1 has no days, and GWT shows 'None' (ProfilePeriod's constructor defaults null
+                    // days to an empty Days, whose toString is 'None')
                     play.expect(periodRow).toHaveTextContent(TextMatch.containing("None"));
                     play.expect(periodRow).not().toHaveTextContent(TextMatch.containing("00:00:00"));
                     // Add a period
@@ -134,7 +131,7 @@ public final class ProcessorProfilesScreenStories {
                     // Cluster Threads
                     play.click(period.getAllByRole("checkbox").nth(0));
                     play.click(period.getAllByRole("checkbox").nth(7));
-                    // Differs from React: GWT always shows the 'Max Node Threads' spinner
+                    // GWT always shows the 'Max Node Threads' spinner
                     period.findByText("Max Node Threads");
                     play.click(period.getByRole("button", StroomDom.button("OK")));
                     // The new period row shows the day range (a single contiguous day is 'Mon-Mon')
@@ -173,10 +170,10 @@ public final class ProcessorProfilesScreenStories {
                     final Play screen = play.screen();
                     play.findByText("Nightly");
                     // Create a new profile.
-                    // Differs from React: the 'New' button is an icon button titled 'New'
+                    // The 'New' button is an icon button titled 'New'
                     play.click(play.getByTitle("New"));
                     screen.findByText("Create Processor Profile");
-                    // Differs from React: the field's id is the FormGroup's identity, 'profileName'
+                    // The field's id is the FormGroup's identity, 'profileName'
                     final Query name = screen.querySelector("#profileName");
                     // It's seeded with "New Profile"
                     play.expect(name).toHaveValue("New Profile");
@@ -192,9 +189,9 @@ public final class ProcessorProfilesScreenStories {
                     play.dblClick(play.getByText("Nightly"));
                     screen.findByText(TextMatch.containing("Edit Processor Profile"));
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: GWT's ProcessorProfileEditPresenter closes an unchanged
-                    // profile without saving it (Objects.equals(updated, processorProfile)), so its
-                    // periods and time zone are kept by not being sent at all
+                    // ProcessorProfileEditPresenter closes an unchanged profile without saving it
+                    // (Objects.equals(updated, processorProfile)), so its periods and time zone are kept
+                    // by not being sent at all
                     play.waitFor(() -> play.expect(screen.queryByText(TextMatch.containing("Edit Processor Profile")))
                             .toBeNull());
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
@@ -204,7 +201,7 @@ public final class ProcessorProfilesScreenStories {
     }
 
     // The first period row of the profile editor's 'Processing Schedules' grid, once it shows.
-    // Differs from React: GWT's grid rows are <tr __gwt_row> elements, not '[data-row-index]'
+    // The grid's rows are <tr __gwt_row> elements
     private static Query periodRow(final Play play, final Play profile) {
         play.waitFor(() -> play.expect(profile.querySelectorAll(StroomDom.GRID_ROW).count()).toBe(1));
         return profile.querySelectorAll(StroomDom.GRID_ROW).nth(0);

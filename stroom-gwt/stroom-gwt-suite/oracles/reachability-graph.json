@@ -1,2930 +1,2512 @@
 {
  "generated": "2026-10-08T22:51:04.174Z",
- "source": "stroom-stroom-gwt-suite/tools/build-reachability-graph.mjs",
+ "source": "stroom-gwt-suite/tools/build-reachability-graph.mjs",
  "presenters": [
   {
    "name": "AboutPresenter",
    "area": "About",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "AboutPlugin"
   },
   {
    "name": "ActivityEditPresenter",
    "area": "Activity",
-   "status": "todo",
    "how": "config-gated (a door only when enabled)",
    "via": "stroom.ui.activity.enabled (opened from ManageActivityPresenter)"
   },
   {
    "name": "ActivityListPresenter",
    "area": "Activity",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ManageActivityPresenter"
   },
   {
    "name": "ManageActivityPresenter",
    "area": "Activity",
-   "status": "todo",
    "how": "config-gated (a door only when enabled)",
    "via": "stroom.ui.activity.enabled (NavigationPresenter: `activityConfig.isEnabled()` adds the activity button)"
   },
   {
    "name": "SplashPresenter",
    "area": "Activity",
-   "status": "todo",
    "how": "config-gated (a door only when enabled)",
    "via": "stroom.ui.splash.enabled (SplashPresenter.show: `splashConfig.isEnabled()`)"
   },
   {
    "name": "AiAttachmentDataPresenter",
    "area": "AI",
-   "status": "todo",
    "how": "dialog",
    "via": "AskStroomAiPresenter"
   },
   {
    "name": "AiChatHistoryPresenter",
    "area": "AI",
-   "status": "todo",
    "how": "dialog",
    "via": "AskStroomAiPresenter"
   },
   {
    "name": "AiChatHistoryResultListPresenter",
    "area": "AI",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AiChatHistoryPresenter"
   },
   {
    "name": "AiConfigGeneralPresenter",
    "area": "AI",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AskStroomAiConfigPresenter"
   },
   {
    "name": "AiConfigTableAnalysisPresenter",
    "area": "AI",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AskStroomAiConfigPresenter"
   },
   {
    "name": "AskStroomAiConfigPresenter",
    "area": "AI",
-   "status": "todo",
    "how": "dialog",
    "via": "AskStroomAiPresenter"
   },
   {
    "name": "AskStroomAiPresenter",
    "area": "AI",
-   "status": "todo",
    "how": "dialog",
    "via": "AskStroomAIGinjector, MainPresenter, MyDataGridAiSupport, QueryResultTablePresenter, TablePresenter"
   },
   {
    "name": "DownloadChatPresenter",
    "area": "AI",
-   "status": "todo",
    "how": "dialog",
    "via": "AskStroomAiPresenter"
   },
   {
    "name": "AbstractDuplicateManagementPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "AbstractNotificationListPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "AbstractNotificationPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "AbstractProcessingPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "AbstractQueryEditPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "AbstractSettingsPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "AnalyticDataShardListPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticDataShardsPresenter"
   },
   {
    "name": "AnalyticDataShardsPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticRulePresenter"
   },
   {
    "name": "AnalyticDuplicateManagementPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticRulePresenter"
   },
   {
    "name": "AnalyticEmailDestinationPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticNotificationEditPresenter"
   },
   {
    "name": "AnalyticNotificationEditPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "dialog",
    "via": "AbstractNotificationListPresenter"
   },
   {
    "name": "AnalyticNotificationListPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticNotificationPresenter"
   },
   {
    "name": "AnalyticNotificationPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticRulePresenter"
   },
   {
    "name": "AnalyticProcessingPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticRulePresenter"
   },
   {
    "name": "AnalyticQueryEditPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticRulePresenter"
   },
   {
    "name": "AnalyticRulePresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "AnalyticsPlugin"
   },
   {
    "name": "AnalyticSettingsPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticRulePresenter"
   },
   {
    "name": "AnalyticStreamDestinationPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticNotificationEditPresenter"
   },
   {
    "name": "BatchExecutionScheduleEditPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "dialog",
    "via": "ExecutionScheduleManager"
   },
   {
    "name": "DuplicateManagementListPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AbstractDuplicateManagementPresenter, AnalyticDuplicateManagementPresenter"
   },
   {
    "name": "ExecutionScheduleRunNowPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "dialog",
    "via": "ExecutionScheduleManager"
   },
   {
    "name": "ReportNotificationListPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ReportNotificationPresenter"
   },
   {
    "name": "ReportNotificationPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ReportPresenter"
   },
   {
    "name": "ReportPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ReportPlugin"
   },
   {
    "name": "ReportProcessingPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ReportPresenter"
   },
   {
    "name": "ReportQueryEditPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ReportPresenter"
   },
   {
    "name": "ReportSettingsPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ReportPresenter"
   },
   {
    "name": "ScheduledProcessEditPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "dialog",
    "via": "ExecutionScheduleManager, ScheduledProcessingPresenter"
   },
   {
    "name": "ScheduledProcessHistoryListPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ScheduledProcessingPresenter"
   },
   {
    "name": "ScheduledProcessListPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ScheduledProcessingPresenter"
   },
   {
    "name": "ScheduledProcessingPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AbstractProcessingPresenter, AnalyticProcessingPresenter, DataGenProcessingPresenter"
   },
   {
    "name": "StreamingProcessingPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AbstractProcessingPresenter, AnalyticProcessingPresenter, ReportProcessingPresenter"
   },
   {
    "name": "TableBuilderProcessingPresenter",
    "area": "Analytics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AbstractProcessingPresenter, AnalyticProcessingPresenter, ReportProcessingPresenter"
   },
   {
    "name": "AddEventLinkPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "dialog",
    "via": "LinkedEventPresenter"
   },
   {
    "name": "AnnotationEditPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnnotationPresenter"
   },
   {
    "name": "AnnotationLinkPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnnotationPresenter"
   },
   {
    "name": "AnnotationPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnnotationEditPresenter, AnnotationLinkPresenter, LinkedEventPresenter"
   },
   {
    "name": "AnnotationTagCreatePresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "dialog",
    "via": "AnnotationTagPresenter"
   },
   {
    "name": "AnnotationTagEditPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "dialog",
    "via": "AnnotationTagCreatePresenter, AnnotationTagPresenter"
   },
   {
    "name": "AnnotationTagListPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnnotationTagPresenter"
   },
   {
    "name": "AnnotationTagPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "AnnotationCollectionPlugin, AnnotationCommentPlugin, AnnotationLabelPlugin, AnnotationPlugin, AnnotationStatusPlugin"
   },
   {
    "name": "BrowseAnnotationPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "AnnotationBrowsePlugin"
   },
   {
    "name": "ChangeAssignedToPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "dialog",
    "via": "AnnotationManager"
   },
   {
    "name": "ChangeStatusPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "dialog",
    "via": "AnnotationManager"
   },
   {
    "name": "ChooserPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnnotationEditPresenter, ChangeStatusPresenter, MultiChooserPresenter"
   },
   {
    "name": "CommentEditPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "dialog",
    "via": "AnnotationEditPresenter"
   },
   {
    "name": "DurationPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "dialog",
    "via": "AnnotationEditPresenter"
   },
   {
    "name": "FindAnnotationListPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnnotationLinkPresenter, BrowseAnnotationPresenter, FindAnnotationPresenter"
   },
   {
    "name": "FindAnnotationPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "dialog",
    "via": "AnnotationLinkPresenter, AnnotationManager"
   },
   {
    "name": "LinkedEventPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnnotationPresenter"
   },
   {
    "name": "MultiChooserPresenter",
    "area": "Annotation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnnotationEditPresenter"
   },
   {
    "name": "S3ConfigPresenter",
    "area": "AWS / S3",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "S3ConfigPlugin"
   },
   {
    "name": "CacheListPresenter",
    "area": "Cache",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CachePresenter"
   },
   {
    "name": "CacheNodeListPresenter",
    "area": "Cache",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CachePresenter"
   },
   {
    "name": "CachePresenter",
    "area": "Cache",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "CacheMonitoringPlugin"
   },
   {
    "name": "ConfigPropertyClusterValuesListPresenter",
    "area": "Config / properties",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ConfigPropertyClusterValuesPresenter"
   },
   {
    "name": "ConfigPropertyClusterValuesPresenter",
    "area": "Config / properties",
-   "status": "todo",
    "how": "dialog",
    "via": "ManageGlobalPropertyEditPresenter"
   },
   {
    "name": "GlobalPropertyTabPresenter",
    "area": "Config / properties",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ManageGlobalPropertiesPlugin"
   },
   {
    "name": "ManageGlobalPropertyEditPresenter",
    "area": "Config / properties",
-   "status": "todo",
    "how": "dialog",
    "via": "GlobalPropertyTabPresenter"
   },
   {
    "name": "ManageGlobalPropertyListPresenter",
    "area": "Config / properties",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "GlobalPropertyTabPresenter"
   },
   {
    "name": "ContentTabPanePresenter",
    "area": "Content",
-   "status": "todo",
    "how": "not a door (by construction)",
    "via": "the content tab pane itself — application shell, revealed by the AppModule proxy, not opened"
   },
   {
    "name": "ContentTabPresenter",
    "area": "Content",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "ContentStoreContentPackDetailsPresenter",
    "area": "Content store",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ContentStorePresenter"
   },
   {
    "name": "ContentStoreContentPackListPresenter",
    "area": "Content store",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ContentStorePresenter"
   },
   {
    "name": "ContentStorePresenter",
    "area": "Content store",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ContentStorePlugin"
   },
   {
    "name": "AccessTokenSecretPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CredentialSettingsPresenter, SecretPresenter"
   },
   {
    "name": "CredentialEditPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "dialog",
    "via": "CredentialsListPresenter"
   },
   {
    "name": "CredentialSettingsPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CredentialEditPresenter"
   },
   {
    "name": "CredentialsListPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CredentialsManagerDialogPresenter, CredentialsPresenter"
   },
   {
    "name": "CredentialsManagerDialogPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "dialog",
    "via": "ContentStoreContentPackDetailsPresenter"
   },
   {
    "name": "CredentialsPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "CredentialsPlugin"
   },
   {
    "name": "KeyStoreSecretPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CredentialSettingsPresenter, SecretPresenter"
   },
   {
    "name": "SecretPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AccessTokenSecretPresenter, CredentialSettingsPresenter, KeyStoreSecretPresenter"
   },
   {
    "name": "SshKeySecretPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CredentialSettingsPresenter, SecretPresenter"
   },
   {
    "name": "UsernamePasswordSecretPresenter",
    "area": "Credentials",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CredentialSettingsPresenter, SecretPresenter"
   },
   {
    "name": "BasicEmbeddedQuerySettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "EmbeddedQuerySettingsPresenter"
   },
   {
    "name": "EmbeddedQueryPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "EmbeddedQueryPlugin"
   },
   {
    "name": "EmbeddedQuerySettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "EmbeddedQueryPresenter"
   },
   {
    "name": "BasicKeyValueInputSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "KeyValueInputSettingsPresenter"
   },
   {
    "name": "BasicListInputSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ListInputSettingsPresenter"
   },
   {
    "name": "BasicTableFilterSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TableFilterSettingsPresenter"
   },
   {
    "name": "BasicTextInputSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TextInputSettingsPresenter"
   },
   {
    "name": "ColumnSelectionPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "BasicTableFilterSettingsPresenter"
   },
   {
    "name": "KeyValueInputPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "KeyValueInputPlugin"
   },
   {
    "name": "KeyValueInputSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "KeyValueInputPresenter"
   },
   {
    "name": "ListInputPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ListInputPlugin"
   },
   {
    "name": "ListInputSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ListInputPresenter"
   },
   {
    "name": "MultiRulesPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "BasicTableFilterSettingsPresenter, TableFilterSettingsPresenter"
   },
   {
    "name": "TableFilterPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TableFilterPlugin"
   },
   {
    "name": "TableFilterSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TableFilterPresenter"
   },
   {
    "name": "TextInputPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TextInputPlugin"
   },
   {
    "name": "TextInputSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TextInputPresenter"
   },
   {
    "name": "AbstractComponentPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "AbstractRefreshableComponentPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "AbstractSettingsTabPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "BasicSettingsTabPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "BasicEmbeddedQuerySettingsPresenter, BasicKeyValueInputSettingsPresenter, BasicListInputSettingsPresenter"
   },
   {
    "name": "DashboardPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DashboardSuperPresenter, RenameTabPresenter"
   },
   {
    "name": "DashboardSuperPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DashboardPlugin"
   },
   {
    "name": "LayoutConstraintPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "DashboardPresenter"
   },
   {
    "name": "RenameTabPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "DashboardPresenter, TabManager"
   },
   {
    "name": "SettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "AbstractComponentPresenter"
   },
   {
    "name": "BasicQuerySettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "QuerySettingsPresenter"
   },
   {
    "name": "CurrentSelectionPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "DashboardPresenter"
   },
   {
    "name": "NamePresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "QueryFavouritesPresenter"
   },
   {
    "name": "ProcessorLimitsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "QueryPresenter"
   },
   {
    "name": "QueryFavouritesPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "QueryPresenter"
   },
   {
    "name": "QueryHistoryPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "QueryPresenter"
   },
   {
    "name": "QueryInfoPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "QueryInfo"
   },
   {
    "name": "QueryPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "QueryPlugin"
   },
   {
    "name": "QuerySettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "QueryPresenter"
   },
   {
    "name": "SelectionHandlerListPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SelectionHandlersPresenter"
   },
   {
    "name": "SelectionHandlerPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "SelectionHandlersPresenter"
   },
   {
    "name": "SelectionHandlersPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "EmbeddedQuerySettingsPresenter, QuerySettingsPresenter, TableSettingsPresenter"
   },
   {
    "name": "BasicTableSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TableSettingsPresenter"
   },
   {
    "name": "ColumnFilterPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "QueryResultTablePresenter, QueryTableColumnsManager, TableFilterPresenter"
   },
   {
    "name": "ColumnFunctionEditorPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "ColumnsManager, TablePresenter"
   },
   {
    "name": "ColumnValuesFilterPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "ColumnsManager, QueryResultTablePresenter, QueryTableColumnsManager, TableFilterPresenter, TablePresenter"
   },
   {
    "name": "DownloadPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "QueryResultTablePresenter, TablePresenter"
   },
   {
    "name": "FormatPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "ColumnsManager, QueryResultTablePresenter, QueryTableColumnsManager, TablePresenter"
   },
   {
    "name": "IncludeExcludeFilterDictionaryPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "IncludeExcludeFilterPresenter"
   },
   {
    "name": "IncludeExcludeFilterPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TableFilterPresenter"
   },
   {
    "name": "RenameColumnPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "ColumnsManager, TablePresenter"
   },
   {
    "name": "TableFilterPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TableFilterPlugin"
   },
   {
    "name": "TablePresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TablePlugin"
   },
   {
    "name": "TableSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TablePresenter"
   },
   {
    "name": "CustomRowStylePresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "RulePresenter"
   },
   {
    "name": "EditExpressionPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "DataRetentionImpactPresenter"
   },
   {
    "name": "RuleListPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "RulesPresenter"
   },
   {
    "name": "RulePresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "RulesPresenter"
   },
   {
    "name": "RulesPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "dialog",
    "via": "QueryTableColumnsManager"
   },
   {
    "name": "BasicTextSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TextSettingsPresenter"
   },
   {
    "name": "TextPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TextPlugin"
   },
   {
    "name": "TextSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TextPresenter"
   },
   {
    "name": "UnknownComponentPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "not a door (by construction)",
    "via": "fallback for a dashboard component whose type is not registered (Components.java: `componentRegistry.getComponent(type) == null`) — needs corrupt content"
   },
   {
    "name": "BasicVisSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "VisSettingsPresenter"
   },
   {
    "name": "VisPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "VisPlugin"
   },
   {
    "name": "VisSettingsPresenter",
    "area": "Dashboard",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "VisPresenter"
   },
   {
    "name": "AbstractMetaListPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "CharacterNavigatorPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SourcePresenter"
   },
   {
    "name": "CharacterRangeSelectionPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "CharacterNavigatorPresenter"
   },
   {
    "name": "DataPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DataPreviewTabPresenter, LinkedEventPresenter, MarkerListPresenter"
   },
   {
    "name": "DataPreviewTabPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DataPreviewTabPlugin"
   },
   {
    "name": "DataUploadPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "MetaPresenter"
   },
   {
    "name": "EditExpressionPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "DataRetentionImpactPresenter"
   },
   {
    "name": "ExpressionPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "ExecutionScheduleManager, MetaPresenter, ProcessorPresenter"
   },
   {
    "name": "ItemNavigatorPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DataPresenter"
   },
   {
    "name": "ItemSelectionPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "ItemNavigatorPresenter"
   },
   {
    "name": "MarkerListPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DataPresenter"
   },
   {
    "name": "MetaListPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "MetaPresenter"
   },
   {
    "name": "MetaPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DataUploadPresenter, FeedPresenter, FolderPresenter"
   },
   {
    "name": "MetaRelationListPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "MetaPresenter"
   },
   {
    "name": "ProcessChoicePresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "AbstractMetaListPresenter, MetaListPresenter, MetaRelationListPresenter, SteppingMetaListPresenter"
   },
   {
    "name": "ProcessorTaskListPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ProcessorTaskPresenter"
   },
   {
    "name": "ProcessorTaskPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ProcessorTaskPlugin"
   },
   {
    "name": "ProcessorTaskSummaryPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ProcessorTaskPresenter"
   },
   {
    "name": "SelectionSummaryPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "AbstractMetaListPresenter, MetaListPresenter, MetaRelationListPresenter, SteppingMetaListPresenter"
   },
   {
    "name": "SourcePresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SourceTabPresenter, SteppingPresenter"
   },
   {
    "name": "SourceTabPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "SourceTabPlugin"
   },
   {
    "name": "SteppingMetaListPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SteppingPresenter"
   },
   {
    "name": "TextPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TextPlugin"
   },
   {
    "name": "FsVolumeEditPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "FsVolumeGinjector, FsVolumeGroupEditPresenter"
   },
   {
    "name": "FsVolumeGroupEditPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "FsVolumeGroupPresenter"
   },
   {
    "name": "FsVolumeGroupListPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "FsVolumeGroupPresenter"
   },
   {
    "name": "FsVolumeGroupPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ManageFsVolumesPlugin"
   },
   {
    "name": "FsVolumeStatusListPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "FsVolumeGroupEditPresenter"
   },
   {
    "name": "NewFsVolumeGroupPresenter",
    "area": "Data / streams",
-   "status": "todo",
    "how": "dialog",
    "via": "FsVolumeGroupPresenter"
   },
   {
    "name": "DataGenPresenter",
    "area": "Data generation",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DataGenPlugin"
   },
   {
    "name": "DataGenProcessingPresenter",
    "area": "Data generation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DataGenPresenter"
   },
   {
    "name": "DataGenSettingsPresenter",
    "area": "Data generation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DataGenPresenter"
   },
   {
    "name": "DictionaryListPresenter",
    "area": "Dictionary",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DictionarySettingsPresenter"
   },
   {
    "name": "DictionaryPresenter",
    "area": "Dictionary",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DictionaryPlugin"
   },
   {
    "name": "DictionarySettingsPresenter",
    "area": "Dictionary",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DictionaryPresenter"
   },
   {
    "name": "DocRefListPresenter",
    "area": "Dictionary",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DictionaryListPresenter, IncludeExcludeFilterDictionaryPresenter"
   },
   {
    "name": "WordListPresenter",
    "area": "Dictionary",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DictionaryPresenter, DictionarySettingsPresenter"
   },
   {
    "name": "DocumentationPresenter",
    "area": "Documentation",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DocumentationPlugin"
   },
   {
    "name": "CopyDocumentPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager"
   },
   {
    "name": "CreateDocumentPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPlugin, DocumentPluginEventManager, ExplorerPopupPresenter, QueryDocEditPresenter"
   },
   {
    "name": "DocPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "DocTabPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "InfoDocumentPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager"
   },
   {
    "name": "LinkTabPanelPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "MarkdownEditPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticRulePresenter, AnnotationPresenter, DashboardSuperPresenter"
   },
   {
    "name": "MarkdownPreviewPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "MarkdownEditPresenter"
   },
   {
    "name": "MoveDocumentPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager"
   },
   {
    "name": "NameDocumentPresenter",
    "area": "Entity",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager"
   },
   {
    "name": "AbstractFindPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "DocSelectionBoxPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AbstractSettingsPresenter, AiConfigGeneralPresenter, AnalyticProcessingPresenter"
   },
   {
    "name": "DocumentListPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "BatchDocumentPermissionsPresenter"
   },
   {
    "name": "DocumentPermissionsListPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserPermissionReportPresenter"
   },
   {
    "name": "EntityCheckTreePresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ExportConfigPresenter"
   },
   {
    "name": "EntityTreePresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CopyDocumentPresenter, CreateDocumentPresenter, MoveDocumentPresenter"
   },
   {
    "name": "ExplorerNodeEditTagsPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager"
   },
   {
    "name": "ExplorerNodeRemoveTagsPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager"
   },
   {
    "name": "ExplorerPopupPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "dialog",
    "via": "DocSelectionBoxPresenter"
   },
   {
    "name": "FindDocResultListPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AbstractFindPresenter, FindPresenter, RecentItemsPresenter"
   },
   {
    "name": "FindInContentPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "dialog",
    "via": "AppGinjectorUser"
   },
   {
    "name": "FindPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager, NavigationPlugin"
   },
   {
    "name": "NavigationPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "place-based (session/navigation state)",
    "via": "GWTP proxy"
   },
   {
    "name": "RecentItemsPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager, NavigationPlugin"
   },
   {
    "name": "TabSessionChooserPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "UNKNOWN",
    "via": ""
   },
   {
    "name": "TypeFilterPresenter",
    "area": "Explorer",
-   "status": "todo",
    "how": "dialog",
    "via": "ExportConfigPresenter, NavigationPresenter"
   },
   {
    "name": "FeedPresenter",
    "area": "Feed",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "FeedPlugin"
   },
   {
    "name": "FeedSettingsPresenter",
    "area": "Feed",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "FeedPresenter"
   },
   {
    "name": "FolderPresenter",
    "area": "Folder",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "FolderPlugin"
   },
   {
    "name": "FolderRootPresenter",
    "area": "Folder",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "FolderPlugin, FolderRootPlugin"
   },
   {
    "name": "GitRepoCommitDialogPresenter",
    "area": "Git repository",
-   "status": "todo",
    "how": "dialog",
    "via": "GitRepoSettingsPresenter"
   },
   {
    "name": "GitRepoPresenter",
    "area": "Git repository",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "GitRepoPlugin"
   },
   {
    "name": "GitRepoSettingsPresenter",
    "area": "Git repository",
-   "status": "todo",
    "how": "dialog",
    "via": "GitRepoPresenter"
   },
   {
    "name": "HttpClientConfigPresenter",
    "area": "HTTP",
-   "status": "todo",
    "how": "dialog",
    "via": "GitRepoSettingsPresenter, OpenAIModelSettingsPresenter"
   },
   {
    "name": "HttpTlsConfigPresenter",
    "area": "HTTP",
-   "status": "todo",
    "how": "dialog",
    "via": "HttpClientConfigPresenter"
   },
   {
    "name": "DependenciesInfoPresenter",
    "area": "Import / Export",
-   "status": "todo",
    "how": "dialog",
    "via": "DependenciesPresenter, ImportExportConfigGinjector"
   },
   {
    "name": "DependenciesPresenter",
    "area": "Import / Export",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DependenciesTabPresenter"
   },
   {
    "name": "DependenciesTabPresenter",
    "area": "Import / Export",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DependenciesPlugin"
   },
   {
    "name": "ExportConfigPresenter",
    "area": "Import / Export",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager, ExportConfigPlugin"
   },
   {
    "name": "ImportConfigConfirmPresenter",
    "area": "Import / Export",
-   "status": "todo",
    "how": "dialog",
    "via": "ImportConfigPresenter, ImportExportConfigGinjector"
   },
   {
    "name": "ImportConfigPresenter",
    "area": "Import / Export",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentPluginEventManager, ImportConfigPlugin"
   },
   {
    "name": "DenseVectorFieldPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "IndexFieldEditPresenter"
   },
   {
    "name": "IndexFieldEditPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "dialog",
    "via": "IndexFieldListPresenter, IndexGinjector"
   },
   {
    "name": "IndexFieldListPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "IndexPresenter"
   },
   {
    "name": "IndexPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "IndexPlugin"
   },
   {
    "name": "IndexSettingsPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "IndexPresenter"
   },
   {
    "name": "IndexShardPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "IndexPresenter"
   },
   {
    "name": "IndexVolumeEditPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "dialog",
    "via": "IndexVolumeGroupEditPresenter"
   },
   {
    "name": "IndexVolumeGroupEditPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "dialog",
    "via": "IndexVolumeGroupPresenter"
   },
   {
    "name": "IndexVolumeGroupListPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "IndexVolumeGroupPresenter"
   },
   {
    "name": "IndexVolumeGroupPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ManageIndexVolumesPlugin"
   },
   {
    "name": "IndexVolumeStatusListPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "IndexVolumeGroupEditPresenter"
   },
   {
    "name": "NewIndexVolumeGroupPresenter",
    "area": "Index",
-   "status": "todo",
    "how": "dialog",
    "via": "IndexVolumeGroupPresenter"
   },
   {
    "name": "JobListPresenter",
    "area": "Jobs / scheduler",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "JobPresenter"
   },
   {
    "name": "JobNodeListPresenter",
    "area": "Jobs / scheduler",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "JobPresenter"
   },
   {
    "name": "JobPresenter",
    "area": "Jobs / scheduler",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "JobListPlugin"
   },
   {
    "name": "KafkaConfigPresenter",
    "area": "Kafka",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "KafkaConfigPlugin"
   },
   {
    "name": "MainPresenter",
    "area": "Main",
-   "status": "todo",
    "how": "place-based (session/navigation state)",
    "via": "GWTP proxy"
   },
   {
    "name": "DatabaseTablesMonitoringPresenter",
    "area": "Monitoring",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DatabaseTablesMonitoringPlugin"
   },
   {
    "name": "NewNodeGroupPresenter",
    "area": "Node / cluster",
-   "status": "todo",
    "how": "dialog",
    "via": "NodeGroupPresenter"
   },
   {
    "name": "NodeGroupEditPresenter",
    "area": "Node / cluster",
-   "status": "todo",
    "how": "dialog",
    "via": "NodeGroupPresenter"
   },
   {
    "name": "NodeGroupListPresenter",
    "area": "Node / cluster",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "NodeGroupPresenter"
   },
   {
    "name": "NodeGroupPresenter",
    "area": "Node / cluster",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "NodeGroupsPlugin"
   },
   {
    "name": "NodeGroupStateListPresenter",
    "area": "Node / cluster",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "NodeGroupEditPresenter"
   },
   {
    "name": "NodeJobListPresenter",
    "area": "Node / cluster",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "NodePresenter"
   },
   {
    "name": "NodePresenter",
    "area": "Node / cluster",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "NodeMonitoringPlugin"
   },
   {
    "name": "NodeStatusListPresenter",
    "area": "Node / cluster",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "NodePresenter"
   },
   {
    "name": "OpenAIModelPresenter",
    "area": "AI (OpenAI)",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "OpenAIModelPlugin"
   },
   {
    "name": "OpenAIModelSettingsPresenter",
    "area": "AI (OpenAI)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "OpenAIModelPresenter"
   },
   {
    "name": "ConstraintEditPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "dialog",
    "via": "ConstraintListPresenter"
   },
   {
    "name": "ConstraintListPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PathwayEditPresenter"
   },
   {
    "name": "PathwayEditPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "dialog",
    "via": "PathwayListPresenter"
   },
   {
    "name": "PathwayListPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PathwaysSplitPresenter"
   },
   {
    "name": "PathwayTreePresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PathwayEditPresenter, PathwaysSplitPresenter"
   },
   {
    "name": "PathwaysPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "PathwaysPlugin"
   },
   {
    "name": "PathwaysSettingsPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PathwaysPresenter"
   },
   {
    "name": "PathwaysSplitPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PathwaysPresenter"
   },
   {
    "name": "TracesListPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TracesListTabPresenter"
   },
   {
    "name": "TracesListTabPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TracesPresenter"
   },
   {
    "name": "TracesPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TracesDocPlugin, TracesPlugin"
   },
   {
    "name": "TracesSettingsPresenter",
    "area": "Pathways",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TracesPresenter"
   },
   {
    "name": "DocRefSelectionPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "PipelinePlugin"
   },
   {
    "name": "PipelinePresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "PipelinePlugin"
   },
   {
    "name": "TextConverterPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TextConverterPlugin"
   },
   {
    "name": "TextConverterSettingsPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TextConverterPresenter"
   },
   {
    "name": "XsltPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "XsltPlugin"
   },
   {
    "name": "ElementPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "dialog",
    "via": "SteppingPresenter"
   },
   {
    "name": "StepControlPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SteppingPresenter"
   },
   {
    "name": "StepLocationLinkPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SteppingPresenter"
   },
   {
    "name": "StepLocationPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "dialog",
    "via": "StepLocationLinkPresenter"
   },
   {
    "name": "SteppingFilterPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "dialog",
    "via": "PipelineGinjector, SteppingPresenter"
   },
   {
    "name": "SteppingPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PipelinePresenter"
   },
   {
    "name": "XPathFilterPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "dialog",
    "via": "SteppingFilterPresenter"
   },
   {
    "name": "XPathListPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SteppingFilterPresenter"
   },
   {
    "name": "NewElementPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "dialog",
    "via": "PipelineStructurePresenter"
   },
   {
    "name": "NewPipelineReferencePresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "dialog",
    "via": "PipelineReferenceListPresenter"
   },
   {
    "name": "NewPropertyPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "dialog",
    "via": "PropertyListPresenter"
   },
   {
    "name": "PipelineReferenceListPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PipelineStructurePresenter"
   },
   {
    "name": "PipelineStructurePresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PipelinePresenter"
   },
   {
    "name": "PipelineTreePresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PipelineStructurePresenter, SteppingPresenter"
   },
   {
    "name": "PropertyListPresenter",
    "area": "Pipeline",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "NewPropertyPresenter, PipelineStructurePresenter"
   },
   {
    "name": "AbstractPlanBSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "abstract base (not a door)",
    "via": ""
   },
   {
    "name": "HistogramSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PlanBSettingsPresenter"
   },
   {
    "name": "MetricSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PlanBSettingsPresenter"
   },
   {
    "name": "PlanBPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "PlanBPlugin"
   },
   {
    "name": "PlanBSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PlanBPresenter, TracesSettingsPresenter"
   },
   {
    "name": "RangeStateSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PlanBSettingsPresenter"
   },
   {
    "name": "SessionSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PlanBSettingsPresenter"
   },
   {
    "name": "StateSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PlanBSettingsPresenter"
   },
   {
    "name": "TemporalRangeStateSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PlanBSettingsPresenter"
   },
   {
    "name": "TemporalStateSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PlanBSettingsPresenter"
   },
   {
    "name": "TraceSettingsPresenter",
    "area": "State (Plan B)",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "PlanBSettingsPresenter"
   },
   {
    "name": "EditorPreferencesPresenter",
    "area": "Preferences",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserPreferencesPresenter"
   },
   {
    "name": "ThemePreferencesPresenter",
    "area": "Preferences",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserPreferencesPresenter"
   },
   {
    "name": "TimePreferencesPresenter",
    "area": "Preferences",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserPreferencesPresenter"
   },
   {
    "name": "UserPreferencesPresenter",
    "area": "Preferences",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "UserPreferencesPlugin"
   },
   {
    "name": "BatchProcessorFilterEditPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "dialog",
    "via": "ProcessorPresenter"
   },
   {
    "name": "EditFeedDependencyPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "dialog",
    "via": "FeedDependencyListPresenter"
   },
   {
    "name": "FeedDependencyListPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "FeedDependencyPresenter"
   },
   {
    "name": "FeedDependencyPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "dialog",
    "via": "ProcessorEditPresenter"
   },
   {
    "name": "ProcessorEditPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "dialog",
    "via": "ProcessorPresenter"
   },
   {
    "name": "ProcessorListPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ProcessorPresenter"
   },
   {
    "name": "ProcessorPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "FolderPresenter, FolderRootPresenter, PipelinePresenter"
   },
   {
    "name": "ProcessorProfileEditPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "dialog",
    "via": "ProcessorProfilePresenter"
   },
   {
    "name": "ProcessorProfileListPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ProcessorProfilePresenter"
   },
   {
    "name": "ProcessorProfilePresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ProcessorProfilePlugin"
   },
   {
    "name": "ProfilePeriodEditPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "dialog",
    "via": "ProfilePeriodListPresenter"
   },
   {
    "name": "ProfilePeriodListPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ProcessorProfileEditPresenter"
   },
   {
    "name": "ProcessorTaskPresenter",
    "area": "Processor",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ProcessorTaskPlugin"
   },
   {
    "name": "ExpressionTreePresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ContentTemplateTabPresenter, DataRetentionPolicyPresenter, EditExpressionPresenter"
   },
   {
    "name": "QueryDocEditPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "QueryDocPresenter"
   },
   {
    "name": "QueryDocPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "QueryPlugin"
   },
   {
    "name": "QueryEditPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AbstractQueryEditPresenter, AnalyticQueryEditPresenter, QueryDocEditPresenter"
   },
   {
    "name": "QueryHelpPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ColumnFunctionEditorPresenter, QueryEditPresenter"
   },
   {
    "name": "QueryResultTablePresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticDataShardsPresenter, EmbeddedQueryPresenter, QueryResultTableSplitPresenter"
   },
   {
    "name": "QueryResultTableSplitPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "QueryEditPresenter"
   },
   {
    "name": "QueryResultVisPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "EmbeddedQueryPresenter, QueryEditPresenter, QueryResultTablePresenter"
   },
   {
    "name": "QueryToolbarPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AnalyticDataShardsPresenter, DashboardPresenter, QueryEditPresenter"
   },
   {
    "name": "ResultStoreListPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ResultStorePresenter"
   },
   {
    "name": "ResultStorePresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ResultStorePlugin"
   },
   {
    "name": "ResultStoreSettingsPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "dialog",
    "via": "ResultStoreListPresenter"
   },
   {
    "name": "TextPresenter",
    "area": "Query / search",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TextPlugin"
   },
   {
    "name": "ContentTemplateEditPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "dialog",
    "via": "ContentTemplateTabPresenter"
   },
   {
    "name": "ContentTemplateListPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ContentTemplateTabPresenter"
   },
   {
    "name": "ContentTemplateTabPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ContentTemplatePlugin"
   },
   {
    "name": "DataRetentionImpactPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DataRetentionPresenter"
   },
   {
    "name": "DataRetentionPolicyListPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DataRetentionPolicyPresenter"
   },
   {
    "name": "DataRetentionPolicyPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DataRetentionPolicyListPresenter, DataRetentionPresenter"
   },
   {
    "name": "DataRetentionPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DataRetentionPlugin"
   },
   {
    "name": "DataRetentionRulePresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "dialog",
    "via": "DataRetentionPolicyPresenter"
   },
   {
    "name": "FieldEditPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "dialog",
    "via": "FieldListPresenter"
   },
   {
    "name": "FieldListPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "RuleSetPresenter, RuleSetSettingsPresenter"
   },
   {
    "name": "RulePresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "dialog",
    "via": "RulesPresenter"
   },
   {
    "name": "RuleSetListPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "RuleSetSettingsPresenter"
   },
   {
    "name": "RuleSetPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ReceiveDataRuleSetPlugin"
   },
   {
    "name": "RuleSetSettingsPresenter",
    "area": "Data receipt",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "RuleSetPresenter"
   },
   {
    "name": "ScriptDependencyListPresenter",
    "area": "Script",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ScriptSettingsPresenter"
   },
   {
    "name": "ScriptListPresenter",
    "area": "Script",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ScriptDependencyListPresenter"
   },
   {
    "name": "ScriptPresenter",
    "area": "Script",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ScriptPlugin"
   },
   {
    "name": "ScriptSettingsPresenter",
    "area": "Script",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ScriptPresenter"
   },
   {
    "name": "ElasticClusterPresenter",
    "area": "Search",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ElasticClusterPlugin"
   },
   {
    "name": "ElasticClusterSettingsPresenter",
    "area": "Search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ElasticClusterPresenter"
   },
   {
    "name": "ElasticIndexFieldListPresenter",
    "area": "Search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ElasticIndexPresenter"
   },
   {
    "name": "ElasticIndexPresenter",
    "area": "Search",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ElasticIndexPlugin"
   },
   {
    "name": "ElasticIndexSettingsPresenter",
    "area": "Search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ElasticIndexPresenter"
   },
   {
    "name": "SolrIndexFieldEditPresenter",
    "area": "Search",
-   "status": "todo",
    "how": "dialog",
    "via": "SolrIndexFieldListPresenter, SolrIndexGinjector"
   },
   {
    "name": "SolrIndexFieldListPresenter",
    "area": "Search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SolrIndexPresenter"
   },
   {
    "name": "SolrIndexPresenter",
    "area": "Search",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "SolrIndexPlugin"
   },
   {
    "name": "SolrIndexSettingsPresenter",
    "area": "Search",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SolrIndexPresenter"
   },
   {
    "name": "ApiKeysListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ApiKeysPresenter"
   },
   {
    "name": "ApiKeysPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ApiKeysPlugin"
   },
   {
    "name": "AppPermissionsEditPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AppPermissionsPresenter, UserTabPresenter"
   },
   {
    "name": "AppPermissionsPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "AppPermissionsPlugin, CacheMonitoringPlugin, ContentStorePlugin, ContentTemplatePlugin, CredentialsPlugin, DataRetentionPlugin, DatabaseTablesMonitoringPlugin, DependenciesPlugin, DocumentPermissionsPlugin"
   },
   {
    "name": "AppUserPermissionsListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AppPermissionsPresenter"
   },
   {
    "name": "BatchDocumentPermissionsEditPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "dialog",
    "via": "BatchDocumentPermissionsPresenter, UserPermissionReportPresenter"
   },
   {
    "name": "BatchDocumentPermissionsPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DocumentPermissionsPlugin, NodeMonitoringPlugin, ReceiveDataRuleSetPlugin"
   },
   {
    "name": "CreateExternalUserPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CreateUserPresenter"
   },
   {
    "name": "CreateMultipleUsersPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "CreateUserPresenter"
   },
   {
    "name": "CreateNewGroupPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "dialog",
    "via": "UserAndGroupHelper"
   },
   {
    "name": "CreateUserPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "dialog",
    "via": "UserAndGroupsPresenter, UsersPresenter"
   },
   {
    "name": "DocumentCreatePermissionsListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DocumentUserCreatePermissionsEditPresenter"
   },
   {
    "name": "DocumentUserCreatePermissionsEditPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentUserPermissionsEditPresenter"
   },
   {
    "name": "DocumentUserPermissionsEditPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "dialog",
    "via": "DocumentUserPermissionsPresenter, UserPermissionReportPresenter"
   },
   {
    "name": "DocumentUserPermissionsListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "DocumentUserPermissionsPresenter"
   },
   {
    "name": "DocumentUserPermissionsPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "DocumentPermissionsPlugin"
   },
   {
    "name": "EditApiKeyPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "dialog",
    "via": "ApiKeysPresenter"
   },
   {
    "name": "SigningKeyListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "SigningKeyPresenter"
   },
   {
    "name": "SigningKeyPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "SigningKeyPlugin"
   },
   {
    "name": "UserAccessListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserAccessPresenter"
   },
   {
    "name": "UserAccessPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "UserAccessPlugin"
   },
   {
    "name": "UserAndGroupsPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "UsersAndGroupsPlugin"
   },
   {
    "name": "UserDependenciesListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserTabPresenter"
   },
   {
    "name": "UserInfoPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserTabPresenter"
   },
   {
    "name": "UserListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserAndGroupsPresenter, UsersPresenter"
   },
   {
    "name": "UserPermissionReportPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "UserPermissionsReportPlugin"
   },
   {
    "name": "UserRefPopupPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "UserPermissionsReportPlugin"
   },
   {
    "name": "UserRefSelectionBoxPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "BatchDocumentPermissionsEditPresenter, BatchExecutionScheduleEditPresenter, BatchProcessorFilterEditPresenter"
   },
   {
    "name": "UserSessionsListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserAccessPresenter"
   },
   {
    "name": "UserTabPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "UserPlugin, UserTabPlugin"
   },
   {
    "name": "UsersPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "UsersPlugin"
   },
   {
    "name": "AccountsListPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "AccountsPresenter"
   },
   {
    "name": "AccountsPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "AccountsPlugin"
   },
   {
    "name": "AuthenticationErrorPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "place-based (session/navigation state)",
    "via": "GWTP proxy"
   },
   {
    "name": "ChangePasswordPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "dialog",
    "via": "ChangePasswordGinjector, CurrentPasswordPresenter, EditAccountPresenter, LoginPresenter, ResetPasswordPresenter"
   },
   {
    "name": "CurrentPasswordPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ChangePasswordPlugin"
   },
   {
    "name": "EditAccountPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "dialog",
    "via": "AccountsListPresenter"
   },
   {
    "name": "EmailResetPasswordPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "dialog",
    "via": "LoginPresenter"
   },
   {
    "name": "LoginPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "place-based (session/navigation state)",
    "via": "GWTP proxy"
   },
   {
    "name": "ResetPasswordPresenter",
    "area": "Security",
-   "status": "todo",
    "how": "place-based (session/navigation state)",
    "via": "GWTP proxy"
   },
   {
    "name": "TaskManagerListPresenter",
    "area": "Tasks",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "TaskManagerPresenter"
   },
   {
    "name": "TaskManagerPresenter",
    "area": "Tasks",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "TaskManagerPlugin"
   },
   {
    "name": "UserTaskManagerPresenter",
    "area": "Tasks",
-   "status": "todo",
    "how": "dialog",
    "via": "TaskGinjector"
   },
   {
    "name": "UserTaskPresenter",
    "area": "Tasks",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "UserTaskManagerPresenter"
   },
   {
    "name": "ViewPresenter",
    "area": "View",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "ViewPlugin"
   },
   {
    "name": "ViewSettingsPresenter",
    "area": "View",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "ViewPresenter"
   },
   {
    "name": "VisualisationAssetsAddItemDialogPresenter",
    "area": "Visualisation",
-   "status": "todo",
    "how": "dialog",
    "via": "VisualisationAssetsPresenter"
   },
   {
    "name": "VisualisationAssetsEditAssetDialogPresenter",
    "area": "Visualisation",
-   "status": "todo",
    "how": "dialog",
    "via": "VisualisationAssetsPresenter"
   },
   {
    "name": "VisualisationAssetsPresenter",
    "area": "Visualisation",
-   "status": "todo",
    "how": "dialog",
    "via": "VisualisationPresenter"
   },
   {
    "name": "VisualisationAssetsUploadFileDialogPresenter",
    "area": "Visualisation",
-   "status": "todo",
    "how": "dialog",
    "via": "VisualisationAssetsPresenter"
   },
   {
    "name": "VisualisationPresenter",
    "area": "Visualisation",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "VisualisationPlugin"
   },
   {
    "name": "VisualisationSettingsPresenter",
    "area": "Visualisation",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "VisualisationPresenter"
   },
   {
    "name": "WelcomePresenter",
    "area": "Welcome",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "AccountsPlugin, ApiKeysPlugin, AppPermissionsPlugin, WelcomePlugin"
   },
   {
    "name": "XMLSchemaPresenter",
    "area": "XML schema",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "XMLSchemaPlugin"
   },
   {
    "name": "XMLSchemaSettingsPresenter",
    "area": "XML schema",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "XMLSchemaPresenter"
   },
   {
    "name": "ContentPresenter",
    "area": "Gwt",
-   "status": "todo",
    "how": "UNKNOWN",
    "via": ""
   },
   {
    "name": "StatisticsCustomMaskListPresenter",
    "area": "Statistics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "StatisticsDataSourcePresenter, StatisticsFieldListPresenter"
   },
   {
    "name": "StatisticsDataSourcePresenter",
    "area": "Statistics",
-   "status": "todo",
    "how": "screen/dialog via plugin",
    "via": "StatisticsPlugin"
   },
   {
    "name": "StatisticsDataSourceSettingsPresenter",
    "area": "Statistics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "StatisticsDataSourcePresenter"
   },
   {
    "name": "StatisticsFieldEditPresenter",
    "area": "Statistics",
-   "status": "todo",
    "how": "dialog",
    "via": "StatisticsFieldListPresenter, StatisticsGinjector"
   },
   {
    "name": "StatisticsFieldListPresenter",
    "area": "Statistics",
-   "status": "todo",
    "how": "embedded panel (covered via parent)",
    "via": "StatisticsDataSourcePresenter"
   }

@@ -20,8 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/// The demo rows of the `Widgets/Data Grid/DataGrid` stories, the same as React's `demoRows()`
-/// and `NOTES`.
+/// The demo rows of the `Widgets/Data Grid/DataGrid` stories.
 final class DataGridRows {
 
     private static final String[] ROLES = {"Engineer", "Designer", "Product", "QA", "Manager"};
@@ -30,7 +29,7 @@ final class DataGridRows {
         // Static utility
     }
 
-    /// React's `demoRows()`: fifteen people.
+    /// Fifteen people.
     ///
     /// @return A new list of the people.
     static List<Person> people() {
@@ -52,7 +51,7 @@ final class DataGridRows {
                 new Person(15, "Olivia Martin", "Manager", 43, true)));
     }
 
-    /// React's generated rows: `Person 1` to `Person <count>`.
+    /// Generated rows: `Person 1` to `Person <count>`.
     ///
     /// @param count The number of people.
     /// @return A new list of the people.
@@ -68,7 +67,7 @@ final class DataGridRows {
         return people;
     }
 
-    /// React's `NOTES`: rows whose descriptions are long enough to wrap.
+    /// Rows whose descriptions are long enough to wrap.
     ///
     /// @return A new list of the notes.
     static List<Note> notes() {
@@ -132,7 +131,7 @@ final class DataGridRows {
             return active;
         }
 
-        /// @return `Yes` or `No`, as React's `Active` column shows it.
+        /// @return `Yes` or `No`, as the `Active` column shows it.
         String getActiveText() {
             return active
                     ? "Yes"

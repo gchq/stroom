@@ -32,13 +32,12 @@ import com.google.gwt.user.cellview.client.CellWidget;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [SvgCell], matching `Widgets/Cell Renderers/SvgCell` in the React
-/// Storybook. Each cell is a `CellWidget`, whose value is the cell's [Preset] (icon, title and
-/// enabled state). A clickable cell (`new SvgCell(true)`) reports a click by updating the value,
-/// which the `CellWidget` reports as a value change.
+/// Stories for Stroom's [SvgCell]. Each cell is a `CellWidget`, whose value is the cell's [Preset]
+/// (icon, title and enabled state). A clickable cell (`new SvgCell(true)`) reports a click by
+/// updating the value, which the `CellWidget` reports as a value change.
 public final class SvgCellStories {
 
-    // Arg names, the same as the React SvgCell's props
+    // Arg names
     private static final String ICON = "icon";
     private static final String TITLE = "title";
     private static final String ENABLED = "enabled";
@@ -59,7 +58,7 @@ public final class SvgCellStories {
                         .typeName("SvgImage"))
                 .argType(ArgType.text(TITLE).description("The icon's tooltip (GWT Preset's title)."))
                 .argType(ArgType.bool(ENABLED).description("GWT Preset's enabled state.").defaultSummary("true"))
-                // React's onClick is only given by ClickableIcons; a cell from the args is a static icon
+                // Only ClickableIcons has clickable cells; a cell from the args is a static icon
                 // (new SvgCell(false)), as GWT decides whether a cell is a button when it is created
                 .args(Args.of(ICON, "INFO"))
                 // Clickable icons: info and delete fire; copy is disabled
@@ -82,7 +81,7 @@ public final class SvgCellStories {
         final Args args = context.getArgs();
         final SvgImage icon = StoryArgs.toSvgImage(args.getString(ICON));
         if (icon == null) {
-            // As React's SvgCell with no icon, which renders nothing
+            // No icon: render nothing
             return new InlineLabel();
         }
         final Preset preset = new Preset(icon,

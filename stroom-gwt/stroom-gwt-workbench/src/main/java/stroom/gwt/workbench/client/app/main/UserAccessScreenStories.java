@@ -38,20 +38,20 @@ import stroom.security.shared.AppPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/UserAccessScreen` in the React Storybook, showing Stroom's real
-/// [UserAccessPresenter] (the 'User Access' tab: users with sessions or tokens above, the selected
-/// user's sessions below) with fake REST replies.
+/// Stories of `App/Main/UserAccessScreen`, showing Stroom's real [UserAccessPresenter] (the 'User
+/// Access' tab: users with sessions or tokens above, the selected user's sessions below) with fake
+/// REST replies.
 ///
-/// | React seam | Stroom REST endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `find` | `POST /userAccess/v1/find` |
-/// | `listSessions` | `POST /userAccess/v1/sessions?subjectId=...` |
-/// | `revoke` | `POST /userAccess/v1/revoke?subjectId=...` |
-/// | `terminateSession` | `POST /session/v1/terminateSession?sessionHandle=...&nodeName=...` |
-/// | React's internal/external IdP UI config | the extended UI config's `externalIdentityProvider` |
+/// | `POST /userAccess/v1/find` | the users |
+/// | `POST /userAccess/v1/sessions?subjectId=...` | a user's sessions |
+/// | `POST /userAccess/v1/revoke?subjectId=...` | revoking a user's access |
+/// | `POST /session/v1/terminateSession?sessionHandle=...&nodeName=...` | terminating a session |
+/// | the extended UI config's `externalIdentityProvider` | an internal or external IdP |
 ///
-/// React's recorder of the calls becomes checks on the request spy, and `openScreen` a spy on
-/// Stroom's `OpenUserEvent`. The user holds `MANAGE_USERS_PERMISSION`, as React's fixture.
+/// The calls are checked on the request spy, and the `openScreen` spy records Stroom's
+/// `OpenUserEvent`. The user holds `MANAGE_USERS_PERMISSION`.
 /// Confirmations are Stroom's real dialogs. The presenter comes from GIN and is opened as
 /// `UserAccessPlugin` opens it (refreshed).
 public final class UserAccessScreenStories {
@@ -113,7 +113,7 @@ public final class UserAccessScreenStories {
                     // No column is sortable
                     play.expect(play.querySelectorAll("." + StroomDom.SORTABLE_HEADER)).toHaveLength(0);
                     // The dates carry a relative suffix (formatWithDuration).
-                    // Differs from React: Moment.js says 'in 3 years', not '3 years from now'
+                    // Moment.js says e.g. 'in 3 years' or '2 days ago'
                     play.expect(users.getAllByText(TextMatch.regex("\\((.* ago|in .*)\\)$")).count())
                             .toBeGreaterThan(1);
                     SecurityPlays.expectNoProblems(play);
@@ -136,10 +136,9 @@ public final class UserAccessScreenStories {
                 .story("SelectionDrivesTheSessionList", context -> render(context, false))
                 .withPlay(play -> {
                     play.findByText("Alice Smith");
-                    // Differs from React: GWT selects the first user when the list loads
-                    // (UserAccessListPresenter.changeData), so Alice's sessions are shown at once rather
-                    // than an empty list; and GWT has no 'Sessions for Alice Smith' heading. The sessions
-                    // are fetched for the selected subject
+                    // GWT selects the first user when the list loads
+                    // (UserAccessListPresenter.changeData), so Alice's sessions are shown at once. The
+                    // sessions are fetched for the selected subject
                     play.expect(play.within(play.getByText("Alice Smith").closest("tr")).getByText("alice"))
                             .toBeInTheDocument();
                     play.expect(play.getByText("Alice Smith").closest("tr")).toHaveClass(StroomDom.SELECTED_ROW);
@@ -160,9 +159,8 @@ public final class UserAccessScreenStories {
                     play.findByText("Alice Smith");
                     final Query revoke = play.getByRole("button", TextMatch.containing(REVOKE_TITLE));
                     final Query openUser = play.getByRole("button", OPEN_USER_TITLE);
-                    // Differs from React: GWT selects the first user when the list loads, so both
-                    // buttons start live; with the selection cleared (a ctrl-click on the selected
-                    // row) they go dead
+                    // GWT selects the first user when the list loads, so both buttons start live; with
+                    // the selection cleared (a ctrl-click on the selected row) they go dead
                     play.expect(revoke).not().toHaveClass("disabled");
                     play.fireEvent().mouseDown(play.getByText("Alice Smith"), EventInit.create().ctrlKey());
                     play.waitFor(() -> play.expect(usersGrid(play).querySelectorAll("." + StroomDom.SELECTED_ROW))
@@ -234,7 +232,7 @@ public final class UserAccessScreenStories {
                 .story("FilterIsServerSide", context -> render(context, false))
                 .withPlay(play -> {
                     play.findByText("Alice Smith");
-                    // Differs from React: the quick filter has no 'Filter' label, only a placeholder
+                    // The quick filter has no label, only a placeholder
                     play.type(play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER), "ali");
                     play.waitFor(3000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/userAccess/v1/find")
@@ -244,8 +242,7 @@ public final class UserAccessScreenStories {
                 });
     }
 
-    /// Differs from React: GWT's grids have no role="grid", so each is found as the pager view
-    /// holding its toolbar button.
+    /// GWT's grids have no role="grid", so each is found as the pager view holding its toolbar button.
     ///
     /// @return The users grid (with its toolbar and pager).
     private static Play usersGrid(final Play play) {

@@ -39,16 +39,15 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Stories for Stroom's [SelectionBox], matching `Widgets/Selectors/SelectionBox` in the React
-/// Storybook: a read only box that opens a list of items (Stroom's `SelectionPopup`), with a
-/// quick filter over 10 items and a pager over 100.
+/// Stories for Stroom's [SelectionBox]: a read only box that opens a list of items (Stroom's
+/// `SelectionPopup`), with a quick filter over 10 items and a pager over 100.
 public final class SelectionBoxStories {
 
     private static final String ON_CHANGE = "onChange";
     private static final String ON_WINDOW_ESCAPE = "onWindowEscape";
-    // Differs from React: the render box (which paints the value) is covered by the box's
-    // transparent text box, which takes the clicks (as it does for a user) and opens the popup;
-    // the render box has no click handler of its own
+    // The render box (which paints the value) is covered by the box's transparent text box, which
+    // takes the clicks (as it does for a user) and opens the popup; the render box has no click
+    // handler of its own
     private static final String OPENER = ".SelectionBox-textBox";
     private static final String POPUP = ".SelectionPopup";
     private static final int KEY_F9 = 120;
@@ -121,7 +120,7 @@ public final class SelectionBoxStories {
                 })
                 .withPlay(play -> {
                     play.click(play.querySelector(OPENER));
-                    // Differs from React: Stroom's popup is on the page's body, not in the canvas
+                    // Stroom's popup is on the page's body, not in the canvas
                     play.waitFor(() -> play.expect(play.screen().querySelector(".selectionList .pager")).toBeVisible());
                     play.expect(play.screen().querySelector(".selectionList-quickFilter .quickFilter-textBox"))
                             .not().toBeNull();
@@ -212,7 +211,7 @@ public final class SelectionBoxStories {
         return box;
     }
 
-    /// The React stories' `<div style={{minWidth: 220}}>` with a `Selected: ...` echo below.
+    /// The box, at least 220px wide, with a `Selected: ...` echo below.
     private static Widget withEcho(final SelectionBox<String> box) {
         final HTML echo = new HTML();
         echo.getElement().getStyle().setProperty("marginTop", "8px");
@@ -234,8 +233,7 @@ public final class SelectionBoxStories {
         return panel;
     }
 
-    /// Records every key pressed that reaches the window, as the React play's
-    /// `window.addEventListener('keydown', onWindowEscape)`.
+    /// Records every key pressed that reaches the window, with a `keydown` listener on it.
     private static native JavaScriptObject addWindowKeyDownListener(Spy spy) /*-{
         var listener = function (event) {
             @stroom.gwt.workbench.client.widgets.selectors.SelectionBoxStories::onWindowKeyDown(*)(spy, event.key);

@@ -33,14 +33,14 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/FindInContentDialog` in the React Storybook, showing Stroom's real
-/// [FindInContentPresenter] (the 'Find In Content' dialog: a pattern box with match case and regex
-/// toggles over a result list and a highlighted preview) with fake REST replies.
+/// Stories of `App/Main/FindInContentDialog`, showing Stroom's real [FindInContentPresenter] (the
+/// 'Find In Content' dialog: a pattern box with match case and regex toggles over a result list and
+/// a highlighted preview) with fake REST replies.
 ///
-/// The React story's `findInContent` seam becomes `POST /explorer/v2/findInContent` and
-/// `fetchHighlights` becomes `POST /explorer/v2/fetchHighlights` (one reply per document, routed by
-/// the request's document). The dialog is shown by firing `ShowFindInContentEvent`, with the
-/// presenter (from GIN) as its handler in place of its GWTP proxy.
+/// The stories answer `POST /explorer/v2/findInContent` and `POST /explorer/v2/fetchHighlights`
+/// (one reply per document, routed by the request's document). The dialog is shown by firing
+/// `ShowFindInContentEvent`, with the presenter (from GIN) as its handler in place of its GWTP
+/// proxy.
 public final class FindInContentDialogStories {
 
     private static final String FIND_IN_CONTENT_PATH = "/explorer/v2/findInContent";
@@ -96,7 +96,7 @@ public final class FindInContentDialogStories {
                     final Play screen = play.screen();
                     play.expect(screen.findByText("Find In Content")).toBeInTheDocument();
                     // Type a pattern: the matching documents appear (debounced 750ms).
-                    // Differs from React: GWT's pattern box is a text area with no label
+                    // GWT's pattern box is a text area with no label
                     play.type(screen.querySelector(".FindViewImpl-top textarea"), "events");
                     play.waitFor(4000, () -> play.expect(screen.getByText("Events Pipeline")).toBeInTheDocument());
                     play.expect(screen.getByText("Events Dictionary")).toBeInTheDocument();
@@ -109,7 +109,7 @@ public final class FindInContentDialogStories {
                     play.waitFor(4000, () -> play.expect(screen.getByText(TextMatch.containing("PIPELINEPREVIEW")))
                             .toBeInTheDocument());
                     // Match case and Regex toggles are present.
-                    // Differs from React: GWT's toggles are InlineSvgToggleButtons, divs titled with
+                    // GWT's toggles are InlineSvgToggleButtons, divs titled with
                     // their names rather than buttons
                     play.expect(screen.getByTitle("Match case")).toBeInTheDocument();
                     play.expect(screen.getByTitle("Regex")).toBeInTheDocument();

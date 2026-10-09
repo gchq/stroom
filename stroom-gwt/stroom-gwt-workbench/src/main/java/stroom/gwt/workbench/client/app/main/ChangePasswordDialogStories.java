@@ -40,22 +40,21 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.EnumSet;
 
-/// Stories matching `App/Main/ChangePasswordDialog` in the React Storybook, showing Stroom's real
-/// [CurrentPasswordPresenter] ('Enter Your Current Password', then the 'Change Password' dialog
-/// and the offer to sign out of the other sessions) with fake REST replies.
+/// Stories of `App/Main/ChangePasswordDialog`, showing Stroom's real [CurrentPasswordPresenter]
+/// ('Enter Your Current Password', then the 'Change Password' dialog and the offer to sign out of
+/// the other sessions) with fake REST replies.
 ///
-/// | React seam | Stroom REST endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `confirmPassword` | `POST /authentication/v1/confirmPassword` |
-/// | `fetchPasswordPolicy` | `GET /authentication/v1/fetchPasswordPolicy` |
-/// | `changePassword` | `POST /authentication/v1/changePassword` |
-/// | `terminateOtherSessions` | `POST /session/v1/terminateOther` (its recorder: the request spy) |
+/// | `POST /authentication/v1/confirmPassword` | confirming the current password |
+/// | `GET /authentication/v1/fetchPasswordPolicy` | the password policy |
+/// | `POST /authentication/v1/changePassword` | changing the password |
+/// | `POST /session/v1/terminateOther` (the request spy) | ending the user's other sessions |
 ///
 /// It is shown as the user menu's 'Change Password' item (`ChangePasswordPlugin`) shows it. The
 /// presenter is created with `new`, with Stroom's `CurrentUser` holding the `admin` user: it needs
 /// that class rather than the harness's `ClientSecurityContext`, and GIN can't create its graph
-/// (the splash screen and the current activity) here. The dialogs are Stroom's popups, so React's
-/// `OfferHarness` (which closes the dialog for real) needs no GWT equivalent.
+/// (the splash screen and the current activity) here.
 public final class ChangePasswordDialogStories {
 
     private static final String POLICY = """

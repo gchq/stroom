@@ -29,9 +29,9 @@ import { join } from 'node:path';
 /**
  * Commit -> position in history, newest first. A larger index is older.
  *
- * The walker was written in another repository (stroom-ui-react/gwt-suite), whose history is kept in
- * walker-history.txt, and every rule below names one of its commits. This repository's history comes
- * first: anything walked here is newer than every rule written there.
+ * The walker was written before it moved to this repository; the commits from that time are kept in
+ * walker-history.txt, and every rule below names one of them. This repository's history comes first:
+ * anything walked here is newer than every rule written before the move.
  */
 const order = (() => {
   let here = [];

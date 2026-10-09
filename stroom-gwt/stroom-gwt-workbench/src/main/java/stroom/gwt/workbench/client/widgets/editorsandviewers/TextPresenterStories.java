@@ -32,11 +32,10 @@ import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import java.util.Collections;
 
 /// Stories for Stroom's data [TextPresenter] (`stroom.data.client`, the editor that shows stream
-/// data, with its stepping button), matching `Widgets/Editors & Viewers/TextPresenter` in the
-/// React Storybook.
+/// data, with its stepping button).
 public final class TextPresenterStories {
 
-    // Spy names, the same as the React TextPresenter's props
+    // Spy names
     private static final String ON_CHANGE = AceEditorStories.ON_CHANGE;
     private static final String ON_CLEAR = "onClear";
     private static final String ON_BEGIN_STEPPING = "onBeginStepping";
@@ -95,13 +94,12 @@ public final class TextPresenterStories {
         final Spy onChange = context.fn(ON_CHANGE);
         // The editor's change events have no value (Editor fires them with null), so read the text
         presenter.addValueChangeHandler(event -> onChange.call(presenter.getText()));
-        // React's uiHandlers prop.
-        // Differs from React: beginStepping is recorded by a spy rather than calling window.alert
+        // The UI handlers' calls are recorded by spies
         presenter.setUiHandlers(new SpyTextUiHandlers(context.fn(ON_CLEAR), context.fn(ON_BEGIN_STEPPING)));
         return presenter;
     }
 
-    /// React's `showLineNumbers`. The data TextPresenter hides line numbers (and makes the option
+    /// Shows line numbers. The data TextPresenter hides line numbers (and makes the option
     /// unavailable) as Stroom formats the data it shows.
     private static void showLineNumbers(final TextPresenter presenter) {
         presenter.getLineNumbersOption().setAvailable(true);
@@ -116,7 +114,7 @@ public final class TextPresenterStories {
     // --------------------------------------------------------------------------------
 
 
-    /// Records the presenter's UI handler calls (React's `uiHandlers` prop) with spies.
+    /// Records the presenter's UI handler calls with spies.
     private static class SpyTextUiHandlers implements TextUiHandlers {
 
         private final Spy onClear;

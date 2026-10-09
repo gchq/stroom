@@ -61,28 +61,28 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-/// Stories matching `App/Editors/QueryEditor` in the React Storybook, showing Stroom's real
-/// `QueryDocPresenter` (a Query's editor tab: Query, Documentation and Permissions, the Query tab
-/// being the query help, the StroomQL editor and the results table) with fake REST replies.
+/// The `App/Editors/QueryEditor` stories, showing Stroom's real `QueryDocPresenter` (a Query's
+/// editor tab: Query, Documentation and Permissions, the Query tab being the query help, the
+/// StroomQL editor and the results table) with fake REST replies.
 ///
 /// As `QueryPlugin` does, the story fetches the document (`GET /query/v1/{uuid}`), checks the user
-/// may edit it and reads it into the editor. React's `QueryApi` seams are Stroom's endpoints:
+/// may edit it and reads it into the editor. The other routes:
 ///
-/// | React                            | Stroom                                                |
-/// |----------------------------------|-------------------------------------------------------|
-/// | `search`                         | `POST /query/v1/search/{node}`, polled to completion  |
-/// | `fetchHelpItems` / `fetchDetail` | `POST /query/v1/helpItems` / `fetchDetail`            |
-/// | `fetchDataSourceFromQueryString` | `POST /query/v1/fetchDataSourceFromQueryString`       |
-/// | `fetchTimeZones`                 | `GET /query/v1/fetchTimeZones`                        |
-/// | `downloadSearchResults`          | `POST /query/v1/downloadSearchResults/{node}`         |
-/// | `columnValues`                   | `POST /query/v1/columnValues/{node}`                  |
-/// | `destroy` / `terminate`          | `POST /resultStore/v1/destroy` / `terminate/{node}`   |
-/// | `loadSource`                     | `POST /data/v1/fetch`                                 |
-/// | `docPermission`                  | the Permissions tab's `fetchDocumentUserPermissions`  |
+/// | Stroom endpoint                                       | Used for                        |
+/// |-------------------------------------------------------|---------------------------------|
+/// | `POST /query/v1/search/{node}`, polled to completion  | a search                        |
+/// | `POST /query/v1/helpItems` / `fetchDetail`            | the query help                  |
+/// | `POST /query/v1/fetchDataSourceFromQueryString`       | the query's data source         |
+/// | `GET /query/v1/fetchTimeZones`                        | the time zones                  |
+/// | `POST /query/v1/downloadSearchResults/{node}`         | Download                        |
+/// | `POST /query/v1/columnValues/{node}`                  | a column's values filter        |
+/// | `POST /result-store/v1/destroy/{node}`, `terminate`   | ending a search                 |
+/// | `POST /data/v1/fetch`                                 | a row's source                  |
+/// | the Permissions tab's `fetchDocumentUserPermissions`  | the Permissions tab             |
 ///
 /// Stroom also asks for the user's current activity (`GET /activity/v1/current`) before each
-/// search. React's recorders (`columnSearchRequests`, `sourceRequests`, ...) are checks of the
-/// requests the screen made (`REQUEST_SPY`). The shared search fixtures are in [QueryFixtures].
+/// search. The plays check the requests the screen made (`REQUEST_SPY`). The shared search
+/// fixtures are in [QueryFixtures].
 public final class QueryEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(QueryDoc.TYPE, "query-1", "My Query");
@@ -99,8 +99,7 @@ public final class QueryEditorStories {
     // FindAnnotationPresenter's warning for OK with no annotation selected
     private static final String NOTHING_SELECTED = "No annotation has been selected";
 
-    // React's TABLE_RESPONSE: one table result with four columns and two rows, the second
-    // annotated
+    // One table result with four columns and two rows, the second annotated
     static final String TABLE = QueryFixtures.tableResult("table", """
                     [{"id": "f-name", "name": "Name", "visible": true},
                      {"id": "f-count", "name": "Count", "format": {"type": "NUMBER"}, "visible": true},
@@ -112,12 +111,12 @@ public final class QueryEditorStories {
 
     private static final String COMPLETE = QueryFixtures.response(true, TABLE);
 
-    // React's fetchHelpItems: two titles at the root, each with one child
+    // The help items: two titles at the root, each with one child
     private static final String HELP_ROOT = QueryFixtures.helpItems(
             QueryFixtures.helpRow("TITLE", "functions", "Functions", true),
             QueryFixtures.helpRow("TITLE", "fields", "Fields", true));
 
-    // FetchDataResult of React's loadSourceFixture
+    // The FetchDataResult of a row's source
     private static final String SOURCE_RESULT = """
             {"type": "FetchDataResult", "feedName": "TEST_FEED", "streamTypeName": "Events",
               "sourceLocation": {"metaId": 1001, "partIndex": 0, "recordIndex": 4},
@@ -127,7 +126,7 @@ public final class QueryEditorStories {
 
     private static final RestFixtures FIXTURES = fixtures(RestFixtures.builder(), RestReply.json(COMPLETE));
 
-    // AskAiButton: the chat's requests as well (React's askAiApiFixture)
+    // AskAiButton: the chat's requests as well
     private static final RestFixtures ASK_AI_FIXTURES = fixtures(AiFixtures.chatRoutes(RestFixtures.builder()),
             RestReply.json(COMPLETE));
 
@@ -201,7 +200,7 @@ public final class QueryEditorStories {
     private static final BiConsumer<ScreenHarness, QueryScreenGinjector> NO_SETUP = (harness, injector) -> {
     };
 
-    // React's appApiFixture.fetchUiConfig: the analytic rule and report defaults
+    // The UI config's analytic rule and report defaults
     private static final String CREATE_UI_CONFIG = QueryFixtures.uiConfigWith("""
             "analyticUiDefaultConfig": {
               "defaultErrorFeed": {"type": "Feed", "uuid": "feed-err", "name": "ERROR_FEED"},
@@ -236,8 +235,8 @@ public final class QueryEditorStories {
     private static final RestFixtures CREATE_GROUP_BY_FIXTURES = fixtures(createRoutes(true),
             RestReply.json(COMPLETE));
 
-    // The annotation endpoints: React's annotationTagFixture statuses, its batchChange and
-    // addToAnnotationApi's existing annotation
+    // The annotation endpoints: the annotation statuses, the batch change and an existing
+    // annotation to add to
     private static RestFixtures.Builder annotationRoutes(final RestFixtures.Builder builder) {
         return builder
                 .post(FIND_TAGS_PATH, RestReply.json("""
@@ -326,8 +325,8 @@ public final class QueryEditorStories {
                     play.expect(play.findByRole("button", "Execute Query")).toBeInTheDocument();
                     play.expect(play.getByRole("button", "Create Rule")).toBeInTheDocument();
                     play.expect(play.getByText("All time")).toBeInTheDocument();
-                    // Differs from React: GWT shows an empty table, with no 'Run a query to see
-                    // results' message, so the check is that it has no rows
+                    // Stroom shows an empty table, with no message, so the check is that it has no
+                    // rows
                     play.expect(play.queryByText("alpha")).toBeNull();
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
                     DocumentEditors.expectNoProblems(play);
@@ -351,7 +350,7 @@ public final class QueryEditorStories {
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY))
                             .toHaveBeenCalledWith(QueryFixtures.SEARCH.toSpyMatcher()));
                     play.click(play.querySelector(".timeRange-selector"));
-                    // Differs from React: the popup is a GWT PopupPanel on the page's body
+                    // The popup is a GWT PopupPanel on the page's body
                     play.waitFor(() -> play.expect(screen.querySelector(".timeRange-popup")).toBeInTheDocument());
                     final Play popup = screen.within(screen.querySelector(".timeRange-popup"));
                     play.click(popup.getByText("Today"));
@@ -363,15 +362,14 @@ public final class QueryEditorStories {
                 // selecting a row shows its documentation and enables Insert
                 .story("QueryHelp", context -> render(context, FIXTURES))
                 .withPlay(play -> {
-                    // Differs from React: the help rows are grid cells, not buttons
+                    // The help rows are grid cells, not buttons
                     play.waitFor(() -> play.expect(play.getByText("Functions", HELP_ITEM)).toBeInTheDocument());
                     play.expect(play.getByText("Fields", HELP_ITEM)).toBeInTheDocument();
                     play.click(play.getByText("Functions", HELP_ITEM));
                     play.waitFor(() -> play.expect(play.getByText("count", HELP_ITEM)).toBeInTheDocument());
                     play.click(play.getByText("count", HELP_ITEM));
                     play.waitFor(() -> play.expect(play.getByRole("button", "Insert")).not().toHaveClass("disabled"));
-                    // Differs from React: the documentation is shown in an iframe, so the check is
-                    // that it was fetched
+                    // The documentation is shown in an iframe, so the check is that it was fetched
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/query/v1/fetchDetail")
                                     .withJsonBodyContaining("{\"title\": \"count\"}").toSpyMatcher());
@@ -383,8 +381,8 @@ public final class QueryEditorStories {
                     play.click(play.findByText("Fields", HELP_ITEM));
                     play.waitFor(() -> play.expect(play.getByText("field_0", HELP_ITEM)).toBeInTheDocument());
                     play.expect(play.getByText("field_99", HELP_ITEM)).toBeInTheDocument();
-                    // Differs from React: GWT pages the level with its pager ('1 to 100 of 105'),
-                    // replacing the page, rather than appending with 'Show more…'
+                    // Stroom pages the level with its pager ('1 to 100 of 105'), replacing the page; there
+                    // is no 'Show more' to append rows
                     play.expect(play.queryByText(TextMatch.startingWith("Show more"))).toBeNull();
                     play.expect(play.querySelectorAll(".pager-paging").nth(0).textContent())
                             .toSatisfy("shows '1 to 100 of 105'", text ->
@@ -423,7 +421,7 @@ public final class QueryEditorStories {
                     execute(play);
                     play.findByText("alpha");
                     play.click(play.getByRole("button", "Download"));
-                    // Differs from React: Stroom's dialogs have no role="dialog"
+                    // Stroom's dialogs have no role="dialog"
                     final Play dialog = dialog(screen, "Download Options");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -431,7 +429,7 @@ public final class QueryEditorStories {
                                     .withJsonBodyContaining("{\"fileType\": \"EXCEL\", \"searchRequest\": "
                                                             + "{\"queryKey\": {\"uuid\": \"qk-1\"}}}")
                                     .toSpyMatcher()));
-                    // Differs from React: the fixture replies with a resource, which Stroom downloads
+                    // The fixture replies with a resource, which Stroom downloads
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.DOWNLOAD_SPY)).toHaveBeenCalled());
                     DocumentEditors.expectNoProblems(play);
                 })
@@ -442,9 +440,8 @@ public final class QueryEditorStories {
                     executeAndOpenColumnMenu(play, "Count");
                     play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
                     play.click(play.screen().findByText("Hide", StroomDom.MENU_ITEM_TEXT));
-                    // Differs from React: GWT hides the column at once, without searching again; the
-                    // preference is kept on the document, which is now dirty, and is sent with
-                    // the next search
+                    // Stroom hides the column at once, without searching again; the preference is
+                    // kept on the document, which is now dirty, and is sent with the next search
                     play.waitFor(() -> play.expect(play.queryByText("Count", ".column-top .column-label")).toBeNull());
                     play.expect(play.getByRole("button", "Save")).not().toHaveClass("disabled");
                     play.click(play.getByRole("button", "Execute Query"));
@@ -489,8 +486,7 @@ public final class QueryEditorStories {
                     final Play screen = play.screen();
                     execute(play);
                     play.findByText("alpha");
-                    // Differs from React: the values filter is opened by the filter icon of the
-                    // column's header, not a 'Filter Values' menu item
+                    // The values filter is opened by the filter icon of the column's header
                     clickHeader(play, play.within(header(play, "Count").closest("th"))
                             .querySelector(".column-valueFilterIcon"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -498,7 +494,7 @@ public final class QueryEditorStories {
                                     .toSpyMatcher()));
                     play.click(screen.findByText("Select None"));
                     // The popup's 'alpha' is after the table's on the page.
-                    // Differs from React: the popup has no OK; a choice applies at once
+                    // The popup has no OK; a choice applies at once
                     play.waitFor(() -> play.expect(screen.getAllByText("alpha")).toHaveLength(2));
                     play.click(screen.getAllByText("alpha").nth(1));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": [{}, {\"name\": \"Count\", "
@@ -516,8 +512,8 @@ public final class QueryEditorStories {
                     play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
                     play.click(screen.findByText("Number", ".SelectionPopup *"));
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
-                    // Differs from React: the play formats 'Name' (React's 'Count' is a Number
-                    // already, so choosing Number would change nothing in GWT)
+                    // The play formats 'Name' ('Count' is a Number already, so choosing Number would
+                    // change nothing)
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
                                            + "[{\"name\": \"Name\", \"format\": {\"type\": \"NUMBER\"}}, "
                                            + "{}, {}, {}]}}");
@@ -529,7 +525,7 @@ public final class QueryEditorStories {
                     final Play screen = play.screen();
                     executeAndOpenColumnMenu(play, "Count");
                     play.click(screen.findByText("Conditional Formatting", StroomDom.MENU_ITEM_TEXT));
-                    // Differs from React: GWT captions the rules dialog 'Settings'
+                    // The rules dialog is captioned 'Settings'
                     final Play list = dialog(screen, "Settings");
                     play.click(list.getByRole("button", "Add"));
                     final Play rule = dialog(screen, "Add New Rule");
@@ -551,7 +547,7 @@ public final class QueryEditorStories {
                     final Query link = play.findByText("Docs");
                     play.expect(play.queryByText(TextMatch.containing("[Docs]"))).toBeNull();
                     play.expect(link.property("tagName")).toBe("U");
-                    // Differs from React: GWT URL encodes the link in the attribute
+                    // Stroom URL encodes the link in the attribute
                     play.expect(link.attribute("link")).toMatch("https%3A%2F%2Fexample.com");
                     DocumentEditors.expectNoProblems(play);
                 })
@@ -560,7 +556,7 @@ public final class QueryEditorStories {
                 .withPlay(play -> {
                     execute(play);
                     play.findByText("North");
-                    // Differs from React: GWT's ExpanderCell icon has no title
+                    // The ExpanderCell icon has no title
                     play.click(play.querySelector(".expanderCell .expanderIcon"));
                     expectSearchWith(play, "{\"groupSelection\": {\"openGroups\": [\"g-north\"]}}");
                     DocumentEditors.expectNoProblems(play);
@@ -569,8 +565,7 @@ public final class QueryEditorStories {
                 .story("SearchRequestCarriesDateTimeSettings", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     execute(play);
-                    // Differs from React: the user's preferences (Stroom's defaults here) are checked
-                    // in the request, rather than by calling the port's pure mapping function
+                    // The user's preferences (Stroom's defaults here) are checked in the request
                     expectSearchWith(play, "{\"queryContext\": {\"dateTimeSettings\": "
                                            + "{\"dateTimePattern\": \"yyyy-MM-dd'T'HH:mm:ss.SSSXX\", "
                                            + "\"timeZone\": {\"use\": \"UTC\"}}}}");
@@ -588,7 +583,7 @@ public final class QueryEditorStories {
                     final Play dialog = dialog(screen, "Justify Query");
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
                             QueryFixtures.SEARCH.toSpyMatcher());
-                    // Differs from React: the text area has no id
+                    // The text area has no id
                     play.type(dialog.querySelector("textarea"), "investigating alert 42");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     expectSearchWith(play, "{\"queryContext\": {\"queryInfo\": \"investigating alert 42\"}}");
@@ -602,10 +597,9 @@ public final class QueryEditorStories {
                     execute(play);
                     play.findByText("alpha");
                     play.click(play.getByRole("button", "Ask Stroom AI"));
-                    // Differs from React: the chat is Stroom's 'Ask Stroom AI' dialog, and its 'How
-                    // can I help?' greeting is hidden once the table is attached as the chat's
-                    // context, so the play checks the message box's placeholder, which is the same
-                    // text
+                    // The chat is Stroom's 'Ask Stroom AI' dialog, and its 'How can I help?'
+                    // greeting is hidden once the table is attached as the chat's context, so the
+                    // play checks the message box's placeholder, which is the same text
                     play.expect(screen.findByText("Ask Stroom AI", StroomDom.DIALOG_TITLE)).toBeInTheDocument();
                     play.waitFor(() -> play.expect(screen.getByPlaceholderText("How can I help?")).toBeVisible());
                     // The chat is titled with the table's context, which is sent to the server
@@ -633,7 +627,7 @@ public final class QueryEditorStories {
                                      "errorFeed": {"name": "ERROR_FEED"},
                                      "notifications": [{"maxNotifications": 100, "destinationType": "STREAM"}]}
                                     """).toSpyMatcher()));
-                    // Differs from React: GWT then opens the new rule
+                    // Stroom then opens the new rule
                     play.waitFor(() -> play.expect(play.spy(OPEN_DOC)).toHaveBeenCalledWith("new-1"));
                     DocumentEditors.expectNoProblems(play);
                 })
@@ -689,11 +683,11 @@ public final class QueryEditorStories {
                     final Play screen = play.screen();
                     execute(play);
                     play.click(play.findByText("alpha"));
-                    // Differs from React: the actions are in the 'Annotate' button's menu
+                    // The actions are in the 'Annotate' button's menu
                     play.click(play.getByRole("button", "Annotate"));
                     play.click(screen.findByText("Create Annotation", StroomDom.MENU_ITEM_TEXT));
-                    // Differs from React: GWT fires CreateAnnotationEvent, which Stroom's annotation
-                    // plugin (not part of this screen) handles by creating and opening it
+                    // Stroom fires CreateAnnotationEvent, which Stroom's annotation plugin (not part
+                    // of this screen) handles by creating and opening it
                     play.waitFor(() -> play.expect(play.spy(CREATE_ANNOTATION)).toHaveBeenCalledWith("[1001:5]"));
                     play.click(play.getByText("beta"));
                     play.click(play.getByRole("button", "Annotate"));
@@ -712,7 +706,7 @@ public final class QueryEditorStories {
                             RequestMatcher.post(FIND_TAGS_PATH).toSpyMatcher());
                     play.click(play.getByRole("button", "Annotate"));
                     play.click(screen.findByText("Change Status", StroomDom.MENU_ITEM_TEXT));
-                    // Differs from React: the statuses are a chooser in the 'Change Status' dialog
+                    // The statuses are a chooser in the 'Change Status' dialog
                     final Play dialog = dialog(screen, "Change Status");
                     play.click(dialog.querySelector(".annotationSettingHeading"));
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
@@ -755,9 +749,9 @@ public final class QueryEditorStories {
                     play.click(play.getByRole("button", "Annotate"));
                     play.click(screen.findByText("Add To Annotation", StroomDom.MENU_ITEM_TEXT));
                     final Play dialog = dialog(screen, "Choose Annotation");
-                    // Differs from React: GWT doesn't select the first annotation (the list only
-                    // selects it when the filter changes), so OK with none selected warns and keeps
-                    // the chooser open; the play then selects it
+                    // Stroom doesn't select the first annotation (the list only selects it when the
+                    // filter changes), so OK with none selected warns and keeps the chooser open;
+                    // the play then selects it
                     play.expect(dialog.findByText("Existing incident").closest("tr"))
                             .not().toHaveClass("cellTableSelectedRow");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
@@ -788,8 +782,8 @@ public final class QueryEditorStories {
                 .withPlay(play -> {
                     execute(play);
                     play.click(play.findByText("Step"));
-                    // Differs from React: GWT fires BeginPipelineSteppingEvent, which the stepping
-                    // screen (not part of this screen) handles
+                    // Stroom fires BeginPipelineSteppingEvent, which the stepping screen (not part
+                    // of this screen) handles
                     play.waitFor(() -> play.expect(play.spy(STEPPING)).toHaveBeenCalledWith("1001:0:4"));
                     DocumentEditors.expectNoProblems(play);
                 })
@@ -814,8 +808,8 @@ public final class QueryEditorStories {
                 .withPlay(play -> {
                     execute(play);
                     play.click(play.findByText("Open"));
-                    // Differs from React: GWT fires ShowDataEvent, which Stroom's data tab plugins
-                    // (not part of this screen) handle
+                    // Stroom fires ShowDataEvent, which Stroom's data tab plugins (not part of this
+                    // screen) handle
                     play.waitFor(() -> play.expect(play.spy(SHOW_DATA))
                             .toHaveBeenCalledWith("STROOM_TAB SOURCE 1001:4"));
                     DocumentEditors.expectNoProblems(play);
@@ -826,7 +820,7 @@ public final class QueryEditorStories {
                         null, false, QueryEditorStories::annotationSpies))
                 .withPlay(play -> {
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
-                    // Let the query's data source (Annotations) be fetched, as React waits for it
+                    // Let the query's data source (Annotations) be fetched
                     play.waitFor(() -> play.expect(requests).toHaveBeenCalledWith(RequestMatcher.post(
                             "/query/v1/fetchDataSourceFromQueryString").toSpyMatcher()));
                     assignToMe(play);
@@ -837,8 +831,8 @@ public final class QueryEditorStories {
                 // A vis result shows the Visualisation tab, which loads the visualisation
                 .story("Visualisation", context -> render(context, VIS_FIXTURES))
                 .withPlay(play -> {
-                    // Differs from React: GWT's result tabs have no role="tab", and the hidden
-                    // Visualisation tab is in the page, not shown
+                    // The result tabs have no role="tab", and the hidden Visualisation tab is in the
+                    // page, not shown
                     play.waitFor(() -> play.expect(DocumentEditors.tab(play, "Table")).toBeInTheDocument());
                     play.expect(DocumentEditors.tab(play, "Visualisation")).not().toBeVisible();
                     execute(play);
@@ -880,7 +874,7 @@ public final class QueryEditorStories {
                 .route(helpItems("fields."), RestReply.json(QueryFixtures.helpItems(
                         QueryFixtures.helpRow("FIELD", "fld-name", "name", false))))
                 .route(helpItems(""), RestReply.json(HELP_ROOT))
-                // React's fetchDetail: the row's title as its documentation and insert text
+                // The help detail: the row's title as its documentation and insert text
                 .route(RequestMatcher.post("/query/v1/fetchDetail")
                                 .withJsonBodyContaining("{\"title\": \"count\"}"),
                         RestReply.json("{\"documentation\": \"# count\\n\\nHelp for **count**.\", "
@@ -941,7 +935,7 @@ public final class QueryEditorStories {
     }
 
     // Runs the query and opens the menu of a column.
-    // Differs from React: GWT opens a column's menu when its header is clicked (MyDataGrid's
+    // Stroom opens a column's menu when its header is clicked (MyDataGrid's
     // HeadingListener.onShowMenu), not on a context menu
     private static void executeAndOpenColumnMenu(final Play play, final String column) {
         execute(play);
@@ -965,16 +959,14 @@ public final class QueryEditorStories {
         play.fireEvent().click(target, EventInit.create().atCentreOf(target));
     }
 
-    // Checks the request for a new document that ShowCreateDocumentDialogEvent makes (React's
-    // pending create request)
+    // Checks the request for a new document that ShowCreateDocumentDialogEvent makes
     private static void expectCreateRequest(final Play play, final String type, final String title) {
         play.waitFor(() -> play.expect(play.getByTestId("pending-type")).toHaveTextContent(type));
         play.expect(play.getByTestId("pending-title")).toHaveTextContent(title);
     }
 
     // Assigns the selected row's annotation to the current user.
-    // Differs from React: GWT has no 'Assign to Me' menu item; the 'Change Assigned To' dialog has
-    // 'Assign Yourself'
+    // The 'Change Assigned To' dialog has 'Assign Yourself'
     private static void assignToMe(final Play play) {
         final Play screen = play.screen();
         execute(play);
@@ -999,7 +991,7 @@ public final class QueryEditorStories {
         return render(context, fixtures, null, false, NO_SETUP);
     }
 
-    /// Renders the Query editor of the React story's `QUERY_DOC`, for other stories that show a
+    /// Renders the Query editor of the stories' query ('My Query'), for other stories that show a
     /// part of it, e.g. `App/Dashboard/QueryResultVis`.
     ///
     /// @param context  The story's context.
@@ -1009,7 +1001,7 @@ public final class QueryEditorStories {
         return render(context, fixtures);
     }
 
-    /// The fixtures of a search whose replies have React's table and a visualisation result
+    /// The fixtures of a search whose replies have the table and a visualisation result
     /// (the visualisation document `vis-1`), for [#renderEditor].
     ///
     /// @param search     The first reply.
@@ -1027,7 +1019,7 @@ public final class QueryEditorStories {
         return fixtures(RestFixtures.builder(), RestReply.json(QueryFixtures.response(true, results)));
     }
 
-    /// A search reply with React's table and a visualisation result with data.
+    /// A search reply with the table and a visualisation result with data.
     ///
     /// @param complete Whether the search is complete.
     /// @return The reply's JSON.
@@ -1079,9 +1071,9 @@ public final class QueryEditorStories {
         return harness.asWidget();
     }
 
-    // Stands in for the explorer's 'create document' dialog (React's CreatePendingProbe): shows
-    // what ShowCreateDocumentDialogEvent asks for, with a 'run-seed' button that creates the
-    // document 'new-1' as the dialog would
+    // Stands in for the explorer's 'create document' dialog: shows what
+    // ShowCreateDocumentDialogEvent asks for, with a 'run-seed' button that creates the document
+    // 'new-1' as the dialog would
     private static void createProbe(final ScreenHarness harness, final QueryScreenGinjector injector) {
         harness.fn(OPEN_DOC);
         harness.getEventBus().addHandler(OpenDocumentEvent.getType(), event ->

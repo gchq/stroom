@@ -27,7 +27,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's `TextBox` (its copy of GWT's, which reports a change on every input
-/// event), matching `Widgets/Inputs/TextInput` in the React Storybook.
+/// event).
 public final class TextInputStories {
 
     private TextInputStories() {

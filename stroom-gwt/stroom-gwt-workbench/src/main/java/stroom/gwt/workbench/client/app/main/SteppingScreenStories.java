@@ -46,18 +46,17 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/SteppingScreen` in the React Storybook, showing Stroom's real
-/// [SteppingPresenter] (a pipeline's stepper, as `PipelinePresenter.beginStepping` starts it) with
-/// a fake stepping server.
+/// Stories of `App/Main/SteppingScreen`, showing Stroom's real [SteppingPresenter] (a pipeline's
+/// stepper, as `PipelinePresenter.beginStepping` starts it) with a fake stepping server.
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `api.step` | `POST /stepping/v1/step` (a handler, see `step`) |
-/// | `api.terminate` | `POST /stepping/v1/terminateStepping` |
-/// | `api.findElementDoc` | `POST /stepping/v1/findElementDoc` |
-/// | `codeApi.loadCode`, `saveCode` | `GET`, `PUT /xslt/v1/x1` (through Stroom's `XsltPlugin`) |
-/// | `structure` | `POST /pipeline/v1/fetchPipelineLayers`, `GET /pipeline/v1/propertyTypes` |
-/// | (the stream) | `POST /data/v1/fetch`, `GET /meta/v1/1` |
+/// | `POST /stepping/v1/step` (a handler, see `step`) | stepping |
+/// | `POST /stepping/v1/terminateStepping` | terminating stepping |
+/// | `POST /stepping/v1/findElementDoc` | an element's document |
+/// | `GET`, `PUT /xslt/v1/x1` (through Stroom's `XsltPlugin`) | loading and saving an element's code |
+/// | `POST /pipeline/v1/fetchPipelineLayers`, `GET /pipeline/v1/propertyTypes` | the pipeline's structure |
+/// | `POST /data/v1/fetch`, `GET /meta/v1/1` | the stream |
 ///
 /// `SteppingWithCode` registers Stroom's XSLT document plugin ([StoryDocumentPlugins]), through which
 /// the element's code is loaded, as the app's plugins register themselves as it starts.
@@ -65,7 +64,7 @@ public final class SteppingScreenStories {
 
     private static final String STEP_PATH = "/stepping/v1/step";
 
-    // React's SteppingWithCode: the xsltFilter's code is in the XSLT 'My XSLT'
+    // SteppingWithCode: the xsltFilter's code is in the XSLT 'My XSLT'
     private static final String XSLT_PATH = "/xslt/v1/x1";
     private static final String XSLT_REF = """
             {"type": "XSLT", "uuid": "x1", "name": "My XSLT"}""";
@@ -128,9 +127,9 @@ public final class SteppingScreenStories {
                     // beginStepping refreshes on entry: the label settles at [1:1:1] (record 0)
                     play.waitFor(() -> play.expect(play.getAllByText("[1:1:1]").count()).toBeGreaterThan(0));
                     play.waitFor(() -> play.expect(play.getByTitle("Step Forward")).not().toHaveClass("disabled"));
-                    // Differs from React: StepControlPresenter only knows a record is the first of the
-                    // first stream of the stepper's stream list, which a stepper begun on one stream (as
-                    // here) hasn't loaded, so the initial REFRESH leaves Back enabled
+                    // StepControlPresenter only knows a record is the first of the first stream of the
+                    // stepper's stream list, which a stepper begun on one stream (as here) hasn't
+                    // loaded, so the initial REFRESH leaves Back enabled
                     play.waitFor(() -> play.expect(play.getByTitle("Step Backward")).not().toHaveClass("disabled"));
                     // Step Forward twice -> [1:1:3]; Back is now enabled
                     play.click(play.getByTitle("Step Forward"));
@@ -143,20 +142,19 @@ public final class SteppingScreenStories {
                     play.findAllByText("[1:1:5]");
                     play.waitFor(() -> play.expect(play.getByTitle("Step To Last")).toHaveClass("disabled"));
                     // Both elements are in the pipeline tree.
-                    // Differs from React: GWT's stepper shows the pipeline's element tree, not a
-                    // listbox of the elements that returned data
+                    // The stepper shows the pipeline's element tree
                     play.findByText("xsltFilter");
                     play.findByText("xmlWriter");
                     // Selecting the element with errors shows the log pane toggle with its count.
-                    // Differs from React: GWT's log pane has no 'log' role (its markers are in the
-                    // element's editors), so the toggle's title, which counts the errors, is checked
-                    // rather than the pane being shown and hidden
+                    // The log pane has no 'log' role (its markers are in the element's editors), so the
+                    // toggle's title, which counts the errors, is checked rather than the pane being
+                    // shown and hidden
                     play.click(play.getByText("xmlWriter"));
                     play.findByTitle(TextMatch.containing("1 Error"));
-                    // Differs from React: GWT doesn't start a new session for each step; the session
-                    // is dropped only when stepping (re)begins on a stream (SteppingPresenter
-                    // .beginStepping), and each step polls with the session it has, so the three steps
-                    // above were all sent with the server's session
+                    // GWT doesn't start a new session for each step; the session is dropped only when
+                    // stepping (re)begins on a stream (SteppingPresenter.beginStepping), and each step
+                    // polls with the session it has, so the three steps above were all sent with the
+                    // server's session
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.expect("the steps sent with the session", () -> stepsWithSession(requests))
                             .toBeGreaterThanOrEqual(3);
@@ -190,7 +188,7 @@ public final class SteppingScreenStories {
                     play.click(play.getByTitle("Manage Step Filters"));
                     final Play dialog = screen.within(
                             screen.findByText("Change Step Filters", StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
-                    // Differs from React: GWT's element list is the dialog's element chooser table
+                    // The element list is the dialog's element chooser table
                     final Play list = dialog.within(dialog.querySelector(".pipelineElementChooser"));
                     // recordCount returned no step data, yet is listed
                     play.expect(list.getByText("recordCount")).toBeInTheDocument();
@@ -204,14 +202,14 @@ public final class SteppingScreenStories {
                     play.click(play.getByText("xsltFilter"));
                     // The code pane loads the element's document with its document plugin
                     // (XsltPlugin) and shows its code.
-                    // Differs from React: GWT's code pane is an editor with no 'Code' heading; the
-                    // play checks that it shows the code the plugin loaded
+                    // The code pane is an editor with no 'Code' heading; the play checks that it shows
+                    // the code the plugin loaded
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get(XSLT_PATH).toSpyMatcher()));
                     final Query code = play.findByText("ORIGINAL XSLT CODE");
-                    // Differs from React: GWT's code pane has no 'Save code' button; the code is
-                    // editable, and saved with the pipeline's Save (see PipelineEditor's
-                    // MultiDocumentSave), so the play checks that the code can be edited
+                    // The code pane has no 'Save code' button; the code is editable, and saved with the
+                    // pipeline's Save (see PipelineEditor's MultiDocumentSave), so the play checks that
+                    // the code can be edited
                     // Ace's text layer ignores the mouse: click its content to focus the editor
                     play.click(code.closest(".ace_content"));
                     play.keyboard("{Control>}{End}{/Control} EDITED");

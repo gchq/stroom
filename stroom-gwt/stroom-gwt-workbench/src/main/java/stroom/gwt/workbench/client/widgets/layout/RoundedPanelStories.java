@@ -23,10 +23,10 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 
-/// Stories matching `Widgets/Layout/RoundedPanel` in the React Storybook.
+/// Stories for the rounded card of Stroom's login screen.
 ///
-/// Stroom has no rounded panel widget: the React `RoundedPanel` ports the centred, rounded card
-/// that `LoginViewImpl.ui.xml` builds (`LoginView` > `LoginViewFormPanel` >
+/// Stroom has no rounded panel widget: it is the centred, rounded card that `LoginViewImpl.ui.xml`
+/// builds (`LoginView` > `LoginViewFormPanel` >
 /// `max form-padding form LoginViewForm`), so these stories build the same panels, styled by
 /// Stroom's `Login.css`.
 public final class RoundedPanelStories {
@@ -43,8 +43,7 @@ public final class RoundedPanelStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // The centred, rounded login card with some sample content
                 .story("Default", context -> {
-                    // Differs from React: LoginViewImpl's outer panel is a div, not a <main>
-                    // landmark.
+                    // LoginViewImpl's outer panel is a div, not a <main> landmark.
                     final FlowPanel view = new FlowPanel();
                     view.setStyleName("LoginView");
                     final FlowPanel formPanel = new FlowPanel();

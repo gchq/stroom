@@ -45,26 +45,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/// The popup contract (React's `porting/popup-behaviour.md`), as one parametrised suite over the
-/// popups of Stroom's widgets, matching `Widgets/PopupPositioner/Popup contract` in the React
-/// Storybook.
+/// The popup contract: how a popup should open, close, nest and be placed, as one parametrised
+/// suite over the popups of Stroom's widgets.
 ///
-/// Each React story is a clause of the contract run over every case of a registry. The GWT
-/// registry ([#cases()]) has the same cases, made of the real Stroom widgets the React ones are
-/// ports of, and says per case what GWT does where that differs from the contract (e.g. Stroom's
-/// help popups don't register their buttons as auto-hide partners), so each clause asserts what
-/// GWT does.
+/// Each story is a clause of the contract run over every case of a registry ([#cases()]), made of
+/// the real Stroom widgets, which says per case what GWT does where that differs from the contract
+/// (e.g. a date box handles Escape itself, so it is left out of `EscapeCloses`), so each clause
+/// asserts what GWT does.
 public final class PopupContractStories {
 
     private static final String NEIGHBOUR_ID = "popup-contract-neighbour";
     private static final String NEIGHBOUR = "#" + NEIGHBOUR_ID;
-    // The neighbour button's clicks, counted as React's play counts them with a listener
+    // The neighbour button's clicks, counted with a listener
     private static final String NEIGHBOUR_CLICK = "neighbourClick";
 
     private static final String HELP_PANEL = ".help-button-tooltip";
     private static final String QUICK_FILTER_PANEL = ".quickFilter-tooltip:not(.help-button-tooltip)";
-    // Differs from React: Stroom's menus and submenus are each a `simplePopup-popup` holding a
-    // cell table of `menuItem-outer` rows (React: `.stroom-menu` panels with `data-menu-idx` rows)
+    // Stroom's menus and submenus are each a `simplePopup-popup` holding a cell table of
+    // `menuItem-outer` rows
     private static final String MENU_PANEL = ".simplePopup-popup:has(.menuItem-outer)";
     private static final String MENU_ROW = ".menuCellTable > tbody > tr";
     // A row's content, which the menu's cell table handles mouse events on (not on the row)
@@ -75,19 +73,19 @@ public final class PopupContractStories {
 
     private static final List<PopupCase> CASES = cases();
     private static final PopupCase MENU_CASE = find("MenuPanel");
-    // Every popup any story opens, for React's `openPopupCount()`
+    // Every popup any story opens, for counting the open popups
     private static final String ALL_PANELS = allPanels();
 
     private PopupContractStories() {
         // Static utility
     }
 
-    /// The registry: React's `CASES`, with what GWT does per clause.
+    /// The registry: the cases, with what GWT does per clause.
     private static List<PopupCase> cases() {
         final List<PopupCase> cases = new ArrayList<>();
         cases.add(PopupCase.of("HelpButton", PopupHarnesses::helpButton)
                 .opener("button.help-button")
-                // React: the button and the icon inside it
+                // The button and the icon inside it
                 .partners("button.help-button", "button.help-button svg")
                 .panel(HELP_PANEL)
                 .insideTarget(HELP_PANEL + " h4")
@@ -111,13 +109,14 @@ public final class PopupContractStories {
                 // The type filter's list is also a `menuCellTable`, but without menu rows
                 .panel(".simplePopup-popup:has(.menuCellTable):not(:has(.menuItem-outer))")
                 .insideTarget(".simplePopup-popup:not(:has(.menuItem-outer)) .simplePopup-content")
-                // GWT TypeFilterPresenter.escape() → hideSelf(); the popup's own list handles the key
-                .react(true, false)
+                // Left out of EscapeCloses: Escape is handled by the popup's list, not the popup
+                // (TypeFilterSelectionEventManager.onClose → TypeFilterPresenter.escape() → hideSelf())
+                .storyCases(true, false)
                 .placement(".type-filter-trigger", PopupLocation.RIGHT, 3,
                         "TypeFilterPresenter.show — new Rect(element).grow(3), PopupLocation.RIGHT"));
         cases.add(PopupCase.of("Popover (SettingBlock)", PopupHarnesses::settingBlock)
                 .opener(".setting-block")
-                // React: the block and the label inside it
+                // The block and the label inside it
                 .partners(".setting-block", ".setting-block .gwt-Label")
                 .panel(".simplePopup-popup:has(.popover-body)")
                 .insideTarget(".popover-body"));
@@ -129,7 +128,7 @@ public final class PopupContractStories {
                         ".svgIconBox-icon-inner")
                 .panel(".SelectionPopup")
                 .insideTarget(".selectionList")
-                // Differs from React: SelectionPopup positions itself with a shadow width of 4
+                // SelectionPopup positions itself with a shadow width of 4
                 // (PositionUtil.getPosition(4, ...)), which grows the anchor by 4px
                 .placement("input.SelectionBox-textBox", PopupLocation.BELOW, 4,
                         "SelectionPopup.show — new PopupPosition(new Rect(relativeElement), BELOW)"));
@@ -137,11 +136,11 @@ public final class PopupContractStories {
                 .opener("input")
                 .partners("input")
                 .panel(".dateBoxPopup")
-                // Differs from React: GWT's DatePicker's days grid is `datePickerDays`
+                // GWT's DatePicker's days grid is `datePickerDays`
                 .insideTarget(".dateBoxPopup .datePickerDays")
                 // MyDateBox.showDatePicker() is guarded by `if (!popup.isShowing())`, and the box
                 // handles Escape itself (DateBoxHandler.onKeyDown)
-                .react(false, false)
+                .storyCases(false, false)
                 .triggerToggles(false)
                 .placement("input", PopupLocation.BELOW, 0, "MyDateBox — popup.showRelativeTo(this)"));
         cases.add(PopupCase.of("MenuPanel", PopupHarnesses::menu)
@@ -150,10 +149,10 @@ public final class PopupContractStories {
                 .panel(MENU_PANEL)
                 // The panel's own content box, not a row — clicking a row runs its command
                 .insideTarget(MENU_PANEL + " .simplePopup-content")
-                // MenuViewImpl.escape() → MenuPresenter.hideAll()
-                .react(true, false)
-                // Differs from React: React's root menus are placed right-first (a recorded gap);
-                // a Stroom menu shown with ShowMenuEvent is placed where the call site asks
+                // Left out of EscapeCloses: a menu's Escape (MenuViewImpl.escape() →
+                // MenuPresenter.hideAll()) is checked by EscapeClosesTheWholeMenuHierarchy
+                .storyCases(true, false)
+                // A Stroom menu shown with ShowMenuEvent is placed where the call site asks
                 .placement(".menu-harness-trigger", PopupLocation.BELOW, 0,
                         "ShowMenuEvent — new PopupPosition(new Rect(button), PopupLocation.BELOW)"));
         return cases;
@@ -182,7 +181,7 @@ public final class PopupContractStories {
                 .story("TriggerClickClosesAndStaysClosed", PopupContractStories::render)
                 .withPlay(play -> {
                     for (final PopupCase c : CASES) {
-                        if (c.isReactTriggerToggles()) {
+                        if (c.isInTriggerStory()) {
                             openPopup(play, c);
                             play.click(play.querySelector(c.getOpener()));
                             if (c.isTriggerToggles()) {
@@ -190,7 +189,7 @@ public final class PopupContractStories {
                             }
                             // And still closed a beat later — a reopen would land on the next frame
                             play.sleep(60);
-                            // Differs from React (where triggerToggles is false): see cases()
+                            // A case marked triggerToggles(false) in cases() stays open
                             play.expect(c.getName() + ": must stay closed",
                                     () -> PopupDom.isOpen(c.getPanel())).toBe(!c.isTriggerToggles());
                             closeAll(play);
@@ -205,7 +204,7 @@ public final class PopupContractStories {
                             play.fireEvent().mouseDown(play.querySelector(partner));
                             // Give auto-hide a frame in which to have wrongly fired
                             play.sleep(30);
-                            // Differs from React (where partnersExempt is false): see cases()
+                            // A case marked partnersExempt(false) in cases() is auto-hidden instead
                             play.expect(c.getName() + ": mousedown on partner \"" + partner
                                                 + "\" must not auto-hide the popup",
                                     () -> PopupDom.isOpen(c.getPanel())).toBe(c.isPartnersExempt());
@@ -235,13 +234,13 @@ public final class PopupContractStories {
                 .story("EscapeCloses", PopupContractStories::render)
                 .withPlay(play -> {
                     for (final PopupCase c : CASES) {
-                        if (c.isReactEscapeClosesViaHook()) {
+                        if (c.isInEscapeStory()) {
                             openPopup(play, c);
                             play.keyboard("{Escape}");
                             if (c.isEscapeCloses()) {
                                 expectClosed(play, c);
                             } else {
-                                // Differs from React: see cases()
+                                // A case marked escapeCloses(false) in cases() ignores Escape
                                 play.sleep(30);
                                 play.expect(c.getName() + ": Escape is ignored",
                                         () -> PopupDom.isOpen(c.getPanel())).toBe(true);
@@ -297,7 +296,7 @@ public final class PopupContractStories {
                     final PopupCase sel = find("SelectionBox");
                     openPopup(play, sel);
                     play.click(play.screen().querySelector(sel.getPanel() + " button.help-button"));
-                    // Differs from React: the help popup is on the page's body, not in the list
+                    // The help popup is on the page's body, not in the list
                     play.waitFor(() -> play.expect("help should open", () -> PopupDom.isOpen(QUICK_FILTER_PANEL))
                             .toBe(true));
                     play.keyboard("{Escape}");
@@ -309,8 +308,8 @@ public final class PopupContractStories {
                 })
                 .story("RegistryDoesNotLeak", PopupContractStories::render)
                 .withPlay(play -> {
-                    // Differs from React: GWT has no registry of open popups (React's
-                    // openPopupCount()), so this counts the shown popups of every case
+                    // GWT has no registry of open popups, so this counts the shown popups of every
+                    // case
                     play.expect(() -> PopupDom.countOpen(ALL_PANELS)).toBe(0);
                     for (final PopupCase c : CASES) {
                         openPopup(play, c);
@@ -384,10 +383,10 @@ public final class PopupContractStories {
                 .withPlay(play -> {
                     openNestedSubmenus(play);
                     // Click the root's parent row, which toggles its submenu shut.
-                    // Differs from React: the submenu was opened by the keyboard, and Stroom only
-                    // toggles shut a submenu that a click opened, so that a click meant to open a
-                    // submenu that hovering has only just opened doesn't close it. The first click
-                    // (whose mousedown auto-hides the innermost level) claims it; the second closes it
+                    // The submenu was opened by the keyboard, and Stroom only toggles shut a
+                    // submenu that a click opened, so that a click meant to open a submenu that
+                    // hovering has only just opened doesn't close it. The first click (whose
+                    // mousedown auto-hides the innermost level) claims it; the second closes it
                     final Query parentRow = play.screen().querySelectorAll(MENU_PANEL + " " + MENU_ITEM).nth(1);
                     play.click(parentRow);
                     play.waitFor(() -> play.expect(PopupContractStories::visibleMenus).toBe(2));
@@ -433,8 +432,8 @@ public final class PopupContractStories {
                 .withPlay(play -> {
                     openSubmenu(play);
                     final Query parentRow = play.screen().querySelectorAll(MENU_PANEL + " " + MENU_ITEM).nth(1);
-                    // Differs from React: the submenu was opened by the keyboard, and Stroom only
-                    // toggles shut a submenu that a click opened (see ClosingAMenuClosesItsDescendants),
+                    // The submenu was opened by the keyboard, and Stroom only toggles shut a
+                    // submenu that a click opened (see ClosingAMenuClosesItsDescendants),
                     // so the first click on its parent row leaves it open
                     play.click(parentRow);
                     play.sleep(60);
@@ -460,8 +459,8 @@ public final class PopupContractStories {
                 });
     }
 
-    /// React's `AllCases`: every case in its own labelled container, in a grid so that every
-    /// trigger is in the viewport, with the portal cascade and a neighbour button beside them.
+    /// Every case in its own labelled container, in a grid so that every trigger is in the
+    /// viewport, with the portal cascade and a neighbour button beside them.
     private static Widget render(final StoryContext context) {
         final Spy neighbourClick = context.fn(NEIGHBOUR_CLICK);
         final StoryPopups popups = StoryPopups.create(context).withHelp().withMenus();
@@ -530,10 +529,10 @@ public final class PopupContractStories {
     /// Open the root menu and the submenu of its parent row.
     private static void openSubmenu(final Play play) {
         openPopup(play, MENU_CASE);
-        // Differs from React: Stroom's Menu focuses the root's first row when it is shown, so one
-        // ArrowDown (not two) reaches "Parent", and moving onto a parent row opens its submenu
-        // at once. ArrowRight then moves the focus into the submenu, which can only take it once
-        // it is shown, so the keys are pressed one at a time.
+        // Stroom's Menu focuses the root's first row when it is shown, so one ArrowDown reaches
+        // "Parent", and moving onto a parent row opens its submenu at once. ArrowRight then moves
+        // the focus into the submenu, which can only take it once it is shown, so the keys are
+        // pressed one at a time.
         play.waitFor(() -> play.expect("the menu should have the focus", () -> menuHasFocus(0)).toBe(true));
         play.keyboard("{ArrowDown}");
         play.waitFor(() -> play.expect(PopupContractStories::visibleMenus).toBe(2));
@@ -595,8 +594,7 @@ public final class PopupContractStories {
     /// `position/flips-at-the-viewport-edge` and `position/clamps-when-neither-side-fits`,
     /// asserted against GWT's `PositionUtil.getPosition`.
     private static void positionerFlipsAndClamps(final Play play) {
-        // Differs from React: PositionUtil reads the window's size (React's port takes the
-        // viewport as arguments, 1000 x 800), so the anchors near the edges are placed relative
+        // PositionUtil reads the window's size, so the anchors near the edges are placed relative
         // to the real viewport
         final double vw = Window.getClientWidth();
         final double vh = Window.getClientHeight();
@@ -694,7 +692,7 @@ public final class PopupContractStories {
         return map;
     }
 
-    /// A rect from React's `{left, top, right, bottom}`.
+    /// A rect from its left, top, right and bottom.
     private static Rect rect(final double left, final double top, final double right, final double bottom) {
         return new Rect(top, bottom, left, right);
     }

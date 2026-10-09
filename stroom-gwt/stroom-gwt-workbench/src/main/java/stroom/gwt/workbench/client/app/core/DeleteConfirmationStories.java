@@ -44,17 +44,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/// Stories matching `App/Core/deleteConfirmation` in the React Storybook, which tests the React
-/// port's delete confirmation as pure functions and their orchestration. Here they are the rules as
-/// Stroom applies them: Stroom's real `DocumentPluginEventManager` handles a `DeleteDocumentEvent`
-/// (as the explorer's Delete does), fetches the `DeleteConfirmation` (`POST
-/// /explorer/v2/fetchDeleteConfirmation`) and asks with Stroom's real confirmation dialog, whose
-/// message and detail (`buildDeleteWarningMessage`, `buildDeleteConfirmationDetail`) the plays check.
+/// The `App/Core/deleteConfirmation` stories, which check Stroom's delete confirmation: Stroom's
+/// real `DocumentPluginEventManager` handles a `DeleteDocumentEvent` (as the explorer's Delete
+/// does), fetches the `DeleteConfirmation` (`POST /explorer/v2/fetchDeleteConfirmation`) and asks
+/// with Stroom's real confirmation dialog, whose message and detail (`buildDeleteWarningMessage`,
+/// `buildDeleteConfirmationDetail`) the plays check.
 ///
 /// The story shows a button per case (the documents to delete and the confirmation the server
-/// returns), which fires the event; React's `onResult` is a spy on the event's `ResultCallback`, and
-/// its `confirm`/`confirmWarnHtml` seams are the confirmation spy (`QUESTION` for the plain question,
-/// `WARN` for the warning). `isDeleteConfirmationEmpty` is Stroom's `DeleteConfirmation.isEmpty`.
+/// returns), which fires the event; a spy ([#ON_RESULT]) records the result the event's
+/// `ResultCallback` is given, and the confirmation spy the question asked (`QUESTION` for the
+/// plain question, `WARN` for the warning). Whether a confirmation is empty is Stroom's
+/// `DeleteConfirmation.isEmpty`.
 public final class DeleteConfirmationStories {
 
     /// The name of the spy recording the delete's result.
@@ -63,7 +63,7 @@ public final class DeleteConfirmationStories {
     private static final String FETCH_PATH = "/explorer/v2/fetchDeleteConfirmation";
     private static final String DELETE_PATH = "/explorer/v2/delete";
 
-    // React's CHILD_ONLY and DEPENDANTS_ONLY
+    // A confirmation with only child items, and one with only dependants
     private static final String CHILD_ONLY = """
             "totalChildCount": 2, "childTypeCounts": {"Dictionary": 2},
             "childItems": [{"type": "Dictionary", "uuid": "d1", "name": "Countries"},
@@ -84,8 +84,7 @@ public final class DeleteConfirmationStories {
                 .story("EmptyConfirmationAsksThePlainQuestion",
                         context -> new Label("See the play function."))
                 .withPlay(play -> {
-                    // Differs from React: Stroom's DeleteConfirmation.isEmpty, on confirmations as
-                    // the server sends them
+                    // Stroom's DeleteConfirmation.isEmpty, on confirmations as the server sends them
                     play.expect("{} is empty", () -> confirmation(null, null, null).isEmpty()).toBe(true);
                     play.expect("all items hidden isn't empty",
                             () -> confirmation(null, true, null).isEmpty()).toBe(false);
@@ -201,8 +200,8 @@ public final class DeleteConfirmationStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     open(play, "script-name");
-                    // Differs from React: the dialog shows the detail, so the name's text is checked,
-                    // and that no image was made of it
+                    // The dialog shows the detail, so the name's text is checked, and that no image
+                    // was made of it
                     play.expect(screen.getByText("<img src=x onerror=alert(1)>")).toBeInTheDocument();
                     play.expect(screen.querySelectorAll(StroomDom.DIALOG + " img")).toHaveLength(0);
                     cancel(play);
@@ -237,7 +236,7 @@ public final class DeleteConfirmationStories {
                     play.waitFor(() -> play.expect(play.spy(ON_RESULT)).toHaveBeenCalledWith("true"));
                     expectNoProblems(play);
                 })
-                // React: onResult reports a cancel too
+                // A cancel is reported too
                 .story("CancelIsReported", context -> render(context, new Case("cancel", 1, "{}")))
                 .withPlay(play -> {
                     open(play, "cancel");

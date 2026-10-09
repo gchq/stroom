@@ -33,21 +33,19 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/CredentialPickerDialog` in the React Storybook, showing Stroom's
-/// real [CredentialsManagerDialogPresenter] (the 'Credentials' picker) with fake REST replies.
+/// Stories of `App/Main/CredentialPickerDialog`, showing Stroom's real
+/// [CredentialsManagerDialogPresenter] (the 'Credentials' picker) with fake REST replies.
 ///
 /// The presenter comes from GIN ([AppScreenGinjector]), as Stroom injects it into
 /// `ContentStoreContentPackDetailsPresenter`, and the story shows it as that presenter does. The
-/// React story's `loadCredentials` fixture becomes a route for
-/// `POST /credentials/findCredentialsWithPermissions` and its `onPick` callback a spy called from
-/// the dialog's OK handler.
+/// credentials come from `POST /credentials/findCredentialsWithPermissions`, and `onPick` is a spy
+/// called from the dialog's OK handler.
 public final class CredentialPickerDialogStories {
 
     /// The name of the spy recording the credential picked.
     static final String ON_PICK = "onPick";
 
-    // CredentialsResource.findCredentialsWithPermissions(), with the React fixture's credentials
-    // (shaped as the gwt-suite corpus's reply)
+    // CredentialsResource.findCredentialsWithPermissions() (shaped as the gwt-suite corpus's reply)
     private static final String CREDENTIALS = """
             {
               "values": [

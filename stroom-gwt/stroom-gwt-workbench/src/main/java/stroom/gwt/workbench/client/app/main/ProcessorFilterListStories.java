@@ -33,18 +33,17 @@ import stroom.processor.client.presenter.ProcessorPresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/ProcessorFilterList` in the React Storybook, showing Stroom's real
-/// [ProcessorPresenter] (a pipeline's 'Processors' tab: the processor and filter tree, as
-/// `PipelinePresenter` shows it) with fake REST replies.
+/// Stories of `App/Main/ProcessorFilterList`, showing Stroom's real [ProcessorPresenter] (a
+/// pipeline's 'Processors' tab: the processor and filter tree, as `PipelinePresenter` shows it)
+/// with fake REST replies.
 ///
-/// The React story's `ProcessorFilterApi.find` becomes `POST /processorFilter/v1/find`
-/// (`ProcessorListRowResultPage`, whose rows are `processor` or `processorFilter` rows).
+/// The rows come from `POST /processorFilter/v1/find` (`ProcessorListRowResultPage`, whose rows are
+/// `processor` or `processorFilter` rows).
 public final class ProcessorFilterListStories {
 
     private static final String FIND_PATH = "/processorFilter/v1/find";
 
-    // One filter row, as the React story's makeApi(filter) builds it; FILTER_FIELDS and TRACKER
-    // vary per story
+    // One filter row; FILTER_FIELDS and TRACKER vary per story
     private static final String FILTER_ROWS = """
             {
               "values": [
@@ -124,12 +123,11 @@ public final class ProcessorFilterListStories {
                 .story("InfoOmitsDelayRowWhenUnset", context -> render(context, PLAIN_ROWS))
                 .withPlay(play -> {
                     final Play screen = openInfo(play);
-                    // Differs from React: GWT's ProcessorInfoBuilder labels the row 'Max Concurrent
-                    // Tasks', not 'Max Processing Tasks'
+                    // ProcessorInfoBuilder labels the row 'Max Concurrent Tasks'
                     play.waitFor(() -> play.expect(screen.getByText("Max Concurrent Tasks")).toBeInTheDocument());
                     play.expect(screen.queryByText("Max Task Creation Delay")).toBeNull();
-                    // Differs from React: GWT's addRowDateString leaves out the 'Next Poll' row when
-                    // the filter is not backing off (no nextPollMs), rather than showing it blank
+                    // addRowDateString leaves out the 'Next Poll' row when the filter is not backing off
+                    // (no nextPollMs)
                     play.expect(screen.queryByText("Next Poll")).toBeNull();
                     play.expect(screen.getByText("Last Poll")).toBeInTheDocument();
                     expectNoProblems(play);
@@ -155,16 +153,15 @@ public final class ProcessorFilterListStories {
                     play.expect(play.within(play.querySelectorAll(".expanderCell").nth(1))
                             .querySelector(".svg-image__dot")).not().toBeNull();
                     // Depth 1 is indented by GWT's 20px per level
-                    // Differs from React: GWT writes the style without spaces, so the padding is
-                    // checked as a style rather than as the attribute's text
+                    // GWT writes the style without spaces, so the padding is checked as a style rather
+                    // than as the attribute's text
                     play.expect(play.querySelectorAll(".expanderCell").nth(1)).toHaveStyle("paddingLeft", "20px");
                     expectNoProblems(play);
                 });
     }
 
     // Opens the filter row's Info popover (ProcessorInfoBuilder), shown on the page's body.
-    // Differs from React: GWT's info cell is an SvgCell titled 'Info' (React's 'Processor filter
-    // details')
+    // The info cell is an SvgCell titled 'Info'
     private static Play openInfo(final Play play) {
         play.click(play.findAllByTitle("Info").nth(0));
         return play.screen();

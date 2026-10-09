@@ -39,21 +39,21 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Stories matching `App/Main/UserTabScreen` in the React Storybook, showing Stroom's real
-/// [UserTabPresenter] (a user's tab, and the 'User Profile' tab) with fake REST replies.
+/// Stories of `App/Main/UserTabScreen`, showing Stroom's real [UserTabPresenter] (a user's tab, and
+/// the 'User Profile' tab) with fake REST replies.
 ///
-/// | React seam | Stroom REST endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `users.findUsers` (the User Groups tab's panes) | `POST /users/v1/find` (`ParentsOf`: Administrators) |
-/// | `users.findDependencies` | `POST /users/v1/findDependencies` |
-/// | `appPerms.getReport` | `POST /permission/app/v1/getAppUserPermissionsReport` |
-/// | `appPerms.changeAppPermission` (its recorder) | `POST /permission/app/v1/changeAppPermission` |
-/// | `docPerms.findUserDocumentPermissions` | `POST /explorer/v2/advancedFindWithPermissions` |
+/// | `POST /users/v1/find` (`ParentsOf`: Administrators) | the User Groups tab's panes |
+/// | `POST /users/v1/findDependencies` | the Dependencies tab |
+/// | `POST /permission/app/v1/getAppUserPermissionsReport` | the Application Permissions tab |
+/// | `POST /permission/app/v1/changeAppPermission` | changing an app permission (checked on the request spy) |
+/// | `POST /explorer/v2/advancedFindWithPermissions` | the Document Permissions tab |
 ///
-/// The signed in user is `admin` holding `MANAGE_USERS_PERMISSION` (not `MANAGE_API_KEYS`), as
-/// React's fixture, so the tab set has Application Permissions and not API Keys. The presenter comes
-/// from GIN; a user's tab is opened as `UserTabPlugin.open` opens it (`setUserRef(bob)`), the
-/// 'User Profile' tab as `UserPlugin.open` does (`setUserRef` with the signed in user).
+/// The signed in user is `admin` holding `MANAGE_USERS_PERMISSION` (not `MANAGE_API_KEYS`), so the
+/// tab set has Application Permissions and not API Keys. The presenter comes from GIN; a user's tab
+/// is opened as `UserTabPlugin.open` opens it (`setUserRef(bob)`), the 'User Profile' tab as
+/// `UserPlugin.open` does (`setUserRef` with the signed in user).
 public final class UserTabScreenStories {
 
     private static final UserRef SESSION_USER = new UserRef("admin", "admin", "Admin", null, false, true);
@@ -100,7 +100,7 @@ public final class UserTabScreenStories {
                     play.findByText("Info", StroomDom.LINK_TAB_LABEL);
                     play.waitFor(() -> play.expect(play.getByDisplayValue("admin")).toBeInTheDocument());
                     // The full tab set, gated: App Permissions in, API Keys out.
-                    // Differs from React: the tabs have no role="tab"; they are found by their labels
+                    // The tabs have no role="tab"; they are found by their labels
                     for (final String tab : new String[]{"Info", "User Groups", "Application Permissions",
                             "Document Permissions", "Dependencies"}) {
                         play.expect(tab(play, tab)).toBeInTheDocument();
@@ -144,8 +144,8 @@ public final class UserTabScreenStories {
                 .withPlay(play -> {
                     play.click(play.findByText("User Groups", StroomDom.LINK_TAB_LABEL));
                     play.waitFor(() -> play.expect(play.getAllByText("Administrators").count()).toBeGreaterThan(0));
-                    // Differs from React: GWT's sortable headers have role="button", not
-                    // "columnheader", so the headings are read from the header cells' name holders
+                    // GWT's sortable headers have role="button", not "columnheader", so the headings are
+                    // read from the header cells' name holders
                     final Value<List<String>> headings = play.querySelectorAll(".dataGridSortableHeaderNameHolder")
                             .textContents();
                     play.expect("the headings", () -> trimmed(headings.get())).toContain("Display Name");
@@ -181,7 +181,7 @@ public final class UserTabScreenStories {
                 });
     }
 
-    /// Differs from React: the tabs (`LinkTabPanelView`) have no role="tab".
+    /// The tabs (`LinkTabPanelView`) have no role="tab".
     ///
     /// @return The tab with the label.
     private static Query tab(final Play play, final String label) {

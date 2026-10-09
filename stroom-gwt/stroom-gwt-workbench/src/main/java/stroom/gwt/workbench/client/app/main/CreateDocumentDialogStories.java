@@ -35,13 +35,13 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/CreateDocumentDialog` in the React Storybook, showing Stroom's real
-/// [CreateDocumentPresenter] (the 'New ...' and 'Save As' dialog) with fake REST replies.
+/// Stories of `App/Main/CreateDocumentDialog`, showing Stroom's real [CreateDocumentPresenter] (the
+/// 'New ...' and 'Save As' dialog) with fake REST replies.
 ///
-/// The React story's `pickerNodes` become the explorer tree's `POST /explorer/v2/fetchExplorerNodes`
-/// (the shared [ExplorerFixture]). The dialog is shown by firing `ShowCreateDocumentDialogEvent`,
-/// as the explorer's 'New' menu and 'Save As' do, with the presenter (from GIN) registered as its
-/// handler in place of its GWTP proxy.
+/// The folder picker's tree comes from `POST /explorer/v2/fetchExplorerNodes` (the shared
+/// [ExplorerFixture]). The dialog is shown by firing `ShowCreateDocumentDialogEvent`, as the
+/// explorer's 'New' menu and 'Save As' do, with the presenter (from GIN) registered as its handler
+/// in place of its GWTP proxy.
 public final class CreateDocumentDialogStories {
 
     // GWT's folder picker is an EntityTreePresenter: a quick filter above the tree
@@ -69,17 +69,15 @@ public final class CreateDocumentDialogStories {
                     screen.findByText("Select the parent folder");
                     // GWT's `max form` layout: three form groups, the folder picker growing
                     // (dock-max) while Name / Permissions are natural height (dock-min).
-                    // Differs from React: the dialog is GWT's CreateDocumentViewImpl, with no
-                    // 'create-document-dialog' class, so its form is found from its caption
+                    // The dialog is GWT's CreateDocumentViewImpl; its form is found from its caption
                     final Play dialog = screen.within(screen.within(screen.getByText("New Dictionary")
                             .closest(StroomDom.DIALOG)).querySelector(".max.form"));
                     play.expect(dialog.querySelectorAll(":scope > .form-group")).toHaveLength(3);
                     play.expect(dialog.querySelectorAll(":scope > .form-group").nth(0)).toHaveClass("dock-max");
                     play.expect(dialog.querySelectorAll(":scope > .form-group").nth(1)).toHaveClass("dock-min");
                     // The folder picker is GWT's EntityTreePresenter: its quick filter is inside the
-                    // picker's form group.
-                    // Differs from React: React checks its own port's class names for the picker's
-                    // border; GWT's are checked by the explorer tree widget stories
+                    // picker's form group. The picker's border classes are checked by the explorer
+                    // tree widget stories
                     final Play picker = dialog.within(dialog.querySelectorAll(":scope > .form-group").nth(0));
                     play.expect(picker.querySelector(QUICK_FILTER)).toBeInTheDocument();
                     picker.findByText("System");

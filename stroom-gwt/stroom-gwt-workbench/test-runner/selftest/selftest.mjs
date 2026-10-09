@@ -17,10 +17,10 @@
 
 // Self-test of the play API's browser code (the JSNI in the workbench framework's play package):
 // compares, in the same headless Chromium, the workbench's roles, accessible names, matchers and
-// user events with the reference React Storybook plays use (Testing Library, user-event 14 and
-// jest-dom from `storybook/test`). See README.md.
+// user events with the reference Storybook plays use (Testing Library, user-event 14 and jest-dom
+// from `storybook/test`). See README.md.
 //
-// Usage: node selftest/selftest.mjs [--url http://localhost:6008] [--react-modules DIR]
+// Usage: node selftest/selftest.mjs [--url http://localhost:6008] [--storybook-modules DIR]
 //                                   [--update-golden] [--only TEXT] [--verbose]
 
 import { existsSync } from 'node:fs';
@@ -37,16 +37,16 @@ import { loadReference, referenceDir } from './reference.mjs';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const GOLDEN_FILE = path.join(HERE, 'golden', 'reference.json');
 const DEFAULT_URL = process.env.WORKBENCH_URL ?? 'http://localhost:6008';
-// The React project is a sibling of this repository
-const DEFAULT_REACT_MODULES = process.env.STROOM_UI_REACT_MODULES
-  ?? path.resolve(HERE, '../../../../../stroom-ui-react/node_modules');
+// Where `npm run selftest:reference` installs Storybook (git-ignored)
+const DEFAULT_STORYBOOK_MODULES = process.env.STORYBOOK_MODULES
+  ?? path.resolve(HERE, 'reference', 'node_modules');
 const STORY_PATH = '/iframe.html?id=widgets-buttons-button--default&viewMode=story&selftest';
 const LOAD_TIMEOUT_MILLIS = 60000;
 
 const { values: options } = parseArgs({
   options: {
     url: { type: 'string', default: DEFAULT_URL },
-    'react-modules': { type: 'string', default: DEFAULT_REACT_MODULES },
+    'storybook-modules': { type: 'string', default: DEFAULT_STORYBOOK_MODULES },
     'update-golden': { type: 'boolean', default: false },
     only: { type: 'string' },
     verbose: { type: 'boolean', default: false },
@@ -58,8 +58,10 @@ if (options.help) {
   console.log(`Usage: node selftest/selftest.mjs [options]
 
   --url URL             The workbench (default ${DEFAULT_URL}, or $WORKBENCH_URL)
-  --react-modules DIR   The React project's node_modules, holding storybook/dist/test
-                        (default ${DEFAULT_REACT_MODULES}, or $STROOM_UI_REACT_MODULES).
+  --storybook-modules DIR
+                        A node_modules holding the storybook package's dist/test (default
+                        ${DEFAULT_STORYBOOK_MODULES}, or $STORYBOOK_MODULES; install it there with
+                        'npm run selftest:reference').
                         If it isn't there, the results are compared with golden/reference.json.
   --update-golden       Write the reference's results to golden/reference.json
   --only TEXT           Only run the scenarios whose name contains TEXT
@@ -232,9 +234,9 @@ function difference(ours, reference, where = '') {
 }
 
 async function main() {
-  const dir = referenceDir(options['react-modules']);
+  const dir = referenceDir(options['storybook-modules']);
   if (!dir && options['update-golden']) {
-    console.error(`Can't update the golden file: no storybook/dist/test in ${options['react-modules']}`);
+    console.error(`Can't update the golden file: no storybook/dist/test in ${options['storybook-modules']}`);
     process.exit(2);
   }
   const browser = await chromium.launch();
@@ -259,9 +261,9 @@ async function main() {
       }
     } else {
       if (!existsSync(GOLDEN_FILE)) {
-        throw new Error(`No reference in ${options['react-modules']} and no ${GOLDEN_FILE}`);
+        throw new Error(`No reference in ${options['storybook-modules']} and no ${GOLDEN_FILE}`);
       }
-      console.log(`No reference in ${options['react-modules']}: comparing with ${GOLDEN_FILE}`);
+      console.log(`No reference in ${options['storybook-modules']}: comparing with ${GOLDEN_FILE}`);
       reference = JSON.parse(await readFile(GOLDEN_FILE, 'utf8'));
       const aria = await runAria(port.page, false);
       const matchers = await runMatchers(port.page, false);

@@ -32,9 +32,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 
-/// Stories for [FormGroup], matching `Widgets/Inputs/FormGroup` in the React Storybook.
-///
-/// React's `TextInput` children are Stroom's `TextBox` (see [TextInputStories]).
+/// Stories for [FormGroup], with Stroom's `TextBox` as its control (see [TextInputStories]).
 public final class FormGroupStories {
 
     private static final String MAX_WIDTH = "400px";
@@ -95,12 +93,11 @@ public final class FormGroupStories {
                 .story("Feedback", context -> {
                     final FormGroup formGroup = formGroup("fg-validated", "Username");
                     final TextBox textBox = InputWidgets.textBox(context, "", "Choose a username…");
-                    // Differs from React: GWT's FormGroup has no feedback setter (its invalid-feedback
-                    // label is private and always empty). Stroom's views (e.g. ChangePasswordViewImpl)
-                    // add their own "feedback" label under the control and mark the control with
-                    // FieldValidity, so this story does the same.
-                    // Differs from React: the message updates when the text box reports its value,
-                    // on leaving it (React's updates as you type)
+                    // GWT's FormGroup has no feedback setter (its invalid-feedback label is private
+                    // and always empty). Stroom's views (e.g. ChangePasswordViewImpl) add their own
+                    // "feedback" label under the control and mark the control with FieldValidity,
+                    // so this story does the same. The message updates when the text box reports
+                    // its value, on leaving it.
                     final Label feedback = new Label();
                     feedback.setStyleName("feedback");
                     textBox.addValueChangeHandler(event -> validate(textBox, feedback));
@@ -226,7 +223,7 @@ public final class FormGroupStories {
         return description;
     }
 
-    /// React's rule: required, then at least 3 characters.
+    /// The story's rule: required, then at least 3 characters.
     private static void validate(final TextBox textBox, final Label feedback) {
         final String value = textBox.getValue();
         final String message = value.isEmpty()

@@ -26,8 +26,8 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.task.client.DefaultTaskMonitorFactory;
 
 /// The fake annotation service (`AnnotationResource`, `/annotation/v1`) shared by the annotation
-/// editor stories (`App/Main/AnnotationEditor`, `App/Annotations/decorateComment`): the React
-/// stories' annotation 42 with its status, label and comment tags.
+/// editor stories (`App/Main/AnnotationEditor`, `App/Annotations/decorateComment`): annotation 42
+/// with its status, label and comment tags.
 public final class AnnotationFixtures {
 
     /// The annotation the stories edit.

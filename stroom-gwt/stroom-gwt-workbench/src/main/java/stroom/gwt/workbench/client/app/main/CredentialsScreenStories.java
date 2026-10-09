@@ -33,16 +33,16 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/CredentialsScreen` in the React Storybook, showing Stroom's real
-/// `CredentialsPresenter` (the 'Credentials' tab) with fake REST replies.
+/// Stories of `App/Main/CredentialsScreen`, showing Stroom's real `CredentialsPresenter` (the
+/// 'Credentials' tab) with fake REST replies.
 ///
-/// | React seam | Stroom REST endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `find` | `POST /credentials/findCredentialsWithPermissions` |
-/// | `createDocRef` | `GET /credentials/createDocRef` |
-/// | `store` (its recorder) | `POST /credentials/store` (the request spy) |
-/// | `docPermission.fetchPermissions` | `POST /permission/doc/v1/fetchDocumentUserPermissions` |
-/// | `uploadFile` | the key store file's upload (`importfile.rpc`): an upload reply, key `rk-1` |
+/// | `POST /credentials/findCredentialsWithPermissions` | the credentials |
+/// | `GET /credentials/createDocRef` | a new credential's reference |
+/// | `POST /credentials/store` (the request spy) | saving a credential |
+/// | `POST /permission/doc/v1/fetchDocumentUserPermissions` | a credential's permissions |
+/// | the key store file's upload (`importfile.rpc`): an upload reply, key `rk-1` | key stores |
 ///
 /// The presenter comes from GIN and is shown as `CredentialsPlugin` shows it.
 public final class CredentialsScreenStories {
@@ -53,14 +53,14 @@ public final class CredentialsScreenStories {
                                                 "credentialType": "USERNAME_PASSWORD"},
                                  "edit": true, "delete": true}],
                      "pageResponse": {"offset": 0, "length": 1, "total": 1, "exact": true}}"""))
-            // The new credential's permissions (React's docPermission.fetchPermissions)
+            // The new credential's permissions
             .post("/permission/doc/v1/fetchDocumentUserPermissions", RestReply.json("""
                     {"values": [], "pageResponse": {"offset": 0, "length": 0, "total": 0, "exact": true}}"""))
             .get("/credentials/createDocRef", RestReply.json("""
                     {"type": "Credential", "uuid": "new-uuid", "name": ""}"""))
             .post("/credentials/store", RestReply.json("""
                     {"uuid": "new-uuid", "name": "CI Token", "credentialType": "USERNAME_PASSWORD"}"""))
-            // React's KeyStore uploadFile
+            // The key store file's upload
             .upload(UploadReply.success("rk-1", "ks.p12"))
             .build();
 
@@ -105,7 +105,7 @@ public final class CredentialsScreenStories {
                 .withPlay(play -> {
                     play.findByText("My Creds");
                     final Play dialog = openNewCredentials(play);
-                    // Differs from React: GWT's SelectionBox opens when its text box is clicked
+                    // GWT's SelectionBox opens when its text box is clicked
                     play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
                     play.click(play.screen().findByText("SSH Key"));
                     dialog.findByLabelText("Private Key");
@@ -119,7 +119,7 @@ public final class CredentialsScreenStories {
                     play.findByText("My Creds");
                     final Play dialog = openNewCredentials(play);
                     play.type(dialog.getByLabelText("Name"), "TLS Store");
-                    // Differs from React: GWT's SelectionBox opens when its text box is clicked
+                    // GWT's SelectionBox opens when its text box is clicked
                     play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
                     play.click(play.screen().findByText("Key Store"));
                     play.waitFor(() -> play.expect(dialog.querySelector(StroomDom.FILE_INPUT)).not().toBeNull());
@@ -142,7 +142,7 @@ public final class CredentialsScreenStories {
     /// @return The dialog.
     private static Play openNewCredentials(final Play play) {
         play.click(play.getByTitle("Add"));
-        // Differs from React: Stroom's dialogs have no role="dialog"
+        // Stroom's dialogs have no role="dialog"
         final Play screen = play.screen();
         return screen.within(screen.findByText("New Credentials").closest(StroomDom.DIALOG));
     }

@@ -36,15 +36,15 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories matching `App/Main/UserTaskManagerDialog` in the React Storybook, showing Stroom's real
-/// [UserTaskManagerPresenter] (the current user's 'Task Manager' dialog) with fake REST replies.
+/// Stories of `App/Main/UserTaskManagerDialog`, showing Stroom's real [UserTaskManagerPresenter]
+/// (the current user's 'Task Manager' dialog) with fake REST replies.
 ///
 /// The dialog polls: once a second, while it is open, it lists the nodes (`GET /node/v1/all`) and
-/// fetches the user's tasks from each (`GET /task/v1/user/{node}`, React's `userTasks`), so the
-/// fixtures answer every poll with the same reply. Its timer only stops when the dialog is asked
-/// to close, so the story registers it with `ScreenHarness.closeOnCleanUp`. React's `terminate`
-/// is `POST /task/v1/terminate/{node}`, checked with the request spy. The presenter comes from GIN
-/// and is opened by its event, as its GWTP proxy would.
+/// fetches the user's tasks from each (`GET /task/v1/user/{node}`), so the fixtures answer every
+/// poll with the same reply. Its timer only stops when the dialog is asked to close, so the story
+/// registers it with `ScreenHarness.closeOnCleanUp`. Terminating a task is
+/// `POST /task/v1/terminate/{node}`, checked with the request spy. The presenter comes from GIN and
+/// is opened by its event, as its GWTP proxy would.
 public final class UserTaskManagerDialogStories {
 
     // TaskResource.userTasks()

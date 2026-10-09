@@ -37,14 +37,13 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.ArrayList;
 import java.util.List;
 
-/// Stories matching `App/Main/ResultStoresDialog` in the React Storybook, showing Stroom's real
-/// [ResultStorePresenter] (the 'Search Result Stores' dialog) with fake REST replies.
+/// Stories of `App/Main/ResultStoresDialog`, showing Stroom's real [ResultStorePresenter] (the
+/// 'Search Result Stores' dialog) with fake REST replies.
 ///
-/// The React story's `ResultStoreApi` becomes routes for Stroom's `NodeResource` and
-/// `ResultStoreResource` (`/result-store/v1`): `listNodes` → `GET /node/v1/all`, `find` →
-/// `POST /find/{node}`, `terminate` → `POST /terminate/{node}`, `destroy` → `POST /destroy/{node}`,
-/// `updateSettings` → `POST /update/{node}`. Its recorder becomes checks on the request spy. The
-/// dialog is shown as `ResultStorePlugin` does (`show()`).
+/// The fixtures answer Stroom's `NodeResource` (the nodes, `GET /node/v1/all`) and
+/// `ResultStoreResource` (`/result-store/v1`: `POST /find/{node}`, `POST /terminate/{node}`,
+/// `POST /destroy/{node}` and `POST /update/{node}`). The requests are checked on the request spy.
+/// The dialog is shown as `ResultStorePlugin` does (`show()`).
 public final class ResultStoresDialogStories {
 
     private static final String FIND_PATH = "/result-store/v1/find/node1";
@@ -80,7 +79,7 @@ public final class ResultStoresDialogStories {
                     screen.findByText("admin");
                     screen.findByText("analyst");
                     // Select the DASHBOARD_UI (non-analytic, incomplete) store: Terminate is enabled.
-                    // Differs from React: GWT's toolbar buttons are found by their titles
+                    // The toolbar buttons are found by their titles
                     play.click(screen.getByText("admin"));
                     final Query terminate = screen.getByTitle("Terminate Search");
                     play.waitFor(() -> play.expect(terminate).not().toHaveClass("disabled"));
@@ -95,7 +94,7 @@ public final class ResultStoresDialogStories {
                             RequestMatcher.post("/result-store/v1/terminate/node1")
                                     .withJsonBodyContaining("{\"uuid\": \"q-1\"}")
                                     .toSpyMatcher()));
-                    // Differs from React: GWT then tells the user it terminated the search
+                    // GWT then tells the user it terminated the search
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("INFO: Terminated"));
                     play.click(screen.within(screen.getByText("Terminated").closest(StroomDom.DIALOG))
@@ -136,7 +135,7 @@ public final class ResultStoresDialogStories {
                     screen.findByText("user-0");
                     play.expect(screen.queryByText("user-100")).toBeNull();
                     // The pager reports the full total across the fan-out.
-                    // Differs from React: the pager is in the dialog, on the page's body
+                    // The pager is in the dialog, on the page's body
                     screen.findByText("150");
                     // Forward: page 2 shows the rest
                     play.click(screen.getByTitle("Forward"));

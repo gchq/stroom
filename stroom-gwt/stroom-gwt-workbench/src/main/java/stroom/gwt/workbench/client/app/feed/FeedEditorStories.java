@@ -35,38 +35,37 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Feed/FeedEditor` in the React Storybook, showing Stroom's real
-/// [FeedPresenter] (a Feed's tab: Data, Active Tasks, Settings, Documentation and Permissions)
-/// with fake REST replies.
+/// The `App/Feed/FeedEditor` stories, showing Stroom's real [FeedPresenter] (a Feed's tab: Data,
+/// Active Tasks, Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `FeedPlugin` does, the story fetches the document (`GET /feed/v1/{uuid}`) and reads it into
-/// the editor ([DocEditors#open]). React's seams become routes:
+/// the editor ([DocEditors#open]). The other routes:
 ///
-/// | React seam | Stroom endpoint |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `options.fetchSupportedEncodings` | `GET /feed/v1/fetchSupportedEncodings` |
-/// | `options.fetchStreamTypes` | `GET /meta/v1/getTypes` |
-/// | `options.fetchVolumeGroups` | `POST /fsVolume/volumeGroup/v2/find` |
-/// | `meta.find` | `POST /meta/v1/find` |
-/// | `data.fetch` | `POST /data/v1/fetch` (and the stream's `info` and `child-types`) |
-/// | `processorTask.findSummary` | `POST /processorTask/v1/summary` |
-/// | `processorTask.find` | `POST /processorTask/v1/find` |
-/// | `docPermission` | the Permissions tab's routes |
+/// | `GET /feed/v1/fetchSupportedEncodings` | the encodings |
+/// | `GET /meta/v1/getTypes` | the stream types |
+/// | `POST /fsVolume/volumeGroup/v2/find` | the volume groups |
+/// | `POST /meta/v1/find` | the feed's streams |
+/// | `POST /data/v1/fetch` (and the stream's `info` and `child-types`) | the data preview |
+/// | `POST /processorTask/v1/summary` | the active tasks' summary |
+/// | `POST /processorTask/v1/find` | the active tasks |
+/// | the Permissions tab's routes | the Permissions tab |
 ///
-/// React's UI config (`receiptCheckMode: FEED_STATUS`, so Feed Status is enabled) is the start-up
+/// The UI config (`receiptCheckMode: FEED_STATUS`, so Feed Status is enabled) is the start-up
 /// fixtures' default.
 public final class FeedEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(FeedDoc.TYPE, "feed-events", "EVENTS");
 
-    // FeedResource.fetch(): React's INITIAL_DOC
+    // FeedResource.fetch(): the feed
     private static final String DOC = """
             {"type": "Feed", "uuid": "feed-events", "name": "EVENTS",
               "description": "# Events feed\\n\\nRaw event data.", "classification": "OFFICIAL",
               "reference": false, "status": "RECEIVE", "streamType": "Raw Events", "encoding": "UTF-8",
               "contextEncoding": "UTF-8", "dataFormat": "JSON", "volumeGroup": "Default"}""";
 
-    // MetaResource.find(): React's metaFixture
+    // MetaResource.find(): the feed's streams
     private static final String STREAMS = """
             {"values": [
                 {"meta": {"id": 101, "feedName": "EVENTS", "typeName": "Raw Events", "status": "UNLOCKED",
@@ -76,7 +75,7 @@ public final class FeedEditorStories {
                   "createMs": 1700000600000}, "attributes": {}}],
               "pageResponse": {"offset": 0, "length": 2, "total": 2, "exact": true}}""";
 
-    // DataResource.fetch(): React's dataFixture
+    // DataResource.fetch(): a stream's data
     private static final String DATA = """
             {"type": "data", "feedName": "EVENTS", "streamTypeName": "Raw Events",
               "classification": "OFFICIAL",
@@ -87,7 +86,7 @@ public final class FeedEditorStories {
               "data": "<Events>\\n  <Event id=\\"1\\">login</Event>\\n</Events>",
               "html": false, "dataType": "NON_SEGMENTED", "displayMode": "TEXT"}""";
 
-    // ProcessorTaskResource.summary() and find(): React's processorTaskFixture
+    // ProcessorTaskResource.summary() and find(): the active tasks
     private static final String TASK_PIPE =
             "{\"type\": \"Pipeline\", \"uuid\": \"p2\", \"name\": \"Events Task Pipeline\"}";
     private static final String TASK_SUMMARY = """
@@ -123,8 +122,8 @@ public final class FeedEditorStories {
             .post("/processorTask/v1/find", RestReply.json(TASKS))
             .build();
 
-    // Differs from React: a FormGroup gives its control the group's identity as its id
-    // (FeedSettingsViewImpl.ui.xml), not React's '<name>-input'
+    // A FormGroup gives its control the group's identity as its id
+    // (FeedSettingsViewImpl.ui.xml)
     private static final String CLASSIFICATION = "#feedSettingsClassification";
 
     private FeedEditorStories() {
@@ -148,8 +147,7 @@ public final class FeedEditorStories {
                     // Data is the default tab: the feed's streams, and selecting one previews it
                     play.waitFor(() -> play.expect(play.getByText("Events Pipeline")).toBeInTheDocument());
                     play.click(play.getByText("Events Pipeline"));
-                    // Differs from React: GWT's preview has no 'Select a stream' placeholder; the
-                    // play checks that the selected stream's data is fetched
+                    // The play checks that the selected stream's data is fetched
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/data/v1/fetch")
                                     .withJsonBodyContaining("{\"sourceLocation\": {\"metaId\": 101}}")
@@ -163,7 +161,7 @@ public final class FeedEditorStories {
                     final Query save = play.getByRole("button", "Save");
                     play.expect(save).toHaveClass("disabled");
                     play.type(play.querySelector(CLASSIFICATION), "-X");
-                    // Differs from React: the text box reports its change when it loses the focus
+                    // The text box reports its change when it loses the focus
                     play.tab();
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
 

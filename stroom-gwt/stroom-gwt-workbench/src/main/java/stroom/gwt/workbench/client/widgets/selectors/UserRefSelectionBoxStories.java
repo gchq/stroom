@@ -31,14 +31,12 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for Stroom's [UserRefSelectionBoxPresenter], matching
-/// `Widgets/Selectors/UserRefSelectionBox` in the React Storybook: a drop-down showing the chosen
-/// user or group, which opens Stroom's user picker. The users are found by a [UserFixture] of the
-/// React stories' users.
+/// Stories for Stroom's [UserRefSelectionBoxPresenter]: a drop-down showing the chosen user or
+/// group, which opens Stroom's user picker. The users are found by a [UserFixture].
 public final class UserRefSelectionBoxStories {
 
     private static final String ON_CHANGE = "onChange";
-    // As the React fixture's loader, which shows the "Loading…" state
+    // Delays the users' search, to show the "Loading…" state
     private static final int FIND_DELAY_MILLIS = 150;
 
     private UserRefSelectionBoxStories() {
@@ -71,7 +69,7 @@ public final class UserRefSelectionBoxStories {
                 });
     }
 
-    /// The React stories' box with a `Selected: ...` echo below.
+    /// The box with a `Selected: ...` echo below.
     private static Widget withEcho(final StoryContext context, final UserRef selected) {
         final ScreenHarness harness = harness(context);
         final UserRefSelectionBoxPresenter box = box(context, harness);

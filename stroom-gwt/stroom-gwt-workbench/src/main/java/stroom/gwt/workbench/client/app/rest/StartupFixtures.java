@@ -27,8 +27,7 @@ import java.util.Objects;
 
 /// The replies to the requests that Stroom makes when it starts and that many screens repeat:
 /// the session info, the (extended) UI config, the user's preferences, their app permissions and
-/// document permission checks. They are the equivalent of the React stories' `appApiFixture`
-/// (`fetchSessionInfo`, `fetchUiConfig`, `fetchUserPreferences`, `fetchEffectiveAppPermissions`).
+/// document permission checks.
 ///
 /// The [stroom.gwt.workbench.client.app.screen.ScreenHarness] adds them after the story's own
 /// fixtures, so a story only overrides what it cares about, either with its own route (the first

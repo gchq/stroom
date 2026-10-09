@@ -33,14 +33,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-/// Stories for [Button], matching `Widgets/Buttons/Button` in the React Storybook.
+/// Stories for [Button].
 public final class ButtonStories {
 
     private static final String PRIMARY = "Button--contained-primary";
     private static final String SECONDARY = "Button--contained-secondary";
     private static final int LOADING_RESET_MILLIS = 2000;
 
-    // Arg names, the same as the React Button's props
+    // Arg names
     private static final String TEXT = "text";
     private static final String VARIANT = "variant";
     private static final String LOADING = "loading";

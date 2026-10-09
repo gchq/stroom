@@ -26,8 +26,8 @@ import java.util.Locale;
 import java.util.Map;
 
 /// A fake of Stroom's data source field search (`POST /dataSource/v1/findFields`), answering a
-/// `DynamicFieldSelectionListModel`'s requests from a fixed list of fields: the equivalent of the
-/// React stories' `fieldSource` (`loadFields` and `findFieldByName`).
+/// `DynamicFieldSelectionListModel`'s requests from a fixed list of fields, as a data source's field
+/// list (`findFields`) would answer them.
 ///
 /// Plain Java, so it is unit tested on the JVM.
 public final class FieldFixture {
@@ -45,7 +45,7 @@ public final class FieldFixture {
         this.fields = fields;
     }
 
-    /// Describes a request as the React story's `fieldSource` records its calls.
+    /// Describes a request, for the stories' `fieldSource` spy to record.
     ///
     /// @param requestJson The request's body, a `FindFieldCriteria`.
     /// @return `findFieldByName:<name>` for a request for one field by name, else `loadFields`.

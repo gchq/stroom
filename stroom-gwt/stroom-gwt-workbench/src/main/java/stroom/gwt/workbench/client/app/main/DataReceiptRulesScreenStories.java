@@ -40,17 +40,17 @@ import com.google.gwt.user.client.ui.Widget;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Main/DataReceiptRulesScreen` in the React Storybook, showing Stroom's
-/// real [RuleSetPresenter] (the 'Data Receipt Rules' tab, as `ReceiveDataRuleSetPlugin` opens it:
-/// the Rules, Fields and Documentation sub-tabs) with fake REST replies.
+/// Stories of `App/Main/DataReceiptRulesScreen`, showing Stroom's real [RuleSetPresenter] (the
+/// 'Data Receipt Rules' tab, as `ReceiveDataRuleSetPlugin` opens it: the Rules, Fields and
+/// Documentation sub-tabs) with fake REST replies.
 ///
-/// | React | Stroom |
+/// | Stroom endpoint | Used for |
 /// |---|---|
-/// | `fetch` | `GET /ruleset/v2` |
-/// | `update` | `PUT /ruleset/v2` (echoes the rules) |
-/// | `uiConfig.obfuscatedFields` | the extended UI config's `obfuscatedFields` |
+/// | `GET /ruleset/v2` | the rules |
+/// | `PUT /ruleset/v2` (echoes the rules) | saving the rules |
+/// | the extended UI config's `obfuscatedFields` | the fields to obfuscate |
 ///
-/// The recorder's checks become checks on the request spy.
+/// The requests made are checked on the request spy.
 public final class DataReceiptRulesScreenStories {
 
     private static final String RULES_PATH = "/ruleset/v2";
@@ -83,7 +83,7 @@ public final class DataReceiptRulesScreenStories {
             + ",\"receiptCheckMode\":\"FEED_STATUS\",\"lastAnnotationChangeTime\":0}";
 
     private static final String SAVE = "Save all rules";
-    // Differs from React: the expression panel has no class of its own; it is the expression tree's
+    // The expression panel has no class of its own; it is the expression tree's
     // view (ExpressionTreeViewImpl)
     private static final String EXPRESSION_PANEL = ".ExpressionTreeViewImpl-layoutPanel";
 
@@ -143,7 +143,7 @@ public final class DataReceiptRulesScreenStories {
                     // Add a rule -> "Edit Rule" dialog (GWT's caption for an add too) -> name -> OK
                     play.click(play.getByTitle("Add new rule"));
                     final Play dialog = dialog(screen, "Edit Rule");
-                    // Differs from React: the field's id is its FormGroup's identity
+                    // The field's id is its FormGroup's identity
                     play.type(dialog.querySelector("#ruleRuleName"), "Drop everything else");
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Drop everything else");
@@ -163,11 +163,11 @@ public final class DataReceiptRulesScreenStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.findByText("Reject test feeds");
-                    // Differs from React: GWT's tabs are link tabs with no 'tab' role
+                    // GWT's tabs are link tabs with no 'tab' role
                     play.click(play.getByText("Fields", StroomDom.LINK_TAB_LABEL));
                     play.findByText("System");
                     // The field columns are sortable, sorted by name ascending to start with.
-                    // Differs from React: GWT has no aria-sort; the sorted header shows a sort icon
+                    // GWT has no aria-sort; the sorted header shows a sort icon
                     final Query nameHeader = play.getByText("Name", "th *").closest("th");
                     final Query grid = nameHeader.closest(".dataGridWidget");
                     play.expect(play.within(nameHeader).querySelector(".column-sortIcon")).not().toBeNull();
@@ -176,7 +176,7 @@ public final class DataReceiptRulesScreenStories {
                     play.click(nameHeader);
                     play.waitFor(() -> play.expect("the field order", () -> fieldOrder(grid.element().get()))
                             .toBe("System,Feed"));
-                    // Differs from React: the button is titled 'New Field', the dialog 'New Field'
+                    // The button is titled 'New Field', the dialog 'New Field'
                     play.click(play.getByTitle("New Field"));
                     final Play dialog = dialog(screen, "New Field");
                     play.type(dialog.querySelector("#fieldEditName"), "Environment");
@@ -273,8 +273,7 @@ public final class DataReceiptRulesScreenStories {
         final ScreenHarness.Builder builder = ScreenHarness.builder(context, FIXTURES)
                 .injector(injector);
         if (obfuscateFeed) {
-            // React's nested AppContextProvider with uiConfig.obfuscatedFields; the confirmation is
-            // Stroom's real dialog
+            // A UI config with obfuscated fields; the confirmation is Stroom's real dialog
             builder.startup(startup -> startup.extendedUiConfig(OBFUSCATING_UI_CONFIG)).realAlerts();
         }
         final ScreenHarness harness = builder.build();

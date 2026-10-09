@@ -31,8 +31,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/// Stories for Stroom's [SpinnerSmall] and [SpinnerLarge], matching `Widgets/Feedback/Spinner`
-/// in the React Storybook.
+/// Stories for Stroom's [SpinnerSmall] and [SpinnerLarge].
 public final class SpinnerStories {
 
     private SpinnerStories() {
@@ -53,7 +52,7 @@ public final class SpinnerStories {
 
     private static Widget inline() {
         final SpinnerSmall spinner = new SpinnerSmall();
-        // React's `visible` is SpinnerSmall's `refreshing` style
+        // SpinnerSmall shows while it has the `refreshing` style
         spinner.setRefreshing(true);
         final InlineLabel text = StoryPanels.note("Inline loading spinner", "#ccc", "0.85rem");
         final FlowPanel spinnerRow = StoryPanels.row(12, spinner, text);

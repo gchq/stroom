@@ -54,15 +54,13 @@ import java.util.List;
 import java.util.function.Supplier;
 
 /// Stories for Stroom's [DataPresenter] (the data preview of a stream: its Info, Error, Data
-/// Preview, Meta and Context tabs, the item navigator and the marker list), matching
-/// `Widgets/Editors & Viewers/SourceViewer` in the React Storybook.
+/// Preview, Meta and Context tabs, the item navigator and the marker list).
 ///
-/// The React stories' `loadSource` seams become fixtures for the requests [DataPresenter] makes:
+/// Fixtures answer the requests [DataPresenter] makes:
 /// the stream's meta (`GET /meta/v1/{id}`), its child stream types
 /// (`GET /data/v1/{id}/parts/{part}/child-types`) and the data (`POST /data/v1/fetch`).
 ///
-/// React's `SourceViewer` combines the GWT data preview with the source view's character
-/// navigator; the GWT data preview pages by part or record (the 'View Source' link opens the
+/// The data preview pages by part or record (the 'View Source' link opens the
 /// source view, see `SourcePresenterStories`), and shows markers in its Error tab, for streams of
 /// the `Error` type.
 public final class SourceViewerStories {
@@ -128,8 +126,7 @@ public final class SourceViewerStories {
                 // The marker list (MarkerListPresenter) of an Error stream
                 .story("Markers", context -> render(context, MARKERS_FIXTURES, location(1001)))
                 .withPlay(play -> {
-                    // Differs from React: GWT shows an Error stream's markers in its Error tab, which
-                    // it selects itself; React has a 'Markers' tab to click
+                    // An Error stream's markers are shown in its Error tab
                     play.click(play.findByText(ERROR, TAB_LABEL));
                     for (final String heading : List.of("Element", "Stream", "Line", "Col", "Message")) {
                         play.expect(play.findByRole("columnheader", heading)).toBeInTheDocument();
@@ -145,7 +142,7 @@ public final class SourceViewerStories {
                     // ElementId.toString(): `name {id}`
                     play.expect(play.getByText("Split records {SplitFilter}")).toBeInTheDocument();
                     // Summary rows span Element+Stream+Line+Col+Message.
-                    // Differs from React: GWT sets the cell's colspan, not aria-colspan
+                    // The summary cell has a colspan
                     final Query summaryRow = play.getByText("Errors (1 item)").closest("tr");
                     play.expect(play.within(summaryRow).querySelector("td[colspan=\"5\"]")).not().toBeNull();
                     // The expander column is ExpanderCell.getColumnWidth(1) = 45px
@@ -158,8 +155,8 @@ public final class SourceViewerStories {
                     final Supplier<Object> lastFetch = lastFetch(play);
                     play.click(play.findByText(ERROR, TAB_LABEL));
                     play.waitFor(() -> play.expect(play.getByText("Errors (1 item)")).toBeInTheDocument());
-                    // Differs from React: GWT starts with every severity expanded
-                    // (MarkerListPresenter.resetExpandedSeverities), so the error shows to begin with
+                    // MarkerListPresenter starts with every severity expanded
+                    // (resetExpandedSeverities), so the error shows to begin with
                     // and the first click collapses the group
                     play.expect(play.getByText("Split records {SplitFilter}")).toBeInTheDocument();
                     play.click(play.querySelector(".expanderCell .expanderIcon"));
@@ -181,19 +178,16 @@ public final class SourceViewerStories {
                     waitForEditorText(play, "<event>record 0</event>");
 
                     // The item pager: the next record fetches with recordIndex 1.
-                    // Differs from React: the button's title is "Next record" (lower case)
                     play.click(play.getByTitle("Next record"));
                     play.waitFor(() -> play.expect("the last fetch", lastFetch).toMatch("\"recordIndex\":1"));
                     waitForEditorText(play, "<event>record 1</event>");
 
-                    // Differs from React: GWT shows the child streams as tabs (Data Preview, Meta,
-                    // Context), not a selector
+                    // The child streams are tabs (Data Preview, Meta, Context)
                     play.click(play.getByText("Context", TAB_LABEL));
                     play.waitFor(() -> play.expect("the last fetch", lastFetch).toMatch("\"childType\":\"Context\""));
                     waitForEditorText(play, "<context>ctx</context>");
 
-                    // Differs from React: View as Hex is an option of the editor's context menu, not
-                    // a button
+                    // View as Hex is an option of the editor's context menu
                     play.rightClick(play.querySelector(".ace_content"));
                     play.click(play.screen().findByText(TextMatch.containing("View as Hex")));
                     play.waitFor(() -> play.expect("the last fetch", lastFetch).toMatch("\"displayMode\":\"HEX\""));
@@ -209,7 +203,7 @@ public final class SourceViewerStories {
                     // child type
                     play.waitFor(() -> play.expect(play.querySelectorAll(".ace_marker-layer .hl").count())
                             .toBeGreaterThan(0));
-                    // Differs from React: the data preview hides the line numbers (it formats the
+                    // The data preview hides the line numbers (it formats the
                     // data), so there is no gutter numbered from the returned first line
                     play.expect(play.querySelector(".ace_gutter")).not().toBeVisible();
                     // A range has nothing to navigate, so there is no item navigator (it was once
@@ -234,7 +228,7 @@ public final class SourceViewerStories {
             presenter.fetchData(sourceLocation);
         }
 
-        // React's Frame: {height: 460, display: 'flex', flexDirection: 'column'}
+        // A 460px high frame
         harness.add(EditorWidgets.frame(presenter.getWidget(), "auto", "460px"));
         return harness.asWidget();
     }
@@ -270,7 +264,7 @@ public final class SourceViewerStories {
         return SourceLocation.builder(metaId).build();
     }
 
-    /// React's `HL_RANGE`, both the range to fetch and the highlight: columns 11-16 of line 6.
+    /// Both the range to fetch and the highlight: columns 11-16 of line 6.
     private static SourceLocation highlightLocation() {
         final DataRange range = DataRange.between(DefaultLocation.of(6, 11), DefaultLocation.of(6, 16));
         return SourceLocation.builder(4004)
@@ -319,7 +313,7 @@ public final class SourceViewerStories {
                 .build();
     }
 
-    /// React's `buildSampleXml(records)`.
+    /// Sample XML with the given number of records.
     private static String buildSampleXml(final int records) {
         final StringBuilder sb = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Events>\n");
         for (int i = 1; i <= records; i++) {
@@ -335,7 +329,7 @@ public final class SourceViewerStories {
         return sb.append("</Events>").toString();
     }
 
-    /// React's `makeLoadSource(text, windowSize)`: a window of the text from the requested
+    /// A window of the text from the requested
     /// character, with the true total.
     private static String window(final String requestBody, final String text, final int windowSize) {
         final int maxIndex = Math.max(text.length() - 1, 0);
@@ -353,7 +347,7 @@ public final class SourceViewerStories {
                 + "\"totalBytes\": " + text.length() + ", " + ONE_PART);
     }
 
-    /// React's `makeStreamSource()`: a segmented stream of 3 records with child streams and hex.
+    /// A segmented stream of 3 records with child streams and hex.
     private static String segmented(final String requestBody) {
         final Object childType = DataFixtures.get(requestBody, "sourceLocation", "childType");
         final long record = DataFixtures.getLong(requestBody, 0, "sourceLocation", "recordIndex");
@@ -383,7 +377,7 @@ public final class SourceViewerStories {
                 + "\"itemRange\": {\"offset\": " + record + ", \"length\": 1}");
     }
 
-    /// React's `makeHighlightSource()`: whole lines from line 5, reported as the range's first
+    /// Whole lines from line 5, reported as the range's first
     /// line.
     private static String highlightSource() {
         return dataResult(4004, RAW_EVENTS, HL_CONTENT, "NON_SEGMENTED", "TEXT",
@@ -425,7 +419,7 @@ public final class SourceViewerStories {
                + "}";
     }
 
-    /// React's `expandingLoadSource`: the ERROR group's errors only when ERROR is expanded.
+    /// The ERROR group's errors only when ERROR is expanded.
     private static List<String> expandingMarkers(final String requestBody) {
         final Object expanded = DataFixtures.get(requestBody, "expandedSeverities");
         final boolean open = expanded instanceof List && ((List<?>) expanded).contains("ERROR");

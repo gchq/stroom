@@ -41,13 +41,12 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 
 /// Stories for Stroom's [SourcePresenter] (the 'Source' view of a stream: title, classification,
-/// progress bar, character navigator and the read-only editor), matching
-/// `Widgets/Editors & Viewers/SourcePresenter` in the React Storybook.
+/// progress bar, character navigator and the read-only editor).
 ///
-/// The React stories' `loadSource` seams become fixtures for `POST /data/v1/fetch`.
+/// The data is served by fixtures for `POST /data/v1/fetch`.
 public final class SourcePresenterStories {
 
-    /// The name of the spy for React's `onBeginStepping` prop.
+    /// The name of the spy for the stepping button.
     static final String ON_BEGIN_STEPPING = "onBeginStepping";
 
     private static final long META_ID = 1234;
@@ -59,19 +58,19 @@ public final class SourcePresenterStories {
     private static final String WIDTH = "760px";
     private static final String HEIGHT = "440px";
 
-    // React's makeLoadSource(): a window of a (pretend) 250,000 character stream, starting at the
+    // A window of a (pretend) 250,000 character stream, starting at the
     // requested character
     private static final RestFixtures LOADED_FIXTURES = RestFixtures.builder()
             .post(DataFixtures.FETCH_PATH, request -> RestReply.json(loadedSource(request.getBody()))
                     .delayed(LOAD_DELAY_MILLIS))
             .build();
 
-    // React's loadForever: the fetch never resolves
+    // The fetch never resolves
     private static final RestFixtures LOADING_FIXTURES = RestFixtures.builder()
             .post(DataFixtures.FETCH_PATH, RestReply.json("{}").delayed(LOADING_FOREVER_MILLIS))
             .build();
 
-    // React's loadWithErrors (GWT showErrors)
+    // A reply with errors (showErrors)
     private static final RestFixtures ERROR_FIXTURES = RestFixtures.builder()
             .post(DataFixtures.FETCH_PATH, RestReply.json("""
                     {
@@ -98,7 +97,7 @@ public final class SourcePresenterStories {
                 // shows over the editor; clicking it begins stepping
                 .story("SteppingEnabled", context -> render(context, LOADED_FIXTURES, true, false))
                 // A stepping source: no View as Hex option.
-                // Differs from React: the character navigator still shows
+                // The character navigator still shows
                 .story("SteppingSource", context -> render(context, LOADED_FIXTURES, true, true))
                 // Loading: the fetch never completes
                 .story("Loading", context -> render(context, LOADING_FIXTURES, false, false))
@@ -110,8 +109,8 @@ public final class SourcePresenterStories {
                                  final RestFixtures fixtures,
                                  final boolean canStep,
                                  final boolean steppingSource) {
-        // Differs from React: GWT shows the stepping button whenever the user has the stepping
-        // permission (React's canStep), so the other stories' user doesn't have it
+        // Stroom shows the stepping button whenever the user has the stepping permission, so the
+        // other stories' user doesn't have it
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .appPermissions(canStep
                         ? new AppPermission[]{AppPermission.VIEW_DATA_PERMISSION, AppPermission.STEPPING_PERMISSION}
@@ -133,7 +132,7 @@ public final class SourcePresenterStories {
                 .withRecordIndex(0L)
                 .build());
 
-        // Differs from React: SourceViewImpl keeps a 300px area at the top for the stepping meta
+        // SourceViewImpl keeps a 300px area at the top for the stepping meta
         // list, so much of the view is below the frame's fold
         harness.add(EditorWidgets.frame(presenter.getWidget(), WIDTH, HEIGHT));
         return harness.asWidget();
@@ -166,7 +165,7 @@ public final class SourcePresenterStories {
                 harness.getInjector().getClientSecurityContext());
     }
 
-    /// React's `makeLoadSource()` reply: a window of the stream from the requested character.
+    /// A window of the stream from the requested character.
     private static String loadedSource(final String requestBody) {
         final long from = DataFixtures.getLong(requestBody, 0,
                 "sourceLocation", "dataRange", "charOffsetFrom");

@@ -26,10 +26,9 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Shows each story on the Stroom theme's background, the equivalent of the `ThemeFrame`
-/// decorator in the React Storybook's `.storybook/preview.tsx`. The theme is selected by the
-/// classes on the `<html>` element of iframe.html, which [#applyTheme(StoryTheme)] sets to the
-/// workbench's chosen theme.
+/// Shows each story on the Stroom theme's background, as a Storybook decorator would. The theme is
+/// selected by the classes on the `<html>` element of iframe.html, which [#applyTheme(StoryTheme)]
+/// sets to the workbench's chosen theme.
 ///
 /// Some of Stroom's code doesn't follow the page's classes but the user's preferences (an Ace
 /// editor's theme, a visualisation's or Markdown preview's frame), so stories give Stroom the same

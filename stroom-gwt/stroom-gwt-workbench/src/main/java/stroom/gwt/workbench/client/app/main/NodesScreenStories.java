@@ -33,16 +33,14 @@ import stroom.node.client.presenter.NodePresenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/NodesScreen` in the React Storybook, showing Stroom's real
-/// [NodePresenter] (the 'Nodes' tab: the node list and the selected node's jobs) with fake REST
-/// replies.
+/// Stories of `App/Main/NodesScreen`, showing Stroom's real [NodePresenter] (the 'Nodes' tab: the
+/// node list and the selected node's jobs) with fake REST replies.
 ///
-/// The React story's `NodeApi` and `JobApi` fixtures become routes for Stroom's `NodeResource`
-/// (`fetchNodes` → `POST /node/v1/find`, `ping` → `GET /node/v1/ping/{node}`, `setEnabled` →
-/// `PUT /node/v1/enabled/{node}`, `listEnabledNodes` → `GET /node/v1/enabled`) and
-/// `JobNodeResource` (`findJobNodes` → `POST /jobNode/v1/find`, by the criteria's `nodeName`), and
-/// its recorders become checks on the request spy. Its `nodeMonitoring` UI config is the harness's.
-/// The presenter comes from GIN.
+/// The fixtures answer Stroom's `NodeResource` (the nodes, `POST /node/v1/find`; ping,
+/// `GET /node/v1/ping/{node}`; enabling, `PUT /node/v1/enabled/{node}`; the enabled nodes,
+/// `GET /node/v1/enabled`) and `JobNodeResource` (a node's jobs, `POST /jobNode/v1/find`, by the
+/// criteria's `nodeName`), and the requests are checked on the request spy. The `nodeMonitoring` UI
+/// config is the harness's. The presenter comes from GIN.
 public final class NodesScreenStories {
 
     private static final String TEXT_ALL_JOBS_ON_NODE1A = "All jobs on node 'node1a'";
@@ -122,8 +120,8 @@ public final class NodesScreenStories {
                                     .withJsonBodyContaining("{\"sortList\": [{\"id\": \"URL\", \"desc\": false}]}")
                                     .toSpyMatcher()));
                     // Ping has no withSorting in GWT, so its header isn't sortable.
-                    // Differs from React: the headers are <th> elements (no role attribute), marked
-                    // sortable with GWT's 'dataGridSortableHeader' class (React's /sortable/)
+                    // The headers are <th> elements (no role attribute), marked sortable with GWT's
+                    // 'dataGridSortableHeader' class
                     play.expect(play.getByText("Ping (ms)").closest("th")).not().toHaveClass(StroomDom.SORTABLE_HEADER);
                     play.expect(play.getByText("Name").closest("th")).toHaveClass(StroomDom.SORTABLE_HEADER);
                     expectNoProblems(play);
@@ -139,9 +137,8 @@ public final class NodesScreenStories {
                     // Select node1a: its job list loads in the bottom pane
                     play.click(play.getByText("node1a"));
                     play.findByText("Data Retention");
-                    // Differs from React: React checks there is no 'Jobs on node' heading, which GWT
-                    // doesn't show either (that check can't fail); GWT heads the pane 'All jobs on
-                    // node ...' (NodeJobListPresenter.updateFormGroupHeading)
+                    // GWT heads the pane 'All jobs on node ...'
+                    // (NodeJobListPresenter.updateFormGroupHeading)
                     play.expect(play.getByText(TEXT_ALL_JOBS_ON_NODE1A)).toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(JOB_NODE_FIND_PATH)

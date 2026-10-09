@@ -32,18 +32,18 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Main/ContentStoreScreen` in the React Storybook, showing Stroom's real
-/// [ContentStorePresenter] (the 'Content Store' tab: the content pack list and the selected pack's
-/// details) with fake REST replies.
+/// Stories of `App/Main/ContentStoreScreen`, showing Stroom's real [ContentStorePresenter] (the
+/// 'Content Store' tab: the content pack list and the selected pack's details) with fake REST
+/// replies.
 ///
-/// The React story's `ContentStoreApi` becomes routes for Stroom's `ContentStoreResource`
-/// (`/contentstore`): `list` → `POST /list`, `install` → `POST /create`, `upgrade` →
-/// `POST /upgradeContentPack`, `checkUpgrade` → `POST /checkContentUpgradeAvailable` (true for the
-/// installed 'core' pack). Its recorder becomes checks on the request spy. The details panel's
-/// credential picker loads the credentials (`POST /credentials/findCredentialsWithPermissions`, none).
+/// The stories answer Stroom's `ContentStoreResource` (`/contentstore`): `POST /list` (the packs),
+/// `POST /create` (an install), `POST /upgradeContentPack` (an upgrade) and
+/// `POST /checkContentUpgradeAvailable` (true for the installed 'core' pack), checked on the
+/// request spy. The details panel's credential picker loads the credentials
+/// (`POST /credentials/findCredentialsWithPermissions`, none).
 public final class ContentStoreScreenStories {
 
-    // Differs from React: the packs have owner ids, as Stroom's ContentStoreMetadata requires one
+    // The packs have owner ids, as Stroom's ContentStoreMetadata requires one
     private static final String PACKS = """
             {
               "values": [
@@ -129,7 +129,7 @@ public final class ContentStoreScreenStories {
                             RequestMatcher.post("/contentstore/create")
                                     .withJsonBodyContaining("{\"contentPack\": {\"id\": \"extra\"}}")
                                     .toSpyMatcher()));
-                    // Differs from React: GWT tells the user the pack was installed
+                    // GWT tells the user the pack was installed
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("INFO: Creation success"));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();

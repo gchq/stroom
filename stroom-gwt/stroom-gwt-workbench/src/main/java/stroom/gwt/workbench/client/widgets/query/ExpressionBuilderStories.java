@@ -53,15 +53,13 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories for Stroom's [EditExpressionPresenter] (an [ExpressionTreePresenter] under a toolbar),
-/// matching `Widgets/Query/ExpressionBuilder` in the React Storybook: the editor of a query
-/// expression, a tree of operators and terms, each term edited (when selected) with a field
-/// picker, a condition and a value editor for the field's type.
+/// Stories for Stroom's [EditExpressionPresenter] (an [ExpressionTreePresenter] under a toolbar):
+/// the editor of a query expression, a tree of operators and terms, each term edited (when
+/// selected) with a field picker, a condition and a value editor for the field's type.
 ///
 /// The term editors' document and user pickers are Stroom's (see [SelectorWidgets]), answered by
-/// the React stories' explorer tree and users. A field list served by a data source (React's
-/// `dynamicFields`/`fieldSource`) is Stroom's `DynamicFieldSelectionListModel`, answered by a
-/// [FieldFixture].
+/// a fixed explorer tree and users. A field list served by a data source is Stroom's
+/// `DynamicFieldSelectionListModel`, answered by a [FieldFixture].
 public final class ExpressionBuilderStories {
 
     private static final String ON_CHANGE = "onChange";
@@ -80,9 +78,8 @@ public final class ExpressionBuilderStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's loadSuggestions (term value autocomplete) is Stroom's suggestion service, which
-        // the stories don't answer (no suggestions are shown); onSearch has no equivalent in the
-        // editor (Stroom's query screens search).
+        // Term value autocomplete is Stroom's suggestion service, which the stories don't answer
+        // (no suggestions are shown).
         registry.component("Widgets/Query/ExpressionBuilder", ExpressionBuilderStories.class)
                 .layout(StoryLayout.CENTERED)
                 // A populated expression. Select a node to edit it inline; add, copy, disable or
@@ -93,9 +90,9 @@ public final class ExpressionBuilderStories {
                 // Read only - the populated expression, with no selection, editing or dragging
                 .story("ReadOnly", ExpressionBuilderStories::readOnly)
                 .withPlay(play -> {
-                    // Differs from React: Stroom shows a read only expression (e.g. a processor
-                    // filter's, or a query in the history) as the tree alone, with no toolbar,
-                    // rather than a toolbar of disabled buttons
+                    // Stroom shows a read only expression (e.g. a processor filter's, or a query in
+                    // the history) as the tree alone, with no toolbar, rather than a toolbar of
+                    // disabled buttons
                     play.findAllByText(TextMatch.containing("UserId"), ".expressionItemBox-label");
                     for (final String title : TOOLBAR) {
                         play.expect(play.queryByTitle(title)).toBeNull();
@@ -128,7 +125,7 @@ public final class ExpressionBuilderStories {
                         context -> editor(context, populatedExpression(), false))
                 .withPlay(play -> {
                     selectTermFieldPicker(play, "UserId");
-                    // Differs from React: the arrow is the SelectionBox's SvgIconBox icon
+                    // The arrow is the SelectionBox's SvgIconBox icon
                     final Query arrowSvgPath = play.querySelector(FIELD_PICKER + " .svgIconBox-icon-outer svg path");
                     play.expect(arrowSvgPath).not().toBeNull();
                     play.click(arrowSvgPath);
@@ -138,8 +135,7 @@ public final class ExpressionBuilderStories {
                 .story("AddTermStartsWithNoField", context -> editor(context, emptyExpression(), false))
                 .withPlay(play -> {
                     play.click(play.getByTitle("Add Term"));
-                    // Differs from React: the field box's painted value is the SelectionBox's
-                    // render box
+                    // The field box's painted value is the SelectionBox's render box
                     final Query picker = play.querySelector(FIELD_PICKER + " .SelectionBox-renderBox");
                     play.waitFor(() -> play.expect(picker).not().toBeNull());
                     play.expect(picker.textContent()).toBe("");
@@ -147,7 +143,7 @@ public final class ExpressionBuilderStories {
                         play.expect(picker).not().toHaveTextContent(field.getFldName());
                     }
                     // And no value editor while the term has no field.
-                    // Differs from React: Stroom's term editor keeps its value box, hidden
+                    // Stroom's term editor keeps its value box, hidden
                     play.expect(play.querySelector(".termEditor-item.wide")).not().toBeVisible();
                 })
                 // A field list served by a data source is only fetched when needed
@@ -166,8 +162,7 @@ public final class ExpressionBuilderStories {
         // Nothing is selected yet, so the selection's buttons are disabled and the others not
         play.expect(play.getByTitle("Add Term").className()).not().toMatch("disabled");
         play.expect(play.getByTitle("Copy").className()).toMatch("disabled");
-        // Differs from React: Stroom's InlineSvgButton.setEnabled(false) also sets the native
-        // `disabled` property (GWT's FocusWidget), as well as the `disabled` class
+        // Stroom's InlineSvgButton.setEnabled(false) sets the `disabled` class and `aria-disabled`
         play.expect(play.getByTitle("Copy")).toHaveAttribute("aria-disabled", "true");
         play.expect(play.getByTitle("Add Term")).not().toHaveAttribute("disabled");
         // Focusable means focusable
@@ -202,17 +197,15 @@ public final class ExpressionBuilderStories {
     private static Query selectTermFieldPicker(final Play play, final String label) {
         final Query term = play.findByText(TextMatch.containing(label), ".expressionItemBox-label");
         play.click(term);
-        // Differs from React: the field picker is a Stroom SelectionBox, whose text box takes the
-        // clicks (React's `.selection-box__display`)
+        // The field picker is a Stroom SelectionBox, whose text box takes the clicks
         final Query picker = play.querySelector(FIELD_PICKER + " .SelectionBox-textBox");
         play.waitFor(() -> play.expect(picker).not().toBeNull());
         return picker;
     }
 
-    /// The React stories' FIELDS. React's text fields offer `Contains`, which Stroom's default
-    /// text conditions don't, so they have the conditions of Stroom's SQL backed text fields
-    /// (`SQL_TEXT`). React's RunAsUser is a Text field limited to user conditions; in Stroom that
-    /// is a user field (`createUserRef`).
+    /// The stories' fields. The text fields have the conditions of Stroom's SQL backed text fields
+    /// (`SQL_TEXT`), which offer `Contains`, unlike Stroom's default text conditions. RunAsUser is a
+    /// user field (`createUserRef`).
     private static List<QueryField> fields() {
         return List.of(
                 textField("UserId"),
@@ -283,12 +276,12 @@ public final class ExpressionBuilderStories {
                 })
                 .build());
         holder[0] = harness;
-        // As React's fieldSource records its calls
+        // Records the field list's requests
         harness.fn(FIELD_SOURCE);
         return harness;
     }
 
-    /// The editor in the React stories' frame.
+    /// The editor in the stories' frame.
     private static Widget editor(final StoryContext context,
                                  final ExpressionOperator expression,
                                  final boolean dynamicFields) {
@@ -365,7 +358,7 @@ public final class ExpressionBuilderStories {
         return model;
     }
 
-    /// Equivalent of the React stories' `frame`.
+    /// The stories' frame around the editor.
     private static Widget frame(final Widget editor) {
         final FlowPanel frame = new FlowPanel();
         final Style style = frame.getElement().getStyle();

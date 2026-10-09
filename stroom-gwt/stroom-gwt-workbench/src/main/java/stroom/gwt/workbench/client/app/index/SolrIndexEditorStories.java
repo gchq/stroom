@@ -42,20 +42,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/// Stories matching `App/Index/SolrIndexEditor` in the React Storybook, showing Stroom's real
-/// [SolrIndexPresenter] (a Solr index's tab: Fields, Settings, Documentation and Permissions) with
-/// fake REST replies.
+/// The `App/Index/SolrIndexEditor` stories, showing Stroom's real [SolrIndexPresenter] (a Solr
+/// index's tab: Fields, Settings, Documentation and Permissions) with fake REST replies.
 ///
 /// As `SolrIndexPlugin` does, the story fetches the document (`GET /solrIndex/v1/{uuid}`) and
 /// reads it into the editor ([DocEditors#open]); Save sends it to `PUT /solrIndex/v1/{uuid}`.
-/// React's `SolrIndexApi` seam is Stroom's `SolrIndexResource`: `fetchSolrTypes` →
-/// `POST /solrIndex/v1/fetchSolrTypes`, `connectionTest` → `POST /solrIndex/v1/solrConnectionTest`.
-/// React's `recorded` documents (each change) are the document GWT writes when it is saved.
+/// The Solr types are `POST /solrIndex/v1/fetchSolrTypes` and the connection test
+/// `POST /solrIndex/v1/solrConnectionTest`. The plays check the document Stroom writes when it is
+/// saved.
 public final class SolrIndexEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(SolrIndexDoc.TYPE, "solr-events", "Events (Solr)");
 
-    // SolrIndexResource.fetch(): React's INITIAL_DOC
+    // SolrIndexResource.fetch(): the index
     private static final String DOC = """
             {"type": "SolrIndex", "uuid": "solr-events", "name": "Events (Solr)",
               "description": "# Solr events index", "collection": "events",
@@ -74,8 +73,8 @@ public final class SolrIndexEditorStories {
 
     private static final String UPDATE = "/solrIndex/v1/solr-events";
 
-    // Differs from React: a FormGroup gives its control the group's identity as its id
-    // (SolrIndexFieldEditViewImpl.ui.xml), not React's '<name>-input'
+    // A FormGroup gives its control the group's identity as its id
+    // (SolrIndexFieldEditViewImpl.ui.xml)
     private static final String FIELD_NAME = "#solrIndexFieldName";
 
     private SolrIndexEditorStories() {
@@ -98,7 +97,7 @@ public final class SolrIndexEditorStories {
                     play.expect(play.getByText("UserId")).toBeInTheDocument();
                     // The Solr schema synchronisation state is under the grid
                     play.expect(play.getByText("Last synchronised:")).toBeInTheDocument();
-                    // Differs from React: the state is one HTML block, the message a text node in it
+                    // The state is one HTML block, the message a text node in it
                     play.expect(play.getByText(TextMatch.containing("Synchronised 2 fields from Solr.")))
                             .toBeInTheDocument();
                     // Editing a field shows the field dialog, with the fetched native types
@@ -144,8 +143,8 @@ public final class SolrIndexEditorStories {
                     play.click(screen.findByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.queryByText("TempField")).toBeNull());
 
-                    // Differs from React: React records the document on each change; GWT writes
-                    // it when it is saved, so the play saves it and checks what was sent
+                    // Stroom writes the document when it is saved, so the play saves it and checks
+                    // what was sent
                     final Query save = play.getByRole("button", "Save");
                     play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
                     play.click(save);
@@ -164,8 +163,8 @@ public final class SolrIndexEditorStories {
                     final Play screen = play.screen();
                     play.expect(play.findByText("Field000")).toBeInTheDocument();
                     play.expect(play.queryByText("Field100")).toBeNull();
-                    // Differs from React: Stroom's link tabs only show the selected tab, so the
-                    // fields grid's pager is the only one, found by its button's title
+                    // Stroom's link tabs only show the selected tab, so the fields grid's pager is
+                    // the only one, found by its button's title
                     play.click(play.getByTitle("Forward"));
                     play.waitFor(() -> play.expect(play.getByText("Field100")).toBeInTheDocument());
                     play.expect(play.queryByText("Field000")).toBeNull();

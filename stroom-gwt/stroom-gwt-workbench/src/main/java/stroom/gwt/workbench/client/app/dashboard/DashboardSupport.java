@@ -55,24 +55,24 @@ import java.util.function.Consumer;
 /// from JSON exactly as Stroom reads a fetched one.
 public final class DashboardSupport {
 
-    /// The title of React's dashboard editor stories.
+    /// The title of the dashboard editor stories.
     public static final String TITLE = "App/Editors/DashboardEditor";
 
     /// Every `POST /dashboard/v1/search/{node}` request (a dashboard `SearchModel`'s poll).
     public static final RequestMatcher SEARCH = RequestMatcher.post(
             "/dashboard/v1/search/" + RequestMatcher.PATH_WILDCARD);
 
-    /// The user's preferences with Stroom's dark theme, as React's stories show (the editors'
-    /// Ace themes follow the preferences, e.g. `tomorrow_night`).
+    /// The user's preferences with Stroom's dark theme (the editors' Ace themes follow the
+    /// preferences, e.g. `tomorrow_night`).
     public static final String DARK_PREFERENCES = StartupFixtures.DEFAULT_USER_PREFERENCES
             .replace("\"Light\"", "\"Dark\"")
             .replace("\"chrome\"", "\"tomorrow_night\"");
 
-    /// The rows `alpha` and `beta` of React's table results.
+    /// The rows `alpha` and `beta` of the table results.
     public static final String ALPHA_BETA_ROWS = "[{\"values\": [\"alpha\"], \"depth\": 0}, "
                                                  + "{\"values\": [\"beta\"], \"depth\": 0}]";
 
-    // React's REFERENCED_QUERY
+    // The referenced query
     private static final String REFERENCED_QUERY = "{\"uuid\": \"q-ref\", \"type\": \"Query\", "
                                                    + "\"name\": \"Referenced Query\", "
                                                    + "\"query\": \"from index\\nselect name\\n\"}";
@@ -95,9 +95,9 @@ public final class DashboardSupport {
     ///
     /// | Request | Default reply |
     /// |---|---|
-    /// | A dashboard search ([#SEARCH]) | React's `dashboardApiFixture('t1')`: `t1`'s rows `alpha` and `beta` |
-    /// | A StroomQL search (`QueryFixtures.SEARCH`, an Embedded Query) | React's `TABLE_RESPONSE`: `alpha`, `beta` |
-    /// | `GET /query/v1/q-ref` | React's `REFERENCED_QUERY` |
+    /// | A dashboard search ([#SEARCH]) | `t1`'s rows `alpha` and `beta` |
+    /// | A StroomQL search (`QueryFixtures.SEARCH`, an Embedded Query) | the rows `alpha` and `beta` |
+    /// | `GET /query/v1/q-ref` | the referenced query |
     /// | `POST /dataSource/v1/fetchDefaultExtractionPipeline` | none |
     /// | The result store's `destroy`/`terminate`, the StroomQL editor's requests | [QueryFixtures#editorRoutes] |
     /// | The Permissions tab | the user owns the dashboard |
@@ -157,7 +157,7 @@ public final class DashboardSupport {
         return QueryFixtures.response(true, QueryFixtures.tableResult(componentId, fields, rows, totalRows));
     }
 
-    /// The rows `alpha` and `beta` of React's table results, with their `Name` column.
+    /// The rows `alpha` and `beta` of the table results, with their `Name` column.
     ///
     /// @param componentId The table component's id.
     /// @return The reply's JSON.
@@ -316,8 +316,8 @@ public final class DashboardSupport {
             return this;
         }
 
-        /// @param linkParams The parameters of the link that opened the dashboard (React's
-        ///                   `linkParams`), e.g. `env=prod other=x`.
+        /// @param linkParams The parameters of the link that opened the dashboard, e.g.
+        ///                   `env=prod other=x`.
         /// @return These options.
         public Options linkParams(final String linkParams) {
             this.linkParams = linkParams;

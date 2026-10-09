@@ -37,19 +37,17 @@ import stroom.security.shared.DocumentPermission;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/Editors/AnalyticRuleEditor` in the React Storybook, showing Stroom's real
-/// `AnalyticRulePresenter` (an analytic rule's editor tab: Query, Settings, Notifications,
-/// Execution, Shards or Duplicate Management, Documentation and Permissions) with fake REST
-/// replies.
+/// The `App/Editors/AnalyticRuleEditor` stories, showing Stroom's real `AnalyticRulePresenter` (an
+/// analytic rule's editor tab: Query, Settings, Notifications, Execution, Shards or Duplicate
+/// Management, Documentation and Permissions) with fake REST replies.
 ///
 /// As `AnalyticsPlugin` does, the story fetches the document (`GET /analyticRule/v1/{uuid}`),
 /// checks the user may edit it and reads it into the editor. The query pane's requests are
-/// answered by [QueryFixtures] (as for `App/Editors/QueryEditor`). React's `AnalyticRuleApi`,
-/// `ExecutionScheduleApi` and `docPermission` seams are Stroom's analytic rule, execution
-/// schedule, duplicate check and document permission endpoints.
+/// answered by [QueryFixtures] (as for `App/Editors/QueryEditor`), and the other tabs' by Stroom's
+/// analytic rule, execution schedule, duplicate check and document permission endpoints.
 public final class AnalyticRuleEditorStories {
 
-    /// React's `appApiFixture.fetchUiConfig`: the analytic rules' defaults.
+    /// The UI config's analytic rules' defaults.
     static final String UI_CONFIG = QueryFixtures.uiConfigWith("""
             "analyticUiDefaultConfig": {"defaultNode": "node1",
               "defaultSubjectTemplate": "Detection: {{ ruleName }}",
@@ -62,7 +60,7 @@ public final class AnalyticRuleEditorStories {
 
     private static final DocRef DOC_REF = new DocRef(AnalyticRuleDoc.TYPE, "rule-1", "My Rule");
 
-    // AnalyticRuleResource.fetch(): React's SCHEDULED_DOC
+    // AnalyticRuleResource.fetch(): a scheduled rule
     private static final String DOC = """
             {
               "type": "AnalyticRule", "uuid": "rule-1", "name": "My Rule",
@@ -76,7 +74,7 @@ public final class AnalyticRuleEditorStories {
 
     private static final String SCHEDULED = "\"analyticProcessType\": \"SCHEDULED_QUERY\", ";
 
-    // React's findDuplicateRows: two columns and two rows
+    // The duplicate rows: two columns and two rows
     private static final String DUPLICATES = """
             {"columnNames": ["host", "user"],
               "resultPage": {"values": [{"values": ["alpha", "bob"]}, {"values": ["beta", "carol"]}],
@@ -121,7 +119,7 @@ public final class AnalyticRuleEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Execution");
-                    // Differs from React: the process type is a selection box's text box
+                    // The process type is a selection box's text box
                     play.waitFor(() -> play.expect(play.getByDisplayValue("Scheduled Query")).toBeInTheDocument());
                     play.click(play.getByDisplayValue("Scheduled Query"));
                     play.click(screen.findByText("Table Builder", ".SelectionPopup *"));
@@ -146,7 +144,7 @@ public final class AnalyticRuleEditorStories {
                     final Play screen = play.screen();
                     openTab(play, "Notifications");
                     play.click(play.findByRole("button", "Add Notification"));
-                    // Differs from React: GWT's dialog is captioned 'Add Notification'
+                    // The dialog is captioned 'Add Notification'
                     final Play dialog = dialog(screen, "Add Notification");
                     play.expect(dialog.getByText("Destination Type")).toBeInTheDocument();
                     // A new notification defaults to Stream (it once had no destination type, and OK
@@ -164,7 +162,7 @@ public final class AnalyticRuleEditorStories {
                     openTab(play, "Notifications");
                     play.click(play.findByRole("button", "Add Notification"));
                     final Play dialog = dialog(screen, "Add Notification");
-                    // Differs from React: GWT labels it 'Maximum Notifications'
+                    // It is labelled 'Maximum Notifications'
                     play.expect(dialog.getByText("Maximum Notifications")).toBeInTheDocument();
                     pickDestinationType(play, dialog, "Email");
                     play.waitFor(() -> play.expect(toField(dialog)).toBeInTheDocument());
@@ -182,7 +180,7 @@ public final class AnalyticRuleEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Execution");
-                    // Differs from React: GWT titles the button 'Add Execution Schedule'
+                    // The button is titled 'Add Execution Schedule'
                     play.click(play.findByRole("button", "Add Execution Schedule"));
                     play.waitFor(() -> play.expect(screen.getByDisplayValue("node9")).toBeInTheDocument());
                     expectNoProblems(play);
@@ -241,8 +239,8 @@ public final class AnalyticRuleEditorStories {
             "{\"values\": [], \"pageResponse\": {\"offset\": 0, \"length\": 0, \"total\": 0, \"exact\": true}}";
 
     /// Runs the query, hides the Count column and checks that the document is dirty, i.e. that
-    /// the table preferences are part of it. Differs from React: the play can't see the
-    /// document the editor would save, so the check is that Save is enabled.
+    /// the table preferences are part of it. The play can't see the document the editor would
+    /// save, so the check is that Save is enabled.
     ///
     /// @param play The play.
     static void hideCountColumn(final Play play) {
@@ -250,7 +248,7 @@ public final class AnalyticRuleEditorStories {
         play.click(play.findByRole("button", "Execute Query"));
         play.findByText("alpha");
         play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
-        // Differs from React: GWT opens a column's menu when its header is clicked
+        // Stroom opens a column's menu when its header is clicked
         QueryEditorStories.clickHeader(play, play.getByText("Count", ".column-top .column-label"));
         play.click(screen.findByText("Hide", StroomDom.MENU_ITEM_TEXT));
         play.waitFor(() -> play.expect(play.getByRole("button", "Save")).not().toHaveClass("disabled"));

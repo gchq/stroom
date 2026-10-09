@@ -17,11 +17,10 @@
 // Compares the story screenshots of a run (run.mjs --screenshots) with a baseline of them, so that
 // a change to Stroom's widgets can be reviewed for its effect on every story's appearance.
 //
-// Each pair is compared with ImageMagick's `compare -metric AE` (as the React port's
-// compare/pixel-diff.mjs does), measuring the difference twice: `raw` counts any difference,
-// including sub-level anti-aliasing (ImageMagick 7 counts a pixel that differs by less than a level
-// as a fraction of one, so it may not be a whole number), and `visible` counts the pixels that differ
-// by more than the fuzz (1%), so what a person could see. A story has changed if its visible count
+// Each pair is compared with ImageMagick's `compare -metric AE`, measuring the difference twice:
+// `raw` counts any difference, including sub-level anti-aliasing (ImageMagick 7 counts a pixel
+// that differs by less than a level as a fraction of one, so it may not be a whole number), and
+// `visible` counts the pixels that differ by more than the fuzz (1%), so what a person could see. A story has changed if its visible count
 // is over the allowance.
 
 import { execFile } from 'node:child_process';

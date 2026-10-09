@@ -146,10 +146,9 @@ const CHROME = new Set([
   'Main Menu', 'Show Menu', 'Expand All', 'Collapse All', 'Locate Current Item', 'Find In Content',
   'Toggle Alerts', 'Ask Stroom AI', 'Filter Types', 'Clear Filter', 'Quick Filter Syntax Help',
   'New', 'Delete',
-  // The port's a11y sweep gives the navigation logo and the tab bar's sidebar toggle an
-  // `aria-label`; GWT's are untitled Buttons (the sidebar title sits on the inner SVG), so the
-  // reader sees them on one side only. Both are chrome on both sides — CurveTabLayoutViewImpl has
-  // the same `Hide Sidebar` toggle — and walking the toggle put a post-action state under every node.
+  // The navigation logo and the tab bar's sidebar toggle (CurveTabLayoutViewImpl's `Hide Sidebar`)
+  // are chrome; the names are listed in case either is given an `aria-label`. Walking the toggle
+  // put a post-action state under every node.
   'Stroom', 'Hide sidebar', 'Show sidebar',
 ]);
 const chromeDone = new Set();
@@ -504,11 +503,10 @@ async function survey() {
   const menu = menuItems.filter((i) => i.enabled !== false).map((i) => i.label ?? i.text);
   const menuDisabled = menuItems.filter((i) => i.enabled === false).map((i) => i.label ?? i.text);
   const buttons = menuItems.length ? [] : ((await readButtons(page, scope)) ?? []);
-  // Sortable grid headers are affordances on both UIs, but only GWT's happen to be visible to the
-  // button reader: CellTable gives a sortable `th` `role="button"`, the port's DataGrid gives its
-  // header cell the ARIA role a header should have (`columnheader`, `aria-sort`). Read the port's
-  // here under the same label the reader gives GWT's (`Created 1` — text plus sort index), so a
-  // header sort is one affordance on both sides rather than a GWT-only one.
+  // Sortable grid headers are affordances. GWT's CellTable gives a sortable `th` `role="button"`, so
+  // the button reader already finds them; a header with the ARIA role a header should have
+  // (`columnheader`, `aria-sort`) isn't a button, so it is read here under the same kind of label
+  // (`Created 1` — text plus sort index). An ARIA fallback: Stroom's headers are found above.
   if (!menuItems.length) {
     const headers = await page.evaluate((sel) => {
       const root = document.querySelector(sel) ?? document.body;
@@ -533,8 +531,8 @@ async function survey() {
   }
   const grids = await page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    // Both grid vocabularies: GWT's `.dataGridWidget` table and the port's ARIA grid (`role=grid`,
-    // whose header is `[role=row][aria-rowindex="1"]` and whose data rows follow it).
+    // GWT's `.dataGridWidget` table, with an ARIA grid (`role=grid`, whose header is
+    // `[role=row][aria-rowindex="1"]` and whose data rows follow it) as a fallback.
     return [...document.querySelectorAll('.dataGridWidget, [role=grid]')]
       .filter((g) => g.offsetWidth > 0)
       .map((g) => {
@@ -1604,7 +1602,7 @@ if (DIRECTED.includes('pipeline')) {
 }
 if (DIRECTED.includes('results')) {
   // A query that RETURNS ROWS, under the guard: `Execute Query` is a search, which the read-only
-  // guard allows (plan §1.2), and `probe-results.mjs` found `Example Index` answers 100 rows and
+  // guard allows (searches only make transient server state), and `probe-results.mjs` found `Example Index` answers 100 rows and
   // `Annotations` 10 — the seeded documents' own queries all error. `limit` goes BEFORE `select`.
   // Two seeds over the same state: the result table's column menu (ColumnFilter, Rules/Conditional
   // Formatting, ColumnValuesFilter, Format), and the toolbar + a selected row (Download, and the

@@ -38,14 +38,13 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/// Stories matching `App/Core/appPermissions` in the React Storybook, which tests two rules of the
-/// React port as pure functions. Here they are the rules as Stroom's GWT code applies them:
+/// The `App/Core/appPermissions` stories, which check two rules as Stroom's GWT code applies them:
 ///
-/// * `holdsAppPermission` → Stroom's `CurrentUser.hasAppPermission` (`ADMINISTRATOR` implies every
-///   permission), checked against `CurrentUser`s holding the React cases' permissions;
-/// * `userTabLabel` → `UserTabPresenter.setUserRef`'s tab label, read from real presenters (from
-///   GIN) given the React cases' users. The story shows each case and its label, and the play
-///   checks them.
+/// * Holding a permission: Stroom's `CurrentUser.hasAppPermission` (`ADMINISTRATOR` implies every
+///   permission), checked against `CurrentUser`s holding each case's permissions;
+/// * The user tab's label: `UserTabPresenter.setUserRef`'s tab label, read from real presenters (from
+///   GIN) given each case's user. The story shows each case and its label, and the play checks
+///   them.
 public final class AppPermissionsStories {
 
     private static final AppPermission SHARDS = AppPermission.MANAGE_INDEX_SHARDS_PERMISSION;
@@ -77,8 +76,8 @@ public final class AppPermissionsStories {
                     expectHolds(play, "none / SHARDS", () -> user(), SHARDS, false);
                     // No permissions loaded (signed out, or not yet signed in) refuses rather than
                     // throwing.
-                    // Differs from React: Stroom has no undefined/null permission list as such; the
-                    // CurrentUser before sign in, and after it is cleared, stand for them
+                    // The CurrentUser before sign in, and after it is cleared, stand for a missing
+                    // permission list
                     expectHolds(play, "not signed in / SHARDS", () -> new CurrentUser(null, null, null, null),
                             SHARDS, false);
                     expectHolds(play, "cleared / SHARDS", AppPermissionsStories::clearedUser, SHARDS, false);
@@ -93,7 +92,7 @@ public final class AppPermissionsStories {
                     // displayName wins over subjectId (toDisplayString)
                     expectCaption(play, "both", "User: Alice");
                     // The NullSafe fallback.
-                    // Differs from React: null and undefined are one case in Java
+                    // A null user ref
                     expectCaption(play, "null", "Unknown User/Group");
                     // A user with nothing to identify it (it was once 'User: {null}', from
                     // toDisplayString's UUID fallback)

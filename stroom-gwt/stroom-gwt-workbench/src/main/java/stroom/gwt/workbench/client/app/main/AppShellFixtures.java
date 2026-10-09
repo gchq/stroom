@@ -28,30 +28,29 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /// The `App/Main/AppShell` stories' fixtures that are plain Java (so unit tested on the JVM): the
-/// React stories' explorer trees and the server's replies that are computed from a request, e.g.
+/// explorer trees and the server's replies that are computed from a request, e.g.
 /// the explorer's permissions for the nodes asked about.
 final class AppShellFixtures {
 
-    /// The permissions of a node the user owns (React's `crudFixture`).
+    /// The permissions of a node the user owns.
     static final List<String> FULL_PERMISSIONS = List.of("OWNER", "DELETE", "EDIT", "VIEW", "USE");
 
-    /// The permissions of a node the user may only view (React's `readOnlyCrud`).
+    /// The permissions of a node the user may only view.
     static final List<String> VIEW_ONLY = List.of("VIEW");
 
     private AppShellFixtures() {
         // Static utility
     }
 
-    /// React's `DICT_TREE`: a 'Dictionaries' root folder holding two dictionaries and a feed, with
-    /// React's uuids.
+    /// A 'Dictionaries' root folder holding two dictionaries and a feed.
     ///
     /// @return A new fixture of the tree.
     static ExplorerFixture dictTree() {
         return new ExplorerFixture(dictionaries());
     }
 
-    /// React's `ROOTED_TREE`: the Favourites and System roots, with [#dictTree()]'s folder in System.
-    /// Differs from React: the roots have Stroom's uuids (`1` and `0`), by which Stroom knows them.
+    /// The Favourites and System roots, with [#dictTree()]'s folder in System.
+    /// The roots have Stroom's uuids (`1` and `0`), by which Stroom knows them.
     ///
     /// @return A new fixture of the tree.
     static ExplorerFixture rootedTree() {
@@ -110,7 +109,7 @@ final class AppShellFixtures {
                + ",\"name\":" + toJson(name) + "}";
     }
 
-    /// Answers `DELETE /explorer/v2/delete` as React's `crudFixture` does: every document asked to
+    /// Answers `DELETE /explorer/v2/delete`: every document asked to
     /// be deleted is reported deleted (so the shell closes their tabs).
     ///
     /// @param requestJson The request's body, an `ExplorerServiceDeleteRequest`.
@@ -120,7 +119,7 @@ final class AppShellFixtures {
         return "{\"explorerNodes\":" + toJson(docRefs) + ",\"message\":\"\"}";
     }
 
-    /// Answers `POST /explorer/v2/create` as React's `crudFixture` does: a new document (uuid
+    /// Answers `POST /explorer/v2/create`: a new document (uuid
     /// `new-doc`) of the type and with the name asked for, in the destination folder's tree, as the
     /// server's node (with its root, key and flags).
     ///
@@ -141,7 +140,7 @@ final class AppShellFixtures {
                + ",\"nodeFlags\":[\"L\"]}";
     }
 
-    /// Answers `PUT /explorer/v2/rename` as React's `crudFixture` does: the node with its new name.
+    /// Answers `PUT /explorer/v2/rename`: the node with its new name.
     ///
     /// @param requestJson The request's body, an `ExplorerServiceRenameRequest`.
     /// @return The reply's body, an `ExplorerNode`.

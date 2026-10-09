@@ -39,25 +39,23 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Stories matching `App/IdP/ChangePassword` in the React Storybook, showing Stroom's real
-/// 'Change Password' dialog (`ChangePasswordPresenter` with `ChangePasswordViewImpl`) as the sign in
-/// page shows it when the server requires a new password (`LoginPresenter.changePassword`), for
-/// the user `alice` who signed in with `correct-horse`.
+/// The `App/IdP/ChangePassword` stories, showing Stroom's real 'Change Password' dialog
+/// (`ChangePasswordPresenter` with `ChangePasswordViewImpl`) as the sign in page shows it when the
+/// server requires a new password (`LoginPresenter.changePassword`), for the user `alice` who
+/// signed in with `correct-horse`.
 ///
-/// | React seam | Stroom |
-/// |---|---|
-/// | `fetchPasswordPolicy` | `GET /authentication/v1/fetchPasswordPolicy` (after 100ms) |
-/// | `changePassword` | `POST /authentication/v1/changePassword` (after 250ms) |
-/// | `onChanged` | what `LoginPresenter` does on `changeSucceeded` (`afterLogin()`, i.e. navigate) |
-/// | `onCancel` | the dialog's Cancel (`LoginPresenter` hides the dialog) |
+/// The password policy is `GET /authentication/v1/fetchPasswordPolicy` (replying after 100ms) and
+/// the change `POST /authentication/v1/changePassword` (after 250ms). Cancel hides the dialog, as
+/// `LoginPresenter` does.
 ///
 /// The dialog's OK handler is `LoginPresenter.changePassword`'s (a private method), copied here
-/// with its `afterLogin()` (a navigation) replaced by React's `onChanged` echo.
+/// with its `afterLogin()` (a navigation) replaced by an echo of the change, recorded by the
+/// `onChanged` spy.
 public final class ChangePasswordStories {
 
-    /// The spy for React's `onChanged`, given `changed ✓` or `changed ✓ — forceSignIn: …`.
+    /// The spy recording a successful change, given `changed ✓` or `changed ✓ — forceSignIn: …`.
     static final String ON_CHANGED = "onChanged";
-    /// The spy for React's `onCancel`.
+    /// The spy recording Cancel.
     static final String ON_CANCEL = "onCancel";
 
     private static final String CAPTION = "Change Password";
@@ -120,7 +118,7 @@ public final class ChangePasswordStories {
                     final Play dialog = IdpPlays.fillPasswords(play, CAPTION, "password1", "password1");
                     IdpPlays.waitForStrengthScored(play, dialog, "1-5");
                     play.click(dialog.getByRole("button", IdpPlays.OK));
-                    // Differs from React: the dialog is on the page's body, not in the canvas
+                    // The dialog is on the page's body, not in the canvas
                     play.expect(dialog.findByText("Password is weak")).toBeInTheDocument();
                     expectInvalid(dialog, "Password", "Password is weak");
                     expectNoChange(play);
@@ -151,8 +149,8 @@ public final class ChangePasswordStories {
                     final Play dialog = IdpPlays.fillPasswords(play, CAPTION, STRONG, STRONG);
                     IdpPlays.waitForStrengthScored(play, dialog, "1-5");
                     play.click(dialog.getByRole("button", IdpPlays.OK));
-                    // Differs from React: Stroom shows the server's message in an error alert over
-                    // the dialog (AlertEvent.fireError), not inline
+                    // Stroom shows the server's message in an error alert over the dialog
+                    // (AlertEvent.fireError), not inline
                     play.expect(play.screen().findByText("New password must differ from the previous one."))
                             .toBeInTheDocument();
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).toHaveBeenCalledWith(
@@ -166,8 +164,8 @@ public final class ChangePasswordStories {
                     final Play dialog = IdpPlays.fillPasswords(play, CAPTION, STRONG, STRONG);
                     IdpPlays.waitForStrengthScored(play, dialog, "1-5");
                     play.click(dialog.getByRole("button", IdpPlays.OK));
-                    // Differs from React: Stroom's sign in page ignores forceSignIn (it signs in with
-                    // afterLogin() whenever the change succeeds); the story's echo shows the flag
+                    // Stroom's sign in page ignores forceSignIn (it signs in with afterLogin()
+                    // whenever the change succeeds); the story's echo shows the flag
                     play.expect(play.findByText(TextMatch.containing("forceSignIn"))).toBeInTheDocument();
                     IdpPage.expectNoProblems(play);
                 });
@@ -193,7 +191,7 @@ public final class ChangePasswordStories {
         harness.fn(ON_CHANGED);
         harness.fn(ON_CANCEL);
 
-        // React's StoryHarness: the result of the change
+        // The result of the change
         final Label result = new Label("onChanged: (awaiting change)");
         result.getElement().setAttribute("style", "font-size: 12px; opacity: 0.8");
         final FlowPanel column = new FlowPanel();
@@ -204,7 +202,7 @@ public final class ChangePasswordStories {
 
         final AuthenticationResource resource = GWT.create(AuthenticationResource.class);
         final ChangePasswordPresenter presenter = injector.getChangePasswordPresenter();
-        // As LoginPresenter.changePassword, with afterLogin() replaced by React's onChanged
+        // As LoginPresenter.changePassword, with afterLogin() replaced by the onChanged spy
         presenter.show(CAPTION, e -> {
             if (e.isOk()) {
                 if (presenter.validate()) {

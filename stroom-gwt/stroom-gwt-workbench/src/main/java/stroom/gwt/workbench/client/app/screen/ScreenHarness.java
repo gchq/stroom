@@ -283,9 +283,9 @@ public final class ScreenHarness {
         return injector.getUserPreferencesManager();
     }
 
-    /// Gets a spy of this rendering, the equivalent of a React story's `fn()` arg, e.g. to record
-    /// the events a screen fires. Call it as the story renders (so that a play can check the spy
-    /// was *not* called), then call the spy, or [#spy(String, String)], when the screen acts.
+    /// Gets a spy of this rendering, e.g. to record the events a screen fires. Call it as the
+    /// story renders (so that a play can check the spy was *not* called), then call the spy, or
+    /// [#spy(String, String)], when the screen acts.
     ///
     /// @param name The name of the spy, e.g. `onOpenDoc`.
     /// @return The spy, the same one each time for a name.
@@ -294,8 +294,8 @@ public final class ScreenHarness {
     }
 
     /// Records a call of a spy, which is also shown in the Actions addon, e.g. when the screen
-    /// fires an event that a React story checks with a `fn()` arg. Calls after the harness is
-    /// disposed are ignored, so an old rendering can't add to the new rendering's spies.
+    /// fires an event that a play checks. Calls after the harness is disposed are ignored, so an
+    /// old rendering can't add to the new rendering's spies.
     ///
     /// @param name   The name of the spy, e.g. `onOpenDoc`, which should have been got with
     ///               [#fn(String)] as the story rendered.
@@ -370,8 +370,7 @@ public final class ScreenHarness {
 
     /// Shows a screen that Stroom shows in a tab (e.g. Jobs, Nodes, a document editor), filling
     /// the story's canvas, the full height of the page, as Stroom's content pane gives a tab's
-    /// content all its space (the React stories wrap such screens in a `100vh` high box). The
-    /// presenter is unbound when the story renders again.
+    /// content all its space. The presenter is unbound when the story renders again.
     ///
     /// @param presenter The tab's presenter.
     /// @param <P>       The presenter type.

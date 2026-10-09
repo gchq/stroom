@@ -34,8 +34,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 /// Stories for Stroom's [DateTimeBox] (a text box for an ISO date-time, whose calendar icon opens
-/// the "Set Date And Time" dialog, [DateTimePopup], used by e.g. the schedule dialogs), matching
-/// `Widgets/Date & Time/DateTimePicker` in the React Storybook.
+/// the "Set Date And Time" dialog, [DateTimePopup], used by e.g. the schedule dialogs).
 ///
 /// The dialog is shown with Stroom's `ShowPopupEvent`, so the stories use a [ScreenHarness] for
 /// its event bus and popup manager (no REST requests are made). Times are shown in Stroom's
@@ -57,7 +56,7 @@ public final class DateTimePickerStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's valueMs arg is only a default for its Controls; the stories render their own state
+        // No args: the stories render their own state
         registry.component("Widgets/Date & Time/DateTimePicker", DateTimePickerStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Type an ISO date-time, or use the calendar icon to open the dialog

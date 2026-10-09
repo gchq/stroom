@@ -38,8 +38,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import java.util.function.Consumer;
 
 /// Stories for Stroom's copyable text ([CopyTextUtil], as rendered by `CopyTextCell` and in
-/// e.g. the dashboard's current selection panel), matching `Widgets/Display/CopyText` in the
-/// React Storybook.
+/// e.g. the dashboard's current selection panel).
 ///
 /// There is no copy text widget in GWT: Stroom's `CurrentSelectionPresenter` renders
 /// [CopyTextUtil#render] into an `HTML` widget and passes its mouse downs to
@@ -59,7 +58,7 @@ public final class CopyTextStories {
     ///
     /// @param registry The registry to add to.
     public static void addTo(final StoryRegistry registry) {
-        // React's value arg is only a default for its Controls; the stories render fixed values
+        // No args: the stories render fixed values
         registry.component("Widgets/Display/CopyText", CopyTextStories.class)
                 .layout(StoryLayout.CENTERED)
                 // Copy only: hover to show the copy icon; a left click copies, a right click shows a menu
@@ -73,8 +72,8 @@ public final class CopyTextStories {
                 // A long value: the tooltip's preview is truncated at 30 characters
                 .story("LongValue", context -> {
                     final ScreenHarness harness = harness(context);
-                    // React shows the insert icon with no onInsert, so the icon does nothing and the
-                    // menu has no Insert item; GWT's CopyTextUtil is the same with no insert handler
+                    // With no insert handler, CopyTextUtil's insert icon does nothing and the menu has
+                    // no Insert item
                     harness.add(minWidth(copyText(harness,
                             "this is a very long value that will be truncated in the copy tooltip preview",
                             true,
