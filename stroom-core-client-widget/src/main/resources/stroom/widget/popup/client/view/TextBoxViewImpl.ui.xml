@@ -7,7 +7,10 @@
                         helpText="The name to save this under. A name is required."
                         screenReaderText="The name to save this under."
                         required="true">
-            <g:TextBox ui:field="textBox"/>
+            <g:FlowPanel>
+                <g:TextBox ui:field="textBox"/>
+                <g:Label ui:field="feedback" styleName="feedback"/>
+            </g:FlowPanel>
         </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder> 

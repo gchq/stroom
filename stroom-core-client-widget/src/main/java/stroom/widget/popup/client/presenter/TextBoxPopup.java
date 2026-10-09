@@ -29,13 +29,20 @@ import java.util.function.Consumer;
 
 public class TextBoxPopup extends MyPresenterWidget<TextBoxView> {
 
+    static final String NO_NAME_MESSAGE = "You must provide a name";
+
     @Inject
     public TextBoxPopup(final EventBus eventBus,
                         final TextBoxView view) {
         super(eventBus, view);
     }
 
+    /// Shows the popup. OK with a blank name says so under the field and keeps the popup open.
+    ///
+    /// @param caption  The popup's caption.
+    /// @param consumer Given the name when OK is pressed with one.
     public void show(final String caption, final Consumer<String> consumer) {
+        getView().setValid();
         final PopupSize popupSize = PopupSize.resizableX();
         ShowPopupEvent.builder(this)
                 .popupType(PopupType.OK_CANCEL_DIALOG)
@@ -46,9 +53,11 @@ public class TextBoxPopup extends MyPresenterWidget<TextBoxView> {
                     if (e.isOk()) {
                         final String text = getText();
                         if (text != null && !text.isBlank()) {
-                            consumer.accept(getText());
+                            getView().setValid();
+                            consumer.accept(text);
                             e.hide();
                         } else {
+                            getView().setInvalid(NO_NAME_MESSAGE);
                             e.reset();
                         }
                     } else {
@@ -72,5 +81,12 @@ public class TextBoxPopup extends MyPresenterWidget<TextBoxView> {
 
         void setText(String text);
 
+        /// Marks the name invalid, showing why under it and moving the focus to it.
+        ///
+        /// @param message What is wrong with the name.
+        void setInvalid(String message);
+
+        /// Marks the name valid, clearing any message.
+        void setValid();
     }
 }

@@ -344,20 +344,6 @@ basic use:
 All of these were found the same way: OK must close the dialog, show a message, or be disabled.
 Leaving the dialog open and saying nothing is the bug.
 
-### Save Tab Session with a blank name does nothing
-
-**Reproduced.** (gwt-bugs #46) Main Menu, Navigation, Save Tab Session, leave Name blank and press
-OK. The dialog stays open with no message.
-
-`TextBoxPopup` (line 52) calls `e.reset()` for a blank value and says nothing. Compare
-`NewFsVolumeGroupPresenter:78`, which shows "You must provide a name".
-
-Fix: `AlertEvent.fireError(this, "You must provide a name for the tab session.", e::reset)`.
-`TextBoxPopup` is shared but has one caller today (`TabSessionManager:100`), so this covers future
-callers too.
-
-* `stroom-core-client-widget/src/main/java/stroom/widget/popup/client/presenter/TextBoxPopup.java`
-
 ### A blank or unreadable API key expiry date gets the wrong message
 
 **Reported.** (gwt-bugs #43, now fixed except for its message) A blank or unreadable Expiry Date in
@@ -991,6 +977,12 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   The four messages were fired as the Properties screen's own `ErrorEvent`, which nothing else
   handles. They are now warning alerts, and the dialog can be used again once one is closed
   (`TestBatchProcessorFilterEditPresenter`, `TestBatchDocumentPermissionsEditPresenter`).
+* #46: Save Tab Session with a blank name did nothing and said nothing: `TextBoxPopup` reset the
+  dialog without a message. As `TextBoxPopup` is a shared widget (in `stroom-core-client-widget`,
+  which can't fire Stroom's alerts), it now says "You must provide a name" under the Name field,
+  marked invalid as the sign-in views mark theirs (`FieldValidity`: `aria-invalid` and a
+  description), and moves the focus to it (`TestTextBoxPopup`, the workbench's
+  `Widgets/Dialogs/TextBoxPopupDialog` `Basic`).
 * #36: in stepping, Refresh Current Step (and Set Location then OK) before a stream was chosen sent
   a step request with no `criteria`, which failed on the server with a `NullPointerException`.
   `StepControlPresenter.initButtons()` now starts Refresh disabled like the other step buttons, the

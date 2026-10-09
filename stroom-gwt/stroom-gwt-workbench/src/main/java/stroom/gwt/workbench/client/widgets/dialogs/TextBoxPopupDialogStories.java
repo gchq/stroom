@@ -18,8 +18,12 @@
 package stroom.gwt.workbench.client.widgets.dialogs;
 
 import stroom.gwt.workbench.client.StoryPanels;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.client.widgets.StoryPopups;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.button.client.Button;
@@ -76,6 +80,24 @@ public final class TextBoxPopupDialogStories {
                     final FlowPanel column = StoryPanels.column(8, button, result);
                     column.getElement().getStyle().setProperty("alignItems", "center");
                     return column;
+                })
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.getByRole("button", StroomDom.button("Open popup")));
+                    final Query name = screen.findByRole("textbox", "Name");
+                    // OK with no name says why under the field, and keeps the popup open
+                    play.clear(name);
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.expect(screen.getByText("You must provide a name")).toBeVisible();
+                    play.expect(name).toHaveAttribute("aria-invalid", "true");
+                    play.expect(name).toHaveAccessibleDescription(TextMatch.startingWith("You must provide a name"));
+                    play.expect(play.spy(ON_OK)).not().toHaveBeenCalled();
+                    // With a name, OK accepts it and closes the popup
+                    play.type(name, "new name");
+                    play.click(screen.getByRole("button", StroomDom.button("OK")));
+                    play.expect(play.spy(ON_OK)).toHaveBeenCalledWith("new name");
+                    play.waitFor(() -> play.expect(screen.queryByRole("textbox", "Name")).toBeNull());
+                    play.expect(play.getByText("Result: new name")).toBeInTheDocument();
                 });
     }
 }
