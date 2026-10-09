@@ -53,6 +53,7 @@ dependencies {
 
     implementation libs.jackson.databind
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.langchain4j
     implementation libs.vavr
 

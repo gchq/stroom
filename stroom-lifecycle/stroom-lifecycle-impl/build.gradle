@@ -25,4 +25,5 @@ dependencies {
 
     implementation libs.dropwizard.lifecycle
     implementation libs.guice
+    implementation libs.jackson.annotations
 }

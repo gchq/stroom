@@ -35,6 +35,7 @@ dependencies {
     implementation libs.aws.sts
     implementation libs.commons.compress
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.restygwt
 
     testImplementation libs.mbknor.jackson.jsonSchema

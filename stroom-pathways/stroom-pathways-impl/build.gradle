@@ -35,6 +35,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.kryo
     implementation libs.lmdbjava

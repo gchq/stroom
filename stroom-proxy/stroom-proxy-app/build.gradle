@@ -44,6 +44,7 @@ dependencies {
     implementation libs.dropwizard.client
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.dataformat.yaml
     implementation libs.jose4j
     implementation libs.kafka.clients

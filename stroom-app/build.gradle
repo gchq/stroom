@@ -190,6 +190,7 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.flyway.mysql
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.dataformat.yaml
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api

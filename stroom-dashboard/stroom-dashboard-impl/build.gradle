@@ -43,6 +43,7 @@ dependencies {
     implementation libs.commons.text
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.poi.ooxml

@@ -135,7 +135,6 @@ main() {
     "${GRADLE_ARGS[@]}" \
     --quiet \
     --scan \
-    --stacktrace \
     -PdumpFailedTestXml=true \
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
     checkstyleMain \

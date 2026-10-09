@@ -43,6 +43,7 @@ dependencies {
     implementation libs.commons.compress
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jakarta.servlet.api
     implementation libs.jakarta.validation.api
     implementation libs.jooq

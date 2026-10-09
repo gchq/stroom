@@ -44,6 +44,7 @@ dependencies {
     implementation libs.dropwizard.validation
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jooq
     implementation libs.restygwt
     implementation libs.vavr

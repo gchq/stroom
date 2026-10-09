@@ -21,6 +21,7 @@ dependencies {
     implementation project(':stroom-util-shared')
 
     implementation libs.dropwizard.validation
+    implementation libs.jackson.annotations
     implementation libs.jose4j
 
     testImplementation libs.bundles.common.test.implementation
