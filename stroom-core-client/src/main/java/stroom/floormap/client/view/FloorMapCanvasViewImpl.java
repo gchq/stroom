@@ -213,6 +213,8 @@ public class FloorMapCanvasViewImpl
     /// would not report a usable size", which stops the image being probed forever.
     private final Map<String, double[]> imageNaturalSizeCache = new HashMap<>();
     private final Set<String> loadingImages = new HashSet<>();
+    /// Keys of facts already reported as unplaceable, so the warning is not repeated every frame.
+    private final Set<String> unplaceableFactsReported = new HashSet<>();
     private Runnable redrawListener;
     private Runnable resizeListener;
 
@@ -1146,12 +1148,15 @@ public class FloorMapCanvasViewImpl
                             final FloorMapHighlight highlight) {
         if (!fact.hasUsablePlacement()) {
             // Skip rather than draw it wrongly, and say so: silently dropping an object the
-            // user can see in the Fact List is its own kind of confusing. Warning per frame
-            // is acceptable because this cannot happen to well-formed data - the parser
-            // rejects an unusable matrix - so a repeating warning means a document written
+            // user can see in the Fact List is its own kind of confusing. Once per fact, as
+            // this runs every animation frame during playback. It cannot happen to well-formed
+            // data - the parser rejects an unusable matrix - so it means a document written
             // before that check, or a hand-edited store value of six valid zeros.
-            Console.warn(() -> "Skipping fact '" + fact.getKey()
-                               + "': its world-to-map matrix is singular, so it cannot be placed");
+            if (unplaceableFactsReported.add(fact.getKey())) {
+                Console.warn(() -> "Skipping fact '" + fact.getKey()
+                                   + "': its world-to-map matrix is singular, so it cannot be"
+                                   + " placed. Reported once per fact.");
+            }
             return;
         }
         // One resolved colour per fact — group membership or area containment,

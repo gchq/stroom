@@ -175,6 +175,14 @@ public class FloorMapMapPresenter
 
     private boolean factsHistoryTruncationReported;
 
+    /// So an events result that parses to no entities is described once per document, not on
+    /// every read - three times a second during playback.
+    private boolean unparsedEventsReported;
+
+    /// So entities that match no fact key are named once per document, not on every read and
+    /// every empty-stage heartbeat.
+    private boolean unplacedEntitiesReported;
+
     /// Names whichever stage of the events pipeline came up empty, once it has stayed empty.
     ///
     /// Four stages can each produce nothing and all four look the same on screen. Three of them
@@ -676,6 +684,8 @@ public class FloorMapMapPresenter
         factsHistoryErrorReported = false;
         factsHistoryTruncationReported = false;
         eventDataFaultReported = false;
+        unparsedEventsReported = false;
+        unplacedEntitiesReported = false;
         wrongEventsStoreTypeReported = false;
         stageReporter.reset();
         floorMapCanvasPresenter.setEmptyStatus(null, false);
@@ -1151,9 +1161,12 @@ public class FloorMapMapPresenter
     /// entities simply stop appearing, and the map looks as though animation has
     /// been switched off. Naming the columns and showing a sample value turns
     /// that into something inspectable.
+    ///
+    /// Reported once per document read: the same rows arrive on every tick.
     private void reportUnparsedEvents(final TableResult tableResult,
                                       final List<FloorMapObject> entities) {
-        if (!entities.isEmpty()
+        if (unparsedEventsReported
+            || !entities.isEmpty()
             || tableResult == null
             || tableResult.getRows() == null
             || tableResult.getRows().isEmpty()) {
@@ -1183,6 +1196,7 @@ public class FloorMapMapPresenter
                     .append(column == null ? "(not set)" : "'" + column + "'");
         }
 
+        unparsedEventsReported = true;
         Console.error("Floor map events query returned "
                       + tableResult.getRows().size()
                       + " rows but no entities. The column mapping is: " + mapping
@@ -1190,7 +1204,8 @@ public class FloorMapMapPresenter
                       + ". " + FloorMapEventRole.ENTITY_ID.getDisplayName() + " must name a column"
                       + " the query selects, and so must at least one of "
                       + FloorMapEventRole.LOCATION.getDisplayName() + " and "
-                      + FloorMapEventRole.LOCATION_REF.getDisplayName() + ".");
+                      + FloorMapEventRole.LOCATION_REF.getDisplayName() + ". Reported once per"
+                      + " document.");
     }
 
     /// The schema roles that map onto columns of the facts query's result table. Area roles
@@ -1415,17 +1430,20 @@ public class FloorMapMapPresenter
         // Facts arriving after the events is normal and self-corrects on the
         // next facts refresh, so only a full miss against facts we actually
         // have says the two sides do not agree on what an object is called.
-        if (placed.isEmpty()
+        if (!unplacedEntitiesReported
+            && placed.isEmpty()
             && lastRawEventObjects != null
             && !lastRawEventObjects.isEmpty()
             && lastFacts != null
             && !lastFacts.isEmpty()) {
+            unplacedEntitiesReported = true;
             //noinspection SequencedCollectionMethodCanBeUsed
             Console.error("Floor map: none of the " + lastRawEventObjects.size()
                           + " event entities could be placed. Their location column names objects"
                           + " like '" + lastRawEventObjects.get(0).getLocationRef()
                           + "', which matches no fact key at this time — the facts query returned"
-                          + " keys like '" + lastFacts.get(0).getKey() + "'.");
+                          + " keys like '" + lastFacts.get(0).getKey() + "'. Reported once per"
+                          + " document.");
         }
         return placed;
     }

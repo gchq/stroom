@@ -36,7 +36,6 @@ import stroom.query.shared.QueryTablePreferences;
 import stroom.task.client.DefaultTaskMonitorFactory;
 import stroom.task.client.HasTaskMonitorFactory;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.util.client.Console;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
@@ -136,7 +135,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
      * that they no longer want data and search has ended. Do not destroy search results.
      */
     public void stop() {
-        Console.info("SearchModel - stop()");
+        GWT.log("SearchModel - stop()");
 
         terminate(currentNode, currentQueryKey);
         setSearching(false);
@@ -154,7 +153,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
      * begin.
      */
     public void reset(final DestroyReason destroyReason) {
-        Console.info("SearchModel - reset()");
+        GWT.log("SearchModel - reset()");
 
         // Stop previous search if there is one.
         deleteStore(currentNode, currentQueryKey, destroyReason);
@@ -185,7 +184,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                                final boolean storeHistory,
                                final String queryInfo,
                                final ExpressionOperator additionalQueryExpression) {
-        Console.info("SearchModel - startNewSearch()");
+        GWT.log("SearchModel - startNewSearch()");
 
         // Destroy the previous search and ready all components for a new search to begin.
         reset(DestroyReason.NO_LONGER_NEEDED);
@@ -298,7 +297,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                             }
                         }
                     } catch (final RuntimeException e) {
-                        Console.info(e.getMessage());
+                        GWT.log(e.getMessage());
                     }
                     resultConsumer.accept(result);
                 })
@@ -309,7 +308,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                                     new ErrorMessage(Severity.ERROR, throwable.toString())));
                         }
                     } catch (final RuntimeException e) {
-                        Console.info(e.getMessage());
+                        GWT.log(e.getMessage());
                     }
                     resultConsumer.accept(null);
                 })
@@ -321,20 +320,18 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
     private void deleteStore(final String node, final QueryKey queryKey, final DestroyReason destroyReason) {
         if (queryKey != null) {
             resultStoreModel.destroy(node, queryKey, destroyReason, (ok) ->
-                    Console.info("Destroyed store " + queryKey + ": " + ok), taskMonitorFactory);
+                    GWT.log("Destroyed store " + queryKey), taskMonitorFactory);
         }
     }
 
     private void terminate(final String node, final QueryKey queryKey) {
         if (queryKey != null) {
             resultStoreModel.terminate(node, queryKey, (ok) ->
-                    Console.info("Terminate search " + queryKey + ": " + ok), taskMonitorFactory);
+                    GWT.log("Terminate search " + queryKey), taskMonitorFactory);
         }
     }
 
     private void poll(final boolean storeHistory) {
-        Console.info("poll(" + storeHistory + "); polling = " + polling);
-
         final QueryKey queryKey = currentQueryKey;
         final QuerySearchRequest search = currentSearch;
         if (search != null && polling) {
@@ -352,12 +349,12 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                     .requestedRange(requestedRange)
                     .queryTablePreferences(queryTablePreferencesSupplier.get())
                     .build();
-            Console.info("REST call");
+
             restFactory
                     .create(QUERY_RESOURCE)
                     .method(res -> res.search(currentNode, request))
                     .onSuccess(response -> {
-                        Console.info("Response: " + response.toString());
+//                        GWT.log(response.toString());
 
                         if (search == currentSearch) {
                             if (response != null) {
@@ -367,7 +364,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                                 try {
                                     update(response);
                                 } catch (final RuntimeException e) {
-                                    Console.info(e.getMessage());
+                                    GWT.log(e.getMessage());
                                 }
 
                                 if (polling) {
@@ -390,7 +387,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                         }
                     })
                     .onFailure(throwable -> {
-                        Console.info("REST failure: " + throwable.getMessage());
+//                        GWT.log(throwable.getMessage());
 
                         try {
                             if (search == currentSearch) {
@@ -399,7 +396,7 @@ public class QueryModel implements HasTaskMonitorFactory, HasHandlers {
                                 polling = false;
                             }
                         } catch (final RuntimeException e) {
-                            Console.info(e.getMessage());
+                            GWT.log(e.getMessage());
                         }
 
                         if (polling) {
