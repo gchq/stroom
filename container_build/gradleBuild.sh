@@ -123,6 +123,24 @@ main() {
     #:stroom-proxy:stroom-proxy-app:test
   #echo "::endgroup::"
 
+  # Run just the checkstyle and the two config test as these often fail
+  # so better to fail early. Also not running CS alonside the other tasks
+  # may help to stop out of memory issues.
+  # This will implicitly run the java compile too
+  echo "::group::Run checkstyle"
+  echo -e "${GREEN}Run checkstyle${NC}"
+  ./gradlew \
+    "${GRADLE_ARGS[@]}" \
+    --scan \
+    --stacktrace \
+    -PdumpFailedTestXml=true \
+    -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
+    checkstyleMain \
+    checkstyleTest \
+    :stroom-proxy:stroom-proxy-app:test --tests '*TestProxyYamlUtil' \
+    :stroom-config:stroom-config-app:test --tests '*TestStroomYamlUtil'
+  echo "::endgroup::"
+
   # Do the gradle build
   # Use custom gwt compile jvm settings to avoid blowing the ram limit in
   # travis. At time of writing a sudo VM in travis has 7.5gb ram.
@@ -141,6 +159,8 @@ main() {
     -Pversion="${BUILD_VERSION:-SNAPSHOT}" \
     build \
     "${test_args[@]}" \
+    -x checkstyleMain \
+    -x checkstyleTest \
     -x :stroom-app:shadowJar \
     -x :stroom-proxy:stroom-proxy-app:shadowJar \
     -x :stroom-headless:shadowJar \
@@ -185,6 +205,8 @@ main() {
     shadowJar \
     copyFilesForStroomDockerBuild \
     copyFilesForProxyDockerBuild \
+    -x checkstyleMain \
+    -x checkstyleTest \
     -x test \
     -x stroom-app-gwt:gwtCompile \
     -x stroom-dashboard-gwt:gwtCompile
