@@ -446,6 +446,8 @@ copy_swagger_ui_content() {
 
 check_for_out_of_date_puml_svgs() {
 
+  echo "::group::Converting .puml files to .svg"
+
   local convert_cmd=( "./container_build/runInJavaDocker.sh" "SVG" )
 
   echo -e "${GREEN}Ensuring all PlantUML generated .svg files are up to date${NC}"
@@ -496,6 +498,8 @@ check_for_out_of_date_puml_svgs() {
 
     exit 1
   fi
+
+  echo "::endgroup::"
 }
 
 
@@ -605,8 +609,10 @@ echo "::group::Start stroom-all-dbs"
 start_databases stroom-all-dbs
 echo "::endgroup::"
 
+echo "::group::Setup local.yml"
 # Ensure we have a local.yml file as the integration tests will need it
 ./local.yml.sh
+echo "::endgroup::"
 
 echo -e "${GREEN}Running all gradle builds with build version" \
   "${BLUE}${BUILD_VERSION}${NC}"
