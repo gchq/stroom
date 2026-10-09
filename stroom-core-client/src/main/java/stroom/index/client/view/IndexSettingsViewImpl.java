@@ -70,7 +70,8 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
         maxDocsPerShard.setValue(1000000000L);
         maxDocsPerShard.setMin(1000L);
-        maxDocsPerShard.setMax(10000000000L);
+        // The value is an int (Lucene can't hold more documents than that in one index)
+        maxDocsPerShard.setMax(Integer.MAX_VALUE);
 
         shardsPerPartition.setValue(1L);
         shardsPerPartition.setMin(1L);

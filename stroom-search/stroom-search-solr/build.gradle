@@ -46,4 +46,7 @@ dependencies {
     implementation libs.saxon.he
     implementation libs.solrj
     implementation libs.ws.rs.api
+
+    testImplementation libs.bundles.common.test.implementation
+    testRuntimeOnly libs.bundles.common.test.runtime
 }

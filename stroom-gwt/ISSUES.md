@@ -47,21 +47,21 @@ presenter.
 
 ## Wrong values and failures
 
-### Max Docs Per Shard overflows
+### Solr clients can't be made: SolrJ needs a Jetty client the app doesn't have
 
-**Confirmed.** The spinner allows up to 10,000,000,000 but `IndexSettingsViewImpl.getMaxDocsPerShard()`
-returns `getIntValue()`, so any value above 2,147,483,647 overflows.
+**Confirmed** (by the classpath, and a unit test that tried). The app runs SolrJ 9.10.1, which is
+built against Jetty client 10, but Gradle resolves `org.eclipse.jetty:jetty-client` to 12.1.9 for
+the whole app (`./gradlew :stroom-app:dependencyInsight --configuration runtimeClasspath
+--dependency org.eclipse.jetty:jetty-client`). Jetty 12 moved
+`org.eclipse.jetty.client.util.InputStreamResponseListener`, so making SolrJ's `Http2SolrClient`
+fails with `NoClassDefFoundError`, and `SolrClientFactory` makes one for every kind of Solr
+connection. Not yet seen against a running Solr, but it suggests no Solr index can be used.
 
-* `stroom-core-client/src/main/java/stroom/index/client/view/IndexSettingsViewImpl.java` (lines 73, 90-91)
-
-### Solr Cloud without ZooKeeper builds its client from the ZooKeeper hosts
-
-**Confirmed.** In the branch for Solr Cloud without ZooKeeper, `SolrClientFactory` checks that Solr
-URLs are set, then builds a `CloudSolrClient` from `getZkHosts()` (which this mode doesn't use)
-instead of from the Solr URLs.
+Fix: build Solr clients on a client that doesn't need Jetty 10 (e.g. SolrJ's JDK HTTP client,
+`HttpJdkSolrClient`, if it covers what Stroom uses), or isolate (shade) SolrJ with its own Jetty.
 
 * `stroom-search/stroom-search-solr/src/main/java/stroom/search/solr/SolrClientFactory.java`
-  (lines 57-68)
+* `stroom-search/stroom-search-solr/build.gradle`
 
 ### Elastic number fields can fail when blank
 
@@ -222,24 +222,6 @@ instead of letting the constraint throw. The edit dialog should show a sentence,
 
 * `stroom-annotation/stroom-annotation-impl/src/main/java/stroom/annotation/impl/dao/AnnotationTagDaoImpl.java`
   (line 162)
-
-### A search polls forever if handling its results fails
-
-**Confirmed.** Found while writing the workbench's dashboard stories. Both search loops
-(`QueryModel.poll` for StroomQL queries, `SearchModel.poll` for dashboards) call `update(response)`
-in a `try` whose `catch` only does `GWT.log(...)`, then poll again while `polling` is true. It is
-`update` that sets `polling = false` once the response is complete, so if anything in it throws
-(e.g. a result component's `setData`), the search is never seen to finish: the client keeps
-requesting the completed search, the spinner keeps going and the Query button stays at Stop, with
-no error shown. Two causes of this have been fixed (a search whose `update` threw, and
-`QueryPresenter.getCurrentErrors` throwing for a Query that hadn't searched), but any other
-exception would still do it.
-
-Fix: on an exception from `update`, stop polling, end the search (`endSearch`, `setSearching(false)`)
-and show the error through `setErrors`, as the `onFailure` handler does.
-
-* `stroom-core-client/src/main/java/stroom/query/client/presenter/QueryModel.java` (lines 332-340)
-* `stroom-core-client/src/main/java/stroom/dashboard/client/main/SearchModel.java` (lines 355-363)
 
 ### The Pathways editor can't create a pathway or add a constraint
 
@@ -883,6 +865,18 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   `@JsonCreator` (as `ReceiptCheckMode` and `ReceiveAction` do), and an unknown value reads as no
   status (`null`, which rules made before #5774 already have) rather than failing; the next save
   writes the `null`. Statuses are still written by name (`TestAnalyticRuleDoc`).
+* Max Docs Per Shard overflowed: the spinner allowed up to 10,000,000,000 but the value is an `int`
+  (as is what Lucene can hold), so anything above 2,147,483,647 was saved wrapped round. The
+  spinner's maximum is now `Integer.MAX_VALUE`, so a larger value is refused, as its help text
+  already said (the workbench's `App/Index/IndexEditor` `MaxDocsPerShardLimit`).
+* Solr Cloud without ZooKeeper built its client from the ZooKeeper hosts, which that mode doesn't
+  use, instead of the Solr URLs. `SolrClientFactory` now passes the Solr URLs to SolrJ's
+  `CloudSolrClient.Builder` (`TestSolrClientFactory`). See also
+  [Solr clients can't be made](#solr-clients-cant-be-made-solrj-needs-a-jetty-client-the-app-doesnt-have).
+* A search polled for ever if handling its results threw: `QueryModel` and `SearchModel` only
+  logged the exception and polled again, and only a handled result could end the search. Such a
+  failure now stops polling, ends the search on its components, stops showing it as running and
+  shows the error (`TestQueryModel`, `TestSearchModel`).
 * #43 (in part): a blank API key expiry made OK do nothing (`a2dc7af70c`); see
   [the remaining part](#a-blank-or-unreadable-api-key-expiry-date-gets-the-wrong-message).
 * #48: User Preferences couldn't be closed after saving them failed (OK spinning, OK and Cancel
@@ -1000,7 +994,7 @@ Found while writing the workbench's stories, and fixed. Each story named is its 
   an Embedded Query's `automate` and `queryTablePreferences` (`EmbeddedQueryPresenter`).
 * A dashboard search whose `update` threw polled forever, and `QueryPresenter.getCurrentErrors` threw
   for a Query that hadn't searched (the dashboard selection stories check every search completes;
-  see also [A search polls forever](#a-search-polls-forever-if-handling-its-results-fails)).
+  any such failure now ends the search, see below).
 * `MySingleSelectionModel` counted two quick list refreshes as a double select, which closed the
   Query Favourites dialog: `DashboardComponent` `QueryHistoryAndFavourites`.
 

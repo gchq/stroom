@@ -356,6 +356,8 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                                     update(response);
                                 } catch (final RuntimeException e) {
                                     GWT.log(e.getMessage());
+                                    // update() is what sees the search finish, so stop it here
+                                    endSearchWithError(e);
                                 }
 
                                 if (polling) {
@@ -450,6 +452,16 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
             // If we have completed search then stop the task spinner.
             polling = false;
         }
+    }
+
+    // Ends a search whose results couldn't be handled: stops polling (else the search would never
+    // be seen to finish, and the client would poll it for ever), tells the components the search
+    // has ended and says what went wrong.
+    private void endSearchWithError(final RuntimeException e) {
+        polling = false;
+        resultComponents.values().forEach(ResultComponent::endSearch);
+        setSearching(false);
+        setErrors(Collections.singletonList(new ErrorMessage(Severity.ERROR, e.toString())));
     }
 
     private void setErrors(final List<ErrorMessage> errors) {

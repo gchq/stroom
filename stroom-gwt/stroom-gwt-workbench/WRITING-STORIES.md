@@ -637,8 +637,8 @@ Each area has its own ginjector in `client/app/gin/<area>` and helpers for its s
   (an Embedded Query has none); `simpleMenuItem`; `drag(play, from, to, fx, fy, dx, dy)` drags tabs
   and splitters with mouse events (`FlexLayout` reads them with capture); `closeWindow(play)`
   (`beforeunload`); `at(json, path...)`, `param`, `componentIds` and `componentRequest` read
-  request bodies. A search whose result handling throws polls forever (see `ISSUES.md`), so when a
-  play waits for nothing in particular, check no Query is left searching.
+  request bodies. A search whose result handling throws ends with the error shown in the Query's
+  errors, so a play that waits for nothing in particular should check no error is shown.
 * **Ask Stroom AI opened by another screen** (a results table's 'Ask Stroom AI' button fires
   `AskStroomAiEvent`): add the ginjector's `AskStroomAIScreenModule` and a getter for
   `AskStroomAiPresenter`, route the chat's requests with `AiFixtures.chatRoutes(builder)` (a

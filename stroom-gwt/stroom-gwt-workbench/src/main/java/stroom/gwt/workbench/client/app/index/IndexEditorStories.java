@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -210,6 +211,22 @@ public final class IndexEditorStories {
                 .story("SettingsEditable", context -> render(context, false, false))
                 .withPlay(play -> {
                     openSettings(play);
+                    DocEditors.expectNoProblems(play);
+                })
+                // Max Docs Per Shard is an int, so a larger value is refused rather than overflowing
+                .story("MaxDocsPerShardLimit", context -> render(context, false, false))
+                .withPlay(play -> {
+                    openSettings(play);
+                    final Query maxDocs = play.getByLabelText("Max Docs Per Shard");
+                    play.clear(maxDocs);
+                    play.type(maxDocs, "3000000000");
+                    play.tab();
+                    play.expect(maxDocs).toHaveValue("1000000000");
+                    // The largest int is allowed
+                    play.clear(maxDocs);
+                    play.type(maxDocs, "2147483647");
+                    play.tab();
+                    play.expect(maxDocs).toHaveValue("2147483647");
                     DocEditors.expectNoProblems(play);
                 })
                 // The Settings tab when the user may only view the index
