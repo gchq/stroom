@@ -344,23 +344,6 @@ basic use:
 All of these were found the same way: OK must close the dialog, show a message, or be disabled.
 Leaving the dialog open and saying nothing is the bug.
 
-### A new index field with a blank name locks the dialog
-
-**Reproduced.** (gwt-bugs #40) Open a Lucene index, Fields, New Field, leave the name blank and
-press OK. The dialog stays open with OK and Cancel both disabled, and no message. Cancel can't
-close it; only closing the tab gets out.
-
-`IndexFieldEditPresenter.write()` (line 77) throws `ValidationException("An index field must have a
-name")`. `IndexFieldListPresenter.onEdit()` catches that and shows it with `e::reset` (line 294), but
-`onAdd()` (line 253) doesn't catch it, so nothing calls `e.reset()` and the dialog keeps its buttons
-disabled. The Solr and receipt-rule versions of `write()` show a warning and return `null` instead.
-
-Fix: wrap `onAdd()`'s call the way `onEdit()` does, or make `write()` warn and return `null` like
-the Solr version so neither caller can forget.
-
-* `stroom-core-client/src/main/java/stroom/index/client/presenter/IndexFieldListPresenter.java`
-  (lines 249-268)
-
 ### The batch edit dialogs' validation messages are never shown
 
 **Reproduced.** (gwt-bugs #41) Batch Edit Current Processors, then OK, on a Folder or Pipeline with
@@ -1015,6 +998,12 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   its settings are saved again, such a query with Auto Refresh ticked never refreshes, as
   `AbstractRefreshableComponentPresenter.scheduleRefresh` ignores the failure to parse a `null`
   interval.
+* #40: OK on a new Lucene index field with a blank name left the New Field dialog with OK and Cancel
+  disabled and no message: `IndexFieldEditPresenter.write()` threw a `ValidationException` that
+  `IndexFieldListPresenter.onAdd()` didn't catch. `write()` now warns "An index field must have a
+  name" and returns `null`, as the Solr version does, and both `onAdd()` and `onEdit()` let the
+  dialog be used again (`TestIndexFieldEditPresenter`, the workbench's `App/Index/IndexEditor`
+  `NewFieldWithoutName`).
 * #36: in stepping, Refresh Current Step (and Set Location then OK) before a stream was chosen sent
   a step request with no `criteria`, which failed on the server with a `NullPointerException`.
   `StepControlPresenter.initButtons()` now starts Refresh disabled like the other step buttons, the

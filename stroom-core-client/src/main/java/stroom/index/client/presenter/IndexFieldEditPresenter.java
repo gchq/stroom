@@ -16,6 +16,7 @@
 
 package stroom.index.client.presenter;
 
+import stroom.alert.client.event.AlertEvent;
 import stroom.document.client.event.ChangeUiHandlers;
 import stroom.index.client.presenter.IndexFieldEditPresenter.IndexFieldEditView;
 import stroom.index.shared.IndexFieldImpl;
@@ -35,8 +36,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-
-import javax.validation.ValidationException;
 
 public class IndexFieldEditPresenter
         extends MyPresenterWidget<IndexFieldEditView>
@@ -69,12 +68,16 @@ public class IndexFieldEditPresenter
         onChange();
     }
 
+    /// Reads the field from the dialog. If the field isn't valid, e.g. it has no name, a warning
+    /// says why and null is returned, so the caller can keep the dialog open.
+    ///
+    /// @return The field, or null if it isn't valid.
     public IndexFieldImpl write() {
-        String name = getView().getFieldName();
-        name = name.trim();
+        final String name = NullSafe.trim(getView().getFieldName());
 
-        if (name.length() == 0) {
-            throw new ValidationException("An index field must have a name");
+        if (name.isEmpty()) {
+            AlertEvent.fireWarn(this, "An index field must have a name", null);
+            return null;
         }
 
         return IndexFieldImpl

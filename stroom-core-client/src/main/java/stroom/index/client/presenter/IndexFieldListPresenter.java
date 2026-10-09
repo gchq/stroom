@@ -16,7 +16,6 @@
 
 package stroom.index.client.presenter;
 
-import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.CriteriaUtil;
 import stroom.data.client.presenter.RestDataProvider;
@@ -251,17 +250,22 @@ public class IndexFieldListPresenter
         indexFieldEditPresenter.show("New Field", e -> {
             if (e.isOk()) {
                 final IndexFieldImpl indexField = indexFieldEditPresenter.write();
-                restFactory
-                        .create(INDEX_RESOURCE)
-                        .method(res -> res.addField(new AddField(docRef, indexField)))
-                        .onSuccess(response -> {
-                            selectionModel.setSelected(indexField);
-                            refresh();
-                            e.hide();
-                        })
-                        .onFailure(new DefaultErrorHandler(this, e::reset))
-                        .taskMonitorFactory(pagerView)
-                        .exec();
+                if (indexField == null) {
+                    // Not valid: write() has said why, so let the dialog be used again
+                    e.reset();
+                } else {
+                    restFactory
+                            .create(INDEX_RESOURCE)
+                            .method(res -> res.addField(new AddField(docRef, indexField)))
+                            .onSuccess(response -> {
+                                selectionModel.setSelected(indexField);
+                                refresh();
+                                e.hide();
+                            })
+                            .onFailure(new DefaultErrorHandler(this, e::reset))
+                            .taskMonitorFactory(pagerView)
+                            .exec();
+                }
             } else {
                 e.hide();
             }
@@ -274,8 +278,11 @@ public class IndexFieldListPresenter
             indexFieldEditPresenter.read(existingField);
             indexFieldEditPresenter.show("Edit Field", e -> {
                 if (e.isOk()) {
-                    try {
-                        final IndexFieldImpl indexField = indexFieldEditPresenter.write();
+                    final IndexFieldImpl indexField = indexFieldEditPresenter.write();
+                    if (indexField == null) {
+                        // Not valid: write() has said why, so let the dialog be used again
+                        e.reset();
+                    } else {
                         restFactory
                                 .create(INDEX_RESOURCE)
                                 .method(res -> res.updateField(new UpdateField(
@@ -290,8 +297,6 @@ public class IndexFieldListPresenter
                                 .onFailure(new DefaultErrorHandler(this, e::reset))
                                 .taskMonitorFactory(pagerView)
                                 .exec();
-                    } catch (final RuntimeException ex) {
-                        AlertEvent.fireError(IndexFieldListPresenter.this, ex.getMessage(), e::reset);
                     }
                 } else {
                     e.hide();

@@ -23,6 +23,7 @@ import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -176,6 +177,27 @@ public final class IndexEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
                     DocEditors.expectNoProblems(play);
+                })
+                // OK on a new field with no name says why and leaves the dialog usable (its OK and
+                // Cancel once stayed disabled with no message, as the validation error went uncaught)
+                .story("NewFieldWithoutName", context -> render(context, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.waitFor(() -> play.expect(play.getByText("EventTime")).toBeInTheDocument());
+                    play.click(play.getByRole("button", "New Field"));
+                    final Play dialog = screen.within(screen.findByText("New Field", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.ALERT_SPY))
+                            .toHaveBeenCalledWith("WARN: An index field must have a name"));
+                    play.click(screen.findByRole("button", StroomDom.button("Close")));
+                    // The dialog can be used again: Cancel closes it, and nothing was added
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("New Field", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY))
+                            .not().toHaveBeenCalledWith(RequestMatcher.post("/index/v2/addField").toSpyMatcher());
+                    DocEditors.expectNoUnhandledRequests(play);
                 })
                 // The Fields tab (the default) when the user may only view the index
                 .story("FieldsReadOnly", context -> render(context, false, true))
