@@ -1,0 +1,171 @@
+{
+ "generated": "2026-10-09T04:46:19.992Z",
+ "byClass": {
+  "plain": 6,
+  "permission": 1,
+  "no-opener": 1
+ },
+ "doors": [
+  {
+   "door": "AiAttachmentDataPresenter",
+   "how": "dialog",
+   "area": "AI",
+   "via": "AskStroomAiPresenter",
+   "reachedParent": [
+    "AskStroomAiPresenter"
+   ],
+   "class": "plain",
+   "sites": [
+    {
+     "shower": "AskStroomAiPresenter",
+     "method": "onViewAttachmentData",
+     "primary": "plain",
+     "signals": [],
+     "trigger": null,
+     "viaMenu": false
+    }
+   ]
+  },
+  {
+   "door": "DownloadChatPresenter",
+   "how": "dialog",
+   "area": "AI",
+   "via": "AskStroomAiPresenter",
+   "reachedParent": [
+    "AskStroomAiPresenter"
+   ],
+   "class": "plain",
+   "sites": [
+    {
+     "shower": "AskStroomAiPresenter",
+     "method": "onDownloadChat",
+     "primary": "plain",
+     "signals": [],
+     "trigger": "Download",
+     "viaMenu": false
+    }
+   ]
+  },
+  {
+   "door": "CredentialsManagerDialogPresenter",
+   "how": "dialog",
+   "area": "Credentials",
+   "via": "ContentStoreContentPackDetailsPresenter",
+   "reachedParent": [],
+   "class": "permission",
+   "sites": [
+    {
+     "shower": "ContentStoreContentPackDetailsPresenter",
+     "method": "btnCreateGitRepoClick",
+     "primary": "permission",
+     "signals": [
+      "permission"
+     ],
+     "trigger": null,
+     "viaMenu": false
+    }
+   ]
+  },
+  {
+   "door": "QueryInfoPresenter",
+   "how": "dialog",
+   "area": "Dashboard",
+   "via": "QueryInfo",
+   "reachedParent": [],
+   "class": "plain",
+   "sites": [
+    {
+     "shower": "QueryInfo",
+     "method": "prompt",
+     "primary": "plain",
+     "signals": [],
+     "trigger": null,
+     "viaMenu": false
+    }
+   ]
+  },
+  {
+   "door": "ConstraintEditPresenter",
+   "how": "dialog",
+   "area": "Pathways",
+   "via": "ConstraintListPresenter",
+   "reachedParent": [],
+   "class": "plain",
+   "sites": [
+    {
+     "shower": "ConstraintListPresenter",
+     "method": "onAdd",
+     "primary": "create",
+     "signals": [
+      "create"
+     ],
+     "trigger": null,
+     "viaMenu": false
+    },
+    {
+     "shower": "ConstraintListPresenter",
+     "method": "onEdit",
+     "primary": "plain",
+     "signals": [],
+     "trigger": null,
+     "viaMenu": false
+    }
+   ]
+  },
+  {
+   "door": "PathwayEditPresenter",
+   "how": "dialog",
+   "area": "Pathways",
+   "via": "PathwayListPresenter",
+   "reachedParent": [],
+   "class": "plain",
+   "sites": [
+    {
+     "shower": "PathwayListPresenter",
+     "method": "onAdd",
+     "primary": "create",
+     "signals": [
+      "create"
+     ],
+     "trigger": null,
+     "viaMenu": false
+    },
+    {
+     "shower": "PathwayListPresenter",
+     "method": "onEdit",
+     "primary": "plain",
+     "signals": [],
+     "trigger": null,
+     "viaMenu": false
+    }
+   ]
+  },
+  {
+   "door": "DocRefSelectionPresenter",
+   "how": "screen/dialog via plugin",
+   "area": "Pipeline",
+   "via": "PipelinePlugin",
+   "reachedParent": [],
+   "class": "plain",
+   "sites": [
+    {
+     "shower": "PipelinePlugin",
+     "method": "save",
+     "primary": "plain",
+     "signals": [],
+     "trigger": null,
+     "viaMenu": false
+    }
+   ]
+  },
+  {
+   "door": "ContentPresenter",
+   "how": "UNKNOWN",
+   "area": "Gwt",
+   "via": "",
+   "reachedParent": [],
+   "class": "no-opener",
+   "sites": []
+  }
+ ]
+}

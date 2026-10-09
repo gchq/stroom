@@ -581,6 +581,8 @@ tasks.workbenchCopySources.mustRunAfter(tasks.workbenchClean)
 //                            tests a running one given by -PworkbenchUrl=http://localhost:6008.
 //                            -PworkbenchTestFilter=<id/title prefix or glob>[,...]
 //                            -PworkbenchTestWorkers=N  -PworkbenchTestScreenshots
+//                            -PworkbenchLeakCheck (after each story passes, close and open its
+//                            screen many times and fail it if each close keeps more of the page)
 //                            -PworkbenchTestArgs='<more test-runner/run.mjs options>' (split on
 //                            spaces, except within '...' or "...")
 //                            -PworkbenchTestPort=N (the server's port, which must be free)
@@ -850,6 +852,9 @@ def runTestRunner = { String testUrl ->
     }
     if (findProperty('workbenchTestScreenshots') != null || screenshotTaskRequested) {
         command += ['--screenshots']
+    }
+    if (findProperty('workbenchLeakCheck') != null) {
+        command += ['--leak-check']
     }
     if (screenshotTaskRequested) {
         // So that the times the stories show are the same in the baseline and each comparison. A

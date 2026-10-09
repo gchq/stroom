@@ -19,6 +19,7 @@ package stroom.dashboard.client.main;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.unknown.UnknownComponentPresenter;
 import stroom.docref.HasDisplayValue;
+import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.json.client.JSONObject;
@@ -43,6 +44,9 @@ public class Components implements Iterable<Component> {
     private final Provider<UnknownComponentPresenter> unknownComponentProvider;
 
     private final JavaScriptObject context;
+    // The dashboard's scope: its components are made as it is read, and belong to it too, so that
+    // closing the dashboard releases them
+    private final PresenterScope presenterScope;
 
     @Inject
     public Components(final ComponentRegistry componentRegistry,
@@ -50,10 +54,16 @@ public class Components implements Iterable<Component> {
         this.componentRegistry = componentRegistry;
         this.unknownComponentProvider = unknownComponentProvider;
         this.context = new JSONObject().getJavaScriptObject();
+        this.presenterScope = PresenterScope.current();
     }
 
     public Component add(final String type,
                          final String id) {
+        return PresenterScope.captureIn(presenterScope, () -> addComponent(type, id));
+    }
+
+    private Component addComponent(final String type,
+                                   final String id) {
         Component component = componentRegistry.getComponent(type);
         if (component == null) {
             component = unknownComponentProvider.get();

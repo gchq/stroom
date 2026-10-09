@@ -17,6 +17,7 @@
 package stroom.preferences.client;
 
 import stroom.config.global.shared.UserPreferencesResource;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.query.api.UserTimeZone;
@@ -81,6 +82,26 @@ public class UserPreferencesManager {
                 .create(PREFERENCES_RESOURCE)
                 .method(res -> res.update(userPreferences))
                 .onSuccess(consumer)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /// Saves the user's preferences, telling the caller if they can't be saved, e.g. so that a
+    /// dialog waiting for the save can be used again.
+    ///
+    /// @param userPreferences    The preferences to save.
+    /// @param consumer           Called once they have been saved.
+    /// @param errorHandler       Called if they can't be saved.
+    /// @param taskMonitorFactory Shows that the save is in progress.
+    public void update(final UserPreferences userPreferences,
+                       final Consumer<Boolean> consumer,
+                       final RestErrorHandler errorHandler,
+                       final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(PREFERENCES_RESOURCE)
+                .method(res -> res.update(userPreferences))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

@@ -39,6 +39,7 @@ import { toJUnitXml } from './lib/junit.mjs';
 import {
   decideOutcome, DONE_STATUSES, errorRepeatsPageOrConsoleError, formatMillis, isFailure, runWithRetries,
 } from './lib/outcome.mjs';
+import { judgeLeak, measureLeak, withLeakProbe } from './lib/leak-check.mjs';
 import { screenshotFile } from './lib/screenshots.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -48,6 +49,7 @@ const DEFAULT_TIMEOUT_MILLIS = 15000;
 // How long to keep watching a story after it has finished, so that e.g. an error thrown by a timer
 // it started fails it rather than going unnoticed
 const DEFAULT_SETTLE_MILLIS = 100;
+const DEFAULT_LEAK_CYCLES = 8;
 const DEFAULT_WORKERS = Math.max(1, Math.min(8, Math.floor(os.availableParallelism() / 2)));
 const INDEX_TIMEOUT_MILLIS = 30000;
 const MAX_PRINTED_CONSOLE_ERRORS = 5;
@@ -112,6 +114,11 @@ Options:
   --fixed-time <iso>       Fix the stories' clock (Date) at this time, e.g. 2026-01-01T12:00:00Z,
                            so that times they show are the same every run (for comparing
                            screenshots). Timers still run
+  --leak-check             After each story passes, close and open its screen again many times
+                           and fail it if each close keeps more DOM nodes or event listeners
+                           (only stories that open their screen with ScreenHarness.afterStartUp
+                           can be checked; the others are run as usual)
+  --leak-cycles <n>        How many closes the leak check measures (default: ${DEFAULT_LEAK_CYCLES})
   --headed                 Show the browser
   --list                   List the stories that would run, then exit
   -v, --verbose            Show every story, not just failed ones
@@ -154,6 +161,8 @@ function parseOptions() {
       'output-dir': { type: 'string', default: DEFAULT_OUTPUT_DIR },
       screenshots: { type: 'boolean', default: false },
       'fixed-time': { type: 'string' },
+      'leak-check': { type: 'boolean', default: false },
+      'leak-cycles': { type: 'string', default: String(DEFAULT_LEAK_CYCLES) },
       headed: { type: 'boolean', default: false },
       list: { type: 'boolean', default: false },
       verbose: { type: 'boolean', short: 'v', default: false },
@@ -184,6 +193,8 @@ function parseOptions() {
     outputDir: path.resolve(values['output-dir']),
     screenshots: values.screenshots,
     fixedTime: fixedTime(values['fixed-time']),
+    leakCheck: values['leak-check'],
+    leakCycles: integer('leak-cycles', values['leak-cycles'], 2),
     headed: values.headed,
     list: values.list,
     verbose: values.verbose,
@@ -230,7 +241,10 @@ function emptyResult(story, options, status) {
     title: story.title,
     name: story.name,
     hasPlay: Boolean(story.hasPlay),
-    url: previewUrl(options.url, story.id),
+    url: options.leakCheck
+      ? withLeakProbe(previewUrl(options.url, story.id))
+      : previewUrl(options.url, story.id),
+    leak: null,
     status,
     durationMs: 0,
     failedStep: null,
@@ -327,6 +341,9 @@ async function runStoryOnce(browser, story, options, attempt) {
       consoleErrors: result.consoleErrors,
       failOnConsole: options.failOnConsole,
     }));
+    if (options.leakCheck && result.status === 'PASS') {
+      await checkForLeak(page, story, options, result);
+    }
     if (!unresponsive && !seen.crashed && (options.screenshots || result.status !== 'PASS')) {
       await takeScreenshot(page, screenshotFile(screenshotsDir(options), story.id, attempt), result, seen);
     }
@@ -341,6 +358,25 @@ async function runStoryOnce(browser, story, options, attempt) {
     }
   }
   return result;
+}
+
+// The leak check (--leak-check) of a story that passed: fails it if each close of its screen keeps
+// more of the page (see lib/leak-check.mjs). The measures are kept as the result's leak.
+async function checkForLeak(page, story, options, result) {
+  try {
+    const leak = await withDeadline(measureLeak(page, options.leakCycles),
+      2 * (options.leakCycles + 4) * (options.timeout + UNRESPONSIVE_GRACE_MILLIS));
+    if (leak === TIMED_OUT) {
+      throw new Error('Leak check: the page stopped responding');
+    }
+    result.leak = leak;
+    const error = judgeLeak(leak);
+    if (error) {
+      Object.assign(result, { status: 'FAIL', error });
+    }
+  } catch (error) {
+    Object.assign(result, { status: 'FAIL', error: firstLine(error) });
+  }
 }
 
 // Records what the page reports in seen: whether it crashed, its uncaught errors and its console
@@ -479,7 +515,11 @@ function printComponent(title, results, verbose) {
     const note = result.status === 'SKIP' ? ' (skipped)'
       : result.flaky ? ` (flaky: passed on attempt ${result.attempts})`
         : result.attempts > 1 ? ` (failed on all ${result.attempts} attempts)` : '';
-    console.log(`    ${mark} ${result.name}${note} (${formatMillis(result.durationMs)})`);
+    const leak = !result.leak ? ''
+      : result.leak.checked
+        ? ` [per close: ${result.leak.nodes} nodes, ${result.leak.listeners} listeners, ${result.leak.heapKB} KB]`
+        : ` [leak not checked: ${result.leak.reason}]`;
+    console.log(`    ${mark} ${result.name}${note}${leak} (${formatMillis(result.durationMs)})`);
   }
 }
 

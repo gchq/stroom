@@ -45,32 +45,53 @@ public class MyDateBox extends Composite implements DateBoxView {
     private static final String DEFAULT_LOCAL_TIME = "T00:00:00.000";
 
     private boolean utc;
-    private final PopupPanel popup;
-    private final DatePicker datePicker;
+    // One calendar for every date box, made when one is first opened: a calendar is a few hundred
+    // elements, most date boxes (e.g. one in every expression term) are never opened, and only one
+    // can be open at a time, so the box that opens it takes it over (see showDatePicker)
+    private static PopupPanel sharedPopup;
+    private static DatePicker sharedDatePicker;
+    // The box the calendar is open for; null while it is closed, so the shared calendar doesn't keep
+    // a box (and the screen it is on) after it is closed
+    private static MyDateBox owner;
+
+    private final DateBoxHandler handler;
     private final TextBox textBox;
     private boolean isEnabled;
     private boolean readOnly;
 
     public MyDateBox() {
         isEnabled = true;
-        datePicker = new CustomDatePicker();
         textBox = new TextBox();
-
-        this.popup = new PopupPanel(true);
-        popup.addAutoHidePartner(textBox.getElement());
-        popup.setWidget(datePicker);
-        popup.setStyleName("dateBoxPopup");
 
         initWidget(textBox);
 
-        final DateBoxHandler handler = new DateBoxHandler();
-        datePicker.addValueChangeHandler(handler);
+        handler = new DateBoxHandler();
         textBox.addFocusHandler(handler);
         textBox.addBlurHandler(handler);
         textBox.addClickHandler(handler);
         textBox.addKeyDownHandler(handler);
         textBox.setDirectionEstimator(false);
-        popup.addCloseHandler(handler);
+    }
+
+    private static PopupPanel getSharedPopup() {
+        if (sharedPopup == null) {
+            sharedDatePicker = new CustomDatePicker();
+            sharedDatePicker.addValueChangeHandler(event -> {
+                if (owner != null) {
+                    owner.handler.onValueChange(event);
+                }
+            });
+            sharedPopup = new PopupPanel(true);
+            sharedPopup.setWidget(sharedDatePicker);
+            sharedPopup.setStyleName("dateBoxPopup");
+            sharedPopup.addCloseHandler(event -> {
+                if (owner != null) {
+                    sharedPopup.removeAutoHidePartner(owner.textBox.getElement());
+                    owner = null;
+                }
+            });
+        }
+        return sharedPopup;
     }
 
     public void setUtc(final boolean utc) {
@@ -147,13 +168,19 @@ public class MyDateBox extends Composite implements DateBoxView {
     }
 
     public void showDatePicker() {
-        if (!popup.isShowing() && isEnabled && !readOnly) {
+        if (isEnabled && !readOnly && !isDatePickerShowing()) {
+            final PopupPanel popup = getSharedPopup();
+            // Another box's calendar closes first; this box then takes the calendar over
+            popup.hide();
+            owner = this;
+            popup.addAutoHidePartner(textBox.getElement());
+
             Date current = parseDate();
             if (current == null) {
                 current = new Date();
             }
-            datePicker.setCurrentMonth(current);
-            datePicker.setValue(current, false);
+            sharedDatePicker.setCurrentMonth(current);
+            sharedDatePicker.setValue(current, false);
             popup.showRelativeTo(this);
         }
     }
@@ -178,9 +205,15 @@ public class MyDateBox extends Composite implements DateBoxView {
     }
 
     public void hideDatePicker() {
-        if (popup.isShowing()) {
-            popup.hide();
+        if (isDatePickerShowing()) {
+            sharedPopup.hide();
         }
+    }
+
+
+    // Whether the shared calendar is open for this box
+    private boolean isDatePickerShowing() {
+        return owner == this && sharedPopup != null && sharedPopup.isShowing();
     }
 
 

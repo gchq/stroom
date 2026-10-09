@@ -65,6 +65,14 @@ public class IFramePresenter extends MyPresenterWidget<IFramePresenter.IFrameVie
     }
 
     @Override
+    protected void onDispose() {
+        super.onDispose();
+        // Stops the view's title poll, which would otherwise run every second, and keep this, for
+        // the life of the page (e.g. a closed document's Documentation tab)
+        close();
+    }
+
+    @Override
     public void onTitleChange(final String title) {
         DirtyEvent.fire(this, true);
     }

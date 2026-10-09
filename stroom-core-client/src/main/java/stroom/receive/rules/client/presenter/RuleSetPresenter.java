@@ -65,6 +65,7 @@ import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         implements HasDirtyHandlers, CloseContentEvent.Handler, HasSave, DocumentTabData, ChangeUiHandlers {
@@ -82,6 +83,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private final LazyValue<MarkdownEditPresenter> lazyMarkdownEditPresenter;
     private final RestFactory restFactory;
     private final ButtonPanel toolbar;
+    private final HasSaveRegistry hasSaveRegistry;
 
     private PresenterWidget<?> currentContent;
     private String lastLabel;
@@ -107,7 +109,8 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         fieldListPresenter = fieldListPresenterProvider.get();
         ruleSetSettingsPresenter.setFieldListPresenter(fieldListPresenter);
         this.lazyMarkdownEditPresenter = new LazyValue<>(
-                markdownEditPresenterProvider,
+                // Made when its tab is first shown, in this screen's scope so it is released with it
+                (Supplier<MarkdownEditPresenter>) () -> inScope(markdownEditPresenterProvider::get),
                 markdownEditPresenter -> {
                     setDescriptionOnPresenter(markdownEditPresenter);
                     registerHandler(markdownEditPresenter.addDirtyHandler(event -> {
@@ -116,6 +119,7 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                 });
         this.restFactory = restFactory;
 
+        this.hasSaveRegistry = hasSaveRegistry;
         hasSaveRegistry.register(this);
         this.saveButton = SvgButton.create(SvgPresets.SAVE.title("Save all rules"));
         this.saveButton.setEnabled(false);
@@ -141,6 +145,13 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                         null))
                 .taskMonitorFactory(this)
                 .exec();
+    }
+
+    @Override
+    protected void onDispose() {
+        super.onDispose();
+        // The registry is shared, so it would keep this closed screen (and Save All would save it)
+        hasSaveRegistry.unregister(this);
     }
 
     public final boolean isDirty() {

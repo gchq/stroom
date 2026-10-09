@@ -39,6 +39,11 @@ public interface BaseEditorView
 
     void markClean();
 
+    /// Destroys the code editor for good, when it is closed, releasing what it holds (e.g. Ace's
+    /// listener on the window, which would otherwise keep the editor, and all it belongs to, for
+    /// the life of the page).
+    void destroy();
+
     void insertTextAtCursor(String text);
 
     void replaceSelectedText(String text);

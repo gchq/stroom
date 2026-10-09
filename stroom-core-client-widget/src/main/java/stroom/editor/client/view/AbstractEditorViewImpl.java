@@ -125,6 +125,10 @@ public abstract class AbstractEditorViewImpl extends ViewImpl {
         return editor.isClean();
     }
 
+    public void destroy() {
+        editor.destroy();
+    }
+
     public void markClean() {
         editor.markClean();
     }

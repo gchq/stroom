@@ -49,6 +49,7 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
 import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
@@ -150,17 +151,23 @@ public final class ScreenHarness {
     private final Map<String, Spy> spies = new HashMap<>();
     private final FlowPanel host = new FlowPanel();
     private boolean disposed;
-    // TEMPORARY memory probe (see MemoryProbe): the presenters shown, held only until the probe
-    // closes them, rather than until the story renders again
-    private boolean probe;
-    private final List<PresenterWidget<?>> probeShown = new ArrayList<>();
+    // Whether the leak check's probe is wanted (see LeakProbe)
+    private final boolean probe;
+    // The scope of the presenters made while opening the screen, for the probe to dispose
+    private PresenterScope probeScope;
+    // The number of clean ups registered before the screen was opened, so that the probe's close
+    // runs those its opening registered (e.g. a story's save handler)
+    private int probeCleanUpMark;
+    // The number of widgets shown before the screen was opened, so that the probe's close removes
+    // only those its opening added
+    private int probeWidgetMark;
 
     private ScreenHarness(final Builder builder) {
         this.context = builder.context;
         // Register the clean up first, so that if anything below fails the partly built harness
         // is still undone
         context.addCleanUp(this::dispose);
-        probe = MemoryProbe.isRequested();
+        probe = LeakProbe.isRequested();
 
         // Spies must be registered as the story renders, for plays to check they weren't called
         for (final String name : new String[]{
@@ -328,10 +335,19 @@ public final class ScreenHarness {
                 getUserPreferencesManager().fetch(preferences -> {
                     if (!disposed) {
                         applyUserPreferences(preferences);
-                        action.run();
-                        // TEMPORARY memory probe: lets the page close and reopen the screen
                         if (probe) {
-                            MemoryProbe.install(this, action);
+                            // For the leak check: opens the screen in a scope, as DocumentPlugin
+                            // opens a document, and lets the page close and open it again
+                            final Runnable openInScope = () -> {
+                                probeCleanUpMark = cleanUps.size();
+                                probeWidgetMark = host.getWidgetCount();
+                                probeScope = new PresenterScope();
+                                probeScope.run(action);
+                            };
+                            openInScope.run();
+                            LeakProbe.install(this, openInScope);
+                        } else {
+                            action.run();
                         }
                     }
                 }, taskMonitorFactory);
@@ -372,37 +388,47 @@ public final class ScreenHarness {
         content.setWidget(widget);
         add(content);
         if (probe) {
-            probeShown.add(presenter);
+            // Disposed with the scope it was made in when the probe closes the screen
             return presenter;
         }
         return unbindOnCleanUp(presenter);
     }
 
-    /// @return Whether the harness is probing.
-    public boolean isProbe() {
-        return probe;
-    }
-
-    /// TEMPORARY memory probe: removes what is shown, as closing a Stroom content tab does
-    /// (`removeFromParent()`), and forgets its presenters, unbinding them first if asked (the
-    /// proposed fix).
+    /// For the leak check's probe (see [LeakProbe]): closes the screen as closing a Stroom tab does,
+    /// hiding the popups and removing the widgets its opening added and, if asked, disposing the
+    /// presenters made while opening it (as `DocumentPlugin` does) and running the clean ups its
+    /// opening registered.
     ///
-    /// @param unbind Whether to unbind the presenters.
-    public void probeCloseAll(final boolean unbind) {
+    /// @param dispose Whether to dispose the screen's presenters and run its clean ups.
+    void probeClose(final boolean dispose) {
         // Popups (dialogs) are hidden as Stroom hides them, which unbinds their presenters
         for (final PresenterWidget<?> popup : List.copyOf(popups.getOpenPopups())) {
             HidePopupEvent.builder(popup).autoClose(true).ok(false).fire();
         }
-        host.clear();
-        if (unbind) {
-            probeShown.forEach(PresenterWidget::unbind);
+        for (int i = host.getWidgetCount() - 1; i >= probeWidgetMark; i--) {
+            host.remove(i);
         }
-        probeShown.clear();
+        if (dispose) {
+            if (probeScope != null) {
+                probeScope.dispose();
+            }
+            // The clean ups the opening registered, as rendering the story again would run them
+            for (int i = cleanUps.size() - 1; i >= probeCleanUpMark; i--) {
+                runSafely("running a clean up", cleanUps.remove(i));
+            }
+        }
+        probeScope = null;
     }
 
-    /// @return The number of widgets and popups shown.
-    public int probeShownCount() {
-        return host.getWidgetCount() + popups.getOpenPopups().size();
+    /// @return For the leak check's probe, the number of widgets the screen's opening has shown,
+    /// and of popups shown.
+    int probeShownCount() {
+        return host.getWidgetCount() - probeWidgetMark + popups.getOpenPopups().size();
+    }
+
+    /// @return For the leak check's probe, the number of REST requests not yet answered.
+    int probePendingCount() {
+        return dispatcher.getPendingCount();
     }
 
     /// @return The story's widget, which holds any widgets added. Dialogs are shown on the

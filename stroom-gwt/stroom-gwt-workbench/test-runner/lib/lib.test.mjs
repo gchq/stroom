@@ -26,6 +26,7 @@ import { parseCsf } from './csf-parser.mjs';
 import { TIMED_OUT, withDeadline } from './deadline.mjs';
 import { selectStories } from './filter.mjs';
 import { escapeXml, toJUnitXml } from './junit.mjs';
+import { growthPerCycle, judgeLeak, withLeakProbe } from './leak-check.mjs';
 import { decideOutcome, runWithRetries } from './outcome.mjs';
 import { safeFileBase, screenshotFile } from './screenshots.mjs';
 import { sanitize, storyId, storyNameFromExport } from './storybook-ids.mjs';
@@ -494,4 +495,17 @@ test('shared browser: not relaunched once the run is cancelled, or if it fails t
   }, { pauseMillis: 0 });
   await failing.start();
   await assert.rejects(failing.replace(failing.browser), /^Error: Unable to relaunch Chromium: No Chromium$/);
+});
+
+test('leak check: growth per close and judgement', () => {
+  const samples = [0, 1, 2, 3].map((i) => ({ nodes: 1000 + 50 * i, listeners: 200 + 2 * i, heap: 4096 * i }));
+  assert.deepEqual(growthPerCycle(samples), { nodes: 50, listeners: 2, heapKB: 4 });
+  assert.deepEqual(growthPerCycle([{ nodes: 5, listeners: 5, heap: 5 }]), { nodes: 0, listeners: 0, heapKB: 0 });
+
+  assert.equal(judgeLeak({ checked: false }), null);
+  assert.equal(judgeLeak({ checked: true, cycles: 8, nodes: 20, listeners: 5, heapKB: 1 }), null);
+  assert.match(judgeLeak({ checked: true, cycles: 8, nodes: 21, listeners: 0, heapKB: 9 }),
+    /^Leak: each close of the screen keeps 21 DOM nodes and 0 event listeners \(9 KB of heap\), over 8 closes/);
+  assert.match(judgeLeak({ checked: true, cycles: 8, nodes: 0, listeners: 6, heapKB: 0 }), /keeps 0 DOM nodes and 6/);
+  assert.equal(withLeakProbe('http://x/iframe.html?id=a&viewMode=story'), 'http://x/iframe.html?id=a&viewMode=story&probe=1');
 });

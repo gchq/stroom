@@ -179,14 +179,11 @@ public final class DocEditors {
                                 final DocRef docRef,
                                 final DocPresenter<?, D> presenter,
                                 final DocResource<D> resource) {
-        // Not while probing: the registration would keep each closed presenter itself
-        if (!harness.isProbe()) {
-            harness.addRegistration(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
-                if (event.getTabData() == presenter) {
-                    save(harness, docRef, presenter, resource);
-                }
-            }));
-        }
+        harness.addRegistration(harness.getEventBus().addHandler(SaveDocumentEvent.getType(), event -> {
+            if (event.getTabData() == presenter) {
+                save(harness, docRef, presenter, resource);
+            }
+        }));
         resource.fetch(harness.getRestFactory())
                 .onSuccess(doc -> {
                     if (presenter instanceof final DocTabPresenter<?, ?> docTabPresenter) {

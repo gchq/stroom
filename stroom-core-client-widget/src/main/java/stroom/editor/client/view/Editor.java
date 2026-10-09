@@ -154,6 +154,17 @@ public class Editor extends Composite implements
         initWidget(editor);
     }
 
+    /// Destroys the Ace editor for good, removing what it added to the page (e.g. its listener on
+    /// the window, which would otherwise keep it, and everything it belongs to, for the life of the
+    /// page). If attached again, a new Ace editor is started.
+    public void destroy() {
+        if (started) {
+            text = editor.getText();
+            editor.destroy();
+            started = false;
+        }
+    }
+
     public String getId() {
         return editor.getId();
     }

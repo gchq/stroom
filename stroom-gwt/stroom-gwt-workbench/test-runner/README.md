@@ -290,6 +290,27 @@ A few stories' final states still vary between runs (e.g. which row ends up sele
 left by the play), so expect a handful of small differences even without a change; run the diff
 again to check a surprising one.
 
+## Leak check
+
+`-PworkbenchLeakCheck` (the runner's `--leak-check`) also checks each story that passes for memory
+leaks. For a story that opens its screen with `ScreenHarness.afterStartUp` (with `probe=1` in its
+address the harness exposes `window.__leakProbe`; see `LeakProbe`), it closes the screen as closing
+a Stroom tab does, disposing the presenters made while opening it (as `DocumentPlugin` does), and
+opens it again, 2 times to warm up and then 8 times (`--leak-cycles N`), measuring the DOM nodes
+and event listeners left after each close (once garbage has been collected). The story fails if
+each close keeps more than 20 nodes or 5 listeners on average. A story that seems to leak is
+measured again, waiting 1.5 s after each close, since e.g. a deferred command keeps a closed
+screen until it has run; only if it still leaks does it fail. Stories that don't open their screen
+with `afterStartUp`, or show nothing from it, aren't checked (`-v` shows each story's growth per
+close, or why it wasn't checked).
+
+```bash
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchLeakCheck -PworkbenchTestFilter='app-editors-*'
+```
+
+A leak found this way can be investigated with `stroom-gwt/stroom-gwt-suite/mem-leak.mjs` (which
+classes grow, and what keeps them) against the full app.
+
 ## Coverage
 
 `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchCoverage` prints, for each top level group
@@ -339,7 +360,7 @@ for a new React component in its sidebar position when it is ported.
   [Screenshots](#screenshots)); `lib/screenshot-diff.mjs` does the comparison.
 * `lib/` - Storybook's id rules, the `*.stories.tsx` parser, story selection, deciding a story's
   outcome (and retrying it), the shared browser (relaunched if it stops), screenshot file names,
-  deadlines and the JUnit XML writer, with tests (`node --test lib/`). `lib/run.test.mjs` tests
+  deadlines, the leak check and the JUnit XML writer, with tests (`node --test lib/`). `lib/run.test.mjs` tests
   `run.mjs` itself against a fake workbench whose stories misbehave (endless loops, reloads,
   navigating away, crashing the browser etc.); it needs Playwright's Chromium, and is skipped
   without it.

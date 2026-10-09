@@ -24,6 +24,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
 import stroom.task.client.DefaultTaskMonitorFactory;
+import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
@@ -49,7 +50,8 @@ public class AnnotationEditSupport implements HasHandlers {
         this.securityContext = securityContext;
 
         eventBus.addHandler(CreateAnnotationEvent.getType(), e -> {
-            final AnnotationPresenter presenter = presenterProvider.get();
+            // In a scope that releases it, and all its presenters, when its tab is closed
+            final AnnotationPresenter presenter = new PresenterScope().capture(presenterProvider::get);
             presenter.setInitialComment(e.getComment());
             final CreateAnnotationRequest request = new CreateAnnotationRequest(
                     e.getTitle(),
@@ -67,7 +69,8 @@ public class AnnotationEditSupport implements HasHandlers {
         });
 
         eventBus.addHandler(EditAnnotationEvent.getType(), e -> {
-            final AnnotationPresenter presenter = presenterProvider.get();
+            // In a scope that releases it, and all its presenters, when its tab is closed
+            final AnnotationPresenter presenter = new PresenterScope().capture(presenterProvider::get);
             annotationResourceClient.getAnnotationById(e.getAnnotationId(), annotation ->
                     show(presenter, annotation), new DefaultTaskMonitorFactory(this));
         });
@@ -82,10 +85,21 @@ public class AnnotationEditSupport implements HasHandlers {
                     DocumentPermission.EDIT,
                     allowUpdate -> {
                         presenter.read(annotation, !allowUpdate);
-                        contentManager.open(e2 -> e2.getCallback().closeTab(true), presenter, presenter);
+                        contentManager.open(e2 -> {
+                            e2.getCallback().closeTab(true);
+                            // Closed for good, so release the annotation's presenters
+                            PresenterScope.disposeScopeOf(presenter);
+                        }, presenter, presenter);
                     },
-                    throwable -> AlertEvent.fireErrorFromException(this, throwable, null),
+                    throwable -> {
+                        // Never shown, so released now
+                        PresenterScope.disposeScopeOf(presenter);
+                        AlertEvent.fireErrorFromException(this, throwable, null);
+                    },
                     new DefaultTaskMonitorFactory(this));
+        } else {
+            // Never shown, so released now
+            PresenterScope.disposeScopeOf(presenter);
         }
     }
 

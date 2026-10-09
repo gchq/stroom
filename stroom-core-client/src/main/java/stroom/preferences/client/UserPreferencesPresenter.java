@@ -17,6 +17,7 @@
 package stroom.preferences.client;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.editor.client.presenter.ChangeCurrentPreferencesEvent;
 import stroom.editor.client.presenter.CurrentPreferences;
 import stroom.preferences.client.UserPreferencesPresenter.UserPreferencesView;
@@ -182,7 +183,11 @@ public final class UserPreferencesPresenter
                             final UserPreferences newUserPreferences = write(before);
                             userPreferencesManager.setCurrentPreferences(newUserPreferences);
                             if (!Objects.equals(newUserPreferences, fetchedUserPreferences)) {
-                                userPreferencesManager.update(newUserPreferences, (result) -> e.hide(), this);
+                                // If the save fails, let the user try again or cancel
+                                userPreferencesManager.update(newUserPreferences,
+                                        (result) -> e.hide(),
+                                        RestErrorHandler.forPopup(this, e),
+                                        this);
                             } else {
                                 e.hide();
                             }
