@@ -302,7 +302,7 @@ compileJava {
     doLast {
         def compiler = javaToolchains.compilerFor {
             languageVersion = JavaLanguageVersion.of(javaLanguageVersion)
-            // vendor = javaVendor
+            vendor = javaVendor
         }
         def compilerMeta = compiler.get().metadata
         println """

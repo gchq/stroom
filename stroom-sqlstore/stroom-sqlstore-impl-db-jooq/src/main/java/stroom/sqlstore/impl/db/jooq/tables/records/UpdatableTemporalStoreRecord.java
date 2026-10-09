@@ -47,16 +47,16 @@ public class UpdatableTemporalStoreRecord extends UpdatableRecordImpl<UpdatableT
     }
 
     /**
-     * Setter for <code>stroom.updatable_temporal_store.key_</code>.
+     * Setter for <code>stroom.updatable_temporal_store.map_key</code>.
      */
-    public void setKey_(String value) {
+    public void setMapKey(String value) {
         set(2, value);
     }
 
     /**
-     * Getter for <code>stroom.updatable_temporal_store.key_</code>.
+     * Getter for <code>stroom.updatable_temporal_store.map_key</code>.
      */
-    public String getKey_() {
+    public String getMapKey() {
         return (String) get(2);
     }
 
@@ -75,16 +75,16 @@ public class UpdatableTemporalStoreRecord extends UpdatableRecordImpl<UpdatableT
     }
 
     /**
-     * Setter for <code>stroom.updatable_temporal_store.value_</code>.
+     * Setter for <code>stroom.updatable_temporal_store.map_value</code>.
      */
-    public void setValue_(String value) {
+    public void setMapValue(String value) {
         set(4, value);
     }
 
     /**
-     * Getter for <code>stroom.updatable_temporal_store.value_</code>.
+     * Getter for <code>stroom.updatable_temporal_store.map_value</code>.
      */
-    public String getValue_() {
+    public String getMapValue() {
         return (String) get(4);
     }
 
@@ -111,14 +111,14 @@ public class UpdatableTemporalStoreRecord extends UpdatableRecordImpl<UpdatableT
     /**
      * Create a detached, initialised UpdatableTemporalStoreRecord
      */
-    public UpdatableTemporalStoreRecord(String docUuid, String mapName, String key_, Long effectiveTime, String value_) {
+    public UpdatableTemporalStoreRecord(String docUuid, String mapName, String mapKey, Long effectiveTime, String mapValue) {
         super(UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE);
 
         setDocUuid(docUuid);
         setMapName(mapName);
-        setKey_(key_);
+        setMapKey(mapKey);
         setEffectiveTime(effectiveTime);
-        setValue_(value_);
-        resetChangedOnNotNull();
+        setMapValue(mapValue);
+        resetTouchedOnNotNull();
     }
 }

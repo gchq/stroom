@@ -54,13 +54,13 @@ class TestUpdatableSqlTemporalStore extends StroomUnitTest {
                 stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.MAP_NAME,
                 String::valueOf);
         expressionMapper.map(UpdatableTemporalStore.KEY_FIELD,
-                stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.KEY_,
+                stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.MAP_KEY,
                 String::valueOf);
         expressionMapper.map(UpdatableTemporalStore.TIME_FIELD,
                 stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME,
                 Long::valueOf);
         expressionMapper.map(UpdatableTemporalStore.VALUE_FIELD,
-                stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.VALUE_,
+                stroom.sqlstore.impl.db.jooq.tables.UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.MAP_VALUE,
                 String::valueOf);
     }
 
@@ -96,7 +96,7 @@ class TestUpdatableSqlTemporalStore extends StroomUnitTest {
         assertThat(condition).isNotNull();
         assertThat(condition.toString())
                 .contains("map_name\" = 'my-map'")
-                .contains("key_\" = 'my-key'");
+                .contains("map_key\" = 'my-key'");
     }
 
     /**
@@ -135,8 +135,8 @@ class TestUpdatableSqlTemporalStore extends StroomUnitTest {
         assertThat(condition).isNotNull();
         assertThat(condition.toString())
                 .contains("map_name\" = 'my-map'")
-                .contains("key_\" = 'key1'")
-                .contains("key_\" = 'key2'");
+                .contains("map_key\" = 'key1'")
+                .contains("map_key\" = 'key2'");
     }
 
     /**

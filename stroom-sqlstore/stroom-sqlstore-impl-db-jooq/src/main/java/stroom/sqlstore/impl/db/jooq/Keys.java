@@ -24,5 +24,5 @@ public class Keys {
     // UNIQUE and PRIMARY KEY definitions
     // -------------------------------------------------------------------------
 
-    public static final UniqueKey<UpdatableTemporalStoreRecord> KEY_UPDATABLE_TEMPORAL_STORE_PRIMARY = Internal.createUniqueKey(UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE, DSL.name("KEY_updatable_temporal_store_PRIMARY"), new TableField[] { UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.DOC_UUID, UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.KEY_, UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME }, true);
+    public static final UniqueKey<UpdatableTemporalStoreRecord> KEY_UPDATABLE_TEMPORAL_STORE_PRIMARY = Internal.createUniqueKey(UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE, DSL.name("KEY_updatable_temporal_store_PRIMARY"), new TableField[] { UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.DOC_UUID, UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.MAP_KEY, UpdatableTemporalStore.UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME }, true);
 }

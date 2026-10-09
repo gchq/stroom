@@ -72,7 +72,7 @@ ext.javaVendor = JvmVendorSpec.ADOPTIUM
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(javaLanguageVersion)
-        // vendor = javaVendor
+        vendor = javaVendor
     }
 }
 

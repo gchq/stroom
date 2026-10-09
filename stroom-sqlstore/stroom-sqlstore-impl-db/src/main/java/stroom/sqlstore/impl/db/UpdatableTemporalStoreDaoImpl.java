@@ -81,13 +81,13 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
         this.expressionMapper = expressionMapperFactory.create();
         // Deliberately no mapping for MAP_FIELD - see the class javadoc. Map terms are stripped.
         expressionMapper.map(UpdatableTemporalStore.KEY_FIELD,
-                UPDATABLE_TEMPORAL_STORE.KEY_,
+                UPDATABLE_TEMPORAL_STORE.MAP_KEY,
                 String::valueOf);
         expressionMapper.map(UpdatableTemporalStore.TIME_FIELD,
                 UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME,
                 DateUtil::parseUnknownString);
         expressionMapper.map(UpdatableTemporalStore.VALUE_FIELD,
-                UPDATABLE_TEMPORAL_STORE.VALUE_,
+                UPDATABLE_TEMPORAL_STORE.MAP_VALUE,
                 String::valueOf);
     }
 
@@ -99,13 +99,13 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                 .insertInto(UPDATABLE_TEMPORAL_STORE)
                 .set(UPDATABLE_TEMPORAL_STORE.DOC_UUID, docUuid)
                 .set(UPDATABLE_TEMPORAL_STORE.MAP_NAME, entry.getMap())
-                .set(UPDATABLE_TEMPORAL_STORE.KEY_, entry.getKey())
+                .set(UPDATABLE_TEMPORAL_STORE.MAP_KEY, entry.getKey())
                 .set(UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME, entry.getEffectiveTimeMs())
-                .set(UPDATABLE_TEMPORAL_STORE.VALUE_, entry.getValue())
+                .set(UPDATABLE_TEMPORAL_STORE.MAP_VALUE, entry.getValue())
                 .onDuplicateKeyUpdate()
                 // Refresh the label too, so a row rewritten after a rename is corrected.
                 .set(UPDATABLE_TEMPORAL_STORE.MAP_NAME, entry.getMap())
-                .set(UPDATABLE_TEMPORAL_STORE.VALUE_, entry.getValue())
+                .set(UPDATABLE_TEMPORAL_STORE.MAP_VALUE, entry.getValue())
                 .execute());
         return entry;
     }
@@ -122,14 +122,14 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
         return JooqUtil.contextResult(sqlStoreDbConnProvider, context -> context
                 .selectFrom(UPDATABLE_TEMPORAL_STORE)
                 .where(UPDATABLE_TEMPORAL_STORE.DOC_UUID.eq(docUuid))
-                .and(UPDATABLE_TEMPORAL_STORE.KEY_.eq(id.getKey()))
+                .and(UPDATABLE_TEMPORAL_STORE.MAP_KEY.eq(id.getKey()))
                 .and(UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME.eq(id.getEffectiveTimeMs()))
                 .fetchOptional()
                 .map(record -> new TemporalEntry(
                         record.getMapName(),
-                        record.getKey_(),
+                        record.getMapKey(),
                         record.getEffectiveTime(),
-                        record.getValue_())));
+                        record.getMapValue())));
     }
 
     @Override
@@ -139,7 +139,7 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
         return JooqUtil.contextResult(sqlStoreDbConnProvider, context -> context
                 .deleteFrom(UPDATABLE_TEMPORAL_STORE)
                 .where(UPDATABLE_TEMPORAL_STORE.DOC_UUID.eq(docUuid))
-                .and(UPDATABLE_TEMPORAL_STORE.KEY_.eq(id.getKey()))
+                .and(UPDATABLE_TEMPORAL_STORE.MAP_KEY.eq(id.getKey()))
                 .and(UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME.eq(id.getEffectiveTimeMs()))
                 .execute() > 0);
     }
@@ -158,13 +158,13 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
 
             final SelectHavingStep<Record3<String, String, Long>> subquery = DSL.select(
                             t2.DOC_UUID.as("sub_uuid"),
-                            t2.KEY_.as("sub_key"),
+                            t2.MAP_KEY.as("sub_key"),
                             DSL.max(t2.EFFECTIVE_TIME).as("max_time"))
                     .from(t2)
                     .where(t2.DOC_UUID.eq(docUuid))
                     .and(condition)
                     .and(t2.EFFECTIVE_TIME.le(queryTime))
-                    .groupBy(t2.DOC_UUID, t2.KEY_);
+                    .groupBy(t2.DOC_UUID, t2.MAP_KEY);
 
             final Table<Record3<String, String, Long>> subTable = subquery.asTable("sub");
             final Field<String> subUuid = subTable.field("sub_uuid", String.class);
@@ -172,20 +172,20 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
             final Field<Long> maxTime = subTable.field("max_time", Long.class);
 
             final List<TemporalEntry> list = JooqUtil.contextResult(sqlStoreDbConnProvider, context -> context
-                    .select(t1.MAP_NAME, t1.KEY_, t1.EFFECTIVE_TIME, t1.VALUE_)
+                    .select(t1.MAP_NAME, t1.MAP_KEY, t1.EFFECTIVE_TIME, t1.MAP_VALUE)
                     .from(t1)
                     .innerJoin(subTable)
                     .on(t1.DOC_UUID.eq(subUuid))
-                    .and(t1.KEY_.eq(subKey))
+                    .and(t1.MAP_KEY.eq(subKey))
                     .and(t1.EFFECTIVE_TIME.eq(maxTime))
                     .limit(JooqUtil.getLimit(criteria.getPageRequest(), true))
                     .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                     .fetch()
                     .map(record -> new TemporalEntry(
                             record.get(t1.MAP_NAME),
-                            record.get(t1.KEY_),
+                            record.get(t1.MAP_KEY),
                             record.get(t1.EFFECTIVE_TIME),
-                            record.get(t1.VALUE_))));
+                            record.get(t1.MAP_VALUE))));
             return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
         } else {
             final Condition condition = condition(criteria);
@@ -198,9 +198,9 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                     .fetch()
                     .map(record -> new TemporalEntry(
                             record.getMapName(),
-                            record.getKey_(),
+                            record.getMapKey(),
                             record.getEffectiveTime(),
-                            record.getValue_())));
+                            record.getMapValue())));
             return ResultPage.createPageLimitedList(list, criteria.getPageRequest());
         }
     }
@@ -253,11 +253,11 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
         // Subquery: for each key, find the greatest effective_time in this store.
         final SelectHavingStep<Record3<String, String, Long>> subquery = DSL.select(
                         t2.DOC_UUID.as("sub_uuid"),
-                        t2.KEY_.as("sub_key"),
+                        t2.MAP_KEY.as("sub_key"),
                         DSL.max(t2.EFFECTIVE_TIME).as("max_time"))
                 .from(t2)
                 .where(t2.DOC_UUID.eq(docUuid))
-                .groupBy(t2.DOC_UUID, t2.KEY_);
+                .groupBy(t2.DOC_UUID, t2.MAP_KEY);
 
         final Table<Record3<String, String, Long>> subTable = subquery.asTable("sub");
         final Field<String> subUuid = subTable.field("sub_uuid", String.class);
@@ -266,19 +266,19 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
 
         // Join the outer table to the subquery to retrieve the full rows.
         return JooqUtil.contextResult(sqlStoreDbConnProvider, context -> context
-                .select(t1.MAP_NAME, t1.KEY_, t1.EFFECTIVE_TIME, t1.VALUE_)
+                .select(t1.MAP_NAME, t1.MAP_KEY, t1.EFFECTIVE_TIME, t1.MAP_VALUE)
                 .from(t1)
                 .innerJoin(subTable)
                 .on(t1.DOC_UUID.eq(subUuid))
-                .and(t1.KEY_.eq(subKey))
+                .and(t1.MAP_KEY.eq(subKey))
                 .and(t1.EFFECTIVE_TIME.eq(maxTime))
-                .orderBy(t1.KEY_.asc())
+                .orderBy(t1.MAP_KEY.asc())
                 .fetch()
                 .map(record -> new TemporalEntry(
                         record.get(t1.MAP_NAME),
-                        record.get(t1.KEY_),
+                        record.get(t1.MAP_KEY),
                         record.get(t1.EFFECTIVE_TIME),
-                        record.get(t1.VALUE_))));
+                        record.get(t1.MAP_VALUE))));
     }
 
     /**
@@ -398,12 +398,12 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                 trx.insertInto(UPDATABLE_TEMPORAL_STORE)
                         .set(UPDATABLE_TEMPORAL_STORE.DOC_UUID, (String) null)
                         .set(UPDATABLE_TEMPORAL_STORE.MAP_NAME, (String) null)
-                        .set(UPDATABLE_TEMPORAL_STORE.KEY_, (String) null)
+                        .set(UPDATABLE_TEMPORAL_STORE.MAP_KEY, (String) null)
                         .set(UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME, (Long) null)
-                        .set(UPDATABLE_TEMPORAL_STORE.VALUE_, (String) null)
+                        .set(UPDATABLE_TEMPORAL_STORE.MAP_VALUE, (String) null)
                         .onDuplicateKeyUpdate()
                         .set(UPDATABLE_TEMPORAL_STORE.MAP_NAME, (String) null)
-                        .set(UPDATABLE_TEMPORAL_STORE.VALUE_, (String) null));
+                        .set(UPDATABLE_TEMPORAL_STORE.MAP_VALUE, (String) null));
         for (final TemporalEntry entry : upserts) {
             batch = batch.bind(
                     docUuid,
@@ -429,7 +429,7 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
         BatchBindStep batch = trx.batch(
                 trx.deleteFrom(UPDATABLE_TEMPORAL_STORE)
                         .where(UPDATABLE_TEMPORAL_STORE.DOC_UUID.eq((String) null))
-                        .and(UPDATABLE_TEMPORAL_STORE.KEY_.eq((String) null))
+                        .and(UPDATABLE_TEMPORAL_STORE.MAP_KEY.eq((String) null))
                         .and(UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME.eq((Long) null)));
         for (final TemporalEntryId id : deletes) {
             batch = batch.bind(docUuid, id.getKey(), id.getEffectiveTimeMs());
@@ -494,7 +494,7 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
             // queryTime whenever that row is in scope, and no row at all when it is not.
             final SelectHavingStep<Record3<String, String, Long>> subquery = DSL.select(
                             t2.DOC_UUID.as("sub_uuid"),
-                            t2.KEY_.as("sub_key"),
+                            t2.MAP_KEY.as("sub_key"),
                             DSL.max(t2.EFFECTIVE_TIME).as("max_time"))
                     .from(t2)
                     .where(t2.DOC_UUID.eq(docUuid))
@@ -503,7 +503,7 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                     .and(notBefore == null
                             ? DSL.noCondition()
                             : t2.EFFECTIVE_TIME.ge(notBefore))
-                    .groupBy(t2.DOC_UUID, t2.KEY_);
+                    .groupBy(t2.DOC_UUID, t2.MAP_KEY);
 
             final Table<Record3<String, String, Long>> subTable = subquery.asTable("sub");
             final Field<String> subUuid = subTable.field("sub_uuid", String.class);
@@ -512,22 +512,22 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
 
             //noinspection CodeBlock2Expr
             JooqUtil.context(sqlStoreDbConnProvider, context -> context
-                    .select(t1.MAP_NAME, t1.KEY_, t1.EFFECTIVE_TIME,
+                    .select(t1.MAP_NAME, t1.MAP_KEY, t1.EFFECTIVE_TIME,
                             includeValue
-                                    ? t1.VALUE_
-                                    : DSL.inline((String) null).as(t1.VALUE_))
+                                    ? t1.MAP_VALUE
+                                    : DSL.inline((String) null).as(t1.MAP_VALUE))
                     .from(t1)
                     .innerJoin(subTable)
                     .on(t1.DOC_UUID.eq(subUuid))
-                    .and(t1.KEY_.eq(subKey))
+                    .and(t1.MAP_KEY.eq(subKey))
                     .and(t1.EFFECTIVE_TIME.eq(maxTime))
                     .fetch()
                     .forEach(record -> {
                         consumer.accept(new TemporalEntry(
                                 record.get(t1.MAP_NAME),
-                                record.get(t1.KEY_),
+                                record.get(t1.MAP_KEY),
                                 record.get(t1.EFFECTIVE_TIME),
-                                record.get(t1.VALUE_)));
+                                record.get(t1.MAP_VALUE)));
                     }));
         } else {
             final Condition condition = condition(criteria);
@@ -535,11 +535,11 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
             //noinspection CodeBlock2Expr
             JooqUtil.context(sqlStoreDbConnProvider, context -> context
                     .select(UPDATABLE_TEMPORAL_STORE.MAP_NAME,
-                            UPDATABLE_TEMPORAL_STORE.KEY_,
+                            UPDATABLE_TEMPORAL_STORE.MAP_KEY,
                             UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME,
                             includeValue
-                                    ? UPDATABLE_TEMPORAL_STORE.VALUE_
-                                    : DSL.inline((String) null).as(UPDATABLE_TEMPORAL_STORE.VALUE_))
+                                    ? UPDATABLE_TEMPORAL_STORE.MAP_VALUE
+                                    : DSL.inline((String) null).as(UPDATABLE_TEMPORAL_STORE.MAP_VALUE))
                     .from(UPDATABLE_TEMPORAL_STORE)
                     .where(UPDATABLE_TEMPORAL_STORE.DOC_UUID.eq(docUuid))
                     .and(condition)
@@ -547,9 +547,9 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                     .forEach(record -> {
                         consumer.accept(new TemporalEntry(
                                 record.get(UPDATABLE_TEMPORAL_STORE.MAP_NAME),
-                                record.get(UPDATABLE_TEMPORAL_STORE.KEY_),
+                                record.get(UPDATABLE_TEMPORAL_STORE.MAP_KEY),
                                 record.get(UPDATABLE_TEMPORAL_STORE.EFFECTIVE_TIME),
-                                record.get(UPDATABLE_TEMPORAL_STORE.VALUE_)));
+                                record.get(UPDATABLE_TEMPORAL_STORE.MAP_VALUE)));
                     }));
         }
     }
@@ -575,13 +575,13 @@ class UpdatableTemporalStoreDaoImpl implements UpdatableTemporalStoreDao {
                                        final ExpressionCriteria criteria) {
         final ExpressionMapper localExpressionMapper = expressionMapperFactory.create();
         localExpressionMapper.map(UpdatableTemporalStore.KEY_FIELD,
-                t.KEY_,
+                t.MAP_KEY,
                 String::valueOf);
         localExpressionMapper.map(UpdatableTemporalStore.TIME_FIELD,
                 t.EFFECTIVE_TIME,
                 DateUtil::parseUnknownString);
         localExpressionMapper.map(UpdatableTemporalStore.VALUE_FIELD,
-                t.VALUE_,
+                t.MAP_VALUE,
                 String::valueOf);
 
         final ExpressionOperator expression = getFilteredExpression(criteria);

@@ -4,10 +4,13 @@
 package stroom.sqlstore.impl.db.jooq.tables;
 
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import org.jooq.Condition;
 import org.jooq.Field;
+import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.PlainSQL;
 import org.jooq.QueryPart;
@@ -23,6 +26,7 @@ import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.jooq.impl.TableImpl;
 
+import stroom.sqlstore.impl.db.jooq.Indexes;
 import stroom.sqlstore.impl.db.jooq.Keys;
 import stroom.sqlstore.impl.db.jooq.Stroom;
 import stroom.sqlstore.impl.db.jooq.tables.records.UpdatableTemporalStoreRecord;
@@ -60,9 +64,9 @@ public class UpdatableTemporalStore extends TableImpl<UpdatableTemporalStoreReco
     public final TableField<UpdatableTemporalStoreRecord, String> MAP_NAME = createField(DSL.name("map_name"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.updatable_temporal_store.key_</code>.
+     * The column <code>stroom.updatable_temporal_store.map_key</code>.
      */
-    public final TableField<UpdatableTemporalStoreRecord, String> KEY_ = createField(DSL.name("key_"), SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<UpdatableTemporalStoreRecord, String> MAP_KEY = createField(DSL.name("map_key"), SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
      * The column <code>stroom.updatable_temporal_store.effective_time</code>.
@@ -70,9 +74,9 @@ public class UpdatableTemporalStore extends TableImpl<UpdatableTemporalStoreReco
     public final TableField<UpdatableTemporalStoreRecord, Long> EFFECTIVE_TIME = createField(DSL.name("effective_time"), SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.updatable_temporal_store.value_</code>.
+     * The column <code>stroom.updatable_temporal_store.map_value</code>.
      */
-    public final TableField<UpdatableTemporalStoreRecord, String> VALUE_ = createField(DSL.name("value_"), SQLDataType.CLOB, this, "");
+    public final TableField<UpdatableTemporalStoreRecord, String> MAP_VALUE = createField(DSL.name("map_value"), SQLDataType.CLOB, this, "");
 
     private UpdatableTemporalStore(Name alias, Table<UpdatableTemporalStoreRecord> aliased) {
         this(alias, aliased, (Field<?>[]) null, null);
@@ -108,6 +112,11 @@ public class UpdatableTemporalStore extends TableImpl<UpdatableTemporalStoreReco
     @Override
     public Schema getSchema() {
         return aliased() ? null : Stroom.STROOM;
+    }
+
+    @Override
+    public List<Index> getIndexes() {
+        return Arrays.asList(Indexes.UPDATABLE_TEMPORAL_STORE_UPDATABLE_TEMPORAL_STORE_MAP_NAME_IDX);
     }
 
     @Override
