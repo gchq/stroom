@@ -130,7 +130,7 @@ else
     run_cmd=( \
       "bash" \
       "-c"  \
-      "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" GWT_MIN_HEAP=\"${GWT_MIN_HEAP:-50M}\" GWT_MAX_HEAP=\"${GWT_MAX_HEAP:-2G}\" ./container_build/gradleBuild.sh" \
+      "SKIP_TESTS=\"${SKIP_TESTS:-false}\" MAX_WORKERS=\"${MAX_WORKERS:-6}\" GWT_MIN_HEAP=\"${GWT_MIN_HEAP:-1G}\" GWT_MAX_HEAP=\"${GWT_MAX_HEAP:-2G}\" ./container_build/gradleBuild.sh" \
     )
   elif [[ $# -eq 1 ]] && [[ "$1" = "GRADLE_COMPILE" ]]; then
     # Run the full CI gradle build

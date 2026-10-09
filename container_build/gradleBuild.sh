@@ -168,7 +168,6 @@ main() {
   echo -e "${GREEN}Do the basic java build (compilation & tests)${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
-    --info \
     --scan \
     --stacktrace \
     -PdumpFailedTestXml=true \
