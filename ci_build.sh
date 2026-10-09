@@ -336,7 +336,7 @@ releaseToDockerHub() {
   local allTagArgs=()
 
   for tagVersionPart in "$@"; do
-    if [ "x${tagVersionPart}" != "x" ]; then
+    if [[ -n "${tagVersionPart}" ]]; then
       # echo -e "Adding docker tag [${GREEN}${tagVersionPart}${NC}]"
       allTagArgs+=("--tag=${dockerRepo}:${tagVersionPart}")
     fi
@@ -525,6 +525,7 @@ echo -e "LOCAL_BUILD:                   [${GREEN}${LOCAL_BUILD}${NC}]"
 echo -e "docker version:                [${GREEN}$(docker --version)${NC}]"
 echo -e "docker-compose version:        [${GREEN}$(docker compose version)${NC}]"
 echo -e "git version:                   [${GREEN}$(git --version)${NC}]"
+echo -e "Total memory:                  [${GREEN}$(grep -oP '^MemTotal:\s+\K.*' /proc/meminfo)${NC}]"
 
 # Normal commit/PR/tag build
 extraBuildArgs=()
