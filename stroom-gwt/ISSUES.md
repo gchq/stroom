@@ -183,50 +183,6 @@ table builder's Time To Keep Data In The Table (blank meant "keep all data").
 * Plan B session stores (not confirmed): `SessionDb.condense()` takes the later session's end, so a
   session nested inside an earlier one could shorten the merged session.
 
-### An analytic rule with an unknown status can't be opened
-
-**Reproduced.** (gwt-bugs #35) A rule whose stored `status` isn't one of the four
-`AnalyticRuleStatus` values can't be read: `GET /api/analyticRule/v1/<uuid>` answers 500 with
-`Cannot deserialize value of type AnalyticRuleStatus from String "ENABLED": not one of the values
-accepted for Enum class: [TESTING, STABLE, EXPERIMENTAL, DEPRECATED]`, and the editor never opens.
-The UI does report it properly: an alert names the document, with the server's message under
-Show Detail.
-
-`status` used to be a free-text `String` and #5774 narrowed it to the enum, with no tolerant reader
-and no migration. Only content that set `status` by import or the API is affected: the old client
-never edited it, so a rule made in the UI has `null`, which is fine. The enum also rejects a bad
-value on the way in, so such a rule can't be made through the API now.
-
-Fix: a tolerant reader that maps an unknown value to `null`:
-
-```java
-@JsonCreator
-public static AnalyticRuleStatus fromJson(final String value) {
-    if (value == null) {
-        return null;
-    }
-    for (final AnalyticRuleStatus status : values()) {
-        if (status.name().equalsIgnoreCase(value)) {
-            return status;
-        }
-    }
-    return null;
-}
-```
-
-* Use `null`, not a stage. `null` is already a normal state (every rule from before #5774 has it,
-  and `AnalyticSettingsViewImpl:47` shows it as nothing selected). Defaulting to a stage would claim
-  something the document never said; `STABLE` would present an unchecked rule as ready for use.
-* The enum is in `stroom-core-shared`, which GWT compiles, so it can't log. If the change should be
-  logged, do it in the docstore's read path.
-* The next save writes the `null`, so the original string is lost. That's right for `ENABLED`,
-  which Stroom never defined, but it's a silent data change.
-* Not `READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE` on the `ObjectMapper`: that changes every enum
-  in the API, can't give a `null` default, and nothing in the codebase uses it.
-* No client change is needed: the server only ever sends a legal value once it has coerced it.
-
-* `stroom-core-shared/src/main/java/stroom/analytics/shared/AnalyticRuleStatus.java`
-
 ### A name with `/` in it can't be used for volume groups, node groups or processor profiles
 
 **Reproduced.** (gwt-bugs #42) Administration, Data Volumes, New, then `A/B volumes` and OK, shows
@@ -921,6 +877,12 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   (`getChildren().size()`), was already safe: `replaceComponentSelection` returns early for an
   operator with `null` or no children (since `155636d99d`); `TestDashboardContextImpl` now guards
   it. No other client code dereferences an operator's children unchecked.
+* #35: an analytic rule whose stored `status` wasn't one of the four statuses (it was free text
+  before #5774, so imported content could hold e.g. `ENABLED`) couldn't be read: the server answered
+  500 and the editor never opened. `AnalyticRuleStatus` now reads its name in any case with a
+  `@JsonCreator` (as `ReceiptCheckMode` and `ReceiveAction` do), and an unknown value reads as no
+  status (`null`, which rules made before #5774 already have) rather than failing; the next save
+  writes the `null`. Statuses are still written by name (`TestAnalyticRuleDoc`).
 * #43 (in part): a blank API key expiry made OK do nothing (`a2dc7af70c`); see
   [the remaining part](#a-blank-or-unreadable-api-key-expiry-date-gets-the-wrong-message).
 * #48: User Preferences couldn't be closed after saving them failed (OK spinning, OK and Cancel
@@ -1072,7 +1034,7 @@ reproduce them. They drive Stroom at `http://localhost:8080` (set `URL=` to chan
 | Preferences save fails (#48) | `node probe-prefs-failsave.mjs` | its last line says the dialog closed |
 | Annotation tags (#44, #45) | `MUTATE=1 ONLY="annotation comments" node cycles.mjs` | the cycle passes |
 | Closed tabs (#47) | `MODE=doc DOCTYPE=Pipeline ROUNDS=8 node mem-leak.mjs` | DOM nodes and listeners stay flat per round |
-| Unknown rule status (#35) | none: test Jackson reading `{"status":"ENABLED"}` | the rule reads with `status` `null` |
+| Unknown rule status (#35) | `TestAnalyticRuleDoc` (Jackson reading `{"status":"ENABLED"}`) | the rule reads with `status` `null` |
 
 * `cycles.mjs` writes to Stroom (and removes what it makes); without `MUTATE=1` it only prints its
   plan. #44 also needs a tag deleted and then a rename onto its name, as described in its entry.
