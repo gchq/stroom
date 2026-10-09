@@ -23,10 +23,12 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownPreviewPresenter;
 import stroom.entity.client.view.MarkdownEditViewImpl;
 import stroom.entity.client.view.MarkdownPreviewViewImpl;
+import stroom.gwt.workbench.client.FrameDocuments;
 import stroom.gwt.workbench.client.StroomThemeDecorator;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.StartupFixtures;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -125,6 +127,12 @@ public final class MarkdownEditorStories {
                 .story("ReadOnlyPreview", context -> {
                     final ScreenHarness harness = ScreenHarness.create(context, FIXTURES);
                     return markdownEditor(harness, SAMPLE_MARKDOWN, true);
+                })
+                // The rendered document says it is in English, for screen readers (gchq/stroom#5408)
+                .withPlay(play -> {
+                    final Query frame = play.querySelector("iframe#markdown-frame");
+                    play.waitFor(() -> play.expect(FrameDocuments.language(frame)).toBe("en"));
+                    play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                 })
                 // With no help URL configured, "Documentation help" shows "Help is not configured!"
                 .story("HelpNotConfigured", context -> {

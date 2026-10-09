@@ -32,6 +32,8 @@ import jakarta.ws.rs.ForbiddenException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -166,6 +168,28 @@ class TestAuthFlowResourceImpl {
                 .anySatisfy(header -> assertThat(header).contains(STATE_COOKIE + "=state-a"));
         assertThat(setCookies(response))
                 .noneSatisfy(header -> assertThat(header).contains("state-b"));
+    }
+
+    @Test
+    void callbackRedirectPageDeclaresItsLanguage() throws Exception {
+        // The page that sends the browser on after sign in says it is in English, for screen readers
+        // (gchq/stroom#5408).
+        final HttpServletRequest request = requestWithCookies(new Cookie(STATE_COOKIE, "the-state"));
+        final HttpServletResponse response = mock(HttpServletResponse.class);
+        final StringWriter page = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(page));
+        final AuthenticationState state = mock(AuthenticationState.class);
+        when(state.getInitiatingUri()).thenReturn(ORIGIN + "/");
+        final AuthenticationStateCache stateCache = mock(AuthenticationStateCache.class);
+        when(stateCache.getAndRemove("the-state")).thenReturn(Optional.of(state));
+        final StroomUserIdentityFactory userIdentityFactory = mock(StroomUserIdentityFactory.class);
+        final UserIdentity identity = identity("the-subject", "Alice");
+        when(userIdentityFactory.getAuthFlowUserIdentity(request, "the-code", state))
+                .thenReturn(Optional.of(identity));
+
+        newResource(stateCache, userIdentityFactory).callback("the-code", "the-state", request, response);
+
+        assertThat(page.toString()).startsWith("<!DOCTYPE html><html lang=\"en\">");
     }
 
     // --- an unrecognised state restarts the flow rather than dead-ending ---
@@ -372,9 +396,22 @@ class TestAuthFlowResourceImpl {
     }
 
     private AuthFlowResourceImpl newResource(final AuthenticationStateCache stateCache,
+                                             final StroomUserIdentityFactory userIdentityFactory) {
+        return newResource(stateCache, defaultOpenIdManager(), false, null, userIdentityFactory);
+    }
+
+    private AuthFlowResourceImpl newResource(final AuthenticationStateCache stateCache,
                                              final OpenIdManager openIdManager,
                                              final boolean edgeEnabled,
                                              final IdpType idpType) {
+        return newResource(stateCache, openIdManager, edgeEnabled, idpType, null);
+    }
+
+    private AuthFlowResourceImpl newResource(final AuthenticationStateCache stateCache,
+                                             final OpenIdManager openIdManager,
+                                             final boolean edgeEnabled,
+                                             final IdpType idpType,
+                                             final StroomUserIdentityFactory userIdentityFactory) {
         final UriFactory uriFactory = mock(UriFactory.class);
         lenient().when(uriFactory.publicUri(anyString())).thenReturn(PUBLIC_ROOT);
 
@@ -390,7 +427,7 @@ class TestAuthFlowResourceImpl {
                 () -> openIdConfiguration,
                 () -> stateCache,
                 () -> uriFactory,
-                null,
+                () -> userIdentityFactory,
                 () -> authenticationConfig);
     }
 

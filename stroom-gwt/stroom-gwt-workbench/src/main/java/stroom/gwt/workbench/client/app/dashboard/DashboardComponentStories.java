@@ -17,6 +17,7 @@
 
 package stroom.gwt.workbench.client.app.dashboard;
 
+import stroom.gwt.workbench.client.FrameDocuments;
 import stroom.gwt.workbench.client.app.ai.AiFixtures;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
@@ -145,8 +146,10 @@ public final class DashboardComponentStories {
                         play.expect(DashboardPlays.tab(play, tab)).toBeInTheDocument();
                     }
                     // The visualisation frame (VisFrame) has no title
-                    play.waitFor(() -> play.expect(play.screen().querySelector("iframe.VisFrame-frame"))
-                            .toBeInTheDocument());
+                    final Query visFrame = play.screen().querySelector("iframe.VisFrame-frame");
+                    play.waitFor(() -> play.expect(visFrame).toBeInTheDocument());
+                    // Its page (ui/vis.html) says it is in English, for screen readers (gchq/stroom#5408)
+                    play.waitFor(() -> play.expect(FrameDocuments.language(visFrame)).toBe("en"));
                     DashboardPlays.expectNoProblems(play);
                 })
                 // A component's settings rename it
