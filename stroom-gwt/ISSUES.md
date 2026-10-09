@@ -318,31 +318,6 @@ instead of letting the constraint throw. The edit dialog should show a sentence,
 * `stroom-annotation/stroom-annotation-impl/src/main/java/stroom/annotation/impl/dao/AnnotationTagDaoImpl.java`
   (line 162)
 
-### Editing or deleting an annotation comment fails after doing the work
-
-**Reproduced.** (gwt-bugs #45) In Annotation Comments, edit a tag's name and press OK. The dialog
-stays open behind `Error calling PUT .../api/annotation/v1/updateAnnotationTag - code: 500,
-details: java.lang.NullPointerException`, but the change has been saved. Deleting does the same.
-Labels, Statuses and Collections are fine.
-
-`getFieldNameFromTagType` returns `null` for `COMMENT` on purpose (it's `@Nullable`, with a
-comment saying why), and `updateAnnotationTag` (lines 502-505) and `deleteAnnotationTag`
-(lines 515-518) pass it to `Set.of(fieldName)`, which rejects `null`. The DAO call has already
-committed, so only the event fails.
-
-Fix: don't fire the event when there's no field name. The same file already has the idiom, in
-`getChangedFieldNames` (line 658): `NullSafe.asSet(fieldName)`.
-
-```java
-final String fieldName = getFieldNameFromTagType(annotationTag.getType());
-if (fieldName != null) {
-    entityEventBus.fire(AnnotationFieldsEntityEventData.createAllAnnotationsEvent(
-            EntityAction.UPDATE, Set.of(fieldName)));
-}
-```
-
-* `stroom-annotation/stroom-annotation-impl/src/main/java/stroom/annotation/impl/AnnotationService.java`
-
 ## Controls that stay enabled but do nothing
 
 **Reported.**
@@ -972,6 +947,10 @@ evidence is in `stroom-ui-react/porting/gwt-bugs.md` under the same number:
   (`TestUserPreferencesPresenter`). Found by the suite's r8 round, where the read-only guard
   refused the save and the stuck dialog spoiled most of each shard (and caused 10 knock-on
   "Ask Stroom AI did not restore the node" fails).
+* #45: editing or deleting an annotation comment tag saved the change but then failed with a 500
+  (`NullPointerException`), leaving the dialog open: comment tags have no decoration field, and
+  `AnnotationService` passed the `null` field name to `Set.of`. It now fires the fields event only
+  for tag types that have a field (`TestAnnotationService`).
 
 ## Checked and not bugs
 
