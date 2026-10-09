@@ -1467,6 +1467,15 @@
    text-decoration: underline;
 }
 
+.stepLocationLink--disabled {
+    cursor: default;
+    color: var(--text-color--disabled);
+}
+
+.stepLocationLink--disabled:hover {
+    text-decoration: none;
+}
+
 .stepLocationViewImpl-left {
 }
 

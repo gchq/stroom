@@ -226,26 +226,6 @@ public static AnalyticRuleStatus fromJson(final String value) {
 
 * `stroom-core-shared/src/main/java/stroom/analytics/shared/AnalyticRuleStatus.java`
 
-### Refresh Current Step before a stream is selected fails with a server error
-
-**Reproduced.** (gwt-bugs #36) Open a pipeline, Structure, Enter Stepping Mode, then press Refresh
-Current Step before choosing a stream. An alert shows `Cannot invoke
-"stroom.meta.shared.FindMetaCriteria.isFetchRelationships()" because "criteria" is null` from a 500
-on `POST /api/stepping/v1/step`. Set Location then OK, before a stream is chosen, does the same.
-
-First, Back, Forward and Last start disabled, but `StepControlPresenter.initButtons()` enables
-Refresh. The request's `criteria` is only set by `SteppingPresenter.beginStepping` (line 747) from
-the selected stream, so until then it goes out as `null` and `MetaServiceImpl` (line 388)
-dereferences it.
-
-Fix: start Refresh disabled in `initButtons()` and enable it once a stream is chosen, as the other
-four buttons already work; do the same for the location link. The server could also reject a
-request without criteria with a message, but the client fix is the one that matches the rest of the
-toolbar.
-
-* `stroom-core-client/src/main/java/stroom/pipeline/stepping/client/presenter/StepControlPresenter.java`
-* `stroom-meta/stroom-meta-impl/src/main/java/stroom/meta/impl/MetaServiceImpl.java` (line 388)
-
 ### An empty expression operator fails on the client
 
 **Partly fixed.** (gwt-bugs #37) `ExpressionOperator.Builder.build()` leaves `children` as `null`
@@ -941,6 +921,11 @@ evidence is in `stroom-ui-react/porting/gwt-bugs.md` under the same number:
   its settings are saved again, such a query with Auto Refresh ticked never refreshes, as
   `AbstractRefreshableComponentPresenter.scheduleRefresh` ignores the failure to parse a `null`
   interval.
+* #36: in stepping, Refresh Current Step (and Set Location then OK) before a stream was chosen sent
+  a step request with no `criteria`, which failed on the server with a `NullPointerException`.
+  `StepControlPresenter.initButtons()` now starts Refresh disabled like the other step buttons, the
+  location link is disabled too, and `SteppingPresenter.beginStepping` enables both once a stream is
+  chosen (`TestStepControlPresenter`, `TestStepLocationLinkPresenter`).
 
 ## Checked and not bugs
 

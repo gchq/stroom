@@ -198,7 +198,9 @@ public class SteppingPresenter
         pipelineTreePresenter.setPipelineTreeBuilder(new DefaultPipelineTreeBuilder());
         pipelineTreePresenter.setAllowNullSelection(false);
 
+        // Nothing can be stepped until a stream has been chosen (see beginStepping).
         stepControlPresenter.initButtons();
+        stepLocationLinkPresenter.setEnabled(false);
 
         leftButtons = new ButtonPanel();
 
@@ -745,6 +747,9 @@ public class SteppingPresenter
         findMetaCriteria.setSortList(steppingMetaListPresenter.getCriteria().getSortList());
         findMetaCriteria.setExpression(steppingMetaListPresenter.getCriteria().getExpression());
         requestBuilder.criteria(findMetaCriteria);
+        // A step request needs the criteria, so a refresh or new location is only possible from now.
+        stepControlPresenter.setRefreshEnabled(true);
+        stepLocationLinkPresenter.setEnabled(true);
 
         requestBuilder.childStreamType(childStreamType);
 

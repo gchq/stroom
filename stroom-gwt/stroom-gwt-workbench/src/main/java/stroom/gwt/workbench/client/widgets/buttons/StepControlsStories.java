@@ -65,9 +65,11 @@ public final class StepControlsStories {
                     column.getElement().getStyle().setProperty("alignItems", "center");
                     return column;
                 })
-                // Initial state - navigation disabled, only refresh enabled (GWT initButtons)
+                // Initial state - every step button disabled until a stream is chosen (GWT initButtons)
                 .story("Initial", context -> {
                     final StepControlPresenter presenter = stepControls(context, false);
+                    // Differs from React: refresh is disabled too. React mirrors the old initButtons,
+                    // whose enabled refresh sent a step request with no stream (gwt-bugs #36).
                     presenter.initButtons();
                     return presenter.getWidget();
                 })
