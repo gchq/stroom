@@ -260,24 +260,6 @@ run time). Fix: size the list after the check, or use `NullSafe.list`.
 
 * `stroom-core-client/src/main/java/stroom/dashboard/client/main/DashboardContextImpl.java` (line 333)
 
-### A dashboard Query's settings can't be saved when the refresh interval is blank
-
-**Reproduced.** (gwt-bugs #38) On a dashboard whose Query component was saved without
-`automate.refreshInterval`, the Query's Settings, then OK, shows `(TypeError) : Cannot read
-properties of null (reading 'a')` and the dialog won't close. Cancel is the only way out.
-
-`BasicQuerySettingsPresenter.validate()` (lines 114-115) does
-`ModelStringUtil.parseDurationString(interval).intValue()`, and `parseDurationString` returns
-`null` for a blank string. The `catch (RuntimeException e)` around it then shows the raw `TypeError`
-as if it were the validation message. The box is blank because `read()` (line 86) copies a `null`
-from stored dashboards made before the `"10s"` default in `Automate`, which only applies to objects
-built in the client.
-
-Fix: say the interval is required when it's blank, or default it to `10s` in `read()` when it's
-`null`. Either is two lines.
-
-* `stroom-core-client/src/main/java/stroom/dashboard/client/query/BasicQuerySettingsPresenter.java`
-
 ### A name with `/` in it can't be used for volume groups, node groups or processor profiles
 
 **Reproduced.** (gwt-bugs #42) Administration, Data Volumes, New, then `A/B volumes` and OK, shows
@@ -951,6 +933,14 @@ evidence is in `stroom-ui-react/porting/gwt-bugs.md` under the same number:
   (`NullPointerException`), leaving the dialog open: comment tags have no decoration field, and
   `AnnotationService` passed the `null` field name to `Set.of`. It now fires the fields event only
   for tag types that have a field (`TestAnnotationService`).
+* #38: a dashboard Query saved without `automate.refreshInterval` (from before the `10s` default)
+  showed a blank interval, and OK on its settings failed with a raw `TypeError` and wouldn't close
+  the dialog. The Query and Embedded Query settings now show `Automate.DEFAULT_REFRESH_INTERVAL` when
+  none is stored, and a blank interval gets the message "A query refresh interval must be provided"
+  (`TestBasicQuerySettingsPresenter`, `TestBasicEmbeddedQuerySettingsPresenter`). Still open: until
+  its settings are saved again, such a query with Auto Refresh ticked never refreshes, as
+  `AbstractRefreshableComponentPresenter.scheduleRefresh` ignores the failure to parse a `null`
+  interval.
 
 ## Checked and not bugs
 

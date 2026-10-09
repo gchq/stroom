@@ -112,7 +112,10 @@ public class BasicEmbeddedQuerySettingsPresenter
 
         getView().setQueryOnOpen(automate.isOpen());
         getView().setAutoRefresh(automate.isRefresh());
-        getView().setRefreshInterval(automate.getRefreshInterval());
+        // Dashboards saved before the interval had a default may have none.
+        getView().setRefreshInterval(NullSafe.nonBlankStringElse(
+                automate.getRefreshInterval(),
+                Automate.DEFAULT_REFRESH_INTERVAL));
         getView().setPageSize(NullSafe.getOrElse(
                 settings,
                 EmbeddedQueryComponentSettings::getQueryTablePreferences,
@@ -218,6 +221,9 @@ public class BasicEmbeddedQuerySettingsPresenter
 
         try {
             final String interval = getView().getRefreshInterval();
+            if (NullSafe.isBlankString(interval)) {
+                throw new NumberFormatException("A query refresh interval must be provided");
+            }
             final int millis = ModelStringUtil.parseDurationString(interval).intValue();
 
             if (millis < TEN_SECONDS) {

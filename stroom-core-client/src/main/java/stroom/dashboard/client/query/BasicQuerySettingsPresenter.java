@@ -27,6 +27,7 @@ import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.security.shared.DocumentPermission;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -83,7 +84,10 @@ public class BasicQuerySettingsPresenter
 
         getView().setQueryOnOpen(automate.isOpen());
         getView().setAutoRefresh(automate.isRefresh());
-        getView().setRefreshInterval(automate.getRefreshInterval());
+        // Dashboards saved before the interval had a default may have none.
+        getView().setRefreshInterval(NullSafe.nonBlankStringElse(
+                automate.getRefreshInterval(),
+                Automate.DEFAULT_REFRESH_INTERVAL));
     }
 
     @Override
@@ -112,6 +116,9 @@ public class BasicQuerySettingsPresenter
 
         try {
             final String interval = getView().getRefreshInterval();
+            if (NullSafe.isBlankString(interval)) {
+                throw new NumberFormatException("A query refresh interval must be provided");
+            }
             final int millis = ModelStringUtil.parseDurationString(interval).intValue();
 
             if (millis < QueryPresenter.TEN_SECONDS) {
