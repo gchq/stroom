@@ -105,7 +105,6 @@ public class QueryPresenter
     private static final ErrorMessageTemplates ERROR_MESSAGE_TEMPLATES = GWT.create(ErrorMessageTemplates.class);
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query", ComponentUse.PANEL);
-    static final int TEN_SECONDS = 10000;
 
     private final ExpressionTreePresenter expressionPresenter;
     private final QueryHistoryPresenter historyPresenter;

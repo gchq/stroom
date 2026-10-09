@@ -19,6 +19,7 @@ package stroom.dashboard.client.query;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
+import stroom.dashboard.client.main.RefreshInterval;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.QueryComponentSettings;
@@ -26,7 +27,6 @@ import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.DocSelectionBoxPresenter;
 import stroom.explorer.shared.NodeFlag;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -112,25 +112,12 @@ public class BasicQuerySettingsPresenter
 
     @Override
     public boolean validate() {
-        boolean valid = false;
-
-        try {
-            final String interval = getView().getRefreshInterval();
-            if (NullSafe.isBlankString(interval)) {
-                throw new NumberFormatException("A query refresh interval must be provided");
-            }
-            final int millis = ModelStringUtil.parseDurationString(interval).intValue();
-
-            if (millis < QueryPresenter.TEN_SECONDS) {
-                throw new NumberFormatException("Query refresh interval must be greater than or equal to 10 seconds");
-            }
-
-            valid = true;
-        } catch (final RuntimeException e) {
-            AlertEvent.fireError(this, e.getMessage(), null);
+        final String problem = RefreshInterval.validate(getView().getRefreshInterval());
+        if (problem != null) {
+            AlertEvent.fireError(this, problem, null);
+            return false;
         }
-
-        return valid;
+        return true;
     }
 
     @Override

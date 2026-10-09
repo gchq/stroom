@@ -229,6 +229,8 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         if (resultComponent == null) {
             return false;
         }
+        // The search this is for, to tell whether it is still current when the reply comes
+        final Search searchAtStart = currentSearch;
 
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap == null) {
@@ -284,7 +286,10 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                 })
                 .onFailure(throwable -> {
                     try {
-                        if (queryKey.equals(currentQueryKey)) {
+                        // A forced new search (no query key) reports if its search is still current
+                        if (queryKey == null
+                                ? searchAtStart == currentSearch
+                                : queryKey.equals(currentQueryKey)) {
                             setErrors(Collections.singletonList(
                                     new ErrorMessage(Severity.ERROR, throwable.toString())));
                         }
@@ -357,7 +362,7 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                                 } catch (final RuntimeException e) {
                                     GWT.log(e.getMessage());
                                     // update() is what sees the search finish, so stop it here
-                                    endSearchWithError(e);
+                                    endSearchWithError(e.toString());
                                 }
 
                                 if (polling) {
@@ -380,20 +385,10 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
                         }
                     })
                     .onFailure(throwable -> {
-//                        GWT.log(throwable.getMessage());
-
-                        try {
-                            if (search == currentSearch) {
-                                setErrors(Collections.singletonList(
-                                        new ErrorMessage(Severity.ERROR, throwable.toString())));
-                                polling = false;
-                            }
-                        } catch (final RuntimeException e) {
-                            GWT.log(e.getMessage());
-                        }
-
-                        if (polling) {
-                            poll(Fetch.CHANGES, false);
+                        // A failed request ends the search it was for. A failure for an earlier
+                        // search is ignored: the current search has its own polling.
+                        if (search == currentSearch) {
+                            endSearchWithError(throwable.toString());
                         }
                     })
                     .taskMonitorFactory(taskMonitorFactory)
@@ -454,14 +449,17 @@ public class SearchModel implements HasTaskMonitorFactory, HasHandlers {
         }
     }
 
-    // Ends a search whose results couldn't be handled: stops polling (else the search would never
-    // be seen to finish, and the client would poll it for ever), tells the components the search
-    // has ended and says what went wrong.
-    private void endSearchWithError(final RuntimeException e) {
+    // Ends a search that failed, or whose results couldn't be handled: stops polling (else the
+    // search would never be seen to finish, and the client would poll it for ever), stops the search
+    // on the server (as no one will poll it again; its results are kept, as for stop()), tells the
+    // components the search has ended, says what went wrong and stops showing it as running (which
+    // lets an auto refresh be scheduled). The error is set first, as a completed search's are.
+    private void endSearchWithError(final String message) {
         polling = false;
+        terminate(currentNode, currentQueryKey);
         resultComponents.values().forEach(ResultComponent::endSearch);
+        setErrors(Collections.singletonList(new ErrorMessage(Severity.ERROR, message)));
         setSearching(false);
-        setErrors(Collections.singletonList(new ErrorMessage(Severity.ERROR, e.toString())));
     }
 
     private void setErrors(final List<ErrorMessage> errors) {

@@ -114,6 +114,31 @@ class TestBasicEmbeddedQuerySettingsPresenter {
                 .containsExactly("Query refresh interval must be greater than or equal to 10 seconds");
     }
 
+    @Test
+    void validate_unreadableRefreshInterval() {
+        // Regression test: an interval that couldn't be read was reported as a NullPointerException
+        Mockito.when(view.getRefreshInterval()).thenReturn("soon");
+
+        assertThat(presenter.validate())
+                .isFalse();
+        assertThat(alerts)
+                .extracting(alert -> alert.getMessage().asString())
+                .containsExactly("Query refresh interval must be a duration, e.g. 10s, 5m or 1h");
+    }
+
+    @Test
+    void validate_refreshIntervalTooLong() {
+        // Regression test: 25 days or more wrapped round to a negative number of milliseconds, and
+        // was refused as being under 10 seconds
+        Mockito.when(view.getRefreshInterval()).thenReturn("30d");
+
+        assertThat(presenter.validate())
+                .isFalse();
+        assertThat(alerts)
+                .extracting(alert -> alert.getMessage().asString())
+                .containsExactly("Query refresh interval must be 24 days or less");
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"10s", "1m"})
     void validate_validRefreshInterval(final String interval) {

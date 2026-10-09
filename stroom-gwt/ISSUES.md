@@ -148,12 +148,6 @@ the credentials are saved, including edits that don't change it.
 06:00) is meant to run overnight, but `ProcessorProfileCache` always takes the start from the current
 day, so the part after midnight never matches.
 
-### A blank result store duration fails when saved
-
-**Reported.** The result store's Time To Idle and Time To Live boxes can be left blank, but
-`StroomDuration.parse("")` passes a null duration to a constructor that requires one, so saving
-fails on the server (`ResultStoreSettingsViewImpl.ui.xml`).
-
 ### Index "No partition" is saved as Month
 
 **Reported.** Choosing No partition for a Lucene index saves nothing, and `LuceneIndexDoc` turns
@@ -877,6 +871,37 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   logged the exception and polled again, and only a handled result could end the search. Such a
   failure now stops polling, ends the search on its components, stops showing it as running and
   shows the error (`TestQueryModel`, `TestSearchModel`).
+* A reply to an earlier query search, arriving after a new search had started, threw a
+  `NullPointerException` (shown as an error alert) when it was the finished search's `null` reply:
+  `QueryModel` read it without the `null` check `SearchModel` has (`TestQueryModel`).
+* A table's forced new search (its re-run, e.g. after a column change) never showed why it failed:
+  it has no query key, so the failure handler's `queryKey.equals(...)` threw, and the exception was
+  only logged. Its failure is now shown as the search's error, if the search it re-ran is still
+  the current one (`TestQueryModel`, `TestSearchModel`).
+* A failed poll (e.g. the connection dropped, or the server restarted) showed its error but left
+  the search shown as running: the Query button stayed at Stop, the components were never told the
+  search had ended, and as an auto refresh is only scheduled when a search stops, an auto
+  refreshing dashboard stopped refreshing for good. It now ends the search with its error, as a
+  reply that can't be shown does (`TestQueryModel`, `TestSearchModel`).
+* A failed poll of an earlier search started the current search polling again, so it was polled
+  twice over from then on. Such a failure is now ignored (`TestQueryModel`, `TestSearchModel`).
+* Auto refresh intervals: one of 25 days or more (e.g. `30d`) wrapped round to a negative number of
+  milliseconds, so the Query and Embedded Query settings refused it as being under 10 seconds (and
+  a stored one would have waited a negative time), and one that couldn't be read was reported as a
+  `NullPointerException`. The rules are now in one place, `RefreshInterval`: the settings say an
+  interval must be a duration, at least 10 seconds and at most 24 days (the longest a browser
+  timer can wait is about 24.8 days), and a stored interval outside that is kept within it
+  (`TestRefreshInterval`, `TestBasicQuerySettingsPresenter`,
+  `TestBasicEmbeddedQuerySettingsPresenter`).
+* A search that failed, or whose results couldn't be shown, was left running on the server until
+  its idle timeout, as the client only stopped polling it. It is now stopped there too (its results
+  are kept, as when the user stops a search) (`TestQueryModel`, `TestSearchModel`).
+* A blank result store duration failed when saved (`StroomDuration.parse("")` on the server), and
+  any failed save closed the Result Store Settings dialog with nothing said and nothing changed,
+  as `ResultStoreModel.updateSettings` turned a failure into `false`. A blank duration is now
+  refused in the dialog, naming the field ("Store Time To Live must be set, e.g. 10m, 1h or 1d."),
+  and a failed save shows the server's error and keeps the dialog open
+  (`TestResultStoreSettingsPresenter`).
 * #43 (in part): a blank API key expiry made OK do nothing (`a2dc7af70c`); see
   [the remaining part](#a-blank-or-unreadable-api-key-expiry-date-gets-the-wrong-message).
 * #48: User Preferences couldn't be closed after saving them failed (OK spinning, OK and Cancel
@@ -894,10 +919,10 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   showed a blank interval, and OK on its settings failed with a raw `TypeError` and wouldn't close
   the dialog. The Query and Embedded Query settings now show `Automate.DEFAULT_REFRESH_INTERVAL` when
   none is stored, and a blank interval gets the message "A query refresh interval must be provided"
-  (`TestBasicQuerySettingsPresenter`, `TestBasicEmbeddedQuerySettingsPresenter`). Still open: until
-  its settings are saved again, such a query with Auto Refresh ticked never refreshes, as
-  `AbstractRefreshableComponentPresenter.scheduleRefresh` ignores the failure to parse a `null`
-  interval.
+  (`TestBasicQuerySettingsPresenter`, `TestBasicEmbeddedQuerySettingsPresenter`). Such a query
+  with Auto Refresh ticked now also refreshes before its settings are saved again:
+  `RefreshInterval.getMillis` uses the default for an interval that isn't set or can't be read
+  (`TestRefreshInterval`).
 * #40: OK on a new Lucene index field with a blank name left the New Field dialog with OK and Cancel
   disabled and no message: `IndexFieldEditPresenter.write()` threw a `ValidationException` that
   `IndexFieldListPresenter.onAdd()` didn't catch. `write()` now warns "An index field must have a

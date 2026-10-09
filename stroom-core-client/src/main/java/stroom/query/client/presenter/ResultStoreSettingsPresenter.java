@@ -17,10 +17,12 @@
 package stroom.query.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.query.api.LifespanInfo;
 import stroom.query.api.ResultStoreInfo;
 import stroom.query.client.presenter.ResultStoreSettingsPresenter.ResultStoreSettingsView;
 import stroom.query.shared.UpdateStoreRequest;
+import stroom.util.shared.NullSafe;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -59,13 +61,21 @@ public class ResultStoreSettingsPresenter extends MyPresenterWidget<ResultStoreS
                 .onShow(event -> getView().focus())
                 .onHideRequest(e -> {
                     if (e.isOk()) {
+                        final String notSet = getFirstDurationNotSet();
+                        if (notSet != null) {
+                            AlertEvent.fireWarn(this,
+                                    notSet + " must be set, e.g. 10m, 1h or 1d.",
+                                    e::reset);
+                            return;
+                        }
                         final UpdateStoreRequest updateStoreRequest = write();
                         try {
+                            // A failed save says why and leaves the dialog open
                             resultStoreModel.updateSettings(resultStoreInfo.getNodeName(),
                                     updateStoreRequest, r -> {
                                         consumer.accept(r);
                                         e.hide();
-                                    }, this);
+                                    }, RestErrorHandler.forPopup(this, e), this);
                         } catch (final RuntimeException ex) {
                             AlertEvent.fireError(ResultStoreSettingsPresenter.this,
                                     ex.getMessage(), e::reset);
@@ -75,6 +85,21 @@ public class ResultStoreSettingsPresenter extends MyPresenterWidget<ResultStoreS
                         e.hide();
                     }
                 }).fire();
+    }
+
+    // Every duration needs a value: the server can't read a blank one, and 'never expire' isn't
+    // something these settings offer. Returns the label of the first that is blank, or null.
+    private String getFirstDurationNotSet() {
+        if (NullSafe.isBlankString(getView().getSearchProcessTimeToIdle())) {
+            return "Search Process Time To Idle";
+        } else if (NullSafe.isBlankString(getView().getSearchProcessTimeToLive())) {
+            return "Search Process Time To Live";
+        } else if (NullSafe.isBlankString(getView().getStoreTimeToIdle())) {
+            return "Store Time To Idle";
+        } else if (NullSafe.isBlankString(getView().getStoreTimeToLive())) {
+            return "Store Time To Live";
+        }
+        return null;
     }
 
     private void read(final ResultStoreInfo resultStoreInfo) {

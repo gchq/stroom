@@ -19,6 +19,7 @@ package stroom.dashboard.client.embeddedquery;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.BasicSettingsView;
+import stroom.dashboard.client.main.RefreshInterval;
 import stroom.dashboard.shared.Automate;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.EmbeddedQueryComponentSettings;
@@ -30,7 +31,6 @@ import stroom.query.client.QueryClient;
 import stroom.query.shared.QueryDoc;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.security.shared.DocumentPermission;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 
 import com.google.gwt.user.client.ui.Focus;
@@ -45,8 +45,6 @@ import java.util.Objects;
 public class BasicEmbeddedQuerySettingsPresenter
         extends BasicSettingsTabPresenter<BasicEmbeddedQuerySettingsPresenter.BasicEmbeddedQuerySettingsView>
         implements Focus, BasicEmbeddedQuerySettingsUiHandlers {
-
-    static final int TEN_SECONDS = 10000;
 
     private final DocSelectionBoxPresenter querySelectionPresenter;
     private final Provider<DocSelectionPopup> docSelectionPopupProvider;
@@ -217,25 +215,12 @@ public class BasicEmbeddedQuerySettingsPresenter
 
     @Override
     public boolean validate() {
-        boolean valid = false;
-
-        try {
-            final String interval = getView().getRefreshInterval();
-            if (NullSafe.isBlankString(interval)) {
-                throw new NumberFormatException("A query refresh interval must be provided");
-            }
-            final int millis = ModelStringUtil.parseDurationString(interval).intValue();
-
-            if (millis < TEN_SECONDS) {
-                throw new NumberFormatException("Query refresh interval must be greater than or equal to 10 seconds");
-            }
-
-            valid = true;
-        } catch (final RuntimeException e) {
-            AlertEvent.fireError(this, e.getMessage(), null);
+        final String problem = RefreshInterval.validate(getView().getRefreshInterval());
+        if (problem != null) {
+            AlertEvent.fireError(this, problem, null);
+            return false;
         }
-
-        return valid;
+        return true;
     }
 
     @Override
