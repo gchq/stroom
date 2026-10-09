@@ -12,20 +12,20 @@ when a post-action selection state was reached under it. The rest are classified
 
 | | declared | exercised | |
 | --- | ---: | ---: | ---: |
-| **all classes** | 1546 | 734 | 47.5% |
-| **presenters** | 805 | 467 | 58.0% |
+| **all classes** | 1546 | 744 | 48.1% |
+| **presenters** | 805 | 471 | 58.5% |
 
 _66 of the exercised are joined by LABEL alone (a label one or two classes use, clicked somewhere the ledger did not attribute to the class); the rest by the ledger's attribution of the node to the class, a subclass, or a presenter that embeds it._
 
 | kind | declared | exercised | |
 | --- | ---: | ---: | ---: |
 | click | 473 | 252 | 53.3% |
-| value | 314 | 69 | 22.0% |
+| value | 314 | 70 | 22.3% |
 | command | 212 | 137 | 64.6% |
 | selection | 158 | 73 | 46.2% |
 | ok | 98 | 60 | 61.2% |
 | cancel | 98 | 79 | 80.6% |
-| key | 82 | 11 | 13.4% |
+| key | 82 | 20 | 24.4% |
 | hide | 33 | 19 | 57.6% |
 | dirty | 15 | 5 | 33.3% |
 | mousedown | 14 | 4 | 28.6% |
@@ -43,10 +43,10 @@ _66 of the exercised are joined by LABEL alone (a label one or two classes use, 
 | why | handlers | meaning |
 | --- | ---: | --- |
 | `unreached` | 250 | labelled, in a presenter, and never clicked on a node attributed to it |
-| `needs-value` | 245 | a value must be typed or chosen (B3) |
+| `needs-value` | 244 | a value must be typed or chosen (B3) |
 | `widget` | 89 | declared in a widget class — inherited by many presenters, counted once here |
-| `needs-key` | 71 | a keyboard event (B3) |
 | `view` | 66 | declared in a ViewImpl (a @UiHandler) — joined by ui.xml label, none matched |
+| `needs-key` | 62 | a keyboard event (B3) |
 | `unlabelled` | 49 | a click handler on a receiver whose label the miner could not resolve (miner gap) |
 | `ok-blocked` | 16 | the OK writes, and the guard aborted it (B4) |
 | `needs-dirty` | 10 | an editor made dirty (B3) |
@@ -85,7 +85,6 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `QueryEditPresenter` | 4 | 0 | unreached 1, needs-value 3 |
 | `RuleSetPresenter` | 7 | 3 | needs-dirty 4 |
 | `UserPermissionReportPresenter` | 6 | 2 | unreached 3, needs-value 1 |
-| `XMLSchemaSettingsPresenter` | 4 | 0 | needs-value 1, needs-key 3 |
 | `BatchExecutionScheduleEditPresenter` | 3 | 0 | unreached 2, needs-value 1 |
 | `ScheduledProcessHistoryListPresenter` | 3 | 0 | unreached 3 |
 | `ManageGlobalPropertyEditPresenter` | 5 | 2 | unreached 2, ok-blocked 1 |
@@ -207,7 +206,7 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `AccountsListPresenter` | 4 | 3 | unreached 1 |
 | `EditAccountPresenter` | 3 | 2 | ok-blocked 1 |
 | `UserTaskManagerPresenter` | 1 | 0 | unreached 1 |
-| `VisualisationSettingsPresenter` | 3 | 2 | needs-key 1 |
+| `XMLSchemaSettingsPresenter` | 4 | 3 | needs-value 1 |
 | `EditorMenuPresenter` | 1 | 0 | unreached 1 |
 | `MenuItemPresenter` | 1 | 0 | unlabelled 1 |
 | `CurveTabLayoutPresenter` | 1 | 0 | unreached 1 |
@@ -218,13 +217,13 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 
 _Every `AlertEvent.fireWarn / fireError / fireInfo`, `ConfirmEvent.fire`, `ErrorEvent.fire` and `throw new ValidationException` with a literal message, as a template (`…` = a variable part), joined by prefix to the alert and confirm bodies the walk read. An unobserved message is a validation the walk has never provoked — the row of the matrix still to drive. Templates with under eight literal characters do not join._
 
-**66 of 276 observed (23.9%).**
+**69 of 276 observed (25.0%).**
 
 | kind | declared | observed |
 | --- | ---: | ---: |
 | error | 122 | 35 |
-| confirm | 59 | 12 |
-| warn | 51 | 18 |
+| confirm | 59 | 13 |
+| warn | 51 | 20 |
 | info | 37 | 0 |
 | error-event | 4 | 0 |
 | validation-exception | 3 | 1 |
@@ -379,7 +378,7 @@ _Every `AlertEvent.fireWarn / fireError / fireInfo`, `ConfirmEvent.fire`, `Error
 - `TaskManagerListPresenter` (error, line 655) — Unable to find feed '…'
 - `TextPresenter` (error, line 703) — No stream id
 - `UserAccessListPresenter` (error, line 140) — Error fetching user access: …
-- `UserPreferencesPresenter` (confirm, line 128) — Are you sure you want to set the current preferences as the defaults for ALL users? This will not change individual users' saved preferences.
+- `UserPreferencesPresenter` (confirm, line 129) — Are you sure you want to set the current preferences as the defaults for ALL users? This will not change individual users' saved preferences.
 - `UserSessionsListPresenter` (error, line 120) — Error fetching sessions: …
 - `VisPresenter` (error, line 499) — There was an error checking if the visualisation document has an index.html asset: …
 - `VisualisationAssetsPresenter` (error, line 339) — There was an error saving the document to a new document

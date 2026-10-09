@@ -1046,6 +1046,13 @@ reproduce them. They drive Stroom at `http://localhost:8080` (set `URL=` to chan
   the other 10 not reached; #46 at all 3). The places of #36, #37, #38, #40, #41 and #43 are in
   directed shards that r8 didn't include. Of the 37 fails marked stale (walked by an older walker),
   4 now pass and the rest weren't reached. r8 also found #48, which left a dialog open over most of
-  each shard; #48 is now fixed and round r9 re-walks it.
+  each shard; #48 is now fixed and round r9 re-walks it. (r8's #46 fails were recorded with that
+  dialog open, so they don't prove #46 on their own; `probe-ctrlenter.mjs` does.)
+* The r9 round (October 2026, the same shards plus Pipeline, with #48 fixed) passes at all 10
+  places #48 failed, and no shard had the Preferences dialog stuck open. #42 still fails at 11 of
+  the 14 places r8 reached, and at a new one (PlanB, Settings, New); #40 still fails. #46 wasn't
+  checked: without #48's dialog in the way the walker no longer visits Save Tab Session a second
+  time, and at its one visit OK can't be clicked. #40 left its New Field dialog open over the end of
+  the Lucene index shard, so PlanB, Query, Script and View were re-walked on their own (`docs-b2`).
 * The ledger (`stroom-gwt-suite/out/coverage.md`) lists every run's fails side by side, so a fix
   shows as a re-walk that passes where an older run failed, not as a fail that disappears.

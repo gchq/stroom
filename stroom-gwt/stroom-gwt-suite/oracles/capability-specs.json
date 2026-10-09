@@ -11251,7 +11251,7 @@
   {
    "presenter": "UserPreferencesPresenter",
    "expected": 2,
-   "seenCount": 177,
+   "seenCount": 185,
    "missing": [],
    "extra": [
     "Set As Default",
@@ -11396,6 +11396,14 @@
     "Rename",
     "Dependants",
     "Permissions",
+    "chose \"Vim\" \"Editor Key Bindings\"",
+    "chose \"On\" \"Editor Live Auto Completion\"",
+    "Editor Theme - Click for help",
+    "Editor Key Bindings - Click for help",
+    "Editor Live Auto Completion - Click for help",
+    "Date and Time Format - Click for help",
+    "Custom Format - Click for help",
+    "Time Zone - Click for help",
     "Escape",
     "right-click an explorer row",
     "right-click a grid row",
@@ -11435,11 +11443,12 @@
   {
    "presenter": "CurrentPasswordPresenter",
    "expected": 2,
-   "seenCount": 5,
+   "seenCount": 6,
    "missing": [],
    "extra": [
     "Show Password",
     "Ctrl+Enter",
+    "Current Password - Click for help",
     "Escape"
    ],
    "explained": 0
@@ -11459,7 +11468,7 @@
   {
    "presenter": "ContentTemplateEditPresenter",
    "expected": 0,
-   "seenCount": 31,
+   "seenCount": 32,
    "missing": [],
    "extra": [
     "Template Name - Click for help",
@@ -11487,6 +11496,7 @@
     "OK (cleared \"Processor Priority\")",
     "stepped the spinner \"Processor Priority\"",
     "stepped the spinner \"Processor Max Concurrent Tasks\"",
+    "None",
     "Escape",
     "right-click an explorer row"
    ],
@@ -11515,12 +11525,22 @@
   {
    "presenter": "ExplorerPopupPresenter",
    "expected": 2,
-   "seenCount": 7,
+   "seenCount": 17,
    "missing": [],
    "extra": [
     "drag by the caption",
     "resize by the SE handle",
     "right-click a grid row",
+    "mouseover on \"Number of slices\" spinner",
+    "mouseout on \"Number of slices\" spinner",
+    "mousedown on \"Number of slices\" spinner",
+    "mouseup on \"Number of slices\" spinner",
+    "stepped the spinner \"Number of slices\"",
+    "mouseover on \"Scroll size\" spinner",
+    "mouseout on \"Scroll size\" spinner",
+    "mousedown on \"Scroll size\" spinner",
+    "mouseup on \"Scroll size\" spinner",
+    "stepped the spinner \"Scroll size\"",
     "Ctrl+Enter",
     "right-click an explorer row"
    ],
@@ -11564,7 +11584,7 @@
   {
    "presenter": "ExpressionPresenter",
    "expected": 0,
-   "seenCount": 12,
+   "seenCount": 23,
    "missing": [],
    "extra": [
     "OK",
@@ -11572,6 +11592,17 @@
     "Close",
     "Ctrl+Enter",
     "Escape",
+    "Terminate Search",
+    "Delete Store",
+    "Store Settings",
+    "First",
+    "Backward",
+    "Forward",
+    "Last",
+    "Apply to Selection",
+    "Apply to Filtered",
+    "Enable",
+    "Refresh",
     "right-click an explorer row",
     "right-click a grid row",
     "type a row number in the pager"
@@ -11818,7 +11849,7 @@
   {
    "presenter": "CreateDocumentPresenter",
    "expected": 2,
-   "seenCount": 9,
+   "seenCount": 12,
    "missing": [],
    "extra": [
     "Close",
@@ -11826,6 +11857,9 @@
     "OK (illegal text in \"Name\")",
     "Ctrl+Enter",
     "Escape",
+    "Select the parent folder - Click for help",
+    "Name - Click for help",
+    "Permissions - Click for help",
     "OK (cleared \"Name\")",
     "right-click an explorer row"
    ],
@@ -11834,7 +11868,7 @@
   {
    "presenter": "FindAnnotationPresenter",
    "expected": 2,
-   "seenCount": 9,
+   "seenCount": 11,
    "missing": [],
    "extra": [
     "First",
@@ -11843,6 +11877,8 @@
     "Last",
     "Refresh",
     "Escape",
+    "Ctrl+Enter",
+    "Close",
     "right-click an explorer row"
    ],
    "explained": 0
@@ -11850,7 +11886,7 @@
   {
    "presenter": "SteppingFilterPresenter",
    "expected": 6,
-   "seenCount": 15,
+   "seenCount": 20,
    "missing": [
     "Has active filter(s)"
    ],
@@ -11863,6 +11899,11 @@
     "Ctrl+Enter",
     "Escape",
     "right-click a pipeline element",
+    "Minimum Severity - Click for help",
+    "Output - Click for help",
+    "Stepping Conditions - Click for help",
+    "Search type - Click for help",
+    "Condition - Click for help",
     "right-click an explorer row",
     "right-click a grid row"
    ],
@@ -12037,15 +12078,18 @@
     "mouseup on \"Part Number\" spinner",
     "stepped the spinner \"Part Number\"",
     "right-click a pipeline element",
-    "right-click an explorer row",
     "right-click the editor",
+    "Stream Id - Click for help",
+    "Part Number - Click for help",
+    "Record Number - Click for help",
+    "right-click an explorer row",
     "right-click a grid row"
    ]
   },
   {
    "presenter": "DocumentUserPermissionsEditPresenter",
    "expected": 2,
-   "seenCount": 9,
+   "seenCount": 12,
    "missing": [],
    "extra": [
     "Ctrl+Enter",
@@ -12053,6 +12097,9 @@
     "Apply To Descendants",
     "Set Document Create Permissions",
     "Escape",
+    "Document - Click for help",
+    "User - Click for help",
+    "Permission - Click for help",
     "right-click an explorer row",
     "right-click a grid row"
    ],
@@ -12120,7 +12167,7 @@
   {
    "presenter": "GitRepoPresenter",
    "expected": 2,
-   "seenCount": 34,
+   "seenCount": 35,
    "missing": [],
    "extra": [
     "typed \"Git repository URL\"",
@@ -12153,14 +12200,15 @@
     "Effective Permission",
     "typed in the editor \"Documentation\"",
     "OK",
-    "Cancel"
+    "Cancel",
+    "Content Pack Name - Click for help"
    ],
    "explained": 1
   },
   {
    "presenter": "HttpClientConfigPresenter",
    "expected": 2,
-   "seenCount": 45,
+   "seenCount": 47,
    "missing": [],
    "extra": [
     "Timeout - Click for help",
@@ -12205,7 +12253,9 @@
     "stepped the spinner \"Timeout\"",
     "stepped the spinner \"Connection Timeout\"",
     "stepped the spinner \"Maximum context window tokens\"",
-    "stepped the spinner \"Embedding model dimensions\""
+    "stepped the spinner \"Embedding model dimensions\"",
+    "Cookies Enabled - Click for help",
+    "Follow Redirects - Click for help"
    ],
    "explained": 0
   },
@@ -12247,7 +12297,7 @@
   {
    "presenter": "ProcessChoicePresenter",
    "expected": 2,
-   "seenCount": 12,
+   "seenCount": 20,
    "missing": [],
    "extra": [
     "Escape",
@@ -12258,6 +12308,14 @@
     "mousedown on \"Priority of new filters (unless auto)\" spinner",
     "mouseup on \"Priority of new filters (unless auto)\" spinner",
     "stepped the spinner \"Priority of new filters (unless auto)\"",
+    "mouseover on \"Priority\" spinner",
+    "mouseout on \"Priority\" spinner",
+    "mousedown on \"Priority\" spinner",
+    "mouseup on \"Priority\" spinner",
+    "stepped the spinner \"Priority\"",
+    "Priority - Click for help",
+    "Min Create Time - Click for help",
+    "Max Create Time - Click for help",
     "right-click an explorer row",
     "right-click a grid row"
    ],
@@ -12355,7 +12413,7 @@
   {
    "presenter": "QueryDocPresenter",
    "expected": 2,
-   "seenCount": 38,
+   "seenCount": 39,
    "missing": [],
    "extra": [
     "First",
@@ -12380,6 +12438,8 @@
     "Annotate",
     "Edit Permissions For Selected User",
     "typed in the editor \"Query\"",
+    "right-click the editor",
+    "Time range to apply to all queries in this dashboard. The selected time range applies to the time field applicable to each query's data source.",
     "typed in the editor \"Documentation\"",
     "Edit",
     "chose \"Show Effective\" \"Permission Visibility\"",
@@ -12391,8 +12451,7 @@
     "Effective Permission",
     "OK",
     "Cancel",
-    "right-click an explorer row",
-    "right-click the editor"
+    "right-click an explorer row"
    ],
    "explained": 1
   },
@@ -12409,7 +12468,7 @@
   {
    "presenter": "EditAccountPresenter",
    "expected": 2,
-   "seenCount": 15,
+   "seenCount": 28,
    "missing": [],
    "extra": [
     "Escape",
@@ -12424,21 +12483,35 @@
     "Reactivate",
     "Change Password",
     "OK (cleared \"User Id\")",
-    "Hide Password"
+    "Hide Password",
+    "User ID - Click for help",
+    "Email - Click for help",
+    "First Name - Click for help",
+    "Last Name - Click for help",
+    "Comments - Click for help",
+    "Never Deactivate When Unused - Click for help",
+    "Password - Click for help",
+    "Confirm Password - Click for help",
+    "OK (illegal id in \"User ID\")",
+    "Enabled - Click for help",
+    "Sign-in lock - Click for help",
+    "Activity - Click for help",
+    "OK (cleared \"User ID\")"
    ],
    "explained": 0
   },
   {
    "presenter": "CreateUserPresenter",
    "expected": 2,
-   "seenCount": 7,
+   "seenCount": 8,
    "missing": [],
    "extra": [
     "Escape",
     "Enter",
     "OK (illegal text in \"Name\")",
     "Ctrl+Enter",
-    "Close"
+    "Close",
+    "Name - Click for help"
    ],
    "explained": 0
   },
@@ -12546,13 +12619,15 @@
   {
    "presenter": "VisualisationAssetsUploadFileDialogPresenter",
    "expected": 2,
-   "seenCount": 6,
+   "seenCount": 8,
    "missing": [],
    "extra": [
     "Escape",
     "Choose File",
     "Ctrl+Enter",
-    "Close"
+    "Close",
+    "Upload to - Click for help",
+    "File - Click for help"
    ],
    "explained": 0
   },
@@ -12735,11 +12810,19 @@
   {
    "presenter": "BatchExecutionScheduleEditPresenter",
    "expected": 1,
-   "seenCount": 3,
+   "seenCount": 11,
    "missing": [],
    "extra": [
     "Apply to Selection",
-    "Apply to Filtered"
+    "Apply to Filtered",
+    "None",
+    "Schedule Name - Click for help",
+    "Enabled - Click for help",
+    "Processing Node - Click for help",
+    "Schedule (Cron) - Click for help",
+    "Start Time - Click for help",
+    "End Time (Optional) - Click for help",
+    "Run As User - Click for help"
    ],
    "explained": 0
   },
@@ -12791,7 +12874,7 @@
   {
    "presenter": "AnalyticRulePresenter",
    "expected": 2,
-   "seenCount": 75,
+   "seenCount": 76,
    "missing": [],
    "extra": [
     "First",
@@ -12865,7 +12948,8 @@
     "Enable Transparency - Click for help",
     "Hide Conditional Styles - Click for help",
     "Set As Default",
-    "Revert To Default"
+    "Revert To Default",
+    "XML_FILTERING_ANALYTIC"
    ],
    "explained": 1
   },
@@ -12888,6 +12972,16 @@
     "OK (illegal number in \"Maximum Notifications\")",
     "stepped the spinner \"Maximum Notifications\"",
     "stepped the spinner \"Resume Notifications After\"",
+    "Destination Type - Click for help",
+    "Destination Feed - Click for help",
+    "None",
+    "Set as the default destination feed for all users",
+    "Close",
+    "Use Source Feed If Possible (Streaming Only) - Click for help",
+    "Enabled - Click for help",
+    "Limit Notifications - Click for help",
+    "Maximum Notifications - Click for help",
+    "Resume Notifications After - Click for help",
     "right-click an explorer row",
     "right-click a grid row"
    ]
@@ -13026,7 +13120,7 @@
   {
    "presenter": "FeedPresenter",
    "expected": 2,
-   "seenCount": 62,
+   "seenCount": 63,
    "missing": [],
    "extra": [
     "First",
@@ -13079,6 +13173,7 @@
     "Enter",
     "OK",
     "Cancel",
+    "View Source",
     "right-click an explorer row",
     "right-click a grid row",
     "right-click the editor"
@@ -13088,7 +13183,7 @@
   {
    "presenter": "DataUploadPresenter",
    "expected": 2,
-   "seenCount": 9,
+   "seenCount": 13,
    "missing": [],
    "extra": [
     "Choose File",
@@ -13096,6 +13191,10 @@
     "Ctrl+Enter",
     "Close",
     "OK (illegal time in \"Effective Date\")",
+    "Meta Data - Click for help",
+    "Type - Click for help",
+    "Effective Date - Click for help",
+    "File - Click for help",
     "right-click an explorer row",
     "right-click a grid row"
    ],
@@ -13173,7 +13272,7 @@
   {
    "presenter": "ElasticClusterPresenter",
    "expected": 2,
-   "seenCount": 15,
+   "seenCount": 23,
    "missing": [],
    "extra": [
     "Edit Permissions For Selected User",
@@ -13188,7 +13287,15 @@
     "typed \"Connection timeout (ms)\"",
     "typed \"Response timeout (ms)\"",
     "OK",
-    "Cancel"
+    "Cancel",
+    "Enter",
+    "Connection URLs - Click for help",
+    "CA certificate (PEM format) - Click for help",
+    "Use authentication - Click for help",
+    "API key ID - Click for help",
+    "API key secret - Click for help",
+    "Connection timeout (ms) - Click for help",
+    "Response timeout (ms) - Click for help"
    ],
    "explained": 0
   },
@@ -13248,7 +13355,7 @@
   {
    "presenter": "TextConverterPresenter",
    "expected": 2,
-   "seenCount": 31,
+   "seenCount": 32,
    "missing": [],
    "extra": [
     "Edit Permissions For Selected User",
@@ -13278,7 +13385,8 @@
     "Enable Transparency - Click for help",
     "Hide Conditional Styles - Click for help",
     "Set As Default",
-    "Revert To Default"
+    "Revert To Default",
+    "Converter Type - Click for help"
    ],
    "explained": 1
   },
@@ -13312,7 +13420,7 @@
   {
    "presenter": "ElasticIndexPresenter",
    "expected": 2,
-   "seenCount": 35,
+   "seenCount": 49,
    "missing": [],
    "extra": [
     "First",
@@ -13346,14 +13454,28 @@
     "Explicit Permission",
     "Effective Permission",
     "OK",
-    "Cancel"
+    "Cancel",
+    "Enter",
+    "typed \"Minimum Rerank Score\"",
+    "Cluster configuration - Click for help",
+    "None",
+    "Index name or pattern - Click for help",
+    "Main date field - Click for help",
+    "Number of slices - Click for help",
+    "Scroll size - Click for help",
+    "Default extraction pipeline - Click for help",
+    "Vector generation model - Click for help",
+    "Rerank model - Click for help",
+    "Rerank text field suffix - Click for help",
+    "Rerank score field suffix - Click for help",
+    "Minimum Rerank Score - Click for help"
    ],
    "explained": 1
   },
   {
    "presenter": "SolrIndexPresenter",
    "expected": 2,
-   "seenCount": 27,
+   "seenCount": 40,
    "missing": [],
    "extra": [
     "Edit Field",
@@ -13378,14 +13500,27 @@
     "Add Operator",
     "typed in the editor \"Documentation\"",
     "OK",
-    "Cancel"
+    "Cancel",
+    "Enter",
+    "typed \"ZooKeeper Hosts\"",
+    "typed \"ZooKeeper Path\"",
+    "Collection - Click for help",
+    "Instance Type - Click for help",
+    "Solr URLs - Click for help",
+    "Use ZK - Click for help",
+    "ZooKeeper Hosts - Click for help",
+    "ZooKeeper Path - Click for help",
+    "Main Time Field Name - Click for help",
+    "Default Extraction Pipeline - Click for help",
+    "None",
+    "Data Retention Expression (matching data will be deleted) - Click for help"
    ],
    "explained": 2
   },
   {
    "presenter": "VisualisationPresenter",
    "expected": 2,
-   "seenCount": 25,
+   "seenCount": 30,
    "missing": [],
    "extra": [
     "Revert changes",
@@ -13409,14 +13544,19 @@
     "Explicit Permission",
     "Effective Permission",
     "OK",
-    "Cancel"
+    "Cancel",
+    "Enter",
+    "Function Name - Click for help",
+    "Script - Click for help",
+    "None",
+    "Settings - Click for help"
    ],
    "explained": 1
   },
   {
    "presenter": "XMLSchemaPresenter",
    "expected": 3,
-   "seenCount": 25,
+   "seenCount": 30,
    "missing": [
     "Alert"
    ],
@@ -13442,6 +13582,11 @@
     "Effective Permission",
     "OK",
     "Cancel",
+    "Enter",
+    "Namespace URI - Click for help",
+    "System Id - Click for help",
+    "Schema Group - Click for help",
+    "Deprecated - Click for help",
     "type in \"Namespace URI\""
    ],
    "explained": 1
@@ -13449,7 +13594,7 @@
   {
    "presenter": "StatisticsDataSourcePresenter",
    "expected": 2,
-   "seenCount": 28,
+   "seenCount": 32,
    "missing": [],
    "extra": [
     "Edit Field",
@@ -13474,14 +13619,18 @@
     "Explicit Permission",
     "Effective Permission",
     "OK",
-    "Cancel"
+    "Cancel",
+    "Statistic Type - Click for help",
+    "Precision - Click for help",
+    "Roll Up Type - Click for help",
+    "Enabled - Click for help"
    ],
    "explained": 3
   },
   {
    "presenter": "PipelinePresenter",
    "expected": 2,
-   "seenCount": 65,
+   "seenCount": 72,
    "missing": [],
    "extra": [
     "First",
@@ -13536,14 +13685,21 @@
     "Hide Conditional Styles - Click for help",
     "Set As Default",
     "Revert To Default",
-    "right-click the editor"
+    "right-click the editor",
+    "Indexing",
+    "mouseover on \"Max Processing Tasks\" spinner",
+    "mouseout on \"Max Processing Tasks\" spinner",
+    "mousedown on \"Max Processing Tasks\" spinner",
+    "mouseup on \"Max Processing Tasks\" spinner",
+    "stepped the spinner \"Max Processing Tasks\"",
+    "mousedown on \"Max Task Creation Delay\" spinner"
    ],
    "explained": 10
   },
   {
    "presenter": "ProcessorEditPresenter",
    "expected": 2,
-   "seenCount": 35,
+   "seenCount": 45,
    "missing": [],
    "extra": [
     "Remove Reference",
@@ -13573,15 +13729,151 @@
     "Enable Maximum Processing Delay - Click for help",
     "Maximum Processing Delay - Click for help",
     "Ctrl+Enter",
+    "Expression - Click for help",
+    "Min Create Time - Click for help",
+    "Max Create Time - Click for help",
+    "Include in Export - Click for help",
+    "Run As User - Click for help",
+    "admin",
+    "/",
+    "Display Name 1",
+    "Full Name",
+    "Click for help",
     "Enter",
     "right-click a grid row"
    ],
    "explained": 4
   },
   {
+   "presenter": "PlanBPresenter",
+   "expected": 2,
+   "seenCount": 62,
+   "missing": [],
+   "extra": [
+    "Edit Permissions For Selected User",
+    "First",
+    "Backward",
+    "Forward",
+    "Last",
+    "chose \"State\" \"State Type\"",
+    "typed \"Max Store Size\"",
+    "Enter",
+    "chose \"Boolean\" \"Retain For\"",
+    "chose \"Boolean\" \"Key Type\"",
+    "mousedown on \"Retain For\" spinner",
+    "right-click an explorer row",
+    "State Type - Click for help",
+    "Max Store Size - Click for help",
+    "Synchronise Data Merges On Write - Click for help",
+    "Overwrite Existing Data - Click for help",
+    "Use Snapshots For Lookup - Click for help",
+    "Use Snapshots For Get - Click for help",
+    "Use Snapshots For Query - Click for help",
+    "Enabled - Click for help",
+    "Condense Age - Click for help",
+    "Retain For - Click for help",
+    "Use State Time - Click for help",
+    "Key Type - Click for help",
+    "Hash Length - Click for help",
+    "Temporal Precision - Click for help",
+    "State Value Type - Click for help",
+    "typed in the editor \"Documentation\"",
+    "right-click the editor",
+    "Edit",
+    "chose \"Show Effective\" \"Permission Visibility\"",
+    "Permission Visibility - Click for help",
+    "Users and Groups - Click for help",
+    "Refresh",
+    "/",
+    "Display Name 1",
+    "Explicit Permission",
+    "Effective Permission",
+    "ticked \"Synchronise Data Merges On Write\"",
+    "ticked \"Overwrite Existing Data\"",
+    "ticked \"Use Snapshots For Lookup\"",
+    "ticked \"Use Snapshots For Get\"",
+    "ticked \"Use Snapshots For Query\"",
+    "ticked \"Enabled\"",
+    "chose \"Days\" \"Condense Age\"",
+    "ticked \"Use State Time\"",
+    "mouseover on \"Retain For\" spinner",
+    "mouseout on \"Retain For\" spinner",
+    "mouseup on \"Retain For\" spinner",
+    "stepped the spinner \"Retain For\"",
+    "OK",
+    "Cancel",
+    "Type - Click for help",
+    "Name - Click for help",
+    "Stored - Click for help",
+    "Indexed - Click for help",
+    "Positions - Click for help",
+    "Analyser - Click for help",
+    "Case Sensitive - Click for help"
+   ],
+   "explained": 1
+  },
+  {
+   "presenter": "ScriptPresenter",
+   "expected": 2,
+   "seenCount": 26,
+   "missing": [],
+   "extra": [
+    "Remove Dependency",
+    "First",
+    "Backward",
+    "Forward",
+    "Last",
+    "Edit Permissions For Selected User",
+    "typed in the editor \"Script\"",
+    "right-click the editor",
+    "Dependencies - Click for help",
+    "Add Dependency",
+    "Refresh",
+    "Edit",
+    "chose \"Show Effective\" \"Permission Visibility\"",
+    "Permission Visibility - Click for help",
+    "Users and Groups - Click for help",
+    "/",
+    "Display Name 1",
+    "Explicit Permission",
+    "Effective Permission",
+    "OK",
+    "Cancel",
+    "right-click a grid row",
+    "right-click an explorer row"
+   ],
+   "explained": 1
+  },
+  {
+   "presenter": "ViewPresenter",
+   "expected": 2,
+   "seenCount": 20,
+   "missing": [],
+   "extra": [
+    "Copy",
+    "Disable",
+    "Edit Permissions For Selected User",
+    "First",
+    "Backward",
+    "Forward",
+    "Last",
+    "Data Source - Click for help",
+    "Example Index",
+    "Pipeline - Click for help",
+    "Meta Filter - Click for help",
+    "Add Term",
+    "Add Operator",
+    "Edit",
+    "OK",
+    "Cancel",
+    "right-click an explorer row"
+   ],
+   "explained": 1
+  },
+  {
    "presenter": "ReportPresenter",
    "expected": 2,
-   "seenCount": 71,
+   "seenCount": 74,
    "missing": [],
    "extra": [
     "First",
@@ -13651,6 +13943,9 @@
     "Hide Conditional Styles - Click for help",
     "Set As Default",
     "Revert To Default",
+    "File Type - Click for help",
+    "None",
+    "XML_FILTERING_ANALYTIC",
     "right-click a grid row"
    ],
    "explained": 1
@@ -13694,7 +13989,7 @@
   {
    "presenter": "IndexPresenter",
    "expected": 2,
-   "seenCount": 56,
+   "seenCount": 63,
    "missing": [],
    "extra": [
     "Delete Selected Shards",
@@ -13745,123 +14040,18 @@
     "Enter",
     "OK",
     "Cancel",
+    "Type - Click for help",
+    "Name - Click for help",
+    "Stored - Click for help",
+    "Indexed - Click for help",
+    "Positions - Click for help",
+    "Analyser - Click for help",
+    "Case Sensitive - Click for help",
     "typed \"Max Docs Per Shard\"",
     "right-click an explorer row",
     "right-click a grid row"
    ],
    "explained": 3
-  },
-  {
-   "presenter": "PlanBPresenter",
-   "expected": 2,
-   "seenCount": 53,
-   "missing": [],
-   "extra": [
-    "Edit Permissions For Selected User",
-    "First",
-    "Backward",
-    "Forward",
-    "Last",
-    "chose \"State\" \"State Type\"",
-    "typed \"Max Store Size\"",
-    "ticked \"Synchronise Data Merges On Write\"",
-    "ticked \"Overwrite Existing Data\"",
-    "ticked \"Use Snapshots For Lookup\"",
-    "ticked \"Use Snapshots For Get\"",
-    "ticked \"Use Snapshots For Query\"",
-    "ticked \"Enabled\"",
-    "chose \"Days\" \"Condense Age\"",
-    "chose \"Boolean\" \"Retain For\"",
-    "ticked \"Use State Time\"",
-    "mouseover on \"Retain For\" spinner",
-    "mouseout on \"Retain For\" spinner",
-    "mousedown on \"Retain For\" spinner",
-    "mouseup on \"Retain For\" spinner",
-    "stepped the spinner \"Retain For\"",
-    "State Type - Click for help",
-    "Max Store Size - Click for help",
-    "Synchronise Data Merges On Write - Click for help",
-    "Overwrite Existing Data - Click for help",
-    "Use Snapshots For Lookup - Click for help",
-    "Use Snapshots For Get - Click for help",
-    "Use Snapshots For Query - Click for help",
-    "Enabled - Click for help",
-    "Condense Age - Click for help",
-    "Retain For - Click for help",
-    "Use State Time - Click for help",
-    "Key Type - Click for help",
-    "Hash Length - Click for help",
-    "Temporal Precision - Click for help",
-    "State Value Type - Click for help",
-    "typed in the editor \"Documentation\"",
-    "Edit",
-    "chose \"Show Effective\" \"Permission Visibility\"",
-    "Permission Visibility - Click for help",
-    "Users and Groups - Click for help",
-    "Refresh",
-    "/",
-    "Display Name 1",
-    "Explicit Permission",
-    "Effective Permission",
-    "Enter",
-    "OK",
-    "Cancel",
-    "right-click an explorer row"
-   ],
-   "explained": 1
-  },
-  {
-   "presenter": "ScriptPresenter",
-   "expected": 2,
-   "seenCount": 25,
-   "missing": [],
-   "extra": [
-    "Remove Dependency",
-    "First",
-    "Backward",
-    "Forward",
-    "Last",
-    "Edit Permissions For Selected User",
-    "typed in the editor \"Script\"",
-    "Add Dependency",
-    "Refresh",
-    "Edit",
-    "chose \"Show Effective\" \"Permission Visibility\"",
-    "Permission Visibility - Click for help",
-    "Users and Groups - Click for help",
-    "/",
-    "Display Name 1",
-    "Explicit Permission",
-    "Effective Permission",
-    "OK",
-    "Cancel",
-    "right-click the editor",
-    "right-click a grid row",
-    "right-click an explorer row"
-   ],
-   "explained": 1
-  },
-  {
-   "presenter": "ViewPresenter",
-   "expected": 2,
-   "seenCount": 16,
-   "missing": [],
-   "extra": [
-    "Copy",
-    "Disable",
-    "Edit Permissions For Selected User",
-    "First",
-    "Backward",
-    "Forward",
-    "Last",
-    "Add Term",
-    "Add Operator",
-    "Edit",
-    "OK",
-    "Cancel",
-    "right-click an explorer row"
-   ],
-   "explained": 1
   },
   {
    "presenter": "BrowseAnnotationPresenter",
@@ -13918,7 +14108,7 @@
   {
    "presenter": "CredentialEditPresenter",
    "expected": 2,
-   "seenCount": 29,
+   "seenCount": 31,
    "missing": [],
    "extra": [
     "Name - Click for help",
@@ -13947,7 +14137,9 @@
     "ticked \"Credentials expire\"",
     "typed \"User Name\"",
     "chose \"Show Effective\" \"Permission Visibility\"",
-    "Enter"
+    "Enter",
+    "chose \"Access Token\" \"Type\"",
+    "Expires - Click for help"
    ],
    "explained": 0
   },
