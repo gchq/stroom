@@ -128,7 +128,6 @@ main() {
   echo -e "${GREEN}Run Java compile${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
-    --info \
     --scan \
     --stacktrace \
     -PdumpFailedTestXml=true \
@@ -189,7 +188,6 @@ main() {
   echo -e "${GREEN}Do the GWT UI build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
-    --info \
     --scan \
     --stacktrace \
     "${GWT_ARGS[@]}" \
@@ -200,7 +198,6 @@ main() {
   echo -e "${GREEN}Do the dashboard GWT UI build${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
-    --info \
     --scan \
     --stacktrace \
     "${GWT_ARGS[@]}" \
@@ -214,7 +211,6 @@ main() {
     "${BLUE}${BUILD_VERSION:-SNAPSHOT}${NC}"
   ./gradlew \
     "${GRADLE_ARGS[@]}" \
-    --info \
     --scan \
     --stacktrace \
     -PdumpFailedTestXml=true \
