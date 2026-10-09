@@ -227,20 +227,6 @@ public static AnalyticRuleStatus fromJson(final String value) {
 
 * `stroom-core-shared/src/main/java/stroom/analytics/shared/AnalyticRuleStatus.java`
 
-### An empty expression operator fails on the client
-
-**Partly fixed.** (gwt-bugs #37) `ExpressionOperator.Builder.build()` leaves `children` as `null`
-when nothing was added. Filter Schedules then OK, with nothing added, used to fail with
-`(TypeError) : Cannot read properties of null` from `ExecutionScheduleManager.formatISOExpressions`.
-`e8920d6c87` fixed that one with `NullSafe.list(...)`.
-
-**Confirmed** for the other place it can happen: `DashboardContextImpl` (line 333) does
-`new ArrayList<>(operator.getChildren().size())` before its `NullSafe.hasItems` check on the next
-line, so an empty operator reaching `replaceComponentSelection` would fail the same way (not seen at
-run time). Fix: size the list after the check, or use `NullSafe.list`.
-
-* `stroom-core-client/src/main/java/stroom/dashboard/client/main/DashboardContextImpl.java` (line 333)
-
 ### A name with `/` in it can't be used for volume groups, node groups or processor profiles
 
 **Reproduced.** (gwt-bugs #42) Administration, Data Volumes, New, then `A/B volumes` and OK, shows
@@ -929,8 +915,12 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
 * #30: dashboard design mode was neither defaulted for a new dashboard nor saved.
 * #31: six document types couldn't be created, and no processing user could write a document.
 * #32: `ContentStoreCredentialsDialogPresenter` was bound but nothing opened it.
-* #37 (in part): Filter Schedules with an empty expression (`e8920d6c87`); see
-  [the remaining part](#an-empty-expression-operator-fails-on-the-client).
+* #37: an empty expression operator (nothing added) has `null` children, which failed on the client.
+  Filter Schedules then OK failed in `ExecutionScheduleManager.formatISOExpressions`, fixed with
+  `NullSafe.list(...)` (`e8920d6c87`). The other place reported, `DashboardContextImpl`
+  (`getChildren().size()`), was already safe: `replaceComponentSelection` returns early for an
+  operator with `null` or no children (since `155636d99d`); `TestDashboardContextImpl` now guards
+  it. No other client code dereferences an operator's children unchecked.
 * #43 (in part): a blank API key expiry made OK do nothing (`a2dc7af70c`); see
   [the remaining part](#a-blank-or-unreadable-api-key-expiry-date-gets-the-wrong-message).
 * #48: User Preferences couldn't be closed after saving them failed (OK spinning, OK and Cancel
