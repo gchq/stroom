@@ -142,4 +142,36 @@ class TestFloorMapPlaybackRange {
         assertThat(FloorMapPlaybackRange.clampInto(HOUR, 2 * HOUR, 10 * HOUR))
                 .isEqualTo(2 * HOUR);
     }
+
+    /// Regression: a step was the range divided by the bar count. Bucketed bars hang over both
+    /// range edges, so that came out shorter than a bar - 30 days over 32 day-wide bars stepped
+    /// about 22.5 hours. A step is now exactly one bucket.
+    @Test
+    void testStepIsTheBucketWidthWhereKnown() {
+        assertThat(FloorMapPlaybackRange.stepMs(0, 720 * HOUR, 32, 24 * HOUR))
+                .isEqualTo(24 * HOUR);
+    }
+
+    /// The Editor tab draws no bucketed bars, so it keeps the even division it always had.
+    @Test
+    void testStepFallsBackToEvenDivisionWithoutBucketWidth() {
+        assertThat(FloorMapPlaybackRange.stepMs(0, 100 * HOUR, 100, 0))
+                .isEqualTo(HOUR);
+    }
+
+    /// A zero or negative bar count cannot divide by zero.
+    @Test
+    void testStepWithNoBarsDividesByOne() {
+        assertThat(FloorMapPlaybackRange.stepMs(0, 10 * HOUR, 0, 0))
+                .isEqualTo(10 * HOUR);
+        assertThat(FloorMapPlaybackRange.stepMs(0, 10 * HOUR, -3, 0))
+                .isEqualTo(10 * HOUR);
+    }
+
+    /// An inverted range with no bucket width steps nowhere rather than backwards.
+    @Test
+    void testStepForInvertedRangeIsZero() {
+        assertThat(FloorMapPlaybackRange.stepMs(10 * HOUR, 0, 10, 0))
+                .isZero();
+    }
 }

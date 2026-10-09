@@ -84,6 +84,8 @@ public class HistogramWidget extends Composite {
     private final Canvas canvas;
     private final Label tooltip;
     private int[] bins;
+    // Where each bin belongs across the widget; never null once data has been set.
+    private HistogramLayout layout = HistogramLayout.even(1);
 
     // Called when the user clicks, with the fractional position [0..1]
     private Consumer<Double> clickHandler;
@@ -133,9 +135,23 @@ public class HistogramWidget extends Composite {
     // Public API
     // -----------------------------------------------------------------------
 
-    /** Sets the bin data and triggers a redraw. */
+    /** Sets the bin data, drawn as an even division of the width, and triggers a redraw. */
     public void setData(final int[] binCounts) {
+        setData(binCounts, null);
+    }
+
+    /// Sets the bin data and where each bin belongs across the widget, and triggers a redraw.
+    ///
+    /// Bucketed counts need the layout: their first and last bins hang over the edges of the
+    /// visible range, so an even division of the width draws every bar away from its own time.
+    ///
+    /// @param binCounts the count in each bin
+    /// @param layout    where each bin belongs, or `null` for an even division of the width
+    public void setData(final int[] binCounts, final HistogramLayout layout) {
         this.bins = binCounts;
+        this.layout = layout != null
+                ? layout
+                : HistogramLayout.even(binCounts == null ? 1 : binCounts.length);
         updateTextAlternative();
         Scheduler.get().scheduleDeferred(this::draw);
     }
@@ -248,9 +264,9 @@ public class HistogramWidget extends Composite {
 
         // Midpoint of the peak bin, so a single-bin histogram reads as 50% rather
         // than 0% — the bar spans the whole width, and its left edge is not where
-        // the events are.
-        final int peakPct = (int) Math.round(
-                ((peakIndex + 0.5) / bins.length) * 100.0);
+        // the events are. Clamped because an edge bin can hang over the range.
+        final double peakMid = (layout.barStart(peakIndex) + layout.barEnd(peakIndex)) / 2;
+        final int peakPct = (int) Math.round(Math.max(0, Math.min(1, peakMid)) * 100.0);
 
         return "Event distribution over time: " + total + " events in "
                 + bins.length + " intervals, busiest interval has " + max
@@ -301,7 +317,6 @@ public class HistogramWidget extends Composite {
 
         // ---- Draw histogram bars ----
         final int n = bins.length;
-        final double barW = (double) width / n;
 
         // Resolved once per draw rather than per bar: reading a computed style
         // forces the browser to flush pending style work, so doing it inside the
@@ -314,12 +329,18 @@ public class HistogramWidget extends Composite {
             if (barH < 1) {
                 continue;
             }
-            final double x = i * barW;
+            // Placed by the layout and clipped to the canvas: the first and last bars can hang
+            // over the edges of the visible range.
+            final double x = Math.max(0, layout.barStart(i) * width);
+            final double right = Math.min(width, layout.barEnd(i) * width);
+            if (right <= x) {
+                continue;
+            }
             final double y = HEIGHT_PX - barH;
 
             // Use a brighter colour for the peak bin.
             ctx.setFillStyle(bins[i] == max ? peakFill : barFill);
-            ctx.fillRect(x, y, Math.max(1, barW - 1), barH);
+            ctx.fillRect(x, y, Math.max(1, right - x - 1), barH);
         }
 
         // ---- Draw tick marks at regular intervals ----
@@ -327,8 +348,10 @@ public class HistogramWidget extends Composite {
         final int tickInterval = tickInterval(n);
         ctx.setFillStyle(TICK_COLOUR);
         for (int i = tickInterval; i < n; i += tickInterval) {
-            final double x = i * barW;
-            ctx.fillRect(x, 0, 1, HEIGHT_PX);
+            final double x = layout.barStart(i) * width;
+            if (x > 0 && x < width) {
+                ctx.fillRect(x, 0, 1, HEIGHT_PX);
+            }
         }
     }
 
@@ -361,9 +384,7 @@ public class HistogramWidget extends Composite {
             return;
         }
         final int relX = event.getX();
-        final int binIndex = (int) Math.min(
-                bins.length - 1,
-                Math.max(0, (relX / (double) containerWidth) * bins.length));
+        final int binIndex = layout.barAt(relX / (double) containerWidth, bins.length);
         final int count = bins[binIndex];
 
         tooltip.setText(count + " event" + (count == 1 ? "" : "s"));

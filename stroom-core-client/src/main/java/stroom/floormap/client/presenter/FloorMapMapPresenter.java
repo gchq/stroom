@@ -61,6 +61,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.histogram.client.HistogramDataModel;
+import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.histogram.client.HistogramQueryHelper;
 
 import com.google.gwt.user.client.Timer;
@@ -1647,8 +1648,9 @@ public class FloorMapMapPresenter
     /// extent answer did not know about.
     ///
     /// @param binCounts the event count in each bar
-    private void applyHistogramData(final int[] binCounts) {
-        floorMapTimelinePresenter.setHistogramData(binCounts);
+    /// @param layout    where each bar belongs across the range the counts were taken over
+    private void applyHistogramData(final int[] binCounts, final HistogramLayout layout) {
+        floorMapTimelinePresenter.setHistogramData(binCounts, layout);
         if (hasAnyCount(binCounts)) {
             runExtentQueryIfUnknown();
         }

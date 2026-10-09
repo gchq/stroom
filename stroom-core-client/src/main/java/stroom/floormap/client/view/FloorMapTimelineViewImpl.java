@@ -20,6 +20,7 @@ import stroom.floormap.client.presenter.FloorMapTimelinePresenter.FloorMapTimeli
 import stroom.floormap.client.presenter.FloorMapTimelinePresenter.OutOfRange;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.SvgButton;
+import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.histogram.client.HistogramWidget;
 
 import com.google.gwt.dom.client.Element;
@@ -413,9 +414,9 @@ public class FloorMapTimelineViewImpl extends ViewImpl implements FloorMapTimeli
     }
 
     @Override
-    public void setHistogramData(final int[] binCounts) {
+    public void setHistogramData(final int[] binCounts, final HistogramLayout layout) {
         if (histogramWidget != null) {
-            histogramWidget.setData(binCounts);
+            histogramWidget.setData(binCounts, layout);
         }
     }
 

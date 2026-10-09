@@ -21,7 +21,7 @@ import stroom.query.api.TableResult;
 import stroom.widget.datepicker.client.UTCDate;
 
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 /**
  * Buckets {@link TableResult} timestamps into a fixed number of histogram bins.
@@ -36,8 +36,8 @@ public class HistogramDataModel {
     private long rangeStart;
     private long rangeEnd;
 
-    /** Called when bin data is ready. */
-    private Consumer<int[]> dataHandler;
+    /** Called when bin data is ready, with where each bin belongs across the visible range. */
+    private BiConsumer<int[], HistogramLayout> dataHandler;
 
     /**
      * Creates a new histogram data model with the given number of bins.
@@ -59,7 +59,13 @@ public class HistogramDataModel {
         this.rangeEnd = end;
     }
 
-    public void setDataHandler(final Consumer<int[]> handler) {
+    /// Sets the handler called with each set of bin counts.
+    ///
+    /// The layout travels with the counts because the bins are bucket-aligned rather than an even
+    /// division of the visible range, and only this model knows the range the counts were taken over.
+    ///
+    /// @param handler receives the counts and their layout, or `null` to remove it
+    public void setDataHandler(final BiConsumer<int[], HistogramLayout> handler) {
         this.dataHandler = handler;
     }
 
@@ -82,9 +88,11 @@ public class HistogramDataModel {
      * its own unbounded query instead.</p>
      *
      * <p>Bins are sized to the given width, so one bin is one bucket and no
-     * redistribution is needed. A bucket outside the visible range is skipped rather than clamped to
-     * an edge bin: clamping would pile activity from outside the range onto the first and last
-     * bars.</p>
+     * redistribution is needed. They start at the bucket boundary at or before the range start, not at
+     * the range start itself, so they are handed on with a {@link HistogramLayout} saying where each
+     * one belongs; drawing them as an even division of the range shifts every bar off its own time.
+     * A bucket outside the visible range is skipped rather than clamped to an edge bin: clamping
+     * would pile activity from outside the range onto the first and last bars.</p>
      *
      * @param tableResult  the grouped result; a null or empty one yields empty bins
      * @param bucketWidthMs the width each row covers, which must match the width the query grouped
@@ -95,15 +103,16 @@ public class HistogramDataModel {
         final long range = rangeEnd - rangeStart;
         if (bucketWidthMs <= 0 || range <= 0) {
             final int[] empty = new int[binCount];
-            notifyDataHandler(empty);
+            notifyDataHandler(empty, HistogramLayout.even(empty.length));
             return empty;
         }
 
         final long firstBucket = floorTo(rangeStart, bucketWidthMs);
         final int[] counts = new int[binCountFor(rangeStart, rangeEnd, bucketWidthMs)];
+        final HistogramLayout layout = HistogramLayout.forBuckets(rangeStart, rangeEnd, bucketWidthMs);
 
         if (tableResult == null || tableResult.getRows() == null) {
-            notifyDataHandler(counts);
+            notifyDataHandler(counts, layout);
             return counts;
         }
 
@@ -123,7 +132,7 @@ public class HistogramDataModel {
             }
         }
 
-        notifyDataHandler(counts);
+        notifyDataHandler(counts, layout);
         return counts;
     }
 
@@ -255,9 +264,9 @@ public class HistogramDataModel {
         }
     }
 
-    private void notifyDataHandler(final int[] bins) {
+    private void notifyDataHandler(final int[] bins, final HistogramLayout layout) {
         if (dataHandler != null) {
-            dataHandler.accept(bins);
+            dataHandler.accept(bins, layout);
         }
     }
 }

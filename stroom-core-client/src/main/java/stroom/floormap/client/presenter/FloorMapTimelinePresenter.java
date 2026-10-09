@@ -26,6 +26,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.help.client.HelpButton;
+import stroom.widget.histogram.client.HistogramLayout;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -93,10 +94,15 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
     private long dataRangeMax = Long.MIN_VALUE;
 
     /// Number of histogram bins, learned from the data supplied to
-    /// [#setHistogramData(int\[\])]. Used to size a single step-back/forward
-    /// to exactly one bin width. Defaults to the histogram's bin count until
-    /// data arrives.
+    /// [#setHistogramData(int\[\], HistogramLayout)]. Sizes a single step-back/forward
+    /// where no bucket width is known (see [#histogramBucketWidthMs]). Defaults to the
+    /// histogram's bin count until data arrives.
     private int histogramBinCount = 100;
+
+    /// The time one histogram bar spans, from the layout given to
+    /// [#setHistogramData(int\[\], HistogramLayout)], or `0` until bucketed bars arrive.
+    /// Where known, a step is exactly this.
+    private long histogramBucketWidthMs;
 
     /// The pending playback animation frame, or `null` when none is scheduled.
     ///
@@ -562,11 +568,11 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
         if (endTime <= startTime) {
             return;
         }
-        // Step by one histogram bin width, using the actual bin count from the
-        // rendered histogram (see histogramBinCount / setHistogramData).
-        final long duration = endTime - startTime;
-        final long stepMs = duration / histogramBinCount * bins;
-        final long newTime = Math.max(startTime, Math.min(endTime, currentTime + stepMs));
+        // Step by one histogram bar: the bucket width where the bars are bucketed, otherwise the
+        // range divided by the bar count (see setHistogramData).
+        final long stepMs = FloorMapPlaybackRange.stepMs(
+                startTime, endTime, histogramBinCount, histogramBucketWidthMs) * bins;
+        final long newTime = FloorMapPlaybackRange.clampInto(currentTime + stepMs, startTime, endTime);
         // Covers the step buttons and the keyboard nudge alike, since both funnel through here.
         fireDiscontinuity();
         setCurrentTime(newTime);
@@ -704,12 +710,17 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
 
     /// Provides histogram bin counts to be displayed above the scrubber.
     ///
-    /// @param binCounts  Array of event counts per bin.
-    public void setHistogramData(final int[] binCounts) {
+    /// @param binCounts Array of event counts per bin.
+    /// @param layout    Where each bin belongs across the visible range, and the time it spans,
+    ///                  which sizes a step. `null` draws the bins as an even division of the range.
+    public void setHistogramData(final int[] binCounts, final HistogramLayout layout) {
         if (binCounts != null && binCounts.length > 0) {
             histogramBinCount = binCounts.length;
         }
-        getView().setHistogramData(binCounts);
+        histogramBucketWidthMs = layout == null
+                ? 0
+                : layout.getBucketWidthMs();
+        getView().setHistogramData(binCounts, layout);
     }
 
     /// Records the earliest and latest event times in the data, which is the range "Show All"
@@ -846,7 +857,11 @@ public class FloorMapTimelinePresenter extends MyPresenterWidget<FloorMapTimelin
 
         /// Provides histogram data (event counts per bin) for display above the scrubber.
         /// An empty or null array clears the histogram.
-        void setHistogramData(int[] binCounts);
+        ///
+        /// @param binCounts the event count in each bin
+        /// @param layout    where each bin belongs across the visible range, or `null` for an
+        ///                  even division of it
+        void setHistogramData(int[] binCounts, HistogramLayout layout);
 
         /// Shows or hides the out-of-range indicator at the appropriate end of the
         /// timeline bar.

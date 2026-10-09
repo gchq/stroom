@@ -86,4 +86,27 @@ public final class FloorMapPlaybackRange {
     public static long clampInto(final long time, final long start, final long end) {
         return Math.max(start, Math.min(end, time));
     }
+
+    /// How far one step of the step buttons or the keyboard nudge moves the playhead.
+    ///
+    /// One histogram bar, so a step lands where the next bar starts rather than a fraction of the
+    /// way into it. Where the bars are bucketed that is the bucket width. Dividing the range by
+    /// the bar count is not the same thing, because the first and last bars hang over the range
+    /// edges. Where there are no bucketed bars (the Editor tab draws none) it falls back to that
+    /// division.
+    ///
+    /// @param start         the start of the visible range, in epoch milliseconds
+    /// @param end           the end of the visible range, in epoch milliseconds
+    /// @param binCount      the number of bars, used only for the fallback
+    /// @param bucketWidthMs the time one bar spans, or `0` or less where unknown
+    /// @return the step in milliseconds, zero only for an empty range with no bucket width
+    public static long stepMs(final long start,
+                              final long end,
+                              final int binCount,
+                              final long bucketWidthMs) {
+        if (bucketWidthMs > 0) {
+            return bucketWidthMs;
+        }
+        return Math.max(0, end - start) / Math.max(1, binCount);
+    }
 }
