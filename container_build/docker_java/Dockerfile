@@ -52,7 +52,7 @@ ENV CONTAINER_USER_ID=$USER_ID \
 # Set tini as entrypoint
 #ENTRYPOINT ["/sbin/tini", "--", "/builder/docker-entrypoint.sh"]
 
-CMD id
+CMD [ "id" ]
 
 # graphviz, ttf-* for plantuml
 # rsync for gradle task :stroom-app:gwt:jakarta
