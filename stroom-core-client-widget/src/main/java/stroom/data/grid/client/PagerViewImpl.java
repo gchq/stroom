@@ -18,12 +18,10 @@ package stroom.data.grid.client;
 
 import stroom.data.pager.client.Pager;
 import stroom.data.pager.client.RefreshButton;
-import stroom.svg.client.Preset;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
-import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -79,13 +77,6 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
             toolbarWidgets.add(toolbar);
         }
         return toolbar;
-    }
-
-    @Override
-    public ButtonView addButton(final Preset preset) {
-        final ToolbarButton button = getToolbar().button(preset.getSvgImage(), preset.getTitle(), null);
-        button.setEnabled(preset.isEnabled());
-        return button;
     }
 
     @Override

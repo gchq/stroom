@@ -25,9 +25,8 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.identity.shared.SigningKeyResource;
 import stroom.security.identity.shared.SigningKeyRow;
 import stroom.security.identity.shared.SigningKeyStatus;
-import stroom.svg.client.Preset;
 import stroom.util.client.DataGridUtil;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -76,8 +75,11 @@ public class SigningKeyListPresenter extends MyPresenterWidget<PagerView> {
         return selectionModel;
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return pagerView.addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return pagerView.getToolbar();
     }
 
     /**

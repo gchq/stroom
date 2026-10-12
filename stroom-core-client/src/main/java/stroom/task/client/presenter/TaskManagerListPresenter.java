@@ -49,7 +49,6 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.task.client.event.OpenProcessorTaskEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskInfoParser.TaskInfoKey;
 import stroom.task.shared.FindTaskCriteria;
@@ -84,7 +83,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Timer;
@@ -171,16 +169,18 @@ public class TaskManagerListPresenter
                 pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
 
-        final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
-        terminateButton.addClickHandler(event -> endSelectedTask());
+        final ButtonView terminateButton = getView().getToolbar().button(SvgImage.DELETE, "Terminate Task",
+                this::endSelectedTask);
 
-        expandAllButton = getView().addButton(SvgPresets.EXPAND_ALL.enabled(false));
-        collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_ALL.enabled(false));
+        expandAllButton = getView().getToolbar().button(SvgImage.EXPAND_ALL, "Expand All", this::onExpandAll);
+        expandAllButton.setEnabled(false);
+        collapseAllButton = getView().getToolbar().button(SvgImage.COLLAPSE_ALL, "Collapse All", this::onCollapseAll);
+        collapseAllButton.setEnabled(false);
 
         wrapToggleButton = getView().getToolbar().toggle(SvgImage.TEXT_WRAP, "Toggle wrapping of Info column",
                 this::onWrapToggled);
 
-        warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
+        warningsButton = getView().getToolbar().button(SvgImage.ALERT, "Show Warnings", this::showWarnings);
         warningsButton.setVisible(false);
 
         updateButtonStates();
@@ -225,26 +225,23 @@ public class TaskManagerListPresenter
         dataGrid.setMultiLine(wrap);
     }
 
+    private void onExpandAll() {
+        treeAction.expandAll();
+        dataProvider.refresh();
+        updateButtonStates();
+    }
+
+    private void onCollapseAll() {
+        treeAction.collapseAll();
+        dataProvider.refresh();
+        updateButtonStates();
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(expandAllButton.addClickHandler(event -> {
-            treeAction.expandAll();
-            dataProvider.refresh();
-            updateButtonStates();
-        }));
 
-        registerHandler(collapseAllButton.addClickHandler(event -> {
-            treeAction.collapseAll();
-            dataProvider.refresh();
-            updateButtonStates();
-        }));
 
-        registerHandler(warningsButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                showWarnings();
-            }
-        }));
 
         registerHandler(dataGrid.addColumnSortHandler(event -> {
             // As we get data async from all nodes we can't be sure when we have finished so

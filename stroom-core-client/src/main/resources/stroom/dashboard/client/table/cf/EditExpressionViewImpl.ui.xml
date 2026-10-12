@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:b="urn:import:stroom.widget.button.client">
     <g:FlowPanel styleName="max dock-max dock-container-vertical">
-        <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-min"/>
+        <b:Toolbar ui:field="toolbar" name="Expression actions" addStyleNames="dock-min"/>
         <g:ScrollPanel styleName="dock-max">
             <g:SimplePanel ui:field="expressionTree" styleName="editExpressionViewImpl-expressionTree"/>
         </g:ScrollPanel>

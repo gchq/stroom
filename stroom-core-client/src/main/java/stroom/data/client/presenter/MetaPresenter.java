@@ -43,7 +43,7 @@ import stroom.query.shared.ExpressionResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.widget.button.client.ButtonView;
@@ -51,10 +51,8 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -132,40 +130,57 @@ public class MetaPresenter
 
         dataPresenter.setBeginSteppingHandler(this);
 
+        metaListPresenter.getToolbar().setName("Stream actions");
+        metaRelationListPresenter.getToolbar().setName("Related stream actions");
+
         // Process
         if (securityContext.hasAppPermission(AppPermission.MANAGE_PROCESSORS_PERMISSION)) {
-            streamListProcess = metaListPresenter.add(SvgPresets.PROCESS);
-            streamRelationListProcess = metaRelationListPresenter.add(SvgPresets.PROCESS);
+            streamListProcess = metaListPresenter.getToolbar().button(SvgImage.PROCESS, "Process",
+                    () -> metaListPresenter.process());
+            streamListProcess.setEnabled(false);
+            streamRelationListProcess = metaRelationListPresenter.getToolbar().button(SvgImage.PROCESS, "Process",
+                    () -> metaRelationListPresenter.process());
+            streamRelationListProcess.setEnabled(false);
         }
 
         // Delete, Undelete, DE-duplicate
         if (securityContext.hasAppPermission(AppPermission.DELETE_DATA_PERMISSION)) {
-            streamListDelete = metaListPresenter.add(SvgPresets.DELETE);
+            streamListDelete = metaListPresenter.getToolbar().button(SvgImage.DELETE, "Delete",
+                    () -> metaListPresenter.delete());
             streamListDelete.setEnabled(false);
-            streamRelationListDelete = metaRelationListPresenter.add(SvgPresets.DELETE);
+            streamRelationListDelete = metaRelationListPresenter.getToolbar().button(SvgImage.DELETE, "Delete",
+                    () -> metaRelationListPresenter.delete());
             streamRelationListDelete.setEnabled(false);
-            streamListRestore = metaListPresenter.add(SvgPresets.UNDO);
-            streamListRestore.setTitle("Restore");
-            streamRelationListRestore = metaRelationListPresenter.add(SvgPresets.UNDO);
-            streamRelationListRestore.setTitle("Restore");
+            streamListRestore = metaListPresenter.getToolbar().button(SvgImage.UNDO, "Restore",
+                    () -> metaListPresenter.restore());
+            streamListRestore.setEnabled(false);
+            streamRelationListRestore = metaRelationListPresenter.getToolbar().button(SvgImage.UNDO, "Restore",
+                    () -> metaRelationListPresenter.restore());
+            streamRelationListRestore.setEnabled(false);
         }
 
         // Selection information
-        streamListInfo = metaListPresenter.add(SvgPresets.INFO.title("Selection summary"));
+        streamListInfo = metaListPresenter.getToolbar().button(SvgImage.INFO, "Selection summary",
+                () -> metaListPresenter.info());
 
         // Download
         if (securityContext.hasAppPermission(AppPermission.EXPORT_DATA_PERMISSION)) {
-            streamListDownload = metaListPresenter.add(SvgPresets.DOWNLOAD);
-            streamRelationListDownload = metaRelationListPresenter.add(SvgPresets.DOWNLOAD);
+            streamListDownload = metaListPresenter.getToolbar().button(SvgImage.DOWNLOAD, "Download",
+                    () -> metaListPresenter.download());
+            streamListDownload.setEnabled(false);
+            streamRelationListDownload = metaRelationListPresenter.getToolbar().button(SvgImage.DOWNLOAD, "Download",
+                    () -> metaRelationListPresenter.download());
+            streamRelationListDownload.setEnabled(false);
         }
 
         // Upload
         if (securityContext.hasAppPermission(AppPermission.IMPORT_DATA_PERMISSION)) {
-            streamListUpload = metaListPresenter.add(SvgPresets.UPLOAD);
+            streamListUpload = metaListPresenter.getToolbar().button(SvgImage.UPLOAD, "Upload",
+                    () -> streamUploadPresenter.get().show(MetaPresenter.this, feedRef));
         }
 
         // Filter
-        streamListFilter = metaListPresenter.add(SvgPresets.FILTER);
+        streamListFilter = metaListPresenter.getToolbar().button(SvgImage.FILTER, "Filter", this::onStreamListFilter);
 
         // Init the buttons
         setStreamListSelectableEnabled(null);
@@ -186,6 +201,61 @@ public class MetaPresenter
         return null;
     }
 
+    private void onStreamListFilter() {
+        final ExpressionPresenter presenter = streamListFilterPresenter.get();
+
+        final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
+            if (e.isOk()) {
+                final ExpressionOperator expression = presenter.write();
+
+                expressionValidator.validateExpression(
+                        MetaPresenter.this,
+                        MetaFields.getAllFields(),
+                        expression, expression2 -> {
+                            if (!expression2.equals(getCriteria().getExpression())) {
+                                if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
+                                    ConfirmEvent.fire(MetaPresenter.this,
+                                            "You are setting advanced filters!  It is recommended you constrain " +
+                                            "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                            + "Are you sure you want to apply this advanced filter?",
+                                            confirm -> {
+                                                if (confirm) {
+                                                    setExpression(expression2);
+                                                    e.hide();
+                                                } else {
+                                                    // Don't hide
+                                                    e.reset();
+                                                }
+                                            });
+                                } else {
+                                    setExpression(expression2);
+                                    e.hide();
+                                }
+                            } else {
+                                // Nothing changed!
+                                e.hide();
+                            }
+                        }, this);
+            } else {
+                e.hide();
+            }
+        };
+
+        presenter.read(getCriteria().getExpression(),
+                MetaFields.STREAM_STORE_DOC_REF,
+                MetaFields.getAllFields());
+
+        presenter.getWidget().getElement().addClassName("default-min-sizes");
+        final PopupSize popupSize = PopupSize.resizable(1_000, 600);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Filter Streams")
+                .onShow(e -> presenter.focus())
+                .onHideRequest(HidePopupRequestEventHandler)
+                .fire();
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
@@ -201,136 +271,6 @@ public class MetaPresenter
                 showData()));
         registerHandler(metaRelationListPresenter.addDataSelectionHandler(event ->
                 setStreamRelationListSelectableEnabled(event.getSelectedItem())));
-
-        registerHandler(streamListFilter.addClickHandler(event -> {
-            final ExpressionPresenter presenter = streamListFilterPresenter.get();
-
-            final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
-                if (e.isOk()) {
-                    final ExpressionOperator expression = presenter.write();
-
-                    expressionValidator.validateExpression(
-                            MetaPresenter.this,
-                            MetaFields.getAllFields(),
-                            expression, expression2 -> {
-                                if (!expression2.equals(getCriteria().getExpression())) {
-                                    if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
-                                        ConfirmEvent.fire(MetaPresenter.this,
-                                                "You are setting advanced filters!  It is recommended you constrain " +
-                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                                + "Are you sure you want to apply this advanced filter?",
-                                                confirm -> {
-                                                    if (confirm) {
-                                                        setExpression(expression2);
-                                                        e.hide();
-                                                    } else {
-                                                        // Don't hide
-                                                        e.reset();
-                                                    }
-                                                });
-                                    } else {
-                                        setExpression(expression2);
-                                        e.hide();
-                                    }
-                                } else {
-                                    // Nothing changed!
-                                    e.hide();
-                                }
-                            }, this);
-                } else {
-                    e.hide();
-                }
-            };
-
-            presenter.read(getCriteria().getExpression(),
-                    MetaFields.STREAM_STORE_DOC_REF,
-                    MetaFields.getAllFields());
-
-            presenter.getWidget().getElement().addClassName("default-min-sizes");
-            final PopupSize popupSize = PopupSize.resizable(1_000, 600);
-            ShowPopupEvent.builder(presenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Filter Streams")
-                    .onShow(e -> presenter.focus())
-                    .onHideRequest(HidePopupRequestEventHandler)
-                    .fire();
-        }));
-
-        // Some button's may not exist due to permissions
-        if (streamListUpload != null) {
-            registerHandler(streamListUpload.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    streamUploadPresenter.get().show(MetaPresenter.this, feedRef);
-                }
-            }));
-        }
-        if (streamListInfo != null) {
-            registerHandler(streamListInfo.addClickHandler(event -> {
-                if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                    metaListPresenter.info();
-                }
-            }));
-        }
-        if (streamListDownload != null) {
-            registerHandler(streamListDownload.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    metaListPresenter.download();
-                }
-            }));
-        }
-        if (streamRelationListDownload != null) {
-            registerHandler(streamRelationListDownload.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    metaRelationListPresenter.download();
-                }
-            }));
-        }
-        // Delete
-        if (streamListDelete != null) {
-            registerHandler(streamListDelete.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    metaListPresenter.delete();
-                }
-            }));
-        }
-        if (streamRelationListDelete != null) {
-            registerHandler(streamRelationListDelete.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    metaRelationListPresenter.delete();
-                }
-            }));
-        }
-        // Restore
-        if (streamListRestore != null) {
-            registerHandler(streamListRestore.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    metaListPresenter.restore();
-                }
-            }));
-        }
-        if (streamRelationListRestore != null) {
-            registerHandler(streamRelationListRestore.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    metaRelationListPresenter.restore();
-                }
-            }));
-        }
-        // Process
-        if (streamListProcess != null) {
-            registerHandler(streamListProcess.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    metaListPresenter.process();
-                }
-            }));
-        }
-        if (streamRelationListProcess != null) {
-            registerHandler(streamRelationListProcess.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    metaRelationListPresenter.process();
-                }
-            }));
-        }
     }
 
     private void setExpression(final ExpressionOperator expression) {

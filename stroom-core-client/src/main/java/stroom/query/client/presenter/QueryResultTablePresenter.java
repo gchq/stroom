@@ -70,16 +70,15 @@ import stroom.query.shared.QuerySearchRequest;
 import stroom.query.shared.QueryTablePreferences;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.core.client.GWT;
@@ -138,7 +137,7 @@ public class QueryResultTablePresenter
     private final AnnotationManager annotationManager;
     private final ToolbarToggleButton valueFilterButton;
     private final ButtonView resetButton;
-    private final ButtonView annotateButton;
+    private final ToolbarButton annotateButton;
     private final EventBus eventBus;
     private final ButtonView askAiButton;
 
@@ -222,7 +221,9 @@ public class QueryResultTablePresenter
         pagerView.addButton(collapseButton);
 
         // Download
-        downloadButton = pagerView.addButton(SvgPresets.DOWNLOAD);
+        pagerView.getToolbar().setName("Table actions");
+        downloadButton = pagerView.getToolbar().button(SvgImage.DOWNLOAD, "Download", this::onDownload);
+        downloadButton.setEnabled(false);
         downloadButton.setVisible(securityContext.hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Filter values
@@ -230,18 +231,15 @@ public class QueryResultTablePresenter
                 pressed -> toggleShowValueFilters());
 
         // Reset button
-        resetButton = pagerView.addButton(SvgPresets.UNDO);
-        resetButton.setEnabled(true);
-        resetButton.setTitle("Reset table customisation");
+        resetButton = pagerView.getToolbar().button(SvgImage.UNDO, "Reset table customisation",
+                this::resetTableCustomisation);
 
         // Annotate
-        annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
+        annotateButton = pagerView.getToolbar().button(SvgImage.EDIT, "Annotate", this::showAnnotationMenu);
         annotateButton.setVisible(annotationManager.isEnabled());
 
         // Ask AI
-        askAiButton = pagerView.addButton(SvgPresets.AI);
-        askAiButton.setTitle("Ask Stroom AI");
-        pagerView.addButton(askAiButton);
+        askAiButton = pagerView.getToolbar().button(SvgImage.AI, "Ask Stroom AI", this::onAskAi);
 
         annotationManager.setColumnSupplier(() -> currentColumns);
     }
@@ -276,6 +274,50 @@ public class QueryResultTablePresenter
         return requestedRange;
     }
 
+    private void onDownload() {
+        if (currentSearchModel != null) {
+            if (currentSearchModel.isSearching()) {
+                ConfirmEvent.fire(QueryResultTablePresenter.this,
+                        "Search still in progress. Do you want to download the current results? " +
+                        "Note that these may be incomplete.",
+                        ok -> {
+                            if (ok) {
+                                download();
+                            }
+                        });
+            } else {
+                download();
+            }
+        }
+    }
+
+    private void resetTableCustomisation() {
+        setPreferredColumns(Collections.emptyList());
+        refresh();
+    }
+
+    private void onAskAi() {
+        if (currentSearchModel != null) {
+            if (currentSearchModel.isSearching()) {
+                ConfirmEvent.fire(QueryResultTablePresenter.this,
+                        "Search still in progress. AI response may be based on incomplete data. " +
+                        "Do you wish to continue? ",
+                        ok -> {
+                            if (ok) {
+                                askStroomAi();
+                            }
+                        });
+            } else {
+                askStroomAi();
+            }
+        }
+    }
+
+    // The menu opens below the button
+    private void showAnnotationMenu() {
+        annotationManager.showAnnotationMenu(annotateButton.getElement(), selectionModel.getSelectedItems());
+    }
+
     @Override
     protected void onBind() {
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
@@ -308,54 +350,10 @@ public class QueryResultTablePresenter
             refresh();
         }));
 
-        registerHandler(downloadButton.addClickHandler(event -> {
-            if (currentSearchModel != null) {
-                if (currentSearchModel.isSearching()) {
-                    ConfirmEvent.fire(QueryResultTablePresenter.this,
-                            "Search still in progress. Do you want to download the current results? " +
-                            "Note that these may be incomplete.",
-                            ok -> {
-                                if (ok) {
-                                    download();
-                                }
-                            });
-                } else {
-                    download();
-                }
-            }
-        }));
 
 
-        registerHandler(resetButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                setPreferredColumns(Collections.emptyList());
-                refresh();
-            }
-        }));
 
-        registerHandler(annotateButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                annotationManager.showAnnotationMenu(event.getNativeEvent(),
-                        selectionModel.getSelectedItems());
-            }
-        }));
 
-        registerHandler(askAiButton.addClickHandler(event -> {
-            if (currentSearchModel != null) {
-                if (currentSearchModel.isSearching()) {
-                    ConfirmEvent.fire(QueryResultTablePresenter.this,
-                            "Search still in progress. AI response may be based on incomplete data. " +
-                            "Do you wish to continue? ",
-                            ok -> {
-                                if (ok) {
-                                    askStroomAi();
-                                }
-                            });
-                } else {
-                    askStroomAi();
-                }
-            }
-        }));
 
         registerHandler(selectionModel.addSelectionHandler(event -> {
             if (event.getSelectionType().isDoubleSelect()) {

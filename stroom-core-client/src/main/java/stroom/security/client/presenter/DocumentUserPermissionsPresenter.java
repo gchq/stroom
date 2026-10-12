@@ -26,14 +26,12 @@ import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentUserPermissions;
 import stroom.security.shared.DocumentUserPermissionsReport;
 import stroom.security.shared.PermissionShowLevel;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -74,10 +72,12 @@ public class DocumentUserPermissionsPresenter
         this.docPermissionClient = docPermissionClient;
         view.setDocUserPermissionListView(documentUserPermissionsListPresenter.getView());
 
-        docEdit = documentUserPermissionsListPresenter.addButton(new Preset(
+        documentUserPermissionsListPresenter.getToolbar().setName("Permission actions");
+        docEdit = documentUserPermissionsListPresenter.getToolbar().button(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected User",
-                false));
+                this::onEdit);
+        docEdit.setEnabled(false);
 
         permissionVisibility = getView().getPermissionVisibility();
         permissionVisibility.addItems(PermissionShowLevel.ITEMS);
@@ -94,11 +94,6 @@ public class DocumentUserPermissionsPresenter
             updateDetails();
             docEdit.setEnabled(selected != null);
             if (e.getSelectionType().isDoubleSelect()) {
-                onEdit();
-            }
-        }));
-        registerHandler(docEdit.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
                 onEdit();
             }
         }));

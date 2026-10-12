@@ -28,11 +28,10 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -74,7 +73,9 @@ public class DuplicateManagementListPresenter
         dataGrid.setTableName("Duplicate Management");
         selectionModel = dataGrid.addDefaultSelectionModel(true);
         view.setDataWidget(dataGrid);
-        deleteButton = view.addButton(SvgPresets.DELETE);
+        view.getToolbar().setName("Duplicate check actions");
+        deleteButton = view.getToolbar().button(SvgImage.DELETE, "Delete", this::onDelete);
+        deleteButton.setEnabled(false);
 
         criteria = new FindDuplicateCheckCriteria();
         //noinspection Convert2Diamond // cos GWT
@@ -138,13 +139,6 @@ public class DuplicateManagementListPresenter
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
         }));
-        if (deleteButton != null) {
-            registerHandler(deleteButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    onDelete();
-                }
-            }));
-        }
 
         super.onBind();
     }

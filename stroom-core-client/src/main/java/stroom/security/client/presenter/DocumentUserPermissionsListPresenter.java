@@ -38,7 +38,6 @@ import stroom.security.shared.FetchDocumentUserPermissionsRequest;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.security.shared.QuickFilterExpressionParser;
 import stroom.security.shared.UserFields;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
@@ -46,7 +45,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -350,12 +349,11 @@ public class DocumentUserPermissionsListPresenter
         }
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return pagerView.addButton(preset);
-    }
-
-    public void addButton(final ButtonView buttonView) {
-        pagerView.addButton(buttonView);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return pagerView.getToolbar();
     }
 
     public MultiSelectionModel<DocumentUserPermissions> getSelectionModel() {

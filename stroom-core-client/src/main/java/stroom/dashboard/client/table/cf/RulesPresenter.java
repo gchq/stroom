@@ -30,7 +30,7 @@ import stroom.query.api.ConditionalFormattingType;
 import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.query.shared.QueryTablePreferences;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 import stroom.widget.button.client.ButtonView;
@@ -81,13 +81,20 @@ public class RulesPresenter
 
         getView().setTableView(listPresenter.getView());
 
-        addButton = listPresenter.add(SvgPresets.ADD);
-        editButton = listPresenter.add(SvgPresets.EDIT);
-        copyButton = listPresenter.add(SvgPresets.COPY);
-        disableButton = listPresenter.add(SvgPresets.DISABLE);
-        deleteButton = listPresenter.add(SvgPresets.DELETE);
-        moveUpButton = listPresenter.add(SvgPresets.UP);
-        moveDownButton = listPresenter.add(SvgPresets.DOWN);
+        listPresenter.getToolbar().setName("Conditional formatting rule actions");
+        addButton = listPresenter.getToolbar().button(SvgImage.ADD, "Add", this::add);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit", this::onEdit);
+        editButton.setEnabled(false);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Copy", this::onCopy);
+        copyButton.setEnabled(false);
+        disableButton = listPresenter.getToolbar().button(SvgImage.DISABLE, "Disable", this::onDisable);
+        disableButton.setEnabled(false);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete", this::onDelete);
+        deleteButton.setEnabled(false);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Up", this::onMoveUp);
+        moveUpButton.setEnabled(false);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Down", this::onMoveDown);
+        moveDownButton.setEnabled(false);
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
@@ -99,88 +106,91 @@ public class RulesPresenter
         addButton.focus();
     }
 
-    @Override
-    protected void onBind() {
-        registerHandler(listPresenter.addDirtyHandler(event -> setDirty(true)));
-        registerHandler(addButton.addClickHandler(event -> {
-            add();
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
-            if (selected != null) {
-                edit(selected);
+    private void onEdit() {
+        final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
+        if (selected != null) {
+            edit(selected);
+        }
+    }
+
+    private void onCopy() {
+        final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
+        if (selected != null) {
+            final ConditionalFormattingRule newRule = selected
+                    .copy()
+                    .id(RandomId.createId(5))
+                    .build();
+
+            final int index = rules.indexOf(selected);
+
+            if (index < rules.size() - 1) {
+                rules.add(index + 1, newRule);
+            } else {
+                rules.add(newRule);
             }
-        }));
-        registerHandler(copyButton.addClickHandler(event -> {
-            final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
-            if (selected != null) {
-                final ConditionalFormattingRule newRule = selected
-                        .copy()
-                        .id(RandomId.createId(5))
-                        .build();
 
-                final int index = rules.indexOf(selected);
+            update();
+            listPresenter.getSelectionModel().setSelected(newRule);
+        }
+    }
 
-                if (index < rules.size() - 1) {
-                    rules.add(index + 1, newRule);
-                } else {
-                    rules.add(newRule);
-                }
+    private void onDisable() {
+        final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
+        if (selected != null) {
+            final ConditionalFormattingRule newRule = selected
+                    .copy()
+                    .enabled(!selected.isEnabled())
+                    .build();
+            final int index = rules.indexOf(selected);
+            rules.remove(index);
+            rules.add(index, newRule);
+            listPresenter.getSelectionModel().setSelected(newRule);
+            update();
+            setDirty(true);
+        }
+    }
 
-                update();
-                listPresenter.getSelectionModel().setSelected(newRule);
-            }
-        }));
-        registerHandler(disableButton.addClickHandler(event -> {
-            final ConditionalFormattingRule selected = listPresenter.getSelectionModel().getSelected();
-            if (selected != null) {
-                final ConditionalFormattingRule newRule = selected
-                        .copy()
-                        .enabled(!selected.isEnabled())
-                        .build();
-                final int index = rules.indexOf(selected);
-                rules.remove(index);
-                rules.add(index, newRule);
-                listPresenter.getSelectionModel().setSelected(newRule);
+    private void onDelete() {
+        ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
+            if (ok) {
+                final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
+                rules.remove(rule);
+                listPresenter.getSelectionModel().clear();
                 update();
                 setDirty(true);
             }
-        }));
-        registerHandler(deleteButton.addClickHandler(event -> {
-            ConfirmEvent.fire(this, "Are you sure you want to delete this item?", ok -> {
-                if (ok) {
-                    final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
-                    rules.remove(rule);
-                    listPresenter.getSelectionModel().clear();
-                    update();
-                    setDirty(true);
-                }
-            });
-        }));
-        registerHandler(moveUpButton.addClickHandler(event -> {
-            final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
-            if (rule != null) {
-                final int index = rules.indexOf(rule);
-                if (index > 0) {
-                    rules.remove(rule);
-                    rules.add(index - 1, rule);
-                    update();
-                    setDirty(true);
-                }
+        });
+    }
+
+    private void onMoveUp() {
+        final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
+        if (rule != null) {
+            final int index = rules.indexOf(rule);
+            if (index > 0) {
+                rules.remove(rule);
+                rules.add(index - 1, rule);
+                update();
+                setDirty(true);
             }
-        }));
-        registerHandler(moveDownButton.addClickHandler(event -> {
-            final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
-            if (rule != null) {
-                final int index = rules.indexOf(rule);
-                if (index < rules.size() - 1) {
-                    rules.remove(rule);
-                    rules.add(index + 1, rule);
-                    update();
-                    setDirty(true);
-                }
+        }
+    }
+
+    private void onMoveDown() {
+        final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
+        if (rule != null) {
+            final int index = rules.indexOf(rule);
+            if (index < rules.size() - 1) {
+                rules.remove(rule);
+                rules.add(index + 1, rule);
+                update();
+                setDirty(true);
             }
-        }));
+        }
+    }
+
+    @Override
+    protected void onBind() {
+        registerHandler(listPresenter.addDirtyHandler(event -> setDirty(true)));
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(event -> {
             final ConditionalFormattingRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {

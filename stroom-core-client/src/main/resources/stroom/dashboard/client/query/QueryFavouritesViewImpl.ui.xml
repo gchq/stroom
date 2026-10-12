@@ -10,7 +10,7 @@
         </g:south>
         <g:center>
             <g:FlowPanel styleName="dock-container-vertical max stroom-control">
-                <b:ButtonPanel ui:field="buttonPanel" addStyleNames="dock-min"/>
+                <b:Toolbar ui:field="toolbar" name="Favourite query actions" addStyleNames="dock-min"/>
                 <g:ScrollPanel ui:field="top" styleName="dock-max dock-container-vertical">
                     <l:CustomCellList ui:field="cellList" styleName="queryFavouritesViewImpl-cellList"/>
                 </g:ScrollPanel>

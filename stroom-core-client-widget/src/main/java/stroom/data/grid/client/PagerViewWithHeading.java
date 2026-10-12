@@ -17,7 +17,6 @@
 package stroom.data.grid.client;
 
 import stroom.data.pager.client.RefreshButton;
-import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.Toolbar;
@@ -39,8 +38,6 @@ public interface PagerViewWithHeading extends View, TaskMonitorFactory {
     ///
     /// @return The toolbar.
     Toolbar getToolbar();
-
-    ButtonView addButton(Preset preset);
 
     void addButton(ButtonView buttonView);
 

@@ -53,7 +53,6 @@ import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.pipeline.structure.client.presenter.PipelineModel;
 import stroom.pipeline.structure.client.presenter.PipelineTreePresenter;
 import stroom.query.api.ExpressionOperator;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
@@ -213,7 +212,9 @@ public class SteppingPresenter
         stepToolbar.add(stepMessage);
         getView().addWidgetLeft(stepToolbar);
 
-        streamListFilter = steppingMetaListPresenter.add(SvgPresets.FILTER);
+        steppingMetaListPresenter.getToolbar().setName("Stream actions");
+        streamListFilter = steppingMetaListPresenter.getToolbar().button(SvgImage.FILTER, "Filter",
+                this::onStreamListFilter);
 
         sourcePresenter.getView().setMetaListContainerView(steppingMetaListPresenter.getWidget());
     }
@@ -232,6 +233,61 @@ public class SteppingPresenter
             elementPresenter.setDesiredLogPanVisibility(visible);
             elementPresenter.setLogPaneVisibility(visible);
         }
+    }
+
+    private void onStreamListFilter() {
+        final ExpressionPresenter presenter = streamListFilterPresenterProvider.get();
+
+        final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
+            if (e.isOk()) {
+                final ExpressionOperator expression = presenter.write();
+
+                expressionValidator.validateExpression(
+                        SteppingPresenter.this,
+                        MetaFields.getAllFields(),
+                        expression, expression2 -> {
+                            if (!expression2.equals(getCriteria().getExpression())) {
+                                if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
+                                    ConfirmEvent.fire(SteppingPresenter.this,
+                                            "You are setting advanced filters!  It is recommended you constrain " +
+                                            "your filter (e.g. by 'Created') to avoid an expensive query.  "
+                                            + "Are you sure you want to apply this advanced filter?",
+                                            confirm -> {
+                                                if (confirm) {
+                                                    setExpression(expression2);
+                                                    e.hide();
+                                                } else {
+                                                    // Don't hide
+                                                    e.reset();
+                                                }
+                                            });
+                                } else {
+                                    setExpression(expression2);
+                                    e.hide();
+                                }
+                            } else {
+                                // Nothing changed!
+                                e.hide();
+                            }
+                        }, this);
+            } else {
+                e.hide();
+            }
+        };
+
+        presenter.read(getCriteria().getExpression(),
+                MetaFields.STREAM_STORE_DOC_REF,
+                MetaFields.getAllFields());
+
+        presenter.getWidget().getElement().addClassName("default-min-sizes");
+        final PopupSize popupSize = PopupSize.resizable(1_000, 600);
+        ShowPopupEvent.builder(presenter)
+                .popupType(PopupType.OK_CANCEL_DIALOG)
+                .popupSize(popupSize)
+                .caption("Filter Streams")
+                .onShow(e -> presenter.focus())
+                .onHideRequest(HidePopupRequestEventHandler)
+                .fire();
     }
 
     @Override
@@ -294,60 +350,6 @@ public class SteppingPresenter
             }
         }));
 
-        registerHandler(streamListFilter.addClickHandler(event -> {
-            final ExpressionPresenter presenter = streamListFilterPresenterProvider.get();
-
-            final HidePopupRequestEvent.Handler HidePopupRequestEventHandler = e -> {
-                if (e.isOk()) {
-                    final ExpressionOperator expression = presenter.write();
-
-                    expressionValidator.validateExpression(
-                            SteppingPresenter.this,
-                            MetaFields.getAllFields(),
-                            expression, expression2 -> {
-                                if (!expression2.equals(getCriteria().getExpression())) {
-                                    if (MetaExpressionUtil.hasAdvancedCriteria(expression2)) {
-                                        ConfirmEvent.fire(SteppingPresenter.this,
-                                                "You are setting advanced filters!  It is recommended you constrain " +
-                                                "your filter (e.g. by 'Created') to avoid an expensive query.  "
-                                                + "Are you sure you want to apply this advanced filter?",
-                                                confirm -> {
-                                                    if (confirm) {
-                                                        setExpression(expression2);
-                                                        e.hide();
-                                                    } else {
-                                                        // Don't hide
-                                                        e.reset();
-                                                    }
-                                                });
-                                    } else {
-                                        setExpression(expression2);
-                                        e.hide();
-                                    }
-                                } else {
-                                    // Nothing changed!
-                                    e.hide();
-                                }
-                            }, this);
-                } else {
-                    e.hide();
-                }
-            };
-
-            presenter.read(getCriteria().getExpression(),
-                    MetaFields.STREAM_STORE_DOC_REF,
-                    MetaFields.getAllFields());
-
-            presenter.getWidget().getElement().addClassName("default-min-sizes");
-            final PopupSize popupSize = PopupSize.resizable(1_000, 600);
-            ShowPopupEvent.builder(presenter)
-                    .popupType(PopupType.OK_CANCEL_DIALOG)
-                    .popupSize(popupSize)
-                    .caption("Filter Streams")
-                    .onShow(e -> presenter.focus())
-                    .onHideRequest(HidePopupRequestEventHandler)
-                    .fire();
-        }));
 
 //        steppingMetaListPresenter.setExpression(ExpressionValidator.ALL_UNLOCKED_EXPRESSION, () -> {});
     }

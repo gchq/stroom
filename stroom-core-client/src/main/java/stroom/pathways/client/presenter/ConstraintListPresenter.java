@@ -26,10 +26,9 @@ import stroom.dispatch.client.RestFactory;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.Constraint;
 import stroom.pathways.shared.pathway.PathNode;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.user.cellview.client.Column;
@@ -85,39 +84,39 @@ public class ConstraintListPresenter
 
         this.constraintEditPresenter = constraintEditPresenter;
 
-        newButton = pagerView.addButton(SvgPresets.NEW_ITEM);
-        editButton = pagerView.addButton(SvgPresets.EDIT);
-        removeButton = pagerView.addButton(SvgPresets.DELETE);
+        pagerView.getToolbar().setName("Constraint actions");
+        newButton = pagerView.getToolbar().button(SvgImage.ADD, "New", this::onNew);
+        editButton = pagerView.getToolbar().button(SvgImage.EDIT, "Edit", this::onEditClicked);
+        editButton.setEnabled(false);
+        removeButton = pagerView.getToolbar().button(SvgImage.DELETE, "Delete", this::onRemoveClicked);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
+    }
+
+    private void onNew() {
+        if (!readOnly) {
+            onAdd();
+        }
+    }
+
+    private void onEditClicked() {
+        if (!readOnly) {
+            onEdit();
+        }
+    }
+
+    private void onRemoveClicked() {
+        if (!readOnly) {
+            onRemove();
+        }
     }
 
     @Override
     protected void onBind() {
         super.onBind();
 
-        registerHandler(newButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onAdd();
-                }
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onEdit();
-                }
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (!readOnly) {
-                if (MouseUtil.isPrimary(event)) {
-                    onRemove();
-                }
-            }
-        }));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             if (!readOnly) {
                 enableButtons();

@@ -20,14 +20,12 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.util.client.KeyBinding.Action;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.inject.Inject;
@@ -62,9 +60,11 @@ public class GlobalPropertyTabPresenter
         this.editProvider = editProvider;
         view.setUiHandlers(this);
         setInSlot(LIST, listPresenter);
-        openButton = listPresenter.addButton(SvgPresets.EDIT);
+        listPresenter.getToolbar().setName("Property actions");
+        openButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit", this::onOpen);
+        openButton.setEnabled(false);
 
-        warningsButton = listPresenter.addButton(SvgPresets.ALERT.title("Show Warnings"));
+        warningsButton = listPresenter.getToolbar().button(SvgImage.ALERT, "Show Warnings", this::showWarnings);
         warningsButton.setVisible(false);
 
         uiConfigCache.get(uiConfig -> {
@@ -94,18 +94,6 @@ public class GlobalPropertyTabPresenter
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onOpen();
-            }
-        }));
-        if (openButton != null) {
-            registerHandler(openButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    onOpen();
-                }
-            }));
-        }
-        registerHandler(warningsButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                showWarnings();
             }
         }));
         registerHandler(listPresenter.addErrorHandler(event -> setErrors(event.getError())));

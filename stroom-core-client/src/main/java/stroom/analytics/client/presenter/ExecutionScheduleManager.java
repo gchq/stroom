@@ -59,7 +59,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.cell.client.TextCell;
@@ -208,65 +207,24 @@ public class ExecutionScheduleManager
 
 
     private void createButtons() {
-        singleEditButton = this.getView().addButton(new Preset(
-                SvgImage.EDIT,
-                "Edit Selected Schedule",
-                false));
-        registerHandler(singleEditButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onSingleEdit();
-            }
-        }));
+        this.getView().getToolbar().setName("Execution schedule actions");
+        singleEditButton = this.getView().getToolbar().button(SvgImage.EDIT, "Edit Selected Schedule",
+                this::onSingleEdit);
+        singleEditButton.setEnabled(false);
 
-        batchEditButton = this.getView().addButton(new Preset(
-                SvgImage.GENERATE,
-                "Batch Edit Schedules",
-                true));
-        registerHandler(batchEditButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                batchExecutionScheduleEditPresenter.show();
-            }
-        }));
+        batchEditButton = this.getView().getToolbar().button(SvgImage.GENERATE, "Batch Edit Schedules",
+                () -> batchExecutionScheduleEditPresenter.show());
 
-        filterButton = this.getView().addButton(new Preset(
-                SvgImage.FILTER,
-                "Filter Schedules",
-                true));
-        registerHandler(filterButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onFilter();
-            }
-        }));
+        filterButton = this.getView().getToolbar().button(SvgImage.FILTER, "Filter Schedules", this::onFilter);
 
-        clearFilterButton = this.getView().addButton(new Preset(
-                SvgImage.CLEAR,
-                "Clear Filter",
-                false));
-        registerHandler(clearFilterButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onClearFilter();
-            }
-        }));
+        clearFilterButton = this.getView().getToolbar().button(SvgImage.CLEAR, "Clear Filter", this::onClearFilter);
+        clearFilterButton.setEnabled(false);
 
-        runJobNowButton = this.getView().addButton(new Preset(
-                SvgImage.STEP_FORWARD,
-                "Run Schedules Now",
-                true));
-        registerHandler(runJobNowButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                executionScheduleRunNowPresenter.show();
-            }
-        }));
+        runJobNowButton = this.getView().getToolbar().button(SvgImage.STEP_FORWARD, "Run Schedules Now",
+                () -> executionScheduleRunNowPresenter.show());
 
-        deleteButton = this.getView().addButton(new Preset(
-                SvgImage.DELETE,
-                "Delete Schedules",
-                false));
-        registerHandler(deleteButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onDelete();
-            }
-        }));
+        deleteButton = this.getView().getToolbar().button(SvgImage.DELETE, "Delete Schedules", this::onDelete);
+        deleteButton.setEnabled(false);
 
         setButtonState();
     }

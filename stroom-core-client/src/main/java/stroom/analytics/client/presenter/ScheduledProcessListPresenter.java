@@ -35,7 +35,6 @@ import stroom.node.client.NodeClient;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.UserFields;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
@@ -114,9 +113,12 @@ public class ScheduledProcessListPresenter
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
 
-        addButton = view.addButton(SvgPresets.ADD);
-        editButton = view.addButton(SvgPresets.EDIT);
-        removeButton = view.addButton(SvgPresets.DELETE);
+        view.getToolbar().setName("Schedule actions");
+        addButton = view.getToolbar().button(SvgImage.ADD, "Add", () -> scheduledProcessingPresenter.add());
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", () -> scheduledProcessingPresenter.edit());
+        editButton.setEnabled(false);
+        removeButton = view.getToolbar().button(SvgImage.DELETE, "Delete", () -> scheduledProcessingPresenter.remove());
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -134,9 +136,6 @@ public class ScheduledProcessListPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(addButton.addClickHandler(e -> scheduledProcessingPresenter.add()));
-        registerHandler(editButton.addClickHandler(e -> scheduledProcessingPresenter.edit()));
-        registerHandler(removeButton.addClickHandler(e -> scheduledProcessingPresenter.remove()));
         registerHandler(selectionModel.addSelectionHandler(event -> {
             enableButtons();
             // A read only document's schedules can't be edited, so double clicking does nothing

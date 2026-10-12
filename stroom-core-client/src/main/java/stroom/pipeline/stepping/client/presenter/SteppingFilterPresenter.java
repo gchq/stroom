@@ -26,6 +26,7 @@ import stroom.pipeline.stepping.client.presenter.SteppingFilterPresenter.Steppin
 import stroom.pipeline.structure.client.presenter.PipelineElementTypesFactory;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.OutputState;
@@ -85,12 +86,13 @@ public class SteppingFilterPresenter extends
         this.xPathListPresenter = xPathListPresenter;
         this.xPathFilterPresenter = xPathFilterProvider;
 
-        addXPath = xPathListPresenter.addButton(SvgPresets.ADD);
-        addXPath.setTitle("Add XPath Filter");
-        editXPath = xPathListPresenter.addButton(SvgPresets.EDIT);
-        editXPath.setTitle("Edit XPath Filter");
-        removeXPath = xPathListPresenter.addButton(SvgPresets.REMOVE);
-        removeXPath.setTitle("Delete XPath Filter");
+        xPathListPresenter.getToolbar().setName("XPath actions");
+        addXPath = xPathListPresenter.getToolbar().button(SvgImage.ADD, "Add XPath Filter", this::addXPathFilter);
+        editXPath = xPathListPresenter.getToolbar().button(SvgImage.EDIT, "Edit XPath Filter", this::editXPathFilter);
+        editXPath.setEnabled(false);
+        removeXPath = xPathListPresenter.getToolbar().button(SvgImage.REMOVE, "Delete XPath Filter",
+                this::removeXPathFilter);
+        removeXPath.setEnabled(false);
         editXPath.setEnabled(false);
         removeXPath.setEnabled(false);
 
@@ -165,9 +167,6 @@ public class SteppingFilterPresenter extends
                 }
             }
         }));
-        registerHandler(addXPath.addClickHandler(e -> addXPathFilter()));
-        registerHandler(editXPath.addClickHandler(e -> editXPathFilter()));
-        registerHandler(removeXPath.addClickHandler(e -> removeXPathFilter()));
         registerHandler(elementSelectionModel.addSelectionChangeHandler(e ->
                 update(elementSelectionModel.getSelectedObject())));
         getView().setSkipToErrorsChangeHandler(severity ->

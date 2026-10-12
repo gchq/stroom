@@ -30,7 +30,7 @@ import stroom.data.grid.client.PagerView;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.CriteriaFieldSort;
 import stroom.util.shared.ResultPage;
@@ -89,7 +89,8 @@ public class ScheduledProcessHistoryListPresenter
         dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         view.setDataWidget(dataGrid);
 
-        replayButton = view.addButton(SvgPresets.RERUN);
+        view.getToolbar().setName("History actions");
+        replayButton = view.getToolbar().button(SvgImage.RERUN, "Rerun", this::replay);
 
         addColumns();
         enableButtons();
@@ -97,7 +98,6 @@ public class ScheduledProcessHistoryListPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(replayButton.addClickHandler(ignored -> replay()));
         registerHandler(selectionModel.addSelectionHandler(ignored -> enableButtons()));
         registerHandler(dataGrid.addColumnSortHandler(ignored -> refresh()));
     }

@@ -17,9 +17,7 @@
 package stroom.pathways.client.view;
 
 import stroom.pathways.client.presenter.PathwayTreePresenter.PathwayTreeView;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -36,7 +34,7 @@ public class PathwayTreeViewImpl extends ViewImpl implements PathwayTreeView {
     @UiField
     FlowPanel listContainer;
 
-    private ButtonPanel buttonPanel;
+    private Toolbar toolbar;
     private final Widget widget;
 
     @Inject
@@ -56,21 +54,12 @@ public class PathwayTreeViewImpl extends ViewImpl implements PathwayTreeView {
     }
 
     @Override
-    public ButtonView addButton(final Preset preset) {
-        return getButtonPanel().addButton(preset);
-    }
-
-    @Override
-    public void addButton(final ButtonView buttonView) {
-        getButtonPanel().addButton(buttonView);
-    }
-
-    private ButtonPanel getButtonPanel() {
-        if (buttonPanel == null) {
-            buttonPanel = new ButtonPanel();
-            toolbarWidgets.add(buttonPanel);
+    public Toolbar getToolbar() {
+        if (toolbar == null) {
+            toolbar = new Toolbar("Pathway actions");
+            toolbarWidgets.add(toolbar);
         }
-        return buttonPanel;
+        return toolbar;
     }
 
     public interface Binder extends UiBinder<Widget, PathwayTreeViewImpl> {

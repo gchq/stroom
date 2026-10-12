@@ -120,14 +120,27 @@ public class ContentTemplateTabPresenter
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        saveButton = listPresenter.add(SvgPresets.SAVE.title("Save templates"));
-        addAboveButton = listPresenter.add(ADD_ABOVE_SVG_PRESET);
-        addBelowButton = listPresenter.add(ADD_BELOW_SVG_PRESET);
-        editButton = listPresenter.add(EDIT_TEMPLATE_SVG_PRESET);
-        copyButton = listPresenter.add(COPY_TEMPLATE_SVG_PRESET);
-        deleteButton = listPresenter.add(DELETE_TEMPLATE_SVG_PRESET);
-        moveUpButton = listPresenter.add(MOVE_TEMPLATE_UP_SVG_PRESET);
-        moveDownButton = listPresenter.add(MOVE_TEMPLATE_DOWN_SVG_PRESET);
+        listPresenter.getToolbar().setName("Content template actions");
+        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save templates", this::onSave);
+        saveButton.setEnabled(false);
+        addAboveButton = listPresenter.getToolbar().button(
+                SvgImage.ADD_ABOVE,
+                "Add new template above the selected one",
+                this::onAddAbove);
+        addBelowButton = listPresenter.getToolbar().button(
+                SvgImage.ADD_BELOW,
+                "Add new template below the selected one",
+                this::onAddBelow);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit template", this::onEdit);
+        editButton.setEnabled(false);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Copy template", this::onCopy);
+        copyButton.setEnabled(false);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete template", this::onDelete);
+        deleteButton.setEnabled(false);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move template up", this::onMoveUp);
+        moveUpButton.setEnabled(false);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move template down", this::onMoveDown);
+        moveDownButton.setEnabled(false);
 
         listPresenter.getView()
                 .asWidget()
@@ -163,6 +176,72 @@ public class ContentTemplateTabPresenter
 
     private int getMaxTemplateIndex() {
         return contentTemplates.size() - 1;
+    }
+
+    private void onSave() {
+        // Get the user's rules without our default one
+        restFactory
+                .create(CONTENT_TEMPLATE_RESOURCE)
+                .method(res ->
+                        res.update(contentTemplatesWrapper.copy()
+                                .contentTemplates(getTemplates())
+                                .build()))
+                .onSuccess(result -> {
+                    contentTemplatesWrapper = result;
+                    contentTemplates = new ArrayList<>(result.getContentTemplates());
+                    getSelectionModel().clear();
+                    update();
+                    setDirty(false);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    private void onAddAbove() {
+        if (contentTemplates != null) {
+            addNewRule(AddMode.ABOVE);
+        }
+    }
+
+    private void onAddBelow() {
+        if (contentTemplates != null) {
+            addNewRule(AddMode.BELOW);
+        }
+    }
+
+    private void onEdit() {
+        if (contentTemplates != null) {
+            final ContentTemplate selected = getSelected();
+            editRule(selected);
+        }
+    }
+
+    private void onCopy() {
+        if (contentTemplates != null) {
+            final ContentTemplate selected = getSelected();
+            copyRule(selected);
+        }
+    }
+
+    private void onDelete() {
+        if (contentTemplates != null) {
+            final ContentTemplate contentTemplate = getSelected();
+            deleteRule(contentTemplate);
+        }
+    }
+
+    private void onMoveUp() {
+        if (contentTemplates != null) {
+            final ContentTemplate contentTemplate = getSelected();
+            moveRuleUp(contentTemplate);
+        }
+    }
+
+    private void onMoveDown() {
+        if (contentTemplates != null) {
+            final ContentTemplate contentTemplate = getSelected();
+            moveRuleDown(contentTemplate);
+        }
     }
 
     @Override
@@ -283,12 +362,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addMoveDownButtonHandler() {
-        registerHandler(moveDownButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate contentTemplate = getSelected();
-                moveRuleDown(contentTemplate);
-            }
-        }));
     }
 
     private void moveRuleDown(final ContentTemplate rule) {
@@ -309,12 +382,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addMoveUpButtonHandler() {
-        registerHandler(moveUpButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate contentTemplate = getSelected();
-                moveRuleUp(contentTemplate);
-            }
-        }));
     }
 
     private void moveRuleUp(final ContentTemplate rule) {
@@ -337,12 +404,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addDeleteButtonHandler() {
-        registerHandler(deleteButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate contentTemplate = getSelected();
-                deleteRule(contentTemplate);
-            }
-        }));
     }
 
     private void deleteRule(final ContentTemplate rule) {
@@ -378,12 +439,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addCopyButtonHandler() {
-        registerHandler(copyButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate selected = getSelected();
-                copyRule(selected);
-            }
-        }));
     }
 
     private boolean nameExists(final String name) {
@@ -429,12 +484,6 @@ public class ContentTemplateTabPresenter
     }
 
     private void addEditButtonHandler() {
-        registerHandler(editButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                final ContentTemplate selected = getSelected();
-                editRule(selected);
-            }
-        }));
     }
 
     private void editRule(final ContentTemplate rule) {
@@ -444,40 +493,12 @@ public class ContentTemplateTabPresenter
     }
 
     private void addAddAboveButtonHandler() {
-        registerHandler(addAboveButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                addNewRule(AddMode.ABOVE);
-            }
-        }));
     }
 
     private void addAddBelowButtonHandler() {
-        registerHandler(addBelowButton.addClickHandler(event -> {
-            if (contentTemplates != null) {
-                addNewRule(AddMode.BELOW);
-            }
-        }));
     }
 
     private void addSaveButtonHandler() {
-        registerHandler(saveButton.addClickHandler(event -> {
-            // Get the user's rules without our default one
-            restFactory
-                    .create(CONTENT_TEMPLATE_RESOURCE)
-                    .method(res ->
-                            res.update(contentTemplatesWrapper.copy()
-                                    .contentTemplates(getTemplates())
-                                    .build()))
-                    .onSuccess(result -> {
-                        contentTemplatesWrapper = result;
-                        contentTemplates = new ArrayList<>(result.getContentTemplates());
-                        getSelectionModel().clear();
-                        update();
-                        setDirty(false);
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        }));
     }
 
     private void addNewRule(final AddMode addMode) {

@@ -20,9 +20,7 @@ import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryFavouritesPresenter.QueryFavouritesView;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.svg.client.Preset;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.util.client.ReadingOrder;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -46,7 +44,7 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
     @UiField
     SimplePanel bottom;
     @UiField
-    ButtonPanel buttonPanel;
+    Toolbar toolbar;
 
     @Inject
     public QueryFavouritesViewImpl(final Binder binder,
@@ -73,8 +71,8 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
     }
 
     @Override
-    public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
+    public Toolbar getToolbar() {
+        return toolbar;
     }
 
     public interface Binder extends UiBinder<Widget, QueryFavouritesViewImpl> {

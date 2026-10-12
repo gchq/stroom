@@ -42,7 +42,7 @@
                         helpText="The value set in the nodes' YAML configuration files, if any. On each node it overrides the database value. If nodes have different YAML values, a message says so."
                         screenReaderText="Read only. Overrides the database value on the nodes where it is set.">
             <g:FlowPanel>
-                <b:ButtonPanel ui:field="yamlValueButtonPanel"/>
+                <b:Toolbar ui:field="yamlValueToolbar" name="YAML value actions"/>
                 <g:TextArea ui:field="yamlValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
             </g:FlowPanel>
@@ -51,7 +51,7 @@
                         helpText="The value the nodes are actually using: the YAML value if set, otherwise the database value, otherwise the default. A warning icon shows if nodes differ in value or source, or a node could not be checked; select it to see each node's value."
                         screenReaderText="Read only. YAML value, else database value, else default.">
             <g:FlowPanel>
-                <b:ButtonPanel ui:field="effectiveValueButtonPanel"/>
+                <b:Toolbar ui:field="effectiveValueToolbar" name="Effective value actions"/>
                 <g:TextArea ui:field="effectiveValue"
                             addStyleNames="globalProperties globalPropertyEditViewImpl-textAreaReducedHeight allow-focus w-100"/>
             </g:FlowPanel>
@@ -60,7 +60,7 @@
                         helpText="The type of value the property takes, which sets the format to use. The help button beside the type name gives details of each type.">
             <g:FlowPanel addStyleNames="globalPropertyEditViewImpl-dataType">
                 <g:Label ui:field="dataType" addStyleNames="globalProperties"/>
-                <b:ButtonPanel ui:field="dataTypeButtonPanel" addStyleNames="helpIcon"/>
+                <b:Toolbar ui:field="dataTypeToolbar" name="Data type actions" addStyleNames="helpIcon"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditSource" label="Source"

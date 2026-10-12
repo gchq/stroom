@@ -41,7 +41,7 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.AppPermission;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
@@ -50,7 +50,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.TableBuilder;
 
 import com.google.gwt.cell.client.TextCell;
@@ -111,8 +110,11 @@ public class IndexShardPresenter
         this.dateTimeFormatter = dateTimeFormatter;
 
         if (securityContext.hasAppPermission(AppPermission.MANAGE_INDEX_SHARDS_PERMISSION)) {
-            buttonFlush = view.addButton(SvgPresets.SHARD_FLUSH);
-            buttonDelete = view.addButton(SvgPresets.DELETE);
+            view.getToolbar().setName("Shard actions");
+            buttonFlush = view.getToolbar().button(SvgImage.SHARD_FLUSH, "Flush Selected Shards", this::flush);
+            buttonFlush.setEnabled(false);
+            buttonDelete = view.getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+            buttonDelete.setEnabled(false);
         }
 
         addColumns();
@@ -122,20 +124,6 @@ public class IndexShardPresenter
     @Override
     protected void onBind() {
         super.onBind();
-        if (buttonFlush != null) {
-            registerHandler(buttonFlush.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    flush();
-                }
-            }));
-        }
-        if (buttonDelete != null) {
-            registerHandler(buttonDelete.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    delete();
-                }
-            }));
-        }
         registerHandler(dataGrid.addColumnSortHandler(event -> refresh()));
     }
 

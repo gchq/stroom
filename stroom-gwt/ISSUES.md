@@ -586,10 +586,20 @@ document's Save and Save As (`DocTabPresenter.createToolbar`), the pipeline's st
 query's Create Rule and Create Report, the dashboard's design buttons, stepping's Terminate and log
 pane toggle (hidden rather than removed), the visualisation assets' buttons and the query text
 view's Close; and the templates' loose buttons are in a `<b:Toolbar>` (query buttons, navigation,
-the query toolbar's errors, a property's copy name). Every screenshot is unchanged. Still made on
-their own: buttons added through a view's `addButton(ButtonView)` (the pagers and list views, which
-need to expose their toolbar), and the button widgets built on `ToolbarButton` (`HelpButton`,
-`RefreshButton`, table expand and collapse, the quick filter's and date picker's buttons).
+the query toolbar's errors, a property's copy name). Every screenshot is unchanged.
+Then every list's buttons: `PagerView` and `PagerViewWithHeading` hold a `Toolbar` (`getToolbar()`,
+named after the list with `setName`), and about 100 list presenters make their buttons in it with
+`getToolbar().button(icon, name, handler)` in place of `addButton(Preset)` and a click handler
+registered in `onBind`. The list presenters' own `add(Preset)`/`addButton(Preset)` pass-throughs are
+`getToolbar()`, as are the views' (`QueryView`'s left and right `ButtonPanel`s are its expression and
+messages toolbars; `PathwayTreeView`, both `EditExpressionView`s, `QueryFavouritesView` and the
+global property editor's value icons), and `PagerView.addButton(Preset)` is gone. A menu a button
+opens (a dashboard table's Add Column, the annotation menu) is placed against the button rather
+than whatever was clicked inside it (`AnnotationManager.showAnnotationMenu(Element, …)`). Every
+screenshot is unchanged. Still made on their own: the button widgets built on `ToolbarButton`
+(`HelpButton`, `RefreshButton` (the visualisations' own), table expand and collapse, the quick
+filter's and date picker's buttons), which `PagerView.addButton(ButtonView)` still adds. The pathway
+tree's New, Edit and Remove buttons have never had a click handler, so do nothing.
 
 ### Opening a screen leaves the focus behind (#5405)
 

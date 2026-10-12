@@ -28,12 +28,11 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.security.shared.FindUserAccessCriteria;
 import stroom.security.shared.UserAccessResource;
 import stroom.security.shared.UserAccessRow;
-import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
 import stroom.widget.util.client.MultiSelectionModelImpl;
@@ -200,8 +199,11 @@ public class UserAccessListPresenter
         }
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return pagerView.addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return pagerView.getToolbar();
     }
 
     public void setQuickFilter(final String userInput) {
