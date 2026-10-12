@@ -355,6 +355,10 @@
     "color-contrast",
     "label"
   ],
+  "app-main-annotationeditor--failed-comment-change-keeps-dialog-usable": [
+    "color-contrast",
+    "label"
+  ],
   "app-main-annotationeditor--grouped-history": [
     "color-contrast",
     "label"
@@ -622,6 +626,9 @@
   "app-main-executionschedulesscreen--filter": [
     "aria-command-name"
   ],
+  "app-main-executionschedulesscreen--invalid-filter-keeps-dialog-usable": [
+    "aria-command-name"
+  ],
   "app-main-executionschedulesscreen--run-now": [
     "aria-command-name",
     "color-contrast"
@@ -686,6 +693,9 @@
     "label"
   ],
   "app-main-pipelineeditor--embedded-property": [
+    "label"
+  ],
+  "app-main-pipelineeditor--failed-batch-change-keeps-dialog-usable": [
     "label"
   ],
   "app-main-pipelineeditor--processors": [
@@ -796,6 +806,9 @@
     "target-size"
   ],
   "app-main-usersscreen--bulk-create": [
+    "target-size"
+  ],
+  "app-main-usersscreen--failed-restore-keeps-dialog-usable": [
     "target-size"
   ],
   "app-main-usersscreen--focused-open": [
