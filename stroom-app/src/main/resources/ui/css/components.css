@@ -2555,7 +2555,7 @@ button.main-menu svg {
 }
 
 /* Add a smidge of a gap between the split and the next form group */
-.DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
+.DictionarySettingViewImpl-words > .form-group-label-container {
     margin-top: 0.5em;
 }
 

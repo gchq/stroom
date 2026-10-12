@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:l="urn:import:stroom.cell.list.client"
              xmlns:split="urn:import:stroom.widget.layout.client">
-    <split:SplitPane vertical="true" thin="true" sizes="*, 120px"
+    <split:SplitPane vertical="true" sizes="*, 120px"
                      names="History, Selected query" addStyleNames="max default-min-sizes">
         <g:ScrollPanel ui:field="top" styleName="max stroom-control">
             <l:CustomCellList ui:field="cellList" styleName="queryHistoryViewImpl-cellList" />
