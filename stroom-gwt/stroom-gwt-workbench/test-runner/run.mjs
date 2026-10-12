@@ -41,7 +41,7 @@ import {
 } from './lib/outcome.mjs';
 import { judgeLeak, measureLeak, withLeakProbe } from './lib/leak-check.mjs';
 import { judgeA11y, measureA11y, readBaseline, updateBaseline, writeBaseline } from './lib/a11y-check.mjs';
-import { REAL_INPUT_CHECKS } from './lib/real-input.mjs';
+import { REAL_INPUT_CHECKS } from './lib/real-input/index.mjs';
 import { judgeContentFocus, measureContentFocus } from './lib/focus-check.mjs';
 import { screenshotFile } from './lib/screenshots.mjs';
 
@@ -385,7 +385,7 @@ async function runStoryOnce(browser, story, options, attempt) {
   return result;
 }
 
-// The real input check of a story that passed (see lib/real-input.mjs): fails it if the page
+// The real input check of a story that passed (see lib/real-input/): fails it if the page
 // doesn't behave as it should with real key presses and mouse clicks.
 async function checkRealInput(page, check, options, result) {
   try {

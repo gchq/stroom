@@ -217,7 +217,7 @@ public final class ToolbarStories {
                     play.expect(play.getByRole("button", "Add")).toHaveFocus();
                 })
                 // Driven by the test runner with real key presses and mouse clicks (its real input
-                // check, test-runner/lib/real-input.mjs), which a play can't make
+                // check, test-runner/lib/real-input/buttons.mjs), which a play can't make
                 .story("RealInput", context -> region(documentActions(context)))
                 // A row of two toolbars, at either end: a tab stop each
                 .story("Row", context -> {

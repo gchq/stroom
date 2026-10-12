@@ -30,6 +30,7 @@ import { judgeA11y, updateBaseline } from './a11y-check.mjs';
 import { judgeContentFocus } from './focus-check.mjs';
 import { decideOutcome, runWithRetries } from './outcome.mjs';
 import { safeFileBase, screenshotFile } from './screenshots.mjs';
+import { mergeChecks } from './real-input/index.mjs';
 
 test('filters', () => {
   const stories = [
@@ -311,4 +312,13 @@ test('focus on open: the focus must go onto a tab stop in the screen', () => {
     /outside it \(on Main Menu\)/);
   assert.match(judgeContentFocus({ checked: true, inside: true, tabStop: false, name: 'div' }),
     /nothing a keyboard user can tab to/);
+});
+
+test('real input checks: each component file adds its own, and a story id in two files is an error', () => {
+  const a = async () => {};
+  const b = async () => {};
+  assert.deepEqual(Object.keys(mergeChecks({ 'x.mjs': { 'one--a': a }, 'y.mjs': { 'two--b': b } })),
+    ['one--a', 'two--b']);
+  assert.throws(() => mergeChecks({ 'x.mjs': { 'one--a': a }, 'y.mjs': { 'one--a': b } }),
+    /one--a is in both x\.mjs and y\.mjs/);
 });

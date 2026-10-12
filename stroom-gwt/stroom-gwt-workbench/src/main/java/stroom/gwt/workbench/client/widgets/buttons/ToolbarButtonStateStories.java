@@ -30,7 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// (`workbenchScreenshotDiff`).
 ///
 /// The hover and focus stories are hovered over or tabbed to with the real mouse and keyboard by
-/// the test runner's real input checks (`test-runner/lib/real-input.mjs`).
+/// the test runner's real input checks (`test-runner/lib/real-input/buttons.mjs`).
 public final class ToolbarButtonStateStories {
 
     private static final String TARGET = "target";

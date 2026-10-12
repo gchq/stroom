@@ -50,7 +50,7 @@ import java.util.List;
 ///
 /// The `Compare` stories show an old split panel (test id `old`) above a split pane set up alike
 /// (test id `new`), and check their panes are the same size; the runner's real input check drags
-/// both splitters with the real mouse and checks again (`test-runner/lib/real-input.mjs`). The other
+/// both splitters with the real mouse and checks again (`test-runner/lib/real-input/split-pane.mjs`). The other
 /// stories cover what only the split pane does: the keyboard, what a screen reader is told, and the
 /// panes' order in the page.
 public final class SplitPaneStories {

@@ -903,7 +903,7 @@ Also:
   (see [Accessibility check](test-runner/README.md#accessibility-check)).
 * Keyboard behaviour that depends on the browser trusting the input (real Tab order,
   `:focus-visible`, mouse versus keyboard focus) can't be shown by a play's own events; add a
-  check to `test-runner/lib/real-input.mjs` (see
+  check to the component's file in `test-runner/lib/real-input/` (see
   [Real input checks](test-runner/README.md#real-input-checks)).
 * `stroom.gwt.workbench.client.a11y` measures keyboard access: `TabStops.names(region)` (the tab
   stops in order, as a browser counts them) and `ButtonRuns.of(region)` (runs of adjacent icon
