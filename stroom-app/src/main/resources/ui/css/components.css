@@ -1221,10 +1221,6 @@
 }
 */
 
-.mainViewImpl-splitPanel > .thinSplitLayoutPanel-Dragger-Outer {
-    background-color: var(--navigation__splitter__background-color);
-}
-
 .thinSplitLayoutPanel-Dragger-Outer {
     overflow: visible !important;
     background-color: var(--splitter__background-color);

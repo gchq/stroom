@@ -95,8 +95,18 @@ public final class AiFixtures {
     /// @param builder The story's fixtures' builder.
     /// @return The builder.
     public static RestFixtures.Builder chatRoutes(final RestFixtures.Builder builder) {
+        return chatRoutes(builder, CONFIG);
+    }
+
+    /// Adds the routes of a chat, as [#chatRoutes(RestFixtures.Builder)] does, with a default config
+    /// of the story's own, e.g. one that docks the chat into the main screen.
+    ///
+    /// @param builder The story's fixtures' builder.
+    /// @param config  The default config (`getDefaultConfig`), as JSON.
+    /// @return The builder.
+    public static RestFixtures.Builder chatRoutes(final RestFixtures.Builder builder, final String config) {
         return builder
-                .post("/ai/v1/getDefaultConfig", RestReply.json(CONFIG))
+                .post("/ai/v1/getDefaultConfig", RestReply.json(config))
                 // UserPreferencesResource.update(): the chat saves the default config as the user's
                 .post("/preferences/v1", RestReply.json("true"))
                 .post("/ai/v1/createChat", RestReply.json("{\"id\": 1, \"title\": \"\"}"))

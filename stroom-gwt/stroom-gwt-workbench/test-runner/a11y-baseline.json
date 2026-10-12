@@ -411,6 +411,10 @@
   "app-main-appshell--activity-chooses-on-startup": [
     "target-size"
   ],
+  "app-main-appshell--ai-docked-beside-content": [
+    "button-name",
+    "target-size"
+  ],
   "app-main-appshell--banner": [
     "button-name",
     "target-size"

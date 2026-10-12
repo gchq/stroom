@@ -21,6 +21,8 @@ import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.DocumentTabData;
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
+import stroom.gwt.workbench.client.app.ai.AiFixtures;
+import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.query.QueryFixtures;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -36,6 +38,7 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -422,6 +425,27 @@ public final class AppShellStories {
                     play.dblClick(navTree(play).getByText("Countries"));
                     play.findByText("Words", StroomDom.LINK_TAB_LABEL);
                     play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
+                    expectNoProblems(play);
+                })
+                // The 'Ask Stroom AI' chat docked to the right of the content (its config's dock
+                // type is DOCK), opened with the toolbar's button: the main screen puts it in a split
+                // pane of its own beside the content, whose splitter is named by the chat
+                .story("AiDockedBesideContent", AppShellStories::renderDockedAi)
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    play.click(play.getByTitle("Ask Stroom AI"));
+                    final Query aiSplitter = play.findByRole("separator", "Ask Stroom AI");
+                    play.expect(aiSplitter).toHaveAttribute("aria-orientation", "vertical");
+                    // The explorer's splitter is still there, in the content beside the chat
+                    play.expect(play.getByRole("separator", "Explorer")).toBeInTheDocument();
+                    // Moving the chat's splitter saves its new size in the user's preferences
+                    final Value<Integer> requests = play.spy(ScreenHarness.REQUEST_SPY).callCount();
+                    final Value<Integer> before = play.capture("requests before", requests::get);
+                    play.click(aiSplitter);
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenLastCalledWith(
+                            RequestMatcher.post("/preferences/v1").withBodyContaining("dockSize").toSpyMatcher()));
+                    play.expect("requests since", () -> requests.get() - before.get()).toBeGreaterThan(0);
                     expectNoProblems(play);
                 })
                 // Load, edit (dirty), save, and close with the unsaved changes confirmation
@@ -930,6 +954,17 @@ public final class AppShellStories {
         final RestFixtures.Builder routes = RestFixtures.builder();
         storyRoutes.accept(routes);
         return ShellScreen.create(context, routes.addAll(commonRoutes(tree)).build(), options);
+    }
+
+    // The shell with the 'Ask Stroom AI' chat, configured to dock to the right of the content
+    private static Widget renderDockedAi(final StoryContext context) {
+        final ShellScreen shell = createShell(context, AppShellFixtures.dictTree(),
+                routes -> AiFixtures.chatRoutes(routes, "{\"dockType\": \"DOCK\", \"dockLocation\": \"RIGHT\"}"),
+                builder -> {
+                });
+        AskStroomAiChat.register(shell.getHarness(), shell.getInjector()::getAskStroomAiPresenter);
+        shell.start(null);
+        return shell.asWidget();
     }
 
     // Stroom's embedded view: the document without the shell
