@@ -2,47 +2,51 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
-             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view"
+             xmlns:sg="urn:import:stroom.planb.client.view"
              xmlns:d="urn:import:stroom.widget.customdatebox.client">
     <g:FlowPanel styleName="max form-padding form">
-        <g:SimplePanel ui:field="sharedFileStore"/>
-        <form:FormGroup identity="pathwaysInfoFeed" label="Info Feed">
-            <g:SimplePanel ui:field="infoFeed"/>
-        </form:FormGroup>
-        <form:FormGroup identity="temporalOrderingTolerance"
-                        label="Temporal Ordering Tolerance">
-            <d:DurationPicker ui:field="temporalOrderingTolerance"/>
-        </form:FormGroup>
-        <form:FormGroup identity="observationWindow"
-                        label="Observation Window"
-                        helpText="How far back this model is held to. What a trace teaches only ever widens the model, so an envelope left to itself ends up admitting everything and saying nothing. Each night the model is narrowed to what has actually been seen within this of now, which is also what gives a widening its meaning again: a change then says something happened that has not happened lately, rather than something that has not happened since the model was new. What a model was given is kept a day at a time, so a window reaches back into the day it lands in and keeps all of it. It is counted in whole days: a document given something shorter by import or by the API is held to one day. A short window narrows hard: the next day's traces then widen the model again, and each widening is recorded.">
-            <d:DurationPicker ui:field="observationWindow"/>
-        </form:FormGroup>
-        <form:FormGroup identity="pathwaysIgnoredSpanNames"
-                        label="Ignored Span Names"
-                        helpText="Spans that are no part of a pathway, one per line, where '*' stands for any run of characters, e.g. 'Ping'. For work the runtime does when it feels like it rather than when the code says to, such as a connection pool checking a connection it has not used for a while: whether it happens is decided by how long something sat idle, so recording it doubles the paths for every place it can appear. Such a span is left out of the model as well as the path, along with whatever it ran, and it takes no part in deciding what else ran at the same time. Matching is case sensitive and covers the whole name.">
-            <g:TextArea ui:field="ignoredSpanNames"
-                        width="400px"
-                        title="Ignored Span Names"/>
-        </form:FormGroup>
-        <form:FormGroup identity="pathwaysIgnoredAttributes"
-                        label="Ignored Attributes"
-                        helpText="Span attributes the model should not learn a value for, one per line, where '*' stands for any run of characters, e.g. 'thread.*'. A matching attribute is recorded once as accepting anything and is never changed again, so it stays visible against the node without the model growing every time its value differs. Matching is case sensitive and covers the whole name.">
-            <g:TextArea ui:field="ignoredAttributes"
-                        width="400px"
-                        title="Ignored Attributes"/>
-        </form:FormGroup>
-        <form:FormGroup identity="pathwaysInfoAllowPathwayCreation" label="Allow Pathway Creation">
-            <tickbox:CustomCheckBox ui:field="allowPathwayCreation"/>
-        </form:FormGroup>
-        <form:FormGroup identity="pathwaysInfoAllowPathwayMutation" label="Allow Pathway Mutation">
-            <tickbox:CustomCheckBox ui:field="allowPathwayMutation"/>
-        </form:FormGroup>
-        <form:FormGroup identity="pathwaysInfoAllowConstraintCreation" label="Allow Constraint Creation">
-            <tickbox:CustomCheckBox ui:field="allowConstraintCreation"/>
-        </form:FormGroup>
-        <form:FormGroup identity="pathwaysInfoAllowConstraintMutation" label="Allow Constraint Mutation">
-            <tickbox:CustomCheckBox ui:field="allowConstraintMutation"/>
-        </form:FormGroup>
+        <sg:SettingsGroup label="Shared File Store">
+            <g:SimplePanel ui:field="sharedFileStore"/>
+        </sg:SettingsGroup>
+        <sg:SettingsGroup label="Reporting">
+            <g:FlowPanel>
+                <form:FormGroup identity="pathwaysInfoFeed" label="Info Feed"
+                                helpText="Where this document says what it has learnt. A trace that teaches the model something says so here — a path it had never taken before, a constraint widened to admit a value it had not seen — and so does every change the nightly narrowing makes. One stream of messages per run of work, so a run that found nothing writes nothing. Leave it empty and the model still learns; it just has nowhere to report what it found.">
+                    <g:SimplePanel ui:field="infoFeed"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </sg:SettingsGroup>
+        <sg:SettingsGroup label="Learning">
+            <g:FlowPanel>
+                <form:FormGroup identity="temporalOrderingTolerance"
+                                label="Temporal Ordering Tolerance"
+                                helpText="How close two steps have to start to count as having run at the same time. Work done side by side starts in whatever order the scheduler chose that second, so reading that order as part of the shape of the work would make every run look like a new way through it. Steps that genuinely followed one another keep their order, because the program decided that and a change in it is a change in behaviour worth recording. At zero only work that actually overlaps counts as simultaneous, which is strict: short calls made from several threads at once often land tens of microseconds apart without quite touching, and a tolerance of about a millisecond gathers those while leaving genuinely separate steps apart. Set it too high and a real change in the order of steps reads as work happening at once, and goes unnoticed.">
+                    <d:DurationPicker ui:field="temporalOrderingTolerance"/>
+                </form:FormGroup>
+                <form:FormGroup identity="narrowingWindow"
+                                label="Narrow To The Last"
+                                helpText="How far back the nightly narrowing looks. What a trace teaches only ever widens the model, so an envelope left to itself ends up admitting everything and saying nothing. Each night the model is held to what it has actually been given within this of now: a constraint narrows to the values it was seen with, a node nothing has run is retired, and a path nothing has taken is dropped. What a model was given is kept a day at a time, so this reaches back into the day it lands in and keeps all of it. It is counted in whole days: a document given something shorter by import or by the API is held to one day. Set it short and the model narrows hard, so the next day's traces widen it again — which is the point, because a widening then says something happened that has not happened lately rather than something that has not happened since the model was new.">
+                    <d:DurationPicker ui:field="narrowingWindow"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </sg:SettingsGroup>
+        <sg:SettingsGroup label="Ignored">
+            <g:FlowPanel>
+                <form:FormGroup identity="pathwaysIgnoredSpanNames"
+                                label="Ignored Span Names"
+                                helpText="Spans that are no part of a pathway, one per line, where '*' stands for any run of characters, e.g. 'Ping'. For work the runtime does when it feels like it rather than when the code says to, such as a connection pool checking a connection it has not used for a while: whether it happens is decided by how long something sat idle, so recording it doubles the paths for every place it can appear. Such a span is left out of the model as well as the path, along with whatever it ran, and it takes no part in deciding what else ran at the same time. Matching is case sensitive and covers the whole name.">
+                    <g:TextArea ui:field="ignoredSpanNames"
+                                width="400px"
+                                title="Ignored Span Names"/>
+                </form:FormGroup>
+                <form:FormGroup identity="pathwaysIgnoredAttributes"
+                                label="Ignored Attributes"
+                                helpText="Span attributes the model should not learn a value for, one per line, where '*' stands for any run of characters, e.g. 'thread.*'. A matching attribute is recorded once as accepting anything and is never changed again, so it stays visible against the node without the model growing every time its value differs. Matching is case sensitive and covers the whole name.">
+                    <g:TextArea ui:field="ignoredAttributes"
+                                width="400px"
+                                title="Ignored Attributes"/>
+                </form:FormGroup>
+            </g:FlowPanel>
+        </sg:SettingsGroup>
     </g:FlowPanel>
 </ui:UiBinder>

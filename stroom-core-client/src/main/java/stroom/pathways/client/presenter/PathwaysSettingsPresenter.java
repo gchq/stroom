@@ -64,11 +64,7 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
         getView().setTemporalOrderingTolerance(doc.getTemporalOrderingTolerance());
         getView().setIgnoredSpanNames(doc.getIgnoredSpanNames());
         getView().setIgnoredAttributes(doc.getIgnoredAttributes());
-        getView().setObservationWindow(doc.getObservationWindow());
-        getView().setAllowPathwayCreation(doc.isAllowPathwayCreation());
-        getView().setAllowPathwayMutation(doc.isAllowPathwayMutation());
-        getView().setAllowConstraintCreation(doc.isAllowConstraintCreation());
-        getView().setAllowConstraintMutation(doc.isAllowConstraintMutation());
+        getView().setNarrowingWindow(doc.getNarrowingWindow());
         feedPresenter.setSelectedEntityReference(doc.getInfoFeed(), true);
         getView().setSharedFileStore(doc.getSharedFileStore());
         // Where a pathway already lives is decided by these two, so once anything has been written
@@ -84,11 +80,7 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
                 .temporalOrderingTolerance(getView().getTemporalOrderingTolerance())
                 .ignoredSpanNames(getView().getIgnoredSpanNames())
                 .ignoredAttributes(getView().getIgnoredAttributes())
-                .observationWindow(getView().getObservationWindow())
-                .allowPathwayCreation(getView().isAllowPathwayCreation())
-                .allowPathwayMutation(getView().isAllowPathwayMutation())
-                .allowConstraintCreation(getView().isAllowConstraintCreation())
-                .allowConstraintMutation(getView().isAllowConstraintMutation())
+                .narrowingWindow(getView().getNarrowingWindow())
                 .infoFeed(feedPresenter.getSelectedEntityReference())
                 .sharedFileStore(configuredSharedFileStore())
                 .build();
@@ -119,27 +111,19 @@ public class PathwaysSettingsPresenter extends DocPresenter<PathwaysSettingsView
 
         List<String> getIgnoredAttributes();
 
-        SimpleDuration getObservationWindow();
+        SimpleDuration getNarrowingWindow();
 
-        void setObservationWindow(SimpleDuration observationWindow);
+        void setNarrowingWindow(SimpleDuration narrowingWindow);
 
         void setIgnoredAttributes(List<String> ignoredAttributes);
 
-        boolean isAllowPathwayCreation();
 
-        void setAllowPathwayCreation(boolean allowPathwayCreation);
 
-        boolean isAllowPathwayMutation();
 
-        void setAllowPathwayMutation(boolean allowPathwayMutation);
 
-        boolean isAllowConstraintCreation();
 
-        void setAllowConstraintCreation(boolean allowConstraintCreation);
 
-        boolean isAllowConstraintMutation();
 
-        void setAllowConstraintMutation(boolean allowConstraintMutation);
 
         SharedFileStoreSettings getSharedFileStore();
 

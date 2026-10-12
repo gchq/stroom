@@ -63,27 +63,27 @@ public enum MutationType implements HasDisplayValue, HasPrimitiveValue {
      */
     CONSTRAINT_BOUND_OPENED("Bound Opened", 13),
     /**
-     * A constraint was narrowed to what has been seen within the document's observation window. Not
+     * A constraint was narrowed to what has been seen within the document's narrowing window. Not
      * caused by a trace: every trace only ever widens, and this is the narrowing putting back what
      * one outlier took away, so that a widening means something again.
      */
-    CONSTRAINT_NARROWED("Narrowed", 14),
+    CONSTRAINT_NARROWED("Constraint Narrowed", 14),
     /**
-     * A path was dropped because nothing has taken it within the document's observation window. Not
+     * A path was dropped because nothing has taken it within the document's narrowing window. Not
      * caused by a trace: a pathway gathers one-off shapes faster than anything else, and a path
-     * nothing takes any more is a way through the work that is no longer a way through the work.
+     * nothing takes anymore is a way through the work that is no longer a way through the work.
      */
     PATH_DROPPED("Path Dropped", 15),
     /**
      * A node stopped being part of the work, because no trace within the window carried it. The node
      * is kept, not removed — paths name nodes by position and a replay puts them back by uuid.
      */
-    NODE_RETIRED("Retired", 16),
+    NODE_RETIRED("Node Retired", 16),
     /**
      * A node that had stopped being part of the work is part of it again. The same node as before, so
      * what it was and how it was used are still its own.
      */
-    NODE_REVIVED("Revived", 17);
+    NODE_REVIVED("Node Revived", 17);
 
     public static final PrimitiveValueConverter<MutationType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(MutationType.class, MutationType.values());

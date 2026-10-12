@@ -25,7 +25,6 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.customdatebox.client.DurationPicker;
-import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -47,7 +46,7 @@ public class PathwaysSettingsViewImpl
         extends ViewWithUiHandlers<PathwaysSettingsUiHandlers>
         implements PathwaysSettingsView, ReadOnlyChangeHandler {
 
-    private static final SimpleDuration DEFAULT_OBSERVATION_WINDOW = new SimpleDuration(7, TimeUnit.DAYS);
+    private static final SimpleDuration DEFAULT_NARROWING_WINDOW = new SimpleDuration(7, TimeUnit.DAYS);
 
     private final Widget widget;
     private final SharedFileStoreSettingsWidget sharedFileStoreWidget;
@@ -59,19 +58,11 @@ public class PathwaysSettingsViewImpl
     @UiField
     DurationPicker temporalOrderingTolerance;
     @UiField
-    DurationPicker observationWindow;
+    DurationPicker narrowingWindow;
     @UiField
     TextArea ignoredSpanNames;
     @UiField
     TextArea ignoredAttributes;
-    @UiField
-    CustomCheckBox allowPathwayCreation;
-    @UiField
-    CustomCheckBox allowPathwayMutation;
-    @UiField
-    CustomCheckBox allowConstraintCreation;
-    @UiField
-    CustomCheckBox allowConstraintMutation;
 
     @Inject
     public PathwaysSettingsViewImpl(final Binder binder,
@@ -83,8 +74,8 @@ public class PathwaysSettingsViewImpl
         temporalOrderingTolerance.smallTimeMode();
         temporalOrderingTolerance.setValue(new SimpleDuration(0, TimeUnit.NANOSECONDS));
         // Counted in whole days whatever is typed, so the form offers nothing finer.
-        observationWindow.wholeDaysMode();
-        observationWindow.setValue(DEFAULT_OBSERVATION_WINDOW);
+        narrowingWindow.wholeDaysMode();
+        narrowingWindow.setValue(DEFAULT_NARROWING_WINDOW);
     }
 
     @Override
@@ -98,13 +89,13 @@ public class PathwaysSettingsViewImpl
     }
 
     @Override
-    public SimpleDuration getObservationWindow() {
-        return observationWindow.getValue();
+    public SimpleDuration getNarrowingWindow() {
+        return narrowingWindow.getValue();
     }
 
     @Override
-    public void setObservationWindow(final SimpleDuration observationWindow) {
-        this.observationWindow.setValue(inWholeDays(observationWindow));
+    public void setNarrowingWindow(final SimpleDuration narrowingWindow) {
+        this.narrowingWindow.setValue(inWholeDays(narrowingWindow));
     }
 
     // The picker offers whole days and more, and a window shorter than a day is held to a day when it
@@ -112,7 +103,7 @@ public class PathwaysSettingsViewImpl
     // will actually be held to, rather than a unit the picker cannot display.
     private static SimpleDuration inWholeDays(final SimpleDuration window) {
         if (window == null || window.getTimeUnit() == null) {
-            return DEFAULT_OBSERVATION_WINDOW;
+            return DEFAULT_NARROWING_WINDOW;
         }
         return window.getTimeUnit().getPrimitiveValue() < TimeUnit.DAYS.getPrimitiveValue()
                 ? new SimpleDuration(1, TimeUnit.DAYS)
@@ -177,46 +168,6 @@ public class PathwaysSettingsViewImpl
     }
 
     @Override
-    public boolean isAllowPathwayCreation() {
-        return allowPathwayCreation.getValue();
-    }
-
-    @Override
-    public void setAllowPathwayCreation(final boolean allowPathwayCreation) {
-        this.allowPathwayCreation.setValue(allowPathwayCreation);
-    }
-
-    @Override
-    public boolean isAllowPathwayMutation() {
-        return allowPathwayMutation.getValue();
-    }
-
-    @Override
-    public void setAllowPathwayMutation(final boolean allowPathwayMutation) {
-        this.allowPathwayMutation.setValue(allowPathwayMutation);
-    }
-
-    @Override
-    public boolean isAllowConstraintCreation() {
-        return allowConstraintCreation.getValue();
-    }
-
-    @Override
-    public void setAllowConstraintCreation(final boolean allowConstraintCreation) {
-        this.allowConstraintCreation.setValue(allowConstraintCreation);
-    }
-
-    @Override
-    public boolean isAllowConstraintMutation() {
-        return allowConstraintMutation.getValue();
-    }
-
-    @Override
-    public void setAllowConstraintMutation(final boolean allowConstraintMutation) {
-        this.allowConstraintMutation.setValue(allowConstraintMutation);
-    }
-
-    @Override
     public SharedFileStoreSettings getSharedFileStore() {
         return sharedFileStoreWidget.getSharedFileStore();
     }
@@ -234,7 +185,7 @@ public class PathwaysSettingsViewImpl
     @Override
     public void onReadOnly(final boolean readOnly) {
         temporalOrderingTolerance.setEnabled(!readOnly);
-        observationWindow.setEnabled(!readOnly);
+        narrowingWindow.setEnabled(!readOnly);
         ignoredSpanNames.setEnabled(!readOnly);
         ignoredAttributes.setEnabled(!readOnly);
         sharedFileStoreWidget.onReadOnly(readOnly);
@@ -245,8 +196,8 @@ public class PathwaysSettingsViewImpl
         fireChange();
     }
 
-    @UiHandler("observationWindow")
-    public void onObservationWindow(final ValueChangeEvent<SimpleDuration> e) {
+    @UiHandler("narrowingWindow")
+    public void onNarrowingWindow(final ValueChangeEvent<SimpleDuration> e) {
         fireChange();
     }
 
@@ -272,26 +223,6 @@ public class PathwaysSettingsViewImpl
 
     @UiHandler("ignoredAttributes")
     public void onIgnoredAttributes(final ValueChangeEvent<String> e) {
-        fireChange();
-    }
-
-    @UiHandler("allowPathwayCreation")
-    public void onAllowPathwayCreation(final ValueChangeEvent<Boolean> e) {
-        fireChange();
-    }
-
-    @UiHandler("allowPathwayMutation")
-    public void onAllowPathwayMutation(final ValueChangeEvent<Boolean> e) {
-        fireChange();
-    }
-
-    @UiHandler("allowConstraintCreation")
-    public void onAllowConstraintCreation(final ValueChangeEvent<Boolean> e) {
-        fireChange();
-    }
-
-    @UiHandler("allowConstraintMutation")
-    public void onAllowConstraintMutation(final ValueChangeEvent<Boolean> e) {
         fireChange();
     }
 

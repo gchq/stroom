@@ -346,7 +346,7 @@ class TestPathwayNarrowing {
     }
 
     private static PathwaysDoc windowOf(final long time, final TimeUnit unit) {
-        return doc().copy().observationWindow(new SimpleDuration(time, unit)).build();
+        return doc().copy().narrowingWindow(new SimpleDuration(time, unit)).build();
     }
 
     @Test

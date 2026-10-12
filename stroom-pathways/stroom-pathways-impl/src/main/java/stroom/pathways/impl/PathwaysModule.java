@@ -63,7 +63,7 @@ public class PathwaysModule extends AbstractModule {
                 .bindJobTo(NarrowPathways.class, builder -> builder
                         .name("Narrow Pathways")
                         .description("Job to narrow each pathway model to what it has happened within "
-                                     + "its observation window")
+                                     + "its narrowing window")
                         .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
 
         GuiceUtil.buildMultiBinder(binder(), SharedFileStoreDocStore.class)

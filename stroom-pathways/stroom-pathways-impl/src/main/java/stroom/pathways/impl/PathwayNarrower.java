@@ -83,7 +83,7 @@ import java.util.function.Consumer;
  * <p>A trace only ever widens a model, so an envelope left to itself ends up admitting everything and
  * saying nothing — and a change stops meaning anything, because nothing falls outside it any more.
  * Once a night every model is narrowed back to what has actually been seen within its document's
- * observation window, from the day by day account kept beside it as traces were applied.
+ * narrowing window, from the day by day account kept beside it as traces were applied.
  *
  * <p>What that restores is the worth of a change. After a narrowing, a constraint widening
  * says something happened that has not happened in the window — which is the thing worth being told
@@ -280,7 +280,7 @@ public class PathwayNarrower {
      */
     static int oldestDayInWindow(final PathwaysDoc doc, final Instant now) {
         final Instant aDayAgo = now.minusMillis(TraceProcessor.MILLIS_PER_DAY);
-        final Instant asked = SimpleDurationUtil.minus(now, doc.getObservationWindow());
+        final Instant asked = SimpleDurationUtil.minus(now, doc.getNarrowingWindow());
         final Instant oldest = asked.isAfter(aDayAgo)
                 ? aDayAgo
                 : asked;
