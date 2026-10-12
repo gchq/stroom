@@ -128,8 +128,10 @@ public final class UserAccessScreenStories {
                     final Play users = usersGrid(play);
                     play.waitFor(() -> play.expect(users.querySelectorAll("." + StroomDom.SELECTED_ROW))
                             .toHaveLength(2));
-                    // The two panes are split, so the divider can be dragged
-                    play.expect(play.querySelector(".thinSplitLayoutPanel-VDragger")).toBeInTheDocument();
+                    // The two panes are split, by a splitter that can be dragged or moved from the
+                    // keyboard, named by the pane it resizes
+                    play.expect(play.getByRole("separator", "Sessions"))
+                            .toHaveAttribute("aria-orientation", "horizontal");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // Selecting a user loads their sessions below
