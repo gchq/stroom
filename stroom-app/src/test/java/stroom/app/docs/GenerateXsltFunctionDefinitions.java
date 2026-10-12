@@ -519,16 +519,17 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
         private static XsltFunctionDefPojo create(final XsltFunctionDef annotaion, final String effectiveName) {
             if (Objects.equals(effectiveName, annotaion.name())) {
                 return new XsltFunctionDefPojo(
-                        annotaion.name(),
+                        trim(annotaion.name()),
                         null, // Not an alias, this is primary name
-                        annotaion.helpAnchor(),
+                        trim(annotaion.helpAnchor()),
                         annotaion.aliases(),
                         annotaion.commonCategory(),
                         annotaion.commonSubCategories(),
-                        annotaion.commonDescription(),
-                        annotaion.extendedCommonDescription(),
+                        trim(annotaion.commonDescription()),
+                        trim(annotaion.extendedCommonDescription()),
                         annotaion.commonReturnType(),
-                        annotaion.commonReturnDescription(), annotaion.signatures());
+                        trim(annotaion.commonReturnDescription()),
+                        annotaion.signatures());
             } else {
                 final boolean foundAlias = NullSafe.stream(annotaion.aliases())
                         .anyMatch(aName -> Objects.equals(aName, effectiveName));
@@ -544,17 +545,24 @@ public class GenerateXsltFunctionDefinitions implements DocumentationGenerator {
                         .toArray(String[]::new);
 
                 return new XsltFunctionDefPojo(
-                        effectiveName,
-                        annotaion.name(), // This is an alias so record the primary name
+                        trim(effectiveName),
+                        trim(annotaion.name()), // This is an alias so record the primary name
                         "", // Clear the help anchor as it is an alias
                         newAliases,
                         annotaion.commonCategory(),
                         annotaion.commonSubCategories(),
-                        annotaion.commonDescription(),
-                        annotaion.extendedCommonDescription(),
+                        trim(annotaion.commonDescription()),
+                        trim(annotaion.extendedCommonDescription()),
                         annotaion.commonReturnType(),
-                        annotaion.commonReturnDescription(), annotaion.signatures());
+                        trim(annotaion.commonReturnDescription()),
+                        annotaion.signatures());
             }
+        }
+
+        private static String trim(final String value) {
+            return value != null
+                    ? value.trim()
+                    : null;
         }
 
         public String getName() {
