@@ -47,6 +47,7 @@ import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.entity.shared.ExpressionCriteria;
@@ -705,7 +706,8 @@ public class AnnotationEditPresenter
         annotationResourceClient.changeAnnotationEntry(
                 request,
                 ignored -> afterChangeComment(e),
-                ignored -> new DefaultErrorHandler(this, e::reset),
+                // If the change fails, say why and let the user try again or cancel
+                RestErrorHandler.forPopup(this, e),
                 this);
     }
 

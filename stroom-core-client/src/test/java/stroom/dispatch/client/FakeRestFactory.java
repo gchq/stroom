@@ -136,7 +136,16 @@ public class FakeRestFactory implements RestFactory {
         ///
         /// @param throwable What went wrong.
         public void fail(final Throwable throwable) {
-            errorHandler.onError(new RestError(Mockito.mock(Method.class), throwable));
+            // With no failure handler, Stroom's default one only shows an alert, which nothing here
+            // can answer, so the caller hears nothing (e.g. a dialog waiting on it is never reset)
+            if (errorHandler != null) {
+                errorHandler.onError(new RestError(Mockito.mock(Method.class), throwable));
+            }
+        }
+
+        /// @return True if the request has its own failure handler, rather than Stroom's default.
+        public boolean hasFailureHandler() {
+            return errorHandler != null;
         }
     }
 }

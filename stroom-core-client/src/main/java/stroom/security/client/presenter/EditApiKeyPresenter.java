@@ -262,11 +262,10 @@ public class EditApiKeyPresenter
         final long maxExpiryEpochMs = now + uiConfig.getMaxApiKeyExpiryAgeMs();
         final UserRef owner = ownerPresenter.getSelected();
         if (expireTimeEpochMs == null) {
-            AlertEvent.fireError(this, "API Key expiry date must be less than or equal to "
-                                       + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
+            // Blank, or text that isn't a date and time
+            AlertEvent.fireError(this, "A valid expiry date must be provided for the API key.", event::reset);
         } else if (expireTimeEpochMs < now) {
-            AlertEvent.fireError(this, "API Key expiry date cannot be in the past "
-                                       + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);
+            AlertEvent.fireError(this, "API Key expiry date cannot be in the past.", event::reset);
         } else if (expireTimeEpochMs > maxExpiryEpochMs) {
             AlertEvent.fireError(this, "API Key expiry date cannot be after "
                                        + ClientDateUtil.toISOString(maxExpiryEpochMs), event::reset);

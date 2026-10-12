@@ -18,7 +18,8 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.CommonAlertEvent.Level;
-import stroom.dispatch.client.RestFactory;
+import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.FakeRestFactory;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
 import stroom.processor.shared.ProcessorFilterChange;
 import stroom.query.api.ExpressionOperator;
@@ -46,9 +47,10 @@ class TestBatchProcessorFilterEditPresenter {
     private final EventBus eventBus = new SimpleEventBus();
     private final List<ShowPopupEvent> shown = new ArrayList<>();
     private final List<AlertEvent> alerts = new ArrayList<>();
+    private final List<ConfirmEvent> confirms = new ArrayList<>();
     private BatchProcessorFilterEditView view;
     private UserRefSelectionBoxPresenter userRefSelectionBoxPresenter;
-    private RestFactory restFactory;
+    private FakeRestFactory restFactory;
     private BatchProcessorFilterEditPresenter presenter;
 
     @BeforeEach
@@ -57,9 +59,10 @@ class TestBatchProcessorFilterEditPresenter {
         GWTMockUtilities.disarm();
         eventBus.addHandler(ShowPopupEvent.getType(), shown::add);
         eventBus.addHandler(AlertEvent.getType(), alerts::add);
+        eventBus.addHandler(ConfirmEvent.getType(), confirms::add);
         view = Mockito.mock(BatchProcessorFilterEditView.class);
         userRefSelectionBoxPresenter = Mockito.mock(UserRefSelectionBoxPresenter.class);
-        restFactory = Mockito.mock(RestFactory.class);
+        restFactory = new FakeRestFactory();
         presenter = new BatchProcessorFilterEditPresenter(eventBus, view, userRefSelectionBoxPresenter, restFactory);
     }
 
@@ -108,6 +111,26 @@ class TestBatchProcessorFilterEditPresenter {
         assertThat(alerts)
                 .isEmpty();
         Mockito.verify(okPressed, Mockito.never()).reset();
+        Mockito.verify(okPressed, Mockito.never()).hide();
+    }
+
+    @Test
+    void ok_changeFails() {
+        // Regression test: the change had no failure handler, so when it failed (e.g. the server
+        // refused it) the dialog was left with OK and Cancel disabled.
+        Mockito.when(view.getChange()).thenReturn(ProcessorFilterChange.ENABLE);
+        final HidePopupRequestEvent okPressed = showAndPressOk(2);
+        assertThat(confirms)
+                .hasSize(1);
+        confirms.getFirst().getCallback().onResult(true);
+
+        restFactory.getLastRequest().fail(new RuntimeException("Refused"));
+
+        assertThat(alerts)
+                .hasSize(1);
+        Mockito.verify(okPressed, Mockito.never()).reset();
+        alerts.getFirst().getCallback().onClose();
+        Mockito.verify(okPressed).reset();
         Mockito.verify(okPressed, Mockito.never()).hide();
     }
 

@@ -217,24 +217,6 @@ basic use:
 * Solr index: the ZooKeeper fields stay enabled when Use ZK is unticked or for a single node
   (`SolrIndexSettingsViewImpl.ui.xml`).
 
-## Dialogs that don't say what's wrong
-
-All of these were found the same way: OK must close the dialog, show a message, or be disabled.
-Leaving the dialog open and saying nothing is the bug.
-
-### A blank or unreadable API key expiry date gets the wrong message
-
-**Reported.** (gwt-bugs #43, now fixed except for its message) A blank or unreadable Expiry Date in
-Create new API key used to make OK silently do nothing: the `Long` was unboxed into a `long`.
-`a2dc7af70c` (gh-5551) fixed that, but a `null` expiry now shows "API Key expiry date must be less
-than or equal to <max date>", which doesn't explain a blank or unreadable box. Note that typed text
-that doesn't parse also gives `null`, not just an empty box.
-
-Fix: a message for the actual problem, e.g. "An expiry date must be provided for the API key."
-
-* `stroom-core-client/src/main/java/stroom/security/client/presenter/EditApiKeyPresenter.java`
-  (lines 264-266)
-
 ## Memory
 
 ### Closed screens are never released
@@ -757,6 +739,8 @@ editors. Dialogs aren't limited to the window's size, and long forms rely on scr
 
 **Reported.**
 
+* Rename hides its dialog before the request is sent, and the document permission dialogs
+  close once a failed change is dismissed, so both lose what was entered if the request fails.
 * An empty paged list says "1 to 1 of 0" rather than "0 of 0" (e.g. the user groups screen's
   Member Of and Members panes with nothing selected).
 * `TimeViewImpl.setHourVisible` hides only the hour spinner, not its whole group, unlike the minute
@@ -1054,8 +1038,46 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   refused in the dialog, naming the field ("Store Time To Live must be set, e.g. 10m, 1h or 1d."),
   and a failed save shows the server's error and keeps the dialog open
   (`TestResultStoreSettingsPresenter`).
-* #43 (in part): a blank API key expiry made OK do nothing (`a2dc7af70c`); see
-  [the remaining part](#a-blank-or-unreadable-api-key-expiry-date-gets-the-wrong-message).
+* #43: a blank API key expiry made OK do nothing (`a2dc7af70c`), and then got "API Key expiry
+  date must be less than or equal to <max date>", which didn't say what was wrong (typed text that
+  isn't a date gives the same `null`). It now says "A valid expiry date must be provided for the
+  API key.", and a date in the past no longer ends with the latest date allowed
+  (`TestEditApiKeyPresenter`).
+* #57: placing a duplicated or added dashboard component needed a mouse: the new component
+  follows the mouse under a glass over the whole window until a click places it, and no key
+  finished or cancelled it, so a keyboard user who chose Duplicate was stuck. Now Escape cancels
+  (the unplaced components are removed again) and Enter places it beside the tab it came from; the
+  glass says so (`FlexLayout`, `PlacementKeys`, `DashboardPresenter.cancelNewComponents`; the
+  workbench stories `DuplicateCancelledWithEscape` and `DuplicatePlacedWithEnter`). The suite's
+  walker met it in four rounds, where its next click placed the copy.
+* #49 to #56: dialogs left with OK and Cancel disabled after an error, so that only reloading the
+  page got rid of them (Escape honours the disabled buttons). OK disables a dialog's buttons, and
+  each of these had a failure path that neither closed the dialog nor called
+  `HidePopupRequestEvent.reset()`. #49 and #50 were found by the suite's r10 round (whose walker now
+  reloads when a dialog won't close, and logs it as stranded), the rest by reading every dialog's
+  hide handler and what it passes the request to. Each has a workbench story,
+  `…KeepsDialogUsable`, that fails before the fix.
+  * #49: Batch Edit Current Processors, when the change failed: `bulkChange` had no failure
+    handler (`TestBatchProcessorFilterEditPresenter`).
+  * #50: Filter Schedules, the Data screen's and the stepping filter, and Add/Edit Processor, when
+    the expression was invalid or couldn't be validated: `ExpressionValidator` only alerted. It now
+    takes an `onInvalid` callback, run when the alert closes, and those dialogs pass `e::reset`;
+    Add/Edit Processor's own copy of the validation resets too (`TestExpressionValidator`,
+    `TestProcessorEditPresenter`).
+  * #51: Set Source Range, when the range ended before or where it started: the message had no
+    callback and the hide handler no `else`. Its offsets also read "51" for 5, as the 1 was
+    appended rather than added (`TestCharacterRangeSelectionPresenter`).
+  * #52: Add Processor, when creating the filter failed: the create, unlike the update, had no
+    failure handler (`TestProcessorEditPresenter`).
+  * #53: Add/Edit index volume, when the user declined the validation warning
+    (`TestIndexVolumeEditPresenter`).
+  * #54: Edit Comment, when the change failed: nothing was said either, as the failure handler was
+    `ignored -> new DefaultErrorHandler(this, e::reset)`, which made a handler and threw it away
+    (the workbench story only).
+  * #55: adding several users, when restoring a deleted one failed
+    (`TestCreateMultipleUsersPresenter`).
+  * #56: a pipeline property set to Embedded, when its document couldn't be created or saved (the
+    workbench story only).
 * #48: User Preferences couldn't be closed after saving them failed (OK spinning, OK and Cancel
   disabled, Escape ignored), as `UserPreferencesManager.update` had no failure handler; once
   Escape honoured disabled buttons, that made the dialog a trap. OK now passes
@@ -1203,6 +1225,9 @@ reproduce them. They drive Stroom at `http://localhost:8080` (set `URL=` to chan
 | API key expiry (#43) | `node probe-apikey-expiry.mjs`, `probe-apikey-badtime.mjs` | the message names the problem |
 | Save Tab Session (#46) | `node probe-ctrlenter.mjs` | a message shows |
 | Preferences save fails (#48) | `node probe-prefs-failsave.mjs` | its last line says the dialog closed |
+| Batch processor change fails (#49) | `node probe-batch-failsave.mjs` | its last line says the dialog closed |
+| Filter with an invalid term (#50) | `node probe-filter-invalid.mjs` | its last line says the dialog closed |
+| Dialogs left disabled (#49 to #56) | `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchTestFilter='*keeps-dialog-usable'` | the `…KeepsDialogUsable` stories pass |
 | Annotation tags (#44, #45) | `MUTATE=1 ONLY="annotation comments" node cycles.mjs` | the cycle passes |
 | Closed tabs (#47) | `MODE=doc DOCTYPE=Pipeline ROUNDS=8 node mem-leak.mjs` | DOM nodes and listeners stay flat per round |
 | Unknown rule status (#35) | `TestAnalyticRuleDoc` (Jackson reading `{"status":"ENABLED"}`) | the rule reads with `status` `null` |
@@ -1223,11 +1248,31 @@ reproduce them. They drive Stroom at `http://localhost:8080` (set `URL=` to chan
   4 now pass and the rest weren't reached. r8 also found #48, which left a dialog open over most of
   each shard; #48 is now fixed and round r9 re-walks it. (r8's #46 fails were recorded with that
   dialog open, so they don't prove #46 on their own; `probe-ctrlenter.mjs` does.)
-* The r9 round (October 2026, the same shards plus Pipeline, with #48 fixed) passes at all 10
+* The r9 round (October 2026, the same shards plus Pipeline, on a build with #48 fixed but from
+  before the fixes for #36, #38, #40, #41, #42 and #46) passes at all 10
   places #48 failed, and no shard had the Preferences dialog stuck open. #42 still fails at 11 of
   the 14 places r8 reached, and at a new one (PlanB, Settings, New); #40 still fails. #46 wasn't
   checked: without #48's dialog in the way the walker no longer visits Save Tab Session a second
   time, and at its one visit OK can't be clicked. #40 left its New Field dialog open over the end of
   the Lucene index shard, so PlanB, Query, Script and View were re-walked on their own (`docs-b2`).
+* On the build with those fixes, `probe-newfield` (#40), `probe-ctrlenter` (#46),
+  `probe-stepping` (#36) and `probe-prefs-failsave` (#48) all give their "fixed" result; the two
+  API key probes still give #43's open message. Round r10 re-walks everything on that build,
+  including Dashboard, Traces and the directed shards, which hold #36's, #38's and #41's places.
+* The r10 round (October 2026, all 15 shards on that build) passes at every place #38, #40, #41,
+  #42 and #48 failed and that it reached (#42 at 12 of 15; its fix answers "A name can't contain
+  '/'." before any request). #43's one place and #46's places weren't checked (#46: OK on Save Tab
+  Session still can't be clicked by the walker). It also found #49 and #50, whose dialogs the walker
+  had to reload to escape: Batch Edit Current Processors, Filter Schedules, and Add Processor
+  ("Add Filter").
+* The r11 round (October 2026, all 15 shards on the build with #43 and #49 to #56 fixed) had no
+  first-time fails and left no dialog stranded: in r10, #49 and #50 had stranded dialogs 11 times
+  across three shards. #38, #40, #41, #42 and #48 still pass where reached. The one fail at #57's
+  place is #57 itself, which is still open.
+* The r12 round (October 2026, the same build, with the walker now driving every dialog's fields)
+  also had no first-time fails: driving 60-250 fields per shard found no new bug, and coverage rose
+  from 759 to 805 handlers.
 * The ledger (`stroom-gwt-suite/out/coverage.md`) lists every run's fails side by side, so a fix
   shows as a re-walk that passes where an older run failed, not as a fail that disappears.
+  `./merge.sh <round>` also writes `out/flips-<round>.md`: every place an earlier run failed, and
+  whether the round now passes there, still fails, reached it without checking, or didn't reach it.

@@ -32,128 +32,128 @@ predict.
 `missing` = mined but never seen (miner phantom, dead code, or a real defect).
 `extra` = seen but not mined (the miner is incomplete — chrome, menu items, column headers).
 
-* **AskStroomAiPresenter** — expected 3, saw 5, MISSING: Close, OK, Cancel, extra: Download, Delete All Messages, New Conversation, Conversation History, Configure
+* **AskStroomAiPresenter** — expected 3, saw 6, MISSING: Close, OK, Cancel, extra: Download, Delete All Messages, New Conversation, Conversation History, Configure, None
 * **IndexFieldListPresenter** — expected 3, saw 17, MISSING: New, Edit, Delete, extra: Save, Edit Field, Remove Field, First, Backward, Forward
 * **SolrIndexFieldListPresenter** — expected 3, saw 10, MISSING: New, Edit, Delete, extra: Save, Edit Field, Remove Field, First, Backward, Forward
 * **BatchDocumentPermissionsPresenter** — expected 3, saw 8, MISSING: OK, Cancel, Close, extra: Edit Permissions For Selected Document, First, Backward, Filter Documents To Apply Permissions Changes On, Batch Edit Permissions For Filtered Documents, Forward
-* **ScheduledProcessEditPresenter** — expected 2, saw 1, MISSING: OK, Cancel, extra: Close
 * **TracesPresenter** — expected 2, saw 12, MISSING: Save, Save As, extra: First, Backward, Forward, Last, Refresh, Operation
 * **AnnotationPresenter** — expected 2, saw 25, MISSING: Save As, extra: First, Backward, Forward, Last, Edit Permissions For Selected User, Copy History
-* **QueryResultTablePresenter** — expected 4, saw 29, MISSING: Undo, extra: First, Backward, Forward, Last, Insert, Expand
-* **SteppingFilterPresenter** — expected 6, saw 20, MISSING: Has active filter(s), extra: First, Backward, Forward, Last, Refresh, Ctrl+Enter
+* **QueryResultTablePresenter** — expected 4, saw 30, MISSING: Undo, extra: First, Backward, Forward, Last, Insert, Expand
+* **SteppingFilterPresenter** — expected 6, saw 26, MISSING: Has active filter(s), extra: First, Backward, Forward, Last, Refresh, Ctrl+Enter
 * **UserTaskManagerPresenter** — expected 1, saw 0, MISSING: Close
-* **XMLSchemaPresenter** — expected 3, saw 30, MISSING: Alert, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Schema is valid
+* **XMLSchemaPresenter** — expected 3, saw 31, MISSING: Alert, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Schema is valid
 * **GlobalPropertyTabPresenter** — expected 2, saw 9, MISSING: Show Warnings, extra: First, Backward, Forward, Last, Refresh, Name
 * **CommonAlertPresenter** — expected 3, saw 7, extra: drag by the caption, resize by the SE handle, Escape, Ctrl+Enter
 * **AiChatHistoryPresenter** — expected 2, saw 13, extra: First, Backward, Forward, Last, Refresh, Ctrl+Enter
-* **AskStroomAiConfigPresenter** — expected 2, saw 53, extra: Restore From Defaults, Set As Default, Close, Enter, mouseover on "Max History Safety Cap" spinner, mouseout on "Max History Safety Cap" spinner
+* **AskStroomAiConfigPresenter** — expected 2, saw 55, extra: Restore From Defaults, Set As Default, Close, Enter, mouseover on "Max History Safety Cap" spinner, mouseout on "Max History Safety Cap" spinner
 * **ImportConfigPresenter** — expected 2, saw 11, extra: Choose File, Close, Ctrl+Enter, drag by the caption, resize by the SE handle, File - Click for help
-* **ExportConfigPresenter** — expected 2, saw 10, extra: Close, Ctrl+Enter, drag by the caption, resize by the SE handle, Items To Export - Click for help, Escape
+* **ExportConfigPresenter** — expected 2, saw 11, extra: Close, Ctrl+Enter, drag by the caption, resize by the SE handle, Items To Export - Click for help, ticked "Items To Export"
 * **ResultStorePresenter** — expected 1, saw 16, extra: First, Backward, Forward, Last, Refresh, drag by the caption
 * **FindPresenter** — expected 1, saw 11, extra: First, Backward, Forward, Last, Refresh, drag by the caption
-* **FindInContentPresenter** — expected 1, saw 13, extra: First, Backward, Forward, Last, Match case, Regex
+* **FindInContentPresenter** — expected 1, saw 16, extra: First, Backward, Forward, Last, Match case, Regex
 * **RecentItemsPresenter** — expected 1, saw 11, extra: First, Backward, Forward, Last, Refresh, drag by the caption
 * **TabSessionChooserPresenter** — no mined spec, saw 8
-* **TextBoxPopup** — expected 2, saw 11, extra: Enter, OK (illegal text in "Name"), drag by the caption, resize by the SE handle, Name - Click for help, Escape
-* **UserPreferencesPresenter** — expected 2, saw 185, extra: Set As Default, Revert To Default, Close, chose "Light" "Theme", chose "Comfortable" "Layout Density", ticked "Enable Transparency"
+* **TextBoxPopup** — expected 2, saw 12, extra: Enter, OK (illegal text in "Name"), drag by the caption, resize by the SE handle, Name - Click for help, typed "Name"
+* **UserPreferencesPresenter** — expected 2, saw 191, extra: Set As Default, Revert To Default, Close, chose "Light" "Theme", chose "Comfortable" "Layout Density", ticked "Enable Transparency"
 * **CurrentPasswordPresenter** — expected 2, saw 6, extra: Show Password, Ctrl+Enter, Current Password - Click for help, Escape
 * **AboutPresenter** — expected 1, saw 4, extra: Escape, right-click an explorer row, right-click a grid row
-* **ContentTemplateEditPresenter** — expected 0, saw 32, extra: Template Name - Click for help, Template Description - Click for help, Template Type - Click for help, Copy Pipeline Element Dependencies - Click for help, Pipeline - Click for help, Processor Priority - Click for help
-* **EditExpressionPresenter** — expected 5, saw 8, extra: OK, Cancel, Ctrl+Enter
-* **InfoDocumentPresenter** — expected 1, saw 1
-* **ExplorerPopupPresenter** — expected 2, saw 17, extra: drag by the caption, resize by the SE handle, right-click a grid row, mouseover on "Number of slices" spinner, mouseout on "Number of slices" spinner, mousedown on "Number of slices" spinner
-* **FolderPresenter** — expected 0, saw 33, extra: First, Backward, Forward, Last, Show Tasks, Edit Permissions For Selected User
-* **ExpressionPresenter** — expected 0, saw 23, extra: OK, Cancel, Close, Ctrl+Enter, Escape, Terminate Search
-* **BatchProcessorFilterEditPresenter** — expected 2, saw 7, extra: Close, Escape, Ctrl+Enter, right-click an explorer row, right-click a grid row
-* **FolderRootPresenter** — expected 0, saw 33, extra: First, Backward, Last, Forward, Show Tasks, Edit Permissions For Selected User
-* **SourceTabPresenter** — no mined spec, saw 22
-* **PipelineStructurePresenter** — expected 0, saw 16, extra: Save, Edit Pipeline Element, Edit Property, First, Backward, Forward
-* **NewElementPresenter** — expected 2, saw 6, extra: Enter, OK (illegal text in "Name"), Ctrl+Enter, Escape
+* **ContentTemplateEditPresenter** — expected 0, saw 35, extra: Template Name - Click for help, Template Description - Click for help, Template Type - Click for help, Copy Pipeline Element Dependencies - Click for help, Pipeline - Click for help, Processor Priority - Click for help
+* **EditExpressionPresenter** — expected 5, saw 9, extra: OK, Cancel, Ctrl+Enter, Enable
+* **InfoDocumentPresenter** — expected 1, saw 6, extra: right-click an explorer row, drag by the caption, resize by the SE handle, right-click the editor, right-click a grid row
+* **ExplorerPopupPresenter** — expected 2, saw 33, extra: drag by the caption, resize by the SE handle, right-click a grid row, mouseover on "Temporal Ordering Tolerance" spinner, mouseout on "Temporal Ordering Tolerance" spinner, mousedown on "Temporal Ordering Tolerance" spinner
+* **FolderPresenter** — expected 0, saw 34, extra: First, Backward, Forward, Last, Show Tasks, Edit Permissions For Selected User
+* **ExpressionPresenter** — expected 0, saw 26, extra: OK, Cancel, Close, Ctrl+Enter, right-click a pipeline element, Escape
+* **BatchProcessorFilterEditPresenter** — expected 2, saw 18, extra: Close, Escape, Ctrl+Enter, Change - Click for help, mouseover on "spinner 1" spinner, mouseout on "spinner 1" spinner
+* **FolderRootPresenter** — expected 0, saw 43, extra: First, Backward, Last, Forward, Show Tasks, Edit Permissions For Selected User
+* **SourceTabPresenter** — no mined spec, saw 23
+* **PipelineStructurePresenter** — expected 0, saw 17, extra: Save, Edit Pipeline Element, Edit Property, First, Backward, Forward
+* **NewElementPresenter** — expected 2, saw 11, extra: Enter, OK (illegal text in "Name"), Ctrl+Enter, right-click a pipeline element, Name - Click for help, Description (optional) - Click for help
 * **AddEventLinkPresenter** — expected 2, saw 3, extra: Close
-* **DurationPresenter** — expected 2, saw 2
-* **RulePresenter** — expected 0, saw 15, extra: Row Match Expression - Click for help, Rule Enabled State - Click for help, Hide Matching Rows - Click for help, Formatting Type - Click for help, Style - Click for help, Make Text Bold - Click for help
-* **CreateDocumentPresenter** — expected 2, saw 12, extra: Close, Enter, OK (illegal text in "Name"), Ctrl+Enter, Escape, Select the parent folder - Click for help
-* **FindAnnotationPresenter** — expected 2, saw 11, extra: First, Backward, Forward, Last, Refresh, Escape
+* **DurationPresenter** — expected 2, saw 9, extra: mouseover on "Retain For" spinner, mouseout on "Retain For" spinner, mousedown on "Retain For" spinner, mouseup on "Retain For" spinner, stepped the spinner "Retain For", Retain For - Click for help
+* **RulePresenter** — expected 0, saw 17, extra: Row Match Expression - Click for help, Rule Enabled State - Click for help, Hide Matching Rows - Click for help, Formatting Type - Click for help, Style - Click for help, Make Text Bold - Click for help
+* **CreateDocumentPresenter** — expected 2, saw 17, extra: Close, Enter, OK (illegal text in "Name"), Ctrl+Enter, Select the parent folder - Click for help, Name - Click for help
+* **FindAnnotationPresenter** — expected 2, saw 12, extra: First, Backward, Forward, Last, Refresh, Ctrl+Enter
 * **NewPropertyPresenter** — expected 0, saw 11, extra: Element Id - Click for help, Name - Click for help, Description - Click for help, Source - Click for help, Value - Click for help, Default Value - Click for help
-* **PathwaysPresenter** — expected 2, saw 30, extra: Close, New path disabled as read only, Edit path disabled as read only, Remove path disabled as read only, View Matching Traces, Edit Pathway
+* **PathwaysPresenter** — expected 2, saw 42, extra: Close, New path disabled as read only, Edit path disabled as read only, Remove path disabled as read only, View Matching Traces, Edit Pathway
 * **CommentEditPresenter** — no mined spec, saw 2
-* **NewPipelineReferencePresenter** — expected 0, saw 3, extra: OK, Close, Cancel
-* **CustomRowStylePresenter** — expected 2, saw 10, extra: Light Background Colour - Click for help, Light Text Colour - Click for help, Dark Background Colour - Click for help, Dark Text Colour - Click for help, Escape, Enter
-* **ColumnValuesFilterPresenter** — no mined spec, saw 19
-* **DashboardPresenter** — expected 0, saw 10, extra: Expand, Collapse, Download, First, Backward, Forward
-* **RenameColumnPresenter** — expected 2, saw 6, extra: Escape, Enter, OK (illegal text in "Name"), Ctrl+Enter
+* **NewPipelineReferencePresenter** — expected 0, saw 9, extra: OK, Close, Cancel, Element Id - Click for help, Pipeline - Click for help, None
+* **CustomRowStylePresenter** — expected 2, saw 16, extra: Light Background Colour - Click for help, Light Text Colour - Click for help, Dark Background Colour - Click for help, Dark Text Colour - Click for help, Escape, Enter
+* **ColumnValuesFilterPresenter** — no mined spec, saw 20
+* **DashboardPresenter** — expected 0, saw 15, extra: Expand, Collapse, Download, First, Backward, Forward
+* **RenameColumnPresenter** — expected 2, saw 12, extra: Escape, Enter, OK (illegal text in "Name"), Ctrl+Enter, drag by the caption, resize by the SE handle
 * **StepLocationPresenter** — no mined spec, saw 21
-* **DocumentUserPermissionsEditPresenter** — expected 2, saw 12, extra: Ctrl+Enter, Close, Apply To Descendants, Set Document Create Permissions, Escape, Document - Click for help
-* **DataPreviewTabPresenter** — no mined spec, saw 6
-* **TableSettingsPresenter** — expected 0, saw 14, extra: Enable, First, Backward, Forward, Last, OK
-* **SelectionHandlerPresenter** — expected 0, saw 7, extra: OK, Cancel, Ctrl+Enter
-* **QuerySettingsPresenter** — expected 0, saw 13, extra: Enable, First, Backward, Forward, Last, OK
-* **GitRepoPresenter** — expected 2, saw 35, extra: typed "Git repository URL", Git repository URL - Click for help, Git branch - Click for help, Git path - Click for help, Git commit - Click for help, Automatically push - Click for help
-* **HttpClientConfigPresenter** — expected 2, saw 47, extra: Timeout - Click for help, Connection Timeout - Click for help, Connection Request Timeout - Click for help, Time To Live - Click for help, Help, Max Connections - Click for help
-* **GitRepoCommitDialogPresenter** — expected 2, saw 5, extra: Commit message - Click for help, Enter, Close
+* **DocumentUserPermissionsEditPresenter** — expected 2, saw 16, extra: Ctrl+Enter, Close, Document - Click for help, User - Click for help, Permission - Click for help, chose "Use" "Permission"
+* **DataPreviewTabPresenter** — no mined spec, saw 7
+* **TableSettingsPresenter** — expected 0, saw 34, extra: Enable, First, Backward, Forward, Last, OK
+* **SelectionHandlerPresenter** — expected 0, saw 11, extra: OK, Cancel, Ctrl+Enter, Enabled - Click for help, Additional Query Expression - Click for help, Current Selection - Click for help
+* **QuerySettingsPresenter** — expected 0, saw 19, extra: Enable, First, Backward, Forward, Last, OK
+* **GitRepoPresenter** — expected 2, saw 40, extra: typed "Git repository URL", Git repository URL - Click for help, Git branch - Click for help, Git path - Click for help, Git commit - Click for help, Automatically push - Click for help
+* **HttpClientConfigPresenter** — expected 2, saw 68, extra: Timeout - Click for help, Connection Timeout - Click for help, Connection Request Timeout - Click for help, Time To Live - Click for help, Help, Max Connections - Click for help
+* **GitRepoCommitDialogPresenter** — expected 2, saw 7, extra: Commit message - Click for help, Enter, OK (illegal text in "Commit message"), typed "Commit message", Close
 * **ResultStoreListPresenter** — expected 3, saw 9, extra: First, Backward, Forward, Last, Refresh, Close
 * **ProcessorLimitsPresenter** — no mined spec, saw 2
-* **ProcessChoicePresenter** — expected 2, saw 20, extra: Escape, Enter, Ctrl+Enter, mouseover on "Priority of new filters (unless auto)" spinner, mouseout on "Priority of new filters (unless auto)" spinner, mousedown on "Priority of new filters (unless auto)" spinner
+* **CharacterRangeSelectionPresenter** — expected 2, saw 8, extra: From - Click for help, To - Click for help, OK (illegal time in "From"), Ctrl+Enter, chose "Character Offset (inc)" "From", chose "Character Count" "To"
+* **ProcessChoicePresenter** — expected 2, saw 25, extra: Escape, Enter, Ctrl+Enter, mouseover on "Priority" spinner, mouseout on "Priority" spinner, mousedown on "Priority" spinner
 * **SelectionSummaryPresenter** — expected 3, saw 6, extra: Escape, right-click an explorer row, right-click a grid row
-* **ChangeStatusPresenter** — expected 2, saw 5, extra: Escape, Ctrl+Enter, Close
-* **ChangeAssignedToPresenter** — expected 2, saw 5, extra: Escape, Ctrl+Enter, Close
+* **ChangeStatusPresenter** — expected 2, saw 6, extra: Escape, Ctrl+Enter, Close, Status - Click for help
+* **ChangeAssignedToPresenter** — expected 2, saw 15, extra: Escape, Ctrl+Enter, Close, First, Backward, Last
+* **UserRefPopupPresenter** — expected 2, saw 14, extra: First, Backward, Last, Forward, Refresh, /
 * **QueryDocPresenter** — expected 2, saw 39, extra: First, Backward, Forward, Last, Insert, Copy
-* **DependenciesInfoPresenter** — expected 1, saw 2, extra: Escape
-* **EditAccountPresenter** — expected 2, saw 28, extra: Escape, Set Password, Show Password, Ctrl+Enter, Enter, OK (illegal id in "User Id")
-* **CreateUserPresenter** — expected 2, saw 8, extra: Escape, Enter, OK (illegal text in "Name"), Ctrl+Enter, Close, Name - Click for help
-* **EditApiKeyPresenter** — expected 2, saw 13, extra: Escape, Owner - Click for help, API Key Name - Click for help, Hash Algorithm - Click for help, Enabled - Click for help, Comments - Click for help
-* **UserTabPresenter** — expected 0, saw 27, extra: First, Backward, Forward, Last, Display Name - Click for help, Full Name - Click for help
-* **CreateNewGroupPresenter** — expected 0, saw 7, extra: Escape, Enter, OK (illegal text in "Name"), Ctrl+Enter, OK, Close
-* **UserRefPopupPresenter** — expected 2, saw 12, extra: First, Backward, Last, Escape, Forward, Refresh
+* **DependenciesInfoPresenter** — expected 1, saw 6, extra: Escape, drag by the caption, resize by the SE handle, right-click an explorer row, right-click a grid row
+* **EditAccountPresenter** — expected 2, saw 37, extra: Escape, Set Password, Show Password, Ctrl+Enter, Enter, OK (illegal id in "User Id")
+* **CreateUserPresenter** — expected 2, saw 13, extra: Escape, Enter, OK (illegal text in "Name"), Ctrl+Enter, Close, drag by the caption
+* **EditApiKeyPresenter** — expected 2, saw 24, extra: Escape, Owner - Click for help, API Key Name - Click for help, Hash Algorithm - Click for help, Enabled - Click for help, Comments - Click for help
+* **UserTabPresenter** — expected 0, saw 29, extra: First, Backward, Forward, Last, Display Name - Click for help, Full Name - Click for help
+* **CreateNewGroupPresenter** — expected 0, saw 12, extra: Escape, Enter, OK (illegal text in "Name"), Ctrl+Enter, OK, Close
 * **VisualisationAssetsPresenter** — expected 0, saw 6, extra: Save, Revert changes, Save As, Add file, Rename, View in browser
-* **VisualisationAssetsUploadFileDialogPresenter** — expected 2, saw 8, extra: Escape, Choose File, Ctrl+Enter, Close, Upload to - Click for help, File - Click for help
-* **VisualisationAssetsEditAssetDialogPresenter** — expected 2, saw 4, extra: Escape, Enter
+* **VisualisationAssetsUploadFileDialogPresenter** — expected 2, saw 10, extra: Escape, Choose File, Ctrl+Enter, Close, drag by the caption, resize by the SE handle
+* **VisualisationAssetsEditAssetDialogPresenter** — expected 2, saw 6, extra: Escape, Enter, Name - Click for help, typed "Name"
 * **WelcomePresenter** — expected 0, saw 0
 * **LoginPresenter** — expected 0, saw 2, extra: Show Password, link: Forgot password?
 * **EmailResetPasswordPresenter** — expected 2, saw 2
 * **SteppingPresenter** — expected 1, saw 21, extra: Save, Step To First, Step Backward, Step Forward, Step To Last, Terminate Stepping
 * **ElementPresenter** — expected 0, saw 11, extra: Save, Step To First, Step Backward, Step Forward, Step To Last, Terminate Stepping
-* **CharacterRangeSelectionPresenter** — expected 2, saw 2
 * **CopyDocumentPresenter** — expected 2, saw 4, extra: Select the parent folder - Click for help, Permissions - Click for help
 * **MoveDocumentPresenter** — expected 2, saw 4, extra: Select the parent folder - Click for help, Permissions - Click for help
-* **RenameTabPresenter** — expected 2, saw 5, extra: Enter, Ctrl+Enter, OK (illegal text in "Name")
+* **RenameTabPresenter** — expected 2, saw 7, extra: Enter, Ctrl+Enter, Name - Click for help, OK (illegal text in "Name"), typed "Name"
 * **QueryHistoryPresenter** — expected 2, saw 3, extra: Ctrl+Enter
-* **QueryFavouritesPresenter** — expected 5, saw 9, extra: Enter, Ctrl+Enter, Close, OK (illegal text in "Name")
-* **LayoutConstraintPresenter** — no mined spec, saw 1
+* **QueryFavouritesPresenter** — expected 5, saw 11, extra: Enter, Ctrl+Enter, Close, Name - Click for help, OK (illegal text in "Name"), typed "Name"
+* **LayoutConstraintPresenter** — no mined spec, saw 3
 * **CurrentSelectionPresenter** — no mined spec, saw 1
-* **BatchExecutionScheduleEditPresenter** — expected 1, saw 11, extra: Apply to Selection, Apply to Filtered, None, Schedule Name - Click for help, Enabled - Click for help, Processing Node - Click for help
+* **BatchExecutionScheduleEditPresenter** — expected 1, saw 24, extra: Apply to Selection, Apply to Filtered, None, Schedule Name - Click for help, Enabled - Click for help, Processing Node - Click for help
 * **ExecutionScheduleRunNowPresenter** — expected 1, saw 3, extra: Apply to Selection, Apply to Filtered
-* **ProcessorProfileEditPresenter** — expected 2, saw 27, extra: Remove Period, First, Backward, Forward, Last, New Period
-* **AnalyticRulePresenter** — expected 2, saw 76, extra: First, Backward, Forward, Last, Insert, Copy
-* **AnalyticNotificationEditPresenter** — no mined spec, saw 27
-* **DashboardSuperPresenter** — expected 2, saw 43, extra: Copy, Expand, Collapse, Download, First, Backward
+* **ProcessorProfileEditPresenter** — expected 2, saw 42, extra: Remove Period, First, Backward, Forward, Last, New Period
+* **AnalyticRulePresenter** — expected 2, saw 78, extra: First, Backward, Forward, Last, Insert, Copy
+* **AnalyticNotificationEditPresenter** — no mined spec, saw 35
+* **ScheduledProcessEditPresenter** — expected 2, saw 18, extra: Close, typed "Name", ticked "Enabled", chose "node2a" "Processing Node", typed "Schedule (Cron)", typed "Start Time"
+* **DashboardSuperPresenter** — expected 2, saw 47, extra: Copy, Expand, Collapse, Download, First, Backward
 * **DictionaryPresenter** — expected 3, saw 39, extra: Remove Import, First, Backward, Forward, Last, Edit Permissions For Selected User
 * **DocumentationPresenter** — expected 3, saw 20, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Edit
 * **FeedPresenter** — expected 2, saw 63, extra: First, Backward, Forward, Last, Edit Permissions For Selected User, Refresh
-* **DataUploadPresenter** — expected 2, saw 13, extra: Choose File, Enter, Ctrl+Enter, Close, OK (illegal time in "Effective Date"), Meta Data - Click for help
+* **DataUploadPresenter** — expected 2, saw 16, extra: Choose File, Enter, Ctrl+Enter, Close, OK (illegal time in "Effective Date"), Meta Data - Click for help
 * **KafkaConfigPresenter** — expected 3, saw 24, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, Edit
 * **OpenAIModelPresenter** — expected 2, saw 34, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed "Base URL (optional)"
-* **ElasticClusterPresenter** — expected 2, saw 23, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed "Connection URLs"
-* **DataGenPresenter** — expected 2, saw 47, extra: Edit Execution Schedule, Remove Execution Schedule, First, Backward, Forward, Last
+* **ElasticClusterPresenter** — expected 2, saw 24, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed "Connection URLs"
+* **DataGenPresenter** — expected 2, saw 48, extra: Edit Execution Schedule, Remove Execution Schedule, First, Backward, Forward, Last
 * **TextConverterPresenter** — expected 2, saw 32, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed in the editor "Conversion"
 * **XsltPresenter** — expected 2, saw 21, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed in the editor "XSLT"
 * **ElasticIndexPresenter** — expected 2, saw 49, extra: First, Backward, Forward, Last, Edit Permissions For Selected User, typed "Index name or pattern"
-* **SolrIndexPresenter** — expected 2, saw 40, extra: Edit Field, Remove Field, First, Backward, Forward, Last
+* **SolrIndexPresenter** — expected 2, saw 41, extra: Edit Field, Remove Field, First, Backward, Forward, Last
 * **VisualisationPresenter** — expected 2, saw 30, extra: Revert changes, Rename, View in browser, Edit Permissions For Selected User, First, Backward
-* **StatisticsDataSourcePresenter** — expected 2, saw 32, extra: Edit Field, Remove Field, First, Backward, Forward, Last
+* **StatisticsDataSourcePresenter** — expected 2, saw 33, extra: Edit Field, Remove Field, First, Backward, Forward, Last
 * **PipelinePresenter** — expected 2, saw 72, extra: First, Backward, Forward, Last, Add New Pipeline Element, Remove Pipeline Element
-* **ProcessorEditPresenter** — expected 2, saw 45, extra: Remove Reference, First, Backward, Forward, Last, mouseover on "Max Processing Tasks" spinner
-* **PlanBPresenter** — expected 2, saw 62, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, chose "State" "State Type"
+* **ProcessorEditPresenter** — expected 2, saw 51, extra: Remove Reference, First, Backward, Forward, Last, mouseover on "Max Processing Tasks" spinner
+* **PlanBPresenter** — expected 2, saw 64, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, chose "State" "State Type"
 * **ScriptPresenter** — expected 2, saw 26, extra: Remove Dependency, First, Backward, Forward, Last, Edit Permissions For Selected User
 * **ViewPresenter** — expected 2, saw 20, extra: Copy, Disable, Edit Permissions For Selected User, First, Backward, Forward
 * **ReportPresenter** — expected 2, saw 74, extra: First, Backward, Forward, Last, Insert, Copy
 * **S3ConfigPresenter** — expected 3, saw 31, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed in the editor "Config"
-* **IndexPresenter** — expected 2, saw 63, extra: Delete Selected Shards, First, Backward, Forward, Last, Edit Field
+* **IndexPresenter** — expected 2, saw 72, extra: Delete Selected Shards, First, Backward, Forward, Last, Edit Field
 * **BrowseAnnotationPresenter** — no mined spec, saw 5
 * **CachePresenter** — expected 0, saw 5, extra: First, Backward, Forward, Last, Refresh
 * **ContentStorePresenter** — no mined spec, saw 7
 * **CredentialsPresenter** — expected 0, saw 7, extra: First, Backward, Forward, Last, Refresh
-* **CredentialEditPresenter** — expected 2, saw 31, extra: Name - Click for help, Credentials expire - Click for help, Type - Click for help, User Name - Click for help, Password - Click for help, Show Password
+* **CredentialEditPresenter** — expected 2, saw 32, extra: Name - Click for help, Credentials expire - Click for help, Type - Click for help, User Name - Click for help, Password - Click for help, Show Password
 * **FsVolumeGroupPresenter** — expected 3, saw 8, extra: First, Backward, Forward, Last, Refresh
 * **NavigationPresenter** — no mined spec, saw 0
 * **DependenciesTabPresenter** — expected 0, saw 10, extra: First, Backward, Forward, Last, Refresh, From (Type)

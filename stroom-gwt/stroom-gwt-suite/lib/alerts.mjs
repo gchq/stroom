@@ -140,6 +140,10 @@ export const KNOWN_FAILS = [
   // check on the chrome finds the dialog over everything it surveyed before: Ask Stroom AI "loses"
   // the Main Menu and every other control (and gains the Preferences dialog's own).
   ['#48', /› Ask Stroom AI — Ask Stroom AI → Ask Stroom AI did not restore the node \(lost Main Menu,/],
+  // #57: after a dashboard tab's Duplicate the copy waits for a click to place it, under a glass
+  // over everything, so the round-trip check's first click placed it and the dashboard's own
+  // controls were "lost" under the glass.
+  ['#57', /Dashboard \(document\) \/ .*after Duplicate › Ask Stroom AI — Ask Stroom AI → Ask Stroom AI did not restore the node/],
 ];
 export const knownFail = (text) => KNOWN_FAILS.find(([, re]) => re.test(text))?.[0] ?? null;
 /**
@@ -162,6 +166,10 @@ const VALIDATION = [
   // FAIL ("answered with a info message, not a rule") on four screens where GWT behaved correctly.
   // `\bnot specified\b` does not reach it: the sentence says "No name specified", not "not specified".
   /\bno \w+ (specified|supplied|given|provided|entered|selected)\b/i,
+  // #42's fix: names that would become part of a URL path are refused before any request with
+  // "A name can't contain '/'." (`PathSafeNames`). Without this, all 13 places #42 failed were
+  // called `info` — and so FAILS — in the first round after the fix, though no request was sent.
+  /\bcan(?:'|no)t contain\b/i,
 ];
 
 /**

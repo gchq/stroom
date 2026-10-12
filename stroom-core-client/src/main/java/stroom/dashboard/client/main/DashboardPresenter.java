@@ -820,6 +820,23 @@ public class DashboardPresenter
         }
     }
 
+    /// Removes components that were made to be placed (a duplicate, or an added component) when
+    /// placing them is cancelled, as removing their tabs would.
+    ///
+    /// @param unplaced The components that were not placed.
+    @Override
+    public void cancelNewComponents(final List<Component> unplaced) {
+        for (final Component component : unplaced) {
+            if (component instanceof final Queryable queryable) {
+                queryable.removeSearchStateListener(this);
+                queryable.removeSearchErrorListener(this);
+            }
+            components.remove(component.getId());
+        }
+        dashboardContext.fireContextChangeEvent();
+        enableQueryButtons();
+    }
+
     @Override
     public void removeTab(final MutableTabLayoutConfig tabLayoutConfig, final MutableTabConfig tab) {
         removeTabs(tabLayoutConfig, Collections.singletonList(tab));

@@ -67,6 +67,14 @@ public final class UsersScreenStories {
                      {"id": 101, "uuid": "u-dave", "subjectId": "dave", "group": false, "enabled": true}]"""))
             .build();
 
+    // carol was deleted (disabled), so creating her asks whether to restore her, and restoring fails
+    private static final RestFixtures RESTORE_FAILS_FIXTURES = RestFixtures.builder()
+            .post("/users/v1/find", RestReply.json(USERS))
+            .post("/users/v1/createUsers", RestReply.json("""
+                    [{"id": 100, "uuid": "u-carol", "subjectId": "carol", "group": false, "enabled": false}]"""))
+            .post("/users/v1/updateUser", RestReply.error(500, "Unable to restore the user"))
+            .build();
+
     private static final UserRef ALICE_REF = UserRef.builder()
             .uuid("u-alice")
             .subjectId("alice")
@@ -125,6 +133,27 @@ public final class UsersScreenStories {
                                     .toSpyMatcher()));
                     expectNoProblems(play);
                 })
+                // Restoring a deleted user that fails says why and leaves the dialog usable: the
+                // restore had no failure handler, so OK and Cancel stayed disabled
+                .story("FailedRestoreKeepsDialogUsable", context -> render(context, RESTORE_FAILS_FIXTURES, null,
+                        true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Alice Anderson");
+                    play.click(play.getByTitle("Create User"));
+                    final Play dialog = screen.within(
+                            screen.findByText("Add External User(s)").closest(StroomDom.DIALOG));
+                    play.click(dialog.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Add Multiple Identity Provider Users"));
+                    play.type(dialog.getByLabelText("Users to add"), "carol");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.click(screen.within(screen.findByText(TextMatch.containing("would you like to restore them"))
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("OK")));
+                    play.click(screen.within(screen.findByText(TextMatch.containing("Unable to restore the user"))
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("Close")));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Add External User(s)")).toBeNull());
+                })
                 // The row's action menu opens the App Permissions screen focused on the user
                 .story("ActionMenu", context -> render(context, null))
                 .withPlay(play -> {
@@ -171,11 +200,22 @@ public final class UsersScreenStories {
     }
 
     private static Widget render(final StoryContext context, final UserRef focus) {
+        return render(context, FIXTURES, focus, false);
+    }
+
+    // As above, with the given fixtures, and with Stroom's real alerts and confirmations if asked
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final UserRef focus,
+                                 final boolean realAlerts) {
         final AppScreenGinjector injector = GWT.create(AppScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
+        final ScreenHarness.Builder builder = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
-                .appPermissions(AppPermission.MANAGE_USERS_PERMISSION)
-                .build();
+                .appPermissions(AppPermission.MANAGE_USERS_PERMISSION);
+        if (realAlerts) {
+            builder.realAlerts();
+        }
+        final ScreenHarness harness = builder.build();
         harness.fn(OPEN_SCREEN);
         harness.getEventBus().addHandler(OpenAppPermissionsScreenEvent.getType(), event ->
                 harness.spy(OPEN_SCREEN, "ApplicationPermissions: " + event.getUserRef().getDisplayName()));
