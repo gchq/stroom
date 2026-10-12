@@ -55,7 +55,6 @@
   ],
   "app-editors-dashboardeditor--embedded-query-settings-fields": [
     "label",
-    "scrollable-region-focusable",
     "target-size"
   ],
   "app-editors-dashboardeditor--inner-split-dock": [

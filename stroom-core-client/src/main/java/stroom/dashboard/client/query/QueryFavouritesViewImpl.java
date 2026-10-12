@@ -23,12 +23,10 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.Preset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.ReadingOrder;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
-import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -39,8 +37,6 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
 
     private final Widget widget;
 
-    @UiField
-    MySplitLayoutPanel splitLayoutPanel;
     @UiField(provided = true)
     CustomCellList<StoredQuery> cellList;
     @UiField
@@ -53,8 +49,6 @@ public class QueryFavouritesViewImpl extends ViewImpl implements QueryFavourites
                                    final DateTimeFormatter dateTimeFormatter) {
         cellList = new CustomCellList<>(new QueryCell(dateTimeFormatter));
         widget = binder.createAndBindUi(this);
-        // Tab moves through the panes as they are seen, not in the order they were added
-        ReadingOrder.apply(splitLayoutPanel);
     }
 
     @Override

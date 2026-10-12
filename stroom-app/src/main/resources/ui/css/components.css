@@ -1153,6 +1153,9 @@
 
 .QueryEditViewImpl {
     border-top: 1px solid var(--control__border-color);
+    background-color: var(--dashboard-panel__background-color);
+    overflow: hidden;
+    user-select: none;
 }
 
 .characterNavigator {
