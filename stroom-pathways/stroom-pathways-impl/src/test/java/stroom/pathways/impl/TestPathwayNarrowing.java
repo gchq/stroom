@@ -518,6 +518,37 @@ class TestPathwayNarrowing {
         return found;
     }
 
+    @Test
+    void aTraceAppliedTooLongAgoIsForgotten(@TempDir final Path dir) {
+        applied(dir, List.of(trace(0, 20), trace(1, 25)));
+        assertThat(appliedTraceRecords(dir))
+                .as("one per trace applied, so the same trace handed over twice is applied once")
+                .isEqualTo(2);
+
+        // Measured against the clock the entries were written by rather than the days the traces ran
+        // on: what is remembered is when this shard applied something, not when it happened.
+        final int today = (int) (System.currentTimeMillis() / DAY_MS);
+
+        narrow(dir, today);
+        assertThat(appliedTraceRecords(dir))
+                .as("applied today, so still worth remembering")
+                .isEqualTo(2);
+
+        narrow(dir, today + 1);
+        assertThat(appliedTraceRecords(dir))
+                .as("older than the window, so forgotten: a trace that old could teach the model "
+                    + "nothing that survived the next pass anyway")
+                .isZero();
+    }
+
+    private static int appliedTraceRecords(final Path dir) {
+        final int[] count = {0};
+        try (final PathwaysDb db = PathwaysDb.create(dir, BYTE_BUFFERS, false)) {
+            db.getProcessingStatus().iterate((key, value) -> count[0]++);
+        }
+        return count[0];
+    }
+
     private static int observedValueRecords(final Path dir) {
         final int[] count = {0};
         try (final PathwaysDb db = PathwaysDb.create(dir, BYTE_BUFFERS, false)) {

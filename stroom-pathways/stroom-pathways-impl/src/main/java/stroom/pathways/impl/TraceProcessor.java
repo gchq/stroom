@@ -56,8 +56,6 @@ public class TraceProcessor {
     static final long MILLIS_PER_DAY = 86_400_000L;
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TraceProcessor.class);
-    // Distinguishes a usage reading from a change under the same pathway key.
-    private static final ByteBuffer PROCESSED = ByteBuffer.allocateDirect(0);
 
     private final MutationLog mutationLog;
     private final ByteBuffers byteBuffers;
@@ -121,7 +119,7 @@ public class TraceProcessor {
                     LOGGER.warn("Skipping trace root {} as the bucket holds no spans for it; " +
                                     "marking as processed to suppress future re-scans",
                             HexStringUtil.encode(traceId));
-                    processingStatus.insert(writer, keyByteBuffer, PROCESSED);
+                    markProcessed(writer, processingStatus, keyByteBuffer);
                     writer.tryCommit();
                     return ApplyOutcome.APPLIED;
                 } else {
@@ -138,7 +136,7 @@ public class TraceProcessor {
                         return ApplyOutcome.NOT_APPLICABLE;
                     } else {
                         buildPathways(writer, trace, doc, messageReceiver, pathwaysDb, sourceUuid);
-                        processingStatus.insert(writer, keyByteBuffer, PROCESSED);
+                        markProcessed(writer, processingStatus, keyByteBuffer);
                         writer.tryCommit();
                         return ApplyOutcome.APPLIED;
                     }
@@ -146,6 +144,18 @@ public class TraceProcessor {
             }
             return ApplyOutcome.ALREADY_APPLIED;
         });
+    }
+
+    /**
+     * What is written against a trace that has been applied: when it was applied, so the entry can be
+     * forgotten once it is too old to be handed over again. The trace id is the key and is all that is
+     * read back — nothing asks what the value says except the nightly pass that deletes the old ones.
+     */
+    private void markProcessed(final LmdbWriter writer,
+                               final SimpleDb processingStatus,
+                               final ByteBuffer keyByteBuffer) {
+        byteBuffers.useLong(System.currentTimeMillis(), (Consumer<ByteBuffer>) valueByteBuffer ->
+                processingStatus.insert(writer, keyByteBuffer, valueByteBuffer));
     }
 
     private void buildPathways(final LmdbWriter writer,

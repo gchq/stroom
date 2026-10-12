@@ -328,6 +328,11 @@ public class PathwayNarrower {
                     changed |= narrowPathway(writer, pathwaysDb, key, pathways.get(i),
                             byPathway.getOrDefault(asText(key), Window.NOTHING), oldestDay, messages);
                 }
+
+                // Forgetting is still a change to the shard. Were it not said so, a pass that only
+                // forgot would report nothing changed, the shard would be thrown away rather than
+                // pushed, and the same entries would be forgotten again every night for ever.
+                changed |= forgetOldTraces(writer, pathwaysDb, oldestDay) > 0;
                 writer.commit();
             }
         }
@@ -394,6 +399,40 @@ public class PathwayNarrower {
             case PATH_DROPPED -> "Dropping path: " + where;
             default -> mutation.getType().getDisplayValue() + ": " + where;
         };
+    }
+
+    /**
+     * Forgets the traces this shard applied too long ago to be worth remembering.
+     *
+     * <p>A trace is remembered so that one handed over twice is applied once. What bounds that is the
+     * same window the model is held to: a trace older than it cannot teach the model anything that
+     * survives, because its observations fall outside the window and the next pass takes back whatever
+     * it widened. So a trace that old will not be applied again whether it is remembered or not.
+     *
+     * <p>An entry written before this shard started recording when it applied things has no time to
+     * judge, so it is kept rather than guessed at. Those go when the shard is next built from nothing.
+     *
+     * @return how many were forgotten.
+     */
+    private int forgetOldTraces(final LmdbWriter writer,
+                                final PathwaysDb pathwaysDb,
+                                final int oldestDay) {
+        final long oldest = (long) oldestDay * TraceProcessor.MILLIS_PER_DAY;
+        final SimpleDb db = pathwaysDb.getProcessingStatus();
+        final List<byte[]> expired = new ArrayList<>();
+        db.iterate(writer.getWriteTxn(), (key, value) -> {
+            if (value != null
+                && value.remaining() >= Long.BYTES
+                && value.getLong(value.position()) < oldest) {
+                expired.add(copyOf(key));
+            }
+        });
+
+        expired.forEach(key -> byteBuffers.useBytes(key,
+                (Consumer<ByteBuffer>) keyByteBuffer -> db.delete(writer, keyByteBuffer)));
+        LOGGER.debug(() -> LogUtil.message("Forgot {} applied trace(s) older than day {}",
+                expired.size(), oldestDay));
+        return expired.size();
     }
 
     // Everything the window still covers, folded into one account per model, node and constraint. Days
