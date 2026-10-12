@@ -7,9 +7,9 @@
         <g:FlowPanel styleName="pager dock-container-horizontal dock-min align-center">
             <g:FlowPanel ui:field="toolbarWidgets" addStyleNames="pager-toolbar"/>
         </g:FlowPanel>
-        <g:MySplitLayoutPanel styleName="dock-max">
+        <g:MySplitLayoutPanel ui:field="mainSplit" styleName="dock-max">
             <g:south size="280">
-                <g:FlowPanel styleName="max dock-container-vertical">
+                <g:FlowPanel ui:field="lowerPanel" styleName="max dock-container-vertical">
                     <tab:LinkTabBar ui:field="tabBar" styleName="dock-min linkTabBar pathway-tabs"/>
                     <tab:LayerContainerImpl ui:field="layerContainer"
                                             styleName="dock-max form-control-background form-control-border"/>

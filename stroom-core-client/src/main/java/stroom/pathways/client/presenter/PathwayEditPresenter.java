@@ -91,6 +91,7 @@ public class PathwayEditPresenter
      */
     private static final String TAB_TYPE = "Pathway";
     private static final double TREE_SHARE = 0.6;
+    private static final double LOWER_SHARE = 0.4;
 
     private Pathway pathway;
     // What the two tables were showing when the drawing was last made. Everything the drawing takes
@@ -123,9 +124,9 @@ public class PathwayEditPresenter
     private final ConstraintListPresenter constraintListPresenter;
     private final PathwayMutationListPresenter mutationListPresenter;
     private final PathwayPathListPresenter pathListPresenter;
-    private final TabData pathsTab = new TabDataImpl("Paths");
     private final TabData changesTab = new TabDataImpl("Changes");
-    private TabData selectedTab = pathsTab;
+    private final TabData pathsTab = new TabDataImpl("Paths");
+    private TabData selectedTab = changesTab;
     private final ButtonView saveButton;
     private final ButtonView playButton;
     private final ButtonView stopButton;
@@ -160,8 +161,8 @@ public class PathwayEditPresenter
         view.setConstraints(constraintListPresenter.getView());
         // One at a time rather than side by side. Both are wide tables of the whole pathway and
         // neither is read while the other is, so sharing the strip left each too narrow to read.
-        view.getTabBar().addTab(pathsTab);
         view.getTabBar().addTab(changesTab);
+        view.getTabBar().addTab(pathsTab);
 
         // On the tab's own toolbar rather than on any one panel's, because it is the pathway that is
         // saved rather than anything on show.
@@ -197,10 +198,12 @@ public class PathwayEditPresenter
 
         registerHandler(pathwayTreePresenter.getSelectionModel()
                 .addSelectionChangeHandler(e -> {
-                    // The paths table narrows itself to the node picked out on the drawing, so it is
-                    // told each time that moves.
-                    pathListPresenter.setSelectedNode(
-                            pathwayTreePresenter.getSelectionModel().getSelectedObject());
+                    // Both tables narrow themselves to the node picked out on the drawing, so both
+                    // are told each time that moves.
+                    final PathNode selectedNode =
+                            pathwayTreePresenter.getSelectionModel().getSelectedObject();
+                    pathListPresenter.setSelectedNode(selectedNode);
+                    mutationListPresenter.setSelectedNode(selectedNode);
                     showConstraints();
                 }));
 
@@ -222,7 +225,7 @@ public class PathwayEditPresenter
 
         // Paths first: what the pathway actually does is what a reader opens it for, and the changes
         // are how it came to be that way.
-        showTab(pathsTab);
+        showTab(changesTab);
 
 //        registerHandler(getView().getDetails().addClickHandler(e -> {
 //            final Element target = e.getNativeEvent().getEventTarget().cast();
@@ -518,35 +521,10 @@ public class PathwayEditPresenter
         if (node == null) {
             return;
         }
-        // Only where the paths are what is on show. Narrowing them while the changes are up would move
-        // something the reader cannot see.
-        if (!pathsTab.equals(selectedTab)) {
-            return;
-        }
-
-        final PathwayPathListPresenter.Filter filter = pathListPresenter.getFilter();
-        final List<Item> items = new ArrayList<>();
-        items.add(new IconMenuItem.Builder()
-                .priority(1)
-                .icon(SvgImage.FILTER)
-                .text("Show paths through the selected node")
-                .command(() -> pathListPresenter.setFilter(PathwayPathListPresenter.Filter.RUNNING_NODE))
-                .enabled(filter != PathwayPathListPresenter.Filter.RUNNING_NODE)
-                .build());
-        items.add(new IconMenuItem.Builder()
-                .priority(2)
-                .icon(SvgImage.FILTER)
-                .text("Show paths avoiding the selected node")
-                .command(() -> pathListPresenter.setFilter(PathwayPathListPresenter.Filter.AVOIDING_NODE))
-                .enabled(filter != PathwayPathListPresenter.Filter.AVOIDING_NODE)
-                .build());
-        items.add(new IconMenuItem.Builder()
-                .priority(3)
-                .icon(SvgImage.UNDO)
-                .text("Show every path")
-                .command(() -> pathListPresenter.setFilter(PathwayPathListPresenter.Filter.OFF))
-                .enabled(filter != PathwayPathListPresenter.Filter.OFF)
-                .build());
+        // What the menu offers is what the table under it can do, so it follows whichever tab is up.
+        final List<Item> items = changesTab.equals(selectedTab)
+                ? changeFilterItems()
+                : pathFilterItems();
 
         ShowMenuEvent
                 .builder()
@@ -623,6 +601,57 @@ public class PathwayEditPresenter
 
     // Only the selected one is built into the strip, so the other stops drawing rather than being
     // hidden behind it.
+    // A change is made to one node, so there is only the one thing to ask of it. There is no
+    // counterpart to the paths menu's "avoiding", because the changes that were not made to a node are
+    // not about that node at all.
+    private List<Item> changeFilterItems() {
+        final PathwayMutationListPresenter.Filter filter = mutationListPresenter.getFilter();
+        final List<Item> items = new ArrayList<>();
+        items.add(new IconMenuItem.Builder()
+                .priority(1)
+                .icon(SvgImage.FILTER)
+                .text("Show changes to the selected node")
+                .command(() -> mutationListPresenter.setFilter(
+                        PathwayMutationListPresenter.Filter.SELECTED_NODE))
+                .enabled(filter != PathwayMutationListPresenter.Filter.SELECTED_NODE)
+                .build());
+        items.add(new IconMenuItem.Builder()
+                .priority(2)
+                .icon(SvgImage.UNDO)
+                .text("Show every change")
+                .command(() -> mutationListPresenter.setFilter(PathwayMutationListPresenter.Filter.OFF))
+                .enabled(filter != PathwayMutationListPresenter.Filter.OFF)
+                .build());
+        return items;
+    }
+
+    private List<Item> pathFilterItems() {
+        final PathwayPathListPresenter.Filter filter = pathListPresenter.getFilter();
+        final List<Item> items = new ArrayList<>();
+        items.add(new IconMenuItem.Builder()
+                .priority(1)
+                .icon(SvgImage.FILTER)
+                .text("Show paths through the selected node")
+                .command(() -> pathListPresenter.setFilter(PathwayPathListPresenter.Filter.RUNNING_NODE))
+                .enabled(filter != PathwayPathListPresenter.Filter.RUNNING_NODE)
+                .build());
+        items.add(new IconMenuItem.Builder()
+                .priority(2)
+                .icon(SvgImage.FILTER)
+                .text("Show paths avoiding the selected node")
+                .command(() -> pathListPresenter.setFilter(PathwayPathListPresenter.Filter.AVOIDING_NODE))
+                .enabled(filter != PathwayPathListPresenter.Filter.AVOIDING_NODE)
+                .build());
+        items.add(new IconMenuItem.Builder()
+                .priority(3)
+                .icon(SvgImage.UNDO)
+                .text("Show every path")
+                .command(() -> pathListPresenter.setFilter(PathwayPathListPresenter.Filter.OFF))
+                .enabled(filter != PathwayPathListPresenter.Filter.OFF)
+                .build());
+        return items;
+    }
+
     private void showTab(final TabData tab) {
         if (tab == null) {
             return;
@@ -790,6 +819,10 @@ public class PathwayEditPresenter
     public void onOpened() {
         if (!split) {
             split = true;
+            // Three fifths of the height to the model and two to the tables under it. Set before
+            // the width below, so that the drawing is centred against the room it actually ends up
+            // with rather than against a height that is about to change under it.
+            getView().setLowerShare(LOWER_SHARE);
             // Three fifths to the drawing, the rest to the constraints. The drawing wants all the
             // room it can have, but a constraint's value is a whole sql statement or a set of names
             // and is worth nothing cut off at the second word.
@@ -840,6 +873,8 @@ public class PathwayEditPresenter
     public interface PathwayEditView extends View {
 
         ButtonView addButton(Preset preset);
+
+        void setLowerShare(double share);
 
         void setTreeShare(double share, Runnable onSized);
 

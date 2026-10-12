@@ -45,6 +45,10 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
     @UiField
     FlowPanel toolbarWidgets;
     @UiField
+    MySplitLayoutPanel mainSplit;
+    @UiField
+    FlowPanel lowerPanel;
+    @UiField
     MySplitLayoutPanel centreSplit;
     @UiField
     FormGroup treeGroup;
@@ -76,6 +80,22 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
             toolbarWidgets.add(buttonPanel);
         }
         return buttonPanel.addButton(preset);
+    }
+
+    @Override
+    public void setLowerShare(final double share) {
+        // Of the room above and below the splitter, which is the whole tab less its toolbar.
+        final int height = mainSplit.getOffsetHeight();
+        if (height <= 0) {
+            // Nothing laid out to measure yet, so ask again rather than settling on zero — but only
+            // while the tab is still on the screen, or a tab closed before it was laid out would ask
+            // for ever.
+            if (widget.isAttached()) {
+                Scheduler.get().scheduleDeferred(() -> setLowerShare(share));
+            }
+            return;
+        }
+        mainSplit.setWidgetSize(lowerPanel, height * share);
     }
 
     @Override

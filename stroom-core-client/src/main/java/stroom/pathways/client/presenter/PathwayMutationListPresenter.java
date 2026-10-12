@@ -22,20 +22,22 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.HasContextMenusCell;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
-import stroom.docref.DocRef;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.pathways.shared.TraceHistogram;
 import stroom.pathways.shared.otel.trace.NanoTime;
 import stroom.pathways.shared.pathway.AbstractRange;
 import stroom.pathways.shared.pathway.ConstraintValue;
 import stroom.pathways.shared.pathway.MutationType;
+import stroom.pathways.shared.pathway.PathNode;
 import stroom.pathways.shared.pathway.PathwayMutation;
 import stroom.preferences.client.DateTimeFormatter;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
 import com.google.gwt.dom.client.Document;
@@ -89,7 +91,17 @@ public class PathwayMutationListPresenter extends MyPresenterWidget<PagerView> {
     private List<PathwayMutation> mutations = new ArrayList<>();
     // Where the traces that taught this model are kept, or null where nothing keeps them.
     private List<String> sources = List.of();
+    // What the button says when there is a filter to take off. It says nothing else, because it is
+    // only there when there is something to undo — the filtering itself is asked for on the drawing,
+    // over the node it is about.
+    private static final String FILTER_ON_TITLE = "Show every change";
+    private static final String FILTER_OFF_TITLE = "Right click a node on the drawing to filter";
+
+    private final InlineSvgToggleButton filterButton;
     private final ButtonView expandAllButton;
+    private Filter filter = Filter.OFF;
+    // The node picked out on the drawing, by uuid, or null where none is.
+    private String selectedNode;
     private final ButtonView collapseAllButton;
     // The same strip the traces list puts over its rows, here over the changes. Built from the history
     // already in hand rather than asked for, so it costs nothing to keep beside them.
@@ -114,6 +126,18 @@ public class PathwayMutationListPresenter extends MyPresenterWidget<PagerView> {
         // through that same copy so the two cannot disagree.
         dataProvider = new ListDataProvider<>();
         dataProvider.addDataDisplay(dataGrid);
+
+        // Narrows the table to the changes made to the node being looked at. On this toolbar rather
+        // than on the drawing because it is this table it changes, and the node it works from is
+        // picked out on the drawing either way.
+        filterButton = new InlineSvgToggleButton();
+        filterButton.setSvg(SvgImage.FILTER);
+        filterButton.setTitle(FILTER_OFF_TITLE);
+        // Off and out of reach until there is a filter on. Narrowing is asked for from the drawing,
+        // where the node being narrowed to is the one under the pointer; all this does is undo it,
+        // which is nothing to offer while nothing has been done.
+        filterButton.setEnabled(false);
+        pagerView.addButton(filterButton);
 
         expandAllButton = pagerView.addButton(SvgPresets.EXPAND_ALL);
         collapseAllButton = pagerView.addButton(SvgPresets.COLLAPSE_ALL);
@@ -155,7 +179,9 @@ public class PathwayMutationListPresenter extends MyPresenterWidget<PagerView> {
         long to = Long.MIN_VALUE;
         for (final PathwayMutation mutation : mutations) {
             final NanoTime time = mutation.getTime();
-            if (time != null) {
+            // Only what the table is showing, so that narrowing the list narrows the plot over it
+            // rather than leaving the bars saying something the rows no longer do.
+            if (time != null && shown(mutation)) {
                 from = Math.min(from, time.toEpochMillis());
                 to = Math.max(to, time.toEpochMillis());
             }
@@ -192,7 +218,7 @@ public class PathwayMutationListPresenter extends MyPresenterWidget<PagerView> {
             // One bar unit per thing that changed the model rather than per change, so a trace that
             // taught it twenty things counts the same as one that taught it one. The narrowing is
             // counted the same way, a run at a time, which is what its group names.
-            if (time != null && counted.add(MutationRow.groupOf(mutation))) {
+            if (time != null && shown(mutation) && counted.add(MutationRow.groupOf(mutation))) {
                 final int at = (int) Math.min(BUCKETS - 1, (time.toEpochMillis() - from) / width);
                 counts.set(at, counts.get(at) + 1);
             }
@@ -214,6 +240,10 @@ public class PathwayMutationListPresenter extends MyPresenterWidget<PagerView> {
     @Override
     protected void onBind() {
         super.onBind();
+        registerHandler(filterButton.addClickHandler(e -> {
+            // Only reachable while something is filtered, so the only thing it can mean is stop.
+            setFilter(Filter.OFF);
+        }));
         registerHandler(expandAllButton.addClickHandler(event -> {
             treeAction.expandAll(groups());
             order();
@@ -442,9 +472,11 @@ public class PathwayMutationListPresenter extends MyPresenterWidget<PagerView> {
         // what is selected to decide which model to show.
         selectionModel.clear();
 
-        // This is reused for every pathway opened, so which of the last one's traces were open is not
-        // carried over to the next.
+        // This is reused for every pathway opened, so which of the last one's traces were open, and
+        // whatever it was narrowed to, are not carried over to the next.
         treeAction.collapseAll();
+        selectedNode = null;
+        setFilter(Filter.OFF);
         this.mutations = new ArrayList<>(NullSafe.list(mutations));
         order();
         histogram.setData(bars());
@@ -454,6 +486,61 @@ public class PathwayMutationListPresenter extends MyPresenterWidget<PagerView> {
     // Newest first, always. The only order that means anything here is the one the changes were made
     // in, and a reader who turned it round would be looking at a model growing backwards — so the
     // columns offer nothing to sort by and this has nothing to read.
+    /**
+     * Which changes the table is showing: all of them, or only those made to the node picked out on
+     * the drawing. There is no counterpart to the paths table's "avoiding" filter, because a change
+     * is made to one node and the changes that were not made to it are not about it at all.
+     */
+    public enum Filter {
+        OFF,
+        SELECTED_NODE
+    }
+
+    /**
+     * The node picked out on the drawing, which is what the filter works from.
+     *
+     * <p>Moving to another node takes the filter off rather than quietly aiming it somewhere else. A
+     * filter that re-aimed itself would change what the table was showing while the reader was reading
+     * it, and leave them no way of telling which node it had settled on.
+     */
+    public void setSelectedNode(final PathNode node) {
+        final String uuid = NullSafe.get(node, PathNode::getUuid);
+        if (!Objects.equals(uuid, selectedNode)) {
+            selectedNode = uuid;
+            if (filter != Filter.OFF) {
+                setFilter(Filter.OFF);
+            }
+        }
+    }
+
+    /**
+     * Narrows the table, or stops narrowing it. Asked for from the drawing as well as from the button
+     * beside the table, so the button is brought into line with whatever was asked.
+     */
+    public void setFilter(final Filter filter) {
+        this.filter = filter;
+        final boolean on = filter != Filter.OFF && selectedNode != null;
+        filterButton.setState(on);
+        filterButton.setEnabled(on);
+        filterButton.setTitle(on
+                ? FILTER_ON_TITLE
+                : FILTER_OFF_TITLE);
+        order();
+        histogram.setData(bars());
+    }
+
+    public Filter getFilter() {
+        return filter;
+    }
+
+    // Whether a change is one the table is showing. With a filter on and nothing picked out there is
+    // nothing to narrow by, so everything is shown rather than nothing.
+    private boolean shown(final PathwayMutation mutation) {
+        return filter == Filter.OFF
+               || selectedNode == null
+               || selectedNode.equals(mutation.getNodeUuid());
+    }
+
     private void order() {
         dataProvider.setCompleteList(buildRows());
         updateButtons();
@@ -554,6 +641,12 @@ public class PathwayMutationListPresenter extends MyPresenterWidget<PagerView> {
 
         final List<MutationRow> rows = new ArrayList<>();
         for (final List<PathwayMutation> group : groups) {
+            // A trace stands where any one of its changes is one the table is showing, and then shows
+            // only those — so narrowing to a node never breaks a change away from the thing that made
+            // it, and the trace row still names the change the trace finished on.
+            if (group.stream().noneMatch(this::shown)) {
+                continue;
+            }
             // The last change it made, which is the model as it left it however the list is turned
             // round.
             final PathwayMutation last = group.get(group.size() - 1);
@@ -565,7 +658,9 @@ public class PathwayMutationListPresenter extends MyPresenterWidget<PagerView> {
                 final List<PathwayMutation> changes = new ArrayList<>(group);
                 Collections.reverse(changes);
                 for (final PathwayMutation mutation : changes) {
-                    rows.add(MutationRow.change(mutation));
+                    if (shown(mutation)) {
+                        rows.add(MutationRow.change(mutation));
+                    }
                 }
             }
         }
