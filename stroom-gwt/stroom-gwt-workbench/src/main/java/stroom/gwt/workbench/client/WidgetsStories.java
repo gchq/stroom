@@ -65,7 +65,6 @@ import stroom.gwt.workbench.client.widgets.feedback.ProgressBarStories;
 import stroom.gwt.workbench.client.widgets.feedback.SpinnerStories;
 import stroom.gwt.workbench.client.widgets.feedback.TaskCounterStories;
 import stroom.gwt.workbench.client.widgets.formatdatetime.FormatDateTimeStories;
-import stroom.gwt.workbench.client.widgets.glass.DragGuardContractStories;
 import stroom.gwt.workbench.client.widgets.inputs.FileChooserStories;
 import stroom.gwt.workbench.client.widgets.inputs.FormGroupStories;
 import stroom.gwt.workbench.client.widgets.inputs.LineColInputStories;
@@ -78,11 +77,9 @@ import stroom.gwt.workbench.client.widgets.inputs.TickBoxStories;
 import stroom.gwt.workbench.client.widgets.inputs.ValueSpinnerStories;
 import stroom.gwt.workbench.client.widgets.inputs.ViewStateStories;
 import stroom.gwt.workbench.client.widgets.layout.RoundedPanelStories;
-import stroom.gwt.workbench.client.widgets.layout.SplitLayoutPanelStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneContentStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneResizingStories;
 import stroom.gwt.workbench.client.widgets.layout.SplitPaneStories;
-import stroom.gwt.workbench.client.widgets.layout.ThinSplitLayoutPanelStories;
 import stroom.gwt.workbench.client.widgets.menu.MenuItemWidgetStories;
 import stroom.gwt.workbench.client.widgets.menu.MenuPanelStories;
 import stroom.gwt.workbench.client.widgets.overlays.HelpButtonStories;
@@ -267,8 +264,6 @@ public final class WidgetsStories {
         TickBoxStories.addTo(registry);
         // Widgets/Inputs/ValueSpinner
         ValueSpinnerStories.addTo(registry);
-        // Widgets/Glass/Drag guard contract
-        DragGuardContractStories.addTo(registry);
         // Widgets/Overlays/HelpButton
         HelpButtonStories.addTo(registry);
         // Widgets/Overlays/Tooltip
@@ -293,10 +288,7 @@ public final class WidgetsStories {
         TaskCounterStories.addTo(registry);
         // Widgets/Layout/RoundedPanel
         RoundedPanelStories.addTo(registry);
-        // Widgets/Layout/SplitLayoutPanel
-        SplitLayoutPanelStories.addTo(registry);
-        // Widgets/Layout/ThinSplitLayoutPanel
-        ThinSplitLayoutPanelStories.addTo(registry);
+        // Widgets/Layout/SplitPane
         SplitPaneStories.addTo(registry);
         SplitPaneResizingStories.addTo(registry);
         SplitPaneContentStories.addTo(registry);

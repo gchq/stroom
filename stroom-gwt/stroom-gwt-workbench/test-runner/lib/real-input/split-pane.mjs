@@ -14,21 +14,13 @@
  * limitations under the License.
  */
 
-// Real input checks for split panes (see index.mjs): old and new splitters dragged alike with the
-// real mouse, dragging on a right-to-left page and across a frame, contrast in both themes,
+// Real input checks for split panes (see index.mjs): splitters dragged with the real mouse
+// (including to a minimum, on a right-to-left page and across a frame), contrast in both themes,
 // forced colours, the splitter's menu from the keyboard, and mouse versus keyboard focus.
 
 import assert from 'node:assert/strict';
 
-// Split pane comparisons (Widgets/Layout/SplitPane Compare*): an old split panel (test id "old")
-// above a split pane (test id "new"), each with its sized pane (test ids "old-sized", "new-sized")
-const OLD_SPLITTER = '.thinSplitLayoutPanel-Dragger, .gwt-SplitLayoutPanel-Dragger';
-const NEW_SPLITTER = '.split-pane__splitter';
-// How far the old panel's pane may move differently from the split pane's in a drag: the old one
-// doesn't follow the mouse exactly (it measures a drag from its 7px dragger's edge, not where it was
-// grabbed, and takes 2px off a proportional pane each time it lays out); the split pane must follow
-// it to the pixel
-const OLD_DRAG_TOLERANCE_PX = 6;
+const SPLITTER = '.split-pane__splitter';
 
 // Drags a splitter with the real mouse, from its middle, by dx and dy, in steps as a hand would
 async function dragSplitter(page, splitter, dx, dy) {
@@ -41,41 +33,24 @@ async function dragSplitter(page, splitter, dx, dy) {
   await page.mouse.up();
 }
 
-// The size of the pane holding a sized widget (its layer in an old panel, its pane in a split pane),
-// rather than the widget's, which can't be smaller than its padding
-async function sizedPaneSize(page, testId, vertical) {
+// The size of the pane holding a widget (by its test id), rather than the widget's, which can't be
+// smaller than its padding
+async function paneSize(page, testId, vertical) {
   const box = await page.getByTestId(testId).locator('xpath=..').boundingBox();
   return vertical ? box.height : box.width;
 }
 
-// Drags the old and new splitters alike. The split pane's sized pane must then be the expected
-// size (by default, its size before plus the distance dragged, in the direction that grows it),
-// and the old panel's pane must have moved as far, give or take OLD_DRAG_TOLERANCE_PX.
-async function dragBothAndCompare(page, { dx = 0, dy = 0, grows = 1, expected }) {
+// Drags a story's first splitter by dx or dy. The pane holding the widget with the test id (by
+// default the first, "pane-0") must then be the expected size: by default its size before plus the
+// distance dragged, in the direction that grows it (grows, 1 or -1), to the pixel.
+async function dragAndExpect(page, { testId = 'pane-0', dx = 0, dy = 0, grows = 1, expected, message = 'a drag' }) {
   const vertical = dy !== 0;
-  const oldBefore = await sizedPaneSize(page, 'old-sized', vertical);
-  const newBefore = await sizedPaneSize(page, 'new-sized', vertical);
-  await dragSplitter(page, page.getByTestId('old').locator(OLD_SPLITTER).first(), dx, dy);
-  await dragSplitter(page, page.getByTestId('new').locator(NEW_SPLITTER).first(), dx, dy);
-  // The old panel lays itself out after a drag (deferred)
-  await page.waitForTimeout(100);
-  const oldSize = await sizedPaneSize(page, 'old-sized', vertical);
-  const newSize = await sizedPaneSize(page, 'new-sized', vertical);
-  const wanted = expected ?? newBefore + grows * (dx || dy);
-  assert.ok(Math.abs(newSize - wanted) <= 1,
-    `after a drag by ${dx || dy}px the split pane's pane is ${wanted}px (it is ${newSize}px)`);
-  assert.ok(Math.abs((oldSize - oldBefore) - (newSize - newBefore)) <= OLD_DRAG_TOLERANCE_PX,
-    `a drag by ${dx || dy}px moves the old panel's pane as far as the split pane's `
-    + `(old ${oldBefore}px to ${oldSize}px, new ${newBefore}px to ${newSize}px)`);
-}
-
-// Drags a split pane's splitter by dx and checks its first pane (test id "pane-0") grew by grows
-async function dragAndExpectGrowth(page, dx, grows, message) {
-  const before = await sizedPaneSize(page, 'pane-0', false);
-  await dragSplitter(page, page.locator(NEW_SPLITTER).first(), dx, 0);
-  const after = await sizedPaneSize(page, 'pane-0', false);
-  assert.ok(Math.abs(after - (before + grows)) <= 1,
-    `${message}: the first pane went from ${before}px to ${after}px, not ${before + grows}px`);
+  const before = await paneSize(page, testId, vertical);
+  await dragSplitter(page, page.locator(SPLITTER).first(), dx, dy);
+  const after = await paneSize(page, testId, vertical);
+  const wanted = expected ?? before + grows * (dx || dy);
+  assert.ok(Math.abs(after - wanted) <= 1,
+    `${message} by ${dx || dy}px: the pane went from ${before}px to ${after}px, not ${wanted}px`);
 }
 
 // The contrast of a story's first splitter against what is either side of it (WCAG 1.4.11 asks
@@ -135,8 +110,8 @@ export const CHECKS = {
   // A mouse press gives the splitter the focus as the pointer's, not the keyboard's: it shows the
   // drag highlight while held, not the keyboard focus bar, before and after (once a regression:
   // focusing it from script made the press show as keyboard focus)
-  'widgets-layout-splitpanecontent--compare-thin-with-content': async (page) => {
-    const splitter = page.getByTestId('new').locator(NEW_SPLITTER).first();
+  'widgets-layout-splitpanecontent--regular-table-and-editor': async (page) => {
+    const splitter = page.locator(SPLITTER).first();
     const box = await splitter.boundingBox();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await page.mouse.down();
@@ -199,7 +174,7 @@ export const CHECKS = {
   // colour, where its background would otherwise be replaced
   'widgets-layout-splitpane--keyboard': async (page) => {
     // The splitter's colour and the page's, which forced colours replaces a background with
-    const colours = () => page.locator(NEW_SPLITTER).first().evaluate((element) => ({
+    const colours = () => page.locator(SPLITTER).first().evaluate((element) => ({
       splitter: getComputedStyle(element, '::before').backgroundColor,
       page: getComputedStyle(document.body).backgroundColor,
     }));
@@ -216,54 +191,59 @@ export const CHECKS = {
   },
   // The first pane is on the right: dragging the splitter left grows it
   'widgets-layout-splitpane--right-to-left': async (page) => {
-    await dragAndExpectGrowth(page, -100, 100, 'a drag left on a right-to-left page');
-    await dragAndExpectGrowth(page, 50, -50, 'a drag right on a right-to-left page');
+    await dragAndExpect(page, { dx: -100, grows: -1, message: 'a drag left on a right-to-left page' });
+    await dragAndExpect(page, { dx: 50, grows: -1, message: 'a drag right on a right-to-left page' });
   },
   // A drag across a frame keeps going: the frame doesn't take the pointer from the splitter
   'widgets-layout-splitpane--over-a-frame': async (page) => {
-    await dragAndExpectGrowth(page, 400, 400, 'a drag across the frame');
-    await dragAndExpectGrowth(page, -300, -300, 'a drag back across the frame');
+    await dragAndExpect(page, { dx: 400, message: 'a drag across the frame' });
+    await dragAndExpect(page, { dx: -300, message: 'a drag back across the frame' });
   },
-  // Dragging grows and shrinks the first pane alike, down to nothing (neither has a minimum)
-  'widgets-layout-splitpane--compare-thin-horizontal': async (page) => {
-    await dragBothAndCompare(page, { dx: 100 });
-    await dragBothAndCompare(page, { dx: -150 });
+  // Dragging grows and shrinks the first pane, down to nothing (neither has a minimum)
+  'widgets-layout-splitpane--drag-thin-horizontal': async (page) => {
+    await dragAndExpect(page, { dx: 100 });
+    await dragAndExpect(page, { dx: -150 });
     // Past the frame's edge (but not the page's): the pane closes
-    await dragBothAndCompare(page, { dx: -270, expected: 0 });
+    await dragAndExpect(page, { dx: -270, expected: 0 });
     // and opens again
-    await dragBothAndCompare(page, { dx: 300 });
+    await dragAndExpect(page, { dx: 300 });
   },
-  'widgets-layout-splitpane--compare-horizontal': async (page) => {
-    await dragBothAndCompare(page, { dx: 100, expected: 400 });
-    await dragBothAndCompare(page, { dx: -150, expected: 250 });
+  'widgets-layout-splitpane--drag-horizontal': async (page) => {
+    await dragAndExpect(page, { dx: 100, expected: 400 });
+    await dragAndExpect(page, { dx: -150, expected: 250 });
   },
-  'widgets-layout-splitpane--compare-thin-vertical': async (page) => {
-    await dragBothAndCompare(page, { dy: 50, expected: 170 });
-    await dragBothAndCompare(page, { dy: -100, expected: 70 });
+  'widgets-layout-splitpane--drag-thin-vertical': async (page) => {
+    await dragAndExpect(page, { dy: 50, expected: 170 });
+    await dragAndExpect(page, { dy: -100, expected: 70 });
   },
-  'widgets-layout-splitpane--compare-vertical': async (page) => {
-    await dragBothAndCompare(page, { dy: 50, expected: 170 });
+  'widgets-layout-splitpane--drag-vertical': async (page) => {
+    await dragAndExpect(page, { dy: 50, expected: 170 });
   },
   // The second pane is the sized one: dragging left grows it
-  'widgets-layout-splitpane--compare-thin-anchor-end': async (page) => {
-    await dragBothAndCompare(page, { dx: -100, grows: -1 });
-    await dragBothAndCompare(page, { dx: 50, grows: -1 });
+  'widgets-layout-splitpane--drag-thin-anchor-end': async (page) => {
+    await dragAndExpect(page, { testId: 'pane-1', dx: -100, grows: -1 });
+    await dragAndExpect(page, { testId: 'pane-1', dx: 50, grows: -1 });
   },
   // A drag stops at the pane's minimum
-  'widgets-layout-splitpane--compare-thin-with-minimum': async (page) => {
-    await dragBothAndCompare(page, { dx: -250, expected: 150 });
-    await dragBothAndCompare(page, { dx: 100, expected: 250 });
+  'widgets-layout-splitpane--drag-thin-with-minimum': async (page) => {
+    await dragAndExpect(page, { dx: -250, expected: 150 });
+    await dragAndExpect(page, { dx: 100, expected: 250 });
   },
   // The first pane keeps its share as the page narrows, after a drag as before it
-  'widgets-layout-splitpane--compare-thin-proportional': async (page) => {
-    await dragBothAndCompare(page, { dx: 100 });
+  'widgets-layout-splitpane--drag-thin-proportional': async (page) => {
+    await dragAndExpect(page, { dx: 100 });
+    const share = async () => (await paneSize(page, 'pane-0', false))
+      / ((await page.getByTestId('frame').boundingBox()).width - 2);
+    const before = await share();
     const viewport = page.viewportSize();
     await page.setViewportSize({ width: Math.round(viewport.width * 0.75), height: viewport.height });
-    await page.waitForTimeout(200);
-    const oldSize = await sizedPaneSize(page, 'old-sized', false);
-    const newSize = await sizedPaneSize(page, 'new-sized', false);
-    await page.setViewportSize(viewport);
-    assert.ok(Math.abs(oldSize - newSize) <= OLD_DRAG_TOLERANCE_PX,
-      `after the page narrows the panes match (old ${oldSize}px, new ${newSize}px)`);
+    try {
+      await page.waitForTimeout(200);
+      const after = await share();
+      assert.ok(Math.abs(after - before) <= 0.005,
+        `after the page narrows the first pane keeps its share (${before} before, ${after} after)`);
+    } finally {
+      await page.setViewportSize(viewport);
+    }
   },
 };

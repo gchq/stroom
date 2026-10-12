@@ -621,6 +621,11 @@ either side or restores them, and Alt+M maximises the pane holding the focus (a 
 button was tried and dropped, as it sat over pane content). Known gap (2.5.8): a 7px splitter has
 no room where another meets it in a T at its centre, as in User Groups' 50/50 split.
 
+Since then, every view uses `SplitPane` (the main screen's explorer and docked AI chat among them),
+and the old panels, their CSS, their stories and the comparison stories are deleted. The `Drag`
+stories in `Widgets/Layout/SplitPane` now drag split panes alone, checking each follows the mouse to
+the pixel.
+
 ### Keyboard trap in the code editor
 
 Tab in an editable code editor inserts an indent, so keyboard users can't leave it (WCAG 2.1.2).
@@ -757,9 +762,6 @@ editors. Dialogs aren't limited to the window's size, and long forms rely on scr
   the presenter overwrites it.
 * `CombinedParser.getMode()` guesses XML Fragment or Data Splitter for a None converter, but the guess
   has no effect: `ParserFactoryPoolImpl` always builds a Data Splitter for None.
-* `MySplitLayoutPanel` doesn't give its dragger's container the `gwt-SplitLayoutPanel-Dragger-Outer`
-  class (only `ThinSplitLayoutPanel` adds its own), so the 7px dragger isn't painted in
-  `--splitter__background-color` and the background shows through.
 * `ActionMenuCell` shows its "Actions..." icon on every row, even one with no actions, where pressing
   it does nothing.
 * The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
