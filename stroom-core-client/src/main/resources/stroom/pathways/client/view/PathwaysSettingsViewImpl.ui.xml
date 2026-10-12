@@ -37,6 +37,7 @@
                                 helpText="Spans that are no part of a pathway, one per line, where '*' stands for any run of characters, e.g. 'Ping'. For work the runtime does when it feels like it rather than when the code says to, such as a connection pool checking a connection it has not used for a while: whether it happens is decided by how long something sat idle, so recording it doubles the paths for every place it can appear. Such a span is left out of the model as well as the path, along with whatever it ran, and it takes no part in deciding what else ran at the same time. Matching is case sensitive and covers the whole name.">
                     <g:TextArea ui:field="ignoredSpanNames"
                                 width="400px"
+                                height="150px"
                                 title="Ignored Span Names"/>
                 </form:FormGroup>
                 <form:FormGroup identity="pathwaysIgnoredAttributes"
@@ -44,6 +45,7 @@
                                 helpText="Span attributes the model should not learn a value for, one per line, where '*' stands for any run of characters, e.g. 'thread.*'. A matching attribute is recorded once as accepting anything and is never changed again, so it stays visible against the node without the model growing every time its value differs. Matching is case sensitive and covers the whole name.">
                     <g:TextArea ui:field="ignoredAttributes"
                                 width="400px"
+                                height="150px"
                                 title="Ignored Attributes"/>
                 </form:FormGroup>
             </g:FlowPanel>
