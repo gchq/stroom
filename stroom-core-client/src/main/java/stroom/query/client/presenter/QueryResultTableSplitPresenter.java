@@ -28,9 +28,9 @@ import stroom.query.api.Result;
 import stroom.query.api.SpecialColumns;
 import stroom.query.client.presenter.QueryResultTableSplitPresenter.QueryResultTableSplitView;
 import stroom.query.shared.QueryTablePreferences;
+import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -48,7 +48,7 @@ public class QueryResultTableSplitPresenter
     private final QueryResultTablePresenter tablePresenter;
     private final TextPresenter textPresenter;
     private SimplePanel tableContainer;
-    private ThinSplitLayoutPanel splitLayoutPanel;
+    private SplitPane splitLayoutPanel;
     private boolean showingSplit = true;
 
 
@@ -121,11 +121,16 @@ public class QueryResultTableSplitPresenter
                     tableContainer = new SimplePanel();
                     tableContainer.setStyleName("max");
 
-                    splitLayoutPanel = new ThinSplitLayoutPanel();
+                    // The table beside the source of the selected row, half each, the source no
+                    // narrower than 100px
+                    splitLayoutPanel = new SplitPane();
+                    splitLayoutPanel.setThin(true);
+                    splitLayoutPanel.setSizes("*, 50%");
+                    splitLayoutPanel.setMinSizes("0px, 100px");
+                    splitLayoutPanel.setNames("Table, Source");
                     splitLayoutPanel.addStyleName("max");
-                    final double size = Math.max(100, getWidget().getElement().getOffsetWidth() / 2D);
-                    splitLayoutPanel.addEast(textPresenter.getWidget(), size);
                     splitLayoutPanel.add(tableContainer);
+                    splitLayoutPanel.add(textPresenter.getWidget());
                 }
 
                 tableContainer.setWidget(tablePresenter.getWidget());
