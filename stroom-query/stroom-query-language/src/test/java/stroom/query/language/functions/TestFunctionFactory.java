@@ -236,8 +236,8 @@ class TestFunctionFactory {
                 if (foundOptArg && !args[i].isOptional()) {
                     softAssertions.fail(classAndSigName +
                                         " - found mandatory argument " + args[i].name() +
-                                        " at index " + i + " after optional arguments. All arguments after an optional one" +
-                                        " must also be optional");
+                                        " at index " + i + " after optional arguments. " +
+                                        "All arguments after an optional one must also be optional");
                 }
                 foundOptArg = true;
             }
