@@ -7,7 +7,7 @@
             <g:Label ui:field="backLink" styleName="gwt-Label link" text="Back"/>
             <g:Label ui:field="forwardLink" styleName="gwt-Label link" text="Forward"/>
         </g:FlowPanel>
-        <g:ThinSplitLayoutPanel styleName="dock-max">
+        <g:ThinSplitLayoutPanel ui:field="splitLayoutPanel" styleName="dock-max">
             <g:east size="200">
                 <g:ThinSplitLayoutPanel vSplits="0.5" styleName="max">
                     <g:north size="300">

@@ -17,10 +17,12 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.UserAccessPresenter.UserAccessView;
+import stroom.widget.util.client.ReadingOrder;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -31,6 +33,8 @@ public class UserAccessViewImpl extends ViewImpl implements UserAccessView {
     private final Widget widget;
 
     @UiField
+    ThinSplitLayoutPanel splitLayoutPanel;
+    @UiField
     SimplePanel listContainer;
     @UiField
     SimplePanel sessionsContainer;
@@ -38,6 +42,8 @@ public class UserAccessViewImpl extends ViewImpl implements UserAccessView {
     @Inject
     public UserAccessViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Tab moves through the panes as they are seen, not in the order they were added
+        ReadingOrder.apply(splitLayoutPanel);
         widget.addAttachHandler(event -> focus());
     }
 

@@ -574,6 +574,36 @@ templates, are `ToolbarButton` and `ToolbarToggleButton`), with `.icon-button`, 
 `SvgButton.create(Preset)` stays, deprecated (it makes a `ToolbarButton`), until `SvgPresets` goes;
 `FabButton` (`stroom-button-fab`, `face`) is left for a BEM pass of its own.
 
+### Opening a screen leaves the focus behind (#5405)
+
+**Fixed.** Opening a screen from the main menu left the focus on the menu's button (the closing
+menu gives it back), and opening a document from the explorer left it on the tree, so a keyboard
+user had to Tab across the explorer to reach what they opened (WCAG 2.4.3, Focus Order). The tab
+pane now focuses the screen it opens (`ContentFocus`, from `ContentTabPanePresenter.onOpen`): a
+screen that is a `Focus` focuses itself, otherwise its first tab stop takes the focus, or the screen
+itself (`tabindex="-1"`) if it has none. Focusing doesn't scroll (`preventScroll`), as focus scrolls
+even a container whose overflow is hidden. Two things had stopped it working at first: GWTP's (0.7)
+presenters aren't `IsWidget`, and link tabs carry an empty `tabindex` attribute, which looks like a
+tab stop but can't take the focus (the workbench's `TabStops` counted them too; both now read the
+browser's `tabIndex`).
+
+Screens split into panes were read and tabbed through out of order: `DockLayoutPanel` (and
+`SplitLayoutPanel`) must add its centre last, so a pane to the right of the centre came first in the
+DOM (e.g. User Groups' Members pane before its Member Of pane). `ReadingOrder.apply` reorders a dock
+panel's children as they are laid out (north, west, centre, east, south, splitters last), without
+changing the layout; it is applied to the ten views split that way (app permissions, document and
+create permissions, user access, user groups, pathways, query history and favourites, XSD browser).
+
+Checked by stories `App/Main/AppShell` `OpenedScreenTakesFocus` and `OpenedDocumentTakesFocus`,
+`App/Main/UserGroupsScreen` `ReadingOrder`, and `workbenchTest`'s focus check, which, after every
+story that shows a tab's screen (`ScreenHarness.addContent`) passes, focuses the screen as the tab
+pane does and fails the story unless the focus lands on one of its tab stops (`lib/focus-check.mjs`;
+pages shown on their own, such as sign in, use `ScreenHarness.addPage` and decide their own focus).
+Every screen passes. Screenshots changed only where a story opens a tab (the focus ring moves from
+the explorer to the opened document). Longer term, layouts built with CSS grid or flex keep DOM
+order and visual order together without `ReadingOrder`.
+
+
 ### Keyboard trap in the code editor
 
 Tab in an editable code editor inserts an indent, so keyboard users can't leave it (WCAG 2.1.2).

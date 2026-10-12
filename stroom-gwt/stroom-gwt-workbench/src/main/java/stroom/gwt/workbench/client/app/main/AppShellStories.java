@@ -91,6 +91,8 @@ public final class AppShellStories {
     private static final String MENU_SHORTCUT = ".menuItem-shortcut";
     // The main menu button is the explorer's 'Main Menu'
     private static final String MAIN_MENU = "Main Menu";
+    // The content tab pane (CurveTabLayoutViewImpl) when the focus is in it
+    private static final String CONTENT_WITH_FOCUS = ".curveTabLayoutViewImpl-layerContainerOuter:focus-within";
 
     private static final String DICTIONARY_PATH = "/dictionary/v1/";
     private static final String CREATE_PATH = "/explorer/v2/create";
@@ -397,6 +399,30 @@ public final class AppShellStories {
                             "Save, Save As, Download Dictionary words: 1 tab stop",
                             "New, Delete, Locate Current Item, Expand All, Collapse All, "
                             + "Filter Types, Find In Content: 1 tab stop"));
+                })
+                // #5405: a screen opened from the main menu takes the focus, rather than leave it
+                // on the menu's button, so a keyboard user carries on in the screen they opened
+                .story("OpenedScreenTakesFocus", context -> render(context, TreeFixtures.fixtureTree(),
+                        routes -> routes.addAll(UserGroupsScreenStories.FIXTURES), builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Security")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Security"));
+                    play.click(screen.findByText("User Groups", StroomDom.MENU_ITEM_TEXT));
+                    play.findAllByText("Administrators");
+                    play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
+                    play.expect(play.getByTitle(MAIN_MENU)).not().toHaveFocus();
+                    expectNoProblems(play);
+                })
+                // #5405: a document opened from the explorer takes the focus
+                .story("OpenedDocumentTakesFocus", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.dblClick(navTree(play).getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
+                    expectNoProblems(play);
                 })
                 // Load, edit (dirty), save, and close with the unsaved changes confirmation
                 .story("DictionaryLifecycle", context -> render(context, AppShellFixtures.dictTree()))

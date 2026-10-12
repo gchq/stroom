@@ -503,6 +503,14 @@
     "button-name",
     "target-size"
   ],
+  "app-main-appshell--opened-document-takes-focus": [
+    "button-name",
+    "target-size"
+  ],
+  "app-main-appshell--opened-screen-takes-focus": [
+    "button-name",
+    "target-size"
+  ],
   "app-main-appshell--opens-document": [
     "button-name",
     "target-size"
@@ -773,6 +781,9 @@
     "target-size"
   ],
   "app-main-usergroupsscreen--membership-action-menus": [
+    "target-size"
+  ],
+  "app-main-usergroupsscreen--reading-order": [
     "target-size"
   ],
   "app-main-usergroupsscreen--toolbar-tab-stops": [

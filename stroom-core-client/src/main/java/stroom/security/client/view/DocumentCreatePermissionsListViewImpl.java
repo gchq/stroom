@@ -18,11 +18,13 @@ package stroom.security.client.view;
 
 import stroom.security.client.presenter.DocumentCreatePermissionsListPresenter.DocumentCreatePermissionsListView;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
+import stroom.widget.util.client.ReadingOrder;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -33,6 +35,8 @@ public class DocumentCreatePermissionsListViewImpl
         implements DocumentCreatePermissionsListView {
 
     @UiField
+    MySplitLayoutPanel splitLayoutPanel;
+    @UiField
     SimplePanel dataGrid;
     @UiField
     HTML details;
@@ -42,6 +46,8 @@ public class DocumentCreatePermissionsListViewImpl
     @Inject
     public DocumentCreatePermissionsListViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Tab moves through the panes as they are seen, not in the order they were added
+        ReadingOrder.apply(splitLayoutPanel);
     }
 
     @Override

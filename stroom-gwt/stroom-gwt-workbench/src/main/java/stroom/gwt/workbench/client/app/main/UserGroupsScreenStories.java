@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.app.main;
 
 import stroom.gwt.workbench.client.a11y.ButtonRuns;
+import stroom.gwt.workbench.client.a11y.TabStops;
 import stroom.gwt.workbench.client.app.gin.security.SecurityScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -66,7 +67,8 @@ public final class UserGroupsScreenStories {
             {"id": 2, "uuid": "g-admins", "subjectId": "Administrators", "displayName": "Administrators",
               "group": true, "enabled": true}""";
 
-    private static final RestFixtures FIXTURES = RestFixtures.builder()
+    // Package-private so the shell stories can open the screen from the main menu
+    static final RestFixtures FIXTURES = RestFixtures.builder()
             // Member Of: no groups; Members: Alice; otherwise everyone
             .route(RequestMatcher.post("/users/v1/find").withBodyContaining("ParentsOf"),
                     RestReply.json(page()))
@@ -133,6 +135,25 @@ public final class UserGroupsScreenStories {
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
                             "Add, Remove: 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop"));
+                })
+                // #5405: Tab reads the panes as they are laid out, the master list, then the left
+                // (Member Of) pane, then the right (Members) pane; the right pane once came first,
+                // as its split panel adds the centre (left) pane last
+                .story("ReadingOrder", UserGroupsScreenStories::render)
+                .withPlay(play -> {
+                    play.findAllByText("Administrators");
+                    play.click(play.getAllByText("Administrators").nth(0));
+                    play.waitFor(() -> play.expect(play.querySelector("[inert]")).toBeNull());
+                    play.findByText("Members of group \"Administrators\":");
+                    // A screen reader reads the page in this order too
+                    play.expect(play.body()).toHaveTextContent(TextMatch.regex(
+                            "is a member of:.*Members of group"));
+                    // The panes' tab stops: a quick filter, its help, its toolbar and its pager
+                    // (and its grid, a div), the master's, then Member Of's, then Members'
+                    play.expect(TabStops.names(play.body())).toEqual(List.of(
+                            "input", "Quick Filter Syntax Help", "Create Group", "First", "div",
+                            "input", "Quick Filter Syntax Help", "Add", "First",
+                            "input", "Quick Filter Syntax Help", "Add", "First", "div"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)

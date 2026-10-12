@@ -17,6 +17,7 @@
 package stroom.security.client.view;
 
 import stroom.security.client.presenter.UserAndGroupsPresenter.UserAndGroupsView;
+import stroom.widget.util.client.ReadingOrder;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -46,6 +47,8 @@ public final class UserAndGroupsViewImpl extends ViewImpl implements UserAndGrou
     @Inject
     public UserAndGroupsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Tab moves through the panes as they are seen, not in the order they were added
+        ReadingOrder.apply(innerSplitLayoutPanel);
     }
 
     @Override

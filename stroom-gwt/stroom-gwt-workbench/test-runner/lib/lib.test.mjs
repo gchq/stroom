@@ -27,6 +27,7 @@ import { selectStories } from './filter.mjs';
 import { escapeXml, toJUnitXml } from './junit.mjs';
 import { growthPerCycle, judgeLeak, withLeakProbe } from './leak-check.mjs';
 import { judgeA11y, updateBaseline } from './a11y-check.mjs';
+import { judgeContentFocus } from './focus-check.mjs';
 import { decideOutcome, runWithRetries } from './outcome.mjs';
 import { safeFileBase, screenshotFile } from './screenshots.mjs';
 
@@ -300,4 +301,14 @@ test('accessibility: updating the baseline', () => {
   // wasn't checked keeps its entry
   assert.deepEqual(updated, { 'a--worse': ['button-name', 'label'], 'c--not-run': ['region'] });
   assert.deepEqual(Object.keys(updated), ['a--worse', 'c--not-run']);
+});
+
+test('focus on open: the focus must go onto a tab stop in the screen', () => {
+  // A story with no screen isn't checked
+  assert.equal(judgeContentFocus({ checked: false }), null);
+  assert.equal(judgeContentFocus({ checked: true, inside: true, tabStop: true, name: 'Quick Filter' }), null);
+  assert.match(judgeContentFocus({ checked: true, inside: false, tabStop: false, name: 'Main Menu' }),
+    /outside it \(on Main Menu\)/);
+  assert.match(judgeContentFocus({ checked: true, inside: true, tabStop: false, name: 'div' }),
+    /nothing a keyboard user can tab to/);
 });

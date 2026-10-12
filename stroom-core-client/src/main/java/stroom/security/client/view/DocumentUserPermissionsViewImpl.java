@@ -22,12 +22,14 @@ import stroom.security.shared.PermissionShowLevel;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.string.CaseType;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.util.client.ReadingOrder;
 
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -42,6 +44,8 @@ public final class DocumentUserPermissionsViewImpl
     private final Widget widget;
 
     @UiField
+    ThinSplitLayoutPanel splitLayoutPanel;
+    @UiField
     SelectionBox<PermissionShowLevel> permissionVisibility;
     @UiField
     SimplePanel docUserPermissionsList;
@@ -53,6 +57,8 @@ public final class DocumentUserPermissionsViewImpl
     @Inject
     public DocumentUserPermissionsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Tab moves through the panes as they are seen, not in the order they were added
+        ReadingOrder.apply(splitLayoutPanel);
     }
 
     @Override

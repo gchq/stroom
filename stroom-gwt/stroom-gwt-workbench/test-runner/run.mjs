@@ -42,6 +42,7 @@ import {
 import { judgeLeak, measureLeak, withLeakProbe } from './lib/leak-check.mjs';
 import { judgeA11y, measureA11y, readBaseline, updateBaseline, writeBaseline } from './lib/a11y-check.mjs';
 import { REAL_INPUT_CHECKS } from './lib/real-input.mjs';
+import { judgeContentFocus, measureContentFocus } from './lib/focus-check.mjs';
 import { screenshotFile } from './lib/screenshots.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -367,6 +368,10 @@ async function runStoryOnce(browser, story, options, attempt) {
     if (!unresponsive && !seen.crashed && (options.screenshots || result.status !== 'PASS')) {
       await takeScreenshot(page, screenshotFile(screenshotsDir(options), story.id, attempt), result, seen);
     }
+    // After the screenshot, as it moves the focus
+    if (result.status === 'PASS' && !unresponsive && !seen.crashed) {
+      await checkContentFocus(page, options, result);
+    }
   } catch (error) {
     // e.g. the page crashed, or the browser has gone
     result.status = 'ERROR';
@@ -390,6 +395,26 @@ async function checkRealInput(page, check, options, result) {
     }
   } catch (error) {
     Object.assign(result, { status: 'FAIL', error: `Real input: ${firstLine(error)}` });
+  }
+}
+
+// The focus check of a story that passed and shows a screen (see lib/focus-check.mjs): fails it if
+// focusing the screen, as Stroom does when it opens it, doesn't take the focus into it.
+async function checkContentFocus(page, options, result) {
+  try {
+    const measured = await withDeadline(measureContentFocus(page), options.timeout + UNRESPONSIVE_GRACE_MILLIS);
+    if (measured === TIMED_OUT) {
+      throw new Error('Focus on open: the page stopped responding');
+    }
+    if (measured.checked) {
+      result.contentFocus = { inside: measured.inside, tabStop: measured.tabStop, name: measured.name };
+    }
+    const error = judgeContentFocus(measured);
+    if (error) {
+      Object.assign(result, { status: 'FAIL', error });
+    }
+  } catch (error) {
+    Object.assign(result, { status: 'FAIL', error: firstLine(error) });
   }
 }
 

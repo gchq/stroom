@@ -42,7 +42,9 @@ import stroom.widget.tab.client.presenter.CurveTabLayoutView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.view.AbstractTab;
 import stroom.widget.tab.client.view.CurveTabLayoutUiHandlers;
+import stroom.widget.util.client.ContentFocus;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.History;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -165,6 +167,11 @@ public class ContentTabPanePresenter
         add(event.getTabData(), event.getLayer());
 
         event.runCallbackOnOpen();
+
+        // Take the user to the screen they opened, rather than leave the focus where they chose it
+        // (e.g. the main menu's button, which the closing menu gives it back to)
+        final Object content = event.getLayer();
+        Scheduler.get().scheduleDeferred(() -> ContentFocus.focus(content));
 
         if (event.getLayer() instanceof HasTaskMonitorFactory) {
             final AbstractTab tab = getView().getTabBar().getTab(event.getTabData());

@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui">
-    <g:ThinSplitLayoutPanel styleName="max default-min-sizes">
+    <g:ThinSplitLayoutPanel ui:field="splitLayoutPanel" styleName="max default-min-sizes">
         <g:south size="400">
             <g:SimplePanel ui:field="tree" styleName="max"/>
         </g:south>

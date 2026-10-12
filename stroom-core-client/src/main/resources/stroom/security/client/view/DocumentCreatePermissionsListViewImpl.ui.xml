@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
-    <g:MySplitLayoutPanel styleName="max default-min-sizes">
+    <g:MySplitLayoutPanel ui:field="splitLayoutPanel" styleName="max default-min-sizes">
         <g:south size="200">
             <form:FormGroup label="Document Create Permission Details" addStyleNames="max"
                             helpText="Explains how the selected user or group holds permission to create the selected document type here: directly, through 'Create All', through ownership, or inherited from a group.">

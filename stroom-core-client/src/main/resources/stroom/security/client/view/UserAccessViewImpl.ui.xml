@@ -5,7 +5,7 @@
          ended without a separate screen. Split rather than fixed heights because how much of each an
          administrator wants to see depends entirely on the situation - triaging one user's devices wants the
          lower pane, scanning for who is active wants the upper. -->
-    <g:ThinSplitLayoutPanel styleName="max default-min-sizes">
+    <g:ThinSplitLayoutPanel ui:field="splitLayoutPanel" styleName="max default-min-sizes">
         <g:south size="250">
             <g:SimplePanel ui:field="sessionsContainer" styleName="max"/>
         </g:south>

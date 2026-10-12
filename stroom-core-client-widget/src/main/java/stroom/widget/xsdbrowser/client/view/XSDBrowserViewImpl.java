@@ -16,6 +16,7 @@
 
 package stroom.widget.xsdbrowser.client.view;
 
+import stroom.widget.util.client.ReadingOrder;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserPresenter.XSDBrowserView;
 import stroom.widget.xsdbrowser.client.presenter.XSDBrowserUiHandlers;
 
@@ -25,6 +26,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -32,6 +34,8 @@ import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 public class XSDBrowserViewImpl extends ViewWithUiHandlers<XSDBrowserUiHandlers> implements XSDBrowserView {
 
     private final Widget widget;
+    @UiField
+    ThinSplitLayoutPanel splitLayoutPanel;
     @UiField
     Label homeLink;
     @UiField
@@ -48,6 +52,8 @@ public class XSDBrowserViewImpl extends ViewWithUiHandlers<XSDBrowserUiHandlers>
     @Inject
     public XSDBrowserViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Tab moves through the panes as they are seen, not in the order they were added
+        ReadingOrder.apply(splitLayoutPanel);
     }
 
     @Override

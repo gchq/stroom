@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client"
              xmlns:l="urn:import:stroom.item.client">
-    <g:ThinSplitLayoutPanel styleName="max default-min-sizes">
+    <g:ThinSplitLayoutPanel ui:field="splitLayoutPanel" styleName="max default-min-sizes">
         <g:south size="200">
             <form:FormGroup ui:field="detailsFormGroup"
                             addStyleNames="form-label-padding">

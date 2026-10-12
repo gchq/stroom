@@ -31,9 +31,9 @@ import java.util.List;
 ///
 /// The rules are a browser's, not the play's simulated Tab (user-event's), which doesn't know about
 /// `inert`: an element is a tab stop if it can take focus (a control, a link or an element with a
-/// `tabindex`), its `tabindex` isn't negative, it isn't disabled and it isn't hidden (with
-/// `display: none` or `visibility: hidden`) or inside an `inert` element. Positive `tabindex`
-/// values come first, as a browser orders them.
+/// `tabindex`), its tab index (as the browser reads it) isn't negative, it isn't disabled and it
+/// isn't hidden (with `display: none` or `visibility: hidden`) or inside an `inert` element.
+/// Positive `tabindex` values come first, as a browser orders them.
 public final class TabStops {
 
     private TabStops() {
@@ -65,8 +65,9 @@ public final class TabStops {
         if (!element.matches(selector) || element.disabled || element.closest('[inert]')) {
             return false;
         }
-        var tabIndex = element.getAttribute('tabindex');
-        if (tabIndex !== null && Number(tabIndex) < 0) {
+        // The browser's own tab index, e.g. -1 for an element whose tabindex attribute is empty
+        // or invalid, which can't take the focus
+        if (element.tabIndex < 0) {
             return false;
         }
         var win = element.ownerDocument.defaultView;

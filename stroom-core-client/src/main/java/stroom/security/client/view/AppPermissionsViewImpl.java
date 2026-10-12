@@ -20,10 +20,12 @@ import stroom.item.client.SelectionBox;
 import stroom.security.client.presenter.AppPermissionsPresenter.AppPermissionsView;
 import stroom.security.shared.PermissionShowLevel;
 import stroom.util.shared.UserRef;
+import stroom.widget.util.client.ReadingOrder;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.SimplePanel;
+import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -37,6 +39,8 @@ public final class AppPermissionsViewImpl
     private static final String APP_PERM_DETAILS_BASE_LABEL = "Application Permission Details";
     private final Widget widget;
 
+    @UiField
+    ThinSplitLayoutPanel splitLayoutPanel;
     @UiField
     SelectionBox<PermissionShowLevel> permissionVisibility;
     @UiField
@@ -53,6 +57,8 @@ public final class AppPermissionsViewImpl
     @Inject
     public AppPermissionsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Tab moves through the panes as they are seen, not in the order they were added
+        ReadingOrder.apply(splitLayoutPanel);
         setUserRef(null);
     }
 

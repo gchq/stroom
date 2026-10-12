@@ -3,7 +3,7 @@
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
              xmlns:form="urn:import:stroom.widget.form.client">
 
-    <g:ThinSplitLayoutPanel styleName="max">
+    <g:ThinSplitLayoutPanel ui:field="splitLayoutPanel" styleName="max">
         <g:south size="300">
             <form:FormGroup ui:field="detailsFormGroup"
                             helpText="Explains how the user/group has obtained the selected permission."
