@@ -62,14 +62,19 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 /**
@@ -91,11 +96,22 @@ public class PathwayNarrower {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwayNarrower.class);
 
+    /**
+     * How many times a shard is asked for before it is given up on. The lock this takes is the one the
+     * processor holds while it applies traces to the same model, and both jobs can reach for a shard
+     * at the same moment — the processor runs every minute and this runs just after midnight, so the
+     * two land on each other readily. A pass of the processor is over in well under a second, so
+     * asking again is almost always enough.
+     */
+    private static final int LOCK_ATTEMPTS = 3;
+    private static final Duration BETWEEN_ATTEMPTS = Duration.ofSeconds(2);
+
     private final PathwaysStore pathwaysStore;
     private final PathwaysShardStore shardStore;
     private final PathwaySerde pathwaySerde;
     private final MutationLog mutationLog;
     private final ClusterLockService clusterLockService;
+    private final ExecutorService shardExecutor;
     private final SecurityContext securityContext;
     private final MessageReceiverFactory messageReceiverFactory;
     private final ByteBuffers byteBuffers;
@@ -109,6 +125,7 @@ public class PathwayNarrower {
                            final SecurityContext securityContext,
                            final MessageReceiverFactory messageReceiverFactory,
                            final ByteBuffers byteBuffers) {
+        this.shardExecutor = PathwaysProcessor.createShardExecutor("Pathways Narrow");
         this.pathwaysStore = pathwaysStore;
         this.shardStore = shardStore;
         this.pathwaySerde = pathwaySerde;
@@ -144,26 +161,111 @@ public class PathwayNarrower {
         }
 
         final int oldestDay = oldestDayInWindow(doc, Instant.now());
+        final int shardCount = ShardQueue.shardCount(settings);
 
         // Held until the pass is over rather than written as it goes. Opening the feed opens a stream
         // whether or not anything is put in it, and most runs most documents have nothing to report
-        // — a stream each would bury the runs that did say something. Every line is a change that
-        // was made, so they are all INFO and only the words need keeping.
-        final List<String> lines = new ArrayList<>();
-        final MessageReceiver collect = (severity, message) -> lines.add(message.get());
-        for (int shard = 0; shard < ShardQueue.shardCount(settings); shard++) {
-            final int shardIndex = shard;
-            // The same lock the processor takes, so a model is never narrowed while a trace is being
-            // applied to it on another node.
-            clusterLockService.tryLock(PathwaysProcessor.lockName(doc.getUuid(), shardIndex),
-                    () -> narrowShard(doc, shardIndex, oldestDay, collect));
+        // — a stream each would bury the runs that did say something.
+        //
+        // A list per shard rather than one between them, because the shards are worked at the same
+        // time: one list would need holding against them all, and what each shard did would read in
+        // whatever order they happened to finish.
+        final List<List<String>> lines = new ArrayList<>();
+        for (int shard = 0; shard < shardCount; shard++) {
+            lines.add(new ArrayList<>());
+        }
+
+        Set<Integer> busy = narrowShards(doc, oldestDay, lines, allShards(shardCount));
+        for (int attempt = 1; attempt < LOCK_ATTEMPTS && !busy.isEmpty(); attempt++) {
+            if (!pause()) {
+                break;
+            }
+            busy = narrowShards(doc, oldestDay, lines, busy);
         }
 
         // One stream for the document's whole pass, so what the narrowing did to it reads in one place
-        // rather than a shard at a time.
-        if (!lines.isEmpty()) {
-            PathwaysProcessor.withMessageReceiver(messageReceiverFactory, doc, messages ->
-                    lines.forEach(line -> messages.log(Severity.INFO, () -> line)));
+        // rather than a shard at a time. A shard nobody could get at is said here as well: it will not
+        // be narrowed until tomorrow, and a nightly job quietly leaving a quarter of its work undone is
+        // worth hearing about.
+        final List<String> report = new ArrayList<>();
+        lines.forEach(report::addAll);
+        final Set<Integer> stillBusy = busy;
+        if (!report.isEmpty() || !stillBusy.isEmpty()) {
+            PathwaysProcessor.withMessageReceiver(messageReceiverFactory, doc, messages -> {
+                report.forEach(line -> messages.log(Severity.INFO, () -> line));
+                stillBusy.forEach(shard -> messages.log(Severity.WARNING, () -> "Shard " + shard
+                        + " of " + shardCount + " was in use after " + LOCK_ATTEMPTS
+                        + " attempts, so it was not narrowed"));
+            });
+        }
+    }
+
+    /**
+     * Narrows the given shards, each on a thread of its own, and gives back the ones that were in use.
+     *
+     * <p>Side by side rather than one after another, the way the processor works them: a shard is a
+     * model of its own under a lock of its own, so nothing is shared but the disk.
+     *
+     * @return the shards whose lock was held by something else, which is not an error — only work put
+     * off.
+     */
+    private Set<Integer> narrowShards(final PathwaysDoc doc,
+                                      final int oldestDay,
+                                      final List<List<String>> lines,
+                                      final Collection<Integer> shards) {
+        final Set<Integer> busy = Collections.synchronizedSet(new LinkedHashSet<>());
+        final List<CompletableFuture<Void>> inFlight = new ArrayList<>();
+        for (final int shard : shards) {
+            final int shardIndex = shard;
+            final MessageReceiver collect =
+                    (severity, message) -> lines.get(shardIndex).add(message.get());
+            inFlight.add(CompletableFuture
+                    // Each shard re-establishes the processing user: the identity is held per thread,
+                    // so it does not travel to a pool thread on its own.
+                    .runAsync(() -> securityContext.asProcessingUser(() -> {
+                        // Whether the work ran, because tryLock gives nothing back and a shard that
+                        // was busy looks exactly like one that had nothing to do.
+                        final boolean[] ran = {false};
+                        clusterLockService.tryLock(
+                                PathwaysProcessor.lockName(doc.getUuid(), shardIndex),
+                                () -> {
+                                    ran[0] = true;
+                                    narrowShard(doc, shardIndex, oldestDay, collect);
+                                });
+                        if (!ran[0]) {
+                            busy.add(shardIndex);
+                        }
+                    }), shardExecutor)
+                    .exceptionally(t -> {
+                        LOGGER.error(() -> LogUtil.message("Error narrowing shard {} of {}: {}",
+                                shardIndex, doc.getName(), t.getMessage()), t);
+                        return null;
+                    }));
+        }
+        // Waited on, so that the pass does not report on work it has not finished and does not overlap
+        // the retry below.
+        CompletableFuture.allOf(inFlight.toArray(new CompletableFuture[0])).join();
+        return busy;
+    }
+
+    private static List<Integer> allShards(final int shardCount) {
+        final List<Integer> shards = new ArrayList<>(shardCount);
+        for (int shard = 0; shard < shardCount; shard++) {
+            shards.add(shard);
+        }
+        return shards;
+    }
+
+    // Long enough for a pass of the processor to have finished and let go of whatever it held.
+    // @return whether to carry on, which an interrupted wait says not to.
+    private static boolean pause() {
+        try {
+            Thread.sleep(BETWEEN_ATTEMPTS.toMillis());
+            return true;
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOGGER.info("Interrupted while waiting to ask for a busy shard again");
+            return false;
         }
     }
 

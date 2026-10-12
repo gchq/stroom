@@ -140,7 +140,7 @@ public class PathwaysProcessor {
         this.securityContext = securityContext;
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
-        this.shardExecutor = createShardExecutor();
+        this.shardExecutor = createShardExecutor("Pathways Queue Drain");
 
         this.tracesApplied = metrics.registrationBuilder(getClass())
                 .addNamePart("tracesApplied")
@@ -396,7 +396,9 @@ public class PathwaysProcessor {
     // Sets an unreadable item aside rather than deleting or retrying it: retrying stalls the shard
     // forever on the same item, and deleting destroys the only copy of whatever went wrong.
 
-    private static ExecutorService createShardExecutor() {
+    // Shared with the narrowing, which works the same shards under the same locks and wants the same
+    // small pool of low priority threads to do it on.
+    static ExecutorService createShardExecutor(final String threadName) {
         final AtomicInteger threadNo = new AtomicInteger();
         return new ThreadPoolExecutor(
                 SHARD_THREADS,
@@ -406,7 +408,7 @@ public class PathwaysProcessor {
                 new LinkedBlockingQueue<>(),
                 runnable -> {
                     final Thread thread = new Thread(
-                            runnable, "Pathways Queue Drain #" + threadNo.incrementAndGet());
+                            runnable, threadName + " #" + threadNo.incrementAndGet());
                     thread.setDaemon(true);
                     thread.setPriority(3);
                     return thread;
