@@ -603,6 +603,32 @@ Every screen passes. Screenshots changed only where a story opens a tab (the foc
 the explorer to the opened document). Longer term, layouts built with CSS grid or flex keep DOM
 order and visual order together without `ReadingOrder`.
 
+Since then: `SplitPane` (`stroom.widget.layout.client`, styled by `split-pane.css` under BEM names)
+is to replace both split panels (`ThinSplitLayoutPanel` and `MySplitLayoutPanel`, copies of one
+widget but for the splitter's size). It is a CSS grid whose panes are in the page in the order they
+are shown, and its splitters are focusable separators (the WAI-ARIA window splitter pattern: arrow
+keys, Shift for bigger steps, Page Up and Down, Home, End, Enter to collapse and restore) that a
+mouse, finger or pen can drag, across a frame and on a right-to-left page. Panes are sized `30%`
+(kept as it is resized), `400px` or `*` (the rest), in Java or in a template (`sizes`, `names`,
+`minSizes`, `vertical`, `thin`); a pane left without a size is reported, by name, when the split
+pane is shown. See "Split panes" in `COMPONENT_MODEL_DESIGN.md`. Stories `Widgets/Layout/SplitPane`: `Compare*`
+show an old panel above a split pane set up alike and check their panes match, and the runner drags
+both with the real mouse (the split pane follows the mouse to the pixel; the old panels drift 4px
+on each grab of an end-anchored pane, and take 2px off a proportional one); the rest cover the
+keyboard, names, an end-anchored pane, a hidden pane, a right-to-left page, a drag across a frame,
+resize notices, a missing size and a nested template.
+
+Then, from research into what the old panels do when they are resized: a fixed pane kept its
+size however small the panel became (squeezing the centre to nothing), and a minimum size only
+limited drags. A split pane now shrinks the pane taking the rest first, to its minimum, then the
+sized panes, to theirs, and restores each as it widens (`Widgets/Layout/SplitPaneResizing`
+measures old and new at several sizes: first pane fixed, second fixed, a share, with minimums,
+stacked). Also: drags lay out at most once a frame; a pane collapsed to nothing is `inert`;
+double click collapses and restores (WCAG 2.5.7); keyboard focus is drawn as the app's focus; thin
+splitters show in forced colours (the runner checks it, and fails without the rule); and
+`setOnResized` says when the user has resized a pane. `Widgets/Layout/SplitPaneContent` tries it
+with Stroom's data grid and code editor, the stepping screen's four pane layout (beside the old
+panel), forms and double clicks. No screen uses it yet; User Groups is to be the first.
 
 ### Keyboard trap in the code editor
 

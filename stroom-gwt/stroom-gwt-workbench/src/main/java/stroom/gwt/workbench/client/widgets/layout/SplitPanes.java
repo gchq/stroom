@@ -53,9 +53,9 @@ final class SplitPanes {
 
     /// The stories' frame: 300px high with a rounded border.
     ///
-    /// @param split The split panel, which fills the frame.
+    /// @param split The split panel (or `SplitPane`), which fills the frame.
     /// @return The frame.
-    static Widget frame(final DockLayoutPanel split) {
+    static FlowPanel frame(final Widget split) {
         final FlowPanel frame = new FlowPanel();
         final Style style = frame.getElement().getStyle();
         style.setProperty("height", "300px");
