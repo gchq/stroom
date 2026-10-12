@@ -122,11 +122,16 @@ public class PathwayEditPresenter
     private boolean usageArrived;
     private final PathwayTreePresenter pathwayTreePresenter;
     private final ConstraintListPresenter constraintListPresenter;
+    private final NodeInfoPresenter nodeInfoPresenter;
     private final PathwayMutationListPresenter mutationListPresenter;
     private final PathwayPathListPresenter pathListPresenter;
     private final TabData changesTab = new TabDataImpl("Changes");
     private final TabData pathsTab = new TabDataImpl("Paths");
     private TabData selectedTab = changesTab;
+    // The middle panel's own tabs, which say different things about one node rather than different
+    // things about the pathway.
+    private final TabData constraintsTab = new TabDataImpl("Constraints");
+    private final TabData infoTab = new TabDataImpl("Info");
     private final ButtonView saveButton;
     private final ButtonView playButton;
     private final ButtonView stopButton;
@@ -148,6 +153,7 @@ public class PathwayEditPresenter
                                 final PathwayEditView view,
                                 final PathwayTreePresenter pathwayTreePresenter,
                                 final ConstraintListPresenter constraintListPresenter,
+                                final NodeInfoPresenter nodeInfoPresenter,
                                 final PathwayMutationListPresenter mutationListPresenter,
                                 final PathwayPathListPresenter pathListPresenter,
                                 final RestFactory restFactory) {
@@ -155,10 +161,13 @@ public class PathwayEditPresenter
         this.restFactory = restFactory;
         this.pathwayTreePresenter = pathwayTreePresenter;
         this.constraintListPresenter = constraintListPresenter;
+        this.nodeInfoPresenter = nodeInfoPresenter;
         this.mutationListPresenter = mutationListPresenter;
         this.pathListPresenter = pathListPresenter;
         view.setTree(pathwayTreePresenter.getView());
-        view.setConstraints(constraintListPresenter.getView());
+        view.getNodeTabBar().addTab(constraintsTab);
+        view.getNodeTabBar().addTab(infoTab);
+        showNodeTab(constraintsTab);
         // One at a time rather than side by side. Both are wide tables of the whole pathway and
         // neither is read while the other is, so sharing the strip left each too narrow to read.
         view.getTabBar().addTab(changesTab);
@@ -221,6 +230,8 @@ public class PathwayEditPresenter
             }
         }));
         registerHandler(getView().getTabBar().addSelectionHandler(e -> showTab(e.getSelectedItem())));
+        registerHandler(getView().getNodeTabBar()
+                .addSelectionHandler(e -> showNodeTab(e.getSelectedItem())));
         registerHandler(getView().getTabBar().addShowMenuHandler(e -> getEventBus().fireEvent(e)));
 
         // Paths first: what the pathway actually does is what a reader opens it for, and the changes
@@ -681,13 +692,30 @@ public class PathwayEditPresenter
     // be asked for rather than waited for.
     private void showConstraints() {
         final PathNode node = pathwayTreePresenter.getSelectionModel().getSelectedObject();
-        // Nothing else on the screen says which node these constraints are for, and the drawing they
-        // were clicked on may have been scrolled away from since. The path ends with the node's own
-        // name, so one line says both what it is and where it sits.
+        // Nothing else on the screen says which node these are for, and the drawing they were clicked
+        // on may have been scrolled away from since. The path ends with the node's own name, so one
+        // line says both what it is and where it sits, whichever tab is up.
         getView().setNodePath(path(node));
         constraintListPresenter.setData(node,
                 readOnly,
                 mutationListPresenter.getSelectedConstraints(NullSafe.get(node, PathNode::getNodePath)));
+        // How often the model has been taught something about this node is not on the node — the
+        // changes say it. Asked of the drawing, which has already worked it out to size the node by,
+        // so the two cannot disagree about it.
+        nodeInfoPresenter.setData(node,
+                pathwayTreePresenter.getChange(NullSafe.get(node, PathNode::getNodePath)));
+    }
+
+    // Only the selected one is built into the panel, so the other stops drawing rather than being
+    // hidden behind it.
+    private void showNodeTab(final TabData tab) {
+        if (tab == null) {
+            return;
+        }
+        getView().getNodeTabBar().selectTab(tab);
+        getView().getNodeLayerContainer().show(infoTab.equals(tab)
+                ? nodeInfoPresenter
+                : constraintListPresenter);
     }
 
     /**
@@ -885,10 +913,13 @@ public class PathwayEditPresenter
          */
         void setNodePath(String path);
 
-        void setConstraints(View view);
-
         LinkTabBar getTabBar();
 
         LayerContainer getLayerContainer();
+
+        /** The tabs over the middle panel, which are about the node picked out on the drawing. */
+        LinkTabBar getNodeTabBar();
+
+        LayerContainer getNodeLayerContainer();
     }
 }

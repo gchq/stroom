@@ -16,7 +16,7 @@
                 </g:FlowPanel>
             </g:south>
             <g:center>
-                <g:MySplitLayoutPanel ui:field="centreSplit">
+                <g:MySplitLayoutPanel ui:field="centreSplit" addStyleNames="pathway-headings">
                     <g:west size="400">
                         <form:FormGroup ui:field="treeGroup" identity="pathwayDetails" label="Pathway">
                             <g:SimplePanel ui:field="tree"
@@ -24,13 +24,16 @@
                         </form:FormGroup>
                     </g:west>
                     <g:center>
-                        <form:FormGroup identity="pathwayConstraints" label="Constraints">
+                        <g:FlowPanel styleName="max dock-container-vertical">
+                            <tab:LinkTabBar ui:field="nodeTabBar"
+                                            styleName="dock-min linkTabBar pathway-tabs"/>
                             <g:FlowPanel
                                     styleName="max dock-container-vertical form-control-background form-control-border">
                                 <g:Label ui:field="nodePath" styleName="dock-min pathway-node-path"/>
-                                <g:SimplePanel ui:field="constraints" styleName="dock-max"/>
+                                <tab:LayerContainerImpl ui:field="nodeLayerContainer"
+                                                        styleName="dock-max"/>
                             </g:FlowPanel>
-                        </form:FormGroup>
+                        </g:FlowPanel>
                     </g:center>
                 </g:MySplitLayoutPanel>
             </g:center>

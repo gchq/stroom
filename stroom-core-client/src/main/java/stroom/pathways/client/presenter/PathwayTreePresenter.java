@@ -560,6 +560,17 @@ public class PathwayTreePresenter
     }
 
     /**
+     * How often the model has been taught something about one node, and when it last was, as at the
+     * point the drawing is showing. Taken from here rather than worked out again so that anything
+     * else saying it cannot disagree with the picture.
+     */
+    public NodeChange getChange(final List<String> nodePath) {
+        return nodePath == null
+                ? null
+                : counts.node(nodePath);
+    }
+
+    /**
      * Every change made to this pathway, which is where the graph gets the colour of a node from.
      * Handing them over stops them being asked for. Takes effect on the next read.
      */

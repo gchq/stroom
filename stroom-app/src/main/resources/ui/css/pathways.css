@@ -1260,3 +1260,31 @@
        end is on show. A flat end reads as a cut-off pipe where a round one reads as a join. */
     stroke-linecap: round;
 }
+
+/* The drawing and what sits beside it, below the list of pathways. Held off the list above so the two
+   read as separate panels rather than as one that happens to have a line across it. Border box, so
+   the split panel inside still fills what is left rather than overflowing by the size of the gap. */
+.pathways-lower {
+    box-sizing: border-box;
+    padding-top: var(--control__gap--vertical);
+    /* Held off the left edge so the headings below do not start hard against it. The grid above insets
+       its column headings by --row__padding--horizontal, which on its own is too little to read as a
+       margin, so this uses the wider of the two spacings the theme defines. */
+    padding-left: var(--control__gap--horizontal);
+}
+
+/* Wherever the drawing sits beside a panel of its own, the heading over one is a form label and the
+   heading over the other is a tab, and the two leave different amounts of room beneath them. Levelled
+   here so both panels start at the same height — otherwise one reads as sitting slightly lower than
+   the other for no reason. Used by the pathways document and by a pathway opened on its own. */
+.pathway-headings .form-group-label-container,
+.pathway-headings .pathway-tabs {
+    margin-bottom: var(--control__gap--vertical);
+}
+
+/* The difference between the two is exactly the pixel of padding .linkTabBar puts above itself, which
+   the form label has not got. Given to the label rather than taken off the tabs, because that pixel is
+   the tab bar's own business and nothing here should decide it is wrong. */
+.pathway-headings .form-group-label-container {
+    padding-top: 1px;
+}

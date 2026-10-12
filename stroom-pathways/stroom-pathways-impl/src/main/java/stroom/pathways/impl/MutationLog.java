@@ -252,8 +252,11 @@ public class MutationLog {
     // having done so. Without these a replay can say what the model allowed at a point but not how
     // busy it was.
     //
-    // Numbered with the last change the trace made, so winding back to any change finds the newest
-    // reading at or before it.
+    // Numbered with the last change the trace made, which is how winding back to any one of that
+    // trace's changes finds this reading: it is the first at or after the change picked. Not the last
+    // one before it — that is the state before this trace ran, and a change of this trace being on
+    // show means it has. A count moves once for the whole trace, so there is no state between one of
+    // its changes and the next for a reading to describe.
     private void writeUsage(final LmdbWriter writer,
                             final SimpleDb db,
                             final byte[] pathwayKey,

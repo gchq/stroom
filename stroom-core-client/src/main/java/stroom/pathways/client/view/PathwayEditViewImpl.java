@@ -55,7 +55,9 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
     @UiField
     SimplePanel tree;
     @UiField
-    SimplePanel constraints;
+    LinkTabBar nodeTabBar;
+    @UiField
+    LayerContainer nodeLayerContainer;
     @UiField
     Label nodePath;
     @UiField
@@ -139,8 +141,13 @@ public class PathwayEditViewImpl extends ViewImpl implements PathwayEditView {
     }
 
     @Override
-    public void setConstraints(final View view) {
-        constraints.setWidget(view.asWidget());
+    public LinkTabBar getNodeTabBar() {
+        return nodeTabBar;
+    }
+
+    @Override
+    public LayerContainer getNodeLayerContainer() {
+        return nodeLayerContainer;
     }
 
     public interface Binder extends UiBinder<Widget, PathwayEditViewImpl> {
