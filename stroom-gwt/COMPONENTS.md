@@ -43,7 +43,7 @@ the component's classes (some names also match related classes), to help priorit
 | Toolbars | `ButtonPanel`, `SvgButton`, `InlineSvgButton`, `InlineSvgToggleButton`, `SvgToggleButton`, `BaseSvgButton` | `Toolbar`, `ToolbarRow`, `ToolbarSeparator`, `ToolbarButton`, `ToolbarToggleButton`, `ButtonGroupFocus`, `FocusTooltip` | toolbar | replaced | ~100 | done | `SvgButton.create(Preset)` stays until `SvgPresets` goes; some toolbars unnamed; text/icon display preference (later); not tried with a screen reader |
 | Floating action button | `FabButton` | — | button | retrofit | ~8 | in part (one tab stop) | BEM pass not done (`stroom-button-fab`, `face`) |
 | Refresh button | `RefreshButton` | (rebuilt on `ToolbarButton`) | button | retrofit | pagers | done | — |
-| Split panes | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | built, rollout not started (User Groups first) | 2.5.8 where splitters meet in a T at a centre; theme colours to revisit (line contrast relies on `--grey-600`); not tried with a screen reader or touch device; `ReadingOrder` stopgap in 10 views until converted; views that call `onResize()` to force a relayout need checking (e.g. stepping) |
+| Split panes | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | rolling out: User Groups (thin, nested) and Find in Content (wide) converted | 2.5.8 where splitters meet in a T at a centre (accepted, see below); theme colours to revisit (line contrast relies on `--grey-600`); not tried with a screen reader or touch device; `ReadingOrder` stopgap in 9 views until converted; views that call `onResize()` to force a relayout need checking (e.g. stepping) |
 | Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | ? (tied to `ContentTabPanePresenter`, document plugins) | every document | not started | not a tablist; one tab stop with arrows, `aria-selected`, `aria-controls` |
 | Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | ? | ~16 | not started | tabs carry an empty `tabindex=""` (not focusable); no tablist roles |
 | Data grids | `MyDataGrid`, `MyCellTable`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+14 cell tables, ~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"` |
@@ -55,6 +55,21 @@ the component's classes (some names also match related classes), to help priorit
 | Code editor | Ace (`EditorPresenter`, `EditorViewImpl`) | — | — | retrofit around Ace | ~34 | not started | keyboard trap: Tab indents (`ISSUES.md`); Ace sources need human approval to change |
 | Layout panels | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | few direct (most via split panels) | not started | DOM order differs from layout (`ReadingOrder` stopgap) |
 | Content focus | tab pane | `ContentFocus` | — | added | all tabs | done (#5405) | — |
+
+## Accepted deviations
+
+- **Split panes, WCAG 2.5.8 (Target Size, Minimum) where splitters meet in a T.** A splitter's grab
+  area is 7px, reaching 3px either side of its line, so where a nested split pane's splitter
+  starts at another splitter's centre (e.g. User Groups' 50/50 split), the 24px circle 2.5.8
+  centres on the outer splitter touches the inner one, and their grab areas overlap in a 7×3px
+  patch (the inner splitter, later in the page, takes it). The guidance gives no exception for
+  this: the overlapping area counts for neither target, which one is on top doesn't matter, and
+  the only way out ("Equivalent") is a separate 24px control that resizes the panes, which was
+  tried (a collapse button on each splitter) and dropped, as it sat over pane content. The
+  guidance doesn't address splitters or long thin targets, and both can be grabbed along their
+  whole length but for that patch, as with the old panels and most UIs. Accepted; the
+  `Template` story pins it, so a change shows. A split moved more than 12px off the outer
+  splitter's centre passes, if a screen ever needs to.
 
 ## Groundwork on main before any worktree
 
