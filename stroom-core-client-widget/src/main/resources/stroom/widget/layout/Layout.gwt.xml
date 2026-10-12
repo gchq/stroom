@@ -4,5 +4,8 @@
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name='com.google.gwt.user.User' />
   <inherits name='stroom.widget.tab.Tab' />
+  <inherits name='stroom.widget.menu.Menu' />
+  <inherits name='stroom.widget.popup.Popup' />
+  <inherits name='stroom.widget.util.Util' />
   <source path="client" />
 </module>

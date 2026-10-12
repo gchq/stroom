@@ -630,6 +630,15 @@ splitters show in forced colours (the runner checks it, and fails without the ru
 with Stroom's data grid and code editor, the stepping screen's four pane layout (beside the old
 panel), forms and double clicks. No screen uses it yet; User Groups is to be the first.
 
+Then, from measuring it against WCAG: splitter lines were 1.3:1 (dark) and 1:1 (light) against
+Stroom's table and editor, and keyboard focus 2.6:1, under the 3:1 of 1.4.11; they are now drawn
+with `--splitter__line-color` (grey-600) and `--splitter__focus-color` (per theme), which the
+runner checks in both themes. A splitter's name is required, and its value is said as "30% of the
+width". For 2.5.7, a splitter's menu (right click, long press, context menu key) maximises the pane
+either side or restores them, and Alt+M maximises the pane holding the focus (a visible collapse
+button was tried and dropped, as it sat over pane content). Known gap (2.5.8): a 7px splitter has
+no room where another meets it in a T at its centre, as in User Groups' 50/50 split.
+
 ### Keyboard trap in the code editor
 
 Tab in an editable code editor inserts an indent, so keyboard users can't leave it (WCAG 2.1.2).

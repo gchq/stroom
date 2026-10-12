@@ -43,6 +43,7 @@ import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.UserRef;
 import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
@@ -210,6 +211,9 @@ public final class ScreenHarness {
         new PopupManager(eventBus);
         // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's Menu does
         new Menu(eventBus, this::createMenuPresenter);
+        // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
+        // MainPresenter relays them
+        addCleanUp(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
 
         // Record alerts and confirmations, and optionally show them as Stroom does
         eventBus.addHandler(AlertEvent.getType(), event -> spy(ALERT_SPY, describe(event)));

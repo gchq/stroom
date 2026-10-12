@@ -16,11 +16,20 @@
 
 package stroom.widget.layout.client;
 
+import stroom.svg.shared.SvgImage;
+import stroom.widget.menu.client.presenter.IconMenuItem;
+import stroom.widget.menu.client.presenter.Item;
+import stroom.widget.menu.client.presenter.MenuRequest;
+import stroom.widget.menu.client.presenter.Separator;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tab.client.view.GlobalResizeObserver;
+import stroom.widget.util.client.KeyBinding;
+import stroom.widget.util.client.KeyBinding.Action;
 
 import com.google.gwt.animation.client.AnimationScheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.ComplexPanel;
 import com.google.gwt.user.client.ui.ProvidesResize;
@@ -62,8 +71,15 @@ import java.util.List;
 /// it could be squeezed to nothing.)
 ///
 /// A pane collapsed to nothing (e.g. with Enter) is `inert`, so the focus can't go into it unseen.
-/// Double clicking a splitter collapses and restores its pane, as Enter does, so a pane can be
-/// resized without dragging (WCAG 2.5.7). [#setOnResized] is told when the user has resized a pane.
+/// Double clicking a splitter collapses and restores its pane, as Enter does. A pane is restored
+/// to the size it had, or if it was dragged closed, to the size it was given.
+///
+/// A pane can be maximised (the others shrink to nothing, their splitters left to drag them back)
+/// and restored: from a splitter's menu (a right click or long press on it, or the context menu
+/// key when it has the focus), which offers to maximise the pane either side of it, so a pane can
+/// be resized without dragging (WCAG 2.5.7); or with Alt+M ([KeyBinding.Action#MAXIMISE_PANE]),
+/// which maximises the pane holding the focus, in the split pane nearest it, and restores it.
+/// [#setOnResized] is told when the user has resized a pane.
 ///
 /// Panes split both ways nest one split pane inside another. A pane's widget fills the pane
 /// (`split-pane.css`), and is told whenever its pane changes size if it [RequiresResize], so it
@@ -93,6 +109,8 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
     private List<String> minSizes = List.of();
 
     private Runnable onResized;
+    // The maximised pane, or -1 if none is
+    private int maximised = -1;
 
     // The splitter being dragged (or -1), where the drag started and the size of its pane then, and
     // where the pointer has moved to since the panes were last laid out (applied once a frame)
@@ -107,6 +125,7 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
     public SplitPane() {
         setElement(Document.get().createDivElement());
         setStyleName(BLOCK);
+        listenForMaximise(getElement());
     }
 
     /// @param vertical Whether the panes are stacked one above another, rather than side by side.
@@ -143,7 +162,8 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
     }
 
     /// Sets the panes' names, in order, e.g. `"Users, Groups"`. A splitter is announced by the name
-    /// of the pane it resizes.
+    /// of the pane it resizes, so every pane a splitter resizes (each but the one taking the rest)
+    /// must have one; a split pane missing one fails when it is shown, as it does for a size.
     ///
     /// @param names For each pane, its name.
     public void setNames(final String names) {
@@ -243,6 +263,28 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
         return sizeOf(requireIndexOf(widget));
     }
 
+    /// Maximises a pane: the others shrink to nothing (their splitters stay, so they can be dragged
+    /// back), until [#restore] is called or a splitter is moved.
+    ///
+    /// @param widget The pane's widget.
+    public void maximise(final Widget widget) {
+        maximised = requireIndexOf(widget);
+        layout();
+    }
+
+    /// Restores the panes to their sizes before one was maximised.
+    public void restore() {
+        maximised = -1;
+        layout();
+    }
+
+    /// @return The widget of the maximised pane, or null if no pane is maximised.
+    public Widget getMaximised() {
+        return maximised >= 0
+                ? panes.get(maximised).widget
+                : null;
+    }
+
     /// Does nothing for the panes' widgets, which are told when their own panes are resized
     /// (whether by a splitter or by the split pane's parents), but brings the splitters' values up
     /// to date.
@@ -305,6 +347,12 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
     }
 
     private String track(final int index, final int rest) {
+        if (maximised >= 0) {
+            // The maximised pane takes all the space; the others, none (whatever their minimums)
+            return index == maximised
+                    ? "minmax(0px, 1fr)"
+                    : "0px";
+        }
         final int min = minSizeOf(index);
         if (index == rest) {
             return "minmax(" + min + "px, 1fr)";
@@ -426,6 +474,7 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
 
     // Resizes a splitter's pane, within its limits, keeping its size a share or a fixed size
     private void resize(final int splitterIndex, final double size) {
+        leaveMaximised();
         final int controlled = controlledPane(splitterIndex);
         final double clamped = Math.max(minSizeOf(controlled), Math.min(size, maxSize(splitterIndex)));
         final Pane pane = panes.get(controlled);
@@ -440,6 +489,34 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
             pane.size = Math.round(clamped) + "px";
         }
         layout();
+    }
+
+    // Once a pane is maximised, moving a splitter carries on from the panes as they are shown: each
+    // takes the size it is shown at as its own (a share stays a share)
+    private void leaveMaximised() {
+        if (maximised < 0) {
+            return;
+        }
+        final double container = containerSize();
+        final int rest = restIndex();
+        for (int i = 0; i < panes.size(); i++) {
+            final Pane pane = panes.get(i);
+            if (i != rest && !pane.hidden) {
+                final String size = sizeOf(i);
+                pane.size = size != null && size.endsWith("%") && container > 0
+                        ? round(paneSize(i) * 100 / container) + "%"
+                        : Math.round(paneSize(i)) + "px";
+            }
+        }
+        maximised = -1;
+    }
+
+    private void toggleMaximised(final int index) {
+        maximised = maximised == index
+                ? -1
+                : index;
+        layout();
+        resized();
     }
 
     private static String round(final double value) {
@@ -503,6 +580,86 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
         resized();
     }
 
+    // Alt+M anywhere in a pane (or on a splitter, for the pane it resizes); returns whether used
+    private boolean onPaneKeyDown(final NativeEvent event, final Element target) {
+        if (!KeyBinding.isShortcut(event, Action.MAXIMISE_PANE)) {
+            return false;
+        }
+        final int index = paneHolding(target);
+        if (index < 0) {
+            return false;
+        }
+        toggleMaximised(index);
+        return true;
+    }
+
+    // The pane an element is in, or the pane a splitter resizes, or -1 if it is in neither
+    private int paneHolding(final Element element) {
+        final int splitterIndex = splitters.indexOf(element);
+        if (splitterIndex >= 0) {
+            return controlledPane(splitterIndex);
+        }
+        for (int i = 0; i < panes.size(); i++) {
+            if (panes.get(i).element.isOrHasChild(element)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    // A splitter's menu: maximise the pane either side of it, or restore them. Alt+M is hinted on
+    // the item it would do (from the splitter, it maximises the pane the splitter resizes)
+    private void onContextMenu(final Element splitter, final int x, final int y) {
+        final int splitterIndex = splitters.indexOf(splitter);
+        final int controlled = controlledPane(splitterIndex);
+        final List<Item> items = new ArrayList<>();
+        int priority = 0;
+        for (final int index : new int[]{splitterIndex, splitterIndex + 1}) {
+            items.add(new IconMenuItem.Builder()
+                    .priority(++priority)
+                    .icon(SvgImage.MAXIMISE)
+                    .text("Maximise " + paneLabel(index, splitterIndex))
+                    .enabled(maximised != index)
+                    .action(maximised < 0 && index == controlled
+                            ? Action.MAXIMISE_PANE
+                            : null)
+                    .command(() -> toggleMaximised(index))
+                    .build());
+        }
+        items.add(new Separator(++priority));
+        items.add(new IconMenuItem.Builder()
+                .priority(++priority)
+                .icon(SvgImage.MINIMISE)
+                .text("Restore")
+                .enabled(maximised >= 0)
+                .action(maximised >= 0
+                        ? Action.MAXIMISE_PANE
+                        : null)
+                .command(() -> toggleMaximised(maximised))
+                .build());
+        MenuRequest.fire(splitter, items, new PopupPosition(x, y));
+    }
+
+    // A pane's name, else where it is beside the splitter, e.g. "the left pane"
+    private String paneLabel(final int index, final int splitterIndex) {
+        final String name = nameOf(index);
+        if (!name.isEmpty()) {
+            return name;
+        }
+        final boolean before = index <= splitterIndex;
+        final String side;
+        if (vertical) {
+            side = before
+                    ? "top"
+                    : "bottom";
+        } else {
+            side = before != isReversed()
+                    ? "left"
+                    : "right";
+        }
+        return "the " + side + " pane";
+    }
+
     private void resized() {
         if (onResized != null) {
             onResized.run();
@@ -549,15 +706,28 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
 
     // Collapses the pane to its smallest, or restores it to where it was
     private void toggleCollapsed(final int splitterIndex, final int controlled, final double size) {
+        leaveMaximised();
         final Pane pane = panes.get(controlled);
         if (size > minSizeOf(controlled)) {
             pane.sizeBeforeCollapse = sizeOf(controlled);
             resize(splitterIndex, minSizeOf(controlled));
-        } else if (pane.sizeBeforeCollapse != null) {
-            pane.size = pane.sizeBeforeCollapse;
-            pane.sizeBeforeCollapse = null;
-            layout();
+        } else {
+            // To where it was, or if it was dragged closed, to the size it was given
+            final String restored = pane.sizeBeforeCollapse != null
+                    ? pane.sizeBeforeCollapse
+                    : givenSizeOf(controlled);
+            if (restored != null) {
+                pane.size = restored;
+                pane.sizeBeforeCollapse = null;
+                layout();
+            }
         }
+    }
+
+    private String givenSizeOf(final int index) {
+        return index < sizes.size() && !sizes.get(index).isEmpty()
+                ? sizes.get(index)
+                : null;
     }
 
     // --------------------------------------------------------------------------------
@@ -597,14 +767,20 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
             splitter.setAttribute("aria-controls", panes.get(controlled).element.getId());
             final String name = nameOf(controlled);
             if (name.isEmpty()) {
-                splitter.removeAttribute("aria-label");
-            } else {
-                splitter.setAttribute("aria-label", name);
+                throw new IllegalStateException("The split pane's " + describe(controlled)
+                                                + " has no name, which its splitter is announced by: "
+                                                + "give it one with names, e.g. \"Users, Groups\"");
             }
+            splitter.setAttribute("aria-label", name);
             if (container > 0 && isSplitterShown(i)) {
+                final String now = percent(paneSize(controlled), container);
                 splitter.setAttribute("aria-valuemin", percent(minSizeOf(controlled), container));
                 splitter.setAttribute("aria-valuemax", percent(maxSize(i), container));
-                splitter.setAttribute("aria-valuenow", percent(paneSize(controlled), container));
+                splitter.setAttribute("aria-valuenow", now);
+                // Said instead of the bare number, e.g. "30% of the width"
+                splitter.setAttribute("aria-valuetext", now + "% of the " + (vertical
+                        ? "height"
+                        : "width"));
             }
         }
     }
@@ -629,9 +805,9 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
             } catch (e) {
                 return;
             }
-            // Don't select text while dragging
-            event.preventDefault();
-            splitter.focus({preventScroll: true});
+            // The press itself gives the splitter the focus, as the pointer's (so not shown as the
+            // keyboard's, as focusing it from script would be); text isn't selected while
+            // dragging, by split-pane.css
             self.@stroom.widget.layout.client.SplitPane::onPointerDown(*)(splitter, position(event));
         });
         splitter.addEventListener('pointermove', function (event) {
@@ -649,11 +825,33 @@ public class SplitPane extends ComplexPanel implements RequiresResize, ProvidesR
             event.preventDefault();
             self.@stroom.widget.layout.client.SplitPane::onDoubleClick(*)(splitter);
         });
+        // A right click, a long press, or the context menu key when it has the focus (placed by the
+        // splitter when the browser gives no pointer position)
+        splitter.addEventListener('contextmenu', function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+            var box = splitter.getBoundingClientRect();
+            var atPointer = event.clientX !== 0 || event.clientY !== 0;
+            var x = atPointer ? event.clientX : box.left + box.width / 2;
+            var y = atPointer ? event.clientY : box.top + Math.min(box.height / 2, 40);
+            self.@stroom.widget.layout.client.SplitPane::onContextMenu(*)(splitter, Math.round(x), Math.round(y));
+        });
         splitter.addEventListener('keydown', function (event) {
             if (event.altKey || event.ctrlKey || event.metaKey) {
                 return;
             }
             if (self.@stroom.widget.layout.client.SplitPane::onKeyDown(*)(splitter, event.key, event.shiftKey)) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+    }-*/;
+
+    // Keys pressed anywhere in the split pane; the nearest split pane to the focus takes Alt+M
+    private native void listenForMaximise(Element element) /*-{
+        var self = this;
+        element.addEventListener('keydown', function (event) {
+            if (self.@stroom.widget.layout.client.SplitPane::onPaneKeyDown(*)(event, event.target)) {
                 event.preventDefault();
                 event.stopPropagation();
             }

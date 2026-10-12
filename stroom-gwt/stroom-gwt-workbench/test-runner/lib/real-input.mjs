@@ -123,7 +123,123 @@ async function dragAndExpectGrowth(page, dx, grows, message) {
     `${message}: the first pane went from ${before}px to ${after}px, not ${before + grows}px`);
 }
 
+// The contrast of a story's first splitter against what is either side of it (WCAG 1.4.11 asks
+// for 3:1): its line at rest and its keyboard focus colour, each as [before, after]
+async function splitterContrast(page) {
+  await page.evaluate(() => document.activeElement?.blur());
+  await page.mouse.move(0, 0);
+  return page.evaluate(() => {
+    const rgb = (colour) => colour.match(/[\d.]+/g).slice(0, 4).map(Number);
+    const luminance = ([r, g, b]) => {
+      const linear = (v) => (v / 255 <= 0.03928 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4);
+      return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+    };
+    const ratio = (a, b) => {
+      const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+      return Math.round(((light + 0.05) / (dark + 0.05)) * 100) / 100;
+    };
+    // The colour shown at a point: the first background that isn't transparent
+    const backgroundAt = (x, y) => {
+      for (let element = document.elementFromPoint(x, y); element; element = element.parentElement) {
+        const colour = rgb(getComputedStyle(element).backgroundColor);
+        if (colour.length < 4 || colour[3] > 0) {
+          return colour;
+        }
+      }
+      return [255, 255, 255];
+    };
+    const variable = (name) => {
+      const probe = document.createElement('div');
+      probe.style.backgroundColor = `var(${name})`;
+      document.body.append(probe);
+      const colour = rgb(getComputedStyle(probe).backgroundColor);
+      probe.remove();
+      return colour;
+    };
+    const splitter = document.querySelector('.split-pane__splitter');
+    const box = splitter.getBoundingClientRect();
+    // Part way down it, either side of it
+    const y = box.top + box.height * 0.7;
+    const before = backgroundAt(box.left - 4, y);
+    const after = backgroundAt(box.right + 4, y);
+    const line = rgb(getComputedStyle(splitter, '::before').backgroundColor);
+    const focus = variable('--splitter__focus-color');
+    return { line: [ratio(line, before), ratio(line, after)], focus: [ratio(focus, before), ratio(focus, after)] };
+  });
+}
+
+function expectContrast(measured, theme) {
+  for (const [what, ratios] of Object.entries(measured)) {
+    assert.ok(Math.min(...ratios) >= 3,
+      `in the ${theme} theme the splitter's ${what} is at least 3:1 against the panes either side `
+      + `(it is ${ratios.join(':1 and ')}:1)`);
+  }
+}
+
 export const REAL_INPUT_CHECKS = {
+  // A mouse press gives the splitter the focus as the pointer's, not the keyboard's: it shows the
+  // drag highlight while held, not the keyboard focus bar, before and after (once a regression:
+  // focusing it from script made the press show as keyboard focus)
+  'widgets-layout-splitpanecontent--compare-thin-with-content': async (page) => {
+    const splitter = page.getByTestId('new').locator(NEW_SPLITTER).first();
+    const box = await splitter.boundingBox();
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    const held = await splitter.evaluate((element) => ({
+      focused: element === document.activeElement,
+      focusVisible: element.matches(':focus-visible'),
+      colour: getComputedStyle(element, '::before').backgroundColor,
+      highlight: (() => {
+        const probe = document.createElement('div');
+        probe.style.backgroundColor = 'var(--splitter__background-color--highlight)';
+        document.body.append(probe);
+        const colour = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return colour;
+      })(),
+    }));
+    await page.mouse.up();
+    assert.ok(held.focused, 'a press gives the splitter the focus');
+    assert.ok(!held.focusVisible, 'a press doesn\'t show as keyboard focus');
+    assert.equal(held.colour, held.highlight, 'the held splitter shows the drag highlight');
+    assert.ok(!(await splitter.evaluate((element) => element.matches(':focus-visible'))),
+      'after the press it still doesn\'t show as keyboard focus');
+  },
+  // From the keyboard: the context menu key and Shift+F10 open a splitter's menu, Escape closes it
+  // and gives the focus back to the splitter, and Alt+M restores the maximised pane (the play leaves
+  // the first pane maximised)
+  'widgets-layout-splitpanecontent--splitter-menu': async (page) => {
+    const splitter = page.getByRole('separator', { name: 'Properties' });
+    const menu = page.locator('.menuItem-text', { hasText: 'Restore' });
+    await splitter.focus();
+    for (const key of ['ContextMenu', 'Shift+F10']) {
+      await page.keyboard.press(key);
+      await menu.waitFor({ state: 'visible', timeout: 2000 });
+      await page.keyboard.press('Escape');
+      await menu.waitFor({ state: 'hidden', timeout: 2000 });
+      assert.ok(await splitter.evaluate((element) => element === document.activeElement),
+        `after ${key} and Escape the focus is back on the splitter`);
+    }
+    const content = page.getByTestId('content').locator('xpath=..');
+    assert.equal((await content.boundingBox()).width, 0, 'the first pane is maximised');
+    await page.keyboard.press('Alt+m');
+    assert.ok((await content.boundingBox()).width > 0, 'Alt+M restores the panes');
+  },
+  // Beside Stroom's table and code editor, a splitter's line and its keyboard focus can be seen,
+  // in both themes (the light theme in a page of its own, leaving this one as it is)
+  'widgets-layout-splitpanecontent--table-and-editor': async (page) => {
+    expectContrast(await splitterContrast(page), 'dark');
+    const light = await page.context().newPage();
+    try {
+      await light.setViewportSize(page.viewportSize());
+      await light.goto(`${page.url()}&globals=theme:light`);
+      await light.locator('.ace_content').waitFor();
+      await light.getByText('Person 1', { exact: true }).waitFor();
+      expectContrast(await splitterContrast(light), 'light');
+    } finally {
+      await light.close();
+    }
+  },
   // In forced colours (e.g. Windows high contrast) a thin splitter is still drawn, in the text
   // colour, where its background would otherwise be replaced
   'widgets-layout-splitpane--keyboard': async (page) => {

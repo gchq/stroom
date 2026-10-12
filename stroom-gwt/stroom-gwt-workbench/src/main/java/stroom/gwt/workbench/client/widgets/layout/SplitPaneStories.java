@@ -17,6 +17,7 @@
 package stroom.gwt.workbench.client.widgets.layout;
 
 import stroom.gwt.workbench.client.a11y.TabStops;
+import stroom.gwt.workbench.client.a11y.TargetSpacing;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
@@ -125,6 +126,9 @@ public final class SplitPaneStories {
                     final Query first = play.getByTestId("pane-0");
                     play.expect(splitter).toHaveAttribute("aria-orientation", "vertical");
                     play.expect(splitter).toHaveAttribute("aria-controls");
+                    // Said instead of the bare percentage
+                    play.expect(splitter.attribute("aria-valuetext"))
+                            .toMatch(TextMatch.regex("^\\d+% of the width$"));
                     play.expect(TabStops.names(play.body())).toEqual(List.of("Users"));
                     play.tab();
                     play.expect(splitter).toHaveFocus();
@@ -160,6 +164,8 @@ public final class SplitPaneStories {
                 .withPlay(play -> {
                     final Query splitter = play.getByRole("separator", "Users");
                     play.expect(splitter).toHaveAttribute("aria-orientation", "horizontal");
+                    play.expect(splitter.attribute("aria-valuetext"))
+                            .toMatch(TextMatch.regex("^\\d+% of the height$"));
                     play.tab();
                     play.keyboard("{ArrowDown}");
                     play.expect(play.getByTestId("pane-0").height()).toBe(130.0);
@@ -266,12 +272,14 @@ public final class SplitPaneStories {
                     return SplitPanes.frame(pane);
                 })
                 .withPlay(play -> play.expect(play.getByTitle("A page in a frame")).toBeInTheDocument())
-                // A pane without a size, or two taking the rest, is a mistake the split pane
-                // reports when it is shown, naming the pane
+                // A pane without a size, two taking the rest, or a pane a splitter resizes without
+                // a name (which the splitter is announced by), is a mistake the split pane reports
+                // when it is shown, naming the pane
                 .story("MissingSize", context -> {
                     final FlowPanel page = new FlowPanel();
-                    page.add(new HTML(failure("100px")));
-                    page.add(new HTML(failure("*, *")));
+                    page.add(new HTML(failure("100px", "Users, Groups, Roles")));
+                    page.add(new HTML(failure("*, *", "Users, Groups, Roles")));
+                    page.add(new HTML(failure("100px, 100px, *", "Users")));
                     return page;
                 })
                 .withPlay(play -> {
@@ -279,6 +287,38 @@ public final class SplitPaneStories {
                                    + "e.g. \"30%\" or \"400px\"");
                     play.getByText("The split pane's 'Users' pane and 'Groups' pane both take the rest (*): "
                                    + "only one can");
+                    play.getByText("The split pane's pane 2 has no name, which its splitter is announced by: "
+                                   + "give it one with names, e.g. \"Users, Groups\"");
+                })
+                // Beside the explorer, a thin splitter is drawn in the navigation colours
+                // (split-pane--navigation), which a split pane nested in it doesn't take on
+                .story("NavigationColour", context -> {
+                    final SplitPane inner = thin("50%, *");
+                    inner.setNames("Content, Details");
+                    inner.add(SplitPanes.rightPane());
+                    inner.add(SplitPanes.rightPane());
+                    final SplitPane outer = thin("250px, *");
+                    outer.addStyleName("split-pane--navigation");
+                    outer.setNames("Explorer, Content");
+                    outer.add(SplitPanes.leftPane(HINT));
+                    outer.add(inner);
+                    final FlowPanel frame = SplitPanes.frame(outer);
+                    // The navigation line colour is the same grey as the others, so the story
+                    // makes it red, to tell them apart
+                    setVariable(frame.getElement(), "--navigation__splitter__line-color", "rgb(255, 0, 0)");
+                    return frame;
+                })
+                .withPlay(play -> {
+                    final Value<Element> explorer = play.getByRole("separator", "Explorer").element();
+                    final Value<Element> content = play.getByRole("separator", "Content").element();
+                    play.expect(same(
+                            Value.of("the explorer's splitter colour", () -> splitterColour(explorer.get())),
+                            Value.of("red", () -> "rgb(255, 0, 0)")))
+                            .toBe(true);
+                    play.expect(same(
+                            Value.of("the nested splitter colour", () -> splitterColour(content.get())),
+                            Value.of("the splitter colour", () -> variableColour("--splitter__line-color"))))
+                            .toBe(true);
                 })
                 // A widget that needs to know it has been resized is told when its pane is
                 .story("ResizeNotifies", context -> {
@@ -308,6 +348,11 @@ public final class SplitPaneStories {
                             .toHaveAttribute("aria-orientation", "horizontal");
                     play.expect(play.getByRole("separator", "Member of"))
                             .toHaveAttribute("aria-orientation", "vertical");
+                    // Room around each splitter (WCAG 2.5.8). Known gap: where two splitters meet in
+                    // a T, the centre of the one across the top touches the one below it, so neither
+                    // has the room 2.5.8 asks of a target narrower than 24px
+                    play.expect(TargetSpacing.crowding(play.getByRole("separator", "Users")))
+                            .toEqual(List.of("Member of"));
                 });
     }
 
@@ -356,6 +401,7 @@ public final class SplitPaneStories {
                                   final SplitPane pane) {
         final Widget docked = SplitPanes.layout(old, vertical, anchorEnd, size, HINT);
         docked.getElement().setAttribute("data-testid", "old-sized");
+        pane.setNames("Left panel, Right panel");
         addPanes(pane);
         pane.getWidget(anchorEnd
                 ? 1
@@ -415,10 +461,11 @@ public final class SplitPaneStories {
                 () -> Math.abs(oldSize.get() - newSize.get()));
     }
 
-    // Shows a split pane of three panes with the sizes given, and returns the error it reports
-    private static String failure(final String sizes) {
+    // Shows a split pane of three panes with the sizes and names given, and returns the error it
+    // reports
+    private static String failure(final String sizes, final String names) {
         final SplitPane pane = thin(sizes);
-        pane.setNames("Users, Groups, Roles");
+        pane.setNames(names);
         pane.add(new HTML("Users"));
         pane.add(new HTML("Groups"));
         pane.add(new HTML("Roles"));
@@ -435,6 +482,26 @@ public final class SplitPaneStories {
             RootPanel.get().remove(pane);
         }
     }
+
+    // Sets a CSS variable on an element (GWT's Style can't)
+    private static native void setVariable(Element element, String name, String value) /*-{
+        element.style.setProperty(name, value);
+    }-*/;
+
+    // The colour a splitter is drawn in (its ::before's background)
+    private static native String splitterColour(Element splitter) /*-{
+        return $wnd.getComputedStyle(splitter, '::before').backgroundColor;
+    }-*/;
+
+    // A theme colour variable's value, as a computed colour (e.g. rgb(53, 57, 68))
+    private static native String variableColour(String variable) /*-{
+        var probe = $doc.createElement('div');
+        probe.style.backgroundColor = 'var(' + variable + ')';
+        $doc.body.appendChild(probe);
+        var colour = $wnd.getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        return colour;
+    }-*/;
 
     private static Value<Boolean> same(final Value<String> first, final Value<String> second) {
         return Value.of(first + " and " + second + " are the same",

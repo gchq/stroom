@@ -28,6 +28,8 @@
 .split-pane {
     --split-pane__splitter-size: var(--split__size);
     --split-pane__grab-size: var(--split__size);
+    /* A thin splitter's colour, set on each split pane so a nested one doesn't take its parent's */
+    --split-pane__splitter-colour: var(--splitter__line-color);
     display: grid;
     grid-template-rows: 100%;
     width: 100%;
@@ -72,6 +74,7 @@
     cursor: col-resize;
     outline: none;
     touch-action: none;
+    user-select: none;
 }
 
 .split-pane--vertical > .split-pane__splitter {
@@ -90,7 +93,12 @@
 }
 
 .split-pane--thin > .split-pane__splitter::before {
-    background-color: var(--splitter__background-color);
+    background-color: var(--split-pane__splitter-colour);
+}
+
+/* Beside the explorer, whose splitter is drawn in the navigation colours */
+.split-pane--navigation {
+    --split-pane__splitter-colour: var(--navigation__splitter__line-color);
 }
 
 /* Being dragged */
@@ -102,7 +110,7 @@
    splitter can be grabbed by, so it shows against any pane */
 .split-pane__splitter:focus-visible::before {
     inset: 0;
-    background-color: var(--focus-border);
+    background-color: var(--splitter__focus-color);
     box-shadow: var(--focus-shadow);
 }
 

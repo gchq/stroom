@@ -17,6 +17,8 @@
 package stroom.gwt.workbench.client.widgets.layout;
 
 import stroom.gwt.workbench.client.a11y.TabStops;
+import stroom.gwt.workbench.client.a11y.TargetSpacing;
+import stroom.gwt.workbench.client.widgets.StoryPopups;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
@@ -29,7 +31,10 @@ import stroom.widget.layout.client.SplitPane;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -40,6 +45,9 @@ import java.util.List;
 /// collapsed to nothing, double clicking a splitter, and the call that says the user has resized
 /// a pane.
 public final class SplitPaneContentStories {
+
+    private static final String MENU_ITEM_TEXT = ".menuItem-text";
+    private static final String MENU_ITEM_DISABLED = "menuItem-disabled";
 
     // Spy names
     private static final String ON_RESIZED = "onResized";
@@ -80,7 +88,15 @@ public final class SplitPaneContentStories {
                             () -> gridWidth.get() - gridBefore.get()).toBeCloseTo(50, 0));
                     play.waitFor(() -> play.expect("the editor's growth",
                             () -> editorWidth.get() - editorBefore.get()).toBeCloseTo(-50, 0));
+                    // A splitter is narrower than 24px, so nothing else clickable may be within 12px
+                    // of its centre (WCAG 2.5.8): the pager's buttons and the editor's gutter aren't
+                    play.expect(TargetSpacing.crowding(splitter)).toEqual(List.of());
                 })
+                // How the old and new splitters look beside Stroom's table and code editor: the old
+                // thin panel (ThinSplitLayoutPanel) above the thin split pane, set up alike
+                .story("CompareThinWithContent", context -> compareWithContent(new ThinSplitLayoutPanel(), true))
+                // The old wide panel (MySplitLayoutPanel), a 7px gap, above the split pane
+                .story("CompareWithContent", context -> compareWithContent(new MySplitLayoutPanel(), false))
                 // The stepping screen's element layout (ElementViewImpl), which put four panes in
                 // one old panel (code above, log below, input beside output in between): three
                 // nested split panes, side by side with the old panel, the same sizes
@@ -130,6 +146,90 @@ public final class SplitPaneContentStories {
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
                             "Name", "Description", "Properties", "Name", "Description"));
                 })
+                // Alt+M maximises the pane holding the focus (the others shrink to nothing and are
+                // inert) and restores it, whichever pane it is
+                .story("MaximiseKey", context -> {
+                    final SplitPane pane = thin("300px, *", "Properties, Content");
+                    pane.add(SplitPaneContent.form("properties"));
+                    pane.add(SplitPaneContent.form("content"));
+                    return frame(pane, "240px");
+                })
+                .withPlay(play -> {
+                    final Query properties = play.getByTestId("properties");
+                    final Query content = play.getByTestId("content");
+                    final Value<Integer> fullWidth = paneWidth(content);
+                    final Value<Integer> both = play.capture("both panes' width",
+                            () -> paneWidth(properties).get() + 1 + fullWidth.get());
+                    // In the second pane, the one taking the rest
+                    play.click(play.getAllByLabelText("Name").nth(1));
+                    play.keyboard("{Alt>}m{/Alt}");
+                    play.expect(paneWidth(properties)).toBe(0);
+                    play.expect("the content pane's width, less the splitter",
+                            () -> fullWidth.get() + 1 - both.get()).toBe(0);
+                    play.expect(play.getAllByLabelText("Name").nth(1)).toHaveFocus();
+                    play.expect(TabStops.names(play.body())).toEqual(List.of("Properties", "Name", "Description"));
+                    play.keyboard("{Alt>}m{/Alt}");
+                    play.expect(paneWidth(properties)).toBe(300);
+                    // In the first pane
+                    play.click(play.getAllByLabelText("Name").nth(0));
+                    play.keyboard("{Alt>}m{/Alt}");
+                    play.expect(paneWidth(content)).toBe(0);
+                    play.keyboard("{Alt>}m{/Alt}");
+                    play.expect(paneWidth(properties)).toBe(300);
+                })
+                // In split panes nested in one another, Alt+M maximises the pane in the split pane
+                // nearest the focus, leaving the outer one as it is
+                .story("MaximiseNested", context -> {
+                    final SplitPane inner = thin("50%, *", "Left, Right");
+                    inner.add(SplitPaneContent.form("left"));
+                    inner.add(SplitPaneContent.form("right"));
+                    final SplitPane outer = thin("100px, *", "Top, Bottom");
+                    outer.setVertical(true);
+                    outer.add(SplitPaneContent.form("top"));
+                    outer.add(inner);
+                    return frame(outer, "320px");
+                })
+                .withPlay(play -> {
+                    play.click(play.getAllByLabelText("Name").nth(1));
+                    play.keyboard("{Alt>}m{/Alt}");
+                    play.expect(paneWidth(play.getByTestId("right"))).toBe(0);
+                    play.expect(paneHeight(play.getByTestId("top"))).toBe(100);
+                    play.keyboard("{Alt>}m{/Alt}");
+                    play.expect(paneWidth(play.getByTestId("right"))).toBeGreaterThan(0);
+                })
+                // A splitter's menu (right click, long press or the context menu key) maximises
+                // the pane either side of it, or restores them, so a pane can be resized without
+                // dragging (WCAG 2.5.7); Alt+M is hinted on the item it would do
+                .story("SplitterMenu", context -> {
+                    StoryPopups.create(context).withMenuRequests();
+                    final SplitPane pane = thin("300px, *", "Properties, Content");
+                    pane.add(SplitPaneContent.block("Properties", "properties", true));
+                    pane.add(SplitPaneContent.block("Content", "content", false));
+                    return frame(pane, "240px");
+                })
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query splitter = play.getByRole("separator", "Properties");
+                    play.rightClick(splitter);
+                    final Query maximiseProperties = screen.findByText("Maximise Properties", MENU_ITEM_TEXT);
+                    play.expect(screen.getByText("Maximise Content", MENU_ITEM_TEXT)).toBeInTheDocument();
+                    // From the splitter, Alt+M maximises the pane it resizes
+                    play.expect(menuItem(screen, "Maximise Properties"))
+                            .toHaveTextContent(TextMatch.containing("Alt+m"));
+                    play.expect(menuItem(screen, "Maximise Content"))
+                            .not().toHaveTextContent(TextMatch.containing("Alt"));
+                    play.expect(menuItem(screen, "Restore")).toHaveClass(MENU_ITEM_DISABLED);
+                    play.click(screen.getByText("Maximise Content", MENU_ITEM_TEXT));
+                    play.expect(paneWidth(play.getByTestId("properties"))).toBe(0);
+                    play.rightClick(splitter);
+                    play.expect(menuItem(screen, "Restore")).not().toHaveClass(MENU_ITEM_DISABLED);
+                    play.expect(menuItem(screen, "Maximise Content")).toHaveClass(MENU_ITEM_DISABLED);
+                    play.click(screen.getByText("Restore", MENU_ITEM_TEXT));
+                    play.expect(paneWidth(play.getByTestId("properties"))).toBe(300);
+                    play.rightClick(splitter);
+                    play.click(maximiseProperties);
+                    play.expect(paneWidth(play.getByTestId("content"))).toBe(0);
+                })
                 // Double clicking a splitter collapses and restores its pane, as Enter does, so a
                 // pane can be resized without dragging (WCAG 2.5.7)
                 .story("DoubleClick", context -> {
@@ -174,6 +274,17 @@ public final class SplitPaneContentStories {
 
     // --------------------------------------------------------------------------------
 
+    // A menu item (its outer element), by its text
+    private static Query menuItem(final Play screen, final String text) {
+        return screen.getByText(text, MENU_ITEM_TEXT).closest(".menuItem-outer");
+    }
+
+    // The height of the pane a widget fills
+    private static Value<Integer> paneHeight(final Query widget) {
+        final Value<Element> element = widget.element();
+        return Value.of(widget.describe() + "'s pane height", () -> element.get().getParentElement().getOffsetHeight());
+    }
+
     // The width of the pane a widget fills (the widget itself can be no narrower than its padding)
     private static Value<Integer> paneWidth(final Query widget) {
         final Value<Element> element = widget.element();
@@ -193,6 +304,33 @@ public final class SplitPaneContentStories {
         frame.getElement().getStyle().setProperty("height", height);
         frame.getElement().getStyle().setProperty("margin", "8px");
         return frame;
+    }
+
+    // An old panel and a split pane, each with a table beside a code editor, in labelled frames
+    private static Widget compareWithContent(final DockLayoutPanel old, final boolean thin) {
+        old.addWest(SplitPaneContent.table("old-table"), 420);
+        old.add(SplitPaneContent.editor());
+        final SplitPane pane = new SplitPane();
+        pane.setThin(thin);
+        pane.setSizes("420px, *");
+        pane.setNames("Table, Editor");
+        pane.add(SplitPaneContent.table("new-table"));
+        pane.add(SplitPaneContent.editor());
+        final FlowPanel page = new FlowPanel();
+        page.add(labelled(old.getClass().getSimpleName() + " (old)", frame(old, "250px"), "old"));
+        page.add(labelled("SplitPane (new)", frame(pane, "250px"), "new"));
+        return page;
+    }
+
+    private static Widget labelled(final String label, final Widget frame, final String testId) {
+        final FlowPanel section = new FlowPanel();
+        section.getElement().setAttribute("data-testid", testId);
+        final HTML heading = new HTML(label);
+        heading.getElement().getStyle().setProperty("margin", "8px 8px 0");
+        heading.getElement().getStyle().setProperty("fontSize", "0.8rem");
+        section.add(heading);
+        section.add(frame);
+        return section;
     }
 
     // ElementViewImpl's layout, in one old panel: code north 50%, log south 15%, input west 50%,

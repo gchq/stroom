@@ -87,6 +87,7 @@ public class KeyBinding {
         add(Action.FIND_IN_CONTENT, Shortcut.builder().ctrl().shift().keyCode(KeyCodes.KEY_F).build());
         add(Action.RECENT_ITEMS, Shortcut.builder().ctrl().keyCode(KeyCodes.KEY_E).build());
         add(Action.LOCATE, Shortcut.builder().alt().keyCode(KeyCodes.KEY_L).build());
+        add(Action.MAXIMISE_PANE, Shortcut.builder().alt().keyCode(KeyCodes.KEY_M).build());
         add(Action.HELP, Shortcut.builder().keyCode(KeyCodes.KEY_F1).build());
         add(Action.SHOW_KEY_BINDS, Shortcut.builder().keyCode(MyKeyCodes.KEY_QUESTION_MARK).build());
         add(Action.INFO, Shortcut.builder().keyCode(KeyCodes.KEY_I).build());
@@ -173,6 +174,19 @@ public class KeyBinding {
             // Try key sequences instead
             return KEY_SEQUENCES.getShortcut(action);
         }
+    }
+
+    /// Whether a key press is a shortcut for an action, without the side effects of [#test] (it
+    /// neither runs a command nor takes part in a key sequence), for a widget that handles an
+    /// action itself before the global key handler sees the key.
+    ///
+    /// @param e      A `keydown` event.
+    /// @param action The action.
+    /// @return Whether the key, with its modifiers, is bound to the action.
+    public static boolean isShortcut(final NativeEvent e, final Action action) {
+        return BrowserEvents.KEYDOWN.equals(e.getType())
+               && (e.getAltKey() || e.getCtrlKey() || e.getMetaKey())
+               && getKeyDownAction(e) == action;
     }
 
     public static Action test(final NativeEvent e) {
@@ -527,6 +541,8 @@ public class KeyBinding {
         FIND_IN_CONTENT,
         RECENT_ITEMS,
         LOCATE,
+        // Maximise the pane holding the focus within its split pane, or restore it
+        MAXIMISE_PANE,
         HELP,
         DOCUMENTATION,
         SHOW_KEY_BINDS,

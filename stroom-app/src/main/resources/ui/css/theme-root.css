@@ -173,6 +173,10 @@
     /* Splitter */
     --splitter__background-color: var(--border-color);
     --splitter__background-color--highlight: var(--blue-300);
+    /* A split pane's splitter line and keyboard focus, each at least 3:1 against the panes beside it
+       (WCAG 1.4.11) */
+    --splitter__line-color: var(--grey-600);
+    --splitter__focus-color: var(--blue-800);
 
     /* Main curve tabs */
     --curve-tab__svg-color: #555;
@@ -251,6 +255,7 @@
 
     /* Navigation pane */
     --navigation__splitter__background-color: var(--border-color);
+    --navigation__splitter__line-color: var(--grey-600);
     --navigation__background-color: var(--white);
     --navigation__background-color--hovered: var(--row__background-color--hovered);
     --navigation__background-color--selected: var(--row__background-color--selected);
