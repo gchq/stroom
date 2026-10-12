@@ -131,7 +131,7 @@ public class PathwayEditPresenter
     // The middle panel's own tabs, which say different things about one node rather than different
     // things about the pathway.
     private final TabData constraintsTab = new TabDataImpl("Constraints");
-    private final TabData infoTab = new TabDataImpl("Info");
+    private final TabData infoTab = new TabDataImpl("Node Info");
     private final ButtonView saveButton;
     private final ButtonView playButton;
     private final ButtonView stopButton;

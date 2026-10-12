@@ -38,7 +38,7 @@ public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, Path
     private final NodeInfoPresenter nodeInfoPresenter;
     // One tab rather than none, so the panel reads the same as the pathway tab's and has somewhere to
     // put a second thing about a node if one is ever wanted.
-    private final TabData infoTab = new TabDataImpl("Info");
+    private final TabData infoTab = new TabDataImpl("Node Info");
 
     @Inject
     public PathwaysSplitPresenter(final EventBus eventBus,
