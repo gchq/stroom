@@ -173,7 +173,7 @@ public final class UserGroupsScreenStories {
                     play.expect(master.getByText("Display Name").closest("th"))
                             .toHaveClass("dataGridSortedHeaderAscending");
                     // Create, Edit, Delete in the master grid's pager toolbar
-                    final Query edit = play.within(play.getByTitle("Create Group").closest(".button-container"))
+                    final Query edit = play.within(play.getByTitle("Create Group").closest(".toolbar"))
                             .querySelectorAll("button").nth(1);
                     play.expect(edit).toHaveAttribute("title", "No Selection");
                     play.expect(edit).toHaveAttribute("aria-disabled", "true");

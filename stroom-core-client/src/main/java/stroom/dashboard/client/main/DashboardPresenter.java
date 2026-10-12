@@ -62,7 +62,7 @@ import stroom.task.client.HasTaskMonitorFactory;
 import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Version;
-import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.Item;
@@ -74,12 +74,10 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -142,7 +140,7 @@ public class DashboardPresenter
     private final ToolbarButton selectionInfoButton;
     private final ToolbarButton maximiseTabsButton;
     private final ToolbarButton restoreTabsButton;
-    private final ButtonPanel editToolbar;
+    private final Toolbar editToolbar;
 
     @Inject
     public DashboardPresenter(final EventBus eventBus,
@@ -175,32 +173,22 @@ public class DashboardPresenter
         flexLayout.setComponents(components);
         view.setContent(flexLayout);
 
-        editModeButton = new ToolbarToggleButton();
-        editModeButton.setSvg(SvgImage.EDIT);
-        editModeButton.setTitle("Enter Design Mode");
+        editToolbar = new Toolbar("Dashboard actions");
+        editModeButton = editToolbar.toggle(SvgImage.EDIT, "Enter Design Mode", pressed -> onDesign());
 
-        addComponentButton = new ToolbarButton();
-        addComponentButton.setSvg(SvgImage.ADD);
-        addComponentButton.setTitle("Add Component");
+        addComponentButton = editToolbar.button(SvgImage.ADD, "Add Component", this::onAdd);
         addComponentButton.setVisible(false);
 
-        setConstraintsButton = new ToolbarButton();
-        setConstraintsButton.setSvg(SvgImage.RESIZE);
-        setConstraintsButton.setTitle("Set Constraints");
+        setConstraintsButton = editToolbar.button(SvgImage.RESIZE, "Set Constraints", this::onConstraints);
         setConstraintsButton.setVisible(false);
 
-        selectionInfoButton = new ToolbarButton();
-        selectionInfoButton.setSvg(SvgImage.SELECTION);
-        selectionInfoButton.setTitle("View Current Selection");
+        selectionInfoButton = editToolbar.button(SvgImage.SELECTION, "View Current Selection",
+                this::onSelectionInfo);
         selectionInfoButton.setVisible(false);
 
-        maximiseTabsButton = new ToolbarButton();
-        maximiseTabsButton.setSvg(SvgImage.MAXIMISE);
-        maximiseTabsButton.setTitle("Maximise");
+        maximiseTabsButton = editToolbar.button(SvgImage.MAXIMISE, "Maximise", this::onMaximiseTabs);
 
-        restoreTabsButton = new ToolbarButton();
-        restoreTabsButton.setSvg(SvgImage.MINIMISE);
-        restoreTabsButton.setTitle("Restore");
+        restoreTabsButton = editToolbar.button(SvgImage.MINIMISE, "Restore", this::onRestoreTabs);
         restoreTabsButton.setVisible(false);
 
 //                <g:FlowPanel styleName="DashboardViewImpl-top dock-min dock-container-horizontal">
@@ -217,14 +205,6 @@ public class DashboardPresenter
 //            </g:FlowPanel>
 //        </g:FlowPanel>
 
-
-        editToolbar = new ButtonPanel();
-        editToolbar.addButton(editModeButton);
-        editToolbar.addButton(addComponentButton);
-        editToolbar.addButton(setConstraintsButton);
-        editToolbar.addButton(selectionInfoButton);
-        editToolbar.addButton(maximiseTabsButton);
-        editToolbar.add(restoreTabsButton);
 
         NullSafe.consumeNonBlankString(urlParameters.getTitle(), true, this::setCustomTitle);
 //        final String linkParams = ;
@@ -259,39 +239,17 @@ public class DashboardPresenter
             dashboardContext.fireContextChangeEvent();
             start();
         }));
-        registerHandler(editModeButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onDesign();
-            }
-        }));
-        registerHandler(addComponentButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onAdd(e);
-            }
-        }));
-        registerHandler(setConstraintsButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onConstraints();
-            }
-        }));
-        registerHandler(selectionInfoButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onSelectionInfo();
-            }
-        }));
-        registerHandler(maximiseTabsButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                maximiseTabs(null);
-                // The button swaps for Restore, so focus goes with it rather than being lost
-                restoreTabsButton.setFocus(true);
-            }
-        }));
-        registerHandler(restoreTabsButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                restoreTabs();
-                maximiseTabsButton.setFocus(true);
-            }
-        }));
+    }
+
+    private void onMaximiseTabs() {
+        maximiseTabs(null);
+        // The button swaps for Restore, so focus goes with it rather than being lost
+        restoreTabsButton.setFocus(true);
+    }
+
+    private void onRestoreTabs() {
+        restoreTabs();
+        maximiseTabsButton.setFocus(true);
     }
 
     @Override
@@ -374,10 +332,11 @@ public class DashboardPresenter
 //        return designMode;
 //    }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         restoreTabs();
 
-        final Element target = event.getNativeEvent().getEventTarget().cast();
+        // The menu opens below the button
+        final Element target = addComponentButton.getElement();
 
         final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft() - 3,
                 target.getAbsoluteTop() + target.getClientHeight() + 1);

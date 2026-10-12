@@ -76,6 +76,11 @@
     justify-content: space-between;
 }
 
+/* Holds the errors button, which sits in the row as if on its own */
+.QueryToolbarViewImpl-errors {
+    margin: 0;
+}
+
 .DashboardViewImpl-top-buttons {
     display: flex;
     gap: var(--control__gap--horizontal);

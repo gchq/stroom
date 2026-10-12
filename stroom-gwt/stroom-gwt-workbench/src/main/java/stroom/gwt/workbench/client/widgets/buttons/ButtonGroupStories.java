@@ -21,12 +21,11 @@ import stroom.gwt.workbench.client.a11y.TabStops;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonGroupFocus;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -55,7 +54,7 @@ public final class ButtonGroupStories {
         registry.component("Widgets/Buttons/ButtonGroup", ButtonGroupStories.class)
                 .layout(StoryLayout.CENTERED)
                 // One button on its own: a plain button, not a toolbar
-                .story("SingleButton", context -> region(panel(SvgPresets.ADD)))
+                .story("SingleButton", context -> region(panel(button(SvgImage.ADD, "Add"))))
                 .withPlay(play -> {
                     final Query region = play.getByTestId(REGION);
                     play.expect(ButtonRuns.of(region)).toEqual(List.of("Add: 1 tab stop"));
@@ -64,7 +63,7 @@ public final class ButtonGroupStories {
                     play.expect(play.getByRole("button", "Add")).toHaveFocus();
                 })
                 // Three buttons side by side: one tab stop, a toolbar the arrow keys move around
-                .story("ThreeButtons", context -> region(panel(SvgPresets.ADD, SvgPresets.EDIT, SvgPresets.DELETE)))
+                .story("ThreeButtons", context -> region(addEditDelete()))
                 .withPlay(play -> {
                     final Query region = play.getByTestId(REGION);
                     final Query add = play.getByRole("button", "Add");
@@ -97,7 +96,7 @@ public final class ButtonGroupStories {
                 })
                 // A disabled button (aria-disabled) can still be reached, so its name is found
                 .story("WithDisabled", context -> {
-                    final ButtonPanel panel = panel(SvgPresets.ADD, SvgPresets.EDIT, SvgPresets.DELETE);
+                    final ButtonPanel panel = addEditDelete();
                     buttonTitled(panel, "Edit").setEnabled(false);
                     return region(panel);
                 })
@@ -112,7 +111,7 @@ public final class ButtonGroupStories {
                 })
                 // A toggle button (ToolbarToggleButton) beside an ordinary one
                 .story("WithToggle", context -> {
-                    final ButtonPanel panel = panel(SvgPresets.ADD);
+                    final ButtonPanel panel = panel(button(SvgImage.ADD, "Add"));
                     final ToolbarToggleButton toggle = new ToolbarToggleButton();
                     toggle.setSvg(SvgImage.EXPAND_DOWN);
                     toggle.setTitle("Expand");
@@ -126,7 +125,7 @@ public final class ButtonGroupStories {
                 })
                 // A hidden button is neither seen nor reached by the arrow keys
                 .story("WithHidden", context -> {
-                    final ButtonPanel panel = panel(SvgPresets.ADD, SvgPresets.EDIT, SvgPresets.DELETE);
+                    final ButtonPanel panel = addEditDelete();
                     buttonTitled(panel, "Edit").asWidget().setVisible(false);
                     return region(panel);
                 })
@@ -141,8 +140,8 @@ public final class ButtonGroupStories {
                 .story("Vertical", context -> {
                     final ButtonPanel panel = new ButtonPanel();
                     panel.setVertical(true);
-                    panel.addButton(SvgPresets.ADD.enabled(true));
-                    panel.addButton(SvgPresets.DELETE.enabled(true));
+                    panel.addButton(button(SvgImage.ADD, "Add"));
+                    panel.addButton(button(SvgImage.DELETE, "Delete"));
                     return region(panel);
                 })
                 .withPlay(play -> {
@@ -156,8 +155,8 @@ public final class ButtonGroupStories {
                 // Two panels side by side (as a document tab's Save buttons sit beside its editor's)
                 // look like one group, but are still a tab stop each
                 .story("AdjacentPanels", context -> region(
-                        panel(SvgPresets.SAVE, SvgPresets.SAVE_AS),
-                        panel(SvgPresets.ADD, SvgPresets.DELETE)))
+                        panel(button(SvgImage.SAVE, "Save"), button(SvgImage.SAVEAS, "Save As")),
+                        panel(button(SvgImage.ADD, "Add"), button(SvgImage.DELETE, "Delete"))))
                 .withPlay(play -> {
                     final Query region = play.getByTestId(REGION);
                     play.expect(ButtonRuns.of(region)).toEqual(List.of("Save, Save As, Add, Delete: 2 tab stops"));
@@ -166,8 +165,8 @@ public final class ButtonGroupStories {
                 // panels leave their buttons to it, so the arrow keys cross from one to the other
                 .story("MergedPanels", context -> {
                     final FlowPanel row = region(
-                            panel(SvgPresets.SAVE, SvgPresets.SAVE_AS),
-                            panel(SvgPresets.ADD, SvgPresets.DELETE));
+                            panel(button(SvgImage.SAVE, "Save"), button(SvgImage.SAVEAS, "Save As")),
+                            panel(button(SvgImage.ADD, "Add"), button(SvgImage.DELETE, "Delete")));
                     ButtonGroupFocus.install(row.getElement());
                     return row;
                 })
@@ -183,8 +182,8 @@ public final class ButtonGroupStories {
                 // Panels at either end of a row are separate groups, a tab stop each
                 .story("SeparatedPanels", context -> {
                     final FlowPanel row = region(
-                            panel(SvgPresets.ADD, SvgPresets.DELETE),
-                            panel(SvgPresets.REFRESH_GREEN));
+                            panel(button(SvgImage.ADD, "Add"), button(SvgImage.DELETE, "Delete")),
+                            panel(button(SvgImage.REFRESH, "Refresh")));
                     row.getElement().getStyle().setProperty("justifyContent", "space-between");
                     row.getElement().getStyle().setProperty("width", "300px");
                     return row;
@@ -197,13 +196,29 @@ public final class ButtonGroupStories {
                 });
     }
 
-    // A ButtonPanel of enabled buttons, as presenters build their toolbars
-    private static ButtonPanel panel(final Preset... presets) {
+    // A ButtonPanel of buttons, as presenters build their toolbars
+    private static ButtonPanel panel(final ButtonView... buttons) {
         final ButtonPanel panel = new ButtonPanel();
-        for (final Preset preset : presets) {
-            panel.addButton(preset.enabled(true));
+        for (final ButtonView button : buttons) {
+            panel.addButton(button);
         }
         return panel;
+    }
+
+    // A list's Add, Edit and Delete buttons
+    private static ButtonPanel addEditDelete() {
+        return panel(
+                button(SvgImage.ADD, "Add"),
+                button(SvgImage.EDIT, "Edit"),
+                button(SvgImage.DELETE, "Delete"));
+    }
+
+    // An enabled button with an icon and a name
+    private static ToolbarButton button(final SvgImage icon, final String name) {
+        final ToolbarButton button = new ToolbarButton();
+        button.setSvg(icon);
+        button.setTitle(name);
+        return button;
     }
 
     private static ButtonView buttonTitled(final ButtonPanel panel, final String title) {

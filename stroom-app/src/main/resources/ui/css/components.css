@@ -520,6 +520,11 @@
     cursor: pointer;
 }
 
+/* Holds the warning button, which is placed in the drop down, so takes no room of its own */
+.dropDownView-warningToolbar {
+    margin: 0;
+}
+
 .dropDownView-warning {
     position: absolute;
     display: flex;
@@ -1055,6 +1060,11 @@
 }
 
 .copyNameIcon {
+}
+
+/* Holds the copy name button, which sits beside the name as if on its own */
+.globalPropertyEditViewImpl-nameActions {
+    margin: 0;
 }
 
 .copyNameIcon svg {
@@ -2458,7 +2468,7 @@ button.main-menu svg {
     flex-basis: 200px;
 }
 
-.editNodeTagsAddTagsInputPanel .button-container {
+.editNodeTagsAddTagsInputPanel .toolbar {
     position: absolute;
     margin-top: 7px;
     right: 50px;

@@ -573,6 +573,23 @@ templates, are `ToolbarButton` and `ToolbarToggleButton`), with `.icon-button`, 
 `.navigation-menu-button`); nothing in the app emits those names. Every screenshot is unchanged.
 `SvgButton.create(Preset)` stays, deprecated (it makes a `ToolbarButton`), until `SvgPresets` goes;
 `FabButton` (`stroom-button-fab`, `face`) is left for a BEM pass of its own.
+Phase 4: `SvgButton` is deleted, with the unused `SubStreamNavigator` and `DataNavigator` templates.
+Every button it made is now made in the `Toolbar` it sits in (a button is never made on its own):
+the XML schema's validation indicator in the document's toolbar, the data receipt rules' Save and
+Show Warnings in theirs (now a `Toolbar`), and the drop down's warning in a one-button `Toolbar` in
+its template. `MarkdownEditPresenter` makes its toolbar (Edit, Help) when it is first shown, and
+`setAddButtonsFirst(Consumer<Toolbar>)` replaces `setInsertedButtons`, so the annotation's Save is made
+in that toolbar, before Edit. A `Toolbar` nested in a document's toolbar sits as a nested
+`ButtonPanel` does (`.toolbar > .toolbar` beside the transitional `.toolbar > .button-container`).
+Then the buttons made on their own beside a toolbar in the same presenter were made in it: the
+document's Save and Save As (`DocTabPresenter.createToolbar`), the pipeline's stepping toggle, the
+query's Create Rule and Create Report, the dashboard's design buttons, stepping's Terminate and log
+pane toggle (hidden rather than removed), the visualisation assets' buttons and the query text
+view's Close; and the templates' loose buttons are in a `<b:Toolbar>` (query buttons, navigation,
+the query toolbar's errors, a property's copy name). Every screenshot is unchanged. Still made on
+their own: buttons added through a view's `addButton(ButtonView)` (the pagers and list views, which
+need to expose their toolbar), and the button widgets built on `ToolbarButton` (`HelpButton`,
+`RefreshButton`, table expand and collapse, the quick filter's and date picker's buttons).
 
 ### Opening a screen leaves the focus behind (#5405)
 

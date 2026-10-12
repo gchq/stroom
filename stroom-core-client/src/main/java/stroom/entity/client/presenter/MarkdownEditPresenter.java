@@ -26,15 +26,11 @@ import stroom.entity.client.presenter.MarkdownEditPresenter.MarkdownEditView;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.iframe.client.presenter.IFramePresenter.SandboxOption;
 import stroom.preferences.client.UserPreferencesManager;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarToggleButton;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -49,6 +45,7 @@ import com.gwtplatform.mvp.client.View;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class MarkdownEditPresenter
         extends MyPresenterWidget<MarkdownEditView>
@@ -61,13 +58,14 @@ public class MarkdownEditPresenter
     private final MarkdownPreviewPresenter markdownPreviewPresenter;
     private final IFramePresenter iFramePresenter;
     private final UiConfigCache uiConfigCache;
-    private final ToolbarToggleButton editModeButton;
-    private final ButtonView helpButton;
     private final MarkdownConverter markdownConverter;
     private boolean reading;
     private boolean readOnly = true;
     private boolean editMode = false;
-    private List<ButtonView> insertedButtons;
+    // Made when first shown, so that buttons can be added before its own
+    private Toolbar toolbar;
+    private ToolbarToggleButton editModeButton;
+    private Consumer<Toolbar> addButtonsFirst;
 
     private String lastRawMarkdown = null;
     private SafeHtml lastRenderedMarkdown = null;
@@ -91,12 +89,6 @@ public class MarkdownEditPresenter
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
 //        view.setView(iFramePresenter.getView());
 
-        editModeButton = new ToolbarToggleButton();
-        editModeButton.setSvg(SvgImage.EDIT);
-        editModeButton.setTitle("Edit");
-        editModeButton.setEnabled(true);
-        helpButton = SvgButton.create(SvgPresets.HELP.title("Documentation help"));
-
         registerHandler(eventBus.addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 updateMarkdownOnIFramePresenter()));
     }
@@ -106,21 +98,29 @@ public class MarkdownEditPresenter
         if (readOnly) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(createToolbar());
+        return Collections.singletonList(getToolbar());
     }
 
-    private ButtonPanel createToolbar() {
-        final ButtonPanel toolbar = new ButtonPanel();
-        if (insertedButtons != null) {
-            toolbar.addButtons(insertedButtons);
+    private Toolbar getToolbar() {
+        if (toolbar == null) {
+            toolbar = new Toolbar("Documentation actions");
+            if (addButtonsFirst != null) {
+                addButtonsFirst.accept(toolbar);
+            }
+            editModeButton = toolbar.toggle(SvgImage.EDIT, "Edit", pressed -> toggleEditMode());
+            editModeButton.setPressed(editMode);
+            toolbar.button(SvgImage.HELP, "Documentation help", this::showHelp);
         }
-        toolbar.addButton(editModeButton);
-        toolbar.addButton(helpButton);
         return toolbar;
     }
 
-    public void setInsertedButtons(final List<ButtonView> insertedButtons) {
-        this.insertedButtons = insertedButtons;
+    /// Adds buttons to the start of this presenter's toolbar, before its Edit and Help buttons, e.g.
+    /// a document's Save button. They are made in the toolbar when it is first shown, so this must
+    /// be called before then.
+    ///
+    /// @param addButtonsFirst Given the toolbar, adds the buttons to it.
+    public void setAddButtonsFirst(final Consumer<Toolbar> addButtonsFirst) {
+        this.addButtonsFirst = addButtonsFirst;
     }
 
     @Override
@@ -129,14 +129,6 @@ public class MarkdownEditPresenter
         registerHandler(markdownPreviewPresenter.addValueChangeHandler(event -> setDirty(true)));
         registerHandler(markdownPreviewPresenter.addFormatHandler(event -> setDirty(true)));
 
-        registerHandler(editModeButton.addClickHandler(e -> {
-            toggleEditMode();
-        }));
-        registerHandler(helpButton.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                showHelp();
-            }
-        }));
         setEditMode(false);
     }
 
@@ -153,7 +145,9 @@ public class MarkdownEditPresenter
             getView().setView(iFramePresenter.getView());
             this.editMode = false;
         }
-        editModeButton.setState(this.editMode);
+        if (editModeButton != null) {
+            editModeButton.setPressed(this.editMode);
+        }
     }
 
     private void setDirty(final boolean dirty) {

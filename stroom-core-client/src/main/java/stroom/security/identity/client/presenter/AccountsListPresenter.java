@@ -41,6 +41,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
@@ -98,10 +99,12 @@ public class AccountsListPresenter
         this.dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
 
-        addButton = new ToolbarButton();
-        editButton = new ToolbarButton();
-        deleteButton = new ToolbarButton();
-        initButtons();
+        final Toolbar toolbar = pagerView.getToolbar();
+        toolbar.setName("Account actions");
+        addButton = toolbar.button(SvgImage.ADD, "Add new account", this::createNewAccount);
+        editButton = toolbar.button(SvgImage.EDIT, "Edit account", this::editSelectedAccount);
+        deleteButton = toolbar.button(SvgImage.DELETE, "Delete selected account", this::deleteSelectedAccount);
+        setButtonStates();
         initTableColumns();
 
         selectionModel.addSelectionHandler(event -> {
@@ -144,25 +147,6 @@ public class AccountsListPresenter
         return account.getFailureLockedUntilMs() == null
                 ? "Locked"
                 : "Locked until " + dateTimeFormatter.format(account.getFailureLockedUntilMs());
-    }
-
-    private void initButtons() {
-        addButton.setSvg(SvgImage.ADD);
-        addButton.setTitle("Add new account");
-        addButton.addClickHandler(event -> createNewAccount());
-        pagerView.addButton(addButton);
-
-        editButton.setSvg(SvgImage.EDIT);
-        editButton.setTitle("Edit account");
-        editButton.addClickHandler(event -> editSelectedAccount());
-        pagerView.addButton(editButton);
-
-        deleteButton.setSvg(SvgImage.DELETE);
-        deleteButton.setTitle("Delete selected account");
-        deleteButton.addClickHandler(event -> deleteSelectedAccount());
-        pagerView.addButton(deleteButton);
-
-        setButtonStates();
     }
 
     private void setButtonStates() {

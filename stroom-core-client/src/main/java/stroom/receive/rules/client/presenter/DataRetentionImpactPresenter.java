@@ -41,7 +41,6 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
-import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -121,15 +120,13 @@ public class DataRetentionImpactPresenter
         this.restFactory = restFactory;
         this.editExpressionPresenterProvider = editExpressionPresenterProvider;
 
+        view.getToolbar().setName("Retention impact actions");
         runButton = view.addButton(SvgPresets.RUN.title(BTN_TITLE_RUN_QUERY));
         stopButton = view.addButton(SvgPresets.STOP.title(BTN_TITLE_STOP_QUERY));
         filterButton = view.addButton(SvgPresets.FILTER.title(BTN_TITLE_SET_FILTER));
         // Pressed while the results are shown nested
-        final ToolbarToggleButton nestedToggle = new ToolbarToggleButton();
-        nestedToggle.setSvg(SvgImage.TABLE_NESTED);
-        nestedToggle.setTitle(BTN_TITLE_NESTED_TABLE);
-        view.addButton(nestedToggle);
-        flatNestedToggleButton = nestedToggle;
+        flatNestedToggleButton = view.getToolbar().toggle(SvgImage.TABLE_NESTED, BTN_TITLE_NESTED_TABLE,
+                this::setTableNested);
         expandAllButton = view.addButton(SvgPresets.EXPAND_ALL.title(BTN_TITLE_EXPAND_ALL));
         collapseAllButton = view.addButton(SvgPresets.COLLAPSE_ALL.title(BTN_TITLE_COLLAPSE_ALL));
 
@@ -276,11 +273,6 @@ public class DataRetentionImpactPresenter
         registerHandler(filterButton.addClickHandler(event ->
                 openFilterPresenter()));
 
-        registerHandler(flatNestedToggleButton.addClickHandler(e -> {
-            // Get the user's rules without our default one
-            isTableNested = flatNestedToggleButton.getState();
-            refreshVisibleData();
-        }));
         registerHandler(expandAllButton.addClickHandler(event -> {
             treeAction.expandAll();
             refreshVisibleData();
@@ -290,6 +282,11 @@ public class DataRetentionImpactPresenter
             refreshVisibleData();
         }));
         registerHandler(dataGrid.addColumnSortHandler(event -> refreshVisibleData()));
+    }
+
+    private void setTableNested(final boolean nested) {
+        isTableNested = nested;
+        refreshVisibleData();
     }
 
     private void openFilterPresenter() {

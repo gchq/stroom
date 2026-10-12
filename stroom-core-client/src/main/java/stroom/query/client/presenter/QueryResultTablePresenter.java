@@ -226,10 +226,8 @@ public class QueryResultTablePresenter
         downloadButton.setVisible(securityContext.hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Filter values
-        valueFilterButton = new ToolbarToggleButton();
-        valueFilterButton.setSvg(SvgImage.FILTER);
-        valueFilterButton.setTitle("Filter Values");
-        pagerView.addButton(valueFilterButton);
+        valueFilterButton = pagerView.getToolbar().toggle(SvgImage.FILTER, "Filter Values",
+                pressed -> toggleShowValueFilters());
 
         // Reset button
         resetButton = pagerView.addButton(SvgPresets.UNDO);
@@ -327,7 +325,6 @@ public class QueryResultTablePresenter
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> toggleShowValueFilters()));
 
         registerHandler(resetButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {

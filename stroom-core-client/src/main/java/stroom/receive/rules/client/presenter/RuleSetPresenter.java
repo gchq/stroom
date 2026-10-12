@@ -39,20 +39,17 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.receive.rules.shared.ReceiptCheckMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.LazyValue;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -77,14 +74,13 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private static final TabData FIELDS_TAB = new TabDataImpl("Fields");
     private static final TabData DOCUMENTATION_TAB = new TabDataImpl("Documentation");
     private static final String TAB_LABEL = "Data Receipt Rules";
-    private final ButtonView saveButton;
-    private final ButtonView warningButton;
+    private final ToolbarButton saveButton;
 
     private final RuleSetSettingsPresenter ruleSetSettingsPresenter;
     private final FieldListPresenter fieldListPresenter;
     private final LazyValue<MarkdownEditPresenter> lazyMarkdownEditPresenter;
     private final RestFactory restFactory;
-    private final ButtonPanel toolbar;
+    private final Toolbar toolbar;
     // The buttons the tab showing added to the toolbar, removed when another tab is shown
     private final List<Widget> tabButtons = new ArrayList<>();
     private final HasSaveRegistry hasSaveRegistry;
@@ -125,13 +121,11 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
 
         this.hasSaveRegistry = hasSaveRegistry;
         hasSaveRegistry.register(this);
-        this.saveButton = SvgButton.create(SvgPresets.SAVE.title("Save all rules"));
-        this.saveButton.setEnabled(false);
-        this.warningButton = SvgButton.create(SvgPresets.ALERT.title("Show Warnings"));
-
-        toolbar = new ButtonPanel();
+        toolbar = new Toolbar("Document actions");
+        saveButton = toolbar.button(SvgImage.SAVE, "Save all rules", this::save);
+        saveButton.setEnabled(false);
         uiConfigCache.get(extendedUiConfig -> {
-            initToolbar(toolbar, extendedUiConfig.getReceiptCheckMode());
+            addWarningButton(extendedUiConfig.getReceiptCheckMode());
         }, this);
 
         addTab(RULES_TAB);
@@ -162,18 +156,9 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
         return dirty;
     }
 
-    private void initToolbar(final ButtonPanel toolbar, final ReceiptCheckMode receiptCheckMode) {
-//        GWT.log("receiptCheckMode: " + receiptCheckMode);
-        toolbar.addButton(saveButton);
-        registerHandler(saveButton.addClickHandler(event -> save()));
-
+    private void addWarningButton(final ReceiptCheckMode receiptCheckMode) {
         if (receiptCheckMode != ReceiptCheckMode.RECEIPT_POLICY) {
-            toolbar.addButton(warningButton);
-            registerHandler(warningButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    showWarnings(receiptCheckMode);
-                }
-            }));
+            toolbar.button(SvgImage.ALERT, "Show Warnings", () -> showWarnings(receiptCheckMode));
         }
     }
 

@@ -65,8 +65,8 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
@@ -139,7 +139,7 @@ public class SteppingPresenter
     private boolean searching;
     private SteppingResult lastFoundResult;
     private SteppingResult currentResult;
-    private final ButtonPanel leftButtons;
+    private final Toolbar leftButtons;
     private boolean runStepping = true;
 
     final ButtonView streamListFilter;
@@ -178,13 +178,10 @@ public class SteppingPresenter
         this.streamListFilterPresenterProvider = streamListFilterPresenterProvider;
         this.expressionValidator = expressionValidator;
 
-        terminateButton = new ToolbarButton();
+        final Toolbar buttonPanel = new Toolbar("Stepping");
+        terminateButton = buttonPanel.button(SvgImage.STOP, "Terminate Stepping", this::terminate);
         terminateButton.setEnabled(false);
         terminateButton.addStyleName("QueryButtons-button stop");
-        terminateButton.setSvg(SvgImage.STOP);
-        terminateButton.setTitle("Terminate Stepping");
-        final ButtonPanel buttonPanel = new ButtonPanel();
-        buttonPanel.addButton(terminateButton);
 
         view.addWidgetRight(stepLocationLinkPresenter.getView().asWidget());
         view.addWidgetRight(stepControlPresenter.getView().asWidget());
@@ -202,14 +199,9 @@ public class SteppingPresenter
         stepControlPresenter.initButtons();
         stepLocationLinkPresenter.setEnabled(false);
 
-        leftButtons = new ButtonPanel();
-
-        // Create but don't add yet
-        toggleLogPaneButton = new ToolbarToggleButton();
-        toggleLogPaneButton.setSvg(SvgImage.EXCLAMATION);
+        leftButtons = new Toolbar("Log pane");
+        toggleLogPaneButton = leftButtons.toggle(SvgImage.EXCLAMATION, "Toggle Log Pane", this::onToggleLogPane);
         toggleLogPaneButton.setOn();
-        toggleLogPaneButton.setTitle("Toggle Log Pane");
-        leftButtons.addButton(toggleLogPaneButton);
 
         sourcePresenter.setClassificationUiHandlers(this);
 
@@ -234,6 +226,14 @@ public class SteppingPresenter
         }
     }
 
+    private void onToggleLogPane(final boolean visible) {
+        final ElementPresenter elementPresenter = getCurrentElementPresenter();
+        if (elementPresenter != null) {
+            elementPresenter.setDesiredLogPanVisibility(visible);
+            elementPresenter.setLogPaneVisibility(visible);
+        }
+    }
+
     @Override
     protected void onBind() {
         registerHandler(
@@ -251,14 +251,6 @@ public class SteppingPresenter
                 step(event.getStepType(), event.getStepLocation())));
         registerHandler(stepControlPresenter.addChangeFilterHandler(event ->
                 showChangeFiltersDialog()));
-        registerHandler(terminateButton.addClickHandler(event -> terminate()));
-        registerHandler(toggleLogPaneButton.addClickHandler(event -> {
-            final ElementPresenter elementPresenter = getCurrentElementPresenter();
-            if (elementPresenter != null) {
-                elementPresenter.setDesiredLogPanVisibility(toggleLogPaneButton.isOn());
-                elementPresenter.setLogPaneVisibility(toggleLogPaneButton.isOn());
-            }
-        }));
 
         registerHandler(steppingMetaListPresenter.getSelectionModel().addSelectionHandler(event -> {
             if (runStepping) {
@@ -661,12 +653,7 @@ public class SteppingPresenter
             toggleLogPaneButton.setTitle(msg);
         }
 
-        final boolean hasButton = leftButtons.containsButton(toggleLogPaneButton);
-        if (isButtonVisible && !hasButton) {
-            leftButtons.addButton(toggleLogPaneButton);
-        } else if (!isButtonVisible && hasButton) {
-            leftButtons.removeButton(toggleLogPaneButton);
-        }
+        toggleLogPaneButton.setVisible(isButtonVisible);
         // Now set the button state based on the desired state from the presenter
         if (isButtonVisible) {
             toggleLogPaneButton.setState(isLogPaneVisible);

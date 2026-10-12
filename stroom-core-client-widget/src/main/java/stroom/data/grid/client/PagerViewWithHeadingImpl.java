@@ -21,8 +21,9 @@ import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.Preset;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.GWT;
@@ -51,7 +52,7 @@ public class PagerViewWithHeadingImpl extends ViewImpl implements PagerViewWithH
     @UiField
     Pager pager;
     @UiField
-    ButtonPanel buttonPanel;
+    Toolbar toolbar;
     @UiField
     SimplePanel listContainer;
 
@@ -82,13 +83,20 @@ public class PagerViewWithHeadingImpl extends ViewImpl implements PagerViewWithH
     }
 
     @Override
+    public Toolbar getToolbar() {
+        return toolbar;
+    }
+
+    @Override
     public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
+        final ToolbarButton button = getToolbar().button(preset.getSvgImage(), preset.getTitle(), null);
+        button.setEnabled(preset.isEnabled());
+        return button;
     }
 
     @Override
     public void addButton(final ButtonView buttonView) {
-        buttonPanel.addButton(buttonView);
+        getToolbar().add(buttonView.asWidget());
     }
 
     @Override

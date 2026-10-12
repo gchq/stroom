@@ -256,10 +256,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Filter values
-        valueFilterButton = new ToolbarToggleButton();
-        valueFilterButton.setSvg(SvgImage.FILTER);
-        valueFilterButton.setTitle("Show Column Filters");
-        pagerView.addButton(valueFilterButton);
+        valueFilterButton = pagerView.getToolbar().toggle(SvgImage.FILTER, "Show Column Filters",
+                pressed -> toggleShowValueFilters());
 
         // Annotate
         annotateButton = pagerView.addButton(SvgPresets.ANNOTATE);
@@ -392,7 +390,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             }
         }));
 
-        registerHandler(valueFilterButton.addClickHandler(event -> toggleShowValueFilters()));
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if (MouseUtil.isPrimary(event)) {

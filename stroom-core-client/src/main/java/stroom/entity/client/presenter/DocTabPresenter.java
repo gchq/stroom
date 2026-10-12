@@ -55,8 +55,11 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         extends DocPresenter<V, D>
         implements DocumentTabData, Refreshable, HasType, HasSave {
 
-    private final ToolbarButton saveButton;
-    private final ToolbarButton saveAsButton;
+    // Made in the toolbar by createToolbar, so null if a subclass's toolbar has none
+    private ToolbarButton saveButton;
+    private ToolbarButton saveAsButton;
+    private boolean saveEnabled;
+    private boolean saveAsEnabled;
     private TabData selectedTab;
     private String lastLabel;
     // The document's toolbar: Save, Save As and any buttons subclasses add, then the buttons of the
@@ -80,17 +83,6 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     public DocTabPresenter(final EventBus eventBus,
                            final V view) {
         super(eventBus, view);
-        saveButton = new ToolbarButton();
-        saveButton.setSvg(SvgImage.SAVE);
-        saveButton.setTitle("Save");
-        saveButton.setOnClick(this::save);
-        saveButton.setEnabled(false);
-        saveAsButton = new ToolbarButton();
-        saveAsButton.setSvg(SvgImage.SAVEAS);
-        saveAsButton.setTitle("Save As");
-        saveAsButton.setOnClick(this::saveAs);
-        saveAsButton.setEnabled(false);
-
         toolbar = createToolbar();
         readOnlyStatus.setStyleName("docTab-readOnlyStatus");
         readOnlyStatus.getElement().setAttribute("role", "status");
@@ -111,9 +103,25 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     /// @return The toolbar.
     protected Toolbar createToolbar() {
         final Toolbar toolbar = new Toolbar("Document actions");
-        toolbar.add(saveButton);
-        toolbar.add(saveAsButton);
+        saveButton = toolbar.button(SvgImage.SAVE, "Save", this::save);
+        saveButton.setEnabled(false);
+        saveAsButton = toolbar.button(SvgImage.SAVEAS, "Save As", this::saveAs);
+        saveAsButton.setEnabled(false);
         return toolbar;
+    }
+
+    private void setSaveEnabled(final boolean enabled) {
+        saveEnabled = enabled;
+        if (saveButton != null) {
+            saveButton.setEnabled(enabled);
+        }
+    }
+
+    private void setSaveAsEnabled(final boolean enabled) {
+        saveAsEnabled = enabled;
+        if (saveAsButton != null) {
+            saveAsButton.setEnabled(enabled);
+        }
     }
 
     private void addEntry(final Map<CommonDocLinkTab, TabData> commonTabsMap,
@@ -143,13 +151,13 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
 
     @Override
     public void save() {
-        if (saveButton.isEnabled()) {
+        if (saveEnabled) {
             SaveDocumentEvent.fire(DocTabPresenter.this, DocTabPresenter.this);
         }
     }
 
     private void saveAs() {
-        if (saveAsButton.isEnabled()) {
+        if (saveAsEnabled) {
             SaveAsDocumentEvent.fire(DocTabPresenter.this, DocTabPresenter.this);
         }
     }
@@ -268,9 +276,9 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     @Override
     protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
         this.docRef = docRef;
-        saveButton.setEnabled(isDirty());
-        saveAsButton.setEnabled(true);
-        if (readOnly) {
+        setSaveEnabled(isDirty());
+        setSaveAsEnabled(true);
+        if (readOnly && saveButton != null) {
             saveButton.setTitle("Save is not available as this document is read only");
         }
         setReadOnlyStatus(readOnly);
@@ -323,7 +331,7 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     @Override
     public void onDirty() {
         refreshTabIfLabelChanged();
-        saveButton.setEnabled(isDirty());
+        setSaveEnabled(isDirty());
     }
 
     private void refreshTabIfLabelChanged() {

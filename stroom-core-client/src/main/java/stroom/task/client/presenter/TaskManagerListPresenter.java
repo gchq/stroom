@@ -76,7 +76,6 @@ import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
@@ -167,11 +166,10 @@ public class TaskManagerListPresenter
         dataGrid.setTableName("Server Tasks");
         view.setDataWidget(dataGrid);
 
-        autoRefreshButton = new ToolbarToggleButton();
-        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
-        autoRefreshButton.setTitle("Turn Auto Refresh Off");
+        getView().getToolbar().setName("Task actions");
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Turn Auto Refresh Off",
+                pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
-        getView().addButton(autoRefreshButton);
 
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
         terminateButton.addClickHandler(event -> endSelectedTask());
@@ -179,11 +177,8 @@ public class TaskManagerListPresenter
         expandAllButton = getView().addButton(SvgPresets.EXPAND_ALL.enabled(false));
         collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_ALL.enabled(false));
 
-        wrapToggleButton = new ToolbarToggleButton();
-        wrapToggleButton.setSvg(SvgImage.TEXT_WRAP);
-        wrapToggleButton.setTitle("Toggle wrapping of Info column");
-        wrapToggleButton.setOff();
-        getView().addButton(wrapToggleButton);
+        wrapToggleButton = getView().getToolbar().toggle(SvgImage.TEXT_WRAP, "Toggle wrapping of Info column",
+                this::onWrapToggled);
 
         warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
@@ -211,6 +206,25 @@ public class TaskManagerListPresenter
         dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(treeAction, dataGrid, expanderColumn));
     }
 
+    private void onAutoRefreshToggled() {
+        autoRefresh = !autoRefresh;
+        if (autoRefresh) {
+            autoRefreshButton.setTitle("Turn Auto Refresh Off");
+            internalRefresh();
+        } else {
+            autoRefreshButton.setTitle("Turn Auto Refresh On");
+        }
+    }
+
+    private void onWrapToggled(final boolean wrap) {
+        if (wrap) {
+            wrapToggleButton.setTitle("Turn Cell Line Wrapping Off");
+        } else {
+            wrapToggleButton.setTitle("Turn Cell Line Wrapping On");
+        }
+        dataGrid.setMultiLine(wrap);
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
@@ -229,31 +243,6 @@ public class TaskManagerListPresenter
         registerHandler(warningsButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 showWarnings();
-            }
-        }));
-
-        registerHandler(autoRefreshButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                autoRefresh = !autoRefresh;
-                if (autoRefresh) {
-                    autoRefreshButton.setTitle("Turn Auto Refresh Off");
-                    internalRefresh();
-                } else {
-                    autoRefreshButton.setTitle("Turn Auto Refresh On");
-                }
-            }
-        }));
-
-        registerHandler(wrapToggleButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                if (wrapToggleButton.isOff()) {
-                    wrapToggleButton.setTitle("Turn Cell Line Wrapping On");
-                    dataGrid.setMultiLine(false);
-                } else {
-                    wrapToggleButton.setTitle("Turn Cell Line Wrapping Off");
-                    dataGrid.setMultiLine(true);
-                }
-//                internalRefresh();
             }
         }));
 
