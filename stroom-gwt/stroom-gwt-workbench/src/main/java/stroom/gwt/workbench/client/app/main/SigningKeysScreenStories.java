@@ -88,11 +88,11 @@ public final class SigningKeysScreenStories {
                 .withPlay(play -> {
                     play.findByText("Revoked");
                     final Query revoke = play.getByRole("button", REVOKE_TITLE);
-                    play.expect(revoke).toHaveClass("disabled");
+                    play.expect(revoke).toHaveAttribute("aria-disabled", "true");
                     play.click(play.getByText("Revoked"));
-                    play.expect(revoke).toHaveClass("disabled");
+                    play.expect(revoke).toHaveAttribute("aria-disabled", "true");
                     play.click(play.getByText("Active"));
-                    play.expect(revoke).not().toHaveClass("disabled");
+                    play.expect(revoke).not().toHaveAttribute("aria-disabled");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // Revoking the active key warns about the cluster
@@ -127,7 +127,7 @@ public final class SigningKeysScreenStories {
                     final Play screen = play.screen();
                     play.findByText("Active");
                     final Query revokeAll = play.getByRole("button", REVOKE_ALL_TITLE);
-                    play.expect(revokeAll).not().toHaveClass("disabled");
+                    play.expect(revokeAll).not().toHaveAttribute("aria-disabled");
                     play.click(revokeAll);
                     screen.findByText(TextMatch.containing("revoke every signing key?"));
                     play.expect(screen.getByText(TextMatch.containing(

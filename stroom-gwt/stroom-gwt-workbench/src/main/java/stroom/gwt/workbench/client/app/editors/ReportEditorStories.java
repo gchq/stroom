@@ -101,10 +101,11 @@ public final class ReportEditorStories {
                     final Query fileType = fileType(play);
                     play.expect(fileType).toHaveValue("Excel");
                     play.expect(play.getByText("Send Empty Reports")).toBeInTheDocument();
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     play.click(fileType);
                     play.click(screen.findByText("Markdown", ".SelectionPopup *"));
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Save")).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .not().toHaveAttribute("aria-disabled"));
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Read only: the settings can't be changed (the shared analytic settings once
@@ -146,13 +147,13 @@ public final class ReportEditorStories {
                 // Opening the Notifications tab doesn't make the document dirty
                 .story("NotificationsRevealDoesNotDirty", context -> render(context, NO_ERROR_FEED_FIXTURES))
                 .withPlay(play -> {
-                    play.expect(play.findByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.findByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     openTab(play, "Notifications");
                     play.waitFor(() -> play.expect(play.getByRole("button", "Add Notification")).toBeInTheDocument());
                     // 'Feed For Errors' is on the Settings tab, so the play shows that too
                     openTab(play, "Settings");
                     play.waitFor(() -> play.expect(play.getByText("Feed For Errors")).toBeInTheDocument());
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The Execution tab offers only Scheduled Query

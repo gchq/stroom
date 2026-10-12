@@ -56,7 +56,7 @@ public final class AiFixtures {
 
     /// The chat's Run button.
     /// It has no title or accessible name (`AskStroomAiViewImpl` sets its text, which
-    /// `InlineSvgButton` doesn't show), so it is found by its 'play' class.
+    /// `ToolbarButton` doesn't show), so it is found by its 'play' class.
     static final String RUN = "button.play";
 
     /// The Run button while the chat is working (a Stop button), with the 'stop' class.

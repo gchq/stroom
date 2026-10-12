@@ -21,6 +21,7 @@ import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.HasToolbar;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.entity.client.view.LinkTabPanelViewImpl;
+import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.widgets.tabs.TabWidgets.StoryTab;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
@@ -72,6 +73,9 @@ public final class LinkTabPanelStories {
                 .story("WithToolbar", context -> panel(context, sampleTabs(), null,
                         toolbar(SvgButton.create(SvgPresets.SAVE.enabled(true)),
                                 SvgButton.create(SvgPresets.SAVE_AS.enabled(true))), false))
+                // The toolbar's icon buttons, and the tab stops they cost
+                .withPlay(play -> play.expect(ButtonRuns.of(play.body()))
+                        .toEqual(List.of("Save, Save As: 1 tab stop")))
                 // Many tabs in a narrow bar - the chevron overflow selector (») appears
                 .story("Overflow", context -> {
                     final List<String> many = new ArrayList<>();

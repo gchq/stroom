@@ -107,8 +107,8 @@ td:hover .customDatePickerDayIsValue {
     gap: 4px;
     padding: 0 2px;
 }
-.customDatePickerYear .icon-button,
-.customDatePickerMonth .icon-button {
+.customDatePickerYear .toolbar-button,
+.customDatePickerMonth .toolbar-button {
     width: 26px;
     height: 26px;
 }

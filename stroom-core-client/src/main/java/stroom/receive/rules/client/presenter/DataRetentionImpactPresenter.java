@@ -36,10 +36,12 @@ import stroom.query.api.datasource.QueryField;
 import stroom.query.client.presenter.SimpleFieldSelectionListModel;
 import stroom.svg.client.Preset;
 import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.ToggleButtonView;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -71,7 +73,6 @@ public class DataRetentionImpactPresenter
     private static final String BTN_TITLE_RUN_QUERY = "Run Query";
     private static final String BTN_TITLE_STOP_QUERY = "Abort Query";
     private static final String BTN_TITLE_SET_FILTER = "Set Query Filter";
-    private static final String BTN_TITLE_FLAT_TABLE = "View Flat Results";
     private static final String BTN_TITLE_NESTED_TABLE = "View Nested Results";
     private static final String BTN_TITLE_EXPAND_ALL = "Expand all";
     private static final String BTN_TITLE_COLLAPSE_ALL = "Collapse all";
@@ -123,9 +124,12 @@ public class DataRetentionImpactPresenter
         runButton = view.addButton(SvgPresets.RUN.title(BTN_TITLE_RUN_QUERY));
         stopButton = view.addButton(SvgPresets.STOP.title(BTN_TITLE_STOP_QUERY));
         filterButton = view.addButton(SvgPresets.FILTER.title(BTN_TITLE_SET_FILTER));
-        flatNestedToggleButton = view.addToggleButton(
-                SvgPresets.TABLE.title(BTN_TITLE_FLAT_TABLE),
-                SvgPresets.TABLE_NESTED.title(BTN_TITLE_NESTED_TABLE));
+        // Pressed while the results are shown nested
+        final ToolbarToggleButton nestedToggle = new ToolbarToggleButton();
+        nestedToggle.setSvg(SvgImage.TABLE_NESTED);
+        nestedToggle.setTitle(BTN_TITLE_NESTED_TABLE);
+        view.addButton(nestedToggle);
+        flatNestedToggleButton = nestedToggle;
         expandAllButton = view.addButton(SvgPresets.EXPAND_ALL.title(BTN_TITLE_EXPAND_ALL));
         collapseAllButton = view.addButton(SvgPresets.COLLAPSE_ALL.title(BTN_TITLE_COLLAPSE_ALL));
 

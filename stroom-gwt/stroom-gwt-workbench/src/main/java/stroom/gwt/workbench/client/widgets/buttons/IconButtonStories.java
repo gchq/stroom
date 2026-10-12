@@ -27,14 +27,14 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-/// Stories for [InlineSvgButton] (and its subclass `SvgButton`), Stroom's icon-only button.
+/// Stories for [ToolbarButton] (and its subclass `SvgButton`), Stroom's icon-only button.
 public final class IconButtonStories {
 
     // Arg names
@@ -57,7 +57,7 @@ public final class IconButtonStories {
                 .layout(StoryLayout.CENTERED)
                 // The icon arg is the name of an SvgImage
                 .argType(ArgType.select(ICON, "ADD", "EDIT", "DELETE", "FIND", "AUTO_REFRESH")
-                        .description("The glyph (GWT InlineSvgButton.setSvg(...)).")
+                        .description("The glyph (GWT ToolbarButton.setSvg(...)).")
                         .typeName("SvgImage"))
                 .argType(ArgType.text(TITLE).description("Native tooltip (GWT setTitle(...))."))
                 .argType(ArgType.bool(ENABLED)
@@ -74,7 +74,7 @@ public final class IconButtonStories {
                 .withArgs(Args.of(ICON, "ADD", TITLE, "Add"))
                 // The full set of shared glyphs, each with a tooltip
                 .story("Icons", context -> StoryPanels.row(8,
-                        // InlineSvgButton has no aria-label; its accessible name comes from its title
+                        // ToolbarButton has no aria-label; its accessible name comes from its title
                         iconButton(context, SvgImage.ADD, "Add"),
                         iconButton(context, SvgImage.EDIT, "Edit"),
                         iconButton(context, SvgImage.DELETE, "Delete"),
@@ -82,7 +82,7 @@ public final class IconButtonStories {
                         iconButton(context, SvgImage.AUTO_REFRESH, "Refresh")))
                 // Disabled - the disabled class is applied and clicks are ignored
                 .story("Disabled", context -> {
-                    final InlineSvgButton button = iconButton(context, SvgImage.DELETE, "Delete");
+                    final ToolbarButton button = iconButton(context, SvgImage.DELETE, "Delete");
                     final InlineLabel counter = counter("Clicks: ", " (should stay 0)");
                     countClicks(button, counter, "Clicks: ", " (should stay 0)");
                     // aria-disabled, not the native disabled property, so it keeps its tooltip and
@@ -104,14 +104,14 @@ public final class IconButtonStories {
                 })
                 // Interactive - click to increment a counter
                 .story("Clickable", context -> {
-                    final InlineSvgButton button = iconButton(context, SvgImage.ADD, "Increment");
+                    final ToolbarButton button = iconButton(context, SvgImage.ADD, "Increment");
                     final InlineLabel counter = counter("Count: ", "");
                     countClicks(button, counter, "Count: ", "");
                     return StoryPanels.row(8, button, counter);
                 })
                 // visible={false} collapses the button (rendered here beside a visible one)
                 .story("Visibility", context -> {
-                    final InlineSvgButton hidden = iconButton(context, SvgImage.EDIT, "Hidden");
+                    final ToolbarButton hidden = iconButton(context, SvgImage.EDIT, "Hidden");
                     hidden.setVisible(false);
                     return StoryPanels.row(8,
                             iconButton(context, SvgImage.ADD, "Visible"),
@@ -123,7 +123,7 @@ public final class IconButtonStories {
     /// A button made entirely from the story's args, so the Controls addon changes it.
     private static Widget fromArgs(final StoryContext context) {
         final Args args = context.getArgs();
-        final InlineSvgButton button = iconButton(context,
+        final ToolbarButton button = iconButton(context,
                 StoryArgs.toSvgImage(args.getString(ICON)),
                 args.getString(TITLE));
         button.setEnabled(StoryArgs.getBoolean(args, ENABLED, true));
@@ -134,10 +134,10 @@ public final class IconButtonStories {
         return button;
     }
 
-    private static InlineSvgButton iconButton(final StoryContext context,
+    private static ToolbarButton iconButton(final StoryContext context,
                                               final SvgImage icon,
                                               final String title) {
-        final InlineSvgButton button = new InlineSvgButton();
+        final ToolbarButton button = new ToolbarButton();
         if (icon != null) {
             button.setSvg(icon);
         }
@@ -154,7 +154,7 @@ public final class IconButtonStories {
         return StoryPanels.note(prefix + 0 + suffix, "#dce4e5", "12px");
     }
 
-    private static void countClicks(final InlineSvgButton button,
+    private static void countClicks(final ToolbarButton button,
                                     final InlineLabel counter,
                                     final String prefix,
                                     final String suffix) {

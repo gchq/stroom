@@ -123,6 +123,11 @@ public class DashboardSuperPresenter
     }
 
     @Override
+    public List<Widget> getDocumentButtons() {
+        return dashboardPresenter.getDocumentButtons();
+    }
+
+    @Override
     public List<Widget> getToolbars() {
         return dashboardPresenter.getToolbars();
     }

@@ -75,7 +75,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Expander;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.util.client.ElementUtil;
@@ -136,7 +136,7 @@ public class QueryResultTablePresenter
     private final ButtonView downloadButton;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
-    private final InlineSvgToggleButton valueFilterButton;
+    private final ToolbarToggleButton valueFilterButton;
     private final ButtonView resetButton;
     private final ButtonView annotateButton;
     private final EventBus eventBus;
@@ -226,7 +226,7 @@ public class QueryResultTablePresenter
         downloadButton.setVisible(securityContext.hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Filter values
-        valueFilterButton = new InlineSvgToggleButton();
+        valueFilterButton = new ToolbarToggleButton();
         valueFilterButton.setSvg(SvgImage.FILTER);
         valueFilterButton.setTitle("Filter Values");
         pagerView.addButton(valueFilterButton);

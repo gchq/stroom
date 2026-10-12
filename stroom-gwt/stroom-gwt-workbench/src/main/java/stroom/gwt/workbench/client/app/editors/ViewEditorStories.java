@@ -95,7 +95,7 @@ public final class ViewEditorStories {
                     play.expect(play.getByRole("button", TextMatch.startingWith("Pipeline My Pipeline")))
                             .toHaveAttribute("aria-haspopup", "dialog");
                     // Save starts disabled (clean on load)
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Editing the Meta Filter expression (Add Term) makes the document dirty, so Save
@@ -103,9 +103,9 @@ public final class ViewEditorStories {
                 .story("AddTermEnablesSave", context -> render(context, false))
                 .withPlay(play -> {
                     final Query save = play.findByRole("button", "Save");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.click(play.getByTitle("Add Term"));
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Read only: GWT disables the settings and Save can never be enabled
@@ -113,7 +113,7 @@ public final class ViewEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(play.getByText("My DataSource")).toBeInTheDocument());
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
-                            .toHaveClass("disabled");
+                            .toHaveAttribute("aria-disabled", "true");
                     // The settings can't be changed (they once could, and the edits were thrown away)
                     play.expect(play.getByRole("button", TextMatch.startingWith("Data Source My DataSource")))
                             .toHaveAttribute("aria-disabled", "true");

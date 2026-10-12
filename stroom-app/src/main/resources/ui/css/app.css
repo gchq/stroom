@@ -21,6 +21,8 @@
 @import url("stroom.css");
 @import url("stroom-control.css");
 @import url("stroom-button.css");
+@import url("toolbar.css");
+@import url("focus-tooltip.css");
 @import url("stroom-annotation.css");
 @import url("stroom-dashboard.css");
 @import url("editor.css");

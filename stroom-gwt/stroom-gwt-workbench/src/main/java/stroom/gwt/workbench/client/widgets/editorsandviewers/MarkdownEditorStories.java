@@ -41,7 +41,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -193,7 +192,7 @@ public final class MarkdownEditorStories {
         frame.getElement().getStyle().setProperty("height", "520px");
         frame.getElement().getStyle().setProperty("display", "flex");
         frame.getElement().getStyle().setProperty("flexDirection", "column");
-        for (final Widget toolbar : presenter.getToolbars()) {
+        for (final Widget toolbar : presenter.getDocumentButtons()) {
             toolbar.getElement().getStyle().setProperty("flex", "0 0 auto");
             frame.add(toolbar);
         }
@@ -212,11 +211,9 @@ public final class MarkdownEditorStories {
         for (int i = 0; i < buttons.getLength(); i++) {
             final Element button = buttons.getItem(i);
             if ("Edit".equals(button.getTitle())) {
-                // InlineSvgButton acts on a primary mouse down and up, not a click event
-                button.dispatchEvent(Document.get().createMouseDownEvent(
-                        0, 0, 0, 0, 0, false, false, false, false, NativeEvent.BUTTON_LEFT));
-                button.dispatchEvent(Document.get().createMouseUpEvent(
-                        0, 0, 0, 0, 0, false, false, false, false, NativeEvent.BUTTON_LEFT));
+                // A real button: a click presses it
+                button.dispatchEvent(Document.get().createClickEvent(
+                        1, 0, 0, 0, 0, false, false, false, false));
                 return;
             }
         }

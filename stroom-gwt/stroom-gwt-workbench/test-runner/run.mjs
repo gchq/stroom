@@ -40,6 +40,8 @@ import {
   decideOutcome, DONE_STATUSES, errorRepeatsPageOrConsoleError, formatMillis, isFailure, runWithRetries,
 } from './lib/outcome.mjs';
 import { judgeLeak, measureLeak, withLeakProbe } from './lib/leak-check.mjs';
+import { judgeA11y, measureA11y, readBaseline, updateBaseline, writeBaseline } from './lib/a11y-check.mjs';
+import { REAL_INPUT_CHECKS } from './lib/real-input.mjs';
 import { screenshotFile } from './lib/screenshots.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -50,6 +52,8 @@ const DEFAULT_TIMEOUT_MILLIS = 15000;
 // it started fails it rather than going unnoticed
 const DEFAULT_SETTLE_MILLIS = 100;
 const DEFAULT_LEAK_CYCLES = 8;
+// The rules each story is allowed to break, for now (see lib/a11y-check.mjs)
+const A11Y_BASELINE_FILE = path.join(HERE, 'a11y-baseline.json');
 const DEFAULT_WORKERS = Math.max(1, Math.min(8, Math.floor(os.availableParallelism() / 2)));
 const INDEX_TIMEOUT_MILLIS = 30000;
 const MAX_PRINTED_CONSOLE_ERRORS = 5;
@@ -119,6 +123,11 @@ Options:
                            (only stories that open their screen with ScreenHarness.afterStartUp
                            can be checked; the others are run as usual)
   --leak-cycles <n>        How many closes the leak check measures (default: ${DEFAULT_LEAK_CYCLES})
+  --skip-a11y              Don't check accessibility. Otherwise, after each story passes, axe-core
+                           checks its page with the WCAG 2.x A and AA rules and fails it if it
+                           breaks a rule not listed for it in a11y-baseline.json
+  --update-a11y-baseline   Rewrite a11y-baseline.json with the rules the stories run break now,
+                           rather than failing them (stories not run keep their entries)
   --headed                 Show the browser
   --list                   List the stories that would run, then exit
   -v, --verbose            Show every story, not just failed ones
@@ -163,6 +172,8 @@ function parseOptions() {
       'fixed-time': { type: 'string' },
       'leak-check': { type: 'boolean', default: false },
       'leak-cycles': { type: 'string', default: String(DEFAULT_LEAK_CYCLES) },
+      'skip-a11y': { type: 'boolean', default: false },
+      'update-a11y-baseline': { type: 'boolean', default: false },
       headed: { type: 'boolean', default: false },
       list: { type: 'boolean', default: false },
       verbose: { type: 'boolean', short: 'v', default: false },
@@ -195,6 +206,8 @@ function parseOptions() {
     fixedTime: fixedTime(values['fixed-time']),
     leakCheck: values['leak-check'],
     leakCycles: integer('leak-cycles', values['leak-cycles'], 2),
+    a11y: !values['skip-a11y'],
+    updateA11yBaseline: values['update-a11y-baseline'],
     headed: values.headed,
     list: values.list,
     verbose: values.verbose,
@@ -245,6 +258,7 @@ function emptyResult(story, options, status) {
       ? withLeakProbe(previewUrl(options.url, story.id))
       : previewUrl(options.url, story.id),
     leak: null,
+    a11y: null,
     status,
     durationMs: 0,
     failedStep: null,
@@ -344,6 +358,12 @@ async function runStoryOnce(browser, story, options, attempt) {
     if (options.leakCheck && result.status === 'PASS') {
       await checkForLeak(page, story, options, result);
     }
+    if (REAL_INPUT_CHECKS[story.id] && result.status === 'PASS' && !unresponsive && !seen.crashed) {
+      await checkRealInput(page, REAL_INPUT_CHECKS[story.id], options, result);
+    }
+    if (options.a11y && result.status === 'PASS' && !unresponsive && !seen.crashed) {
+      await checkA11y(page, story, options, result);
+    }
     if (!unresponsive && !seen.crashed && (options.screenshots || result.status !== 'PASS')) {
       await takeScreenshot(page, screenshotFile(screenshotsDir(options), story.id, attempt), result, seen);
     }
@@ -358,6 +378,43 @@ async function runStoryOnce(browser, story, options, attempt) {
     }
   }
   return result;
+}
+
+// The real input check of a story that passed (see lib/real-input.mjs): fails it if the page
+// doesn't behave as it should with real key presses and mouse clicks.
+async function checkRealInput(page, check, options, result) {
+  try {
+    const checked = await withDeadline(check(page), options.timeout + UNRESPONSIVE_GRACE_MILLIS);
+    if (checked === TIMED_OUT) {
+      throw new Error('the page stopped responding');
+    }
+  } catch (error) {
+    Object.assign(result, { status: 'FAIL', error: `Real input: ${firstLine(error)}` });
+  }
+}
+
+// The accessibility check of a story that passed: fails it if the page breaks a WCAG rule that
+// isn't in its baseline (see lib/a11y-check.mjs), unless the baseline is being updated. The
+// violations are kept as the result's a11y.
+async function checkA11y(page, story, options, result) {
+  try {
+    const measured = await withDeadline(measureA11y(page, options.url),
+      options.timeout + UNRESPONSIVE_GRACE_MILLIS);
+    if (measured === TIMED_OUT) {
+      throw new Error('Accessibility check: the page stopped responding');
+    }
+    if (!measured.checked) {
+      result.a11y = measured;
+      return;
+    }
+    const judged = judgeA11y(measured.violations, options.a11yBaseline[story.id]);
+    result.a11y = { ...measured, newRules: judged.newRules, fixedRules: judged.fixedRules };
+    if (judged.error && !options.updateA11yBaseline) {
+      Object.assign(result, { status: 'FAIL', error: judged.error });
+    }
+  } catch (error) {
+    Object.assign(result, { status: 'FAIL', error: firstLine(error) });
+  }
 }
 
 // The leak check (--leak-check) of a story that passed: fails it if each close of its screen keeps
@@ -607,6 +664,33 @@ async function writeReports(options, results, durationMs, runError, browserRelau
   console.log(`Reports:     ${jsonFile}\n             ${junitFile}`);
 }
 
+// Writes the accessibility baseline if asked to (--update-a11y-baseline), otherwise says which
+// stories no longer break rules their baseline allows, so it can be tightened.
+async function reportA11y(options, results, runError) {
+  if (!options.a11y) {
+    return;
+  }
+  const unchecked = results.find((result) => result.a11y && !result.a11y.checked);
+  if (unchecked) {
+    console.log(`Accessibility: not checked, as ${unchecked.a11y.reason}`);
+    return;
+  }
+  if (options.updateA11yBaseline) {
+    if (runError) {
+      console.log('Accessibility: the baseline was not updated, as the run failed');
+      return;
+    }
+    await writeBaseline(A11Y_BASELINE_FILE, updateBaseline(options.a11yBaseline, results));
+    console.log(`Accessibility: updated the baseline ${A11Y_BASELINE_FILE}`);
+    return;
+  }
+  const fixed = results.filter((result) => result.a11y?.fixedRules?.length > 0);
+  if (fixed.length > 0) {
+    console.log(`Accessibility: ${fixed.length} stor${fixed.length === 1 ? 'y no longer breaks' : 'ies no longer break'} `
+      + 'rules their baseline allows; run with --update-a11y-baseline to tighten it');
+  }
+}
+
 // The exit code for a run cancelled by the signal, as a shell gives it.
 function cancelledExitCode(signal) {
   return 128 + (os.constants.signals[signal] ?? 15);
@@ -637,6 +721,7 @@ async function main() {
   if (!options.list) {
     await removeReports(options.outputDir);
   }
+  options.a11yBaseline = options.a11y ? await readBaseline(A11Y_BASELINE_FILE) : {};
 
   const startTime = performance.now();
   const browsers = new SharedBrowser(() => chromium.launch({ headless: !options.headed }),
@@ -772,6 +857,7 @@ async function main() {
     if (browsers.relaunches > 0) {
       console.log(`Chromium:    stopped unexpectedly and was relaunched ${browsers.relaunches} time(s)`);
     }
+    await reportA11y(options, results, runError);
     await writeReports(options, results, durationMs, runError, browsers.relaunches);
     if (runError) {
       console.error(cancelledBy ? `\n${runError}` : `\nThe test run failed: ${runError}`);

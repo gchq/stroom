@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.app.main;
 
+import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.gin.security.SecurityScreenGinjector;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
@@ -111,6 +112,28 @@ public final class UserGroupsScreenStories {
                             .toBeGreaterThanOrEqual(2));
                     SecurityPlays.expectNoProblems(play);
                 })
+                // The runs of icon buttons, and the tab stops each costs, once a group is selected
+                // (each pane has a list toolbar and a pager)
+                .story("ToolbarTabStops", UserGroupsScreenStories::render)
+                .withPlay(play -> {
+                    play.findAllByText("Administrators");
+                    play.click(play.getAllByText("Administrators").nth(0));
+                    play.waitFor(() -> play.expect(play.querySelector("[inert]")).toBeNull());
+                    play.findByText("Members of group \"Administrators\":");
+                    play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
+                            "User Groups: - Click for help: 0 tab stops",
+                            "Quick Filter Syntax Help: 1 tab stop",
+                            "Create Group, Edit group 'Administrators', Delete group 'Administrators': 1 tab stop",
+                            "First, Backward, Forward, Last, Refresh: 1 tab stop",
+                            "Group \"Administrators\" is a member of: - Click for help: 0 tab stops",
+                            "Members of group \"Administrators\": - Click for help: 0 tab stops",
+                            "Quick Filter Syntax Help: 1 tab stop",
+                            "Quick Filter Syntax Help: 1 tab stop",
+                            "Add, Remove: 1 tab stop",
+                            "First, Backward, Forward, Last, Refresh: 1 tab stop",
+                            "Add, Remove: 1 tab stop",
+                            "First, Backward, Forward, Last, Refresh: 1 tab stop"));
+                })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)
                 .withPlay(play -> {
@@ -132,15 +155,15 @@ public final class UserGroupsScreenStories {
                     final Query edit = play.within(play.getByTitle("Create Group").closest(".button-container"))
                             .querySelectorAll("button").nth(1);
                     play.expect(edit).toHaveAttribute("title", "No Selection");
-                    play.expect(edit).toHaveClass("disabled");
+                    play.expect(edit).toHaveAttribute("aria-disabled", "true");
                     // A user: disabled, with GWT's reason
                     play.click(play.getByText("Alice Anderson"));
                     play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "User editing is not supported"));
-                    play.expect(edit).toHaveClass("disabled");
+                    play.expect(edit).toHaveAttribute("aria-disabled", "true");
                     // A group: enabled
                     play.click(play.getAllByText("Administrators").nth(0));
                     play.waitFor(() -> play.expect(edit).toHaveAttribute("title", "Edit group 'Administrators'"));
-                    play.expect(edit).not().toHaveClass("disabled");
+                    play.expect(edit).not().toHaveAttribute("aria-disabled");
                     // Edit, rename, OK: the subject id and display name are both changed
                     play.click(edit);
                     final Play dialog = screen.within(screen.findByText("Edit User Group").closest(StroomDom.DIALOG));

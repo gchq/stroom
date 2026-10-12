@@ -69,7 +69,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -132,8 +132,8 @@ public class TaskManagerListPresenter
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
     private final ButtonView warningsButton;
-    private final InlineSvgToggleButton autoRefreshButton;
-    private final InlineSvgToggleButton wrapToggleButton;
+    private final ToolbarToggleButton autoRefreshButton;
+    private final ToolbarToggleButton wrapToggleButton;
 
     private String currentWarnings;
     private Column<TaskProgress, Expander> expanderColumn;
@@ -167,7 +167,7 @@ public class TaskManagerListPresenter
         dataGrid.setTableName("Server Tasks");
         view.setDataWidget(dataGrid);
 
-        autoRefreshButton = new InlineSvgToggleButton();
+        autoRefreshButton = new ToolbarToggleButton();
         autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
         autoRefreshButton.setTitle("Turn Auto Refresh Off");
         autoRefreshButton.setState(autoRefresh);
@@ -179,7 +179,7 @@ public class TaskManagerListPresenter
         expandAllButton = getView().addButton(SvgPresets.EXPAND_ALL.enabled(false));
         collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_ALL.enabled(false));
 
-        wrapToggleButton = new InlineSvgToggleButton();
+        wrapToggleButton = new ToolbarToggleButton();
         wrapToggleButton.setSvg(SvgImage.TEXT_WRAP);
         wrapToggleButton.setTitle("Toggle wrapping of Info column");
         wrapToggleButton.setOff();

@@ -41,6 +41,7 @@ import stroom.util.shared.NullSafe;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
+import stroom.widget.util.client.SvgMarkup;
 
 import com.google.gwt.cell.client.AbstractInputCell;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -220,8 +221,7 @@ public class FilterCell
         }
 
         final ClassNameBuilder buttonClassName = new ClassNameBuilder();
-        buttonClassName.addClassName("inline-svg-button");
-        buttonClassName.addClassName("icon-button");
+        buttonClassName.addClassName("toolbar-button");
         buttonClassName.addClassName("dashboard-table-filter-cell-disable-button");
         if (!enabled) {
             buttonClassName.addClassName("dashboard-table-filter-cell-disable-button-disabled");
@@ -238,10 +238,8 @@ public class FilterCell
 
             outer.div(buttons -> {
                 buttons.elem(button -> {
-                    button.div("", Attribute.className("background"));
-                    button.div(div -> {
-                        div.appendTrustedString(SvgImage.DISABLE.getSvg());
-                    }, Attribute.className("svg-image svg-image__process face"));
+                    button.appendTrustedString(
+                            SvgMarkup.decorative(SvgImage.DISABLE.getSvg(), "toolbar-button__icon"));
                 }, SafeHtmlUtils.fromSafeConstant("button"),
                     new Attribute("type", "button"),
                     Attribute.className(buttonClassName.build()),

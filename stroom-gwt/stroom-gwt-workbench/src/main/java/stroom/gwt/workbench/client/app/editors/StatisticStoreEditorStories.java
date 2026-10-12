@@ -85,7 +85,7 @@ public final class StatisticStoreEditorStories {
                     play.expect(play.getByText("Precision", "label")).toBeInTheDocument();
                     play.expect(play.getByText("Roll Up Type", "label")).toBeInTheDocument();
                     play.expect(play.getByText("Enabled")).toBeInTheDocument();
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Read only: the Settings tab, as 'Default' shows it
@@ -126,14 +126,14 @@ public final class StatisticStoreEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("host")).toBeInTheDocument());
                     play.expect(play.getByText("user")).toBeInTheDocument();
                     final Query save = play.getByRole("button", "Save");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.click(play.getByRole("button", "New Field"));
                     // The name's text box is identified as 'statisticsFieldName'
                     final Query input = nameInput(screen);
                     play.type(input, "app");
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(play.getByText("app")).toBeInTheDocument());
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The field dialog refuses a duplicate name with an alert, staying open
@@ -159,14 +159,14 @@ public final class StatisticStoreEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     openTab(play, "Fields");
-                    play.expect(play.findByRole("button", "Edit Field")).toHaveClass("disabled");
-                    play.expect(play.getByRole("button", "Remove Field")).toHaveClass("disabled");
+                    play.expect(play.findByRole("button", "Edit Field")).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Remove Field")).toHaveAttribute("aria-disabled", "true");
                     play.dblClick(play.findByText("user"));
                     play.expect(nameInput(screen)).toHaveValue("user");
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
                     play.click(play.getByText("host"));
                     play.waitFor(() -> play.expect(play.getByRole("button", "Remove Field"))
-                            .not().toHaveClass("disabled"));
+                            .not().toHaveAttribute("aria-disabled"));
                     play.click(play.getByRole("button", "Remove Field"));
                     play.waitFor(() -> play.expect(play.queryByText("host")).toBeNull());
                     play.expect(screen.queryByText(TextMatch.containingIgnoreCase("are you sure"))).toBeNull();
@@ -181,10 +181,11 @@ public final class StatisticStoreEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("host", "th, th *")).toBeInTheDocument());
                     play.expect(play.getByText("user", "th, th *")).toBeInTheDocument();
                     final Query save = play.getByRole("button", "Save");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.click(play.getByRole("button", "New roll-up permutation"));
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
-                    play.expect(play.getByRole("button", "Remove roll-up permutation")).toHaveClass("disabled");
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
+                    play.expect(play.getByRole("button", "Remove roll-up permutation"))
+                            .toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Read only: the field buttons say why they're disabled and Save can't be enabled
@@ -192,9 +193,9 @@ public final class StatisticStoreEditorStories {
                 .withPlay(play -> {
                     openTab(play, "Fields");
                     play.expect(play.findByRole("button", "New field disabled as fields are read only"))
-                            .toHaveClass("disabled");
+                            .toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
-                            .toHaveClass("disabled");
+                            .toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // The roll-up grid always has the no roll-up row: removing the last permutation

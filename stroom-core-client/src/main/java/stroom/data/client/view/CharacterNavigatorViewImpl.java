@@ -18,11 +18,10 @@ package stroom.data.client.view;
 
 import stroom.data.client.presenter.CharacterNavigatorPresenter.CharacterNavigatorView;
 import stroom.data.pager.client.RefreshButton;
-import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Count;
 import stroom.util.shared.HasCharacterData;
 import stroom.util.shared.HasCharacterData.NavigationMode;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -50,12 +49,12 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     Label lblLines;
     @UiField
     Label lblCharacters;
-    @UiField(provided = true)
-    SvgButton showHeadCharactersBtn;
-    @UiField(provided = true)
-    SvgButton advanceCharactersForwardBtn;
-    @UiField(provided = true)
-    SvgButton advanceCharactersBackwardBtn;
+    @UiField
+    ToolbarButton showHeadCharactersBtn;
+    @UiField
+    ToolbarButton advanceCharactersForwardBtn;
+    @UiField
+    ToolbarButton advanceCharactersBackwardBtn;
 
     @UiField
     RefreshButton refresh;
@@ -69,20 +68,13 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
     @Inject
     public CharacterNavigatorViewImpl(final EventBus eventBus,
                                       final Binder binder) {
-        initButtons();
         widget = binder.createAndBindUi(this);
+        initButtons();
         refresh.setEnabled(false);
     }
 
     private void initButtons() {
         // Char buttons
-        showHeadCharactersBtn = SvgButton.create(
-                SvgPresets.FAST_BACKWARD_BLUE.title("Show Beginning"));
-        advanceCharactersBackwardBtn = SvgButton.create(
-                SvgPresets.STEP_BACKWARD_BLUE.title("Advance Range Backwards"));
-        advanceCharactersForwardBtn = SvgButton.create(
-                SvgPresets.STEP_FORWARD_BLUE.title("Advance Range Forwards"));
-
         setupButton(showHeadCharactersBtn, true, false);
         setupButton(advanceCharactersBackwardBtn, true, false);
         setupButton(advanceCharactersForwardBtn, true, false);
@@ -92,7 +84,7 @@ public class CharacterNavigatorViewImpl extends ViewImpl implements CharacterNav
         return display;
     }
 
-    private void setupButton(final SvgButton button,
+    private void setupButton(final ToolbarButton button,
                              final boolean isEnabled,
                              final boolean isVisible) {
         button.setEnabled(isEnabled);

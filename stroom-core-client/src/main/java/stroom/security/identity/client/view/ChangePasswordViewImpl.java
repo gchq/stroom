@@ -19,7 +19,7 @@ package stroom.security.identity.client.view;
 import stroom.security.identity.client.presenter.ChangePasswordPresenter.ChangePasswordView;
 import stroom.security.identity.shared.InternalIdpPasswordPolicyConfig;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
@@ -49,13 +49,13 @@ public class ChangePasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHand
     @UiField
     PasswordTextBox password;
     @UiField
-    InlineSvgButton showPassword;
+    ToolbarButton showPassword;
     @UiField
     Label passwordFeedback;
     @UiField
     PasswordTextBox confirmPassword;
     @UiField
-    InlineSvgButton showConfirmPassword;
+    ToolbarButton showConfirmPassword;
     @UiField
     FlowPanel strengthMeter;
     @UiField

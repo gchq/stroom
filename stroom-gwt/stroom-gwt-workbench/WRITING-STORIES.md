@@ -898,3 +898,13 @@ Also:
   Playwright.
 * Rerun a screen story from the debugger controls and check the console for dropped requests from
   an earlier rendering (see [What happens on a re-render](#what-happens-on-a-re-render)).
+* Each story that passes is also checked with axe-core (WCAG 2.x A and AA). A new story must break
+  no rules; fix what it finds rather than adding the story to `test-runner/a11y-baseline.json`
+  (see [Accessibility check](test-runner/README.md#accessibility-check)).
+* Keyboard behaviour that depends on the browser trusting the input (real Tab order,
+  `:focus-visible`, mouse versus keyboard focus) can't be shown by a play's own events; add a
+  check to `test-runner/lib/real-input.mjs` (see
+  [Real input checks](test-runner/README.md#real-input-checks)).
+* `stroom.gwt.workbench.client.a11y` measures keyboard access: `TabStops.names(region)` (the tab
+  stops in order, as a browser counts them) and `ButtonRuns.of(region)` (runs of adjacent icon
+  buttons and the tab stops each costs).

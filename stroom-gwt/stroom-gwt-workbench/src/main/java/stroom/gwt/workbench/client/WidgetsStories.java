@@ -18,9 +18,14 @@ package stroom.gwt.workbench.client;
 
 import stroom.gwt.workbench.client.widgets.aceeditor.FormatStories;
 import stroom.gwt.workbench.client.widgets.actionmenucell.ActionMenuCellStories;
+import stroom.gwt.workbench.client.widgets.buttons.ButtonGroupStories;
 import stroom.gwt.workbench.client.widgets.buttons.ButtonStories;
+import stroom.gwt.workbench.client.widgets.buttons.FabButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.IconButtonStories;
+import stroom.gwt.workbench.client.widgets.buttons.RefreshButtonStories;
 import stroom.gwt.workbench.client.widgets.buttons.StepControlsStories;
+import stroom.gwt.workbench.client.widgets.buttons.ToolbarButtonStateStories;
+import stroom.gwt.workbench.client.widgets.buttons.ToolbarStories;
 import stroom.gwt.workbench.client.widgets.celllist.CellListStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.DocRefCellStories;
 import stroom.gwt.workbench.client.widgets.cellrenderers.DocumentTypeCellStories;
@@ -158,10 +163,20 @@ public final class WidgetsStories {
         TextBoxPopupDialogStories.addTo(registry);
         // Widgets/Buttons/Button
         ButtonStories.addTo(registry);
+        // Widgets/Buttons/ButtonGroup
+        ButtonGroupStories.addTo(registry);
+        // Widgets/Buttons/FabButton
+        FabButtonStories.addTo(registry);
         // Widgets/Buttons/IconButton
         IconButtonStories.addTo(registry);
+        // Widgets/Buttons/RefreshButton
+        RefreshButtonStories.addTo(registry);
         // Widgets/Buttons/StepControls
         StepControlsStories.addTo(registry);
+        // Widgets/Buttons/Toolbar
+        ToolbarStories.addTo(registry);
+        // Widgets/Buttons/ToolbarButtonStates
+        ToolbarButtonStateStories.addTo(registry);
         // Widgets/Date & Time/CalendarGrid
         CalendarGridStories.addTo(registry);
         // Widgets/Date & Time/CustomDateBox

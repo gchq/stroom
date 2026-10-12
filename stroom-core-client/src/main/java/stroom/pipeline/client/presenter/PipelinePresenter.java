@@ -45,7 +45,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.security.shared.AppPermission;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.util.client.MouseUtil;
@@ -79,7 +79,7 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
     private PipelineModel pipelineModel;
     private boolean steppingMetaListLoaded = false;
 
-    private final InlineSvgToggleButton steppingModeButton;
+    private final ToolbarToggleButton steppingModeButton;
 
     private ExpressionOperator steppingMetaExpression = null;
 
@@ -225,12 +225,12 @@ public class PipelinePresenter extends DocTabPresenter<LinkTabPanelView, Pipelin
         addTab(PERMISSIONS, documentUserPermissionsTabProvider);
         setDefaultTab(defaultTab);
 
-        steppingModeButton = new InlineSvgToggleButton();
+        steppingModeButton = new ToolbarToggleButton();
         steppingModeButton.setSvg(SvgImage.STEP);
         steppingModeButton.setTitle("Enter Stepping Mode");
         steppingModeButton.setState(false);
         steppingModeButton.setVisible(false);
-        toolbar.addButton(steppingModeButton);
+        toolbar.add(steppingModeButton);
 
         registerHandler(steppingModeButton.addClickHandler(e -> {
             if (MouseUtil.isPrimary(e)) {

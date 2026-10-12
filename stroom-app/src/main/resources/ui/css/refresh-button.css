@@ -1,75 +1,48 @@
-.RefreshButton {
-    position: relative;
-    width: 22px;
-    height: 22px;
-}
+/*
+   The refresh button (stroom.data.pager.client.RefreshButton): a toolbar button (see toolbar.css)
+   holding four icons, one above another, each centred in it. Named BEM style; its modifiers choose
+   which icons are shown:
+   - refresh, when it is none of refreshing, pausable or paused;
+   - a spinner turning, when refreshing, unless both pausable and paused;
+   - a static circle, when pausable and not refreshing, or when paused;
+   - pause, when paused, or when refreshing and pausable.
+*/
 
-.RefreshButton .refresh-inner svg,
-.RefreshButton .circle-inner svg,
-.RefreshButton .spinning-inner svg,
-.RefreshButton .pause-inner svg {
-    color: var(--icon-button__color);
-}
-
-.RefreshButton .refresh-outer,
-.RefreshButton .circle-outer,
-.RefreshButton .spinning-outer,
-.RefreshButton .pause-outer {
+.refresh-button__icon {
     position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 5;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    inset: 0;
+    margin: auto;
+    width: 18px;
+    height: 18px;
+    color: var(--icon-button__color);
     visibility: hidden;
 }
 
-.RefreshButton .refresh-inner,
-.RefreshButton .circle-inner,
-.RefreshButton .spinning-inner,
-.RefreshButton .pause-inner {
-    display: flex;
-    align-items: center;
-    height: 100%;
+.refresh-button:not(.refresh-button--refreshing):not(.refresh-button--pausable):not(.refresh-button--paused)
+        .refresh-button__icon--refresh,
+.refresh-button--refreshing:not(.refresh-button--pausable.refresh-button--paused) .refresh-button__icon--spinning,
+.refresh-button--pausable:not(.refresh-button--refreshing) .refresh-button__icon--circle,
+.refresh-button--paused .refresh-button__icon--circle,
+.refresh-button--paused .refresh-button__icon--pause,
+.refresh-button--refreshing.refresh-button--pausable .refresh-button__icon--pause {
+    visibility: visible;
 }
 
-.RefreshButton .refresh-inner svg,
-.RefreshButton .circle-inner svg,
-.RefreshButton .spinning-inner svg,
-.RefreshButton .pause-inner svg {
-    width: 18px;
-    height: 18px;
-}
-
-.RefreshButton.refreshing .spinning-inner svg {
+.refresh-button--refreshing .refresh-button__icon--spinning {
     -webkit-animation: spinner-border .75s linear infinite;
     animation: spinner-border .75s linear infinite;
 }
 
-.RefreshButton.paused {
+.refresh-button--paused {
     animation: pulse-animation 2s infinite;
 }
 
-.RefreshButton.refreshing .refresh-outer,
-.RefreshButton.refreshing.allowPause .circle-outer,
-.RefreshButton.paused .refresh-outer,
-.RefreshButton.paused.allowPause .spinning-outer,
-.RefreshButton.allowPause .refresh-outer,
-.RefreshButton.paused.allowPause .refresh-outer {
-    visibility: hidden;
-}
-
-.RefreshButton.refreshing .spinning-outer,
-.RefreshButton.refreshing.allowPause .pause-outer,
-.RefreshButton.paused .circle-outer,
-.RefreshButton.paused .pause-outer,
-.RefreshButton .refresh-outer,
-.RefreshButton.allowPause .circle-outer,
-.RefreshButton.paused.allowPause .circle-outer {
-    visibility: visible;
+/* No turning or pulsing for those who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+    .refresh-button--refreshing .refresh-button__icon--spinning,
+    .refresh-button--paused {
+        animation: none;
+    }
 }
 
 @keyframes pulse-animation {

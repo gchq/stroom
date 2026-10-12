@@ -88,7 +88,7 @@ public class XMLSchemaPresenter extends DocTabPresenter<LinkTabPanelView, XmlSch
         validationIndicator = SvgButton.create(SvgPresets.ALERT);
         validationIndicator.setSvg(SvgImage.OK);
         validationIndicator.setTitle(VALID);
-        toolbar.addButton(this.validationIndicator);
+        toolbar.add(this.validationIndicator.asWidget());
 
         this.validationDebounceTimer = new Timer() {
             @Override

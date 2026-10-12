@@ -26,6 +26,7 @@ import { TIMED_OUT, withDeadline } from './deadline.mjs';
 import { selectStories } from './filter.mjs';
 import { escapeXml, toJUnitXml } from './junit.mjs';
 import { growthPerCycle, judgeLeak, withLeakProbe } from './leak-check.mjs';
+import { judgeA11y, updateBaseline } from './a11y-check.mjs';
 import { decideOutcome, runWithRetries } from './outcome.mjs';
 import { safeFileBase, screenshotFile } from './screenshots.mjs';
 
@@ -269,4 +270,34 @@ test('leak check: growth per close and judgement', () => {
     /^Leak: each close of the screen keeps 21 DOM nodes and 0 event listeners \(9 KB of heap\), over 8 closes/);
   assert.match(judgeLeak({ checked: true, cycles: 8, nodes: 0, listeners: 6, heapKB: 0 }), /keeps 0 DOM nodes and 6/);
   assert.equal(withLeakProbe('http://x/iframe.html?id=a&viewMode=story'), 'http://x/iframe.html?id=a&viewMode=story&probe=1');
+});
+
+test('accessibility: a story fails only on rules missing from its baseline', () => {
+  const violation = (id) => ({ id, impact: 'serious', help: `${id} help`, targets: ['#a', '#b'] });
+  assert.deepEqual(judgeA11y([], []), { error: null, newRules: [], fixedRules: [] });
+  // Allowed by the baseline
+  assert.equal(judgeA11y([violation('color-contrast')], ['color-contrast']).error, null);
+  // A rule not in the baseline fails it, naming the rule and the elements
+  const judged = judgeA11y([violation('color-contrast'), violation('button-name')], ['color-contrast']);
+  assert.deepEqual(judged.newRules, ['button-name']);
+  assert.match(judged.error, /button-name \(serious\): button-name help\n {4}#a\n {4}#b/);
+  // A story missing from the baseline must break nothing
+  assert.deepEqual(judgeA11y([violation('label')]).newRules, ['label']);
+  // Baseline rules no longer broken are reported, without failing
+  assert.deepEqual(judgeA11y([], ['label', 'aria-allowed-attr']),
+    { error: null, newRules: [], fixedRules: ['aria-allowed-attr', 'label'] });
+});
+
+test('accessibility: updating the baseline', () => {
+  const checked = (id, rules) => ({ id, a11y: { checked: true, violations: rules.map((rule) => ({ id: rule })) } });
+  const baseline = { 'b--clean-now': ['label'], 'c--not-run': ['region'], 'a--worse': ['label'] };
+  const updated = updateBaseline(baseline, [
+    checked('a--worse', ['label', 'button-name', 'label']),
+    checked('b--clean-now', []),
+    { id: 'd--failed-early', a11y: null },
+  ]);
+  // Sorted by story, each story's rules sorted and unique; a clean story is removed; a story that
+  // wasn't checked keeps its entry
+  assert.deepEqual(updated, { 'a--worse': ['button-name', 'label'], 'c--not-run': ['region'] });
+  assert.deepEqual(Object.keys(updated), ['a--worse', 'c--not-run']);
 });

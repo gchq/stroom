@@ -107,7 +107,7 @@ public final class CodeDocumentEditorStories {
                 .story("Xslt", context -> xslt(context, XSLT_DATA, false))
                 .withPlay(play -> {
                     expectTabs(play, "XSLT", "Documentation", "Permissions");
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // Read only: the XSLT tab, as 'Xslt' shows it
@@ -186,7 +186,7 @@ public final class CodeDocumentEditorStories {
                     expectTabs(play, "Config", "Documentation", "Permissions");
                     play.expect(play.getByRole("button", "Download")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // Read only: the Config tab, as 'KafkaConfig' shows it
@@ -202,7 +202,7 @@ public final class CodeDocumentEditorStories {
                     expectTabs(play, "Config", "Documentation", "Permissions");
                     play.expect(play.getByRole("button", "Download")).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // Read only: the Config tab, as 'S3Config' shows it
@@ -223,11 +223,11 @@ public final class CodeDocumentEditorStories {
                     play.expect(play.findByText("Namespace URI", "label")).toBeInTheDocument();
                     play.expect(play.getByText("System Id", "label")).toBeInTheDocument();
                     final Query save = play.getByRole("button", "Save");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.type(play.querySelector(NAMESPACE_URI), "/v2");
                     // The text box reports its change when it loses the focus
                     play.tab();
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
                 // The Text tab, to compare with its read only partner
@@ -270,7 +270,7 @@ public final class CodeDocumentEditorStories {
                     play.click(DocEditors.tab(play, "Settings"));
                     play.waitFor(() -> play.expect(play.querySelector(NAMESPACE_URI)).toHaveAttribute("readonly"));
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
-                            .toHaveClass("disabled");
+                            .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // The Format action is on the editor's context menu (getFormatAction()); it
@@ -279,14 +279,14 @@ public final class CodeDocumentEditorStories {
                 .withPlay(play -> {
                     final Query save = play.findByRole("button", "Save");
                     play.waitFor(() -> play.expect(play.querySelector(".ace_content")).toBeInTheDocument());
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     // The menu opens on a secondary mousedown (EditorViewImpl), on the page's body
                     play.rightClick(play.querySelector(".ace_content"));
                     play.click(play.screen().findByText("Format", StroomDom.MENU_ITEM_TEXT));
                     final Value<List<String>> lines = play.querySelectorAll(".ace_line").textContents();
                     play.waitFor(() -> play.expect("the editor's value", () -> String.join("\n", lines.get()))
                             .toMatch("\n  <b>1</b>"));
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 });
     }

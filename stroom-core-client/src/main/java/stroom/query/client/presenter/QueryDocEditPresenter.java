@@ -49,7 +49,7 @@ import stroom.ui.config.shared.ReportUiDefaultConfig;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
@@ -72,8 +72,8 @@ public class QueryDocEditPresenter
     private final QueryEditPresenter queryEditPresenter;
     private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
-    private final InlineSvgButton createRuleButton;
-    private final InlineSvgButton createReportButton;
+    private final ToolbarButton createRuleButton;
+    private final ToolbarButton createReportButton;
     private final ButtonPanel toolbar;
     private DocRef docRef;
 
@@ -87,12 +87,12 @@ public class QueryDocEditPresenter
         this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
 
-        createRuleButton = new InlineSvgButton();
+        createRuleButton = new ToolbarButton();
         createRuleButton.setSvg(SvgImage.DOCUMENT_ANALYTIC_RULE);
         createRuleButton.setTitle("Create Rule");
         createRuleButton.setVisible(true);
 
-        createReportButton = new InlineSvgButton();
+        createReportButton = new ToolbarButton();
         createReportButton.setSvg(SvgImage.DOCUMENT_REPORT);
         createReportButton.setTitle("Create Report");
         createReportButton.setVisible(true);
@@ -103,11 +103,16 @@ public class QueryDocEditPresenter
     }
 
     @Override
-    public List<Widget> getToolbars() {
+    public List<Widget> getDocumentButtons() {
         final List<Widget> list = new ArrayList<>();
         list.add(toolbar);
-        list.addAll(queryEditPresenter.getToolbars());
+        list.addAll(queryEditPresenter.getDocumentButtons());
         return list;
+    }
+
+    @Override
+    public List<Widget> getToolbars() {
+        return queryEditPresenter.getToolbars();
     }
 
     @Override

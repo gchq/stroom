@@ -6,10 +6,11 @@
     <g:FlowPanel styleName="FindViewImpl FindViewImpl--dialog max dock-container-vertical">
         <g:FlowPanel styleName="FindViewImpl-top dock-container-horizontal dock-min">
             <g:TextArea ui:field="pattern" addStyleNames="dock-max allow-focus"/>
-            <g:FlowPanel ui:field="buttonContainer" styleName="dock-min find-buttons">
-                <p:InlineSvgToggleButton ui:field="toggleMatchCase"/>
-                <p:InlineSvgToggleButton ui:field="toggleRegex"/>
-            </g:FlowPanel>
+            <p:Toolbar ui:field="buttonContainer" name="Search options"
+                       addStyleNames="dock-min find-buttons toolbar--control">
+                <p:ToolbarToggleButton ui:field="toggleMatchCase" svg="CASE_SENSITIVE" title="Match case"/>
+                <p:ToolbarToggleButton ui:field="toggleRegex" svg="REGEX" title="Regex"/>
+            </p:Toolbar>
         </g:FlowPanel>
         <g:MySplitLayoutPanel styleName="FindViewImpl-bottom dock-max overflow-hidden">
             <g:north size="300">

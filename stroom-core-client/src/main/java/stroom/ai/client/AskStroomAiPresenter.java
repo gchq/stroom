@@ -57,6 +57,7 @@ import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Size;
+import stroom.widget.util.client.SvgMarkup;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
@@ -869,14 +870,14 @@ public class AskStroomAiPresenter
     }
 
     private static Attribute iconButtonClassName(final String className) {
-        return Attribute.className(className + " icon-button");
+        return Attribute.className(className + " toolbar-button");
     }
 
     private static void button(final HtmlBuilder hb,
                                final SvgImage icon,
                                final Attribute... attributes) {
-        hb.elem(button -> button.div(div -> div.appendTrustedString(icon.getSvg()),
-                        Attribute.className("svg-image " + icon.getClassName() + " face")),
+        hb.elem(button -> button.appendTrustedString(
+                        SvgMarkup.decorative(icon.getSvg(), "toolbar-button__icon")),
                 BUTTON,
                 attributes);
     }

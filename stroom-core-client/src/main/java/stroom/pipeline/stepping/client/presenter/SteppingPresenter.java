@@ -67,8 +67,8 @@ import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -129,8 +129,8 @@ public class SteppingPresenter
     // elementId => ElementPresenter
     private final Map<ElementId, ElementPresenter> elementPresenterMap = new HashMap<>();
     private PipelineModel pipelineModel;
-    private final InlineSvgButton terminateButton;
-    private final InlineSvgToggleButton toggleLogPaneButton;
+    private final ToolbarButton terminateButton;
+    private final ToolbarToggleButton toggleLogPaneButton;
     private boolean foundRecord;
     private boolean busyTranslating;
     // Whether the in-flight step is answering an applied step filter. A filtered step is a scan - the
@@ -178,7 +178,7 @@ public class SteppingPresenter
         this.streamListFilterPresenterProvider = streamListFilterPresenterProvider;
         this.expressionValidator = expressionValidator;
 
-        terminateButton = new InlineSvgButton();
+        terminateButton = new ToolbarButton();
         terminateButton.setEnabled(false);
         terminateButton.addStyleName("QueryButtons-button stop");
         terminateButton.setSvg(SvgImage.STOP);
@@ -205,7 +205,7 @@ public class SteppingPresenter
         leftButtons = new ButtonPanel();
 
         // Create but don't add yet
-        toggleLogPaneButton = new InlineSvgToggleButton();
+        toggleLogPaneButton = new ToolbarToggleButton();
         toggleLogPaneButton.setSvg(SvgImage.EXCLAMATION);
         toggleLogPaneButton.setOn();
         toggleLogPaneButton.setTitle("Toggle Log Pane");

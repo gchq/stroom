@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2026 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,14 @@
 
 package stroom.widget.button.client;
 
-public class InlineSvgToggleButton extends InlineSvgButton implements ToggleButtonView {
+import com.google.gwt.user.client.ui.FlowPanel;
 
-    private boolean on;
+/// A row of [Toolbar]s spread across the space it has: the first at the start, the last at the
+/// end. Each toolbar is its own tab stop, so a row's actions and, say, its paging buttons are
+/// reached separately.
+public class ToolbarRow extends FlowPanel {
 
-    @Override
-    public void setState(final boolean on) {
-        this.on = on;
-        if (on) {
-            getElement().addClassName("on");
-        } else {
-            getElement().removeClassName("on");
-        }
-        getElement().setAttribute("aria-pressed", String.valueOf(on));
-    }
-
-    @Override
-    public boolean getState() {
-        return on;
-    }
-
-    @Override
-    void onClick() {
-        setState(!this.on);
-        super.onClick();
+    public ToolbarRow() {
+        setStyleName("toolbar-row");
     }
 }

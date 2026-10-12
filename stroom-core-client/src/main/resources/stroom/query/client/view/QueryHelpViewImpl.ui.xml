@@ -10,10 +10,10 @@
         </g:north>
         <g:center>
             <g:FlowPanel styleName="QueryHelpViewImpl-details max dashboard-panel dock-container-vertical">
-                <g:FlowPanel styleName="QueryHelpViewImpl-buttons dock-min button-container">
-                    <b:InlineSvgButton ui:field="insertButton" title="Insert" enabled="false"/>
-                    <b:InlineSvgButton ui:field="copyButton" title="Copy" enabled="false"/>
-                </g:FlowPanel>
+                <b:Toolbar name="Help actions" addStyleNames="QueryHelpViewImpl-buttons dock-min">
+                    <b:ToolbarButton ui:field="insertButton" svg="INSERT" title="Insert" enabled="false"/>
+                    <b:ToolbarButton ui:field="copyButton" svg="COPY" title="Copy" enabled="false"/>
+                </b:Toolbar>
                 <g:SimplePanel ui:field="details" styleName="dock-max queryHelpDetail"/>
             </g:FlowPanel>
         </g:center>

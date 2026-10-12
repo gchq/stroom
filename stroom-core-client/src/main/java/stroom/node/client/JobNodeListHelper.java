@@ -48,7 +48,7 @@ import stroom.util.client.DataGridUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.scheduler.Schedule;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.MenuBuilder;
 import stroom.widget.menu.client.presenter.MenuPresenter;
@@ -342,8 +342,8 @@ public class JobNodeListHelper {
         }
     }
 
-    public InlineSvgToggleButton buildJobFilterButton() {
-        final InlineSvgToggleButton showEnabledToggleBtn = new InlineSvgToggleButton();
+    public ToolbarToggleButton buildJobFilterButton() {
+        final ToolbarToggleButton showEnabledToggleBtn = new ToolbarToggleButton();
         showEnabledToggleBtn.setSvg(SvgImage.FILTER);
         showEnabledToggleBtn.setTitle(FILTER_BTN_TITLE_OFF);
         showEnabledToggleBtn.setOff();

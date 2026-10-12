@@ -41,7 +41,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -71,9 +71,9 @@ public class AccountsListPresenter
     private final MultiSelectionModelImpl<Account> selectionModel;
     private RestDataProvider<Account, ResultPage<Account>> dataProvider;
     private final MyDataGrid<Account> dataGrid;
-    private final InlineSvgButton addButton;
-    private final InlineSvgButton editButton;
-    private final InlineSvgButton deleteButton;
+    private final ToolbarButton addButton;
+    private final ToolbarButton editButton;
+    private final ToolbarButton deleteButton;
     private final PagerView pagerView;
     private final FindAccountRequest.Builder requestBuilder = new FindAccountRequest.Builder();
 
@@ -98,9 +98,9 @@ public class AccountsListPresenter
         this.dataGrid.setSelectionModel(selectionModel, selectionEventManager);
         pagerView.setDataWidget(dataGrid);
 
-        addButton = new InlineSvgButton();
-        editButton = new InlineSvgButton();
-        deleteButton = new InlineSvgButton();
+        addButton = new ToolbarButton();
+        editButton = new ToolbarButton();
+        deleteButton = new ToolbarButton();
         initButtons();
         initTableColumns();
 

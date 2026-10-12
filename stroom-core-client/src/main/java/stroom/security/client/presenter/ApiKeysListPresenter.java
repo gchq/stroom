@@ -84,9 +84,9 @@ public class ApiKeysListPresenter
 //    private final QuickFilterTimer timer = new QuickFilterTimer();
     private final MyDataGrid<HashedApiKey> dataGrid;
     private final UiConfigCache uiConfigCache;
-//    private final InlineSvgButton addButton;
-//    private final InlineSvgButton editButton;
-//    private final InlineSvgButton deleteButton;
+//    private final ToolbarButton addButton;
+//    private final ToolbarButton editButton;
+//    private final ToolbarButton deleteButton;
 
     private RestDataProvider<HashedApiKey, ResultPage<HashedApiKey>> dataProvider = null;
     private Map<Integer, HashedApiKey> apiKeys = new HashMap<>();
@@ -133,9 +133,9 @@ public class ApiKeysListPresenter
         listView.setDataView(pagerView);
         listView.setUiHandlers(this);
 
-//        addButton = new InlineSvgButton();
-//        editButton = new InlineSvgButton();
-//        deleteButton = new InlineSvgButton();
+//        addButton = new ToolbarButton();
+//        editButton = new ToolbarButton();
+//        deleteButton = new ToolbarButton();
 //        initButtons();
 //        initTableColumns();
 //        selectionModel.addSelectionHandler(event -> {

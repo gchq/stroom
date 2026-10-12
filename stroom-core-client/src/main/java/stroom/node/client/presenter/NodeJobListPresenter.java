@@ -40,7 +40,7 @@ import stroom.schedule.client.SchedulePopup;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.MenuPresenter;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
@@ -72,10 +72,10 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
     private final RestDataProvider<JobNodeAndInfo, JobNodeAndInfoListResponse> dataProvider;
     private final MyDataGrid<JobNodeAndInfo> dataGrid;
     private final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
-    private final InlineSvgToggleButton showEnabledToggleBtn;
+    private final ToolbarToggleButton showEnabledToggleBtn;
     private final MultiSelectionModelImpl<JobNodeAndInfo> selectionModel;
     private final NodeClient nodeClient;
-    private final InlineSvgToggleButton autoRefreshButton;
+    private final ToolbarToggleButton autoRefreshButton;
 
     private boolean autoRefresh;
 
@@ -109,7 +109,7 @@ public class NodeJobListPresenter extends MyPresenterWidget<PagerViewWithHeading
         view.addButton(showEnabledToggleBtn);
 
         autoRefresh = false;
-        autoRefreshButton = new InlineSvgToggleButton();
+        autoRefreshButton = new ToolbarToggleButton();
         autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
         autoRefreshButton.setTitle(AUTO_REFRESH_OFF_TITLE);
         autoRefreshButton.setState(autoRefresh);

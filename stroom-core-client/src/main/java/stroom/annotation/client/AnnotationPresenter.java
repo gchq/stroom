@@ -27,9 +27,9 @@ import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -120,9 +120,10 @@ public class AnnotationPresenter
         selectTab(ANNOTATION);
     }
 
+    // An annotation has no Save As, and its Save is in its editor's buttons
     @Override
-    protected ButtonPanel createToolbar() {
-        return new ButtonPanel();
+    protected Toolbar createToolbar() {
+        return new Toolbar("Annotation actions");
     }
 
     @Override

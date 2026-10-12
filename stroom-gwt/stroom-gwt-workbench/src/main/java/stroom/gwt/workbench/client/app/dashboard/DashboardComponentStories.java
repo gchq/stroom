@@ -18,6 +18,7 @@
 package stroom.gwt.workbench.client.app.dashboard;
 
 import stroom.gwt.workbench.client.FrameDocuments;
+import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.ai.AiFixtures;
 import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.query.DocumentEditors;
@@ -276,7 +277,7 @@ public final class DashboardComponentStories {
                     for (final String title : List.of("Add", "Edit", "Copy", "Delete", "Up", "Down")) {
                         play.expect(settings.getAllByTitle(title).count()).toBeGreaterThan(0);
                     }
-                    play.expect(settings.getAllByTitle("Edit").nth(0)).toHaveClass("disabled");
+                    play.expect(settings.getAllByTitle("Edit").nth(0)).toHaveAttribute("aria-disabled", "true");
                     play.click(settings.getAllByTitle("Add").nth(0));
                     // The caption is 'Add New Selection Handler'
                     play.expect(screen.findByText("Add New Selection Handler", StroomDom.DIALOG_TITLE))
@@ -404,6 +405,38 @@ public final class DashboardComponentStories {
                     // The play checks the app's stepping event, for the selected row's stream
                     play.expect(play.spy(BEGIN_STEPPING)).toHaveBeenCalledWith("1001");
                     DashboardPlays.expectNoProblems(play);
+                })
+                // The runs of icon buttons, and the tab stops each costs, once a query has run and a
+                // row is selected (the dashboard's, each component's and the text's stepping button)
+                .story("ToolbarTabStops", DashboardSupport.story(DashboardDocs.QUERY_TABLE_TEXT_STEP_DASHBOARD,
+                        DashboardComponentStories::textRoutes,
+                        options -> options.harness(builder -> builder.appPermissions(
+                                AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION,
+                                AppPermission.STEPPING_PERMISSION,
+                                AppPermission.VIEW_DATA_PERMISSION))))
+                .withPlay(play -> {
+                    DashboardPlays.opened(play);
+                    DashboardPlays.runQuery(play, 0);
+                    play.waitFor(() -> play.expect(play.getByText("alpha")).toBeInTheDocument());
+                    play.click(play.getByText("alpha"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", STEP))
+                            .not().toHaveAttribute("aria-disabled"));
+                    // The document's Save buttons and the dashboard's own sit together, one toolbar
+                    // (one tab stop); the stepping button (a
+                    // FabButton) is one tab stop (it was once two: its outer element and its button)
+                    play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
+                            "Save, Save As, Enter Design Mode, Maximise: 1 tab stop",
+                            "Execute Query: 1 tab stop",
+                            "Settings: 1 tab stop",
+                            "Settings: 1 tab stop",
+                            "Settings: 1 tab stop",
+                            "Add Term, Add Operator, Copy, Disable, Delete, History, Favourites, "
+                            + "Download Query: 1 tab stop",
+                            "Execute Query: 1 tab stop",
+                            "Add Column, Expand, Collapse, Download, Show Column Filters, "
+                            + "Ask Stroom AI: 1 tab stop",
+                            "First, Backward, Forward, Last, Not Updating: 1 tab stop",
+                            "Enter Stepping Mode: 1 tab stop"));
                 })
                 // The table sends its conditional formatting rules, and colours the rows that match
                 .story("TableConditionalFormattingRenders", DashboardSupport.story(DashboardDocs.CF_DASHBOARD,

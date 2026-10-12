@@ -20,6 +20,7 @@ package stroom.gwt.workbench.client.app.main;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.DocumentTabData;
+import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.query.QueryFixtures;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -183,16 +184,15 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play nav = navTree(play);
                     final Query filter = nav.getByRole("button", "Filter Types");
-                    // The toggle button shows its state with the 'on' class,
-                    // not aria-pressed
-                    play.expect(filter).not().toHaveClass("on");
+                    // The toggle button says whether a filter is set with aria-pressed
+                    play.expect(filter).toHaveAttribute("aria-pressed", "false");
                     play.click(filter);
                     final Play screen = play.screen();
                     screen.findByText("All / None");
                     play.expect(screen.getByText("Feed")).toBeInTheDocument();
                     play.expect(screen.getByText("Dictionary")).toBeInTheDocument();
                     play.click(screen.getByText("Feed"));
-                    play.waitFor(() -> play.expect(filter).toHaveClass("on"));
+                    play.waitFor(() -> play.expect(filter).toHaveAttribute("aria-pressed", "true"));
                     expectNoProblems(play);
                 })
                 // The Toggle Alerts button shows only when dependency warnings are enabled
@@ -206,9 +206,9 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play nav = navTree(play);
                     final Query alerts = nav.getByRole("button", "Toggle Alerts");
-                    play.expect(alerts).not().toHaveClass("on");
+                    play.expect(alerts).toHaveAttribute("aria-pressed", "false");
                     play.click(alerts);
-                    play.waitFor(() -> play.expect(alerts).toHaveClass("on"));
+                    play.waitFor(() -> play.expect(alerts).toHaveAttribute("aria-pressed", "true"));
                     expectNoProblems(play);
                 })
                 // A document opened on its own, without the explorer or toolbar
@@ -378,6 +378,26 @@ public final class AppShellStories {
                     play.expect(play.findByText("Volume Group", "label")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
+                // The runs of icon buttons, and the tab stops each costs: the explorer's and the
+                // main toolbar's, then those a document adds (its tab's Save buttons and its editor's)
+                .story("ToolbarTabStops", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
+                            "Ask Stroom AI, Show Menu: 1 tab stop",
+                            "Quick Filter Syntax Help: 1 tab stop",
+                            "New, Delete, Locate Current Item, Expand All, Collapse All, Filter Types, "
+                            + "Find In Content: 1 tab stop"));
+                    play.dblClick(navTree(play).getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeInTheDocument());
+                    play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
+                            "Ask Stroom AI, Show Menu: 1 tab stop",
+                            "Quick Filter Syntax Help: 1 tab stop",
+                            "Save, Save As, Download Dictionary words: 1 tab stop",
+                            "New, Delete, Locate Current Item, Expand All, Collapse All, "
+                            + "Filter Types, Find In Content: 1 tab stop"));
+                })
                 // Load, edit (dirty), save, and close with the unsaved changes confirmation
                 .story("DictionaryLifecycle", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
@@ -540,7 +560,7 @@ public final class AppShellStories {
                     play.expect(play.within(dialog).findByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))
                             .toBeInTheDocument();
                     final Query typeFilter = play.within(dialog).getByRole("button", "Filter Types");
-                    play.expect(typeFilter).not().toHaveClass("on");
+                    play.expect(typeFilter).toHaveAttribute("aria-pressed", "false");
                     // The Filter Types button is beside the quick filter, in the same row.
                     // The row is ExportConfigViewImpl's '.exportConfigViewImpl-filter'
                     play.expect(typeFilter.closest(".exportConfigViewImpl-filter")).not().toBeNull();

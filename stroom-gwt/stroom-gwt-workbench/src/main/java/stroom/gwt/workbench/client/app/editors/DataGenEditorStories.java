@@ -99,7 +99,7 @@ public final class DataGenEditorStories {
                         play.waitFor(() -> play.expect(DocEditors.tab(play, label)).toBeInTheDocument());
                     }
                     waitForSettings(play);
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // Settings, read only: the partner of Default
@@ -139,7 +139,7 @@ public final class DataGenEditorStories {
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).toHaveAttribute("readonly"));
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
-                            .toHaveClass("disabled");
+                            .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // Execution, editable: the partner of ExecutionReadOnly

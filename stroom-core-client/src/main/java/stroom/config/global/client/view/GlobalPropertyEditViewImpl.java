@@ -23,7 +23,7 @@ import stroom.svg.shared.SvgImage;
 import stroom.util.client.ClipboardUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -47,7 +47,7 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     Label name;
     @UiField
-    InlineSvgButton copyNameButton;
+    ToolbarButton copyNameButton;
     @UiField
     TextArea description;
     @UiField

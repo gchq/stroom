@@ -88,9 +88,8 @@ public final class TypeFilterStories {
             }
         }
 
-        // A GWT button with the `icon-button` class
+        // A text button, which shows how many types are chosen
         final Button button = new Button("Type filter");
-        button.setStyleName("icon-button");
         final Label echo = new Label();
         echo.getElement().getStyle().setProperty("fontSize", "12px");
         echo.getElement().getStyle().setProperty("marginTop", "12px");

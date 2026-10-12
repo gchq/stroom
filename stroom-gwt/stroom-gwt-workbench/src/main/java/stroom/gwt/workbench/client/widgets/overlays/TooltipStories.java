@@ -24,7 +24,7 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupPosition.PopupLocation;
@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.Widget;
 /// Stories for Stroom's tooltips.
 ///
 /// Stroom has two kinds: a [TooltipPresenter] popup shown next to a widget at a `PopupLocation`,
-/// and the native `title` that Stroom gives its toolbar buttons ([InlineSvgButton]).
+/// and the native `title` that Stroom gives its toolbar buttons ([ToolbarButton]).
 public final class TooltipStories {
 
     private TooltipStories() {
@@ -121,7 +121,7 @@ public final class TooltipStories {
     }
 
     private static Widget iconButton(final SvgImage icon, final String title) {
-        final InlineSvgButton button = new InlineSvgButton();
+        final ToolbarButton button = new ToolbarButton();
         button.setSvg(icon);
         button.setTitle(title);
         button.setEnabled(true);

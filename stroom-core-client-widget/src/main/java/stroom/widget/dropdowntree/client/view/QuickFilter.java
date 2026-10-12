@@ -17,7 +17,7 @@
 package stroom.widget.dropdowntree.client.view;
 
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -58,8 +58,8 @@ public class QuickFilter extends FlowPanel
             .toSafeHtml();
 
     private final TextBox textBox = new TextBox();
-    private final InlineSvgButton clearButton;
-    private final InlineSvgButton helpButton;
+    private final ToolbarButton clearButton;
+    private final ToolbarButton helpButton;
     private final HandlerManager handlerManager = new HandlerManager(this);
     private Supplier<SafeHtml> popupTextSupplier;
     private String lastInput = "";
@@ -79,12 +79,12 @@ public class QuickFilter extends FlowPanel
         textBox.addStyleName("allow-focus");
         textBox.getElement().setAttribute("placeholder", "Quick Filter");
 
-        clearButton = new InlineSvgButton();
+        clearButton = new ToolbarButton();
         clearButton.setSvg(SvgImage.CLEAR);
         clearButton.setTitle("Clear Filter");
         clearButton.addStyleName("clear");
 
-        helpButton = new InlineSvgButton();
+        helpButton = new ToolbarButton();
         helpButton.setSvg(SvgImage.HELP_OUTLINE);
         helpButton.setTitle("Quick Filter Syntax Help");
         helpButton.addStyleName("help-button info");

@@ -132,7 +132,7 @@ public final class DataRetentionScreenStories {
                     play.findByText("Keep a month");
                     // Save -> PUT the rules (the retain-all rule excluded) with the renamed rule
                     final Query save = play.getByTitle("Save rules");
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(RULES_PATH)
@@ -205,21 +205,23 @@ public final class DataRetentionScreenStories {
                 .withPlay(play -> {
                     openImpactSummary(play);
                     // Idle: Run enabled, Abort disabled
-                    play.expect(play.getByTitle(ABORT_QUERY)).toHaveClass("disabled");
-                    play.expect(play.getByTitle(RUN_QUERY)).not().toHaveClass("disabled");
+                    play.expect(play.getByTitle(ABORT_QUERY)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle(RUN_QUERY)).not().toHaveAttribute("aria-disabled");
                     // In flight: the gating inverts (updateButtonStates)
                     play.click(play.getByTitle(RUN_QUERY));
-                    play.waitFor(() -> play.expect(play.getByTitle(ABORT_QUERY)).not().toHaveClass("disabled"));
-                    play.expect(play.getByTitle(RUN_QUERY)).toHaveClass("disabled");
-                    play.expect(play.getByTitle(SET_FILTER)).toHaveClass("disabled");
+                    play.waitFor(() -> play.expect(play.getByTitle(ABORT_QUERY))
+                            .not().toHaveAttribute("aria-disabled"));
+                    play.expect(play.getByTitle(RUN_QUERY)).toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByTitle(SET_FILTER)).toHaveAttribute("aria-disabled", "true");
                     // Abort cancels the same queryId the run was issued with
                     play.click(play.getByTitle(ABORT_QUERY));
                     final Spy requests = play.spy(ScreenHarness.REQUEST_SPY);
                     play.waitFor(() -> play.expect("the query ids run and cancelled",
                                     () -> runAndCancelledIds(requests))
                             .toSatisfy("one run, cancelled by its id", DataRetentionScreenStories::isCancelledRun));
-                    play.waitFor(() -> play.expect(play.getByTitle(ABORT_QUERY)).toHaveClass("disabled"));
-                    play.expect(play.getByTitle(RUN_QUERY)).not().toHaveClass("disabled");
+                    play.waitFor(() -> play.expect(play.getByTitle(ABORT_QUERY))
+                            .toHaveAttribute("aria-disabled", "true"));
+                    play.expect(play.getByTitle(RUN_QUERY)).not().toHaveAttribute("aria-disabled");
                     // The aborted run's late response must not fill the cleared table
                     play.sleep(1600);
                     play.expect(play.queryByText("LATE")).toBeNull();

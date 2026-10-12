@@ -464,6 +464,116 @@ toolbar is a `ButtonPanel` (about 100 uses), so most of the change is there; the
 toolbar and the main header are built without it. Tab bars (`role="tablist"`) and tables should
 likewise be one tab stop with arrow keys inside.
 
+Agreed design: buttons that sit next to each other are one group (one tab stop), whatever code adds
+them, so adjacent panels (e.g. a document tab's Save buttons and its editor's) become one; buttons
+apart on a row (e.g. at either end) are separate groups. Every image button is in a group, even on
+its own; a group is `role="toolbar"` (named) only with two or more visible buttons. Left/Right wrap
+and Home/End jump; the keys are the arrows only, not `KeyBinding`'s letters (A/D/H/L), which would
+swallow key sequences such as `g u`. Buttons inside a widget that owns its keys (e.g. the quick
+filter's) are exempt. `FocusWidget.onAttach` turns a `tabIndex` of -1 back into 0, so the roving
+tab index must be set after attach (or use -2, as `HelpButton` does).
+
+Measured (`ButtonRuns` and `TabStops` in the workbench's `a11y` package; stories
+`Widgets/Buttons/ButtonGroup` and the `ToolbarTabStops` stories of `App/Main/AppShell`,
+`App/Main/UserGroupsScreen` and `App/Editors/DashboardEditor`): the explorer's header costs 7 tab
+stops, a dashboard with a query, table and text 30, its expression toolbar 8 and table toolbar 6,
+and each list pane 3 + 5 (its actions and its pager). Found while measuring:
+
+* `SvgToggleButton` (`ButtonPanel.addToggleButton`) has no name: its tooltip is on the icon inside
+  it, not on the button (`Widgets/Buttons/ButtonGroup` `WithToggle`).
+* A `FabButton` (the Text component's stepping button) is two tab stops, its outer `div` and its
+  inner `button` (`App/Editors/DashboardEditor` `ToolbarTabStops`).
+* `TablePresenter` (line 268) adds its Ask Stroom AI button twice.
+
+Done so far: `ButtonPanel` is a group (`ButtonGroupFocus`, which can also be installed on any
+element, merging the groups inside it), so each list's actions, the dictionary's Save buttons and a
+dashboard's expression and table toolbars are now one tab stop each (`Widgets/Buttons/ButtonGroup`,
+`Widgets/Query/ExpressionBuilder` `ToolbarIsRealButtons`). Still to do: the groups built as plain
+`FlowPanel`s (the explorer's header, the pagers, the main toolbar, the data navigators), merging
+adjacent groups (e.g. a document tab's toolbar row), naming each toolbar (`setAccessibleName`), the
+`FabButton`'s second tab stop and the `SvgToggleButton`'s name.
+
+Since then: `Toolbar` and `ToolbarRow` (named groups built from an `SvgImage` and a name, also in
+UiBinder) with their own buttons (`ToolbarButton`, `ToolbarToggleButton`, styled only by
+`toolbar.css` under new BEM names, so the older buttons' names and rules can later be deleted;
+they match the older icon buttons pixel for pixel), toggles that say they are toggles before first
+pressed,
+`FocusTooltip` (an icon button's name shown on keyboard focus) and focus handed on when the focused
+button of a group is hidden or removed (`Widgets/Buttons/Toolbar`). Known limits: Escape in a
+dialog also closes the dialog (its popup handles Escape first).
+
+Checked since: real key presses and mouse clicks on a toolbar (`workbenchTest`'s real input check,
+story `Widgets/Buttons/Toolbar` `RealInput`), which found that a real click showed the focus
+tooltip (fixed: it now ignores focus that follows a pointer press); `workbenchTest` now fails a
+story that breaks a WCAG 2.x A or AA rule not in `test-runner/a11y-baseline.json` (365 stories have
+entries, mostly `target-size`, `label`, `button-name` and `color-contrast`); and the cost of keeping
+groups up to date is small (a dashboard with a query, table and text: 7 groups, 47 updates, 3 ms in
+all). Still to do: try a toolbar with a screen reader (NVDA or VoiceOver).
+
+The buttons' DOM was then simplified, each step checked against a screenshot baseline of every
+story (`workbenchScreenshotDiff`; stories `Widgets/Buttons/IconButtonStates`, whose hover and focus
+states are set with the real mouse and keyboard, `Widgets/Buttons/RefreshButton` `AllStates` and
+`Widgets/Buttons/FabButton`):
+
+* Icon buttons draw their hover, on and focus fill and border with `.icon-button::before` instead of
+  a `div.background` in every button, and their states are styled from `aria-pressed` and
+  `aria-disabled` rather than the `on` and `disabled` classes (which are still set), so what is
+  shown matches what screen readers are told. Pixel-identical.
+* `FabButton` is one tab stop: its outer element no longer takes the focus (real input check).
+* `RefreshButton` is its button and four icons (it was 14 elements); four rules choose the icons in
+  place of 13 competing selectors, identical in all eight combinations of refreshing, pausable and
+  paused, and it doesn't turn or pulse for `prefers-reduced-motion`.
+* The icons inside buttons are `aria-hidden` (the buttons are named by their titles).
+* `ButtonPanel.setVertical` lays its buttons out in a column (it set `display: block` on each,
+  which left them in a row and the focus outline adrift; unused in the app).
+
+Rollout: the explorer's header is a `Toolbar` (`toolbar--navigation`, in the explorer's colours),
+so its 7 buttons are one tab stop, named "Explorer", with 2px between them, which also meets
+`target-size` (`App/Main/AppShell` `ToolbarTabStops`). Every list's paging buttons are a `Toolbar`
+named "Paging" (`Pager.ui.xml`), one tab stop where they were five, and `RefreshButton` is a
+`ToolbarButton` with BEM names (`refresh-button`, `refresh-button__icon--…`,
+`refresh-button--refreshing/--pausable/--paused`); every story's screenshot is unchanged. A
+document's toolbar is a `Toolbar` ("Document actions": Save, Save As, a subclass's own buttons such
+as Download, then the showing tab's buttons from `HasToolbar.getDocumentButtons`), one tab stop for
+the buttons that sit together; controls apart at the end of the row (a query's time range and
+Execute) stay their own (`HasToolbar.getToolbars`). A dashboard's Save, Save As, Design Mode and
+Maximise were two tab stops and are one; `VisualisationAssetsPresenter` no longer adds its click
+handlers again each time its tab is shown. Screenshots unchanged. Then the other groups that were
+plain `FlowPanel`s: the application's toolbar (Ask Stroom AI and the main menu, `toolbar--header`),
+Find in Content's Match case and Regex (`toolbar--control`, now 2px apart for `target-size`), the
+data screen's item and character navigators, the stepping controls, the pipeline structure's
+buttons, query help's Insert and Copy, the export dialog's filter and each dashboard pane's
+Settings; each is one tab stop and, but for Find in Content's gap, looks the same. `ToolbarButton`
+and `ToolbarToggleButton` are `ButtonView`s and `ToggleButtonView`s, so presenters given buttons
+that way work with them unchanged. Ask Stroom AI's buttons are a quiet toolbar ("Conversation",
+`toolbar--quiet`), 2px apart; their text labels never showed (`setSvg` replaced them), so toolbars
+are icon only for now (see "Display preference" in `COMPONENT_MODEL_DESIGN.md`), and its Send/Cancel
+button has a name. The Copy button under each chat reply is a labelled action on its message, not a
+toolbar, so stays a plain button (it is built as HTML with the old `icon-button` class, so should
+become a `Button` when that class goes). Left: `DataNavigator` and `SubStreamNavigator` (not used:
+to be deleted), and the remaining `ButtonPanel` callers, which already behave as toolbars and move
+as their areas are next changed.
+
+Retiring the older buttons, phase 1: `ButtonPanel.addButton(Preset)` makes a `ToolbarButton`, so the
+buttons of every list, document and dashboard toolbar built that way use the new names and styles
+(every screenshot unchanged); `addToggleButton`, `SvgToggleButton` (two icons, no name) and
+`BaseSvgButton` are gone, and the data retention impact's flat/nested switch is a pressed toggle
+named "Nested table" (seven stories no longer break `button-name`). Phase 2: `InlineSvgButton`,
+`InlineSvgToggleButton` and `SvgButton` are now deprecated subclasses of `ToolbarButton` and
+`ToolbarToggleButton`, so every remaining older button (beside inputs, help, table expand and
+collapse, date picker) renders the new markup; `FilterCell`'s and the chat's icon buttons emit it
+too (`SvgMarkup.decorative`); the rules that reached inside the older markup (password, Edit Tags,
+form help, date picker, chat, explorer) were moved to the new names. The chat's Copy buttons were
+already plain buttons of their own. `ToolbarButton` keeps the older buttons' mouse handling: pressing
+it with the mouse doesn't move the focus elsewhere (`setFocusOnMouseDown(false)` leaves it in the
+field beside it). Screenshots unchanged but for the show-password eye, now drawn on whole pixels.
+Phase 3: `InlineSvgButton` and `InlineSvgToggleButton` are deleted (their uses, in 54 files and
+templates, are `ToolbarButton` and `ToolbarToggleButton`), with `.icon-button`, `.inline-svg-button`,
+`.icon-button-group` and their rules (`stroom-button.css` keeps only the floating action button and
+`.navigation-menu-button`); nothing in the app emits those names. Every screenshot is unchanged.
+`SvgButton.create(Preset)` stays, deprecated (it makes a `ToolbarButton`), until `SvgPresets` goes;
+`FabButton` (`stroom-button-fab`, `face`) is left for a BEM pass of its own.
+
 ### Keyboard trap in the code editor
 
 Tab in an editable code editor inserts an indent, so keyboard users can't leave it (WCAG 2.1.2).
@@ -519,9 +629,9 @@ best done in `ShowMenuEvent` with a named opener rather than one place at a time
   time preferences); the minutes spinner is also hidden by a FIXME.
 * The explorer's Stroom logo (`navigation-logo`, a `Button` holding an SVG) has no name and is a tab
   stop (`NavigationViewImpl`).
-* Ask Stroom AI: the Send/Cancel button is an `InlineSvgButton` given its name with `setText`, which
-  doesn't show, so it has no name; the message box has only a placeholder ("How can I help?")
-  (`AskStroomAiViewImpl`).
+* Ask Stroom AI: the message box has only a placeholder ("How can I help?") (`AskStroomAiViewImpl`).
+  (Its Send/Cancel button, once named only by `setText`, which didn't show, is now a `ToolbarButton`
+  named Send or Cancel.)
 * Quick filters have only a "Quick Filter" placeholder, no label, e.g. the Find dialog's,
   Dependencies, User Access and Export (`QuickFilter`).
 * Find In Content's pattern box has no label (`FindInContentViewImpl.ui.xml`).

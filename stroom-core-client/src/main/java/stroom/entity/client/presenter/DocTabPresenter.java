@@ -27,14 +27,12 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.util.client.SafeHtmlUtil;
 
@@ -46,7 +44,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -55,11 +55,15 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         extends DocPresenter<V, D>
         implements DocumentTabData, Refreshable, HasType, HasSave {
 
-    private final ButtonView saveButton;
-    private final ButtonView saveAsButton;
+    private final ToolbarButton saveButton;
+    private final ToolbarButton saveAsButton;
     private TabData selectedTab;
     private String lastLabel;
-    protected final ButtonPanel toolbar;
+    // The document's toolbar: Save, Save As and any buttons subclasses add, then the buttons of the
+    // tab showing (HasToolbar.getDocumentButtons), all one group (one tab stop)
+    protected final Toolbar toolbar;
+    // The buttons the tab showing added to the toolbar, removed when another tab is shown
+    private final List<Widget> tabButtons = new ArrayList<>();
     // Why a document is read only: it is only ever opened read only for a user who can't edit it
     private static final String READ_ONLY_REASON = "You don't have permission to change this";
 
@@ -76,9 +80,15 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     public DocTabPresenter(final EventBus eventBus,
                            final V view) {
         super(eventBus, view);
-        saveButton = SvgButton.create(SvgPresets.SAVE);
-        saveAsButton = SvgButton.create(SvgPresets.SAVE_AS);
+        saveButton = new ToolbarButton();
+        saveButton.setSvg(SvgImage.SAVE);
+        saveButton.setTitle("Save");
+        saveButton.setOnClick(this::save);
         saveButton.setEnabled(false);
+        saveAsButton = new ToolbarButton();
+        saveAsButton.setSvg(SvgImage.SAVEAS);
+        saveAsButton.setTitle("Save As");
+        saveAsButton.setOnClick(this::saveAs);
         saveAsButton.setEnabled(false);
 
         toolbar = createToolbar();
@@ -95,12 +105,14 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         addEntry(commonTabsMap, CommonDocLinkTab.PERMISSIONS, this::getPermissionsTab);
     }
 
-    protected ButtonPanel createToolbar() {
-        final ButtonPanel toolbar = new ButtonPanel();
-        toolbar.addButton(saveButton);
-        toolbar.addButton(saveAsButton);
-        registerHandler(saveButton.addClickHandler(event -> save()));
-        registerHandler(saveAsButton.addClickHandler(event -> saveAs()));
+    /// Makes the document's toolbar, with its Save and Save As buttons. A subclass may add its own
+    /// buttons to [#toolbar] once it is made.
+    ///
+    /// @return The toolbar.
+    protected Toolbar createToolbar() {
+        final Toolbar toolbar = new Toolbar("Document actions");
+        toolbar.add(saveButton);
+        toolbar.add(saveAsButton);
         return toolbar;
     }
 
@@ -184,17 +196,22 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
                         // Set the content.
                         getView().getLayerContainer().show((Layer) currentContent);
 
-                        // Update the buttons.
+                        // Update the buttons: the tab's own buttons join the document's toolbar,
+                        // and its other toolbars follow it
+                        for (final Widget widget : tabButtons) {
+                            toolbar.remove(widget);
+                        }
+                        tabButtons.clear();
+                        getView().clearToolbar();
+                        getView().addToolbar(toolbar);
                         if (currentContent instanceof final HasToolbar hasToolbar) {
-                            getView().clearToolbar();
-                            getView().addToolbar(toolbar);
-
+                            for (final Widget widget : hasToolbar.getDocumentButtons()) {
+                                toolbar.add(widget);
+                                tabButtons.add(widget);
+                            }
                             for (final Widget widget : hasToolbar.getToolbars()) {
                                 getView().addToolbar(widget);
                             }
-                        } else {
-                            getView().clearToolbar();
-                            getView().addToolbar(toolbar);
                         }
 
                         // Update the selected tab.

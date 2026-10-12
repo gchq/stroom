@@ -23,7 +23,6 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToggleButtonView;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -79,12 +78,6 @@ public class PagerViewImpl extends ViewImpl implements PagerView {
     @Override
     public void addButton(final ButtonView buttonView) {
         getButtonPanel().addButton(buttonView);
-    }
-
-    @Override
-    public ToggleButtonView addToggleButton(final Preset primaryPreset,
-                                            final Preset secondaryPreset) {
-        return getButtonPanel().addToggleButton(primaryPreset, secondaryPreset);
     }
 
     private ButtonPanel getButtonPanel() {

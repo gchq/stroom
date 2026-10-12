@@ -126,21 +126,25 @@ public final class SteppingScreenStories {
                 .withPlay(play -> {
                     // beginStepping refreshes on entry: the label settles at [1:1:1] (record 0)
                     play.waitFor(() -> play.expect(play.getAllByText("[1:1:1]").count()).toBeGreaterThan(0));
-                    play.waitFor(() -> play.expect(play.getByTitle("Step Forward")).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(play.getByTitle("Step Forward"))
+                            .not().toHaveAttribute("aria-disabled"));
                     // StepControlPresenter only knows a record is the first of the first stream of the
                     // stepper's stream list, which a stepper begun on one stream (as here) hasn't
                     // loaded, so the initial REFRESH leaves Back enabled
-                    play.waitFor(() -> play.expect(play.getByTitle("Step Backward")).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(play.getByTitle("Step Backward"))
+                            .not().toHaveAttribute("aria-disabled"));
                     // Step Forward twice -> [1:1:3]; Back is now enabled
                     play.click(play.getByTitle("Step Forward"));
                     play.findAllByText("[1:1:2]");
                     play.click(play.getByTitle("Step Forward"));
                     play.findAllByText("[1:1:3]");
-                    play.waitFor(() -> play.expect(play.getByTitle("Step Backward")).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(play.getByTitle("Step Backward"))
+                            .not().toHaveAttribute("aria-disabled"));
                     // Step To Last -> [1:1:5]
                     play.click(play.getByTitle("Step To Last"));
                     play.findAllByText("[1:1:5]");
-                    play.waitFor(() -> play.expect(play.getByTitle("Step To Last")).toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(play.getByTitle("Step To Last"))
+                            .toHaveAttribute("aria-disabled", "true"));
                     // Both elements are in the pipeline tree.
                     // The stepper shows the pipeline's element tree
                     play.findByText("xsltFilter");

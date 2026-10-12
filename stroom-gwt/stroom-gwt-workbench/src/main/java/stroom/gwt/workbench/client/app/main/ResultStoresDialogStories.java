@@ -82,7 +82,7 @@ public final class ResultStoresDialogStories {
                     // The toolbar buttons are found by their titles
                     play.click(screen.getByText("admin"));
                     final Query terminate = screen.getByTitle("Terminate Search");
-                    play.waitFor(() -> play.expect(terminate).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(terminate).not().toHaveAttribute("aria-disabled"));
                     play.click(terminate);
                     // GWT confirms before terminating
                     play.waitFor(() -> play.expect(screen.getByText(
@@ -101,7 +101,8 @@ public final class ResultStoresDialogStories {
                             .getByRole("button", StroomDom.button("Close")));
                     // The analytic store can't be terminated or deleted
                     play.click(screen.findByText("analyst"));
-                    play.waitFor(() -> play.expect(screen.getByTitle("Delete Store")).toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(screen.getByTitle("Delete Store"))
+                            .toHaveAttribute("aria-disabled", "true"));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 })
                 // Selecting a store and opening Settings edits its lifespans
@@ -112,7 +113,7 @@ public final class ResultStoresDialogStories {
                     // GWT: the toolbar button is titled "Store Settings"; the dialog it opens is
                     // captioned "Change Result Store Settings"
                     final Query settings = screen.getByTitle("Store Settings");
-                    play.waitFor(() -> play.expect(settings).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(settings).not().toHaveAttribute("aria-disabled"));
                     play.click(settings);
                     final Play dialog = screen.within(screen.findByText("Change Result Store Settings")
                             .closest(StroomDom.DIALOG));
