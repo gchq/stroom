@@ -338,6 +338,39 @@ public final class DashboardLayoutStories {
                             .toHaveTextContent("The Table"));
                     DashboardPlays.expectNoProblems(play);
                 })
+                // Escape cancels placing a duplicate: no copy is made and the dashboard can be used
+                // again. Only a mouse click ended placing it, under a glass over the whole window
+                .story("DuplicateCancelledWithEscape", DashboardSupport.story(DashboardDocs.SINGLE_GROUP_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.designMode(play, true);
+                    DashboardPlays.openTabMenu(play, "The Table");
+                    play.click(DashboardPlays.menuItem(screen, "Duplicate"));
+                    play.waitFor(() -> play.expect(screen.querySelector(".flexLayout-glassVisible")).toBeInTheDocument());
+                    play.keyboard("{Escape}");
+                    play.waitFor(() -> play.expect(screen.querySelectorAll(".flexLayout-glassVisible").count()).toBe(0));
+                    play.expect(play.queryByText("The Table 2", DashboardPlays.COMPONENT_TAB)).toBeNull();
+                    DashboardPlays.expectNoProblems(play);
+                })
+                // Enter places a duplicate beside the tab it was copied from
+                .story("DuplicatePlacedWithEnter", DashboardSupport.story(DashboardDocs.SINGLE_GROUP_DASHBOARD,
+                        routes -> {
+                        }))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    DashboardPlays.opened(play);
+                    DashboardPlays.designMode(play, true);
+                    DashboardPlays.openTabMenu(play, "The Table");
+                    play.click(DashboardPlays.menuItem(screen, "Duplicate"));
+                    play.waitFor(() -> play.expect(screen.querySelector(".flexLayout-glassVisible")).toBeInTheDocument());
+                    play.keyboard("{Enter}");
+                    play.waitFor(() -> play.expect(DashboardPlays.tab(play, "The Table 2")).toBeInTheDocument());
+                    play.expect(screen.querySelectorAll(".flexLayout-glassVisible").count()).toBe(0);
+                    DashboardPlays.expectNoProblems(play);
+                })
                 // A tab's menu duplicates, maximises (then restores) and hides components
                 .story("TabActions", DashboardSupport.story(DashboardDocs.SINGLE_GROUP_DASHBOARD, routes -> {
                 }))

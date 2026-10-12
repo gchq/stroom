@@ -196,6 +196,19 @@ public final class PipelineEditorStories {
                     .route(RequestMatcher.post("/processorFilter/v1/find")
                                     .withJsonBodyContaining("{\"expandedRows\": []}"),
                             RestReply.json(COLLAPSED_PROCESSOR_ROWS)));
+    // Creating an embedded XSLT fails, e.g. the server refuses it
+    private static final RestFixtures EMBED_FAILS_FIXTURES = fixtures(DOC, NO_ROWS, NO_ROWS,
+            RestFixtures.builder()
+                    .post(LAYERS_PATH, RestReply.json(LAYERS))
+                    .post("/xslt/v1", RestReply.error(500, "Unable to create the XSLT")));
+    // As PROCESSOR_FIXTURES, with the batch change failing, e.g. the server refuses it
+    private static final RestFixtures BATCH_FAILS_FIXTURES = fixtures(DOC, NO_ROWS, PROCESSOR_ROWS,
+            RestFixtures.builder()
+                    .post(LAYERS_PATH, RestReply.json(LAYERS))
+                    .route(RequestMatcher.post("/processorFilter/v1/find")
+                                    .withJsonBodyContaining("{\"expandedRows\": []}"),
+                            RestReply.json(COLLAPSED_PROCESSOR_ROWS))
+                    .post("/processorFilter/v1/bulkChange", RestReply.error(500, "Unable to change the processors")));
     private static final RestFixtures STEPPING_FIXTURES = fixtures(DOC, STREAMS, NO_ROWS,
             RestFixtures.builder().post(LAYERS_PATH, RestReply.json(LAYERS)));
     // The XSLT of the xslt element, whose code is edited while stepping
@@ -347,6 +360,45 @@ public final class PipelineEditorStories {
                     play.click(play.getByText("Complete"));
                     play.waitFor(() -> play.expect(play.getByTitle("Show Tasks")).not().toHaveClass("disabled"));
                     expectNoProblems(play);
+                })
+                // An embedded document that can't be created says why and leaves the property dialog
+                // usable: the failure alert had no callback, so OK and Cancel stayed disabled
+                .story("FailedEmbeddedCreateKeepsDialogUsable", context ->
+                        renderWithPlugins(context, EMBED_FAILS_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    openStructure(play);
+                    play.click(play.findByText("xslt"));
+                    play.dblClick(play.findByText("My XSLT"));
+                    final Play property = dialog(screen, "Edit Property");
+                    play.click(property.querySelector(StroomDom.SELECTION_BOX));
+                    play.click(screen.findByText("Embedded"));
+                    play.waitFor(() -> play.expect(property.getByDisplayValue("EMBEDDED XSLT (xslt)"))
+                            .toBeInTheDocument());
+                    play.click(property.getByRole("button", StroomDom.button("OK")));
+                    play.click(dialogWith(screen, TextMatch.containing("Unable to create embedded document"))
+                            .getByRole("button", StroomDom.button("Close")));
+                    play.click(property.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Property", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                })
+                // A batch change that fails says why and leaves the dialog usable: the change had no
+                // failure handler, so OK and Cancel stayed disabled after the alert
+                .story("FailedBatchChangeKeepsDialogUsable", context -> render(context, BATCH_FAILS_FIXTURES))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByText("Processors", StroomDom.LINK_TAB_LABEL));
+                    play.findByText("Complete");
+                    play.click(play.getByTitle("Batch Edit Current Processors"));
+                    final Play batch = dialog(screen, "Batch Change All Filtered Processors");
+                    play.click(batch.getByRole("button", StroomDom.button("OK")));
+                    play.click(dialogWith(screen, TextMatch.exact("Are you sure you want to change 2 processors?"))
+                            .getByRole("button", StroomDom.button("OK")));
+                    play.click(dialogWith(screen, TextMatch.containing("Unable to change the processors"))
+                            .getByRole("button", StroomDom.button("Close")));
+                    play.click(batch.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Batch Change All Filtered Processors",
+                            StroomDom.DIALOG_TITLE)).toBeNull());
                 })
                 // With data access, the Data tab is there (the default) and Structure is reachable
                 .story("WithDataTab", context -> render(context, FIXTURES))
@@ -570,8 +622,13 @@ public final class PipelineEditorStories {
     // the tab, and saves it (the tab's Save) with its 'Save Pipeline' picker; a stepping element's
     // code is loaded and saved by XsltPlugin
     private static Widget renderWithPlugins(final StoryContext context) {
+        return renderWithPlugins(context, MULTI_SAVE_FIXTURES);
+    }
+
+    // As above, with the given fixtures
+    private static Widget renderWithPlugins(final StoryContext context, final RestFixtures fixtures) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, MULTI_SAVE_FIXTURES)
+        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
                 .realAlerts()
                 .build();

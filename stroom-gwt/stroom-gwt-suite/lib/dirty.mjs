@@ -85,10 +85,29 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       const t = String(content.textContent ?? '');
       return `${t.length}:${t.slice(0, 120)}`;
     };
+    /**
+     * A `CustomCheckBox`: a visible `.SimpleTickBox` around a hidden `input.checkbox`, whose
+     * `checked` is the state. Reading only `input[type=checkbox]` found the hidden input, which has
+     * no size, so all 56 of its value handlers were `needs-value`. Disabled or read-only ones can't be
+     * driven. It is named by its own label ("Enabled"), or by its input's `aria-label` when it stands
+     * outside any FormGroup, as Batch Edit Schedules' "Change Schedule Name" enable boxes do.
+     */
+    const simpleTick = (el) => {
+      if (!el || !(el.offsetWidth > 0) || /SimpleTickBox-(disabled|readonly)/.test(el.className)) return null;
+      const input = el.querySelector('input[type="checkbox"]');
+      const target = el.querySelector('.checkmark') ?? el.querySelector('.checkbox-container') ?? el;
+      const r = target.getBoundingClientRect();
+      return { label: norm(el.querySelector('.form-label')?.textContent) || norm(input?.getAttribute('aria-label'))
+        || norm(el.getAttribute('aria-label')), kind: 'tick', value: `checked=${!!input?.checked}`,
+        x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    };
     const out = [];
     for (const group of document.querySelectorAll('.form-group')) {
       if (!(group.offsetWidth > 0) || inDialog(group)) continue;
-      const label = norm(group.querySelector('.form-group-label')?.textContent);
+      const ownTick = group.querySelector('.SimpleTickBox');
+      // An inline tick's group has no `.form-group-label`: the tick box carries its own.
+      const label = norm(group.querySelector('.form-group-label')?.textContent)
+        || norm(ownTick?.querySelector('.form-label')?.textContent);
       // ONLY a labelled FormGroup field. Not every box on a document editor belongs to the
       // document: the Feed's Data tab is a stream browser, and its filter and pager boxes have no
       // business marking the Feed dirty. Typing in one and calling Save's silence a defect is how
@@ -101,6 +120,9 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       // A SelectionBox first: its inner text box is an <input> too, and typing into one does
       // nothing — the value is chosen from the popup its icon opens.
       const select = group.querySelector('.SelectionBox');
+      // A disabled box can't be driven (Batch Edit Schedules' until its enable box is ticked), and
+      // trying to opened nothing, so the Escape meant for its list closed the dialog instead.
+      if (select && select.offsetWidth > 0 && /\bdisabled\b/.test(select.className)) continue;
       if (select && select.offsetWidth > 0) {
         const icon = select.querySelector('.svgIconBox-icon') ?? select;
         out.push({ label, kind: 'select', value: norm(select.querySelector('.SelectionBox-renderBox')?.textContent
@@ -111,6 +133,11 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       // checkbox is a real `input.checkbox` (CustomCheckBox) whose class never changes and whose
       // `checked` does. Reading the class for both made every form checkbox look like a control
       // that refused to move, while its document went dirty — so read whichever actually varies.
+      if (ownTick) {
+        const t = simpleTick(ownTick);
+        if (t) out.push({ ...t, label });
+        continue;
+      }
       const tick = group.querySelector('.tickBox, input[type="checkbox"]');
       if (tick && tick.offsetWidth > 0) {
         const state = tick.tagName === 'INPUT'
@@ -157,6 +184,13 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
       // editors — Script, View, DataGen's template — are reachable no other way.
       const ace = group.querySelector('.ace_content, .ace_editor');
       if (ace && ace.offsetWidth > 0) out.push({ label, kind: 'ace', value: aceText(ace), ...at(ace, 0.3) });
+    }
+    // Tick boxes OUTSIDE any FormGroup: a batch dialog's per-field "enable" boxes, which decide
+    // whether the field next to them is applied at all.
+    for (const el of document.querySelectorAll('.SimpleTickBox')) {
+      if (el.closest('.form-group') || inDialog(el)) continue;
+      const t = simpleTick(el);
+      if (t && t.label) out.push(t);
     }
     // A tab that IS an editor — Script, XSLT, TextConverter — has no FormGroup at all: the editor
     // fills the pane. Drive it when the tab offers nothing else, named for the tab so the record
@@ -207,17 +241,48 @@ export async function nudge(page, f) {
     return 'ticked';
   }
   if (f.kind === 'chooser') {
-    // NOT DRIVEN YET. The box is recognised and counted, but choosing a document through it is
-    // unfinished, so the driver does not spend a walk's time attempting it.
-    //
-    // What is known: mousedown (not click) opens a `Choose item` dialog — `DropDownViewImpl`
-    // registers `MouseDownEvent`, not `ClickEvent`. The tree inside opens on its BRANCHES: folders,
-    // and documents that contain others (a Git Repo holding feeds), while the leaves the chooser
-    // accepts are collapsed inside them. Filtering surfaces more rows, but clicking one and
-    // pressing OK leaves the box showing its original value, so the selection is not being made —
-    // a row click alone is evidently not what `DocSelectionBoxPresenter` listens for. The walker
-    // reaches these with `fill` + `select-tree`, and lifting that pair here is the next attempt.
-    return null;
+    // A DOCUMENT CHOOSER (`DocSelectionBoxPresenter`): MOUSEDOWN opens `Choose item`
+    // (`DropDownViewImpl` registers MouseDownEvent, not ClickEvent). Choose a DOCUMENT row other than
+    // the current one, then OK. The earlier attempt picked a branch: a folder, System or a Git Repo
+    // holding feeds can't be chosen, so OK left the box as it was and the driver was set aside. The
+    // documents the chooser accepts are listed at the top level as well as in their folders.
+    await page.mouse.move(f.x, f.y);
+    await page.mouse.down();
+    await page.mouse.up();
+    const opened = await page.waitForFunction(() => [...document.querySelectorAll('.dialog-titleText')]
+      .some((e) => e.offsetWidth > 0 && e.textContent.trim() === 'Choose item'), null, { timeout: 3_000 })
+      .then(() => true).catch(() => false);
+    if (!opened) return null;
+    await page.waitForTimeout(500);
+    const pick = await page.evaluate((current) => {
+      const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
+      const title = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0)
+        .filter((e) => e.textContent.trim() === 'Choose item').pop();
+      const dialog = title?.closest('.dialog-container, .resizableDialog-popup, .dialog-popup');
+      const branch = new Set(['Folder', 'System', 'Favourites', 'Git Repo', null]);
+      const row = [...(dialog?.querySelectorAll('.explorerCell') ?? [])].find((e) => e.offsetWidth > 0
+        && !branch.has(e.querySelector('.explorerCell-icon')?.getAttribute('title') ?? null)
+        && norm(e.textContent) && norm(e.textContent) !== 'None' && norm(e.textContent) !== norm(current));
+      if (!row) return null;
+      const r = row.getBoundingClientRect();
+      // The row's middle: nearer its start is the expander or the icon, which don't select it.
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2, text: norm(row.textContent) };
+    }, f.value ?? '');
+    const button = (name) => page.locator('.dialog-titleText', { hasText: /^Choose item$/ })
+      .locator('xpath=ancestor::*[contains(@class,"dialog-container") or contains(@class,"resizableDialog-popup") or contains(@class,"dialog-popup")][1]')
+      .getByRole('button', { name, exact: true }).last();
+    if (!pick) {
+      await button('Cancel').click({ timeout: 2_000 }).catch(() => {});
+      return null;
+    }
+    // Clicked as an element, not at the point read: the dialog is still settling when it is read,
+    // and a click at that point left the box as it was.
+    const dialog = page.locator('.dialog-titleText', { hasText: /^Choose item$/ })
+      .locator('xpath=ancestor::*[contains(@class,"dialog-container") or contains(@class,"resizableDialog-popup") or contains(@class,"dialog-popup")][1]');
+    await dialog.locator('.explorerCell').filter({ hasText: pick.text }).first().click({ timeout: 2_000 }).catch(() => {});
+    await page.waitForTimeout(400);
+    await button('OK').click({ timeout: 2_000 }).catch(() => {});
+    return `chose "${pick.text}"`;
   }
   if (f.kind === 'ace') {
     // Click into the text, go to the end of the line so nothing is overwritten, and type one
@@ -240,7 +305,10 @@ export async function nudge(page, f) {
     return { x: r.x + Math.min(r.width / 2, 40), y: r.y + r.height / 2, text: norm(other.textContent) };
   }, f.value ?? '');
   if (!item) {
-    await page.keyboard.press('Escape').catch(() => {});
+    // Escape only if a list did open: with none, the Escape lands on the dialog and closes it.
+    const listOpen = await page.evaluate(() => [...document.querySelectorAll('.selectionList-elementChooser')]
+      .some((e) => e.offsetWidth > 0)).catch(() => false);
+    if (listOpen) await page.keyboard.press('Escape').catch(() => {});
     return null;
   }
   await page.mouse.move(item.x, item.y);

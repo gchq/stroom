@@ -81,6 +81,10 @@ public final class ProcessorFilterEditDialogStories {
 
     private static final RestFixtures VALID = fixtures("{\"ok\": true}");
     private static final RestFixtures INVALID = fixtures("{\"ok\": false, \"string\": \"Field 'Bogus' is not valid\"}");
+    // Creating a filter fails, e.g. the server refuses it
+    private static final RestFixtures FAILING_CREATE = builder("{\"ok\": true}")
+            .post("/processorFilter/v1", RestReply.error(500, "Unable to create the filter"))
+            .build();
 
     private ProcessorFilterEditDialogStories() {
         // Static utility
@@ -113,6 +117,29 @@ public final class ProcessorFilterEditDialogStories {
                     play.expect(play.spy(ScreenHarness.ALERT_SPY))
                             .toHaveBeenCalledWith("ERROR: Field &#39;Bogus&#39; is not valid");
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
+                })
+                // Once the invalid expression's message is closed the dialog can be used again: its OK
+                // and Cancel once stayed disabled, as the validation never told the dialog it failed
+                .story("InvalidExpressionKeepsDialogUsable", context -> render(context, INVALID, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Add Filter", StroomDom.DIALOG_TITLE);
+                    play.click(okButton(screen, "Add Filter"));
+                    closeAlert(play, screen, "Field 'Bogus' is not valid");
+                    cancelCloses(play, screen, "Add Filter");
+                })
+                // A new filter that the server fails to create says why and leaves the dialog usable: the
+                // create had no failure handler, so OK and Cancel stayed disabled after the alert
+                .story("FailedCreateKeepsDialogUsable", context -> render(context, FAILING_CREATE, null,
+                        feedExpression()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    screen.findByText("Add Filter", StroomDom.DIALOG_TITLE);
+                    play.click(okButton(screen, "Add Filter"));
+                    closeAlert(play, screen, "Unable to create the filter");
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY))
+                            .toHaveBeenCalledWith(RequestMatcher.post("/processorFilter/v1").toSpyMatcher());
+                    cancelCloses(play, screen, "Add Filter");
                 })
                 // Editing an existing filter first warns about the tracker position
                 .story("UpdateExistingConfirm", context -> render(context, VALID, filter(7, emptyExpression())
@@ -258,6 +285,18 @@ public final class ProcessorFilterEditDialogStories {
         return screen.within(screen.findByText(caption, StroomDom.DIALOG_TITLE).closest(StroomDom.DIALOG));
     }
 
+    // Closes the alert showing the given message
+    private static void closeAlert(final Play play, final Play screen, final String message) {
+        final Play alert = screen.within(screen.findByText(TextMatch.containing(message)).closest(StroomDom.DIALOG));
+        play.click(alert.getByRole("button", StroomDom.button("Close")));
+    }
+
+    // Checks the dialog's Cancel works, i.e. the dialog wasn't left with its buttons disabled
+    private static void cancelCloses(final Play play, final Play screen, final String caption) {
+        play.click(dialog(screen, caption).getByRole("button", StroomDom.button("Cancel")));
+        play.waitFor(() -> play.expect(screen.queryByText(caption, StroomDom.DIALOG_TITLE)).toBeNull());
+    }
+
     // Drives OK through the single tracker confirmation to the save
     private static void saveExistingFilter(final Play play, final Play screen) {
         play.click(okButton(screen, "Edit Filter"));
@@ -296,17 +335,28 @@ public final class ProcessorFilterEditDialogStories {
     }
 
     private static RestFixtures fixtures(final String validation) {
+        return builder(validation).build();
+    }
+
+    private static RestFixtures.Builder builder(final String validation) {
         return TreeFixtures.explorerRoutes(new ExplorerFixture(ExplorerFixture.folder("System",
                         ExplorerFixture.doc("MY_FEED", FeedDoc.TYPE))))
                 .post(VALIDATE_PATH, RestReply.json(validation))
                 .put("/processorFilter/v1/*", request -> RestReply.json(request.getBody()))
-                .get("/meta/v1/getTypes", RestReply.json("[\"Reference\", \"Events\"]"))
-                .build();
+                .get("/meta/v1/getTypes", RestReply.json("[\"Reference\", \"Events\"]"));
     }
 
     private static Widget render(final StoryContext context,
                                  final RestFixtures fixtures,
                                  final ProcessorFilter filter) {
+        return render(context, fixtures, filter, emptyExpression());
+    }
+
+    // As above, with the expression a new filter starts with
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final ProcessorFilter filter,
+                                 final ExpressionOperator defaultExpression) {
         final ProcessingScreenGinjector injector = GWT.create(ProcessingScreenGinjector.class);
         final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
                 .injector(injector)
@@ -318,7 +368,7 @@ public final class ProcessorFilterEditDialogStories {
         harness.afterStartUp(() -> {
             final ProcessorEditPresenter presenter = injector.getProcessorEditPresenter();
             // As ProcessorPresenter adds or edits a filter
-            presenter.show(ProcessorType.PIPELINE, pipelineRef, filter, emptyExpression(), result ->
+            presenter.show(ProcessorType.PIPELINE, pipelineRef, filter, defaultExpression, result ->
                     harness.spy(ON_SAVED, result == null
                             ? null
                             : String.valueOf(result.getId())));

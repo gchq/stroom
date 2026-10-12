@@ -90,6 +90,10 @@ public final class ExecutionSchedulesScreenStories {
 
     private static final RestFixtures FIXTURES = fixtures("[\"node1\", \"node2\", \"node3\"]",
             RestReply.json(SCHEDULES));
+    // The filter's expression is invalid, e.g. a term with no field
+    private static final RestFixtures INVALID_FILTER_FIXTURES = fixtures(
+            RestReply.json("{\"ok\": false, \"string\": \"Expression term has a missing field\"}"),
+            "[\"node1\", \"node2\", \"node3\"]", RestReply.json(SCHEDULES));
     private static final RestFixtures ONE_NODE_FIXTURES = fixtures("[\"node1\"]", RestReply.json(SCHEDULES));
     // The list as loaded (the first load and the flush of selections that goes with each), then edited
     private static final RestFixtures EDIT_FIXTURES = fixtures("[\"node1\", \"node2\", \"node3\"]",
@@ -205,6 +209,20 @@ public final class ExecutionSchedulesScreenStories {
                     play.expect(play.getByTitle("Clear Filter")).toHaveClass("disabled");
                     play.expect(play.spy(ScreenHarness.ALERT_SPY)).not().toHaveBeenCalled();
                     expectNoErrors(play);
+                })
+                // An invalid filter says why, and once that is closed the dialog can be used again: its OK
+                // and Cancel once stayed disabled, as the validation never told the dialog it failed
+                .story("InvalidFilterKeepsDialogUsable", context -> render(context, INVALID_FILTER_FIXTURES, false))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Hourly rollup");
+                    play.click(play.getByTitle("Filter Schedules"));
+                    play.click(dialog(screen, "Filter Schedules").getByRole("button", StroomDom.button("OK")));
+                    play.click(dialogWith(screen, TextMatch.containing("Expression term has a missing field"))
+                            .getByRole("button", StroomDom.button("Close")));
+                    play.click(dialog(screen, "Filter Schedules").getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Filter Schedules", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
                 })
                 // Batch Edit applies only the enabled fields to every filtered schedule
                 .story("BatchEdit", context -> render(context, FIXTURES, false))
@@ -421,6 +439,14 @@ public final class ExecutionSchedulesScreenStories {
     }
 
     private static RestFixtures fixtures(final String nodes, final RestReply schedules, final RestReply... more) {
+        return fixtures(RestReply.json("{\"ok\": true}"), nodes, schedules, more);
+    }
+
+    // As above, with the filter's validation reply
+    private static RestFixtures fixtures(final RestReply validation,
+                                         final String nodes,
+                                         final RestReply schedules,
+                                         final RestReply... more) {
         return RestFixtures.builder()
                 .post(FETCH_PATH, schedules, more)
                 .post(UPDATE_PATH, request -> RestReply.json(request.getBody()))
@@ -429,7 +455,7 @@ public final class ExecutionSchedulesScreenStories {
                 .post(BASE + "/fetchTracker", RestReply.json("{\"lastEffectiveExecutionTimeMs\": 1700000000000}"))
                 .get("/node/v1/all", RestReply.json(nodes))
                 .post("/scheduledTime/v1", RestReply.json("{\"nextScheduledTimeMs\": 1700000000000}"))
-                .post("/expression/v1/validate", RestReply.json("{\"ok\": true}"))
+                .post("/expression/v1/validate", validation)
                 .post(SET_CONFIG_PATH, RestReply.json("true"))
                 .build();
     }

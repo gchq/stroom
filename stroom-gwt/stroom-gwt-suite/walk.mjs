@@ -931,12 +931,54 @@ async function activateContentTab(label) {
   if (clicked) await page.waitForTimeout(300);
 }
 
-/** Clear whatever is up — dialogs, menus — without touching the screen underneath. */
-async function clearOverlays() {
+/**
+ * Dialogs that would not close — Escape and their own Cancel/Close both refused — with where the walk
+ * was. A dialog like that is a trap for the user and, before this, for the walk: #48's User
+ * Preferences (OK spinning, every button disabled) stayed up over four-fifths of every r8 shard, and
+ * #40's New Field over the end of r9's docs-b, every node after it surveyed with the dialog on top.
+ */
+const stranded = [];
+
+/**
+ * Clear whatever is up — dialogs, menus — without touching the screen underneath. A dialog that
+ * survives is recorded as stranded and the page reloaded, so one trap costs one reload, not the rest
+ * of the shard.
+ */
+async function clearOverlays(where = null) {
+  // A dashboard's Duplicate (or Add Component) waits for a click to place the new component, under a
+  // glass over the whole window that no key dismisses (#57). Place it, or every click after this
+  // lands on the glass: four rounds' Ask Stroom AI round-trips "lost" the dashboard that way.
+  if (await page.locator('.flexLayout-glassVisible').count().catch(() => 0)) {
+    console.log('      (placing a dashboard component left waiting for a click: #57)');
+    await page.mouse.click(Math.round(VW / 2), Math.round(VH / 2)).catch(() => {});
+    await page.waitForTimeout(300);
+  }
   await closeDialogs(page).catch(() => {});
   await dismissMenus(page).catch(() => {});
-  await waitUntil(page, async () => (await readDialogs(page)).length === 0 && !(await menuIsOpen()),
-    { budget: 3_000, label: 'clear', kind: 'restore' }).catch(() => {});
+  const clear = await waitUntil(page, async () => (await readDialogs(page)).length === 0 && !(await menuIsOpen()),
+    { budget: 3_000, label: 'clear', kind: 'restore' }).catch(() => ({ ok: false }));
+  if (clear.ok) return;
+  // A dialog the walk itself made dirty asks before it closes ("Expression has unsaved changes. Are
+  // you sure you want to close this window?"), and Cancel on that Confirm keeps the dialog by
+  // design. The changes are the field driver's own, so discard them: say OK, and close again.
+  // `closeDialogs` answers whatever is on top with Cancel, so the Confirm may already have been
+  // dismissed: ask once more, from the dialog's own Cancel, to bring it back.
+  const isConfirmUp = async () => (await readDialogs(page).catch(() => [])).some((d) => /confirm/i.test(d.caption ?? ''));
+  if (!(await isConfirmUp()) && (await readDialogs(page).catch(() => [])).length) {
+    await clickDialogButton(/./, /^(cancel|close)$/).catch(() => {});
+    await page.waitForTimeout(400);
+  }
+  if (await isConfirmUp()) {
+    await clickDialogButton(/confirm/, /^(ok|yes)$/).catch(() => {});
+    await page.waitForTimeout(400);
+    await closeDialogs(page).catch(() => {});
+    if (!(await readDialogs(page).catch(() => [])).length) return;
+  }
+  const left = (await readDialogs(page).catch(() => [])).map((d) => d.caption);
+  if (!left.length) return;
+  console.log(`      ‼ stranded: [${left.join(', ')}] would not close — reloading`);
+  stranded.push({ node: where, dialogs: left });
+  await reloadAndSignIn();
 }
 
 /**
@@ -1403,7 +1445,7 @@ async function driveStep(step) {
 async function resync(node) {
   resyncs += 1;
   const t0 = Date.now();
-  await clearOverlays();
+  await clearOverlays(idOf(node));
   const tClear = Date.now();
   try {
     await gwt.assertSignedIn(page, creds);
@@ -2279,13 +2321,19 @@ async function probeMouse(node, id) {
  */
 const dirtyDone = new Set();
 async function probeDirty(node, id) {
-  if (!['editor', 'editor-tab'].includes(node.kind)) return;
-  const key = node.path.join(' / ');
-  if (dirtyDone.has(key)) return;
-  const before = await readSave(page);
+  if (!['editor', 'editor-tab', 'dialog'].includes(node.kind)) return 0;
+  const isDialog = node.kind === 'dialog';
+  // A dialog is the same form however it was reached, so its fields are driven once per caption,
+  // not once per route to it.
+  const key = isDialog
+    ? `dialog@${(await readDialogs(page).catch(() => [])).at(-1)?.caption ?? node.path.join(' / ')}`
+    : node.path.join(' / ');
+  if (dirtyDone.has(key)) return 0;
+  // A dialog's Save, if any, is the document's behind it: only the `value` question applies.
+  const before = isDialog ? null : await readSave(page);
   // No Save button and no dialog in front: not a document editor, nothing to say.
   const dialogsUp = (await readDialogs(page).catch(() => [])).length > 0;
-  if (!before && !dialogsUp) return;
+  if (!before && !dialogsUp) return 0;
   // VALUE-ONLY mode for a tab inside a dialog. There is no Save button to read, so the `dirty`
   // question cannot be asked at all — but every field is still a `value` handler, and in this scope
   // nothing else drives them: Ask Stroom AI's Configure tabs were touched by the spinner gesture and
@@ -2293,13 +2341,22 @@ async function probeDirty(node, id) {
   const valueOnly = !before;
   dirtyDone.add(key);
   const fields = (await readTabFields(page, { inDialogScope: valueOnly })).slice(0, FIELDS);
-  if (!fields.length) return;
+  if (!fields.length) return 0;
   /** The dialog stack as the loop found it, so an alert raised by a field can be told apart. */
   const fieldCaps = await readDialogs(page).catch(() => []);
   for (const f of fields) {
     const t = Date.now();
     const saveBefore = await readSave(page);
     try {
+      // Where the field is NOW. The form was read once, and a field can move the rest: choosing
+      // "Comfortable" Layout Density re-lays out User Preferences, and the next tick, clicked at its
+      // old place, closed the dialog. Its value is re-read too, as an earlier field may have changed it.
+      const fresh = (await readTabFields(page, { inDialogScope: valueOnly })).find((x) => x.label === f.label);
+      if (!fresh) {
+        console.log(`      ✎ "${f.label}" [${f.kind}] — gone from the form before it was driven`);
+        continue;
+      }
+      Object.assign(f, { x: fresh.x, y: fresh.y, down: fresh.down, value: fresh.value, i: fresh.i });
       const how = await nudge(page, f);
       if (!how) continue;
       await page.waitForTimeout(500);
@@ -2312,15 +2369,23 @@ async function probeDirty(node, id) {
       // `POST /api/preferences/v1` the moment it changes — and the guard aborts that, which puts an
       // error popup over the form. Left there, every later field reads inside the ALERT and comes back
       // `unchecked`, and the walk carries on with the wrong thing in front. Close it first.
-      const capsNow = await readDialogs(page).catch(() => []);
-      if (capsNow.length > fieldCaps.length) {
-        await closeTop('alert').catch(() => {});
+      let capsNow = await readDialogs(page).catch(() => []);
+      // Close back down to the form: a field can open more than one popup. Ask Stroom AI's Dock
+      // Type set to "Dialog" opens the AI dialog AND the alert for its refused save, and closing
+      // only the top one left every later field read inside the AI dialog, as "not found".
+      for (let n = 0; capsNow.length > fieldCaps.length && n < 3; n += 1) {
+        await closeTop(isAlertCaption(capsNow.at(-1)?.caption) ? 'alert' : 'dialog').catch(() => {});
         await page.waitForTimeout(300);
+        capsNow = await readDialogs(page).catch(() => []);
       }
       // Re-read by LABEL, with the index only as a fallback: a form that grew a message has moved its
       // fields, so `[f.i]` can be a different box than the one just driven.
       const allNow = await readTabFields(page, { inDialogScope: valueOnly });
       const now = allNow.find((x) => x.label === f.label) ?? allNow[f.i];
+      if (!now && env('FIELD_DEBUG', '') === '1') {
+        console.log(`      (field debug: "${f.label}" not found; re-read ${allNow.length} field(s) [${allNow.map((x) => x.label).join(', ')}];`
+          + ` dialogs before ${JSON.stringify(fieldCaps.map((d) => d.caption))} now ${JSON.stringify(capsNow.map((d) => d.caption))})`);
+      }
       const vcheck = { kind: 'value', before: f.value, after: now?.value ?? null,
         plan: [{ label: f.label, kind: f.kind, text: how, target: true,
           changed: String(f.value ?? '') !== String(now?.value ?? '') }],
@@ -2351,7 +2416,8 @@ async function probeDirty(node, id) {
       // types in on every walk. A view may bind Enter or not (`KeyBinding:75` has the panel ignore
       // it), so there is nothing to fail: the field travels with the record and the inventory joins it
       // to the handler's receiver by name.
-      if (f.kind === 'text' && now && now.kind === 'text') {
+      // Not in a plain dialog: Enter there can be its OK, and probeKeys already presses it there.
+      if (!isDialog && f.kind === 'text' && now && now.kind === 'text') {
         const tk = Date.now();
         const capsK = await readDialogs(page).catch(() => []);
         await page.mouse.click(now.x, now.y);
@@ -2378,11 +2444,25 @@ async function probeDirty(node, id) {
         else await page.keyboard.press('Delete');
         await page.keyboard.press('Tab');
       }
+      // A tick can ENABLE other fields: a batch dialog's "Change Schedule Name" box enables the
+      // name box beside it, which was disabled, and so unread, when the form was first read. Read
+      // the form again and drive whatever has appeared, in the same loop (a for-of over an array
+      // sees what is pushed to it).
+      if (f.kind === 'tick' && fields.length < FIELDS * 2) {
+        const known = new Set(fields.map((x) => x.label));
+        for (const x of await readTabFields(page, { inDialogScope: valueOnly })) {
+          if (!known.has(x.label) && fields.length < FIELDS * 2) {
+            fields.push(x);
+            known.add(x.label);
+          }
+        }
+      }
     } catch (e) {
       console.log(`      ✎ "${f.label}" [${f.kind}] — could not drive: ${String(e?.message ?? e).slice(0, 70)}`);
       break;
     }
   }
+  return fields.length;
 }
 
 /**
@@ -2458,7 +2538,7 @@ async function walk(node, state, arrivedAt) {
         // whose tabs these are — and so would `dismissMenus`, whose Escape a dialog answers too —
         // so nothing is cleared there. And the previous tab's own OK/Cancel CLOSED the dialog, so
         // if it is not up any more, replay the route that opened it.
-        if (node.kind !== 'dialog') await clearOverlays();
+        if (node.kind !== 'dialog') await clearOverlays(idOf(node));
         else if (!(await readDialogs(page).catch(() => [])).length) await resync(node);
         await driveStep(child.route.at(-1));
       } catch (e) {
@@ -2474,7 +2554,7 @@ async function walk(node, state, arrivedAt) {
     // last tab's last pop left it; the editor's affordances are the same from any tab, so re-arm
     // by returning to the first tab rather than replaying the whole route.
     if (tabs.length) {
-      if (node.kind !== 'dialog') await clearOverlays();
+      if (node.kind !== 'dialog') await clearOverlays(idOf(node));
       else if (!(await readDialogs(page).catch(() => [])).length) await resync(node).catch(() => {});
       await clickEditorTab(page, tabs[0], { nth: 0 }).catch(() => {});
     }
@@ -2508,6 +2588,22 @@ async function walk(node, state, arrivedAt) {
         detail: 'Escape closed the dialog and the route replay did not re-open it — the node was not walked' });
       console.log('      ‼ Escape closed the dialog and it did not come back — node skipped');
       return;
+    }
+    // A plain dialog's fields (§ B3's value driver, once per caption). Then the dialog is put back
+    // as it opened, so the OK, illegal-text and key drivers below still see the untouched form: a
+    // ticked "enable" box or a changed selection would change what OK does. Batch Edit Schedules'
+    // seven enable tick boxes, a schedule box and a dozen other dialogs' fields were `needs-value`
+    // for as long as this driver ran on editor tabs only.
+    if (await probeDirty(node, id).catch(() => 0)) {
+      await resync(node).catch(() => {});
+      current = await settledSurvey({ lead: 0 });
+      if (!current.dialogs.length) {
+        findings.push({ node: id, label: 'fields', outcome: 'closed', kind: 'resync-failed', expected: sig,
+          observed: signatureOf(node, current),
+          detail: 'driving the dialog\'s fields left it closed and the route replay did not re-open it' });
+        console.log('      ‼ the dialog did not come back after its fields were driven — node skipped');
+        return;
+      }
     }
   }
   // What Ctrl+Enter did at this dialog, waiting for OK to say what it should have done.
@@ -3088,9 +3184,10 @@ const summary = {
   outcomes: affordances.reduce((m, a) => ({ ...m, [a.outcome]: (m[a.outcome] ?? 0) + 1 }), {}),
   blockedRequests: [...new Set(affordances.flatMap((a) => a.blocked))],
   findings: findings.length,
+  stranded: stranded.length,
 };
 await writeFile(join(OUT, `crawl-${summary.area.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.json`),
-  JSON.stringify({ summary, nodes, affordances, findings }, null, 1));
+  JSON.stringify({ summary, nodes, affordances, findings, stranded }, null, 1));
 return summary;
 }
 
@@ -3105,6 +3202,7 @@ await browser.close();
 console.log(`\n=== ${summary.area} · depth=${DEPTH} · walk ===`);
 console.log(`  nodes ${summary.reached}/${summary.nodes} reached, ${summary.affordances} affordances`);
 if (summary.blockedByAlert) console.log(`  !! ${summary.blockedByAlert} node(s) were an ALERT over the target, not the target`);
+if (summary.stranded) console.log(`  !! ${summary.stranded} dialog(s) would not close and cost a reload: ${[...new Set(stranded.flatMap((s) => s.dialogs))].join(', ')}`);
 console.log(`  ${summary.distinctPlaces} distinct places, ${summary.duplicates} re-entrances recorded but not re-explored`);
 console.log(`  outcomes: ${Object.entries(summary.outcomes).map(([k, v]) => `${k}=${v}`).join(' ')}`);
 {

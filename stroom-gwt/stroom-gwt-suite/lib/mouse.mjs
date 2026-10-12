@@ -242,6 +242,16 @@ export function readSpinners(page) {
   }).catch(() => []);
 }
 
+/** Whether the n-th visible spinner's up arrow is behind something now, e.g. an alert's glass. */
+const spinnerCovered = (page, i) => page.evaluate((n) => {
+  const e = [...document.querySelectorAll('.valueSpinner')].filter((x) => x.offsetWidth > 0)[n];
+  const up = e?.querySelector('[class*=arrowUp]');
+  if (!up) return true;
+  const r = up.getBoundingClientRect();
+  const at = document.elementFromPoint(Math.round(r.x + r.width / 2), Math.round(r.y + r.height / 2));
+  return !(at && (at === up || up.contains(at) || at.contains(up)));
+}, i).catch(() => true);
+
 const spinnerState = (page, i) => page.evaluate((n) => {
   const e = [...document.querySelectorAll('.valueSpinner')].filter((x) => x.offsetWidth > 0)[n];
   if (!e) return null;
@@ -259,6 +269,12 @@ export async function spinnerGestures(page, s) {
   // Something is in front of it — almost always a dialog over the one holding the spinner. The press
   // would land on the glass, and a gesture that cannot reach its target proves nothing.
   if (s.occluded) return { skipped: 'the arrow is covered by something in front of it' };
+  // And again NOW. The list is read once, before any spinner is driven, and driving one can put
+  // something in front of the rest: in a grid, a press changes the row's value, the write it sends
+  // is refused by the guard, and the alert's glass covers every spinner after it. That was r10's
+  // `spinner 2` failing hover and press on the Processors tab and under Batch Edit, where only
+  // `spinner 1` had been reachable.
+  if (await spinnerCovered(page, s.index)) return { skipped: 'the arrow is covered by something in front of it' };
   // PARK THE POINTER FIRST. A mouse move to where the pointer already is generates no mouseover, so
   // if something earlier left it on this arrow — the field driver steps spinners, and leaves the
   // pointer on the arrow it pressed — the hover never fires and the class stays at rest. That read as
@@ -296,7 +312,11 @@ export async function spinnerGestures(page, s) {
   return { rest, hovered, left, pressed, released, restored };
 }
 
-const has = (st, frag) => !!st?.cls && st.cls.includes(frag);
+// Two spinners, two spellings: `Spinner` sets `valueSpinner-arrowUpHover` / `…arrowUpPressed`, and the
+// grid's `ValueSpinnerCell` (Processors' Priority column) adds `valueSpinner-arrowUp--hover` /
+// `…--pressed`. Matched without case, so `hover` and `pressed` find both — r10 failed a working cell
+// spinner for not spelling it `Hover`.
+const has = (st, frag) => !!st?.cls && st.cls.toLowerCase().includes(frag.toLowerCase());
 
 /**
  * One verdict per gesture, because they are four handlers and a driver that reports them as one
@@ -309,14 +329,14 @@ export function spinnerVerdicts(ev, label) {
   }
   const out = [];
   out.push(has(ev.hovered, 'Hover')
-    ? { kind: 'mouseover', verdict: 'pass', why: `hovering "${label}" set valueSpinner-arrowUpHover` }
+    ? { kind: 'mouseover', verdict: 'pass', why: `hovering "${label}" set the arrow's hover class` }
     : { kind: 'mouseover', verdict: 'fail', why: `hovering "${label}" left the class as ${ev.hovered?.cls ?? 'unreadable'} (Spinner:121 sets …arrowUpHover)` });
   out.push(!has(ev.left, 'Hover') && has(ev.left, 'arrowUp')
     ? { kind: 'mouseout', verdict: 'pass', why: `leaving "${label}" put the class back to valueSpinner-arrowUp` }
     : { kind: 'mouseout', verdict: 'fail', why: `leaving "${label}" left the class as ${ev.left?.cls ?? 'unreadable'} (Spinner:133 cancelTimer restores …arrowUp)` });
   const moved = ev.pressed && ev.rest && ev.pressed.value !== ev.rest.value;
   out.push(has(ev.pressed, 'Pressed')
-    ? { kind: 'mousedown', verdict: 'pass', why: `pressing "${label}" set valueSpinner-arrowUpPressed and took the value ${ev.rest?.value} -> ${ev.pressed?.value}` }
+    ? { kind: 'mousedown', verdict: 'pass', why: `pressing "${label}" set the arrow's pressed class and took the value ${ev.rest?.value} -> ${ev.pressed?.value}` }
     : { kind: 'mousedown', verdict: moved ? 'pass' : 'fail', why: moved
       ? `pressing "${label}" moved the value ${ev.rest?.value} -> ${ev.pressed?.value} without setting …arrowUpPressed`
       : `pressing "${label}" changed neither the class nor the value (Spinner:105 sets …arrowUpPressed and calls increase())` });

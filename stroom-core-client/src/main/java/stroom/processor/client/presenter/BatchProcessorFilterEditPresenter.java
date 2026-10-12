@@ -18,6 +18,7 @@ package stroom.processor.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.processor.client.presenter.BatchProcessorFilterEditPresenter.BatchProcessorFilterEditView;
 import stroom.processor.shared.BulkProcessorFilterChangeRequest;
@@ -178,6 +179,8 @@ public class BatchProcessorFilterEditPresenter
                                 event::reset);
                     }
                 })
+                // If the change fails, let the user try again or cancel
+                .onFailure(RestErrorHandler.forPopup(this, event))
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

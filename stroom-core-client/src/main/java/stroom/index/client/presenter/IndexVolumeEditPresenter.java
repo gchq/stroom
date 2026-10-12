@@ -125,6 +125,9 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
                                         if (work != null) {
                                             work.run();
                                         }
+                                    } else {
+                                        // Let the user change the volume or cancel
+                                        event.reset();
                                     }
                                 });
                     } else {
