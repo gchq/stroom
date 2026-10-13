@@ -156,7 +156,7 @@ public final class LinkTabPanelStories {
         style.setProperty("height", "260px");
         if (narrow) {
             style.setProperty("width", "320px");
-            style.setProperty("border", "1px solid var(--panel__border-color, #ccc)");
+            style.setProperty("border", "1px solid var(--border-color)");
         }
         frame.add(presenter.getWidget());
         harness.add(frame);

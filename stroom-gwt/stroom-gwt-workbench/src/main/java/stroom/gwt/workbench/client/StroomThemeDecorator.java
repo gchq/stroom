@@ -35,6 +35,8 @@ import com.google.gwt.user.client.ui.Widget;
 /// theme with [#getStroomThemeName()], as `ScreenHarness` does for the user's preferences.
 public class StroomThemeDecorator implements StoryDecorator {
 
+    private static final String PAGE_BACKGROUND = "var(--page__background-color, rgb(34, 37, 44))";
+
     // The theme applied to the page, one story being shown per page
     private static StoryTheme theme = StoryTheme.DEFAULT;
 
@@ -70,8 +72,11 @@ public class StroomThemeDecorator implements StoryDecorator {
         style.setProperty("padding", "24px");
         style.setProperty("minHeight", "100vh");
         // The theme's page colour, which Stroom's panels and dialogs are drawn on (not the app's
-        // background behind them, which in the light theme is blue)
-        style.setProperty("background", "var(--page__background-color, rgb(34, 37, 44))");
+        // background behind them, which in the light theme is blue), on the page as well as the
+        // story's frame, as a story that doesn't fill the page (e.g. centred) leaves the page's
+        // background showing around it
+        style.setProperty("background", PAGE_BACKGROUND);
+        Document.get().getBody().getStyle().setProperty("background", PAGE_BACKGROUND);
         style.setProperty("color", "var(--text-color, #dce4e5)");
         frame.add(story);
         return frame;

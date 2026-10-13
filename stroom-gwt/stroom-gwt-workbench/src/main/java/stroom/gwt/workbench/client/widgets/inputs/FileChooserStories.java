@@ -51,8 +51,8 @@ public final class FileChooserStories {
                 .story("Basic", context -> {
                     final Label hint = new Label("Click the button to select a file");
                     final Style style = hint.getElement().getStyle();
-                    style.setProperty("color", "var(--text__color--muted)");
-                    style.setProperty("fontSize", "var(--font-size)");
+                    style.setProperty("color", "var(--text-color--disabled)");
+                    style.setProperty("fontSize", "var(--font-size-13)");
                     return padded(hint, fileUpload());
                 })
                 // With an accept filter and a callback reporting the chosen file name

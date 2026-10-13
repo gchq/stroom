@@ -866,18 +866,6 @@
   "app-security-documentpermissionstab--no-descendants-button-on-document": [
     "target-size"
   ],
-  "widgets-aceeditor-format--formats-nested-elements": [
-    "color-contrast"
-  ],
-  "widgets-aceeditor-format--gwt-quirks": [
-    "color-contrast"
-  ],
-  "widgets-aceeditor-format--is-idempotent": [
-    "color-contrast"
-  ],
-  "widgets-aceeditor-format--leaves-non-xml-alone": [
-    "color-contrast"
-  ],
   "widgets-date-time-calendargrid--basic": [
     "aria-allowed-attr",
     "button-name",
@@ -936,9 +924,6 @@
     "color-contrast"
   ],
   "widgets-display-classificationlabel--official": [
-    "color-contrast"
-  ],
-  "widgets-display-copytext--with-insert": [
     "color-contrast"
   ],
   "widgets-display-htmlpresenter--rich-content": [

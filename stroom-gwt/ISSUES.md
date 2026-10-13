@@ -779,12 +779,12 @@ editors. Dialogs aren't limited to the window's size, and long forms rely on scr
 
 **Confirmed** (`workbenchTest`'s accessibility check, dark theme). The workbench now shows stories
 on the theme's page colour (`--page__background-color`), which Stroom's panels and dialogs are drawn
-on, instead of the near-black app background, and three stories' text then falls below the WCAG AA
-contrast ratio (`color-contrast`):
+on, instead of the near-black app background, and two stories' text then falls below the WCAG AA
+contrast ratio (`color-contrast`) (a third, `CopyText`'s inserted text, was the story's own colour, a
+token that doesn't exist, and is fixed):
 
 * the Traces screen's histogram hint and timeline header text (`.histogram-hint`,
   `.timeline-header` spans; `app-main-tracesscreen--traces`);
-* `CopyText`'s inserted text (`widgets-display-copytext--with-insert`);
 * a disabled form group's description (`.form-group__description`, faded to 80% and in the
   disabled colour; `widgets-inputs-formgroup--disabled`). WCAG exempts text that is part of a
   disabled control, so this one may be acceptable.

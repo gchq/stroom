@@ -368,7 +368,7 @@ public final class ExpressionBuilderStories {
         final Style style = frame.getElement().getStyle();
         style.setProperty("width", "760px");
         style.setProperty("height", "420px");
-        style.setProperty("border", "1px solid var(--panel__border-color, #ccc)");
+        style.setProperty("border", "1px solid var(--border-color)");
         editor.setSize("100%", "100%");
         frame.add(editor);
         return frame;
