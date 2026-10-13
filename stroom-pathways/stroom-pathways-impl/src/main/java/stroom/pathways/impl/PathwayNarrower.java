@@ -63,7 +63,6 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -80,8 +79,12 @@ import java.util.function.Consumer;
  *
  * <p>A trace only ever widens a model, so an envelope left to itself ends up admitting everything and
  * saying nothing — and a change stops meaning anything, because nothing falls outside it any more.
- * Once a night every model is narrowed back to what has actually been seen within its document's
+ * About once a day every model is narrowed back to what has actually been seen within its document's
  * narrowing window, from the day by day account kept beside it as traces were applied.
+ *
+ * <p>Not a job of its own. Narrowing a shard means holding it, and something already holds a shard to
+ * apply traces to it — so this is called from inside that hold when a marker beside the shard says a
+ * day has passed. Nothing here finds documents, takes locks or decides when to run.
  *
  * <p>What that restores is the worth of a change. After a narrowing, a constraint widening
  * says something happened that has not happened in the window — which is the thing worth being told
@@ -95,149 +98,36 @@ public class PathwayNarrower {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwayNarrower.class);
 
     /**
-     * How many times a shard is asked for before it is given up on.
+     * Whether a shard whose model was last narrowed at {@code lastRun} is due another narrowing.
      *
-     * <p>Two things hold the lock this needs. The processor holds it while applying traces to the
-     * same model, and it may hold one shard for a whole hold — see {@link
-     * PathwaysProcessor#MAX_TIME_PER_HOLD} — so asking again a few seconds later does not always
-     * find it free. Every other node runs this same pass at the same moment, and holds a shard only
-     * as long as narrowing one model takes.
+     * <p>Once per day, at midnight, rather than a day after the last run: a daily pass that creeps
+     * forward by however long it waited to be noticed ends up running at a different time every day,
+     * and when each model was last held to its window stops being something anyone can say.
      *
-     * <p>Few attempts rather than many: where another node has the shard, giving up loses nothing,
-     * because that node is doing the work this one was going to do.
+     * <p>The day is the one the window is measured in — see {@link #oldestDayInWindow}, which counts
+     * whole days from the epoch — so a model narrowed at any point on a day is not narrowed again
+     * until the next one begins.
+     *
+     * @param lastRun when this shard was last narrowed, or null where it never has been, which is
+     *                also what a marker that cannot be read says.
      */
-    private static final int LOCK_ATTEMPTS = 3;
-    private static final Duration BETWEEN_ATTEMPTS = Duration.ofSeconds(2);
+    static boolean narrowingDue(final Instant lastRun, final Instant now) {
+        return lastRun == null
+               || lastRun.toEpochMilli() / TraceProcessor.MILLIS_PER_DAY
+                  < now.toEpochMilli() / TraceProcessor.MILLIS_PER_DAY;
+    }
 
-    private final PathwaysStore pathwaysStore;
-    private final PathwaysShardStore shardStore;
     private final PathwaySerde pathwaySerde;
     private final MutationLog mutationLog;
-    private final ShardPass shardPass;
-    private final SecurityContext securityContext;
-    private final MessageReceiverFactory messageReceiverFactory;
     private final ByteBuffers byteBuffers;
 
     @Inject
-    public PathwayNarrower(final PathwaysStore pathwaysStore,
-                           final PathwaysShardStore shardStore,
-                           final PathwaySerde pathwaySerde,
+    public PathwayNarrower(final PathwaySerde pathwaySerde,
                            final MutationLog mutationLog,
-                           final ClusterLockService clusterLockService,
-                           final SecurityContext securityContext,
-                           final MessageReceiverFactory messageReceiverFactory,
                            final ByteBuffers byteBuffers) {
-        // A pool of its own rather than the processor's: the two jobs reach for the same shards and
-        // the same disk, and a nightly pass waiting behind a per-minute one would be worse than both
-        // running.
-        this.shardPass = new ShardPass(clusterLockService, securityContext,
-                PathwaysProcessor.createShardExecutor("Pathways Narrow"));
-        this.pathwaysStore = pathwaysStore;
-        this.shardStore = shardStore;
         this.pathwaySerde = pathwaySerde;
         this.mutationLog = mutationLog;
-        this.securityContext = securityContext;
-        this.messageReceiverFactory = messageReceiverFactory;
         this.byteBuffers = byteBuffers;
-    }
-
-    public void exec() {
-        securityContext.asProcessingUser(() -> {
-            for (final DocRef docRef : NullSafe.list(pathwaysStore.list())) {
-                try {
-                    narrowDocument(docRef);
-                } catch (final RuntimeException e) {
-                    // One unreadable or mid-deletion document must not stop the others being held to
-                    // their window.
-                    LOGGER.error(() -> LogUtil.message("Error narrowing {}: {}", docRef, e.getMessage()), e);
-                }
-            }
-        });
-    }
-
-    private void narrowDocument(final DocRef docRef) {
-        final PathwaysDoc doc = pathwaysStore.readDocument(docRef);
-        final SharedFileStoreSettings settings = doc == null
-                ? null
-                : doc.getSharedFileStore();
-        if (settings == null || NullSafe.isBlankString(settings.getSharedPath())) {
-            // Nothing has been configured, so nothing was ever written for it.
-            return;
-        }
-
-        final int oldestDay = oldestDayInWindow(doc, Instant.now());
-        final int shardCount = ShardQueue.shardCount(settings);
-
-        // Held until the pass is over rather than written as it goes. Opening the feed opens a stream
-        // whether or not anything is put in it, and most runs most documents have nothing to report
-        // — a stream each would bury the runs that did say something.
-        //
-        // A list per shard rather than one between them, because the shards are worked at the same
-        // time: one list would need holding against them all, and what each shard did would read in
-        // whatever order they happened to finish.
-        final List<List<String>> lines = new ArrayList<>();
-        for (int shard = 0; shard < shardCount; shard++) {
-            lines.add(new ArrayList<>());
-        }
-
-        Set<Integer> busy = narrowShards(doc, oldestDay, lines, allShards(shardCount));
-        for (int attempt = 1; attempt < LOCK_ATTEMPTS && !busy.isEmpty(); attempt++) {
-            if (!pause()) {
-                break;
-            }
-            busy = narrowShards(doc, oldestDay, lines, busy);
-        }
-
-        // One stream for the document's whole pass, so what the narrowing did to it reads in one place
-        // rather than a shard at a time. A shard nobody could get at is said here as well: it will not
-        // be narrowed until tomorrow, and a nightly job quietly leaving a quarter of its work undone is
-        // worth hearing about.
-        final List<String> report = new ArrayList<>();
-        lines.forEach(report::addAll);
-        final Set<Integer> stillBusy = busy;
-        if (!report.isEmpty() || !stillBusy.isEmpty()) {
-            PathwaysProcessor.withMessageReceiver(messageReceiverFactory, doc, messages -> {
-                report.forEach(line -> messages.log(Severity.INFO, () -> line));
-                stillBusy.forEach(shard -> messages.log(Severity.WARNING, () -> "Shard " + shard
-                        + " of " + shardCount + " was in use after " + LOCK_ATTEMPTS
-                        + " attempts, so it was not narrowed"));
-            });
-        }
-    }
-
-    // Each shard on a thread of its own, the way the processor works them: a shard is a model of its
-    // own under a lock of its own, so nothing is shared but the disk. Shards that were in use come
-    // back, which is not an error — only work put off.
-    private Set<Integer> narrowShards(final PathwaysDoc doc,
-                                      final int oldestDay,
-                                      final List<List<String>> lines,
-                                      final Collection<Integer> shards) {
-        return shardPass.run(shards,
-                shard -> PathwaysProcessor.lockName(doc.getUuid(), shard),
-                shard -> narrowShard(doc, shard, oldestDay,
-                        (severity, message) -> lines.get(shard).add(message.get())),
-                "narrowing " + doc.getName());
-    }
-
-    private static List<Integer> allShards(final int shardCount) {
-        final List<Integer> shards = new ArrayList<>(shardCount);
-        for (int shard = 0; shard < shardCount; shard++) {
-            shards.add(shard);
-        }
-        return shards;
-    }
-
-    // Long enough for a pass of the processor to have finished and let go of whatever it held.
-    // @return whether to carry on, which an interrupted wait says not to.
-    private static boolean pause() {
-        try {
-            Thread.sleep(BETWEEN_ATTEMPTS.toMillis());
-            return true;
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOGGER.info("Interrupted while waiting to ask for a busy shard again");
-            return false;
-        }
     }
 
     /**
@@ -256,20 +146,6 @@ public class PathwayNarrower {
                 ? aDayAgo
                 : asked;
         return (int) (oldest.toEpochMilli() / TraceProcessor.MILLIS_PER_DAY);
-    }
-
-    private void narrowShard(final PathwaysDoc doc,
-                             final int shardIndex,
-                             final int oldestDay,
-                             final MessageReceiver messages) {
-        try {
-            shardStore.withShard(doc, shardIndex, localDir -> narrow(localDir, oldestDay, messages));
-        } catch (final IOException e) {
-            // The model could not be taken down or put back, so nothing here was committed. The next
-            // run tries again, and until then the model stays as wide as it was.
-            LOGGER.error(() -> LogUtil.message("Could not narrow shard {} of {}: {}",
-                    shardIndex, doc.getName(), e.getMessage()), e);
-        }
     }
 
     // Returns whether anything changed, which is what decides whether the shard is worth pushing back.

@@ -424,7 +424,7 @@ class TestPathwayNarrowing {
     }
 
     private static boolean narrow(final Path dir, final int oldestDay, final MessageReceiver messages) {
-        return new PathwayNarrower(null, null, serde(), mutationLog(), null, null, null, BYTE_BUFFERS)
+        return new PathwayNarrower(serde(), mutationLog(), BYTE_BUFFERS)
                 .narrow(dir, oldestDay, messages);
     }
 
@@ -518,6 +518,38 @@ class TestPathwayNarrowing {
                     found.addAll(log.read(db.getMutations(), name.getBytes(StandardCharsets.UTF_8))));
         }
         return found;
+    }
+
+    @Test
+    void aShardIsNarrowedOnceADayAtMidnight() {
+        final Instant noon = Instant.parse("2026-10-13T12:00:00Z");
+
+        assertThat(PathwayNarrower.narrowingDue(null, noon))
+                .as("never narrowed, so due — which is what deleting the marker asks for")
+                .isTrue();
+        assertThat(PathwayNarrower.narrowingDue(Instant.parse("2026-10-13T00:00:30Z"), noon))
+                .as("already narrowed today, so not again until tomorrow")
+                .isFalse();
+        assertThat(PathwayNarrower.narrowingDue(Instant.parse("2026-10-13T23:59:59Z"), noon))
+                .as("the same day, however late in it")
+                .isFalse();
+        assertThat(PathwayNarrower.narrowingDue(Instant.parse("2026-10-12T23:59:59Z"),
+                        Instant.parse("2026-10-13T00:00:01Z")))
+                .as("a second past midnight is a new day, so the pass just after it narrows")
+                .isTrue();
+    }
+
+    @Test
+    void narrowingDoesNotCreepThroughTheDay() {
+        // Due a day after the last run, a pass that ran at 00:00:30 would next be due at 00:00:30
+        // tomorrow and run at the first pass after that, so each day it starts a little later than
+        // the last. Held to the day boundary it does not.
+        final Instant ranJustAfterMidnight = Instant.parse("2026-10-13T00:00:30Z");
+
+        assertThat(PathwayNarrower.narrowingDue(ranJustAfterMidnight,
+                        Instant.parse("2026-10-14T00:00:10Z")))
+                .as("twenty seconds short of a day later, but a new day, so it runs")
+                .isTrue();
     }
 
     @Test

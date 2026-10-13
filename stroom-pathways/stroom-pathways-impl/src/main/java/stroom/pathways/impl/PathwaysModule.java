@@ -30,7 +30,6 @@ import stroom.planb.shared.StateType;
 import stroom.util.RunnableWrapper;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.RestResourcesBinder;
-import stroom.util.shared.scheduler.CronExpressions;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
@@ -58,13 +57,11 @@ public class PathwaysModule extends AbstractModule {
         ScheduledJobsBinder.create(binder())
                 .bindJobTo(ProcessPathways.class, builder -> builder
                         .name("Process Pathways")
-                        .description("Job to process trace data to form pathways and/or validate traces")
-                        .frequencySchedule("1m"))
-                .bindJobTo(NarrowPathways.class, builder -> builder
-                        .name("Narrow Pathways")
-                        .description("Job to narrow each pathway model to what it has happened within "
-                                     + "its narrowing window")
-                        .cronSchedule(CronExpressions.EVERY_DAY_AT_MIDNIGHT.getExpression()));
+                        // Narrowing has no job of its own: a shard has to be held to be narrowed, and
+                        // this already holds shards.
+                        .description("Job to process trace data to form pathways and/or validate "
+                                     + "traces, and to hold each model to its narrowing window")
+                        .frequencySchedule("1m"));
 
         GuiceUtil.buildMultiBinder(binder(), SharedFileStoreDocStore.class)
                 .addBinding(TracesDocStoreImpl.class);
@@ -78,14 +75,6 @@ public class PathwaysModule extends AbstractModule {
         // became newly complete over to it.
         GuiceUtil.buildMapBinder(binder(), StateType.class, MergeCompletionStrategy.class)
                 .addBinding(StateType.TRACE, TraceMergeCompletionStrategy.class);
-    }
-
-    private static class NarrowPathways extends RunnableWrapper {
-
-        @Inject
-        NarrowPathways(final PathwayNarrower pathwayNarrower) {
-            super(pathwayNarrower::exec);
-        }
     }
 
     private static class ProcessPathways extends RunnableWrapper {

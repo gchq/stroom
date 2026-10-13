@@ -61,6 +61,7 @@ public final class PlanBConstants {
     public static final String FAILED_FILE_NAME = ".failed";
     public static final String RETENTION_LAST_FILE_NAME = ".retention.last";
     public static final String COMPACTION_LAST_FILE_NAME = ".compaction.last";
+    public static final String NARROWED_LAST_FILE_NAME = ".narrowed.last";
 
     private PlanBConstants() {}
 

@@ -28,6 +28,7 @@ import stroom.planb.impl.dao.trace.IgnoredSpans;
 import stroom.planb.impl.dao.trace.PathwaysDb;
 import stroom.planb.impl.dao.trace.QueueItem;
 import stroom.planb.impl.dao.trace.QueueItemReader;
+import stroom.planb.impl.fs.OperationMarker;
 import stroom.planb.impl.fs.ShardPass;
 import stroom.planb.impl.fs.ShardQueue;
 import stroom.planb.impl.serde.trace.HexStringUtil;
@@ -38,6 +39,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.metrics.Metrics;
 import stroom.util.shared.NullSafe;
+import stroom.util.shared.Severity;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
@@ -100,11 +102,16 @@ public class PathwaysProcessor {
      */
     static final int SHARD_THREADS = 4;
 
+    /** When each shard was last narrowed, kept beside the shard on the shared file store. */
+    private static final OperationMarker NARROWED_MARKER =
+            new OperationMarker(PlanBConstants.NARROWED_LAST_FILE_NAME);
+
     private final PathwaysStore pathwaysStore;
     private final PathwaysShardStore shardStore;
     private final MessageReceiverFactory messageReceiverFactory;
     private final PathwaySerde pathwaySerde;
     private final MutationLog mutationLog;
+    private final PathwayNarrower pathwayNarrower;
     private final ShardPass shardPass;
     private final SecurityContext securityContext;
     private final ByteBuffers byteBuffers;
@@ -127,6 +134,7 @@ public class PathwaysProcessor {
                                   final PathwaysShardStore shardStore,
                                   final MessageReceiverFactory messageReceiverFactory,
                                   final PathwaySerde pathwaySerde,
+                                  final PathwayNarrower pathwayNarrower,
                                   final ClusterLockService clusterLockService,
                                   final SecurityContext securityContext,
                                   final ByteBuffers byteBuffers,
@@ -137,6 +145,7 @@ public class PathwaysProcessor {
         this.shardStore = shardStore;
         this.messageReceiverFactory = messageReceiverFactory;
         this.pathwaySerde = pathwaySerde;
+        this.pathwayNarrower = pathwayNarrower;
         this.securityContext = securityContext;
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
@@ -196,7 +205,7 @@ public class PathwaysProcessor {
         final Survey survey = survey(doc, settings);
         final Set<Integer> busy = shardPass.run(survey.shards().keySet(),
                 shard -> lockName(doc.getUuid(), shard),
-                shard -> drain(doc, shard, survey.shards().get(shard).queue()),
+                shard -> drain(doc, shard, survey.shards().get(shard)),
                 "draining " + doc.getName());
         if (!busy.isEmpty()) {
             // Worth seeing, but not worth saying out loud: this runs every minute, the node holding
@@ -220,6 +229,7 @@ public class PathwaysProcessor {
         long items = 0;
         long oldestAgeMs = 0;
         final Instant now = Instant.now();
+        final Optional<Path> docDir = shardStore.sharedDocDir(doc);
         for (int shard = 0; shard < ShardQueue.shardCount(settings); shard++) {
             if (Thread.currentThread().isInterrupted()) {
                 LOGGER.debug("Interrupted, looking at no more shards this pass");
@@ -227,14 +237,27 @@ public class PathwaysProcessor {
             }
             final ShardQueue queue = ShardQueue.of(settings, doc.getUuid(), shard);
             final List<Path> waiting = queue.itemsOldestFirst();
-            if (!waiting.isEmpty()) {
-                shards.put(shard, new Queued(queue, waiting.size()));
+            // A shard that has gone quiet still has to be opened, because narrowing is exactly what a
+            // model nobody is exercising any more needs: its paths should be falling away.
+            final boolean narrowingDue = narrowingDue(docDir, shard, now);
+            if (!waiting.isEmpty() || narrowingDue) {
+                shards.put(shard, new Queued(queue, waiting.size(), narrowingDue));
                 items += waiting.size();
-                oldestAgeMs = Math.max(oldestAgeMs,
-                        now.toEpochMilli() - QueueItem.orderKeyOf(waiting.getFirst()));
+                if (!waiting.isEmpty()) {
+                    oldestAgeMs = Math.max(oldestAgeMs,
+                            now.toEpochMilli() - QueueItem.orderKeyOf(waiting.getFirst()));
+                }
             }
         }
         return new Survey(shards, new Backlog(items, oldestAgeMs));
+    }
+
+    // Whether this shard has been narrowed today. A shard that never has, or whose marker cannot be
+    // read, is due — which is also how deleting the marker file asks for a narrowing by hand.
+    private boolean narrowingDue(final Optional<Path> docDir, final int shard, final Instant now) {
+        return docDir
+                .map(dir -> PathwayNarrower.narrowingDue(NARROWED_MARKER.lastRun(dir, shard), now))
+                .orElse(false);
     }
 
     static String lockName(final String pathwaysDocUuid, final int shard) {
@@ -254,11 +277,17 @@ public class PathwaysProcessor {
     // back, then deletes exactly what went into it.
     private void drain(final PathwaysDoc doc,
                        final int shardIndex,
-                       final ShardQueue queue) {
+                       final Queued shard) {
+        // Asked again now the lock is held. Whether a shard was due was worked out before locking,
+        // and on a cluster every node works that out for itself — so by the time this one has the
+        // shard, another may have narrowed it and stamped the marker a second ago.
+        final boolean narrowNow = shard.narrowingDue()
+                                  && narrowingDue(shardStore.sharedDocDir(doc), shardIndex, Instant.now());
+
         final List<Path> applied = new ArrayList<>();
         try {
             shardStore.withShard(doc, shardIndex,
-                    localDir -> applyBatch(doc, queue, localDir, applied));
+                    localDir -> work(doc, shard.queue(), shard.items(), narrowNow, localDir, applied));
         } catch (final IOException e) {
             // The model could not be taken down or put back, so nothing here was committed. Leaving
             // the items queued is the whole point: they are applied again by whoever gets the shard
@@ -267,7 +296,46 @@ public class PathwaysProcessor {
                     shardIndex, doc.getName(), applied.size(), e.getMessage()), e);
             return;
         }
-        queue.delete(applied);
+        shard.queue().delete(applied);
+        if (narrowNow) {
+            // Stamped after the shard is safely back, and whether or not the narrowing changed
+            // anything — the work was done either way, and a model already as narrow as its window
+            // does not need looking at again today.
+            shardStore.sharedDocDir(doc).ifPresent(dir -> NARROWED_MARKER.recordRun(dir, shardIndex));
+        }
+    }
+
+    // Everything this hold does to the shard, in the order it happens: the queued traces widen the
+    // model, and then the narrowing takes back whatever has fallen outside the window — so a night's
+    // widenings and the narrowing that answers them land in the history in the order they happened.
+    private boolean work(final PathwaysDoc doc,
+                         final ShardQueue queue,
+                         final int queued,
+                         final boolean narrowNow,
+                         final Path localDir,
+                         final List<Path> applied) {
+        // Only where there is something to apply. A shard opened because its narrowing is due has an
+        // empty queue, and applying nothing still opens the document's feed — see below.
+        boolean changed = queued > 0 && applyBatch(doc, queue, localDir, applied);
+        if (narrowNow) {
+            changed = narrow(doc, localDir) || changed;
+        }
+        return changed;
+    }
+
+    private boolean narrow(final PathwaysDoc doc, final Path localDir) {
+        // Collected rather than written as the narrowing goes: opening the feed opens a stream
+        // whether or not anything is put in it, and a model already as narrow as its window has
+        // nothing to say — which is most models most days.
+        final List<String> lines = new ArrayList<>();
+        final boolean changed = pathwayNarrower.narrow(localDir,
+                PathwayNarrower.oldestDayInWindow(doc, Instant.now()),
+                (severity, message) -> lines.add(message.get()));
+        if (!lines.isEmpty()) {
+            withMessageReceiver(messageReceiverFactory, doc, messages ->
+                    lines.forEach(line -> messages.log(Severity.INFO, () -> line)));
+        }
+        return changed;
     }
 
     // Fills `applied` with the items that went in, so the caller can delete exactly those once the
@@ -430,8 +498,8 @@ public class PathwaysProcessor {
     // --------------------------------------------------------------------------------
 
 
-    /** One shard's queue, and how deep it was when it was looked at. */
-    private record Queued(ShardQueue queue, int items) {
+    /** One shard's queue, how deep it was when it was looked at, and whether it is due a narrowing. */
+    private record Queued(ShardQueue queue, int items, boolean narrowingDue) {
 
     }
 

@@ -29,6 +29,7 @@ import stroom.planb.impl.dao.trace.QueueItem;
 import stroom.planb.impl.dao.trace.QueueItemWriter;
 import stroom.planb.impl.dao.trace.TraceDb;
 import stroom.planb.impl.data.value.SpanKV;
+import stroom.planb.impl.fs.OperationMarker;
 import stroom.planb.impl.fs.ShardQueue;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.impl.serde.trace.SpanKey;
@@ -55,6 +56,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -67,6 +69,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -102,7 +105,11 @@ class TestPathwaysProcessor {
     @Mock
     private MessageReceiverFactory messageReceiverFactory;
 
+    private static final OperationMarker NARROWED_MARKER =
+            new OperationMarker(PlanBConstants.NARROWED_LAST_FILE_NAME);
+
     private Path pathwaysShared;
+    private Path narrowedMarkers;
     private Path bucketDir;
     private PlanBDoc tracesDoc;
     private PathwaysDoc pathwaysDoc;
@@ -116,6 +123,7 @@ class TestPathwaysProcessor {
     void setUp() throws IOException {
         MockitoAnnotations.openMocks(this);
         pathwaysShared = Files.createDirectories(tempDir.resolve("pathways_shared"));
+        narrowedMarkers = Files.createDirectories(tempDir.resolve("pathways_shards"));
 
         pathwaysDoc = PathwaysDoc.builder()
                 .uuid(UUID.randomUUID().toString())
@@ -153,6 +161,14 @@ class TestPathwaysProcessor {
             return lastChanged;
         }).when(shardStore).withShard(any(), anyInt(), any());
 
+        // Where the marker saying when each shard was last narrowed lives. Every shard is marked as
+        // narrowed just now, so nothing is due unless a test says so — an unmarked shard is due, which
+        // is what makes a fresh install narrow everything once.
+        doReturn(Optional.of(narrowedMarkers)).when(shardStore).sharedDocDir(any());
+        for (int shard = 0; shard < SHARD_COUNT; shard++) {
+            NARROWED_MARKER.recordRun(narrowedMarkers, shard);
+        }
+
         tracesDoc = PlanBDoc.builder()
                 .uuid(UUID.randomUUID().toString())
                 .name("test-traces")
@@ -165,6 +181,9 @@ class TestPathwaysProcessor {
                 new MutationLog(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY)),
                 pathwaysStore, shardStore, messageReceiverFactory,
                 new PathwaySerde(BYTE_BUFFER_FACTORY),
+                new PathwayNarrower(new PathwaySerde(BYTE_BUFFER_FACTORY),
+                        new MutationLog(BYTE_BUFFERS, new PathwaySerde(BYTE_BUFFER_FACTORY)),
+                        BYTE_BUFFERS),
                 clusterLockService, securityContext,
                 BYTE_BUFFERS, BYTE_BUFFER_FACTORY,
                 () -> new MetricRegistry());
@@ -338,6 +357,32 @@ class TestPathwaysProcessor {
         assertThat(lastChanged)
                 .as("re-applying a trace this shard has seen is not worth a push")
                 .isFalse();
+    }
+
+    @Test
+    void aQuietShardIsStillWorkedWhenItIsDueANarrowing() throws IOException {
+        // Nothing queued anywhere, so nothing to apply. Shard 2 has no marker, which is how a shard
+        // that has never been narrowed presents.
+        Files.delete(narrowedMarkers.resolve("0002").resolve(PlanBConstants.NARROWED_LAST_FILE_NAME));
+
+        processor.exec();
+
+        verify(clusterLockService).tryLock(
+                eq(PathwaysProcessor.lockName(pathwaysDoc.getUuid(), 2)), any(Runnable.class));
+        verify(clusterLockService, never()).tryLock(
+                eq(PathwaysProcessor.lockName(pathwaysDoc.getUuid(), 1)), any(Runnable.class));
+    }
+
+    @Test
+    void aShardNarrowedIsNotNarrowedAgainUntilTheMarkerIsOldEnough() throws IOException {
+        Files.delete(narrowedMarkers.resolve("0002").resolve(PlanBConstants.NARROWED_LAST_FILE_NAME));
+        processor.exec();
+
+        // The pass stamped the marker, so the next one has no reason to open the shard.
+        clearInvocations(clusterLockService);
+        processor.exec();
+
+        verify(clusterLockService, never()).tryLock(anyString(), any(Runnable.class));
     }
 
     @Test
