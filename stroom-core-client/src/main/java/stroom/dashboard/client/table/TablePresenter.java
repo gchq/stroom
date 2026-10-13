@@ -161,8 +161,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final List<com.google.gwt.user.cellview.client.Column<TableRow, ?>> existingColumns = new ArrayList<>();
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final ToolbarButton addColumnButton;
-    private final TableExpandButton expandButton;
-    private final TableCollapseButton collapseButton;
+    private final GroupLevelButtons groupLevelButtons;
     private final ButtonView downloadButton;
     private final ToolbarToggleButton valueFilterButton;
     private final ToolbarButton annotateButton;
@@ -241,11 +240,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // Add the 'add column' button.
         addColumnButton = pagerView.getToolbar().button(SvgImage.ADD, "Add Column", this::onAddColumn);
 
-        expandButton = TableExpandButton.create();
-        pagerView.addButton(expandButton);
-
-        collapseButton = TableCollapseButton.create();
-        pagerView.addButton(collapseButton);
+        groupLevelButtons = new GroupLevelButtons(
+                pagerView.getToolbar(), () -> groupSelection, () -> maxDepth, this::setGroupSelection);
 
         // Download
         pagerView.getToolbar().setName("Table actions");
@@ -384,25 +380,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         registerHandler(dataGrid.addHyperlinkHandler(event -> HyperlinkEvent
                 .fire(this, event.getHyperlink(), event.getTaskMonitorFactory(), getDashboardContext())));
 
-        registerHandler(expandButton.addClickHandler(event -> {
-            groupSelection = expandButton.expand(groupSelection, maxDepth);
-
-            tableResultRequest = tableResultRequest
-                    .copy()
-                    .groupSelection(groupSelection)
-                    .build();
-            refresh();
-        }));
-
-        registerHandler(collapseButton.addClickHandler(event -> {
-            groupSelection = collapseButton.collapse(groupSelection);
-
-            tableResultRequest = tableResultRequest
-                    .copy()
-                    .groupSelection(groupSelection)
-                    .build();
-            refresh();
-        }));
 
 
 
@@ -893,8 +870,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         expanderColumnWidth = ExpanderCell.getColumnWidth(maxDepth);
         dataGrid.setColumnWidth(expanderColumn, expanderColumnWidth, Unit.PX);
 
-        expandButton.update(groupSelection, maxDepth);
-        collapseButton.update(groupSelection, maxDepth);
+        groupLevelButtons.update(groupSelection, maxDepth);
 
         return processed;
     }
@@ -1353,6 +1329,16 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .copy()
                 .requestedRange(new OffsetRange(0L, length))
                 .build();
+    }
+
+    // Shows the table's groups opened and closed as the selection says
+    private void setGroupSelection(final GroupSelection groupSelection) {
+        this.groupSelection = groupSelection;
+        tableResultRequest = tableResultRequest
+                .copy()
+                .groupSelection(groupSelection)
+                .build();
+        refresh();
     }
 
     void refresh() {

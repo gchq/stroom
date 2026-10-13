@@ -607,6 +607,11 @@ made by `Toolbar.refresh(onClick)`. Presenters set what it does with `setOnClick
 pause and resume button, which was on its own, is in a toolbar of its own ("Visualisation",
 `dashboardVis-refresh`, placed where the button was). The pagers, navigators and visualisations look
 as they did.
+A grouped table's Expand and Collapse are regular toolbar buttons, made by `GroupLevelButtons` (in
+the dashboard table's and query result table's pager toolbars, and in a "Group levels" toolbar on
+the traces screen, which made them one tab stop where they were two). The screen keeps the group
+selection; the helper works out the next level and names and enables the buttons for it.
+`TableExpandButton`, `TableCollapseButton` and `PagerView.addButton(ButtonView)` are gone.
 
 ### Opening a screen leaves the focus behind (#5405)
 
