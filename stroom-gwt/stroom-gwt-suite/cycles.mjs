@@ -195,6 +195,21 @@ const SPECS = [
     writes: [{ method: 'POST', path: /\/api\/config\/v1$/ },
       { method: 'PUT', path: /\/api\/config\/v1\/clusterProperties\/stroom\.ui\.aboutHtml$/ }],
   },
+  {
+    name: 'ask stroom ai config',
+    kind: 'edit',
+    // AskStroomAiConfigPresenter's onHideRequest (:109). The pane opens from the top bar's Ask Stroom
+    // AI wherever you are; Data Volumes is just a quiet screen to stand on, as the walk did.
+    okPresenters: ['AskStroomAiConfigPresenter'],
+    menu: ['Administration', 'Data Volumes'],
+    opener: ['Ask Stroom AI', 'Configure'],
+    // A prompt is text the cycle can append to and take off again exactly; the dock settings move
+    // the pane, which the reload would then have to find again.
+    field: 'History Summary Prompt',
+    value: (was) => `${was} ${STAMP}`,
+    // The config lives in the user's preferences (AskStroomAiClient.setConfig): POST /preferences/v1.
+    writes: [{ method: 'POST', path: /\/api\/preferences\/v1$/ }],
+  },
   // One document cycle per type in the explorer's New menu (read from a live Stroom, 2026-10-12),
   // each made in the seed folder, renamed and deleted. Pathways is left out: its editor is out of
   // scope for this branch. CreateDocumentPresenter's onHideRequest (:100) runs on New and
