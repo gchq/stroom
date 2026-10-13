@@ -614,6 +614,11 @@ the form group's parts named BEM style: `form-group__label-row`, `__label`, `__h
 `__help-icon`, `__description-row`, `__description` and `__feedback` (no longer Bootstrap's
 `invalid-feedback`, so its styles are its own), and the `form-group--indented` and
 `form-group--inline-tick` modifiers. The help popup is `help-popup`.
+The quick filter's Clear and syntax help buttons are made in a toolbar (`quickFilter-toolbar`, placed
+over the end of the box) as regular toolbar buttons, so they are one tab stop with the arrow keys
+between them. Its help icon is the same size and colour everywhere (it was smaller, in the
+navigation colour, inside a form group), and Clear sits a toolbar gap from the help button (it
+overlapped it by a pixel).
 
 ### Opening a screen leaves the focus behind (#5405)
 

@@ -31,16 +31,16 @@
 	cursor: text;
 }
 
-.quickFilter button {
+/* The filter's buttons (Clear and its syntax help), over the end of its box */
+.quickFilter-toolbar {
 	position: absolute;
-}
-
-.quickFilter button.clear {
-	right: 25px;
-}
-
-.quickFilter button.info {
 	right: 4px;
+	margin: 0;
+}
+
+/* Its icons are in the colour of a form group's help icon */
+.quickFilter-toolbar .toolbar-button__icon {
+	color: var(--navigation-icon-button__color);
 }
 
 .quickFilter .svgIcon {

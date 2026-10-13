@@ -61,6 +61,8 @@ public final class PopupContractStories {
 
     private static final String HELP_PANEL = ".help-popup";
     private static final String QUICK_FILTER_PANEL = ".quickFilter-tooltip:not(.help-popup)";
+    // A quick filter's help button
+    private static final String QUICK_FILTER_HELP = ".quickFilter-toolbar button[title='Quick Filter Syntax Help']";
     // Stroom's menus and submenus are each a `simplePopup-popup` holding a cell table of
     // `menuItem-outer` rows
     private static final String MENU_PANEL = ".simplePopup-popup:has(.menuItem-outer)";
@@ -84,8 +86,8 @@ public final class PopupContractStories {
     private static List<PopupCase> cases() {
         final List<PopupCase> cases = new ArrayList<>();
         cases.add(PopupCase.of("QuickFilter help", PopupHarnesses::quickFilter)
-                .opener(".quickFilter button.help-button")
-                .partners(".quickFilter button.help-button", ".quickFilter button.help-button svg")
+                .opener(QUICK_FILTER_HELP)
+                .partners(QUICK_FILTER_HELP, QUICK_FILTER_HELP + " svg")
                 .panel(QUICK_FILTER_PANEL)
                 .insideTarget(QUICK_FILTER_PANEL));
         cases.add(PopupCase.of("FormGroup help", PopupHarnesses::formGroup)
@@ -289,7 +291,7 @@ public final class PopupContractStories {
                 .withPlay(play -> {
                     final PopupCase sel = find("SelectionBox");
                     openPopup(play, sel);
-                    play.click(play.screen().querySelector(sel.getPanel() + " button.help-button"));
+                    play.click(play.screen().querySelector(sel.getPanel() + " " + QUICK_FILTER_HELP));
                     // The help popup is on the page's body, not in the list
                     play.waitFor(() -> play.expect("help should open", () -> PopupDom.isOpen(QUICK_FILTER_PANEL))
                             .toBe(true));
