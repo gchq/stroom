@@ -125,10 +125,10 @@ public class QuickFilter extends FlowPanel
             });
             popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
-                // Position it below the filter
+                // Position it below the filter, clear of its buttons
                 popup.setPopupPosition(
                         getAbsoluteLeft() + 4,
-                        getAbsoluteTop() + 26);
+                        getAbsoluteTop() + getOffsetHeight());
             });
             this.helpPopup = popup;
         }
