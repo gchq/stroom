@@ -49,9 +49,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -62,11 +63,12 @@ import java.util.stream.Stream;
 /**
  * Drives the merge cycle for every doc held on a shared file store.
  *
- * <p>Owns only what every store type shares: finding the docs and shards with work, holding the
- * per-shard cluster lock, choosing complete batches, counting failed attempts against a batch,
- * deleting merged batches, and applying retention to the archive buckets. What actually happens to
- * a shard's batches inside the lock is the {@link MergeStrategy} bound for its
- * {@link StateType} — a store type with no strategy is not merged.
+ * <p>Owns only what every store type shares: finding the docs and shards with work, choosing complete
+ * batches, counting failed attempts against a batch, deleting merged batches, and applying retention
+ * to the archive buckets. Taking each shard's cluster lock and working the shards side by side is
+ * {@link ShardPass}. What actually happens to a shard's batches inside the lock is the
+ * {@link MergeStrategy} bound for its {@link StateType} — a store type with no strategy is not
+ * merged.
  */
 @Singleton
 public class SharedFileStoreMergeProcessor {
@@ -83,10 +85,9 @@ public class SharedFileStoreMergeProcessor {
     private static final OperationMarker RETENTION_MARKER =
             new OperationMarker(PlanBConstants.RETENTION_LAST_FILE_NAME);
 
-    private final ClusterLockService clusterLockService;
     private final SecurityContext securityContext;
     private final TaskContextFactory taskContextFactory;
-    private final ExecutorService mergeExecutor;
+    private final ShardPass shardPass;
     private final PlanBDocCache planBDocCache;
     private final Map<StateType, MergeStrategy> mergeStrategies;
 
@@ -97,10 +98,10 @@ public class SharedFileStoreMergeProcessor {
                                          final TaskContextFactory taskContextFactory,
                                          final PlanBDocCache planBDocCache,
                                          final Map<StateType, MergeStrategy> mergeStrategies) {
-        this.clusterLockService = clusterLockService;
         this.securityContext = securityContext;
         this.taskContextFactory = taskContextFactory;
-        this.mergeExecutor = createMergeExecutor(configProvider.get().getShardMergeThreadCount());
+        this.shardPass = new ShardPass(clusterLockService, securityContext,
+                createMergeExecutor(configProvider.get().getShardMergeThreadCount()));
         this.planBDocCache = planBDocCache;
         this.mergeStrategies = mergeStrategies;
     }
@@ -152,104 +153,97 @@ public class SharedFileStoreMergeProcessor {
             return;
         }
 
+        final Map<Integer, List<Path>> withWork = batchesByShard(doc);
+        final Set<Integer> busy = shardPass.run(withWork.keySet(),
+                shardIndex -> PlanBConstants.getMergeLockName(doc.getUuid(), shardIndex),
+                shardIndex -> taskContextFactory.childContext(parentTaskContext,
+                        "Merge doc " + doc.getName()
+                        + " shard " + PlanBConstants.formatShardIndex(shardIndex),
+                        taskContext -> mergeShard(strategy, doc, shardIndex,
+                                withWork.get(shardIndex))).run(),
+                "merging " + doc.getName());
+        if (!busy.isEmpty()) {
+            // Expected rather than wrong: every node runs this, so a shard another node is merging is
+            // a shard this one does not have to. It waits for the next cycle, a minute away.
+            LOGGER.debug(() -> LogUtil.message("{} shard(s) of {} were held elsewhere this cycle: {}",
+                    busy.size(), doc.getName(), busy));
+        }
+    }
+
+    /**
+     * The shards of a document with something to do this cycle, and the batches each has waiting.
+     *
+     * <p>Worked out before any lock is taken, which is safe because it only reads: a shard that gains
+     * a batch between here and the lock merges it next cycle, and one that loses its reason to be
+     * merged costs a lock taken for nothing. Retention is re-checked inside the lock, where another
+     * node may have run it since.
+     */
+    private Map<Integer, List<Path>> batchesByShard(final PlanBDocument doc) {
         final Path processingDocDir = SharedFileStore.rootOf(doc)
                 .resolve(PlanBConstants.PROCESSING_DIR_NAME)
                 .resolve(doc.getUuid());
 
-        // Shuffle shard indices so concurrent nodes naturally scatter across
-        // different shards on each merge cycle. Without this, all nodes would
-        // race for shard 0 first, causing O(N²) failed lock attempts per cycle
-        // instead of O(N).  With a shuffle each node is likely to win a
-        // different shard, giving close to 1:1 work distribution.
-        final int shardCount = SharedFileStore.shardCountOf(doc);
-        final List<Integer> shardIndices = new ArrayList<>(shardCount);
-        for (int i = 0; i < shardCount; i++) {
-            shardIndices.add(i);
-        }
-        Collections.shuffle(shardIndices);
+        final Map<Integer, List<Path>> withWork = new LinkedHashMap<>();
+        for (int shardIndex = 0; shardIndex < SharedFileStore.shardCountOf(doc); shardIndex++) {
+            final List<Path> completeBatchDirs =
+                    collectBatchDirs(processingDocDir, PlanBConstants.formatShardIndex(shardIndex));
 
-        final List<CompletableFuture<Void>> futures = new ArrayList<>();
-
-        for (final int shardIndex : shardIndices) {
-            final String shardIndexStr = PlanBConstants.formatShardIndex(shardIndex);
-
-            final List<Path> completeBatchDirs = collectBatchDirs(processingDocDir, shardIndexStr);
-
-            // Sort by name for deterministic merge order: when two batches write
-            // the same key the last-named batch wins.
+            // Sorted by name for deterministic merge order: when two batches write the same key the
+            // last-named batch wins.
             completeBatchDirs.sort(Comparator.comparing(p -> p.getFileName().toString()));
 
-            // Evaluate outside the lock (read-only, safe to race). Re-validated inside the lock
-            // before acting.
             if (!completeBatchDirs.isEmpty() || retentionDue(doc, shardIndex)) {
-                final Runnable runnable = taskContextFactory.childContext(parentTaskContext,
-                        "Merge doc " + doc.getName() + " shard " + shardIndexStr,
-                        taskContext -> securityContext.asProcessingUser(() ->
-                                mergeShard(strategy, doc, shardIndex, completeBatchDirs)));
-
-                futures.add(CompletableFuture
-                        .runAsync(runnable, mergeExecutor)
-                        .exceptionally(t -> {
-                            LOGGER.error("Error processing shard {} for doc {}",
-                                    shardIndexStr, doc.getName(), t);
-                            return null;
-                        }));
+                withWork.put(shardIndex, completeBatchDirs);
             }
         }
-
-        // Wait for all shard merges to complete before returning.
-        if (!futures.isEmpty()) {
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        }
+        return withWork;
     }
 
+    // Called with the shard's cluster lock held, so nothing else is working this shard.
     private void mergeShard(final MergeStrategy strategy,
                             final PlanBDocument doc,
                             final int shardIndex,
                             final List<Path> completeBatchDirs) {
         final String lockName = PlanBConstants.getMergeLockName(doc.getUuid(), shardIndex);
-        LOGGER.debug(() -> "Attempting to acquire lock " + lockName);
-        clusterLockService.tryLock(lockName, () -> {
-            try {
-                LOGGER.debug("Acquired lock {}, starting merge/maintenance", lockName);
+        try {
+            LOGGER.debug("Holding lock {}, starting merge/maintenance", lockName);
 
-                // Re-check now the lock is held: another node may have run retention since the
-                // pre-lock check.
-                final boolean retentionDue = retentionDue(doc, shardIndex);
-                if (retentionDue) {
-                    final SimpleDuration interval = checkInterval(doc);
-                    LOGGER.debug(() -> LogUtil.message("Running retention for {} (every {}, next due {})",
-                            lockName, interval, SimpleDurationUtil.plus(Instant.now(), interval)));
-                }
-
-                final MergeContext ctx = new MergeContext(doc, shardIndex, lockName, retentionDue);
-                final MergeResult result = strategy.mergeShard(ctx, completeBatchDirs);
-
-                if (retentionDue) {
-                    // Runs regardless of whether anything currently writes buckets, so buckets left
-                    // by a previous configuration are cleaned up too.
-                    deleteExpiredArchiveShards(ctx);
-                    RETENTION_MARKER.recordRun(archiveDocDir(doc), shardIndex);
-                }
-
-                result.failures().forEach(this::recordBatchFailure);
-                cleanUpMergedBatches(result.mergedBatchDirs());
-
-                if (!result.failures().isEmpty()) {
-                    LOGGER.error(() -> LogUtil.message(
-                                    "Completed merge/maintenance for {} with {} of {} batches failing",
-                                    lockName,
-                                    result.failures().size(),
-                                    completeBatchDirs.size()),
-                            result.firstFailure());
-                } else {
-                    LOGGER.debug("Successfully completed merge/maintenance for {}", lockName);
-                }
-            } catch (final IOException e) {
-                LOGGER.error("Error during merge/maintenance for {}", lockName, e);
-                throw new UncheckedIOException(e);
+            // Re-check now the lock is held: another node may have run retention since the
+            // pre-lock check.
+            final boolean retentionDue = retentionDue(doc, shardIndex);
+            if (retentionDue) {
+                final SimpleDuration interval = checkInterval(doc);
+                LOGGER.debug(() -> LogUtil.message("Running retention for {} (every {}, next due {})",
+                        lockName, interval, SimpleDurationUtil.plus(Instant.now(), interval)));
             }
-        });
+
+            final MergeContext ctx = new MergeContext(doc, shardIndex, lockName, retentionDue);
+            final MergeResult result = strategy.mergeShard(ctx, completeBatchDirs);
+
+            if (retentionDue) {
+                // Runs regardless of whether anything currently writes buckets, so buckets left
+                // by a previous configuration are cleaned up too.
+                deleteExpiredArchiveShards(ctx);
+                RETENTION_MARKER.recordRun(archiveDocDir(doc), shardIndex);
+            }
+
+            result.failures().forEach(this::recordBatchFailure);
+            cleanUpMergedBatches(result.mergedBatchDirs());
+
+            if (!result.failures().isEmpty()) {
+                LOGGER.error(() -> LogUtil.message(
+                                "Completed merge/maintenance for {} with {} of {} batches failing",
+                                lockName,
+                                result.failures().size(),
+                                completeBatchDirs.size()),
+                        result.firstFailure());
+            } else {
+                LOGGER.debug("Successfully completed merge/maintenance for {}", lockName);
+            }
+        } catch (final IOException e) {
+            LOGGER.error("Error during merge/maintenance for {}", lockName, e);
+            throw new UncheckedIOException(e);
+        }
     }
 
     // -----------------------------------------------------------------------
