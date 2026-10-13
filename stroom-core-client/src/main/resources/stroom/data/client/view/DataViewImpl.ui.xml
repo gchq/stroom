@@ -11,7 +11,7 @@
                                 addStyleNames="max dataViewImpl-tabBarInner"/>
             </g:FlowPanel>
             <g:FlowPanel styleName="dock-min dataViewImpl-rightPanel">
-                <b:ButtonPanel ui:field="buttonPanel" styleName="dataViewImpl-buttonPanel"/>
+                <g:FlowPanel styleName="dataViewImpl-buttonPanel"/>
                 <g:SimplePanel ui:field="navigatorContainer"
                                styleName="dataViewImpl-navigatorContainer"/>
                 <g:Label ui:field="sourceLinkLabel"

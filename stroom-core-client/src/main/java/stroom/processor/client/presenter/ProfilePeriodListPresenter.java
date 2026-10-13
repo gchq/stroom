@@ -19,16 +19,14 @@ package stroom.processor.client.presenter;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.PagerView;
 import stroom.processor.shared.ProfilePeriod;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.Days;
 import stroom.util.shared.time.Time;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.MultiSelectionModelImpl;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -67,9 +65,12 @@ public class ProfilePeriodListPresenter
 
         this.newConcurrencyTimeRangePresenter = newConcurrencyTimeRangePresenter;
 
-        addButton = view.addButton(SvgPresets.NEW_ITEM);
-        editButton = view.addButton(SvgPresets.EDIT);
-        removeButton = view.addButton(SvgPresets.REMOVE);
+        addButton = view.getToolbar().button(SvgImage.ADD, "New", this::onAdd);
+        view.getToolbar().setName("Profile period actions");
+        editButton = view.getToolbar().button(SvgImage.EDIT, "Edit", () -> onEdit(selectionModel.getSelected()));
+        editButton.setEnabled(false);
+        removeButton = view.getToolbar().button(SvgImage.REMOVE, "Remove", this::onRemove);
+        removeButton.setEnabled(false);
 
         addColumns();
         enableButtons();
@@ -81,21 +82,6 @@ public class ProfilePeriodListPresenter
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
                 onEdit(selectionModel.getSelected());
-            }
-        }));
-        registerHandler(addButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onAdd(event);
-            }
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onEdit(selectionModel.getSelected());
-            }
-        }));
-        registerHandler(removeButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                onRemove();
             }
         }));
     }
@@ -184,7 +170,7 @@ public class ProfilePeriodListPresenter
         enableButtons();
     }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         final ProfilePeriod profilePeriod = ProfilePeriod.builder().uuid(UUID.randomUUID().toString()).build();
         showEditor(profilePeriod);
     }

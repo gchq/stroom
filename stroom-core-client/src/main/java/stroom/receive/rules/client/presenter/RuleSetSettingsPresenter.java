@@ -31,11 +31,12 @@ import stroom.receive.rules.client.presenter.RuleSetSettingsPresenter.RuleSetSet
 import stroom.receive.rules.shared.ReceiveAction;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ExtendedUiConfig;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -45,7 +46,6 @@ import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.dom.client.Style.BorderStyle;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -95,13 +95,22 @@ public class RuleSetSettingsPresenter
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        addButton = listPresenter.add(SvgPresets.ADD.title("Add new rule"));
-        editButton = listPresenter.add(SvgPresets.EDIT.title("Edit selected rule"));
-        copyButton = listPresenter.add(SvgPresets.COPY.title("Copy selected rule"));
-        disableButton = listPresenter.add(SvgPresets.DISABLE.title("Disable/enable selected rule"));
-        deleteButton = listPresenter.add(SvgPresets.DELETE.title("Delete selected rule"));
-        moveUpButton = listPresenter.add(SvgPresets.UP.title("Move selected rule up"));
-        moveDownButton = listPresenter.add(SvgPresets.DOWN.title("Move selected rule down"));
+        final Toolbar ruleActions = listPresenter.getToolbar();
+        ruleActions.setName("Receipt rule actions");
+        addButton = ruleActions.button(SvgImage.ADD, "Add new rule", this::addRuleButtonClickHandler);
+        editButton = ruleActions.button(SvgImage.EDIT, "Edit selected rule", this::editButtonClickHandler);
+        editButton.setEnabled(false);
+        copyButton = ruleActions.button(SvgImage.COPY, "Copy selected rule", this::copyRuleButtonClickHandler);
+        copyButton.setEnabled(false);
+        disableButton = ruleActions.button(SvgImage.DISABLE, "Disable/enable selected rule",
+                this::disableButtonClickHandler);
+        disableButton.setEnabled(false);
+        deleteButton = ruleActions.button(SvgImage.DELETE, "Delete selected rule", this::deleteButtonClickHandler);
+        deleteButton.setEnabled(false);
+        moveUpButton = ruleActions.button(SvgImage.UP, "Move selected rule up", this::moveUpButtonClickHandler);
+        moveUpButton.setEnabled(false);
+        moveDownButton = ruleActions.button(SvgImage.DOWN, "Move selected rule down", this::moveDownButtonClickHandler);
+        moveDownButton.setEnabled(false);
 
         listPresenter.getView().asWidget().getElement().getStyle().setBorderStyle(BorderStyle.NONE);
 
@@ -110,13 +119,6 @@ public class RuleSetSettingsPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(addButton.addClickHandler(this::addRuleButtonClickHandler));
-        registerHandler(editButton.addClickHandler(this::editButtonClickHandler));
-        registerHandler(copyButton.addClickHandler(this::copyRuleButtonClickHandler));
-        registerHandler(disableButton.addClickHandler(this::disableButtonClickHandler));
-        registerHandler(deleteButton.addClickHandler(this::deleteButtonClickHandler));
-        registerHandler(moveUpButton.addClickHandler(this::moveUpButtonClickHandler));
-        registerHandler(moveDownButton.addClickHandler(this::moveDownButtonClickHandler));
 
         registerHandler(listPresenter.getSelectionModel().addSelectionHandler(this::listSelectionHandler));
 
@@ -138,7 +140,7 @@ public class RuleSetSettingsPresenter
 //        }
 //    }
 
-    private void addRuleButtonClickHandler(final ClickEvent event) {
+    private void addRuleButtonClickHandler() {
         if (!isReadOnly()) {
             if (fieldListPresenter == null || NullSafe.isEmptyCollection(fieldListPresenter.getFields())) {
                 AlertEvent.fireError(
@@ -152,7 +154,7 @@ public class RuleSetSettingsPresenter
         }
     }
 
-    private void editButtonClickHandler(final ClickEvent event) {
+    private void editButtonClickHandler() {
         if (!isReadOnly()) {
             final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
@@ -161,7 +163,7 @@ public class RuleSetSettingsPresenter
         }
     }
 
-    private void copyRuleButtonClickHandler(final ClickEvent event) {
+    private void copyRuleButtonClickHandler() {
         if (!isReadOnly()) {
             final ReceiveDataRule selected = listPresenter.getSelectionModel().getSelected();
             if (selected != null) {
@@ -187,7 +189,7 @@ public class RuleSetSettingsPresenter
         }
     }
 
-    private void disableButtonClickHandler(final ClickEvent event) {
+    private void disableButtonClickHandler() {
         if (!isReadOnly()) {
             final List<ReceiveDataRule> selectedItems = listPresenter.getSelectionModel().getSelectedItems();
             if (NullSafe.hasItems(selectedItems)) {
@@ -208,7 +210,7 @@ public class RuleSetSettingsPresenter
         }
     }
 
-    private void deleteButtonClickHandler(final ClickEvent event) {
+    private void deleteButtonClickHandler() {
         if (!isReadOnly()) {
             final List<ReceiveDataRule> rules = listPresenter.getSelectionModel().getSelectedItems();
             final String msg = rules.size() > 1
@@ -225,7 +227,7 @@ public class RuleSetSettingsPresenter
         }
     }
 
-    private void moveUpButtonClickHandler(final ClickEvent event) {
+    private void moveUpButtonClickHandler() {
         if (!isReadOnly()) {
             final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {
@@ -238,7 +240,7 @@ public class RuleSetSettingsPresenter
         }
     }
 
-    private void moveDownButtonClickHandler(final ClickEvent event) {
+    private void moveDownButtonClickHandler() {
         if (!isReadOnly()) {
             final ReceiveDataRule rule = listPresenter.getSelectionModel().getSelected();
             if (rule != null) {

@@ -23,11 +23,15 @@ import stroom.util.shared.EntityServiceException;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
+import org.fusesource.restygwt.client.FailedStatusCodeException;
 import org.fusesource.restygwt.client.Method;
 
 import java.io.PrintStream;
 
 public class DefaultErrorHandler implements RestErrorHandler {
+
+    static final String NO_RESPONSE_MESSAGE =
+            "The server did not respond. Check that Stroom is running and try again.";
 
     private final HasHandlers hasHandlers;
     private final AlertCallback callback;
@@ -90,9 +94,19 @@ public class DefaultErrorHandler implements RestErrorHandler {
         }
 
         if (message == null || message.trim().length() <= 1) {
-            message = throwable.getClass().getName();
+            // The URL and the exception are in the details
+            message = isNoResponse(throwable)
+                    ? NO_RESPONSE_MESSAGE
+                    : throwable.getClass().getName();
         }
 
         AlertEvent.fireError(hasHandlers, message, details, callback);
+    }
+
+    // A request that got no response at all (the server is down, a proxy timed out or the
+    // connection dropped) fails with status code 0
+    private static boolean isNoResponse(final Throwable throwable) {
+        return throwable instanceof final FailedStatusCodeException failedStatusCodeException
+               && failedStatusCodeException.getStatusCode() == 0;
     }
 }

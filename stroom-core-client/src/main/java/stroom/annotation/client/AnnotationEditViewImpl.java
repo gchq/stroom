@@ -47,6 +47,9 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
     private final Widget widget;
 
+    private boolean readOnly;
+    private boolean assignYourselfEnabled;
+
     @UiField
     Label annotationId;
     @UiField
@@ -90,6 +93,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @Inject
     public AnnotationEditViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        AssignYourselfLink.init(assignYourself, this::assignYourself);
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
         create.setIcon(SvgImage.ADD);
@@ -226,8 +230,26 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     }
 
     @Override
-    public void setAssignYourselfVisible(final boolean visible) {
-        assignYourself.setVisible(visible);
+    public void setAssignYourselfEnabled(final boolean enabled) {
+        this.assignYourselfEnabled = enabled;
+        AssignYourselfLink.update(assignYourself, !enabled, readOnly);
+    }
+
+    @Override
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        titleTextBox.setReadOnly(readOnly);
+        subjectTextBox.setReadOnly(readOnly);
+        comment.setReadOnly(readOnly);
+        commentButton.setEnabled(!readOnly);
+        create.setEnabled(!readOnly);
+        delete.setEnabled(!readOnly);
+        statusBlock.setReadOnly(readOnly);
+        assignedToBlock.setReadOnly(readOnly);
+        annotationLabelBlock.setReadOnly(readOnly);
+        annotationCollectionBlock.setReadOnly(readOnly);
+        annotationRetentionPeriodBlock.setReadOnly(readOnly);
+        AssignYourselfLink.update(assignYourself, !assignYourselfEnabled, readOnly);
     }
 
     @Override
@@ -319,10 +341,14 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
     @UiHandler("assignYourself")
     public void onAssignYourself(final ClickEvent e) {
+        AssignYourselfLink.runIfEnabled(assignYourself, this::assignYourself);
+        e.stopPropagation();
+    }
+
+    private void assignYourself() {
         if (getUiHandlers() != null) {
             getUiHandlers().assignYourself();
         }
-        e.stopPropagation();
     }
 
     @UiHandler("annotationLabelBlock")

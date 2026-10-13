@@ -425,9 +425,9 @@ public class DocumentPluginEventManager extends Plugin {
                         .create(EXPLORER_RESOURCE)
                         .method(res -> res.fetchDeleteConfirmation(
                                 new DeleteConfirmationRequest(event.getDocRefs())))
-                        .onSuccess(info -> confirmDelete(event.getDocRefs(), info, action))
+                        .onSuccess(info -> confirmDelete(event.getDocRefs(), info, action, event.getCallback()))
                         .onFailure(err -> confirmDeleteAfterLookupError(
-                                event.getDocRefs(), err.getMessage(), action))
+                                event.getDocRefs(), err.getMessage(), action, event.getCallback()))
                         .taskMonitorFactory(explorerListener)
                         .exec();
             } else {
@@ -773,13 +773,10 @@ public class DocumentPluginEventManager extends Plugin {
      */
     private void confirmDelete(final List<DocRef> docRefs,
                                final DeleteConfirmation info,
-                               final Runnable action) {
+                               final Runnable action,
+                               final ResultCallback resultCallback) {
         final int cnt = NullSafe.size(docRefs);
-        final ConfirmCallback callback = ok -> {
-            if (ok) {
-                action.run();
-            }
-        };
+        final ConfirmCallback callback = createDeleteConfirmCallback(action, resultCallback);
 
         if (info == null || info.isEmpty()) {
             final String msg = cnt > 1
@@ -929,7 +926,8 @@ public class DocumentPluginEventManager extends Plugin {
      */
     private void confirmDeleteAfterLookupError(final List<DocRef> docRefs,
                                                final String errorMessage,
-                                               final Runnable action) {
+                                               final Runnable action,
+                                               final ResultCallback resultCallback) {
         final int cnt = NullSafe.size(docRefs);
         final String msg = cnt > 1
                 ? "Unable to check what would be affected by deleting these " + cnt + " items. Are you "
@@ -946,11 +944,20 @@ public class DocumentPluginEventManager extends Plugin {
                 DocumentPluginEventManager.this,
                 SafeHtmlUtil.getSafeHtml(msg),
                 detail.toSafeHtml(),
-                ok -> {
-                    if (ok) {
-                        action.run();
-                    }
-                });
+                createDeleteConfirmCallback(action, resultCallback));
+    }
+
+    /// Runs the delete if the user agrees. If they cancel, the caller's callback (if any) is told the
+    /// delete didn't happen, so anything waiting on the result isn't left waiting.
+    private ConfirmCallback createDeleteConfirmCallback(final Runnable action,
+                                                        final ResultCallback resultCallback) {
+        return ok -> {
+            if (ok) {
+                action.run();
+            } else if (resultCallback != null) {
+                resultCallback.onResult(false);
+            }
+        };
     }
 
     private void setAsFavourite(final DocRef docRef,

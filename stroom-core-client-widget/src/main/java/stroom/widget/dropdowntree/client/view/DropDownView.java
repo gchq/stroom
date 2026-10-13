@@ -27,4 +27,18 @@ public interface DropDownView extends View, Focus, HasUiHandlers<DropDownUiHandl
     void setText(String text, boolean hasErrorMsg);
 
     HandlerRegistration addWarningClickHandler(final MouseDownHandler mouseDownHandler);
+
+    /// Shows whether the value can be changed: greys the control out (the `disabled` class) and
+    /// tells assistive technology (`aria-disabled`). It stays focusable, and it doesn't stop the
+    /// popup being requested; the presenter ignores that while disabled.
+    ///
+    /// @param enabled Whether the value can be changed.
+    void setEnabled(boolean enabled);
+
+    /// Shows that the value can be read but not changed: the normal field with its value greyed
+    /// (the `readonly` class). It stays focusable and is `aria-disabled`, as a button can't be
+    /// read only; the presenter ignores the popup being requested while read only.
+    ///
+    /// @param readOnly Whether the value is read only.
+    void setReadOnly(boolean readOnly);
 }

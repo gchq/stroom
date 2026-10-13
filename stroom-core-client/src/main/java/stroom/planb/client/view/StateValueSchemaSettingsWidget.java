@@ -39,8 +39,6 @@ public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget imple
     @UiField
     SelectionBox<HashLength> hashLength;
 
-    private boolean readOnly;
-
     @Inject
     public StateValueSchemaSettingsWidget(final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -72,16 +70,15 @@ public class StateValueSchemaSettingsWidget extends AbstractSettingsWidget imple
     }
 
     public void onReadOnly(final boolean readOnly) {
-        this.readOnly = readOnly;
-        stateValueType.setEnabled(!readOnly);
-        hashLength.setEnabled(!readOnly);
+        stateValueType.setReadOnly(readOnly);
+        hashLength.setReadOnly(readOnly);
     }
 
     private void onStateValueTypeChange() {
         final StateValueType value = stateValueType.getValue();
-        hashLength.setEnabled(!readOnly &&
-                              (Objects.equals(value, StateValueType.HASH_LOOKUP) ||
-                               Objects.equals(value, StateValueType.VARIABLE)));
+        // Hash length only applies to some types; read only is set separately in onReadOnly()
+        hashLength.setEnabled(Objects.equals(value, StateValueType.HASH_LOOKUP) ||
+                              Objects.equals(value, StateValueType.VARIABLE));
     }
 
     @UiHandler("stateValueType")

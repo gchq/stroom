@@ -16,10 +16,12 @@
 
 package stroom.widget.popup.client.view;
 
+import stroom.widget.form.client.FieldValidity;
 import stroom.widget.popup.client.presenter.TextBoxPopup.TextBoxView;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -31,6 +33,8 @@ public class TextBoxViewImpl extends ViewImpl implements TextBoxView {
 
     @UiField
     TextBox textBox;
+    @UiField
+    Label feedback;
 
     @Inject
     public TextBoxViewImpl(final Binder binder) {
@@ -50,6 +54,17 @@ public class TextBoxViewImpl extends ViewImpl implements TextBoxView {
     @Override
     public void focus() {
         textBox.setFocus(true);
+    }
+
+    @Override
+    public void setInvalid(final String message) {
+        FieldValidity.setInvalid(textBox, feedback, message);
+        textBox.setFocus(true);
+    }
+
+    @Override
+    public void setValid() {
+        FieldValidity.setValid(textBox, feedback);
     }
 
 

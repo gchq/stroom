@@ -23,6 +23,12 @@ public interface MenuUiHandlers extends UiHandlers {
 
     void showSubMenu(MenuItem menuItem, Element element);
 
+    /// Shows the item's sub menu, or, if it is already showing, hides it.
+    ///
+    /// @param menuItem The item whose sub menu to show or hide.
+    /// @param element  The item's row.
+    void toggleSubMenu(MenuItem menuItem, Element element);
+
     void hideExistingSubMenu(MenuItem newItem);
 
     void ensureParentItemSelected();

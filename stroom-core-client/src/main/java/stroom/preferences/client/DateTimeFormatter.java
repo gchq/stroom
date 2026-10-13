@@ -169,6 +169,10 @@ public class DateTimeFormatter {
         converted = converted.replace('y', 'Y');
         converted = converted.replace('d', 'D');
         converted = converted.replaceAll("'", "");
+        // Java's XXX is an offset with a colon, e.g. +01:00, which is moment.js's Z (moment.js would
+        // otherwise read XXX as three X tokens, the Unix time in seconds). Done before SSSXX, which
+        // would otherwise match the start of SSSXXX
+        converted = converted.replaceAll("XXX", "Z");
         converted = converted.replaceAll("SSSXX", "SSSZ");
         converted = converted.replaceAll("T", "[T]");
         converted = converted.replaceAll("xxx", "Z");

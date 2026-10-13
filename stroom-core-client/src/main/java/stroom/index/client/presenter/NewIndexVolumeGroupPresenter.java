@@ -22,6 +22,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.NameDocumentView;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
+import stroom.util.shared.PathSafeNames;
 import stroom.widget.popup.client.event.DialogEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -77,6 +78,11 @@ public class NewIndexVolumeGroupPresenter
                 AlertEvent.fireError(
                         NewIndexVolumeGroupPresenter.this,
                         "You must provide a name",
+                        e::reset);
+            } else if (PathSafeNames.validate(name) != null) {
+                AlertEvent.fireError(
+                        NewIndexVolumeGroupPresenter.this,
+                        PathSafeNames.validate(name),
                         e::reset);
             } else {
                 checkVolumeGroupName(name, e);

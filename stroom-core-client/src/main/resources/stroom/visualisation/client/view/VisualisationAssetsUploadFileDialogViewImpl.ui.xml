@@ -4,12 +4,16 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max visualisation-assets-add-dialog">
         <form:FormGroup identity="visualisationAssetsUploadFileTo"
-                        label="Upload to">
+                        label="Upload to"
+                        helpText="The folder that the file will be uploaded to.">
             <g:Label ui:field="lblPath"/>
         </form:FormGroup>
         <form:FormGroup identity="visualisationAssetsUploadFile"
                         label="File"
-                        addStyleNames="dock-min">
+                        addStyleNames="dock-min"
+                        helpText="The file to add to the visualisation's assets. Any '/' or ':' characters are removed from its name."
+                        screenReaderText="Any '/' or ':' characters are removed from its name."
+                        required="true">
             <form:CustomFileUpload ui:field="fileUpload"/>
         </form:FormGroup>
     </g:FlowPanel>

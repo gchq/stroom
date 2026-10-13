@@ -120,10 +120,20 @@ public class AnnotationManager implements HasHandlers {
 
     public void showAnnotationMenu(final NativeEvent event,
                                    final List<TableRow> selectedItems) {
+        final Element target = event.getEventTarget().cast();
+        showAnnotationMenu(target, selectedItems);
+    }
+
+    /// Shows the annotation menu for the selected rows, below an element, e.g. the button that
+    /// opens it.
+    ///
+    /// @param target        The element to show the menu below.
+    /// @param selectedItems The selected rows the menu's actions apply to.
+    public void showAnnotationMenu(final Element target,
+                                   final List<TableRow> selectedItems) {
         if (enabled) {
             this.selectedItems = selectedItems;
 
-            final Element target = event.getEventTarget().cast();
             Rect relativeRect = new Rect(target);
             relativeRect = relativeRect.grow(3);
             final PopupPosition popupPosition = new PopupPosition(relativeRect, PopupLocation.BELOW);

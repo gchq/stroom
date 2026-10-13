@@ -23,7 +23,7 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.UrlParameters;
 import stroom.dispatch.client.RestFactory;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
@@ -34,7 +34,6 @@ import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HasHandlers;
@@ -100,9 +99,12 @@ public class ManageActivityPresenter
         view.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 ActivityResource.QUICK_FILTER_CONTEXT, this, this));
 
-        newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
-        openButton = listPresenter.addButton(SvgPresets.EDIT);
-        deleteButton = listPresenter.addButton(SvgPresets.DELETE);
+        listPresenter.getToolbar().setName("Activity actions");
+        newButton = listPresenter.getToolbar().button(SvgImage.ADD, "New", this::onNew);
+        openButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit", this::onOpen);
+        openButton.setEnabled(false);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete", this::onDelete);
+        deleteButton.setEnabled(false);
 
         updateQuickFilterTooltipContentSupplier();
     }
@@ -118,27 +120,6 @@ public class ManageActivityPresenter
 //                onOpen();
             }
         }));
-        if (newButton != null) {
-            registerHandler(newButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    onNew();
-                }
-            }));
-        }
-        if (openButton != null) {
-            registerHandler(openButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    onOpen();
-                }
-            }));
-        }
-        if (deleteButton != null) {
-            registerHandler(deleteButton.addClickHandler(event -> {
-                if (MouseUtil.isPrimary(event)) {
-                    onDelete();
-                }
-            }));
-        }
 
         super.onBind();
     }

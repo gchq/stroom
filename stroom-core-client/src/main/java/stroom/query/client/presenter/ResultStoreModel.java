@@ -142,12 +142,13 @@ public class ResultStoreModel {
     public void updateSettings(final String nodeName,
                                final UpdateStoreRequest updateStoreRequest,
                                final Consumer<Boolean> consumer,
+                               final RestErrorHandler errorHandler,
                                final TaskMonitorFactory taskMonitorFactory) {
         restFactory
                 .create(RESULT_STORE_RESOURCE)
                 .method(res -> res.update(nodeName, updateStoreRequest))
                 .onSuccess(consumer)
-                .onFailure(t -> consumer.accept(false))
+                .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }

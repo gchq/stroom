@@ -96,7 +96,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
 
                 if (AnalyticProcessType.SCHEDULED_QUERY.equals(analyticProcessType)) {
                     scheduledProcessingPresenter
-                            .read(docRef);
+                            .read(docRef, readOnly);
                 } else if (AnalyticProcessType.STREAMING.equals(analyticProcessType)) {
                     streamingProcessingPresenter
                             .update(getEntity(), isReadOnly(), analyticRuleDoc.getQuery());
@@ -104,7 +104,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
                     //noinspection PatternVariableCanBeUsed // Not in GWT
                     final TableBuilderAnalyticProcessConfig ac =
                             (TableBuilderAnalyticProcessConfig) analyticProcessConfig;
-                    tableBuilderProcessingPresenter.read(docRef, ac);
+                    tableBuilderProcessingPresenter.read(docRef, ac, readOnly);
 
                 }
             }
@@ -119,7 +119,7 @@ public abstract class AbstractProcessingPresenter<D extends AbstractAnalyticRule
                 break;
             }
             case SCHEDULED_QUERY: {
-                scheduledProcessingPresenter.read(getEntity().asDocRef());
+                scheduledProcessingPresenter.read(getEntity().asDocRef(), isReadOnly());
                 getView().setProcessSettings(scheduledProcessingPresenter.getView());
                 break;
             }

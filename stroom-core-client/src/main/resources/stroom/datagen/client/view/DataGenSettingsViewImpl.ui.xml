@@ -13,8 +13,9 @@
 
         <form:FormGroup identity="dataGenSettingsTemplate"
                         label="Template"
-                        helpText="The data that will be sent into this Feed."
-                        addStyleNames="dock-max">
+                        helpText="The text written to the destination feed as a new Raw Events stream each time the schedule runs. It is sent exactly as entered, in UTF-8."
+                        addStyleNames="dock-max"
+                        screenReaderText="Sent as entered, as a new Raw Events stream on each run.">
             <g:SimplePanel ui:field="templateEditor" styleName="max form-control-border"/>
         </form:FormGroup>
 

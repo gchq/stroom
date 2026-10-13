@@ -41,7 +41,8 @@
 	color: var(--row__text-color--selected);
 }
 
-.expressionItemBox-selectable.expressionItemBox-disabled .termEditor-inner {
+/* A disabled term looks disabled in read-only trees too (once only in editable ones) */
+.expressionItemBox-disabled .termEditor-inner {
 	background-color: var(--expression-item-box__background-color--disabled);
 }
 
@@ -62,5 +63,15 @@
 }
 
 .expressionItemBox-disabled * {
-	color: #999;
+	color: var(--expression-item-box__text-color--disabled);
+}
+
+/* A read-only expression editor: its terms greyed, as a read-only field's value is (a disabled
+   term keeps its own look) */
+.editExpressionViewImpl-readonly .treePanel-panel .expressionItemBox-label {
+	color: var(--control__text-color--readonly);
+}
+
+.editExpressionViewImpl-readonly .treePanel-panel .expressionItemBox-disabled .expressionItemBox-label {
+	color: var(--expression-item-box__text-color--disabled);
 }

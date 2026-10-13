@@ -1022,12 +1022,3 @@ td.datePickerYear {
   background: #92c1f0;
 }
 
-.gwt-SplitLayoutPanel-HDragger {
-  background: #d0e4f6 url(images/splitPanelThumb.png) center center no-repeat;
-  cursor: col-resize;
-}
-
-.gwt-SplitLayoutPanel-VDragger {
-  background: #d0e4f6 url(images/splitPanelThumb.png) center center no-repeat;
-  cursor: row-resize;
-}

@@ -20,6 +20,7 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupType;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
@@ -40,16 +41,34 @@ public class TooltipPresenter extends MyPresenterWidget<TooltipPresenter.Tooltip
     }
 
     public void show(final SafeHtml html, final PopupPosition popupPosition) {
+        show(html, popupPosition, null);
+    }
+
+    /// Shows the tooltip, opened by an element such as an icon.
+    ///
+    /// @param html          The tooltip's content.
+    /// @param popupPosition Where to show it.
+    /// @param anchor        The element that opened it, or null. A mousedown on it doesn't
+    ///                      auto-hide the tooltip, so that clicking it again closes the tooltip
+    ///                      rather than showing it again.
+    public void show(final SafeHtml html, final PopupPosition popupPosition, final Element anchor) {
         getView().setHTML(html);
-        show(popupPosition);
+        show(popupPosition, anchor);
     }
 
     private void show(final PopupPosition popupPosition) {
-        ShowPopupEvent.builder(this)
+        show(popupPosition, null);
+    }
+
+    private void show(final PopupPosition popupPosition, final Element anchor) {
+        final ShowPopupEvent.Builder builder = ShowPopupEvent.builder(this)
                 .popupType(PopupType.POPUP)
                 .popupPosition(popupPosition)
-                .onShow(e -> getView().focus())
-                .fire();
+                .onShow(e -> getView().focus());
+        if (anchor != null) {
+            builder.addAutoHidePartner(anchor);
+        }
+        builder.fire();
     }
 
 

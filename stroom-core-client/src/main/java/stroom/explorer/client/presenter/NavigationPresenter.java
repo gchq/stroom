@@ -68,8 +68,9 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.util.shared.NullSafe;
 import stroom.view.shared.ViewDoc;
-import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.menu.client.presenter.HideMenuEvent;
@@ -84,7 +85,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -118,14 +118,14 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
     private final MenuItems menuItems;
 
-    private final InlineSvgButton locate;
-    private final InlineSvgButton find;
-    private final InlineSvgButton collapseAll;
-    private final InlineSvgButton expandAll;
-    private final InlineSvgButton add;
-    private final InlineSvgButton delete;
-    private final InlineSvgToggleButton filter;
-    private final InlineSvgToggleButton showAlertsBtn;
+    private final ToolbarButton locate;
+    private final ToolbarButton find;
+    private final ToolbarButton collapseAll;
+    private final ToolbarButton expandAll;
+    private final ToolbarButton add;
+    private final ToolbarButton delete;
+    private final ToolbarToggleButton filter;
+    private final ToolbarToggleButton showAlertsBtn;
     private boolean menuVisible = false;
     private boolean hasActiveFilter = false;
     private final DocumentPluginRegistry documentPluginRegistry;
@@ -151,65 +151,20 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         this.currentActivity = currentActivity;
         this.quickFilterContextHandlerFactory = quickFilterContextHandlerFactory;
 
-        add = new InlineSvgButton();
-        add.setSvg(SvgImage.ADD);
-        add.getElement().addClassName("navigation-header-button add");
-        add.setTitle("New");
+        // The explorer's buttons: one toolbar, so one tab stop
+        final Toolbar toolbar = getView().getToolbar();
+        add = toolbar.button(SvgImage.ADD, "New", this::onNew);
         add.setEnabled(false);
-
-        delete = new InlineSvgButton();
-        delete.setSvg(SvgImage.DELETE);
-        delete.getElement().addClassName("navigation-header-button delete");
-        delete.setTitle("Delete");
+        delete = toolbar.button(SvgImage.DELETE, "Delete", this::deleteItem);
         delete.setEnabled(false);
-
-        filter = new InlineSvgToggleButton();
-        filter.setState(hasActiveFilter);
-        filter.setSvg(SvgImage.FILTER);
-        filter.getElement().addClassName("navigation-header-button filter");
-        filter.setTitle("Filter Types");
-        filter.setEnabled(true);
-
-        showAlertsBtn = new InlineSvgToggleButton();
-        showAlertsBtn.setOff();
-        showAlertsBtn.setSvg(SvgImage.EXCLAMATION);
-        showAlertsBtn.getElement().addClassName("navigation-header-button show-alerts");
-        showAlertsBtn.setTitle("Toggle Alerts");
-        showAlertsBtn.setEnabled(true);
-
-        collapseAll = new InlineSvgButton();
-        collapseAll.setSvg(SvgImage.COLLAPSE_ALL);
-        collapseAll.getElement().addClassName("navigation-header-button explorer-collapse-all");
-        collapseAll.setTitle("Collapse All");
-        collapseAll.setEnabled(true);
-
-        expandAll = new InlineSvgButton();
-        expandAll.setSvg(SvgImage.EXPAND_ALL);
-        expandAll.getElement().addClassName("navigation-header-button explorer-expand-all");
-        expandAll.setTitle("Expand All");
-        expandAll.setEnabled(true);
-
-        find = new InlineSvgButton();
-        find.setSvg(SvgImage.FIND);
-        find.getElement().addClassName("navigation-header-button find");
-        find.setTitle("Find In Content");
-        find.setEnabled(true);
-
-        locate = new InlineSvgButton();
-        locate.setSvg(SvgImage.LOCATE);
-        locate.getElement().addClassName("navigation-header-button locate-in-explorer");
-        locate.setTitle("Locate Current Item");
+        showAlertsBtn = toolbar.toggle(SvgImage.EXCLAMATION, "Toggle Alerts", this::onShowAlerts);
+        locate = toolbar.button(SvgImage.LOCATE, "Locate Current Item", this::onLocate);
         locate.setEnabled(false);
-
-        final FlowPanel buttons = getView().getButtonContainer();
-        buttons.add(add);
-        buttons.add(delete);
-        buttons.add(showAlertsBtn);
-        buttons.add(locate);
-        buttons.add(expandAll);
-        buttons.add(collapseAll);
-        buttons.add(filter);
-        buttons.add(find);
+        expandAll = toolbar.button(SvgImage.EXPAND_ALL, "Expand All", this::onExpandAll);
+        collapseAll = toolbar.button(SvgImage.COLLAPSE_ALL, "Collapse All", this::onCollapseAll);
+        filter = toolbar.toggle(SvgImage.FILTER, "Filter Types", this::onFilter);
+        filter.setPressed(hasActiveFilter);
+        find = toolbar.button(SvgImage.FIND, "Find In Content", this::onFind);
 
         view.setUiHandlers(this);
 
@@ -217,7 +172,7 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
                 restFactory,
                 getView().getTaskListener(),
                 true,
-                showAlertsBtn.getState());
+                showAlertsBtn.isPressed());
 
         // Add views.
         uiConfigCache.get(uiConfig -> {
@@ -284,23 +239,6 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> {
             selectedDoc = documentPluginRegistry.getExplorerDocRef(e.getTabData());
             locate.setEnabled(selectedDoc != null);
-        }));
-        registerHandler(collapseAll.addClickHandler((e) -> {
-            explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
-            explorerTree.getTreeModel().collapseAll();
-        }));
-        registerHandler(expandAll.addClickHandler((e) -> {
-            explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
-            explorerTree.getTreeModel().expandAll();
-        }));
-        registerHandler(locate.addClickHandler((e) -> LocateDocEvent.fire(this, selectedDoc)));
-        registerHandler(find.addClickHandler((e) -> ShowFindInContentEvent.fire(this)));
-        registerHandler(add.addClickHandler((e) -> newItem(add.getElement())));
-        registerHandler(delete.addClickHandler((e) -> deleteItem()));
-        registerHandler(filter.addClickHandler((e) -> showTypeFilter(filter.getElement())));
-        registerHandler(showAlertsBtn.addClickHandler((e) -> {
-            explorerTree.setShowAlerts(showAlertsBtn.getState());
-            explorerTree.refresh();
         }));
 
         // Register for refresh events.
@@ -425,16 +363,48 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
         }
     }
 
+    private void onNew() {
+        newItem(add.getElement());
+    }
+
+    private void onShowAlerts(final boolean showAlerts) {
+        explorerTree.setShowAlerts(showAlerts);
+        explorerTree.refresh();
+    }
+
+    private void onLocate() {
+        LocateDocEvent.fire(this, selectedDoc);
+    }
+
+    private void onExpandAll() {
+        explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
+        explorerTree.getTreeModel().expandAll();
+    }
+
+    private void onCollapseAll() {
+        explorerTree.getTreeModel().setForceSelection(explorerTree.getSelectionModel().getSelected());
+        explorerTree.getTreeModel().collapseAll();
+    }
+
+    // The filter is only pressed when a filter has been set, not just when clicked
+    private void onFilter(final boolean pressed) {
+        showTypeFilter(filter.getElement());
+    }
+
+    private void onFind() {
+        ShowFindInContentEvent.fire(this);
+    }
+
     public void showTypeFilter(final Element target) {
         // Override the default behaviour of the toggle button as we only want
         // it to be ON if a filter has been set, not just when clicked
-        filter.setState(hasActiveFilter);
+        filter.setPressed(hasActiveFilter);
         typeFilterPresenter.show(target, this::setFilterState);
     }
 
     private void setFilterState(final boolean hasActiveFilter) {
         this.hasActiveFilter = hasActiveFilter;
-        filter.setState(hasActiveFilter);
+        filter.setPressed(hasActiveFilter);
     }
 
     @ProxyEvent
@@ -506,7 +476,8 @@ public class NavigationPresenter extends MyPresenter<NavigationView, NavigationP
 
         void registerPopupTextProvider(Supplier<SafeHtml> popupTextSupplier);
 
-        FlowPanel getButtonContainer();
+        /// @return The explorer's toolbar, for its buttons.
+        Toolbar getToolbar();
 
         void setNavigationWidget(Widget widget);
 

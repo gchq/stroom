@@ -31,29 +31,22 @@
 	cursor: text;
 }
 
-.quickFilter button {
+/* The filter's buttons (Clear and its syntax help), over the end of its box */
+.quickFilter-toolbar {
 	position: absolute;
-}
-
-.quickFilter button.clear {
-	right: 25px;
-}
-
-.quickFilter button.info {
 	right: 4px;
+	margin: 0;
 }
 
-/* With a recent-filters drop-down: [text][clear][drop-down][help] */
+/* Its icons are in the colour of a form group's help icon */
+.quickFilter-toolbar .toolbar-button__icon {
+	color: var(--navigation-icon-button__color);
+}
+
+/* With a recent-filters drop-down: [text][clear][drop-down][help]. The drop-down is always shown,
+   so leave room for it as well as the help */
 .quickFilter.hasDropDown .quickFilter-textBox {
-	padding-right: 44px;
-}
-
-.quickFilter.hasDropDown button.drop-down {
-	right: 25px;
-}
-
-.quickFilter.hasDropDown button.clear {
-	right: 46px;
+	padding-right: 50px;
 }
 
 .quickFilter .svgIcon {

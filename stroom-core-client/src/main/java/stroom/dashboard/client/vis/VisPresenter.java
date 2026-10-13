@@ -193,6 +193,14 @@ public class VisPresenter
     }
 
     @Override
+    protected void onDispose() {
+        super.onDispose();
+        // The frame is on the page's root, so closing a dashboard, which doesn't remove its
+        // components, would otherwise leave it (and through it the whole dashboard) loaded
+        RootPanel.get().remove(visFrame);
+    }
+
+    @Override
     protected void onBind() {
         super.onBind();
 

@@ -20,6 +20,7 @@ import stroom.dashboard.client.table.FormatPresenter.FormatView;
 import stroom.item.client.SelectionBox;
 import stroom.query.api.Format.Type;
 import stroom.query.api.UserTimeZone.Use;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -105,6 +106,9 @@ public class FormatViewImpl extends ViewWithUiHandlers<FormatUihandlers> impleme
     @Inject
     public FormatViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Named by the part they are, as the Time Zone Offset label names the pair
+        AccessibleName.set(timeZoneOffsetHours, "Hours");
+        AccessibleName.set(timeZoneOffsetMinutes, "Minutes");
 
         decimalPlaces.setValue(0);
         decimalPlaces.setMin(0);

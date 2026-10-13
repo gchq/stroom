@@ -16,6 +16,7 @@
 
 package stroom.data.client.presenter;
 
+import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaExpressionUtil;
@@ -59,7 +60,31 @@ public class ExpressionValidator {
                                       final ExpressionOperator expression,
                                       final Consumer<ExpressionOperator> consumer,
                                       final TaskMonitorFactory taskMonitorFactory) {
-        if (expression != null) {
+        validateExpression(hasHandlers, fields, expression, consumer, null, taskMonitorFactory);
+    }
+
+    /// Validates an expression, telling the caller whether it is valid, e.g. so that a dialog waiting
+    /// for the result can be used again when it isn't.
+    ///
+    /// @param hasHandlers        Where to show why the expression isn't valid.
+    /// @param fields             The fields the expression may use.
+    /// @param expression         The expression to validate.
+    /// @param consumer           Called with the expression if it is valid.
+    /// @param onInvalid          Called if the expression isn't valid or can't be validated, once the
+    ///                           message saying why has been closed. May be null.
+    /// @param taskMonitorFactory Shows that the validation is in progress.
+    public void validateExpression(final HasHandlers hasHandlers,
+                                   final List<QueryField> fields,
+                                   final ExpressionOperator expression,
+                                   final Consumer<ExpressionOperator> consumer,
+                                   final Runnable onInvalid,
+                                   final TaskMonitorFactory taskMonitorFactory) {
+        if (expression == null) {
+            // Nothing to validate or apply
+            if (onInvalid != null) {
+                onInvalid.run();
+            }
+        } else {
             if (Objects.equals(expression, validatedExpression)) {
                 // Same expression as last time, nothing new to validate, so carry on
                 if (expressionValidationMessage == null) {
@@ -68,7 +93,7 @@ public class ExpressionValidator {
                     AlertEvent.fireError(
                             hasHandlers,
                             expressionValidationMessage,
-                            null);
+                            whenClosed(onInvalid));
                 }
             } else if (Objects.equals(ALL_UNLOCKED_EXPRESSION, expression)) {
                 // Standard expression that needs no validation, so save on the rest call
@@ -87,18 +112,25 @@ public class ExpressionValidator {
                                 consumer.accept(expression);
                             } else {
                                 AlertEvent.fireError(
-                                        hasHandlers, result.getString(), null);
+                                        hasHandlers, result.getString(), whenClosed(onInvalid));
                                 expressionValidationMessage = result.getString();
                             }
                         })
                         .onFailure(throwable -> {
                             AlertEvent.fireError(
-                                    hasHandlers, throwable.getMessage(), null);
+                                    hasHandlers, throwable.getMessage(), whenClosed(onInvalid));
                             expressionValidationMessage = throwable.getMessage();
                         })
                         .taskMonitorFactory(taskMonitorFactory)
                         .exec();
             }
         }
+    }
+
+    // Runs the callback, if there is one, when an alert is closed
+    private static AlertCallback whenClosed(final Runnable onInvalid) {
+        return onInvalid == null
+                ? null
+                : onInvalid::run;
     }
 }

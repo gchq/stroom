@@ -353,10 +353,17 @@ public class UserAndGroupHelper {
         if (userRef == null) {
             return "";
         } else if (userRef.getDisplayName() != null) {
-            return UserFields.FIELD_DISPLAY_NAME + ":" + userRef.getDisplayName();
+            // Quoted, as a display name may contain spaces
+            return UserFields.FIELD_DISPLAY_NAME + ":" + quoteFilterValue(userRef.getDisplayName());
         } else {
             return "";
         }
+    }
+
+    // Quotes a quick filter value so that it is read as one value, whatever it contains, escaping
+    // any backslashes and double quotes, as QuickFilterPrinter does.
+    private static String quoteFilterValue(final String value) {
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 
 }

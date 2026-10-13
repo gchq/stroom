@@ -24,6 +24,7 @@ import stroom.item.client.SelectionBox;
 import stroom.schedule.client.ScheduleBox;
 import stroom.security.client.presenter.UserRefSelectionBoxPresenter;
 import stroom.svg.shared.SvgImage;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.scheduler.Schedule;
 import stroom.util.shared.scheduler.ScheduleType;
@@ -170,10 +171,10 @@ public final class BatchExecutionScheduleEditViewImpl
 
         final Long startTime = startTimeEnable.getValue()
                 ? startTimeBox.getValue()
-                : executionSchedule.getScheduleBounds().getStartTimeMs();
+                : NullSafe.get(executionSchedule.getScheduleBounds(), ScheduleBounds::getStartTimeMs);
         final Long endTime = endTimeEnable.getValue()
                 ? endTimeBox.getValue()
-                : executionSchedule.getScheduleBounds().getEndTimeMs();
+                : NullSafe.get(executionSchedule.getScheduleBounds(), ScheduleBounds::getEndTimeMs);
         final ScheduleBounds scheduleBounds = new ScheduleBounds(startTime, endTime);
         final UserRef runAsUser = runAsUserEnable.getValue()
                 ? userRefSelectionBoxPresenter.getSelected()
@@ -202,8 +203,8 @@ public final class BatchExecutionScheduleEditViewImpl
         nodeForm.setDisabled(!nodeEnable.getValue());
 
         final boolean instantSchedule = scheduleBox.getValue().getType().equals(ScheduleType.INSTANT);
-        scheduleBox.setEnabled(scheduleEnable.getValue() && !instantSchedule);
-        scheduleForm.setDisabled(!(scheduleEnable.getValue() && !instantSchedule));
+        scheduleBox.setEnabled(scheduleEnable.getValue());
+        scheduleForm.setDisabled(!scheduleEnable.getValue());
         scheduleForm.setLabel("Schedule (" + scheduleBox.getValue().getType().getDisplayValue() + ")");
 
         startTimeBox.setEnabled(startTimeEnable.getValue() && !instantSchedule);

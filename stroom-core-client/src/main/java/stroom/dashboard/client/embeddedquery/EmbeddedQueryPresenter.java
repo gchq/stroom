@@ -306,11 +306,9 @@ public class EmbeddedQueryPresenter
                 restFactory,
                 dateTimeSettingsFactory,
                 resultStoreModel,
-                () -> getQuerySettings()
-                        .getQueryTablePreferences()
+                () -> getQueryTablePreferences()
                         .copy()
-                        .selectionFilter(NullSafe.get(currentTablePresenter,
-                                QueryResultTablePresenter::getCurrentSelectionFilter))
+                        .selectionFilter(getCurrentSelectionFilter())
                         .build());
         queryModel.addResultComponent(QueryModel.TABLE_COMPONENT_ID, tableResultConsumer);
         queryModel.addResultComponent(QueryModel.VIS_COMPONENT_ID, visResultConsumer);
@@ -410,9 +408,7 @@ public class EmbeddedQueryPresenter
 
                 if (currentTablePresenter != null) {
                     currentTablePresenter.setDashboardContext(dashboardContext);
-                    final ExpressionOperator selectionFilter = dashboardContext
-                            .createSelectionHandlerExpression(getQuerySettings().getSelectionFilter())
-                            .orElse(null);
+                    final ExpressionOperator selectionFilter = resolveSelectionFilter();
                     if (!Objects.equals(currentTablePresenter.getCurrentSelectionFilter(), selectionFilter)) {
                         currentTablePresenter.setCurrentSelectionFilter(selectionFilter);
                         currentTablePresenter.onColumnFilterChange();
@@ -449,6 +445,24 @@ public class EmbeddedQueryPresenter
         }));
     }
 
+    // The table's selection filter, or, before the table exists (e.g. for the first search), the
+    // one the dashboard's context gives
+    private ExpressionOperator getCurrentSelectionFilter() {
+        return currentTablePresenter != null
+                ? currentTablePresenter.getCurrentSelectionFilter()
+                : resolveSelectionFilter();
+    }
+
+    private ExpressionOperator resolveSelectionFilter() {
+        final DashboardContext dashboardContext = getDashboardContext();
+        if (dashboardContext == null) {
+            return null;
+        }
+        return dashboardContext
+                .createSelectionHandlerExpression(getQuerySettings().getSelectionFilter())
+                .orElse(null);
+    }
+
     private void updateVisibleResult() {
         if (currentVisPresenter != null && getQuerySettings().getShowTable() != Boolean.TRUE) {
             getView().setResultView(currentVisPresenter.getView());
@@ -462,8 +476,10 @@ public class EmbeddedQueryPresenter
         if (currentTablePresenter == null) {
             currentTablePresenter = tablePresenterProvider.get();
             currentTablePresenter.setDashboardContext(getDashboardContext());
-            currentTablePresenter.setQueryTablePreferencesSupplier(() ->
-                    getQuerySettings().getQueryTablePreferences());
+            // The filter may not depend on a selection, so the new table needs it now, not only when
+            // the dashboard's context next changes
+            currentTablePresenter.setCurrentSelectionFilter(resolveSelectionFilter());
+            currentTablePresenter.setQueryTablePreferencesSupplier(this::getQueryTablePreferences);
             currentTablePresenter.setQueryTablePreferencesConsumer(queryTablePreferences ->
                     setSettings(getQuerySettings().copy().queryTablePreferences(queryTablePreferences).build()));
             currentTablePresenter.setQueryModel(queryModel);
@@ -664,8 +680,7 @@ public class EmbeddedQueryPresenter
             queryModel.init(queryDoc.asDocRef());
             query = queryDoc.getQuery();
             initialised = true;
-            final Automate automate = settings.getAutomate();
-            if (queryOnOpen || automate.isOpen()) {
+            if (queryOnOpen || getAutomate().isOpen()) {
                 run(true, false);
             }
         }
@@ -698,7 +713,20 @@ public class EmbeddedQueryPresenter
 
     @Override
     public Automate getAutomate() {
-        return getQuerySettings().getAutomate();
+        // Settings may have no automate (e.g. a dashboard written without one)
+        final Automate automate = getQuerySettings().getAutomate();
+        return automate != null
+                ? automate
+                : Automate.builder().build();
+    }
+
+    // The settings' table preferences, or the defaults if they have none (e.g. a dashboard written
+    // without them), as the results table expects some
+    private QueryTablePreferences getQueryTablePreferences() {
+        final QueryTablePreferences queryTablePreferences = getQuerySettings().getQueryTablePreferences();
+        return queryTablePreferences != null
+                ? queryTablePreferences
+                : QueryTablePreferences.builder().build();
     }
 
     private EmbeddedQueryComponentSettings getQuerySettings() {

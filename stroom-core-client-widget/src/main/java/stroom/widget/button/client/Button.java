@@ -72,6 +72,8 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
 
         backgroundText = DOM.createSpan();
         backgroundText.setClassName("Button__backgroundText");
+        // An invisible copy of the text that sizes the button, so it isn't part of its name
+        backgroundText.setAttribute("aria-hidden", "true");
         getElement().appendChild(backgroundText);
 
         rippleContainer = DOM.createDiv();
@@ -88,7 +90,7 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
 
         spinnerBorder = DOM.createSpan();
         spinnerBorder.setClassName("spinner-border spinner-border-sm");
-        spinnerBorder.setAttribute("role", "status");
+        // Only a picture: the button itself says it is busy (aria-busy)
         spinnerBorder.setAttribute("aria-hidden", "true");
         buttonSpinner.appendChild(spinnerBorder);
 
@@ -162,8 +164,10 @@ public class Button extends ButtonBase implements ButtonView, TaskMonitorFactory
     public void setLoading(final boolean loading) {
         if (loading) {
             getElement().addClassName("Button--loading");
+            getElement().setAttribute("aria-busy", "true");
         } else {
             getElement().removeClassName("Button--loading");
+            getElement().removeAttribute("aria-busy");
         }
     }
 

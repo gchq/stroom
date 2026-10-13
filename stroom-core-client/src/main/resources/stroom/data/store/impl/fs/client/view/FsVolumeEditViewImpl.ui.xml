@@ -5,7 +5,8 @@
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
 
-        <form:FormGroup identity="fsVolumeType" label="Volume Type">
+        <form:FormGroup identity="fsVolumeType" label="Volume Type"
+                        screenReaderText="Standard uses a file path. S3 types use the S3 configuration.">
             <form:HelpHTML>
                 <p>The type of volume to store data in.</p>
                 <ul>
@@ -41,11 +42,13 @@
         </form:FormGroup>
         <form:FormGroup identity="fsVolumePath"
                         label="Path"
-                        helpText="The directory path to store the data in. Not applicable to S3 volumes.">
+                        helpText="The directory where data is stored. Required for Standard volumes and must be left blank for S3 volumes."
+                        screenReaderText="Required for Standard volumes. Leave blank for S3.">
             <g:TextBox ui:field="path" addStyleNames="w-100"/>
         </form:FormGroup>
 
-        <form:FormGroup identity="fsVolumeStatus" label="Status">
+        <form:FormGroup identity="fsVolumeStatus" label="Status"
+                        screenReaderText="Only Active volumes are written to.">
             <form:HelpHTML>
                 <p>The status of the volume controlling how it can be used.</p>
                 <ul>
@@ -68,15 +71,16 @@
 
         <form:FormGroup identity="fsVolumeLimit"
                         label="Limit"
-                        helpText="The maximum amount of data that can be stored on this volume.
-                        Not applicable to S3 based volumes.">
+                        helpText="The maximum amount of data to store on this volume, with an optional unit such as 500G or 2T (powers of 1024). If blank, the volume is used until it has 10 GiB free or is 99% full, whichever comes later. Must be blank for S3 volumes."
+                        screenReaderText="Size with unit, e.g. 500G. Blank for S3 volumes.">
             <g:TextBox ui:field="byteLimit" addStyleNames="w-100"/>
         </form:FormGroup>
 
         <form:FormGroup identity="fsVolumeConfig"
                         label="S3 Configuration"
                         addStyleNames="default-min-sizes flex-grow-1"
-                        helpText="The JSON configuration for the S3 volume.">
+                        helpText="The S3 client settings for the volume as a JSON object, such as the bucket, region and credentials. Required for S3 volumes and must be empty for Standard volumes."
+                        screenReaderText="JSON object. Required for S3 volumes only.">
             <g:ResizeLayoutPanel ui:field="configEditorContainer"
                                  addStyleNames="dock-max form-control-border"/>
         </form:FormGroup>

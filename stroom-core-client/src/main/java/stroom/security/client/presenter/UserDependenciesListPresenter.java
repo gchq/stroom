@@ -198,6 +198,7 @@ public class UserDependenciesListPresenter
         final DocRefCell.Builder<UserDependency> cellBuilder =
                 new DocRefCell.Builder<UserDependency>()
                         .eventBus(getEventBus())
+                        .docRefFunction(UserDependency::getDocRef)
                         .showIcon(true);
 
         final Column<UserDependency, UserDependency> docNameCol = DataGridUtil.docRefColumnBuilder(

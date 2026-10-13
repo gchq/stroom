@@ -148,17 +148,17 @@ public class ElasticClusterSettingsViewImpl extends ViewWithUiHandlers<ElasticCl
         this.responseTimeoutMillis.setValue(responseTimeoutMillis);
     }
 
+    // Read only: every field can be read and copied but not changed (the API key fields were once
+    // left editable, as reading the document enabled them again)
     @Override
     public void onReadOnly(final boolean readOnly) {
-        connectionUrls.setEnabled(!readOnly);
-        caCertificate.setEnabled(!readOnly);
-        useAuthentication.setEnabled(!readOnly);
-        if (readOnly) {
-            apiKeyId.setEnabled(false);
-            apiKeySecret.setEnabled(false);
-        }
-        connectionTimeoutMillis.setEnabled(!readOnly);
-        responseTimeoutMillis.setEnabled(!readOnly);
+        connectionUrls.setReadOnly(readOnly);
+        caCertificate.setReadOnly(readOnly);
+        useAuthentication.setReadOnly(readOnly);
+        apiKeyId.setReadOnly(readOnly);
+        apiKeySecret.setReadOnly(readOnly);
+        connectionTimeoutMillis.setReadOnly(readOnly);
+        responseTimeoutMillis.setReadOnly(readOnly);
     }
 
     @UiHandler("connectionUrls")

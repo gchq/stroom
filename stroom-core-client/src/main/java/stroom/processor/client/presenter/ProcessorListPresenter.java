@@ -66,6 +66,7 @@ import stroom.widget.util.client.MultiSelectionModelImpl;
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.Range;
@@ -270,9 +271,11 @@ public class ProcessorListPresenter extends MyPresenterWidget<PagerView>
         // Info column.
         final InfoColumn<ProcessorListRow> infoColumn = new InfoColumn<ProcessorListRow>() {
             @Override
-            protected void showInfo(final ProcessorListRow row, final PopupPosition popupPosition) {
+            protected void showInfo(final ProcessorListRow row,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final SafeHtml safeHtml = processorInfoBuilder.get(row);
-                tooltipPresenter.show(safeHtml, popupPosition);
+                tooltipPresenter.show(safeHtml, popupPosition, anchor);
             }
         };
         OpenLinkUtil.addClickHandler(this, tooltipPresenter.getWidget());

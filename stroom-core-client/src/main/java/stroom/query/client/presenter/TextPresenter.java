@@ -157,7 +157,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
     private void initRawPresenter() {
         if (rawPresenter == null) {
-            rawPresenter = rawPresenterProvider.get();
+            rawPresenter = inScope(rawPresenterProvider::get);
             rawPresenter.setReadOnly(true);
             rawPresenter.getLineNumbersOption().setOn(false);
             rawPresenter.getLineWrapOption().setOn(true);
@@ -166,7 +166,7 @@ public class TextPresenter extends MyPresenterWidget<TextView> implements TextUi
 
     private void initHtmlPresenter() {
         if (htmlPresenter == null) {
-            htmlPresenter = htmlPresenterProvider.get();
+            htmlPresenter = inScope(htmlPresenterProvider::get);
             htmlPresenter.getWidget().addDomHandler(event -> {
                 final Element target = event.getNativeEvent().getEventTarget().cast();
                 final String link = target.getAttribute("link");

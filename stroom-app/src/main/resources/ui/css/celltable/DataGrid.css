@@ -222,13 +222,11 @@ don't want the open link to appear
 */
 /* .dataGridDisabledCell :not(.commandLinkContainer) .svgIcon,*/
 
-.dataGridDisabledCell .tickBox,
-.dataGridDisabledCell .svgIcon,
-.dataGridDisabledCell .svgCell-button.svgCell-icon {
-    cursor: default;
-    color: #000;
-    opacity: 0.3;
-}
+/*
+A disabled row is an item that is switched off (a disabled rule, job or node), not a row that can't
+be changed: its text is greyed above, but its tick boxes, spinners and icons still work, so they are
+drawn as usual. A control that really can't be used shows its own disabled look.
+*/
 
 .dataGridSelectedRow,
 table .dataGridEvenRow.dataGridSelectedRow,

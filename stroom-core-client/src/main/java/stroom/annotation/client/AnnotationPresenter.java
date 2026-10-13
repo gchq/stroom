@@ -26,17 +26,15 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgButton;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 
-import java.util.Collections;
 import javax.inject.Provider;
 
 public class AnnotationPresenter
@@ -49,8 +47,11 @@ public class AnnotationPresenter
     private static final TabData DOCUMENTATION = new TabDataImpl("Documentation");
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final ButtonView saveButton;
+    // Made in the documentation tab's toolbar when it is first shown
+    private ToolbarButton saveButton;
+    private boolean descriptionDirty;
 
+    private final AnnotationResourceClient annotationResourceClient;
     private final AnnotationEditPresenter annotationEditPresenter;
     private MarkdownEditPresenter markdownEditPresenter;
 
@@ -66,6 +67,7 @@ public class AnnotationPresenter
                                final Provider<MarkdownEditPresenter> markdownEditPresenterProvider,
                                final DocumentUserPermissionsTabProvider<Annotation> documentUserPermissionsTabProvider) {
         super(eventBus, view);
+        this.annotationResourceClient = annotationResourceClient;
         this.annotationEditPresenter = annotationEditPresenter;
         annotationEditPresenter.setParent(this);
         linkedEventPresenter.setParent(this);
@@ -73,19 +75,6 @@ public class AnnotationPresenter
         linkFrom.setParent(this);
         linkFrom.setFrom(true);
 
-        saveButton = SvgButton.create(SvgPresets.SAVE);
-        saveButton.setEnabled(false);
-        registerHandler(saveButton.addClickHandler(e -> {
-            annotationResourceClient.change(
-                    new SingleAnnotationChangeRequest(getDocRef(),
-                            new ChangeDescription(markdownEditPresenter.getText())),
-                    success -> {
-                        if (success) {
-                            AnnotationChangeEvent.fire(this, getDocRef());
-                        }
-                    }, this);
-            saveButton.setEnabled(false);
-        }));
 
         addTab(ANNOTATION, new DocTabProvider<>(() -> annotationEditPresenter));
         addTab(EVENTS, new DocTabProvider<>(() -> linkedEventPresenter));
@@ -94,8 +83,11 @@ public class AnnotationPresenter
         addTab(DOCUMENTATION, new MarkdownTabProvider<Annotation>(eventBus, () -> {
             if (markdownEditPresenter == null) {
                 markdownEditPresenter = markdownEditPresenterProvider.get();
-                markdownEditPresenter.setInsertedButtons(Collections.singletonList(saveButton));
-                markdownEditPresenter.addDirtyHandler(e -> saveButton.setEnabled(e.isDirty()));
+                markdownEditPresenter.setAddButtonsFirst(markdownToolbar -> {
+                    saveButton = markdownToolbar.button(SvgImage.SAVE, "Save", this::saveDescription);
+                    saveButton.setEnabled(descriptionDirty);
+                });
+                markdownEditPresenter.addDirtyHandler(e -> setDescriptionDirty(e.isDirty()));
             }
             return markdownEditPresenter;
         }) {
@@ -120,9 +112,29 @@ public class AnnotationPresenter
         selectTab(ANNOTATION);
     }
 
+    private void saveDescription() {
+        annotationResourceClient.change(
+                new SingleAnnotationChangeRequest(getDocRef(),
+                        new ChangeDescription(markdownEditPresenter.getText())),
+                success -> {
+                    if (success) {
+                        AnnotationChangeEvent.fire(this, getDocRef());
+                    }
+                }, this);
+        setDescriptionDirty(false);
+    }
+
+    private void setDescriptionDirty(final boolean dirty) {
+        this.descriptionDirty = dirty;
+        if (saveButton != null) {
+            saveButton.setEnabled(descriptionDirty);
+        }
+    }
+
+    // An annotation has no Save As, and its Save is in its editor's buttons
     @Override
-    protected ButtonPanel createToolbar() {
-        return new ButtonPanel();
+    protected Toolbar createToolbar() {
+        return new Toolbar("Annotation actions");
     }
 
     @Override

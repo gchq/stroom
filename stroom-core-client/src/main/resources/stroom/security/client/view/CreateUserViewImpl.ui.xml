@@ -7,7 +7,8 @@
         <form:FormGroup ui:field="createTypesFormGroup"
                         identity="createTypes"
                         label="Action"
-                        helpText="Select the action to perform.">
+                        helpText="Choose whether to add a single identity provider user or several users at once."
+                        screenReaderText="Add one identity provider user or several at once.">
             <i:SelectionBox ui:field="createTypes" addStyleNames="createUserViewImpl-selection dock-min w-100"/>
         </form:FormGroup>
         <g:SimplePanel ui:field="panel" addStyleNames="createUserViewImpl-panel dock-max"/>

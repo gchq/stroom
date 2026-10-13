@@ -5,28 +5,43 @@
              xmlns:v="urn:import:stroom.widget.valuespinner.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form-padding form">
-        <form:FormGroup identity="indexSettingsMaxDocsPerShard" label="Max Docs Per Shard">
+        <form:FormGroup identity="indexSettingsMaxDocsPerShard" label="Max Docs Per Shard"
+                        helpText="The maximum number of documents written to one index shard. When a shard is full a new one is created. Between 1,000 and 2,147,483,647. Default is 1,000,000,000."
+                        screenReaderText="A new shard is created when this is reached. Default is 1,000,000,000.">
             <v:ValueSpinner ui:field="maxDocsPerShard" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexSettingsPartitionBy" label="Partition By">
+        <form:FormGroup identity="indexSettingsPartitionBy" label="Partition By"
+                        helpText="Split the index into time-based partitions by Year, Month, Week or Day, so old data can be removed by partition. Choosing No partition is currently saved as Month. Default is Month."
+                        screenReaderText="Time unit used to divide the index into partitions.">
             <l:SelectionBox ui:field="partitionBy"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexSettingsPartitionSize" label="Partition Size">
+        <form:FormGroup identity="indexSettingsPartitionSize" label="Partition Size"
+                        helpText="The number of 'Partition By' units in each partition, between 1 and 100. For example, 3 with Month gives a partition per quarter. Default is 1."
+                        screenReaderText="Number of Partition By units in each partition, 1 to 100.">
             <v:ValueSpinner ui:field="partitionSize" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexSettingsShardsPerPartition" label="Shards Per Partition">
+        <form:FormGroup identity="indexSettingsShardsPerPartition" label="Shards Per Partition"
+                        helpText="The number of shards to create in each partition, between 1 and 100. More shards allow more parallel writing. Default is 1."
+                        screenReaderText="Number of shards per partition, 1 to 100.">
             <v:ValueSpinner ui:field="shardsPerPartition" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexSettingsTimeField" label="Main Time Field Name">
+        <form:FormGroup identity="indexSettingsTimeField" label="Main Time Field Name"
+                        helpText="The name of the date field that holds each event's time. It is used to choose the event's partition and as the time field for queries. Default is EventTime."
+                        screenReaderText="Date field used for partitioning and query time ranges. Default is EventTime.">
             <g:TextBox ui:field="timeField" width="200px"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexSettingsRetentionPeriod" label="Retention Period">
+        <form:FormGroup identity="indexSettingsRetentionPeriod" label="Retention Period"
+                        helpText="How long to keep indexed data. Shards in partitions that ended longer ago than this are deleted. Choose Forever to keep all data."
+                        screenReaderText="Older partitions are deleted. Forever keeps all data.">
             <l:SelectionBox ui:field="retentionAge"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexSettingsVolumeGroup" label="Volume Group">
+        <form:FormGroup identity="indexSettingsVolumeGroup" label="Volume Group"
+                        helpText="The group of index volumes that new shards for this index are written to."
+                        screenReaderText="Volumes that new index shards are written to.">
             <l:SelectionBox ui:field="volumeGroups"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline">
+        <form:FormGroup identity="indexSettingsDefaultExtractionPipeline" label="Default Extraction Pipeline"
+                        helpText="The pipeline used to extract field values for search results when a query does not choose its own extraction pipeline.">
             <g:SimplePanel ui:field="defaultExtractionPipeline"/>
         </form:FormGroup>
     </g:FlowPanel>

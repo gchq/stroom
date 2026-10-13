@@ -19,8 +19,7 @@ package com.google.gwt.user.client.ui;
 /**
  * A {@link FlowPanel} that participates in the GWT resize chain.
  * <p>
- * {@link DockLayoutPanel} (and its subclass {@link ThinSplitLayoutPanel})
- * only propagates {@code onResize()} to children that implement
+ * {@link DockLayoutPanel} only propagates {@code onResize()} to children that implement
  * {@link RequiresResize}. A plain {@link FlowPanel} does not, so any
  * {@link RequiresResize} widgets inside it (such as another
  * {@code DockLayoutPanel}) will never be notified of size changes —

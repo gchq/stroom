@@ -24,8 +24,9 @@ import stroom.data.store.impl.fs.shared.FsVolumeGroupResource;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DelayedUpdate;
+import stroom.util.shared.PathSafeNames;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -77,14 +78,29 @@ public class FsVolumeGroupEditPresenter
         this.editProvider = editProvider;
         this.restFactory = restFactory;
 
-        newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
-        openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
-        deleteButton = volumeStatusListPresenter.getView().addButton(SvgPresets.DELETE);
-        rescanButton = volumeStatusListPresenter.getView().addButton(SvgPresets.REFRESH_GREEN);
-        rescanButton.setTitle("Rescan Volumes");
+        volumeStatusListPresenter.getView().getToolbar().setName("Volume actions");
+        newButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.ADD, "New", this::create);
+        openButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.EDIT, "Edit", this::edit);
+        openButton.setEnabled(false);
+        deleteButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::delete);
+        deleteButton.setEnabled(false);
+        rescanButton = volumeStatusListPresenter.getView().getToolbar().button(SvgImage.REFRESH, "Rescan Volumes",
+                this::onRescan);
 
         view.setListView(volumeStatusListPresenter.getView());
         delayedUpdate = new DelayedUpdate(volumeStatusListPresenter::refresh);
+    }
+
+    private void onRescan() {
+        delayedUpdate.reset();
+        restFactory
+                .create(FS_VOLUME_RESOURCE)
+                .method(FsVolumeResource::rescan)
+                .onSuccess(response -> delayedUpdate.update())
+                .onFailure(throwable -> {
+                })
+                .taskMonitorFactory(this)
+                .exec();
     }
 
     @Override
@@ -94,20 +110,6 @@ public class FsVolumeGroupEditPresenter
             if (event.getSelectionType().isDoubleSelect()) {
                 edit();
             }
-        }));
-        registerHandler(newButton.addClickHandler(event -> create()));
-        registerHandler(openButton.addClickHandler(event -> edit()));
-        registerHandler(deleteButton.addClickHandler(event -> delete()));
-        registerHandler(rescanButton.addClickHandler(event -> {
-            delayedUpdate.reset();
-            restFactory
-                    .create(FS_VOLUME_RESOURCE)
-                    .method(FsVolumeResource::rescan)
-                    .onSuccess(response -> delayedUpdate.update())
-                    .onFailure(throwable -> {
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
         }));
     }
 
@@ -233,7 +235,12 @@ public class FsVolumeGroupEditPresenter
         if (groupName == null || groupName.isEmpty()) {
             AlertEvent.fireError(
                     FsVolumeGroupEditPresenter.this,
-                    "You must provide a name for the index volume group.",
+                    "You must provide a name for the data volume group.",
+                    event::reset);
+        } else if (PathSafeNames.validate(groupName) != null) {
+            AlertEvent.fireError(
+                    FsVolumeGroupEditPresenter.this,
+                    PathSafeNames.validate(groupName),
                     event::reset);
         } else {
             restFactory

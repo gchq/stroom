@@ -106,13 +106,21 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
         // Stop users from selecting expression items.
         expressionPresenter.setSelectionModel(null);
 
-        saveButton = listPresenter.add(SvgPresets.SAVE.title("Save rules"));
-        addButton = listPresenter.add(ADD_ABOVE_SVG_PRESET);
-        editButton = listPresenter.add(EDIT_RULE_SVG_PRESET);
-        copyButton = listPresenter.add(COPY_RULE_SVG_PRESET);
-        deleteButton = listPresenter.add(DELETE_RULE_SVG_PRESET);
-        moveUpButton = listPresenter.add(MOVE_RULE_UP_SVG_PRESET);
-        moveDownButton = listPresenter.add(MOVE_RULE_DOWN_SVG_PRESET);
+        listPresenter.getToolbar().setName("Retention rule actions");
+        saveButton = listPresenter.getToolbar().button(SvgImage.SAVE, "Save rules", this::onSave);
+        saveButton.setEnabled(false);
+        addButton = listPresenter.getToolbar().button(SvgImage.ADD_ABOVE, "Add new rule above the selected one",
+                this::onAdd);
+        editButton = listPresenter.getToolbar().button(SvgImage.EDIT, "Edit rule", this::onEdit);
+        editButton.setEnabled(false);
+        copyButton = listPresenter.getToolbar().button(SvgImage.COPY, "Copy rule", this::onCopy);
+        copyButton.setEnabled(false);
+        deleteButton = listPresenter.getToolbar().button(SvgImage.DELETE, "Delete rule", this::onDelete);
+        deleteButton.setEnabled(false);
+        moveUpButton = listPresenter.getToolbar().button(SvgImage.UP, "Move rule up", this::onMoveUp);
+        moveUpButton.setEnabled(false);
+        moveDownButton = listPresenter.getToolbar().button(SvgImage.DOWN, "Move rule down", this::onMoveDown);
+        moveDownButton.setEnabled(false);
 
         listPresenter.getView()
                 .asWidget()
@@ -173,6 +181,67 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             // Default rule is always the last one
             return rule.getRuleNumber() == visibleRules.get(visibleRules.size() - 1)
                     .getRuleNumber();
+        }
+    }
+
+    private void onSave() {
+        // Get the user's rules without our default one
+        policy = policy.copy().rules(getUserRules()).build();
+
+        restFactory
+                .create(DATA_RETENTION_RULES_RESOURCE)
+                .method(res -> res.update(policy))
+                .onSuccess(result -> {
+                    policy = result;
+                    setVisibleRules(policy.getRules());
+                    listPresenter.getSelectionModel().clear();
+
+                    update();
+                    setDirty(false);
+                })
+                .taskMonitorFactory(this)
+                .exec();
+    }
+
+    private void onAdd() {
+        if (visibleRules != null) {
+            addNewRule();
+        }
+    }
+
+    private void onEdit() {
+        if (visibleRules != null) {
+            final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
+            editRule(selected);
+        }
+    }
+
+    private void onCopy() {
+        if (visibleRules != null) {
+            final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
+            copyRule(selected);
+        }
+    }
+
+    private void onDelete() {
+        if (visibleRules != null) {
+
+            final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
+            deleteRule(rule);
+        }
+    }
+
+    private void onMoveUp() {
+        if (visibleRules != null) {
+            final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
+            moveRuleUp(rule);
+        }
+    }
+
+    private void onMoveDown() {
+        if (visibleRules != null) {
+            final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
+            moveRuleDown(rule);
         }
     }
 
@@ -289,12 +358,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void addMoveDownButtonHandler() {
-        registerHandler(moveDownButton.addClickHandler(event -> {
-            if (visibleRules != null) {
-                final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
-                moveRuleDown(rule);
-            }
-        }));
     }
 
     private void moveRuleDown(final DataRetentionRule rule) {
@@ -316,12 +379,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void addMoveUpButtonHandler() {
-        registerHandler(moveUpButton.addClickHandler(event -> {
-            if (visibleRules != null) {
-                final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
-                moveRuleUp(rule);
-            }
-        }));
     }
 
     private void moveRuleUp(final DataRetentionRule rule) {
@@ -343,13 +400,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void addDeleteButtonHandler() {
-        registerHandler(deleteButton.addClickHandler(event -> {
-            if (visibleRules != null) {
-
-                final DataRetentionRule rule = listPresenter.getSelectionModel().getSelected();
-                deleteRule(rule);
-            }
-        }));
     }
 
     private void deleteRule(final DataRetentionRule rule) {
@@ -387,12 +437,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void addCopyButtonHandler() {
-        registerHandler(copyButton.addClickHandler(event -> {
-            if (visibleRules != null) {
-                final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
-                copyRule(selected);
-            }
-        }));
     }
 
     private void copyRule(final DataRetentionRule rule) {
@@ -423,12 +467,6 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void addEditButtonHandler() {
-        registerHandler(editButton.addClickHandler(event -> {
-            if (visibleRules != null) {
-                final DataRetentionRule selected = listPresenter.getSelectionModel().getSelected();
-                editRule(selected);
-            }
-        }));
     }
 
     private void editRule(final DataRetentionRule rule) {
@@ -438,32 +476,9 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
     }
 
     private void addAddButtonHandler() {
-        registerHandler(addButton.addClickHandler(event -> {
-            if (visibleRules != null) {
-                addNewRule();
-            }
-        }));
     }
 
     private void addSaveButtonHandler() {
-        registerHandler(saveButton.addClickHandler(event -> {
-            // Get the user's rules without our default one
-            policy = policy.copy().rules(getUserRules()).build();
-
-            restFactory
-                    .create(DATA_RETENTION_RULES_RESOURCE)
-                    .method(res -> res.update(policy))
-                    .onSuccess(result -> {
-                        policy = result;
-                        setVisibleRules(policy.getRules());
-                        listPresenter.getSelectionModel().clear();
-
-                        update();
-                        setDirty(false);
-                    })
-                    .taskMonitorFactory(this)
-                    .exec();
-        }));
     }
 
     private void addNewRule() {

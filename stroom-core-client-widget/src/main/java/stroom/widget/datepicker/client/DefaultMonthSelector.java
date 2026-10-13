@@ -35,7 +35,7 @@ package stroom.widget.datepicker.client;
 import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions;
 import stroom.widget.datepicker.client.IntlDateTimeFormat.FormatOptions.Year;
 
@@ -54,11 +54,11 @@ import java.util.Objects;
 
 public final class DefaultMonthSelector extends MonthSelector {
 
-    private InlineSvgButton monthBackwards;
-    private InlineSvgButton monthForwards;
+    private ToolbarButton monthBackwards;
+    private ToolbarButton monthForwards;
     private FlowPanel layout;
-    private InlineSvgButton yearBackwards;
-    private InlineSvgButton yearForwards;
+    private ToolbarButton yearBackwards;
+    private ToolbarButton yearForwards;
     private SelectionBox<IntItem> monthSelect;
     private SelectionBox<IntItem> yearSelect;
     private int monthColumn;
@@ -136,9 +136,9 @@ public final class DefaultMonthSelector extends MonthSelector {
         initWidget(layout);
     }
 
-    private InlineSvgButton createNavigationButton(
+    private ToolbarButton createNavigationButton(
             final SvgImage svgImage, final int noOfMonths, final String styleName) {
-        final InlineSvgButton button = new InlineSvgButton();
+        final ToolbarButton button = new ToolbarButton();
         button.setSvg(svgImage);
         button.addClickHandler(event -> addMonths(noOfMonths));
         button.addStyleName(styleName);

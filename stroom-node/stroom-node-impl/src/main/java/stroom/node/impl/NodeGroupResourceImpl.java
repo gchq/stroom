@@ -28,6 +28,7 @@ import stroom.node.shared.NodeGroupState;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.rest.RestUtil;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
 
@@ -56,6 +57,7 @@ class NodeGroupResourceImpl implements NodeGroupResource {
 
     @Override
     public NodeGroup create(final String name) {
+        RestUtil.checkPathSafeName(name);
         return nodeGroupServiceProvider.get().create(name);
     }
 
@@ -71,6 +73,7 @@ class NodeGroupResourceImpl implements NodeGroupResource {
 
     @Override
     public NodeGroup update(final Integer id, final NodeGroup indexVolumeGroup) {
+        RestUtil.checkPathSafeName(indexVolumeGroup.getName());
         return nodeGroupServiceProvider.get().update(indexVolumeGroup);
     }
 

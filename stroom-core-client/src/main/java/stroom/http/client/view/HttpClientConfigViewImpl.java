@@ -19,6 +19,7 @@ package stroom.http.client.view;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.http.client.presenter.HttpClientConfigPresenter.HttpClientConfigView;
 import stroom.http.client.presenter.HttpClientConfigUiHandlers;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.time.SimpleDuration;
 import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.DurationPicker;
@@ -29,6 +30,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -60,6 +62,8 @@ public class HttpClientConfigViewImpl
     @UiField
     ValueSpinner retries;
     @UiField
+    TextBox userAgent;
+    @UiField
     DurationPicker validateAfterInactivityPeriod;
     @UiField
     Button setHttpTlsConfig;
@@ -81,17 +85,18 @@ public class HttpClientConfigViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        timeout.setEnabled(!readOnly);
-        connectionTimeout.setEnabled(!readOnly);
-        connectionRequestTimeout.setEnabled(!readOnly);
-        timeToLive.setEnabled(!readOnly);
-        cookiesEnabled.setEnabled(!readOnly);
-        followRedirects.setEnabled(!readOnly);
-        maxConnections.setEnabled(!readOnly);
-        maxConnectionsPerRoute.setEnabled(!readOnly);
-        keepAlive.setEnabled(!readOnly);
-        retries.setEnabled(!readOnly);
-        validateAfterInactivityPeriod.setEnabled(!readOnly);
+        timeout.setReadOnly(readOnly);
+        connectionTimeout.setReadOnly(readOnly);
+        connectionRequestTimeout.setReadOnly(readOnly);
+        timeToLive.setReadOnly(readOnly);
+        cookiesEnabled.setReadOnly(readOnly);
+        followRedirects.setReadOnly(readOnly);
+        maxConnections.setReadOnly(readOnly);
+        maxConnectionsPerRoute.setReadOnly(readOnly);
+        keepAlive.setReadOnly(readOnly);
+        retries.setReadOnly(readOnly);
+        userAgent.setReadOnly(readOnly);
+        validateAfterInactivityPeriod.setReadOnly(readOnly);
     }
 
     @Override
@@ -197,6 +202,19 @@ public class HttpClientConfigViewImpl
     @Override
     public int getRetries() {
         return retries.getIntValue();
+    }
+
+    @Override
+    public void setUserAgent(final String userAgent) {
+        this.userAgent.setValue(NullSafe.string(userAgent));
+    }
+
+    @Override
+    public String getUserAgent() {
+        // Blank means the HTTP client's own user agent
+        return NullSafe.isBlankString(userAgent.getValue())
+                ? null
+                : userAgent.getValue().trim();
     }
 
     @Override

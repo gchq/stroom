@@ -4,16 +4,26 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="indexVolumeEditNode" label="Node">
+        <form:FormGroup identity="indexVolumeEditNode" label="Node"
+                        helpText="The Stroom node that the volume belongs to. The node writes its index shards to this volume."
+                        screenReaderText="The node writes its index shards to this volume."
+                        required="true">
             <l:SelectionBox ui:field="nodeName" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexVolumeEditPath" label="Path">
+        <form:FormGroup identity="indexVolumeEditPath" label="Path"
+                        helpText="The directory where index shards are stored on the node. A relative path is resolved against the Stroom home directory. Example: /stroom/volumes/index1."
+                        screenReaderText="Relative paths are resolved against Stroom home."
+                        required="true">
             <g:TextBox ui:field="path" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexVolumeEditState" label="State">
+        <form:FormGroup identity="indexVolumeEditState" label="State"
+                        helpText="Controls how the volume is used. Active: read and written. Inactive: read only, no new shards. Closed: data removed, not used."
+                        screenReaderText="Only Active volumes receive new shards.">
             <l:SelectionBox ui:field="state" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup identity="indexVolumeEditLimit" label="Limit">
+        <form:FormGroup identity="indexVolumeEditLimit" label="Limit"
+                        helpText="The maximum amount of data to store on this volume, with an optional unit such as 500G or 2T (B, K, M, G, T, P; powers of 1024). Leave blank to fill the disk up to 99% or to 10 GiB free, whichever allows more."
+                        screenReaderText="Size with unit, e.g. 500G. Blank fills most of the disk.">
             <g:TextBox ui:field="bytesLimit" addStyleNames="w-100"/>
         </form:FormGroup>
     </g:FlowPanel>

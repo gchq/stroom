@@ -52,7 +52,7 @@ public class TextConverterSettingsViewImpl extends ViewImpl
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        converterType.setEnabled(!readOnly);
+        converterType.setReadOnly(readOnly);
     }
 
     public interface Binder extends UiBinder<Widget, TextConverterSettingsViewImpl> {

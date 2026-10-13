@@ -67,7 +67,7 @@ public class DataGenSettingsPresenter
         // Set unconditionally - a null docRef clears the box, which is what a doc with no feed should show. Guarding
         // on null would leave a previous read's selection in place, and onWrite would then write it straight back.
         destinationFeedPresenter.setSelectedEntityReference(dataGenDoc.getFeed(), true);
-        destinationFeedPresenter.setEnabled(!readOnly);
+        destinationFeedPresenter.setReadOnly(readOnly);
         templatePresenter.setText(dataGenDoc.getTemplate());
         templatePresenter.setReadOnly(readOnly);
         templatePresenter.getFormatAction().setAvailable(!readOnly);

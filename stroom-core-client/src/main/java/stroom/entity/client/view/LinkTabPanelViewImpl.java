@@ -31,6 +31,8 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
 
     private final Widget widget;
     @UiField
+    FlowPanel tabBarRow;
+    @UiField
     FlowPanel toolbarContainer;
     @UiField
     TabBar tabBar;
@@ -60,6 +62,17 @@ public class LinkTabPanelViewImpl extends ViewImpl implements LinkTabPanelView {
     @Override
     public TabBar getTabBar() {
         return tabBar;
+    }
+
+    @Override
+    public void setTabBarStatus(final Widget widget) {
+        // The row holds the tab bar, then this status
+        while (tabBarRow.getWidgetCount() > 1) {
+            tabBarRow.remove(1);
+        }
+        if (widget != null) {
+            tabBarRow.add(widget);
+        }
     }
 
     @Override

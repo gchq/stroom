@@ -134,13 +134,16 @@ public class TextPresenter
         // Defer showing data to be sure that the data display has been made
         // visible first.
         Scheduler.get().scheduleDeferred(() -> {
-            // Determine if we should show tha play button.
-            playButtonVisible = !isHtml
-                                && getTextSettings().isShowStepping()
-                                && securityContext.hasAppPermission(AppPermission.STEPPING_PERMISSION);
-
-            // Show the play button if we have fetched input data.
-            getView().setSteppingVisible(playButtonVisible);
+            // The play button applies to text (not HTML) when stepping is shown and allowed. It
+            // needs a source location, which the text has only once a row is selected
+            // (beginStepping needs the stream id), so until then it is shown disabled
+            final boolean steppingApplies = !isHtml
+                                            && getTextSettings().isShowStepping()
+                                            && securityContext.hasAppPermission(
+                                                    AppPermission.STEPPING_PERMISSION);
+            playButtonVisible = steppingApplies && currentStreamId != null;
+            getView().setSteppingVisible(steppingApplies);
+            getView().setSteppingEnabled(currentStreamId != null);
 
             getView().setClassification(classification);
             if (isHtml) {
@@ -191,7 +194,7 @@ public class TextPresenter
 
     private void initRawPresenter() {
         if (rawPresenter == null) {
-            rawPresenter = rawPresenterProvider.get();
+            rawPresenter = inScope(rawPresenterProvider::get);
             rawPresenter.setReadOnly(true);
             rawPresenter.getLineNumbersOption().setOn(false);
             rawPresenter.getLineWrapOption().setOn(true);
@@ -200,7 +203,7 @@ public class TextPresenter
 
     private void initHtmlPresenter() {
         if (htmlPresenter == null) {
-            htmlPresenter = htmlPresenterProvider.get();
+            htmlPresenter = inScope(htmlPresenterProvider::get);
             htmlPresenter.getWidget().addDomHandler(event -> {
                 final Element target = event.getNativeEvent().getEventTarget().cast();
                 final String link = target.getAttribute("link");
@@ -734,5 +737,10 @@ public class TextPresenter
         void setClassification(String classification);
 
         void setSteppingVisible(boolean visible);
+
+        /// Enables the stepping button, or disables it, saying why, until a row is selected.
+        ///
+        /// @param enabled Whether the button is enabled.
+        void setSteppingEnabled(boolean enabled);
     }
 }

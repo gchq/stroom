@@ -16,8 +16,7 @@
 
 package stroom.data.pager.client;
 
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -44,14 +43,14 @@ import java.util.Set;
 public class Pager extends AbstractPager {
 
     private static Binder binder;
-    @UiField(provided = true)
-    SvgButton first;
-    @UiField(provided = true)
-    SvgButton prev;
-    @UiField(provided = true)
-    SvgButton next;
-    @UiField(provided = true)
-    SvgButton last;
+    @UiField
+    ToolbarButton first;
+    @UiField
+    ToolbarButton prev;
+    @UiField
+    ToolbarButton next;
+    @UiField
+    ToolbarButton last;
     @UiField(provided = true)
     RefreshButton refresh;
     @UiField
@@ -84,10 +83,6 @@ public class Pager extends AbstractPager {
             binder = GWT.create(Binder.class);
         }
 
-        first = SvgButton.create(SvgPresets.FAST_BACKWARD_BLUE);
-        prev = SvgButton.create(SvgPresets.STEP_BACKWARD_BLUE);
-        next = SvgButton.create(SvgPresets.STEP_FORWARD_BLUE);
-        last = SvgButton.create(SvgPresets.FAST_FORWARD_BLUE);
         refresh = new RefreshButton();
 
         initWidget(binder.createAndBindUi(this));
@@ -100,7 +95,7 @@ public class Pager extends AbstractPager {
         refresh.setEnabled(false);
     }
 
-    private void setupButton(final SvgButton button) {
+    private void setupButton(final ToolbarButton button) {
         button.setEnabled(false);
     }
 

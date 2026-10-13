@@ -36,6 +36,7 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
+    margin: 0;
 }
 
 .askStroomAiViewImpl-middle {
@@ -61,8 +62,9 @@
     align-items: center;
 }
 
+/* Hidden until there is a context by the view (setVisible), not here: a display: none rule here
+   once kept it hidden for good, as showing it only clears the inline style */
 .askStroomAiViewImpl-contextChip {
-    display: none;
     font-size: 0.75rem;
     line-height: 1;
     padding: 3px 8px;
@@ -284,15 +286,17 @@
     opacity: 0;
 }
 
-.ai-message:hover > .ai-message-footer .ai-message-delete {
+.ai-message:hover > .ai-message-footer .ai-message-delete,
+/* Keyboard users can tab to it, so it shows when it or its message has focus */
+.ai-message:focus-within > .ai-message-footer .ai-message-delete {
     opacity: 1;
 }
 
-.ai-message-delete .face {
+.ai-message-delete .toolbar-button__icon {
     color: var(--control__text-color--disabled);
 }
 
-.ai-message-delete:hover .face {
+.ai-message-delete:hover .toolbar-button__icon {
     color: var(--icon-colour__red);
 }
 
@@ -300,6 +304,6 @@
     cursor: default !important;
 }
 
-.ai-attachment-status-icon .face {
+.ai-attachment-status-icon .toolbar-button__icon {
     color: var(--icon-colour__green);
 }

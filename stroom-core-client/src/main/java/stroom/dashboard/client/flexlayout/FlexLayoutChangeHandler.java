@@ -16,6 +16,10 @@
 
 package stroom.dashboard.client.flexlayout;
 
+import stroom.dashboard.client.main.Component;
+
+import java.util.List;
+
 public interface FlexLayoutChangeHandler {
 
     void removeTab(MutableTabLayoutConfig tabLayoutConfig, MutableTabConfig tab);
@@ -23,4 +27,11 @@ public interface FlexLayoutChangeHandler {
     void removeTabPanel(MutableTabLayoutConfig tabLayoutConfig);
 
     void onChange();
+
+    /// Called when placing new components (a duplicate, or an added component) is cancelled, so
+    /// that they can be removed again: they were made before they were placed.
+    ///
+    /// @param components The components that were not placed.
+    default void cancelNewComponents(final List<Component> components) {
+    }
 }

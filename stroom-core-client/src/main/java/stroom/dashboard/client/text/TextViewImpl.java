@@ -73,6 +73,14 @@ public class TextViewImpl extends ViewWithUiHandlers<TextUiHandlers> implements 
         steppingButton.setVisible(visible);
     }
 
+    @Override
+    public void setSteppingEnabled(final boolean enabled) {
+        steppingButton.setEnabled(enabled);
+        steppingButton.setTitle(enabled
+                ? "Enter Stepping Mode"
+                : "Select a row to step through its source");
+    }
+
     @UiHandler("steppingButton")
     public void onSteppingClick(final ClickEvent e) {
         if (getUiHandlers() != null) {

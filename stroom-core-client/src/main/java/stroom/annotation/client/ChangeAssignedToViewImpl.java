@@ -44,6 +44,7 @@ public class ChangeAssignedToViewImpl
     @Inject
     public ChangeAssignedToViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        AssignYourselfLink.init(assignYourself, this::assignYourself);
     }
 
     @Override
@@ -57,8 +58,8 @@ public class ChangeAssignedToViewImpl
     }
 
     @Override
-    public void setAssignYourselfVisible(final boolean visible) {
-        assignYourself.setVisible(visible);
+    public void setAssignYourselfEnabled(final boolean enabled) {
+        AssignYourselfLink.update(assignYourself, !enabled, false);
     }
 
     @Override
@@ -81,10 +82,14 @@ public class ChangeAssignedToViewImpl
 
     @UiHandler("assignYourself")
     public void onAssignYourself(final ClickEvent e) {
+        AssignYourselfLink.runIfEnabled(assignYourself, this::assignYourself);
+        e.stopPropagation();
+    }
+
+    private void assignYourself() {
         if (getUiHandlers() != null) {
             getUiHandlers().assignYourself();
         }
-        e.stopPropagation();
     }
 
 

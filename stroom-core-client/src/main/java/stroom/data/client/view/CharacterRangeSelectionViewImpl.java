@@ -21,6 +21,7 @@ import stroom.docref.HasDisplayValue;
 import stroom.item.client.SelectionBox;
 import stroom.util.shared.Count;
 import stroom.util.shared.DataRange;
+import stroom.widget.form.client.AccessibleName;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
@@ -67,6 +68,14 @@ public class CharacterRangeSelectionViewImpl
     @Inject
     public CharacterRangeSelectionViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        // Named by the part they are, as the From and To labels name each group of controls
+        AccessibleName.set(fromType, "Type");
+        AccessibleName.set(fromLineCol, "Line and column");
+        AccessibleName.set(fromCharOffset, "Character offset");
+        AccessibleName.set(toType, "Type");
+        AccessibleName.set(toLineCol, "Line and column");
+        AccessibleName.set(toCharOffset, "Character offset");
+        AccessibleName.set(toCharCount, "Character count");
 
         setInitialMinMax();
 

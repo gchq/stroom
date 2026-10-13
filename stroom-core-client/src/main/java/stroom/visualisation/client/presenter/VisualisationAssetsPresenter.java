@@ -41,8 +41,8 @@ import stroom.visualisation.shared.VisualisationAssetUpdateNewFile;
 import stroom.visualisation.shared.VisualisationAssetUpdateRename;
 import stroom.visualisation.shared.VisualisationAssets;
 import stroom.visualisation.shared.VisualisationDoc;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -107,27 +107,31 @@ public class VisualisationAssetsPresenter
     /**
      * Button to revert any changes and go back to live version
      */
-    private final InlineSvgButton revertButton = new InlineSvgButton();
+    // The tab's buttons, for its document's toolbar
+    private final Toolbar toolbar = new Toolbar("Asset actions");
+    private final ToolbarButton revertButton =
+            toolbar.button(SvgImage.REFRESH, "Revert changes", this::onRevertButtonClick);
 
     /**
      * Button to add stuff to the tree
      */
-    private final InlineSvgButton addButton = new InlineSvgButton();
+    private final ToolbarButton addButton = toolbar.button(SvgImage.ADD, "Add file", this::showAddMenu);
 
     /**
      * Button to delete stuff from the tree
      */
-    private final InlineSvgButton deleteButton = new InlineSvgButton();
+    private final ToolbarButton deleteButton =
+            toolbar.button(SvgImage.DELETE, "Delete", this::onDeleteButtonClick);
 
     /**
      * Button to edit stuff from the tree
      */
-    private final InlineSvgButton editButton = new InlineSvgButton();
+    private final ToolbarButton editButton = toolbar.button(SvgImage.EDIT, "Rename", this::onEditFilename);
 
     /**
      * Button to view stuff
      */
-    private final InlineSvgButton viewButton = new InlineSvgButton();
+    private final ToolbarButton viewButton = toolbar.button(SvgImage.EYE, "View in browser", this::onViewAsset);
 
     /**
      * Dialog that appears when user wants to upload a file
@@ -255,42 +259,9 @@ public class VisualisationAssetsPresenter
         return nonClashingLabel;
     }
 
-    /**
-     * Sets up the toolbar for the tab.
-     */
+    /// The tab's buttons, for its document's toolbar. This is asked each time the tab is shown.
     @Override
-    public List<Widget> getToolbars() {
-        revertButton.setSvg(SvgImage.REFRESH);
-        revertButton.setTitle("Revert changes");
-        revertButton.setVisible(true);
-        revertButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onRevertButtonClick());
-
-        addButton.setSvg(SvgImage.ADD);
-        addButton.setTitle("Add file");
-        addButton.setVisible(true);
-
-        deleteButton.setSvg(SvgImage.DELETE);
-        deleteButton.setTitle("Delete");
-        deleteButton.setVisible(true);
-        deleteButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onDeleteButtonClick());
-
-        editButton.setSvg(SvgImage.EDIT);
-        editButton.setTitle("Rename");
-        editButton.setVisible(true);
-        editButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onEditFilename());
-
-        viewButton.setSvg(SvgImage.EYE);
-        viewButton.setTitle("View in browser");
-        viewButton.setVisible(true);
-        viewButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onViewAsset());
-
-        final ButtonPanel toolbar = new ButtonPanel();
-        toolbar.addButton(revertButton);
-        toolbar.addButton(addButton);
-        toolbar.addButton(deleteButton);
-        toolbar.addButton(editButton);
-        toolbar.addButton(viewButton);
-
+    public List<Widget> getDocumentButtons() {
         // Ensure state is set correctly
         updateState();
 
@@ -335,15 +306,16 @@ public class VisualisationAssetsPresenter
                 .enabled(true)
                 .build());
 
-        addButton.addClickHandler(event -> {
-            final Rect relativeRect = new Rect(addButton.getElement()).grow(3);
-            final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
-            ShowMenuEvent.builder()
-                    .items(menuItems)
-                    .popupPosition(position)
-                    .allowCloseOnMoveLeft()
-                    .fire(this);
-        });
+    }
+
+    private void showAddMenu() {
+        final Rect relativeRect = new Rect(addButton.getElement()).grow(3);
+        final PopupPosition position = new PopupPosition(relativeRect, PopupLocation.RIGHT);
+        ShowMenuEvent.builder()
+                .items(menuItems)
+                .popupPosition(position)
+                .allowCloseOnMoveLeft()
+                .fire(this);
     }
 
     /**
@@ -970,7 +942,7 @@ public class VisualisationAssetsPresenter
     private void disableEditor() {
         editorPresenter.setText("");
         editorPresenter.setReadOnly(true);
-        editorPresenter.getWidget().setVisible(false);
+        getView().setEditorVisible(false);
     }
 
     /**
@@ -1002,7 +974,7 @@ public class VisualisationAssetsPresenter
                             editorMode = AceEditorMode.PLAIN_TEXT;
                         }
 
-                        editorPresenter.getWidget().setVisible(true);
+                        getView().setEditorVisible(true);
                         editorPresenter.setText(result.getContent());
                         editorPresenter.setReadOnly(isReadOnly());
                         editorPresenter.setMode(editorMode);
@@ -1140,5 +1112,10 @@ public class VisualisationAssetsPresenter
          * Sets the cell tree within the view.
          */
         void setTreeAndEditor(final Tree cellTree, final EditorPresenter editor);
+
+        /// Shows the editor, or in its place a message asking for a file to be selected.
+        ///
+        /// @param visible Whether the editor is shown.
+        void setEditorVisible(boolean visible);
     }
 }

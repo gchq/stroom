@@ -5,19 +5,26 @@
              xmlns:l="urn:import:stroom.item.client"
              xmlns:form="urn:import:stroom.widget.form.client">
     <g:FlowPanel styleName="max form">
-        <form:FormGroup identity="scheduleType" label="Schedule Type" addStyleNames="dock-min">
+        <form:FormGroup identity="scheduleType" label="Schedule Type" addStyleNames="dock-min"
+                        helpText="How the schedule is defined. Instant runs as often as possible. Frequency runs at a fixed interval. Cron runs at set times."
+                        screenReaderText="Instant, Frequency or Cron.">
             <l:SelectionBox ui:field="scheduleType" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="quickSettingsFormGroup" identity="quickSettings" label="Quick Settings" addStyleNames="dock-min">
+        <form:FormGroup ui:field="quickSettingsFormGroup" identity="quickSettings" label="Quick Settings" addStyleNames="dock-min"
+                        helpText="Presets that fill in the expression with a common schedule.">
             <g:SimplePanel ui:field="quickSettings" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="expressionFormGroup" identity="scheduleExpression" label="Expression">
+        <form:FormGroup ui:field="expressionFormGroup" identity="scheduleExpression" label="Expression"
+                        helpText="For Frequency, an interval such as 10m or 1h (units s, m, h, d). For Cron, six fields starting with seconds, e.g. 0 0 2 * * ? for 2am every day."
+                        screenReaderText="Frequency e.g. 10m; Cron has 6 fields starting with seconds.">
             <g:TextBox ui:field="expression" addStyleNames="w-100"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="lastExecutedFormGroup" identity="scheduleLastExecuted" label="Last Executed">
+        <form:FormGroup ui:field="lastExecutedFormGroup" identity="scheduleLastExecuted" label="Last Executed"
+                        helpText="When this last ran, or Never.">
             <g:Label ui:field="lastExecuted"/>
         </form:FormGroup>
-        <form:FormGroup ui:field="nextScheduledTimeFormGroup" identity="scheduleNextScheduledTime" label="Next Scheduled Time">
+        <form:FormGroup ui:field="nextScheduledTimeFormGroup" identity="scheduleNextScheduledTime" label="Next Scheduled Time"
+                        helpText="When this will next run, based on the expression. Shows an error if the expression is not valid. Select Calculate to update it.">
             <g:Label ui:field="nextScheduledTime"/>
         </form:FormGroup>
         <b:Button ui:field="calculate" addStyleNames="allow-focus w-100" text="Calculate"/>

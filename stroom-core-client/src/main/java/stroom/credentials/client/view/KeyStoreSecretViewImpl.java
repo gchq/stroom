@@ -21,7 +21,7 @@ import stroom.credentials.client.presenter.KeyStoreSecretPresenter.KeyStoreSecre
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.item.client.SelectionBox;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.CustomFileUpload;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -49,7 +49,7 @@ public class KeyStoreSecretViewImpl
     @UiField
     PasswordTextBox password;
     @UiField
-    InlineSvgButton showPassword;
+    ToolbarButton showPassword;
 
     @Inject
     public KeyStoreSecretViewImpl(final Binder binder) {

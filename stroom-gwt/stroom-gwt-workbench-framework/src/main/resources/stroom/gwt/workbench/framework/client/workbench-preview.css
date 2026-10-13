@@ -1,0 +1,97 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+ * Styles for the workbench preview (iframe.html), injected by StoryPreview. The layout classes
+ * are those that React Storybook applies to the preview body for the 'centered', 'padded' and
+ * 'fullscreen' layouts.
+ */
+
+.sb-show-main.sb-main-centered {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.sb-show-main.sb-main-centered #workbench-root {
+    box-sizing: border-box;
+    margin: auto;
+    padding: 1rem;
+    max-height: 100%;
+}
+
+.sb-show-main.sb-main-fullscreen {
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
+.sb-show-main.sb-main-padded {
+    margin: 0;
+    padding: 1rem;
+    display: block;
+    box-sizing: border-box;
+}
+
+/* Outline tool */
+.wbp-outline * {
+    outline: 1px solid #ff6f00 !important;
+}
+
+/* The outline tool only outlines the story, not the workbench's own overlays. The ids make these
+   rules more specific than the one above, so they win despite both being !important. */
+.wbp-outline #wbp-error,
+.wbp-outline #wbp-error *,
+.wbp-outline #wbp-a11y-highlights,
+.wbp-outline #wbp-a11y-highlights *,
+.wbp-outline #workbench-measure,
+.wbp-outline .wbp-vision-filters,
+.wbp-outline .wbp-vision-filters * {
+    outline: none !important;
+}
+
+.wbp-error:empty {
+    display: none;
+}
+
+.wbp-error {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    padding: 24px;
+    background: #f6f9fc;
+    color: black;
+    font-family: "Nunito Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    white-space: pre-wrap;
+}
+
+/* Accessibility addon highlights */
+#wbp-a11y-highlights {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 2147483646;
+}
+
+.wbp-a11y-highlight {
+    position: absolute;
+    border: 2px solid;
+    border-radius: 2px;
+    box-sizing: border-box;
+}

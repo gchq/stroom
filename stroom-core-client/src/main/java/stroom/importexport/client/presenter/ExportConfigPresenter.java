@@ -34,7 +34,8 @@ import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.DocRefs;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterContextHandler;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -44,7 +45,6 @@ import stroom.widget.popup.client.presenter.PopupType;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.MouseDownEvent;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Focus;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -71,7 +71,7 @@ public class ExportConfigPresenter
     private final RestFactory restFactory;
     private final DocumentTypeCache documentTypeCache;
 
-    private final InlineSvgToggleButton filter;
+    private final ToolbarToggleButton filter;
     private boolean hasActiveFilter = false;
 
     @Inject
@@ -91,15 +91,8 @@ public class ExportConfigPresenter
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
 
-        filter = new InlineSvgToggleButton();
-        filter.setState(hasActiveFilter);
-        filter.setSvg(SvgImage.FILTER);
-        filter.getElement().addClassName("navigation-header-button filter");
-        filter.setTitle("Filter Types");
-        filter.setEnabled(true);
-
-        final FlowPanel buttons = getView().getButtonContainer();
-        buttons.add(filter);
+        filter = getView().getToolbar().toggle(SvgImage.FILTER, "Filter Types", null);
+        filter.setPressed(hasActiveFilter);
 
         view.setTreeView(treePresenter.getView());
         treePresenter.setFilterErrorConsumer(view::setFilterError);
@@ -231,7 +224,8 @@ public class ExportConfigPresenter
 
         void setQuickFilterContextHandler(QuickFilterContextHandler contextHandler);
 
-        FlowPanel getButtonContainer();
+        /// @return The dialog's toolbar, for its buttons.
+        Toolbar getToolbar();
     }
 
 

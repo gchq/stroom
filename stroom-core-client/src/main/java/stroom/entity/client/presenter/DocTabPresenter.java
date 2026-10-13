@@ -27,23 +27,26 @@ import stroom.document.client.event.OpenDocumentEvent.CommonDocLinkTab;
 import stroom.document.client.event.SaveAsDocumentEvent;
 import stroom.document.client.event.SaveDocumentEvent;
 import stroom.entity.client.presenter.TabContentProvider.TabProvider;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.SimpleTask;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.Toolbar;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
+import stroom.widget.util.client.SafeHtmlUtil;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -52,11 +55,24 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         extends DocPresenter<V, D>
         implements DocumentTabData, Refreshable, HasType, HasSave {
 
-    private final ButtonView saveButton;
-    private final ButtonView saveAsButton;
+    // Made in the toolbar by createToolbar, so null if a subclass's toolbar has none
+    private ToolbarButton saveButton;
+    private ToolbarButton saveAsButton;
+    private boolean saveEnabled;
+    private boolean saveAsEnabled;
     private TabData selectedTab;
     private String lastLabel;
-    protected final ButtonPanel toolbar;
+    // The document's toolbar: Save, Save As and any buttons subclasses add, then the buttons of the
+    // tab showing (HasToolbar.getDocumentButtons), all one group (one tab stop)
+    protected final Toolbar toolbar;
+    // The buttons the tab showing added to the toolbar, removed when another tab is shown
+    private final List<Widget> tabButtons = new ArrayList<>();
+    // Why a document is read only: it is only ever opened read only for a user who can't edit it
+    private static final String READ_ONLY_REASON = "You don't have permission to change this";
+
+    // Says that the document is read only, at the far right of the tab bar; a polite status, so
+    // screen readers announce it (and why) when a read-only document opens
+    private final HTML readOnlyStatus = new HTML();
     private PresenterWidget<?> currentContent;
     protected DocRef docRef;
     private TabData defaultTab;
@@ -67,12 +83,10 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
     public DocTabPresenter(final EventBus eventBus,
                            final V view) {
         super(eventBus, view);
-        saveButton = SvgButton.create(SvgPresets.SAVE);
-        saveAsButton = SvgButton.create(SvgPresets.SAVE_AS);
-        saveButton.setEnabled(false);
-        saveAsButton.setEnabled(false);
-
         toolbar = createToolbar();
+        readOnlyStatus.setStyleName("docTab-readOnlyStatus");
+        readOnlyStatus.getElement().setAttribute("role", "status");
+        getView().setTabBarStatus(readOnlyStatus);
 
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
 
@@ -83,13 +97,31 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         addEntry(commonTabsMap, CommonDocLinkTab.PERMISSIONS, this::getPermissionsTab);
     }
 
-    protected ButtonPanel createToolbar() {
-        final ButtonPanel toolbar = new ButtonPanel();
-        toolbar.addButton(saveButton);
-        toolbar.addButton(saveAsButton);
-        registerHandler(saveButton.addClickHandler(event -> save()));
-        registerHandler(saveAsButton.addClickHandler(event -> saveAs()));
+    /// Makes the document's toolbar, with its Save and Save As buttons. A subclass may add its own
+    /// buttons to [#toolbar] once it is made.
+    ///
+    /// @return The toolbar.
+    protected Toolbar createToolbar() {
+        final Toolbar toolbar = new Toolbar("Document actions");
+        saveButton = toolbar.button(SvgImage.SAVE, "Save", this::save);
+        saveButton.setEnabled(false);
+        saveAsButton = toolbar.button(SvgImage.SAVEAS, "Save As", this::saveAs);
+        saveAsButton.setEnabled(false);
         return toolbar;
+    }
+
+    private void setSaveEnabled(final boolean enabled) {
+        saveEnabled = enabled;
+        if (saveButton != null) {
+            saveButton.setEnabled(enabled);
+        }
+    }
+
+    private void setSaveAsEnabled(final boolean enabled) {
+        saveAsEnabled = enabled;
+        if (saveAsButton != null) {
+            saveAsButton.setEnabled(enabled);
+        }
     }
 
     private void addEntry(final Map<CommonDocLinkTab, TabData> commonTabsMap,
@@ -119,13 +151,13 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
 
     @Override
     public void save() {
-        if (saveButton.isEnabled()) {
+        if (saveEnabled) {
             SaveDocumentEvent.fire(DocTabPresenter.this, DocTabPresenter.this);
         }
     }
 
     private void saveAs() {
-        if (saveAsButton.isEnabled()) {
+        if (saveAsEnabled) {
             SaveAsDocumentEvent.fire(DocTabPresenter.this, DocTabPresenter.this);
         }
     }
@@ -172,17 +204,22 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
                         // Set the content.
                         getView().getLayerContainer().show((Layer) currentContent);
 
-                        // Update the buttons.
+                        // Update the buttons: the tab's own buttons join the document's toolbar,
+                        // and its other toolbars follow it
+                        for (final Widget widget : tabButtons) {
+                            toolbar.remove(widget);
+                        }
+                        tabButtons.clear();
+                        getView().clearToolbar();
+                        getView().addToolbar(toolbar);
                         if (currentContent instanceof final HasToolbar hasToolbar) {
-                            getView().clearToolbar();
-                            getView().addToolbar(toolbar);
-
+                            for (final Widget widget : hasToolbar.getDocumentButtons()) {
+                                toolbar.add(widget);
+                                tabButtons.add(widget);
+                            }
                             for (final Widget widget : hasToolbar.getToolbars()) {
                                 getView().addToolbar(widget);
                             }
-                        } else {
-                            getView().clearToolbar();
-                            getView().addToolbar(toolbar);
                         }
 
                         // Update the selected tab.
@@ -213,15 +250,42 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
         }
     }
 
+    private void setReadOnlyStatus(final boolean readOnly) {
+        if (readOnly) {
+            final SafeHtmlBuilder html = new SafeHtmlBuilder();
+            html.appendHtmlConstant("<span class=\"docTab-readOnlyNote\">");
+            html.appendHtmlConstant("<span class=\"docTab-readOnlyIcon\" aria-hidden=\"true\">");
+            html.append(SafeHtmlUtil.getSafeHtmlFromSafeConstant(SvgImage.LOCKED.getSvg()));
+            html.appendHtmlConstant("</span>");
+            html.appendEscaped("Read only");
+            html.appendHtmlConstant("</span>");
+            // The reason, which a tooltip doesn't give screen readers
+            html.appendHtmlConstant("<span class=\"sr-only\">");
+            html.appendEscaped(". " + READ_ONLY_REASON + ".");
+            html.appendHtmlConstant("</span>");
+            readOnlyStatus.setHTML(html.toSafeHtml());
+            readOnlyStatus.setTitle(READ_ONLY_REASON);
+        } else {
+            readOnlyStatus.setHTML("");
+            readOnlyStatus.setTitle(null);
+        }
+        // The status takes room from the tab bar, so it lays its tabs out again
+        getView().getTabBar().refresh();
+    }
+
     @Override
     protected void onRead(final DocRef docRef, final D document, final boolean readOnly) {
         this.docRef = docRef;
-        saveButton.setEnabled(isDirty());
-        saveAsButton.setEnabled(true);
-        if (readOnly) {
+        setSaveEnabled(isDirty());
+        setSaveAsEnabled(true);
+        if (readOnly && saveButton != null) {
             saveButton.setTitle("Save is not available as this document is read only");
         }
+        setReadOnlyStatus(readOnly);
         tabContentProvider.read(docRef, document, readOnly);
+        // The name may have changed (e.g. after a rename or Save As), and a clean document doesn't
+        // become dirty to refresh the tab's label
+        refreshTabIfLabelChanged();
     }
 
     @Override
@@ -266,12 +330,16 @@ public abstract class DocTabPresenter<V extends LinkTabPanelView, D>
 
     @Override
     public void onDirty() {
+        refreshTabIfLabelChanged();
+        setSaveEnabled(isDirty());
+    }
+
+    private void refreshTabIfLabelChanged() {
         // Only fire tab refresh if the tab has changed.
         if (lastLabel == null || !lastLabel.equals(getLabel())) {
             lastLabel = getLabel();
             RefreshContentTabEvent.fire(this, this);
         }
-        saveButton.setEnabled(isDirty());
     }
 
     @Override

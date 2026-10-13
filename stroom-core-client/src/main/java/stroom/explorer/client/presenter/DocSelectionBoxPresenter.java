@@ -53,6 +53,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
     private final ExplorerPopupPresenter explorerPopupPresenter;
     private final RestFactory restFactory;
     private boolean enabled = true;
+    private boolean readOnly;
     private DocRef value = null;
     private String errorMsg = null;
     private String itemType = null;
@@ -260,7 +261,7 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
 
     @Override
     public void showPopup() {
-        if (enabled) {
+        if (enabled && !readOnly) {
             final DocRef oldDocRef = getSelectedEntityReference();
             explorerPopupPresenter.show(selectedDocRef -> {
 //                GWT.log("currentSelectionRef: " + selectedDocRef);
@@ -293,13 +294,18 @@ public class DocSelectionBoxPresenter extends MyPresenterWidget<DropDownView>
                 NullSafe.isNonBlankString(errorMsg));
     }
 
+    /// Makes the selection read only: it can be read and stays in the tab order, but the
+    /// picker doesn't open. It looks like the normal field with its value greyed.
+    ///
+    /// @param readOnly Whether the selection is read only.
+    public void setReadOnly(final boolean readOnly) {
+        this.readOnly = readOnly;
+        getView().setReadOnly(readOnly);
+    }
+
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
-        if (!enabled) {
-            getView().asWidget().getElement().addClassName("disabled");
-        } else {
-            getView().asWidget().getElement().removeClassName("disabled");
-        }
+        getView().setEnabled(enabled);
     }
 
     private String getErrorMsg() {

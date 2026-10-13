@@ -30,9 +30,8 @@ import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.entity.client.presenter.MarkdownEditPresenter;
 import stroom.entity.client.presenter.MarkdownTabProvider;
 import stroom.security.client.presenter.DocumentUserPermissionsTabProvider;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.SvgButton;
+import stroom.svg.shared.SvgImage;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 
@@ -65,7 +64,7 @@ public class DictionaryPresenter extends DocTabPresenter<LinkTabPanelView, Dicti
             .build();
     private static final TabData PERMISSIONS = new TabDataImpl("Permissions");
 
-    private final ButtonView downloadButton;
+    private final ToolbarButton downloadButton;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
 
@@ -86,9 +85,9 @@ public class DictionaryPresenter extends DocTabPresenter<LinkTabPanelView, Dicti
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
-        downloadButton = SvgButton.create(SvgPresets.DOWNLOAD.title("Download Dictionary words"));
+        downloadButton = toolbar.button(SvgImage.DOWNLOAD, "Download Dictionary words", null);
+        downloadButton.setEnabled(false);
 
-        toolbar.addButton(downloadButton);
 
         addTab(WORDS, new AbstractTabProvider<DictionaryDoc, EditorPresenter>(eventBus) {
             @Override

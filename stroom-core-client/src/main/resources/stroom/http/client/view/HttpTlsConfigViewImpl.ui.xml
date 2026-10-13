@@ -7,26 +7,30 @@
     <g:FlowPanel styleName="max form-padding form">
         <form:FormGroup identity="httpTlsConfigProtocol"
                         label="Protocol"
-                        helpText="Protocol">
+                        helpText="The TLS protocol used to create the secure connection, e.g. TLSv1.2. Default is TLSv1.3."
+                        screenReaderText="TLS protocol name. Default is TLSv1.3.">
             <g:TextBox ui:field="protocol"
                        width="400px"
                        title="Protocol"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigProvider"
                         label="Provider"
-                        helpText="Provider">
+                        helpText="The name of the Java security provider to use for TLS, e.g. SunJSSE. Leave blank to use the Java default."
+                        screenReaderText="Leave blank for the Java default.">
             <g:TextBox ui:field="provider"
                        width="400px"
                        title="Provider"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigKeyStore"
                         label="Key Store"
-                        helpText="Key Store">
+                        helpText="Key store credentials holding the client certificate and private key, for servers that require a client certificate. Leave blank if none is needed."
+                        screenReaderText="Client certificate for mutual TLS. Leave blank if not needed.">
             <l:SelectionBox ui:field="keyStore"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigTrustStore"
                         label="Trust Store"
-                        helpText="Trust Store">
+                        helpText="Key store credentials holding the certificates used to trust the server. Leave blank to use the Java default trust store."
+                        screenReaderText="Leave blank for the Java default trust store.">
             <l:SelectionBox ui:field="trustStore"/>
         </form:FormGroup>
         <form:FormGroup>
@@ -41,21 +45,24 @@
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigSupportedProtocols"
                         label="Supported Protocols"
-                        helpText="Supported Protocols">
+                        helpText="The TLS protocol versions that may be used, one per line, e.g. TLSv1.2. Leave blank to allow the Java defaults."
+                        screenReaderText="One per line, e.g. TLSv1.2. Blank allows Java defaults.">
             <g:TextArea ui:field="supportedProtocols"
                         width="400px"
                         title="Supported Protocols"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigSupportedCiphers"
                         label="Supported Ciphers"
-                        helpText="Supported Ciphers">
+                        helpText="The cipher suites that may be used, one per line, e.g. TLS_AES_256_GCM_SHA384. Leave blank to allow the Java defaults."
+                        screenReaderText="One per line. Blank allows Java defaults.">
             <g:TextArea ui:field="supportedCiphers"
                         width="400px"
                         title="Supported Ciphers"/>
         </form:FormGroup>
         <form:FormGroup identity="httpTlsConfigCertAlias"
                         label="Certificate Alias"
-                        helpText="Certificate Alias">
+                        helpText="The alias of the client certificate to use when the key store holds more than one. Leave blank to choose automatically."
+                        screenReaderText="Needed only if the key store has several certificates.">
             <g:TextBox ui:field="certAlias"
                        width="400px"
                        title="Certificate Alias"/>

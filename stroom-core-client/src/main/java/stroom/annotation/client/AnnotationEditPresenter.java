@@ -47,6 +47,7 @@ import stroom.content.client.event.CloseContentTabEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.dispatch.client.DefaultErrorHandler;
+import stroom.dispatch.client.RestErrorHandler;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocPresenter;
 import stroom.hyperlink.client.Hyperlink;
@@ -353,7 +354,7 @@ public class AnnotationEditPresenter
         assignedToPresenter.resolve(assignedTo, userRef -> {
             currentAssignedTo = userRef;
             getView().setAssignedTo(userRef);
-            getView().setAssignYourselfVisible(!Objects.equals(userRef, clientSecurityContext.getUserRef()));
+            getView().setAssignYourselfEnabled(!Objects.equals(userRef, clientSecurityContext.getUserRef()));
             assignedToPresenter.setSelected(currentAssignedTo);
         });
     }
@@ -422,6 +423,9 @@ public class AnnotationEditPresenter
 
     @Override
     public void showRetentionPeriodChooser(final Element element) {
+        if (isReadOnly()) {
+            return;
+        }
         retentionDurationProvider.show(currentRetentionPeriod, this::changeRetentionPeriod);
     }
 
@@ -620,6 +624,10 @@ public class AnnotationEditPresenter
     private void showEntryEditMenu(final MouseDownEvent event,
                                    final long id,
                                    final AnnotationEntryType entryType) {
+        // A read-only annotation's entries can't be edited or deleted
+        if (isReadOnly()) {
+            return;
+        }
         final List<Item> menuItems = new ArrayList<>();
         if (AnnotationEntryType.COMMENT.equals(entryType)) {
             final IconMenuItem editItem = new IconMenuItem.Builder()
@@ -684,7 +692,8 @@ public class AnnotationEditPresenter
         annotationResourceClient.changeAnnotationEntry(
                 request,
                 ignored -> afterChangeComment(e),
-                ignored -> new DefaultErrorHandler(this, e::reset),
+                // If the change fails, say why and let the user try again or cancel
+                RestErrorHandler.forPopup(this, e),
                 this);
     }
 
@@ -1324,6 +1333,9 @@ public class AnnotationEditPresenter
     protected void onRead(final DocRef docRef, final Annotation annotation, final boolean readOnly) {
         this.annotationRef = annotation.asDocRef();
         this.annotationIdentity = annotation.asAnnotationIdentity();
+        // Read only: everything can be read, nothing changed (the presenter also refuses each
+        // change, as some are made straight to the server)
+        getView().setReadOnly(readOnly);
         this.currentStatus = annotation.getStatus();
         this.currentAssignedTo = annotation.getAssignedTo();
 
@@ -1350,16 +1362,25 @@ public class AnnotationEditPresenter
 
     @Override
     public void onTitleChange() {
+        if (isReadOnly()) {
+            return;
+        }
         changeTitle(getView().getTitle());
     }
 
     @Override
     public void onSubjectChange() {
+        if (isReadOnly()) {
+            return;
+        }
         changeSubject(getView().getSubject());
     }
 
     @Override
     public void showStatusChooser(final Element element) {
+        if (isReadOnly()) {
+            return;
+        }
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.builder(annotationStatusPresenter)
@@ -1372,12 +1393,18 @@ public class AnnotationEditPresenter
 
     @Override
     public void showAssignedToChooser(final Element element) {
+        if (isReadOnly()) {
+            return;
+        }
         assignedToPresenter.setSelected(currentAssignedTo);
         assignedToPresenter.show(this::changeAssignedTo);
     }
 
     @Override
     public void showLabelChooser(final Element element) {
+        if (isReadOnly()) {
+            return;
+        }
         annotationLabelPresenter.clearFilter();
         annotationLabelPresenter.setSelectedItems(currentLabels);
         annotationLabelPresenter.refresh();
@@ -1395,6 +1422,9 @@ public class AnnotationEditPresenter
 
     @Override
     public void showCollectionChooser(final Element element) {
+        if (isReadOnly()) {
+            return;
+        }
         annotationCollectionPresenter.clearFilter();
         annotationCollectionPresenter.setSelectedItems(currentCollections);
         annotationCollectionPresenter.refresh();
@@ -1412,6 +1442,9 @@ public class AnnotationEditPresenter
 
     @Override
     public void showCommentChooser(final Element element) {
+        if (isReadOnly()) {
+            return;
+        }
         commentPresenter.clearFilter();
         commentPresenter.clearSelection();
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
@@ -1426,11 +1459,17 @@ public class AnnotationEditPresenter
 
     @Override
     public void assignYourself() {
+        if (isReadOnly()) {
+            return;
+        }
         changeAssignedTo(clientSecurityContext.getUserRef());
     }
 
     @Override
     public void create() {
+        if (isReadOnly()) {
+            return;
+        }
         final String comment = getView().getComment();
         if (comment != null && !comment.isEmpty()) {
             final SingleAnnotationChangeRequest request = new SingleAnnotationChangeRequest(
@@ -1445,6 +1484,9 @@ public class AnnotationEditPresenter
 
     @Override
     public void onDelete() {
+        if (isReadOnly()) {
+            return;
+        }
         ConfirmEvent.fire(this, "Are you sure you want to delete this annotation?", ok -> {
             if (ok) {
                 annotationResourceClient.delete(annotationRef, result -> {
@@ -1544,7 +1586,11 @@ public class AnnotationEditPresenter
 
         void setAssignedTo(UserRef assignedTo);
 
-        void setAssignYourselfVisible(boolean visible);
+        /// Enables 'Assign Yourself', or disables it, saying why, when the annotation is already
+        /// assigned to the current user.
+        ///
+        /// @param enabled Whether it is enabled.
+        void setAssignYourselfEnabled(boolean enabled);
 
         void setLabels(List<AnnotationTag> labels);
 
@@ -1559,5 +1605,12 @@ public class AnnotationEditPresenter
         void setButtonText(String text);
 
         void setRetentionPeriod(String retentionPeriod);
+
+        /// Makes the annotation read only: its title, subject and comment can be read and copied but
+        /// not changed, its settings don't open their choosers, and Comment, Create and Delete are
+        /// disabled.
+        ///
+        /// @param readOnly Whether the annotation is read only.
+        void setReadOnly(boolean readOnly);
     }
 }

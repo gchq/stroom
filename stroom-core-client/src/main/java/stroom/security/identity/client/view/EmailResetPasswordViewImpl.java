@@ -18,6 +18,7 @@ package stroom.security.identity.client.view;
 
 import stroom.security.identity.client.presenter.EmailResetPasswordPresenter.EmailResetPasswordView;
 import stroom.security.identity.client.presenter.EmailValidator;
+import stroom.widget.form.client.FieldValidity;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
@@ -68,17 +69,18 @@ public class EmailResetPasswordViewImpl
     public boolean validate() {
         boolean valid = true;
 
-        email.removeStyleName("invalid");
         if (email.getValue().length() == 0) {
-            emailFeedback.setText("Email is required");
-            email.addStyleName("invalid");
+            FieldValidity.setInvalid(email, emailFeedback, "Email is required");
             valid = false;
         } else if (!EmailValidator.validate(email.getValue())) {
-            emailFeedback.setText("Invalid email address");
-            email.addStyleName("invalid");
+            FieldValidity.setInvalid(email, emailFeedback, "Invalid email address");
             valid = false;
         } else {
-            emailFeedback.setText("");
+            FieldValidity.setValid(email, emailFeedback);
+        }
+
+        if (!valid) {
+            FieldValidity.focusFirstInvalid(email);
         }
 
         return valid;

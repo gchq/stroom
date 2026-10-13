@@ -263,7 +263,7 @@ class AuthFlowResourceImpl implements AuthFlowResource {
                 try (final PrintWriter writer = response.getWriter()) {
                     // Escape the URL before writing it into the HTML attribute, as it derives from the
                     // initiating request.
-                    writer.write("<!DOCTYPE html><html><head>"
+                    writer.write("<!DOCTYPE html><html lang=\"en\"><head>"
                                  + "<meta http-equiv=\"refresh\" content=\"0;url="
                                  + HtmlEscapers.htmlEscaper().escape(state.getInitiatingUri())
                                  + "\"></head><body>Redirecting...</body></html>");

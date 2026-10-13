@@ -18,12 +18,10 @@ package stroom.data.grid.client;
 
 import stroom.data.pager.client.Pager;
 import stroom.data.pager.client.RefreshButton;
-import stroom.svg.client.Preset;
 import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToggleButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.GWT;
@@ -52,7 +50,7 @@ public class PagerViewWithHeadingImpl extends ViewImpl implements PagerViewWithH
     @UiField
     Pager pager;
     @UiField
-    ButtonPanel buttonPanel;
+    Toolbar toolbar;
     @UiField
     SimplePanel listContainer;
 
@@ -83,19 +81,13 @@ public class PagerViewWithHeadingImpl extends ViewImpl implements PagerViewWithH
     }
 
     @Override
-    public ButtonView addButton(final Preset preset) {
-        return buttonPanel.addButton(preset);
+    public Toolbar getToolbar() {
+        return toolbar;
     }
 
     @Override
     public void addButton(final ButtonView buttonView) {
-        buttonPanel.addButton(buttonView);
-    }
-
-    @Override
-    public ToggleButtonView addToggleButton(final Preset primaryPreset,
-                                            final Preset secondaryPreset) {
-        return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
+        getToolbar().add(buttonView.asWidget());
     }
 
     @Override

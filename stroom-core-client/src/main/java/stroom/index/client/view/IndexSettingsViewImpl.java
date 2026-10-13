@@ -70,7 +70,8 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
         maxDocsPerShard.setValue(1000000000L);
         maxDocsPerShard.setMin(1000L);
-        maxDocsPerShard.setMax(10000000000L);
+        // The value is an int (Lucene can't hold more documents than that in one index)
+        maxDocsPerShard.setMax(Integer.MAX_VALUE);
 
         shardsPerPartition.setValue(1L);
         shardsPerPartition.setMin(1L);
@@ -153,13 +154,13 @@ public class IndexSettingsViewImpl extends ViewWithUiHandlers<IndexSettingsUiHan
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        maxDocsPerShard.setEnabled(!readOnly);
-        partitionBy.setEnabled(!readOnly);
-        partitionSize.setEnabled(!readOnly);
-        shardsPerPartition.setEnabled(!readOnly);
-        retentionAge.setEnabled(!readOnly);
-        volumeGroups.setEnabled(!readOnly);
-        timeField.setEnabled(!readOnly);
+        maxDocsPerShard.setReadOnly(readOnly);
+        partitionBy.setReadOnly(readOnly);
+        partitionSize.setReadOnly(readOnly);
+        shardsPerPartition.setReadOnly(readOnly);
+        retentionAge.setReadOnly(readOnly);
+        volumeGroups.setReadOnly(readOnly);
+        timeField.setReadOnly(readOnly);
     }
 
     @UiHandler("maxDocsPerShard")

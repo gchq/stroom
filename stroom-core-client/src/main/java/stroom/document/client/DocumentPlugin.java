@@ -44,6 +44,7 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.util.shared.NullSafe;
+import stroom.widget.util.client.PresenterScope;
 
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -175,7 +176,9 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             } else if (forceOpen) {
                 // If the item isn't already open but we are forcing it open then,
                 // create a new presenter and register it as open.
-                final MyPresenterWidget<?> documentEditPresenter = createEditor();
+                // The editor, and every presenter made for it now or as its tabs are shown, belong to
+                // a scope that releases them all when the document is closed
+                final MyPresenterWidget<?> documentEditPresenter = new PresenterScope().capture(this::createEditor);
                 presenter = documentEditPresenter;
 
                 if (presenter instanceof final HasMultipleInstances hasMultipleInstances) {
@@ -761,6 +764,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
                     removeTabData(tabData);
                     // Tell the callback to close the tab.
                     event.getCallback().closeTab(true);
+                    PresenterScope.disposeScopeOf(tabData);
                 }
             }
         }
@@ -777,6 +781,10 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             }
             // Tell the callback to close the tab if ok.
             callback.closeTab(ok);
+            if (ok) {
+                // Closed for good, so release the editor and all its presenters
+                PresenterScope.disposeScopeOf(presenter);
+            }
         }
     }
 }

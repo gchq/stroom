@@ -18,9 +18,8 @@ package stroom.explorer.client.view;
 
 import stroom.explorer.client.presenter.FindInContentPresenter.FindInContentView;
 import stroom.explorer.client.presenter.FindInContentUiHandlers;
-import stroom.svg.shared.SvgImage;
 import stroom.task.client.TaskMonitorFactory;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.spinner.client.SpinnerLarge;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -50,9 +49,9 @@ public class FindInContentViewImpl
     @UiField
     SimplePanel resultContainer;
     @UiField
-    InlineSvgToggleButton toggleMatchCase;
+    ToolbarToggleButton toggleMatchCase;
     @UiField
-    InlineSvgToggleButton toggleRegex;
+    ToolbarToggleButton toggleRegex;
     @UiField
     FlowPanel textContainer;
     @UiField
@@ -61,14 +60,6 @@ public class FindInContentViewImpl
     @Inject
     public FindInContentViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        toggleMatchCase.setSvg(SvgImage.CASE_SENSITIVE);
-        toggleMatchCase.setTitle("Match case");
-        toggleMatchCase.setEnabled(true);
-
-        toggleRegex.setSvg(SvgImage.REGEX);
-        toggleRegex.setTitle("Regex");
-        toggleRegex.setEnabled(true);
 
         spinner.setVisible(false);
     }

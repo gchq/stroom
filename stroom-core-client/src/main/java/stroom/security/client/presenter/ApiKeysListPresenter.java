@@ -32,7 +32,6 @@ import stroom.security.shared.AppPermission;
 import stroom.security.shared.FindApiKeyCriteria;
 import stroom.security.shared.HashedApiKey;
 import stroom.security.shared.UserFields;
-import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.DataGridUtil;
@@ -42,7 +41,7 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.Selection;
 import stroom.util.shared.TokenError;
 import stroom.util.shared.UserRef;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.dropdowntree.client.view.QuickFilterPageView;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.dropdowntree.client.view.QuickFilterUiHandlers;
@@ -84,9 +83,9 @@ public class ApiKeysListPresenter
 //    private final QuickFilterTimer timer = new QuickFilterTimer();
     private final MyDataGrid<HashedApiKey> dataGrid;
     private final UiConfigCache uiConfigCache;
-//    private final InlineSvgButton addButton;
-//    private final InlineSvgButton editButton;
-//    private final InlineSvgButton deleteButton;
+//    private final ToolbarButton addButton;
+//    private final ToolbarButton editButton;
+//    private final ToolbarButton deleteButton;
 
     private RestDataProvider<HashedApiKey, ResultPage<HashedApiKey>> dataProvider = null;
     private Map<Integer, HashedApiKey> apiKeys = new HashMap<>();
@@ -136,9 +135,9 @@ public class ApiKeysListPresenter
         listView.setQuickFilterContextHandler(quickFilterContextHandlerFactory.create(
                 FindApiKeyCriteria.QUICK_FILTER_CONTEXT, this, this));
 
-//        addButton = new InlineSvgButton();
-//        editButton = new InlineSvgButton();
-//        deleteButton = new InlineSvgButton();
+//        addButton = new ToolbarButton();
+//        editButton = new ToolbarButton();
+//        deleteButton = new ToolbarButton();
 //        initButtons();
 //        initTableColumns();
 //        selectionModel.addSelectionHandler(event -> {
@@ -557,8 +556,11 @@ public class ApiKeysListPresenter
         return isExternalIdp;
     }
 
-    public ButtonView addButton(final Preset preset) {
-        return pagerView.addButton(preset);
+    /// The toolbar beside the list's pager, for the screen's own buttons.
+    ///
+    /// @return The toolbar.
+    public Toolbar getToolbar() {
+        return pagerView.getToolbar();
     }
 
     @Override

@@ -76,6 +76,11 @@
     justify-content: space-between;
 }
 
+/* Holds the errors button, which sits in the row as if on its own */
+.QueryToolbarViewImpl-errors {
+    margin: 0;
+}
+
 .DashboardViewImpl-top-buttons {
     display: flex;
     gap: var(--control__gap--horizontal);
@@ -112,10 +117,6 @@
 	user-select: none;
 	-webkit-user-select: none;
 	-moz-user-select: none;
-}
-
-.QueryEditViewImpl.dashboard-scrollPanel {
-    background-color: var(--dashboard-panel__background-color);
 }
 
 .dashboard-scrollPanel {
@@ -351,8 +352,14 @@
     -webkit-transition: opacity 0.3s;
 }
 
-.tabLayout:hover .tabLayout-buttons {
+.tabLayout:hover .tabLayout-buttons,
+/* Keyboard users can tab to the buttons, so they show when the pane has focus */
+.tabLayout:focus-within .tabLayout-buttons {
 	opacity: 0.6;
+}
+
+.tabLayout-buttons:focus-within {
+	opacity: 1;
 }
 
 .tabLayout-buttons button {
@@ -524,7 +531,8 @@
 	z-index: 5;
 	width: 18px;
 	height: 18px;
-	visibility: hidden;
+	/* Not visibility: hidden, which left its icon showing but took the button itself out of the
+	   tab order and away from screen readers */
 }
 
 .DashboardViewImpl-content .dashboardVis-refresh {

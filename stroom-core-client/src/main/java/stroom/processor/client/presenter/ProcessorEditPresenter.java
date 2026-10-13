@@ -218,7 +218,7 @@ public class ProcessorEditPresenter
                         final String profile = getView().getProfile().getValue();
                         final boolean exportRead = getView().isExport();
 
-                        validateExpression(fields, expression, () -> {
+                        validateExpression(fields, expression, e, () -> {
                             try {
                                 final QueryData qd = queryData
                                         .copy()
@@ -276,8 +276,10 @@ public class ProcessorEditPresenter
         feedDependencyPresenter.show(feedDependencies, updated -> this.feedDependencies = updated);
     }
 
+    // Validates the expression, and if it isn't valid lets the user change it or cancel
     private void validateExpression(final List<QueryField> fields,
                                     final ExpressionOperator expression,
+                                    final HidePopupRequestEvent event,
                                     final Runnable onSuccess) {
 
         restFactory
@@ -290,11 +292,11 @@ public class ProcessorEditPresenter
                     if (result.isOk()) {
                         onSuccess.run();
                     } else {
-                        AlertEvent.fireError(ProcessorEditPresenter.this, result.getString(), null);
+                        AlertEvent.fireError(ProcessorEditPresenter.this, result.getString(), event::reset);
                     }
                 })
                 .onFailure(throwable ->
-                        AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), null))
+                        AlertEvent.fireError(ProcessorEditPresenter.this, throwable.getMessage(), event::reset))
                 .taskMonitorFactory(this)
                 .exec();
     }
@@ -462,6 +464,8 @@ public class ProcessorEditPresenter
                     .create(PROCESSOR_FILTER_RESOURCE)
                     .method(res -> res.create(request))
                     .onSuccess(r -> hide(r, event))
+                    // If it can't be created, let the user try again or cancel
+                    .onFailure(RestErrorHandler.forPopup(this, event))
                     .taskMonitorFactory(this)
                     .exec();
         }

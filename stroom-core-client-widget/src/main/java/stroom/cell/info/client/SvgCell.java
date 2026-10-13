@@ -69,7 +69,8 @@ public class SvgCell extends AbstractCell<Preset> {
                                   final Preset value,
                                   final NativeEvent event,
                                   final ValueUpdater<Preset> valueUpdater) {
-        if (isButton) {
+        // A disabled icon is drawn as disabled, so it mustn't act either
+        if (isButton && value != null && value.isEnabled()) {
             if (valueUpdater != null) {
                 valueUpdater.update(value);
             }

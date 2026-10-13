@@ -38,7 +38,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.OpenDocumentEvent;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.feed.shared.FeedDoc;
+import stroom.feed.client.FeedClient;
 import stroom.node.client.NodeClient;
 import stroom.node.shared.FindNodeStatusCriteria;
 import stroom.node.shared.Node;
@@ -49,7 +49,6 @@ import stroom.preferences.client.DateTimeFormatter;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.task.client.event.OpenProcessorTaskEvent;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.task.client.presenter.TaskInfoParser.TaskInfoKey;
 import stroom.task.shared.FindTaskCriteria;
@@ -69,14 +68,13 @@ import stroom.util.shared.ResultPage;
 import stroom.util.shared.UserRef;
 import stroom.util.shared.UserRef.DisplayType;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
 import stroom.widget.util.client.HtmlBuilder.Attribute;
-import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.TableBuilder;
 import stroom.widget.util.client.TableCell;
 
@@ -84,7 +82,7 @@ import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Timer;
@@ -120,6 +118,7 @@ public class TaskManagerListPresenter
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
     private final NodeClient nodeClient;
+    private final FeedClient feedClient;
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
     private final Map<String, List<String>> errorMap = new HashMap<>();
@@ -130,8 +129,8 @@ public class TaskManagerListPresenter
     private final ButtonView expandAllButton;
     private final ButtonView collapseAllButton;
     private final ButtonView warningsButton;
-    private final InlineSvgToggleButton autoRefreshButton;
-    private final InlineSvgToggleButton wrapToggleButton;
+    private final ToolbarToggleButton autoRefreshButton;
+    private final ToolbarToggleButton wrapToggleButton;
 
     private String currentWarnings;
     private Column<TaskProgress, Expander> expanderColumn;
@@ -150,12 +149,14 @@ public class TaskManagerListPresenter
                                     final TooltipPresenter tooltipPresenter,
                                     final RestFactory restFactory,
                                     final NodeClient nodeClient,
+                                    final FeedClient feedClient,
                                     final DateTimeFormatter dateTimeFormatter,
                                     final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
         this.nodeClient = nodeClient;
+        this.feedClient = feedClient;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, true, false);
         this.dateTimeFormatter = dateTimeFormatter;
         this.securityContext = securityContext;
@@ -164,25 +165,23 @@ public class TaskManagerListPresenter
         dataGrid.setTableName("Server Tasks");
         view.setDataWidget(dataGrid);
 
-        autoRefreshButton = new InlineSvgToggleButton();
-        autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
-        autoRefreshButton.setTitle("Turn Auto Refresh Off");
+        getView().getToolbar().setName("Task actions");
+        autoRefreshButton = getView().getToolbar().toggle(SvgImage.AUTO_REFRESH, "Turn Auto Refresh Off",
+                pressed -> onAutoRefreshToggled());
         autoRefreshButton.setState(autoRefresh);
-        getView().addButton(autoRefreshButton);
 
-        final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE.with("Terminate Task", true));
-        terminateButton.addClickHandler(event -> endSelectedTask());
+        final ButtonView terminateButton = getView().getToolbar().button(SvgImage.DELETE, "Terminate Task",
+                this::endSelectedTask);
 
-        expandAllButton = getView().addButton(SvgPresets.EXPAND_ALL.enabled(false));
-        collapseAllButton = getView().addButton(SvgPresets.COLLAPSE_ALL.enabled(false));
+        expandAllButton = getView().getToolbar().button(SvgImage.EXPAND_ALL, "Expand All", this::onExpandAll);
+        expandAllButton.setEnabled(false);
+        collapseAllButton = getView().getToolbar().button(SvgImage.COLLAPSE_ALL, "Collapse All", this::onCollapseAll);
+        collapseAllButton.setEnabled(false);
 
-        wrapToggleButton = new InlineSvgToggleButton();
-        wrapToggleButton.setSvg(SvgImage.TEXT_WRAP);
-        wrapToggleButton.setTitle("Toggle wrapping of Info column");
-        wrapToggleButton.setOff();
-        getView().addButton(wrapToggleButton);
+        wrapToggleButton = getView().getToolbar().toggle(SvgImage.TEXT_WRAP, "Toggle wrapping of Info column",
+                this::onWrapToggled);
 
-        warningsButton = getView().addButton(SvgPresets.ALERT.title("Show Warnings"));
+        warningsButton = getView().getToolbar().button(SvgImage.ALERT, "Show Warnings", this::showWarnings);
         warningsButton.setVisible(false);
 
         updateButtonStates();
@@ -208,51 +207,42 @@ public class TaskManagerListPresenter
         dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(treeAction, dataGrid, expanderColumn));
     }
 
+    private void onAutoRefreshToggled() {
+        autoRefresh = !autoRefresh;
+        if (autoRefresh) {
+            autoRefreshButton.setTitle("Turn Auto Refresh Off");
+            internalRefresh();
+        } else {
+            autoRefreshButton.setTitle("Turn Auto Refresh On");
+        }
+    }
+
+    private void onWrapToggled(final boolean wrap) {
+        if (wrap) {
+            wrapToggleButton.setTitle("Turn Cell Line Wrapping Off");
+        } else {
+            wrapToggleButton.setTitle("Turn Cell Line Wrapping On");
+        }
+        dataGrid.setMultiLine(wrap);
+    }
+
+    private void onExpandAll() {
+        treeAction.expandAll();
+        dataProvider.refresh();
+        updateButtonStates();
+    }
+
+    private void onCollapseAll() {
+        treeAction.collapseAll();
+        dataProvider.refresh();
+        updateButtonStates();
+    }
+
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(expandAllButton.addClickHandler(event -> {
-            treeAction.expandAll();
-            dataProvider.refresh();
-            updateButtonStates();
-        }));
 
-        registerHandler(collapseAllButton.addClickHandler(event -> {
-            treeAction.collapseAll();
-            dataProvider.refresh();
-            updateButtonStates();
-        }));
 
-        registerHandler(warningsButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                showWarnings();
-            }
-        }));
-
-        registerHandler(autoRefreshButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                autoRefresh = !autoRefresh;
-                if (autoRefresh) {
-                    autoRefreshButton.setTitle("Turn Auto Refresh Off");
-                    internalRefresh();
-                } else {
-                    autoRefreshButton.setTitle("Turn Auto Refresh On");
-                }
-            }
-        }));
-
-        registerHandler(wrapToggleButton.addClickHandler(event -> {
-            if (MouseUtil.isPrimary(event)) {
-                if (wrapToggleButton.isOff()) {
-                    wrapToggleButton.setTitle("Turn Cell Line Wrapping On");
-                    dataGrid.setMultiLine(false);
-                } else {
-                    wrapToggleButton.setTitle("Turn Cell Line Wrapping Off");
-                    dataGrid.setMultiLine(true);
-                }
-//                internalRefresh();
-            }
-        }));
 
         registerHandler(dataGrid.addColumnSortHandler(event -> {
             // As we get data async from all nodes we can't be sure when we have finished so
@@ -320,9 +310,11 @@ public class TaskManagerListPresenter
 
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
             @Override
-            protected void showInfo(final TaskProgress row, final PopupPosition popupPosition) {
+            protected void showInfo(final TaskProgress row,
+                                    final PopupPosition popupPosition,
+                                    final Element anchor) {
                 final SafeHtml tooltipHtml = buildTooltipHtml(row);
-                tooltipPresenter.show(tooltipHtml, popupPosition);
+                tooltipPresenter.show(tooltipHtml, popupPosition, anchor);
             }
         };
         dataGrid.addColumn(furtherInfoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
@@ -470,13 +462,14 @@ public class TaskManagerListPresenter
 
             final String feedName = parser.getString(TaskInfoKey.FEED_NAME);
             if (feedName != null) {
-                final DocRef docRef = new DocRef(FeedDoc.TYPE, null, feedName);
+                // The task info only holds the feed's name, so look up its doc ref (a DocRef must
+                // have a UUID) when the item is chosen
                 menuItems.add(new IconMenuItem.Builder()
                         .priority(priority++)
                         .icon(SvgImage.OPEN)
                         .text("Open Feed")
                         .enabled(true)
-                        .command(() -> OpenDocumentEvent.fire(this, docRef, true))
+                        .command(() -> openFeed(feedName))
                         .build());
             }
 
@@ -674,6 +667,16 @@ public class TaskManagerListPresenter
     @Override
     public HandlerRegistration addDataSelectionHandler(final DataSelectionHandler<Set<String>> handler) {
         return addHandlerToSource(DataSelectionEvent.getType(), handler);
+    }
+
+    private void openFeed(final String feedName) {
+        feedClient.getDocRefForName(feedName, docRef -> {
+            if (docRef != null) {
+                OpenDocumentEvent.fire(this, docRef, true);
+            } else {
+                AlertEvent.fireError(this, "Unable to find feed '" + feedName + "'", null);
+            }
+        }, getView());
     }
 
 

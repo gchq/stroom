@@ -27,12 +27,11 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasDocumentWrite;
 import stroom.explorer.client.presenter.DocSelectionPopup;
 import stroom.security.shared.DocumentPermission;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -66,8 +65,10 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
 
         view.setView(docRefListPresenter.getView());
 
-        addButton = docRefListPresenter.getView().addButton(SvgPresets.ADD);
-        removeButton = docRefListPresenter.getView().addButton(SvgPresets.DELETE);
+        docRefListPresenter.getView().getToolbar().setName("Dictionary actions");
+        addButton = docRefListPresenter.getView().getToolbar().button(SvgImage.ADD, "Add", this::onAdd);
+        removeButton = docRefListPresenter.getView().getToolbar().button(SvgImage.DELETE, "Delete", this::onRemove);
+        removeButton.setEnabled(false);
         docRefListPresenter.initTableColumns("Document Name", true);
 
         enableButtons();
@@ -76,13 +77,10 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
     @Override
     protected void onBind() {
         super.onBind();
-
-        registerHandler(addButton.addClickHandler(this::onAdd));
-        registerHandler(removeButton.addClickHandler(this::onRemove));
         registerHandler(docRefListPresenter.getSelectionModel().addSelectionHandler(event -> enableButtons()));
     }
 
-    private void onAdd(final ClickEvent event) {
+    private void onAdd() {
         final DocSelectionPopup chooser = dictionarySelection.get();
         chooser.setCaption("Import a dictionary");
         chooser.setIncludedTypes(DictionaryDoc.TYPE);
@@ -96,7 +94,7 @@ public class DictionaryListPresenter extends MyPresenterWidget<WrapperView>
         });
     }
 
-    public void onRemove(final ClickEvent event) {
+    public void onRemove() {
         final MultiSelectionModel<DocRef> selectionModel = docRefListPresenter.getSelectionModel();
         final List<DocRef> selected = selectionModel.getSelectedItems();
         if (NullSafe.hasItems(selected)) {

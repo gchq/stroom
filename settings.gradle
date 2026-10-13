@@ -63,7 +63,11 @@ include 'stroom-aws:stroom-aws-s3-impl'
 // App.
 include 'stroom-app'
 include 'stroom-app-gwt'
-include 'stroom-gwt'
+
+// GWT
+include 'stroom-gwt:stroom-gwt-compiler'
+include 'stroom-gwt:stroom-gwt-workbench'
+include 'stroom-gwt:stroom-gwt-workbench-framework'
 
 // Bytebuffer
 include 'stroom-bytebuffer'

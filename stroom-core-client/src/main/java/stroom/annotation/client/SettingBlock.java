@@ -64,6 +64,14 @@ public class SettingBlock extends Composite implements HasWidgets, HasClickHandl
         }
     }
 
+    /// Makes the setting read only: its value is greyed and its chooser doesn't open (the presenter
+    /// refuses the change too), and its ellipsis hint is hidden.
+    ///
+    /// @param readOnly Whether the setting is read only.
+    public void setReadOnly(final boolean readOnly) {
+        formGroupPanel.setStyleName("setting-block--readonly", readOnly);
+    }
+
     @Override
     public void add(final Widget widget) {
         // Not a HelpHTML so must be the childWidget

@@ -31,7 +31,6 @@ import stroom.query.api.ExpressionTerm.Condition;
 import stroom.quickfilter.client.QuickFilterContextHandlerFactory;
 import stroom.security.shared.DocumentPermission;
 import stroom.security.shared.DocumentPermissionFields;
-import stroom.svg.client.Preset;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.ResultPage;
@@ -43,7 +42,6 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 import stroom.widget.popup.client.presenter.Size;
-import stroom.widget.util.client.MouseUtil;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -92,18 +90,21 @@ public class BatchDocumentPermissionsPresenter
         filterExpression = ExpressionOperator.builder().op(Op.AND).build();
 
         // Filter
-        docFilter = documentListPresenter.getView().addButton(new Preset(
+        documentListPresenter.getView().getToolbar().setName("Document permission actions");
+        docFilter = documentListPresenter.getView().getToolbar().button(
                 SvgImage.FILTER,
                 "Filter Documents To Apply Permissions Changes On",
-                true));
-        docEdit = documentListPresenter.getView().addButton(new Preset(
+                this::onFilter);
+        docEdit = documentListPresenter.getView().getToolbar().button(
                 SvgImage.EDIT,
                 "Edit Permissions For Selected Document",
-                false));
-        batchEdit = documentListPresenter.getView().addButton(new Preset(
+                this::onEdit);
+        docEdit.setEnabled(false);
+        batchEdit = documentListPresenter.getView().getToolbar().button(
                 SvgImage.GENERATE,
                 "Batch Edit Permissions For Filtered Documents",
-                false));
+                this::onBatchEdit);
+        batchEdit.setEnabled(false);
 
         documentListPresenter.setFindResultListHandler(new FindDocResultListHandler<FindResult>() {
             @Override
@@ -128,27 +129,12 @@ public class BatchDocumentPermissionsPresenter
     protected void onBind() {
         super.onBind();
 
-        registerHandler(docFilter.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onFilter();
-            }
-        }));
 //        registerHandler(documentListPresenter.getSelectionModel().addSelectionHandler(e -> {
 //            docEdit.setEnabled(documentListPresenter.getSelected() != null);
 //            if (e.getSelectionType().isDoubleSelect()) {
 //                onEdit();
 //            }
 //        }));
-        registerHandler(docEdit.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onEdit();
-            }
-        }));
-        registerHandler(batchEdit.addClickHandler(e -> {
-            if (MouseUtil.isPrimary(e)) {
-                onBatchEdit();
-            }
-        }));
     }
 
     private void onFilter() {
