@@ -17,21 +17,18 @@
 package stroom.security.identity.client.view;
 
 import stroom.security.identity.client.presenter.CurrentPasswordPresenter.CurrentPasswordView;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.PasswordBox;
 import stroom.widget.popup.client.view.DialogAction;
 import stroom.widget.popup.client.view.HideRequest;
 import stroom.widget.popup.client.view.HideRequestUiHandlers;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
@@ -40,9 +37,7 @@ public class CurrentPasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHan
 
     private final Widget widget;
     @UiField
-    PasswordTextBox password;
-    @UiField
-    ToolbarButton showPassword;
+    PasswordBox password;
     @UiField
     Label passwordFeedback;
 
@@ -50,11 +45,7 @@ public class CurrentPasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHan
     public CurrentPasswordViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
 
-        showPassword.setSvg(SvgImage.EYE);
-        showPassword.setTitle("Show Password");
-        showPassword.setEnabled(true);
-
-        password.getElement().setAttribute("placeholder", "Enter Your Current Password");
+        password.setPlaceholder("Enter Your Current Password");
     }
 
     @Override
@@ -77,14 +68,14 @@ public class CurrentPasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHan
         boolean valid = true;
 
         if (password.getValue().length() == 0) {
-            FieldValidity.setInvalid(password, passwordFeedback, "Password is required");
+            FieldValidity.setInvalid(password.getInput(), passwordFeedback, "Password is required");
             valid = false;
         } else {
-            FieldValidity.setValid(password, passwordFeedback);
+            FieldValidity.setValid(password.getInput(), passwordFeedback);
         }
 
         if (!valid) {
-            FieldValidity.focusFirstInvalid(password);
+            FieldValidity.focusFirstInvalid(password.getInput());
         }
 
         return valid;
@@ -102,20 +93,6 @@ public class CurrentPasswordViewImpl extends ViewWithUiHandlers<HideRequestUiHan
         } else if (e.getNativeKeyCode() == KeyCodes.KEY_ESCAPE) {
             getUiHandlers().hideRequest(new HideRequest(DialogAction.CANCEL, () -> {
             }));
-        }
-    }
-
-    @UiHandler("showPassword")
-    public void onShowPassword(final ClickEvent e) {
-        final String type = password.getElement().getAttribute("type");
-        if (type == null || "password".equals(type)) {
-            password.getElement().setAttribute("type", "text");
-            showPassword.setSvg(SvgImage.EYE_OFF);
-            showPassword.setTitle("Hide Password");
-        } else {
-            password.getElement().setAttribute("type", "password");
-            showPassword.setSvg(SvgImage.EYE);
-            showPassword.setTitle("Show Password");
         }
     }
 

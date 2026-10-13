@@ -21,27 +21,17 @@ import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
+import stroom.widget.form.client.PasswordBox;
 
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.Widget;
 
-/// Stories for the password field of Stroom's password views.
-///
-/// Stroom has no password input widget: it is the markup that Stroom's password views
-/// (`ChangePasswordViewImpl`, `LoginViewImpl`) build in their UiBinder templates, a
-/// [PasswordTextBox] with an overlay holding an optional length badge and an [ToolbarButton] that
-/// shows or hides the password. These stories build the same widgets in the same way, with the
-/// views' show/hide and badge code.
+/// Stories for Stroom's [PasswordBox], the password field of its password views (e.g.
+/// `LoginViewImpl`, `ChangePasswordViewImpl`): a box whose value is hidden, with a button over its
+/// end that shows and hides it.
 public final class PasswordInputStories {
 
     private static final String MAX_WIDTH = "360px";
-    private static final String SHOW_PASSWORD = "Show Password";
-    private static final String HIDE_PASSWORD = "Hide Password";
     private static final int MAX_BADGE_LENGTH = 9;
 
     private PasswordInputStories() {
@@ -54,27 +44,37 @@ public final class PasswordInputStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Inputs/PasswordInput", PasswordInputStories.class)
                 .layout(StoryLayout.CENTERED)
-                // Show/hide toggle - click the eye button to reveal the value
-                .story("Basic", context -> {
-                    // Stroom's views don't set autocomplete
-                    final PasswordTextBox password = passwordTextBox(context, "supersecret");
-                    return InputWidgets.maxWidth(passwordInput(password, null), MAX_WIDTH);
+                // The button shows the password, and is then named for hiding it; a screen reader is
+                // told each time
+                .story("Basic", context -> InputWidgets.maxWidth(passwordBox(context, "supersecret"), MAX_WIDTH))
+                .withPlay(play -> {
+                    final Query input = play.querySelector(".password-box__input");
+                    play.expect(input).toHaveAttribute("type", "password");
+                    play.click(play.getByRole("button", "Show password"));
+                    play.expect(input).toHaveAttribute("type", "text");
+                    play.expect(play.getByRole("button", "Hide password")).toBeInTheDocument();
+                    play.expect(play.querySelector(".password-box__status")).toHaveTextContent(
+                            "Your password is shown");
+                    play.click(play.getByRole("button", "Hide password"));
+                    play.expect(input).toHaveAttribute("type", "password");
+                    play.expect(play.querySelector(".password-box__status")).toHaveTextContent(
+                            "Your password is hidden");
                 })
-                // Invalid state - sets aria-invalid and the invalid class
+                // Invalid state - sets aria-invalid and the invalid class on the input
                 .story("Invalid", context -> {
-                    final PasswordTextBox password = passwordTextBox(context, "123");
+                    final PasswordBox password = passwordBox(context, "123");
                     // As Stroom's views (e.g. ChangePasswordViewImpl) mark an invalid password
-                    FieldValidity.setInvalid(password.getElement(), true);
-                    return InputWidgets.maxWidth(passwordInput(password, null), MAX_WIDTH);
+                    FieldValidity.setInvalid(password.getInput().getElement(), true);
+                    return InputWidgets.maxWidth(password, MAX_WIDTH);
                 })
                 .withPlay(play -> {
                     final Query password = play.querySelector("input[type='password']");
                     play.expect(password).toHaveAttribute("aria-invalid", "true");
                     play.expect(password).toHaveClass("invalid");
                 })
-                // With an overlay prefix badge (e.g. the GWT password-length badge)
+                // With a badge beside the button (the change password screen's length badge)
                 .story("WithOverlayPrefix", context -> {
-                    final PasswordTextBox password = passwordTextBox(context, "hunter2");
+                    final PasswordBox password = passwordBox(context, "hunter2");
                     // ChangePasswordViewImpl's length badge, a Bootstrap pill
                     // ("badge badge-pill badge-danger") showing up to "9+" and hidden when empty.
                     // The badge's colour depends on the password policy in Stroom, which isn't
@@ -83,59 +83,19 @@ public final class PasswordInputStories {
                     badge.setStyleName("badge badge-pill badge-danger");
                     updateBadge(badge, password.getValue());
                     password.addValueChangeHandler(event -> updateBadge(badge, password.getValue()));
-                    return InputWidgets.maxWidth(passwordInput(password, badge), MAX_WIDTH);
+                    password.setBadge(badge);
+                    return InputWidgets.maxWidth(password, MAX_WIDTH);
                 });
     }
 
-    private static PasswordTextBox passwordTextBox(final StoryContext context, final String value) {
-        final PasswordTextBox password = new PasswordTextBox();
+    private static PasswordBox passwordBox(final StoryContext context, final String value) {
+        final PasswordBox password = new PasswordBox();
         password.setValue(value);
         // As ChangePasswordViewImpl sets it ("Enter Password" there)
-        password.getElement().setAttribute("placeholder", "Enter password…");
+        password.setPlaceholder("Enter password…");
         final Spy onChange = context.fn(InputWidgets.ON_CHANGE);
         password.addValueChangeHandler(event -> onChange.call(event.getValue()));
         return password;
-    }
-
-    /// Builds `ChangePasswordViewImpl.ui.xml`'s password markup around the text box.
-    ///
-    /// @param badge The length badge, or null for none.
-    private static Widget passwordInput(final PasswordTextBox password, final Widget badge) {
-        final ToolbarButton showPassword = new ToolbarButton();
-        showPassword.addStyleName("showPassword");
-        showPassword.setSvg(SvgImage.EYE);
-        showPassword.setTitle(SHOW_PASSWORD);
-        showPassword.setEnabled(true);
-        // As in Stroom's views, the toggle has no aria-label or aria-pressed; its accessible name
-        // is its title.
-        showPassword.addClickHandler(event -> toggleShowPassword(password, showPassword));
-
-        final FlowPanel overlay = new FlowPanel();
-        overlay.addStyleName("passwordTextBoxOverlay");
-        if (badge != null) {
-            overlay.add(badge);
-        }
-        overlay.add(showPassword);
-
-        final FlowPanel outer = new FlowPanel();
-        outer.addStyleName("passwordTextBoxOuter");
-        outer.add(password);
-        outer.add(overlay);
-        return outer;
-    }
-
-    /// `ChangePasswordViewImpl.onShowPassword`.
-    private static void toggleShowPassword(final PasswordTextBox password, final ToolbarButton showPassword) {
-        final String type = password.getElement().getAttribute("type");
-        if (type == null || "password".equals(type)) {
-            password.getElement().setAttribute("type", "text");
-            showPassword.setSvg(SvgImage.EYE_OFF);
-            showPassword.setTitle(HIDE_PASSWORD);
-        } else {
-            password.getElement().setAttribute("type", "password");
-            showPassword.setSvg(SvgImage.EYE);
-            showPassword.setTitle(SHOW_PASSWORD);
-        }
     }
 
     /// The length badge part of `ChangePasswordViewImpl.onPassword`.

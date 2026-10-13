@@ -617,6 +617,16 @@ one beside each select box, with names ("Previous year", "Next month" and so on)
 They were out of the tab order; each toolbar is now one tab stop, with the arrow keys between its two
 buttons, so the calendar can be stepped a month or a year at a time from the keyboard. It looks as it
 did.
+Password fields are a `PasswordBox` (`stroom.widget.form.client`, styled by `password-box.css`): a
+box with a show/hide button over its end, in a toolbar, as every password field in the app now is
+(login, change and current password, the three credential secrets, and the global property's and
+Elastic cluster's secret values, which had no show/hide). Six views each had their own copy of the
+overlay and its click handler; they are gone, with the overlay rules in `Login.css` and
+`ChangePassword.css`. The button is named for what pressing it does ("Show password", then "Hide
+password", which its tooltip shows too), and a polite live region in the box tells a screen reader
+"Your password is shown" or "hidden", as the focus stays on the button. Validation marks the input
+itself (`getInput()`), and the change password screen's length badge sits beside the button
+(`setBadge`).
 
 ### Opening a screen leaves the focus behind (#5405)
 

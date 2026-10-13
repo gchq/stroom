@@ -60,6 +60,7 @@ import stroom.widget.dropdowntree.client.view.DropDownViewImpl;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.AccessibleName;
 import stroom.widget.form.client.FormGroup;
+import stroom.widget.form.client.PasswordBox;
 import stroom.widget.linecolinput.client.LineColInput;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
@@ -71,7 +72,6 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
@@ -150,8 +150,8 @@ public final class ViewStateStories {
         final List<Row> rows = List.of(
                 new Row("Text box", () -> textBox("My Feed"), w -> ((TextBox) w).setReadOnly(true),
                         w -> ((TextBox) w).setEnabled(false)),
-                new Row("Password", ViewStateStories::password, w -> ((PasswordTextBox) w).setReadOnly(true),
-                        w -> ((PasswordTextBox) w).setEnabled(false)),
+                new Row("Password", ViewStateStories::password, w -> ((PasswordBox) w).setReadOnly(true),
+                        w -> ((PasswordBox) w).setEnabled(false)),
                 new Row("Text area", ViewStateStories::textArea, w -> ((TextArea) w).setReadOnly(true),
                         w -> ((TextArea) w).setEnabled(false)),
                 new Row("Number spinner", ViewStateStories::spinner, w -> ((ValueSpinner) w).setReadOnly(true),
@@ -438,7 +438,7 @@ public final class ViewStateStories {
     }
 
     private static Widget password() {
-        final PasswordTextBox password = new PasswordTextBox();
+        final PasswordBox password = new PasswordBox();
         password.setValue("secret");
         return password;
     }
