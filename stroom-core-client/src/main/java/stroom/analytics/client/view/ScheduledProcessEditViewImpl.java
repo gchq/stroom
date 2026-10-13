@@ -151,7 +151,9 @@ public class ScheduledProcessEditViewImpl
         this.node.clear();
         this.node.addItems(nodes);
         if (selectedNode == null) {
+            //noinspection SizeReplaceableByIsEmpty
             if (nodes.size() > 0) {
+                //noinspection SequencedCollectionMethodCanBeUsed
                 this.node.setValue(nodes.get(0));
             }
         } else {

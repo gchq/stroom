@@ -55,6 +55,21 @@ class TestBootStrapModule {
         // ensure we can inject all the datasources
         final Set<DataSource> dataSources = injector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
 
+        // Resolving this set is what BootstrapUtil does to force every connection provider to be
+        // created, which is what runs each module's Flyway migration while
+        // DbMigrationState.haveBootstrapMigrationsBeenDone() is still false. A *DbModule that is
+        // not reachable from BootStrapModule therefore never migrates: by the time anything asks
+        // for its datasource the flag is set and FlywayUtil.migrate returns without consulting
+        // Flyway. SqlStoreDbModule was installed in CoreModule instead of DbConnectionsModule and
+        // so was missing here, which meant updatable_temporal_store was never created on a normal
+        // startup - it only existed by accident of timing, and once dropped nothing recreated it.
+        Assertions.assertThat(dataSources)
+                .as("every DataSource must be reachable from BootStrapModule, or its Flyway "
+                    + "migration never runs")
+                .extracting(ds -> ds.getClass().getName())
+                .anyMatch(name -> name.endsWith("SqlStoreDbConnProvider"))
+                .anyMatch(name -> name.startsWith("stroom.document.asset.impl.db."));
+
         final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
 
         final AppConfig appConfig = configMapper.getConfigObject(AppConfig.class);

@@ -93,8 +93,20 @@ public class ResizableCreateOkCancelContent extends Composite implements DialogB
 
     @Override
     public void setEnabled(final boolean enabled) {
+        create.setEnabled(enabled);
         ok.setEnabled(enabled);
         cancel.setEnabled(enabled);
+    }
+
+    @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (DialogAction.CREATE.equals(action)) {
+            create.setEnabled(enabled);
+        } else if (DialogAction.OK.equals(action)) {
+            ok.setEnabled(enabled);
+        } else if (DialogAction.CANCEL.equals(action)) {
+            cancel.setEnabled(enabled);
+        }
     }
 
 

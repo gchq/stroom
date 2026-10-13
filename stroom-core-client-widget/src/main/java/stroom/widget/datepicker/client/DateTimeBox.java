@@ -95,6 +95,9 @@ public class DateTimeBox
     }
 
     private void showPopup() {
+        if (!isEnabled()) {
+            return;
+        }
         final DateTimePopup popup = getPopup();
         if (popup != null) {
             final UTCDate date = UTCDate.create(textBox.getValue());
@@ -126,6 +129,7 @@ public class DateTimeBox
 
     public void setEnabled(final boolean enabled) {
         textBox.setEnabled(enabled);
+        svgIconBox.setReadonly(!enabled);
         updateInvalidState();
     }
 

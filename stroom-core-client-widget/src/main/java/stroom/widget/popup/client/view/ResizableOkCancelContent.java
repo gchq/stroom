@@ -89,6 +89,15 @@ public class ResizableOkCancelContent extends Composite implements DialogButtons
         cancel.setEnabled(enabled);
     }
 
+    @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (DialogAction.OK.equals(action)) {
+            ok.setEnabled(enabled);
+        } else if (DialogAction.CANCEL.equals(action)) {
+            cancel.setEnabled(enabled);
+        }
+    }
+
 
     public interface Binder extends UiBinder<Widget, ResizableOkCancelContent> {
 

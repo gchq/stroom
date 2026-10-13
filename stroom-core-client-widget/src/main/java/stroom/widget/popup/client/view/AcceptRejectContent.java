@@ -93,4 +93,13 @@ public class AcceptRejectContent extends Composite implements DialogButtons {
         accept.setEnabled(enabled);
         reject.setEnabled(enabled);
     }
+
+    @Override
+    public void setEnabled(final DialogAction action, final boolean enabled) {
+        if (DialogAction.OK.equals(action)) {
+            accept.setEnabled(enabled);
+        } else if (DialogAction.CANCEL.equals(action)) {
+            reject.setEnabled(enabled);
+        }
+    }
 }

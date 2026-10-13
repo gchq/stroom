@@ -46,6 +46,8 @@ public interface RestFactory {
         MethodExecutor<T, R> onSuccess(Consumer<R> resultConsumer);
 
         MethodExecutor<T, R> onFailure(RestErrorHandler errorHandler);
+
+        void exec();
     }
 
     interface TaskExecutor<T extends DirectRestService, R> {

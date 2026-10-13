@@ -55,6 +55,13 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+// STROOMWORKS-LOCAL: KEEP LOCAL ON MERGE FROM master
+// Local addition: getInitialisationHandler(), which lets a document type collect required
+// configuration before its editor opens, plus the postSaveCallback save() overload. FloorMap
+// needs both - the handler prompts for the Facts and Events store refs, and the callback
+// flushes pending temporal-store changes and saves assets after the document is persisted.
+// Upstream has neither. Taking upstream's version wholesale means a FloorMapDoc opens with no
+// stores selected, and FloorMapPlugin's save throws (it deliberately fails the legacy save).
 public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
 
     private final DocumentTabManager documentTabManager = new DocumentTabManager();
@@ -152,6 +159,7 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
             // If we already have a tab item for this document then make sure it is
             // visible.
             if (!existing.isEmpty() && !duplicate) {
+                @SuppressWarnings("SequencedCollectionMethodCanBeUsed") // Not in GWT
                 final DocumentTabData existingTab = existing.get(0);
                 // Tell the content presenter to select this existing tab.
                 SelectContentTabEvent.fire(this, existingTab);
@@ -322,7 +330,6 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     /**
      * 5. This method will save a document.
      */
-    @SuppressWarnings("unchecked")
     public void save(final DocumentTabData tabData) {
         save(tabData, () -> {
         });
@@ -714,6 +721,21 @@ public abstract class DocumentPlugin<D> extends TabPlugin implements HasSave {
     protected abstract DocRef getDocRef(D document);
 
     public abstract String getType();
+
+    /**
+     * Returns the initialisation handler for this document type.
+     *
+     * <p>The default implementation returns a no-op handler that immediately
+     * signals completion, meaning the document editor opens without any
+     * additional user interaction. Override this method to provide a custom
+     * dialog that collects required configuration before the editor opens.</p>
+     *
+     * @return a non-null {@link DocInitialisationHandler}; the default is a
+     *         no-op that calls {@code onComplete.accept(true)} immediately
+     */
+    public DocInitialisationHandler getInitialisationHandler() {
+        return (docRef, onComplete, tmf) -> onComplete.accept(true);
+    }
 
     public void create(final String documentName,
                        final Consumer<D> resultConsumer,

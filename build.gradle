@@ -427,6 +427,7 @@ subprojects {
                 jvmArgsCopy.add("java.base/java.nio=ALL-UNNAMED")
                 jvmArgsCopy.add("--add-opens")
                 jvmArgsCopy.add("java.base/sun.nio.ch=ALL-UNNAMED")
+                jvmArgsCopy.add("--enable-native-access=ALL-UNNAMED")
                 jvmArgs = jvmArgsCopy
 
 //                jvmArgs = [
