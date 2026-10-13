@@ -25,13 +25,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
 public final class TemporalValue extends KV<TemporalKey, Long> implements PlanBValue {
 
     @JsonCreator
     public TemporalValue(@JsonProperty("key") final TemporalKey key,
-                         @JsonProperty("value") final long value) {
-        super(key, value);
+                         @JsonProperty("value") final Long value) {
+        super(key, Objects.requireNonNullElse(value, 0L));
     }
 }

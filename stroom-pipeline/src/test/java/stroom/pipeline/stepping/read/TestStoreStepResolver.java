@@ -64,8 +64,15 @@ class TestStoreStepResolver {
     private StepDataStore singlePart(final Path tempDir, final int records) {
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
         for (int r = 0; r < records; r++) {
-            store.putElementData(new StepLocation(META, 0, r), new ElementId(E1), "fp1", ed("e1r" + r, true));
-            store.putElementData(new StepLocation(META, 0, r), new ElementId(E2), "fp2", ed("e2r" + r, r % 2 == 0));
+            store.putElementData(
+                    new StepLocation((long) META, 0L, (long) r),
+                    new ElementId(E1),
+                    "fp1",
+                    ed("e1r" + r, true));
+            store.putElementData(
+                    new StepLocation((long) META, 0L, (long) r),
+                    new ElementId(E2), "fp2",
+                    ed("e2r" + r, r % 2 == 0));
         }
         return store;
     }
@@ -74,7 +81,7 @@ class TestStoreStepResolver {
         final StepDataStore store = new StepDataStore(tempDir.resolve(String.valueOf(META)), new SteppingConfig());
         for (long part = 0; part <= 1; part++) {
             for (int r = 0; r < 2; r++) {
-                store.putElementData(new StepLocation(META, part, r), new ElementId(E1), "fp1",
+                store.putElementData(new StepLocation((long) META, (long) part, (long) r), new ElementId(E1), "fp1",
                         ed("p" + part + "r" + r, true));
             }
         }
@@ -92,7 +99,7 @@ class TestStoreStepResolver {
     }
 
     private StepLocation loc(final long part, final long record) {
-        return new StepLocation(META, part, record);
+        return new StepLocation((long) META, (long) part, (long) record);
     }
 
     private StoreStepResolver.CapturedRange range(final long first, final long last) {
@@ -154,7 +161,7 @@ class TestStoreStepResolver {
                     .withRecordIndex((long) r)
                     .withHighlight(new TextRange(new DefaultLocation(10 + r, 1), new DefaultLocation(10 + r, 40)))
                     .build();
-            store.putRecord(new StepLocation(META, 0, r),
+            store.putRecord(new StepLocation((long) META, 0L, (long) r),
                     List.of(new StepDataStore.ElementRecord(new ElementId(E1), "fp1", ed("e1r" + r, true))),
                     sl);
         }
@@ -204,7 +211,7 @@ class TestStoreStepResolver {
         assertThat(resolver.resolve(store, META, fingerprints, filtered, window))
                 .map(ResolvedStep::foundLocation)
                 .as("the held match below the served range is found, not skipped")
-                .contains(new StepLocation(META, 0, 0));
+                .contains(new StepLocation((long) META, 0L, 0L));
     }
 
     @Test
@@ -312,12 +319,16 @@ class TestStoreStepResolver {
         return new StoreStepResolver.CapturedRange() {
             @Override
             public long first(final long partIndex) {
-                return partIndex == coveredPart ? first : StoreStepResolver.CapturedRange.NONE;
+                return partIndex == coveredPart
+                        ? first
+                        : StoreStepResolver.CapturedRange.NONE;
             }
 
             @Override
             public long last(final long partIndex) {
-                return partIndex == coveredPart ? last : StoreStepResolver.CapturedRange.NONE;
+                return partIndex == coveredPart
+                        ? last
+                        : StoreStepResolver.CapturedRange.NONE;
             }
         };
     }
@@ -331,7 +342,7 @@ class TestStoreStepResolver {
         final StepDataStore store = twoParts(tempDir);
 
         assertThat(resolver.resolve(store, META, fingerprints,
-                req(StepType.FORWARD, loc(0, 1), null), partOnlyRange(1, 0, 0))
+                        req(StepType.FORWARD, loc(0, 1), null), partOnlyRange(1, 0, 0))
                 .orElseThrow().foundLocation()).isEqualTo(loc(1, 0));
     }
 
@@ -351,7 +362,7 @@ class TestStoreStepResolver {
         final StepDataStore store = twoParts(tempDir);
 
         assertThat(resolver.resolve(store, META, fingerprints,
-                req(StepType.BACKWARD, loc(1, 0), null), partOnlyRange(0, 1, 1))
+                        req(StepType.BACKWARD, loc(1, 0), null), partOnlyRange(0, 1, 1))
                 .orElseThrow().foundLocation()).isEqualTo(loc(0, 1));
     }
 

@@ -51,14 +51,14 @@ public class GetTraceOverviewRequest {
     @JsonCreator
     public GetTraceOverviewRequest(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
                                    @JsonProperty("traceId") final String traceId,
-                                   @JsonProperty("fromMs") final long fromMs,
-                                   @JsonProperty("toMs") final long toMs,
-                                   @JsonProperty("maxBars") final int maxBars) {
+                                   @JsonProperty("fromMs") final Long fromMs,
+                                   @JsonProperty("toMs") final Long toMs,
+                                   @JsonProperty("maxBars") final Integer maxBars) {
         this.dataSourceRef = dataSourceRef;
         this.traceId = traceId;
-        this.fromMs = fromMs;
-        this.toMs = toMs;
-        this.maxBars = maxBars;
+        this.fromMs = Objects.requireNonNullElse(fromMs, 0L);
+        this.toMs = Objects.requireNonNullElse(toMs, 0L);
+        this.maxBars = Objects.requireNonNullElse(maxBars, 0);
     }
 
     public DocRef getDataSourceRef() {

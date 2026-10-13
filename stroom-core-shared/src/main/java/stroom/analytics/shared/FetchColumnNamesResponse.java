@@ -37,9 +37,9 @@ public class FetchColumnNamesResponse {
 
     @JsonCreator
     public FetchColumnNamesResponse(@JsonProperty("columnNames") final List<String> columnNames,
-                                    @JsonProperty("storeInitialised") final boolean storeInitialised) {
+                                    @JsonProperty("storeInitialised") final Boolean storeInitialised) {
         this.columnNames = columnNames;
-        this.storeInitialised = storeInitialised;
+        this.storeInitialised = Objects.requireNonNullElse(storeInitialised, false);
     }
 
     public static FetchColumnNamesResponse unInitialised() {

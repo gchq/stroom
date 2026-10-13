@@ -158,7 +158,8 @@ public class MarkerListCreator {
                 }
             }
 
-            final StoredError storedError = new StoredError(severity, new StreamLocation(partIndex, lineNo, colNo),
+            final StoredError storedError = new StoredError(severity,
+                    new StreamLocation((long) partIndex, lineNo, colNo),
                     elementId, message);
             markerList.add(storedError);
         }

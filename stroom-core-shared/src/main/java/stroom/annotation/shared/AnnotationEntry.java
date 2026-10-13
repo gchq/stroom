@@ -57,7 +57,7 @@ public class AnnotationEntry {
                            @JsonProperty("entryType") final AnnotationEntryType entryType,
                            @JsonProperty("entryValue") final EntryValue entryValue,
                            @JsonProperty("previousValue") final EntryValue previousValue,
-                           @JsonProperty("deleted") final boolean deleted) {
+                           @JsonProperty("deleted") final Boolean deleted) {
         this.id = id;
         this.entryTime = entryTime;
         this.entryUser = entryUser;
@@ -66,7 +66,7 @@ public class AnnotationEntry {
         this.updateTime = updateTime;
         this.updateUser = updateUser;
         this.previousValue = previousValue;
-        this.deleted = deleted;
+        this.deleted = Objects.requireNonNullElse(deleted, false);
     }
 
     public Long getId() {

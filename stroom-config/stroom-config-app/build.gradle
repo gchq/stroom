@@ -71,6 +71,7 @@ dependencies {
 
     implementation libs.dropwizard.client
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.jackson.dataformat.yaml
     implementation libs.jackson2.databind
 

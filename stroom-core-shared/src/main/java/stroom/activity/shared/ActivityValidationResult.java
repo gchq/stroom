@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class ActivityValidationResult {
 
@@ -30,9 +32,9 @@ public class ActivityValidationResult {
     private final String messages;
 
     @JsonCreator
-    public ActivityValidationResult(@JsonProperty("valid") final boolean valid,
+    public ActivityValidationResult(@JsonProperty("valid") final Boolean valid,
                                     @JsonProperty("messages") final String messages) {
-        this.valid = valid;
+        this.valid = Objects.requireNonNullElse(valid, false);
         this.messages = messages;
     }
 

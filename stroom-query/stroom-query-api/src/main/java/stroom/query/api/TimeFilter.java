@@ -34,10 +34,10 @@ public class TimeFilter {
     private final long to;
 
     @JsonCreator
-    public TimeFilter(@JsonProperty("from") final long from,
-                      @JsonProperty("to") final long to) {
-        this.from = from;
-        this.to = to;
+    public TimeFilter(@JsonProperty("from") final Long from,
+                      @JsonProperty("to") final Long to) {
+        this.from = Objects.requireNonNullElse(from, 0L);
+        this.to = Objects.requireNonNullElse(to, 0L);
     }
 
     public long getFrom() {

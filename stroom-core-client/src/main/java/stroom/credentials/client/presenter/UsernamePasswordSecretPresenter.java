@@ -29,8 +29,8 @@ import com.gwtplatform.mvp.client.View;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class UsernamePasswordSecretPresenter
-        extends MyPresenterWidget<UsernamePasswordSecretView> {
+public final class UsernamePasswordSecretPresenter
+        extends MyPresenterWidget<UsernamePasswordSecretView> implements SecretPresenter<UsernamePasswordSecretView> {
 
     @Inject
     public UsernamePasswordSecretPresenter(final EventBus eventBus,

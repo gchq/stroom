@@ -39,10 +39,10 @@ public class SnapshotRequest {
 
     @JsonCreator
     public SnapshotRequest(@JsonProperty("planBDocRef") final DocRef planBDocRef,
-                           @JsonProperty("effectiveTime") final long effectiveTime,
+                           @JsonProperty("effectiveTime") final Long effectiveTime,
                            @JsonProperty("currentSnapshotTime") final Long currentSnapshotTime) {
         this.planBDocRef = planBDocRef;
-        this.effectiveTime = effectiveTime;
+        this.effectiveTime = Objects.requireNonNullElse(effectiveTime, 0L);
         this.currentSnapshotTime = currentSnapshotTime;
     }
 

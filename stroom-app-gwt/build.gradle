@@ -147,9 +147,9 @@ tasks.register('copySources') {
         def start = Instant.now()
 
         // Copy all code into source output.
-        println("copy project source (java/resources) => ${inputProjectPath}")
+        logger.debug("copy project source (java/resources) => ${inputProjectPath}")
         clientProjects.each { prj ->
-            println('  ' + prj.projectDir)
+            logger.debug('  ' + prj.projectDir)
             copy {
                 from prj.projectDir.toPath().resolve('src').resolve('main').resolve('java')
                 into inputProjectPath
@@ -160,13 +160,13 @@ tasks.register('copySources') {
             }
         }
         delete "${inputProjectPath}/module-info.java"
-        println("${Duration.between(start, Instant.now())}")
+        logger.info("Copy project source took: ${Duration.between(start, Instant.now())}")
         start = Instant.now()
 
         // Transform code.
-        println 'Running eclipse TransformerCLI'
-        println('  input: ' + inputProjectPath)
-        println('  output: ' + transformedSourceDir)
+        logger.info('Running eclipse TransformerCLI')
+        logger.info('  input: ' + inputProjectPath)
+        logger.info('  output: ' + transformedSourceDir)
         delete transformedSourceDir
 
         providers.javaexec {
@@ -178,28 +178,28 @@ tasks.register('copySources') {
                     '-tr', propFilePath,
             ]
         }.result.get()
-        println("${Duration.between(start, Instant.now())}")
+        logger.info("TransformerCLI took: ${Duration.between(start, Instant.now())}")
         start = Instant.now()
 
         delete allSourceDir
 
-        println("copy dep jars => ${allSourceDir}")
+        logger.info("copy dep jars => ${allSourceDir}")
         sourceSets.gwtSource.compileClasspath.files.forEach { zipFile ->
-            println('  ' + zipFile)
+            logger.debug('  ' + zipFile)
             copy {
                 from zipTree(zipFile)
                 into allSourceDir
             }
         }
-        println("${Duration.between(start, Instant.now())}")
+        logger.info("Copy dep jars took: ${Duration.between(start, Instant.now())}")
         start = Instant.now()
 
-        println("copy ${transformedSourceDir} => ${allSourceDir}")
+        logger.info("copy ${transformedSourceDir} => ${allSourceDir}")
         copy {
             from transformedSourceDir
             into allSourceDir
         }
-        println("${Duration.between(start, Instant.now())}")
+        logger.info("Copy transformed source took: ${Duration.between(start, Instant.now())}")
     }
 }
 
@@ -233,28 +233,28 @@ tasks.register('makeGwtSourceDirs') {
         // so that we can be sure that any GWT classes that we have cloned and
         // changed overwrite the original GWT version in  rsyncInputDir
 
-        println("copy ${allSourceDir} => ${rsyncInputDir}")
+        logger.info("copy ${allSourceDir} => ${rsyncInputDir}")
         copy {
             from allSourceDir
             into rsyncInputDir
         }
 
-        println("${Duration.between(start, Instant.now())}")
+        logger.info("${Duration.between(start, Instant.now())}")
         start = Instant.now()
 
-        println("copy ${transformedBuildDir} => ${rsyncInputDir}")
+        logger.info("copy ${transformedBuildDir} => ${rsyncInputDir}")
         copy {
             from transformedBuildDir
             into rsyncInputDir
         }
 
-        println("${Duration.between(start, Instant.now())}")
+        logger.info("${Duration.between(start, Instant.now())}")
         start = Instant.now()
 
         // Rsync the files so that we don't delete all the files that superdev is monitoring,
         // which it doesn't like. Rsync should only change the files that have actually changed
         // i.e. when doing superdev code changes.
-        println "rsync ${rsyncInputDir} => ${rsyncOutputDir}"
+        logger.info "rsync ${rsyncInputDir} => ${rsyncOutputDir}"
         providers.exec {
             executable = 'rsync'
             args = [
@@ -266,7 +266,7 @@ tasks.register('makeGwtSourceDirs') {
                     rsyncOutputDir]
         }.result.get()
 
-        println("${Duration.between(start, Instant.now())}")
+        logger.info("${Duration.between(start, Instant.now())}")
         start = Instant.now()
 
         // Now assemble the sourceDirs array for GWT to compile
@@ -276,9 +276,9 @@ tasks.register('makeGwtSourceDirs') {
         // Add the rsync clone of our transformed build
         gwtSourceDirs.add(rsyncOutputDir)
 
-        println "Dumping ${gwtSourceDirs.size()} gwtSourceDirs"
+        logger.info "Dumping ${gwtSourceDirs.size()} gwtSourceDirs"
         gwtSourceDirs.each {
-            println "  ${it.toString()}"
+            logger.debug "  ${it.toString()}"
         }
     }
 }
@@ -291,7 +291,7 @@ tasks.register('gwtCompile', JavaExec) {
     def module = 'stroom.app.App'
 
     doFirst {
-        println 'Deleting GWT build dirs in ' + gwtBuildDir.toString()
+        logger.info('Deleting GWT build dirs in ' + gwtBuildDir.toString())
         delete gwtTmpDir
         delete workDir
         delete deployDir
@@ -317,10 +317,10 @@ tasks.register('gwtCompile', JavaExec) {
 
         gwtSourceDirs.each {
             if (it instanceof java.nio.file.Path && Files.exists(it)) {
-                println "Can't find gwtSourceDir" + it
+                logger.warn("Can't find gwtSourceDir" + it)
                 //throw new GradleException("Can't find gwtSourceDir ${it}")
             } else if (it instanceof File && !Files.exists(it.toPath())) {
-                println "Can't find gwtSourceDir" + it
+                logger.warn("Can't find gwtSourceDir" + it)
             }
         }
     }
@@ -363,7 +363,7 @@ tasks.register('gwtDraftCompile', JavaExec) {
     def module = 'stroom.app.AppSuperDevModeChrome'
 
     doFirst {
-        println 'Deleting GWT compiled output: ' + outputDir.toString()
+        logger.info('Deleting GWT compiled output: ' + outputDir.toString())
         delete outputDir
 
         logger.info("Ensuring directory gwtBuildDir ${gwtBuildDir}")
@@ -379,10 +379,10 @@ tasks.register('gwtDraftCompile', JavaExec) {
 
         gwtSourceDirs.each {
             if (it instanceof java.nio.file.Path && Files.exists(it)) {
-                println "Can't find gwtSourceDir" + it
+                logger.warn("Can't find gwtSourceDir" + it)
                 //throw new GradleException("Can't find gwtSourceDir ${it}")
             } else if (it instanceof File && !Files.exists(it.toPath())) {
-                println "Can't find gwtSourceDir" + it
+                logger.warn("Can't find gwtSourceDir" + it)
             }
         }
     }

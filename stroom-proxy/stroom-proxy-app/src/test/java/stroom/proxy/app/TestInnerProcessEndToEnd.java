@@ -161,6 +161,7 @@ class TestInnerProcessEndToEnd {
                                 new ForwardFileQueueConfig(),
                                 null,
                                 null,
+                                null,
                                 null))
                         .receiveDataConfig(ReceiveDataConfig.builder()
                                 // Stop it trying to call out to a downstream stroom/proxy

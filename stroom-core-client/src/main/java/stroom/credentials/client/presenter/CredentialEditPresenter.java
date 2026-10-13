@@ -120,8 +120,7 @@ public class CredentialEditPresenter
                      final Consumer<Credential> consumer) {
         read(docRef, cwp);
         final String caption = CreationState.NEW_CREDENTIALS.equals(creationState)
-                ?
-                "New Credentials"
+                ? "New Credentials"
                 : "Edit Credentials";
         // Configure the popup builder for this dialog
         ShowPopupEvent
@@ -229,6 +228,10 @@ public class CredentialEditPresenter
             }
         }
     }
+
+
+    // --------------------------------------------------------------------------------
+
 
     /**
      * Indicates whether the credentials are new ones to be created or old ones to be stored

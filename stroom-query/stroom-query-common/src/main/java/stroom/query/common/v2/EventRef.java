@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class EventRef implements Serializable {
@@ -32,10 +33,10 @@ public class EventRef implements Serializable {
     private final long eventId;
 
     @JsonCreator
-    public EventRef(@JsonProperty("streamId") final long streamId,
-                    @JsonProperty("eventId") final long eventId) {
-        this.streamId = streamId;
-        this.eventId = eventId;
+    public EventRef(@JsonProperty("streamId") final Long streamId,
+                    @JsonProperty("eventId") final Long eventId) {
+        this.streamId = Objects.requireNonNullElse(streamId, 0L);
+        this.eventId = Objects.requireNonNullElse(eventId, 0L);
     }
 
     public long getStreamId() {

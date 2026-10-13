@@ -247,7 +247,7 @@ class TestProcessorFilterDaoImpl extends AbstractProcessorTest {
                 .describedAs("Defaults to the cluster wide maximum")
                 .isNull();
 
-        final SimpleDuration delay = new SimpleDuration(30, TimeUnit.SECONDS);
+        final SimpleDuration delay = new SimpleDuration(30L, TimeUnit.SECONDS);
         processorFilterDao.update(created.copy().maxTaskCreationDelay(delay).build());
         assertThat(processorFilterDao.fetch(created.getId()).orElseThrow().getMaxTaskCreationDelay())
                 .isEqualTo(delay);

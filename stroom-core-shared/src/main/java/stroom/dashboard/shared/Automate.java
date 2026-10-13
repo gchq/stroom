@@ -36,11 +36,11 @@ public class Automate {
     private final String refreshInterval;
 
     @JsonCreator
-    public Automate(@JsonProperty("open") final boolean open,
-                    @JsonProperty("refresh") final boolean refresh,
+    public Automate(@JsonProperty("open") final Boolean open,
+                    @JsonProperty("refresh") final Boolean refresh,
                     @JsonProperty("refreshInterval") final String refreshInterval) {
-        this.open = open;
-        this.refresh = refresh;
+        this.open = Objects.requireNonNullElse(open, false);
+        this.refresh = Objects.requireNonNullElse(refresh, false);
         this.refreshInterval = refreshInterval;
     }
 

@@ -55,7 +55,7 @@ class TestStepDataStoreManager {
         // Same (session, stream) returns the same store instance.
         assertThat(manager.getOrCreateStore("session1", 100L)).isSameAs(streamA);
 
-        streamA.putElementData(new StepLocation(100L, 0, 0), E1, "fp", data("a"));
+        streamA.putElementData(new StepLocation(100L, 0L, 0L), E1, "fp", data("a"));
 
         // Each requested stream gets its own directory under the session.
         assertThat(Files.exists(manager.getSessionDir("session1").resolve("100"))).isTrue();
@@ -66,7 +66,7 @@ class TestStepDataStoreManager {
     void testDeleteSessionRemovesEverything(@TempDir final Path tempDir) {
         final StepDataStoreManager manager = newManager(tempDir);
         final StepDataStore store = manager.getOrCreateStore("session1", 100L);
-        store.putElementData(new StepLocation(100L, 0, 0), E1, "fp", data("a"));
+        store.putElementData(new StepLocation(100L, 0L, 0L), E1, "fp", data("a"));
 
         final Path sessionDir = manager.getSessionDir("session1");
         assertThat(Files.exists(sessionDir)).isTrue();
@@ -85,7 +85,7 @@ class TestStepDataStoreManager {
 
         // A live session - its data is in use and must survive however old it looks.
         manager.getOrCreateStore("live", 100L)
-                .putElementData(new StepLocation(100L, 0, 0), E1, "fp", data("a"));
+                .putElementData(new StepLocation(100L, 0L, 0L), E1, "fp", data("a"));
         final Path liveDir = manager.getSessionDir("live");
         Files.setLastModifiedTime(liveDir, FileTime.from(Instant.now().minus(Duration.ofDays(1))));
 
@@ -105,15 +105,15 @@ class TestStepDataStoreManager {
         assertThat(Files.exists(recentDir)).isTrue();
         // The live session's data is still readable.
         assertThat(manager.getOrCreateStore("live", 100L)
-                .getElementData(new StepLocation(100L, 0, 0), E1, "fp"))
+                .getElementData(new StepLocation(100L, 0L, 0L), E1, "fp"))
                 .map(CapturedElementData::outputText).contains("a");
     }
 
     @Test
     void testDeleteAllSessionsClearsTheBaseDir(@TempDir final Path tempDir) {
         final StepDataStoreManager manager = newManager(tempDir);
-        manager.getOrCreateStore("s1", 1L).putElementData(new StepLocation(1L, 0, 0), E1, "fp", data("a"));
-        manager.getOrCreateStore("s2", 2L).putElementData(new StepLocation(2L, 0, 0), E1, "fp", data("b"));
+        manager.getOrCreateStore("s1", 1L).putElementData(new StepLocation(1L, 0L, 0L), E1, "fp", data("a"));
+        manager.getOrCreateStore("s2", 2L).putElementData(new StepLocation(2L, 0L, 0L), E1, "fp", data("b"));
 
         manager.deleteAllSessions();
 
@@ -125,15 +125,15 @@ class TestStepDataStoreManager {
     void testDifferentSessionsAreIsolated(@TempDir final Path tempDir) {
         final StepDataStoreManager manager = newManager(tempDir);
         manager.getOrCreateStore("sessionA", 1L)
-                .putElementData(new StepLocation(1L, 0, 0), E1, "fp", data("a"));
+                .putElementData(new StepLocation(1L, 0L, 0L), E1, "fp", data("a"));
         manager.getOrCreateStore("sessionB", 1L)
-                .putElementData(new StepLocation(1L, 0, 0), E1, "fp", data("b"));
+                .putElementData(new StepLocation(1L, 0L, 0L), E1, "fp", data("b"));
 
         assertThat(manager.getOrCreateStore("sessionA", 1L)
-                .getElementData(new StepLocation(1L, 0, 0), E1, "fp"))
+                .getElementData(new StepLocation(1L, 0L, 0L), E1, "fp"))
                 .map(CapturedElementData::outputText).contains("a");
         assertThat(manager.getOrCreateStore("sessionB", 1L)
-                .getElementData(new StepLocation(1L, 0, 0), E1, "fp"))
+                .getElementData(new StepLocation(1L, 0L, 0L), E1, "fp"))
                 .map(CapturedElementData::outputText).contains("b");
     }
 }

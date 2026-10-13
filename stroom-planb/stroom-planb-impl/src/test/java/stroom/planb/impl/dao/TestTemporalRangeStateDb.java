@@ -174,7 +174,8 @@ class TestTemporalRangeStateDb {
                                         .build();
 
                                 final Instant refTime = Instant.parse("2000-01-01T00:00:00.000Z");
-                                final Function<Integer, Key> keyFunction = i -> new Key(i, i + 1, refTime);
+                                final Function<Integer, Key> keyFunction =
+                                        i -> new Key((long) i, (long) i + 1, refTime);
 
                                 Path path = null;
                                 try {

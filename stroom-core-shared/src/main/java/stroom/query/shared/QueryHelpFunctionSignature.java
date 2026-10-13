@@ -186,17 +186,17 @@ public final class QueryHelpFunctionSignature extends QueryHelpData {
         @JsonCreator
         public Arg(@JsonProperty("name") final String name,
                    @JsonProperty("argType") final Type argType,
-                   @JsonProperty("optional") final boolean optional,
-                   @JsonProperty("varargs") final boolean varargs,
-                   @JsonProperty("minVarargsCount") final int minVarargsCount,
+                   @JsonProperty("optional") final Boolean optional,
+                   @JsonProperty("varargs") final Boolean varargs,
+                   @JsonProperty("minVarargsCount") final Integer minVarargsCount,
                    @JsonProperty("description") final String description,
                    @JsonProperty("allowedValues") final List<String> allowedValues,
                    @JsonProperty("defaultValue") final String defaultValue) {
             this.name = name;
             this.argType = argType;
-            this.optional = optional;
-            this.varargs = varargs;
-            this.minVarargsCount = minVarargsCount;
+            this.optional = Objects.requireNonNullElse(optional, false);
+            this.varargs = Objects.requireNonNullElse(varargs, false);
+            this.minVarargsCount = Objects.requireNonNullElse(minVarargsCount, 0);
             this.description = description;
             this.allowedValues = allowedValues;
             this.defaultValue = defaultValue;

@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class ConfirmPasswordResponse {
 
@@ -30,9 +32,9 @@ public class ConfirmPasswordResponse {
     private final String message;
 
     @JsonCreator
-    public ConfirmPasswordResponse(@JsonProperty("valid") final boolean valid,
+    public ConfirmPasswordResponse(@JsonProperty("valid") final Boolean valid,
                                    @JsonProperty("message") final String message) {
-        this.valid = valid;
+        this.valid = Objects.requireNonNullElse(valid, false);
         this.message = message;
     }
 

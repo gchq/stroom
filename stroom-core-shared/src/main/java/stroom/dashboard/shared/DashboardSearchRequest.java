@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
@@ -66,15 +67,15 @@ public class DashboardSearchRequest {
             @JsonProperty("search") final Search search,
             @JsonProperty("componentResultRequests") final List<ComponentResultRequest> componentResultRequests,
             @JsonProperty("dateTimeSettings") final DateTimeSettings dateTimeSettings,
-            @JsonProperty("timeout") final long timeout,
-            @JsonProperty("storeHistory") final boolean storeHistory) {
+            @JsonProperty("timeout") final Long timeout,
+            @JsonProperty("storeHistory") final Boolean storeHistory) {
         this.searchRequestSource = searchRequestSource;
         this.queryKey = queryKey;
         this.search = search;
         this.componentResultRequests = componentResultRequests;
         this.dateTimeSettings = dateTimeSettings;
-        this.timeout = timeout;
-        this.storeHistory = storeHistory;
+        this.timeout = Objects.requireNonNullElse(timeout, 0L);
+        this.storeHistory = Objects.requireNonNullElse(storeHistory, false);
     }
 
     public SearchRequestSource getSearchRequestSource() {

@@ -462,7 +462,7 @@ abstract class AbstractInteractiveSearchTest extends AbstractSearchTest {
                 SearchRequestSource.builder().sourceType(SourceType.BATCH_SEARCH).build(),
                 key,
                 query,
-                new EventRef(1, 1),
+                new EventRef(1L, 1L),
                 new EventRef(Long.MAX_VALUE, Long.MAX_VALUE),
                 1000,
                 1000,

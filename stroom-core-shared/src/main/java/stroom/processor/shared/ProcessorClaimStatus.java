@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 /**
  * gh-5699. What one node is doing about finding and claiming its own processor tasks.
  * <p>
@@ -79,35 +81,35 @@ public class ProcessorClaimStatus {
 
     @JsonCreator
     public ProcessorClaimStatus(@JsonProperty("nodeName") final String nodeName,
-                                @JsonProperty("claimTasksOnWorker") final boolean claimTasksOnWorker,
-                                @JsonProperty("eligibleFilterCount") final int eligibleFilterCount,
-                                @JsonProperty("filtersWithWorkCount") final int filtersWithWorkCount,
+                                @JsonProperty("claimTasksOnWorker") final Boolean claimTasksOnWorker,
+                                @JsonProperty("eligibleFilterCount") final Integer eligibleFilterCount,
+                                @JsonProperty("filtersWithWorkCount") final Integer filtersWithWorkCount,
                                 @JsonProperty("summaryAgeMs") final Long summaryAgeMs,
-                                @JsonProperty("backedOffFilterCount") final int backedOffFilterCount,
-                                @JsonProperty("claimAttempts") final long claimAttempts,
-                                @JsonProperty("tasksClaimed") final long tasksClaimed,
-                                @JsonProperty("emptyClaims") final long emptyClaims,
-                                @JsonProperty("lockedMetaReleases") final long lockedMetaReleases,
-                                @JsonProperty("tasksInFlight") final int tasksInFlight,
-                                @JsonProperty("lastHeartbeatAgeMs") final long lastHeartbeatAgeMs,
+                                @JsonProperty("backedOffFilterCount") final Integer backedOffFilterCount,
+                                @JsonProperty("claimAttempts") final Long claimAttempts,
+                                @JsonProperty("tasksClaimed") final Long tasksClaimed,
+                                @JsonProperty("emptyClaims") final Long emptyClaims,
+                                @JsonProperty("lockedMetaReleases") final Long lockedMetaReleases,
+                                @JsonProperty("tasksInFlight") final Integer tasksInFlight,
+                                @JsonProperty("lastHeartbeatAgeMs") final Long lastHeartbeatAgeMs,
                                 @JsonProperty("error") final String error) {
         this.nodeName = nodeName;
-        this.claimTasksOnWorker = claimTasksOnWorker;
-        this.eligibleFilterCount = eligibleFilterCount;
-        this.filtersWithWorkCount = filtersWithWorkCount;
+        this.claimTasksOnWorker = Objects.requireNonNullElse(claimTasksOnWorker, false);
+        this.eligibleFilterCount = Objects.requireNonNullElse(eligibleFilterCount, 0);
+        this.filtersWithWorkCount = Objects.requireNonNullElse(filtersWithWorkCount, 0);
         this.summaryAgeMs = summaryAgeMs;
-        this.backedOffFilterCount = backedOffFilterCount;
-        this.claimAttempts = claimAttempts;
-        this.tasksClaimed = tasksClaimed;
-        this.emptyClaims = emptyClaims;
-        this.lockedMetaReleases = lockedMetaReleases;
-        this.tasksInFlight = tasksInFlight;
-        this.lastHeartbeatAgeMs = lastHeartbeatAgeMs;
+        this.backedOffFilterCount = Objects.requireNonNullElse(backedOffFilterCount, 0);
+        this.claimAttempts = Objects.requireNonNullElse(claimAttempts, 0L);
+        this.tasksClaimed = Objects.requireNonNullElse(tasksClaimed, 0L);
+        this.emptyClaims = Objects.requireNonNullElse(emptyClaims, 0L);
+        this.lockedMetaReleases = Objects.requireNonNullElse(lockedMetaReleases, 0L);
+        this.tasksInFlight = Objects.requireNonNullElse(tasksInFlight, 0);
+        this.lastHeartbeatAgeMs = Objects.requireNonNullElse(lastHeartbeatAgeMs, 0L);
         this.error = error;
     }
 
     public static ProcessorClaimStatus error(final String nodeName, final String error) {
-        return new ProcessorClaimStatus(nodeName, false, 0, 0, null, 0, 0, 0, 0, 0, 0, 0, error);
+        return new ProcessorClaimStatus(nodeName, false, 0, 0, null, 0, 0L, 0L, 0L, 0L, 0, 0L, error);
     }
 
     public String getNodeName() {

@@ -65,12 +65,12 @@ class TestStepDemandPlanner {
         final StepDataStore store = new StepDataStore(dir.resolve("s"), new SteppingConfig());
         for (int part = 0; part < parts; part++) {
             for (int r = 0; r < recordsPerPart; r++) {
-                store.putRecord(new StepLocation(META_ID, part, r),
+                store.putRecord(new StepLocation((long) META_ID, (long) part, (long) r),
                         List.of(new StepDataStore.ElementRecord(new ElementId("marker"), "fp-m", data())), null);
             }
         }
         for (final long r : upstreamRecords) {
-            store.putRecord(new StepLocation(META_ID, 0, r),
+            store.putRecord(new StepLocation((long) META_ID, 0L, (long) r),
                     List.of(new StepDataStore.ElementRecord(new ElementId(UPSTREAM), "fp-u", data())),
                     null, null, StepDataStore.RecordOrder.ON_DEMAND);
         }
@@ -91,7 +91,7 @@ class TestStepDemandPlanner {
         // this design exists to keep fast, invisibly to every launch-counter test.
         final StepDataStore store = storeWith(dir, 100, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
         final RecordRange range = planner.onDemandRangeFor(
-                req(StepType.REFRESH, new StepLocation(META_ID, 0, 5)),
+                req(StepType.REFRESH, new StepLocation((long) META_ID, 0L, 5L)),
                 null, DECISION, store, FINGERPRINTS, META_ID, true);
         assertThat(range).isEqualTo(new RecordRange(0, 5, 5));
     }
@@ -100,7 +100,7 @@ class TestStepDemandPlanner {
     void testForwardIsWidenedByThePrefetchWindowOverAContiguousFeed(@TempDir final Path dir) {
         final StepDataStore store = storeWith(dir, 100, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
         final RecordRange range = planner.onDemandRangeFor(
-                req(StepType.FORWARD, new StepLocation(META_ID, 0, 2)),
+                req(StepType.FORWARD, new StepLocation((long) META_ID, 0L, 2L)),
                 null, DECISION, store, FINGERPRINTS, META_ID, true);
         // Demanded record 3 at the near edge; default window 10 clamped to the feed's last record (9).
         assertThat(range).isEqualTo(new RecordRange(0, 3, 9));
@@ -113,7 +113,7 @@ class TestStepDemandPlanner {
         // nothing left to buy.
         final StepDataStore store = storeWith(dir, 100, 1, 0, 1, 2, 3, 4, 6, 7);
         final RecordRange range = planner.onDemandRangeFor(
-                req(StepType.FORWARD, new StepLocation(META_ID, 0, 2)),
+                req(StepType.FORWARD, new StepLocation((long) META_ID, 0L, 2L)),
                 null, DECISION, store, FINGERPRINTS, META_ID, true);
         assertThat(range).isEqualTo(new RecordRange(0, 3, 4));
     }
@@ -124,7 +124,7 @@ class TestStepDemandPlanner {
         // it, not above.
         final StepDataStore store = storeWith(dir, 100, 1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
         final RecordRange range = planner.onDemandRangeFor(
-                req(StepType.BACKWARD, new StepLocation(META_ID, 0, 6)),
+                req(StepType.BACKWARD, new StepLocation((long) META_ID, 0L, 6L)),
                 null, DECISION, store, FINGERPRINTS, META_ID, true);
         assertThat(range.lastRecord()).as("the demanded record is the far edge").isEqualTo(5);
         assertThat(range.firstRecord()).as("widened downward over the feed").isEqualTo(0);
@@ -134,7 +134,7 @@ class TestStepDemandPlanner {
     void testARefreshNamingAnotherStreamDemandsNothingHere(@TempDir final Path dir) {
         final StepDataStore store = storeWith(dir, 10, 1);
         assertThat(planner.demandedRecordFor(
-                req(StepType.REFRESH, new StepLocation(META_ID + 1, 0, 5)), META_ID, store, true))
+                req(StepType.REFRESH, new StepLocation((long) META_ID + 1, 0L, 5L)), META_ID, store, true))
                 .as("a reference into another stream is not a demand on this one")
                 .isNull();
     }
@@ -146,7 +146,7 @@ class TestStepDemandPlanner {
         final StepDataStore store = storeWith(dir, 10, 1);
         final PipelineStepRequest filtered = PipelineStepRequest.builder()
                 .stepType(StepType.FORWARD)
-                .stepLocation(new StepLocation(META_ID, 0, 2))
+                .stepLocation(new StepLocation((long) META_ID, 0L, 2L))
                 .stepFilterMap(Map.of(EDITED,
                         new SteppingFilterSettings(null, OutputState.NOT_EMPTY, List.of())))
                 .build();
@@ -160,7 +160,7 @@ class TestStepDemandPlanner {
         final StepDataStore store = storeWith(dir, 10, 1);
         assertThat(planner.demandedRecordFor(req(StepType.LAST, null), META_ID, store, false)).isNull();
         assertThat(planner.demandedRecordFor(req(StepType.LAST, null), META_ID, store, true))
-                .isEqualTo(new StepLocation(META_ID, 0, 9));
+                .isEqualTo(new StepLocation((long) META_ID, 0L, 9L));
     }
 
     @Test
@@ -170,7 +170,7 @@ class TestStepDemandPlanner {
         // this walk.
         final StepDataStore store = storeWith(dir, 5, 2);
         assertThat(planner.demandedRecordFor(
-                req(StepType.FORWARD, new StepLocation(META_ID, 0, 4)), META_ID, store, true))
-                .isEqualTo(new StepLocation(META_ID, 1, 0));
+                req(StepType.FORWARD, new StepLocation((long) META_ID, 0L, 4L)), META_ID, store, true))
+                .isEqualTo(new StepLocation((long) META_ID, 1L, 0L));
     }
 }

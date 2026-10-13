@@ -37,10 +37,10 @@ public class ClusterLockKey {
     @JsonCreator
     public ClusterLockKey(@JsonProperty("name") final String name,
                           @JsonProperty("nodeName") final String nodeName,
-                          @JsonProperty("creationTime") final long creationTime) {
+                          @JsonProperty("creationTime") final Long creationTime) {
         this.name = name;
         this.nodeName = nodeName;
-        this.creationTime = creationTime;
+        this.creationTime = Objects.requireNonNullElse(creationTime, 0L);
     }
 
     public String getName() {

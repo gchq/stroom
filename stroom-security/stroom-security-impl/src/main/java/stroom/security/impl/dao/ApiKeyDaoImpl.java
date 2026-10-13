@@ -27,8 +27,6 @@ import stroom.security.impl.UserCache;
 import stroom.security.impl.apikey.ApiKeyDao;
 import stroom.security.impl.apikey.ApiKeyService.DuplicateApiKeyException;
 import stroom.security.impl.db.SecurityDbConnProvider;
-import stroom.security.impl.db.jooq.tables.ApiKey;
-import stroom.security.impl.db.jooq.tables.StroomUser;
 import stroom.security.impl.db.jooq.tables.records.ApiKeyRecord;
 import stroom.security.shared.CreateHashedApiKeyRequest;
 import stroom.security.shared.FindApiKeyCriteria;
@@ -199,6 +197,18 @@ public class ApiKeyDaoImpl implements ApiKeyDao {
                                 .and(DSL.or(
                                         API_KEY.EXPIRES_ON_MS.isNull(),
                                         API_KEY.EXPIRES_ON_MS.greaterThan(nowMs)))
+                                .fetch())
+                .map(this::mapRecordToApiKey);
+    }
+
+    @Override
+    public List<HashedApiKey> fetchApiKeysByPrefix(final String prefix) {
+        Objects.requireNonNull(prefix);
+        // Prefix is not unique, so we may get a few keys back, however in most cases it will be one.
+        // In tests creating 10mil keys, there were only 50 odd prefixes clashes.
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
+                        context.selectFrom(API_KEY)
+                                .where(API_KEY.API_KEY_PREFIX.eq(prefix))
                                 .fetch())
                 .map(this::mapRecordToApiKey);
     }

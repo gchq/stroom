@@ -44,8 +44,8 @@ public final class ValDouble implements ValNumber {
     private final transient LazyBoolean lazyHasFractionalPart;
 
     @JsonCreator
-    private ValDouble(@JsonProperty("value") final double value) {
-        this.value = value;
+    private ValDouble(@JsonProperty("value") final Double value) {
+        this.value = Objects.requireNonNullElse(value, 0D);
         this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
         this.lazyHasFractionalPart = LazyBoolean.initialisedBy(this::deriveHasFractionalPart);
     }

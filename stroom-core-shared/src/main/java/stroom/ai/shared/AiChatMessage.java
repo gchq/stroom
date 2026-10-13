@@ -42,15 +42,15 @@ public class AiChatMessage {
     private final String message;
 
     @JsonCreator
-    public AiChatMessage(@JsonProperty("id") final int id,
-                         @JsonProperty("chatId") final int chatId,
-                         @JsonProperty("createTimeMs") final long createTimeMs,
+    public AiChatMessage(@JsonProperty("id") final Integer id,
+                         @JsonProperty("chatId") final Integer chatId,
+                         @JsonProperty("createTimeMs") final Long createTimeMs,
                          @JsonProperty("messageType") final AiMessageType messageType,
                          @JsonProperty("attachmentId") final Integer attachmentId,
                          @JsonProperty("message") final String message) {
-        this.id = id;
-        this.chatId = chatId;
-        this.createTimeMs = createTimeMs;
+        this.id = Objects.requireNonNullElse(id, 0);
+        this.chatId = Objects.requireNonNullElse(chatId, 0);
+        this.createTimeMs = Objects.requireNonNullElse(createTimeMs, 0L);
         this.messageType = messageType;
         this.attachmentId = attachmentId;
         this.message = message;

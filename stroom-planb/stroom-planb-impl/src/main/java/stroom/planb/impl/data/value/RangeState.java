@@ -26,6 +26,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"key", "value"})
 @JsonInclude(Include.NON_NULL)
 public final class RangeState extends KV<Key, Val> implements PlanBValue {
@@ -73,10 +75,10 @@ public final class RangeState extends KV<Key, Val> implements PlanBValue {
         private final long keyEnd;
 
         @JsonCreator
-        public Key(@JsonProperty("keyStart") final long keyStart,
-                   @JsonProperty("keyEnd") final long keyEnd) {
-            this.keyStart = keyStart;
-            this.keyEnd = keyEnd;
+        public Key(@JsonProperty("keyStart") final Long keyStart,
+                   @JsonProperty("keyEnd") final Long keyEnd) {
+            this.keyStart = Objects.requireNonNullElse(keyStart, 0L);
+            this.keyEnd = Objects.requireNonNullElse(keyEnd, 0L);
         }
 
         public long getKeyStart() {

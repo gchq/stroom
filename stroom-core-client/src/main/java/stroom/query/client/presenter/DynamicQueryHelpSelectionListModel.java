@@ -127,7 +127,7 @@ public class DynamicQueryHelpSelectionListModel
                                                 .build()));
                                 resultPage = new ResultPage<>(
                                         rows,
-                                        new PageResponse(0, 1, 1L, true));
+                                        new PageResponse(0L, 1, 1L, true));
                             }
 
                             consumer.accept(resultPage);

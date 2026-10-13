@@ -434,6 +434,7 @@ appConfig:
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
       fileSystemCleanOldAge: "P1D"
+      fsyncMode: "ENABLED"
   docstore:
     db:
       connection:
@@ -1017,6 +1018,7 @@ appConfig:
     receiptCheckMode: "FEED_STATUS"
     s3Event:
       rePollDuration: "PT5M"
+      sleepDurationPostFailure: "PT1M"
       sqs: null
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"

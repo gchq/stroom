@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class ValidateExpressionResult {
 
@@ -34,12 +36,12 @@ public class ValidateExpressionResult {
     private final boolean groupBy;
 
     @JsonCreator
-    public ValidateExpressionResult(@JsonProperty("ok") final boolean ok,
+    public ValidateExpressionResult(@JsonProperty("ok") final Boolean ok,
                                     @JsonProperty("string") final String string,
-                                    @JsonProperty("groupBy") final boolean groupBy) {
-        this.ok = ok;
+                                    @JsonProperty("groupBy") final Boolean groupBy) {
+        this.ok = Objects.requireNonNullElse(ok, false);
         this.string = string;
-        this.groupBy = groupBy;
+        this.groupBy = Objects.requireNonNullElse(groupBy, false);
     }
 
     public static ValidateExpressionResult ok() {

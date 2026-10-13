@@ -32,7 +32,7 @@ import java.util.Objects;
 public class NanoTime implements Comparable<NanoTime> {
 
     private static final int NANOS_IN_SECOND = 1000000000;
-    public static NanoTime ZERO = new NanoTime(0, 0);
+    public static NanoTime ZERO = new NanoTime(0L, 0);
 
     /**
      * The number of seconds from the epoch of 1970-01-01T00:00:00Z.
@@ -47,13 +47,13 @@ public class NanoTime implements Comparable<NanoTime> {
     private final int nanos;
 
     @JsonCreator
-    public NanoTime(@JsonProperty("seconds") final long seconds,
-                    @JsonProperty("nanos") final int nanos) {
-        this.seconds = seconds;
-        this.nanos = nanos;
-        assert seconds >= 0;
-        assert nanos >= 0;
-        assert nanos < NANOS_IN_SECOND;
+    public NanoTime(@JsonProperty("seconds") final Long seconds,
+                    @JsonProperty("nanos") final Integer nanos) {
+        this.seconds = Objects.requireNonNullElse(seconds, 0L);
+        this.nanos = Objects.requireNonNullElse(nanos, 0);
+        assert this.seconds >= 0;
+        assert this.nanos >= 0;
+        assert this.nanos < NANOS_IN_SECOND;
     }
 
     public static NanoTime ofSeconds(final long seconds) {
@@ -81,7 +81,7 @@ public class NanoTime implements Comparable<NanoTime> {
             final String secondString = time.substring(0, time.length() - 9);
             return new NanoTime(Long.parseLong(secondString), Integer.parseInt(nanoString));
         }
-        return new NanoTime(0, Integer.parseInt(time));
+        return new NanoTime(0L, Integer.parseInt(time));
     }
 
     public String toNanoEpochString() {

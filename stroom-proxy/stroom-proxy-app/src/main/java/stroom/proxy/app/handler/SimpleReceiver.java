@@ -30,6 +30,7 @@ import stroom.receive.common.InputStreamUtils;
 import stroom.receive.common.ReceiveDataConfig;
 import stroom.receive.common.StroomStreamException;
 import stroom.util.io.FileUtil;
+import stroom.util.io.FsyncMode;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.NullSafe;
@@ -60,6 +61,7 @@ public class SimpleReceiver implements Receiver {
     private static final String DATA_FILE_NAME = "0000000001.dat";
 
     private final ReceiveDataConfig receiveDataConfig;
+    private final FsyncMode fsyncModeOnReceipt;
     private final AttributeMapFilterFactory attributeMapFilterFactory;
     private final NumberedDirProvider receivingDirProvider;
     private final LogStream logStream;
@@ -71,11 +73,13 @@ public class SimpleReceiver implements Receiver {
                           final DataDirProvider dataDirProvider,
                           final LogStream logStream,
                           final DropReceiver dropReceiver,
-                          final Provider<ReceiveDataConfig> receiveDataConfigProvider) {
+                          final Provider<ReceiveDataConfig> receiveDataConfigProvider,
+                          final FsyncConfig fsyncConfig) {
         this.attributeMapFilterFactory = attributeMapFilterFactory;
         this.logStream = logStream;
         this.dropReceiver = dropReceiver;
         this.receiveDataConfig = receiveDataConfigProvider.get();
+        this.fsyncModeOnReceipt = fsyncConfig.getReceivingMode();
 
         // Make receiving zip dir.
         final Path receivingDir = dataDirProvider.get().resolve(DirNames.RECEIVING_SIMPLE);
@@ -138,7 +142,7 @@ public class SimpleReceiver implements Receiver {
                     // Deal with GZIP compression.
                     final String compression = attributeMap.get(StandardHeaderArguments.COMPRESSION);
                     final InputStream in = StandardHeaderArguments.COMPRESSION_GZIP.equalsIgnoreCase(compression)
-                                ? new GzipCompressorInputStream(bufferedInputStream, true)
+                            ? new GzipCompressorInputStream(bufferedInputStream, true)
                             : bufferedInputStream;
 
                     // Write the .dat file in the zip
@@ -154,7 +158,7 @@ public class SimpleReceiver implements Receiver {
                             feedName,
                             typeName,
                             null,
-                            new Entry(META_FILE_NAME, metaBytes.length),
+                            new Entry(META_FILE_NAME, (long) metaBytes.length),
                             null,
                             new Entry(DATA_FILE_NAME, bytesRead));
 
@@ -165,6 +169,12 @@ public class SimpleReceiver implements Receiver {
 
                     // Write the .meta file
                     AttributeMapUtil.write(entryAttributeMap, fileGroup.getMeta());
+                }
+
+                // Force the received data to disk before we acknowledge receipt of it, otherwise we
+                // may tell the sender the data is safe when it is still only in the page cache.
+                if (fsyncModeOnReceipt.isAnyFsyncEnabled()) {
+                    fileGroup.sync(fsyncModeOnReceipt);
                 }
 
                 // Now move the temp files to the file store or forward if there is a single destination.

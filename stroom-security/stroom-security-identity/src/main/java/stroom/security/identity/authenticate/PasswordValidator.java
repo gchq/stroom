@@ -18,6 +18,7 @@ package stroom.security.identity.authenticate;
 
 import com.nulabinc.zxcvbn.Zxcvbn;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 public class PasswordValidator {
@@ -33,7 +34,17 @@ public class PasswordValidator {
         }
         if (newPassword.length() < minimumLength) {
             throw new RuntimeException("Password does not meet the minimum length requirement of " +
-                    minimumLength + " characters");
+                                       minimumLength + " characters");
+        }
+
+        // This is because we hash the password using BCrypt, which can only handle passwords up to 72 bytes.
+        // If we don't throw, there is a risk of two passwords that share the same first 72 bytes, thus
+        // hashing to the same value. Hopefully 72 bytes is a big enough password for a user.
+        // See https://spring.io/security/cve-2025-22228
+        final int byteCount = newPassword.getBytes(StandardCharsets.UTF_8).length;
+        if (byteCount > 72) {
+            throw new RuntimeException("Password is too long. Maximum password length is approximately " +
+                                       "72 characters, depending on the characters used.");
         }
     }
 

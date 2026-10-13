@@ -40,14 +40,14 @@ public class AiChat {
     private final String title;
 
     @JsonCreator
-    public AiChat(@JsonProperty("id") final int id,
-                  @JsonProperty("createTimeMs") final long createTimeMs,
-                  @JsonProperty("updateTimeMs") final long updateTimeMs,
+    public AiChat(@JsonProperty("id") final Integer id,
+                  @JsonProperty("createTimeMs") final Long createTimeMs,
+                  @JsonProperty("updateTimeMs") final Long updateTimeMs,
                   @JsonProperty("userUuid") final String userUuid,
                   @JsonProperty("title") final String title) {
-        this.id = id;
-        this.createTimeMs = createTimeMs;
-        this.updateTimeMs = updateTimeMs;
+        this.id = Objects.requireNonNullElse(id, 0);
+        this.createTimeMs = Objects.requireNonNullElse(createTimeMs, 0L);
+        this.updateTimeMs = Objects.requireNonNullElse(updateTimeMs, 0L);
         this.userUuid = userUuid;
         this.title = title;
     }

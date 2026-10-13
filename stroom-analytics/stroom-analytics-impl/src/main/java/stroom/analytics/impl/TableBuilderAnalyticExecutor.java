@@ -812,7 +812,7 @@ public class TableBuilderAnalyticExecutor {
 
             // Create a time filter.
             final TimeFilter timeFilter = new TimeFilter(
-                    0,
+                    0L,
                     to);
 
             // Delete old data from the DB.

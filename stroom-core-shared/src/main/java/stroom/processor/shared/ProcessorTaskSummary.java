@@ -42,14 +42,14 @@ public class ProcessorTaskSummary {
     @JsonCreator
     public ProcessorTaskSummary(@JsonProperty("pipeline") final DocRef pipeline,
                                 @JsonProperty("feed") final String feed,
-                                @JsonProperty("priority") final int priority,
+                                @JsonProperty("priority") final Integer priority,
                                 @JsonProperty("status") final TaskStatus status,
-                                @JsonProperty("count") final long count) {
+                                @JsonProperty("count") final Long count) {
         this.pipeline = pipeline;
         this.feed = feed;
-        this.priority = priority;
+        this.priority = Objects.requireNonNullElse(priority, 0);
         this.status = status;
-        this.count = count;
+        this.count = Objects.requireNonNullElse(count, 0L);
     }
 
     public DocRef getPipeline() {

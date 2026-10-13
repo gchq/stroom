@@ -23,6 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class DownloadQueryResultsRequest {
 
@@ -38,12 +40,12 @@ public class DownloadQueryResultsRequest {
     @JsonCreator
     public DownloadQueryResultsRequest(@JsonProperty("searchRequest") final QuerySearchRequest searchRequest,
                                        @JsonProperty("fileType") final DownloadSearchResultFileType fileType,
-                                       @JsonProperty("sample") final boolean sample,
-                                       @JsonProperty("percent") final int percent) {
+                                       @JsonProperty("sample") final Boolean sample,
+                                       @JsonProperty("percent") final Integer percent) {
         this.searchRequest = searchRequest;
         this.fileType = fileType;
-        this.sample = sample;
-        this.percent = percent;
+        this.sample = Objects.requireNonNullElse(sample, false);
+        this.percent = Objects.requireNonNullElse(percent, 0);
     }
 
     public QuerySearchRequest getSearchRequest() {

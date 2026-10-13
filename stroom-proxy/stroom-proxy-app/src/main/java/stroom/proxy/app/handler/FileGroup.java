@@ -16,6 +16,10 @@
 
 package stroom.proxy.app.handler;
 
+import stroom.util.io.FileSyncUtil;
+import stroom.util.io.FsyncMode;
+
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -75,6 +79,24 @@ public class FileGroup {
      */
     public List<Path> items() {
         return List.of(zip, meta, entries);
+    }
+
+    /// Forces every file in this group, and the directory that holds them, to durable storage.
+    ///
+    /// Call this before handing the parent dir on to the next pipeline phase if the data must
+    /// survive a power failure. Items that have not been written are skipped, as not every
+    /// receive path writes all three files.
+    ///
+    /// @throws IOException If any of the files cannot be forced to disk.
+    public void sync(final FsyncMode fsyncMode) throws IOException {
+        if (fsyncMode.isEnabledForFiles()) {
+            for (final Path item : items()) {
+                FileSyncUtil.syncFileIfExists(item);
+            }
+        }
+        if (fsyncMode.isEnabledForDirs()) {
+            FileSyncUtil.syncDir(parentDir);
+        }
     }
 
     @Override

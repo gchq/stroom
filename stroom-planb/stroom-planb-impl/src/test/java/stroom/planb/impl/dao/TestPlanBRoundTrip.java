@@ -165,7 +165,7 @@ class TestPlanBRoundTrip {
         try (final Node node = new Node(rootDir, List.of(doc))) {
             try (final PlanBStreamWriter writer = node.createWriter()) {
                 writer.addRangeState(node.resolve(doc), new RangeState(
-                        new RangeState.Key(10, 30),
+                        new RangeState.Key(10L, 30L),
                         ValString.create("in range")));
             }
             node.merge();
@@ -194,7 +194,7 @@ class TestPlanBRoundTrip {
         try (final Node node = new Node(rootDir, List.of(doc))) {
             try (final PlanBStreamWriter writer = node.createWriter()) {
                 writer.addTemporalRangeState(node.resolve(doc), new TemporalRangeState(
-                        new TemporalRangeState.Key(10, 30, REF_TIME),
+                        new TemporalRangeState.Key(10L, 30L, REF_TIME),
                         ValString.create("in range")));
             }
             node.merge();

@@ -30,9 +30,9 @@ ARG HOST_REPO_DIR
 ENV CONTAINER_USER_ID=$USER_ID
 
 # Set tini as entrypoint
-ENTRYPOINT ["/sbin/tini", "--", "/builder/docker-entrypoint.sh"]
+ENTRYPOINT [ "/sbin/tini", "--", "/builder/docker-entrypoint.sh" ]
 
-CMD id
+CMD [ "id" ]
 
 # We need to run as the same user/group ID in the container as on the host
 # so that any files created have the right perms and the container can

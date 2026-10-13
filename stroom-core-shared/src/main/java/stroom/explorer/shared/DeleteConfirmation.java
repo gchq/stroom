@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * The information needed to confirm a delete: the items that would additionally be deleted because
@@ -85,19 +86,19 @@ public class DeleteConfirmation {
 
     @JsonCreator
     public DeleteConfirmation(@JsonProperty("childItems") final List<DocRef> childItems,
-                              @JsonProperty("totalChildCount") final int totalChildCount,
+                              @JsonProperty("totalChildCount") final Integer totalChildCount,
                               @JsonProperty("childTypeCounts") final Map<String, Integer> childTypeCounts,
-                              @JsonProperty("hasHiddenChildItems") final boolean hasHiddenChildItems,
-                              @JsonProperty("childItemsTruncated") final boolean childItemsTruncated,
+                              @JsonProperty("hasHiddenChildItems") final Boolean hasHiddenChildItems,
+                              @JsonProperty("childItemsTruncated") final Boolean childItemsTruncated,
                               @JsonProperty("visibleDependants") final List<DocRef> visibleDependants,
-                              @JsonProperty("hasHiddenDependants") final boolean hasHiddenDependants) {
+                              @JsonProperty("hasHiddenDependants") final Boolean hasHiddenDependants) {
         this.childItems = childItems;
-        this.totalChildCount = totalChildCount;
+        this.totalChildCount = Objects.requireNonNullElse(totalChildCount, 0);
         this.childTypeCounts = childTypeCounts;
-        this.hasHiddenChildItems = hasHiddenChildItems;
-        this.childItemsTruncated = childItemsTruncated;
+        this.hasHiddenChildItems = Objects.requireNonNullElse(hasHiddenChildItems, false);
+        this.childItemsTruncated = Objects.requireNonNullElse(childItemsTruncated, false);
         this.visibleDependants = visibleDependants;
-        this.hasHiddenDependants = hasHiddenDependants;
+        this.hasHiddenDependants = Objects.requireNonNullElse(hasHiddenDependants, false);
     }
 
     public List<DocRef> getChildItems() {

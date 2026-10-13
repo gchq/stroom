@@ -83,18 +83,18 @@ public class LuceneIndexField implements IndexField {
                             @JsonProperty("fldName") final String fldName,
                             @JsonProperty("fldType") final FieldType fldType,
                             @JsonProperty("analyzerType") final AnalyzerType analyzerType,
-                            @JsonProperty("indexed") final boolean indexed,
-                            @JsonProperty("stored") final boolean stored,
-                            @JsonProperty("termPositions") final boolean termPositions,
-                            @JsonProperty("caseSensitive") final boolean caseSensitive,
+                            @JsonProperty("indexed") final Boolean indexed,
+                            @JsonProperty("stored") final Boolean stored,
+                            @JsonProperty("termPositions") final Boolean termPositions,
+                            @JsonProperty("caseSensitive") final Boolean caseSensitive,
                             @JsonProperty("denseVectorFieldConfig") final DenseVectorFieldConfig denseVectorFieldConfig) {
         this.fldName = convertLegacyName(fldName, fieldName);
         this.fldType = convertLegacyType(fldType, fieldType);
         this.analyzerType = analyzerType;
-        this.stored = stored;
-        this.indexed = indexed;
-        this.termPositions = termPositions;
-        this.caseSensitive = caseSensitive;
+        this.stored = Objects.requireNonNullElse(stored, false);
+        this.indexed = Objects.requireNonNullElse(indexed, false);
+        this.termPositions = Objects.requireNonNullElse(termPositions, false);
+        this.caseSensitive = Objects.requireNonNullElse(caseSensitive, false);
         this.denseVectorFieldConfig = denseVectorFieldConfig;
     }
 

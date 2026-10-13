@@ -40,8 +40,8 @@ public final class ValDate implements ValNumber {
     private final transient LazyValue<String> lazyStringValue;
 
     @JsonCreator
-    private ValDate(@JsonProperty("epochMs") final long epochMs) {
-        this.epochMs = epochMs;
+    private ValDate(@JsonProperty("epochMs") final Long epochMs) {
+        this.epochMs = Objects.requireNonNullElse(epochMs, 0L);
         this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
     }
 

@@ -42,8 +42,8 @@ class TestSessionDetails {
                         .displayName("jbloggs")
                         .fullName("Jow Bloggs")
                         .build(),
-                0,
-                0,
+                0L,
+                0L,
                 "agent",
                 "node1",
                 "session-handle");

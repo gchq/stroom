@@ -61,11 +61,11 @@ public class CredentialWithPerms {
     @JsonCreator
     public CredentialWithPerms(
             @JsonProperty("credential") final Credential credential,
-            @JsonProperty("edit") final boolean edit,
-            @JsonProperty("delete") final boolean delete) {
+            @JsonProperty("edit") final Boolean edit,
+            @JsonProperty("delete") final Boolean delete) {
         this.credential = credential;
-        this.edit = edit;
-        this.delete = delete;
+        this.edit = Objects.requireNonNullElse(edit, false);
+        this.delete = Objects.requireNonNullElse(delete, false);
     }
 
     /**

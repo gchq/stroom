@@ -55,11 +55,11 @@ public class TraceSpanPage {
 
     @JsonCreator
     public TraceSpanPage(@JsonProperty("rows") final List<TraceSpanRow> rows,
-                         @JsonProperty("more") final boolean more,
+                         @JsonProperty("more") final Boolean more,
                          @JsonProperty("nextCursor") final String nextCursor,
                          @JsonProperty("totalSpans") final Integer totalSpans) {
         this.rows = rows;
-        this.more = more;
+        this.more = Objects.requireNonNullElse(more, false);
         this.nextCursor = nextCursor;
         this.totalSpans = totalSpans;
     }

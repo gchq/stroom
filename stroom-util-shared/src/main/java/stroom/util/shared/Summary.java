@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"severity", "count", "total", "expander"})
 @JsonInclude(Include.NON_NULL)
 public final class Summary implements Marker, TreeRow {
@@ -37,12 +39,12 @@ public final class Summary implements Marker, TreeRow {
 
     @JsonCreator
     public Summary(@JsonProperty("severity") final Severity severity,
-                   @JsonProperty("count") final int count,
-                   @JsonProperty("total") final int total,
+                   @JsonProperty("count") final Integer count,
+                   @JsonProperty("total") final Integer total,
                    @JsonProperty("expander") final Expander expander) {
         this.severity = severity;
-        this.count = count;
-        this.total = total;
+        this.count = Objects.requireNonNullElse(count, 0);
+        this.total = Objects.requireNonNullElse(total, 0);
         this.expander = expander;
     }
 

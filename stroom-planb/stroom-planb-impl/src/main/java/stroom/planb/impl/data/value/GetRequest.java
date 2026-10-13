@@ -38,10 +38,10 @@ public class GetRequest {
     @JsonCreator
     public GetRequest(@JsonProperty("mapName") final String mapName,
                       @JsonProperty("keyName") final String keyName,
-                      @JsonProperty("eventTime") final long eventTime) {
+                      @JsonProperty("eventTime") final Long eventTime) {
         this.mapName = mapName;
         this.keyName = keyName;
-        this.eventTime = eventTime;
+        this.eventTime = Objects.requireNonNullElse(eventTime, 0L);
     }
 
     public String getMapName() {

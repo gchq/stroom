@@ -36,10 +36,10 @@ public class StringMatchLocation {
     private final int length;
 
     @JsonCreator
-    public StringMatchLocation(@JsonProperty("offset") final int offset,
-                               @JsonProperty("length") final int length) {
-        this.offset = offset;
-        this.length = length;
+    public StringMatchLocation(@JsonProperty("offset") final Integer offset,
+                               @JsonProperty("length") final Integer length) {
+        this.offset = Objects.requireNonNullElse(offset, 0);
+        this.length = Objects.requireNonNullElse(length, 0);
     }
 
     public static StringMatchLocation zero() {

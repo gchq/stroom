@@ -145,7 +145,7 @@ class TestLiveReprocessOnEdit extends TranslationTest {
 
             // Record 0 of the completed stream - the early-record case.
             final StepLocation record0 = new StepLocation(
-                    last.getFoundLocation().getMetaId(), last.getFoundLocation().getPartIndex(), 0);
+                    (long) last.getFoundLocation().getMetaId(), (long) last.getFoundLocation().getPartIndex(), 0L);
 
             // 2) REFRESH record 0, still no code -> served from the cached completed sweep (no new launch).
             final SteppingResult first = steppingService.step(base.copy()
@@ -184,7 +184,7 @@ class TestLiveReprocessOnEdit extends TranslationTest {
             // sweep were cached under its signature, the resolver would find a "complete" sweep that does
             // not hold this record and read that as "no such record, cross into the next stream".
             final StepLocation record1 = new StepLocation(
-                    record0.getMetaId(), record0.getPartIndex(), 1);
+                    (long) record0.getMetaId(), (long) record0.getPartIndex(), 1L);
             final SteppingResult third = steppingService.step(base.copy()
                     .stepType(StepType.REFRESH)
                     .stepLocation(record1)

@@ -184,7 +184,8 @@ class TestReprocessFromStore extends TranslationTest {
 
             // ...and nothing else was produced. That is the entire point: the cost is one record's work,
             // not the stream's.
-            assertThat(onDemandStore.getElementData(new StepLocation(metaId, midLocation.getPartIndex(), 0),
+            assertThat(onDemandStore.getElementData(
+                    new StepLocation(metaId, midLocation.getPartIndex(), 0L),
                     startId, fingerprint))
                     .as("record 0 was not materialised").isEmpty();
             assertThat(onDemandStore.getElementData(new StepLocation(metaId, midLocation.getPartIndex(),

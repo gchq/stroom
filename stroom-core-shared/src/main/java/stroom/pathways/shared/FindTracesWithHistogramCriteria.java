@@ -41,9 +41,9 @@ public class FindTracesWithHistogramCriteria {
 
     @JsonCreator
     public FindTracesWithHistogramCriteria(@JsonProperty("criteria") final FindTraceCriteria criteria,
-                                           @JsonProperty("bucketCount") final int bucketCount) {
+                                           @JsonProperty("bucketCount") final Integer bucketCount) {
         this.criteria = criteria;
-        this.bucketCount = bucketCount;
+        this.bucketCount = Objects.requireNonNullElse(bucketCount, 0);
     }
 
     public FindTraceCriteria getCriteria() {

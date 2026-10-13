@@ -35,7 +35,9 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.fast.infoset
     implementation libs.guice.assistedinject
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
+    implementation libs.jaxb.api
     implementation libs.kryo
     implementation libs.langchain4j
     implementation libs.lmdbjava

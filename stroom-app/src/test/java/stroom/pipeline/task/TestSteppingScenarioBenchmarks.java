@@ -179,7 +179,7 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
             start = System.currentTimeMillis();
             SteppingResult result = steppingService.step(base.copy()
                     .stepType(StepType.REFRESH)
-                    .stepLocation(new StepLocation(metaId, partIndex, midRecord))
+                    .stepLocation(new StepLocation((long) metaId, (long) partIndex, (long) midRecord))
                     .sessionUuid(sessionUuid)
                     .code(Map.of(EDITED_ELEMENT_ID, editedXslt(xsltText, ++edit)))
                     .build());
@@ -206,7 +206,7 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
                 start = System.currentTimeMillis();
                 result = steppingService.step(base.copy()
                         .stepType(StepType.REFRESH)
-                        .stepLocation(new StepLocation(metaId, partIndex, midRecord))
+                        .stepLocation(new StepLocation((long) metaId, (long) partIndex, (long) midRecord))
                         .sessionUuid(sessionUuid)
                         .code(Map.of(EDITED_ELEMENT_ID, editedXslt(xsltText, ++edit)))
                         .build());
@@ -381,7 +381,7 @@ class TestSteppingScenarioBenchmarks extends TranslationTest {
             sessionUuid = last.getSessionUuid();
             assertThat(last.isFoundRecord()).as("LAST completed the sweep").isTrue();
             final StepLocation record0 =
-                    new StepLocation(metaId, last.getFoundLocation().getPartIndex(), 0);
+                    new StepLocation((long) metaId, (long) last.getFoundLocation().getPartIndex(), 0L);
 
             for (final int window : windows) {
                 setConfigValueMapper(SteppingConfig.class,

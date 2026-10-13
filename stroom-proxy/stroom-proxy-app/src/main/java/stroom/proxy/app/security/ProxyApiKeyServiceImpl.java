@@ -408,9 +408,9 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
 
         @JsonCreator
         VerifiedApiKeys(@JsonProperty("verifiedApiKeys") final Set<VerifiedApiKey> verifiedApiKeys,
-                        @JsonProperty("snapshotTimeEpochMs") final long snapshotTimeEpochMs) {
+                        @JsonProperty("snapshotTimeEpochMs") final Long snapshotTimeEpochMs) {
             this.verifiedApiKeys = NullSafe.unmodifialbeSet(verifiedApiKeys);
-            this.snapshotTimeEpochMs = snapshotTimeEpochMs;
+            this.snapshotTimeEpochMs = Objects.requireNonNullElse(snapshotTimeEpochMs, 0L);
         }
 
         public Set<VerifiedApiKey> getVerifiedApiKeys() {
@@ -465,14 +465,14 @@ public class ProxyApiKeyServiceImpl implements ProxyApiKeyService {
                        @JsonProperty("prefix") final String prefix,
                        @JsonProperty("hashedApiKey") final String hashedApiKey,
                        @JsonProperty("requiredAppPermissions") final AppPermissionSet requiredAppPermissions,
-                       @JsonProperty("lastVerifiedEpochMs") final long lastVerifiedEpochMs,
+                       @JsonProperty("lastVerifiedEpochMs") final Long lastVerifiedEpochMs,
                        @JsonProperty("userDesc") final UserDesc userDesc) {
             this.hashAlgorithm = Objects.requireNonNull(hashAlgorithm);
             this.prefix = Objects.requireNonNull(prefix);
             this.hashedApiKey = Objects.requireNonNull(hashedApiKey);
             this.requiredAppPermissions = Objects.requireNonNullElseGet(requiredAppPermissions,
                     AppPermissionSet::empty);
-            this.lastVerifiedEpochMs = lastVerifiedEpochMs;
+            this.lastVerifiedEpochMs = Objects.requireNonNullElse(lastVerifiedEpochMs, 0L);
             this.userDesc = userDesc;
         }
 

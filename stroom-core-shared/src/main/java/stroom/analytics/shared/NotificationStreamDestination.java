@@ -38,10 +38,10 @@ public final class NotificationStreamDestination extends NotificationDestination
     @JsonCreator
     public NotificationStreamDestination(
             @JsonProperty("destinationFeed") final DocRef destinationFeed,
-            @JsonProperty("useSourceFeedIfPossible") final boolean useSourceFeedIfPossible) {
+            @JsonProperty("useSourceFeedIfPossible") final Boolean useSourceFeedIfPossible) {
 
         this.destinationFeed = destinationFeed;
-        this.useSourceFeedIfPossible = useSourceFeedIfPossible;
+        this.useSourceFeedIfPossible = Objects.requireNonNullElse(useSourceFeedIfPossible, false);
     }
 
     public DocRef getDestinationFeed() {

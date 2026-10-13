@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class AiChatPollResponse {
@@ -43,11 +44,11 @@ public class AiChatPollResponse {
     public AiChatPollResponse(@JsonProperty("newMessages") final List<AiChatMessage> newMessages,
                               @JsonProperty("attachments") final List<AiChatAttachment> attachments,
                               @JsonProperty("workingMessage") final AiChatMessage workingMessage,
-                              @JsonProperty("complete") final boolean complete) {
+                              @JsonProperty("complete") final Boolean complete) {
         this.newMessages = newMessages;
         this.attachments = attachments;
         this.workingMessage = workingMessage;
-        this.complete = complete;
+        this.complete = Objects.requireNonNullElse(complete, false);
     }
 
     public List<AiChatMessage> getNewMessages() {

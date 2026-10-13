@@ -33,7 +33,7 @@ class TestStreamSweep {
     }
 
     private StepLocation loc(final long record) {
-        return new StepLocation(META, 0, record);
+        return new StepLocation((long) META, 0L, (long) record);
     }
 
     @Test

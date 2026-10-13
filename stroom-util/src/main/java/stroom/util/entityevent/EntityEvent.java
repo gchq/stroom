@@ -19,6 +19,7 @@ package stroom.util.entityevent;
 import stroom.docref.DocRef;
 import stroom.util.json.JsonUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.SerialisationTestConstructor;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -48,9 +49,12 @@ public class EntityEvent {
     @JsonProperty
     private final EntityAction action;
 
+    /// IF data is used, this is the class name of the serialized data.
     @JsonProperty
     private final String dataClassName;
 
+    /// This is additional event data in JSON form. Both sender and receiver should know how to parse it.
+    /// For simple string/long/int data, this is just the string form of the value.
     @JsonProperty
     private final String data;
 
@@ -157,6 +161,16 @@ public class EntityEvent {
     }
 
     /**
+     * Starts building an event-firing operation.
+     *
+     * @param eventBus The event bus to fire the event on.
+     * @return A builder that requires the document reference and action to be supplied.
+     */
+    public static FiringBuilder buildFiring(final EntityEventBus eventBus) {
+        return new FiringBuilder(eventBus);
+    }
+
+    /**
      * @return The {@link DocRef} of the {@link stroom.util.shared.Document} affected by this event,
      * as it is after the event happened.
      */
@@ -203,11 +217,62 @@ public class EntityEvent {
 
     /**
      * @return Additional data relating to the event. The data is JSON and the structure should
-     * be expected and understood by sender and receiver. The format of the data will likely be
-     * specific to the docRef.
+     * be expected and understood by sender and receiver. The format of the data will be
+     * specific to the use case for the event type.
      */
     public String getData() {
         return data;
+    }
+
+    /// When the entity event data is expected to be a simple string value, return the string value.
+    ///
+    /// @throws IllegalArgumentException if dataClassName does not match String.class.getName()
+    @JsonIgnore
+    public String getDataAsString() {
+        final String expectedClassName = String.class.getName();
+        if (expectedClassName.equals(dataClassName)) {
+            return data;
+        } else {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "dataClassName '{}' does not match '{}'", dataClassName, expectedClassName));
+        }
+    }
+
+    /// When the entity event data is expected to be a simple {@link Long} value, return the {@link Long} value.
+    ///
+    /// @throws IllegalArgumentException if dataClassName does not match Long.class.getName()
+    @JsonIgnore
+    public Long getDataAsLong() {
+        final String expectedClassName = Long.class.getName();
+        if (expectedClassName.equals(dataClassName)) {
+            if (NullSafe.isNonBlankString(data)) {
+                return Long.parseLong(data.trim());
+            } else {
+                return null;
+            }
+        } else {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "dataClassName '{}' does not match '{}'", dataClassName, expectedClassName));
+        }
+    }
+
+    /// When the entity event data is expected to be a simple {@link Integer} value,
+    /// return the {@link Integer} value.
+    ///
+    /// @throws IllegalArgumentException if dataClassName does not match Integer.class.getName()
+    @JsonIgnore
+    public Integer getDataAsInteger() {
+        final String expectedClassName = Integer.class.getName();
+        if (expectedClassName.equals(dataClassName)) {
+            if (NullSafe.isNonBlankString(data)) {
+                return Integer.parseInt(data.trim());
+            } else {
+                return null;
+            }
+        } else {
+            throw new IllegalArgumentException(LogUtil.message(
+                    "dataClassName '{}' does not match '{}'", dataClassName, expectedClassName));
+        }
     }
 
     /**
@@ -237,10 +302,13 @@ public class EntityEvent {
         }
     }
 
+    /// A helper metod for when you want part of the EntityData
     public <T extends EntityEventData, R> R getDataObjectAs(@NonNull final Class<T> dataClass,
                                                             @NonNull final Function<T, R> mapper) {
+        Objects.requireNonNull(dataClass, "dataClass must not be null");
         final T data = getDataObject(dataClass);
-        return mapper.apply(data);
+        return Objects.requireNonNull(mapper, "mapper must not be null")
+                .apply(data);
     }
 
     public EntityEventKey asEntityEventKey() {
@@ -276,6 +344,7 @@ public class EntityEvent {
         return Objects.hash(docRef, oldDocRef, action, dataClassName, data);
     }
 
+
     // --------------------------------------------------------------------------------
 
 
@@ -293,12 +362,206 @@ public class EntityEvent {
 
 
     /**
-     * Marker interface for all classes used to provide additional {@link EntityEvent} data.
-     * <p>
-     * Implementations must use Jackson annotations so they can be (de)serialised to JSON.
-     * </p>
+     * The first stage of an event firing builder.
      */
-    public interface EntityEventData {
+    public static final class FiringBuilder {
 
+        private final EntityEventBus eventBus;
+        private DocRef docRef;
+        private DocRef oldDocRef;
+        private EntityAction action;
+        private String dataClassName;
+        private String data;
+        private EntityEventData entityEventData;
+
+        private FiringBuilder(final EntityEventBus eventBus) {
+            this.eventBus = eventBus;
+        }
+
+        /**
+         * Sets the document reference affected by the event.
+         *
+         * @param docRef The document reference.
+         * @return The stage that accepts the optional old document reference or action.
+         */
+        public DocRefStage withDocRef(final DocRef docRef) {
+            this.docRef = Objects.requireNonNull(docRef, "docRef");
+            return new DocRefStage(this);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The builder stage after the current document reference has been supplied.
+     */
+    public static final class DocRefStage {
+
+        private final FiringBuilder builder;
+
+        private DocRefStage(final FiringBuilder builder) {
+            this.builder = builder;
+        }
+
+        /**
+         * Sets the document reference before a rename.
+         *
+         * @param oldDocRef The document reference before the event.
+         * @return The stage that accepts the action.
+         */
+        public OldDocRefStage withOldDocRef(final DocRef oldDocRef) {
+            builder.oldDocRef = Objects.requireNonNull(oldDocRef, "oldDocRef");
+            return new OldDocRefStage(builder);
+        }
+
+        /**
+         * Sets the action performed on the document.
+         *
+         * @param action The event action.
+         * @return The stage that accepts optional event data and can fire the event.
+         */
+        public ActionStage withAction(final EntityAction action) {
+            builder.action = Objects.requireNonNull(action, "action");
+            return new ActionStage(builder);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The builder stage after the old document reference has been supplied.
+     */
+    public static final class OldDocRefStage {
+
+        private final FiringBuilder builder;
+
+        private OldDocRefStage(final FiringBuilder builder) {
+            this.builder = builder;
+        }
+
+        /**
+         * Sets the action performed on the document.
+         *
+         * @param action The event action.
+         * @return The stage that accepts optional event data and can fire the event.
+         */
+        public ActionStage withAction(final EntityAction action) {
+            builder.action = Objects.requireNonNull(action, "action");
+            return new ActionStage(builder);
+        }
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * The builder stage after the action has been supplied.
+     */
+    public static final class ActionStage {
+
+        private final FiringBuilder builder;
+
+        private ActionStage(final FiringBuilder builder) {
+            this.builder = builder;
+        }
+
+        /**
+         * Sets additional event data that will be serialised as JSON.
+         *
+         * @param entityEventData The additional event data.
+         * @return This stage.
+         */
+        public ActionStage withData(final EntityEventData entityEventData) {
+            builder.dataClassName = null;
+            builder.data = null;
+            builder.entityEventData = entityEventData;
+            return this;
+        }
+
+        /**
+         * Sets additional event data that has already been serialised as JSON.
+         *
+         * @param dataClassName The fully qualified class name of the data.
+         * @param json          The JSON encoded data.
+         * @return This stage.
+         */
+        public ActionStage withJsonData(final String dataClassName, final String json) {
+            builder.dataClassName = dataClassName;
+            builder.data = json;
+            builder.entityEventData = null;
+            return this;
+        }
+
+        /**
+         * Sets additional event data that is a simple string, i.e. a single field value, e.g. a name.
+         *
+         * @param strValue The string value.
+         * @return This stage.
+         */
+        public ActionStage withStringData(@Nullable final String strValue) {
+            builder.dataClassName = String.class.getName();
+            builder.data = strValue;
+            builder.entityEventData = null;
+            return this;
+        }
+
+        /**
+         * Sets additional event data that is a simple long, i.e. a single field value, e.g. an ID.
+         *
+         * @param longValue The long value.
+         * @return This stage.
+         */
+        public ActionStage withLongData(@Nullable final Long longValue) {
+            builder.dataClassName = Long.class.getName();
+            builder.data = longValue != null
+                    ? longValue.toString()
+                    : null;
+            builder.entityEventData = null;
+            return this;
+        }
+
+        /**
+         * Sets additional event data that is a simple integer, i.e. a single field value, e.g. an ID.
+         *
+         * @param intValue The integer value.
+         * @return This stage.
+         */
+        public ActionStage withIntData(@Nullable final Integer intValue) {
+            builder.dataClassName = Integer.class.getName();
+            builder.data = intValue != null
+                    ? intValue.toString()
+                    : null;
+            builder.entityEventData = null;
+            return this;
+        }
+
+        /**
+         * Validates the builder and fires the event.
+         */
+        public void fire() {
+            final DocRef docRef = Objects.requireNonNull(builder.docRef, "docRef");
+            final EntityAction action = Objects.requireNonNull(builder.action, "action");
+            if (builder.eventBus != null) {
+                if (builder.entityEventData != null) {
+                    builder.eventBus.fire(new EntityEvent(
+                            docRef,
+                            builder.oldDocRef,
+                            action,
+                            builder.entityEventData));
+                } else {
+                    builder.eventBus.fire(new EntityEvent(
+                            docRef,
+                            builder.oldDocRef,
+                            action,
+                            builder.dataClassName,
+                            builder.data));
+                }
+            }
+        }
     }
 }

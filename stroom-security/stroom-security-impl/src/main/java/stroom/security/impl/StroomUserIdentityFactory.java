@@ -194,7 +194,7 @@ public class StroomUserIdentityFactory
         // First see if the optional insecure test credential is presented (only enabled in test/demo when
         // the environment explicitly opts in), then a Stroom API key, then the internally-signed inter-node
         // processing-user token, else see if we have a valid JWT.
-        return getInsecureTestServiceUserIdentity(request)
+        final Optional<AuthenticatedCredential> optCred = getInsecureTestServiceUserIdentity(request)
                 .map(identity -> new AuthenticatedCredential(identity, CredentialSource.TEST_CREDENTIAL))
                 .or(() -> apiKeyService.fetchVerifiedIdentity(request)
                         .map(identity -> new AuthenticatedCredential(identity, CredentialSource.API_KEY)))
@@ -202,6 +202,8 @@ public class StroomUserIdentityFactory
                         .map(identity -> new AuthenticatedCredential(identity, CredentialSource.CLUSTER_TOKEN)))
                 .or(() -> super.getApiUserIdentity(request)
                         .map(identity -> new AuthenticatedCredential(identity, CredentialSource.REQUEST_TOKEN)));
+        LOGGER.debug("getApiCredential() - request: {}, opCred: {}", request, optCred);
+        return optCred;
     }
 
     /**

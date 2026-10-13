@@ -39,7 +39,7 @@ public class FsVolumeCache implements EntityEvent.Handler, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeCache.class);
     private static final String CACHE_NAME = "Volume Cache";
 
-    private final LoadingStroomCache<Integer, FsVolume> cache;
+    private final LoadingStroomCache<Integer, FsVolume> idToVolumeCache;
     private final FsVolumeDao fsVolumeDao;
 
     @Inject
@@ -50,14 +50,14 @@ public class FsVolumeCache implements EntityEvent.Handler, Clearable {
 
         // We have no change handlers due to the complexity of the number of things that can affect this
         // cache, so keep the time short and expire after write, not access.
-        cache = cacheManager.createLoadingCache(
+        idToVolumeCache = cacheManager.createLoadingCache(
                 CACHE_NAME,
                 () -> volumeConfigProvider.get().getVolumeCache(),
                 this::create);
     }
 
     public FsVolume get(final int id) {
-        final FsVolume fsVolume = cache.get(id);
+        final FsVolume fsVolume = idToVolumeCache.get(id);
         LOGGER.debug("get() - id: {}, fsVolume: {}", id, fsVolume);
         return fsVolume;
     }
@@ -71,27 +71,20 @@ public class FsVolumeCache implements EntityEvent.Handler, Clearable {
     @Override
     public void clear() {
         LOGGER.debug("clear()");
-        cache.clear();
+        idToVolumeCache.clear();
     }
 
     @Override
     public void onChange(final EntityEvent event) {
         LOGGER.debug("onChange() - event: {}", event);
         if (event != null) {
-            if (event.getDocRef() != null) {
-                try {
-                    // Abuse of uuid for the volume ID, but if the ID is not know, the
-                    // UUID will be same as the type.
-                    final int id = Integer.parseInt(event.getDocRef().getUuid());
-                    LOGGER.debug("onChange() - Invalidating entry with ID {}, event: {}", id, event);
-                    cache.invalidate(id);
-                } catch (final NumberFormatException e) {
-                    LOGGER.debug("onChange() - No ID, clearing cache, event: {}", event);
-                    cache.clear();
-                }
+            final Integer id = event.getDataAsInteger();
+            if (id != null) {
+                LOGGER.debug("onChange() - Invalidating entry with ID {}, event: {}", id, event);
+                idToVolumeCache.invalidate(id);
             } else {
-                LOGGER.debug("onChange() - No docRef, clearing cache, event: {}", event);
-                cache.clear();
+                LOGGER.debug("onChange() - No id, clearing cache, event: {}", event);
+                idToVolumeCache.clear();
             }
         }
     }

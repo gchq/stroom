@@ -44,8 +44,8 @@ public final class ValFloat implements ValNumber {
     private final transient LazyBoolean lazyHasFractionalPart;
 
     @JsonCreator
-    private ValFloat(@JsonProperty("value") final float value) {
-        this.value = value;
+    private ValFloat(@JsonProperty("value") final Float value) {
+        this.value = Objects.requireNonNullElse(value, 0F);
         this.lazyStringValue = LazyValue.initialisedBy(this::deriveStringValue);
         this.lazyHasFractionalPart = LazyBoolean.initialisedBy(this::deriveHasFractionalPart);
     }

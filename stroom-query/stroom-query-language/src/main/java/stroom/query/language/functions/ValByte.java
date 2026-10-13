@@ -35,8 +35,8 @@ public final class ValByte implements ValNumber {
     private final byte value;
 
     @JsonCreator
-    private ValByte(@JsonProperty("value") final byte value) {
-        this.value = value;
+    private ValByte(@JsonProperty("value") final Byte value) {
+        this.value = Objects.requireNonNullElse(value, (byte) 0);
     }
 
     public byte getValue() {

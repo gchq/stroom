@@ -28,10 +28,11 @@ import stroom.security.api.UserService;
 import stroom.security.common.impl.ContentSecurityFilter;
 import stroom.security.common.impl.DelegatingServiceUserFactory;
 import stroom.security.common.impl.ExternalIdpConfigurationProvider;
-import stroom.security.common.impl.HashFunctionFactoryImpl;
 import stroom.security.common.impl.IdpConfigurationProvider;
 import stroom.security.common.impl.JwtContextFactory;
 import stroom.security.common.impl.RefreshManager;
+import stroom.security.common.impl.hash.HashFunctionFactoryImpl;
+import stroom.security.impl.apikey.ApiKeyModule;
 import stroom.security.impl.apikey.ApiKeyObjectInfoProvider;
 import stroom.security.impl.apikey.ApiKeyResourceImpl;
 import stroom.security.impl.apikey.CreateHashedApiKeyResponseObjectInfoProvider;
@@ -60,6 +61,7 @@ public class SecurityModule extends AbstractModule {
 
     @Override
     protected void configure() {
+        install(new ApiKeyModule());
         install(new PermissionChangeEventModule());
         install(new PermissionChangeEventLifecycleModule());
 

@@ -39,7 +39,6 @@ dependencies {
     implementation project(':stroom-util')
     implementation project(':stroom-util-shared')
 
-    implementation libs.bcrypt
     implementation libs.bouncy.castle
     implementation libs.commons.csv
     implementation libs.commons.lang
@@ -48,12 +47,14 @@ dependencies {
     implementation libs.eventLogging
     implementation libs.guice
     implementation libs.http.client
+    implementation libs.jackson.annotations
     implementation libs.jackson.databind
     implementation libs.jakarta.servlet.api
     implementation libs.jooq
     implementation libs.jose4j
     implementation libs.mysql.connector.java
     implementation libs.restygwt
+    implementation libs.spring.security.crypto
     implementation libs.swagger.annotations
     implementation libs.ws.rs.api
 

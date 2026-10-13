@@ -186,7 +186,7 @@ class TestSteppingContextLookup extends TranslationTest {
             // here, it cannot be shown to have survived anything.
             swept = steppingService.step(base.copy()
                     .stepType(StepType.REFRESH)
-                    .stepLocation(new StepLocation(metaId, 0, MID_RECORD))
+                    .stepLocation(new StepLocation((long) metaId, 0L, (long) MID_RECORD))
                     .sessionUuid(last.getSessionUuid())
                     .build());
             assertThat(swept.isFoundRecord()).as("the sweep found record " + MID_RECORD).isTrue();
@@ -207,7 +207,7 @@ class TestSteppingContextLookup extends TranslationTest {
             // upstream output, with no sweep running alongside it to have set the input stream provider.
             final SteppingResult replayed = steppingService.step(base.copy()
                     .stepType(StepType.REFRESH)
-                    .stepLocation(new StepLocation(metaId, 0, MID_RECORD))
+                    .stepLocation(new StepLocation((long) metaId, 0L, (long) MID_RECORD))
                     .sessionUuid(swept.getSessionUuid())
                     .code(Map.of(PROBE_ELEMENT_ID, PROBE_XSLT))
                     .build());

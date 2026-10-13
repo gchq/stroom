@@ -82,9 +82,15 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Singleton
+// We need to know about changes to volume groups AND volumes as we hold a cache of current volumes
+// grouped by their names, so a volume group may get renamed
 @EntityEventHandler(type = FsVolumeServiceImpl.ENTITY_TYPE, action = {
         EntityAction.CREATE,
         EntityAction.UPDATE,
+        EntityAction.DELETE})
+@EntityEventHandler(type = FsVolumeGroupServiceImpl.ENTITY_TYPE, action = {
+        EntityAction.UPDATE,
+        EntityAction.CREATE,
         EntityAction.DELETE})
 public class FsVolumeServiceImpl implements FsVolumeService {
 
@@ -93,6 +99,8 @@ public class FsVolumeServiceImpl implements FsVolumeService {
     private static final String LOCK_NAME = "REFRESH_FS_VOLUMES";
     private static final String S3_VOLUME_CACHE_NAME = "S3 Volume Cache";
     static final String ENTITY_TYPE = "FILE_SYSTEM_VOLUME";
+    static final DocRef EVENT_DOCREF = new DocRef(ENTITY_TYPE, ENTITY_TYPE, ENTITY_TYPE);
+
     protected static final String TEMP_FILE_PREFIX = "stroomFsVolVal";
 
     private final FsVolumeDao fsVolumeDao;
@@ -453,7 +461,15 @@ public class FsVolumeServiceImpl implements FsVolumeService {
     @Override
     public void onChange(final EntityEvent event) {
         LOGGER.debug("onChange() - event: {}", event);
-        clearCurrentVolumeList();
+        final EntityAction action = event.getAction();
+        if (action == EntityAction.CREATE
+            || action == EntityAction.UPDATE
+            || action == EntityAction.DELETE) {
+
+            // Changes to volumes/groups are pretty rare so the blunt approach of clearing the whole
+            // cache is OK.
+            clearCurrentVolumeList();
+        }
     }
 
     private synchronized void clearCurrentVolumeList() {
@@ -464,28 +480,17 @@ public class FsVolumeServiceImpl implements FsVolumeService {
     private void fireChange(final Integer id, final EntityAction action) {
         LOGGER.debug("fireChange() - id: {}, action: {}", id, action);
         clearCurrentVolumeList();
-        if (entityEventBusProvider != null) {
+        NullSafe.consume(entityEventBusProvider, Provider::get, entityEventBus -> {
             try {
-                final EntityEventBus entityEventBus = entityEventBusProvider.get();
-                if (entityEventBus != null) {
-                    entityEventBus.fire(createEntityEvent(id, action));
-                }
-            } catch (final RuntimeException e) {
+                entityEventBus.buildFiring()
+                        .withDocRef(EVENT_DOCREF)
+                        .withAction(action)
+                        .withIntData(id)
+                        .fire();
+            } catch (final Exception e) {
                 LOGGER.error(e::getMessage, e);
             }
-        }
-    }
-
-    private EntityEvent createEntityEvent(final Integer id, final EntityAction action) {
-        // Abuse the uuid field with id as we have no uuid.
-        final String uuid = NullSafe.getOrElse(id, String::valueOf, ENTITY_TYPE);
-        return new EntityEvent(
-                DocRef.builder()
-                        .type(ENTITY_TYPE)
-                        .uuid(uuid)
-                        .name(ENTITY_TYPE)
-                        .build(),
-                action);
+        });
     }
 
     /**

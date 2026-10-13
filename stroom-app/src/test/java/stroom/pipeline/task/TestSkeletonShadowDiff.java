@@ -146,7 +146,7 @@ class TestSkeletonShadowDiff extends TranslationTest {
             for (final long deep : new long[]{RECORD_COUNT / 2, RECORD_COUNT - 2, RECORD_COUNT - 1}) {
                 final SteppingResult refreshed = steppingService.step(base.copy()
                         .stepType(StepType.REFRESH)
-                        .stepLocation(new StepLocation(metaId, 0, deep))
+                        .stepLocation(new StepLocation((long) metaId, 0L, (long) deep))
                         .sessionUuid(sessionUuid)
                         .build());
                 sessionUuid = refreshed.getSessionUuid();

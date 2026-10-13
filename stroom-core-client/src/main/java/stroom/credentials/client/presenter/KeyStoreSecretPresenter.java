@@ -35,8 +35,8 @@ import java.util.UUID;
 import java.util.function.Consumer;
 import javax.inject.Inject;
 
-public class KeyStoreSecretPresenter
-        extends MyPresenterWidget<KeyStoreSecretView> {
+public final class KeyStoreSecretPresenter
+        extends MyPresenterWidget<KeyStoreSecretView> implements SecretPresenter<KeyStoreSecretView> {
 
     private ResourceKey resourceKey;
     private Consumer<Boolean> afterSubmitConsumer;

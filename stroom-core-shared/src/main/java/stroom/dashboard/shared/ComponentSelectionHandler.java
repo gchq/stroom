@@ -48,11 +48,11 @@ public class ComponentSelectionHandler {
     public ComponentSelectionHandler(@JsonProperty("id") final String id,
                                      @JsonProperty("componentId") final String componentId,
                                      @JsonProperty("expression") final ExpressionOperator expression,
-                                     @JsonProperty("enabled") final boolean enabled) {
+                                     @JsonProperty("enabled") final Boolean enabled) {
         this.id = id;
         this.componentId = componentId;
         this.expression = expression;
-        this.enabled = enabled;
+        this.enabled = Objects.requireNonNullElse(enabled, false);
     }
 
     public String getId() {

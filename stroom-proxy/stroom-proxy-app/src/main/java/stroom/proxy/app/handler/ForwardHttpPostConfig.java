@@ -182,7 +182,8 @@ public final class ForwardHttpPostConfig
     }
 
     @JsonProperty
-    @JsonPropertyDescription("The API key to use when forwarding data if Stroom is configured to require an API key.")
+    @JsonPropertyDescription("The API key to use when forwarding data if Stroom is configured to require " +
+                             "an API key. This will override any API key configured on the downstream host.")
     public String getApiKey() {
         return apiKey;
     }
@@ -190,7 +191,7 @@ public final class ForwardHttpPostConfig
     /**
      * If true, add Open ID authentication headers to the request. Only works if the identityProviderType
      * is EXTERNAL_IDP and the destination is in the same Open ID Connect realm as the OIDC client that this
-     * proxy instance is using.
+     * proxy instance is using. This will be ignored if an API key is configured on this forwarder.
      */
     @JsonProperty
     public boolean isAddOpenIdAccessToken() {

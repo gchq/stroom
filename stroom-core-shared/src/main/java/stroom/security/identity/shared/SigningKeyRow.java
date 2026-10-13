@@ -50,11 +50,11 @@ public class SigningKeyRow {
     private final Long expiresMs;
 
     @JsonCreator
-    public SigningKeyRow(@JsonProperty("id") final int id,
+    public SigningKeyRow(@JsonProperty("id") final Integer id,
                          @JsonProperty("status") final SigningKeyStatus status,
                          @JsonProperty("issuedMs") final Long issuedMs,
                          @JsonProperty("expiresMs") final Long expiresMs) {
-        this.id = id;
+        this.id = Objects.requireNonNullElse(id, 0);
         this.status = status;
         this.issuedMs = issuedMs;
         this.expiresMs = expiresMs;

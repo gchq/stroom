@@ -57,7 +57,7 @@ public class Meta implements SimpleMeta {
     }
 
     @JsonCreator
-    public Meta(@JsonProperty("id") final long id,
+    public Meta(@JsonProperty("id") final Long id,
                 @JsonProperty("feedName") final String feedName,
                 @JsonProperty("typeName") final String typeName,
                 @JsonProperty("processorUuid") final String processorUuid,
@@ -67,10 +67,10 @@ public class Meta implements SimpleMeta {
                 @JsonProperty("parentMetaId") final Long parentMetaId,
                 @JsonProperty("status") final Status status,
                 @JsonProperty("statusMs") final Long statusMs,
-                @JsonProperty("createMs") final long createMs,
+                @JsonProperty("createMs") final Long createMs,
                 @JsonProperty("effectiveMs") final Long effectiveMs,
-                @JsonProperty("readOnly") final boolean readOnly) {
-        this.id = id;
+                @JsonProperty("readOnly") final Boolean readOnly) {
+        this.id = Objects.requireNonNullElse(id, 0L);
         this.feedName = feedName;
         this.typeName = typeName;
         this.processorUuid = processorUuid;
@@ -80,9 +80,9 @@ public class Meta implements SimpleMeta {
         this.parentMetaId = parentMetaId;
         this.status = status;
         this.statusMs = statusMs;
-        this.createMs = createMs;
+        this.createMs = Objects.requireNonNullElse(createMs, 0L);
         this.effectiveMs = effectiveMs;
-        this.readOnly = readOnly;
+        this.readOnly = Objects.requireNonNullElse(readOnly, false);
     }
 
     public long getId() {

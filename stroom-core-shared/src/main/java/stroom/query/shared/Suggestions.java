@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder(alphabetic = true)
 @JsonInclude(Include.NON_NULL)
@@ -42,9 +43,9 @@ public class Suggestions {
 
     @JsonCreator
     public Suggestions(@JsonProperty("list") final List<String> list,
-                       @JsonProperty("cacheable") final boolean cacheable) {
+                       @JsonProperty("cacheable") final Boolean cacheable) {
         this.list = list;
-        this.cacheable = cacheable;
+        this.cacheable = Objects.requireNonNullElse(cacheable, false);
     }
 
     public List<String> getList() {

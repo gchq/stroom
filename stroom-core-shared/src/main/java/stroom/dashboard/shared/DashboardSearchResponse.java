@@ -94,7 +94,7 @@ public class DashboardSearchResponse {
                                    @JsonProperty("highlights") final Set<String> highlights,
                                    @JsonProperty("errors") final List<String> errors,
                                    @JsonProperty("tokenError") final TokenError tokenError,
-                                   @JsonProperty("complete") final boolean complete,
+                                   @JsonProperty("complete") final Boolean complete,
                                    @JsonProperty("results") final List<Result> results,
                                    @JsonProperty("errorMessages") final List<ErrorMessage> errorMessages) {
         this.node = node;
@@ -102,7 +102,7 @@ public class DashboardSearchResponse {
         this.highlights = highlights;
         this.errors = errors;
         this.tokenError = tokenError;
-        this.complete = complete;
+        this.complete = Objects.requireNonNullElse(complete, false);
         this.results = results;
         this.errorMessages = errorMessages;
     }

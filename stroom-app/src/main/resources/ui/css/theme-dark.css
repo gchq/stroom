@@ -33,6 +33,7 @@
     --text-color--disabled: #999;
     --text-color--disabled--selected: #ccc;
     --text-color--red: var(--red-400);
+    --text-color--red--selected: var(--red-200);
     --text-color--green: var(--green-500);
     --text-color--red--dark: var(--red-900);
     --text-color--green--dark: var(--green-700);
@@ -60,6 +61,7 @@
     --row__box-shadow--focussed: inset 0 0 2px 1px #81cdff;
     --row__box-shadow--selected--focussed: inset 0 0 2px 1px #81cdff;
     --row__text-color--selected: var(--text-color--selected);
+    --row__text-color--red--selected: var(--text-color--red--selected);
 
     --menu-separator__color: rgb(255 255 255 / 20%);
 
