@@ -195,9 +195,7 @@ public class QueryResultVisPresenter
         registerHandler(getEventBus().addHandler(ChangeCurrentPreferencesEvent.getType(), event ->
                 visFrame.setClassName(getClassName(event.getTheme()))));
 
-        registerHandler(getView().getRefreshButton().addClickHandler(e -> {
-            setPause(!pause, true);
-        }));
+        getView().getRefreshButton().setOnClick(() -> setPause(!pause, true));
     }
 
     private void setPause(final boolean pause,

@@ -20,14 +20,16 @@ import stroom.data.pager.client.RefreshButton;
 import stroom.gwt.workbench.client.StoryPanels;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
+import stroom.widget.button.client.Toolbar;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 
 import java.util.function.Consumer;
 
 /// Stories for [RefreshButton], a list's refresh button, which shows whether the list is refreshing
-/// and, when it refreshes itself, whether that is paused. Its states are layered icons, so these
-/// are mainly for screenshots (`workbenchScreenshotDiff`); animations are stopped in them.
+/// and, when it refreshes itself, whether that is paused. Each is made by [Toolbar#refresh], in a
+/// toolbar of its own. Its states are layered icons, so these are mainly for screenshots
+/// (`workbenchScreenshotDiff`); animations are stopped in them.
 public final class RefreshButtonStories {
 
     private RefreshButtonStories() {
@@ -91,9 +93,10 @@ public final class RefreshButtonStories {
                 });
     }
 
-    private static RefreshButton refreshButton(final Consumer<RefreshButton> setUp) {
-        final RefreshButton button = new RefreshButton();
-        setUp.accept(button);
-        return button;
+    // A toolbar holding a refresh button, set up as the story needs, that does nothing when pressed
+    private static Toolbar refreshButton(final Consumer<RefreshButton> setUp) {
+        final Toolbar toolbar = new Toolbar("Paging");
+        setUp.accept(toolbar.refresh(null));
+        return toolbar;
     }
 }

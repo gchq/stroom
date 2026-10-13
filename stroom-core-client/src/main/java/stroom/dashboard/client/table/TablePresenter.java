@@ -408,7 +408,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
 
 
-        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
+        pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
 
         registerHandler(getEventBus().addHandler(
                 AnnotationChangeEvent.getType(),

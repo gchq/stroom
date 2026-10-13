@@ -524,15 +524,20 @@
     height: 100%;
 }
 
+/* A visualisation's toolbar (its pause and resume button), over its top right corner. Not
+   visibility: hidden, which left its icon showing but took the button itself out of the tab order
+   and away from screen readers */
 .dashboardVis-refresh {
 	position: absolute;
 	right: 9px;
 	top: 27px;
 	z-index: 5;
+	margin: 0;
+}
+
+.dashboardVis-refresh > .toolbar-button {
 	width: 18px;
 	height: 18px;
-	/* Not visibility: hidden, which left its icon showing but took the button itself out of the
-	   tab order and away from screen readers */
 }
 
 .DashboardViewImpl-content .dashboardVis-refresh {

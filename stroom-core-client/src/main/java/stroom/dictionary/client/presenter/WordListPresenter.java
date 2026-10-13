@@ -84,9 +84,7 @@ public class WordListPresenter extends MyPresenterWidget<PagerView> implements R
 
         initTableColumns();
 
-        registerHandler(view.getRefreshButton().addClickHandler(event -> {
-            refresh();
-        }));
+        view.getRefreshButton().setOnClick(this::refresh);
     }
 
     private void fetchData() {

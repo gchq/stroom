@@ -601,6 +601,12 @@ over the end of the box) as regular toolbar buttons, so they are one tab stop wi
 between them. Its help icon is the same size and colour everywhere (it was smaller, in the
 navigation colour, inside a form group), and Clear sits a toolbar gap from the help button (it
 overlapped it by a pixel).
+`RefreshButton` is a `ToolbarButton` itself (it was a `Composite` holding one), so it is one of its
+toolbar's buttons like any other: declared in the pagers' and data navigators' toolbars as before, or
+made by `Toolbar.refresh(onClick)`. Presenters set what it does with `setOnClick`. A visualisation's
+pause and resume button, which was on its own, is in a toolbar of its own ("Visualisation",
+`dashboardVis-refresh`, placed where the button was). The pagers, navigators and visualisations look
+as they did.
 
 ### Opening a screen leaves the focus behind (#5405)
 

@@ -338,7 +338,7 @@ public class QueryResultTablePresenter
 //            }
 //        }));
 
-        registerHandler(pagerView.getRefreshButton().addClickHandler(event -> setPause(!pause, true)));
+        pagerView.getRefreshButton().setOnClick(() -> setPause(!pause, true));
 
         registerHandler(expandButton.addClickHandler(event -> {
             groupSelection = expandButton.expand(groupSelection, maxDepth);
