@@ -16,6 +16,7 @@
 
 package stroom.gwt.workbench.client.widgets.inputs;
 
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.shared.EditableLong;
 import stroom.data.client.presenter.ColumnSizeConstants;
@@ -36,7 +37,6 @@ import stroom.query.api.UserTimeZone;
 import stroom.query.client.view.TimeRangeSelector;
 import stroom.query.client.view.TimeZoneWidget;
 import stroom.schedule.client.ScheduleBox;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.scheduler.Schedule;
@@ -327,8 +327,8 @@ public final class ViewStateStories {
                         .build(),
                 DataGridUtil.headingBuilder("Max Tasks").build(),
                 80);
-        grid.addColumn(DataGridUtil.svgPresetColumnBuilder(true,
-                                (Job job) -> SvgPresets.DELETE.enabled(editable))
+        grid.addColumn(DataGridUtil.cellIconColumnBuilder(true,
+                                (Job job) -> CellIcon.of(SvgImage.DELETE, "Delete", editable))
                         .build(),
                 DataGridUtil.headingBuilder("").build(),
                 ColumnSizeConstants.ICON_COL);

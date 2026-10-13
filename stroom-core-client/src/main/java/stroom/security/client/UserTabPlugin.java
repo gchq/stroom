@@ -23,8 +23,7 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.event.OpenUserEvent;
 import stroom.security.client.presenter.UserTabPresenter;
 import stroom.security.shared.AppPermission;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.shared.UserRef;
 
 import com.google.gwt.core.client.GWT;
@@ -37,8 +36,8 @@ import javax.inject.Singleton;
 @Singleton
 public class UserTabPlugin extends AbstractTabPresenterPlugin<UserRef, UserTabPresenter> {
 
-    public static final Preset USER_ICON = SvgPresets.USER;
-    public static final Preset GROUP_ICON = SvgPresets.USER_GROUP;
+    public static final SvgImage USER_ICON = SvgImage.USER;
+    public static final SvgImage GROUP_ICON = SvgImage.USERS;
 
     private final ClientSecurityContext securityContext;
 

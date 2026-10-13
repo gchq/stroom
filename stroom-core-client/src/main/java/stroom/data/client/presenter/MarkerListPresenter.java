@@ -17,10 +17,11 @@
 package stroom.data.client.presenter;
 
 import stroom.cell.expander.client.ExpanderCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.data.grid.client.MyDataGrid;
 import stroom.data.grid.client.WrapperView;
 import stroom.pipeline.shared.FetchMarkerResult;
-import stroom.svg.client.SvgPresets;
+import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Marker;
@@ -106,16 +107,16 @@ public class MarkerListPresenter extends MyPresenterWidget<WrapperView> {
 
     private void addSeverityColumn() {
         dataGrid.addColumn(DataGridUtil
-                .svgPresetColumnBuilder(false, (final Marker marker) -> {
+                .cellIconColumnBuilder(false, (final Marker marker) -> {
                     switch (marker.getSeverity()) {
                         case FATAL_ERROR:
-                            return SvgPresets.FATAL.title("Fatal Error");
+                            return CellIcon.of(SvgImage.FATAL, "Fatal Error");
                         case ERROR:
-                            return SvgPresets.ERROR;
+                            return CellIcon.of(SvgImage.ERROR, "Error");
                         case WARNING:
-                            return SvgPresets.ALERT.title("Warning");
+                            return CellIcon.of(SvgImage.ALERT, "Warning");
                         case INFO:
-                            return SvgPresets.INFO;
+                            return CellIcon.of(SvgImage.INFO, "Info");
                         default:
                             return null;
                     }

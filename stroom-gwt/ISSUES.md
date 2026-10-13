@@ -627,6 +627,11 @@ password", which its tooltip shows too), and a polite live region in the box tel
 "Your password is shown" or "hidden", as the focus stays on the button. Validation marks the input
 itself (`getInput()`), and the change password screen's length badge sits beside the button
 (`setBadge`).
+`Preset` and `SvgPresets` (72 shared icon, title and enabled constants) are deleted. A table cell's
+icon is a `CellIcon` (`SvgCell`, `InfoColumn`, `ActionCell`, `ActionMenuCell` and the `DataGridUtil`
+column builders), made where it is used with its own name; each keeps the icon, name and enabled
+state its preset gave it (e.g. a rule's Delete icon starts disabled). Menu items and the security
+plugins' icons are a plain `SvgImage`, as only the image was used.
 
 ### Opening a screen leaves the focus behind (#5405)
 

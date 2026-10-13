@@ -17,6 +17,7 @@
 package stroom.importexport.client.presenter;
 
 import stroom.cell.info.client.ActionCell;
+import stroom.cell.info.client.CellIcon;
 import stroom.cell.info.client.CommandLink;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.CriteriaUtil;
@@ -38,8 +39,6 @@ import stroom.importexport.client.event.ShowDocRefDependenciesEvent.DependencyTy
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.client.DataGridUtil;
 import stroom.util.shared.PageRequest;
@@ -132,7 +131,7 @@ public class DependenciesPresenter
     private void initColumns() {
 
         // From (Icon)
-        dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
+        dataGrid.addColumn(DataGridUtil.cellIconColumnBuilder(false, (Dependency row) ->
                                 getDocTypeIcon(row.getFrom()))
                         .build(),
                 "<br/>",
@@ -161,7 +160,7 @@ public class DependenciesPresenter
         addActionButtonColumn(Dependency::getFrom, "", 40);
 
         // To (Icon)
-        dataGrid.addColumn(DataGridUtil.svgPresetColumnBuilder(false, (Dependency row) ->
+        dataGrid.addColumn(DataGridUtil.cellIconColumnBuilder(false, (Dependency row) ->
                                 getDocTypeIcon(row.getTo()))
                         .build(),
                 "<br/>",
@@ -323,16 +322,16 @@ public class DependenciesPresenter
         }
     }
 
-    private Preset getDocTypeIcon(final DocRef docRef) {
+    private CellIcon getDocTypeIcon(final DocRef docRef) {
         if (docRef != null && docRef.getType() != null && !docRef.getType().isEmpty()) {
             final SvgImage icon = DocumentTypeRegistry.getIcon(docRef.getType());
             if (icon != null) {
-                return new Preset(icon, docRef.getType(), true);
+                return CellIcon.of(icon, docRef.getType(), true);
             } else {
-                return SvgPresets.ALERT.title("Unknown Document Type");
+                return CellIcon.of(SvgImage.ALERT, "Unknown Document Type");
             }
         } else {
-            return SvgPresets.ALERT.title("Unknown Document Type");
+            return CellIcon.of(SvgImage.ALERT, "Unknown Document Type");
         }
     }
 

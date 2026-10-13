@@ -202,7 +202,7 @@ public class DocumentUserPermissionsListPresenter
     private void setupColumns(final DocumentTypes documentTypes) {
         // Icon
         dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(false, (DocumentUserPermissions row) ->
+                DataGridUtil.cellIconColumnBuilder(false, (DocumentUserPermissions row) ->
                                 UserAndGroupHelper.mapUserRefTypeToIcon(row.getUserRef()))
                         .withSorting(UserFields.FIELD_IS_GROUP)
                         .centerAligned()

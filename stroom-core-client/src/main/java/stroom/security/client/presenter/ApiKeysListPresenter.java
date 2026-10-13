@@ -292,7 +292,7 @@ public class ApiKeysListPresenter
         if (securityContext.hasAppPermission(AppPermission.MANAGE_USERS_PERMISSION)
             && owner == null) {
             dataGrid.addColumn(
-                    DataGridUtil.svgPresetColumnBuilder(false, (HashedApiKey row) ->
+                    DataGridUtil.cellIconColumnBuilder(false, (HashedApiKey row) ->
                                     UserAndGroupHelper.mapUserRefTypeToIcon(row.getOwner()))
                             .withSorting(UserFields.FIELD_IS_GROUP)
                             .centerAligned()

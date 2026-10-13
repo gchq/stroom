@@ -17,6 +17,7 @@
 package stroom.receive.rules.client.presenter;
 
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.cell.info.client.CellIcon;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
@@ -24,8 +25,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter.DataRetentionPolicyView;
-import stroom.svg.client.Preset;
-import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.Item;
@@ -60,13 +59,13 @@ public class DataRetentionPolicyPresenter extends MyPresenterWidget<DataRetentio
             "Default Retain All Forever Rule",
             true,
             ExpressionOperator.builder().build());
-    private static final Preset DELETE_RULE_SVG_PRESET = SvgPresets.DELETE.title("Delete rule");
-    protected static final Preset ADD_ABOVE_SVG_PRESET = SvgPresets.ADD_ABOVE.title(
+    private static final CellIcon DELETE_RULE_ICON = CellIcon.of(SvgImage.DELETE, "Delete rule", false);
+    protected static final CellIcon ADD_ABOVE_ICON = CellIcon.of(SvgImage.ADD_ABOVE,
             "Add new rule above the selected one");
-    protected static final Preset COPY_RULE_SVG_PRESET = SvgPresets.COPY.title("Copy rule");
-    protected static final Preset EDIT_RULE_SVG_PRESET = SvgPresets.EDIT.title("Edit rule");
-    protected static final Preset MOVE_RULE_UP_SVG_PRESET = SvgPresets.UP.title("Move rule up");
-    protected static final Preset MOVE_RULE_DOWN_SVG_PRESET = SvgPresets.DOWN.title("Move rule down");
+    protected static final CellIcon COPY_RULE_ICON = CellIcon.of(SvgImage.COPY, "Copy rule", false);
+    protected static final CellIcon EDIT_RULE_ICON = CellIcon.of(SvgImage.EDIT, "Edit rule", false);
+    protected static final CellIcon MOVE_RULE_UP_ICON = CellIcon.of(SvgImage.UP, "Move rule up", false);
+    protected static final CellIcon MOVE_RULE_DOWN_ICON = CellIcon.of(SvgImage.DOWN, "Move rule down", false);
 
     private final DataRetentionPolicyListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;

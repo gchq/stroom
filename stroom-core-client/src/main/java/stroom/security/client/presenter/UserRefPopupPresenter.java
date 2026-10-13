@@ -122,7 +122,7 @@ public class UserRefPopupPresenter
     private void setupColumns() {
         // Icon
         dataGrid.addColumn(
-                DataGridUtil.svgPresetColumnBuilder(false, UserAndGroupHelper::mapUserRefTypeToIcon)
+                DataGridUtil.cellIconColumnBuilder(false, UserAndGroupHelper::mapUserRefTypeToIcon)
                         .withSorting(UserFields.FIELD_IS_GROUP)
 //                .enabledWhen(UserRef::isEnabled)
                         .centerAligned()
