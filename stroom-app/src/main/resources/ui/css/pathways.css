@@ -15,11 +15,18 @@
  * it sits. Held back, because it is there to say what the table below is about rather than to be read
  * in itself. */
 .pathway-node-path {
-    padding: 4px 4px;
+    padding: 4px 4px 0px;
     color: var(--text-color--disabled);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* An empty path still makes a line, so the panel under it sits at the same height whether a node is
+   picked out or not. A zero width space rather than a height: the box is border-box here, so a height
+   would have to know what the padding above is and would be wrong the moment that changed. */
+.pathway-node-path:empty::before {
+    content: "\200b";
 }
 
 .pathway {

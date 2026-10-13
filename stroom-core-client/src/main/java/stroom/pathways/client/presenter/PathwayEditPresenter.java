@@ -56,6 +56,7 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -132,6 +133,8 @@ public class PathwayEditPresenter
     // things about the pathway.
     private final TabData constraintsTab = new TabDataImpl("Constraints");
     private final TabData infoTab = new TabDataImpl("Node Info");
+    // Whether a node is already waiting to be shown, so a run of selection changes draws once.
+    private boolean nodePending;
     private final ButtonView saveButton;
     private final ButtonView playButton;
     private final ButtonView stopButton;
@@ -690,7 +693,27 @@ public class PathwayEditPresenter
     // The node the tree is holding, whichever model it came from. Winding the model back picks the same
     // node out again, and the selection model treats that as no change and says nothing, so this has to
     // be asked for rather than waited for.
+    /**
+     * Shows what is known about the node picked out on the drawing, once the picking has settled.
+     *
+     * <p>Deferred and folded into one, because reading a pathway clears the selection and then picks
+     * its root, which arrives here as two changes in a row — three where the read itself asks as well.
+     * Acting on each empties both panels and fills them again, and a table that empties is shorter
+     * than one that does not, so what sits under it jumps for a state that never lasted long enough
+     * to read.
+     */
     private void showConstraints() {
+        if (nodePending) {
+            return;
+        }
+        nodePending = true;
+        Scheduler.get().scheduleDeferred(() -> {
+            nodePending = false;
+            showSettledConstraints();
+        });
+    }
+
+    private void showSettledConstraints() {
         final PathNode node = pathwayTreePresenter.getSelectionModel().getSelectedObject();
         // Nothing else on the screen says which node these are for, and the drawing they were clicked
         // on may have been scrolled away from since. The path ends with the node's own name, so one

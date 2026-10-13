@@ -26,6 +26,7 @@ import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.LayerContainer;
@@ -39,6 +40,8 @@ public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, Path
     // One tab rather than none, so the panel reads the same as the pathway tab's and has somewhere to
     // put a second thing about a node if one is ever wanted.
     private final TabData infoTab = new TabDataImpl("Node Info");
+    // Whether a node is already waiting to be shown, so a run of selection changes draws once.
+    private boolean nodePending;
 
     @Inject
     public PathwaysSplitPresenter(final EventBus eventBus,
@@ -68,7 +71,26 @@ public class PathwaysSplitPresenter extends DocPresenter<PathwaysSplitView, Path
                 .addSelectionChangeHandler(e -> showNode()));
     }
 
+    /**
+     * Shows what is known about the node picked out on the drawing, once the picking has settled.
+     *
+     * <p>Deferred and folded into one, because reading a pathway clears the selection and then picks
+     * its root, which arrives here as two changes in a row. Acting on both empties the panel and fills
+     * it again, and a table that empties is shorter than one that does not — so everything under it
+     * jumps up and back down for a state that never lasted long enough to read.
+     */
     private void showNode() {
+        if (nodePending) {
+            return;
+        }
+        nodePending = true;
+        Scheduler.get().scheduleDeferred(() -> {
+            nodePending = false;
+            showSettledNode();
+        });
+    }
+
+    private void showSettledNode() {
         final PathNode node = pathwayTreePresenter.getSelectionModel().getSelectedObject();
         // The drawing may have been scrolled away from since the node was clicked, so the path says
         // both what it is and where it sits.
