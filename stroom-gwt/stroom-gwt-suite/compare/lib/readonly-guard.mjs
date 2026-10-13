@@ -65,6 +65,16 @@ const POST_READ_PATTERNS = [
   // blocks what would change stored content).
   /\/api\/(dashboard|query)\/[^/]+\/(search|poll|destroy|keepAlive)/i,
   /\/api\/(dashboard|query)\/v\d+\/(search|poll|destroy|downloadSearchResults)?$/i,
+  // Downloads and exports: each writes one file into Stroom's resource store (a TEMP file the
+  // browser then fetches and the store evicts), and nothing the corpus records. Checked in
+  // DashboardServiceImpl / QueryServiceImpl (`createTempFile`), DictionaryResourceImpl.download and
+  // ContentServiceImpl.exportContent. `downloadSearchResults` carries the node the search ran on
+  // (`/downloadSearchResults/node1a`), which the pattern above stops short of, so the Download
+  // Options dialog's OK on a query or dashboard table was aborted and its handler left `ok-blocked`.
+  /\/api\/(dashboard|query)\/v\d+\/downloadSearchResults\/[^/]+$/i,
+  /\/api\/dashboard\/v\d+\/downloadQuery$/i,
+  /\/api\/dictionary\/v\d+\/download$/i,
+  /\/api\/content\/v\d+\/export$/i,
   //   /result-store/v1/destroy/<node> — the SAME lifecycle under its own resource. Blocking it is
   //   backwards: the store was created by a search this sweep itself ran, and destroy is how the UI
   //   gives it back. A5c tripped it on a dashboard and, because the request was aborted,

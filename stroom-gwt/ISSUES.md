@@ -832,8 +832,16 @@ They are in `test-runner/a11y-baseline.json` until they are fixed.
 * The annotation chooser (Link Annotation, Add to Annotation) doesn't select the first annotation
   found when it opens, only when the filter changes, so OK straight away warns "No annotation has
   been selected" (`FindAnnotationListPresenter`).
-* A new or duplicated dashboard component follows the mouse until it is dropped; Escape doesn't
-  cancel it (`FlexLayout.enterNewComponentDestinationMode`).
+* Editing a credential (Credentials Manager › Edit) opens with its user name and password empty,
+  as secrets are never sent back to the browser, and OK refuses with "Username must not be empty"
+  until both are entered again, even to change only the name. Nothing in the dialog says the
+  secret is write-only (`CredentialSettingsPresenter.read`, `UsernamePasswordSecretPresenter`).
+  Found by the credentials write cycle.
+* Two document icons carry text of their own into the explorer: `ElasticIndex.svg` (and the
+  pipeline's `elastic_index.svg`) embed a `<style>` block with page-wide class names (`.st0` to
+  `.st7`), and `OpenAI.svg` has a `<title>` "OpenAI icon", so a tree row reads "OpenAI icon My
+  Model". No other icon uses those class names today, so nothing is recoloured, but any that did
+  would be. Found when the document write cycles couldn't match those rows by name.
 * Rejecting the splash screen's terms warns "You must accept the terms to use this system" and then
   leaves a blank page: the app is never shown and only a reload offers the terms again
   (`SplashPresenter`, `CurrentUser.showSplash`).
@@ -1117,6 +1125,14 @@ Found by the GWT behaviour suite, and already fixed (in this branch):
   glass says so (`FlexLayout`, `PlacementKeys`, `DashboardPresenter.cancelNewComponents`; the
   workbench stories `DuplicateCancelledWithEscape` and `DuplicatePlacedWithEnter`). The suite's
   walker met it in four rounds, where its next click placed the copy.
+* #58: deleting a credential left its permissions behind. Saving a new credential makes its
+  creator the owner (`CredentialsService.storeCredentials`), but `deleteCredentialsAndSecret` only
+  deleted the credential, so every credential made and deleted left a `permission_doc` row for a
+  uuid that no longer existed. It now removes the credential's document permissions after the
+  delete, as the explorer's delete does for a document, and leaves them if the delete fails
+  (`TestCredentialsService`). Found by the suite's credentials cycle (§ B4): two runs left two
+  rows, found by looking for permission rows whose document no longer exists; a run since the fix
+  leaves none. The two rows have been deleted.
 * #49 to #56: dialogs left with OK and Cancel disabled after an error, so that only reloading the
   page got rid of them (Escape honours the disabled buttons). OK disables a dialog's buttons, and
   each of these had a failure path that neither closed the dialog nor called
@@ -1339,6 +1355,10 @@ reproduce them. They drive Stroom at `http://localhost:8080` (set `URL=` to chan
 * The r12 round (October 2026, the same build, with the walker now driving every dialog's fields)
   also had no first-time fails: driving 60-250 fields per shard found no new bug, and coverage rose
   from 759 to 805 handlers.
+* The r13 round (October 2026, on the build with #57 fixed) had no first-time fails and stranded no
+  dialog. Its one fail at #57's place was the walker clicking while the duplicated component was
+  still waiting to be placed; the walker now places it with Enter and checks that Enter works.
+  `stroom-gwt-suite/probe-placement-keys.mjs` checks Enter and Escape on a running Stroom.
 * The ledger (`stroom-gwt-suite/out/coverage.md`) lists every run's fails side by side, so a fix
   shows as a re-walk that passes where an older run failed, not as a fail that disappears.
   `./merge.sh <round>` also writes `out/flips-<round>.md`: every place an earlier run failed, and

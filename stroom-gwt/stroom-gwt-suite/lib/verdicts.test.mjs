@@ -409,6 +409,20 @@ test("guard: working out a schedule's run times is a read, its neighbours aren't
   assert.equal(classifyRequest('POST', '/api/executionSchedule/v1/update'), 'mutate');
 });
 
+test('guard: a download or export only writes a temp file, so it is a read', async () => {
+  const { classifyRequest } = await import('../compare/lib/readonly-guard.mjs');
+  // The node the search ran on rides on the end of the path; the old pattern stopped short of it.
+  assert.equal(classifyRequest('POST', '/api/dashboard/v1/downloadSearchResults/node1a'), 'allow');
+  assert.equal(classifyRequest('POST', '/api/query/v1/downloadSearchResults/node1a'), 'allow');
+  assert.equal(classifyRequest('POST', '/api/dashboard/v1/downloadQuery'), 'allow');
+  assert.equal(classifyRequest('POST', '/api/dictionary/v1/download'), 'allow');
+  assert.equal(classifyRequest('POST', '/api/content/v1/export'), 'allow');
+  // ... and their neighbours that do write stay blocked.
+  assert.equal(classifyRequest('POST', '/api/content/v1/import'), 'mutate');
+  assert.equal(classifyRequest('PUT', '/api/dictionary/v1/download'), 'mutate');
+  assert.equal(classifyRequest('POST', '/api/dashboard/v1/downloadSearchResults/node1a/more'), 'mutate');
+});
+
 test('sort: durations are compared as durations', () => {
   const col = (direction, values) => ({ rows: values.length, direction, values });
   // Server Tasks' Age, descending: 144ms is longer than 40ms

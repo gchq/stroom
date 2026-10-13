@@ -123,7 +123,7 @@ predict.
 * **BatchExecutionScheduleEditPresenter** — expected 1, saw 24, extra: Apply to Selection, Apply to Filtered, None, Schedule Name - Click for help, Enabled - Click for help, Processing Node - Click for help
 * **ExecutionScheduleRunNowPresenter** — expected 1, saw 3, extra: Apply to Selection, Apply to Filtered
 * **ProcessorProfileEditPresenter** — expected 2, saw 42, extra: Remove Period, First, Backward, Forward, Last, New Period
-* **AnalyticRulePresenter** — expected 2, saw 78, extra: First, Backward, Forward, Last, Insert, Copy
+* **AnalyticRulePresenter** — expected 2, saw 79, extra: First, Backward, Forward, Last, Insert, Copy
 * **AnalyticNotificationEditPresenter** — no mined spec, saw 35
 * **ScheduledProcessEditPresenter** — expected 2, saw 18, extra: Close, typed "Name", ticked "Enabled", chose "node2a" "Processing Node", typed "Schedule (Cron)", typed "Start Time"
 * **DashboardSuperPresenter** — expected 2, saw 47, extra: Copy, Expand, Collapse, Download, First, Backward
@@ -145,8 +145,8 @@ predict.
 * **ProcessorEditPresenter** — expected 2, saw 51, extra: Remove Reference, First, Backward, Forward, Last, mouseover on "Max Processing Tasks" spinner
 * **PlanBPresenter** — expected 2, saw 64, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, chose "State" "State Type"
 * **ScriptPresenter** — expected 2, saw 26, extra: Remove Dependency, First, Backward, Forward, Last, Edit Permissions For Selected User
-* **ViewPresenter** — expected 2, saw 20, extra: Copy, Disable, Edit Permissions For Selected User, First, Backward, Forward
-* **ReportPresenter** — expected 2, saw 74, extra: First, Backward, Forward, Last, Insert, Copy
+* **ViewPresenter** — expected 2, saw 21, extra: Copy, Disable, Edit Permissions For Selected User, First, Backward, Forward
+* **ReportPresenter** — expected 2, saw 75, extra: First, Backward, Forward, Last, Insert, Copy
 * **S3ConfigPresenter** — expected 3, saw 31, extra: Edit Permissions For Selected User, First, Backward, Forward, Last, typed in the editor "Config"
 * **IndexPresenter** — expected 2, saw 72, extra: Delete Selected Shards, First, Backward, Forward, Last, Edit Field
 * **BrowseAnnotationPresenter** — no mined spec, saw 5

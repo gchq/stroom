@@ -38,8 +38,12 @@ import { chromium } from 'playwright';
 import { gwt } from './compare/adapters/gwt.mjs';
 import { credentials } from './compare/lib/credentials.mjs';
 import { attachReadOnlyGuard } from './compare/lib/readonly-guard.mjs';
-import { clickMenuItem } from './compare/lib/structure.mjs';
-import { clickButton, dialogCaptions, fillField, openScreen, readRows, runCycle, runEditCycle } from './lib/cycle.mjs';
+import { settleExplorer } from './compare/lib/settle.mjs';
+import { clickMenuItem, dismissMenus, rightClickByText } from './compare/lib/structure.mjs';
+import {
+  clickButton, dialogCaptions, fillField, openScreen, permissionSteps, readRows, runAnnotationCycle, runCycle, runDocCycle,
+  runEditCycle,
+} from './lib/cycle.mjs';
 import { fromSuite } from './lib/paths.mjs';
 
 // The suite's folder, so its corpus and output are found wherever the suite is run from
@@ -92,7 +96,8 @@ const SPECS = [
   },
   {
     name: 'data volume group',
-    okPresenters: ['FsVolumeGroupEditPresenter'],   // onHideRequest at :203
+    // The create dialog is `NewFsVolumeGroupPresenter:59` ("New"), as the index volume group's is.
+    okPresenters: ['FsVolumeGroupEditPresenter', 'NewFsVolumeGroupPresenter'],   // onHideRequest at :203
     menu: ['Administration', 'Data Volumes'],
     // Edit is `FsVolumeGroupEditViewImpl` — ui.xml labels its only box "Volume Group Name", the same
     // shape as the index volume group below, which is why this spec needs nothing new.
@@ -132,6 +137,163 @@ const SPECS = [
     // IndexVolumeGroupResource: @Path("/index/volumeGroup" + V2).
     writes: [{ path: /\/api\/index\/volumeGroup\/v\d+/ }],
   },
+  {
+    name: 'credentials',
+    // CredentialEditPresenter's onHideRequest (:92), for both New Credentials and the edit dialog.
+    okPresenters: ['CredentialEditPresenter'],
+    menu: ['Security', 'Credentials Manager'],
+    create: 'Add',
+    // CredentialSettingsViewImpl's "Name", on the dialog's Settings tab (the one it opens on). The
+    // type stays the default; its secret fields are optional for a store.
+    nameField: 'Name',
+    // The default type is a user name and password, and the store refuses an empty user name.
+    createFields: { 'User Name': 'zz-cycle-user', Password: 'zz-cycle-password' },
+    // The secret is never sent back to the browser, so an edit must enter it again.
+    editFields: { 'User Name': 'zz-cycle-user', Password: 'zz-cycle-password' },
+    seed: `${STAMP} credentials`,
+    edited: `${STAMP} credentials (edited)`,
+    // CredentialsResource: @Path("/credentials"), unversioned — createDocRef mints the uuid, store
+    // creates or updates, delete removes.
+    writes: [{ path: /\/api\/credentials\/(createDocRef|store|delete)\b/ }],
+  },
+  {
+    name: 'account',
+    // EditAccountPresenter's onHideRequest (:110 in the inventory), for both Create Account and
+    // Edit Account. The User ID is the account's identity, and changing it would make the account a
+    // second Stroom user, so the edit is its First Name.
+    okPresenters: ['EditAccountPresenter'],
+    menu: ['Security', 'Manage Accounts'],
+    create: 'Add new account',
+    edit: 'Edit account',
+    remove: 'Delete selected account',
+    nameField: 'User ID',
+    editNameField: 'First Name',
+    seed: `${STAMP}-account`,
+    edited: `${STAMP} first name`,
+    // Creating an account makes a Stroom user of the same name, which deleting the account keeps.
+    alsoRemove: { what: 'Stroom user', menu: ['Security', 'Users'], remove: (n) => `Delete user '${n}'` },
+    // AccountResource: @POST /account/v1, @PUT /{id}, @DELETE /{id}; UserResource for the user.
+    writes: [{ path: /\/api\/account\/v\d+/ }, { method: 'DELETE', path: /\/api\/users\/v\d+\/[^/]+$/ }],
+  },
+  {
+    name: 'global property',
+    kind: 'edit',
+    // ManageGlobalPropertyEditPresenter's onHideRequest (:359).
+    okPresenters: ['ManageGlobalPropertyEditPresenter'],
+    menu: ['Administration', 'Properties'],
+    // The About dialog's text: shown nowhere else, so a test value in it for a minute disturbs
+    // nothing. No property has a database value on the dev instance, so the edit ticks "Set
+    // Database value" and the revert unticks it, which deletes the row again
+    // (GlobalConfigService.update).
+    row: 'stroom.ui.aboutHtml',
+    findBy: 'filter',
+    field: 'Database Value',
+    overrideTick: 'Set Database value',
+    value: () => `<p>${STAMP} property</p>`,
+    // GlobalConfigResource: @POST /config/v1 creates the database row the first time, and
+    // @PUT /config/v1/clusterProperties/{propertyName} updates or (unticked) deletes it.
+    writes: [{ method: 'POST', path: /\/api\/config\/v1$/ },
+      { method: 'PUT', path: /\/api\/config\/v1\/clusterProperties\/stroom\.ui\.aboutHtml$/ }],
+  },
+  {
+    name: 'ask stroom ai config',
+    kind: 'edit',
+    // AskStroomAiConfigPresenter's onHideRequest (:109). The pane opens from the top bar's Ask Stroom
+    // AI wherever you are; Data Volumes is just a quiet screen to stand on, as the walk did.
+    okPresenters: ['AskStroomAiConfigPresenter'],
+    menu: ['Administration', 'Data Volumes'],
+    opener: ['Ask Stroom AI', 'Configure'],
+    // A prompt is text the cycle can append to and take off again exactly; the dock settings move
+    // the pane, which the reload would then have to find again.
+    field: 'History Summary Prompt',
+    value: (was) => `${was} ${STAMP}`,
+    // The config lives in the user's preferences (AskStroomAiClient.setConfig): POST /preferences/v1.
+    writes: [{ method: 'POST', path: /\/api\/preferences\/v1$/ }],
+  },
+  // One document cycle per type in the explorer's New menu (read from a live Stroom, 2026-10-12),
+  // each made in the seed folder, renamed and deleted. Pathways is left out: its editor is out of
+  // scope for this branch. CreateDocumentPresenter's onHideRequest (:100) runs on New and
+  // NameDocumentPresenter's (:75) on Rename. ExplorerResource: @POST /explorer/v2/create,
+  // @PUT /rename, @DELETE /delete.
+  ...[
+    [null, 'Folder'],
+    ...['Dictionary', 'Documentation', 'Elastic Cluster', 'Git Repo', 'Kafka Configuration', 'OpenAI Model',
+      'S3 Configuration', 'Script', 'Visualisation'].map((t) => ['Configuration', t]),
+    ...['Feed', 'Pipeline'].map((t) => ['Data Processing', t]),
+    ...['Elastic Index', 'Lucene Index', 'Plan B', 'Solr Index', 'Statistic Store', 'Traces', 'View']
+      .map((t) => ['Indexing', t]),
+    ...['Analytic Rule', 'Dashboard', 'Data Generator', 'Query', 'Report'].map((t) => ['Search', t]),
+    ...['Text Converter', 'XML Schema', 'XSL Translation'].map((t) => ['Transformation', t]),
+  ].map(([category, type]) => {
+    // A feed's name must match `feedNamePattern` (^[A-Z0-9_-]{3,}$), and a Plan B store's is its
+    // state store key (^[a-z_0-9]+$), so each gets a name of its own.
+    const key = STAMP.replace(/-/g, '_');
+    const name = type === 'Feed' ? `${STAMP.toUpperCase()}-FEED`
+      : type === 'Plan B' ? `${key}_plan_b` : `${STAMP} ${type.toLowerCase()}`;
+    return {
+      name: `${type.toLowerCase()} document`,
+      kind: 'doc',
+      okPresenters: ['CreateDocumentPresenter', 'NameDocumentPresenter'],
+      parent: 'Seed Content',
+      category,
+      type,
+      seed: name,
+      edited: type === 'Feed' ? `${name}-EDITED` : type === 'Plan B' ? `${name}_edited` : `${name} (edited)`,
+      // Feeds can't be renamed (gchq/stroom#2912: Rename is disabled for them).
+      ...(type === 'Feed' ? { rename: false } : {}),
+      writes: [{ method: 'POST', path: /\/api\/explorer\/v2\/create$/ },
+        { method: 'PUT', path: /\/api\/explorer\/v2\/rename$/ },
+        { method: 'DELETE', path: /\/api\/explorer\/v2\/delete$/ }],
+    };
+  }),
+  {
+    // A document's permissions can't be created or deleted, only changed, so the cycle makes a
+    // folder of its own, changes admin's permission on it and puts it back, ticks one document type
+    // in its create permissions and unticks it, and deletes the folder. Each change is read back
+    // after the grid's Refresh. The OK handlers are DocumentUserPermissionsEditPresenter:96 and
+    // DocumentUserCreatePermissionsEditPresenter:115 in the inventory; `provedBy` credits each only by its own
+    // change, not by the folder's create.
+    name: 'document permissions',
+    kind: 'doc',
+    okPresenters: ['DocumentUserPermissionsEditPresenter', 'DocumentUserCreatePermissionsEditPresenter'],
+    provedBy: {
+      DocumentUserPermissionsEditPresenter: '\\(Set Permissions\\)$',
+      DocumentUserCreatePermissionsEditPresenter: '\\(Set Document Create Permissions\\)$',
+    },
+    parent: 'Seed Content',
+    category: null,
+    type: 'Folder',
+    seed: `${STAMP} permissions folder`,
+    edited: `${STAMP} permissions folder (edited)`,
+    rename: false,
+    renameWhy: 'not part of this cycle (the folder cycle renames one)',
+    steps: permissionSteps(),
+    // ExplorerResource: @POST /changeDocumentPermissions, for a folder (it is not one of the types
+    // PermissionChangeClient handles itself).
+    writes: [{ method: 'POST', path: /\/api\/explorer\/v2\/create$/ },
+      { method: 'DELETE', path: /\/api\/explorer\/v2\/delete$/ },
+      { method: 'POST', path: /\/api\/explorer\/v2\/changeDocumentPermissions$/ }],
+  },
+  {
+    // ChangeStatusPresenter's and ChangeAssignedToPresenter's OK handlers (:103 and :61 in the
+    // inventory), on an annotation the cycle creates and deletes (`runAnnotationCycle`). The
+    // event row comes from Example Index, which answers rows on this instance; "Seed Status" is
+    // seed-data.mjs's status tag.
+    name: 'annotation status and assignee',
+    kind: 'annotation',
+    okPresenters: ['ChangeStatusPresenter', 'ChangeAssignedToPresenter'],
+    provedBy: {
+      ChangeStatusPresenter: '\\(Change Status\\)$',
+      ChangeAssignedToPresenter: '\\(Change Assigned To\\)$',
+    },
+    query: 'iptolocation',
+    eventQuery: 'from "Example Index" limit 5 select StreamId, EventId, EventTime, UserId',
+    status: 'Seed Status',
+    // AnnotationResource: @POST create, @POST batchChange (both dialogs), @DELETE delete.
+    writes: [{ method: 'POST', path: /\/api\/annotation\/v1\/create$/ },
+      { method: 'POST', path: /\/api\/annotation\/v1\/batchChange$/ },
+      { method: 'DELETE', path: /\/api\/annotation\/v1\/delete$/ }],
+  },
   // The four annotation tag screens are one resource with a `type`; each is its own cycle because
   // each is its own screen, and a create on one must not show up on another.
   ...['Annotation Collections', 'Annotation Comments', 'Annotation Labels', 'Annotation Statuses']
@@ -155,7 +317,12 @@ if (!specs.length) { console.error(`no cycle matches ONLY="${ONLY.join(',')}"`);
 
 console.log(`cycles: ${specs.map((s) => s.name).join(', ')}`);
 for (const s of specs) {
-  console.log(`  ${s.name}: ${s.menu.join(' › ')} · creates "${s.seed}" · edits to "${s.edited}" · deletes it`);
+  console.log(s.kind === 'doc' ? `  ${s.name}: ${s.parent} › New › ${s.type} · creates "${s.seed}"`
+    + `${(s.steps ?? []).map(([what]) => ` · ${what}`).join('')}`
+    + `${s.rename === false ? '' : ` · renames to "${s.edited}"`} · deletes it`
+    : s.kind === 'annotation' ? `  ${s.name}: creates an annotation on a "${s.eventQuery}" row · Change Status to "${s.status}" · Change Assigned To · deletes it`
+    : s.kind === 'edit' ? `  ${s.name}: ${s.menu.join(' › ')} · changes "${s.field}" of "${s.row}" · puts it back`
+      : `  ${s.name}: ${s.menu.join(' › ')} · creates "${s.seed}" · edits to "${s.edited}" · deletes it`);
   console.log(`    may write: ${s.writes.map((w) => `${w.method ?? '*'} ${w.path}`).join(', ')}`);
 }
 if (!MUTATE && !REHEARSE) {
@@ -171,6 +338,21 @@ await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
 await gwt.signInFully(page, credentials());
 
 const settle = (ms) => page.waitForTimeout(ms);
+// A full reload with the explorer expanded, so the tree a document cycle reads is the server's.
+const reloadTree = async () => {
+  await page.goto(URL, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  await gwt.waitForApp(page);
+  await settleExplorer(page, { label: 'reload' }).catch(() => {});
+  await page.locator('button[title="Expand All"]').first().click({ timeout: 10_000 }).catch(() => {});
+  await settleExplorer(page, { label: 'expand' }).catch(() => {});
+};
+// A Query document, opened for its editor: the cycle replaces its text and never saves it.
+const openQuery = async (name) => {
+  await gwt.filterExplorer(page, name);
+  await settle(1500);
+  await gwt.openDocByName(page, name, 'Query');
+  await settle(2500);
+};
 const results = [];
 
 if (REHEARSE) {
@@ -180,6 +362,8 @@ if (REHEARSE) {
   let bad = 0;
   for (const spec of specs) {
     console.log(`\n── ${spec.name} (rehearsal) ──`);
+    // The rehearsal drives a screen's New dialog; the edit and document shapes have none.
+    if (spec.kind) { console.log(`  (a ${spec.kind} cycle — not rehearsed)`); continue; }
     const steps = [];
     try {
       await openScreen(page, { clickMenuItem, settle }, spec.menu[0], spec.menu[1]);
@@ -221,14 +405,15 @@ for (const spec of specs) {
   // delete. A dozen of the blocked OK handlers belong to things that cannot be created at all — a
   // global property, the user's own preferences, a document permission — and for those the
   // compensation is putting the old value back, verified across a reload like everything else.
-  const run = spec.kind === 'edit' ? runEditCycle : runCycle;
-  const rec = await run(page, { ...spec, helpers: { clickMenuItem, settle } },
+  const run = spec.kind === 'edit' ? runEditCycle : spec.kind === 'doc' ? runDocCycle
+    : spec.kind === 'annotation' ? runAnnotationCycle : runCycle;
+  const rec = await run(page, { ...spec, helpers: { clickMenuItem, settle, rightClickByText, dismissMenus, reloadTree, openQuery } },
     { guard, settle, log: (l) => console.log(l) });
   await page.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {});
   // The record carries the OK handlers this cycle drove, so the inventory can credit them: a cycle
   // that created a row through a dialog's OK proves that `onHideRequest` ran AND that its write went
   // through, which is exactly what `ok-blocked` says has not been shown.
-  results.push({ ...rec, okPresenters: spec.okPresenters ?? [] });
+  results.push({ ...rec, okPresenters: spec.okPresenters ?? [], ...(spec.provedBy ? { provedBy: spec.provedBy } : {}) });
   console.log(`  ${rec.ok ? 'PASS' : 'FAIL'} — wrote [${rec.writes.join(', ') || 'nothing'}]`
     + `${rec.undeclared.length ? ` · UNDECLARED [${rec.undeclared.join(', ')}]` : ''}`
     + `${rec.leaked ? ' · LEAKED A ROW' : ''}`);

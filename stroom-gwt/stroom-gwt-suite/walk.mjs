@@ -939,6 +939,34 @@ async function activateContentTab(label) {
  */
 const stranded = [];
 
+/** True while a dashboard's new component waits to be placed, under a glass over the window (#57). */
+async function placementPending() {
+  return (await page.locator('.flexLayout-glassVisible').count().catch(() => 0)) > 0;
+}
+
+/**
+ * An action (a tab's Duplicate, Add Component) left a component waiting to be placed: press Enter,
+ * which must place it beside the original (#57's keys), and record that as a key check. Without the
+ * fix only a click could place it, and the walk's next click landed on the glass instead of its
+ * target. Falls back to a click, so the node is surveyed without the glass either way.
+ */
+async function placeWithEnter(id, label) {
+  await page.keyboard.press('Enter').catch(() => {});
+  await page.waitForTimeout(300);
+  const placed = !(await placementPending());
+  const check = { kind: 'key', ...(placed
+    ? { verdict: 'pass', why: `Enter placed the component ${label} was waiting to place` }
+    : { verdict: 'fail', why: `Enter did not place the component ${label} was waiting to place: the glass is still up` }) };
+  affordances.push({ node: id, label: 'Enter (placing a component)', kind: 'key', outcome: placed ? 'changed' : 'nothing',
+    detail: `after ${label}`, rows: [], blocked: [], clickMs: 0, backMs: 0, check });
+  console.log(`      · Enter (placing a component) → ${placed ? 'placed' : 'still waiting'}  {key ${check.verdict}: ${check.why}}`);
+  if (!placed) {
+    await page.mouse.click(Math.round(VW / 2), Math.round(VH / 2)).catch(() => {});
+    await page.waitForTimeout(300);
+  }
+  return check;
+}
+
 /**
  * Clear whatever is up — dialogs, menus — without touching the screen underneath. A dialog that
  * survives is recorded as stranded and the page reloaded, so one trap costs one reload, not the rest
@@ -948,10 +976,15 @@ async function clearOverlays(where = null) {
   // A dashboard's Duplicate (or Add Component) waits for a click to place the new component, under a
   // glass over the whole window that no key dismisses (#57). Place it, or every click after this
   // lands on the glass: four rounds' Ask Stroom AI round-trips "lost" the dashboard that way.
-  if (await page.locator('.flexLayout-glassVisible').count().catch(() => 0)) {
-    console.log('      (placing a dashboard component left waiting for a click: #57)');
-    await page.mouse.click(Math.round(VW / 2), Math.round(VH / 2)).catch(() => {});
+  // Since the fix Escape cancels it; the click is kept for a build without the fix.
+  if (await placementPending()) {
+    await page.keyboard.press('Escape').catch(() => {});
     await page.waitForTimeout(300);
+    if (await placementPending()) {
+      console.log('      (placing a dashboard component left waiting for a click: #57)');
+      await page.mouse.click(Math.round(VW / 2), Math.round(VH / 2)).catch(() => {});
+      await page.waitForTimeout(300);
+    }
   }
   await closeDialogs(page).catch(() => {});
   await dismissMenus(page).catch(() => {});
@@ -2674,6 +2707,12 @@ async function walk(node, state, arrivedAt) {
     try {
       if (await clickAffordance(label)) {
         after = await settledSurvey();
+        // Placed before the survey that names the outcome, or the node after it is walked under the
+        // glass: r13's `after Duplicate` lost the whole dashboard to its first click.
+        if (await placementPending()) {
+          if ((await placeWithEnter(id, label)).verdict === 'fail') checkFails += 1;
+          after = await settledSurvey({ lead: 0 });
+        }
         result = classifyDelta(before, after);
         // A click that changed the screen may have started a load that has not landed: `after Data
         // Retention` was surveyed with 10 buttons and had 14 once its rules grid arrived, so every

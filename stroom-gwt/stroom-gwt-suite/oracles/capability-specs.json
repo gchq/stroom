@@ -13167,7 +13167,7 @@
   {
    "presenter": "AnalyticRulePresenter",
    "expected": 2,
-   "seenCount": 78,
+   "seenCount": 79,
    "missing": [],
    "extra": [
     "First",
@@ -13235,6 +13235,7 @@
     "XML_FILTERING_ANALYTIC",
     "typed \"Columns\"",
     "Enter",
+    "chose \"BITMAP-REFERENCE\" \"Feed For Errors\"",
     "OK",
     "Cancel",
     "Theme - Click for help",
@@ -13686,6 +13687,7 @@
     "right-click an explorer row",
     "right-click the editor",
     "XML_FILTERING_ANALYTIC",
+    "chose \"BITMAP-REFERENCE\" \"Destination Feed\"",
     "OK",
     "Cancel",
     "Theme - Click for help",
@@ -13695,8 +13697,7 @@
     "Enable Transparency - Click for help",
     "Hide Conditional Styles - Click for help",
     "Set As Default",
-    "Revert To Default",
-    "chose \"BITMAP-REFERENCE\" \"Destination Feed\""
+    "Revert To Default"
    ],
    "explained": 1
   },
@@ -14206,7 +14207,7 @@
   {
    "presenter": "ViewPresenter",
    "expected": 2,
-   "seenCount": 20,
+   "seenCount": 21,
    "missing": [],
    "extra": [
     "Copy",
@@ -14223,6 +14224,7 @@
     "Add Term",
     "Add Operator",
     "Edit",
+    "chose \"Example Dynamic Index\" \"Data Source\"",
     "OK",
     "Cancel",
     "right-click an explorer row"
@@ -14232,7 +14234,7 @@
   {
    "presenter": "ReportPresenter",
    "expected": 2,
-   "seenCount": 74,
+   "seenCount": 75,
    "missing": [],
    "extra": [
     "First",
@@ -14295,6 +14297,7 @@
     "File Type - Click for help",
     "None",
     "XML_FILTERING_ANALYTIC",
+    "chose \"BITMAP-REFERENCE\" \"Feed For Errors\"",
     "OK",
     "Cancel",
     "Theme - Click for help",
