@@ -83,19 +83,19 @@ public final class ElasticClusterEditorStories {
                     play.expect(play.getByText("API key ID", "label")).toBeInTheDocument();
                     play.expect(play.getByText("Use authentication")).toBeInTheDocument();
                     play.expect(play.querySelector(URLS)).toHaveValue("https://es-1:9200\nhttps://es-2:9200");
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 .story("EditEnablesSave", context -> render(context, fixtures(true, null), false))
                 .withPlay(play -> {
                     final Query save = play.findByRole("button", "Save");
                     play.waitFor(() -> play.expect(play.querySelector(API_KEY_ID)).toHaveValue("key-abc"));
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.type(play.querySelector(API_KEY_ID), "-2");
                     // The text box reports its change (ValueChangeEvent) when it loses the focus,
                     // not as each key is typed
                     play.tab();
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
                 .story("TestConnectionSuccess", context -> render(context,
@@ -140,7 +140,7 @@ public final class ElasticClusterEditorStories {
                     play.expect(play.querySelector(API_KEY_ID)).toHaveValue("key-abc");
                     play.expect(play.getByRole("checkbox", "Use authentication"))
                             .toHaveAttribute("aria-readonly", "true");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     // The tab says it is read only, as a status that screen readers announce
                     final Query note = play.getByText("Read only", ".docTab-readOnlyNote");
                     play.expect(note).toBeVisible();

@@ -20,7 +20,6 @@ import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToggleButtonView;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.gwtplatform.mvp.client.View;
@@ -36,9 +35,6 @@ public interface PagerViewWithHeading extends View, TaskMonitorFactory {
     ButtonView addButton(Preset preset);
 
     void addButton(ButtonView buttonView);
-
-    ToggleButtonView addToggleButton(final Preset primaryPreset,
-                                     final Preset secondaryPreset);
 
     RefreshButton getRefreshButton();
 

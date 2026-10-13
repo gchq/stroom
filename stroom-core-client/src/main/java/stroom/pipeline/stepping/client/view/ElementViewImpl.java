@@ -17,19 +17,20 @@
 package stroom.pipeline.stepping.client.view;
 
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
+import stroom.widget.layout.client.SplitPane;
 
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.ViewImpl;
 
 public class ElementViewImpl extends ViewImpl implements ElementView {
 
-    private static final int LOG_PANE_SIZE = 30;
-    private static final double LOG_PANE_SPLIT = 0.15;
+    private static final String LOG_PANE_SIZE = "15%";
 
     private Widget widget;
-    private ThinSplitLayoutPanel layout;
+    // The panes stacked one above another: the code (if any), the input beside the output (or the
+    // output alone), and the log
+    private SplitPane layout;
 
     private View code;
     private View input;
@@ -44,38 +45,46 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
             final Widget logWidget = log.asWidget();
             outputWidget.addStyleName("dashboard-panel overflow-hidden");
             logWidget.addStyleName("dashboard-panel overflow-hidden");
-            layout = new ThinSplitLayoutPanel();
 
+            // The output, beside the input if there is one
+            final Widget middle;
             if (input == null) {
-                layout.setVSplits(LOG_PANE_SPLIT);
-                layout.addSouth(logWidget, LOG_PANE_SIZE);
+                middle = outputWidget;
             } else {
                 final Widget inputWidget = input.asWidget();
                 inputWidget.addStyleName("dashboard-panel overflow-hidden");
-                layout.setHSplits(0.5);
-                if (code == null) {
-                    layout.setVSplits(LOG_PANE_SPLIT);
-                    layout.addSouth(logWidget, LOG_PANE_SIZE);
-                    layout.addWest(inputWidget, 200);
-                } else {
-                    final Widget codeWidget = code.asWidget();
-                    codeWidget.addStyleName("dashboard-panel overflow-hidden");
-                    layout.addNorth(codeWidget, 200);
-                    layout.setVSplits(0.5, LOG_PANE_SPLIT);
-                    layout.addSouth(logWidget, LOG_PANE_SIZE);
-                    layout.addWest(inputWidget, 200);
-                }
+                final SplitPane inputAndOutput = thinSplitPane("50%, *", "Input, Output");
+                inputAndOutput.add(inputWidget);
+                inputAndOutput.add(outputWidget);
+                middle = inputAndOutput;
             }
-            // Center widget so must be added last
-            layout.add(outputWidget);
 
-            layout.setWidgetHidden(logWidget, true);
+            if (code == null) {
+                layout = thinSplitPane("*, " + LOG_PANE_SIZE, "Output, Log");
+            } else {
+                final Widget codeWidget = code.asWidget();
+                codeWidget.addStyleName("dashboard-panel overflow-hidden");
+                layout = thinSplitPane("50%, *, " + LOG_PANE_SIZE, "Code, Output, Log");
+                layout.add(codeWidget);
+            }
+            layout.setVertical(true);
+            layout.add(middle);
+            layout.add(logWidget);
+            layout.setPaneHidden(logWidget, true);
 
             widget = layout;
         }
 
         widget.setSize("100%", "100%");
         return widget;
+    }
+
+    private static SplitPane thinSplitPane(final String sizes, final String names) {
+        final SplitPane splitPane = new SplitPane();
+        splitPane.setThin(true);
+        splitPane.setSizes(sizes);
+        splitPane.setNames(names);
+        return splitPane;
     }
 
     @Override
@@ -102,8 +111,7 @@ public class ElementViewImpl extends ViewImpl implements ElementView {
     public void setLogVisible(final boolean isVisible) {
         isLogVisible = isVisible;
         if (layout != null && log != null) {
-            layout.setWidgetHidden(log.asWidget(), !isVisible);
-            layout.setVSplits();
+            layout.setPaneHidden(log.asWidget(), !isVisible);
         }
     }
 }

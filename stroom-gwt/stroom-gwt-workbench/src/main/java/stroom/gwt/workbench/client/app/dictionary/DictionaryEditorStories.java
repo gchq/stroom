@@ -144,9 +144,9 @@ public final class DictionaryEditorStories {
                             "Words", "Imports", "Effective Words", "Documentation", "Permissions"}) {
                         play.waitFor(() -> play.expect(tab(play, label)).toBeInTheDocument());
                     }
-                    // The toolbar's Save button starts disabled (clean on load); InlineSvgButton
+                    // The toolbar's Save button starts disabled (clean on load); ToolbarButton
                     // marks it with the 'disabled' class
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
 
                     // Effective Words shows the combined list (local and imported)
                     play.click(tab(play, "Effective Words"));
@@ -161,9 +161,9 @@ public final class DictionaryEditorStories {
                     play.waitFor(() -> play.expect(play.getByText("admin")).toBeInTheDocument());
                     play.expect(play.getByText("Analysts")).toBeInTheDocument();
                     final Query editButton = play.getByRole("button", TextMatch.regex("edit permissions", "i"));
-                    play.expect(editButton).toHaveClass("disabled");
+                    play.expect(editButton).toHaveAttribute("aria-disabled", "true");
                     play.click(play.getByText("admin"));
-                    play.waitFor(() -> play.expect(editButton).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(editButton).not().toHaveAttribute("aria-disabled"));
                     play.click(editButton);
                     // The dialog is a popup on the page's body, not in the canvas
                     play.expect(screen.findByText("Set Permissions")).toBeInTheDocument();
@@ -174,7 +174,7 @@ public final class DictionaryEditorStories {
                 .withPlay(play -> {
                     play.findByRole("button", "Save is not available as this document is read only");
                     // Save As stays available even read only, so the document can still be copied
-                    play.expect(play.getByRole("button", "Save As")).not().toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save As")).not().toHaveAttribute("aria-disabled");
                     // The Words editor is read only
                     play.expect(tab(play, "Words")).toBeInTheDocument();
                     expectNoProblems(play);

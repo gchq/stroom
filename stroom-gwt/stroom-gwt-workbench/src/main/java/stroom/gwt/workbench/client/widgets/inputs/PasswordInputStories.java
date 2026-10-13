@@ -22,7 +22,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
 
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -34,7 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 ///
 /// Stroom has no password input widget: it is the markup that Stroom's password views
 /// (`ChangePasswordViewImpl`, `LoginViewImpl`) build in their UiBinder templates, a
-/// [PasswordTextBox] with an overlay holding an optional length badge and an [InlineSvgButton] that
+/// [PasswordTextBox] with an overlay holding an optional length badge and an [ToolbarButton] that
 /// shows or hides the password. These stories build the same widgets in the same way, with the
 /// views' show/hide and badge code.
 public final class PasswordInputStories {
@@ -101,7 +101,7 @@ public final class PasswordInputStories {
     ///
     /// @param badge The length badge, or null for none.
     private static Widget passwordInput(final PasswordTextBox password, final Widget badge) {
-        final InlineSvgButton showPassword = new InlineSvgButton();
+        final ToolbarButton showPassword = new ToolbarButton();
         showPassword.addStyleName("showPassword");
         showPassword.setSvg(SvgImage.EYE);
         showPassword.setTitle(SHOW_PASSWORD);
@@ -125,7 +125,7 @@ public final class PasswordInputStories {
     }
 
     /// `ChangePasswordViewImpl.onShowPassword`.
-    private static void toggleShowPassword(final PasswordTextBox password, final InlineSvgButton showPassword) {
+    private static void toggleShowPassword(final PasswordTextBox password, final ToolbarButton showPassword) {
         final String type = password.getElement().getAttribute("type");
         if (type == null || "password".equals(type)) {
             password.getElement().setAttribute("type", "text");

@@ -75,7 +75,7 @@ public final class DropDownSelectorStories {
                 .withPlay(play -> {
                     final Query picker = play.getByRole("button", TextMatch.containing("Disabled"));
                     play.expect(picker).toHaveAttribute("aria-disabled", "true");
-                    play.expect(picker).toHaveClass("disabled");
+                    play.expect(picker).toHaveAttribute("aria-disabled", "true");
                     play.click(picker);
                     play.expect(play.spy(ON_OPEN)).not().toHaveBeenCalled();
                 })

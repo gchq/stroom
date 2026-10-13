@@ -133,13 +133,16 @@ public final class IndexEditorStories {
                 .withPlay(play -> {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(play.getByText("2024-01")).toBeInTheDocument());
-                    play.expect(play.getByRole("button", "Flush Selected Shards")).toHaveClass("disabled");
-                    play.expect(play.getByRole("button", "Delete Selected Shards")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Flush Selected Shards"))
+                            .toHaveAttribute("aria-disabled", "true");
+                    play.expect(play.getByRole("button", "Delete Selected Shards"))
+                            .toHaveAttribute("aria-disabled", "true");
                     // Shards are selected with their row's tick box
                     play.click(play.within(play.getByText("2024-01").closest("tr")).querySelector(".tickBox"));
                     play.waitFor(() -> play.expect(play.getByRole("button", "Flush Selected Shards"))
-                            .not().toHaveClass("disabled"));
-                    play.expect(play.getByRole("button", "Delete Selected Shards")).not().toHaveClass("disabled");
+                            .not().toHaveAttribute("aria-disabled"));
+                    play.expect(play.getByRole("button", "Delete Selected Shards"))
+                            .not().toHaveAttribute("aria-disabled");
                     // The info column's popup shows what isn't a column
                     play.click(play.querySelector(".svgCell-icon"));
                     final Play info = play.within(screen.findByText("Index UUID").closest("table"));

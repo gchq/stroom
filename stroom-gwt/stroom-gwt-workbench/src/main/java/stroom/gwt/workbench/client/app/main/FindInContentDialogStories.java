@@ -108,9 +108,7 @@ public final class FindInContentDialogStories {
                     // read-only Ace editor)
                     play.waitFor(4000, () -> play.expect(screen.getByText(TextMatch.containing("PIPELINEPREVIEW")))
                             .toBeInTheDocument());
-                    // Match case and Regex toggles are present.
-                    // GWT's toggles are InlineSvgToggleButtons, divs titled with
-                    // their names rather than buttons
+                    // Match case and Regex toggles are present, named by their titles
                     play.expect(screen.getByTitle("Match case")).toBeInTheDocument();
                     play.expect(screen.getByTitle("Regex")).toBeInTheDocument();
                     ContentStorySupport.expectNoProblems(play);

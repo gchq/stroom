@@ -47,8 +47,8 @@ import stroom.util.shared.time.SimpleDuration;
 import stroom.util.shared.time.Time;
 import stroom.util.shared.time.TimeUnit;
 import stroom.widget.button.client.Button;
-import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.customdatebox.client.DurationPicker;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.datepicker.client.DateTimeBox;
@@ -191,7 +191,7 @@ public final class ViewStateStories {
                 new Row("Text button", ViewStateStories::textButton, null, w -> ((Button) w).setEnabled(false),
                         NOT_APPLICABLE),
                 new Row("Icon button", ViewStateStories::iconButton, null,
-                        w -> ((InlineSvgButton) w).setEnabled(false), NOT_APPLICABLE));
+                        w -> ((ToolbarButton) w).setEnabled(false), NOT_APPLICABLE));
 
         int row = 1;
         for (final Row r : rows) {
@@ -393,7 +393,7 @@ public final class ViewStateStories {
     }
 
     private static Widget toggle(final boolean on, final boolean enabled) {
-        final InlineSvgToggleButton button = new InlineSvgToggleButton();
+        final ToolbarToggleButton button = new ToolbarToggleButton();
         button.setSvg(SvgImage.FILTER);
         button.setTitle(on ? "Filter on" : "Filter off");
         button.setState(on);
@@ -539,7 +539,7 @@ public final class ViewStateStories {
     }
 
     private static Widget iconButton() {
-        final InlineSvgButton button = new InlineSvgButton();
+        final ToolbarButton button = new ToolbarButton();
         button.setSvg(SvgImage.DELETE);
         button.setTitle("Delete");
         return button;

@@ -63,8 +63,8 @@ import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.InlineSvgButton;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
@@ -136,12 +136,12 @@ public class DashboardPresenter
     private String externalLinkParameters;
 
     private final DashboardContextImpl dashboardContext;
-    private final InlineSvgToggleButton editModeButton;
-    private final InlineSvgButton addComponentButton;
-    private final InlineSvgButton setConstraintsButton;
-    private final InlineSvgButton selectionInfoButton;
-    private final InlineSvgButton maximiseTabsButton;
-    private final InlineSvgButton restoreTabsButton;
+    private final ToolbarToggleButton editModeButton;
+    private final ToolbarButton addComponentButton;
+    private final ToolbarButton setConstraintsButton;
+    private final ToolbarButton selectionInfoButton;
+    private final ToolbarButton maximiseTabsButton;
+    private final ToolbarButton restoreTabsButton;
     private final ButtonPanel editToolbar;
 
     @Inject
@@ -175,30 +175,30 @@ public class DashboardPresenter
         flexLayout.setComponents(components);
         view.setContent(flexLayout);
 
-        editModeButton = new InlineSvgToggleButton();
+        editModeButton = new ToolbarToggleButton();
         editModeButton.setSvg(SvgImage.EDIT);
         editModeButton.setTitle("Enter Design Mode");
 
-        addComponentButton = new InlineSvgButton();
+        addComponentButton = new ToolbarButton();
         addComponentButton.setSvg(SvgImage.ADD);
         addComponentButton.setTitle("Add Component");
         addComponentButton.setVisible(false);
 
-        setConstraintsButton = new InlineSvgButton();
+        setConstraintsButton = new ToolbarButton();
         setConstraintsButton.setSvg(SvgImage.RESIZE);
         setConstraintsButton.setTitle("Set Constraints");
         setConstraintsButton.setVisible(false);
 
-        selectionInfoButton = new InlineSvgButton();
+        selectionInfoButton = new ToolbarButton();
         selectionInfoButton.setSvg(SvgImage.SELECTION);
         selectionInfoButton.setTitle("View Current Selection");
         selectionInfoButton.setVisible(false);
 
-        maximiseTabsButton = new InlineSvgButton();
+        maximiseTabsButton = new ToolbarButton();
         maximiseTabsButton.setSvg(SvgImage.MAXIMISE);
         maximiseTabsButton.setTitle("Maximise");
 
-        restoreTabsButton = new InlineSvgButton();
+        restoreTabsButton = new ToolbarButton();
         restoreTabsButton.setSvg(SvgImage.MINIMISE);
         restoreTabsButton.setTitle("Restore");
         restoreTabsButton.setVisible(false);
@@ -241,11 +241,13 @@ public class DashboardPresenter
     }
 
     @Override
+    public List<Widget> getDocumentButtons() {
+        return Collections.singletonList(editToolbar);
+    }
+
+    @Override
     public List<Widget> getToolbars() {
-        final List<Widget> list = new ArrayList<>();
-        list.add(editToolbar);
-        list.add(queryToolbarPresenter.getWidget());
-        return list;
+        return Collections.singletonList(queryToolbarPresenter.getWidget());
     }
 
     @Override

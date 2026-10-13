@@ -19,12 +19,12 @@ package stroom.visualisation.client.view;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.visualisation.client.presenter.VisualisationAssetsPresenter.VisualisationAssetsView;
+import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -42,10 +42,7 @@ public class VisualisationAssetsViewImpl extends ViewImpl
     FlowPanel rootPanel;
 
     @UiField
-    ThinSplitLayoutPanel splitLayoutPanel;
-
-    /** Size of tree panel */
-    private static final double TREE_SIZE = 200;
+    SplitPane splitPane;
 
     @Inject
     public VisualisationAssetsViewImpl(final Binder binder) {
@@ -70,9 +67,8 @@ public class VisualisationAssetsViewImpl extends ViewImpl
         editorArea.setStyleName("max visualisationAssets-editorArea");
         editorArea.add(editorPlaceholder);
         editorArea.add(editor);
-        // Note that .add() must be called last
-        splitLayoutPanel.addWest(tree, TREE_SIZE);
-        splitLayoutPanel.add(editorArea);
+        splitPane.add(tree);
+        splitPane.add(editorArea);
     }
 
     @Override

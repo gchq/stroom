@@ -328,7 +328,7 @@ public final class QueryEditorStories {
                     // Stroom shows an empty table, with no message, so the check is that it has no
                     // rows
                     play.expect(play.queryByText("alpha")).toBeNull();
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Running the query shows the table result
@@ -368,7 +368,8 @@ public final class QueryEditorStories {
                     play.click(play.getByText("Functions", HELP_ITEM));
                     play.waitFor(() -> play.expect(play.getByText("count", HELP_ITEM)).toBeInTheDocument());
                     play.click(play.getByText("count", HELP_ITEM));
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Insert")).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Insert"))
+                            .not().toHaveAttribute("aria-disabled"));
                     // The documentation is shown in an iframe, so the check is that it was fetched
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/query/v1/fetchDetail")
@@ -438,12 +439,12 @@ public final class QueryEditorStories {
                 .story("ColumnMenu", context -> render(context, FIXTURES))
                 .withPlay(play -> {
                     executeAndOpenColumnMenu(play, "Count");
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     play.click(play.screen().findByText("Hide", StroomDom.MENU_ITEM_TEXT));
                     // Stroom hides the column at once, without searching again; the preference is
                     // kept on the document, which is now dirty, and is sent with the next search
                     play.waitFor(() -> play.expect(play.queryByText("Count", ".column-top .column-label")).toBeNull());
-                    play.expect(play.getByRole("button", "Save")).not().toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).not().toHaveAttribute("aria-disabled");
                     play.click(play.getByRole("button", "Execute Query"));
                     expectSearchWith(play, "{\"queryTablePreferences\": {\"columns\": "
                                            + "[{}, {\"name\": \"Count\", \"visible\": false}, {}, {}]}}");
@@ -861,7 +862,7 @@ public final class QueryEditorStories {
                 .story("ReadOnly", context -> render(context, FIXTURES, null, true))
                 .withPlay(play -> {
                     play.expect(play.findByRole("button", "Save is not available as this document is read only"))
-                            .toHaveClass("disabled");
+                            .toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByRole("button", "Execute Query")).toBeInTheDocument();
                     DocumentEditors.expectNoProblems(play);
                 });

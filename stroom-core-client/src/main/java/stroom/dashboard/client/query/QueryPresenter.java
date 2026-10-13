@@ -72,7 +72,7 @@ import stroom.util.shared.ErrorMessage;
 import stroom.util.shared.ErrorMessages;
 import stroom.util.shared.Severity;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -125,7 +125,7 @@ public class QueryPresenter
     private final ButtonView historyButton;
     private final ButtonView favouriteButton;
     private final ButtonView downloadQueryButton;
-    private final InlineSvgButton errorsButton;
+    private final ToolbarButton errorsButton;
     private ErrorMessages currentErrors;
     private ButtonView processButton;
     private boolean initialised;
@@ -201,7 +201,7 @@ public class QueryPresenter
             processButton = view.addButtonLeft(SvgPresets.PROCESS.enabled(true));
         }
 
-        errorsButton = new InlineSvgButton();
+        errorsButton = new ToolbarButton();
         view.addButtonRight(errorsButton);
         setErrorsVisible(false);
 

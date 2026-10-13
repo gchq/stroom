@@ -43,12 +43,14 @@ import stroom.ui.config.shared.UserPreferences;
 import stroom.util.shared.UserRef;
 import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.HidePopupRequestEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupManager;
 import stroom.widget.popup.client.view.DialogAction;
+import stroom.widget.util.client.ContentFocus;
 import stroom.widget.util.client.PresenterScope;
 
 import com.google.gwt.core.client.GWT;
@@ -209,6 +211,9 @@ public final class ScreenHarness {
         new PopupManager(eventBus);
         // Show menus (ShowMenuEvent, e.g. from a grid's ActionMenuCell) as Stroom's Menu does
         new Menu(eventBus, this::createMenuPresenter);
+        // and the menus that widgets with no event bus ask for (MenuRequest), as Stroom's
+        // MainPresenter relays them
+        addCleanUp(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
 
         // Record alerts and confirmations, and optionally show them as Stroom does
         eventBus.addHandler(AlertEvent.getType(), event -> spy(ALERT_SPY, describe(event)));
@@ -376,6 +381,23 @@ public final class ScreenHarness {
     /// @param <P>       The presenter type.
     /// @return The presenter.
     public <P extends PresenterWidget<?>> P addContent(final P presenter) {
+        return fill(presenter, true);
+    }
+
+    /// Shows a page that Stroom shows on its own, not in a tab (e.g. the sign in page), filling the
+    /// story's canvas as [#addContent] does. The page decides where its focus goes itself, so the
+    /// test runner's focus check, which focuses a screen as the tab pane does, doesn't apply. The
+    /// presenter is unbound when the story renders again.
+    ///
+    /// @param presenter The page's presenter.
+    /// @param <P>       The presenter type.
+    /// @return The presenter.
+    public <P extends PresenterWidget<?>> P addPage(final P presenter) {
+        return fill(presenter, false);
+    }
+
+    // Shows a screen filling the canvas; a tab's screen is exposed to the focus check
+    private <P extends PresenterWidget<?>> P fill(final P presenter, final boolean tab) {
         final SimplePanel content = new SimplePanel();
         content.setStyleName(CONTENT_STYLE);
         content.getElement().getStyle().setProperty("position", "relative");
@@ -386,12 +408,37 @@ public final class ScreenHarness {
         widget.getElement().getStyle().setProperty("inset", "0");
         content.setWidget(widget);
         add(content);
+        if (tab) {
+            // For the test runner's focus check (test-runner/lib/focus-check.mjs): focuses the
+            // screen as Stroom's tab pane does when it opens it
+            exposeContentFocus(presenter, content.getElement());
+        }
         if (probe) {
             // Disposed with the scope it was made in when the probe closes the screen
             return presenter;
         }
         return unbindOnCleanUp(presenter);
     }
+
+    /// Exposes `window.__workbenchContentFocus()`, which focuses the screen as Stroom's tab pane does
+    /// when it opens it ([ContentFocus]) and reports where the focus went: `{inside, tabStop, name}`,
+    /// whether it is in the screen, on one of its tab stops (rather than the screen itself, which
+    /// takes the focus when it has none), and the name of what has it.
+    private static native void exposeContentFocus(Object presenter, Element content) /*-{
+        $wnd.__workbenchContentFocus = function () {
+            @stroom.widget.util.client.ContentFocus::focus(Ljava/lang/Object;)(presenter);
+            var active = $doc.activeElement;
+            var inside = !!active && active !== $doc.body && content.contains(active);
+            var firstTabStop = @stroom.widget.util.client.ContentFocus::firstTabStop(*)(content);
+            return {
+                inside: inside,
+                tabStop: inside && firstTabStop !== null,
+                name: active ? (active.getAttribute('title') || active.getAttribute('aria-label')
+                    || active.getAttribute('placeholder') || active.textContent.trim().substring(0, 40)
+                    || active.localName) : null
+            };
+        };
+    }-*/;
 
     /// For the leak check's probe (see [LeakProbe]): closes the screen as closing a Stroom tab does,
     /// hiding the popups and removing the widgets its opening added and, if asked, disposing the

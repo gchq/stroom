@@ -179,7 +179,8 @@ public final class AnnotationEditorStories {
                 // A comment change that fails says why and leaves the dialog usable: the failure handler
                 // was made but never called, so nothing was said and OK and Cancel stayed disabled
                 .story("FailedCommentChangeKeepsDialogUsable", context -> render(context, RestFixtures.builder()
-                        .post("/annotation/v1/changeAnnotationEntry", RestReply.error(500, "Unable to change the comment"))
+                        .post("/annotation/v1/changeAnnotationEntry",
+                                RestReply.error(500, "Unable to change the comment"))
                         .addAll(fixtures(ENTRIES).build())
                         .build()))
                 .withPlay(play -> {

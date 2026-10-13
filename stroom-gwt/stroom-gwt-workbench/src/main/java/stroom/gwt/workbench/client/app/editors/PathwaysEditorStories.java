@@ -109,7 +109,7 @@ public final class PathwaysEditorStories {
                     play.expect(play.getByText("checkout")).toBeInTheDocument();
                     // The graph pane shows no nodes until a pathway is selected
                     play.expect(play.querySelector(".pathway-nodeName")).toBeNull();
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // Selecting a pathway shows its graph; a node can be selected
@@ -187,11 +187,11 @@ public final class PathwaysEditorStories {
                     }
                     play.waitFor(() -> play.expect(play.getByText("My Traces")).toBeInTheDocument());
                     final Query save = play.getByRole("button", "Save");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.type(play.querySelector(PROCESSING_NODE), "-x");
                     // The text box reports its change when it loses the focus
                     play.tab();
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
                 .story("ReadOnly", context -> render(context, "pathways-1", PATHWAYS, true))
@@ -207,7 +207,7 @@ public final class PathwaysEditorStories {
                     play.type(processingNode, "-x");
                     play.tab();
                     play.sleep(300);
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 });
     }

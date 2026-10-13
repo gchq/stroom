@@ -159,11 +159,11 @@ public final class FeedEditorStories {
                     play.expect(play.getByText("Feed Status", "label")).toBeInTheDocument();
                     play.expect(play.getByText("Volume Group", "label")).toBeInTheDocument();
                     final Query save = play.getByRole("button", "Save");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.type(play.querySelector(CLASSIFICATION), "-X");
                     // The text box reports its change when it loses the focus
                     play.tab();
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
 
                     // Active Tasks: the task summary; its info icon shows the summary's key data;
                     // selecting a summary lists its tasks

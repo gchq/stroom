@@ -18,11 +18,11 @@ package stroom.dashboard.client.table;
 
 import stroom.query.api.GroupSelection;
 import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import java.util.HashSet;
 
-public class TableExpandButton extends InlineSvgButton {
+public class TableExpandButton extends ToolbarButton {
 
     private TableExpandButton() {
     }

@@ -61,7 +61,7 @@ public final class AskAiChatPanelStories {
                 .story("Empty", context -> render(context, AiFixtures.builder(AiFixtures.poll("", true)).build()))
                 .withPlay(play -> {
                     play.expect(play.findByText(TextMatch.containing(EMPTY_PROMPT))).toBeInTheDocument();
-                    play.expect(play.querySelector(AiFixtures.RUN)).toHaveClass("disabled");
+                    play.expect(play.querySelector(AiFixtures.RUN)).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByTitle("New Conversation")).toBeInTheDocument();
                     DocEditors.expectNoProblems(play);
                 })

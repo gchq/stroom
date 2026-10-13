@@ -128,8 +128,10 @@ public final class UserAccessScreenStories {
                     final Play users = usersGrid(play);
                     play.waitFor(() -> play.expect(users.querySelectorAll("." + StroomDom.SELECTED_ROW))
                             .toHaveLength(2));
-                    // The two panes are split, so the divider can be dragged
-                    play.expect(play.querySelector(".thinSplitLayoutPanel-VDragger")).toBeInTheDocument();
+                    // The two panes are split, by a splitter that can be dragged or moved from the
+                    // keyboard, named by the pane it resizes
+                    play.expect(play.getByRole("separator", "Sessions"))
+                            .toHaveAttribute("aria-orientation", "horizontal");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // Selecting a user loads their sessions below
@@ -161,21 +163,21 @@ public final class UserAccessScreenStories {
                     final Query openUser = play.getByRole("button", OPEN_USER_TITLE);
                     // GWT selects the first user when the list loads, so both buttons start live; with
                     // the selection cleared (a ctrl-click on the selected row) they go dead
-                    play.expect(revoke).not().toHaveClass("disabled");
+                    play.expect(revoke).not().toHaveAttribute("aria-disabled");
                     play.fireEvent().mouseDown(play.getByText("Alice Smith"), EventInit.create().ctrlKey());
                     play.waitFor(() -> play.expect(usersGrid(play).querySelectorAll("." + StroomDom.SELECTED_ROW))
                             .toHaveLength(0));
-                    play.expect(revoke).toHaveClass("disabled");
-                    play.expect(openUser).toHaveClass("disabled");
+                    play.expect(revoke).toHaveAttribute("aria-disabled", "true");
+                    play.expect(openUser).toHaveAttribute("aria-disabled", "true");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // A row with no stroom user can't be opened, but can be revoked
                 .story("OpenUserNeedsAStroomUser", context -> render(context, false))
                 .withPlay(play -> {
                     play.click(play.findAllByText("orphan.subject").nth(0));
-                    play.expect(play.getByRole("button", OPEN_USER_TITLE)).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", OPEN_USER_TITLE)).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByRole("button", TextMatch.containing(REVOKE_TITLE)))
-                            .not().toHaveClass("disabled");
+                            .not().toHaveAttribute("aria-disabled");
                     SecurityPlays.expectNoProblems(play);
                 })
                 // The internal IdP's confirmation: tokens stop at once, the account stays enabled

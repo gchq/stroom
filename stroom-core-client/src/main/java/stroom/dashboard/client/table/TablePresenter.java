@@ -107,7 +107,7 @@ import stroom.util.shared.NullSafe;
 import stroom.util.shared.RandomId;
 import stroom.util.shared.Version;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.dropdowntree.client.view.QuickFilterTooltipUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupType;
@@ -166,7 +166,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final TableExpandButton expandButton;
     private final TableCollapseButton collapseButton;
     private final ButtonView downloadButton;
-    private final InlineSvgToggleButton valueFilterButton;
+    private final ToolbarToggleButton valueFilterButton;
     private final ButtonView annotateButton;
     private final ButtonView askAiButton;
     private final DownloadPresenter downloadPresenter;
@@ -256,7 +256,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 .hasAppPermission(AppPermission.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
         // Filter values
-        valueFilterButton = new InlineSvgToggleButton();
+        valueFilterButton = new ToolbarToggleButton();
         valueFilterButton.setSvg(SvgImage.FILTER);
         valueFilterButton.setTitle("Show Column Filters");
         pagerView.addButton(valueFilterButton);

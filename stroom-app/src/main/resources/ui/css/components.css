@@ -38,6 +38,11 @@
     gap: 2px;
 }
 
+/* A column of buttons (ButtonPanel.setVertical); ButtonGroupFocus says so with aria-orientation */
+.button-container[aria-orientation="vertical"] {
+    flex-direction: column;
+}
+
 .basicTabSelector {
     position: absolute;
     left: 0;
@@ -530,7 +535,7 @@
     height: 17px;
 }
 
-.dropDownView-warning > .background {
+.dropDownView-warning::before {
     /* Because the icon is inside the drop down text box, we need to alter its hover background
        so it doesn't spill over the border of the text box. */
     height: 88%;
@@ -1101,19 +1106,6 @@
     display: flex;
 }
 
-.toolbar {
-}
-
-.toolbar-left {
-    flex-grow: 0;
-}
-
-.toolbar-right {
-    display: flex;
-    justify-content: flex-end;
-    flex-grow: 0;
-}
-
 .queryFavouritesViewImpl-cellList {
     position: absolute;
     min-width: 100%;
@@ -1161,6 +1153,9 @@
 
 .QueryEditViewImpl {
     border-top: 1px solid var(--control__border-color);
+    background-color: var(--dashboard-panel__background-color);
+    overflow: hidden;
+    user-select: none;
 }
 
 .characterNavigator {
@@ -1226,56 +1221,6 @@
 }
 */
 
-.mainViewImpl-splitPanel > .thinSplitLayoutPanel-Dragger-Outer {
-    background-color: var(--navigation__splitter__background-color);
-}
-
-.thinSplitLayoutPanel-Dragger-Outer {
-    overflow: visible !important;
-    background-color: var(--splitter__background-color);
-    z-index: 10;
-}
-
-.thinSplitLayoutPanel-Dragger {
-    position: absolute;
-    background: none;
-    width: 100%;
-    height: 100%;
-    border: none;
-    inset: initial !important;
-}
-
-.thinSplitLayoutPanel-HDragger {
-	width: var(--split__size) !important;
-	height: 100% !important;
-	left: var(--split__offset) !important;
-	cursor: col-resize;
-}
-
-.thinSplitLayoutPanel-VDragger {
-	width: 100% !important;
-	height: var(--split__size) !important;
-	top: var(--split__offset) !important;
-    cursor: row-resize;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 .mainViewImpl-contentWrapper {
     position: relative;
     width: 100%;
@@ -1298,11 +1243,6 @@
     display: flex;
     gap: 0px;
     align-items: center;
-}
-
-.mainViewImpl-menu {
-    width: 32px;
-    height: 32px;
 }
 
 .mainViewImpl-spinner {
@@ -1563,6 +1503,21 @@
     overflow: hidden;
 }
 
+/* Icon buttons in the explorer (its toolbar, its quick filter's) are in the explorer's colours */
+.navigation .toolbar-button:not([aria-disabled="true"]):hover::before {
+    background-color: var(--navigation-icon-button__background-color--hover);
+    border: thin solid var(--navigation-icon-button__border-color--hover);
+}
+
+.navigation .toolbar-button[aria-pressed="true"]::before {
+    background-color: var(--navigation-icon-button__background-color--on);
+    border: thin solid var(--navigation-icon-button__border-color--on);
+}
+
+.navigation .toolbar-button__icon {
+    color: var(--navigation-icon-button__color);
+}
+
 .navigation .cellTableSelectedRow {
 	background-color: var(--navigation__background-color--selected);
 	color: var(--navigation__text-color--selected);
@@ -1714,13 +1669,6 @@ button.main-menu svg {
     align-items: center;
     margin: 0.25rem;
     margin-top: 0;
-}
-
-.navigation-header-buttons {
-    flex-grow: 1;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
 }
 
 .form-control-border {
@@ -1924,7 +1872,7 @@ button.main-menu svg {
     line-height: 1.6em;
 }
 
-.form-group .help-button .icon-button {
+.form-group .help-button .toolbar-button {
     width: 18px;
     height: 18px;
 }
@@ -2214,10 +2162,6 @@ button.main-menu svg {
     top: 3px;
 }
 
-.find-buttons .icon-button .face {
-    color: var(--control__text-color);
-}
-
 .FindCellTable {
     table-layout: fixed;
 }
@@ -2473,11 +2417,7 @@ button.main-menu svg {
     right: 50px;
 }
 
-.editNodeTagsAddTagsInputPanel .button-container .invisible {
-    visibility: hidden;
-}
-
-.editNodeTagsAddTagsInputContainer .svg-image__clear.face {
+.editNodeTagsAddTagsInputContainer .clear .toolbar-button__icon {
     color: var(--control__text-color);
 }
 
@@ -2565,7 +2505,7 @@ button.main-menu svg {
 }
 
 /* Add a smidge of a gap between the split and the next form group */
-.DictionarySettingViewImpl .thinSplitLayoutPanel-Dragger-Outer + div > div.form-group > div.form-group-label-container {
+.DictionarySettingViewImpl-words > .form-group-label-container {
     margin-top: 0.5em;
 }
 

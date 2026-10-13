@@ -26,7 +26,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.htree.client.treelayout.Point;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.HtmlBuilder;
@@ -58,7 +58,7 @@ public class PathwayTreePresenter
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
-    private final InlineSvgButton viewTracesButton;
+    private final ToolbarButton viewTracesButton;
 
     private final HTML html;
     private final MySingleSelectionModel<PathNode> selectionModel = new MySingleSelectionModel<PathNode>();
@@ -77,7 +77,7 @@ public class PathwayTreePresenter
         editButton = view.addButton(SvgPresets.EDIT);
         removeButton = view.addButton(SvgPresets.DELETE);
 
-        viewTracesButton = new InlineSvgButton();
+        viewTracesButton = new ToolbarButton();
         viewTracesButton.setSvg(SvgImage.EYE);
         viewTracesButton.setTitle("View Matching Traces");
         view.addButton(viewTracesButton);

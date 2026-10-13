@@ -8,18 +8,13 @@
             <g:FlowPanel styleName="dock-max askStroomAiViewImpl-title">
                 <g:Label ui:field="chatTitle" text="Agent"/>
             </g:FlowPanel>
-            <g:FlowPanel styleName="dock-min askStroomAiViewImpl-buttons">
-                <p:InlineSvgButton ui:field="newChat" text="New Conversation"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="chatHistory" text="Conversation History"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="download" text="Download"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="deleteAll" text="Delete All Messages"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-                <p:InlineSvgButton ui:field="configure" text="Configure"
-                                   addStyleNames="allow-focus navigation-menu-button"/>
-            </g:FlowPanel>
+            <p:Toolbar name="Conversation" addStyleNames="dock-min askStroomAiViewImpl-buttons toolbar--quiet">
+                <p:ToolbarButton ui:field="newChat" svg="ADD" title="New Conversation"/>
+                <p:ToolbarButton ui:field="chatHistory" svg="HISTORY" title="Conversation History"/>
+                <p:ToolbarButton ui:field="download" svg="DOWN" title="Download" enabled="false"/>
+                <p:ToolbarButton ui:field="deleteAll" svg="DELETE" title="Delete All Messages" enabled="false"/>
+                <p:ToolbarButton ui:field="configure" svg="SETTINGS" title="Configure"/>
+            </p:Toolbar>
         </g:FlowPanel>
         <g:SimplePanel ui:field="markdownPreview" styleName="dock-max askStroomAiViewImpl-middle markdown-container"/>
         <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
@@ -34,7 +29,10 @@
                 <g:FlowPanel styleName="dock-container-horizontal dock-min askStroomAiViewImpl-modelPane">
                     <g:SimplePanel ui:field="modelRef" styleName="dock-max"/>
                     <spinner:SpinnerSmall ui:field="spinner" addStyleNames="navigation-header-spinner"/>
-                    <p:InlineSvgButton ui:field="run" text="Run" addStyleNames="allow-focus play"/>
+                    <p:Toolbar name="Message" addStyleNames="toolbar--control">
+                        <p:ToolbarButton ui:field="run" svg="PLAY" title="Send" enabled="false"
+                                         addStyleNames="play"/>
+                    </p:Toolbar>
                 </g:FlowPanel>
             </g:FlowPanel>
         </g:FlowPanel>

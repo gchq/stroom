@@ -248,8 +248,8 @@ public final class ProcessorFilterEditDialogStories {
                     // read only, with or without a selection
                     play.expect(deps.getByRole("columnheader", "Feed")).toBeInTheDocument();
                     play.expect(deps.getByRole("columnheader", "Type")).toBeInTheDocument();
-                    play.expect(deps.getByTitle("Edit Reference")).not().toHaveClass("disabled");
-                    play.expect(deps.getByTitle("Remove Reference")).toHaveClass("disabled");
+                    play.expect(deps.getByTitle("Edit Reference")).not().toHaveAttribute("aria-disabled");
+                    play.expect(deps.getByTitle("Remove Reference")).toHaveAttribute("aria-disabled", "true");
                     // Add opens the editor popup
                     play.click(deps.getByTitle("New Reference"));
                     final Play editor = dialog(screen, "New Feed Dependency");
@@ -271,7 +271,8 @@ public final class ProcessorFilterEditDialogStories {
                     // The row lands in the grid, and selecting it enables Edit/Remove
                     deps.findByText("MY_FEED");
                     play.click(deps.getByText("MY_FEED"));
-                    play.waitFor(() -> play.expect(deps.getByTitle("Remove Reference")).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(deps.getByTitle("Remove Reference"))
+                            .not().toHaveAttribute("aria-disabled"));
                     play.expect(play.spy(ScreenHarness.UNHANDLED_REQUEST_SPY)).not().toHaveBeenCalled();
                 });
     }

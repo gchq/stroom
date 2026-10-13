@@ -85,7 +85,7 @@ final class SignInPages {
         harness.afterStartUp(() -> {
             final Presenter<?, ?> presenter = page.apply(injector, harness);
             shown[0] = presenter;
-            harness.addContent(presenter);
+            harness.addPage(presenter);
             IdpPage.reveal(presenter);
         });
         return harness.asWidget();

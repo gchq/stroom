@@ -146,7 +146,7 @@ public final class SolrIndexEditorStories {
                     // Stroom writes the document when it is saved, so the play saves it and checks
                     // what was sent
                     final Query save = play.getByRole("button", "Save");
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(UPDATE)

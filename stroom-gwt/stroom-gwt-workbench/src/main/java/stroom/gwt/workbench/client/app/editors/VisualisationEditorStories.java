@@ -99,18 +99,18 @@ public final class VisualisationEditorStories {
                     play.expect(play.querySelector(FUNCTION_NAME)).toHaveValue("D3.Bar");
                     // The settings JSON editor (Ace)
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 .story("EditEnablesSave", context -> render(context, false))
                 .withPlay(play -> {
                     final Query save = play.findByRole("button", "Save");
                     play.waitFor(() -> play.expect(play.querySelector(FUNCTION_NAME)).toHaveValue("D3.Bar"));
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.type(play.querySelector(FUNCTION_NAME), "Chart");
                     // The text box reports its change when it loses the focus
                     play.tab();
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
                 // The Assets tab: a tree of the draft assets and an editor for the selected file
@@ -149,7 +149,7 @@ public final class VisualisationEditorStories {
                     play.waitFor(() -> play.expect(play.querySelector(FUNCTION_NAME)).toHaveAttribute("readonly"));
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).toHaveAttribute("readonly"));
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
-                            .toHaveClass("disabled");
+                            .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // The Assets tab, to compare with its read only partner
@@ -207,7 +207,7 @@ public final class VisualisationEditorStories {
                 : "D3.BarChart"), text);
         play.tab();
         final Query save = play.getByRole("button", "Save");
-        play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+        play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
         play.click(save);
     }
 

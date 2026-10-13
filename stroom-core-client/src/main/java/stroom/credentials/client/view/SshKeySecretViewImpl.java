@@ -19,7 +19,7 @@ package stroom.credentials.client.view;
 import stroom.credentials.client.presenter.SshKeySecretPresenter.SshKeySecretView;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tickbox.client.view.CustomCheckBox;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -42,7 +42,7 @@ public class SshKeySecretViewImpl
     @UiField
     PasswordTextBox passPhrase;
     @UiField
-    InlineSvgButton showPassPhrase;
+    ToolbarButton showPassPhrase;
     @UiField
     TextArea privateKey;
     @UiField

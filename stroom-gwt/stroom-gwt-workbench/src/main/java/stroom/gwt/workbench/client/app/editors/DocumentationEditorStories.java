@@ -77,7 +77,7 @@ public final class DocumentationEditorStories {
                     play.waitFor(() -> play.expect(DocEditors.tab(play, "Documentation")).toBeInTheDocument());
                     play.expect(DocEditors.tab(play, "Permissions")).toBeInTheDocument();
                     // The toolbar carries Save / Save As / Download; Save starts disabled
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     play.expect(play.getByRole("button", "Save As")).toBeInTheDocument();
                     play.expect(play.getByRole("button", "Download")).toBeInTheDocument();
                     // A non-blank document loads in preview mode, the preview being an iframe
@@ -90,15 +90,15 @@ public final class DocumentationEditorStories {
                 .withPlay(play -> {
                     final Query edit = play.findByRole("button", "Edit");
                     // Loads in preview mode (non-blank body): no Ace editor, Edit not pressed
-                    play.expect(edit).not().toHaveClass("on");
+                    play.expect(edit).toHaveAttribute("aria-pressed", "false");
                     play.expect(play.querySelector(ACE_INPUT)).toBeNull();
                     play.click(edit);
                     play.waitFor(() -> play.expect(play.querySelector(ACE_INPUT)).not().toBeNull());
-                    play.expect(edit).toHaveClass("on");
+                    play.expect(edit).toHaveAttribute("aria-pressed", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // Read only (no EDIT permission): the preview shows, the markdown toolbar is hidden
-                // (getToolbars() is empty) and Save is retitled
+                // (getDocumentButtons() is empty) and Save is retitled
                 .story("ReadOnly", context -> render(context, true))
                 .withPlay(play -> {
                     play.findByRole("button", "Save is not available as this document is read only");
@@ -106,7 +106,7 @@ public final class DocumentationEditorStories {
                     play.expect(play.queryByRole("button", "Edit")).toBeNull();
                     play.expect(play.queryByRole("button", "Documentation help")).toBeNull();
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
-                            .toHaveClass("disabled");
+                            .toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 });
     }

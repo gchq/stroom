@@ -32,8 +32,8 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.core.client.GWT;
@@ -61,7 +61,7 @@ public class MarkdownEditPresenter
     private final MarkdownPreviewPresenter markdownPreviewPresenter;
     private final IFramePresenter iFramePresenter;
     private final UiConfigCache uiConfigCache;
-    private final InlineSvgToggleButton editModeButton;
+    private final ToolbarToggleButton editModeButton;
     private final ButtonView helpButton;
     private final MarkdownConverter markdownConverter;
     private boolean reading;
@@ -91,7 +91,7 @@ public class MarkdownEditPresenter
         iFramePresenter.setSandboxEnabled(true, SandboxOption.ALLOW_POPUPS);
 //        view.setView(iFramePresenter.getView());
 
-        editModeButton = new InlineSvgToggleButton();
+        editModeButton = new ToolbarToggleButton();
         editModeButton.setSvg(SvgImage.EDIT);
         editModeButton.setTitle("Edit");
         editModeButton.setEnabled(true);
@@ -102,7 +102,7 @@ public class MarkdownEditPresenter
     }
 
     @Override
-    public List<Widget> getToolbars() {
+    public List<Widget> getDocumentButtons() {
         if (readOnly) {
             return Collections.emptyList();
         }

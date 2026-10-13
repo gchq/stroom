@@ -24,6 +24,7 @@ import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.widget.help.client.presenter.HelpManager;
 import stroom.widget.menu.client.presenter.Menu;
 import stroom.widget.menu.client.presenter.MenuPresenter;
+import stroom.widget.menu.client.presenter.MenuRequest;
 import stroom.widget.menu.client.presenter.MenuViewImpl;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -86,6 +87,16 @@ public final class StoryPopups {
     /// @return This, for chaining.
     public StoryPopups withMenus() {
         new Menu(eventBus, this::createMenuPresenter);
+        return this;
+    }
+
+    /// Shows the menus that widgets with no event bus ask for (e.g. a split pane's splitter, with
+    /// `MenuRequest`), as Stroom's main presenter does, with [#withMenus]'s menus.
+    ///
+    /// @return This, for chaining.
+    public StoryPopups withMenuRequests() {
+        withMenus();
+        cleanUps.add(MenuRequest.relay(event -> eventBus.fireEvent(event))::removeHandler);
         return this;
     }
 

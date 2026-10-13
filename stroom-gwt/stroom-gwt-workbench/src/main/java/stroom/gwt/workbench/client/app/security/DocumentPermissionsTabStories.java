@@ -86,7 +86,7 @@ public final class DocumentPermissionsTabStories {
                     final Play screen = play.screen();
                     play.click(play.findByText("Analysts"));
                     final Query edit = play.getByRole("button", TextMatch.containingIgnoreCase(EDIT_TITLE));
-                    play.waitFor(() -> play.expect(edit).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
                     play.click(edit);
                     screen.findByText("Set Permissions");
                     // The descendants are counted, then the change confirmed
@@ -144,7 +144,7 @@ public final class DocumentPermissionsTabStories {
                     final Play screen = play.screen();
                     play.click(play.findByText("admin"));
                     final Query edit = play.getByRole("button", TextMatch.containingIgnoreCase(EDIT_TITLE));
-                    play.waitFor(() -> play.expect(edit).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(edit).not().toHaveAttribute("aria-disabled"));
                     play.click(edit);
                     // Stroom's dialogs have no role="dialog"; each is the closest
                     // '.dialog-container' of its caption

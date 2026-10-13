@@ -42,7 +42,7 @@ import stroom.util.client.DelayedUpdate;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.InlineSvgToggleButton;
+import stroom.widget.button.client.ToolbarToggleButton;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.HtmlBuilder;
@@ -94,7 +94,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
     private final Map<String, PingResult> latestPing = new HashMap<>();
     private final FindNodeStatusCriteria findNodeStatusCriteria = new FindNodeStatusCriteria();
     private final MultiSelectionModelImpl<NodeStatusResult> selectionModel;
-    private final InlineSvgToggleButton autoRefreshButton;
+    private final ToolbarToggleButton autoRefreshButton;
     private final DelayedUpdate redrawDelayedUpdate;
 
     private Map<String, NodeStatusResult> nodeNameToNodeStatusMap = null;
@@ -120,7 +120,7 @@ public class NodeStatusListPresenter extends MyPresenterWidget<PagerView> implem
         this.dateTimeFormatter = dateTimeFormatter;
         this.redrawDelayedUpdate = new DelayedUpdate(dataGrid::redraw);
 
-        autoRefreshButton = new InlineSvgToggleButton();
+        autoRefreshButton = new ToolbarToggleButton();
         autoRefreshButton.setSvg(SvgImage.AUTO_REFRESH);
         autoRefreshButton.setTitle(AUTO_REFRESH_ON_TITLE);
         autoRefreshButton.setState(autoRefresh);

@@ -116,7 +116,7 @@ public final class OpenAiModelEditorStories {
                     // The box is a text box showing the key's name
                     play.waitFor(() -> play.expect(play.within(play.querySelector(API_KEY))
                             .querySelector(StroomDom.SELECTION_BOX)).toHaveValue("openai-key"));
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // The numeric fields are ValueSpinners, and every FormGroup has help text
@@ -133,10 +133,10 @@ public final class OpenAiModelEditorStories {
                     // The up arrow increments by one and makes the document dirty.
                     // The arrow is a div with no button role or name, and steps on its mousedown
                     final Query save = play.getByRole("button", "Save");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.click(play.within(play.querySelector(MAX_CONTEXT)).querySelector(".valueSpinner-arrowUp"));
                     play.waitFor(() -> play.expect(context).toHaveValue("128001"));
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     // Every settings FormGroup has GWT's help text, so a help button
                     play.expect(play.getAllByRole("button", TextMatch.endingWith("- Click for help")))
                             .toHaveLength(6);
@@ -152,11 +152,11 @@ public final class OpenAiModelEditorStories {
                 .withPlay(play -> {
                     final Query save = play.findByRole("button", "Save");
                     play.waitFor(() -> play.expect(play.querySelector(MODEL_ID)).toHaveValue("gpt-4o"));
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.type(play.querySelector(MODEL_ID), "-mini");
                     // The text box reports its change when it loses the focus
                     play.tab();
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
                 // Picking another API key changes the document's apiKeyName
@@ -167,7 +167,8 @@ public final class OpenAiModelEditorStories {
                     play.waitFor(() -> play.expect(box).toHaveValue("openai-key"));
                     play.click(box);
                     play.click(screen.findByText("azure-key"));
-                    play.waitFor(() -> play.expect(play.getByRole("button", "Save")).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(play.getByRole("button", "Save"))
+                            .not().toHaveAttribute("aria-disabled"));
                     DocEditors.expectNoProblems(play);
                 })
                 .story("TestModelSuccess", context -> render(context,
@@ -198,7 +199,7 @@ public final class OpenAiModelEditorStories {
                     final Query save = play.findByRole("button", "Save");
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/openAIModel/v1/getDefaultHttpClientConfig").toSpyMatcher()));
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
 
                     play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
                     play.waitFor(() -> play.expect(screen.getByText("Edit HTTP Client Configuration"))
@@ -221,7 +222,7 @@ public final class OpenAiModelEditorStories {
                     play.click(screen.getByRole("button", StroomDom.button("OK")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP Client Configuration"))
                             .toBeNull());
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     // The user agent is kept (it used to be lost on OK)
                     play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
                     play.waitFor(() -> play.expect(screen.getByLabelText("User Agent")).toHaveValue(USER_AGENT));
@@ -239,7 +240,7 @@ public final class OpenAiModelEditorStories {
                     play.expect(play.querySelector(BASE_URL)).not().toBeDisabled();
                     // A read-only SelectionBox has the 'readonly' class
                     play.expect(play.querySelector(API_KEY)).toHaveClass("readonly");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // Settings, read only: the partner of Default

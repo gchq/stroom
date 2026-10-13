@@ -20,6 +20,9 @@ package stroom.gwt.workbench.client.app.main;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.DocumentTabData;
+import stroom.gwt.workbench.client.a11y.ButtonRuns;
+import stroom.gwt.workbench.client.app.ai.AiFixtures;
+import stroom.gwt.workbench.client.app.ai.AskStroomAiChat;
 import stroom.gwt.workbench.client.app.editors.DocEditors;
 import stroom.gwt.workbench.client.app.query.QueryFixtures;
 import stroom.gwt.workbench.client.app.rest.RequestMatcher;
@@ -35,6 +38,7 @@ import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
 import stroom.gwt.workbench.framework.client.play.Spy;
 import stroom.gwt.workbench.framework.client.play.TextMatch;
+import stroom.gwt.workbench.framework.client.play.Value;
 import stroom.gwt.workbench.framework.client.play.ValueMatcher;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
@@ -90,6 +94,8 @@ public final class AppShellStories {
     private static final String MENU_SHORTCUT = ".menuItem-shortcut";
     // The main menu button is the explorer's 'Main Menu'
     private static final String MAIN_MENU = "Main Menu";
+    // The content tab pane (CurveTabLayoutViewImpl) when the focus is in it
+    private static final String CONTENT_WITH_FOCUS = ".curveTabLayoutViewImpl-layerContainerOuter:focus-within";
 
     private static final String DICTIONARY_PATH = "/dictionary/v1/";
     private static final String CREATE_PATH = "/explorer/v2/create";
@@ -183,16 +189,15 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play nav = navTree(play);
                     final Query filter = nav.getByRole("button", "Filter Types");
-                    // The toggle button shows its state with the 'on' class,
-                    // not aria-pressed
-                    play.expect(filter).not().toHaveClass("on");
+                    // The toggle button says whether a filter is set with aria-pressed
+                    play.expect(filter).toHaveAttribute("aria-pressed", "false");
                     play.click(filter);
                     final Play screen = play.screen();
                     screen.findByText("All / None");
                     play.expect(screen.getByText("Feed")).toBeInTheDocument();
                     play.expect(screen.getByText("Dictionary")).toBeInTheDocument();
                     play.click(screen.getByText("Feed"));
-                    play.waitFor(() -> play.expect(filter).toHaveClass("on"));
+                    play.waitFor(() -> play.expect(filter).toHaveAttribute("aria-pressed", "true"));
                     expectNoProblems(play);
                 })
                 // The Toggle Alerts button shows only when dependency warnings are enabled
@@ -206,9 +211,9 @@ public final class AppShellStories {
                 .withPlay(play -> {
                     final Play nav = navTree(play);
                     final Query alerts = nav.getByRole("button", "Toggle Alerts");
-                    play.expect(alerts).not().toHaveClass("on");
+                    play.expect(alerts).toHaveAttribute("aria-pressed", "false");
                     play.click(alerts);
-                    play.waitFor(() -> play.expect(alerts).toHaveClass("on"));
+                    play.waitFor(() -> play.expect(alerts).toHaveAttribute("aria-pressed", "true"));
                     expectNoProblems(play);
                 })
                 // A document opened on its own, without the explorer or toolbar
@@ -378,6 +383,71 @@ public final class AppShellStories {
                     play.expect(play.findByText("Volume Group", "label")).toBeInTheDocument();
                     expectNoProblems(play);
                 })
+                // The runs of icon buttons, and the tab stops each costs: the explorer's and the
+                // main toolbar's, then those a document adds (its tab's Save buttons and its editor's)
+                .story("ToolbarTabStops", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
+                            "Ask Stroom AI, Show Menu: 1 tab stop",
+                            "Quick Filter Syntax Help: 1 tab stop",
+                            "New, Delete, Locate Current Item, Expand All, Collapse All, Filter Types, "
+                            + "Find In Content: 1 tab stop"));
+                    play.dblClick(navTree(play).getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeInTheDocument());
+                    play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
+                            "Ask Stroom AI, Show Menu: 1 tab stop",
+                            "Quick Filter Syntax Help: 1 tab stop",
+                            "Save, Save As, Download Dictionary words: 1 tab stop",
+                            "New, Delete, Locate Current Item, Expand All, Collapse All, "
+                            + "Filter Types, Find In Content: 1 tab stop"));
+                })
+                // #5405: a screen opened from the main menu takes the focus, rather than leave it
+                // on the menu's button, so a keyboard user carries on in the screen they opened
+                .story("OpenedScreenTakesFocus", context -> render(context, TreeFixtures.fixtureTree(),
+                        routes -> routes.addAll(UserGroupsScreenStories.FIXTURES), builder -> {
+                        }, null))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.click(play.findByTitle(MAIN_MENU));
+                    play.waitFor(() -> play.expect(menuItem(screen, "Security")).toBeInTheDocument());
+                    play.hover(menuItem(screen, "Security"));
+                    play.click(screen.findByText("User Groups", StroomDom.MENU_ITEM_TEXT));
+                    play.findAllByText("Administrators");
+                    play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
+                    play.expect(play.getByTitle(MAIN_MENU)).not().toHaveFocus();
+                    expectNoProblems(play);
+                })
+                // #5405: a document opened from the explorer takes the focus
+                .story("OpenedDocumentTakesFocus", context -> render(context, AppShellFixtures.dictTree()))
+                .withPlay(play -> {
+                    play.dblClick(navTree(play).getByText("Countries"));
+                    play.findByText("Words", StroomDom.LINK_TAB_LABEL);
+                    play.waitFor(() -> play.expect(play.querySelector(CONTENT_WITH_FOCUS)).toBeInTheDocument());
+                    expectNoProblems(play);
+                })
+                // The 'Ask Stroom AI' chat docked to the right of the content (its config's dock
+                // type is DOCK), opened with the toolbar's button: the main screen puts it in a split
+                // pane of its own beside the content, whose splitter is named by the chat
+                .story("AiDockedBesideContent", AppShellStories::renderDockedAi)
+                .withPlay(play -> {
+                    play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
+                    play.click(play.getByTitle("Ask Stroom AI"));
+                    final Query aiSplitter = play.findByRole("separator", "Ask Stroom AI");
+                    play.expect(aiSplitter).toHaveAttribute("aria-orientation", "vertical");
+                    // The explorer's splitter is still there, in the content beside the chat
+                    play.expect(play.getByRole("separator", "Explorer")).toBeInTheDocument();
+                    // Moving the chat's splitter saves its new size in the user's preferences
+                    final Value<Integer> requests = play.spy(ScreenHarness.REQUEST_SPY).callCount();
+                    final Value<Integer> before = play.capture("requests before", requests::get);
+                    play.click(aiSplitter);
+                    play.keyboard("{ArrowLeft}");
+                    play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenLastCalledWith(
+                            RequestMatcher.post("/preferences/v1").withBodyContaining("dockSize").toSpyMatcher()));
+                    play.expect("requests since", () -> requests.get() - before.get()).toBeGreaterThan(0);
+                    expectNoProblems(play);
+                })
                 // Load, edit (dirty), save, and close with the unsaved changes confirmation
                 .story("DictionaryLifecycle", context -> render(context, AppShellFixtures.dictTree()))
                 .withPlay(play -> {
@@ -540,7 +610,7 @@ public final class AppShellStories {
                     play.expect(play.within(dialog).findByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))
                             .toBeInTheDocument();
                     final Query typeFilter = play.within(dialog).getByRole("button", "Filter Types");
-                    play.expect(typeFilter).not().toHaveClass("on");
+                    play.expect(typeFilter).toHaveAttribute("aria-pressed", "false");
                     // The Filter Types button is beside the quick filter, in the same row.
                     // The row is ExportConfigViewImpl's '.exportConfigViewImpl-filter'
                     play.expect(typeFilter.closest(".exportConfigViewImpl-filter")).not().toBeNull();
@@ -884,6 +954,17 @@ public final class AppShellStories {
         final RestFixtures.Builder routes = RestFixtures.builder();
         storyRoutes.accept(routes);
         return ShellScreen.create(context, routes.addAll(commonRoutes(tree)).build(), options);
+    }
+
+    // The shell with the 'Ask Stroom AI' chat, configured to dock to the right of the content
+    private static Widget renderDockedAi(final StoryContext context) {
+        final ShellScreen shell = createShell(context, AppShellFixtures.dictTree(),
+                routes -> AiFixtures.chatRoutes(routes, "{\"dockType\": \"DOCK\", \"dockLocation\": \"RIGHT\"}"),
+                builder -> {
+                });
+        AskStroomAiChat.register(shell.getHarness(), shell.getInjector()::getAskStroomAiPresenter);
+        shell.start(null);
+        return shell.asWidget();
     }
 
     // Stroom's embedded view: the document without the shell

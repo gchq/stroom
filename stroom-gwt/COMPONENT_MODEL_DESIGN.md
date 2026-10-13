@@ -1,7 +1,8 @@
 # Component and Callbacks Model for the Stroom UI
 
-Draft, 9 October 2026. Exported from the design doc:
-https://claude.ai/code/artifact/e93329dc-1546-4557-9591-79a6246f84a3
+Draft, 9 October 2026. This file is the design of record. It began as an export of an earlier
+draft (https://claude.ai/code/artifact/e93329dc-1546-4557-9591-79a6246f84a3), which is no longer
+kept up to date.
 
 ## Summary
 
@@ -223,6 +224,187 @@ Keys are few and documented in one class, `Contexts`. A feature may define its o
 3. **Lookups need an owner.** Context resolves once a component is owned. Watches registered in the constructor are held until then and applied on adoption.
 4. **Default values are safe.** `READ_ONLY` defaults to `true` and `TASK_MONITOR` to a no-op factory, so an unowned component in a test fails closed rather than editable.
 
+## Lifetimes
+
+Most of what a screen makes needs no clean-up at all, and what does should be released by something that always happens anyway (a widget leaving the page, a tab closing) rather than by a `dispose()` call an author has to remember. Clean-up is only needed when something long-lived (the event bus, `window`, `document`, a timer, a singleton) holds on to an object, so each thing a screen makes falls into one of three cases.
+
+| Lifetime | Mechanism | Who has to remember |
+| --- | --- | --- |
+| Lives and dies with its widget | Listeners only on its own elements; garbage collected with its owner | Nobody |
+| Needs something long-lived while shown | `AttachScope`: registered on attach, removed on detach | Nobody: GWT always attaches and detaches |
+| Must react while hidden | `listen()` and `own()` on the component; only roots are disposed | Only the roots (tab, dialog, story) |
+
+### 1. Self-contained: no clean-up
+
+**Rule: a widget only listens to itself and its own children.** Its handlers, DOM listeners and observers are then a closed group of references (widget → handler → owner → widget), which the garbage collector takes together once nothing outside refers to any of them.
+
+- Click handlers live in the widget's own handler manager, not on the event bus. GWT relies on this: UiBinder's generated code for `@UiHandler` (`HandlerEvaluator`) calls `addClickHandler` and discards the registration, and nothing ever removes it.
+- `Widget.onDetach()` unhooks the element from the widget (`DOM.setEventListener(element, null)`) but keeps the handlers, so a hidden tab or a reopened dialog works again without rebinding.
+- DOM listeners and a `MutationObserver` on the widget's own elements are collected with them (a node holds its observer; the observer holds its callback).
+- A widget in this case has no `dispose()`. Clicks after its owner is disposed can't happen, as a disposed tab or dialog has left the page.
+
+### 2. Attach-scoped: `AttachScope`
+
+A widget that needs something long-lived (a `window` resize listener, a global key handler, a polling timer, an app-wide event that only matters while it is shown) registers it while it is on the page:
+
+```java
+public final class AttachScope {
+    public AttachScope(Widget widget);
+    public void listen(Supplier<HandlerRegistration> register);   // e.g. () -> Window.addResizeHandler(...)
+    public void every(int periodMillis, Runnable task);           // a timer
+    public void whileAttached(Supplier<Runnable> start);          // start returns its own stop
+}
+
+// In the widget or component
+private final AttachScope attached = new AttachScope(this);
+...
+attached.listen(() -> Window.addResizeHandler(event -> layout()));
+attached.every(5000, this::poll);
+```
+
+- Each registration is made when the widget is attached (at once if it already is), removed when it is detached and made again if it returns.
+- The scope watches attach and detach with `Widget.addAttachHandler`, a handler on the widget itself, so the scope is case 1 and needs no clean-up either.
+- Detached widgets stop listening and polling, as the lifecycle above wants ("Detached: keep state; stop polling"). A widget that may miss changes while hidden refreshes when it is attached again.
+
+### 3. Owned: must react while hidden
+
+A few things must keep reacting while their widget is detached, for example a hidden document tab hearing that its document was renamed. These are registered on the component, with `listen()`, `own()` and `onDispose()`, so a registration cannot be made without an owner, and only the roots are ever disposed: the content area when a tab closes, the popup manager when a dialog is finished and the story when it ends. Disposal cascades down the ownership tree, so screen authors never call `dispose()`.
+
+Until Phase 1 these are `registerHandler()` and `addHandlerToSource()` on `MyPresenterWidget`, released by `PresenterScope`.
+
+### Choosing
+
+Use the first case that fits: self-contained if the widget can be; attach-scoped if it only needs the outside world while shown; owned only if it must react while hidden. A leak story can check the first two by showing and closing a screen and finding no listeners left on `window`, `document` or the story's event bus.
+
+## Toolbars
+
+Toolbars are the first part of the UI to be rebuilt on these principles. They are self-contained (lifetime case 1), take inputs and give callbacks, and need nothing from `ComponentNode`, so they can be done before the pilot.
+
+### Keyboard behaviour
+
+Buttons that sit next to each other are one group and one tab stop, the WAI-ARIA toolbar pattern; buttons apart on a row (e.g. at either end) are separate groups. `ButtonGroupFocus` (in `stroom-core-client-widget`, used by `ButtonPanel`) gives a group:
+
+- a roving tab index: one button has `tabindex="0"`, the others `-1`, kept as buttons are added, shown, hidden or attached;
+- Left and Right (Up and Down for a vertical group), wrapping at the ends, and Home and End; Tab returns to the button last used;
+- disabled (`aria-disabled`) buttons that can still be reached; hidden buttons skipped;
+- `role="toolbar"`, named, when it has two or more buttons; a single button is left as a plain button;
+- if the focused button is hidden or removed, the focus moves to the button now in its place (unless code has moved it on purpose).
+
+`FocusTooltip` shows an icon button's name beside it when it has the keyboard focus, as browsers only show a `title` tooltip on hover; one tooltip serves the page, installed by the button classes, and is hidden on blur, Escape, scrolling and mouse presses.
+
+The workbench measures this: `ButtonRuns` reports the runs of adjacent image buttons and the tab stops each costs, and `TabStops` the tab stops of a region in order (stories `Widgets/Buttons/ButtonGroup` and the `ToolbarTabStops` stories). See "Toolbars are a tab stop per button" in `ISSUES.md`.
+
+### Problems with building toolbars today
+
+| Problem | How it happens | Scale (approx.) |
+| --- | --- | --- |
+| Pass-through methods | `addButton(Preset)`, `addButton(ButtonView)` and `addToggleButton(...)` re-declared on view interfaces and presenters so callers can reach a `ButtonPanel` (`PagerView`, `PagerViewWithHeading`, `QueryView.addButtonLeft/Right`, `EditExpressionView`, ...) | ~265 `addButton` calls in 99 files |
+| Presets | `SvgPresets` bundles an icon, a name and a default enabled state (`ADD` enabled, `EDIT` and `DELETE` disabled); names are overridden with `.title(...)`; icons reused under other names | 299 references; 69 `.title(...)` overrides |
+| Clicks wired separately | Buttons kept in fields and wired with `registerHandler(button.addClickHandler(...))` | Most toolbars |
+| Toolbars merged by hand | `HasToolbar.getToolbars()` returns widgets that `DocTabPresenter` adds beside its Save buttons, so adjacent buttons are separate groups | 11 implementers |
+| Two toggle types | `SvgToggleButton` swaps between two preset icons and has no accessible name; `InlineSvgToggleButton` has `aria-pressed` | 8 `addToggleButton` calls |
+| Groups not built as groups | The explorer header, pagers, main toolbar and data navigators are plain `FlowPanel`s | ~10 places |
+
+### API
+
+A `Toolbar` is one named group. Buttons are made from an `SvgImage` and a name, both always given, and start enabled.
+
+```java
+final Toolbar toolbar = new Toolbar("Dictionary actions");
+final ToolbarButton save = toolbar.button(SvgImage.SAVE, "Save", this::save);
+toolbar.button(SvgImage.SAVEAS, "Save As", this::saveAs);
+final ToolbarToggleButton filters = toolbar.toggle(SvgImage.FILTER, "Show Column Filters", this::setFiltering);
+toolbar.separator();                  // a visual divider, still the same group
+save.setEnabled(dirty);
+```
+
+- **Its own buttons.** A toolbar's buttons are `ToolbarButton` and `ToolbarToggleButton`: a `<button class="toolbar-button">` holding its icon (`toolbar-button__icon`), styled only by `toolbar.css`. They replaced the older icon buttons (`InlineSvgButton` and its toggle, whose `icon-button` and `face` markup and rules are gone), looking the same in every state (`Widgets/Buttons/ToolbarButtonStates`). They are real buttons: Enter and Space press them natively.
+- **One callback per button.** `ToolbarButton.setOnClick(Runnable)` and `ToolbarToggleButton.setOnToggle(Consumer<Boolean>)`: a single field, set when the button is made, replaced rather than added to, so there is no registration to keep or remove.
+- **One toggle type.** A toggle is one icon with a pressed state (`aria-pressed`, its only record of the state), named like any other button. `SvgToggleButton` is retired.
+- **No presets.** `Toolbar` takes no `Preset`, so the icon and the name a screen reader announces are visible where the button is made.
+- **A name for every group.** `Toolbar`'s constructor requires the name that is announced with `role="toolbar"`.
+- **Groups apart on a row are a `ToolbarRow`.** A row lays out named toolbars with space between them, e.g. a list's actions at the start and its pager at the end, each its own tab stop.
+
+### Display preference (later)
+
+Toolbars are icon only for now: every button shows its icon, and its name is its tooltip (shown on hover and, by `FocusTooltip`, on keyboard focus) and what a screen reader announces. Some users would find text easier, so a user preference should later choose how toolbars are shown: icons only, text only, or icons and text. Each `ToolbarButton` already has the text (its name), so this needs only:
+
+- a label element in the button (`toolbar-button__label`), holding its name, hidden while icons only;
+- the preference applied as a class on the page, as the theme and density preferences already are (`ThemeCssUtil.getCurrentPreferenceClasses`), e.g. `toolbar-display--text`, which `toolbar.css` reads to show the label, the icon or both;
+- wider buttons when they show text, so `target-size` and the arrow keys are unaffected.
+
+Buttons that act on one piece of content and are labelled (e.g. the Copy button under each chat reply) are not toolbars: they stay ordinary buttons, a tab stop each.
+
+### UiBinder
+
+A toolbar can be declared in a template. `@UiConstructor Toolbar(String name)` makes `name` a required attribute, so an unnamed toolbar fails the GWT compile.
+
+```xml
+<b:ToolbarRow>
+    <b:Toolbar ui:field="actions" name="Dictionary actions">
+        <b:ToolbarButton ui:field="save" svg="SAVE" title="Save"/>
+        <b:ToolbarButton ui:field="saveAs" svg="SAVEAS" title="Save As"/>
+    </b:Toolbar>
+    <b:Toolbar name="Paging">
+        <b:ToolbarButton ui:field="first" svg="FAST_BACKWARD" title="First"/>
+    </b:Toolbar>
+</b:ToolbarRow>
+```
+
+- `svg="SAVE"` sets the icon: UiBinder sets the enum through `ToolbarButton.setSvg(SvgImage)` (story `Widgets/Buttons/Toolbar` `Template`). Until now icons were set in Java even when the title was in the template.
+- The template declares the layout; behaviour is wired in Java with `save.setOnClick(this::save)`, so toolbars made in templates and in code read the same. `@UiHandler` also works (its lifetime is the widget's, case 1), but cannot be replaced or cleared.
+- Toolbars whose buttons depend on permissions, the document type or contributions are made in Java; both end up as the same `Toolbar`.
+
+### Contributions
+
+- Done: `HasToolbar.getDocumentButtons()` gives the groups of buttons that join the document tab's toolbar after Save and Save As (nested in it, so they are one group and one tab stop), and `HasToolbar.getToolbars()` the controls apart from them on the row (e.g. a query's time range and Execute button at its end). When those groups are made of `ToolbarButton`s, they can instead be added to the toolbar itself (`addTo(Toolbar)`), and the transitional `.toolbar > .button-container` rule in `toolbar.css` removed.
+- `PagerView` exposes its `ToolbarRow` (or the actions `Toolbar`) once, instead of re-declaring `addButton` and `addToggleButton`; the pager's navigation is the row's second toolbar.
+- The pass-through methods are deleted as their callers move to the new API.
+
+### Lifetime
+
+A toolbar is self-contained (case 1): its callbacks are on its buttons and `ButtonGroupFocus`'s listeners and observer are on its own element, so it has no `dispose()` and needs no owner. A story checks that a closed toolbar leaves nothing on `window`, `document` or the event bus.
+
+### Migration
+
+1. Done: `Toolbar`, `ToolbarRow`, `ToolbarSeparator`, `ToolbarButton` and `ToolbarToggleButton` (with `setOnClick` and `setOnToggle`), styled by `toolbar.css` alone, with stories for the Java and UiBinder forms (`Widgets/Buttons/Toolbar`). `ButtonPanel`'s `Preset` methods and `SvgToggleButton` are deprecated; existing toolbars keep working, already with the keyboard behaviour. `InlineSvgToggleButton` now says it is a toggle (`aria-pressed="false"`) before it is first pressed.
+2. Convert the Dictionary editor first, the pilot's screen, using its `ToolbarTabStops` numbers as the before and after.
+3. Convert by area: the plain `FlowPanel` groups (explorer header, pagers, main toolbar, data navigators), `HasToolbar` and the document tab, then the remaining `addButton` callers, removing pass-throughs as they go. `SvgPresets` is deleted when its last use goes (menus are to be checked).
+
+## Split panes
+
+`SplitPane` (`stroom.widget.layout.client`, styled by `split-pane.css`) replaced GWT's split layout panels, Stroom's `ThinSplitLayoutPanel` and `MySplitLayoutPanel` (copies of one widget, with 1px and 7px splitters, used by about 40 views; now deleted). Like a toolbar it is self-contained (lifetime case 1): its listeners are on its own splitters, and its panes' resize observers are removed when it is detached.
+
+- **A CSS grid, in reading order.** Its panes and splitters are its children in the order they are shown, so a screen reader and the Tab key meet the panes as they are laid out; a `DockLayoutPanel` adds its centre last, which needed `ReadingOrder` to put right. Panes split both ways nest one split pane in another.
+- **Sizes.** Each pane is a share (`30%`, kept as the split pane is resized), a fixed size (`400px`) or the rest (`*`). One pane takes the rest (the last, if none is given `*`); every other pane must be given a size, and a split pane that lacks one, or has two taking the rest, fails when it is shown, naming the pane. A splitter resizes the pane on its side away from the one taking the rest, as a dock layout's did.
+- **When the split pane is resized** (e.g. with the window), the pane taking the rest gives or takes the space until it is at its minimum; then the sized panes give up space, down to their minimums; and each grows back to its own size as the split pane widens (each sized pane's grid track is `minmax(min, size)`, the rest's `minmax(min, 1fr)`). Which pane absorbs a resize is chosen by which is `*`: the first (e.g. `*, 400px`, as `<g:east>`) or the second (`400px, *`, as `<g:north>`/`<g:west>`, most of Stroom's screens); a share (`30%`) changes with the split pane. The old panels kept a fixed pane at its size however small the panel became, squeezing the centre to nothing, and only kept to a minimum in a drag (the centre could have none): stories `Widgets/Layout/SplitPaneResizing` measure both at several sizes.
+- **Keyboard and screen readers.** Each splitter is a focusable `role="separator"` (the WAI-ARIA window splitter pattern), named by the pane it resizes (so every pane a splitter resizes must be given a name, or the split pane fails when shown), with that pane's size as its value (a percentage of the split pane, said as e.g. "30% of the width") and `aria-controls` pointing at it. Arrow keys move it 10px (50px with Shift), Page Up and Page Down grow and shrink its pane by 50px, Home and End move it to its limits, and Enter collapses its pane and restores it. Movement follows the screen on a right-to-left page.
+- **Pointer.** A mouse, finger or pen drags a splitter, with pointer capture, so a frame in a pane can't take the drag; the panes are laid out at most once a frame however fast the pointer moves. Double clicking a splitter collapses and restores its pane, as Enter does. A thin splitter is drawn as a 1px line but can be grabbed by 7px.
+- **Maximise.** A splitter's menu (a right click or long press on it, or the context menu key or Shift+F10 when it has the focus) offers to maximise the pane either side of it, or to restore them, so a pane can be resized without dragging (WCAG 2.5.7). Alt+M (`KeyBinding.Action.MAXIMISE_PANE`, hinted in the menu) maximises the pane holding the focus, in the split pane nearest it, and restores it. A maximised pane takes all the space and the others none (their splitters stay, to drag them back); moving a splitter carries on from the panes as they are shown. The menu is Stroom's, asked for with `MenuRequest`, which bubbles up the page to the one relay `MainPresenter` installs, as a widget has no event bus to fire `ShowMenuEvent` on; `ScreenHarness` and `StoryPopups.withMenuRequests()` relay it in the workbench. Key bindings are still fixed in `KeyBinding`, so Alt+M will become a user preference with the rest.
+- **Seen.** A thin splitter's line (`--splitter__line-color`) and keyboard focus (`--splitter__focus-color`, the splitter's full 7px, with the app's `--focus-shadow`) are at least 3:1 against the panes either side in both themes (WCAG 1.4.11), as the workbench measures beside Stroom's table and code editor; the old splitters' line was 1.3:1 (dark) and 1:1 (light). Each split pane sets `--split-pane__splitter-colour`, so a nested one doesn't take its parent's, and `split-pane--navigation` draws it in the explorer's colours. In forced colours (Windows high contrast) splitters are drawn in system colours, where their backgrounds would otherwise be replaced by the page's.
+- **Target size (WCAG 2.5.8).** A splitter is 7px wide, which passes when nothing else clickable is within 12px of its centre (`TargetSpacing` measures it). It doesn't where two splitters meet in a T at the centre of the one across (e.g. User Groups' 50/50 split): an accepted deviation (see `COMPONENTS.md`), pinned in the `Template` story.
+- **Collapsed panes.** A pane collapsed to nothing is `inert`, so the focus can't go into it unseen (WCAG 2.4.7); restored, it can again.
+- **Told of resizes.** `setOnResized` is told when the user has resized a pane (on letting go of a drag, a key, a double click, or maximising or restoring), not when the split pane itself is resized or sizes are set in code, e.g. for the main screen to save the explorer's width (which it now finds by overriding `onResize`).
+- **Resizing.** A pane's widget fills it, and is told when its pane changes size (if it `RequiresResize`), by a resize observer on the pane; the split pane's own `onResize` doesn't pass the call on, so a widget isn't laid out twice.
+- **Templates.** `sizes`, `names`, `minSizes`, `vertical` and `thin` are attributes, and the panes are the children, in order.
+- **Thin or regular.** A thin splitter (a 1px line) is for panes that run to their edges with no frame of their own (grids, editors, `dashboard-panel`s), where the line is the only boundary between them. A regular splitter (a 7px gap) is for panes that are framed controls, each with its own border, in a padded form (e.g. dictionary settings' Imports and Effective Words, query history and favourites, Find in Content): a thin line there sits against the frame above it and reads as a doubled border.
+
+A visible collapse button on each splitter was tried for 2.5.7 and 2.5.8 and dropped: wherever it went on a splitter, it sat over pane content (toolbars and pagers at pane corners, filters along their tops).
+
+Stories `Widgets/Layout/SplitPaneContent` hold what Stroom's screens do: Stroom's data grid beside its code editor (each lays itself out again as the splitter moves), the stepping screen's four pane layout as nested split panes, forms in a pane that collapses, Alt+M (alone and in nested split panes), the splitter's menu (and from the keyboard, in the runner), double clicks and the resize call. Stories `Widgets/Layout/SplitPane`: the `Drag` stories set split panes up as Stroom's screens do, and the workbench runner drags them with the real mouse (a pane must follow the mouse to the pixel, and stop at its minimum); the others cover the keyboard, names, an end-anchored pane, a hidden pane, a right-to-left page, a drag across a frame, the navigation colour, resize notices, a missing size or name and a nested template; the runner checks the line and focus contrast in both themes, and forced colours.
+
+Migration (done): User Groups first (which nests splits), with screenshot diffs before and after, then the rest by area, ending with the main screen. The old panels, their CSS (`thinSplitLayoutPanel-*`, `gwt-SplitLayoutPanel-*`), their stories and the comparison stories are deleted, as is `ReadingOrder`.
+
+## CSS for new widgets
+
+New widgets get their own stylesheet, named after the widget's block, in `stroom-app/src/main/resources/ui/css/` and imported by `app.css` (after `stroom-button.css`, whose styles they may build on), e.g. `toolbar.css`, `focus-tooltip.css` and `split-pane.css`. Existing stylesheets (e.g. the 3,000 lines of `components.css`) are left as they are, and a widget's rules move into a file of its own when it is next changed.
+
+- **BEM names.** A block is a widget, in lower-case kebab case (`toolbar`, `toolbar-row`, `focus-tooltip`); a part of it is `block__element` (`toolbar__separator`); a variant is `block--modifier` (e.g. a colour scheme). `Button.css` already uses this form, with capitalised blocks (`Button__content`, `Button--contained-green`), which stay as they are.
+- **States come from ARIA attributes, not classes.** Where an ARIA attribute says what state an element is in, the CSS reads it, so what is shown always matches what a screen reader is told: `[aria-pressed="true"]`, `[aria-disabled="true"]`, `[aria-expanded="true"]`, `[aria-orientation="vertical"]`. Modifiers are only for variants that have no ARIA meaning, and for the rare state ARIA has no attribute for (e.g. `split-pane--resizing`, while a splitter is dragged), which the stylesheet says is one.
+- **One element per part, and no wrappers for effects.** Fills, borders and other decoration that only need a box are drawn with `::before` or `::after` (as `.icon-button::before` draws an icon button's hover, on and focus states), not with extra elements.
+- **Motion respects `prefers-reduced-motion`.** Anything that animates continuously (e.g. a spinner) stops when the user asks for less motion.
+- **Shared names stay.** Names used across many stylesheets or built into HTML by hand (`.icon-button`, its `.face`, `.button-container`) are not renamed; new code uses them as they are.
+
 ## Interop during migration
 
 Old presenters and new components share one ownership tree, because `MyPresenterWidget` gets a `ComponentNode` in Phase 1. Either can own the other, and every existing entry point (tabs, popups, GIN) keeps working while it is converted.
@@ -391,3 +573,5 @@ The main risk is a long period with two styles side by side; each phase therefor
 - [ ] Should `RestFactory` take an owner so in-flight requests are cancelled on dispose, or is dropping late callbacks with `guard()` enough?
 - [ ] Where do proxy presenters (code-split plugins) go once GWTP is removed: a plain plugin registry, and do we still need code splitting?
 - [ ] Is GIN replaced by Dagger 2 as part of Phase 6 or left in place?
+- [x] Does UiBinder set a button's icon from an `svg="..."` attribute? Yes (`Widgets/Buttons/Toolbar` `Template`).
+- [ ] Do menus also use `SvgPresets`, and what replaces them there, before `SvgPresets` can be deleted?

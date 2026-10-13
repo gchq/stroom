@@ -156,7 +156,7 @@ public final class VisualisationAssetsStories {
         harness.afterStartUp(() -> {
             final VisualisationAssetsPresenter presenter = harness.unbindOnCleanUp(
                     injector.getVisualisationAssetsPresenter());
-            for (final Widget toolbar : presenter.getToolbars()) {
+            for (final Widget toolbar : presenter.getDocumentButtons()) {
                 toolbar.getElement().getStyle().setProperty("flex", "0 0 auto");
                 frame.add(toolbar);
             }

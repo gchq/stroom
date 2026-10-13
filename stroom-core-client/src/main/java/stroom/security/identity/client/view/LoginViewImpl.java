@@ -20,7 +20,7 @@ import stroom.security.identity.client.presenter.LoginPresenter.LoginView;
 import stroom.security.identity.client.presenter.LoginUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.Button;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.form.client.FieldValidity;
 import stroom.widget.form.client.FormGroup;
 
@@ -56,7 +56,7 @@ public class LoginViewImpl extends ViewWithUiHandlers<LoginUiHandlers> implement
     @UiField
     PasswordTextBox password;
     @UiField
-    InlineSvgButton showPassword;
+    ToolbarButton showPassword;
     @UiField
     Label passwordFeedback;
     @UiField

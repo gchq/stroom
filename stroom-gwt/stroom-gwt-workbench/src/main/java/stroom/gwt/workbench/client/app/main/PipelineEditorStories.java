@@ -358,7 +358,8 @@ public final class PipelineEditorStories {
                     // Show Tasks is enabled once a single filter row is selected
                     play.expect(play.getByText("Active Tasks", StroomDom.LINK_TAB_LABEL)).toBeInTheDocument();
                     play.click(play.getByText("Complete"));
-                    play.waitFor(() -> play.expect(play.getByTitle("Show Tasks")).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(play.getByTitle("Show Tasks"))
+                            .not().toHaveAttribute("aria-disabled"));
                     expectNoProblems(play);
                 })
                 // An embedded document that can't be created says why and leaves the property dialog

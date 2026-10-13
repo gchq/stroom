@@ -9,7 +9,7 @@
                         helpText="The full name of the property, e.g. stroom.ui.namePattern. Use the copy button to copy it.">
             <g:FlowPanel addStyleNames="inline-label-icon">
                 <g:Label ui:field="name" addStyleNames="globalProperties stroom-control-label"/>
-                <b:InlineSvgButton ui:field="copyNameButton" title="Copy" addStyleNames="svgIcon copyNameIcon"/>
+                <b:ToolbarButton ui:field="copyNameButton" title="Copy" addStyleNames="svgIcon copyNameIcon"/>
             </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="globalPropertyEditDescription" label="Description"

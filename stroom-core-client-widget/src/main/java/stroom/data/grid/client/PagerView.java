@@ -20,7 +20,6 @@ import stroom.data.pager.client.RefreshButton;
 import stroom.svg.client.Preset;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToggleButtonView;
 
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.HTML;
@@ -35,9 +34,6 @@ public interface PagerView extends View, TaskMonitorFactory {
     void addInfoLabel(HTML label);
 
     HTML getInfoLabel(int index);
-
-    ToggleButtonView addToggleButton(Preset primaryPreset,
-                                     Preset secondaryPreset);
 
     RefreshButton getRefreshButton();
 

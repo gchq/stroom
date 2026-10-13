@@ -104,7 +104,7 @@ public final class PlanBEditorStories {
                     final Play retainFor = play.within(play.getByRole("group", "Retain For"));
                     play.expect(retainFor.getByRole("textbox", "Amount")).toBeInTheDocument();
                     play.expect(retainFor.getByRole("textbox", "Unit")).toBeInTheDocument();
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // METRIC: the value schema is a Value Size and the store-aggregate tick boxes, and
@@ -160,7 +160,7 @@ public final class PlanBEditorStories {
                 .story("EditEnablesSave", context -> render(context, "planb-STATE", false))
                 .withPlay(play -> {
                     final Query save = play.findByRole("button", "Save");
-                    play.expect(save).toHaveClass("disabled");
+                    play.expect(save).toHaveAttribute("aria-disabled", "true");
                     play.waitFor(() -> play.expect(maxStoreSize(play)).toBeInTheDocument());
                     play.click(maxStoreSize(play));
                     play.clear(maxStoreSize(play));
@@ -168,7 +168,7 @@ public final class PlanBEditorStories {
                     // The text box reports its value when it loses the focus (a change event), not
                     // as it is typed
                     play.tab();
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     DocumentEditors.expectNoProblems(play);
                 })
                 // Read only: the settings are disabled and Save can never be enabled
@@ -176,7 +176,7 @@ public final class PlanBEditorStories {
                 .withPlay(play -> {
                     play.waitFor(() -> play.expect(maxStoreSize(play)).toHaveAttribute("readonly"));
                     play.expect(play.getByRole("button", "Save is not available as this document is read only"))
-                            .toHaveClass("disabled");
+                            .toHaveAttribute("aria-disabled", "true");
                     DocumentEditors.expectNoProblems(play);
                 })
                 // METRIC read only: the same settings as Metric, when the user may only view the store

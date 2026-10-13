@@ -42,7 +42,7 @@ import stroom.visualisation.shared.VisualisationAssetUpdateRename;
 import stroom.visualisation.shared.VisualisationAssets;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
@@ -107,27 +107,29 @@ public class VisualisationAssetsPresenter
     /**
      * Button to revert any changes and go back to live version
      */
-    private final InlineSvgButton revertButton = new InlineSvgButton();
+    // The tab's buttons, made when first asked for
+    private ButtonPanel toolbar;
+    private final ToolbarButton revertButton = new ToolbarButton();
 
     /**
      * Button to add stuff to the tree
      */
-    private final InlineSvgButton addButton = new InlineSvgButton();
+    private final ToolbarButton addButton = new ToolbarButton();
 
     /**
      * Button to delete stuff from the tree
      */
-    private final InlineSvgButton deleteButton = new InlineSvgButton();
+    private final ToolbarButton deleteButton = new ToolbarButton();
 
     /**
      * Button to edit stuff from the tree
      */
-    private final InlineSvgButton editButton = new InlineSvgButton();
+    private final ToolbarButton editButton = new ToolbarButton();
 
     /**
      * Button to view stuff
      */
-    private final InlineSvgButton viewButton = new InlineSvgButton();
+    private final ToolbarButton viewButton = new ToolbarButton();
 
     /**
      * Dialog that appears when user wants to upload a file
@@ -255,41 +257,42 @@ public class VisualisationAssetsPresenter
         return nonClashingLabel;
     }
 
-    /**
-     * Sets up the toolbar for the tab.
-     */
+    /// The tab's buttons, for its document's toolbar. They are made, and their clicks handled, once:
+    /// this is asked each time the tab is shown.
     @Override
-    public List<Widget> getToolbars() {
-        revertButton.setSvg(SvgImage.REFRESH);
-        revertButton.setTitle("Revert changes");
-        revertButton.setVisible(true);
-        revertButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onRevertButtonClick());
+    public List<Widget> getDocumentButtons() {
+        if (toolbar == null) {
+            revertButton.setSvg(SvgImage.REFRESH);
+            revertButton.setTitle("Revert changes");
+            revertButton.setVisible(true);
+            revertButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onRevertButtonClick());
 
-        addButton.setSvg(SvgImage.ADD);
-        addButton.setTitle("Add file");
-        addButton.setVisible(true);
+            addButton.setSvg(SvgImage.ADD);
+            addButton.setTitle("Add file");
+            addButton.setVisible(true);
 
-        deleteButton.setSvg(SvgImage.DELETE);
-        deleteButton.setTitle("Delete");
-        deleteButton.setVisible(true);
-        deleteButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onDeleteButtonClick());
+            deleteButton.setSvg(SvgImage.DELETE);
+            deleteButton.setTitle("Delete");
+            deleteButton.setVisible(true);
+            deleteButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onDeleteButtonClick());
 
-        editButton.setSvg(SvgImage.EDIT);
-        editButton.setTitle("Rename");
-        editButton.setVisible(true);
-        editButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onEditFilename());
+            editButton.setSvg(SvgImage.EDIT);
+            editButton.setTitle("Rename");
+            editButton.setVisible(true);
+            editButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onEditFilename());
 
-        viewButton.setSvg(SvgImage.EYE);
-        viewButton.setTitle("View in browser");
-        viewButton.setVisible(true);
-        viewButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onViewAsset());
+            viewButton.setSvg(SvgImage.EYE);
+            viewButton.setTitle("View in browser");
+            viewButton.setVisible(true);
+            viewButton.addClickHandler(event -> VisualisationAssetsPresenter.this.onViewAsset());
 
-        final ButtonPanel toolbar = new ButtonPanel();
-        toolbar.addButton(revertButton);
-        toolbar.addButton(addButton);
-        toolbar.addButton(deleteButton);
-        toolbar.addButton(editButton);
-        toolbar.addButton(viewButton);
+            toolbar = new ButtonPanel();
+            toolbar.addButton(revertButton);
+            toolbar.addButton(addButton);
+            toolbar.addButton(deleteButton);
+            toolbar.addButton(editButton);
+            toolbar.addButton(viewButton);
+        }
 
         // Ensure state is set correctly
         updateState();

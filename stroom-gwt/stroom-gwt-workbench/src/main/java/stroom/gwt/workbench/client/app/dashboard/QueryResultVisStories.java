@@ -30,7 +30,7 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 /// REST replies.
 ///
 /// The presenter keeps its pause state and shows it on its refresh button (titled 'Pause Update'
-/// while updating, 'Resume Update' and marked `paused` when paused), which the play checks. The
+/// while updating, 'Resume Update' and marked `refresh-button--paused` when paused), which the play checks. The
 /// button can only be pressed while the search is updating, so the search's last reply is delayed.
 public final class QueryResultVisStories {
 
@@ -56,14 +56,14 @@ public final class QueryResultVisStories {
                     // The pause state is the button's. Not paused at first
                     final Query button = pauseButton(play);
                     play.waitFor(() -> play.expect(button).toHaveAttribute("title", "Pause Update"));
-                    play.expect(button).not().toHaveClass("paused");
+                    play.expect(button).not().toHaveClass("refresh-button--paused");
                     // Pause, and the button offers to resume
                     play.click(button);
-                    play.waitFor(() -> play.expect(button).toHaveClass("paused"));
+                    play.waitFor(() -> play.expect(button).toHaveClass("refresh-button--paused"));
                     play.expect(button).toHaveAttribute("title", "Resume Update");
                     // Resume
                     play.click(button);
-                    play.waitFor(() -> play.expect(button).not().toHaveClass("paused"));
+                    play.waitFor(() -> play.expect(button).not().toHaveClass("refresh-button--paused"));
                     DocumentEditors.expectNoProblems(play);
                 });
     }

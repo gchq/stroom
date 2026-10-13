@@ -19,8 +19,7 @@ package stroom.pipeline.stepping.client.view;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.StepControlPresenter.StepControlView;
 import stroom.pipeline.stepping.client.presenter.StepControlUIHandlers;
-import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -34,44 +33,21 @@ public class StepControlViewImpl extends ViewWithUiHandlers<StepControlUIHandler
 
     private final Widget widget;
     @UiField
-    InlineSvgButton filterButton;
+    ToolbarButton filterButton;
     @UiField
-    InlineSvgButton firstButton;
+    ToolbarButton firstButton;
     @UiField
-    InlineSvgButton backwardButton;
+    ToolbarButton backwardButton;
     @UiField
-    InlineSvgButton forwardButton;
+    ToolbarButton forwardButton;
     @UiField
-    InlineSvgButton lastButton;
+    ToolbarButton lastButton;
     @UiField
-    InlineSvgButton refreshButton;
+    ToolbarButton refreshButton;
 
     @Inject
     public StepControlViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
-
-        filterButton.setSvg(SvgImage.FILTER);
-        filterButton.setTitle("Manage Step Filters");
-
-        firstButton.setSvg(SvgImage.FAST_BACKWARD);
-        firstButton.setTitle("Step To First");
-        firstButton.setEnabled(false);
-
-        backwardButton.setSvg(SvgImage.STEP_BACKWARD);
-        backwardButton.setTitle("Step Backward");
-        backwardButton.setEnabled(false);
-
-        forwardButton.setSvg(SvgImage.STEP_FORWARD);
-        forwardButton.setTitle("Step Forward");
-        forwardButton.setEnabled(false);
-
-        lastButton.setSvg(SvgImage.FAST_FORWARD);
-        lastButton.setTitle("Step To Last");
-        lastButton.setEnabled(false);
-
-        refreshButton.setSvg(SvgImage.REFRESH);
-        refreshButton.setTitle("Refresh Current Step");
-        refreshButton.setEnabled(false);
     }
 
     @Override

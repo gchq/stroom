@@ -27,6 +27,7 @@ import stroom.data.client.view.ItemNavigatorViewImpl;
 import stroom.data.client.view.ItemSelectionViewImpl;
 import stroom.data.grid.client.WrapperViewImpl;
 import stroom.editor.client.presenter.HtmlPresenter;
+import stroom.gwt.workbench.client.a11y.ButtonRuns;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestHandler;
 import stroom.gwt.workbench.client.app.rest.RestReply;
@@ -123,6 +124,9 @@ public final class SourceViewerStories {
                 .layout(StoryLayout.FULLSCREEN)
                 // A fully loaded data preview; the whole stream fits in one part
                 .story("LoadedSource", context -> render(context, LOADED_SOURCE_FIXTURES, location(1001)))
+                // The navigation's icon buttons, and the tab stops they cost
+                .withPlay(play -> play.waitFor(() -> play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
+                        "First part, Previous part, Next part, Last part, Refresh: 1 tab stop"))))
                 // The marker list (MarkerListPresenter) of an Error stream
                 .story("Markers", context -> render(context, MARKERS_FIXTURES, location(1001)))
                 .withPlay(play -> {

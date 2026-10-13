@@ -64,6 +64,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.Layer;
 import com.gwtplatform.mvp.client.PresenterWidget;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
@@ -83,6 +85,8 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
     private final LazyValue<MarkdownEditPresenter> lazyMarkdownEditPresenter;
     private final RestFactory restFactory;
     private final ButtonPanel toolbar;
+    // The buttons the tab showing added to the toolbar, removed when another tab is shown
+    private final List<Widget> tabButtons = new ArrayList<>();
     private final HasSaveRegistry hasSaveRegistry;
 
     private PresenterWidget<?> currentContent;
@@ -225,17 +229,22 @@ public class RuleSetPresenter extends ContentTabPresenter<LinkTabPanelView>
                         // Set the content.
                         getView().getLayerContainer().show((Layer) currentContent);
 
-                        // Update the buttons.
+                        // Update the buttons: the tab's own buttons join the toolbar (one group, one
+                        // tab stop), and its other toolbars follow it
+                        for (final Widget widget : tabButtons) {
+                            toolbar.remove(widget);
+                        }
+                        tabButtons.clear();
+                        getView().clearToolbar();
+                        getView().addToolbar(toolbar);
                         if (currentContent instanceof final HasToolbar hasToolbar) {
-                            getView().clearToolbar();
-                            getView().addToolbar(toolbar);
-
+                            for (final Widget widget : hasToolbar.getDocumentButtons()) {
+                                toolbar.add(widget);
+                                tabButtons.add(widget);
+                            }
                             for (final Widget widget : hasToolbar.getToolbars()) {
                                 getView().addToolbar(widget);
                             }
-                        } else {
-                            getView().clearToolbar();
-                            getView().addToolbar(toolbar);
                         }
 
                         // Update the selected tab.

@@ -18,7 +18,11 @@ package stroom.widget.button.client;
 
 import stroom.svg.client.Preset;
 
-public class SvgButton extends InlineSvgButton {
+/// An icon button made from a preset, now a [ToolbarButton] underneath.
+///
+/// @deprecated Use [ToolbarButton] (e.g. [Toolbar#button]) with an icon and a name.
+@Deprecated
+public class SvgButton extends ToolbarButton {
 
     public SvgButton() {
         super();

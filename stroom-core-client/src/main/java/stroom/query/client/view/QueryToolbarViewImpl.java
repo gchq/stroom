@@ -23,7 +23,7 @@ import stroom.query.client.presenter.QueryToolbarPresenter.QueryToolbarView;
 import stroom.query.client.presenter.QueryToolbarUiHandlers;
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.Severity;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.dom.client.Style.Visibility;
@@ -43,7 +43,7 @@ public class QueryToolbarViewImpl
     private final Widget widget;
 
     @UiField
-    InlineSvgButton errors;
+    ToolbarButton errors;
     @UiField
     QueryButtons queryButtons;
     @UiField

@@ -181,7 +181,7 @@ public final class ContentTemplatesScreenStories {
                     play.click(dialog.getByRole("button", StroomDom.button("OK")));
                     play.findByText("Renamed template");
                     final Query save = play.getByTitle("Save templates");
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(PATH)

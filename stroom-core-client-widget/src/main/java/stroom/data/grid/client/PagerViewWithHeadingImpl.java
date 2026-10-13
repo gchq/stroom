@@ -23,7 +23,6 @@ import stroom.task.client.Task;
 import stroom.task.client.TaskMonitor;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
-import stroom.widget.button.client.ToggleButtonView;
 import stroom.widget.form.client.FormGroup;
 
 import com.google.gwt.core.client.GWT;
@@ -90,12 +89,6 @@ public class PagerViewWithHeadingImpl extends ViewImpl implements PagerViewWithH
     @Override
     public void addButton(final ButtonView buttonView) {
         buttonPanel.addButton(buttonView);
-    }
-
-    @Override
-    public ToggleButtonView addToggleButton(final Preset primaryPreset,
-                                            final Preset secondaryPreset) {
-        return buttonPanel.addToggleButton(primaryPreset, secondaryPreset);
     }
 
     @Override

@@ -19,7 +19,7 @@ package stroom.credentials.client.view;
 import stroom.credentials.client.presenter.UsernamePasswordSecretPresenter.UsernamePasswordSecretView;
 import stroom.document.client.event.DirtyUiHandlers;
 import stroom.svg.shared.SvgImage;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -43,7 +43,7 @@ public class UsernamePasswordSecretViewImpl
     @UiField
     PasswordTextBox password;
     @UiField
-    InlineSvgButton showPassword;
+    ToolbarButton showPassword;
 
     @Inject
     @SuppressWarnings("unused")

@@ -163,10 +163,10 @@ public final class AskStroomAiDialogStories {
                     play.waitFor(() -> play.expect(screen.getByText(TextMatch.containing("How can I help?")))
                             .toBeInTheDocument());
                     // The toggle shows its state with the 'on' class
-                    play.expect(aiButton).toHaveClass("on");
+                    play.expect(aiButton).toHaveAttribute("aria-pressed", "true");
                     play.click(aiButton);
                     play.waitFor(() -> play.expect(screen.queryByText(CAPTION, StroomDom.DIALOG_TITLE)).toBeNull());
-                    play.expect(aiButton).not().toHaveClass("on");
+                    play.expect(aiButton).toHaveAttribute("aria-pressed", "false");
                     DocEditors.expectNoProblems(play);
                 })
                 // An attachment's 'View data' opens its data in a paged grid

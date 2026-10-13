@@ -101,7 +101,7 @@ public final class ExpressionBuilderStories {
                     play.click(play.getByText(TextMatch.containing("UserId"), ".expressionItemBox-label"));
                     play.expect(play.querySelector(FIELD_PICKER)).toBeNull();
                 })
-                // The toolbar is made of real buttons (Stroom's SvgButton, an InlineSvgButton)
+                // The toolbar is made of real buttons (Stroom's SvgButton, an ToolbarButton)
                 .story("ToolbarIsRealButtons", context -> editor(context, populatedExpression(), false))
                 .withPlay(ExpressionBuilderStories::playToolbar)
                 // The default (a simple field list model): a short field list has no picker chrome
@@ -156,19 +156,23 @@ public final class ExpressionBuilderStories {
         for (final String title : TOOLBAR) {
             final Query button = play.getByTitle(title);
             play.expect(button.property("tagName")).toBe("BUTTON");
-            play.expect(button.className()).toMatch("inline-svg-button");
-            play.expect(button.property("tabIndex")).toBe(0);
+            play.expect(button.className()).toMatch("toolbar-button");
+            // The toolbar is one tab stop (its first button); the arrow keys reach the others
+            play.expect(button.property("tabIndex")).toBe(title.equals(TOOLBAR.get(0))
+                    ? 0
+                    : -1);
         }
         // Nothing is selected yet, so the selection's buttons are disabled and the others not
-        play.expect(play.getByTitle("Add Term").className()).not().toMatch("disabled");
-        play.expect(play.getByTitle("Copy").className()).toMatch("disabled");
-        // Stroom's InlineSvgButton.setEnabled(false) sets the `disabled` class and `aria-disabled`
+        play.expect(play.getByTitle("Add Term")).not().toHaveAttribute("aria-disabled");
+        // Disabled with aria-disabled, not the disabled attribute, so it can still be reached
         play.expect(play.getByTitle("Copy")).toHaveAttribute("aria-disabled", "true");
         play.expect(play.getByTitle("Add Term")).not().toHaveAttribute("disabled");
         // Focusable means focusable
         final Query addTerm = play.getByTitle("Add Term");
         play.run("focus Add Term", () -> addTerm.element().get().focus());
         play.expect(addTerm).toHaveFocus();
+        play.keyboard("{ArrowRight}");
+        play.expect(play.getByTitle("Add Operator")).toHaveFocus();
     }
 
     private static void playAsyncFieldSource(final Play play) {

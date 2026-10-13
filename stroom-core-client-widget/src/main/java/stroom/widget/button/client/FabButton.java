@@ -17,6 +17,7 @@
 package stroom.widget.button.client;
 
 import stroom.svg.shared.SvgImage;
+import stroom.widget.tooltip.client.FocusTooltip;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
@@ -28,6 +29,8 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.ButtonBase;
 
+/// A round floating action button with an icon, e.g. a Text component's Enter Stepping Mode. The
+/// button that takes the focus and is announced is the face inside its element.
 public class FabButton extends ButtonBase {
 
     private final Element face;
@@ -51,6 +54,25 @@ public class FabButton extends ButtonBase {
         face.setClassName("face");
 
         getElement().appendChild(face);
+        // Shows the button's name when it has the keyboard focus
+        FocusTooltip.install();
+    }
+
+    /// The button is the face inside this element, so only the face takes the focus: GWT makes a
+    /// focus widget's element a tab stop when it is attached, which would make this two.
+    @Override
+    protected void onAttach() {
+        super.onAttach();
+        getElement().removeAttribute("tabindex");
+    }
+
+    @Override
+    public void setFocus(final boolean focused) {
+        if (focused) {
+            face.focus();
+        } else {
+            face.blur();
+        }
     }
 
     @Override
@@ -81,7 +103,9 @@ public class FabButton extends ButtonBase {
     }
 
     public void setIcon(final SvgImage svgImage) {
-        face.setInnerHTML("<div class=\"svgIcon " + svgImage.getClassName() + "\">" + svgImage.getSvg() + "</div>");
+        // The icon is decoration: the button is named by its aria-label
+        face.setInnerHTML("<div class=\"svgIcon " + svgImage.getClassName() + "\" aria-hidden=\"true\">"
+                          + svgImage.getSvg() + "</div>");
     }
 
     @Override

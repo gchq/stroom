@@ -130,7 +130,7 @@ public final class GitRepoEditorStories {
                     play.expect(play.getByRole("button", StroomDom.button("Check for updates"))).toBeInTheDocument();
                     play.waitFor(() -> play.expect(play.querySelector(URL_INPUT))
                             .toHaveValue("https://github.com/example/repo.git"));
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // A commit hash makes the repository pull-only: Auto-push and Push are shown but
@@ -247,13 +247,13 @@ public final class GitRepoEditorStories {
                     final Play screen = play.screen();
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post(GET_DEFAULT_CONFIG).toSpyMatcher()));
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     play.click(play.getByRole("button", StroomDom.button("Set Http Client Config")));
                     screen.findByText("Edit HTTP Client Configuration");
                     // Cancel: the document is untouched, so Save is still disabled
                     play.click(screen.getByRole("button", StroomDom.button("Cancel")));
                     play.waitFor(() -> play.expect(screen.queryByText("Edit HTTP Client Configuration")).toBeNull());
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // The seed rides along with any edit: onWrite writes the seeded configuration on
@@ -267,7 +267,7 @@ public final class GitRepoEditorStories {
                     // document when it is saved, so the play saves it and checks the request
                     play.tab();
                     final Query save = play.getByRole("button", "Save");
-                    play.waitFor(() -> play.expect(save).not().toHaveClass("disabled"));
+                    play.waitFor(() -> play.expect(save).not().toHaveAttribute("aria-disabled"));
                     play.click(save);
                     play.waitFor(() -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.put(UPDATE)
@@ -290,7 +290,7 @@ public final class GitRepoEditorStories {
                     // (onSetHttpClientConfiguration only calls onChange() when the edited
                     // configuration differs from the seeded one), so Save stays disabled
                     play.sleep(300);
-                    play.expect(play.getByRole("button", "Save")).toHaveClass("disabled");
+                    play.expect(play.getByRole("button", "Save")).toHaveAttribute("aria-disabled", "true");
                     DocEditors.expectNoProblems(play);
                 })
                 // The configuration button has no URL precondition; the remote actions do

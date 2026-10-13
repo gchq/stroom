@@ -18,19 +18,36 @@ package stroom.widget.button.client;
 
 import stroom.svg.client.Preset;
 
-import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 import java.util.stream.StreamSupport;
 
+/// A group of buttons that sit together, e.g. a toolbar. The group is one tab stop: the arrow keys
+/// move between its buttons (see [ButtonGroupFocus]).
 public class ButtonPanel extends FlowPanel {
 
-    private boolean vertical;
+    private final ButtonGroupFocus groupFocus;
 
     public ButtonPanel() {
         setStyleName("button-container");
+        groupFocus = ButtonGroupFocus.install(getElement());
+    }
+
+    /// Names the group for screen readers, e.g. "Dictionary actions", as it is announced as a
+    /// toolbar when it has more than one button.
+    ///
+    /// @param name The group's name.
+    public void setAccessibleName(final String name) {
+        groupFocus.setName(name);
+    }
+
+    @Override
+    protected void onLoad() {
+        super.onLoad();
+        // Attaching the buttons resets their tab indexes (FocusWidget.onAttach)
+        groupFocus.update();
     }
 
     public void addButton(final ButtonView view) {
@@ -43,6 +60,8 @@ public class ButtonPanel extends FlowPanel {
         }
     }
 
+    /// @deprecated Use a [Toolbar] and [Toolbar#button], with an icon and a name, instead of a preset.
+    @Deprecated
     public ButtonView addButton(final Preset preset) {
         final ButtonView button = createButton(preset);
         add((Widget) button);
@@ -51,13 +70,6 @@ public class ButtonPanel extends FlowPanel {
 
     public void removeButton(final ButtonView buttonView) {
         remove(buttonView.asWidget());
-    }
-
-    public ToggleButtonView addToggleButton(final Preset primaryPreset,
-                                            final Preset secondaryPreset) {
-        final SvgToggleButton button = createToggleButton(primaryPreset, secondaryPreset);
-        add(button);
-        return button;
     }
 
     public boolean containsButton(final ButtonView buttonView) {
@@ -70,24 +82,23 @@ public class ButtonPanel extends FlowPanel {
         }
     }
 
+    /// Makes a toolbar button (styled by toolbar.css) from a preset's icon, name and enabled state.
+    ///
+    /// @deprecated Use a [Toolbar] and [Toolbar#button], with an icon and a name, instead of a preset.
+    @Deprecated
     public ButtonView createButton(final Preset preset) {
-        final SvgButton button = SvgButton.create(preset);
-        if (vertical) {
-            button.getElement().getStyle().setDisplay(Display.BLOCK);
-        }
+        final ToolbarButton button = new ToolbarButton();
+        button.setSvg(preset.getSvgImage());
+        button.setTitle(preset.getTitle());
+        button.setEnabled(preset.isEnabled());
         return button;
     }
 
-    private SvgToggleButton createToggleButton(final Preset primaryPreset,
-                                               final Preset secondaryPreset) {
-        final SvgToggleButton button = SvgToggleButton.create(primaryPreset, secondaryPreset);
-        if (vertical) {
-            button.getElement().getStyle().setDisplay(Display.BLOCK);
-        }
-        return button;
-    }
-
+    /// Puts the buttons in a column, which Up and Down move along.
+    ///
+    /// @param vertical Whether the buttons are in a column.
     public void setVertical(final boolean vertical) {
-        this.vertical = vertical;
+        // Laid out as a column by its aria-orientation, which the group sets
+        groupFocus.setVertical(vertical);
     }
 }

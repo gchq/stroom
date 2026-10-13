@@ -18,8 +18,7 @@ package stroom.pipeline.structure.client.view;
 
 import stroom.pipeline.structure.client.presenter.PipelineStructurePresenter.PipelineStructureView;
 import stroom.pipeline.structure.client.presenter.PipelineStructureUiHandlers;
-import stroom.svg.client.SvgPresets;
-import stroom.widget.button.client.SvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.util.client.MouseUtil;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -38,14 +37,14 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
         implements PipelineStructureView {
 
     private final Widget widget;
-    @UiField(provided = true)
-    SvgButton add;
-    @UiField(provided = true)
-    SvgButton remove;
-    @UiField(provided = true)
-    SvgButton edit;
-    @UiField(provided = true)
-    SvgButton restore;
+    @UiField
+    ToolbarButton add;
+    @UiField
+    ToolbarButton remove;
+    @UiField
+    ToolbarButton edit;
+    @UiField
+    ToolbarButton restore;
     @UiField
     SimplePanel inherit;
     @UiField
@@ -59,15 +58,6 @@ public class PipelineStructureViewImpl extends ViewWithUiHandlers<PipelineStruct
 
     @Inject
     public PipelineStructureViewImpl(final Binder binder) {
-        add = SvgButton.create(SvgPresets.ADD);
-        add.setTitle("Add New Pipeline Element");
-        remove = SvgButton.create(SvgPresets.REMOVE);
-        remove.setTitle("Remove Pipeline Element");
-        edit = SvgButton.create(SvgPresets.EDIT);
-        edit.setTitle("Edit Pipeline Element");
-        restore = SvgButton.create(SvgPresets.UNDO);
-        restore.setTitle("Restore Pipeline Element");
-
         widget = binder.createAndBindUi(this);
     }
 

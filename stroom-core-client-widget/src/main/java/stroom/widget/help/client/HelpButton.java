@@ -18,7 +18,7 @@ package stroom.widget.help.client;
 
 import stroom.svg.shared.SvgImage;
 import stroom.util.shared.NullSafe;
-import stroom.widget.button.client.InlineSvgButton;
+import stroom.widget.button.client.ToolbarButton;
 import stroom.widget.tooltip.client.event.ShowHelpEvent;
 import stroom.widget.util.client.KeyBinding;
 import stroom.widget.util.client.KeyBinding.Action;
@@ -28,7 +28,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
-public class HelpButton extends InlineSvgButton {
+public class HelpButton extends ToolbarButton {
 
     private String helpContentHeading;
     private SafeHtml helpContent;

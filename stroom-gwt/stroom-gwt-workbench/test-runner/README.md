@@ -263,6 +263,41 @@ close, or why it wasn't checked).
 A leak found this way can be investigated with `stroom-gwt/stroom-gwt-suite/mem-leak.mjs` (which
 classes grow, and what keeps them) against the full app.
 
+## Accessibility check
+
+After each story passes, the runner also runs axe-core over its page (the story, and any dialog or
+popup it left open) with the WCAG 2.0, 2.1 and 2.2 level A and AA rules, and fails the story if it
+breaks a rule that isn't listed for it in `a11y-baseline.json`. CSS transitions and animations are
+finished first, so that e.g. colour contrast is measured on what the page settles on rather than
+part way through a hover. axe-core's best-practice rules (e.g. that all content is in landmarks)
+aren't checked.
+
+The baseline lists, for each story, the rules it broke when the check was introduced, so existing
+problems don't fail every run but new ones do; a story that isn't listed must break no rules. When
+a run finds stories that no longer break rules their entry allows, it says so; tighten the baseline
+by running them with `--update-a11y-baseline`, which rewrites the entries of the stories run (and
+fails none for accessibility), then review the change to `a11y-baseline.json`:
+
+```bash
+./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchTest -PworkbenchTestArgs=--update-a11y-baseline
+```
+
+Only add a rule to a story's entry when the problem is known and recorded (e.g. in
+`stroom-gwt/ISSUES.md`); otherwise fix it. `--skip-a11y` skips the check. If axe-core isn't
+available (`workbenchFetchAxe` couldn't download it), the check is skipped and the run says so.
+Each story's violations are kept in `results.json` (`a11y`).
+
+## Real input checks
+
+A play dispatches its own events, which the browser doesn't trust: its Tab is simulated (as
+user-event's), and the browser can't tell its key presses from its clicks, which matters to
+`:focus-visible`. For the stories in `lib/real-input/` (a file per component, e.g. `buttons.mjs`,
+`split-pane.mjs`, gathered by `index.mjs`), after the story passes the runner also
+presses real keys and clicks with the real mouse (Playwright's `page.keyboard` and `page.mouse`),
+and fails the story if the page doesn't behave as it should. A story driven this way usually has
+no play of its own (e.g. `Widgets/Buttons/Toolbar` `RealInput`, a toolbar crossed with real Tab,
+arrow, Home, End and Escape keys, and clicked with the mouse).
+
 ## Coverage
 
 `./gradlew :stroom-gwt:stroom-gwt-workbench:workbenchPresenterCoverage` reports which of Stroom's
@@ -274,11 +309,14 @@ or `src/test/resources/presenter-coverage-evidence.json` names a story whose pla
 ## Files
 
 * `run.mjs` - the test runner.
+* `a11y-baseline.json` - the WCAG rules each story may break, for now (see
+  [Accessibility check](#accessibility-check)).
 * `screenshot-diff.mjs` - compares a run's screenshots with the baseline (see
   [Screenshots](#screenshots)); `lib/screenshot-diff.mjs` does the comparison.
 * `lib/` - story selection, deciding a story's
   outcome (and retrying it), the shared browser (relaunched if it stops), screenshot file names,
-  deadlines, the leak check and the JUnit XML writer, with tests (`node --test lib/`). `lib/run.test.mjs` tests
+  deadlines, the leak check, the accessibility check, the real input checks and the JUnit XML
+  writer, with tests (`node --test lib/`). `lib/run.test.mjs` tests
   `run.mjs` itself against a fake workbench whose stories misbehave (endless loops, reloads,
   navigating away, crashing the browser etc.); it needs Playwright's Chromium, and is skipped
   without it.
