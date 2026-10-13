@@ -531,6 +531,3 @@ background: none;
   overflow: hidden;
 }
 
-.form-label {
-	color: var(--form-group__label-color);
-}

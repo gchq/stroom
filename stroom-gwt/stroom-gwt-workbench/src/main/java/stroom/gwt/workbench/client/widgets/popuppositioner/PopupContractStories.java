@@ -59,8 +59,8 @@ public final class PopupContractStories {
     // The neighbour button's clicks, counted with a listener
     private static final String NEIGHBOUR_CLICK = "neighbourClick";
 
-    private static final String HELP_PANEL = ".help-button-tooltip";
-    private static final String QUICK_FILTER_PANEL = ".quickFilter-tooltip:not(.help-button-tooltip)";
+    private static final String HELP_PANEL = ".help-popup";
+    private static final String QUICK_FILTER_PANEL = ".quickFilter-tooltip:not(.help-popup)";
     // Stroom's menus and submenus are each a `simplePopup-popup` holding a cell table of
     // `menuItem-outer` rows
     private static final String MENU_PANEL = ".simplePopup-popup:has(.menuItem-outer)";
@@ -83,26 +83,20 @@ public final class PopupContractStories {
     /// The registry: the cases, with what GWT does per clause.
     private static List<PopupCase> cases() {
         final List<PopupCase> cases = new ArrayList<>();
-        cases.add(PopupCase.of("HelpButton", PopupHarnesses::helpButton)
-                .opener("button.help-button")
-                // The button and the icon inside it
-                .partners("button.help-button", "button.help-button svg")
-                .panel(HELP_PANEL)
-                .insideTarget(HELP_PANEL + " h4")
-                .placement("button.help-button", PopupLocation.RIGHT, 0,
-                        "ShowHelpEvent — new PopupPosition(new Rect(element), PopupLocation.RIGHT)"));
         cases.add(PopupCase.of("QuickFilter help", PopupHarnesses::quickFilter)
                 .opener(".quickFilter button.help-button")
                 .partners(".quickFilter button.help-button", ".quickFilter button.help-button svg")
                 .panel(QUICK_FILTER_PANEL)
                 .insideTarget(QUICK_FILTER_PANEL));
         cases.add(PopupCase.of("FormGroup help", PopupHarnesses::formGroup)
-                .opener("button.form-group-help")
-                .partners("button.form-group-help", "button.form-group-help svg")
+                .opener("button.form-group__help")
+                // The button and the icon inside it
+                .partners("button.form-group__help", "button.form-group__help svg")
                 .panel(HELP_PANEL)
-                .insideTarget(HELP_PANEL)
-                .placement("button.form-group-help", PopupLocation.RIGHT, 0,
-                        "the same ShowHelpEvent default — FormGroup's help is a HelpButton"));
+                // The heading is the group's label
+                .insideTarget(HELP_PANEL + " h4")
+                .placement("button.form-group__help", PopupLocation.RIGHT, 0,
+                        "ShowHelpEvent — new PopupPosition(new Rect(element), PopupLocation.RIGHT)"));
         cases.add(PopupCase.of("TypeFilter", PopupHarnesses::typeFilter)
                 .opener(".type-filter-trigger")
                 .partners(".type-filter-trigger")

@@ -145,7 +145,7 @@
     border-radius: 4rem;
 }
 
-.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewForm .form-group-label {
+.AuthErrorView .AuthErrorViewFormPanel .AuthErrorViewForm .form-group__label {
     font-size: var(--font-size-15);
 }
 

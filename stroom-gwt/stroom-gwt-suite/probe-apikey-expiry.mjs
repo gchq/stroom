@@ -121,7 +121,7 @@ console.log('after OK, top dialog:', JSON.stringify(await readTopDialogBody(page
 console.log('feedback/invalid:', JSON.stringify(await page.evaluate(() => {
   const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
-  return { feedback: [...top.querySelectorAll('.feedback, .invalid-feedback')].map((e) => e.textContent.trim()),
+  return { feedback: [...top.querySelectorAll('.feedback, .form-group__feedback')].map((e) => e.textContent.trim()),
     invalid: top.querySelectorAll('.invalid').length };
 })));
 console.log('page errors:', JSON.stringify(errors, null, 1));

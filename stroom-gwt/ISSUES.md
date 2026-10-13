@@ -471,7 +471,7 @@ its own; a group is `role="toolbar"` (named) only with two or more visible butto
 and Home/End jump; the keys are the arrows only, not `KeyBinding`'s letters (A/D/H/L), which would
 swallow key sequences such as `g u`. Buttons inside a widget that owns its keys (e.g. the quick
 filter's) are exempt. `FocusWidget.onAttach` turns a `tabIndex` of -1 back into 0, so the roving
-tab index must be set after attach (or use -2, as `HelpButton` does).
+tab index must be set after attach (or use -2, as a form group's help button does).
 
 Measured (`ButtonRuns` and `TabStops` in the workbench's `a11y` package; stories
 `Widgets/Buttons/ButtonGroup` and the `ToolbarTabStops` stories of `App/Main/AppShell`,
@@ -597,12 +597,23 @@ global property editor's value icons), and `PagerView.addButton(Preset)` is gone
 opens (a dashboard table's Add Column, the annotation menu) is placed against the button rather
 than whatever was clicked inside it (`AnnotationManager.showAnnotationMenu(Element, …)`). Every
 screenshot is unchanged. Still made on their own: the button widgets built on `ToolbarButton`
-(`HelpButton`, `RefreshButton` (the visualisations' own), table expand and collapse, the quick
-filter's and date picker's buttons), which `PagerView.addButton(ButtonView)` still adds. The pathway
+(`RefreshButton` (the visualisations' own), table expand and collapse, the quick filter's and date
+picker's buttons), which `PagerView.addButton(ButtonView)` still adds. The pathway
 tree's New, Edit and Remove buttons have never had a click handler, so do nothing.
 `ButtonPanel` is deleted, with its `button-container` rules: the last two were empty, holding a place
 in their rows (the data view's and query text view's), so are plain panels. Its stories
 (`Widgets/Buttons/ButtonGroup`) are of `Toolbar`, which has `setVertical` for a column of buttons.
+A form group's help button isn't a toolbar button: it is one button beside a label, out of the tab
+order (F1 in the field shows the same help). `HelpButton` is replaced by the form package's own
+`FormGroupHelpButton`, styled by `form-group__help` and `form-group__help-icon`, so the form groups
+are no longer counted as button runs (`UserGroupsScreen`'s `ToolbarTabStops`). Nothing else used
+`HelpButton`, so its standalone stories (`Widgets/Overlays/HelpButton`) and popup contract case are
+gone; the `FormGroup help` case checks the same popup, heading included.
+The form styles are in `form.css` (imported after Bootstrap, which also styles `.form-group`), with
+the form group's parts named BEM style: `form-group__label-row`, `__label`, `__help`,
+`__help-icon`, `__description-row`, `__description` and `__feedback` (no longer Bootstrap's
+`invalid-feedback`, so its styles are its own), and the `form-group--indented` and
+`form-group--inline-tick` modifiers. The help popup is `help-popup`.
 
 ### Opening a screen leaves the focus behind (#5405)
 

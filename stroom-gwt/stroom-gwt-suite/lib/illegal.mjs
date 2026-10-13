@@ -54,10 +54,10 @@ export function readFields(page) {
     return {
       caption,
       fields: boxes.map((e, i) => {
-        // GWT lays a form out as FormGroup: `.form-group` > `.form-group-label` + the widget. Fall
+        // GWT lays a form out as FormGroup: `.form-group` > `.form-group__label` + the widget. Fall
         // back to a placeholder, a title, or the nearest preceding label-ish text.
         const group = e.closest('.form-group');
-        const label = norm(group?.querySelector('.form-group-label')?.textContent)
+        const label = norm(group?.querySelector('.form-group__label')?.textContent)
           || norm(e.getAttribute('placeholder')) || norm(e.getAttribute('title'))
           || norm(e.getAttribute('aria-label')) || '';
         const r = e.getBoundingClientRect();

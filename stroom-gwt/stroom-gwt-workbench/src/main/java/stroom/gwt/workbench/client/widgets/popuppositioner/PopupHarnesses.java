@@ -31,7 +31,6 @@ import stroom.widget.button.client.Button;
 import stroom.widget.customdatebox.client.MyDateBox;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 import stroom.widget.form.client.FormGroup;
-import stroom.widget.help.client.HelpButton;
 import stroom.widget.menu.client.presenter.Item;
 import stroom.widget.menu.client.presenter.ShowMenuEvent;
 import stroom.widget.menu.client.presenter.SimpleMenuItem;
@@ -67,16 +66,6 @@ final class PopupHarnesses {
         // Static utility
     }
 
-    /// Stroom's `HelpButton`, shown by `HelpManager`.
-    ///
-    /// @param popups The story's popups.
-    /// @return The widget.
-    static Widget helpButton(final StoryPopups popups) {
-        final HelpButton helpButton = HelpButton.create("Heading");
-        helpButton.setHelpContent("Heading", SafeHtmlUtils.fromSafeConstant("<p>Help body text</p>"));
-        return helpButton;
-    }
-
     /// Stroom's `QuickFilter`, whose help button shows its own popup.
     ///
     /// @param popups The story's popups.
@@ -85,7 +74,7 @@ final class PopupHarnesses {
         return new QuickFilter();
     }
 
-    /// Stroom's `FormGroup`, whose help is a `HelpButton`.
+    /// Stroom's `FormGroup`, whose help button's popup is shown by `HelpManager`.
     ///
     /// @param popups The story's popups.
     /// @return The widget.

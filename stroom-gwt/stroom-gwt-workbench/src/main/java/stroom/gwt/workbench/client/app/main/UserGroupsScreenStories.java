@@ -123,12 +123,9 @@ public final class UserGroupsScreenStories {
                     play.waitFor(() -> play.expect(play.querySelector("[inert]")).toBeNull());
                     play.findByText("Members of group \"Administrators\":");
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
-                            "User Groups: - Click for help: 0 tab stops",
                             "Quick Filter Syntax Help: 1 tab stop",
                             "Create Group, Edit group 'Administrators', Delete group 'Administrators': 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
-                            "Group \"Administrators\" is a member of: - Click for help: 0 tab stops",
-                            "Members of group \"Administrators\": - Click for help: 0 tab stops",
                             "Quick Filter Syntax Help: 1 tab stop",
                             "Quick Filter Syntax Help: 1 tab stop",
                             "Add, Remove: 1 tab stop",

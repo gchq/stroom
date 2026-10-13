@@ -115,7 +115,7 @@ for (const r of ROOTS) {
         // which carries `label="Unique User Identity"` and usually `identity="subjectId"` as well.
         // Scan the tags in order and keep the FormGroup label in hand, so a `ui:field` inside one
         // is named by it even when `identity` is absent — that label is exactly what the walk
-        // reads off the rendered `.form-group-label`, which is what joins the two.
+        // reads off the rendered `.form-group__label`, which is what joins the two.
         let group = null;
         for (const t of xml.matchAll(/<([A-Za-z:]+)\b[^>]*>/g)) {
           const [tag, tagName] = t;
@@ -733,7 +733,7 @@ const reduceLabel = (raw) => {
 /**
  * Is one of the boxes the walk typed in THIS handler's receiver? Two ways, and the first is the
  * reliable one: the receiver's `ui:field` is named by the `FormGroup` around it in the view's
- * ui.xml, and that label is exactly the `.form-group-label` the walker reads — "Unique User
+ * ui.xml, and that label is exactly the `.form-group__label` the walker reads — "Unique User
  * Identity" for `subjectId`, which no name reduction could ever have bridged. Failing that, the
  * names themselves (`nameFilter` <-> "Name").
  */

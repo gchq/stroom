@@ -88,7 +88,7 @@ export function readTabFields(page, { inDialogScope = false } = {}) {
     const out = [];
     for (const group of document.querySelectorAll('.form-group')) {
       if (!(group.offsetWidth > 0) || inDialog(group)) continue;
-      const label = norm(group.querySelector('.form-group-label')?.textContent);
+      const label = norm(group.querySelector('.form-group__label')?.textContent);
       // ONLY a labelled FormGroup field. Not every box on a document editor belongs to the
       // document: the Feed's Data tab is a stream browser, and its filter and pager boxes have no
       // business marking the Feed dirty. Typing in one and calling Save's silence a defect is how

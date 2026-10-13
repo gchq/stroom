@@ -116,7 +116,7 @@ export async function fillField(page, label, text) {
       .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'));
     const want = wanted === null ? null : (Array.isArray(wanted) ? wanted : [wanted]);
     const el = want
-      ? boxes.find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group-label')?.textContent)))
+      ? boxes.find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)))
       : boxes.find((e) => !n(e.value));
     if (!el) return null;
     const r = el.getBoundingClientRect();
@@ -140,7 +140,7 @@ export async function clickTickBox(page, label) {
     const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
     const scope = popups.length ? popups[popups.length - 1] : document.body;
     const group = [...scope.querySelectorAll('.form-group')]
-      .find((g) => n(g.querySelector('.form-group-label')?.textContent) === wanted);
+      .find((g) => n(g.querySelector('.form-group__label')?.textContent) === wanted);
     const el = group?.querySelector('.tickBox, input[type="checkbox"]');
     if (!el || !(el.offsetWidth > 0)) return null;
     const r = el.getBoundingClientRect();
@@ -431,7 +431,7 @@ export function readField(page, label) {
     const want = Array.isArray(wanted) ? wanted : [wanted];
     const el = [...scope.querySelectorAll('input[type="text"], input:not([type]), textarea')]
       .filter((e) => e.offsetWidth > 0 && !e.disabled && !e.readOnly && !e.classList.contains('quickFilter-textBox'))
-      .find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group-label')?.textContent)));
+      .find((e) => want.includes(n(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)));
     return el ? String(el.value ?? '') : null;
   }, [label]).catch(() => null);
 }

@@ -6,7 +6,7 @@
     <g:ThinSplitLayoutPanel ui:field="splitLayoutPanel" styleName="max default-min-sizes">
         <g:south size="200">
             <form:FormGroup ui:field="detailsFormGroup"
-                            addStyleNames="form-label-padding">
+                            addStyleNames="form-group--indented">
                 <g:SimplePanel styleName="max form-padding">
                     <g:HTML ui:field="details" styleName="max permissionDetails"/>
                 </g:SimplePanel>
@@ -34,7 +34,7 @@
                     <l:SelectionBox ui:field="permissionVisibility"/>
                 </form:FormGroup>
                 <form:FormGroup label="Users and Groups"
-                                addStyleNames="form-label-padding max"
+                                addStyleNames="form-group--indented max"
                                 screenReaderText="Filtered by Permission Visibility. Select one to see and edit its permissions.">
                     <form:HelpHTML>
                         <p>Lists users/groups, optionally filtered based on the value of the

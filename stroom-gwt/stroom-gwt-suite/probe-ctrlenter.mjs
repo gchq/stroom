@@ -50,9 +50,9 @@ console.log(JSON.stringify(await page.evaluate(() => {
   const top = popups[popups.length - 1];
   if (!top) return null;
   return {
-    groups: [...top.querySelectorAll('.form-group')].map((g) => n(g.querySelector('.form-group-label')?.textContent)),
+    groups: [...top.querySelectorAll('.form-group')].map((g) => n(g.querySelector('.form-group__label')?.textContent)),
     boxes: [...top.querySelectorAll('input, textarea')].map((e) => ({ cls: String(e.className).slice(0, 40), value: e.value, disabled: e.disabled })),
-    feedback: [...top.querySelectorAll('.feedback, .invalid-feedback')].map((e) => n(e.textContent)),
+    feedback: [...top.querySelectorAll('.feedback, .form-group__feedback')].map((e) => n(e.textContent)),
   };
 }), null, 1));
 
@@ -78,7 +78,7 @@ console.log(`feedback after OK: ${JSON.stringify(await page.evaluate(() => {
   const n = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
   const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
   const top = popups[popups.length - 1];
-  return top ? { feedback: [...top.querySelectorAll('.feedback, .invalid-feedback')].map((e) => n(e.textContent)).filter(Boolean), invalid: top.querySelectorAll('.invalid').length } : null;
+  return top ? { feedback: [...top.querySelectorAll('.feedback, .form-group__feedback')].map((e) => n(e.textContent)).filter(Boolean), invalid: top.querySelectorAll('.invalid').length } : null;
 }))}`);
 console.log(`guard aborted: ${JSON.stringify((guard.violations ?? []).map((v) => `${v.method} ${v.path}`))}`);
 await browser.close();

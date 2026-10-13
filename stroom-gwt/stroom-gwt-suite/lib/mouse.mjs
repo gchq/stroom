@@ -230,7 +230,7 @@ export function readSpinners(page) {
     };
     return [...document.querySelectorAll('.valueSpinner')].filter((e) => e.offsetWidth > 0).map((e, i) => ({
       index: i,
-      label: norm(e.closest('.form-group')?.querySelector('.form-group-label')?.textContent)
+      label: norm(e.closest('.form-group')?.querySelector('.form-group__label')?.textContent)
         || norm(e.getAttribute('aria-label')) || `spinner ${i + 1}`,
       value: e.querySelector('input')?.value ?? null,
       up: pt(e.querySelector('[class*=arrowUp]')),

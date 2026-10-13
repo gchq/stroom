@@ -85,7 +85,7 @@ public final class FormGroupStories {
                     play.click(email);
                     play.click(help);
                     play.expect(play.screen().findByText(TextMatch.containing("used for notifications"),
-                                    ".help-button-tooltip *"))
+                                    ".help-popup *"))
                             .toBeInTheDocument();
                     play.expect(email).toHaveFocus();
                 })
@@ -93,7 +93,7 @@ public final class FormGroupStories {
                 .story("Feedback", context -> {
                     final FormGroup formGroup = formGroup("fg-validated", "Username");
                     final TextBox textBox = InputWidgets.textBox(context, "", "Choose a username…");
-                    // GWT's FormGroup has no feedback setter (its invalid-feedback label is private
+                    // GWT's FormGroup has no feedback setter (its form-group__feedback label is private
                     // and always empty). Stroom's views (e.g. ChangePasswordViewImpl) add their own
                     // "feedback" label under the control and mark the control with FieldValidity,
                     // so this story does the same. The message updates when the text box reports
@@ -158,7 +158,7 @@ public final class FormGroupStories {
                     // A required field is announced as required (not in its description)
                     play.expect(size).toHaveAttribute("aria-required", "true");
                     play.click(play.getByTitle("Max Store Size - Click for help"));
-                    play.expect(play.screen().findByText(STORE_SIZE_HELP, ".help-button-tooltip *"))
+                    play.expect(play.screen().findByText(STORE_SIZE_HELP, ".help-popup *"))
                             .toBeInTheDocument();
                 })
                 // GWT-only: a tick box carries its own label, beside the box, so the group has none and
@@ -181,7 +181,7 @@ public final class FormGroupStories {
                             .toBeInTheDocument();
                     // The help is for the tick box's label, as it would be for a group label
                     play.click(play.within(group).getByTitle("Follow Redirects - Click for help"));
-                    play.expect(play.screen().findByText(TICK_HELP, ".help-button-tooltip *"))
+                    play.expect(play.screen().findByText(TICK_HELP, ".help-popup *"))
                             .toBeInTheDocument();
                 })
                 // GWT-only: a group of several controls (an amount and its unit), which one label can't

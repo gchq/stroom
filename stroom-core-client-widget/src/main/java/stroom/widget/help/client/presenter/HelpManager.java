@@ -73,7 +73,7 @@ public class HelpManager {
         // Add the markdown class so that it gets styled like rendered markdown, so we are
         // consistent with that. Add quickFilter-tooltip so it get styling consistent
         // with quickfilter popups
-        popup.setStyleName("quickFilter-tooltip help-button-tooltip markdown");
+        popup.setStyleName("quickFilter-tooltip help-popup markdown");
 
         final PopupPosition popupPosition = showHelpEvent.getPopupPosition();
 

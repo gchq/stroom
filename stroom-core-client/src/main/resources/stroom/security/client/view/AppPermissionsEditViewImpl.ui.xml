@@ -7,7 +7,7 @@
         <g:south size="300">
             <form:FormGroup ui:field="detailsFormGroup"
                             helpText="Explains how the user/group has obtained the selected permission."
-                            addStyleNames="form-label-padding">
+                            addStyleNames="form-group--indented">
                 <g:SimplePanel styleName="max form-padding permissionDetails">
                     <g:HTML ui:field="details" styleName="max"/>
                 </g:SimplePanel>
@@ -15,7 +15,7 @@
         </g:south>
         <g:center>
             <form:FormGroup ui:field="appPermissionsFormGroup"
-                            addStyleNames="form-label-padding">
+                            addStyleNames="form-group--indented">
                 <form:HelpHTML>
                     <p>Lists all available application level permissions.</p>
                     <p>Ticked items are explicitly held by the user/group.</p>
