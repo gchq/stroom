@@ -27,10 +27,6 @@ public abstract class AbstractTab extends Widget implements TaskMonitorFactory {
 
     private boolean hidden;
 
-    protected abstract void setKeyboardSelected(boolean selected);
-
-    protected abstract void setSelected(boolean selected);
-
     protected abstract void setText(String text);
 
     public boolean isHidden() {
@@ -45,12 +41,6 @@ public abstract class AbstractTab extends Widget implements TaskMonitorFactory {
 
     protected Element getCloseElement() {
         return null;
-    }
-
-    protected void setCloseActive(final boolean active) {
-    }
-
-    protected void setHover(final boolean hover) {
     }
 
     @Override

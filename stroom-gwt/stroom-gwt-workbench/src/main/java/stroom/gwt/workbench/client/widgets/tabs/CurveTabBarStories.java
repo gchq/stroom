@@ -49,7 +49,7 @@ import java.util.List;
 
 /// Stories for Stroom's [CurveTabBar], in the tab bar row of `CurveTabLayoutViewImpl`
 /// (`tabBarContainer` > optional `navigation-menu-button` > `curveTabLayoutViewImpl-tabBarOuter` >
-/// `curveTabBar`).
+/// `tab-bar--curved`).
 /// The stories without the sidebar toggle build that row as the view does; the one with it uses
 /// the real [CurveTabLayoutViewImpl]. The overflow selector shows Stroom's real menu.
 public final class CurveTabBarStories {
@@ -59,9 +59,9 @@ public final class CurveTabBarStories {
     private static final String ON_TOGGLE_SIDEBAR = "onToggleSidebar";
 
     // Stroom hides an overflowed tab with an inline `visibility: hidden` (and moves it off the bar)
-    private static final String OVERFLOWED = ".curveTab[style*='visibility: hidden']";
+    private static final String OVERFLOWED = ".tab-bar__tab[style*='visibility: hidden']";
     // The selector is only made visible when some tabs overflow
-    private static final String SELECTOR_SHOWN = ".curveTabSelector[style*='visibility: visible']";
+    private static final String SELECTOR_SHOWN = ".tab-bar__selector[style*='visibility: visible']";
     // Each menu item's content is a `menuItem-outer` (the item, with `role="menuitem"`, is its cell)
     private static final String MENU_ITEM = ".menuItem-outer";
     private static final int MEASURE_TIMEOUT_MILLIS = 5000;
@@ -103,7 +103,7 @@ public final class CurveTabBarStories {
                 // The overflow algorithm (AbstractTabBar.getDisplayableTabs) with fixed widths
                 .story("OverflowAlgorithm", context -> demo(context, manyTabs(), "index", "420px", false))
                 .withPlay(CurveTabBarStories::playOverflowAlgorithm)
-                // A single, non-closable tab (no `multiple-tabs`, no overflow chevron)
+                // A single, non-closable tab (no `tab-bar--multiple`, no overflow chevron)
                 .story("SingleTab", context -> demo(context,
                         List.of(new StoryTab("welcome", "Welcome", "Welcome", null, false)),
                         "welcome", null, false));
@@ -164,11 +164,11 @@ public final class CurveTabBarStories {
         play.expect(play.querySelector(OVERFLOWED)).not().toBeNull();
         // The selector is a button named with the number of tabs it holds that don't fit
         final Query selector = play.getByRole("button", TextMatch.regex("^Show all tabs \\(\\d+ hidden\\)$"));
-        final Query count = play.within(selector).querySelector(".curveTabSelector-text");
+        final Query count = play.within(selector).querySelector(".tab-bar__selector-count");
         play.expect("the overflow count", () -> Double.valueOf(count.textContent().get())).toBeGreaterThan(0);
 
         // The selected tab is the walk centre, so it is never overflowed
-        final Query selectedTab = play.querySelector(".curveTab-selected");
+        final Query selectedTab = play.querySelector(".tab-bar__tab[aria-selected='true']");
         play.expect(selectedTab).not().toBeNull();
         play.expect(selectedTab).toBeVisible();
 
@@ -187,7 +187,7 @@ public final class CurveTabBarStories {
         // Clicking an overflowed (bold) tab selects it and brings it into view
         play.click(boldLabel.closest(MENU_ITEM));
         play.waitFor(() -> {
-            final Query selected = play.querySelector(".curveTab-selected");
+            final Query selected = play.querySelector(".tab-bar__tab[aria-selected='true']");
             play.expect(selected).not().toBeNull();
             play.expect(selected).toBeVisible();
         });
@@ -201,14 +201,14 @@ public final class CurveTabBarStories {
         // Stroom keeps a hidden tab's element in the bar, hidden in the same way as an overflowed
         // tab, so its text is in the document but not visible
         play.expect(play.getByText("SECRET_FEED")).not().toBeVisible();
-        play.expect(play.querySelectorAll(".curveTabBar .curveTab")).toHaveLength(shownCount + 1);
+        play.expect(play.querySelectorAll(".tab-bar--curved .tab-bar__tab")).toHaveLength(shownCount + 1);
         // The overflow count excludes the hidden tab
-        final Query count = play.querySelector(".curveTabSelector-text");
+        final Query count = play.querySelector(".tab-bar__selector-count");
         play.expect("the overflowed tab count", () -> Integer.valueOf(count.textContent().get())
                 + countVisibleTabs()).toBe(shownCount);
 
         // The selector menu lists only the non-hidden tabs
-        play.click(play.querySelector(".curveTabSelector"));
+        play.click(play.querySelector(".tab-bar__selector"));
         play.waitFor(() -> play.expect(play.screen().querySelectorAll(MENU_ITEM)).toHaveLength(shownCount));
         play.expect(play.screen().queryByText("SECRET_FEED", ".menuItem-text")).toBeNull();
     }
@@ -250,7 +250,7 @@ public final class CurveTabBarStories {
             }
             final NodeList<Element> selectors = bar.getElement().getElementsByTagName("div");
             for (int i = 0; i < selectors.getLength(); i++) {
-                if (selectors.getItem(i).hasClassName("curveTabSelector")) {
+                if (selectors.getItem(i).hasClassName("tab-bar__selector")) {
                     fixWidth(selectors.getItem(i), 40);
                 }
             }
@@ -285,7 +285,7 @@ public final class CurveTabBarStories {
         int count = 0;
         for (int i = 0; i < tabs.getLength(); i++) {
             final Element tab = tabs.getItem(i);
-            if (tab.hasClassName("curveTab") && "visible".equals(tab.getStyle().getVisibility())) {
+            if (tab.hasClassName("tab-bar__tab") && "visible".equals(tab.getStyle().getVisibility())) {
                 count++;
             }
         }

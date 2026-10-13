@@ -33,7 +33,7 @@
     display: flex;
 }
 
-.DashboardViewImpl .linkTab {
+.DashboardViewImpl .tab-bar--link .tab-bar__tab {
     opacity: 0.8 !important;
     color: var(--link-tab__text-color) !important;
     transition: none;
@@ -45,20 +45,20 @@
 }
 
 /*
-.DashboardViewImpl .linkTab {
+.DashboardViewImpl .tab-bar--link .tab-bar__tab {
     cursor: default;
     text-decoration: none;
 }
 
-.DashboardViewImpl.dashboard__designMode .linkTab {
+.DashboardViewImpl.dashboard__designMode .tab-bar--link .tab-bar__tab {
   cursor: pointer;
 }
 
-.DashboardViewImpl .linkTab:hover {
+.DashboardViewImpl .tab-bar--link .tab-bar__tab:hover {
     text-decoration: none;
 }
 
-.DashboardViewImpl.dashboard__designMode .linkTab:hover {
+.DashboardViewImpl.dashboard__designMode .tab-bar--link .tab-bar__tab:hover {
     text-decoration: underline;
 }
 */

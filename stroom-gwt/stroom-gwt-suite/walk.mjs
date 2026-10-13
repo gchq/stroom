@@ -477,7 +477,7 @@ async function clickDesignHeader(name) {
 async function tabBarOf(tab) {
   return page.evaluate((wanted) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const lab = [...document.querySelectorAll('.linkTab-label')]
+    const lab = [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .find((e) => e.offsetWidth > 0 && norm(e.textContent) === wanted);
     const bar = lab?.closest('.tabLayout-barOuter');
     if (!bar) return null;
@@ -546,12 +546,12 @@ async function survey() {
   const fingerprint = await page.evaluate((sel) => {
     const root = document.querySelector(sel) ?? document.body;
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    // `.linkTab-label` only: those are an editor's own sub-tabs. The CONTENT tab strip
-    // (`.curveTab-label`) is the application's history — every screen visited adds one — and a
+    // `.tab-bar--link .tab-bar__label` only: those are an editor's own sub-tabs. The CONTENT tab strip
+    // (`.tab-bar--curved .tab-bar__label`) is the application's history — every screen visited adds one — and a
     // walk that never reloads accumulates it, so including it made every screen-level node's
     // signature drift with whatever had been opened before. crawl.mjs never saw this because each
     // of its nodes began from a reload with an empty strip.
-    const tabs = [...root.querySelectorAll('.linkTab-label')]
+    const tabs = [...root.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent)).sort();
     const n = (q) => root.querySelectorAll(q).length;
     return `${tabs.join(',')}#${n('input,select,textarea')}/${n('.form-group')}/${n('.ace_editor')}`;
@@ -659,7 +659,7 @@ async function reloadAndSignIn() {
 }
 
 /**
- * An open editor's sub-tabs — `.linkTab-label` only. lib/tabs.mjs's readEditorTabs also reads the
+ * An open editor's sub-tabs — `.tab-bar--link .tab-bar__label` only. lib/tabs.mjs's readEditorTabs also reads the
  * CONTENT strip and filters out `Welcome` and the document's own name, which was enough for a
  * recorder that opened one document per fresh page; in a walk the strip holds every screen visited
  * so far, and all of them would be reported as sub-tabs of whichever editor is open.
@@ -674,7 +674,7 @@ async function readSubTabs({ inDialog = false } = {}) {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     const popups = [...document.querySelectorAll('.dialog-popup, .resizableDialog-popup')].filter((e) => e.offsetWidth > 0);
     const top = popups[popups.length - 1];
-    return [...document.querySelectorAll('.linkTab-label')]
+    return [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .filter((e) => e.offsetWidth > 0 && e.offsetHeight > 0)
       .filter((e) => (inDialog ? top && top.contains(e) : !popups.some((p) => p.contains(e))))
       .map((e) => norm(e.textContent)).filter(Boolean);
@@ -682,9 +682,9 @@ async function readSubTabs({ inDialog = false } = {}) {
 }
 
 /** The content tab strip's labels, in order. */
-const contentTabs = () => page.evaluate(() => [...document.querySelectorAll('.curveTab')]
+const contentTabs = () => page.evaluate(() => [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
   .filter((t) => t.offsetWidth > 0)
-  .map((t) => (t.querySelector('.curveTab-label') || t).textContent.replace(/\s+/g, ' ').trim())
+  .map((t) => (t.querySelector('.tab-bar__label') || t).textContent.replace(/\s+/g, ' ').trim())
   .filter(Boolean)).catch(() => []);
 
 /**
@@ -715,7 +715,7 @@ async function closeAllContentTabs() {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const open = (await contentTabs()).filter((t) => t && !/Welcome/.test(t));
     if (!open.length) return true;
-    if (attempt === 0 && await rightClickByText(page, '.curveTab', open[0]).catch(() => false)) {
+    if (attempt === 0 && await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', open[0]).catch(() => false)) {
       const before = (await contentTabs()).length;
       if (await clickMenuItem(page, 'Close All').catch(() => false)) {
         // Close All closes tab by tab and may ask once per dirty document.
@@ -819,7 +819,7 @@ async function discardIfAsked({ wait = 2_000 } = {}) {
 async function closeContentTab(label) {
   if (!label) return false;
   const before = (await contentTabs()).length;
-  if (!(await rightClickByText(page, '.curveTab', label).catch(() => false))) return false;
+  if (!(await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', label).catch(() => false))) return false;
   if (!(await clickMenuItem(page, 'Close').catch(() => false))) { await dismissMenus(page).catch(() => {}); return false; }
   return settleTabClose(before, 'Close');
 }
@@ -879,23 +879,23 @@ async function clickDialogButton(captionRe, labelRe) {
 async function whereAmI() {
   return page.evaluate(() => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
-    const tabs = [...document.querySelectorAll('.curveTab')].filter((t) => t.offsetWidth > 0)
-      .map((t) => `${norm((t.querySelector('.curveTab-label') || t).textContent)}${/curveTab-selected/.test(t.className) ? '*' : ''}`);
-    const sub = [...document.querySelectorAll('.linkTab-label')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
+    const tabs = [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')].filter((t) => t.offsetWidth > 0)
+      .map((t) => `${norm((t.querySelector('.tab-bar__label') || t).textContent)}${t.getAttribute('aria-selected') === 'true' ? '*' : ''}`);
+    const sub = [...document.querySelectorAll('.tab-bar--link .tab-bar__label')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
     const dialogs = [...document.querySelectorAll('.dialog-titleText')].filter((e) => e.offsetWidth > 0).map((e) => norm(e.textContent));
     return `tabs [${tabs.join(' | ')}] sub-tabs [${sub.join(', ')}] dialogs [${dialogs.join(', ')}]`;
   }).catch(() => '(unknown)');
 }
 
 /**
- * A document is open when ITS EDITOR'S sub-tab bar exists — `.linkTab-label`, not any tab label.
+ * A document is open when ITS EDITOR'S sub-tab bar exists — `.tab-bar--link .tab-bar__label`, not any tab label.
  * The content strip's `Welcome` tab satisfied the old test instantly, so after a fast re-sync the
  * walker clicked sub-tabs of an editor that had not rendered yet: nine of Analytic Rule's ten tabs
  * came back "no sub-tab". crawl.mjs got away with the same test because its reload made every open
  * slow enough to lose the race.
  */
 async function waitForDocOpen() {
-  const r = await waitUntil(page, () => page.evaluate(() => [...document.querySelectorAll('.linkTab-label')]
+  const r = await waitUntil(page, () => page.evaluate(() => [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
     .some((e) => e.offsetWidth > 0)), { budget: 6_000, label: 'doc-open', kind: 'editor' }).catch(() => ({ ok: false }));
   if (!r.ok) console.log(`      (doc-open: no editor sub-tab bar after 6s — ${await whereAmI()})`);
 }
@@ -922,10 +922,10 @@ async function activateContentTab(label) {
   if (!label) return;
   const clicked = await page.evaluate((wanted) => {
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim().replace(/^\* /, '');
-    const tabs = [...document.querySelectorAll('.curveTab')].filter((t) => t.offsetWidth > 0);
-    const mine = tabs.find((t) => norm((t.querySelector('.curveTab-label') || t).textContent) === wanted);
-    if (!mine || /curveTab-selected/.test(mine.className)) return !!mine;
-    (mine.querySelector('.curveTab-label') || mine).click();
+    const tabs = [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')].filter((t) => t.offsetWidth > 0);
+    const mine = tabs.find((t) => norm((t.querySelector('.tab-bar__label') || t).textContent) === wanted);
+    if (!mine || mine.getAttribute('aria-selected') === 'true') return !!mine;
+    (mine.querySelector('.tab-bar__label') || mine).click();
     return true;
   }, label).catch(() => false);
   if (clicked) await page.waitForTimeout(300);
@@ -1170,7 +1170,7 @@ async function driveStep(step) {
     await page.mouse.click(t.x, t.y, { button: 'right' });
     await waitForMenu(page, { budget: 1_500, label: `right-click:${step.what}` }).catch(() => {});
   } else if (step.via === 'tab-context') {
-    if (!(await rightClickByText(page, '.curveTab', step.label))) {
+    if (!(await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', step.label))) {
       throw new Error(`no content tab "${step.label}" to right-click`);
     }
   } else if (step.via === 'doc') {
@@ -1446,7 +1446,7 @@ async function driveStep(step) {
     lastAddDelta = { items: now.buttons.filter((b) => !buttonsBefore.includes(b)), disabled: now.disabled };
   } else if (step.via === 'tab') {
     // Wait for the tab to EXIST before asking clickEditorTab, whose count check is immediate.
-    await waitUntil(page, () => page.evaluate((label) => [...document.querySelectorAll('.linkTab-label')]
+    await waitUntil(page, () => page.evaluate((label) => [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
       .some((e) => e.offsetWidth > 0 && e.textContent.replace(/\s+/g, ' ').trim() === label), step.label),
     { budget: 5_000, label: `tab-exists:${step.label}`, kind: 'tab' }).catch(() => {});
     if (!(await clickEditorTab(page, step.label, { nth: step.nth ?? 0 }))) {
@@ -1457,7 +1457,7 @@ async function driveStep(step) {
       for (const parent of await readSubTabs().catch(() => [])) {
         if (parent === step.label) continue;
         if (!(await clickEditorTab(page, parent, { nth: 0, timeout: 3_000 }).catch(() => false))) continue;
-        await waitUntil(page, () => page.evaluate((label) => [...document.querySelectorAll('.linkTab-label')]
+        await waitUntil(page, () => page.evaluate((label) => [...document.querySelectorAll('.tab-bar--link .tab-bar__label')]
           .some((e) => e.offsetWidth > 0 && e.textContent.replace(/\s+/g, ' ').trim() === label), step.label),
         { budget: 1_500, label: `nested:${step.label}`, kind: 'tab' }).catch(() => {});
         if (await clickEditorTab(page, step.label, { nth: step.nth ?? 0, timeout: 3_000 }).catch(() => false)) { found = true; break; }

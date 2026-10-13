@@ -85,8 +85,8 @@ public final class AppShellStories {
 
     // The explorer panel is NavigationViewImpl's '.navigation'
     private static final String NAVIGATION = ".navigation";
-    // GWT's document tabs have no 'tab' role; their labels are '.curveTab-text'
-    private static final String TAB_LABEL = ".curveTab-text";
+    // The document tabs' labels
+    private static final String TAB_LABEL = ".tab-bar--curved .tab-bar__label";
     // Menu items have no 'menuitem' role or aria-disabled; a disabled item has
     // the 'menuItem-disabled' class
     private static final String MENU_ITEM = ".menuItem-outer";
@@ -472,8 +472,8 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(play.getByTitle("Save")).not().toHaveAttribute("aria-disabled"));
                     // The tab's close icon has no title
                     play.click(play.within(play.getByText(TextMatch.containing("Countries"), TAB_LABEL)
-                                    .closest(".curveTab"))
-                            .querySelector(".curveTab-close"));
+                                    .closest(".tab-bar__tab"))
+                            .querySelector(".tab-bar__close"));
                     play.expect(screen.findByText(TextMatch.containingIgnoreCase("unsaved changes")))
                             .toBeInTheDocument();
                     play.click(screen.getByRole("button", StroomDom.button("OK")));

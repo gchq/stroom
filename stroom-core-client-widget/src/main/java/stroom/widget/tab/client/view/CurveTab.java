@@ -47,16 +47,13 @@ public class CurveTab extends AbstractTab {
         this.allowClose = allowClose;
 
         element = DOM.createDiv();
-        element.setClassName("curveTab");
+        element.setClassName("tab-bar__tab");
 
-        final Element background = DOM.createDiv();
-        background.setClassName("curveTab-background");
-        element.appendChild(background);
         final String title = Objects.requireNonNullElse(tooltip, text);
 
         if (icon != null) {
             final Element iconElement = DOM.createDiv();
-            iconElement.addClassName("curveTab-icon " + iconColour.getClassName());
+            iconElement.addClassName("tab-bar__icon " + iconColour.getClassName());
             iconElement.setTitle(title);
             SvgImageUtil.setSvgAsInnerHtml(iconElement, icon);
             // The tab is named by its label
@@ -65,7 +62,7 @@ public class CurveTab extends AbstractTab {
         }
 
         label = DOM.createDiv();
-        label.setClassName("curveTab-text");
+        label.setClassName("tab-bar__label");
 
         if (text.length() > MAX_TEXT_LENGTH) {
             label.setInnerText(text.substring(0, MAX_TEXT_LENGTH) + "...");
@@ -77,7 +74,7 @@ public class CurveTab extends AbstractTab {
         element.appendChild(label);
 
         close = DOM.createDiv();
-        close.setClassName("curveTab-close");
+        close.setClassName("tab-bar__close");
         SvgImageUtil.setSvgAsInnerHtml(close, SvgImage.TAB_CLOSE);
         // A tab is closed from the keyboard with Delete, so its cross isn't read
         close.setAttribute("aria-hidden", "true");
@@ -91,43 +88,14 @@ public class CurveTab extends AbstractTab {
         }
 
         spinnerSmall = new SpinnerSmall();
-        spinnerSmall.addStyleName("curveTab-spinner");
+        spinnerSmall.addStyleName("tab-bar__spinner");
 
         final Element closeWrapper = DOM.createDiv();
-        closeWrapper.setClassName("curveTab-close-wrapper");
+        closeWrapper.setClassName("tab-bar__end");
         closeWrapper.appendChild(spinnerSmall.getElement());
         closeWrapper.appendChild(close);
 
         element.appendChild(closeWrapper);
-    }
-
-    @Override
-    protected void setKeyboardSelected(final boolean selected) {
-        if (selected) {
-            element.addClassName("curveTab-keyboardSelected");
-        } else {
-            element.removeClassName("curveTab-keyboardSelected");
-        }
-    }
-
-    @Override
-    public void setSelected(final boolean selected) {
-        if (selected) {
-            element.addClassName("curveTab-selected");
-        } else {
-            element.removeClassName("curveTab-selected");
-        }
-    }
-
-    @Override
-    public void setCloseActive(final boolean active) {
-        if (allowClose) {
-            if (active) {
-                close.addClassName("curveTab-closeActive");
-            } else {
-                close.removeClassName("curveTab-closeActive");
-            }
-        }
     }
 
     public String getText() {
@@ -137,15 +105,6 @@ public class CurveTab extends AbstractTab {
     @Override
     public void setText(final String text) {
         label.setInnerText(text);
-    }
-
-    @Override
-    protected void setHover(final boolean hover) {
-        if (hover) {
-            element.addClassName("curveTab-hover");
-        } else {
-            element.removeClassName("curveTab-hover");
-        }
     }
 
     @Override

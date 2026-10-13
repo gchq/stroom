@@ -45,24 +45,6 @@ public class CurveTabSelector extends AbstractTabSelector {
     }
 
     @Override
-    protected void setKeyboardSelected(final boolean selected) {
-        if (selected) {
-            getElement().addClassName("curveTabSelector-keyboardSelected");
-        } else {
-            getElement().removeClassName("curveTabSelector-keyboardSelected");
-        }
-    }
-
-    @Override
-    protected void setHover(final boolean hover) {
-        if (hover) {
-            getElement().addClassName("curveTabSelector-hover");
-        } else {
-            getElement().removeClassName("curveTabSelector-hover");
-        }
-    }
-
-    @Override
     public void setText(final String text) {
         this.text.setInnerText(text);
     }

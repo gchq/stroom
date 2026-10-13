@@ -65,7 +65,7 @@ async function findDoc(type) {
   }, type);
 }
 
-const contentTabs = () => page.evaluate(() => [...document.querySelectorAll('.curveTab')]
+const contentTabs = () => page.evaluate(() => [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
   .filter((e) => e.offsetWidth > 0).map((e) => e.textContent.replace(/\s+/g, ' ').trim()));
 
 /**
@@ -75,7 +75,7 @@ const contentTabs = () => page.evaluate(() => [...document.querySelectorAll('.cu
  */
 async function closeTab(label) {
   const before = (await contentTabs()).length;
-  if (!(await rightClickByText(page, '.curveTab', label).catch(() => false))) return false;
+  if (!(await rightClickByText(page, '.tab-bar--curved .tab-bar__tab', label).catch(() => false))) return false;
   if (!(await clickMenuItem(page, 'Close').catch(() => false))) { await dismissMenus(page).catch(() => {}); return false; }
   for (let round = 0; round < 3; round += 1) {
     const r = await waitUntil(page, async () => {

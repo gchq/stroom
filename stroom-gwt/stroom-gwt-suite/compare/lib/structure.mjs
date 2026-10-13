@@ -56,7 +56,7 @@ export function tree(unit, nodes, meta = {}) {
 const HELPERS = `
   const norm = (t) => String(t ?? '').replace(/\\s+/g, ' ').trim();
   // Undouble a label. Several Stroom widgets render their text TWICE — a background/sizing element
-  // plus the visible label (.linkTab-background + .linkTab-label, and the same shape inside a
+  // plus the visible label (.tab-bar__sizer + .tab-bar--link .tab-bar__label, and the same shape inside a
   // Button) — so textContent yields "OKOK" / "SettingsSettings". Prefer the dedicated label element;
   // otherwise halve an exact doubling.
   const undouble = (text) => {
@@ -74,7 +74,7 @@ const HELPERS = `
     return t;
   };
   const labelOf = (el) => {
-    const inner = el.querySelector && el.querySelector('.Button__text, .linkTab-label, .curveTab-label');
+    const inner = el.querySelector && el.querySelector('.Button__text, .tab-bar__label');
     if (inner) return norm(inner.textContent);
     return undouble(el.getAttribute && el.getAttribute('title') ? el.getAttribute('title') : el.textContent);
   };
@@ -267,7 +267,7 @@ export async function readButtonsBySelector(page, buttonSelector) {
  * Read a tab strip.
  *
  * Two traps, both found by probing the live GWT UI:
- *  - A `.linkTab` contains BOTH `.linkTab-background` and `.linkTab-label` carrying the same text,
+ *  - A `.tab-bar--link .tab-bar__tab` contains BOTH `.tab-bar__sizer` and `.tab-bar--link .tab-bar__label` carrying the same text,
  *    so `textContent` yields "SettingsSettings". Read the label element.
  *  - GWT's tab `title` is the TOOLTIP, not the label — the Dictionary editor's tabs are titled
  *    "List of 'words' held in this Dictionary." etc. Never fall back to `title` for a tab.
@@ -276,7 +276,7 @@ export async function readButtonsBySelector(page, buttonSelector) {
  * a container query returns the FIRST (possibly hidden) panel and every later capture reads zero
  * tabs; the visibility filter picks the shown one instead.
  */
-export async function readTabs(page, scopeSelector, tabSelector = '.linkTab, .curveTab, [role=tab]') {
+export async function readTabs(page, scopeSelector, tabSelector = '.tab-bar__tab, [role=tab]') {
   return page.evaluate(
     `(() => {
       ${HELPERS}
@@ -284,7 +284,7 @@ export async function readTabs(page, scopeSelector, tabSelector = '.linkTab, .cu
       if (!root) return null;
       const els = [...root.querySelectorAll(${JSON.stringify(tabSelector)})].filter(visible);
       return els.map((el, i) => {
-        const labelEl = el.querySelector('.linkTab-label, .curveTab-label, .tab-label');
+        const labelEl = el.querySelector('.tab-bar__label, .tab-label');
         let label = norm(labelEl ? labelEl.textContent : el.textContent);
         // Defensive: if no label element existed and the text is an exact doubling, halve it.
         if (!labelEl && label.length % 2 === 0) {
@@ -298,7 +298,7 @@ export async function readTabs(page, scopeSelector, tabSelector = '.linkTab, .cu
           order: i,
           enabled: el.getAttribute('aria-disabled') !== 'true',
           visible: true,
-          selected: el.getAttribute('aria-selected') === 'true' || /(linkTab-selected|curveTab-selected)/.test(cls),
+          selected: el.getAttribute('aria-selected') === 'true',
         };
       });
     })()`,
@@ -597,11 +597,11 @@ export async function readDialogs(page) {
         .filter(visible)
         .map((f, i) => ({ kind: 'field', label: norm(f.textContent), order: i, enabled: true, visible: true }))
         .filter((f) => f.label);
-      const tabs = [...root.querySelectorAll('.linkTab, [role=tab]')]
+      const tabs = [...root.querySelectorAll('.tab-bar--link .tab-bar__tab, [role=tab]')]
         .filter(visible)
         .map((x, i) => ({
           kind: 'tab',
-          label: norm((x.querySelector('.linkTab-label') || x).textContent),
+          label: norm((x.querySelector('.tab-bar__label') || x).textContent),
           order: i,
           enabled: true,
           visible: true,
@@ -661,7 +661,7 @@ async function clickInertPoint(page) {
   const pt = await page.evaluate(`(() => {
     const interactive = (el) =>
       !el ||
-      el.closest('button, [role=button], a, input, .inline-svg-button, .menuItem-outer, .stroom-menu, .menuCellTable, .explorerCell, [role=tab], .curveTab, .linkTab, .cellTableRow, tr, [role=row], .dialog-popup, .resizableDialog-popup, .popupContent');
+      el.closest('button, [role=button], a, input, .inline-svg-button, .menuItem-outer, .stroom-menu, .menuCellTable, .explorerCell, [role=tab], .tab-bar__tab, .cellTableRow, tr, [role=row], .dialog-popup, .resizableDialog-popup, .popupContent');
     const W = window.innerWidth, H = window.innerHeight;
     for (const y of [H - 6, Math.round(H * 0.5), Math.round(H * 0.75)]) {
       for (const x of [Math.round(W * 0.5), W - 6, Math.round(W * 0.75)]) {
@@ -767,7 +767,7 @@ export async function resolveButtonPoint(page, buttonSelector, label) {
       // panel. So: click through inert cover, never through a control.
       const interactiveBlocker =
         at != null &&
-        !!at.closest('button, [role=button], a, input, .inline-svg-button, .menuItem-outer, .stroom-menu, .menuCellTable, .explorerCell, [role=tab], .curveTab, .linkTab, .linkTabBar, .link-tab-bar, .cellTableRow, tr, [role=row]');
+        !!at.closest('button, [role=button], a, input, .inline-svg-button, .menuItem-outer, .stroom-menu, .menuCellTable, .explorerCell, [role=tab], .tab-bar__tab, .tab-bar--link, .link-tab-bar, .cellTableRow, tr, [role=row]');
       return { found: true, hits, x, y, interactiveBlocker, blockedBy: hits ? '' : chain.join(' < ') };
     })()`,
   );
@@ -905,17 +905,17 @@ export async function openExplorerDoc(page, name, type) {
  * The marker is a literal `"* "` prefix on the tab label (GWT's tab label decoration). It is TEXT,
  * not a class, so this reader can't miss it the way a class selector could.
  *
- * Content tabs are `.curveTab`s (`.linkTab` is an editor's own sub-tab strip and never
+ * Content tabs are `.tab-bar--curved .tab-bar__tab`s (`.tab-bar--link .tab-bar__tab` is an editor's own sub-tab strip and never
  * carries a document's dirty state).
  */
 export async function readDirtyTabs(page) {
   return page.evaluate(
     `(() => {
       ${HELPERS}
-      return [...document.querySelectorAll('.curveTab')]
+      return [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
         .filter(visible)
         .map((t) => {
-          const lab = t.querySelector('.curveTab-label, .tab-label');
+          const lab = t.querySelector('.tab-bar--curved .tab-bar__label, .tab-label');
           return norm(lab ? lab.textContent : t.textContent);
         })
         .filter((s) => s.startsWith('*'));

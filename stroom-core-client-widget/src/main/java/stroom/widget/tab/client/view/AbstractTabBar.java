@@ -89,8 +89,6 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         getElement().appendChild(tabList);
         sinkEvents(Event.ONMOUSEDOWN |
                    Event.ONMOUSEUP |
-                   Event.ONMOUSEOVER |
-                   Event.ONMOUSEOUT |
                    Event.ONKEYDOWN);
     }
 
@@ -221,9 +219,9 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
     private void updateTabCount() {
         if (tabs.size() > 1) {
-            addStyleName("multiple-tabs");
+            addStyleName("tab-bar--multiple");
         } else {
-            removeStyleName("multiple-tabs");
+            removeStyleName("tab-bar--multiple");
         }
     }
 
@@ -254,7 +252,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     }
 
     /**
-     * Updates selected and keyboard-selected styling on all tab widgets
+     * Updates the selected state on all tab widgets, and moves the tab stop to the selected tab,
      * without recalculating the layout.
      */
     private void updateTabStyles() {
@@ -262,8 +260,10 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             final AbstractTab tab = getTab(tabData);
             if (tab != null) {
                 final boolean visible = visibleTabs.contains(tabData);
-                tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
                 setSelectedState(tab, visible && tabData.equals(selectedTab));
+                if (visible && tabData.equals(keyboardSelectedTab)) {
+                    switchTabIndexElement(tab.getElement());
+                }
             }
         }
     }
@@ -371,7 +371,6 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                 tabIndexElement = tab.getElement();
             }
 
-            tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
             setSelectedState(tab, visible && tabData.equals(selectedTab));
         }
 
@@ -616,7 +615,6 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             getTabSelector().setText(String.valueOf(count));
             getTabSelector().getElement().setAttribute("aria-label", "Show all tabs (" + count + " hidden)");
             makeVisible(getTabSelector().getElement(), x);
-            getTabSelector().setKeyboardSelected(keyboardSelectedTab == null);
         } else {
             makeInvisible(getTabSelector().getElement());
         }
@@ -675,8 +673,8 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         }
     }
 
+    // The selected state, which a tab's look is styled by (tab-bar.css)
     private void setSelectedState(final AbstractTab tab, final boolean selected) {
-        tab.setSelected(selected);
         tab.getElement().setAttribute("aria-selected", String.valueOf(selected));
     }
 
@@ -809,35 +807,6 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                     ShowTabMenuEvent.fire(this,
                             targetTabData, tabs,
                             new PopupPosition(event.getClientX(), event.getClientY()));
-                }
-            }
-        } else if (Event.ONMOUSEOVER == event.getTypeInt()) {
-            final Element target = event.getEventTarget().cast();
-
-            if (getTabSelector().getElement().isOrHasChild(target)) {
-                getTabSelector().setHover(true);
-            } else {
-                final AbstractTab tab = getTargetTab(target);
-                if (tab != null) {
-                    if (tab.getCloseElement() != null && tab.getCloseElement().isOrHasChild(target)) {
-                        tab.setCloseActive(true);
-                    }
-                    tab.setHover(true);
-                }
-            }
-        } else if (Event.ONMOUSEOUT == event.getTypeInt()) {
-            final Element target = event.getEventTarget().cast();
-
-            if (getTabSelector().getElement().isOrHasChild(target)) {
-                getTabSelector().setHover(false);
-            } else {
-                final AbstractTab tab = getTargetTab(target);
-                if (tab != null) {
-                    if (tab.getCloseElement() != null && tab.getCloseElement().isOrHasChild(target)) {
-                        tab.setCloseActive(false);
-                    } else {
-                        tab.setHover(false);
-                    }
                 }
             }
         }

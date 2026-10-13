@@ -26,7 +26,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandlers {
 
     public CurveTabBar() {
-        getElement().setClassName("curveTabBar");
+        getElement().setClassName("tab-bar tab-bar--curved");
         setAccessibleName("Open documents");
     }
 

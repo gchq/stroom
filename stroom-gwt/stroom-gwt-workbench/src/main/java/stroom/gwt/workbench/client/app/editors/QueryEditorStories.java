@@ -841,8 +841,8 @@ public final class QueryEditorStories {
                     play.waitFor(8000, () -> play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.get("/visualisation/v1/vis-1").toSpyMatcher()));
                     // The tab is selected, and the visualisation's frame is on the page's body
-                    play.expect(DocumentEditors.tab(play, "Visualisation").closest(".linkTab"))
-                            .toHaveClass("linkTab-selected");
+                    play.expect(DocumentEditors.tab(play, "Visualisation").closest(".tab-bar__tab"))
+                            .toHaveAttribute("aria-selected", "true");
                     play.expect(play.screen().querySelector("iframe")).toBeInTheDocument();
                     play.click(DocumentEditors.tab(play, "Table"));
                     play.waitFor(() -> play.expect(play.getByText("alpha")).toBeVisible());

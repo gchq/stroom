@@ -36,12 +36,8 @@ import java.util.Map;
 /// requests its searches make.
 final class DashboardPlays {
 
-    /// The label of a component's tab.
-    /// A dashboard's component tabs are Stroom link tabs, with no `role="tab"`.
-    static final String COMPONENT_TAB = ".tabLayout-tabBar .linkTab-label";
-
-    /// The class of a selected link tab.
-    static final String SELECTED_TAB = "linkTab-selected";
+    /// The label of a component's tab (a Stroom link tab).
+    static final String COMPONENT_TAB = ".tabLayout-tabBar .tab-bar__label";
 
     /// A tab layout (a panel).
     static final String PANEL = ".tabLayout";
@@ -77,7 +73,7 @@ final class DashboardPlays {
     /// @param name The component's name.
     /// @return The component's tab (the label's link tab), e.g. to check whether it is selected.
     static Query linkTab(final Play play, final String name) {
-        return tab(play, name).closest(".linkTab");
+        return tab(play, name).closest(".tab-bar__tab");
     }
 
     /// @param play  The play.
@@ -125,7 +121,7 @@ final class DashboardPlays {
         final Query label = tab(play, name);
         final Query link = linkTab(play, name);
         play.run("select the tab " + name, () -> {
-            if (!link.element().get().hasClassName(SELECTED_TAB)) {
+            if (!"true".equals(link.element().get().getAttribute("aria-selected"))) {
                 final Element element = label.element().get();
                 final double[] centre = point(element, 0.5, 0.5, 0, 0);
                 dispatchMouse(element, "mousedown", centre[0], centre[1], 1);
@@ -133,7 +129,7 @@ final class DashboardPlays {
                 dispatchMouse(element, "click", centre[0], centre[1], 0);
             }
         });
-        play.waitFor(() -> play.expect(linkTab(play, name)).toHaveClass(SELECTED_TAB));
+        play.waitFor(() -> play.expect(linkTab(play, name)).toHaveAttribute("aria-selected", "true"));
     }
 
     /// Opens a component's tab menu.

@@ -75,7 +75,7 @@ public final class SourceViewerStories {
                                            + "\"itemRange\": {\"offset\": 0, \"length\": 1}";
 
     // A tab's label (a link tab also holds a hidden copy of its label, for its size)
-    private static final String TAB_LABEL = ".linkTab-label";
+    private static final String TAB_LABEL = ".tab-bar--link .tab-bar__label";
 
     // The Ace editor's lines
     private static final String ACE_LINES = ".ace_line";
