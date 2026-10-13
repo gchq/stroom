@@ -46,6 +46,7 @@ import stroom.planb.impl.dao.LmdbWriter;
 import stroom.planb.impl.dao.trace.NanoTimeUtil;
 import stroom.planb.impl.dao.trace.PathwaysDb;
 import stroom.planb.impl.dao.trace.PathwaysDb.SimpleDb;
+import stroom.planb.impl.fs.ShardPass;
 import stroom.planb.impl.fs.ShardQueue;
 import stroom.planb.shared.SharedFileStoreSettings;
 import stroom.security.api.SecurityContext;
@@ -66,15 +67,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 /**
@@ -97,11 +95,16 @@ public class PathwayNarrower {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(PathwayNarrower.class);
 
     /**
-     * How many times a shard is asked for before it is given up on. The lock this takes is the one the
-     * processor holds while it applies traces to the same model, and both jobs can reach for a shard
-     * at the same moment — the processor runs every minute and this runs just after midnight, so the
-     * two land on each other readily. A pass of the processor is over in well under a second, so
-     * asking again is almost always enough.
+     * How many times a shard is asked for before it is given up on.
+     *
+     * <p>Two things hold the lock this needs. The processor holds it while applying traces to the
+     * same model, and it may hold one shard for a whole hold — see {@link
+     * PathwaysProcessor#MAX_TIME_PER_HOLD} — so asking again a few seconds later does not always
+     * find it free. Every other node runs this same pass at the same moment, and holds a shard only
+     * as long as narrowing one model takes.
+     *
+     * <p>Few attempts rather than many: where another node has the shard, giving up loses nothing,
+     * because that node is doing the work this one was going to do.
      */
     private static final int LOCK_ATTEMPTS = 3;
     private static final Duration BETWEEN_ATTEMPTS = Duration.ofSeconds(2);
@@ -110,8 +113,7 @@ public class PathwayNarrower {
     private final PathwaysShardStore shardStore;
     private final PathwaySerde pathwaySerde;
     private final MutationLog mutationLog;
-    private final ClusterLockService clusterLockService;
-    private final ExecutorService shardExecutor;
+    private final ShardPass shardPass;
     private final SecurityContext securityContext;
     private final MessageReceiverFactory messageReceiverFactory;
     private final ByteBuffers byteBuffers;
@@ -125,12 +127,15 @@ public class PathwayNarrower {
                            final SecurityContext securityContext,
                            final MessageReceiverFactory messageReceiverFactory,
                            final ByteBuffers byteBuffers) {
-        this.shardExecutor = PathwaysProcessor.createShardExecutor("Pathways Narrow");
+        // A pool of its own rather than the processor's: the two jobs reach for the same shards and
+        // the same disk, and a nightly pass waiting behind a per-minute one would be worse than both
+        // running.
+        this.shardPass = new ShardPass(clusterLockService, securityContext,
+                PathwaysProcessor.createShardExecutor("Pathways Narrow"));
         this.pathwaysStore = pathwaysStore;
         this.shardStore = shardStore;
         this.pathwaySerde = pathwaySerde;
         this.mutationLog = mutationLog;
-        this.clusterLockService = clusterLockService;
         this.securityContext = securityContext;
         this.messageReceiverFactory = messageReceiverFactory;
         this.byteBuffers = byteBuffers;
@@ -200,52 +205,18 @@ public class PathwayNarrower {
         }
     }
 
-    /**
-     * Narrows the given shards, each on a thread of its own, and gives back the ones that were in use.
-     *
-     * <p>Side by side rather than one after another, the way the processor works them: a shard is a
-     * model of its own under a lock of its own, so nothing is shared but the disk.
-     *
-     * @return the shards whose lock was held by something else, which is not an error — only work put
-     * off.
-     */
+    // Each shard on a thread of its own, the way the processor works them: a shard is a model of its
+    // own under a lock of its own, so nothing is shared but the disk. Shards that were in use come
+    // back, which is not an error — only work put off.
     private Set<Integer> narrowShards(final PathwaysDoc doc,
                                       final int oldestDay,
                                       final List<List<String>> lines,
                                       final Collection<Integer> shards) {
-        final Set<Integer> busy = Collections.synchronizedSet(new LinkedHashSet<>());
-        final List<CompletableFuture<Void>> inFlight = new ArrayList<>();
-        for (final int shard : shards) {
-            final int shardIndex = shard;
-            final MessageReceiver collect =
-                    (severity, message) -> lines.get(shardIndex).add(message.get());
-            inFlight.add(CompletableFuture
-                    // Each shard re-establishes the processing user: the identity is held per thread,
-                    // so it does not travel to a pool thread on its own.
-                    .runAsync(() -> securityContext.asProcessingUser(() -> {
-                        // Whether the work ran, because tryLock gives nothing back and a shard that
-                        // was busy looks exactly like one that had nothing to do.
-                        final boolean[] ran = {false};
-                        clusterLockService.tryLock(
-                                PathwaysProcessor.lockName(doc.getUuid(), shardIndex),
-                                () -> {
-                                    ran[0] = true;
-                                    narrowShard(doc, shardIndex, oldestDay, collect);
-                                });
-                        if (!ran[0]) {
-                            busy.add(shardIndex);
-                        }
-                    }), shardExecutor)
-                    .exceptionally(t -> {
-                        LOGGER.error(() -> LogUtil.message("Error narrowing shard {} of {}: {}",
-                                shardIndex, doc.getName(), t.getMessage()), t);
-                        return null;
-                    }));
-        }
-        // Waited on, so that the pass does not report on work it has not finished and does not overlap
-        // the retry below.
-        CompletableFuture.allOf(inFlight.toArray(new CompletableFuture[0])).join();
-        return busy;
+        return shardPass.run(shards,
+                shard -> PathwaysProcessor.lockName(doc.getUuid(), shard),
+                shard -> narrowShard(doc, shard, oldestDay,
+                        (severity, message) -> lines.get(shard).add(message.get())),
+                "narrowing " + doc.getName());
     }
 
     private static List<Integer> allShards(final int shardCount) {

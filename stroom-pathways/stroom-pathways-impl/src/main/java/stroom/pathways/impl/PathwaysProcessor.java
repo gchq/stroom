@@ -28,6 +28,7 @@ import stroom.planb.impl.dao.trace.IgnoredSpans;
 import stroom.planb.impl.dao.trace.PathwaysDb;
 import stroom.planb.impl.dao.trace.QueueItem;
 import stroom.planb.impl.dao.trace.QueueItemReader;
+import stroom.planb.impl.fs.ShardPass;
 import stroom.planb.impl.fs.ShardQueue;
 import stroom.planb.impl.serde.trace.HexStringUtil;
 import stroom.planb.shared.SharedFileStoreSettings;
@@ -48,10 +49,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -103,12 +105,11 @@ public class PathwaysProcessor {
     private final MessageReceiverFactory messageReceiverFactory;
     private final PathwaySerde pathwaySerde;
     private final MutationLog mutationLog;
-    private final ClusterLockService clusterLockService;
+    private final ShardPass shardPass;
     private final SecurityContext securityContext;
     private final ByteBuffers byteBuffers;
     private final ByteBufferFactory byteBufferFactory;
 
-    private final ExecutorService shardExecutor;
     private final Meter tracesApplied;
     private final Counter itemsQuarantined;
 
@@ -136,11 +137,11 @@ public class PathwaysProcessor {
         this.shardStore = shardStore;
         this.messageReceiverFactory = messageReceiverFactory;
         this.pathwaySerde = pathwaySerde;
-        this.clusterLockService = clusterLockService;
         this.securityContext = securityContext;
         this.byteBuffers = byteBuffers;
         this.byteBufferFactory = byteBufferFactory;
-        this.shardExecutor = createShardExecutor("Pathways Queue Drain");
+        this.shardPass = new ShardPass(clusterLockService, securityContext,
+                createShardExecutor("Pathways Queue Drain"));
 
         this.tracesApplied = metrics.registrationBuilder(getClass())
                 .addNamePart("tracesApplied")
@@ -191,47 +192,49 @@ public class PathwaysProcessor {
             // Nothing has been configured, so nothing was ever written for it.
             return Backlog.NONE;
         }
+
+        final Survey survey = survey(doc, settings);
+        final Set<Integer> busy = shardPass.run(survey.shards().keySet(),
+                shard -> lockName(doc.getUuid(), shard),
+                shard -> drain(doc, shard, survey.shards().get(shard).queue()),
+                "draining " + doc.getName());
+        if (!busy.isEmpty()) {
+            // Worth seeing, but not worth saying out loud: this runs every minute, the node holding
+            // the shard is working it, and whatever was left waits for the next pass.
+            LOGGER.debug(() -> LogUtil.message("{} shard(s) of {} were in use this pass: {}",
+                    busy.size(), doc.getName(), busy));
+        }
+
+        // The backlog is what was waiting when the document was looked at, not what is left now. A
+        // shard that was in use counts towards it, because its items are still queued.
+        return survey.backlog();
+    }
+
+    // One look at every shard's queue folder: which have items, how many, and how far behind the
+    // document is as a whole. Done before any lock is taken, because looking is the only way to know
+    // a shard has work and a contended tryLock costs a warning and a query against cluster_lock to
+    // report who holds it — taking the lock only where there is work is most of the difference
+    // between quiet logs and sixty a minute.
+    private Survey survey(final PathwaysDoc doc, final SharedFileStoreSettings settings) {
+        final Map<Integer, Queued> shards = new LinkedHashMap<>();
         long items = 0;
         long oldestAgeMs = 0;
         final Instant now = Instant.now();
-        final List<CompletableFuture<Void>> inFlight = new ArrayList<>();
-        for (final int shard : shardsInRandomOrder(ShardQueue.shardCount(settings))) {
+        for (int shard = 0; shard < ShardQueue.shardCount(settings); shard++) {
             if (Thread.currentThread().isInterrupted()) {
-                LOGGER.debug("Interrupted, starting no more shards this pass");
+                LOGGER.debug("Interrupted, looking at no more shards this pass");
                 break;
             }
             final ShardQueue queue = ShardQueue.of(settings, doc.getUuid(), shard);
             final List<Path> waiting = queue.itemsOldestFirst();
-            if (waiting.isEmpty()) {
-                // Look before locking. A contended tryLock costs a warning and a query against
-                // cluster_lock to report who holds it, and most shards have nothing most cycles, so
-                // taking the lock only where there is work is most of the difference between quiet
-                // logs and sixty a minute.
-                continue;
+            if (!waiting.isEmpty()) {
+                shards.put(shard, new Queued(queue, waiting.size()));
+                items += waiting.size();
+                oldestAgeMs = Math.max(oldestAgeMs,
+                        now.toEpochMilli() - QueueItem.orderKeyOf(waiting.getFirst()));
             }
-            items += waiting.size();
-            oldestAgeMs = Math.max(oldestAgeMs,
-                    now.toEpochMilli() - QueueItem.orderKeyOf(waiting.getFirst()));
-
-            final String lockName = lockName(doc.getUuid(), shard);
-            inFlight.add(CompletableFuture
-                    // Each shard re-establishes the processing user: the identity is held per thread,
-                    // so it does not travel to a pool thread on its own.
-                    .runAsync(() -> securityContext.asProcessingUser(
-                            () -> clusterLockService.tryLock(
-                                    lockName, () -> drain(doc, shard, queue))),
-                            shardExecutor)
-                    .exceptionally(t -> {
-                        LOGGER.error(() -> LogUtil.message("Error draining {}: {}",
-                                queue, t.getMessage()), t);
-                        return null;
-                    }));
         }
-        // Wait, so that a pass does not report a backlog it has not finished working and does not
-        // overlap the next one.
-        CompletableFuture.allOf(inFlight.toArray(new CompletableFuture[0])).join();
-
-        return new Backlog(items, oldestAgeMs);
+        return new Survey(shards, new Backlog(items, oldestAgeMs));
     }
 
     static String lockName(final String pathwaysDocUuid, final int shard) {
@@ -415,14 +418,21 @@ public class PathwaysProcessor {
                 });
     }
 
-    // Randomised so that nodes starting a cycle together do not all queue up on the same shard.
-    private static List<Integer> shardsInRandomOrder(final int shardCount) {
-        final List<Integer> shards = new ArrayList<>(shardCount);
-        for (int i = 0; i < shardCount; i++) {
-            shards.add(i);
-        }
-        Collections.shuffle(shards);
-        return shards;
+    // --------------------------------------------------------------------------------
+
+
+    /** What one look at a document's queue folders found. */
+    private record Survey(Map<Integer, Queued> shards, Backlog backlog) {
+
+    }
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /** One shard's queue, and how deep it was when it was looked at. */
+    private record Queued(ShardQueue queue, int items) {
+
     }
 
 
