@@ -550,6 +550,10 @@
     "button-name",
     "target-size"
   ],
+  "app-main-appshell--tab-keyboard": [
+    "button-name",
+    "target-size"
+  ],
   "app-main-appshell--toolbar-delete": [
     "button-name",
     "target-size"

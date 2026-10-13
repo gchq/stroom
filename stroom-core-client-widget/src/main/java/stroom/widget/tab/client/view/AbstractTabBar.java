@@ -62,7 +62,8 @@ import java.util.stream.Collectors;
 /// tab stop. Left and Right move between the tabs shown (and the overflow selector, when some tabs
 /// don't fit), wrapping at the ends; Home and End go to the first and last; Enter or Space selects
 /// the focused tab (or opens the selector), as selecting a tab may load its content; Delete closes a
-/// closable tab.
+/// closable tab; the context menu key or Shift+F10 opens the focused tab's menu (as a right click
+/// does).
 public abstract class AbstractTabBar extends FlowPanel implements TabBar, RequiresResize {
 
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
@@ -728,10 +729,30 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                     fireTabCloseRequest(keyboardSelectedTab);
                 }
                 break;
+            case KeyCodes.KEY_CONTEXT_MENU:
+                showFocusedTabMenu();
+                break;
+            case KeyCodes.KEY_F10:
+                if (!event.getShiftKey()) {
+                    return;
+                }
+                showFocusedTabMenu();
+                break;
             default:
                 return;
         }
         event.preventDefault();
+    }
+
+    // Shows the focused tab's menu below it, as a right click on it does
+    private void showFocusedTabMenu() {
+        final AbstractTab tab = keyboardSelectedTab == null
+                ? null
+                : getTab(keyboardSelectedTab);
+        if (tab != null) {
+            ShowTabMenuEvent.fire(this, keyboardSelectedTab, tabs,
+                    new PopupPosition(new Rect(tab.getElement()).grow(3), PopupLocation.BELOW));
+        }
     }
 
     // Moves the focus to the next (or previous) of the tabs shown, then the overflow selector when

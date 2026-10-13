@@ -44,7 +44,7 @@ the component's classes (some names also match related classes), to help priorit
 | Floating action button | `FabButton` | — | button | retrofit | ~8 | in part (one tab stop) | BEM pass not done (`stroom-button-fab`, `face`) |
 | Refresh button | `RefreshButton` | (rebuilt on `ToolbarButton`) | button | retrofit | pagers | done | — |
 | Split panes | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | done: every view uses `SplitPane` (User Groups first, then by area, ending with the main screen's explorer and docked AI chat); the old panels, their CSS, their stories and the comparison stories are deleted | 2.5.8 where splitters meet in a T at a centre (accepted, see below); theme colours to revisit (the line is drawn in `--border-color`, as other borders are: 1.3:1 dark, 1:1 light, under the 3:1 of 1.4.11); not tried with a screen reader or touch device; `ReadingOrder` deleted (no views need it now); views that call `onResize()` to force a relayout need checking (e.g. stepping) |
-| Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (tied to `ContentTabPanePresenter`, document plugins) | every document | in part: tab list, keys, focus ring, panel link and sidebar toggle name done | left: link tabs are about 16px tall, under 2.5.8's 24px (baselined for the Data Retention impact stories, where one sits above a toolbar); link tab bars have no tab list name; the tabs' rules are still in `components.css` (old names); a tab panel holding nothing focusable isn't a tab stop |
+| Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (tied to `ContentTabPanePresenter`, document plugins) | every document | in part: tab list, keys (and the tab menu from the keyboard), focus ring, panel link and sidebar toggle name done | left: link tabs are about 16px tall, under 2.5.8's 24px (baselined for the Data Retention impact stories, where one sits above a toolbar); link tab bars have no tab list name; the tabs' rules are still in `components.css` (old names); a tab panel holding nothing focusable isn't a tab stop |
 | Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | in part: as document tabs (shared `AbstractTabBar`) | as document tabs |
 | Data grids | `MyDataGrid`, `MyCellTable`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+14 cell tables, ~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"` |
 | Explorer tree | explorer tree (cell tree, `explorerCell`), `EntityTreePresenter`, pickers | — | tree | ? | ~66 | not started | tree roles and keyboard |
@@ -69,6 +69,8 @@ Agreed for both tab bars (document and link tabs), following the WAI-ARIA tabs p
   A/D/H/L no longer move between tabs.
 - **Closing.** Delete closes the focused closable tab (Escape no longer does); Alt+W stays. Focus
   moves to the newly selected tab, not to the page.
+- **Menu.** The context menu key or Shift+F10 opens the focused tab's menu (Close Others and so
+  on), below the tab, as a right click does; Escape gives the focus back to the tab.
 - **Focus.** Shown only for keyboard focus (`:focus-visible`), as a 2px rounded ring in
   `--splitter__focus-color` (6.9:1 dark, 5.8:1 light against the shell): inside the edge of a
   document tab (the selected bar stays below it), and around a link tab's label, 4px past the text
