@@ -1018,6 +1018,7 @@ appConfig:
     receiptCheckMode: "FEED_STATUS"
     s3Event:
       rePollDuration: "PT5M"
+      sleepDurationPostFailure: "PT1M"
       sqs: null
     x509CertificateDnFormat: "LDAP"
     x509CertificateDnHeader: "X-SSL-CLIENT-S-DN"
