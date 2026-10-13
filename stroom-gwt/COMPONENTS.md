@@ -45,7 +45,7 @@ the component's classes (some names also match related classes), to help priorit
 | Refresh button | `RefreshButton` | (rebuilt on `ToolbarButton`) | button | retrofit | pagers | done | — |
 | Split panes | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | done: every view uses `SplitPane` (User Groups first, then by area, ending with the main screen's explorer and docked AI chat); the old panels, their CSS, their stories and the comparison stories are deleted | 2.5.8 where splitters meet in a T at a centre (accepted, see below); theme colours to revisit (the line is drawn in `--border-color`, as other borders are: 1.3:1 dark, 1:1 light, under the 3:1 of 1.4.11); not tried with a screen reader or touch device; `ReadingOrder` deleted (no views need it now); views that call `onResize()` to force a relayout need checking (e.g. stepping) |
 | Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (tied to `ContentTabPanePresenter`, document plugins) | every document | in part: tab list, keys, focus ring, panel link and sidebar toggle name done | left: link tabs are about 16px tall, under 2.5.8's 24px (baselined for the Data Retention impact stories, where one sits above a toolbar); link tab bars have no tab list name; the tabs' rules are still in `components.css` (old names); a tab panel holding nothing focusable isn't a tab stop |
-| Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | in part: as document tabs (shared `AbstractTabBar`), selecting as the arrows move | as document tabs |
+| Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | in part: as document tabs (shared `AbstractTabBar`) | as document tabs |
 | Data grids | `MyDataGrid`, `MyCellTable`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+14 cell tables, ~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"` |
 | Explorer tree | explorer tree (cell tree, `explorerCell`), `EntityTreePresenter`, pickers | — | tree | ? | ~66 | not started | tree roles and keyboard |
 | Menus | `Menu`, `MenuPresenter`, menu items | — | menu / menubar | retrofit | ~19 places show menus | in part (items have `role="menuitem"`; `MenuRequest` lets widgets ask for one) | menu buttons don't say they open a menu (`ISSUES.md`) |
@@ -63,9 +63,10 @@ Agreed for both tab bars (document and link tabs), following the WAI-ARIA tabs p
 - **Roles.** `role="tablist"` with a name, `role="tab"` with `aria-selected` and `aria-controls`,
   and `role="tabpanel"` on the content.
 - **Keys.** One tab stop on the selected tab (as now); Left and Right move between tabs and wrap at
-  the ends; Home and End go to the first and last. Document tabs keep manual activation (arrows
-  move focus, Enter or Space selects, as selecting can load a document); link tabs select as the
-  arrows move. A/D/H/L no longer move between tabs.
+  the ends; Home and End go to the first and last. Arrows move the focus, and Enter or Space
+  selects, on both bars: selecting a tab can load a document, and many link tabs load too (the
+  data viewer's tabs fetch from the server; document sub-tabs build their content on first view).
+  A/D/H/L no longer move between tabs.
 - **Closing.** Delete closes the focused closable tab (Escape no longer does); Alt+W stays. Focus
   moves to the newly selected tab, not to the page.
 - **Focus.** Shown only for keyboard focus (`:focus-visible`), as a 2px rounded ring in

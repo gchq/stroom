@@ -61,8 +61,8 @@ import java.util.stream.Collectors;
 /// A bar of tabs (the WAI-ARIA tabs pattern): a `tablist` of `tab`s, one of them selected, with one
 /// tab stop. Left and Right move between the tabs shown (and the overflow selector, when some tabs
 /// don't fit), wrapping at the ends; Home and End go to the first and last; Enter or Space selects
-/// the focused tab (or opens the selector); Delete closes a closable tab. A bar that
-/// [#setSelectOnFocus(boolean)] selects a tab as the arrows reach it.
+/// the focused tab (or opens the selector), as selecting a tab may load its content; Delete closes a
+/// closable tab.
 public abstract class AbstractTabBar extends FlowPanel implements TabBar, RequiresResize {
 
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
@@ -80,7 +80,6 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     // as in the bar. The overflow selector is outside it, as a tablist may only hold tabs.
     private final Element tabList;
     private Element tabPanel;
-    private boolean selectOnFocus;
 
     public AbstractTabBar() {
         tabList = DOM.createDiv();
@@ -632,15 +631,6 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         element.getStyle().setVisibility(Visibility.VISIBLE);
     }
 
-    /// Sets whether a tab is selected as the arrow keys (or Home and End) reach it, rather than when
-    /// Enter or Space is pressed. Selecting as the keys move suits tabs that switch quickly; tabs
-    /// that may load something when selected (e.g. documents) are best left to Enter.
-    ///
-    /// @param selectOnFocus Whether to select a tab as the keys reach it.
-    public void setSelectOnFocus(final boolean selectOnFocus) {
-        this.selectOnFocus = selectOnFocus;
-    }
-
     /// Names the tab list for screen readers, e.g. "Open documents".
     ///
     /// @param name The name, or null for none.
@@ -758,15 +748,10 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         }
     }
 
-    // Moves the focus to a tab (or the overflow selector, for null), selecting it if the bar
-    // selects as the keys move
+    // Moves the focus to a tab (or the overflow selector, for null)
     private void focusTab(final TabData tabData) {
-        if (tabData == null && overflowTabCount == 0) {
-            return;
-        }
-        keyboardSelectTab(tabData);
-        if (selectOnFocus) {
-            fireTabSelection(tabData);
+        if (tabData != null || overflowTabCount > 0) {
+            keyboardSelectTab(tabData);
         }
     }
 
