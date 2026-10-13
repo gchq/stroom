@@ -612,6 +612,11 @@ the dashboard table's and query result table's pager toolbars, and in a "Group l
 the traces screen, which made them one tab stop where they were two). The screen keeps the group
 selection; the helper works out the next level and names and enables the buttons for it.
 `TableExpandButton`, `TableCollapseButton` and `PagerView.addButton(ButtonView)` are gone.
+The date picker's Previous and Next year and month buttons are two toolbars ("Year" and "Month"),
+one beside each select box, with names ("Previous year", "Next month" and so on) where they had none.
+They were out of the tab order; each toolbar is now one tab stop, with the arrow keys between its two
+buttons, so the calendar can be stepped a month or a year at a time from the keyboard. It looks as it
+did.
 
 ### Opening a screen leaves the focus behind (#5405)
 
