@@ -26,7 +26,7 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-/// Shows each story on the Stroom theme's background, as a Storybook decorator would. The theme is
+/// Shows each story on the Stroom theme's page colour, as a Storybook decorator would. The theme is
 /// selected by the classes on the `<html>` element of iframe.html, which [#applyTheme(StoryTheme)]
 /// sets to the workbench's chosen theme.
 ///
@@ -69,7 +69,9 @@ public class StroomThemeDecorator implements StoryDecorator {
         final Style style = frame.getElement().getStyle();
         style.setProperty("padding", "24px");
         style.setProperty("minHeight", "100vh");
-        style.setProperty("background", "var(--app__background-color, #020202)");
+        // The theme's page colour, which Stroom's panels and dialogs are drawn on (not the app's
+        // background behind them, which in the light theme is blue)
+        style.setProperty("background", "var(--page__background-color, rgb(34, 37, 44))");
         style.setProperty("color", "var(--text-color, #dce4e5)");
         frame.add(story);
         return frame;
