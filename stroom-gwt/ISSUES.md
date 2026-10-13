@@ -621,6 +621,9 @@ either side or restores them, and Alt+M maximises the pane holding the focus (a 
 button was tried and dropped, as it sat over pane content). Known gap (2.5.8): a 7px splitter has
 no room where another meets it in a T at its centre, as in User Groups' 50/50 split.
 
+Since then, the line is drawn in the border colour again (`--border-color`), as other borders are,
+to be revisited with the theme colours; keyboard focus stays at least 3:1.
+
 Since then, every view uses `SplitPane` (the main screen's explorer and docked AI chat among them),
 and the old panels, their CSS, their stories and the comparison stories are deleted. The `Drag`
 stories in `Widgets/Layout/SplitPane` now drag split panes alone, checking each follows the mouse to
