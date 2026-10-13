@@ -785,6 +785,22 @@ Content, Recent Items, Batch Change Permissions and Change Permissions (800 x 80
 editors and the stream viewer (1400 wide), the Edit Account dialog (737 high) and the index field
 editors. Dialogs aren't limited to the window's size, and long forms rely on scrolling inside them.
 
+### Text too faint on the dark theme's page colour
+
+**Confirmed** (`workbenchTest`'s accessibility check, dark theme). The workbench now shows stories
+on the theme's page colour (`--page__background-color`), which Stroom's panels and dialogs are drawn
+on, instead of the near-black app background, and three stories' text then falls below the WCAG AA
+contrast ratio (`color-contrast`):
+
+* the Traces screen's histogram hint and timeline header text (`.histogram-hint`,
+  `.timeline-header` spans; `app-main-tracesscreen--traces`);
+* `CopyText`'s inserted text (`widgets-display-copytext--with-insert`);
+* a disabled form group's description (`.form-group__description`, faded to 80% and in the
+  disabled colour; `widgets-inputs-formgroup--disabled`). WCAG exempts text that is part of a
+  disabled control, so this one may be acceptable.
+
+They are in `test-runner/a11y-baseline.json` until they are fixed.
+
 ## Copy-paste mistakes and typos
 
 **Reported.**

@@ -748,6 +748,7 @@
     "target-size"
   ],
   "app-main-tracesscreen--traces": [
+    "color-contrast",
     "target-size"
   ],
   "app-main-useraccessscreen--buttons-gated-on-selection": [
@@ -911,6 +912,9 @@
   "widgets-display-classificationlabel--official": [
     "color-contrast"
   ],
+  "widgets-display-copytext--with-insert": [
+    "color-contrast"
+  ],
   "widgets-display-htmlpresenter--rich-content": [
     "link-in-text-block"
   ],
@@ -931,6 +935,9 @@
   ],
   "widgets-editors-viewers-markdowneditor--read-only-preview": [
     "frame-title"
+  ],
+  "widgets-inputs-formgroup--disabled": [
+    "color-contrast"
   ],
   "widgets-inputs-linecolinput--basic": [
     "label"
