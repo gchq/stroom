@@ -42,6 +42,7 @@ import stroom.util.shared.time.TimeUnit;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -52,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -539,6 +541,33 @@ class TestPathwayNarrowing {
                 .as("older than the window, so forgotten: a trace that old could teach the model "
                     + "nothing that survived the next pass anyway")
                 .isZero();
+    }
+
+    @Test
+    void anAppliedTraceWithNoTimeIsForgotten(@TempDir final Path dir) {
+        applied(dir, List.of(trace(0, 20)));
+        undatedRecord(dir, "no time against it");
+        assertThat(appliedTraceRecords(dir)).isEqualTo(2);
+
+        // Today's run, so nothing that carries a time is old enough to go. The one that carries none
+        // goes anyway: no run will ever find it old, so no run would ever take it.
+        narrow(dir, (int) (System.currentTimeMillis() / DAY_MS));
+        assertThat(appliedTraceRecords(dir))
+                .as("the dated one is still within the window and the undated one is gone")
+                .isEqualTo(1);
+    }
+
+    // An entry against a trace saying only that it was applied, which is all an entry has to say for
+    // the processor to leave the trace alone.
+    private static void undatedRecord(final Path dir, final String traceId) {
+        try (final PathwaysDb db = PathwaysDb.create(dir, BYTE_BUFFERS, false)) {
+            try (final LmdbWriter writer = db.createWriter()) {
+                BYTE_BUFFERS.useBytes(traceId.getBytes(StandardCharsets.UTF_8),
+                        (Consumer<ByteBuffer>) key ->
+                                db.getProcessingStatus().insert(writer, key, ByteBuffer.allocateDirect(0)));
+                writer.commit();
+            }
+        }
     }
 
     private static int appliedTraceRecords(final Path dir) {

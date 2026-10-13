@@ -409,8 +409,9 @@ public class PathwayNarrower {
      * survives, because its observations fall outside the window and the next pass takes back whatever
      * it widened. So a trace that old will not be applied again whether it is remembered or not.
      *
-     * <p>An entry written before this shard started recording when it applied things has no time to
-     * judge, so it is kept rather than guessed at. Those go when the shard is next built from nothing.
+     * <p>An entry carrying no time is forgotten too. Nothing can say how old it is, so nothing can
+     * ever decide it has aged out, and keeping it would keep it for ever — which is the one answer
+     * that is certainly wrong for a table whose whole purpose is to be bounded.
      *
      * @return how many were forgotten.
      */
@@ -421,9 +422,9 @@ public class PathwayNarrower {
         final SimpleDb db = pathwaysDb.getProcessingStatus();
         final List<byte[]> expired = new ArrayList<>();
         db.iterate(writer.getWriteTxn(), (key, value) -> {
-            if (value != null
-                && value.remaining() >= Long.BYTES
-                && value.getLong(value.position()) < oldest) {
+            if (value == null
+                || value.remaining() < Long.BYTES
+                || value.getLong(value.position()) < oldest) {
                 expired.add(copyOf(key));
             }
         });
