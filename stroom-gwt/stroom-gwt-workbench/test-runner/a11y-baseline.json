@@ -627,8 +627,7 @@
     "aria-command-name"
   ],
   "app-main-executionschedulesscreen--batch-schedule-disabled": [
-    "aria-command-name",
-    "color-contrast"
+    "aria-command-name"
   ],
   "app-main-executionschedulesscreen--default-sort-is-name-descending": [
     "aria-command-name"
@@ -643,12 +642,10 @@
     "aria-command-name"
   ],
   "app-main-executionschedulesscreen--run-now": [
-    "aria-command-name",
-    "color-contrast"
+    "aria-command-name"
   ],
   "app-main-executionschedulesscreen--run-now-filtered-skips-disabled": [
-    "aria-command-name",
-    "color-contrast"
+    "aria-command-name"
   ],
   "app-main-executionschedulesscreen--schedules": [
     "aria-command-name"
