@@ -59,6 +59,8 @@ public class CurveTab extends AbstractTab {
             iconElement.addClassName("curveTab-icon " + iconColour.getClassName());
             iconElement.setTitle(title);
             SvgImageUtil.setSvgAsInnerHtml(iconElement, icon);
+            // The tab is named by its label
+            iconElement.setAttribute("aria-hidden", "true");
             element.appendChild(iconElement);
         }
 
@@ -77,6 +79,8 @@ public class CurveTab extends AbstractTab {
         close = DOM.createDiv();
         close.setClassName("curveTab-close");
         SvgImageUtil.setSvgAsInnerHtml(close, SvgImage.TAB_CLOSE);
+        // A tab is closed from the keyboard with Delete, so its cross isn't read
+        close.setAttribute("aria-hidden", "true");
         element.appendChild(close);
 
         setElement(element);

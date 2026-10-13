@@ -25,6 +25,8 @@ public class LinkTabBar extends AbstractTabBar {
 
     public LinkTabBar() {
         getElement().setClassName("linkTabBar");
+        // Switching between link tabs is quick, so a tab is selected as the arrow keys reach it
+        setSelectOnFocus(true);
 
         final Element text = DOM.createDiv();
         text.setClassName("linkTabBar-hiddenText");

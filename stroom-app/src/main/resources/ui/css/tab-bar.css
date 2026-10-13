@@ -1,0 +1,71 @@
+/*
+ * Copyright 2026 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/*
+   Tab bars (stroom.widget.tab.client.view.AbstractTabBar: the document tabs' curveTabBar and the
+   link tabs' linkTabBar). Their tabs keep their old class names (curveTab, linkTab), styled in
+   components.css; this holds what the tab list adds: the tab list itself, and keyboard focus.
+*/
+
+/* The tab list: the tabs and their separators, over the whole bar, so they are placed in it as in
+   the bar (the overflow selector is beside it, in the bar) */
+.tab-bar__tabs {
+    position: absolute;
+    inset: 0;
+}
+
+/* Keyboard focus (not a mouse click's) is a ring in the focus colour: inside the edge of a document
+   tab, above its selected bar */
+.curveTab:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--tab__focus-color);
+    border-radius: 4px;
+}
+
+/* and around a link tab's label, reaching past it into the space beside the separators */
+.linkTab:focus-visible {
+    outline: none;
+}
+
+.linkTab:focus-visible::after {
+    content: '';
+    position: absolute;
+    inset: -1px -4px;
+    border: 2px solid var(--tab__focus-color);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* The overflow selectors */
+.curveTabSelector:focus-visible,
+.basicTabSelector:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--tab__focus-color);
+}
+
+/* In forced colours (e.g. Windows high contrast) a box shadow isn't drawn, so focus is an outline */
+@media (forced-colors: active) {
+    .curveTab:focus-visible,
+    .curveTabSelector:focus-visible,
+    .basicTabSelector:focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: -2px;
+    }
+
+    .linkTab:focus-visible::after {
+        border-color: Highlight;
+    }
+}

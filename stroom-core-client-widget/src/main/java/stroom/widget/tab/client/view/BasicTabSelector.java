@@ -40,7 +40,10 @@ public class BasicTabSelector extends AbstractTabSelector {
 
         element.appendChild(arrows);
         element.appendChild(text);
-        element.setAttribute("aria-label", "Tab Selector");
+        // A button showing every tab in a menu (the tab bar names it with the tabs it hides)
+        element.setAttribute("role", "button");
+        element.setAttribute("aria-haspopup", "menu");
+        element.setAttribute("aria-label", "Show all tabs");
 
         setElement(element);
     }

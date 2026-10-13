@@ -37,7 +37,10 @@ public class CurveTabSelector extends AbstractTabSelector {
         final DivElement element = binder.createAndBindUi(this);
         SvgImageUtil.setSvgAsInnerHtml(arrows, SvgImage.DOUBLE_ARROW);
 
-        element.setAttribute("aria-label", "Tab Selector");
+        // A button showing every tab in a menu (the tab bar names it with the tabs it hides)
+        element.setAttribute("role", "button");
+        element.setAttribute("aria-haspopup", "menu");
+        element.setAttribute("aria-label", "Show all tabs");
         setElement(element);
     }
 

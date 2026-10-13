@@ -571,12 +571,6 @@
   "app-main-contentstorescreen--upgrade-check-promotes-row": [
     "image-alt"
   ],
-  "app-main-contenttabpane--duplicate-dashboard-tab": [
-    "button-name"
-  ],
-  "app-main-contenttabpane--no-duplicate-for-single-instance": [
-    "button-name"
-  ],
   "app-main-createdocumentdialog--default": [
     "target-size"
   ],
@@ -588,6 +582,18 @@
   ],
   "app-main-datareceiptrulesscreen--obfuscation-warning": [
     "scrollable-region-focusable"
+  ],
+  "app-main-dataretentionscreen--impact-filter": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-nested": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-sorting": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-summary": [
+    "target-size"
   ],
   "app-main-dependenciesscreen--action-menu": [
     "color-contrast",
@@ -1164,9 +1170,6 @@
   ],
   "widgets-selectors-selectionbox--short-list-has-no-pager": [
     "label"
-  ],
-  "widgets-tabs-curvetabbar--with-sidebar-toggle": [
-    "button-name"
   ],
   "widgets-tree-explorertree--basic": [
     "target-size"

@@ -17,6 +17,7 @@
 package stroom.query.client.view;
 
 import stroom.widget.tab.client.presenter.TabBar;
+import stroom.widget.tab.client.view.LayerContainerImpl;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -31,11 +32,12 @@ public class QueryResultTabsViewImpl extends ViewImpl implements QueryResultTabs
     @UiField
     TabBar tabBar;
     @UiField
-    LayerContainer layerContainer;
+    LayerContainerImpl layerContainer;
 
     @Inject
     public QueryResultTabsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        tabBar.setTabPanel(layerContainer.getElement());
         layerContainer.setFade(true);
     }
 

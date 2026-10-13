@@ -180,6 +180,10 @@
     --splitter__focus-color: var(--blue-800);
 
     /* Main curve tabs */
+    /* The selected tab's bar, and a tab's keyboard focus ring (tab-bar.css), each at least 3:1
+       against the tab bar (WCAG 1.4.11) */
+    --curve-tab__selected-color: var(--blue-800);
+    --tab__focus-color: var(--blue-800);
     --curve-tab__svg-color: #555;
     --curve-tab__background-color: transparent;
     --curve-tab__border: thin solid transparent;

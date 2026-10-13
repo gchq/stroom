@@ -89,14 +89,10 @@
 }
 
 .curveTab-selected {
-    border-bottom: solid 3px var(--blue-300);
+    border-bottom: solid 3px var(--curve-tab__selected-color);
 }
 
 .curveTab-selected:hover {
-    background: var(--curve-tab__background-color--hover);
-}
-
-.curveTab-keyboardSelected:focus {
     background: var(--curve-tab__background-color--hover);
 }
 
@@ -175,12 +171,12 @@
 }
 
 .curveTab:hover .curveTab-close,
-.curveTab-keyboardSelected:focus .curveTab-close {
+.curveTab:focus-visible .curveTab-close {
 	opacity: 1;
 }
 
 /* The close cross replaces the spinner while the tab has keyboard focus, as it does on hover */
-.curveTab-keyboardSelected:focus .curveTab-spinner {
+.curveTab:focus-visible .curveTab-spinner {
 	opacity: 0;
 }
 
@@ -216,11 +212,6 @@
 .curveTabSelector:hover {
     background: var(--curve-tab__background-color--hover);
     border: var(--curve-tab__border--hover);
-}
-
-.curveTabSelector-keyboardSelected:focus {
-    border-color: var(--focus-border);
-    box-shadow: var(--focus-shadow);
 }
 
 /* Content. */
@@ -279,11 +270,12 @@
     opacity: 0;
 }
 
+/* Room either side for a focused link tab's ring (tab-bar.css) */
 .linkTabBar .linkTabBar-separator {
 	position: absolute;
 	top: 0;
-	padding-left: 5px;
-	padding-right: 5px;
+	padding-left: 7px;
+	padding-right: 7px;
 }
 
 
@@ -315,8 +307,6 @@
 .multiple-tabs .linkTab-keyboardSelected:focus,
 .dashboard__designMode .linkTab-keyboardSelected:focus {
     opacity: 1;
-    color: var(--link-tab__text-color--focussed);
-    text-decoration: underline;
 }
 
 .multiple-tabs .linkTab:hover,

@@ -27,6 +27,7 @@ public class CurveTabBar extends DraggableTabBar implements HasShowTabMenuHandle
 
     public CurveTabBar() {
         getElement().setClassName("curveTabBar");
+        setAccessibleName("Open documents");
     }
 
     @Override

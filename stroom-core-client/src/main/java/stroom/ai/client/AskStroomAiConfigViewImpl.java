@@ -20,6 +20,7 @@ import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.task.client.TaskMonitorFactory;
 import stroom.widget.button.client.Button;
 import stroom.widget.tab.client.presenter.TabBar;
+import stroom.widget.tab.client.view.LayerContainerImpl;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -41,7 +42,7 @@ public class AskStroomAiConfigViewImpl
     @UiField
     TabBar tabBar;
     @UiField
-    LayerContainer layerContainer;
+    LayerContainerImpl layerContainer;
     @UiField
     Button restoreFromDefaults;
     @UiField
@@ -53,6 +54,7 @@ public class AskStroomAiConfigViewImpl
     @Inject
     public AskStroomAiConfigViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        tabBar.setTabPanel(layerContainer.getElement());
         restoreFromDefaults.setVisible(true);
         setDefaults.setVisible(false);
     }

@@ -26,8 +26,6 @@ import stroom.widget.tab.client.event.RequestCloseTabEvent;
 import stroom.widget.tab.client.event.ShowTabMenuEvent;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
-import stroom.widget.util.client.KeyBinding;
-import stroom.widget.util.client.KeyBinding.Action;
 import stroom.widget.util.client.MouseUtil;
 import stroom.widget.util.client.Rect;
 
@@ -36,10 +34,12 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.dom.client.Style.Visibility;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
@@ -58,6 +58,11 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/// A bar of tabs (the WAI-ARIA tabs pattern): a `tablist` of `tab`s, one of them selected, with one
+/// tab stop. Left and Right move between the tabs shown (and the overflow selector, when some tabs
+/// don't fit), wrapping at the ends; Home and End go to the first and last; Enter or Space selects
+/// the focused tab (or opens the selector); Delete closes a closable tab. A bar that
+/// [#setSelectOnFocus(boolean)] selects a tab as the arrows reach it.
 public abstract class AbstractTabBar extends FlowPanel implements TabBar, RequiresResize {
 
     private final Map<TabData, AbstractTab> tabWidgetMap = new HashMap<>();
@@ -71,8 +76,17 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     private Object currentTargetObject;
     private AbstractTabSelector tabSelector;
     private List<Element> separators;
+    // The tabs and their separators, as a `tablist`; it covers the bar, so the tabs are placed in it
+    // as in the bar. The overflow selector is outside it, as a tablist may only hold tabs.
+    private final Element tabList;
+    private Element tabPanel;
+    private boolean selectOnFocus;
 
     public AbstractTabBar() {
+        tabList = DOM.createDiv();
+        tabList.setClassName("tab-bar__tabs");
+        tabList.setAttribute("role", "tablist");
+        getElement().appendChild(tabList);
         sinkEvents(Event.ONMOUSEDOWN |
                    Event.ONMOUSEUP |
                    Event.ONMOUSEOVER |
@@ -106,8 +120,9 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         }
 
         final AbstractTab tab = createTab(tabData);
+        initTabElement(tab.getElement());
         makeInvisible(tab.getElement());
-        insert(tab, insertIndex);
+        insert(tab, tabList, insertIndex, true);
         tabWidgetMap.put(tabData, tab);
         tabs.add(insertIndex, tabData);
 
@@ -125,6 +140,8 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         final Widget tab = tabWidgetMap.get(tabData);
         if (tab != null) {
             final int tabIndex = tabs.indexOf(tabData);
+            // A tab closed from the keyboard has the focus, which mustn't be lost with it
+            final boolean hadFocus = hasFocus(tab.getElement());
 
             makeInvisible(tab.getElement());
             remove(tab);
@@ -133,6 +150,11 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             recentTabs.remove(tabData);
 
             final int nextSelected = Math.max(0, tabIndex - 1);
+            if (Objects.equals(keyboardSelectedTab, tabData)) {
+                keyboardSelectedTab = tabs.isEmpty()
+                        ? null
+                        : tabs.get(nextSelected);
+            }
 
             if (resize) {
                 if (!tabs.isEmpty()) {
@@ -148,6 +170,9 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
                     selectTab(null);
                 }
                 updateTabCount();
+                if (hadFocus && !tabs.isEmpty()) {
+                    focusTabIndexElement();
+                }
             } else {
                 setSelectedTab(tabs.get(nextSelected));
             }
@@ -163,7 +188,8 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             tabs.remove(tabData);
 
             final AbstractTab tab = createTab(tabData);
-            insert(tab, tabPos);
+            initTabElement(tab.getElement());
+            insert(tab, tabList, tabPos, true);
             tabWidgetMap.put(tabData, tab);
             tabs.add(tabPos, tabData);
 
@@ -176,7 +202,10 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
 
     @Override
     public void clear() {
-        getElement().removeAllChildren();
+        tabList.removeAllChildren();
+        if (separators != null) {
+            separators.clear();
+        }
         tabWidgetMap.clear();
         tabs.clear();
         recentTabs.clear();
@@ -234,7 +263,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             if (tab != null) {
                 final boolean visible = visibleTabs.contains(tabData);
                 tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
-                tab.setSelected(visible && tabData.equals(selectedTab));
+                setSelectedState(tab, visible && tabData.equals(selectedTab));
             }
         }
     }
@@ -248,6 +277,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             recentTabs.remove(tabData);
             recentTabs.addFirst(tabData);
         }
+        updateTabPanelLabel();
     }
 
     @Override
@@ -342,7 +372,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             }
 
             tab.setKeyboardSelected(visible && tabData.equals(keyboardSelectedTab));
-            tab.setSelected(visible && tabData.equals(selectedTab));
+            setSelectedState(tab, visible && tabData.equals(selectedTab));
         }
 
         if (!visibleTabs.contains(keyboardSelectedTab)) {
@@ -563,8 +593,10 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
             if (separators == null) {
                 separators = new ArrayList<>();
             }
+            // A separator ("|") is drawn, not read
+            separator.setAttribute("aria-hidden", "true");
             separators.add(separator);
-            getElement().appendChild(separator);
+            tabList.appendChild(separator);
         }
 
         return separator;
@@ -573,7 +605,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     private void removeSeparators() {
         if (separators != null) {
             for (final Element separator : separators) {
-                getElement().removeChild(separator);
+                tabList.removeChild(separator);
             }
             separators.clear();
         }
@@ -582,6 +614,7 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
     private void setOverflowTabCount(final int x, final int count) {
         if (count > 0) {
             getTabSelector().setText(String.valueOf(count));
+            getTabSelector().getElement().setAttribute("aria-label", "Show all tabs (" + count + " hidden)");
             makeVisible(getTabSelector().getElement(), x);
             getTabSelector().setKeyboardSelected(keyboardSelectedTab == null);
         } else {
@@ -599,60 +632,149 @@ public abstract class AbstractTabBar extends FlowPanel implements TabBar, Requir
         element.getStyle().setVisibility(Visibility.VISIBLE);
     }
 
+    /// Sets whether a tab is selected as the arrow keys (or Home and End) reach it, rather than when
+    /// Enter or Space is pressed. Selecting as the keys move suits tabs that switch quickly; tabs
+    /// that may load something when selected (e.g. documents) are best left to Enter.
+    ///
+    /// @param selectOnFocus Whether to select a tab as the keys reach it.
+    public void setSelectOnFocus(final boolean selectOnFocus) {
+        this.selectOnFocus = selectOnFocus;
+    }
+
+    /// Names the tab list for screen readers, e.g. "Open documents".
+    ///
+    /// @param name The name, or null for none.
+    public void setAccessibleName(final String name) {
+        if (name == null) {
+            tabList.removeAttribute("aria-label");
+        } else {
+            tabList.setAttribute("aria-label", name);
+        }
+    }
+
+    @Override
+    public void setTabPanel(final Element panel) {
+        tabPanel = panel;
+        if (panel != null) {
+            panel.setAttribute("role", "tabpanel");
+            if (panel.getId() == null || panel.getId().isEmpty()) {
+                panel.setId(DOM.createUniqueId());
+            }
+        }
+        for (final AbstractTab tab : tabWidgetMap.values()) {
+            setControls(tab.getElement());
+        }
+        updateTabPanelLabel();
+    }
+
+    // A tab's role, id (which names the panel) and the panel it controls
+    private void initTabElement(final Element element) {
+        element.setAttribute("role", "tab");
+        element.setId(DOM.createUniqueId());
+        element.setTabIndex(-1);
+        element.setAttribute("aria-selected", "false");
+        setControls(element);
+    }
+
+    private void setControls(final Element element) {
+        if (tabPanel == null) {
+            element.removeAttribute("aria-controls");
+        } else {
+            element.setAttribute("aria-controls", tabPanel.getId());
+        }
+    }
+
+    private void setSelectedState(final AbstractTab tab, final boolean selected) {
+        tab.setSelected(selected);
+        tab.getElement().setAttribute("aria-selected", String.valueOf(selected));
+    }
+
+    // The panel is named by the selected tab
+    private void updateTabPanelLabel() {
+        if (tabPanel != null) {
+            final AbstractTab tab = selectedTab == null
+                    ? null
+                    : getTab(selectedTab);
+            if (tab == null) {
+                tabPanel.removeAttribute("aria-labelledby");
+            } else {
+                tabPanel.setAttribute("aria-labelledby", tab.getElement().getId());
+            }
+        }
+    }
+
+    private void onKeyDown(final Event event) {
+        // Shortcuts (e.g. Alt+W to close a tab) are left to others
+        if (event.getAltKey() || event.getCtrlKey() || event.getMetaKey()) {
+            return;
+        }
+        switch (event.getKeyCode()) {
+            case KeyCodes.KEY_LEFT:
+                moveFocus(-1);
+                break;
+            case KeyCodes.KEY_RIGHT:
+                moveFocus(1);
+                break;
+            case KeyCodes.KEY_HOME:
+                focusTab(visibleTabs.isEmpty()
+                        ? null
+                        : visibleTabs.get(0));
+                break;
+            case KeyCodes.KEY_END:
+                focusTab(visibleTabs.isEmpty()
+                        ? null
+                        : visibleTabs.get(visibleTabs.size() - 1));
+                break;
+            case KeyCodes.KEY_ENTER:
+            case KeyCodes.KEY_SPACE:
+                if (keyboardSelectedTab != null) {
+                    fireTabSelection(keyboardSelectedTab);
+                } else if (overflowTabCount > 0) {
+                    showTabSelector(event, getTabSelector().getElement());
+                }
+                break;
+            case KeyCodes.KEY_DELETE:
+                if (keyboardSelectedTab != null && keyboardSelectedTab.isCloseable()) {
+                    fireTabCloseRequest(keyboardSelectedTab);
+                }
+                break;
+            default:
+                return;
+        }
+        event.preventDefault();
+    }
+
+    // Moves the focus to the next (or previous) of the tabs shown, then the overflow selector when
+    // some tabs don't fit, wrapping at the ends
+    private void moveFocus(final int step) {
+        final List<TabData> stops = new ArrayList<>(visibleTabs);
+        if (overflowTabCount > 0) {
+            // The selector
+            stops.add(null);
+        }
+        if (!stops.isEmpty()) {
+            final int index = Math.max(0, stops.indexOf(keyboardSelectedTab));
+            focusTab(stops.get(Math.floorMod(index + step, stops.size())));
+        }
+    }
+
+    // Moves the focus to a tab (or the overflow selector, for null), selecting it if the bar
+    // selects as the keys move
+    private void focusTab(final TabData tabData) {
+        if (tabData == null && overflowTabCount == 0) {
+            return;
+        }
+        keyboardSelectTab(tabData);
+        if (selectOnFocus) {
+            fireTabSelection(tabData);
+        }
+    }
+
     @Override
     public void onBrowserEvent(final Event event) {
 //        GWT.log("onBrowserEvent " + event.getType());
-        final Action action = KeyBinding.test(event);
         if (Event.ONKEYDOWN == event.getTypeInt()) {
-            TabData tabData = null;
-            if (action != null) {
-                switch (action) {
-                    case CLOSE:
-                        if (keyboardSelectedTab != null) {
-                            fireTabCloseRequest(keyboardSelectedTab);
-                        }
-                        break;
-
-                    case MOVE_RIGHT:
-                        if (!visibleTabs.isEmpty()) {
-                            if (keyboardSelectedTab == null) {
-                                tabData = visibleTabs.get(0);
-                            } else {
-                                final int index = visibleTabs.indexOf(keyboardSelectedTab);
-                                if (index >= 0 && index < visibleTabs.size() - 1) {
-                                    tabData = visibleTabs.get(index + 1);
-                                }
-                            }
-                        }
-                        keyboardSelectTab(tabData);
-                        break;
-
-                    case MOVE_LEFT:
-                        if (!visibleTabs.isEmpty()) {
-                            if (keyboardSelectedTab == null) {
-                                tabData = visibleTabs.get(visibleTabs.size() - 1);
-                            } else {
-                                final int index = visibleTabs.indexOf(keyboardSelectedTab);
-                                if (index > 0) {
-                                    tabData = visibleTabs.get(index - 1);
-                                } else if (overflowTabCount == 0) {
-                                    tabData = visibleTabs.get(visibleTabs.size() - 1);
-                                }
-                            }
-                        }
-                        keyboardSelectTab(tabData);
-                        break;
-
-                    case SELECT:
-                    case EXECUTE:
-                        if (keyboardSelectedTab != null) {
-                            fireTabSelection(keyboardSelectedTab);
-                        } else {
-                            showTabSelector(event, getTabSelector().getElement());
-                        }
-                        break;
-                }
-            }
+            onKeyDown(event);
 
         } else if (Event.ONMOUSEDOWN == event.getTypeInt()) {
             if (MouseUtil.isPrimary(event)) {
