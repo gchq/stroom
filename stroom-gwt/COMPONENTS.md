@@ -44,8 +44,8 @@ the component's classes (some names also match related classes), to help priorit
 | Floating action button | `FabButton` | — | button | retrofit | ~8 | in part (one tab stop) | BEM pass not done (`stroom-button-fab`, `face`) |
 | Refresh button | `RefreshButton` | (rebuilt on `ToolbarButton`) | button | retrofit | pagers | done | — |
 | Split panes | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | done: every view uses `SplitPane` (User Groups first, then by area, ending with the main screen's explorer and docked AI chat); the old panels, their CSS, their stories and the comparison stories are deleted | 2.5.8 where splitters meet in a T at a centre (accepted, see below); theme colours to revisit (line contrast relies on `--grey-600`); not tried with a screen reader or touch device; `ReadingOrder` deleted (no views need it now); views that call `onResize()` to force a relayout need checking (e.g. stepping) |
-| Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | ? (tied to `ContentTabPanePresenter`, document plugins) | every document | not started | not a tablist; one tab stop with arrows, `aria-selected`, `aria-controls` |
-| Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | ? | ~16 | not started | tabs carry an empty `tabindex=""` (not focusable); no tablist roles |
+| Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (tied to `ContentTabPanePresenter`, document plugins) | every document | investigated, decisions below | one tab stop with Left/Right already (roving `tabindex`, shared with link tabs); no roles, selected state or panel link; no Home/End or wrap; Escape closes the focused tab and drops focus to the body; A/D/H/L also move; focus drawn as the hover tint; close cross is an unnamed `div`; sidebar toggle has no name |
+| Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | investigated, decisions below | one tab stop with Left/Right already; no roles; separators read as "\|"; focus drawn as the hover underline; the light theme's widget stories draw the bar on a blue canvas, not the shell's white |
 | Data grids | `MyDataGrid`, `MyCellTable`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+14 cell tables, ~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"` |
 | Explorer tree | explorer tree (cell tree, `explorerCell`), `EntityTreePresenter`, pickers | — | tree | ? | ~66 | not started | tree roles and keyboard |
 | Menus | `Menu`, `MenuPresenter`, menu items | — | menu / menubar | retrofit | ~19 places show menus | in part (items have `role="menuitem"`; `MenuRequest` lets widgets ask for one) | menu buttons don't say they open a menu (`ISSUES.md`) |
@@ -55,6 +55,26 @@ the component's classes (some names also match related classes), to help priorit
 | Code editor | Ace (`EditorPresenter`, `EditorViewImpl`) | — | — | retrofit around Ace | ~34 | not started | keyboard trap: Tab indents (`ISSUES.md`); Ace sources need human approval to change |
 | Layout panels | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | few direct (most via split panels) | not started | DOM order differs from layout (`ReadingOrder` stopgap) |
 | Content focus | tab pane | `ContentFocus` | — | added | all tabs | done (#5405) | — |
+
+## Tab decisions
+
+Agreed for both tab bars (document and link tabs), following the WAI-ARIA tabs pattern:
+
+- **Roles.** `role="tablist"` with a name, `role="tab"` with `aria-selected` and `aria-controls`,
+  and `role="tabpanel"` on the content.
+- **Keys.** One tab stop on the selected tab (as now); Left and Right move between tabs and wrap at
+  the ends; Home and End go to the first and last. Document tabs keep manual activation (arrows
+  move focus, Enter or Space selects, as selecting can load a document); link tabs select as the
+  arrows move. A/D/H/L no longer move between tabs.
+- **Closing.** Delete closes the focused closable tab (Escape no longer does); Alt+W stays. Focus
+  moves to the newly selected tab, not to the page.
+- **Focus.** Shown only for keyboard focus (`:focus-visible`), as a 2px rounded ring in
+  `--splitter__focus-color` (6.9:1 dark, 5.8:1 light against the shell): inside the edge of a
+  document tab (the selected bar stays below it), and around a link tab's label, 4px past the text
+  each side (the separators need about 2px more room). Hover keeps its tint (document tabs) and a
+  thin underline (link tabs); selected keeps its bar (document tabs) and bold (link tabs).
+- **To fix alongside.** The selected document tab's bar (`--blue-300`) is 2.2:1 on white in the
+  light theme, below 3:1, and is the only cue for the selected tab there.
 
 ## Accepted deviations
 
