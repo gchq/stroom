@@ -267,6 +267,14 @@ public class MenuPresenter
         getView().setAllowCloseOnMoveLeft(allowCloseOnMoveLeft);
     }
 
+    /// Gives the menu a fixed width rather than fitting it to its items. See
+    /// [ShowMenuEvent.Builder#width(int)].
+    ///
+    /// @param width The menu's width in pixels.
+    public void setWidth(final int width) {
+        getView().setWidth(width);
+    }
+
 
     // --------------------------------------------------------------------------------
 
@@ -287,5 +295,10 @@ public class MenuPresenter
          * an explorer tree or similar.
          */
         void setAllowCloseOnMoveLeft(final boolean allowCloseOnMoveLeft);
+
+        /// Gives the menu a fixed width, cutting items too long for it short with an ellipsis.
+        ///
+        /// @param width The menu's width in pixels.
+        void setWidth(int width);
     }
 }

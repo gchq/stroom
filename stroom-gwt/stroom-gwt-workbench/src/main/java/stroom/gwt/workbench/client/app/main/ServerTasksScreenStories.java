@@ -289,7 +289,7 @@ public final class ServerTasksScreenStories {
 
     private static ValueMatcher filteredFind() {
         return RequestMatcher.post(TASK_FIND_PATH)
-                .withJsonBodyContaining("{\"criteria\": {\"nameFilter\": \"Processor A\"}}")
+                .withJsonBodyContaining("{\"criteria\": {\"quickFilter\": \"Processor A\"}}")
                 .toSpyMatcher();
     }
 
@@ -321,7 +321,7 @@ public final class ServerTasksScreenStories {
                 .post("/node/v1/find", RestReply.json(NODES))
                 // The server marks the tasks matching the name filter
                 .route(RequestMatcher.post(TASK_FIND_PATH)
-                                .withJsonBodyContaining("{\"criteria\": {\"nameFilter\": \"Processor A\"}}"),
+                                .withJsonBodyContaining("{\"criteria\": {\"quickFilter\": \"Processor A\"}}"),
                         RestReply.json(tasks(parentTaskInfo, "NOT_MATCHED", "MATCHED", "NOT_MATCHED")))
                 .post(TASK_FIND_PATH, unfilteredTasks)
                 .post("/task/v1/terminate/node1", RestReply.json("true"))

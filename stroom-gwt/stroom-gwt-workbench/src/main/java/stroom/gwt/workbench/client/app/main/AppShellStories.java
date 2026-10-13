@@ -390,7 +390,7 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(navTree(play).getByText("Countries")).toBeInTheDocument());
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
                             "Ask Stroom AI, Show Menu: 1 tab stop",
-                            "Quick Filter Syntax Help: 1 tab stop",
+                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "New, Delete, Locate Current Item, Expand All, Collapse All, Filter Types, "
                             + "Find In Content: 1 tab stop"));
                     play.dblClick(navTree(play).getByText("Countries"));
@@ -398,7 +398,7 @@ public final class AppShellStories {
                     play.waitFor(() -> play.expect(play.getByTitle("Save")).toBeInTheDocument());
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
                             "Ask Stroom AI, Show Menu: 1 tab stop",
-                            "Quick Filter Syntax Help: 1 tab stop",
+                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "Save, Save As, Download Dictionary words: 1 tab stop",
                             "New, Delete, Locate Current Item, Expand All, Collapse All, "
                             + "Filter Types, Find In Content: 1 tab stop"));

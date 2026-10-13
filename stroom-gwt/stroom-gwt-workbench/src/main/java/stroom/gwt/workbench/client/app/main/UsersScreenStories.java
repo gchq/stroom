@@ -179,16 +179,16 @@ public final class UsersScreenStories {
                 .withPlay(play -> {
                     play.findByText("Alice Anderson");
                     // OpenUsersScreenEvent carries the user, and UserListPresenter.showUser filters by
-                    // its display name with the 'display' field ('"display:Alice Anderson"'). The quick
+                    // its display name with the 'display' field ('display:"Alice Anderson"'). The quick
                     // filter has no label, only a placeholder
                     play.expect(play.getByPlaceholderText(StroomDom.QUICK_FILTER_PLACEHOLDER))
-                            .toHaveValue("\"display:Alice Anderson\"");
-                    // The filter is quoted, so the users are found by the whole display name (it was
-                    // once split at the space: display name '*Alice*' and '*Anderson*' in any default
-                    // field)
+                            .toHaveValue("display:\"Alice Anderson\"");
+                    // The value is quoted, so the server finds the users by the whole display name (it
+                    // was once split at the space: display name '*Alice*' and '*Anderson*' in any
+                    // default field). The filter goes to the server as it is, for it to parse
                     play.expect(play.spy(ScreenHarness.REQUEST_SPY)).toHaveBeenCalledWith(
                             RequestMatcher.post("/users/v1/find")
-                                    .withBodyContaining("\"value\":\"*Alice Anderson*\"")
+                                    .withJsonBodyContaining("{\"quickFilter\": \"display:\\\"Alice Anderson\\\"\"}")
                                     .toSpyMatcher());
                     expectNoProblems(play);
                 });

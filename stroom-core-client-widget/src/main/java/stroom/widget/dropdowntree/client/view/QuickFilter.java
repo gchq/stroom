@@ -92,7 +92,9 @@ public class QuickFilter extends FlowPanel
         // The filter's buttons, at the end of its box
         final Toolbar toolbar = new Toolbar("Quick filter");
         toolbar.addStyleName("quickFilter-toolbar");
-        clearButton = toolbar.button(SvgImage.CLEAR_OUTLINE, "Clear Filter", this::onClear);
+        // A plain cross, so that Clear and the drop-down, which both act on the text, look alike, and
+        // only help, which doesn't, has a ring
+        clearButton = toolbar.button(SvgImage.TAB_CLOSE, "Clear Filter", this::onClear);
         // Between clear and help: clear and the drop-down both act on the text, like a combo
         // box, and help stays outermost as it is on every screen. Hidden until a handler is set.
         dropDownButton = toolbar.button(SvgImage.DROP_DOWN, "Recent Filters", this::showRecentFilters);
@@ -139,10 +141,10 @@ public class QuickFilter extends FlowPanel
             });
             popup.setPopupPositionAndShow((offsetWidth, offsetHeight) -> {
 
-                // Position it below the filter
+                // Position it below the filter, clear of the buttons in it whatever its height
                 popup.setPopupPosition(
                         getAbsoluteLeft() + 4,
-                        getAbsoluteTop() + 26);
+                        getAbsoluteTop() + getOffsetHeight());
             });
             this.helpPopup = popup;
         }

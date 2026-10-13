@@ -101,7 +101,7 @@ public final class FieldFixture {
     private static String filterOf(final String requestJson) {
         final Object request = JsonValues.parse(requestJson);
         if (request instanceof Map) {
-            final Object filter = ((Map<?, ?>) request).get("filter");
+            final Object filter = ((Map<?, ?>) request).get("quickFilter");
             if (filter != null && !filter.toString().trim().isEmpty()) {
                 return filter.toString().trim();
             }

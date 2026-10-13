@@ -123,11 +123,11 @@ public final class UserGroupsScreenStories {
                     play.waitFor(() -> play.expect(play.querySelector("[inert]")).toBeNull());
                     play.findByText("Members of group \"Administrators\":");
                     play.expect(ButtonRuns.of(play.body())).toEqual(List.of(
-                            "Quick Filter Syntax Help: 1 tab stop",
+                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "Create Group, Edit group 'Administrators', Delete group 'Administrators': 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
-                            "Quick Filter Syntax Help: 1 tab stop",
-                            "Quick Filter Syntax Help: 1 tab stop",
+                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
+                            "Recent Filters, Quick Filter Syntax Help: 1 tab stop",
                             "Add, Remove: 1 tab stop",
                             "First, Backward, Forward, Last, Refresh: 1 tab stop",
                             "Add, Remove: 1 tab stop",
@@ -146,15 +146,16 @@ public final class UserGroupsScreenStories {
                     // A screen reader reads the page in this order too
                     play.expect(play.body()).toHaveTextContent(TextMatch.regex(
                             "is a member of:.*Members of group"));
-                    // The panes' tab stops: a quick filter, its help, its toolbar and its pager
-                    // (and its grid, a div), the master's, then Member Of's, then Members', with
-                    // the splitter (named by the pane it resizes) between each
+                    // The panes' tab stops: a quick filter, its buttons (one toolbar, named by its
+                    // first button), its toolbar and its pager (and its grid, a div), the master's,
+                    // then Member Of's, then Members', with the splitter (named by the pane it
+                    // resizes) between each
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
-                            "input", "Quick Filter Syntax Help", "Create Group", "First", "div",
+                            "input", "Recent Filters", "Create Group", "First", "div",
                             "Users and groups",
-                            "input", "Quick Filter Syntax Help", "Add", "First",
+                            "input", "Recent Filters", "Add", "First",
                             "Members",
-                            "input", "Quick Filter Syntax Help", "Add", "First", "div"));
+                            "input", "Recent Filters", "Add", "First", "div"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group
                 .story("EditGroup", UserGroupsScreenStories::render)
