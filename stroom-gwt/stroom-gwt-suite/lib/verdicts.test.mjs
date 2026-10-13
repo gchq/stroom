@@ -368,3 +368,53 @@ test('context: a menu is the handler running; no menu is normal; a stuck menu is
   assert.equal(contextVerdict({ skipped: 'nothing on this screen worth right-clicking' }).verdict, 'unchecked');
   assert.equal(contextVerdict(null).verdict, 'unchecked');
 });
+
+test('places: a node is matched across runs whatever route reached it', async () => {
+  const { placeOf } = await import('./places.mjs');
+  // r8 reached Save Tab Session from the Main Menu; r9, with #48 fixed, through the AI dock's Show Menu.
+  assert.equal(
+    placeOf('dialog / Navigation / Locate Current Item / Main Menu / Navigation / Save Tab Session'),
+    placeOf('dialog / Navigation / Locate Current Item / Main Menu / Administration / after Data Volumes / after Ask Stroom AI / Show Menu / Navigation / Save Tab Session'));
+  // The area or document is kept: the same dialog in another document is another place.
+  assert.notEqual(
+    placeOf('dialog / PlanB (document) / Settings / Main Menu / Administration / after Data Volumes / New'),
+    placeOf('dialog / Administration / Data Volumes / Main Menu / Administration / after Data Volumes / New'));
+  // As is the kind: a dialog and the post-action state it leaves are different places.
+  assert.notEqual(placeOf('dialog / Tools / Content Store / Import'), placeOf('post-action / Tools / Content Store / Import'));
+  assert.equal(placeOf('screen / Monitoring'), 'screen / Monitoring');
+  assert.equal(placeOf(undefined), '');
+});
+
+test("alerts: #42's fix refusing a '/' in a name is the form's own rule", () => {
+  assert.equal(classifyAlert({ text: "A name can't contain '/'.", icon: 'error' }), 'validation');
+  assert.equal(illegalVerdict({ outcome: 'alert', said: { class: classifyAlert({ text: "A name can't contain '/'." }), text: "A name can't contain '/'." }, plan: plan('text') }).verdict, 'pass');
+  // The server's own refusal of the same name, after a request, is still not the form's.
+  assert.equal(classifyAlert({ text: 'Ambiguous URI path separator' }), 'exception');
+});
+
+test("spinner: the grid's ValueSpinnerCell spells its classes differently and still passes", () => {
+  const cls = (extra = '') => ({ cls: `valueSpinner-arrow valueSpinner-arrowUp${extra}`, value: '10' });
+  const v = spinnerVerdicts({
+    rest: cls(), hovered: cls(' valueSpinner-arrowUp--hover'), left: cls(),
+    pressed: { cls: 'valueSpinner-arrow valueSpinner-arrowUp valueSpinner-arrowUp--pressed', value: '11' },
+    released: cls(),
+  }, 'spinner 1');
+  assert.deepEqual(v.map((x) => `${x.kind}:${x.verdict}`), ['mouseover:pass', 'mouseout:pass', 'mousedown:pass', 'mouseup:pass']);
+});
+
+test("guard: working out a schedule's run times is a read, its neighbours aren't", async () => {
+  const { classifyRequest } = await import('../compare/lib/readonly-guard.mjs');
+  assert.equal(classifyRequest('POST', '/api/scheduledTime/v1'), 'allow');
+  assert.equal(classifyRequest('PUT', '/api/scheduledTime/v1'), 'mutate');
+  assert.equal(classifyRequest('POST', '/api/executionSchedule/v1/update'), 'mutate');
+});
+
+test('sort: durations are compared as durations', () => {
+  const col = (direction, values) => ({ rows: values.length, direction, values });
+  // Server Tasks' Age, descending: 144ms is longer than 40ms
+  assert.equal(sortVerdict(null, col('desc', ['2m', '1.5s', '144ms', '40ms'])).verdict, 'pass');
+  assert.equal(sortVerdict(null, col('asc', ['40ms', '144ms', '1h 2m'])).verdict, 'pass');
+  assert.equal(sortVerdict(null, col('desc', ['40ms', '144ms'])).verdict, 'fail');
+  // Sizes stay sizes
+  assert.equal(sortVerdict(null, col('desc', ['40M', '5K'])).verdict, 'pass');
+});

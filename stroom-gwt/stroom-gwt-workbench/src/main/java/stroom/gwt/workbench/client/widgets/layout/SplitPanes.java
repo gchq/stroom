@@ -17,18 +17,12 @@
 package stroom.gwt.workbench.client.widgets.layout;
 
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
-/// The panes and frame shared by the `Widgets/Layout/SplitLayoutPanel` and
-/// `Widgets/Layout/ThinSplitLayoutPanel` stories, and the ways the stories configure the split,
-/// applied to Stroom's split panels (both [DockLayoutPanel]s) as Stroom's `.ui.xml` files do.
+/// The panes and frame shared by the `Widgets/Layout/SplitPane` stories.
 final class SplitPanes {
-
-    /// The docked pane's default size.
-    static final double DEFAULT_SIZE = 300;
 
     private SplitPanes() {
         // Static utility
@@ -36,7 +30,7 @@ final class SplitPanes {
 
     /// The left (first) pane.
     ///
-    /// @param hint The second line of text, which differs between the two components' stories.
+    /// @param hint The second line of text.
     /// @return The pane.
     static Widget leftPane(final String hint) {
         final Widget pane = pane("Left panel", hint);
@@ -53,7 +47,7 @@ final class SplitPanes {
 
     /// The stories' frame: 300px high with a rounded border.
     ///
-    /// @param split The split panel (or `SplitPane`), which fills the frame.
+    /// @param split The split pane, which fills the frame.
     /// @return The frame.
     static FlowPanel frame(final Widget split) {
         final FlowPanel frame = new FlowPanel();
@@ -62,45 +56,11 @@ final class SplitPanes {
         style.setProperty("border", "1px solid var(--border-color,#444)");
         style.setProperty("borderRadius", "4px");
         style.setProperty("overflow", "hidden");
-        // A layout panel needs a size to lay its children out in
+        // A split pane needs a size to lay its panes out in
         style.setProperty("position", "relative");
         split.setSize("100%", "100%");
         frame.add(split);
         return frame;
-    }
-
-    /// Lays the two panes out as a story asks, as a `.ui.xml` would with
-    /// `<g:west size="N">`/`<g:north>`/`<g:east>` and `<g:center>`.
-    ///
-    /// @param split       The split panel.
-    /// @param vertical    Whether the panes are one above the other.
-    /// @param anchorEnd   Whether the second pane is the docked one.
-    /// @param size        The docked pane's size in pixels.
-    /// @param leftHint    The second line of the left pane's text.
-    /// @return The docked pane, e.g. for setting its minimum size.
-    static Widget layout(final DockLayoutPanel split,
-                         final boolean vertical,
-                         final boolean anchorEnd,
-                         final double size,
-                         final String leftHint) {
-        final Widget first = leftPane(leftHint);
-        final Widget second = rightPane();
-        if (anchorEnd) {
-            if (vertical) {
-                split.addSouth(second, size);
-            } else {
-                split.addEast(second, size);
-            }
-            split.add(first);
-            return second;
-        }
-        if (vertical) {
-            split.addNorth(first, size);
-        } else {
-            split.addWest(first, size);
-        }
-        split.add(second);
-        return first;
     }
 
     private static Widget pane(final String title, final String hint) {

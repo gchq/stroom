@@ -1,10 +1,10 @@
 {
- "generated": "2026-10-09T15:24:06.370Z",
+ "generated": "2026-10-12T06:07:29.290Z",
  "declared": 1546,
- "exercised": 744,
+ "exercised": 808,
  "presenters": {
   "declared": 805,
-  "exercised": 471
+  "exercised": 485
  },
  "byKind": {
   "command": {
@@ -13,27 +13,27 @@
   },
   "ok": {
    "declared": 98,
-   "exercised": 60
+   "exercised": 62
   },
   "cancel": {
    "declared": 98,
-   "exercised": 79
+   "exercised": 80
   },
   "click": {
    "declared": 473,
-   "exercised": 252
+   "exercised": 257
   },
   "selection": {
    "declared": 158,
-   "exercised": 73
+   "exercised": 75
   },
   "value": {
    "declared": 314,
-   "exercised": 70
+   "exercised": 120
   },
   "key": {
    "declared": 82,
-   "exercised": 20
+   "exercised": 21
   },
   "hide": {
    "declared": 33,
@@ -53,7 +53,7 @@
   },
   "context": {
    "declared": 11,
-   "exercised": 8
+   "exercised": 11
   },
   "close": {
    "declared": 8,
@@ -81,14 +81,14 @@
   }
  },
  "why": {
-  "unreached": 250,
-  "needs-value": 244,
-  "needs-key": 62,
-  "ok-blocked": 16,
-  "view": 66,
-  "widget": 89,
+  "unreached": 237,
+  "needs-value": 194,
+  "needs-key": 61,
+  "ok-blocked": 18,
+  "view": 67,
+  "widget": 88,
   "needs-dom": 6,
-  "unlabelled": 49,
+  "unlabelled": 47,
   "needs-dirty": 10,
   "needs-close": 5,
   "absent": 5
@@ -268,8 +268,11 @@
    "label": "Dock Location",
    "line": 144,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "AskStroomAiConfigPresenter",
@@ -910,7 +913,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
-   "line": 648,
+   "line": 651,
    "exercised": false,
    "why": "widget"
   },
@@ -964,8 +967,11 @@
    "receiver": "dialog",
    "label": "OK",
    "line": 147,
-   "exercised": false,
-   "why": "unreached"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "vanished"
+   ]
   },
   {
    "class": "ScheduledProcessEditPresenter",
@@ -977,7 +983,6 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "nothing",
     "closed"
    ]
   },
@@ -1021,7 +1026,8 @@
    "exercised": true,
    "join": "label",
    "outcomes": [
-    "alert"
+    "alert",
+    "dialog"
    ]
   },
   {
@@ -1112,7 +1118,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "enabled",
-   "label": null,
+   "label": "Enabled",
    "line": 114,
    "via": "UiHandler",
    "exercised": false,
@@ -1123,7 +1129,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "limitNotifications",
-   "label": null,
+   "label": "Limit Notifications",
    "line": 119,
    "via": "UiHandler",
    "exercised": false,
@@ -1162,8 +1168,11 @@
    "label": "Destination Type",
    "line": 134,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "AnalyticProcessingViewImpl",
@@ -1212,7 +1221,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "includeRuleDocumentation",
-   "label": null,
+   "label": "Include Rule Documentation",
    "line": 125,
    "via": "UiHandler",
    "exercised": true,
@@ -1248,7 +1257,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "useSourceFeedIfPossible",
-   "label": null,
+   "label": "Use Source Feed If Possible (Streaming Only)",
    "line": 76,
    "via": "UiHandler",
    "exercised": false,
@@ -1261,8 +1270,11 @@
    "receiver": "nameEnable",
    "label": null,
    "line": 108,
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "BatchExecutionScheduleEditViewImpl",
@@ -1271,8 +1283,11 @@
    "receiver": "enabledEnable",
    "label": null,
    "line": 109,
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "BatchExecutionScheduleEditViewImpl",
@@ -1281,8 +1296,11 @@
    "receiver": "nodeEnable",
    "label": null,
    "line": 110,
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "BatchExecutionScheduleEditViewImpl",
@@ -1291,8 +1309,11 @@
    "receiver": "scheduleEnable",
    "label": null,
    "line": 111,
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "BatchExecutionScheduleEditViewImpl",
@@ -1301,8 +1322,11 @@
    "receiver": "startTimeEnable",
    "label": null,
    "line": 112,
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "BatchExecutionScheduleEditViewImpl",
@@ -1311,8 +1335,11 @@
    "receiver": "endTimeEnable",
    "label": null,
    "line": 113,
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "BatchExecutionScheduleEditViewImpl",
@@ -1321,8 +1348,11 @@
    "receiver": "runAsUserEnable",
    "label": null,
    "line": 114,
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "BatchExecutionScheduleEditViewImpl",
@@ -1339,7 +1369,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "rememberNotifications",
-   "label": null,
+   "label": "Remember Notifications",
    "line": 103,
    "via": "UiHandler",
    "exercised": false,
@@ -1350,7 +1380,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "suppressDuplicateNotifications",
-   "label": null,
+   "label": "Suppress Duplicate Notifications",
    "line": 108,
    "via": "UiHandler",
    "exercised": false,
@@ -1361,7 +1391,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "chooseColumns",
-   "label": null,
+   "label": "Choose Columns",
    "line": 113,
    "via": "UiHandler",
    "exercised": false,
@@ -1408,7 +1438,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "sendEmptyReports",
-   "label": null,
+   "label": "Send Empty Reports",
    "line": 142,
    "via": "UiHandler",
    "exercised": true,
@@ -1422,11 +1452,14 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "aiSummaryEnabled",
-   "label": null,
+   "label": "AI Summary",
    "line": 147,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ReportSettingsViewImpl",
@@ -1471,19 +1504,25 @@
    "label": "Name",
    "line": 182,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ScheduledProcessEditViewImpl",
    "classKind": "view",
    "kind": "value",
    "receiver": "enabled",
-   "label": null,
+   "label": "Enabled",
    "line": 187,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ScheduledProcessEditViewImpl",
@@ -1493,8 +1532,11 @@
    "label": "Processing Node",
    "line": 192,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ScheduledProcessEditViewImpl",
@@ -1504,8 +1546,11 @@
    "label": "Start Time",
    "line": 197,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ScheduledProcessEditViewImpl",
@@ -1515,15 +1560,18 @@
    "label": "End Time (Optional)",
    "line": 202,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "TableBuilderProcessingViewImpl",
    "classKind": "view",
    "kind": "value",
    "receiver": "enabled",
-   "label": null,
+   "label": "Enabled",
    "line": 165,
    "via": "UiHandler",
    "exercised": false,
@@ -1663,7 +1711,7 @@
    "kind": "click",
    "receiver": "copyToClipboard",
    "label": "Copy History",
-   "line": 598,
+   "line": 599,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -1676,7 +1724,7 @@
    "kind": "selection",
    "receiver": "registerHandler(annotationStatusPresenter",
    "label": null,
-   "line": 249,
+   "line": 250,
    "exercised": false,
    "why": "unreached"
   },
@@ -1686,7 +1734,7 @@
    "kind": "selection",
    "receiver": "registerHandler(annotationLabelPresenter",
    "label": null,
-   "line": 256,
+   "line": 257,
    "exercised": false,
    "why": "unreached"
   },
@@ -1696,7 +1744,7 @@
    "kind": "selection",
    "receiver": "registerHandler(annotationCollectionPresenter",
    "label": null,
-   "line": 260,
+   "line": 261,
    "exercised": false,
    "why": "unreached"
   },
@@ -1706,7 +1754,7 @@
    "kind": "selection",
    "receiver": "registerHandler(commentPresenter",
    "label": null,
-   "line": 264,
+   "line": 265,
    "exercised": false,
    "why": "unreached"
   },
@@ -1716,7 +1764,7 @@
    "kind": "mousedown",
    "receiver": "panel",
    "label": null,
-   "line": 533,
+   "line": 534,
    "exercised": false,
    "why": "unreached"
   },
@@ -1726,7 +1774,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Edit Entry",
-   "line": 635,
+   "line": 636,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -1739,7 +1787,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Delete Entry",
-   "line": 643,
+   "line": 644,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -1752,7 +1800,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 667,
+   "line": 668,
    "exercised": false,
    "why": "unreached"
   },
@@ -1762,7 +1810,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 667,
+   "line": 668,
    "exercised": false,
    "why": "unreached"
   },
@@ -2167,7 +2215,8 @@
    "exercised": false,
    "join": "attributed",
    "outcomes": [
-    "alert"
+    "alert",
+    "unclickable"
    ],
    "why": "ok-blocked"
   },
@@ -2181,7 +2230,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "closed"
+    "closed",
+    "unclickable"
    ]
   },
   {
@@ -2226,7 +2276,8 @@
    "exercised": false,
    "join": "attributed",
    "outcomes": [
-    "alert"
+    "alert",
+    "unclickable"
    ],
    "why": "ok-blocked"
   },
@@ -2240,7 +2291,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "closed"
+    "closed",
+    "unclickable"
    ]
   },
   {
@@ -2296,7 +2348,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "closed"
+    "closed",
+    "unclickable"
    ]
   },
   {
@@ -2309,7 +2362,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "closed"
+    "closed",
+    "unclickable"
    ]
   },
   {
@@ -2317,11 +2371,14 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "forever",
-   "label": null,
+   "label": "Keep Forever",
    "line": 60,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "FindAnnotationListPresenter",
@@ -2857,11 +2914,14 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "credsExpire",
-   "label": null,
+   "label": "Credentials expire",
    "line": 127,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "KeyStoreSecretViewImpl",
@@ -2901,7 +2961,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "referenceExistingQuery",
-   "label": null,
+   "label": "Reference Existing Query",
    "line": 154,
    "via": "UiHandler",
    "exercised": false,
@@ -2954,7 +3014,7 @@
    "kind": "dom",
    "receiver": "ScrollEvent",
    "label": null,
-   "line": 124,
+   "line": 126,
    "via": "addDomHandler",
    "exercised": false,
    "why": "needs-dom"
@@ -3187,22 +3247,28 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "fitWidth",
-   "label": null,
+   "label": "Fit Width",
    "line": 79,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "LayoutConstraintViewImpl",
    "classKind": "view",
    "kind": "value",
    "receiver": "fitHeight",
-   "label": null,
+   "label": "Fit Height",
    "line": 84,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "RenameTabPresenter",
@@ -3228,7 +3294,8 @@
    "join": "attributed",
    "outcomes": [
     "closed",
-    "alert"
+    "alert",
+    "unclickable"
    ]
   },
   {
@@ -3241,7 +3308,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "closed"
+    "closed",
+    "unclickable"
    ]
   },
   {
@@ -3264,7 +3332,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -3612,7 +3681,7 @@
    "kind": "click",
    "receiver": "addTermButton",
    "label": "Add Term",
-   "line": 216,
+   "line": 215,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3625,7 +3694,7 @@
    "kind": "click",
    "receiver": "addOperatorButton",
    "label": "Add Operator",
-   "line": 221,
+   "line": 220,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3638,7 +3707,7 @@
    "kind": "click",
    "receiver": "copyButton",
    "label": "Copy",
-   "line": 226,
+   "line": 225,
    "exercised": false,
    "why": "unreached"
   },
@@ -3648,7 +3717,7 @@
    "kind": "click",
    "receiver": "disableItemButton",
    "label": "Disable",
-   "line": 231,
+   "line": 230,
    "exercised": true,
    "join": "label",
    "outcomes": [
@@ -3661,9 +3730,12 @@
    "kind": "click",
    "receiver": "deleteItemButton",
    "label": "Delete",
-   "line": 236,
-   "exercised": false,
-   "why": "unreached"
+   "line": 235,
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "nothing"
+   ]
   },
   {
    "class": "QueryPresenter",
@@ -3671,7 +3743,7 @@
    "kind": "click",
    "receiver": "historyButton",
    "label": "History",
-   "line": 241,
+   "line": 240,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3684,7 +3756,7 @@
    "kind": "click",
    "receiver": "favouriteButton",
    "label": "Favourites",
-   "line": 247,
+   "line": 246,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3697,7 +3769,7 @@
    "kind": "click",
    "receiver": "processButton",
    "label": "Process",
-   "line": 259,
+   "line": 258,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3710,7 +3782,7 @@
    "kind": "click",
    "receiver": "errorsButton",
    "label": "Show Messages",
-   "line": 265,
+   "line": 264,
    "exercised": false,
    "why": "unreached"
   },
@@ -3720,7 +3792,7 @@
    "kind": "click",
    "receiver": "downloadQueryButton",
    "label": "Download Query",
-   "line": 273,
+   "line": 272,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3733,7 +3805,7 @@
    "kind": "selection",
    "receiver": "registerHandler(expressionPresenter",
    "label": null,
-   "line": 209,
+   "line": 208,
    "exercised": false,
    "why": "unreached"
   },
@@ -3743,9 +3815,12 @@
    "kind": "context",
    "receiver": "registerHandler(expressionPresenter",
    "label": null,
-   "line": 210,
-   "exercised": false,
-   "why": "unreached"
+   "line": 209,
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "menu"
+   ]
   },
   {
    "class": "QueryPresenter",
@@ -3753,7 +3828,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Add Term",
-   "line": 821,
+   "line": 820,
    "exercised": true,
    "join": "label",
    "outcomes": [
@@ -3768,7 +3843,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Add Operator",
-   "line": 827,
+   "line": 826,
    "exercised": true,
    "join": "label",
    "outcomes": [
@@ -3783,12 +3858,13 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Copy",
-   "line": 833,
+   "line": 832,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
     "dialog",
-    "menu"
+    "menu",
+    "nothing"
    ]
   },
   {
@@ -3797,7 +3873,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Delete",
-   "line": 841,
+   "line": 840,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3810,7 +3886,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Delete",
-   "line": 848,
+   "line": 847,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3823,7 +3899,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 509,
+   "line": 508,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3838,7 +3914,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 509,
+   "line": 508,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -3971,22 +4047,28 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "useDefaultExtractionPipeline",
-   "label": null,
+   "label": "Use Default Extraction Pipeline",
    "line": 196,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "BasicTableSettingsViewImpl",
    "classKind": "view",
    "kind": "value",
    "receiver": "overrideMaxStringFieldLength",
-   "label": null,
+   "label": "Override Maximum String Field Length",
    "line": 201,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ColumnFilterPresenter",
@@ -3999,7 +4081,8 @@
    "join": "attributed",
    "outcomes": [
     "closed",
-    "unclickable"
+    "unclickable",
+    "alert"
    ]
   },
   {
@@ -4063,7 +4146,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -4245,7 +4329,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "sample",
-   "label": null,
+   "label": "Sample Only",
    "line": 96,
    "via": "UiHandler",
    "exercised": false,
@@ -4261,7 +4345,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "closed"
+    "closed",
+    "alert"
    ]
   },
   {
@@ -4282,7 +4367,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "custom",
-   "label": null,
+   "label": "Custom",
    "line": 284,
    "via": "UiHandler",
    "exercised": false,
@@ -4296,8 +4381,11 @@
    "label": "Type",
    "line": 289,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "FormatViewImpl",
@@ -4727,6 +4815,7 @@
    "join": "attributed",
    "outcomes": [
     "nothing",
+    "changed",
     "dialog"
    ]
   },
@@ -4817,8 +4906,11 @@
    "label": null,
    "line": 176,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "RuleViewImpl",
@@ -4894,8 +4986,11 @@
    "receiver": "copyButton",
    "label": "Copy",
    "line": 100,
-   "exercised": false,
-   "why": "unreached"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "dialog"
+   ]
   },
   {
    "class": "RulesPresenter",
@@ -4980,7 +5075,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "closed"
+    "closed",
+    "alert"
    ]
   },
   {
@@ -5006,7 +5102,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "closed"
+    "closed",
+    "alert"
    ]
   },
   {
@@ -5044,7 +5141,8 @@
    "exercised": true,
    "join": "label",
    "outcomes": [
-    "changed"
+    "changed",
+    "unclickable"
    ]
   },
   {
@@ -5131,7 +5229,8 @@
    "join": "attributed",
    "outcomes": [
     "dialog",
-    "menu"
+    "menu",
+    "nothing"
    ]
   },
   {
@@ -5322,6 +5421,7 @@
    "join": "attributed",
    "outcomes": [
     "nothing",
+    "changed",
     "dialog"
    ]
   },
@@ -5425,7 +5525,8 @@
    "join": "attributed",
    "outcomes": [
     "dialog",
-    "menu"
+    "menu",
+    "nothing"
    ]
   },
   {
@@ -5500,7 +5601,7 @@
    "kind": "click",
    "receiver": "streamListUpload",
    "label": "Upload",
-   "line": 248,
+   "line": 251,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5513,7 +5614,7 @@
    "kind": "click",
    "receiver": "streamListInfo",
    "label": "Selection summary",
-   "line": 255,
+   "line": 258,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5526,7 +5627,7 @@
    "kind": "click",
    "receiver": "streamListDownload",
    "label": "Download",
-   "line": 262,
+   "line": 265,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5539,7 +5640,7 @@
    "kind": "click",
    "receiver": "streamRelationListDownload",
    "label": "Download",
-   "line": 269,
+   "line": 272,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5552,7 +5653,7 @@
    "kind": "click",
    "receiver": "streamListDelete",
    "label": "Delete",
-   "line": 277,
+   "line": 280,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5566,7 +5667,7 @@
    "kind": "click",
    "receiver": "streamRelationListDelete",
    "label": "Delete",
-   "line": 284,
+   "line": 287,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5580,7 +5681,7 @@
    "kind": "click",
    "receiver": "streamListRestore",
    "label": "Restore",
-   "line": 292,
+   "line": 295,
    "exercised": false,
    "why": "unreached"
   },
@@ -5590,7 +5691,7 @@
    "kind": "click",
    "receiver": "streamRelationListRestore",
    "label": "Restore",
-   "line": 299,
+   "line": 302,
    "exercised": false,
    "why": "unreached"
   },
@@ -5600,7 +5701,7 @@
    "kind": "click",
    "receiver": "streamListProcess",
    "label": "Process",
-   "line": 307,
+   "line": 310,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5613,7 +5714,7 @@
    "kind": "click",
    "receiver": "streamRelationListProcess",
    "label": "Process",
-   "line": 314,
+   "line": 317,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5678,7 +5779,7 @@
    "kind": "selection",
    "receiver": "metaListPresenter",
    "label": null,
-   "line": 440,
+   "line": 443,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5691,7 +5792,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
-   "line": 242,
+   "line": 245,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -5867,8 +5968,11 @@
    "label": "From",
    "line": 245,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "CharacterRangeSelectionViewImpl",
@@ -5878,8 +5982,11 @@
    "label": "To",
    "line": 250,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "DataViewImpl",
@@ -5982,11 +6089,14 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "reprocess",
-   "label": null,
+   "label": "Reprocess data",
    "line": 102,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "TextViewImpl",
@@ -5999,7 +6109,8 @@
    "exercised": true,
    "join": "label",
    "outcomes": [
-    "changed"
+    "changed",
+    "unclickable"
    ]
   },
   {
@@ -6048,7 +6159,7 @@
    "kind": "click",
    "receiver": "newButton",
    "label": "New",
-   "line": 84,
+   "line": 85,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -6062,7 +6173,7 @@
    "kind": "click",
    "receiver": "openButton",
    "label": "Edit",
-   "line": 85,
+   "line": 86,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -6075,12 +6186,13 @@
    "kind": "click",
    "receiver": "deleteButton",
    "label": "Delete",
-   "line": 86,
+   "line": 87,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
     "dialog",
-    "nothing"
+    "nothing",
+    "changed"
    ]
   },
   {
@@ -6089,7 +6201,7 @@
    "kind": "click",
    "receiver": "rescanButton",
    "label": "Rescan Volumes",
-   "line": 87,
+   "line": 88,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -6102,7 +6214,7 @@
    "kind": "selection",
    "receiver": "registerHandler(volumeStatusListPresenter.getSelectionModel()",
    "label": null,
-   "line": 78,
+   "line": 79,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -6115,7 +6227,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 191,
+   "line": 192,
    "exercised": true,
    "join": "cycle",
    "outcomes": [
@@ -6132,7 +6244,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 191,
+   "line": 192,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -6179,7 +6291,8 @@
    "join": "attributed",
    "outcomes": [
     "dialog",
-    "nothing"
+    "nothing",
+    "changed"
    ]
   },
   {
@@ -6201,7 +6314,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 58,
+   "line": 59,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -6218,7 +6331,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 58,
+   "line": 59,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -6586,7 +6699,8 @@
    "join": "attributed",
    "outcomes": [
     "dialog",
-    "menu"
+    "menu",
+    "nothing"
    ]
   },
   {
@@ -6691,7 +6805,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -6792,13 +6907,13 @@
    "receiver": "dialog",
    "label": "OK",
    "line": 104,
-   "exercised": false,
+   "exercised": true,
    "join": "attributed",
    "outcomes": [
     "alert",
-    "unclickable"
-   ],
-   "why": "ok-blocked"
+    "unclickable",
+    "closed"
+   ]
   },
   {
    "class": "CopyDocumentPresenter",
@@ -7095,8 +7210,11 @@
    "label": "Name",
    "line": 50,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-key"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "NavigationPlugin",
@@ -8257,22 +8375,22 @@
    "classKind": "view",
    "kind": "click",
    "receiver": "useImportNames",
-   "label": null,
+   "label": "Use Import Names",
    "line": 114,
    "via": "UiHandler",
    "exercised": false,
-   "why": "unlabelled"
+   "why": "view"
   },
   {
    "class": "ImportConfigConfirmViewImpl",
    "classKind": "view",
    "kind": "click",
    "receiver": "useImportFolders",
-   "label": null,
+   "label": "Use Import Folders",
    "line": 121,
    "via": "UiHandler",
    "exercised": false,
-   "why": "unlabelled"
+   "why": "view"
   },
   {
    "class": "ManageIndexVolumesPlugin",
@@ -8308,7 +8426,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
-   "line": 86,
+   "line": 89,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8323,7 +8441,7 @@
    "kind": "click",
    "receiver": "newButton",
    "label": "New Field",
-   "line": 93,
+   "line": 92,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8336,7 +8454,7 @@
    "kind": "click",
    "receiver": "editButton",
    "label": "Edit Field",
-   "line": 100,
+   "line": 99,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8349,7 +8467,7 @@
    "kind": "click",
    "receiver": "removeButton",
    "label": "Remove Field",
-   "line": 107,
+   "line": 106,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8362,7 +8480,7 @@
    "kind": "selection",
    "receiver": "registerHandler(selectionModel",
    "label": null,
-   "line": 114,
+   "line": 113,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8435,7 +8553,7 @@
    "kind": "click",
    "receiver": "newButton",
    "label": "New",
-   "line": 92,
+   "line": 93,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8448,7 +8566,7 @@
    "kind": "click",
    "receiver": "openButton",
    "label": "Edit",
-   "line": 93,
+   "line": 94,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8461,7 +8579,7 @@
    "kind": "click",
    "receiver": "deleteButton",
    "label": "Delete",
-   "line": 94,
+   "line": 95,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8475,7 +8593,7 @@
    "kind": "click",
    "receiver": "rescanButton",
    "label": "Rescan Volumes",
-   "line": 95,
+   "line": 96,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8488,7 +8606,7 @@
    "kind": "selection",
    "receiver": "registerHandler(volumeStatusListPresenter.getSelectionModel()",
    "label": null,
-   "line": 86,
+   "line": 87,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8501,7 +8619,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 203,
+   "line": 204,
    "exercised": true,
    "join": "cycle",
    "outcomes": [
@@ -8514,7 +8632,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 203,
+   "line": 204,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8582,7 +8700,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 53,
+   "line": 54,
    "exercised": true,
    "join": "cycle",
    "outcomes": [
@@ -8595,7 +8713,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 53,
+   "line": 54,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -8612,8 +8730,11 @@
    "label": "Type",
    "line": 144,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "IndexSettingsViewImpl",
@@ -8621,7 +8742,7 @@
    "kind": "value",
    "receiver": "maxDocsPerShard",
    "label": "Max Docs Per Shard",
-   "line": 151,
+   "line": 152,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -8635,7 +8756,7 @@
    "kind": "value",
    "receiver": "partitionBy",
    "label": "Partition By",
-   "line": 156,
+   "line": 157,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -8649,7 +8770,7 @@
    "kind": "value",
    "receiver": "partitionSize",
    "label": "Partition Size",
-   "line": 161,
+   "line": 162,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -8663,7 +8784,7 @@
    "kind": "value",
    "receiver": "shardsPerPartition",
    "label": "Shards Per Partition",
-   "line": 166,
+   "line": 167,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -8677,7 +8798,7 @@
    "kind": "key",
    "receiver": "timeField",
    "label": "Main Time Field Name",
-   "line": 171,
+   "line": 172,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -8691,7 +8812,7 @@
    "kind": "value",
    "receiver": "retentionAge",
    "label": "Retention Period",
-   "line": 176,
+   "line": 177,
    "via": "UiHandler",
    "exercised": true,
    "join": "attributed",
@@ -8705,7 +8826,7 @@
    "kind": "value",
    "receiver": "volumeGroups",
    "label": "Volume Group",
-   "line": 181,
+   "line": 182,
    "via": "UiHandler",
    "exercised": false,
    "why": "needs-value"
@@ -9048,7 +9169,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 49,
+   "line": 50,
    "exercised": true,
    "join": "cycle",
    "outcomes": [
@@ -9061,7 +9182,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 49,
+   "line": 50,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -9198,8 +9319,11 @@
    "label": "Node Inclusion Behaviour",
    "line": 96,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "OpenAIModelSettingsViewImpl",
@@ -9570,44 +9694,56 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "allowPathwayCreation",
-   "label": null,
+   "label": "Allow Pathway Creation",
    "line": 143,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "PathwaysSettingsViewImpl",
    "classKind": "view",
    "kind": "value",
    "receiver": "allowPathwayMutation",
-   "label": null,
+   "label": "Allow Pathway Mutation",
    "line": 148,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "PathwaysSettingsViewImpl",
    "classKind": "view",
    "kind": "value",
    "receiver": "allowConstraintCreation",
-   "label": null,
+   "label": "Allow Constraint Creation",
    "line": 153,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "PathwaysSettingsViewImpl",
    "classKind": "view",
    "kind": "value",
    "receiver": "allowConstraintMutation",
-   "label": null,
+   "label": "Allow Constraint Mutation",
    "line": 158,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "PathwaysSettingsViewImpl",
@@ -9617,8 +9753,11 @@
    "label": "Processing Node",
    "line": 163,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "PipelinePlugin",
@@ -9729,7 +9868,7 @@
    "kind": "click",
    "receiver": "getLabel()",
    "label": null,
-   "line": 37,
+   "line": 38,
    "exercised": false,
    "why": "unlabelled"
   },
@@ -9739,9 +9878,13 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 43,
+   "line": 47,
    "exercised": false,
-   "why": "unreached"
+   "join": "attributed",
+   "outcomes": [
+    "alert"
+   ],
+   "why": "ok-blocked"
   },
   {
    "class": "StepLocationLinkPresenter",
@@ -9749,9 +9892,12 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 43,
-   "exercised": false,
-   "why": "unreached"
+   "line": 47,
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "closed"
+   ]
   },
   {
    "class": "SteppingFilterPresenter",
@@ -9799,8 +9945,11 @@
    "receiver": "registerHandler(xPathListPresenter.getSelectionModel()",
    "label": null,
    "line": 143,
-   "exercised": false,
-   "why": "unreached"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "SteppingFilterPresenter",
@@ -9809,8 +9958,11 @@
    "receiver": "registerHandler(elementSelectionModel",
    "label": null,
    "line": 157,
-   "exercised": false,
-   "why": "unreached"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "SteppingFilterPresenter",
@@ -9822,7 +9974,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "closed"
+    "closed",
+    "alert"
    ]
   },
   {
@@ -9844,7 +9997,7 @@
    "kind": "click",
    "receiver": "terminateButton",
    "label": "Terminate Stepping",
-   "line": 238,
+   "line": 240,
    "exercised": false,
    "why": "unreached"
   },
@@ -9854,7 +10007,7 @@
    "kind": "click",
    "receiver": "toggleLogPaneButton",
    "label": "Toggle Log Pane",
-   "line": 239,
+   "line": 241,
    "exercised": false,
    "why": "unreached"
   },
@@ -9864,7 +10017,7 @@
    "kind": "click",
    "receiver": "streamListFilter",
    "label": "Filter",
-   "line": 289,
+   "line": 291,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -9878,7 +10031,7 @@
    "kind": "selection",
    "receiver": "pipelineTreePresenter.getSelectionModel()",
    "label": null,
-   "line": 224,
+   "line": 226,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -9891,7 +10044,7 @@
    "kind": "selection",
    "receiver": "registerHandler(steppingMetaListPresenter.getSelectionModel()",
    "label": null,
-   "line": 247,
+   "line": 249,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -9904,7 +10057,7 @@
    "kind": "value",
    "receiver": "presenter",
    "label": null,
-   "line": 519,
+   "line": 524,
    "exercised": false,
    "why": "needs-value"
   },
@@ -9914,7 +10067,7 @@
    "kind": "context",
    "receiver": "registerHandler(pipelineTreePresenter",
    "label": null,
-   "line": 279,
+   "line": 281,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -9927,7 +10080,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Manage step filters",
-   "line": 421,
+   "line": 426,
    "exercised": false,
    "why": "unreached"
   },
@@ -9937,7 +10090,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Clear step filters on this element",
-   "line": 428,
+   "line": 433,
    "exercised": false,
    "why": "unreached"
   },
@@ -9947,7 +10100,7 @@
    "kind": "command",
    "receiver": "menu item",
    "label": "Clear step filters on all elements",
-   "line": 435,
+   "line": 440,
    "exercised": false,
    "why": "unreached"
   },
@@ -9957,7 +10110,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
-   "line": 340,
+   "line": 345,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -10070,8 +10223,11 @@
    "label": "Minimum Severity",
    "line": 106,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "SteppingFilterViewImpl",
@@ -10081,8 +10237,11 @@
    "label": "Output",
    "line": 113,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "XPathFilterViewImpl",
@@ -10092,8 +10251,11 @@
    "label": "Search type",
    "line": 133,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "XPathFilterViewImpl",
@@ -10103,8 +10265,11 @@
    "label": "Condition",
    "line": 148,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "NewElementPresenter",
@@ -10410,8 +10575,11 @@
    "receiver": "getView()",
    "label": null,
    "line": 117,
-   "exercised": false,
-   "why": "unreached"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "menu"
+   ]
   },
   {
    "class": "PropertyListPresenter",
@@ -10538,8 +10706,11 @@
    "receiver": "layoutPanel",
    "label": null,
    "line": 116,
-   "exercised": false,
-   "why": "view"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "menu"
+   ]
   },
   {
    "class": "PlanBSettingsPresenter",
@@ -10556,7 +10727,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "condenseEnabled",
-   "label": null,
+   "label": "Enabled",
    "line": 95,
    "via": "UiHandler",
    "exercised": false,
@@ -10600,7 +10771,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "synchroniseMerge",
-   "label": null,
+   "label": "Synchronise Data Merges On Write",
    "line": 130,
    "via": "UiHandler",
    "exercised": false,
@@ -10611,7 +10782,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "overwrite",
-   "label": null,
+   "label": "Overwrite Existing Data",
    "line": 135,
    "via": "UiHandler",
    "exercised": false,
@@ -10710,7 +10881,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "storeLatestValue",
-   "label": null,
+   "label": "Store Latest Value",
    "line": 85,
    "via": "UiHandler",
    "exercised": false,
@@ -10721,7 +10892,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "storeMin",
-   "label": null,
+   "label": "Store Min Value",
    "line": 90,
    "via": "UiHandler",
    "exercised": false,
@@ -10732,7 +10903,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "storeMax",
-   "label": null,
+   "label": "Store Max Value",
    "line": 95,
    "via": "UiHandler",
    "exercised": false,
@@ -10743,7 +10914,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "storeCount",
-   "label": null,
+   "label": "Store Count",
    "line": 100,
    "via": "UiHandler",
    "exercised": false,
@@ -10754,7 +10925,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "storeSum",
-   "label": null,
+   "label": "Store Sum",
    "line": 105,
    "via": "UiHandler",
    "exercised": false,
@@ -10823,7 +10994,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "retentionEnabled",
-   "label": null,
+   "label": "Enabled",
    "line": 155,
    "via": "UiHandler",
    "exercised": false,
@@ -10878,7 +11049,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "useStateTime",
-   "label": null,
+   "label": "Use State Time",
    "line": 181,
    "via": "UiHandler",
    "exercised": false,
@@ -10944,7 +11115,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "useSnapshotsForLookup",
-   "label": null,
+   "label": "Use Snapshots For Lookup",
    "line": 58,
    "via": "UiHandler",
    "exercised": false,
@@ -10955,7 +11126,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "useSnapshotsForGet",
-   "label": null,
+   "label": "Use Snapshots For Get",
    "line": 63,
    "via": "UiHandler",
    "exercised": false,
@@ -10966,7 +11137,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "useSnapshotsForQuery",
-   "label": null,
+   "label": "Use Snapshots For Query",
    "line": 68,
    "via": "UiHandler",
    "exercised": false,
@@ -11160,8 +11331,11 @@
    "label": "Font",
    "line": 151,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ThemePreferencesViewImpl",
@@ -11171,15 +11345,18 @@
    "label": "Font Size",
    "line": 158,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ThemePreferencesViewImpl",
    "classKind": "view",
    "kind": "value",
    "receiver": "enableTransparency",
-   "label": null,
+   "label": "Enable Transparency",
    "line": 165,
    "via": "UiHandler",
    "exercised": true,
@@ -11193,7 +11370,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "hideConditionalStyles",
-   "label": null,
+   "label": "Hide Conditional Styles",
    "line": 172,
    "via": "UiHandler",
    "exercised": true,
@@ -11207,11 +11384,14 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "custom",
-   "label": null,
+   "label": "Custom",
    "line": 200,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "TimePreferencesViewImpl",
@@ -11592,7 +11772,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "unclickable"
    ]
   },
   {
@@ -11660,7 +11841,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 88,
+   "line": 89,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11674,7 +11855,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 88,
+   "line": 89,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -11715,7 +11896,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "dialog"
+    "dialog",
+    "nothing"
    ]
   },
   {
@@ -11809,15 +11991,18 @@
    "label": "Change",
    "line": 75,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "DaysWidget",
    "classKind": "widget",
    "kind": "value",
    "receiver": "mon",
-   "label": null,
+   "label": "Monday",
    "line": 89,
    "via": "UiHandler",
    "exercised": false,
@@ -11828,7 +12013,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "tue",
-   "label": null,
+   "label": "Tuesday",
    "line": 94,
    "via": "UiHandler",
    "exercised": false,
@@ -11839,7 +12024,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "wed",
-   "label": null,
+   "label": "Wednesday",
    "line": 99,
    "via": "UiHandler",
    "exercised": false,
@@ -11850,7 +12035,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "thu",
-   "label": null,
+   "label": "Thursday",
    "line": 104,
    "via": "UiHandler",
    "exercised": false,
@@ -11861,7 +12046,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "fri",
-   "label": null,
+   "label": "Friday",
    "line": 109,
    "via": "UiHandler",
    "exercised": false,
@@ -11872,7 +12057,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "sat",
-   "label": null,
+   "label": "Saturday",
    "line": 114,
    "via": "UiHandler",
    "exercised": false,
@@ -11883,7 +12068,7 @@
    "classKind": "widget",
    "kind": "value",
    "receiver": "sun",
-   "label": null,
+   "label": "Sunday",
    "line": 119,
    "via": "UiHandler",
    "exercised": false,
@@ -11894,11 +12079,14 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "maxTaskCreationDelayEnabled",
-   "label": null,
+   "label": "Limit Task Creation Delay",
    "line": 145,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ProcessorEditViewImpl",
@@ -11920,22 +12108,28 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "limitNodeThreads",
-   "label": null,
+   "label": "Limit Single Node Threads",
    "line": 121,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ProfilePeriodEditViewImpl",
    "classKind": "view",
    "kind": "value",
    "receiver": "limitClusterThreads",
-   "label": null,
+   "label": "Limit Total Cluster Threads",
    "line": 126,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ProcessorTaskPresenter",
@@ -12457,7 +12651,11 @@
    "label": "OK",
    "line": 844,
    "exercised": false,
-   "why": "unreached"
+   "join": "attributed",
+   "outcomes": [
+    "alert"
+   ],
+   "why": "ok-blocked"
   },
   {
    "class": "QueryResultTablePresenter",
@@ -12469,7 +12667,7 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "nothing"
+    "closed"
    ]
   },
   {
@@ -12620,7 +12818,11 @@
    "label": "OK",
    "line": 747,
    "exercised": false,
-   "why": "widget"
+   "join": "attributed",
+   "outcomes": [
+    "alert"
+   ],
+   "why": "ok-blocked"
   },
   {
    "class": "QueryTableColumnsManager",
@@ -12632,7 +12834,7 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "nothing"
+    "closed"
    ]
   },
   {
@@ -12700,7 +12902,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 46,
+   "line": 48,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -12713,7 +12915,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 46,
+   "line": 48,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -12841,7 +13043,8 @@
    "exercised": true,
    "join": "label",
    "outcomes": [
-    "changed"
+    "changed",
+    "unclickable"
    ]
   },
   {
@@ -12926,8 +13129,11 @@
    "receiver": "registerHandler(getView().getTemplateTypeSelectionBox()",
    "label": null,
    "line": 75,
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ContentTemplateTabPresenter",
@@ -13279,8 +13485,11 @@
    "receiver": "moveDownButton",
    "label": "Move rule down",
    "line": 276,
-   "exercised": false,
-   "why": "unreached"
+   "exercised": true,
+   "join": "label",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "DataRetentionPolicyPresenter",
@@ -13318,7 +13527,8 @@
    "exercised": true,
    "join": "attributed",
    "outcomes": [
-    "changed"
+    "changed",
+    "grid-rows"
    ]
   },
   {
@@ -13355,7 +13565,7 @@
    "label": "Save rules",
    "line": 433,
    "exercised": true,
-   "join": "label",
+   "join": "attributed",
    "outcomes": [
     "alert"
    ]
@@ -13689,7 +13899,8 @@
    "exercised": true,
    "join": "label",
    "outcomes": [
-    "changed"
+    "changed",
+    "grid-rows"
    ]
   },
   {
@@ -13699,8 +13910,11 @@
    "receiver": "disableButton",
    "label": "Enable selected rules",
    "line": 102,
-   "exercised": false,
-   "why": "unreached"
+   "exercised": true,
+   "join": "label",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "RuleSetSettingsPresenter",
@@ -13722,8 +13936,12 @@
    "receiver": "moveUpButton",
    "label": "Move selected rule up",
    "line": 104,
-   "exercised": false,
-   "why": "unreached"
+   "exercised": true,
+   "join": "label",
+   "outcomes": [
+    "nothing",
+    "changed"
+   ]
   },
   {
    "class": "RuleSetSettingsPresenter",
@@ -13735,7 +13953,8 @@
    "exercised": true,
    "join": "label",
    "outcomes": [
-    "changed"
+    "changed",
+    "nothing"
    ]
   },
   {
@@ -13784,7 +14003,7 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "forever",
-   "label": null,
+   "label": "Keep Forever",
    "line": 117,
    "via": "UiHandler",
    "exercised": false,
@@ -14079,11 +14298,14 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "useAuthentication",
-   "label": null,
+   "label": "Use authentication",
    "line": 185,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "ElasticIndexSettingsViewImpl",
@@ -14334,11 +14556,14 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "useZk",
-   "label": null,
+   "label": "Use ZK",
    "line": 213,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "SolrIndexSettingsViewImpl",
@@ -14624,7 +14849,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 95,
+   "line": 94,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -14640,7 +14865,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 95,
+   "line": 94,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -15437,8 +15662,11 @@
    "label": "Action",
    "line": 72,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "DocumentUserCreatePermissionsEditViewImpl",
@@ -16348,8 +16576,11 @@
    "receiver": "registerHandler(getView().getDeprecated()",
    "label": null,
    "line": 39,
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   },
   {
    "class": "XMLSchemaSettingsPresenter",
@@ -17909,7 +18140,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
-   "line": 31,
+   "line": 38,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -17923,7 +18154,7 @@
    "kind": "cancel",
    "receiver": "dialog",
    "label": "Cancel",
-   "line": 31,
+   "line": 38,
    "exercised": true,
    "join": "attributed",
    "outcomes": [
@@ -18634,16 +18865,19 @@
    "classKind": "view",
    "kind": "value",
    "receiver": "enabled",
-   "label": null,
+   "label": "Enabled",
    "line": 131,
    "via": "UiHandler",
-   "exercised": false,
-   "why": "needs-value"
+   "exercised": true,
+   "join": "attributed",
+   "outcomes": [
+    "changed"
+   ]
   }
  ],
  "messages": {
-  "declared": 276,
-  "observed": 69,
+  "declared": 277,
+  "observed": 71,
   "list": [
    {
     "class": "ActivityEditPresenter",
@@ -18780,7 +19014,7 @@
     "classKind": "widget",
     "kind": "warn",
     "template": "…No schedules filtered.…No schedules selected.",
-    "line": 674,
+    "line": 677,
     "observed": false
    },
    {
@@ -18788,7 +19022,7 @@
     "classKind": "widget",
     "kind": "error",
     "template": "…None of the filtered schedules are enabled.…None of the selected schedules are enabled.",
-    "line": 692,
+    "line": 695,
     "observed": false
    },
    {
@@ -18796,7 +19030,7 @@
     "classKind": "widget",
     "kind": "warn",
     "template": "…Some of the filtered schedules are disabled and will not be run.…Some of the selected schedules are disabled and will not be run.",
-    "line": 699,
+    "line": 702,
     "observed": false
    },
    {
@@ -18804,7 +19038,7 @@
     "classKind": "widget",
     "kind": "confirm",
     "template": "You are about to delete … schedule…s…. Are you sure?",
-    "line": 736,
+    "line": 739,
     "observed": false
    },
    {
@@ -18812,7 +19046,7 @@
     "classKind": "widget",
     "kind": "info",
     "template": "Deleted … schedule…s… successfully.",
-    "line": 755,
+    "line": 758,
     "observed": false
    },
    {
@@ -18886,7 +19120,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Unable to copy",
-    "line": 602,
+    "line": 603,
     "observed": false
    },
    {
@@ -18894,7 +19128,7 @@
     "classKind": "presenter",
     "kind": "confirm",
     "template": "Are you sure you want to delete this entry?",
-    "line": 708,
+    "line": 710,
     "observed": false
    },
    {
@@ -18902,7 +19136,7 @@
     "classKind": "presenter",
     "kind": "warn",
     "template": "Please enter a comment",
-    "line": 1471,
+    "line": 1473,
     "observed": true
    },
    {
@@ -18910,7 +19144,7 @@
     "classKind": "presenter",
     "kind": "confirm",
     "template": "Are you sure you want to delete this annotation?",
-    "line": 1480,
+    "line": 1482,
     "observed": true
    },
    {
@@ -19122,7 +19356,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Error loading '…'",
-    "line": 177,
+    "line": 178,
     "observed": false
    },
    {
@@ -19130,7 +19364,7 @@
     "classKind": "presenter",
     "kind": "info",
     "template": "Copy of '…' complete",
-    "line": 182,
+    "line": 183,
     "observed": false
    },
    {
@@ -19138,7 +19372,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "You cannot remove or hide all tabs",
-    "line": 828,
+    "line": 845,
     "observed": true
    },
    {
@@ -19178,7 +19412,7 @@
     "classKind": "presenter",
     "kind": "warn",
     "template": "No data source has been chosen to search",
-    "line": 460,
+    "line": 459,
     "observed": false
    },
    {
@@ -19186,7 +19420,7 @@
     "classKind": "presenter",
     "kind": "info",
     "template": "Created batch processor",
-    "line": 543,
+    "line": 542,
     "observed": false
    },
    {
@@ -19402,8 +19636,8 @@
     "class": "FsVolumeGroupEditPresenter",
     "classKind": "presenter",
     "kind": "error",
-    "template": "You must provide a name for the index volume group.",
-    "line": 220,
+    "template": "You must provide a name for the data volume group.",
+    "line": 221,
     "observed": true
    },
    {
@@ -19411,7 +19645,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Group name '…' is already in use by another group.",
-    "line": 230,
+    "line": 236,
     "observed": false
    },
    {
@@ -19419,7 +19653,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "You must provide a name",
-    "line": 62,
+    "line": 63,
     "observed": true
    },
    {
@@ -19427,7 +19661,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Group name '…' is already in use by another group.",
-    "line": 82,
+    "line": 88,
     "observed": false
    },
    {
@@ -19745,9 +19979,9 @@
    {
     "class": "IndexFieldEditPresenter",
     "classKind": "presenter",
-    "kind": "validation-exception",
+    "kind": "warn",
     "template": "An index field must have a name",
-    "line": 63,
+    "line": 65,
     "observed": true
    },
    {
@@ -19835,7 +20069,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "You must provide a name for the index volume group.",
-    "line": 232,
+    "line": 233,
     "observed": true
    },
    {
@@ -19843,7 +20077,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Group name '…' is already in use by another group.",
-    "line": 242,
+    "line": 248,
     "observed": false
    },
    {
@@ -19851,7 +20085,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "You must provide a name",
-    "line": 63,
+    "line": 64,
     "observed": true
    },
    {
@@ -19859,7 +20093,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Group name '…' is already in use by another group.",
-    "line": 81,
+    "line": 87,
     "observed": false
    },
    {
@@ -19899,7 +20133,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "You must provide a name",
-    "line": 59,
+    "line": 60,
     "observed": true
    },
    {
@@ -19907,7 +20141,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Group name '…' is already in use by another group.",
-    "line": 74,
+    "line": 80,
     "observed": false
    },
    {
@@ -19955,7 +20189,7 @@
     "classKind": "presenter",
     "kind": "confirm",
     "template": "You are setting advanced filters! It is recommended you constrain your filter (e.g. by 'Created') to avoid an expensive query. Are you sure you want to apply this advanced filter?",
-    "line": 302,
+    "line": 304,
     "observed": false
    },
    {
@@ -20019,7 +20253,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Unable to create embedded document",
-    "line": 449,
+    "line": 451,
     "observed": false
    },
    {
@@ -20033,7 +20267,7 @@
    {
     "class": "BatchProcessorFilterEditPresenter",
     "classKind": "presenter",
-    "kind": "error-event",
+    "kind": "warn",
     "template": "No change selected.",
     "line": 104,
     "observed": false
@@ -20041,25 +20275,25 @@
    {
     "class": "BatchProcessorFilterEditPresenter",
     "classKind": "presenter",
-    "kind": "error-event",
+    "kind": "warn",
     "template": "No user selected.",
-    "line": 113,
+    "line": 110,
     "observed": false
    },
    {
     "class": "BatchProcessorFilterEditPresenter",
     "classKind": "presenter",
-    "kind": "error-event",
+    "kind": "warn",
     "template": "No processors are included in the current filter.",
-    "line": 130,
-    "observed": false
+    "line": 124,
+    "observed": true
    },
    {
     "class": "BatchProcessorFilterEditPresenter",
     "classKind": "presenter",
     "kind": "info",
     "template": "Successfully changed.",
-    "line": 163,
+    "line": 154,
     "observed": false
    },
    {
@@ -20067,7 +20301,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Failed to change.",
-    "line": 171,
+    "line": 162,
     "observed": false
    },
    {
@@ -20099,7 +20333,7 @@
     "classKind": "presenter",
     "kind": "confirm",
     "template": "You are about to process all feeds. Are you sure you wish to do this?",
-    "line": 317,
+    "line": 319,
     "observed": true
    },
    {
@@ -20107,7 +20341,7 @@
     "classKind": "presenter",
     "kind": "confirm",
     "template": "You are about to process all stream types. Are you sure you wish to do this?",
-    "line": 361,
+    "line": 363,
     "observed": false
    },
    {
@@ -20123,7 +20357,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "You must provide a name for the processor profile.",
-    "line": 134,
+    "line": 135,
     "observed": true
    },
    {
@@ -20131,7 +20365,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Processor profile name '…' is already in use by another processor profile.",
-    "line": 141,
+    "line": 147,
     "observed": false
    },
    {
@@ -20220,6 +20454,14 @@
     "kind": "warn",
     "template": "Failed to destroy store",
     "line": 170,
+    "observed": false
+   },
+   {
+    "class": "ResultStoreSettingsPresenter",
+    "classKind": "presenter",
+    "kind": "warn",
+    "template": "… must be set, e.g. 10m, 1h or 1d.",
+    "line": 52,
     "observed": false
    },
    {
@@ -20433,9 +20675,9 @@
    {
     "class": "BatchDocumentPermissionsEditPresenter",
     "classKind": "presenter",
-    "kind": "error-event",
+    "kind": "warn",
     "template": "No documents are included in the current filter for this permission change.",
-    "line": 176,
+    "line": 175,
     "observed": false
    },
    {
@@ -20443,7 +20685,7 @@
     "classKind": "presenter",
     "kind": "info",
     "template": "Successfully changed permissions.",
-    "line": 208,
+    "line": 207,
     "observed": false
    },
    {
@@ -20451,7 +20693,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Failed to change permissions.",
-    "line": 216,
+    "line": 215,
     "observed": false
    },
    {
@@ -20570,15 +20812,15 @@
     "class": "EditApiKeyPresenter",
     "classKind": "presenter",
     "kind": "error",
-    "template": "API Key expiry date must be less than or equal to …",
-    "line": 251,
-    "observed": false
+    "template": "A valid expiry date must be provided for the API key.",
+    "line": 252,
+    "observed": true
    },
    {
     "class": "EditApiKeyPresenter",
     "classKind": "presenter",
     "kind": "error",
-    "template": "API Key expiry date cannot be in the past …",
+    "template": "API Key expiry date cannot be in the past.",
     "line": 254,
     "observed": false
    },
@@ -20587,7 +20829,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "API Key expiry date cannot be after …",
-    "line": 257,
+    "line": 256,
     "observed": false
    },
    {
@@ -20595,7 +20837,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "A name must be provided for the API key.",
-    "line": 260,
+    "line": 259,
     "observed": true
    },
    {
@@ -20603,7 +20845,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "An owner must be provided for the API key.",
-    "line": 262,
+    "line": 261,
     "observed": false
    },
    {
@@ -20611,7 +20853,7 @@
     "classKind": "presenter",
     "kind": "error",
     "template": "Error creating API key: …",
-    "line": 293,
+    "line": 292,
     "observed": false
    },
    {

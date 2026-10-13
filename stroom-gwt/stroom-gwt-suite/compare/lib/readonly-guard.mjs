@@ -56,6 +56,11 @@ const POST_READ_PATTERNS = [
   //   Blocked the A5 sweep on the User Access screen (new in #5656, so it postdates this list) and
   //   the resulting error Alert was then read as a dialog that shouldn't be there.
   /\/api\/userAccess\/v\d+\/sessions$/i,
+  //   /scheduledTime/v1 – works out a schedule's next run times (ScheduleService.getScheduledTimes:
+  //   a trigger and some arithmetic, nothing stored). Every schedule box validates through it, so
+  //   blocking it put a "server did not respond" alert over every schedule dialog the moment a field
+  //   changed: Batch Edit Schedules' first enable tick, and the schedule boxes themselves.
+  /\/api\/scheduledTime\/v\d+$/i,
   // Search polling + result-store lifecycle: transient server state, so allowed (the guard only
   // blocks what would change stored content).
   /\/api\/(dashboard|query)\/[^/]+\/(search|poll|destroy|keepAlive)/i,

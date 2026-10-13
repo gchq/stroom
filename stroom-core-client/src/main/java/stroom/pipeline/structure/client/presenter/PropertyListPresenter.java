@@ -408,7 +408,7 @@ public class PropertyListPresenter
                                 final DocumentPlugin<Document> documentPlugin = documentPluginRegistry.get(docType,
                                         Document.class);
 
-                                createEmbeddedDocument(documentPlugin, embeddedPropertyName, parentDocRef,
+                                createEmbeddedDocument(documentPlugin, embeddedPropertyName, parentDocRef, e,
                                         document -> {
                                             final PipelineProperty embeddedProperty = PipelineProperty.builder(editing)
                                                     .value(new PipelinePropertyValue(document.asDocRef(), true))
@@ -456,11 +456,13 @@ public class PropertyListPresenter
     private void createEmbeddedDocument(final DocumentPlugin<Document> documentPlugin,
                                         final String documentName,
                                         final DocRef parentDocRef,
+                                        final HidePopupRequestEvent event,
                                         final Consumer<Document> callback) {
+        // If it can't be created or saved, say why and let the user try again or cancel
         final RestErrorHandler errorHandler = throwable -> AlertEvent.fireError(
                 this,
                 "Unable to create embedded document",
-                throwable.getMessage(), null);
+                throwable.getMessage(), event::reset);
 
         documentPlugin.create(documentName, document -> {
             if (document instanceof final Embeddable embeddable) {

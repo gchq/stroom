@@ -31,11 +31,7 @@ import stroom.widget.layout.client.SplitPane;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.MySplitLayoutPanel;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
@@ -92,36 +88,36 @@ public final class SplitPaneContentStories {
                     // of its centre (WCAG 2.5.8): the pager's buttons and the editor's gutter aren't
                     play.expect(TargetSpacing.crowding(splitter)).toEqual(List.of());
                 })
-                // How the old and new splitters look beside Stroom's table and code editor: the old
-                // thin panel (ThinSplitLayoutPanel) above the thin split pane, set up alike
-                .story("CompareThinWithContent", context -> compareWithContent(new ThinSplitLayoutPanel(), true))
-                // The old wide panel (MySplitLayoutPanel), a 7px gap, above the split pane
-                .story("CompareWithContent", context -> compareWithContent(new MySplitLayoutPanel(), false))
-                // The stepping screen's element layout (ElementViewImpl), which put four panes in
-                // one old panel (code above, log below, input beside output in between): three
-                // nested split panes, side by side with the old panel, the same sizes
-                .story("SteppingLayout", context -> {
-                    final FlowPanel page = new FlowPanel();
-                    page.add(frame(oldStepping(), "320px"));
-                    page.add(frame(newStepping(), "320px"));
-                    return page;
+                // A regular splitter (a 7px gap) beside Stroom's table and code editor (the real
+                // input check presses it with the mouse)
+                .story("RegularTableAndEditor", context -> {
+                    final SplitPane pane = thin("420px, *", "Table, Editor");
+                    pane.setThin(false);
+                    pane.add(SplitPaneContent.table("grid"));
+                    pane.add(SplitPaneContent.editor());
+                    return frame(pane, "250px");
                 })
                 .withPlay(play -> {
-                    for (final String name : List.of("code", "input", "output", "log")) {
-                        final Query oldPane = play.getByTestId("old-" + name);
-                        final Query newPane = play.getByTestId("new-" + name);
-                        final Value<Double> oldWidth = oldPane.width();
-                        final Value<Double> newWidth = newPane.width();
-                        final Value<Double> oldHeight = oldPane.height();
-                        final Value<Double> newHeight = newPane.height();
-                        // Within 3px: the old panel takes 2px off each share
-                        play.waitFor(() -> play.expect(name + " width difference",
-                                () -> Math.abs(oldWidth.get() - newWidth.get())).toBeLessThanOrEqual(3));
-                        play.expect(name + " height difference",
-                                () -> Math.abs(oldHeight.get() - newHeight.get())).toBeLessThanOrEqual(3);
-                    }
+                    play.findByText("Person 1");
+                    play.expect(play.getByTestId("grid").width()).toBe(420.0);
+                })
+                // The stepping screen's element layout (ElementViewImpl): code above, log below,
+                // and input beside output in between, as three nested split panes
+                .story("SteppingLayout", context -> frame(stepping(), "320px"))
+                .withPlay(play -> {
+                    final Value<Double> height = play.getByTestId("stepping").height();
+                    final Value<Double> width = play.getByTestId("stepping").width();
+                    final Value<Double> code = play.getByTestId("code").height();
+                    final Value<Double> log = play.getByTestId("log").height();
+                    final Value<Double> input = play.getByTestId("input").width();
+                    play.expect("code's share less 50%",
+                            () -> Math.abs(code.get() - height.get() * 0.5)).toBeLessThanOrEqual(1);
+                    play.expect("the log's share less 15%",
+                            () -> Math.abs(log.get() - height.get() * 0.15)).toBeLessThanOrEqual(1);
+                    play.expect("input's share less 50%",
+                            () -> Math.abs(input.get() - width.get() * 0.5)).toBeLessThanOrEqual(1);
                     // Reading order: code, input, output, then log
-                    play.expect(play.getByTestId("new")).toHaveTextContent(
+                    play.expect(play.getByTestId("stepping")).toHaveTextContent(
                             TextMatch.regex("Code.*Input.*Output.*Log"));
                 })
                 // A pane collapsed to nothing is inert, so its fields can't be reached unseen;
@@ -306,58 +302,18 @@ public final class SplitPaneContentStories {
         return frame;
     }
 
-    // An old panel and a split pane, each with a table beside a code editor, in labelled frames
-    private static Widget compareWithContent(final DockLayoutPanel old, final boolean thin) {
-        old.addWest(SplitPaneContent.table("old-table"), 420);
-        old.add(SplitPaneContent.editor());
-        final SplitPane pane = new SplitPane();
-        pane.setThin(thin);
-        pane.setSizes("420px, *");
-        pane.setNames("Table, Editor");
-        pane.add(SplitPaneContent.table("new-table"));
-        pane.add(SplitPaneContent.editor());
-        final FlowPanel page = new FlowPanel();
-        page.add(labelled(old.getClass().getSimpleName() + " (old)", frame(old, "250px"), "old"));
-        page.add(labelled("SplitPane (new)", frame(pane, "250px"), "new"));
-        return page;
-    }
-
-    private static Widget labelled(final String label, final Widget frame, final String testId) {
-        final FlowPanel section = new FlowPanel();
-        section.getElement().setAttribute("data-testid", testId);
-        final HTML heading = new HTML(label);
-        heading.getElement().getStyle().setProperty("margin", "8px 8px 0");
-        heading.getElement().getStyle().setProperty("fontSize", "0.8rem");
-        section.add(heading);
-        section.add(frame);
-        return section;
-    }
-
-    // ElementViewImpl's layout, in one old panel: code north 50%, log south 15%, input west 50%,
-    // output in the centre
-    private static Widget oldStepping() {
-        final ThinSplitLayoutPanel layout = new ThinSplitLayoutPanel();
-        layout.setHSplits(0.5);
-        layout.setVSplits(0.5, 0.15);
-        layout.addNorth(SplitPaneContent.block("Code", "old-code", true), 200);
-        layout.addSouth(SplitPaneContent.block("Log", "old-log", false), 30);
-        layout.addWest(SplitPaneContent.block("Input", "old-input", true), 200);
-        layout.add(SplitPaneContent.block("Output", "old-output", false));
-        return layout;
-    }
-
-    // The same layout as split panes: code, the middle and the log stacked, and the middle input
-    // beside output
-    private static Widget newStepping() {
+    // ElementViewImpl's layout: code, the middle and the log stacked, and the middle input beside
+    // output
+    private static Widget stepping() {
         final SplitPane middle = thin("50%, *", "Input, Output");
-        middle.add(SplitPaneContent.block("Input", "new-input", true));
-        middle.add(SplitPaneContent.block("Output", "new-output", false));
+        middle.add(SplitPaneContent.block("Input", "input", true));
+        middle.add(SplitPaneContent.block("Output", "output", false));
         final SplitPane stack = thin("50%, *, 15%", "Code, Middle, Log");
         stack.setVertical(true);
-        stack.add(SplitPaneContent.block("Code", "new-code", true));
+        stack.add(SplitPaneContent.block("Code", "code", true));
         stack.add(middle);
-        stack.add(SplitPaneContent.block("Log", "new-log", false));
-        stack.getElement().setAttribute("data-testid", "new");
+        stack.add(SplitPaneContent.block("Log", "log", false));
+        stack.getElement().setAttribute("data-testid", "stepping");
         return stack;
     }
 }

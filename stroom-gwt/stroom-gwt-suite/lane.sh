@@ -47,8 +47,9 @@ for item in "$@"; do
   mkdir -p "${out}"
   echo "lane: ${name} started $(date +%F' '%H:%M)" >> "${SUITE}/out/${round}-lanes.log"
   # shellcheck disable=SC2086 # the shard's settings are deliberately split into words
-  env STROOM_USER="${STROOM_USER:-admin}" STROOM_PASS="${STROOM_PASS:-a}" ${envs} \
-    MAXNODES=5000 POSTDEPTH=1 OUT="${out}" \
+  # The defaults come first, so that a shard's own settings (e.g. POSTDEPTH=2) override them
+  env STROOM_USER="${STROOM_USER:-admin}" STROOM_PASS="${STROOM_PASS:-a}" MAXNODES=5000 POSTDEPTH=1 \
+    ${envs} OUT="${out}" \
     node "${SUITE}/walk.mjs" > "${out}/walk.log" 2>&1 < /dev/null || true
   echo "lane: ${name} done $(date +%F' '%H:%M)" >> "${SUITE}/out/${round}-lanes.log"
 done

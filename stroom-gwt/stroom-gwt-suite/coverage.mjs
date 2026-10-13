@@ -45,6 +45,7 @@ import { feedbackShown, isFilterAction, pagerVerdict, refreshVerdict, sortVerdic
 import { illegalVerdict } from './lib/illegal.mjs';
 import { ctrlEnterVerdict, escapeVerdict } from './lib/keys.mjs';
 import { dirtyVerdict } from './lib/dirty.mjs';
+import { spinnerVerdicts } from './lib/mouse.mjs';
 import { staleBy } from './lib/vintage.mjs';
 import { join } from 'node:path';
 import { fromSuite, oracle } from './lib/paths.mjs';
@@ -465,6 +466,8 @@ const cyclesReport = () => {
 };
 
 const checks = { by: new Map(), fails: [], unstable: [] };
+/** Every re-judged verdict, by file, for tools/flips.mjs: a fix shows as a place that passes where it failed. */
+const allChecks = [];
 const selectionNodes = []; // { run, id, enabled: Set(labels), disabledAtRest: [...] of the parent }
 for (const f of files) {
   const data = JSON.parse(readFileSync(join(IN, f), 'utf8'));
@@ -487,6 +490,12 @@ for (const f of files) {
           const inline = feedbackShown(c.after);
           if (inline) c = { ...c, verdict: 'pass', why: `validation, inline: ${String(inline).slice(0, 80)}` };
         }
+      }
+      // A spinner gesture is re-judged from the four class captures it recorded, so a correction to
+      // what the classes mean (ValueSpinnerCell's `--hover` / `--pressed`) reaches captures already taken.
+      if (['mouseover', 'mouseout', 'mousedown', 'mouseup'].includes(c.kind) && c.evidence?.hovered !== undefined) {
+        const again = spinnerVerdicts(c.evidence, c.field ?? a.field).find((v) => v.kind === c.kind);
+        if (again) c = { ...c, ...again };
       }
       // The Filter check applies only to a dialog that FILTERS. The walker matched any opener with
       // the word in it, so `Add XPath Filter` — which adds a row by design — was recorded as a
@@ -515,6 +524,8 @@ for (const f of files) {
         c = { ...c, ...ctrlEnterVerdict({ keyOutcome: recordedOutcome(a.outcome, a.said), okOutcome: a.okOutcome, keySaid: a.said,
           aceFocused: a.aceFocused, okBlocked: false, keyBlocked: (a.blocked ?? []).length > 0 }) };
       }
+      allChecks.push({ file: f, run, node: a.node, label: a.label, kind: c.kind, verdict: c.verdict, why: c.why,
+        walkerVersion: data.summary?.walkerVersion });
       const k = `${c.kind}:${c.verdict}`;
       checks.by.set(k, (checks.by.get(k) ?? 0) + 1);
       if (c.verdict === 'fail') {
@@ -653,6 +664,12 @@ const staleException = (msg, e) => {
   return null;
 };
 const newExceptions = [...alerts.exceptions].filter(([m, e]) => !knownBug(m) && !staleException(m, e)).length;
+// Dialogs a walk could not close, by run. Each one cost a reload; before walk.mjs reloaded, each
+// spoiled the rest of its shard (#48, #40), so a run that lists one is a run to read with care.
+const stranded = files.flatMap((f) => {
+  const data = JSON.parse(readFileSync(join(IN, f), 'utf8'));
+  return (data.stranded ?? []).map((s) => ({ run: data.summary?.area ?? f, file: f, ...s }));
+});
 // Declared ABOVE `lines`: that array is a literal, evaluated where it stands, so a `const` used
 // inside it must already be initialised. The same temporal dead zone bit the handler inventory's
 // MOUSE_KINDS earlier today.
@@ -773,6 +790,13 @@ const lines = [
       + ` · **${f.kind}** ${f.node} › ${f.label} — ${f.why}`;
   }) : ['_none_']),
   '',
+  `### Dialogs that would not close (${stranded.length})`,
+  '',
+  '_A dialog that Escape and its own Cancel/Close both left open. The walk reloads and carries on, so'
+  + ' each is one reload; the dialog is a trap for a user and is worth a probe._',
+  '',
+  ...(stranded.length ? stranded.map((s) => `- \`${s.file}\` · [${s.dialogs.join(', ')}] at ${s.node ?? 'a seed boundary'}`) : ['_none_']),
+  '',
   `### Unstable on Refresh (${checks.unstable.length})`,
   '',
   ...(checks.unstable.length ? checks.unstable.slice(0, 40).map((f) => `- ${f.node} — ${f.why}`) : ['_none_']),
@@ -823,6 +847,7 @@ const lines = [
   '',
 ];
 writeFileSync(join(OUT, 'coverage.md'), lines.join('\n'));
+writeFileSync(join(OUT, 'checks.json'), JSON.stringify(allChecks));
 writeFileSync(join(OUT, 'node-presenters.json'), JSON.stringify(nodePresenters));
 writeFileSync(join(OUT, 'coverage.json'), JSON.stringify({
   denominator: denominator.size, reached: coveredKnown.length, attempted: attempted.length,

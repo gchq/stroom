@@ -135,7 +135,8 @@ public final class UserGroupsScreenStories {
                 })
                 // #5405: Tab reads the panes as they are laid out, the master list, then the left
                 // (Member Of) pane, then the right (Members) pane; the right pane once came first,
-                // as its split panel adds the centre (left) pane last
+                // as its old split panel added the centre (left) pane last. The split panes'
+                // splitters are tab stops too, each between the panes it divides
                 .story("ReadingOrder", UserGroupsScreenStories::render)
                 .withPlay(play -> {
                     play.findAllByText("Administrators");
@@ -146,10 +147,13 @@ public final class UserGroupsScreenStories {
                     play.expect(play.body()).toHaveTextContent(TextMatch.regex(
                             "is a member of:.*Members of group"));
                     // The panes' tab stops: a quick filter, its help, its toolbar and its pager
-                    // (and its grid, a div), the master's, then Member Of's, then Members'
+                    // (and its grid, a div), the master's, then Member Of's, then Members', with
+                    // the splitter (named by the pane it resizes) between each
                     play.expect(TabStops.names(play.body())).toEqual(List.of(
                             "input", "Quick Filter Syntax Help", "Create Group", "First", "div",
+                            "Users and groups",
                             "input", "Quick Filter Syntax Help", "Add", "First",
+                            "Members",
                             "input", "Quick Filter Syntax Help", "Add", "First", "div"));
                 })
                 // Create / Edit / Delete, with titles from the selection; Edit renames a group

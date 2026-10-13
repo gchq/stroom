@@ -601,7 +601,10 @@ public class ExecutionScheduleManager
                                 // Nothing changed!
                                 e.hide();
                             }
-                        }, this);
+                        },
+                        // If it isn't valid, let the user change it or cancel
+                        e::reset,
+                        this);
             } else {
                 e.hide();
             }

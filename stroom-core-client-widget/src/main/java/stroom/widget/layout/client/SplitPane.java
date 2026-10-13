@@ -40,8 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// Panes side by side (or one above another) with splitters between them that the user drags, or
-/// moves with the keyboard, to share the space between the panes. It replaces GWT's
-/// `SplitLayoutPanel` (Stroom's `ThinSplitLayoutPanel` and `MySplitLayoutPanel`).
+/// moves with the keyboard, to share the space between the panes. It replaced GWT's
+/// `SplitLayoutPanel` (Stroom's copies of it, `ThinSplitLayoutPanel` and `MySplitLayoutPanel`).
 ///
 /// It is a CSS grid, so the panes are in the page in the order they are shown, and a screen reader
 /// and the Tab key meet them in that order. Each splitter is a focusable `role="separator"` (the

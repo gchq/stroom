@@ -28,41 +28,29 @@ import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.widget.layout.client.SplitPane;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.MySplitLayoutPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories for [SplitPane], the replacement for Stroom's split panels ([ThinSplitLayoutPanel] and
-/// [MySplitLayoutPanel]).
+/// Stories for [SplitPane], Stroom's split panes.
 ///
-/// The `Compare` stories show an old split panel (test id `old`) above a split pane set up alike
-/// (test id `new`), and check their panes are the same size; the runner's real input check drags
-/// both splitters with the real mouse and checks again (`test-runner/lib/real-input.mjs`). The other
-/// stories cover what only the split pane does: the keyboard, what a screen reader is told, and the
-/// panes' order in the page.
+/// The `Drag` stories show a split pane set up as Stroom's screens set them up; the runner's real
+/// input check drags each splitter with the real mouse, and checks the pane follows it
+/// (`test-runner/lib/real-input/split-pane.mjs`). The other stories cover the keyboard, what a
+/// screen reader is told, and the panes' order in the page.
 public final class SplitPaneStories {
 
     // Spy names
     private static final String ON_RESIZE = "onResize";
 
     private static final String HINT = "Drag the divider →";
-    private static final String SPLITTER = ".split-pane__splitter";
-    // How far the old and new panes' sizes may differ: the old panel takes 2px off a proportional
-    // pane, and draws its thin splitter within the pane beside it
-    private static final double TOLERANCE_PX = 3;
 
     private SplitPaneStories() {
         // Static utility
@@ -74,42 +62,37 @@ public final class SplitPaneStories {
     public static void addTo(final StoryRegistry registry) {
         registry.component("Widgets/Layout/SplitPane", SplitPaneStories.class)
                 .layout(StoryLayout.FULLSCREEN)
-                // ThinSplitLayoutPanel <g:west size="300"> and SplitPane sizes="300px, *" thin
-                .story("CompareThinHorizontal", context -> compare(new ThinSplitLayoutPanel(),
-                        false, false, 300, thin("300px, *")))
-                .withPlay(play -> expectSameSizes(play, false))
-                // <g:north size="120">
-                .story("CompareThinVertical", context -> compare(new ThinSplitLayoutPanel(),
-                        true, false, 120, vertical(thin("120px, *"))))
-                .withPlay(play -> expectSameSizes(play, true))
-                // <g:east size="250">: the second pane is the sized one
-                .story("CompareThinAnchorEnd", context -> compare(new ThinSplitLayoutPanel(),
-                        false, true, 250, thin("*, 250px")))
-                .withPlay(play -> expectSameSizes(play, false))
-                // hSplits="0.3": the first pane keeps 30% as the panel is resized
-                .story("CompareThinProportional", context -> {
-                    final ThinSplitLayoutPanel old = new ThinSplitLayoutPanel();
-                    old.setHSplits(0.3);
-                    return compare(old, false, false, 300, thin("30%, *"));
+                // A thin splitter (sizes="300px, *"): the real input check drags it with the
+                // real mouse, and the pane must follow the mouse to the pixel
+                .story("DragThinHorizontal", context -> framed(named(thin("300px, *"))))
+                .withPlay(play -> play.expect(play.getByTestId("pane-0").width()).toBe(300.0))
+                // A thin splitter between stacked panes
+                .story("DragThinVertical", context -> framed(named(vertical(thin("120px, *")))))
+                .withPlay(play -> play.expect(play.getByTestId("pane-0").height()).toBe(120.0))
+                // The second pane is the sized one: dragging left grows it
+                .story("DragThinAnchorEnd", context -> framed(named(thin("*, 250px"))))
+                .withPlay(play -> play.expect(play.getByTestId("pane-1").width()).toBe(250.0))
+                // The first pane keeps 30% of the split pane as it is resized
+                .story("DragThinProportional", context -> framed(named(thin("30%, *"))))
+                .withPlay(play -> {
+                    final Value<Double> width = play.getByTestId("pane-0").width();
+                    final Value<Double> frameWidth = play.getByTestId("frame").width();
+                    // The frame has a 1px border either side
+                    play.expect("30% of the frame's inside", () -> Math.abs(width.get()
+                            - (frameWidth.get() - 2) * 0.3)).toBeLessThanOrEqual(1);
                 })
-                .withPlay(play -> expectSameSizes(play, false))
-                // setWidgetMinSize(first, 150): only a drag shows it (the real input check)
-                .story("CompareThinWithMinimum", context -> {
-                    final ThinSplitLayoutPanel old = new ThinSplitLayoutPanel();
-                    final SplitPane pane = thin("300px, *");
+                // A drag stops at the pane's minimum (150px)
+                .story("DragThinWithMinimum", context -> {
+                    final SplitPane pane = named(thin("300px, *"));
                     pane.setMinSizes("150px");
-                    final Widget widget = compare(old, false, false, 300, pane);
-                    old.setWidgetMinSize(old.getWidget(0), 150);
-                    return widget;
+                    return framed(pane);
                 })
-                .withPlay(play -> expectSameSizes(play, false))
-                // MySplitLayoutPanel, whose splitter is a 7px gap
-                .story("CompareHorizontal", context -> compare(new MySplitLayoutPanel(),
-                        false, false, 300, split("300px, *")))
-                .withPlay(play -> expectSameSizes(play, false))
-                .story("CompareVertical", context -> compare(new MySplitLayoutPanel(),
-                        true, false, 120, vertical(split("120px, *"))))
-                .withPlay(play -> expectSameSizes(play, true))
+                .withPlay(play -> play.expect(play.getByTestId("pane-0").width()).toBe(300.0))
+                // A regular splitter, a 7px gap
+                .story("DragHorizontal", context -> framed(named(split("300px, *"))))
+                .withPlay(play -> play.expect(play.getByTestId("pane-0").width()).toBe(300.0))
+                .story("DragVertical", context -> framed(named(vertical(split("120px, *")))))
+                .withPlay(play -> play.expect(play.getByTestId("pane-0").height()).toBe(120.0))
 
                 // A splitter is a separator a keyboard user can reach and move: Left and Right
                 // move it 10px, Home and End to its limits, and Enter collapses its pane and
@@ -174,8 +157,7 @@ public final class SplitPaneStories {
                     play.expect(play.getByTestId("pane-0").height()).toBe(130.0);
                 })
                 // The second pane is the sized one: the splitter resizes it, so Right shrinks it.
-                // It is still second in the page, where an old panel put it first (it adds the
-                // centre last)
+                // It is still second in the page
                 .story("AnchorEnd", context -> {
                     final SplitPane pane = thin("*, 250px");
                     pane.setNames("Content, Details");
@@ -376,7 +358,13 @@ public final class SplitPaneStories {
         return pane;
     }
 
-    // The split pane with the two panes the old panels' stories show, in the stories' frame
+    // The split pane with its two panes named as their text says
+    private static SplitPane named(final SplitPane pane) {
+        pane.setNames("Left panel, Right panel");
+        return pane;
+    }
+
+    // The split pane with two panes (test ids pane-0 and pane-1), in the stories' frame
     private static Widget framed(final SplitPane pane) {
         addPanes(pane);
         final FlowPanel frame = SplitPanes.frame(pane);
@@ -391,74 +379,6 @@ public final class SplitPaneStories {
         second.getElement().setAttribute("data-testid", "pane-1");
         pane.add(first);
         pane.add(second);
-    }
-
-    // An old split panel laid out as a story asks, above a split pane with the same panes
-    private static Widget compare(final DockLayoutPanel old,
-                                  final boolean vertical,
-                                  final boolean anchorEnd,
-                                  final double size,
-                                  final SplitPane pane) {
-        final Widget docked = SplitPanes.layout(old, vertical, anchorEnd, size, HINT);
-        docked.getElement().setAttribute("data-testid", "old-sized");
-        pane.setNames("Left panel, Right panel");
-        addPanes(pane);
-        pane.getWidget(anchorEnd
-                ? 1
-                : 0).getElement().setAttribute("data-testid", "new-sized");
-        final FlowPanel page = new FlowPanel();
-        final Style style = page.getElement().getStyle();
-        style.setProperty("display", "flex");
-        style.setProperty("flexDirection", "column");
-        style.setProperty("gap", "8px");
-        style.setProperty("padding", "8px");
-        page.add(labelled(old.getClass().getSimpleName() + " (old)", SplitPanes.frame(old), "old"));
-        // In Stroom a resized window reaches an old panel through its parents' onResize calls,
-        // which the story's frame doesn't make; a split pane needs none
-        final HandlerRegistration resizing = Window.addResizeHandler(event -> old.onResize());
-        page.addAttachHandler(event -> {
-            if (!event.isAttached()) {
-                resizing.removeHandler();
-            }
-        });
-        page.add(labelled("SplitPane (new)", SplitPanes.frame(pane), "new"));
-        return page;
-    }
-
-    private static Widget labelled(final String label, final FlowPanel frame, final String testId) {
-        final FlowPanel section = new FlowPanel();
-        section.getElement().setAttribute("data-testid", testId);
-        final HTML heading = new HTML(label);
-        heading.getElement().getStyle().setProperty("margin", "0 0 4px");
-        heading.getElement().getStyle().setProperty("fontSize", "0.8rem");
-        section.add(heading);
-        frame.getElement().getStyle().setProperty("height", "260px");
-        section.add(frame);
-        return section;
-    }
-
-    // The old and new sized panes are the same size, as are the panes beside them
-    private static void expectSameSizes(final Play play, final boolean vertical) {
-        final Query oldSized = play.getByTestId("old-sized");
-        final Query newSized = play.getByTestId("new-sized");
-        // The old panel lays itself out once attached
-        play.waitFor(() -> play.expect(difference(oldSized, newSized, vertical))
-                .toBeLessThanOrEqual(TOLERANCE_PX));
-        final Query old = play.getByTestId("old");
-        final Query split = play.getByTestId("new");
-        play.expect(play.within(split).querySelectorAll(SPLITTER)).toHaveLength(1);
-        play.expect(play.within(old).querySelector(".split-pane")).toBeNull();
-    }
-
-    private static Value<Double> difference(final Query oldPane, final Query newPane, final boolean vertical) {
-        final Value<Double> oldSize = vertical
-                ? oldPane.height()
-                : oldPane.width();
-        final Value<Double> newSize = vertical
-                ? newPane.height()
-                : newPane.width();
-        return Value.of("the difference between the old and new panes' sizes",
-                () -> Math.abs(oldSize.get() - newSize.get()));
     }
 
     // Shows a split pane of three panes with the sizes and names given, and returns the error it

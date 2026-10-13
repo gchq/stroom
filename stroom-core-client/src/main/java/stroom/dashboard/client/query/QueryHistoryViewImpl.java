@@ -20,13 +20,11 @@ import stroom.cell.list.client.CustomCellList;
 import stroom.dashboard.client.query.QueryHistoryPresenter.QueryHistoryView;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.preferences.client.DateTimeFormatter;
-import stroom.widget.util.client.ReadingOrder;
 
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.gwt.user.client.ui.SimplePanel;
-import com.google.gwt.user.client.ui.ThinSplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
@@ -35,8 +33,6 @@ import com.gwtplatform.mvp.client.ViewImpl;
 public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
 
     private final Widget widget;
-    @UiField
-    ThinSplitLayoutPanel splitLayoutPanel;
     @UiField(provided = true)
     CustomCellList<StoredQuery> cellList;
     @UiField
@@ -47,8 +43,6 @@ public class QueryHistoryViewImpl extends ViewImpl implements QueryHistoryView {
                                 final DateTimeFormatter dateTimeFormatter) {
         cellList = new CustomCellList<>(new QueryCell(dateTimeFormatter));
         widget = binder.createAndBindUi(this);
-        // Tab moves through the panes as they are seen, not in the order they were added
-        ReadingOrder.apply(splitLayoutPanel);
     }
 
     @Override

@@ -69,6 +69,13 @@ function keyOf(v, fold = true) {
   // `1,011`; this one had not. Only a fully-grouped number qualifies, so `1,234 items` stays text.
   if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(t)) return { k: 'num', v: Number(t.replace(/,/g, '')) };
   if (/^\d{4}-\d{2}-\d{2}T/.test(t)) return { k: 'date', v: Date.parse(t) };
+  // A DURATION, as Stroom prints one ("144ms", "1.5s", "3m", "1h 2m"), before sizes: as text,
+  // "144ms" sorts before "40ms", which failed Server Tasks' correctly sorted Age column, and "40m"
+  // read as 40 mega. Units are lower case, so a size's "40M" is still a size.
+  if (/^(\d+(?:\.\d+)?(?:ms|s|m|h|d))(\s+\d+(?:\.\d+)?(?:ms|s|m|h|d))*$/.test(t)) {
+    const unit = { ms: 1, s: 1e3, m: 6e4, h: 36e5, d: 864e5 };
+    return { k: 'num', v: [...t.matchAll(/(\d+(?:\.\d+)?)(ms|s|m|h|d)/g)].reduce((n, [, x, u]) => n + Number(x) * unit[u], 0) };
+  }
   const size = /^(\d+(?:\.\d+)?)\s*([KMGT]?)B?$/i.exec(t);
   if (size) return { k: 'num', v: Number(size[1]) * ({ '': 1, K: 1e3, M: 1e6, G: 1e9, T: 1e12 })[size[2].toUpperCase()] };
   return { k: 'text', v: fold ? t.toLowerCase() : t };

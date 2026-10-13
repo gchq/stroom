@@ -25,6 +25,7 @@ import stroom.gwt.workbench.client.app.screen.ScreenHarness;
 import stroom.gwt.workbench.client.app.screen.StroomDom;
 import stroom.gwt.workbench.framework.client.play.Play;
 import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -73,6 +74,13 @@ public final class IndexVolumesScreenStories {
             .get("/node/v1/all", RestReply.json("[\"node1\", \"node2\"]"))
             .build();
 
+    // The new volume validates with a warning, e.g. its path doesn't exist yet
+    private static final RestFixtures WARNING_FIXTURES = RestFixtures.builder()
+            .post("/index/volume/v2/validate", RestReply.json(
+                    "{\"severity\": \"WARNING\", \"message\": \"The path doesn't exist\"}"))
+            .addAll(FIXTURES)
+            .build();
+
     private static final String EDIT_GROUP = "Edit Volume Group - Default";
 
     private IndexVolumesScreenStories() {
@@ -103,6 +111,25 @@ public final class IndexVolumesScreenStories {
                                     .withJsonBodyContaining("{\"path\": \"/newvol\", \"indexVolumeGroupId\": 1}")
                                     .toSpyMatcher()));
                     ContentStorySupport.expectNoProblems(play);
+                })
+                // Declining the warning about a new volume leaves the dialog usable: OK and Cancel once
+                // stayed disabled, as only accepting the warning was handled
+                .story("DeclinedWarningKeepsDialogUsable", context -> render(context, WARNING_FIXTURES, true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.dblClick(play.findByText("Default"));
+                    final Play groupDialog = screen.within(screen.findByText(EDIT_GROUP).closest(StroomDom.DIALOG));
+                    groupDialog.findByText("/vol1");
+                    play.click(groupDialog.getByTitle("New"));
+                    final Play volumeDialog = screen.within(screen.findByText("Add Volume").closest(StroomDom.DIALOG));
+                    play.type(volumeDialog.getByLabelText("Path"), "/newvol");
+                    play.click(volumeDialog.getByRole("button", StroomDom.button("OK")));
+                    play.click(screen.within(screen.findByText(TextMatch.containing("The path doesn't exist"))
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("Cancel")));
+                    play.click(volumeDialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Add Volume")).toBeNull());
+                    play.expect(play.spy(ScreenHarness.REQUEST_SPY)).not().toHaveBeenCalledWith(
+                            RequestMatcher.post("/index/volume/v2").toSpyMatcher());
                 })
                 // The status columns use GWT's PercentBarCell (Use%) and RedGreenTextCell (Full)
                 .story("VolumeStatusCells", IndexVolumesScreenStories::render)
@@ -138,10 +165,20 @@ public final class IndexVolumesScreenStories {
     }
 
     private static Widget render(final StoryContext context) {
+        return render(context, FIXTURES, false);
+    }
+
+    // As above, with the given fixtures, and with Stroom's real alerts and confirmations if asked
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final boolean realAlerts) {
         final ContentScreenGinjector injector = GWT.create(ContentScreenGinjector.class);
-        final ScreenHarness harness = ScreenHarness.builder(context, FIXTURES)
-                .injector(injector)
-                .build();
+        final ScreenHarness.Builder builder = ScreenHarness.builder(context, fixtures)
+                .injector(injector);
+        if (realAlerts) {
+            builder.realAlerts();
+        }
+        final ScreenHarness harness = builder.build();
         harness.afterStartUp(() -> harness.addContent(injector.getIndexVolumeGroupPresenter()));
         return harness.asWidget();
     }

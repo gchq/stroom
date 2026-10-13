@@ -117,8 +117,14 @@ for (const r of ROOTS) {
         // is named by it even when `identity` is absent — that label is exactly what the walk
         // reads off the rendered `.form-group__label`, which is what joins the two.
         let group = null;
-        for (const t of xml.matchAll(/<([A-Za-z:]+)\b[^>]*>/g)) {
+        // Closing tags too, so a FormGroup's label is dropped when the group ends: a box between two
+        // groups (a batch dialog's per-field "enable" tick box) was named by the group before it.
+        for (const t of xml.matchAll(/<(\/?[A-Za-z:]+)\b[^>]*>/g)) {
           const [tag, tagName] = t;
+          if (tagName.startsWith('/')) {
+            if (/FormGroup$/.test(tagName)) group = null;
+            continue;
+          }
           const label = /\blabel="([^"]+)"/.exec(tag)?.[1] ?? null;
           if (/FormGroup$/.test(tagName)) {
             group = label;
@@ -136,11 +142,16 @@ for (const r of ROOTS) {
             // The FormGroup's label belongs to the BOX it wraps, not to a button inside it: a
             // button is named by its own text, and handing it the group's label moved thirteen
             // click handlers from `unlabelled` to a label no affordance could ever match.
-            const isBox = /(TextBox|TextArea|DateBox|DateTimeBox|TimeBox|ValueSpinner|SelectionBox|ListBox|TickBox|Editor)$/.test(tagName);
+            const isBox = /(TextBox|TextArea|DateBox|DateTimeBox|TimeBox|ValueSpinner|SelectionBox|ListBox|TickBox|CheckBox|Editor)$/.test(tagName);
+            // A tick box names itself, as the walker reads it: its own `label` ("Enabled"), or its
+            // `ariaLabel` ("Change Schedule Name") when it stands outside a FormGroup.
+            const tickName = /(TickBox|CheckBox)$/.test(tagName)
+              ? (/\blabel="([^"]+)"/.exec(tag)?.[1] ?? /\bariaLabel="([^"]+)"/.exec(tag)?.[1] ?? null)
+              : null;
             // A `title` on a BOX is a tooltip, and Stroom's tooltips are prose: OpenAIModel's
             // baseUrl is titled "Override the URL for the vector embeddings endpoint. Example: …".
             // The box's NAME is its FormGroup's label. On a button, `title` IS the name.
-            const best = isBox ? (group ?? own) : own;
+            const best = tickName ?? (isBox ? (group ?? own) : own);
             // Whatever the source, a sentence is help text, not a label.
             const usable = best && best.length <= 60 && !/\.\s/.test(best) ? best : null;
             if (usable && !m.get(field)) m.set(field, usable);
@@ -854,7 +865,11 @@ for (const h of handlers) {
     // the walk typed in to the handler's receiver by NAME — `nameBox` / `nameFilter` / `name` all
     // reduce to `name`, and so does a field labelled "Name". A handler whose receiver the miner
     // could not name is left `needs-key`, which is the truth about it.
-    const fields = [...owners].flatMap((o) => [...(enterOn.get(o) ?? [])]);
+    // TYPING is key events too: every character typed into a box fires its keydown, keypress and
+    // keyup, so a key handler on a box the field or illegal-text driver typed into has run, whatever
+    // key it then looks for. Only Enter was counted, which left 24 text boxes' key handlers
+    // `needs-key` on forms the walk types into every round.
+    const fields = [...owners].flatMap((o) => [...(enterOn.get(o) ?? []), ...(typedOn.get(o) ?? [])]);
     hit = matchesField(h, fields);
   } else if (h.kind === 'click' && selectionMade && CLICK_BY_SELECTION.get(h.class)?.has(reduceReceiver(h.receiver))) {
     hit = { outcomes: new Set(['changed']), n: 1, join: 'selection' };

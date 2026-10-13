@@ -736,3 +736,98 @@ the standing decision (2026-10-04) is compensated cycles only, guard armed. The 
 read-only driving is roughly 1100-1200 handlers and ~120/273 messages. `done` is every handler
 either exercised or in a NAMED exclusion class, the ledger at 0 unexplained, and the bug list
 no longer growing when driving is added.
+
+## 2026-10-10 — where the unexercised value handlers are, and the one change that reaches most
+
+Measured on the r10 evidence (`handlers 758/1546`): 239 handlers are `needs-value` and 62
+`needs-key`. Grouped by the widget their handler is on (the `@UiField` behind each `@UiHandler`):
+
+| widget | needs-value | needs-key |
+| --- | ---: | ---: |
+| `SelectionBox` | 68 | |
+| `CustomCheckBox` | 56 | |
+| `TextBox` / `PasswordTextBox` / `TextArea` | 16 | 33 |
+| `ValueSpinner` | 16 | |
+| `QuickFilter` | 12 | 2 |
+| dates, times, durations, schedules | 12 | 3 |
+| other (embedded presenters, editors) | 59 | 24 |
+
+111 of the 239 belong to presenters the walk already reaches, and many of the rest are widgets
+embedded in reached screens (Plan B's settings widgets, the expression `TermEditor`), which the
+presenter join doesn't attribute. The drivers exist: `nudge` sets text boxes, spinners, tick boxes and
+selection boxes. What is missing is the SCOPE: `probeDirty` runs only on `editor` and `editor-tab`
+nodes, so a plain dialog's fields are never driven. Batch Edit Schedules shows it: seven per-field
+"enable" tick boxes and a schedule box, all `needs-value`, in a dialog the walk reaches every round
+(it only clicks each field's "Click for help").
+
+**Next change (after r11, so r11 stays comparable with r10):** run the value-only field driving on
+`dialog` nodes, once per dialog caption, after which the dialog is re-synced so the OK, illegal-text
+and key drivers still see the form as it opened. The guard already stops any field that saves at
+once (as Preferences' Dock Type does), and a dialog's changes are discarded by its Cancel.
+Expected: most of the 111, at the cost of one route replay per distinct dialog with fields.
+
+Key handlers: typing fires a box's keydown, keypress and keyup, so the inventory now credits a key
+handler on any box a driver typed into, not only one Enter was pressed in (`key 20 -> 21`). Most of
+the rest are on boxes in plain dialogs, so they wait on the same change. The change is ready in
+`out/next/dialog-fields.patch`.
+
+Then, in order: document choosers (`chooser` is recognised but not driven; see `nudge`) and seeds
+for the unreached presenters (`door-preconditions.md`).
+
+**Trial t1 (Monitoring, dialog fields driven):** 107 fields driven against r11's 18, 100 passing, no
+dialog lost — but only `value 75 -> 77`. The scope was right and the reader was wrong:
+`CustomCheckBox` renders a visible `.SimpleTickBox` around a hidden `input.checkbox`, and the reader
+looked only for the input, found it zero-sized and skipped the field; so all 56 `CustomCheckBox`
+value handlers were invisible to the driver wherever they were. Batch Edit Schedules showed it: its
+seven per-field "enable" boxes stand outside any FormGroup, named only by `ariaLabel` ("Change
+Schedule Name"), and each enables a field that is disabled, hence unread, when the form opens. Now:
+`readTabFields` reads `.SimpleTickBox`es (in a group or not, named by their own label or
+`aria-label`), the field loop re-reads the form after a tick and drives what it enabled, and the
+inventory names tick boxes from their own `label`/`ariaLabel` and drops a FormGroup's label when the
+group closes (an enable box between groups took the previous group's name). Trial t2 measures it.
+
+**Trials t2-t4 (Monitoring, Administration):** `handlers 763 -> 776`, `value 79 -> 92`, no first
+fails. Each trial found what still stopped a dialog's fields being driven, in order:
+
+* the guard blocked `POST /scheduledTime/v1`, a pure calculation every schedule box validates
+  through, so a tick in a schedule dialog put a "server did not respond" alert over the form (now on
+  the guard's read list, pinned in `verdicts.test.mjs`);
+* a field can open two popups (Dock Type "Dialog" opens Ask Stroom AI and the alert for its refused
+  save), and only one was closed (the loop now closes back down to the form);
+* fields were driven at the place they were read, but one can move the rest ("Comfortable" Layout
+  Density re-lays out User Preferences, and the next click closed it): each field is re-read before
+  it is driven;
+* a disabled SelectionBox was "driven": no list opened, and the Escape meant for the list closed
+  the dialog (disabled boxes are skipped, and Escape is pressed only if a list opened).
+
+With these, the loop drives Batch Edit Schedules end to end: seven enable ticks, then the four
+boxes they enable. Also found: the sort checker compared durations as text ("144ms" before "40ms"),
+now parsed as durations. Round r12 is the first full round with all of it.
+
+**Round r12 (all 15 shards, dialog fields driven):** `handlers 759 -> 805/1546 (52.1%)`, `value
+75 -> 120`, `needs-value 239 -> 194`, no first fails, no dialog lost after its fields were driven.
+Each shard drove 60-250 fields where r11 drove a few dozen. Left from it: d-dash stranded a column's
+Expression dialog twice, because the dialog rightly asks before discarding the text the driver typed
+and the clean-up answered Cancel; `clearOverlays` now says OK to that Confirm, as the changes are the
+walker's own. `key` is still 21/82: the remaining key handlers are mostly on boxes in dialogs the
+walk doesn't reach (`needs-key` 61 unchanged), which is the next thing to look at, with document
+choosers and the 240 `unreached`.
+
+**Trial t5 (choosers) and t6 (Administration at POSTDEPTH=2):** the document chooser driver works
+(Data Generator's Destination Feed changed, Save lit) but adds nothing yet: the choosers the walk
+reaches had their handlers credited already. `POSTDEPTH=2` on Administration took 101 min against 87,
+reached 333 nodes against 242 and added 3 handlers. It does reach Data Retention's added rule and its
+Edit dialog, but those nodes are reached by a Main Menu hop from Data Volumes, and the ledger names
+a node's screen from the seed's `menu` step only, so their handlers are credited to Data Volumes.
+Naming the hop's screen as well (button steps after a menu that opened a menu) was tried: +2 there,
+-4 elsewhere, because a wider parent set changes which presenter a dialog is narrowed to. Not kept;
+the right fix is for the WALKER to record a hop as a `menu` step, so the ledger needs no inference.
+`lane.sh` now lets a shard's settings override its defaults (POSTDEPTH, MAXNODES).
+
+**Main Menu hops, decided against for now (2026-10-12):** recording a hop's screen, whether by the
+ledger reading button steps or by the walker writing a `menu` step, credits data retention's
+`flatNestedToggleButton` and `forever` but loses PipelineStructurePresenter's dialog OK/Cancel,
+ProcessorPresenter's hide and UserPreferences' tab bar: a node that carries two screens gives its
+dialogs a wider parent set, and the caption narrowing then finds no single presenter. Net -2. Worth
+doing only together with narrowing dialogs from the LAST screen on the route rather than all of them.
+Round r13 (all shards, #57 fixed, choosers driven, own changes discarded on close) runs instead.

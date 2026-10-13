@@ -13,7 +13,7 @@ Moved here in October 2026: the 16 scripts, `lib/`, and the four `compare/` modu
 (`adapters/gwt.mjs` and `lib/credentials`, `readonly-guard`, `settle`, `structure`). Later, the
 probes that `stroom-gwt/ISSUES.md` names for checking a fix were added (`probe-stepping`,
 `probe-newfield`, `probe-apikey-expiry`, `probe-apikey-badtime`, `probe-ctrlenter`,
-`probe-loadfail`, and `probe-prefs-failsave` for #48). ISSUES.md's
+`probe-loadfail`, `probe-prefs-failsave` for #48, `probe-batch-failsave` for #49 and `probe-filter-invalid` for #50). ISSUES.md's
 "Checking a fix" says what each shows.
 
 Paths are now relative to this folder, so the scripts can be run from anywhere (`lib/paths.mjs`);
@@ -54,6 +54,18 @@ Stroom on :8080 serving a current `gwtDraftCompile`:
 ./lane.sh r8 "docs-a:RECIPES=oracles/route-recipes.json RECIPEKIND=doc DOCTYPES=DataGen,TextConverter,Xslt" &
 ./merge.sh r8     # once both lanes have finished: out/r8-lanes.log
 ```
+
+A full round also needs the document types the menu areas don't reach (`DOCTYPES=Dashboard,Traces`)
+and the directed seed groups (`DIRECTED=dashboard,settings,datalink,process,stores,gitrepo,pipeline-ref,pathways`,
+`DIRECTED=rows,chrome,docs,ai,stream,pipeline`, `DIRECTED=results,cf,annotation,fields` and
+`DIRECTED=stepping`), which reach design mode, row actions and stepping.
+
+`merge.sh` writes `out/flips-<round>.md` (by `tools/flips.mjs`): for every place an earlier run
+failed, whether the round passes there, still fails, reached it without checking, or didn't reach
+it. Places are matched without the route that reached them, which changes whenever something
+ahead of it changes. A dialog the walk couldn't close (Escape and its own Cancel/Close both refused)
+is logged as `‼ stranded`, costs a reload instead of the rest of the shard, and is listed in the
+ledger under "Dialogs that would not close".
 
 `MEMLOG=1` in a shard's settings writes the renderer's memory and DOM counts per node to its
 `memory.jsonl`. Run

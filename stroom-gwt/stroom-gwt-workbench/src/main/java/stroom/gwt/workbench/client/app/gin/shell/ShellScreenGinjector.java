@@ -19,6 +19,7 @@ package stroom.gwt.workbench.client.app.gin.shell;
 import stroom.about.client.AboutPlugin;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.SplashPresenter;
+import stroom.ai.client.AskStroomAiPresenter;
 import stroom.annotation.client.AnnotationBrowsePlugin;
 import stroom.annotation.client.AnnotationCollectionPlugin;
 import stroom.annotation.client.AnnotationCommentPlugin;
@@ -74,6 +75,7 @@ import stroom.gwt.workbench.client.app.gin.content.PipelineScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.PlanBScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.ResultStoreScreenModule;
 import stroom.gwt.workbench.client.app.gin.content.StreamStoreScreenModule;
+import stroom.gwt.workbench.client.app.gin.editors.AskStroomAIScreenModule;
 import stroom.gwt.workbench.client.app.gin.editors.FolderScreenModule;
 import stroom.gwt.workbench.client.app.gin.processing.AnalyticsScreenModule;
 import stroom.gwt.workbench.client.app.gin.processing.PolicyScreenModule;
@@ -155,6 +157,7 @@ import com.google.gwt.inject.client.GinModules;
         PolicyScreenModule.class,
         IdentityScreenModule.class,
         ShellAppScreenModule.class,
+        AskStroomAIScreenModule.class,
 })
 public interface ShellScreenGinjector extends ScreenGinjector {
 
@@ -374,4 +377,8 @@ public interface ShellScreenGinjector extends ScreenGinjector {
 
     /// @return Stroom's `FolderRootPlugin`, registered as it is created.
     FolderRootPlugin getFolderRootPlugin();
+
+    /// @return The 'Ask Stroom AI' chat, shown (docked, when its config says so) by firing
+    /// `ShowAskStroomAiEvent`.
+    AskStroomAiPresenter getAskStroomAiPresenter();
 }

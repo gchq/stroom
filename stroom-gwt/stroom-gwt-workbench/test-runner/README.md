@@ -291,7 +291,8 @@ Each story's violations are kept in `results.json` (`a11y`).
 
 A play dispatches its own events, which the browser doesn't trust: its Tab is simulated (as
 user-event's), and the browser can't tell its key presses from its clicks, which matters to
-`:focus-visible`. For the stories in `lib/real-input.mjs`, after the story passes the runner also
+`:focus-visible`. For the stories in `lib/real-input/` (a file per component, e.g. `buttons.mjs`,
+`split-pane.mjs`, gathered by `index.mjs`), after the story passes the runner also
 presses real keys and clicks with the real mouse (Playwright's `page.keyboard` and `page.mouse`),
 and fails the story if the page doesn't behave as it should. A story driven this way usually has
 no play of its own (e.g. `Widgets/Buttons/Toolbar` `RealInput`, a toolbar crossed with real Tab,

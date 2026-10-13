@@ -17,7 +17,8 @@
 # Merges a round's shards (out/<round>-*, walked by ./lane.sh) into the evidence (out/crawl), then
 # rebuilds what is judged from it, in the order each step's input needs:
 #
-#   capability specs (reads the crawls) -> coverage (writes node-presenters.json and coverage.md)
+#   capability specs (reads the crawls) -> coverage (writes node-presenters.json, coverage.md and
+#   checks.json) -> flips (reads checks.json: what the round changed, in out/flips-<round>.md)
 #   -> door preconditions (reads coverage.md) -> handler inventory (reads node-presenters.json)
 #
 #   ./merge.sh <round>
@@ -52,5 +53,6 @@ fi
 
 node "${SUITE}/tools/build-capability-specs.mjs"
 node "${SUITE}/coverage.mjs"
+node "${SUITE}/tools/flips.mjs" "${round}"
 node "${SUITE}/tools/build-door-preconditions.mjs"
 node "${SUITE}/tools/build-handler-inventory.mjs"

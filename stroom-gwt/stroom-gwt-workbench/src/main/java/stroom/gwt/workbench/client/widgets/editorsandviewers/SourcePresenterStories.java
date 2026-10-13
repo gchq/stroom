@@ -27,6 +27,10 @@ import stroom.data.client.view.SourceViewImpl;
 import stroom.gwt.workbench.client.app.rest.RestFixtures;
 import stroom.gwt.workbench.client.app.rest.RestReply;
 import stroom.gwt.workbench.client.app.screen.ScreenHarness;
+import stroom.gwt.workbench.client.app.screen.StroomDom;
+import stroom.gwt.workbench.framework.client.play.Play;
+import stroom.gwt.workbench.framework.client.play.Query;
+import stroom.gwt.workbench.framework.client.play.TextMatch;
 import stroom.gwt.workbench.framework.client.story.StoryContext;
 import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
@@ -102,20 +106,54 @@ public final class SourcePresenterStories {
                 // Loading: the fetch never completes
                 .story("Loading", context -> render(context, LOADING_FIXTURES, false, false))
                 // Error state: the editor is replaced by the error panel
-                .story("FetchError", context -> render(context, ERROR_FIXTURES, false, false));
+                .story("FetchError", context -> render(context, ERROR_FIXTURES, false, false))
+                // An invalid range in Set Source Range says why and leaves the dialog usable: OK and
+                // Cancel once stayed disabled after the message
+                .story("InvalidRangeKeepsDialogUsable", context -> render(context, LOADED_FIXTURES, false, false,
+                        true))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    final Query label = play.querySelector(".characterNavigator-label");
+                    play.waitFor(() -> play.expect(label).toBeVisible());
+                    play.click(label);
+                    final Play dialog = screen.within(screen.findByText("Set Source Range", StroomDom.DIALOG_TITLE)
+                            .closest(StroomDom.DIALOG));
+                    // The range opens as character offsets from 1; a range that ends where it starts
+                    final Query to = dialog.querySelectorAll(".valueSpinner input").nth(1);
+                    play.clear(to);
+                    play.type(to, "1");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.click(screen.within(screen.findByText(TextMatch.containing("is equal to the to offset"))
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("Close")));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Set Source Range", StroomDom.DIALOG_TITLE))
+                            .toBeNull());
+                });
     }
 
     private static Widget render(final StoryContext context,
                                  final RestFixtures fixtures,
                                  final boolean canStep,
                                  final boolean steppingSource) {
+        return render(context, fixtures, canStep, steppingSource, false);
+    }
+
+    // As above, with Stroom's real alerts if asked, e.g. to close one
+    private static Widget render(final StoryContext context,
+                                 final RestFixtures fixtures,
+                                 final boolean canStep,
+                                 final boolean steppingSource,
+                                 final boolean realAlerts) {
         // Stroom shows the stepping button whenever the user has the stepping permission, so the
         // other stories' user doesn't have it
-        final ScreenHarness harness = ScreenHarness.builder(context, fixtures)
+        final ScreenHarness.Builder builder = ScreenHarness.builder(context, fixtures)
                 .appPermissions(canStep
                         ? new AppPermission[]{AppPermission.VIEW_DATA_PERMISSION, AppPermission.STEPPING_PERMISSION}
-                        : new AppPermission[]{AppPermission.VIEW_DATA_PERMISSION})
-                .build();
+                        : new AppPermission[]{AppPermission.VIEW_DATA_PERMISSION});
+        if (realAlerts) {
+            builder.realAlerts();
+        }
+        final ScreenHarness harness = builder.build();
         final EventBus eventBus = harness.getEventBus();
         // Stroom's Menu (for the source's context menus) is the harness's
 

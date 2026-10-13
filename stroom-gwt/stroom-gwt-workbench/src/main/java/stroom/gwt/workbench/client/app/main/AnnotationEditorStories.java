@@ -176,6 +176,28 @@ public final class AnnotationEditorStories {
                             .toBeGreaterThanOrEqual(1));
                     ContentStorySupport.expectNoProblems(play);
                 })
+                // A comment change that fails says why and leaves the dialog usable: the failure handler
+                // was made but never called, so nothing was said and OK and Cancel stayed disabled
+                .story("FailedCommentChangeKeepsDialogUsable", context -> render(context, RestFixtures.builder()
+                        .post("/annotation/v1/changeAnnotationEntry",
+                                RestReply.error(500, "Unable to change the comment"))
+                        .addAll(fixtures(ENTRIES).build())
+                        .build()))
+                .withPlay(play -> {
+                    final Play screen = play.screen();
+                    play.findByText("Looking into it.");
+                    play.fireEvent().mouseDown(play.querySelectorAll(".annotationHistoryCommentHeader").nth(0));
+                    play.click(screen.findByText("Edit Entry"));
+                    final Play dialog = screen.within(screen.findByText("Edit Comment").closest(StroomDom.DIALOG));
+                    final Query text = dialog.getByRole("textbox");
+                    play.clear(text);
+                    play.type(text, "Updated comment");
+                    play.click(dialog.getByRole("button", StroomDom.button("OK")));
+                    play.click(screen.within(screen.findByText(TextMatch.containing("Unable to change the comment"))
+                            .closest(StroomDom.DIALOG)).getByRole("button", StroomDom.button("Close")));
+                    play.click(dialog.getByRole("button", StroomDom.button("Cancel")));
+                    play.waitFor(() -> play.expect(screen.queryByText("Edit Comment")).toBeNull());
+                })
                 // An entry's menu edits a comment (fetch, dialog, change) and deletes an entry
                 .story("EntryActions", context -> render(context, fixtures(ENTRIES).build()))
                 .withPlay(play -> {
