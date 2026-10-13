@@ -275,7 +275,7 @@ public final class ExplorerTreeStories {
         final Style style = frame.getElement().getStyle();
         style.setProperty("width", "340px");
         style.setProperty("height", "460px");
-        style.setProperty("border", "1px solid var(--panel__border-color, #444)");
+        style.setProperty("border", "1px solid var(--border-color)");
         style.setProperty("display", "flex");
         style.setProperty("flexDirection", "column");
         style.setProperty("overflow", "auto");

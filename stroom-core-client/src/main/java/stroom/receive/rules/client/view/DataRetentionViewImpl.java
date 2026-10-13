@@ -17,6 +17,7 @@
 package stroom.receive.rules.client.view;
 
 import stroom.receive.rules.client.presenter.DataRetentionPresenter.DataRetentionView;
+import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,11 +34,12 @@ public class DataRetentionViewImpl extends ViewImpl implements DataRetentionView
     @UiField
     LinkTabBar tabBar;
     @UiField
-    LayerContainer layerContainer;
+    LayerContainerImpl layerContainer;
 
     @Inject
     public DataRetentionViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        tabBar.setTabPanel(layerContainer.getElement());
     }
 
     @Override

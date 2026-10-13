@@ -29,38 +29,23 @@ public class BasicTabSelector extends AbstractTabSelector {
 
     public BasicTabSelector() {
         final Element arrows = DOM.createDiv();
-        arrows.setClassName("basicTabSelector-arrows");
+        arrows.setClassName("tab-bar__selector-arrows");
         SvgImageUtil.setSvgAsInnerHtml(arrows, SvgImage.DOUBLE_ARROW);
 
         text = DOM.createDiv();
-        text.setClassName("basicTabSelector-text");
+        text.setClassName("tab-bar__selector-count");
 
         element = DOM.createDiv();
-        element.setClassName("basicTabSelector");
+        element.setClassName("tab-bar__selector");
 
         element.appendChild(arrows);
         element.appendChild(text);
-        element.setAttribute("aria-label", "Tab Selector");
+        // A button showing every tab in a menu (the tab bar names it with the tabs it hides)
+        element.setAttribute("role", "button");
+        element.setAttribute("aria-haspopup", "menu");
+        element.setAttribute("aria-label", "Show all tabs");
 
         setElement(element);
-    }
-
-    @Override
-    protected void setKeyboardSelected(final boolean selected) {
-        if (selected) {
-            getElement().addClassName("basicTabSelector-keyboardSelected");
-        } else {
-            getElement().removeClassName("basicTabSelector-keyboardSelected");
-        }
-    }
-
-    @Override
-    protected void setHover(final boolean hover) {
-        if (hover) {
-            getElement().addClassName("basicTabSelector-hover");
-        } else {
-            getElement().removeClassName("basicTabSelector-hover");
-        }
     }
 
     @Override

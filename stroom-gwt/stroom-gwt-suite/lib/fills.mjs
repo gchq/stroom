@@ -120,15 +120,15 @@ export async function setAce(page, text, index = 0) {
 /**
  * Switch to a named sub-tab of the open document editor.
  *
- * Matched on `.linkTab-label` but CLICKED on the tab: `.linkTab` also holds a hidden
+ * Matched on `.tab-bar--link .tab-bar__label` but CLICKED on the tab: `.tab-bar--link .tab-bar__tab` also holds a hidden
  * width-reserving copy of the label (so `textContent` reads "DocumentationDocumentation") and a
- * `.linkTab-hotspot` overlay that takes the pointer, which makes a click aimed at the label itself
+ * `.tab-bar__hotspot` overlay that takes the pointer, which makes a click aimed at the label itself
  * bounce off with an interception error.
  */
 export async function tab(page, name) {
   const t = page
-    .locator('.linkTab, .curveTab')
-    .filter({ has: page.locator(`.linkTab-label:text-is("${name}"), .curveTab-label:text-is("${name}")`) })
+    .locator('.tab-bar__tab')
+    .filter({ has: page.locator(`.tab-bar__label:text-is("${name}")`) })
     .first();
   if (!(await t.count())) return false;
   await t.click({ timeout: 10_000 });

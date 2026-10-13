@@ -550,6 +550,10 @@
     "button-name",
     "target-size"
   ],
+  "app-main-appshell--tab-keyboard": [
+    "button-name",
+    "target-size"
+  ],
   "app-main-appshell--toolbar-delete": [
     "button-name",
     "target-size"
@@ -571,12 +575,6 @@
   "app-main-contentstorescreen--upgrade-check-promotes-row": [
     "image-alt"
   ],
-  "app-main-contenttabpane--duplicate-dashboard-tab": [
-    "button-name"
-  ],
-  "app-main-contenttabpane--no-duplicate-for-single-instance": [
-    "button-name"
-  ],
   "app-main-createdocumentdialog--default": [
     "target-size"
   ],
@@ -588,6 +586,18 @@
   ],
   "app-main-datareceiptrulesscreen--obfuscation-warning": [
     "scrollable-region-focusable"
+  ],
+  "app-main-dataretentionscreen--impact-filter": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-nested": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-sorting": [
+    "target-size"
+  ],
+  "app-main-dataretentionscreen--impact-summary": [
+    "target-size"
   ],
   "app-main-dependenciesscreen--action-menu": [
     "color-contrast",
@@ -856,18 +866,6 @@
   "app-security-documentpermissionstab--no-descendants-button-on-document": [
     "target-size"
   ],
-  "widgets-aceeditor-format--formats-nested-elements": [
-    "color-contrast"
-  ],
-  "widgets-aceeditor-format--gwt-quirks": [
-    "color-contrast"
-  ],
-  "widgets-aceeditor-format--is-idempotent": [
-    "color-contrast"
-  ],
-  "widgets-aceeditor-format--leaves-non-xml-alone": [
-    "color-contrast"
-  ],
   "widgets-date-time-calendargrid--basic": [
     "aria-allowed-attr",
     "button-name",
@@ -926,9 +924,6 @@
     "color-contrast"
   ],
   "widgets-display-classificationlabel--official": [
-    "color-contrast"
-  ],
-  "widgets-display-copytext--with-insert": [
     "color-contrast"
   ],
   "widgets-display-htmlpresenter--rich-content": [
@@ -1164,9 +1159,6 @@
   ],
   "widgets-selectors-selectionbox--short-list-has-no-pager": [
     "label"
-  ],
-  "widgets-tabs-curvetabbar--with-sidebar-toggle": [
-    "button-name"
   ],
   "widgets-tree-explorertree--basic": [
     "target-size"

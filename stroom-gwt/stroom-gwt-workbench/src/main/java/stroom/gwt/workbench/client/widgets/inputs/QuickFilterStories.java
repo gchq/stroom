@@ -142,7 +142,7 @@ public final class QuickFilterStories {
         final Label row = new Label(item);
         final Style style = row.getElement().getStyle();
         style.setProperty("padding", "6px 10px");
-        style.setProperty("background", "var(--row__background-color,#2a2e38)");
+        style.setProperty("background", "var(--row__background-color--even)");
         style.setProperty("borderRadius", "4px");
         style.setProperty("fontSize", "0.85rem");
         return row;

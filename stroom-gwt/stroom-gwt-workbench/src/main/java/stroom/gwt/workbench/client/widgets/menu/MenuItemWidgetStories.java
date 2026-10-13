@@ -76,7 +76,7 @@ public final class MenuItemWidgetStories {
                     final FlowPanel box = new FlowPanel();
                     final Style boxStyle = box.getElement().getStyle();
                     boxStyle.setProperty("minWidth", "220px");
-                    boxStyle.setProperty("border", "1px solid var(--panel__border-color)");
+                    boxStyle.setProperty("border", "1px solid var(--border-color)");
                     boxStyle.setProperty("padding", "4px 0");
                     box.add(menu);
                     box.add(last);

@@ -44,8 +44,8 @@ the component's classes (some names also match related classes), to help priorit
 | Floating action button | `FabButton` | — | button | retrofit | ~8 | in part (one tab stop) | BEM pass not done (`stroom-button-fab`, `face`) |
 | Refresh button | `RefreshButton` | (rebuilt on `ToolbarButton`) | button | retrofit | pagers | done | — |
 | Split panes | `ThinSplitLayoutPanel`, `MySplitLayoutPanel` | `SplitPane` | window splitter | replaced | ~43 (37 thin, 6 wide) | done: every view uses `SplitPane` (User Groups first, then by area, ending with the main screen's explorer and docked AI chat); the old panels, their CSS, their stories and the comparison stories are deleted | 2.5.8 where splitters meet in a T at a centre (accepted, see below); theme colours to revisit (the line is drawn in `--border-color`, as other borders are: 1.3:1 dark, 1:1 light, under the 3:1 of 1.4.11); not tried with a screen reader or touch device; `ReadingOrder` deleted (no views need it now); views that call `onResize()` to force a relayout need checking (e.g. stepping) |
-| Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (tied to `ContentTabPanePresenter`, document plugins) | every document | investigated, decisions below | one tab stop with Left/Right already (roving `tabindex`, shared with link tabs); no roles, selected state or panel link; no Home/End or wrap; Escape closes the focused tab and drops focus to the body; A/D/H/L also move; focus drawn as the hover tint; close cross is an unnamed `div`; sidebar toggle has no name |
-| Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | investigated, decisions below | one tab stop with Left/Right already; no roles; separators read as "\|"; focus drawn as the hover underline; the light theme's widget stories draw the bar on a blue canvas, not the shell's white |
+| Tab bars (documents) | `CurveTabBar`, `AbstractTabBar`, `CurveTabLayoutViewImpl` | — | tablist | retrofit (in `AbstractTabBar`, shared with link tabs) | every document | in part: tab list, keys (and the tab menu from the keyboard), focus ring, panel link, sidebar toggle name and BEM CSS (`tab-bar.css`) done | left: link tabs are about 16px tall, under 2.5.8's 24px (baselined for the Data Retention impact stories, where one sits above a toolbar); link tab bars have no tab list name; a tab panel holding nothing focusable isn't a tab stop; a document tab's name is cut at 50 characters (with "..."), so a screen reader hears the shortened name; a tab's loading spinner isn't announced |
+| Link tabs (inside documents) | `LinkTabBar`, `LinkTabPanelPresenter` | — | tablist | retrofit | ~16 | in part: as document tabs (shared `AbstractTabBar`) | as document tabs |
 | Data grids | `MyDataGrid`, `MyCellTable`, `PagerViewImpl` | — | grid | probably retrofit (GWT cell table, many features) | ~78 (+14 cell tables, ~86 pagers) | not started | one tab stop with arrows inside; header and cell semantics; sortable headers are `role="button"` |
 | Explorer tree | explorer tree (cell tree, `explorerCell`), `EntityTreePresenter`, pickers | — | tree | ? | ~66 | not started | tree roles and keyboard |
 | Menus | `Menu`, `MenuPresenter`, menu items | — | menu / menubar | retrofit | ~19 places show menus | in part (items have `role="menuitem"`; `MenuRequest` lets widgets ask for one) | menu buttons don't say they open a menu (`ISSUES.md`) |
@@ -53,7 +53,7 @@ the component's classes (some names also match related classes), to help priorit
 | Quick filter | `QuickFilter` | — | search field | retrofit | ~83 | not started | help button below 24px (`target-size` baseline entries) |
 | Form controls | `SelectionBox`, `CustomDatePicker`, `TickBox`, `ValueSpinner`, text inputs | — | combobox, grid (date), checkbox, spinbutton | ? | many (`SelectionBox` ~211, `TickBox` ~154, `ValueSpinner` ~58, dates ~16) | not started | controls with no accessible name (`ISSUES.md`, `label` baseline entries) |
 | Code editor | Ace (`EditorPresenter`, `EditorViewImpl`) | — | — | retrofit around Ace | ~34 | not started | keyboard trap: Tab indents (`ISSUES.md`); Ace sources need human approval to change |
-| Layout panels | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | few direct (most via split panels) | not started | DOM order differs from layout (`ReadingOrder` stopgap) |
+| Layout panels | `DockLayoutPanel` and friends | (grid/flex, `SplitPane`) | — | replace as screens are touched | few direct (most via split panels) | not started | DOM order can differ from layout where a panel places its children (`ReadingOrder` is deleted, as no split panel is left) |
 | Content focus | tab pane | `ContentFocus` | — | added | all tabs | done (#5405) | — |
 
 ## Tab decisions
@@ -63,11 +63,14 @@ Agreed for both tab bars (document and link tabs), following the WAI-ARIA tabs p
 - **Roles.** `role="tablist"` with a name, `role="tab"` with `aria-selected` and `aria-controls`,
   and `role="tabpanel"` on the content.
 - **Keys.** One tab stop on the selected tab (as now); Left and Right move between tabs and wrap at
-  the ends; Home and End go to the first and last. Document tabs keep manual activation (arrows
-  move focus, Enter or Space selects, as selecting can load a document); link tabs select as the
-  arrows move. A/D/H/L no longer move between tabs.
+  the ends; Home and End go to the first and last. Arrows move the focus, and Enter or Space
+  selects, on both bars: selecting a tab can load a document, and many link tabs load too (the
+  data viewer's tabs fetch from the server; document sub-tabs build their content on first view).
+  A/D/H/L no longer move between tabs.
 - **Closing.** Delete closes the focused closable tab (Escape no longer does); Alt+W stays. Focus
   moves to the newly selected tab, not to the page.
+- **Menu.** The context menu key or Shift+F10 opens the focused tab's menu (Close Others and so
+  on), below the tab, as a right click does; Escape gives the focus back to the tab.
 - **Focus.** Shown only for keyboard focus (`:focus-visible`), as a 2px rounded ring in
   `--splitter__focus-color` (6.9:1 dark, 5.8:1 light against the shell): inside the edge of a
   document tab (the selected bar stays below it), and around a link tab's label, 4px past the text

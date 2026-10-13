@@ -188,7 +188,7 @@ public final class AskAiChatPanelStories {
         box.getElement().getStyle().setProperty("width", "480px");
         box.getElement().getStyle().setProperty("height", "560px");
         box.getElement().getStyle().setProperty("display", "flex");
-        box.getElement().getStyle().setProperty("border", "1px solid var(--separator__color, #444)");
+        box.getElement().getStyle().setProperty("border", "1px solid var(--border-color)");
         harness.add(box);
         harness.unbindOnCleanUp(presenter);
     }

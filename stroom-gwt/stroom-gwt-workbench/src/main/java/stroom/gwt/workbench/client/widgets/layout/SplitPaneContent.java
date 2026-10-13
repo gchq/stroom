@@ -63,7 +63,7 @@ final class SplitPaneContent {
         style.setProperty("height", "100%");
         style.setProperty("boxSizing", "border-box");
         if (tinted) {
-            style.setProperty("background", "var(--sidebar__background-color,#1e2229)");
+            style.setProperty("background", "var(--row__background-color--even)");
         }
         return block;
     }

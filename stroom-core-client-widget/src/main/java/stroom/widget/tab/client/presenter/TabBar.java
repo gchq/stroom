@@ -20,6 +20,7 @@ import stroom.widget.menu.client.presenter.ShowMenuEvent.HasShowMenuHandlers;
 import stroom.widget.tab.client.event.HasRequestCloseTabHandlers;
 import stroom.widget.tab.client.view.AbstractTab;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.user.client.ui.Focus;
 
@@ -54,4 +55,10 @@ public interface TabBar extends
     void refresh();
 
     AbstractTab getTab(TabData tabData);
+
+    /// Sets the element that shows the selected tab's content, which screen readers are told the
+    /// tabs control (it becomes a `tabpanel`, named by the selected tab).
+    ///
+    /// @param panel The panel, or null for none.
+    void setTabPanel(Element panel);
 }

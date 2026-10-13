@@ -104,7 +104,7 @@ public final class ContentTabPaneStories {
 
     // The tab bar's tabs for a document (their labels; the editor shows the name too, with its type)
     private static Query tabs(final Play play, final String name) {
-        return play.getAllByText(TextMatch.startingWith(name), ".curveTab-text");
+        return play.getAllByText(TextMatch.startingWith(name), ".tab-bar--curved .tab-bar__label");
     }
 
     private static void open(final ContentManager contentManager,

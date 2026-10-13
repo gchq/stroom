@@ -1097,10 +1097,10 @@ export async function runAnnotationCycle(page, spec, { guard, settle, log = () =
     if (!(await dialogCaptions(page)).some((c) => /alert/i.test(c))) return null;
     return (await readTopDialogBody(page))?.text ?? 'an Alert with no text';
   };
-  const tabs = () => page.evaluate(() => [...document.querySelectorAll('.curveTab')]
+  const tabs = () => page.evaluate(() => [...document.querySelectorAll('.tab-bar--curved .tab-bar__tab')]
     .filter((e) => e.offsetWidth > 0).map((e) => e.innerText.replace(/\s+/g, ' ').trim())).catch(() => []);
   const toTab = async (re) => {
-    const tab = page.locator('.curveTab').filter({ hasText: re }).first();
+    const tab = page.locator('.tab-bar--curved .tab-bar__tab').filter({ hasText: re }).first();
     await tab.click({ timeout: 5_000 });
     await settle(800);
   };

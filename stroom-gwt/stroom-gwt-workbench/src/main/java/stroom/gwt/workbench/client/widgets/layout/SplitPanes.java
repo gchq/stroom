@@ -34,7 +34,7 @@ final class SplitPanes {
     /// @return The pane.
     static Widget leftPane(final String hint) {
         final Widget pane = pane("Left panel", hint);
-        pane.getElement().getStyle().setProperty("background", "var(--sidebar__background-color,#1e2229)");
+        pane.getElement().getStyle().setProperty("background", "var(--row__background-color--even)");
         return pane;
     }
 
