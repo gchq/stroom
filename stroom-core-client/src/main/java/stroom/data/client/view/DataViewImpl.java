@@ -19,7 +19,6 @@ package stroom.data.client.view;
 import stroom.data.client.presenter.DataPresenter.DataView;
 import stroom.data.client.presenter.ItemNavigatorPresenter.ItemNavigatorView;
 import stroom.task.client.TaskMonitor;
-import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.progress.client.presenter.ProgressPresenter.ProgressView;
 import stroom.widget.spinner.client.SpinnerLarge;
 import stroom.widget.tab.client.view.LinkTabBar;
@@ -52,8 +51,6 @@ public class DataViewImpl extends ViewImpl implements DataView {
     LayerContainer layerContainer;
     @UiField
     SimplePanel progressBarPanel;
-    @UiField
-    ButtonPanel buttonPanel;
     @UiField
     SpinnerLarge spinner;
 

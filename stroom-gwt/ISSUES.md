@@ -600,6 +600,9 @@ screenshot is unchanged. Still made on their own: the button widgets built on `T
 (`HelpButton`, `RefreshButton` (the visualisations' own), table expand and collapse, the quick
 filter's and date picker's buttons), which `PagerView.addButton(ButtonView)` still adds. The pathway
 tree's New, Edit and Remove buttons have never had a click handler, so do nothing.
+`ButtonPanel` is deleted, with its `button-container` rules: the last two were empty, holding a place
+in their rows (the data view's and query text view's), so are plain panels. Its stories
+(`Widgets/Buttons/ButtonGroup`) are of `Toolbar`, which has `setVertical` for a column of buttons.
 
 ### Opening a screen leaves the focus behind (#5405)
 

@@ -282,7 +282,7 @@ Toolbars are the first part of the UI to be rebuilt on these principles. They ar
 
 ### Keyboard behaviour
 
-Buttons that sit next to each other are one group and one tab stop, the WAI-ARIA toolbar pattern; buttons apart on a row (e.g. at either end) are separate groups. `ButtonGroupFocus` (in `stroom-core-client-widget`, used by `ButtonPanel`) gives a group:
+Buttons that sit next to each other are one group and one tab stop, the WAI-ARIA toolbar pattern; buttons apart on a row (e.g. at either end) are separate groups. `ButtonGroupFocus` (in `stroom-core-client-widget`, used by `Toolbar`) gives a group:
 
 - a roving tab index: one button has `tabindex="0"`, the others `-1`, kept as buttons are added, shown, hidden or attached;
 - Left and Right (Up and Down for a vertical group), wrapping at the ends, and Home and End; Tab returns to the button last used;
@@ -357,9 +357,8 @@ A toolbar can be declared in a template. `@UiConstructor Toolbar(String name)` m
 
 ### Contributions
 
-- Done: `HasToolbar.getDocumentButtons()` gives the groups of buttons that join the document tab's toolbar after Save and Save As (nested in it, so they are one group and one tab stop), and `HasToolbar.getToolbars()` the controls apart from them on the row (e.g. a query's time range and Execute button at its end). When those groups are made of `ToolbarButton`s, they can instead be added to the toolbar itself (`addTo(Toolbar)`), and the transitional `.toolbar > .button-container` rule in `toolbar.css` removed.
-- `PagerView` exposes its `ToolbarRow` (or the actions `Toolbar`) once, instead of re-declaring `addButton` and `addToggleButton`; the pager's navigation is the row's second toolbar.
-- The pass-through methods are deleted as their callers move to the new API.
+- Done: `HasToolbar.getDocumentButtons()` gives the groups of buttons that join the document tab's toolbar after Save and Save As (nested in it, so they are one group and one tab stop), and `HasToolbar.getToolbars()` the controls apart from them on the row (e.g. a query's time range and Execute button at its end). They are `Toolbar`s; when their buttons are made in the document's toolbar itself (`addTo(Toolbar)`), the transitional `.toolbar > .toolbar` rule in `toolbar.css` can be removed.
+- Done: `PagerView` exposes its actions `Toolbar` once (`getToolbar()`), and the list presenters' and views' pass-through methods are `getToolbar()` too. `PagerView.addButton(ButtonView)` stays for the button widgets built on `ToolbarButton` (e.g. table expand and collapse) until they can be made in a toolbar.
 
 ### Lifetime
 
@@ -369,7 +368,9 @@ A toolbar is self-contained (case 1): its callbacks are on its buttons and `Butt
 
 1. Done: `Toolbar`, `ToolbarRow`, `ToolbarSeparator`, `ToolbarButton` and `ToolbarToggleButton` (with `setOnClick` and `setOnToggle`), styled by `toolbar.css` alone, with stories for the Java and UiBinder forms (`Widgets/Buttons/Toolbar`). `ButtonPanel`'s `Preset` methods and `SvgToggleButton` are deprecated; existing toolbars keep working, already with the keyboard behaviour. `InlineSvgToggleButton` now says it is a toggle (`aria-pressed="false"`) before it is first pressed.
 2. Convert the Dictionary editor first, the pilot's screen, using its `ToolbarTabStops` numbers as the before and after.
-3. Convert by area: the plain `FlowPanel` groups (explorer header, pagers, main toolbar, data navigators), `HasToolbar` and the document tab, then the remaining `addButton` callers, removing pass-throughs as they go. `SvgPresets` is deleted when its last use goes (menus are to be checked).
+3. Done: convert by area: the plain `FlowPanel` groups (explorer header, pagers, main toolbar, data navigators), `HasToolbar` and the document tab, then the remaining `addButton` callers, removing pass-throughs as they go. `SvgButton` and `ButtonPanel` are deleted (`Toolbar.setVertical` replaces `ButtonPanel.setVertical`).
+4. Make the button widgets built on `ToolbarButton` (`HelpButton`, `RefreshButton`, table expand and collapse, the quick filter's and date picker's buttons) in a toolbar.
+5. Replace `Preset` where cells and menus use it (`SvgCell`, `InfoColumn`, `ActionCell`, `IconMenuItem.icon(Preset)`), then delete `Preset` and `SvgPresets`.
 
 ## Split panes
 

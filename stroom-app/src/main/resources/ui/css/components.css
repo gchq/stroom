@@ -32,17 +32,6 @@
     padding: 5px;
 }
 
-.button-container {
-    display: flex;
-    margin: 2px;
-    gap: 2px;
-}
-
-/* A column of buttons (ButtonPanel.setVertical); ButtonGroupFocus says so with aria-orientation */
-.button-container[aria-orientation="vertical"] {
-    flex-direction: column;
-}
-
 .basicTabSelector {
     position: absolute;
     left: 0;

@@ -6,8 +6,7 @@
              xmlns:spinner="urn:import:stroom.widget.spinner.client">
     <g:FlowPanel styleName="TextView max dock-container-vertical">
         <g:FlowPanel styleName="dock-min dock-container-horizontal">
-            <b:ButtonPanel addStyleNames="dock-max">
-            </b:ButtonPanel>
+            <g:FlowPanel styleName="dock-max"/>
             <b:Toolbar name="Text actions" addStyleNames="dock-min">
                 <b:ToolbarButton ui:field="close" svg="CLOSE" title="Close"/>
             </b:Toolbar>

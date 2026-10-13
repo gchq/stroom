@@ -23,17 +23,15 @@ import stroom.gwt.workbench.framework.client.story.StoryLayout;
 import stroom.gwt.workbench.framework.client.story.StoryRegistry;
 import stroom.svg.shared.SvgImage;
 import stroom.widget.button.client.ButtonGroupFocus;
-import stroom.widget.button.client.ButtonPanel;
-import stroom.widget.button.client.ButtonView;
+import stroom.widget.button.client.Toolbar;
 import stroom.widget.button.client.ToolbarButton;
-import stroom.widget.button.client.ToolbarToggleButton;
 
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-/// Stories for groups of icon buttons ([ButtonPanel]), measuring how a keyboard user crosses them.
+/// Stories for groups of icon buttons ([Toolbar]), measuring how a keyboard user crosses them.
 ///
 /// Buttons that sit next to each other are one tab stop, a toolbar whose buttons the arrow keys
 /// move between (the WAI-ARIA toolbar pattern, [ButtonGroupFocus]). The plays measure the tab
@@ -54,11 +52,11 @@ public final class ButtonGroupStories {
         registry.component("Widgets/Buttons/ButtonGroup", ButtonGroupStories.class)
                 .layout(StoryLayout.CENTERED)
                 // One button on its own: a plain button, not a toolbar
-                .story("SingleButton", context -> region(panel(button(SvgImage.ADD, "Add"))))
+                .story("SingleButton", context -> region(add()))
                 .withPlay(play -> {
                     final Query region = play.getByTestId(REGION);
                     play.expect(ButtonRuns.of(region)).toEqual(List.of("Add: 1 tab stop"));
-                    play.expect(play.querySelector(".button-container")).not().toHaveAttribute("role");
+                    play.expect(play.querySelector(".toolbar")).not().toHaveAttribute("role");
                     play.tab();
                     play.expect(play.getByRole("button", "Add")).toHaveFocus();
                 })
@@ -96,9 +94,9 @@ public final class ButtonGroupStories {
                 })
                 // A disabled button (aria-disabled) can still be reached, so its name is found
                 .story("WithDisabled", context -> {
-                    final ButtonPanel panel = addEditDelete();
-                    buttonTitled(panel, "Edit").setEnabled(false);
-                    return region(panel);
+                    final Toolbar toolbar = addEditDelete();
+                    buttonTitled(toolbar, "Edit").setEnabled(false);
+                    return region(toolbar);
                 })
                 .withPlay(play -> {
                     final Query region = play.getByTestId(REGION);
@@ -111,12 +109,9 @@ public final class ButtonGroupStories {
                 })
                 // A toggle button (ToolbarToggleButton) beside an ordinary one
                 .story("WithToggle", context -> {
-                    final ButtonPanel panel = panel(button(SvgImage.ADD, "Add"));
-                    final ToolbarToggleButton toggle = new ToolbarToggleButton();
-                    toggle.setSvg(SvgImage.EXPAND_DOWN);
-                    toggle.setTitle("Expand");
-                    panel.addButton(toggle);
-                    return region(panel);
+                    final Toolbar toolbar = add();
+                    toolbar.toggle(SvgImage.EXPAND_DOWN, "Expand", null);
+                    return region(toolbar);
                 })
                 .withPlay(play -> {
                     final Query region = play.getByTestId(REGION);
@@ -125,9 +120,9 @@ public final class ButtonGroupStories {
                 })
                 // A hidden button is neither seen nor reached by the arrow keys
                 .story("WithHidden", context -> {
-                    final ButtonPanel panel = addEditDelete();
-                    buttonTitled(panel, "Edit").asWidget().setVisible(false);
-                    return region(panel);
+                    final Toolbar toolbar = addEditDelete();
+                    buttonTitled(toolbar, "Edit").setVisible(false);
+                    return region(toolbar);
                 })
                 .withPlay(play -> {
                     final Query region = play.getByTestId(REGION);
@@ -138,11 +133,9 @@ public final class ButtonGroupStories {
                 })
                 // A button column: Up and Down move between the buttons
                 .story("Vertical", context -> {
-                    final ButtonPanel panel = new ButtonPanel();
-                    panel.setVertical(true);
-                    panel.addButton(button(SvgImage.ADD, "Add"));
-                    panel.addButton(button(SvgImage.DELETE, "Delete"));
-                    return region(panel);
+                    final Toolbar toolbar = addDelete();
+                    toolbar.setVertical(true);
+                    return region(toolbar);
                 })
                 .withPlay(play -> {
                     play.expect(play.getByRole("toolbar")).toHaveAttribute("aria-orientation", "vertical");
@@ -152,21 +145,17 @@ public final class ButtonGroupStories {
                     play.keyboard("{ArrowUp}");
                     play.expect(play.getByRole("button", "Add")).toHaveFocus();
                 })
-                // Two panels side by side (as a document tab's Save buttons sit beside its editor's)
+                // Two toolbars side by side (as a document tab's Save buttons sit beside its editor's)
                 // look like one group, but are still a tab stop each
-                .story("AdjacentPanels", context -> region(
-                        panel(button(SvgImage.SAVE, "Save"), button(SvgImage.SAVEAS, "Save As")),
-                        panel(button(SvgImage.ADD, "Add"), button(SvgImage.DELETE, "Delete"))))
+                .story("AdjacentPanels", context -> region(saveSaveAs(), addDelete()))
                 .withPlay(play -> {
                     final Query region = play.getByTestId(REGION);
                     play.expect(ButtonRuns.of(region)).toEqual(List.of("Save, Save As, Add, Delete: 2 tab stops"));
                 })
-                // The same panels made one group, by making the element holding them a group: the
-                // panels leave their buttons to it, so the arrow keys cross from one to the other
+                // The same toolbars made one group, by making the element holding them a group: the
+                // toolbars leave their buttons to it, so the arrow keys cross from one to the other
                 .story("MergedPanels", context -> {
-                    final FlowPanel row = region(
-                            panel(button(SvgImage.SAVE, "Save"), button(SvgImage.SAVEAS, "Save As")),
-                            panel(button(SvgImage.ADD, "Add"), button(SvgImage.DELETE, "Delete")));
+                    final FlowPanel row = region(saveSaveAs(), addDelete());
                     ButtonGroupFocus.install(row.getElement());
                     return row;
                 })
@@ -179,11 +168,9 @@ public final class ButtonGroupStories {
                     play.keyboard("{ArrowRight}");
                     play.expect(play.getByRole("button", "Add")).toHaveFocus();
                 })
-                // Panels at either end of a row are separate groups, a tab stop each
+                // Toolbars at either end of a row are separate groups, a tab stop each
                 .story("SeparatedPanels", context -> {
-                    final FlowPanel row = region(
-                            panel(button(SvgImage.ADD, "Add"), button(SvgImage.DELETE, "Delete")),
-                            panel(button(SvgImage.REFRESH, "Refresh")));
+                    final FlowPanel row = region(addDelete(), refresh());
                     row.getElement().getStyle().setProperty("justifyContent", "space-between");
                     row.getElement().getStyle().setProperty("width", "300px");
                     return row;
@@ -196,47 +183,59 @@ public final class ButtonGroupStories {
                 });
     }
 
-    // A ButtonPanel of buttons, as presenters build their toolbars
-    private static ButtonPanel panel(final ButtonView... buttons) {
-        final ButtonPanel panel = new ButtonPanel();
-        for (final ButtonView button : buttons) {
-            panel.addButton(button);
-        }
-        return panel;
+    // The toolbars the stories show. Their buttons start enabled and do nothing when pressed.
+
+    private static Toolbar add() {
+        final Toolbar toolbar = new Toolbar("List actions");
+        toolbar.button(SvgImage.ADD, "Add", null);
+        return toolbar;
     }
 
     // A list's Add, Edit and Delete buttons
-    private static ButtonPanel addEditDelete() {
-        return panel(
-                button(SvgImage.ADD, "Add"),
-                button(SvgImage.EDIT, "Edit"),
-                button(SvgImage.DELETE, "Delete"));
+    private static Toolbar addEditDelete() {
+        final Toolbar toolbar = new Toolbar("List actions");
+        toolbar.button(SvgImage.ADD, "Add", null);
+        toolbar.button(SvgImage.EDIT, "Edit", null);
+        toolbar.button(SvgImage.DELETE, "Delete", null);
+        return toolbar;
     }
 
-    // An enabled button with an icon and a name
-    private static ToolbarButton button(final SvgImage icon, final String name) {
-        final ToolbarButton button = new ToolbarButton();
-        button.setSvg(icon);
-        button.setTitle(name);
-        return button;
+    private static Toolbar addDelete() {
+        final Toolbar toolbar = new Toolbar("List actions");
+        toolbar.button(SvgImage.ADD, "Add", null);
+        toolbar.button(SvgImage.DELETE, "Delete", null);
+        return toolbar;
     }
 
-    private static ButtonView buttonTitled(final ButtonPanel panel, final String title) {
-        for (final Widget widget : panel) {
+    private static Toolbar saveSaveAs() {
+        final Toolbar toolbar = new Toolbar("Document actions");
+        toolbar.button(SvgImage.SAVE, "Save", null);
+        toolbar.button(SvgImage.SAVEAS, "Save As", null);
+        return toolbar;
+    }
+
+    private static Toolbar refresh() {
+        final Toolbar toolbar = new Toolbar("Paging");
+        toolbar.button(SvgImage.REFRESH, "Refresh", null);
+        return toolbar;
+    }
+
+    private static ToolbarButton buttonTitled(final Toolbar toolbar, final String title) {
+        for (final Widget widget : toolbar) {
             if (title.equals(widget.getTitle())) {
-                return (ButtonView) widget;
+                return (ToolbarButton) widget;
             }
         }
         throw new IllegalArgumentException("No button titled " + title);
     }
 
-    // The panels in a row, marked so the plays can measure them
-    private static FlowPanel region(final Widget... panels) {
+    // The toolbars in a row, marked so the plays can measure them
+    private static FlowPanel region(final Widget... toolbars) {
         final FlowPanel row = new FlowPanel();
         row.getElement().setAttribute("data-testid", REGION);
         row.getElement().getStyle().setProperty("display", "flex");
-        for (final Widget panel : panels) {
-            row.add(panel);
+        for (final Widget toolbar : toolbars) {
+            row.add(toolbar);
         }
         return row;
     }

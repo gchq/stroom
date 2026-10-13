@@ -101,6 +101,14 @@ public class Toolbar extends FlowPanel {
         groupFocus.setName(name);
     }
 
+    /// Puts the buttons in a column, which Up and Down move along rather than Left and Right.
+    ///
+    /// @param vertical Whether the buttons are in a column.
+    public void setVertical(final boolean vertical) {
+        // Laid out as a column by its aria-orientation, which the group sets
+        groupFocus.setVertical(vertical);
+    }
+
     @Override
     protected void onLoad() {
         super.onLoad();
