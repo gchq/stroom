@@ -38,6 +38,7 @@ import stroom.util.shared.PageResponse;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.button.client.InlineSvgToggleButton;
 import stroom.widget.popup.client.presenter.PopupPosition;
+import stroom.widget.tab.client.view.GlobalResizeObserver;
 import stroom.widget.util.client.ElementUtil;
 import stroom.widget.util.client.MySingleSelectionModel;
 
@@ -113,6 +114,10 @@ public class PathwayTreePresenter
     private boolean historyPending;
     private boolean blanked;
     private String wantedSelection;
+    // Whether the drawing was last made against a panel with no size. Put right when the panel has
+    // one, rather than on every showing, so a reader who zoomed in and looked at something else keeps
+    // the drawing where they left it.
+    private boolean drewWhileHidden;
     private final Timer historyRequest = new Timer() {
         @Override
         public void run() {
@@ -198,6 +203,19 @@ public class PathwayTreePresenter
 
     @Override
     protected void onBind() {
+        // A drawing is fitted and placed against the room it has. Made while its panel was off screen
+        // it was fitted against nothing, and the fit is spent, so showing the panel again leaves it
+        // zoomed out and off centre. Watched here rather than waiting to be told: what matters is the
+        // panel having a size, and nothing above knows that better than the panel does — a tab behind
+        // another measures nothing whichever way it came to be hidden.
+        GlobalResizeObserver.addListener(html.getElement(), element -> {
+            if (drewWhileHidden && html.getOffsetWidth() > 0 && html.getOffsetHeight() > 0) {
+                drewWhileHidden = false;
+                viewport.fitOnNextDraw();
+                refresh(false);
+            }
+        });
+
         super.onBind();
         // Follows the button rather than deciding for itself which clicks count: the button turns
         // itself over on any click it accepts, and a drawing that disagreed with the icon on it would
@@ -302,6 +320,12 @@ public class PathwayTreePresenter
             nodeMenuHandler.accept(picked, new PopupPosition(
                     e.getNativeEvent().getClientX(), e.getNativeEvent().getClientY()));
         }, ContextMenuEvent.getType()));
+    }
+
+    @Override
+    protected void onUnbind() {
+        GlobalResizeObserver.removeListener(html.getElement());
+        super.onUnbind();
     }
 
     // The drawing's own buttons, which are the only things on it carrying an id.
@@ -702,7 +726,12 @@ public class PathwayTreePresenter
         if (waiting()) {
             html.setHTML(SafeHtmlUtils.EMPTY_SAFE_HTML);
             blanked = true;
-            wantedSelection = was;
+            // Whatever was on show, or else whatever was already waiting to be picked out. A second
+            // drawing made before the first has anything to draw has nothing on show to remember, and
+            // taking that as the answer would forget the node the first one asked for.
+            if (was != null) {
+                wantedSelection = was;
+            }
             selectionModel.clear();
             return;
         }
@@ -746,6 +775,13 @@ public class PathwayTreePresenter
         // be taken off and put back, and every animation starts again — which is what makes a replay
         // hard to watch. The renderer says whether it managed it; anything else falls through to
         // building the lot, which is always right.
+        if (html.getOffsetWidth() <= 0 || html.getOffsetHeight() <= 0) {
+            // Fitted and placed against a panel with no size, which is what a panel on a tab nobody
+            // is looking at measures. Noted so it can be made again once there is something to
+            // measure.
+            drewWhileHidden = true;
+        }
+
         final boolean changedInPlace = keep && renderer.update(html.getElement(), request);
         if (!changedInPlace) {
             // The element that scrolls is the one being rebuilt below, so where it had got to has to
