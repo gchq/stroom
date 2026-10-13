@@ -1,10 +1,10 @@
 {
- "generated": "2026-10-12T06:07:29.290Z",
+ "generated": "2026-10-13T10:07:59.742Z",
  "declared": 1546,
- "exercised": 808,
+ "exercised": 822,
  "presenters": {
   "declared": 805,
-  "exercised": 485
+  "exercised": 498
  },
  "byKind": {
   "command": {
@@ -13,7 +13,7 @@
   },
   "ok": {
    "declared": 98,
-   "exercised": 62
+   "exercised": 75
   },
   "cancel": {
    "declared": 98,
@@ -37,7 +37,7 @@
   },
   "hide": {
    "declared": 33,
-   "exercised": 19
+   "exercised": 20
   },
   "dirty": {
    "declared": 15,
@@ -81,10 +81,10 @@
   }
  },
  "why": {
-  "unreached": 237,
+  "unreached": 235,
   "needs-value": 194,
   "needs-key": 61,
-  "ok-blocked": 18,
+  "ok-blocked": 6,
   "view": 67,
   "widget": 88,
   "needs-dom": 6,
@@ -204,9 +204,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Chat History",
    "line": 163,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed"
    ]
@@ -290,9 +291,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Configure Ask Stroom AI",
    "line": 109,
    "exercised": false,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "alert",
     "vanished"
@@ -357,6 +359,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Ask Stroom AI",
    "line": 265,
    "exercised": false,
    "why": "unreached"
@@ -367,6 +370,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Download Options",
    "line": 886,
    "exercised": false,
    "why": "unreached"
@@ -387,6 +391,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Ask Stroom AI",
    "line": 1111,
    "exercised": false,
    "why": "unreached"
@@ -554,6 +559,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Add Notification",
    "line": 113,
    "exercised": false,
    "why": "unreached"
@@ -574,6 +580,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Notification",
    "line": 135,
    "exercised": false,
    "why": "unreached"
@@ -913,6 +920,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Filter Schedules",
    "line": 651,
    "exercised": false,
    "why": "widget"
@@ -1659,9 +1667,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Link An Event",
    "line": 50,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "alert"
    ]
@@ -1800,9 +1809,14 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Comment",
    "line": 668,
    "exercised": false,
-   "why": "unreached"
+   "join": "caption",
+   "outcomes": [
+    "nothing"
+   ],
+   "why": "ok-blocked"
   },
   {
    "class": "AnnotationEditPresenter",
@@ -2119,6 +2133,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Change Permissions",
    "line": 127,
    "exercised": true,
    "join": "attributed",
@@ -2211,14 +2226,13 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Change Assigned To",
    "line": 61,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
-    "alert",
-    "unclickable"
-   ],
-   "why": "ok-blocked"
+    "alert"
+   ]
   },
   {
    "class": "ChangeAssignedToPresenter",
@@ -2272,14 +2286,14 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Change Status",
    "line": 103,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "alert",
     "unclickable"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "ChangeStatusPresenter",
@@ -2344,9 +2358,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Set Retention Period",
    "line": 32,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed",
     "unclickable"
@@ -2396,9 +2411,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Choose Annotation",
    "line": 73,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "nothing",
     "unclickable",
@@ -2615,12 +2631,11 @@
    "receiver": "dialog",
    "label": "OK",
    "line": 345,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "alert"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "ManageGlobalPropertyEditPresenter",
@@ -2817,12 +2832,11 @@
    "receiver": "dialog",
    "label": "OK",
    "line": 92,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "alert"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "CredentialEditPresenter",
@@ -3099,13 +3113,13 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Settings",
    "line": 115,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed",
-    "alert",
-    "unclickable"
+    "alert"
    ]
   },
   {
@@ -3289,13 +3303,12 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Rename Tab",
    "line": 66,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "closed",
-    "alert",
-    "unclickable"
+    "closed"
    ]
   },
   {
@@ -3593,13 +3606,12 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Query Favourites",
    "line": 166,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "closed",
-    "alert",
-    "unclickable"
+    "closed"
    ]
   },
   {
@@ -3632,13 +3644,12 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Query History",
    "line": 127,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "closed",
-    "alert",
-    "unclickable"
+    "closed"
    ]
   },
   {
@@ -3899,6 +3910,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Process Search Results",
    "line": 508,
    "exercised": true,
    "join": "attributed",
@@ -4461,9 +4473,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Rename Field",
    "line": 65,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed"
    ]
@@ -4656,6 +4669,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Download Options",
    "line": 575,
    "exercised": true,
    "join": "attributed",
@@ -4682,9 +4696,10 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Custom Row Style",
    "line": 36,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "unclickable",
     "closed"
@@ -5071,12 +5086,13 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Add New Rule",
    "line": 204,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed",
-    "alert"
+    "unclickable"
    ]
   },
   {
@@ -5098,6 +5114,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Rule",
    "line": 231,
    "exercised": true,
    "join": "attributed",
@@ -5198,9 +5215,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Set Source Range",
    "line": 56,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed"
    ]
@@ -5283,9 +5301,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Upload",
    "line": 130,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "alert"
    ]
@@ -5792,11 +5811,12 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Filter Streams",
    "line": 245,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "alert"
+    "closed"
    ]
   },
   {
@@ -5805,12 +5825,12 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Create Processors",
    "line": 33,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "dialog",
-    "unclickable",
     "closed"
    ]
   },
@@ -6314,15 +6334,12 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "New",
    "line": 59,
    "exercised": true,
-   "join": "attributed",
+   "join": "cycle",
    "outcomes": [
-    "alert",
-    "closed",
-    "nothing",
-    "unclickable",
-    "vanished"
+    "alert"
    ]
   },
   {
@@ -6936,13 +6953,12 @@
    "receiver": "dialog",
    "label": "OK",
    "line": 100,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "alert",
     "unclickable"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "CreateDocumentPresenter",
@@ -7143,14 +7159,13 @@
    "receiver": "dialog",
    "label": "OK",
    "line": 75,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "unclickable",
     "vanished",
     "alert"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "NameDocumentPresenter",
@@ -7419,6 +7434,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Find",
    "line": 60,
    "exercised": false,
    "why": "unreached"
@@ -7584,6 +7600,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Recent Items",
    "line": 64,
    "exercised": false,
    "why": "unreached"
@@ -8074,9 +8091,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit HTTP Client Configuration",
    "line": 52,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed"
    ]
@@ -8100,9 +8118,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit HTTP TLS Configuration",
    "line": 66,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed"
    ]
@@ -8281,9 +8300,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Export",
    "line": 135,
    "exercised": false,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "alert"
    ],
@@ -8318,6 +8338,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Confirm Import",
    "line": 161,
    "exercised": false,
    "why": "unreached"
@@ -8328,9 +8349,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Import",
    "line": 82,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "alert"
    ]
@@ -8700,6 +8722,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "New",
    "line": 54,
    "exercised": true,
    "join": "cycle",
@@ -9169,6 +9192,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "New",
    "line": 50,
    "exercised": true,
    "join": "cycle",
@@ -9878,13 +9902,14 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Set Location",
    "line": 47,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "caption",
    "outcomes": [
+    "vanished",
     "alert"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "StepLocationLinkPresenter",
@@ -9970,12 +9995,12 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Change Step Filters",
    "line": 254,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "closed",
-    "alert"
+    "closed"
    ]
   },
   {
@@ -10110,22 +10135,10 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Filter Streams",
    "line": 345,
    "exercised": true,
-   "join": "attributed",
-   "outcomes": [
-    "alert"
-   ]
-  },
-  {
-   "class": "XPathFilterPresenter",
-   "classKind": "presenter",
-   "kind": "hide",
-   "receiver": "dialog",
-   "label": "OK",
-   "line": 67,
-   "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed"
    ]
@@ -10136,9 +10149,24 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Add XPath Filter",
+   "line": 67,
+   "exercised": true,
+   "join": "caption",
+   "outcomes": [
+    "closed"
+   ]
+  },
+  {
+   "class": "XPathFilterPresenter",
+   "classKind": "presenter",
+   "kind": "hide",
+   "receiver": "dialog",
+   "label": "OK",
+   "caption": "Edit XPath Filter",
    "line": 79,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed"
    ]
@@ -10535,6 +10563,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Pipeline Source",
    "line": 551,
    "exercised": true,
    "join": "attributed",
@@ -10613,9 +10642,13 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Property",
    "line": 439,
-   "exercised": false,
-   "why": "unreached"
+   "exercised": true,
+   "join": "caption",
+   "outcomes": [
+    "closed"
+   ]
   },
   {
    "class": "NewPropertyViewImpl",
@@ -11543,16 +11576,15 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Batch Change All Filtered Processors",
    "line": 78,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "caption",
    "outcomes": [
     "nothing",
     "dialog",
-    "unclickable",
     "alert"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "BatchProcessorFilterEditPresenter",
@@ -11655,14 +11687,13 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Set Feed Dependencies",
    "line": 51,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "alert",
     "closed",
-    "unclickable",
-    "dialog"
+    "unclickable"
    ]
   },
   {
@@ -11828,11 +11859,12 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Filter Processors",
    "line": 267,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "alert"
+    "closed"
    ]
   },
   {
@@ -11916,9 +11948,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Period",
    "line": 53,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "alert",
     "closed"
@@ -12649,13 +12682,13 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Download Options",
    "line": 844,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "caption",
    "outcomes": [
-    "alert"
-   ],
-   "why": "ok-blocked"
+    "closed"
+   ]
   },
   {
    "class": "QueryResultTablePresenter",
@@ -12816,13 +12849,13 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Settings",
    "line": 747,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "caption",
    "outcomes": [
-    "alert"
-   ],
-   "why": "ok-blocked"
+    "closed"
+   ]
   },
   {
    "class": "QueryTableColumnsManager",
@@ -13307,9 +13340,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Add New Template",
    "line": 503,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "alert"
    ]
@@ -13333,6 +13367,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Template",
    "line": 564,
    "exercised": true,
    "join": "attributed",
@@ -13458,9 +13493,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Query Filter",
    "line": 290,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed"
    ]
@@ -13659,9 +13695,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Add New Rule",
    "line": 480,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "closed"
    ]
@@ -13685,6 +13722,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Rule",
    "line": 504,
    "exercised": true,
    "join": "attributed",
@@ -13976,12 +14014,12 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Rule",
    "line": 314,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "closed",
-    "alert"
+    "closed"
    ]
   },
   {
@@ -14045,6 +14083,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Change Schedule",
    "line": 166,
    "exercised": false,
    "why": "widget"
@@ -14849,14 +14888,12 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Batch Change Permissions For All Filtered Documents",
    "line": 94,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "dialog",
-    "unclickable",
-    "closed",
-    "alert"
+    "dialog"
    ]
   },
   {
@@ -14917,14 +14954,12 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Filter Documents",
    "line": 157,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "alert",
-    "closed",
-    "dialog",
-    "unclickable"
+    "closed"
    ]
   },
   {
@@ -14933,6 +14968,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Change Permissions",
    "line": 234,
    "exercised": true,
    "join": "attributed",
@@ -14991,14 +15027,14 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Set Document Create Permissions",
    "line": 115,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
     "alert",
     "unclickable"
-   ],
-   "why": "ok-blocked"
+   ]
   },
   {
    "class": "DocumentUserCreatePermissionsEditPresenter",
@@ -15020,14 +15056,13 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Set Permissions",
    "line": 96,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
-    "alert",
-    "unclickable"
-   ],
-   "why": "ok-blocked"
+    "alert"
+   ]
   },
   {
    "class": "DocumentUserPermissionsEditPresenter",
@@ -15102,6 +15137,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit API key",
    "line": 145,
    "exercised": true,
    "join": "attributed",
@@ -15274,6 +15310,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit User Group",
    "line": 179,
    "exercised": false,
    "why": "widget"
@@ -15481,6 +15518,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Filter Documents",
    "line": 171,
    "exercised": false,
    "why": "unreached"
@@ -15819,9 +15857,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Enter Your Current Password",
    "line": 68,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "nothing"
    ]
@@ -15845,13 +15884,12 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Create Account",
    "line": 78,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
-    "nothing",
-    "alert",
-    "unclickable"
+    "alert"
    ]
   },
   {
@@ -15860,15 +15898,13 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Edit Account",
    "line": 110,
-   "exercised": false,
-   "join": "attributed",
+   "exercised": true,
+   "join": "cycle",
    "outcomes": [
-    "nothing",
-    "alert",
-    "unclickable"
-   ],
-   "why": "ok-blocked"
+    "alert"
+   ]
   },
   {
    "class": "EditAccountPresenter",
@@ -15890,9 +15926,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Reset Your Password",
    "line": 61,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "nothing"
    ]
@@ -16260,6 +16297,7 @@
    "kind": "hide",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Task Manager",
    "line": 99,
    "exercised": false,
    "why": "unreached"
@@ -16490,9 +16528,10 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Add File",
    "line": 86,
    "exercised": true,
-   "join": "attributed",
+   "join": "caption",
    "outcomes": [
     "alert"
    ]
@@ -17523,6 +17562,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Set Date And Time",
    "line": 35,
    "exercised": false,
    "why": "widget"
@@ -17790,6 +17830,7 @@
    "kind": "ok",
    "receiver": "dialog",
    "label": "OK",
+   "caption": "Set Time",
    "line": 32,
    "exercised": false,
    "why": "widget"

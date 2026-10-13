@@ -831,3 +831,114 @@ ProcessorPresenter's hide and UserPreferences' tab bar: a node that carries two 
 dialogs a wider parent set, and the caption narrowing then finds no single presenter. Net -2. Worth
 doing only together with narrowing dialogs from the LAST screen on the route rather than all of them.
 Round r13 (all shards, #57 fixed, choosers driven, own changes discarded on close) runs instead.
+
+**Round r13 (all 15 shards; the VM went down at 14:00, and the six shards it hadn't finished were
+walked again from 14:50):** handlers flat at `808/1546 (52.3%)`, no first fails, and no dialog
+stranded in any shard (the Confirm discard holds). #38, #40, #41, #42 and #48 pass wherever reached.
+The one fail filed as #57 was not #57 coming back: Duplicate left the copy waiting to be placed, the
+walk surveyed `after Duplicate` with the glass still up, and the Ask Stroom AI round-trip's first
+click placed it. The walker now places a waiting component with Enter as soon as the click that
+started it settles, records that as a key check (`Enter (placing a component)`, a fail filed as
+#57), and clears one with Escape rather than a click. `probe-placement-keys.mjs` confirms both keys
+on the live build (tabs 6 -> 7 on Enter, unchanged on Escape). Coverage being flat says the walk is
+at its limit on the screens it reaches: the remaining handlers are `unreached` 237, `needs-value`
+194 and `needs-key` 61, which need new seeds and the B4 write cycles, not another round.
+
+**B4 write cycles, 2026-10-12/13 (writes approved without a dump; a restore is
+`setupDevEnv` + `setupSampleDataApplication`):** 37 cycles, all passing, nothing left live.
+`handlers 808 -> 812`, `ok 62 -> 65`, `ok-blocked 18 -> 14`.
+
+* The 8 existing cycles re-ran. Annotation comments, failing since 2026-10-05, now passes (the
+  annotation tag rename fix). Node group's "Enabled" is a self-labelled `CustomCheckBox`, which
+  `clickTickBox` didn't find; it now does.
+* New: credentials (create needs a user name and password; `createFields`/`editFields`),
+  a global property (`stroom.ui.aboutHtml`, the edit shape with an `overrideTick`: tick "Set Database
+  value" to change it, untick to revert, which deletes the config row; the table is empty after), and
+  a DOCUMENT shape (`runDocCycle`): New in Seed Content, reload, Rename, reload, Delete, reload, for
+  every type in the New menu except Pathways (27). Feeds can't be renamed (gchq/stroom#2912), so
+  theirs is create and delete; Plan B's name is its state store key (`^[a-z_0-9]+$`).
+* The edit shape had never run with MUTATE=1: it recorded no `ok` and no writes, so a run whose every
+  phase held said FAIL. Fixed, and the inventory now credits its change step as it does a create.
+* Explorer Delete is a SOFT delete: the `doc` row stays with `deleted` set and the explorer row goes.
+  The cycles' documents are all like that; it is by design (rule 3: harmless, and named here).
+* Two driver faults, caught by checking the database rather than the UI: the tree reader used the
+  cell's `textContent`, which includes an inline SVG icon's `<style>`/`<title>`, so Elastic Index and
+  OpenAI Model rows never matched (`seed.mjs` and `delete-docs.mjs` had the same reader, fixed too);
+  and the compensation took an absent row as "nothing was made", which hid those two. It now accepts
+  that only after the server refused the create. The two were deleted by hand.
+* Found, not bugs: a credential's edit dialog opens with the secret empty and refuses OK until it is
+  entered again (secrets are write-only), and the two icons above. Both in ISSUES.md's oddities.
+
+**Document permissions, 2026-10-13:** `handlers 812 -> 814`, `ok-blocked 14 -> 12`.
+
+* A permission can only be changed, so the cycle is a document cycle with `steps`: make a folder in
+  Seed Content, open its Permissions, change admin from Owner to View and back, tick Dictionary in
+  "Set Document Create Permissions" and untick it, delete the folder. Each change is read back after
+  the grid's Refresh. `provedBy` credits each dialog only by its own change, not by the folder's
+  create. The create-types column draws one icon per type with no text, so `readGridRow` reads
+  icon titles when a cell has no text.
+* Checking the database after it found **#58**: deleting a credential left its owner permission.
+  The folder's permissions went with it (the explorer's delete removes them), but two
+  `permission_doc` rows pointed at nothing, from the two credential runs. Fixed in
+  `CredentialsService`; a credentials run since the fix leaves no row, and the two rows are gone. A
+  check worth keeping after any write cycle: `permission_doc` rows whose uuid is in neither
+  `explorer_node`, `annotation` nor `credential` (0 now).
+
+**Annotations and accounts, 2026-10-13:** `handlers 814 -> 817`, `ok-blocked 12 -> 9`; 40 cycles,
+all passing, none leaked.
+
+* Annotation Change Status and Change Assigned To (`runAnnotationCycle`). Changing an annotation's
+  status adds history and can't go back to no status, so the cycle makes its own: Create Annotation
+  on an Example Index row, read the id from the editor tab (`#<id> New Annotation`), run
+  `from "Annotations"`, select its row, Change Status to Seed Status and Assign Yourself, each read
+  back by re-running the query, then Delete Annotation in its editor. An annotation's delete is a
+  soft delete, as a document's is: the row stays with `deleted` set, with its history and links,
+  and its permissions go.
+* Two driver faults found on the way. `selectRow` clicked the first plain cell, which in a query
+  result is the blank column and selects nothing, and measured rows below the grid's fold
+  off-screen; it now clicks a cell with text, scrolled into view. (The walker's own `select-row`
+  already did both, which is why the walks reached these dialogs and the cycle didn't.)
+  `clickButton` didn't undouble a multi-word label ("Delete Annotation Delete Annotation"). The
+  first run left annotation #15 because of the second; it was deleted the same way.
+* Manage Accounts: create (User ID), edit (First Name: changing the User ID would make a second
+  Stroom user), delete, then `alsoRemove` deletes the Stroom user that creating the account made, on
+  Security › Users. A deleted user moves to `stroom_user_archive`, Stroom's record of deleted users,
+  which also holds the user-group cycles' groups.
+
+Still `ok-blocked` (9): Ask Stroom AI's config, selection summary, data and index volume edit (a
+volume is a path on disk: `outside-db` unless a cycle can use a scratch path), export, step location,
+batch processor filter edit, and the query table's two.
+
+**Which OK was blocked, 2026-10-13:** `handlers 817 -> 822`, `ok-blocked 9 -> 6`; no cycle needed
+for the three that went.
+
+* An `ok` handler was joined by OWNER: any OK pressed anywhere under the presenter's screens. An
+  owner is a whole screen, so the stepper's `Save As` OK, aborted by the guard, made
+  `StepLocationLinkPresenter`'s Set Location OK `ok-blocked` though its own OK had closed cleanly.
+  And a dialog one class shows from another's screen (`QueryTableColumnsManager` shows
+  `RulesPresenter`'s Settings, `QueryResultTablePresenter` shows `DownloadPresenter`'s Download
+  Options) is attributed to the dialog's presenter, so the opener's handler only ever saw the
+  unrelated OKs. The miner now records the caption literal in the handler's `ShowPopupEvent` chain,
+  and the join takes the OKs pressed in a dialog of that caption (the walk records it in `dialogs`)
+  under one of the handler's owners, the dialog's or its opener's. Both halves: `New` is the caption
+  of a dozen dialogs.
+* That cleared Set Location, Download Options and Conditional Formatting's Settings. It moved two
+  the other way, both truthfully: `AnnotationEditPresenter`'s Edit Comment (`unreached` ->
+  `ok-blocked`: pressed, and its `changeAnnotationEntry` aborted), and `NewFsVolumeGroupPresenter`,
+  whose credit had come from other OKs; its own was only pressed with an empty name. The data volume
+  group cycle creates through it, so its spec now claims it, as the index volume group's does, and
+  was re-run (pass).
+* Batch Change All Filtered Processors is credited by the same join: its OK ran (a "No processors
+  are included" alert, or the "change 64 processors?" confirm, declined). The write itself is still
+  unproven and wants a cycle.
+* The guard blocked downloads and exports that only write a temp file to the resource store
+  (`createTempFile` in DashboardServiceImpl, QueryServiceImpl, DictionaryResourceImpl.download and
+  ContentServiceImpl.exportContent). `downloadSearchResults` was meant to be allowed, but its path
+  carries the node (`/downloadSearchResults/node1a`) and the pattern stopped short. Now allowed,
+  with a unit test; Export's OK needs the next walk to show it.
+* The Set Location OK's `FindMetaCriteria ... "criteria" is null` alert in older crawls is the bug
+  `Fix stepping button` (2026-10-09) fixed: the link stays disabled until a stream is chosen. r13
+  has none.
+
+Still `ok-blocked` (6): Ask Stroom AI's config (preferences), selection summary (stream delete or
+restore), data and index volume edit (a path on disk), export (next walk), Edit Comment.

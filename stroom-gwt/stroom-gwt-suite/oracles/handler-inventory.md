@@ -12,8 +12,8 @@ when a post-action selection state was reached under it. The rest are classified
 
 | | declared | exercised | |
 | --- | ---: | ---: | ---: |
-| **all classes** | 1546 | 808 | 52.3% |
-| **presenters** | 805 | 485 | 60.2% |
+| **all classes** | 1546 | 822 | 53.2% |
+| **presenters** | 805 | 498 | 61.9% |
 
 _68 of the exercised are joined by LABEL alone (a label one or two classes use, clicked somewhere the ledger did not attribute to the class); the rest by the ledger's attribution of the node to the class, a subclass, or a presenter that embeds it._
 
@@ -23,10 +23,10 @@ _68 of the exercised are joined by LABEL alone (a label one or two classes use, 
 | value | 314 | 120 | 38.2% |
 | command | 212 | 137 | 64.6% |
 | selection | 158 | 75 | 47.5% |
-| ok | 98 | 62 | 63.3% |
+| ok | 98 | 75 | 76.5% |
 | cancel | 98 | 80 | 81.6% |
 | key | 82 | 21 | 25.6% |
-| hide | 33 | 19 | 57.6% |
+| hide | 33 | 20 | 60.6% |
 | dirty | 15 | 5 | 33.3% |
 | mousedown | 14 | 4 | 28.6% |
 | context | 11 | 11 | 100.0% |
@@ -42,14 +42,14 @@ _68 of the exercised are joined by LABEL alone (a label one or two classes use, 
 
 | why | handlers | meaning |
 | --- | ---: | --- |
-| `unreached` | 237 | labelled, in a presenter, and never clicked on a node attributed to it |
+| `unreached` | 235 | labelled, in a presenter, and never clicked on a node attributed to it |
 | `needs-value` | 194 | a value must be typed or chosen (B3) |
 | `widget` | 88 | declared in a widget class — inherited by many presenters, counted once here |
 | `view` | 67 | declared in a ViewImpl (a @UiHandler) — joined by ui.xml label, none matched |
 | `needs-key` | 61 | a keyboard event (B3) |
 | `unlabelled` | 47 | a click handler on a receiver whose label the miner could not resolve (miner gap) |
-| `ok-blocked` | 18 | the OK writes, and the guard aborted it (B4) |
 | `needs-dirty` | 10 | an editor made dirty (B3) |
+| `ok-blocked` | 6 | the OK writes, and the guard aborted it (B4) |
 | `needs-dom` | 6 | a DOM event the walk has no step for |
 | `needs-close` | 5 | a tab or panel closed |
 | `absent` | 5 | the class is not in the running application — unreachable, not outstanding |
@@ -61,7 +61,7 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | presenter | declared | exercised | unexercised by why |
 | --- | ---: | ---: | --- |
 | `ContentTemplateTabPresenter` | 20 | 6 | unreached 14 |
-| `AnnotationEditPresenter` | 10 | 3 | unreached 7 |
+| `AnnotationEditPresenter` | 10 | 3 | unreached 6, ok-blocked 1 |
 | `DataRetentionPolicyPresenter` | 19 | 12 | unreached 7 |
 | `AbstractNotificationListPresenter` | 9 | 3 | unreached 6 |
 | `TablePresenter` | 13 | 7 | unlabelled 2, unreached 3, needs-close 1 |
@@ -85,7 +85,6 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `BatchExecutionScheduleEditPresenter` | 3 | 0 | unreached 2, needs-value 1 |
 | `ScheduledProcessEditPresenter` | 5 | 2 | unreached 2, needs-value 1 |
 | `ScheduledProcessHistoryListPresenter` | 3 | 0 | unreached 3 |
-| `ManageGlobalPropertyEditPresenter` | 5 | 2 | unreached 2, ok-blocked 1 |
 | `ContentStoreContentPackDetailsPresenter` | 4 | 1 | unreached 3 |
 | `CredentialsListPresenter` | 5 | 2 | unreached 3 |
 | `EmbeddedQueryPresenter` | 3 | 0 | unreached 2, needs-value 1 |
@@ -99,7 +98,6 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `NewPipelineReferencePresenter` | 3 | 0 | unreached 2, needs-value 1 |
 | `PipelineStructurePresenter` | 9 | 6 | unreached 3 |
 | `UserPreferencesPresenter` | 6 | 3 | needs-value 3 |
-| `QueryResultTablePresenter` | 11 | 8 | unlabelled 2, ok-blocked 1 |
 | `ApiKeysPresenter` | 4 | 1 | unreached 3 |
 | `ViewSettingsPresenter` | 3 | 0 | unreached 2, needs-value 1 |
 | `AbstractEditorPresenter` | 3 | 0 | needs-value 1, needs-key 2 |
@@ -108,9 +106,8 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `AskStroomAiConfigPresenter` | 3 | 1 | unreached 1, ok-blocked 1 |
 | `AnalyticNotificationEditPresenter` | 2 | 0 | needs-value 2 |
 | `AnnotationLinkPresenter` | 3 | 1 | unreached 2 |
-| `ChangeStatusPresenter` | 3 | 1 | unreached 1, ok-blocked 1 |
 | `LinkedEventPresenter` | 3 | 1 | unreached 2 |
-| `CredentialEditPresenter` | 3 | 1 | unreached 1, ok-blocked 1 |
+| `ManageGlobalPropertyEditPresenter` | 5 | 3 | unreached 2 |
 | `QueryInfoPresenter` | 2 | 0 | unreached 2 |
 | `IncludeExcludeFilterDictionaryPresenter` | 3 | 1 | unreached 2 |
 | `EditExpressionPresenter` | 22 | 20 | unreached 2 |
@@ -126,13 +123,13 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `PathwayTreePresenter` | 2 | 0 | unlabelled 1, unreached 1 |
 | `TracesListTabPresenter` | 2 | 0 | unreached 1, needs-value 1 |
 | `ElementPresenter` | 2 | 0 | needs-value 1, needs-key 1 |
-| `StepLocationLinkPresenter` | 3 | 1 | unlabelled 1, ok-blocked 1 |
 | `PipelineReferenceListPresenter` | 5 | 3 | unreached 2 |
 | `EditFeedDependencyPresenter` | 2 | 0 | unreached 1, needs-value 1 |
 | `FeedDependencyListPresenter` | 5 | 3 | unreached 2 |
 | `ProcessorProfilePresenter` | 4 | 2 | unreached 2 |
 | `ProfilePeriodListPresenter` | 4 | 2 | unreached 2 |
 | `ExpressionTreePresenter` | 3 | 1 | unreached 2 |
+| `QueryResultTablePresenter` | 11 | 9 | unlabelled 2 |
 | `QueryResultTableSplitPresenter` | 2 | 0 | unreached 1, needs-value 1 |
 | `ResultStoreListPresenter` | 4 | 2 | unreached 2 |
 | `AppPermissionsPresenter` | 4 | 2 | needs-value 2 |
@@ -145,12 +142,13 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `ScheduledProcessingPresenter` | 1 | 0 | unreached 1 |
 | `AddEventLinkPresenter` | 3 | 2 | needs-key 1 |
 | `AnnotationPresenter` | 2 | 1 | needs-dirty 1 |
-| `ChangeAssignedToPresenter` | 2 | 1 | ok-blocked 1 |
+| `ChangeStatusPresenter` | 3 | 2 | unreached 1 |
 | `ChooserPresenter` | 1 | 0 | unreached 1 |
 | `FindAnnotationListPresenter` | 1 | 0 | unreached 1 |
 | `MultiChooserPresenter` | 1 | 0 | unreached 1 |
 | `ContentTabPanePresenter` | 1 | 0 | needs-value 1 |
 | `FullScreenPresenter` | 1 | 0 | needs-dirty 1 |
+| `CredentialEditPresenter` | 3 | 2 | unreached 1 |
 | `BasicTableFilterSettingsPresenter` | 1 | 0 | needs-value 1 |
 | `MultiRulesPresenter` | 1 | 0 | needs-dirty 1 |
 | `LayoutConstraintPresenter` | 1 | 0 | needs-value 1 |
@@ -165,11 +163,9 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `FsVolumeEditPresenter` | 2 | 1 | ok-blocked 1 |
 | `DataGenSettingsPresenter` | 2 | 1 | needs-value 1 |
 | `DictionarySettingsPresenter` | 1 | 0 | needs-value 1 |
-| `CreateDocumentPresenter` | 2 | 1 | ok-blocked 1 |
 | `DocTabPresenter` | 4 | 3 | unreached 1 |
 | `InfoDocumentPresenter` | 1 | 0 | unreached 1 |
 | `MarkdownEditPresenter` | 3 | 2 | needs-value 1 |
-| `NameDocumentPresenter` | 2 | 1 | ok-blocked 1 |
 | `FindInContentPresenter` | 1 | 0 | unreached 1 |
 | `FindPresenter` | 1 | 0 | unreached 1 |
 | `RecentItemsPresenter` | 1 | 0 | unreached 1 |
@@ -181,9 +177,8 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `TracesListPresenter` | 1 | 0 | unreached 1 |
 | `TracesSettingsPresenter` | 1 | 0 | needs-value 1 |
 | `PipelinePresenter` | 2 | 1 | needs-value 1 |
-| `PropertyListPresenter` | 3 | 2 | unreached 1 |
+| `StepLocationLinkPresenter` | 3 | 2 | unlabelled 1 |
 | `PlanBSettingsPresenter` | 1 | 0 | needs-value 1 |
-| `BatchProcessorFilterEditPresenter` | 2 | 1 | ok-blocked 1 |
 | `ProcessorListPresenter` | 1 | 0 | unlabelled 1 |
 | `QueryDocEditPresenter` | 3 | 2 | needs-value 1 |
 | `QueryHelpPresenter` | 1 | 0 | unreached 1 |
@@ -192,14 +187,11 @@ _Presenters with any unexercised handler, most gaps first; the `why` column is t
 | `AppPermissionsEditPresenter` | 2 | 1 | unreached 1 |
 | `BatchDocumentPermissionsPresenter` | 5 | 4 | unreached 1 |
 | `DocumentCreatePermissionsListPresenter` | 1 | 0 | unreached 1 |
-| `DocumentUserCreatePermissionsEditPresenter` | 2 | 1 | ok-blocked 1 |
-| `DocumentUserPermissionsEditPresenter` | 2 | 1 | ok-blocked 1 |
 | `SigningKeyPresenter` | 3 | 2 | unreached 1 |
 | `UserInfoPresenter` | 1 | 0 | needs-value 1 |
 | `UserTabPresenter` | 1 | 0 | unreached 1 |
 | `UsersPresenter` | 3 | 2 | unreached 1 |
 | `AccountsListPresenter` | 4 | 3 | unreached 1 |
-| `EditAccountPresenter` | 3 | 2 | ok-blocked 1 |
 | `UserTaskManagerPresenter` | 1 | 0 | unreached 1 |
 | `EditorMenuPresenter` | 1 | 0 | unreached 1 |
 | `MenuItemPresenter` | 1 | 0 | unlabelled 1 |

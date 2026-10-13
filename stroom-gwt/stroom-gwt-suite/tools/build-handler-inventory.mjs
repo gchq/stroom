@@ -323,7 +323,14 @@ for (const f of files) {
   for (const m of src.matchAll(/\.onHideRequest\s*\(/g)) {
     const body = src.slice(m.index, m.index + 900);
     const twoWay = /\.isOk\(\)/.test(body);
-    handlers.push({ class: name, classKind, kind: twoWay ? 'ok' : 'hide', receiver: 'dialog', label: 'OK', line: lineOf(src, m.index) });
+    // The dialog's CAPTION, when the builder chain names one as a literal: `.caption("Set Location")`.
+    // It is what ties this OK to the dialog the walk pressed it in. Without it the join was by owner,
+    // and an owner is a whole screen: the stepper's `Save As` OK, aborted by the guard, made
+    // `StepLocationLinkPresenter`'s Set Location OK `ok-blocked` though no one had pressed it.
+    const chain = src.slice(Math.max(src.lastIndexOf('ShowPopupEvent', m.index), m.index - 900), m.index);
+    const caption = [...chain.matchAll(/\.caption\(\s*"([^"]+)"\s*\)/g)].pop()?.[1];
+    handlers.push({ class: name, classKind, kind: twoWay ? 'ok' : 'hide', receiver: 'dialog', label: 'OK',
+      ...(caption ? { caption } : {}), line: lineOf(src, m.index) });
     if (twoWay) handlers.push({ class: name, classKind, kind: 'cancel', receiver: 'dialog', label: 'Cancel', line: lineOf(src, m.index) });
   }
   // `addDomHandler(…, KeyDownEvent.getType())` and friends.
@@ -434,6 +441,8 @@ const nodePresenters = existsSync(NODE_PRESENTERS) ? JSON.parse(readFileSync(NOD
 const observedTexts = new Set();
 /** presenter -> Map(label -> {outcomes:Set, blocked:boolean, n}) from every affordance on a node it owns. */
 const clickedOn = new Map();
+/** dialog caption -> [{owners:Set, outcome, blocked}] for every OK pressed in a dialog the walk named. */
+const okByCaption = new Map();
 /** presenter -> kinds of post-action states seen under it (selection, tree, …). */
 const statesOn = new Map();
 /** every menu-item label ever clicked, with outcomes (menu nodes carry no presenter). */
@@ -570,8 +579,17 @@ const cycleProved = new Set();
   if (existsSync(f)) {
     const { results = [] } = JSON.parse(readFileSync(f, 'utf8'));
     for (const r of results) {
-      const made = (r.phases ?? []).some((p) => p.ok && /^create /.test(p.what));
-      if (made && (r.writes ?? []).length) for (const c of r.okPresenters ?? []) cycleProved.add(c);
+      const held = (re) => (r.phases ?? []).some((p) => p.ok && re.test(p.what));
+      // The create, or for the edit-and-revert shape the change, is what drove the OK.
+      const made = held(/^create /) || held(/^change it to /);
+      if (!made || !(r.writes ?? []).length) continue;
+      for (const c of r.okPresenters ?? []) {
+        // A document cycle drives NameDocumentPresenter only in its rename, which a feed's has not.
+        if (c === 'NameDocumentPresenter' && !held(/^rename it to /)) continue;
+        // A cycle that drives several dialogs says which phase proves each (the permission cycle).
+        if (r.provedBy?.[c] && !held(new RegExp(r.provedBy[c]))) continue;
+        cycleProved.add(c);
+      }
     }
   }
 }
@@ -631,6 +649,16 @@ if (existsSync(CRAWLS)) {
       // clicked solely on an unattributed node was invisible to the label-only join, and 59
       // labelled widget and view handlers whose labels the walk HAD clicked stayed unexercised.
       rec(anyClicked, '*', a.label);
+      // An OK pressed in a dialog, under the dialog's caption. Its owners are the dialog node's AND
+      // its opener's: a dialog shown by one class from another's screen (`QueryTableColumnsManager`
+      // shows `RulesPresenter`'s Settings) is attributed to the dialog's presenter, not the opener.
+      if (a.label === 'OK' && node?.kind === 'dialog' && node.dialogs?.length) {
+        const caption = node.dialogs[node.dialogs.length - 1];
+        const parent = `${node.kind} / ${node.path.slice(0, -1).join(' / ')}`;
+        const list = okByCaption.get(caption) ?? [];
+        list.push({ owners: new Set([...owners, ...inherited(parent)]), outcome: a.outcome, blocked: !!a.blocked?.length });
+        okByCaption.set(caption, list);
+      }
       if (node?.kind === 'menu') rec(menuClicked, '*', a.label);
       // ENTER in a named box (stroom-gwt-suite/lib/keys.mjs): the field's LABEL is what joins it to a key
       // handler's receiver below.
@@ -834,7 +862,14 @@ for (const h of handlers) {
       ?? ((classesByLabel.get(h.label)?.size ?? 99) <= 2 && everClicked.has(h.label)
         ? { ...everClicked.get(h.label), join: 'label' } : null);
   }
-  else if (h.kind === 'ok' || h.kind === 'hide') hit = seen('OK');
+  else if ((h.kind === 'ok' || h.kind === 'hide') && h.caption && okByCaption.has(h.caption)) {
+    // By the dialog's caption, pressed under one of this handler's owners. Both halves: a caption
+    // alone is not enough (`New` is the title of a dozen dialogs), and an owner alone is a whole screen.
+    const recs = okByCaption.get(h.caption).filter((r) => [...r.owners].some((o) => owners.has(o)));
+    hit = recs.length
+      ? { outcomes: new Set(recs.map((r) => r.outcome)), blocked: recs.some((r) => r.blocked), n: recs.length, join: 'caption' }
+      : seen('OK');
+  } else if (h.kind === 'ok' || h.kind === 'hide') hit = seen('OK');
   else if (h.kind === 'cancel') hit = seen('Cancel') ?? seen('Close');
   else if (h.kind === 'selection') hit = [...owners].some((o) => statesOn.get(o)?.has('selection')) ? { outcomes: new Set(['changed']), n: 1 } : null;
   else if (h.kind === 'value') {

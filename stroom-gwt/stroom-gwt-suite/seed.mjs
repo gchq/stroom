@@ -102,7 +102,9 @@ const readTree = () =>
     const norm = (t) => String(t ?? '').replace(/\s+/g, ' ').trim();
     return [...document.querySelectorAll('.explorerCell')].map((c) => ({
       type: norm(c.querySelector('.explorerCell-icon')?.getAttribute('title')),
-      label: norm(c.textContent),
+      // Not textContent: an inline SVG icon's <style> or <title> is text too (Elastic Index's
+      // `.st0{fill:…}`, OpenAI Model's "OpenAI icon"), so the name never matched for those types.
+      label: norm([...c.querySelectorAll('*:not(svg):not(svg *)')].filter((e) => !e.children.length).map((e) => e.textContent).join(' ')),
     }));
   });
 
