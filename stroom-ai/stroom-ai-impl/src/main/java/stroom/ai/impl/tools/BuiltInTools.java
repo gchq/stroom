@@ -42,12 +42,14 @@ public class BuiltInTools {
     private final Map<ToolSpecification, ToolExecutor> toolMap;
     private final Set<String> readOnlyToolNames;
     private final Set<String> trustedToolNames;
+    private final Set<String> boundedToolNames;
 
     @Inject
     BuiltInTools(final Set<BuiltInTool> tools) {
         final Map<ToolSpecification, ToolExecutor> map = new LinkedHashMap<>();
         final Set<String> readOnly = new HashSet<>();
         final Set<String> trusted = new HashSet<>();
+        final Set<String> bounded = new HashSet<>();
         for (final BuiltInTool tool : tools) {
             final ToolSpecification specification = tool.specification();
             if (tool.isReadOnly()) {
@@ -55,6 +57,9 @@ public class BuiltInTools {
             }
             if (!tool.readsUntrustedContent()) {
                 trusted.add(specification.name());
+            }
+            if (tool.boundsItsOutput()) {
+                bounded.add(specification.name());
             }
             map.put(specification, (request, memoryId) -> {
                 try {
@@ -71,6 +76,7 @@ public class BuiltInTools {
         toolMap = Map.copyOf(map);
         readOnlyToolNames = Set.copyOf(readOnly);
         trustedToolNames = Set.copyOf(trusted);
+        boundedToolNames = Set.copyOf(bounded);
         LOGGER.debug(() -> "Registered " + toolMap.size() + " built-in tool(s): "
                            + toolMap.keySet().stream().map(ToolSpecification::name).sorted().toList());
     }
@@ -98,6 +104,14 @@ public class BuiltInTools {
      */
     public boolean readsUntrustedContent(final String toolName) {
         return !trustedToolNames.contains(toolName);
+    }
+
+    /**
+     * @param toolName A tool name.
+     * @return True if it is a built-in tool that limits how much it returns itself.
+     */
+    public boolean boundsItsOutput(final String toolName) {
+        return boundedToolNames.contains(toolName);
     }
 
     public boolean isEmpty() {
