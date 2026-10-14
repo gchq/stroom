@@ -50,6 +50,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final StroomDuration workspaceFileRetention;
     private final StroomDuration chatRetention;
     private final AiWorkspaceConfig workspace;
+    private final boolean allowApproveEverything;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -65,6 +66,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         workspaceFileRetention = DEFAULT_WORKSPACE_FILE_RETENTION;
         chatRetention = DEFAULT_CHAT_RETENTION;
         workspace = new AiWorkspaceConfig();
+        allowApproveEverything = false;
     }
 
     @SuppressWarnings("unused")
@@ -78,7 +80,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("compaction") final AiCompactionConfig compaction,
                     @JsonProperty("workspaceFileRetention") final StroomDuration workspaceFileRetention,
                     @JsonProperty("chatRetention") final StroomDuration chatRetention,
-                    @JsonProperty("workspace") final AiWorkspaceConfig workspace) {
+                    @JsonProperty("workspace") final AiWorkspaceConfig workspace,
+                    @JsonProperty("allowApproveEverything") final Boolean allowApproveEverything) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -90,6 +93,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                 DEFAULT_WORKSPACE_FILE_RETENTION);
         this.chatRetention = Objects.requireNonNullElse(chatRetention, DEFAULT_CHAT_RETENTION);
         this.workspace = Objects.requireNonNullElseGet(workspace, AiWorkspaceConfig::new);
+        this.allowApproveEverything = Objects.requireNonNullElse(allowApproveEverything, false);
     }
 
     @Override
@@ -165,6 +169,15 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         return workspace;
     }
 
+    @JsonPropertyDescription("If true, users may turn on 'approve everything' for a chat, so the agent's tool " +
+                             "calls run without asking. Even then it only covers tools on trusted MCP servers that " +
+                             "are not marked destructive or open-world, tools set to ASK_ALWAYS or DENY still " +
+                             "ask or are never offered, and it never applies while the user is away.")
+    @JsonProperty("allowApproveEverything")
+    public boolean isAllowApproveEverything() {
+        return allowApproveEverything;
+    }
+
     @Override
     public String toString() {
         return "AiConfig{" +
@@ -178,6 +191,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", workspaceFileRetention=" + workspaceFileRetention +
                ", chatRetention=" + chatRetention +
                ", workspace=" + workspace +
+               ", allowApproveEverything=" + allowApproveEverything +
                '}';
     }
 }
