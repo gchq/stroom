@@ -71,6 +71,25 @@
     border: thin solid var(--icon-button__border-color--on);
 }
 
+/* Pressed with the mouse (:active), and still held with the pointer moved off it, when letting go
+   won't click it; a button that is on darkens its fill instead */
+.toolbar-button:not([aria-disabled="true"]):not([aria-pressed="true"]):active::before {
+    background-color: var(--icon-button__background-color--active);
+    border: none;
+}
+
+.toolbar-button:not([aria-disabled="true"]):not([aria-pressed="true"]):active:not(:hover)::before {
+    background-color: var(--icon-button__background-color--active-outside);
+}
+
+.toolbar-button[aria-pressed="true"]:not([aria-disabled="true"]):active::before {
+    background-image: linear-gradient(rgba(0, 0, 0, .2), rgba(0, 0, 0, .2));
+}
+
+.toolbar-button[aria-pressed="true"]:not([aria-disabled="true"]):active:not(:hover)::before {
+    background-image: linear-gradient(rgba(0, 0, 0, .1), rgba(0, 0, 0, .1));
+}
+
 .toolbar-button[aria-disabled="true"] {
     opacity: var(--disabled-opacity);
     cursor: default;

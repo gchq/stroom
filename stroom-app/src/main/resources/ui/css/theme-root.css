@@ -105,6 +105,9 @@
     --icon-button__border-color--on: rgba(0, 0, 0, 0.2);
     --icon-button__color--on: var(--white);
     --icon-button__background-color--hover: rgba(0,0,0,.05);
+    /* Pressed with the mouse; and still pressed with the pointer moved off (letting go cancels it) */
+    --icon-button__background-color--active: rgba(0, 0, 0, .15);
+    --icon-button__background-color--active-outside: rgba(0, 0, 0, .1);
     --icon-button__border-color--hover: transparent;
     --icon-button__color: var(--blue-500);
     --navigation-icon-button__color: var(--icon-button__color);
