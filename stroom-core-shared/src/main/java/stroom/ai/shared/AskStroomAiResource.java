@@ -71,6 +71,23 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) EditAiMessageRequest request);
 
     @POST
+    @Path("/compactChat")
+    @Operation(
+            summary = "Compact a chat now: earlier turns are replaced, in what the model sees, by short digests and "
+                      + "a summary. Nothing is deleted",
+            operationId = "compactChat")
+    AskStroomAiResponse compactChat(
+            @Parameter(description = "request", required = true) CompactAiChatRequest request);
+
+    @POST
+    @Path("/undoCompaction")
+    @Operation(
+            summary = "Undo a chat's latest compaction, so the model sees the turns it covered as they were",
+            operationId = "undoCompaction")
+    Boolean undoCompaction(
+            @Parameter(description = "request", required = true) UndoAiCompactionRequest request);
+
+    @POST
     @Path("/getDefaultConfig")
     @Operation(
             summary = "Get the default config to use for asking questions",

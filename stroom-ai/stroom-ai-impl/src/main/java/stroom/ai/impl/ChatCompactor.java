@@ -38,6 +38,7 @@ import jakarta.inject.Provider;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /// Keeps a chat within the model's context window, in three steps, each used only if the one before is not
@@ -124,7 +125,9 @@ public class ChatCompactor {
         }
 
         // Replace older turns with their digests.
-        final List<Integer> finishedTurns = finishedTurns(history);
+        final List<Integer> finishedTurns = mode == CompactionMode.MANUAL
+                ? answeredTurns(history)
+                : finishedTurns(history);
         final int keep = mode == CompactionMode.FORCE
                 ? 0
                 : config().getTurnsKeptInFull();
@@ -220,6 +223,38 @@ public class ChatCompactor {
         return summary.strip();
     }
 
+    /// Compacts a chat now, because the user asked: the turns before the latest ones are replaced by their
+    /// digests, and the model folds the digests into a summary.
+    ///
+    /// @param chatId       The chat.
+    /// @param modelDoc     The model.
+    /// @param chatModel    The model, to write the summary.
+    /// @param instructions What the summary should focus on, or null.
+    /// @return True if anything was compacted, false if there was nothing to compact.
+    public boolean compactNow(final int chatId,
+                              final OpenAIModelDoc modelDoc,
+                              final ChatModel chatModel,
+                              final String instructions) {
+        final CompactionRecord before = ContextAssembler.currentCompaction(aiService.getMessages(chatId));
+        assemble(new AskStroomAiRequest(null, null, null, ""), chatId, Map.of(), modelDoc, chatModel,
+                CompactionMode.MANUAL, instructions);
+        return !ContextAssembler.currentCompaction(aiService.getMessages(chatId)).coversTheSameAs(before);
+    }
+
+    /// @param history All of a chat's messages, in order.
+    /// @return The message holding the chat's latest compaction that is in use, if it has one.
+    public static Optional<AiChatMessage> currentCompactionMessage(final List<AiChatMessage> history) {
+        for (final AiChatMessage message : history.reversed()) {
+            if (message.getMessageType() == AiMessageType.COMPACTION_SUMMARY) {
+                final CompactionRecord record = ContextAssembler.readCompaction(message);
+                if (record != null && !record.stale()) {
+                    return Optional.of(message);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     /// Stores the digest of the chat's latest turn, once it has been answered.
     ///
     /// @param chatId The chat.
@@ -270,6 +305,15 @@ public class ChatCompactor {
         return turns.isEmpty()
                 ? turns
                 : turns.subList(0, turns.size() - 1);
+    }
+
+    /// @return The turns that have an answer, in order.
+    static List<Integer> answeredTurns(final List<AiChatMessage> history) {
+        return history.stream()
+                .filter(m -> m.getMessageType() == AiMessageType.AI_RESPONSE)
+                .map(AiChatMessage::getTurnId)
+                .distinct()
+                .toList();
     }
 
     /// Checks whether an exception from a model call means the request was too large for its context window.

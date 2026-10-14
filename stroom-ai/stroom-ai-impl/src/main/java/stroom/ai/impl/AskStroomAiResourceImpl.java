@@ -26,6 +26,7 @@ import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
+import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
@@ -33,6 +34,7 @@ import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
+import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
@@ -525,6 +527,60 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                                 .build())
                         .build())
                 .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().resumeRun(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public AskStroomAiResponse compactChat(final CompactAiChatRequest request) {
+        final int chatId = NullSafe.getOrElse(request, CompactAiChatRequest::getAiChat, AiChat::getId, 0);
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "compactChat"))
+                .withDescription("Compact AI chat " + chatId)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AiChat")
+                                        .withId(String.valueOf(chatId))
+                                        .addData(Data.builder()
+                                                .withName("Action")
+                                                .withValue("CompactChat")
+                                                .build())
+                                        .addData(Data.builder()
+                                                .withName("Instructions")
+                                                .withValue(NullSafe.string(request.getInstructions()))
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().compactChat(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean undoCompaction(final UndoAiCompactionRequest request) {
+        final int chatId = NullSafe.getOrElse(request, UndoAiCompactionRequest::getAiChat, AiChat::getId, 0);
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "undoCompaction"))
+                .withDescription("Undo compaction " + request.getMessageId() + " of AI chat " + chatId)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AiChat")
+                                        .withId(String.valueOf(chatId))
+                                        .addData(Data.builder()
+                                                .withName("Action")
+                                                .withValue("UndoCompaction")
+                                                .build())
+                                        .addData(Data.builder()
+                                                .withName("MessageId")
+                                                .withValue(String.valueOf(request.getMessageId()))
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().undoCompaction(request))
                 .getResultAndLog();
     }
 
