@@ -354,3 +354,55 @@
     width: 100%;
     height: 100%;
 }
+
+/* The chat title opens the chat switcher. */
+.askStroomAiViewImpl-switcher {
+    cursor: pointer;
+}
+
+.askStroomAiViewImpl-switcher::after {
+    content: " \25BE";
+    opacity: 0.6;
+}
+
+/* Badges on the toolbar's Ask Stroom AI button: a chat needs the user, is working, or has unread messages. */
+.ai-badge--needs-you,
+.ai-badge--busy,
+.ai-badge--unread {
+    position: relative;
+}
+
+.ai-badge--needs-you::after,
+.ai-badge--busy::after,
+.ai-badge--unread::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.ai-badge--needs-you::after {
+    background-color: #ed6c02;
+}
+
+.ai-badge--busy::after {
+    background-color: #1976d2;
+    animation: ai-badge-pulse 1.5s ease-in-out infinite;
+}
+
+.ai-badge--unread::after {
+    background-color: #1976d2;
+}
+
+@keyframes ai-badge-pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
