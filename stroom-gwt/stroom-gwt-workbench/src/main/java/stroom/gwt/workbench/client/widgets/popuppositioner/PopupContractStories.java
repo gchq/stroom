@@ -337,8 +337,9 @@ public final class PopupContractStories {
                     play.expect("left should be filter.left + 4",
                                     () -> Math.abs(PopupDom.rect(c.getPanel())[0] - (PopupDom.rect(filter)[0] + 4)))
                             .toBeLessThanOrEqual(1);
-                    play.expect("top should be filter.top + 26",
-                                    () -> Math.abs(PopupDom.rect(c.getPanel())[1] - (PopupDom.rect(filter)[1] + 26)))
+                    // Just below the filter, clear of its buttons
+                    play.expect("top should be filter.bottom",
+                                    () -> Math.abs(PopupDom.rect(c.getPanel())[1] - PopupDom.rect(filter)[3]))
                             .toBeLessThanOrEqual(1);
                     // The regression that motivated this: the popup must be on screen
                     play.expect("popup must not render below the fold", () -> PopupDom.rect(c.getPanel())[1])
