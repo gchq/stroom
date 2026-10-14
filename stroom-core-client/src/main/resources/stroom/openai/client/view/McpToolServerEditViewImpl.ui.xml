@@ -1,0 +1,53 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:form="urn:import:stroom.widget.form.client"
+             xmlns:b="urn:import:stroom.widget.button.client"
+             xmlns:l="urn:import:stroom.item.client"
+             xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
+    <g:FlowPanel styleName="max form-padding form">
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="enabled"
+                                    identity="mcpToolServerEnabled"
+                                    label="Enabled"/>
+        </form:FormGroup>
+        <form:FormGroup identity="mcpToolServerName"
+                        label="Name"
+                        helpText="A short name for this tool server. Used in the UI, to prefix tool names and in error messages.">
+            <g:TextBox ui:field="name" width="400px"
+                       title="A short name for this tool server."/>
+        </form:FormGroup>
+        <form:FormGroup identity="mcpToolServerEndpoint"
+                        label="Endpoint URL"
+                        helpText="The MCP Streamable HTTP endpoint URL, e.g. https://mcp.example.com/mcp . Both http and https are supported.">
+            <g:TextBox ui:field="endpoint" width="400px"
+                       title="The MCP Streamable HTTP endpoint URL."/>
+        </form:FormGroup>
+        <form:FormGroup identity="mcpToolServerAuthMode"
+                        label="Authentication"
+                        helpText="How Stroom authenticates to this server.">
+            <l:SelectionBox ui:field="authMode"/>
+        </form:FormGroup>
+        <form:FormGroup identity="mcpToolServerCredential"
+                        label="Credential"
+                        helpText="The stored credential to authenticate with. For 'Bearer token' and 'Custom API key header' this is an Access Token credential; for 'Basic auth' it is a Username / Password credential.">
+            <l:SelectionBox ui:field="credential"/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="apiKeyHeaderNameGroup"
+                        identity="mcpToolServerApiKeyHeaderName"
+                        label="API key header name"
+                        helpText="The HTTP header to send the key in. Default: Authorization">
+            <g:TextBox ui:field="apiKeyHeaderName" width="400px"
+                       title="The HTTP header to send the key in."/>
+        </form:FormGroup>
+        <form:FormGroup ui:field="apiKeyValuePrefixGroup"
+                        identity="mcpToolServerApiKeyValuePrefix"
+                        label="API key value prefix"
+                        helpText="An optional prefix placed before the key value, e.g. 'Bearer '.">
+            <g:TextBox ui:field="apiKeyValuePrefix" width="400px"
+                       title="An optional prefix placed before the key value."/>
+        </form:FormGroup>
+        <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
+                  addStyleNames="allow-focus"/>
+    </g:FlowPanel>
+</ui:UiBinder>
