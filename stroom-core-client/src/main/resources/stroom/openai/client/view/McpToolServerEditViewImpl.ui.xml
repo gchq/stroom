@@ -47,6 +47,18 @@
             <g:TextBox ui:field="apiKeyValuePrefix" width="400px"
                        title="An optional prefix placed before the key value."/>
         </form:FormGroup>
+        <form:FormGroup identity="mcpToolServerAllowedTools"
+                        label="Allowed tools"
+                        helpText="Comma separated patterns for the tools of this server that may be offered to the model, e.g. 'find_*, describe_document'. '*' matches any characters. Leave empty to allow all tools (apart from denied ones).">
+            <g:TextBox ui:field="allowedTools" width="400px"
+                       title="Patterns for the tools that may be offered to the model."/>
+        </form:FormGroup>
+        <form:FormGroup identity="mcpToolServerDeniedTools"
+                        label="Denied tools"
+                        helpText="Comma separated patterns for the tools of this server that must never be offered to the model, e.g. 'reprocess_*'. Takes precedence over the allowed tools.">
+            <g:TextBox ui:field="deniedTools" width="400px"
+                       title="Patterns for the tools that must never be offered to the model."/>
+        </form:FormGroup>
         <b:Button ui:field="setHttpClientConfig" text="Set Http Client Config" width="200px"
                   addStyleNames="allow-focus"/>
     </g:FlowPanel>
