@@ -24,6 +24,7 @@ import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiRequest;
+import stroom.ai.shared.EditAiMessageRequest;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestAskStroomAIService {
 
@@ -93,6 +95,81 @@ class TestAskStroomAIService {
 
         // It is started, which fails as busy, rather than steering a run that is about to stop.
         Mockito.verify(runManager).start(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testEditMessage_onlyQuestionsCanBeEdited() {
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(1, AiMessageType.USER_MESSAGE, "q"),
+                message(2, AiMessageType.AI_RESPONSE, "a")));
+
+        assertThatThrownBy(() -> service().editMessage(new EditAiMessageRequest(chat, null, 2, "x")))
+                .hasMessageContaining("Only your own questions");
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testEditMessage_stopsTheRunThenReplacesTheQuestionAndWhatFollows() {
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(1, AiMessageType.USER_MESSAGE, "q1"),
+                message(2, AiMessageType.AI_RESPONSE, "a1"),
+                message(3, AiMessageType.USER_MESSAGE, "q2"),
+                message(4, AiMessageType.AI_RESPONSE, "a2")));
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        // Active until it has been asked to stop.
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running), Optional.of(running), Optional.empty());
+        // Run the new run's work straight away.
+        Mockito.when(runManager.start(Mockito.eq(1), Mockito.any())).thenAnswer(invocation -> {
+            final java.util.function.Consumer<AiChatRun> work = invocation.getArgument(1);
+            try {
+                work.accept(running);
+            } catch (final RuntimeException e) {
+                // The answer cannot be worked out with mocks, which is fine here.
+            }
+            return running;
+        });
+
+        service().editMessage(new EditAiMessageRequest(chat, null, 3, "q2 edited"));
+
+        Mockito.verify(runManager).stop(1, AiChatRunStopReason.EDITED);
+        // The edited question and its answer are removed, and the earlier turn is kept.
+        Mockito.verify(aiService).deleteMessage(3);
+        Mockito.verify(aiService).deleteMessage(4);
+        Mockito.verify(aiService, Mockito.never()).deleteMessage(1);
+        Mockito.verify(aiService, Mockito.never()).deleteMessage(2);
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, "q2 edited");
+    }
+
+    @Test
+    void testEditMessage_retryKeepsTheText() {
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(message(1, AiMessageType.USER_MESSAGE, "q1")));
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.empty());
+        Mockito.when(runManager.start(Mockito.eq(1), Mockito.any())).thenAnswer(invocation -> {
+            final java.util.function.Consumer<AiChatRun> work = invocation.getArgument(1);
+            try {
+                work.accept(null);
+            } catch (final RuntimeException e) {
+                // The answer cannot be worked out with mocks, which is fine here.
+            }
+            return null;
+        });
+
+        service().editMessage(new EditAiMessageRequest(chat, null, 1, null));
+
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.USER_MESSAGE, "q1");
+    }
+
+    @Test
+    void testEditMessage_runThatWillNotStop() {
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(message(1, AiMessageType.USER_MESSAGE, "q1")));
+        final AiChatRun running = new AiChatRun(5, 1, AiChatRunStatus.RUNNING, null, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(running));
+        final AskStroomAIService service = service();
+        service.setStopWait(java.time.Duration.ofMillis(300));
+
+        assertThatThrownBy(() -> service.editMessage(new EditAiMessageRequest(chat, null, 1, "x")))
+                .isInstanceOf(AiChatRunManager.AiChatBusyException.class);
+        Mockito.verify(aiService, Mockito.never()).deleteMessage(Mockito.anyInt());
     }
 
     @Test
