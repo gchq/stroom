@@ -1798,6 +1798,9 @@ public class AskStroomAIService {
         globalConfigProvider.get().setString(currentConfig,
                 AskStroomAiConfig.PROP_NAME_ENABLE_DEBUG_DETAIL,
                 String.valueOf(config.isEnableDebugDetail()));
+        globalConfigProvider.get().setString(currentConfig,
+                AskStroomAiConfig.PROP_NAME_BROWSER_NOTIFICATIONS,
+                String.valueOf(config.isBrowserNotifications()));
         return true;
     }
 

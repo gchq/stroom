@@ -30,5 +30,10 @@
                                     identity="enableDebugDetail"
                                     label="Enable Debug Detail"/>
         </form:FormGroup>
+        <form:FormGroup>
+            <tickbox:CustomCheckBox ui:field="browserNotifications"
+                                    identity="browserNotifications"
+                                    label="Notify me when a chat finishes or needs me while I'm in another tab"/>
+        </form:FormGroup>
     </g:FlowPanel>
 </ui:UiBinder>

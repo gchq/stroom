@@ -23,6 +23,9 @@ import com.google.gwt.json.client.JSONParser;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Reads the JSON held by TOOL_CALL and TOOL_RESULT chat messages, for display.
  */
@@ -509,6 +512,156 @@ final class AiToolMessages {
                 return "*Not made: the memory had changed since the request was made.*";
             default:
                 return "*" + status + "*";
+        }
+    }
+
+    /**
+     * @param json An APPROVAL_REQUEST message for tool calls.
+     * @return Its calls, in order.
+     */
+    static List<ApprovalCall> approvalCalls(final String json) {
+        final List<ApprovalCall> list = new ArrayList<>();
+        final JSONArray calls = getArray(json, "calls");
+        for (int i = 0; calls != null && i < calls.size(); i++) {
+            final JSONObject call = calls.get(i).isObject();
+            if (call != null) {
+                final List<String> risks = new ArrayList<>();
+                final JSONArray riskArray = call.get("risks") != null
+                        ? call.get("risks").isArray()
+                        : null;
+                for (int r = 0; riskArray != null && r < riskArray.size(); r++) {
+                    if (riskArray.get(r).isString() != null) {
+                        risks.add(riskArray.get(r).isString().stringValue());
+                    }
+                }
+                list.add(new ApprovalCall(text(call, "callId"), text(call, "tool"), text(call, "serverKey"), risks,
+                        text(call, "arguments"), text(call, "decision"), text(call, "note")));
+            }
+        }
+        return list;
+    }
+
+    /**
+     * @param decision A call's decision, e.g. "ALLOWED".
+     * @param note     The user's reason, if they gave one.
+     * @return The decision for people.
+     */
+    static String decisionLabel(final String decision, final String note) {
+        return decisionText(decision, note);
+    }
+
+    /**
+     * Records decisions in an APPROVAL_REQUEST message, as the server has, so the card can be redrawn without
+     * asking the server for it again.
+     *
+     * @param json    The message's JSON.
+     * @param callIds The calls decided, or null for all those not yet decided.
+     * @param allowed True if they were allowed.
+     * @param note    The user's reason for denying them, or null.
+     * @return The updated JSON. Its status is ANSWERED once every call has been decided.
+     */
+    static String withDecisions(final String json,
+                                final List<String> callIds,
+                                final boolean allowed,
+                                final String note) {
+        try {
+            final JSONObject object = JSONParser.parseStrict(json).isObject();
+            final JSONArray calls = object.get("calls").isArray();
+            boolean allDecided = true;
+            for (int i = 0; i < calls.size(); i++) {
+                final JSONObject call = calls.get(i).isObject();
+                if (text(call, "decision") == null
+                    && (callIds == null || callIds.contains(text(call, "callId")))) {
+                    call.put("decision", new JSONString(allowed
+                            ? "ALLOWED"
+                            : "DENIED"));
+                    if (!allowed && note != null) {
+                        call.put("note", new JSONString(note));
+                    }
+                }
+                if (text(call, "decision") == null) {
+                    allDecided = false;
+                }
+            }
+            if (allDecided) {
+                object.put("status", new JSONString("ANSWERED"));
+            }
+            return object.toString();
+        } catch (final RuntimeException e) {
+            return json;
+        }
+    }
+
+    /**
+     * @return The JSON laid out over several lines, or the text as it is if it is not JSON.
+     */
+    static native String prettyJson(String json) /*-{
+        try {
+            return JSON.stringify(JSON.parse(json), null, 2);
+        } catch (e) {
+            return json;
+        }
+    }-*/;
+
+
+    // --------------------------------------------------------------------------------
+
+
+    /**
+     * A tool call waiting for, or given, the user's approval.
+     */
+    static final class ApprovalCall {
+
+        private final String callId;
+        private final String tool;
+        private final String server;
+        private final List<String> risks;
+        private final String arguments;
+        private final String decision;
+        private final String note;
+
+        private ApprovalCall(final String callId,
+                             final String tool,
+                             final String server,
+                             final List<String> risks,
+                             final String arguments,
+                             final String decision,
+                             final String note) {
+            this.callId = callId;
+            this.tool = tool;
+            this.server = server;
+            this.risks = risks;
+            this.arguments = arguments;
+            this.decision = decision;
+            this.note = note;
+        }
+
+        String getCallId() {
+            return callId;
+        }
+
+        String getTool() {
+            return tool;
+        }
+
+        String getServer() {
+            return server;
+        }
+
+        List<String> getRisks() {
+            return risks;
+        }
+
+        String getArguments() {
+            return arguments;
+        }
+
+        String getDecision() {
+            return decision;
+        }
+
+        String getNote() {
+            return note;
         }
     }
 }

@@ -42,7 +42,8 @@ import java.util.Objects;
         AskStroomAiConfig.PROP_NAME_HISTORY_SUMMARY_PROMPT,
         AskStroomAiConfig.PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES,
         AskStroomAiConfig.PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS,
-        AskStroomAiConfig.PROP_NAME_ENABLE_DEBUG_DETAIL
+        AskStroomAiConfig.PROP_NAME_ENABLE_DEBUG_DETAIL,
+        AskStroomAiConfig.PROP_NAME_BROWSER_NOTIFICATIONS
 })
 public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig {
 
@@ -56,6 +57,7 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
     public static final String PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES = "maxHistorySafetyCapMessages";
     public static final String PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS = "attachmentDownloadTimeoutMs";
     public static final String PROP_NAME_ENABLE_DEBUG_DETAIL = "enableDebugDetail";
+    public static final String PROP_NAME_BROWSER_NOTIFICATIONS = "browserNotifications";
 
     public static final DockType DEFAULT_DOCK_TYPE = DockType.DOCK;
     public static final DockLocation DEFAULT_DOCK_LOCATION = DockLocation.RIGHT;
@@ -76,6 +78,7 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
     public static final int DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES = 200;
     public static final long DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS = 60_000L;
     public static final boolean DEFAULT_ENABLE_DEBUG_DETAIL = true;
+    public static final boolean DEFAULT_BROWSER_NOTIFICATIONS = true;
 
     @JsonProperty(PROP_NAME_MODEL_REF)
     private final DocRef modelRef;
@@ -97,6 +100,8 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
     private final long attachmentDownloadTimeoutMs;
     @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL)
     private final boolean enableDebugDetail;
+    @JsonProperty(PROP_NAME_BROWSER_NOTIFICATIONS)
+    private final boolean browserNotifications;
 
     public AskStroomAiConfig() {
         modelRef = null;
@@ -109,6 +114,7 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
         maxHistorySafetyCapMessages = DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES;
         attachmentDownloadTimeoutMs = DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS;
         enableDebugDetail = DEFAULT_ENABLE_DEBUG_DETAIL;
+        browserNotifications = DEFAULT_BROWSER_NOTIFICATIONS;
     }
 
     @JsonCreator
@@ -122,7 +128,8 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
             @JsonProperty(PROP_NAME_HISTORY_SUMMARY_PROMPT) final String historySummaryPrompt,
             @JsonProperty(PROP_NAME_MAX_HISTORY_SAFETY_CAP_MESSAGES) final Integer maxHistorySafetyCapMessages,
             @JsonProperty(PROP_NAME_ATTACHMENT_DOWNLOAD_TIMEOUT_MS) final Long attachmentDownloadTimeoutMs,
-            @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final Boolean enableDebugDetail) {
+            @JsonProperty(PROP_NAME_ENABLE_DEBUG_DETAIL) final Boolean enableDebugDetail,
+            @JsonProperty(PROP_NAME_BROWSER_NOTIFICATIONS) final Boolean browserNotifications) {
         this.modelRef = modelRef;
         // FLOAT is no longer offered; a saved FLOAT falls back to DOCK.
         this.dockType = dockType == DockType.FLOAT
@@ -139,6 +146,8 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
                 DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS);
         this.enableDebugDetail = Objects.requireNonNullElse(enableDebugDetail,
                 DEFAULT_ENABLE_DEBUG_DETAIL);
+        this.browserNotifications = Objects.requireNonNullElse(browserNotifications,
+                DEFAULT_BROWSER_NOTIFICATIONS);
     }
 
     @JsonPropertyDescription("The model to use.")
@@ -195,6 +204,12 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
         return enableDebugDetail;
     }
 
+    @JsonPropertyDescription("When enabled, the browser shows a notification when an AI chat finishes, or needs "
+            + "the user, while the Stroom browser tab is not being looked at.")
+    public boolean isBrowserNotifications() {
+        return browserNotifications;
+    }
+
     @Override
     public String toString() {
         return "AskStroomAIConfig{" +
@@ -208,6 +223,7 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
                ", maxHistorySafetyCapMessages=" + maxHistorySafetyCapMessages +
                ", attachmentDownloadTimeoutMs=" + attachmentDownloadTimeoutMs +
                ", enableDebugDetail=" + enableDebugDetail +
+               ", browserNotifications=" + browserNotifications +
                '}';
     }
 
@@ -231,6 +247,7 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
         private int maxHistorySafetyCapMessages;
         private long attachmentDownloadTimeoutMs;
         private boolean enableDebugDetail;
+        private boolean browserNotifications;
 
         private Builder() {
             modelRef = null;
@@ -243,6 +260,7 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
             maxHistorySafetyCapMessages = DEFAULT_MAX_HISTORY_SAFETY_CAP_MESSAGES;
             attachmentDownloadTimeoutMs = DEFAULT_ATTACHMENT_DOWNLOAD_TIMEOUT_MS;
             enableDebugDetail = DEFAULT_ENABLE_DEBUG_DETAIL;
+            browserNotifications = DEFAULT_BROWSER_NOTIFICATIONS;
         }
 
         private Builder(final AskStroomAiConfig askStroomAiConfig) {
@@ -256,6 +274,7 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
             maxHistorySafetyCapMessages = askStroomAiConfig.maxHistorySafetyCapMessages;
             attachmentDownloadTimeoutMs = askStroomAiConfig.attachmentDownloadTimeoutMs;
             enableDebugDetail = askStroomAiConfig.enableDebugDetail;
+            browserNotifications = askStroomAiConfig.browserNotifications;
         }
 
         public Builder modelRef(final DocRef modelRef) {
@@ -308,6 +327,11 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
             return self();
         }
 
+        public Builder browserNotifications(final boolean browserNotifications) {
+            this.browserNotifications = browserNotifications;
+            return self();
+        }
+
         @Override
         protected Builder self() {
             return this;
@@ -319,7 +343,7 @@ public class AskStroomAiConfig extends AbstractConfig implements IsStroomConfig 
                     dockType, dockLocation, dockSize,
                     tableAnalysisConfig, chatSystemPrompt,
                     historySummaryPrompt, maxHistorySafetyCapMessages, attachmentDownloadTimeoutMs,
-                    enableDebugDetail);
+                    enableDebugDetail, browserNotifications);
         }
     }
 

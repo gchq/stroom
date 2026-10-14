@@ -55,6 +55,8 @@ public class AiConfigGeneralViewImpl
     ValueSpinner maxHistorySafetyCapMessages;
     @UiField
     CustomCheckBox enableDebugDetail;
+    @UiField
+    CustomCheckBox browserNotifications;
 
     @Inject
     public AiConfigGeneralViewImpl(final Binder binder) {
@@ -145,6 +147,16 @@ public class AiConfigGeneralViewImpl
     @Override
     public boolean isEnableDebugDetail() {
         return enableDebugDetail.getValue();
+    }
+
+    @Override
+    public void setBrowserNotifications(final boolean enabled) {
+        browserNotifications.setValue(enabled);
+    }
+
+    @Override
+    public boolean isBrowserNotifications() {
+        return browserNotifications.getValue();
     }
 
     // ---------------------------------------------------------------------
