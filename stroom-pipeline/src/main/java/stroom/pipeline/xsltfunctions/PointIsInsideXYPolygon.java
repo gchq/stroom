@@ -35,7 +35,54 @@ import java.util.List;
 // stroom.floormap.shared.FloorMapGeometry and must stay in step with it - the client paints
 // areas with fill-rule="evenodd" and this must agree, or what looks filled does not test as
 // inside. Do not take upstream's version without re-checking FloorMapGeometry.
+@XsltFunctionDef(
+        name = PointIsInsideXYPolygon.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.OTHER,
+        commonSubCategories = {"Maths", "Geometry"},
+        commonDescription = """
+                Tests whether a point is inside a polygon.
+                Useful for determining if a user is inside a physical zone based on their location and
+                the boundary of that zone.
+
+                The list of values supplied for `xPolyData` must correspond with the list of values
+                supplied for `yPolyData` and both must contain at least three points.
+                The points that define the polygon must be provided in order, i.e. starting from one
+                point on the polygon and then travelling round the path of the polygon until it gets
+                back to the beginning.
+                """,
+        commonReturnType = XsltDataType.BOOLEAN,
+        commonReturnDescription = "`true` if the point is inside the polygon; otherwise `false`.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "xPos",
+                                        description = "The point's X coordinate.",
+                                        argType = XsltDataType.DECIMAL
+                                ),
+                                @XsltFunctionArg(
+                                        name = "yPos",
+                                        description = "The point's Y coordinate.",
+                                        argType = XsltDataType.DECIMAL
+                                ),
+                                @XsltFunctionArg(
+                                        name = "xPolyData",
+                                        description = "The polygon's X coordinates, in vertex order.",
+                                        argType = XsltDataType.SEQUENCE
+                                ),
+                                @XsltFunctionArg(
+                                        name = "yPolyData",
+                                        description = "The corresponding Y coordinates, in vertex order.",
+                                        argType = XsltDataType.SEQUENCE
+                                )
+                        }
+                )
+        })
 class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
+
+    public static final String FUNCTION_NAME = "pointIsInsideXYPolygon";
+
+    static final String DELIMITER = ",";
 
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {
@@ -45,7 +92,7 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
             final Double yPos = getSafeDouble(functionName, context, arguments, 1);
             final Double[] xPolyData = getSafeDoubleArray(functionName, context, arguments, 2);
             final Double[] yPolyData = getSafeDoubleArray(functionName, context, arguments, 3);
-            final Point [] polyData = createPolygon(functionName, xPolyData, yPolyData);
+            final Point[] polyData = createPolygon(functionName, xPolyData, yPolyData);
 
             boolean inside = false;
             if (xPos != null && yPos != null) {
@@ -62,22 +109,22 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
         return BooleanValue.FALSE;
     }
 
-    Point [] createPolygon(final String functionName, final Double[] xPolyData, final Double[] yPolyData) {
+    Point[] createPolygon(final String functionName, final Double[] xPolyData, final Double[] yPolyData) {
         if (xPolyData == null || xPolyData.length == 0) {
             throw new IllegalArgumentException("No x values for polygon" +
-                    " in XSLT function " + functionName);
+                                               " in XSLT function " + functionName);
         }
         if (yPolyData == null || yPolyData.length == 0) {
             throw new IllegalArgumentException("No x values for polygon" +
-                    " in XSLT function " + functionName);
+                                               " in XSLT function " + functionName);
         }
         if (xPolyData.length < 3) {
             throw new IllegalArgumentException("Too few points for polygon" +
-                    " in XSLT function " + functionName);
+                                               " in XSLT function " + functionName);
         }
         if (xPolyData.length != yPolyData.length) {
             throw new IllegalArgumentException("Different numbers of x and y values for polygon provided to" +
-                    " XSLT function " + functionName);
+                                               " XSLT function " + functionName);
         }
 
         final Point[] result = new Point[xPolyData.length];
@@ -115,9 +162,9 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
     }
 
     Double[] getSafeDoubleArray(final String functionName,
-                                         final XPathContext context,
-                                         final Sequence[] arguments,
-                                         final int index) throws XPathException {
+                                final XPathContext context,
+                                final Sequence[] arguments,
+                                final int index) throws XPathException {
         final List<Double> result = new ArrayList<>();
         final Sequence sequence = arguments[index];
         if (sequence != null) {
@@ -154,7 +201,12 @@ class PointIsInsideXYPolygon extends StroomExtensionFunctionCall {
         return FloorMapGeometry.contains(vertices, p.x, p.y);
     }
 
+
+    // --------------------------------------------------------------------------------
+
+
     static class Point {
+
         public Point(final double x, final double y) {
             this.x = x;
             this.y = y;

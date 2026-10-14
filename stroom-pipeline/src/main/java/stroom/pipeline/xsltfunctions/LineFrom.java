@@ -25,7 +25,22 @@ import stroom.util.shared.NullSafe;
 
 import jakarta.inject.Inject;
 
+@XsltFunctionDef(
+        name = LineFrom.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.PIPELINE,
+        commonDescription = """
+                Returns the input line where the current record begins, counting from `1`.
+                """,
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The starting input line, if available.",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {}
+                )
+        })
 class LineFrom extends AbstractLocationFunction {
+
+    public static final String FUNCTION_NAME = "line-from";
 
     @Inject
     LineFrom(final LocationHolder locationHolder) {

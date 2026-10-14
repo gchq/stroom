@@ -16,9 +16,9 @@
 
 package stroom.pipeline.xsltfunctions;
 
+import stroom.util.shared.NullSafe;
 import stroom.util.shared.Severity;
 
-import com.google.common.io.BaseEncoding;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
@@ -27,7 +27,48 @@ import net.sf.saxon.value.StringValue;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
+@XsltFunctionDef(
+        name = Hash.FUNCTION_NAME,
+        commonCategory = XsltFunctionCategory.CONVERSION,
+        commonDescription = """
+                Generates a hash of the supplied value using the named hash algorithm.
+                The SHA-256 algorithm will be used if not supplied.
+
+                You can optionally supply a salt value to prepend to the hash.""",
+        commonReturnType = XsltDataType.STRING,
+        commonReturnDescription = "The hash of the value",
+        signatures = {
+                @XsltFunctionSignature(
+                        args = {
+                                @XsltFunctionArg(
+                                        name = "value",
+                                        description = "The value to hash.",
+                                        argType = XsltDataType.STRING),
+                                @XsltFunctionArg(
+                                        name = "algorithm",
+                                        description = "The name of the hash algorithm to use.",
+                                        argType = XsltDataType.STRING,
+                                        isOptional = true,
+                                        defaultValue = "SHA-256",
+                                        allowedValues = {
+                                                "MD5",
+                                                "SHA",
+                                                "SHA-224",
+                                                "SHA-256",
+                                                "SHA-384",
+                                                "SHA-512",
+                                        }),
+                                @XsltFunctionArg(
+                                        name = "salt",
+                                        description = """
+                                                The salt to use as input to the hashing function.
+                                                The salt will be hashed first followed by the value.""",
+                                        isOptional = true,
+                                        argType = XsltDataType.STRING),
+                        })
+        })
 class Hash extends StroomExtensionFunctionCall {
 
     public static final String FUNCTION_NAME = "hash";
@@ -41,12 +82,12 @@ class Hash extends StroomExtensionFunctionCall {
         try {
             final String value = getSafeString(functionName, context, arguments, 0);
 
-            if (value != null && value.length() > 0) {
+            if (NullSafe.isNonEmptyString(value)) {
                 String algorithm = null;
                 if (arguments.length > 1) {
                     algorithm = getSafeString(functionName, context, arguments, 1);
                 }
-                if (algorithm == null || algorithm.trim().length() == 0) {
+                if (NullSafe.isBlankString(algorithm)) {
                     algorithm = DEFAULT_ALGORITHM;
                 }
 
@@ -80,9 +121,8 @@ class Hash extends StroomExtensionFunctionCall {
 
         final byte[] arr = digest.digest();
 
-        // TODO: 30/01/2023 In Java17+ use HexFormat class
-        return BaseEncoding.base16()
-                .lowerCase()
-                .encode(arr);
+        return HexFormat.of()
+                .withLowerCase()
+                .formatHex(arr);
     }
 }

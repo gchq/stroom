@@ -70,6 +70,8 @@ public enum Severity implements HasDisplayValue {
         this.summaryValue = summaryValue;
     }
 
+    /// @param displayValue The display value of the severity in any case.
+    /// @return The severity or null if the display value is null, blank or not recognised.
     public static Severity getSeverity(final String displayValue) {
         if (NullSafe.isBlankString(displayValue)) {
             return null;
