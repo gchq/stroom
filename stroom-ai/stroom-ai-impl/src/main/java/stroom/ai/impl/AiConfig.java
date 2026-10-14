@@ -49,6 +49,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
     private final AiCompactionConfig compaction;
     private final StroomDuration workspaceFileRetention;
     private final StroomDuration chatRetention;
+    private final AiWorkspaceConfig workspace;
 
     public AiConfig() {
         dbConfig = new AiDbConfig();
@@ -63,6 +64,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         compaction = new AiCompactionConfig();
         workspaceFileRetention = DEFAULT_WORKSPACE_FILE_RETENTION;
         chatRetention = DEFAULT_CHAT_RETENTION;
+        workspace = new AiWorkspaceConfig();
     }
 
     @SuppressWarnings("unused")
@@ -75,7 +77,8 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                     @JsonProperty("maxRunsPerNode") final Integer maxRunsPerNode,
                     @JsonProperty("compaction") final AiCompactionConfig compaction,
                     @JsonProperty("workspaceFileRetention") final StroomDuration workspaceFileRetention,
-                    @JsonProperty("chatRetention") final StroomDuration chatRetention) {
+                    @JsonProperty("chatRetention") final StroomDuration chatRetention,
+                    @JsonProperty("workspace") final AiWorkspaceConfig workspace) {
         this.dbConfig = dbConfig;
         this.chatResponseCache = chatResponseCache;
         this.maxRunDuration = Objects.requireNonNullElse(maxRunDuration, DEFAULT_MAX_RUN_DURATION);
@@ -86,6 +89,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         this.workspaceFileRetention = Objects.requireNonNullElse(workspaceFileRetention,
                 DEFAULT_WORKSPACE_FILE_RETENTION);
         this.chatRetention = Objects.requireNonNullElse(chatRetention, DEFAULT_CHAT_RETENTION);
+        this.workspace = Objects.requireNonNullElseGet(workspace, AiWorkspaceConfig::new);
     }
 
     @Override
@@ -156,6 +160,11 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
         return chatRetention;
     }
 
+    @JsonProperty("workspace")
+    public AiWorkspaceConfig getWorkspace() {
+        return workspace;
+    }
+
     @Override
     public String toString() {
         return "AiConfig{" +
@@ -168,6 +177,7 @@ public class AiConfig extends AbstractConfig implements IsStroomConfig, HasDbCon
                ", compaction=" + compaction +
                ", workspaceFileRetention=" + workspaceFileRetention +
                ", chatRetention=" + chatRetention +
+               ", workspace=" + workspace +
                '}';
     }
 }

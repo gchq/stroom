@@ -84,6 +84,19 @@ public interface AiWorkspaceDao {
     /// @param reason Why, e.g. "it reached its retention age".
     void makeUnavailable(int fileId, String reason);
 
+    /// @param chatId The chat.
+    /// @return Every file in the chat's workspace that has a path, in path order.
+    List<FileInfo> listFiles(int chatId);
+
+    /// Deletes a file and its content.
+    ///
+    /// @param fileId The file's id.
+    void deleteFile(int fileId);
+
+    /// @param userUuid A user.
+    /// @return The uncompressed size of all the files in all the user's chat workspaces.
+    long getTotalSizeForUser(String userUuid);
+
     /// @param fileIds File ids.
     /// @return Those of the files whose content is still held.
     List<Integer> findAvailable(List<Integer> fileIds);
@@ -111,13 +124,15 @@ public interface AiWorkspaceDao {
     /// @param sourceDocUuid The UUID of the document its content came from, or null.
     /// @param expireTimeMs  When it expires, or null for never.
     /// @param errorMessage  Why it is unavailable, or another error, or null.
+    /// @param sizeBytes     Its uncompressed size, or 0 if not known.
     record FileInfo(int id,
                     int chatId,
                     String path,
                     AiAttachmentStatus status,
                     String sourceDocUuid,
                     Long expireTimeMs,
-                    String errorMessage) {
+                    String errorMessage,
+                    long sizeBytes) {
 
     }
 
