@@ -26,6 +26,7 @@ dependencies {
     implementation libs.jooq
     implementation libs.flyway.mysql
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.slf4j.api
 
     implementation project(':stroom-config:stroom-config-common')

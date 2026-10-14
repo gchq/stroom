@@ -25,6 +25,7 @@ dependencies {
 
     implementation libs.dropwizard.client
     implementation libs.guice
+    implementation libs.jackson.annotations
 
     testImplementation project(':stroom-test-common')
 

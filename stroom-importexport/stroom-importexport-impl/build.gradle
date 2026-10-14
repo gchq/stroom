@@ -36,6 +36,7 @@ dependencies {
     implementation libs.commons.compress
     implementation libs.eventLogging
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.restygwt
     implementation libs.slf4j.api
     implementation libs.swagger.annotations

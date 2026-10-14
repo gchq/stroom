@@ -43,16 +43,17 @@ dependencies {
 
     // All these pull in lucene-core transitively.
     // lucene-analyzers-common was renamed to lucene-analysis-common in v9.0.0
-    implementation "org.apache.lucene:lucene-analysis-common:10.3.2"
-    implementation "org.apache.lucene:lucene-memory:10.3.2"
-    implementation "org.apache.lucene:lucene-queryparser:10.3.2"
-    implementation "org.apache.lucene:lucene-highlighter:10.3.2"
+    implementation "org.apache.lucene:lucene-analysis-common:10.5.1"
+    implementation "org.apache.lucene:lucene-memory:10.5.1"
+    implementation "org.apache.lucene:lucene-queryparser:10.5.1"
+    implementation "org.apache.lucene:lucene-highlighter:10.5.1"
 
     // Needed to read shards written by older versions, e.g. 9.8.0
-    runtimeOnly "org.apache.lucene:lucene-backward-codecs:10.3.2"
+    runtimeOnly "org.apache.lucene:lucene-backward-codecs:10.5.1"
 
     implementation libs.jackson.databind
     implementation libs.guice
+    implementation libs.jackson.annotations
     implementation libs.langchain4j
     implementation libs.vavr
 
