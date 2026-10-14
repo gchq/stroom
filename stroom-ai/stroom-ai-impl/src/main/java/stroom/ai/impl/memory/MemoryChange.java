@@ -33,6 +33,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /// @param after       The content after the change, or null if it is deleted.
 /// @param status      For an approval request, where it has got to; null for a change already made.
 /// @param reason      For an approval request, why it needs approval.
+/// @param undone      True once the user has undone a change that was made, otherwise null.
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder(alphabetic = true)
 public record MemoryChange(@JsonProperty("kind") String kind,
@@ -42,7 +43,8 @@ public record MemoryChange(@JsonProperty("kind") String kind,
                            @JsonProperty("before") String before,
                            @JsonProperty("after") String after,
                            @JsonProperty("status") ApprovalStatus status,
-                           @JsonProperty("reason") String reason) {
+                           @JsonProperty("reason") String reason,
+                           @JsonProperty("undone") Boolean undone) {
 
     public static final String KIND = "MEMORY";
 
@@ -51,9 +53,31 @@ public record MemoryChange(@JsonProperty("kind") String kind,
         // Explicit constructor for Jackson.
     }
 
+    /// A change not undone.
+    public MemoryChange(final String kind,
+                        final Operation operation,
+                        final String path,
+                        final Integer baseVersion,
+                        final String before,
+                        final String after,
+                        final ApprovalStatus status,
+                        final String reason) {
+        this(kind, operation, path, baseVersion, before, after, status, reason, null);
+    }
+
     /// @return A copy with the status changed.
     public MemoryChange withStatus(final ApprovalStatus status) {
-        return new MemoryChange(kind, operation, path, baseVersion, before, after, status, reason);
+        return new MemoryChange(kind, operation, path, baseVersion, before, after, status, reason, undone);
+    }
+
+    /// @return A copy marked as undone by the user.
+    public MemoryChange withUndone() {
+        return new MemoryChange(kind, operation, path, baseVersion, before, after, status, reason, true);
+    }
+
+    /// @return True if the user has undone the change.
+    public boolean isUndone() {
+        return Boolean.TRUE.equals(undone);
     }
 
     /// What a change does.
