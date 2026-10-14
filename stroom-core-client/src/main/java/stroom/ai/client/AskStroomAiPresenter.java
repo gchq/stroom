@@ -26,6 +26,8 @@ import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatStatus;
 import stroom.ai.shared.AiContextUsage;
+import stroom.ai.shared.AiMcpPrompt;
+import stroom.ai.shared.AiMcpPromptArgument;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
@@ -36,6 +38,7 @@ import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
+import stroom.ai.shared.GetAiMcpPromptRequest;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.alert.client.event.AlertCallback;
 import stroom.alert.client.event.AlertEvent;
@@ -217,6 +220,9 @@ public class AskStroomAiPresenter
     private String lastRenderedDay;
     // True while the conversation is scrolled to the bottom, so new messages scroll into view.
     private boolean followBottom = true;
+    // The prompts the model's MCP servers offer, as slash commands, once fetched.
+    private List<AiMcpPrompt> mcpPrompts;
+    private boolean fetchingPrompts;
     // How much of the model's context window the chat uses, as last reported.
     private AiContextUsage contextUsage;
 
@@ -772,8 +778,12 @@ public class AskStroomAiPresenter
     public void onInputChanged(final String text) {
         final String trimmed = NullSafe.string(text).trim();
         if (trimmed.startsWith("/") && !trimmed.contains(" ")) {
+            if (mcpPrompts == null) {
+                // Suggest the MCP prompts too, once they have been fetched.
+                fetchPrompts(() -> onInputChanged(text));
+            }
             final List<AiSlashCommand> matches = new ArrayList<>();
-            for (final AiSlashCommand command : SLASH_COMMANDS) {
+            for (final AiSlashCommand command : slashCommands()) {
                 if (command.getName().startsWith(trimmed)) {
                     matches.add(command);
                 }
@@ -782,6 +792,74 @@ public class AskStroomAiPresenter
         } else {
             getView().setCommandSuggestions(null);
         }
+    }
+
+    /**
+     * @return The chat's own commands, then the MCP servers' prompts.
+     */
+    private List<AiSlashCommand> slashCommands() {
+        final List<AiSlashCommand> commands = new ArrayList<>(SLASH_COMMANDS);
+        for (final AiMcpPrompt prompt : NullSafe.list(mcpPrompts)) {
+            final StringBuilder arguments = new StringBuilder();
+            for (final AiMcpPromptArgument argument : NullSafe.list(prompt.getArguments())) {
+                if (arguments.length() > 0) {
+                    arguments.append(" ");
+                }
+                arguments.append(argument.isRequired()
+                        ? argument.getName() + "=…"
+                        : "[" + argument.getName() + "=…]");
+            }
+            commands.add(new AiSlashCommand(prompt.getCommand(), arguments.toString(),
+                    NullSafe.string(prompt.getDescription()) + " (from " + prompt.getServer() + ")"));
+        }
+        return commands;
+    }
+
+    /**
+     * Fetches the prompts the model's MCP servers offer, once.
+     */
+    private void fetchPrompts(final Runnable then) {
+        if (fetchingPrompts) {
+            return;
+        }
+        fetchingPrompts = true;
+        askStroomAiClient.getConfig(config -> askStroomAiClient.listMcpPrompts(config, prompts -> {
+            mcpPrompts = NullSafe.list(prompts);
+            fetchingPrompts = false;
+            then.run();
+        }, error -> {
+            // No prompts if they can't be listed, e.g. there is no model yet.
+            mcpPrompts = List.of();
+            fetchingPrompts = false;
+        }, SILENT), SILENT);
+    }
+
+    /**
+     * Fills in an MCP server's prompt and puts it in the input box, for the user to check and send. Server text is
+     * never sent to the model without the user sending it.
+     *
+     * @param prompt The prompt.
+     * @param rest   What the user typed after the command: 'name=value' pairs, or, for a prompt with
+     *               arguments, the first argument's value.
+     */
+    private void runPrompt(final AiMcpPrompt prompt, final String rest) {
+        final Map<String, String> arguments = AiSlashCommand.parseArguments(
+                NullSafe.isEmptyCollection(prompt.getArguments())
+                        ? null
+                        : prompt.getArguments().get(0).getName(),
+                rest);
+        for (final AiMcpPromptArgument argument : NullSafe.list(prompt.getArguments())) {
+            if (argument.isRequired() && NullSafe.isBlankString(arguments.get(argument.getName()))) {
+                AlertEvent.fireWarn(this, prompt.getCommand() + " needs " + argument.getName() + ", e.g. "
+                                          + prompt.getCommand() + " " + argument.getName() + "=…", null);
+                return;
+            }
+        }
+        askStroomAiClient.getConfig(config -> askStroomAiClient.getMcpPrompt(
+                new GetAiMcpPromptRequest(config, prompt.getServer(), prompt.getName(), arguments),
+                text -> getView().setMessage(NullSafe.string(text.getText())),
+                error -> showError(error, "Unable to get " + prompt.getCommand(), null),
+                getView()), getView());
     }
 
     /**
@@ -795,6 +873,21 @@ public class AskStroomAiPresenter
             return false;
         }
         final String[] parts = trimmed.split("\\s+", 2);
+        final AiMcpPrompt prompt = NullSafe.list(mcpPrompts).stream()
+                .filter(candidate -> candidate.getCommand().equals(parts[0]))
+                .findFirst()
+                .orElse(null);
+        if (prompt != null) {
+            runPrompt(prompt, parts.length > 1
+                    ? parts[1]
+                    : "");
+            return true;
+        }
+        if (mcpPrompts == null && !COMPACT_COMMAND.equals(parts[0])) {
+            // It may be an MCP prompt, so fetch them and try again.
+            fetchPrompts(() -> runSlashCommand(message));
+            return true;
+        }
         if (COMPACT_COMMAND.equals(parts[0])) {
             if (currentChat == null) {
                 AlertEvent.fireWarn(this, "There is nothing to compact yet.", null);
@@ -806,7 +899,7 @@ public class AskStroomAiPresenter
             return true;
         }
         final StringBuilder known = new StringBuilder();
-        for (final AiSlashCommand command : SLASH_COMMANDS) {
+        for (final AiSlashCommand command : slashCommands()) {
             known.append("\n").append(command.getName()).append(" ").append(command.getArguments());
         }
         AlertEvent.fireWarn(this, "Unknown command " + parts[0] + ". The commands are:" + known
@@ -1079,6 +1172,8 @@ public class AskStroomAiPresenter
     }
 
     private void writeModel() {
+        // The new model may have other MCP servers, with other prompts.
+        mcpPrompts = null;
         askStroomAiClient.getConfig(config -> {
             final AskStroomAiConfig newConfig = config.copy()
                     .modelRef(docSelectionBoxPresenter.getSelectedEntityReference())
@@ -2660,6 +2755,13 @@ public class AskStroomAiPresenter
          * @param commands The commands, or null/empty to hide them.
          */
         void setCommandSuggestions(List<AiSlashCommand> commands);
+
+        /**
+         * Puts text in the input box, for the user to check and send.
+         *
+         * @param text The text.
+         */
+        void setMessage(String text);
 
         /**
          * @param tab True if the chat is shown in a content tab, so the tab/panel button moves it back.
