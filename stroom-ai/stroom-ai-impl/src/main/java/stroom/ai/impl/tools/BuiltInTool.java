@@ -71,4 +71,12 @@ public interface BuiltInTool {
     default boolean readsUntrustedContent() {
         return true;
     }
+
+    /**
+     * @return True if the tool limits how much it returns itself (e.g. a page of a file), so its result is never
+     * saved to the workspace in place of being returned, which would only make another file to read.
+     */
+    default boolean boundsItsOutput() {
+        return false;
+    }
 }
