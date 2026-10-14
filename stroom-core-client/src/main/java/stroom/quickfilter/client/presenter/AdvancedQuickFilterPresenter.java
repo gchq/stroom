@@ -17,7 +17,6 @@
 package stroom.quickfilter.client.presenter;
 
 import stroom.alert.client.event.AlertEvent;
-import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.ExpressionOperator;
@@ -38,7 +37,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupType;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -58,6 +56,8 @@ import java.util.function.Consumer;
  *     <li>Open, look, Cancel: the text is byte-identical afterwards, comments and spacing intact.</li>
  *     <li>Open, OK without changing anything: also untouched - the canonical spelling of the
  *     original is compared with the canonical spelling of what was written, not the raw text.</li>
+ *     <li>Open, edit, OK: the text is replaced with the canonical spelling of the tree, without a
+ *     confirmation. The edit was deliberate and Cancel is the way out.</li>
  *     <li>Text the server cannot parse: the dialog still opens, empty, and says why; OK from
  *     there does replace the text, because the user has built something new.</li>
  *     <li>The tree editor only offers conditions the syntax can write back, so OK cannot
@@ -103,13 +103,12 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
                 .create(EXPRESSION_RESOURCE)
                 .method(res -> res.parseQuickFilter(new ParseQuickFilterRequest(
                         text, context.getDefaultFields(), context.getQualifiedFields())))
-                .onSuccess(parsed -> open(context, text, parsed, onOk, taskMonitorFactory))
+                .onSuccess(parsed -> open(context, parsed, onOk, taskMonitorFactory))
                 .taskMonitorFactory(taskMonitorFactory)
                 .exec();
     }
 
     private void open(final QuickFilterContext context,
-                      final String currentText,
                       final ParseQuickFilterResult parsed,
                       final Consumer<String> onOk,
                       final TaskMonitorFactory taskMonitorFactory) {
@@ -143,15 +142,14 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
                     .create(EXPRESSION_RESOURCE)
                     .method(res -> res.formatQuickFilter(new FormatQuickFilterRequest(
                             original, context.getDefaultFields(), context.getQualifiedFields())))
-                    .onSuccess(formatted -> showPopup(context, currentText, formatted.getText(), onOk,
-                            taskMonitorFactory))
+                    .onSuccess(formatted -> showPopup(context, formatted.getText(), onOk, taskMonitorFactory))
                     // An unchanged tree will then be re-formatted and written, which is only
                     // cosmetic; not worth refusing to open over.
-                    .onFailure(error -> showPopup(context, currentText, null, onOk, taskMonitorFactory))
+                    .onFailure(error -> showPopup(context, null, onOk, taskMonitorFactory))
                     .taskMonitorFactory(taskMonitorFactory)
                     .exec();
         } else {
-            showPopup(context, currentText, parsed.isOk()
+            showPopup(context, parsed.isOk()
                     ? ""
                     : null, onOk, taskMonitorFactory);
         }
@@ -163,7 +161,6 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
      *                          format call did), in which case OK always writes
      */
     private void showPopup(final QuickFilterContext context,
-                           final String currentText,
                            final String canonicalOriginal,
                            final Consumer<String> onOk,
                            final TaskMonitorFactory taskMonitorFactory) {
@@ -193,10 +190,9 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
                                     // Spec §10.1: nothing was edited, so the text is not touched.
                                     e.hide();
                                 } else {
-                                    confirmReplace(currentText, formatted.getText(), () -> {
-                                        onOk.accept(formatted.getText());
-                                        e.hide();
-                                    }, e::reset);
+                                    // Spec §10.2: the user edited and pressed OK, so no confirmation.
+                                    onOk.accept(formatted.getText());
+                                    e.hide();
                                 }
                             })
                             .onFailure(error -> {
@@ -206,32 +202,6 @@ public class AdvancedQuickFilterPresenter extends MyPresenterWidget<AdvancedQuic
                             .exec();
                 })
                 .fire();
-    }
-
-    /**
-     * Spec §10.2: warn before reformatting, and say what will be lost. Only when there is
-     * something to lose - existing text that the new text does not equal.
-     */
-    private void confirmReplace(final String currentText,
-                                final String newText,
-                                final Runnable onConfirm,
-                                final Runnable onDecline) {
-        if (NullSafe.isBlankString(currentText)) {
-            onConfirm.run();
-            return;
-        }
-        // The detail pane is the part rendered pre-formatted, so the two texts go there, where
-        // their spacing and quoting survive.
-        ConfirmEvent.fire(this,
-                SafeHtmlUtils.fromString("Replace the filter text?"),
-                SafeHtmlUtils.fromString("Current:  " + currentText + "\nNew:      " + newText),
-                ok -> {
-                    if (ok) {
-                        onConfirm.run();
-                    } else {
-                        onDecline.run();
-                    }
-                });
     }
 
 

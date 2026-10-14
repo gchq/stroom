@@ -22,7 +22,7 @@ recorded there are taken as given here and not re-argued:
 | Decision (spec §) | Consequence for this design |
 |---|---|
 | Text is king; the tree is a transient view (§9) | History stores the **text**. Advanced Query is a view over the text, not a second source of truth. |
-| Never overwrite the text unless the user edits the tree; warn before reformatting (§10.1–10.2) | Cancel in the dialog is a no-op on the box. OK replaces the text only after an edit. |
+| Never overwrite the text unless the user edits the tree; replace without a confirmation after an edit (§10.1–10.2) | Cancel in the dialog is a no-op on the box. OK replaces the text only after an edit. |
 | Refuse to open advanced mode when the text cannot be represented (§10.3) | A parse error on open is shown, not silently degraded. |
 | The tree editor offers only the field's `ConditionSet` (§10.4) | The dialog additionally intersects with what the quick-filter grammar can *print* — see §5.3. |
 | Parse and convert server-side, as endpoints (§11) | `parse` and `format` are new endpoints on the existing `ExpressionResource`; the client holds no grammar. |
@@ -476,9 +476,8 @@ collapse the default-field `OR` group (§6.1).
 3. **OK:** `write()` → `formatQuickFilter`. **As built**, "unchanged" is decided by comparing the
    canonical spelling of the written tree with the canonical spelling of the tree opened with
    (fetched before the dialog shows), not by tree equality — the editor rewrites incidental
-   details such as `enabled` flags. Equal → hide with no change (spec §10.1). Otherwise, if the
-   box was non-blank, a `ConfirmEvent` shows the old and new text (spec §10.2); confirmed →
-   `onOk(text)` → the same path as picking a recent filter: widget `setText(text, true)`, change
+   details such as `enabled` flags. Equal → hide with no change (spec §10.1). Otherwise → (no
+   confirmation, spec §10.2) `onOk(text)` → the same path as picking a recent filter: widget `setText(text, true)`, change
    event, `recordUse`.
 4. **Cancel:** nothing.
 

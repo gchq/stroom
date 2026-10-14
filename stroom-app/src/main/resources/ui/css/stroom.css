@@ -972,3 +972,22 @@ input[type="radio"]:disabled:checked {
     color: var(--control__text-color--disabled);
     cursor: default;
 }
+
+/* Query data view (Data tab on PlanB, SQL Temporal Store and Lucene index docs). These live here
+   rather than in QueryDataViewImpl.ui.xml because GWT's ui:style parser cannot read var(). */
+.queryDataView-errorContainer {
+    margin: 0px 8px 8px 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--error);
+    border-radius: 4px;
+    background-color: rgba(var(--bootstrap-error-rgb), 0.15);
+    height: 100px;
+    overflow-y: auto;
+}
+
+.queryDataView-errorLabel {
+    color: var(--error);
+    font-weight: 500;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
