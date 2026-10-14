@@ -34,7 +34,12 @@ public enum AiMessageType implements HasPrimitiveValue {
      * Something went wrong that did not stop the question being answered, e.g. an MCP tool server that
      * could not be reached. Shown to the user but not sent to the model.
      */
-    WARNING(10);
+    WARNING(10),
+    /**
+     * A message the user sent while an agent run was working on their question, to steer it. It belongs to the
+     * question's turn, and the run picks it up at its next safe point.
+     */
+    STEER_MESSAGE(11);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());
