@@ -21,6 +21,8 @@ import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
 import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
+import stroom.ai.shared.AiChatRun;
+import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
@@ -92,6 +94,8 @@ public class AskStroomAiPresenter
     private static final String WORKING_MESSAGE_ID = "ai-working-message";
     private static final String WORKING_TEXT_ID = "ai-working-text";
     private static final String MESSAGE_ID_ATTRIBUTE = "data-message-id";
+    private static final String RUN_STATUS_ID = "ai-run-status";
+    private static final String RESUME_RUN_ATTRIBUTE = "data-resume-run";
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
@@ -166,6 +170,12 @@ public class AskStroomAiPresenter
                     if (NullSafe.isNonBlankString(attachmentIdStr)) {
                         final String desc = button.getAttribute("data-attachment-desc");
                         onViewAttachmentData(Integer.parseInt(attachmentIdStr), desc);
+                        return;
+                    }
+
+                    // Capture resume click events.
+                    if (NullSafe.isNonBlankString(button.getAttribute(RESUME_RUN_ATTRIBUTE))) {
+                        onResumeRun();
                         return;
                     }
 
@@ -444,6 +454,59 @@ public class AskStroomAiPresenter
         }, getView()));
     }
 
+    private void onResumeRun() {
+        if (currentChat == null) {
+            return;
+        }
+        getView().setSendButtonLoadingState(true);
+        askStroomAiClient.getConfig(config -> {
+            final AskStroomAiRequest request = new AskStroomAiRequest(currentChat, config, null, null);
+            askStroomAiClient.resumeRun(request,
+                    response -> startPolling(),
+                    error -> showError(error, "Unable to resume", () ->
+                            getView().setSendButtonLoadingState(false)),
+                    getView());
+        }, getView());
+    }
+
+    /**
+     * Shows a line at the end of the conversation if the chat's last run stopped before finishing, with a
+     * button to resume it, and takes it away otherwise.
+     */
+    private void updateRunStatus(final AiChatRun run) {
+        final Element existing = Document.get().getElementById(RUN_STATUS_ID);
+        if (existing != null) {
+            existing.removeFromParent();
+        }
+        if (run == null || run.isActive() || run.getStatus() == AiChatRunStatus.DONE) {
+            return;
+        }
+        final boolean resumable = run.getStatus() == AiChatRunStatus.STOPPED
+                                  || run.getStatus() == AiChatRunStatus.INTERRUPTED
+                                  || run.getStatus() == AiChatRunStatus.FAILED;
+        final HtmlBuilder hb = new HtmlBuilder();
+        hb.div(div -> {
+            div.span(text -> text.append(runStatusText(run)), Attribute.className("ai-run-status-text"));
+            if (resumable) {
+                div.elem(button -> button.append("Resume"),
+                        BUTTON,
+                        Attribute.className("ai-run-resume"),
+                        Attribute.title("Answer the last question again"),
+                        new Attribute(RESUME_RUN_ATTRIBUTE, String.valueOf(run.getId())));
+            }
+        }, Attribute.className("ai-message ai-message--run-status"), new Attribute("id", RUN_STATUS_ID));
+        appendToContainer(hb);
+    }
+
+    private static String runStatusText(final AiChatRun run) {
+        final String text = run.getStopReason() != null
+                ? run.getStopReason().getDisplayValue()
+                : run.getStatus().getDisplayValue();
+        return run.getStatus() == AiChatRunStatus.FAILED && NullSafe.isNonBlankString(run.getErrorMessage())
+                ? text + ": " + run.getErrorMessage()
+                : text;
+    }
+
     @Override
     public void onCancelProcessing() {
         if (currentChat != null) {
@@ -508,6 +571,9 @@ public class AskStroomAiPresenter
 
             // Update attachment status elements in-place.
             updateAttachmentStatuses(response.getAttachments());
+
+            // Say if the run stopped before finishing, and offer to resume it.
+            updateRunStatus(response.getRun());
 
             // Show what the server is currently doing, and take the line away when it is done.
             updateWorkingMessage(response.getWorkingMessage());
@@ -1025,6 +1091,7 @@ public class AskStroomAiPresenter
             // refreshed, and carries on following it.
             askStroomAiClient.pollMessages(chat.getId(), lastSeenMessageId, response -> {
                 updateAttachmentStatuses(response.getAttachments());
+                updateRunStatus(response.getRun());
                 if (!response.isComplete() && currentChat != null && currentChat.getId() == chat.getId()) {
                     getView().setSendButtonLoadingState(true);
                     startPolling();
