@@ -16,6 +16,7 @@
 
 package stroom.ai.impl;
 
+import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 
 import java.util.List;
@@ -61,6 +62,32 @@ public interface AiWorkspaceDao {
     /// @return The file's uncompressed size, or 0 if it is not known.
     long getSize(int fileId);
 
+    /// Sets where a file's content came from and when it expires.
+    ///
+    /// @param fileId        The file's id.
+    /// @param sourceDocUuid The UUID of the document (e.g. data source) the content came from, or null.
+    /// @param expireTimeMs  When the file expires, or null for never (it goes with its chat).
+    void setRetention(int fileId, String sourceDocUuid, Long expireTimeMs);
+
+    /// @param fileId The file's id.
+    /// @return What is known about the file, if it exists.
+    Optional<FileInfo> getFileInfo(int fileId);
+
+    /// @param nowMs The time now.
+    /// @param limit The most to return.
+    /// @return The ids of files whose content is still held but which have expired.
+    List<Integer> findExpired(long nowMs, int limit);
+
+    /// Removes a file's content, keeping its record (with the reason) so the chat can say what happened to it.
+    ///
+    /// @param fileId The file's id.
+    /// @param reason Why, e.g. "it reached its retention age".
+    void makeUnavailable(int fileId, String reason);
+
+    /// @param fileIds File ids.
+    /// @return Those of the files whose content is still held.
+    List<Integer> findAvailable(List<Integer> fileIds);
+
     /// @param chatId The chat.
     /// @return The uncompressed size of all the files in the chat's workspace.
     long getTotalSize(int chatId);
@@ -72,6 +99,25 @@ public interface AiWorkspaceDao {
     /// @param rawSize   The chunk's uncompressed size in bytes.
     /// @param data      The chunk's compressed data.
     record Chunk(long firstLine, int lineCount, int rawSize, byte[] data) {
+
+    }
+
+    /// What is known about a workspace file.
+    ///
+    /// @param id            The file's id.
+    /// @param chatId        The chat it belongs to.
+    /// @param path          Its path in the workspace, or null for an attachment stored before paths.
+    /// @param status        Its status; UNAVAILABLE once its content has been removed.
+    /// @param sourceDocUuid The UUID of the document its content came from, or null.
+    /// @param expireTimeMs  When it expires, or null for never.
+    /// @param errorMessage  Why it is unavailable, or another error, or null.
+    record FileInfo(int id,
+                    int chatId,
+                    String path,
+                    AiAttachmentStatus status,
+                    String sourceDocUuid,
+                    Long expireTimeMs,
+                    String errorMessage) {
 
     }
 
