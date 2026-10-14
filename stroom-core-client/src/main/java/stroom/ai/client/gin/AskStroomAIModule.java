@@ -30,6 +30,9 @@ import stroom.ai.client.AskStroomAiConfigPresenter.AskStroomAiConfigView;
 import stroom.ai.client.AskStroomAiConfigViewImpl;
 import stroom.ai.client.AskStroomAiPresenter;
 import stroom.ai.client.AskStroomAiPresenter.AskStroomAiView;
+import stroom.ai.client.AskStroomAiTabPresenter;
+import stroom.ai.client.AskStroomAiTabPresenter.AskStroomAiTabView;
+import stroom.ai.client.AskStroomAiTabViewImpl;
 import stroom.ai.client.AskStroomAiViewImpl;
 import stroom.ai.client.DownloadChatPresenter;
 import stroom.ai.client.DownloadChatPresenter.DownloadChatView;
@@ -62,6 +65,10 @@ public class AskStroomAIModule extends AbstractPresenterModule {
                 AiChatHistoryPresenter.class,
                 AiChatHistoryView.class,
                 AiChatHistoryViewImpl.class);
+        bindPresenterWidget(
+                AskStroomAiTabPresenter.class,
+                AskStroomAiTabView.class,
+                AskStroomAiTabViewImpl.class);
         bindPresenterWidget(
                 DownloadChatPresenter.class,
                 DownloadChatView.class,

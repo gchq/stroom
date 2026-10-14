@@ -18,6 +18,7 @@ package stroom.ai.client;
 
 import stroom.ai.shared.AskStroomAiContext;
 
+import com.google.gwt.dom.client.Element;
 import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface AskStroomAiUiHandlers extends UiHandlers {
@@ -28,13 +29,17 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
 
     void onCancelProcessing();
 
-    void onChangeConfig();
-
     void onNewChat();
 
-    void onShowHistory();
+    /**
+     * Moves the chat into a content tab, or back into the panel.
+     */
+    void onToggleTab();
 
-    void onDownloadChat();
-
-    void onDeleteAllMessages();
+    /**
+     * Shows the chat's menu (rename, compact, download, settings and so on) below an element.
+     *
+     * @param target The element to show it below.
+     */
+    void onShowMenu(Element target);
 }
