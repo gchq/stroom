@@ -218,10 +218,11 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
          */
         @Override
         public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
-            try {
+            // A named resource rather than `try (this)`, which crashes the Checkstyle parser.
+            // Try-with-resources (not try/finally) so a close() failure is suppressed onto the
+            // consumer's exception instead of replacing it.
+            try (final PooledByteBuffer self = this) {
                 byteBufferConsumer.accept(byteBuffer);
-            } finally {
-                close();
             }
         }
 
@@ -297,10 +298,11 @@ public class ByteBufferPoolImpl7 implements ByteBufferPool {
         @Override
         public void doWithByteBuffer(final Consumer<ByteBuffer> byteBufferConsumer) {
             Objects.requireNonNull(byteBuffer, "Already released");
-            try {
+            // A named resource rather than `try (this)`, which crashes the Checkstyle parser.
+            // Try-with-resources (not try/finally) so a close() failure is suppressed onto the
+            // consumer's exception instead of replacing it.
+            try (final PooledByteBuffer self = this) {
                 byteBufferConsumer.accept(byteBuffer);
-            } finally {
-                close();
             }
         }
 
