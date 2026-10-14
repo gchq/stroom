@@ -55,6 +55,7 @@ appConfig:
       maxFileBytes: 20971520
       maxLinesPerRead: 500
       maxUserBytes: 524288000
+      queryTimeLimit: "PT2M"
       toolTimeLimit: "PT30S"
     workspaceFileRetention: "P7D"
   analytics:

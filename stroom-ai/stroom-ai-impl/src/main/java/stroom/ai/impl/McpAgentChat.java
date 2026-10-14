@@ -18,6 +18,7 @@ package stroom.ai.impl;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChatMessage;
@@ -167,6 +168,24 @@ class McpAgentChat {
                       final StringBuilder debugLog,
                       final int steerAfterMessageId,
                       final ContextBudget budget) {
+        // Built-in tools that need the model (e.g. to summarise) find it here.
+        return new ToolRunContext(chatModel, modelDoc, cancelled::get).run(() -> chatWithTools(chatModel, modelDoc,
+                chatId, messages, toolset, workingMessageId, cancelled, taskContext, attempt, debugLog,
+                steerAfterMessageId, budget));
+    }
+
+    private ChatResponse chatWithTools(final ChatModel chatModel,
+                                       final OpenAIModelDoc modelDoc,
+                                       final int chatId,
+                                       final List<ChatMessage> messages,
+                                       final McpToolset toolset,
+                                       final int workingMessageId,
+                                       final AtomicBoolean cancelled,
+                                       final TaskContext taskContext,
+                                       final int attempt,
+                                       final StringBuilder debugLog,
+                                       final int steerAfterMessageId,
+                                       final ContextBudget budget) {
         final SteerFeed steerFeed = new SteerFeed(chatId, steerAfterMessageId);
         // Anything in the chat that came from tools or Stroom data could hold planted instructions.
         if (aiService.getMessages(chatId).stream()

@@ -17,6 +17,7 @@
 package stroom.ai.impl.tools;
 
 import stroom.ai.api.AiService;
+import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.AiWorkspaceConfig;
@@ -159,7 +160,7 @@ class TestWorkspaceTools {
     @Test
     void testReadFileLimits() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, 10, 300, null));
+                new AiWorkspaceConfig(null, null, null, 10, 300, null, null));
         workspace.write(chatId, WorkspacePath.parse("/outputs/long.txt"), "x".repeat(5_000) + "\n", null);
 
         assertThat(run(new ReadFileTool(workspace), "{\"path\":\"/outputs/events.log\",\"lineCount\":100}"))
@@ -224,7 +225,7 @@ class TestWorkspaceTools {
     @Test
     void testGrepReDoSIsStopped() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(null, null, null, null, null, StroomDuration.ofMillis(300)));
+                new AiWorkspaceConfig(null, null, null, null, null, StroomDuration.ofMillis(300), null));
         workspace.write(chatId, WorkspacePath.parse("/outputs/csv.txt"), "a,".repeat(40) + "\n", null);
 
         assertThat(run(new GrepTool(workspace), "{\"path\":\"/outputs/csv.txt\",\"pattern\":\"(.*?,){25}x\","
@@ -274,7 +275,7 @@ class TestWorkspaceTools {
     @Test
     void testQuota() {
         aiConfig = new AiConfig(null, null, null, null, null, null, null, null, null,
-                new AiWorkspaceConfig(100L, null, null, null, null, null));
+                new AiWorkspaceConfig(100L, null, null, null, null, null, null));
 
         assertThat(run(new WriteFileTool(workspace), "{\"path\":\"/outputs/big\",\"content\":\""
                                                     + "x".repeat(200) + "\"}"))
@@ -321,15 +322,15 @@ class TestWorkspaceTools {
 
     @Test
     void testTable() {
-        assertThat(run(new TableTool(workspace), "{\"path\":\"/attachments/7.md\",\"groupBy\":[\"host\"],"
+        assertThat(run(tableTool(), "{\"path\":\"/attachments/7.md\",\"groupBy\":[\"host\"],"
                                                 + "\"aggregates\":[{\"function\":\"sum\",\"column\":\"n\"}]}"))
                 .startsWith("1 of 1 rows matched; the result has 1 row(s).")
                 .contains("| host | sum(n) |")
                 .contains("| fw1 | 3 |");
-        assertThat(run(new TableTool(workspace), "{\"path\":\"/attachments/7.md\",\"where\":[{\"column\":\"x\","
+        assertThat(run(tableTool(), "{\"path\":\"/attachments/7.md\",\"where\":[{\"column\":\"x\","
                                                 + "\"op\":\"=\",\"value\":\"1\"}]}"))
                 .startsWith("Error: There is no column 'x'");
-        assertThat(run(new TableTool(workspace), "{\"path\":\"/attachments/7.md\",\"where\":\"host = fw1\"}"))
+        assertThat(run(tableTool(), "{\"path\":\"/attachments/7.md\",\"where\":\"host = fw1\"}"))
                 .startsWith("Error: where must be a list of objects.");
     }
 
@@ -341,7 +342,7 @@ class TestWorkspaceTools {
         final SecurityContext securityContext = injectorSecurityContext;
         Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(true);
 
-        assertThat(run(new TableTool(workspace), "{\"path\":\"/attachments/8.md\",\"distinct\":true,"
+        assertThat(run(tableTool(), "{\"path\":\"/attachments/8.md\",\"distinct\":true,"
                                                 + "\"out\":\"/outputs/hosts.csv\"}"))
                 .startsWith("Wrote the result to /outputs/hosts.csv.");
         assertThat(workspace.readLines(chatId, WorkspacePath.parse("/outputs/hosts.csv"), 0, 5))
@@ -365,7 +366,7 @@ class TestWorkspaceTools {
                 .containsExactlyInAnyOrder("ls", "read_file", "grep", "wc", "write_file", "str_replace",
                         "delete_file");
         assertThat(new JqTool(workspace).boundsItsOutput()).isTrue();
-        assertThat(new TableTool(workspace).readsUntrustedContent()).isTrue();
+        assertThat(tableTool().readsUntrustedContent()).isTrue();
         // Reading files reads data that may hold planted instructions; writing does not.
         assertThat(tools.readsUntrustedContent("read_file")).isTrue();
         assertThat(tools.readsUntrustedContent("grep")).isTrue();
@@ -373,6 +374,11 @@ class TestWorkspaceTools {
         // They only change the chat's own workspace, so may run while the user is away.
         assertThat(tools.isReadOnly("write_file")).isTrue();
         assertThat(tools.boundsItsOutput("read_file")).isTrue();
+    }
+
+    private TableTool tableTool() {
+        return new TableTool(workspace, new ColumnSummariser(workspace, Mockito.mock(TableSummariser.class),
+                () -> null));
     }
 
     private String run(final BuiltInTool tool, final String arguments) {
