@@ -512,4 +512,39 @@ public class AiDaoImpl implements AiDao {
                         .where(AI_CHAT_ATTACHMENT.FK_AI_CHAT_ID.eq(chatId))))
                 .execute();
     }
+
+    @Override
+    public void recordUsage(final int chatId,
+                            final String modelDocUuid,
+                            final int contextWindowTokens,
+                            final long inputTokens,
+                            final long outputTokens) {
+        JooqUtil.context(aiDbConnProvider, context -> context
+                .update(AI_CHAT)
+                .set(AI_CHAT.MODEL_DOC_UUID, modelDocUuid)
+                .set(AI_CHAT.CONTEXT_WINDOW_TOKENS, contextWindowTokens > 0
+                        ? contextWindowTokens
+                        : null)
+                .set(AI_CHAT.LAST_INPUT_TOKENS, (int) Math.min(Integer.MAX_VALUE, inputTokens))
+                .set(AI_CHAT.TOTAL_INPUT_TOKENS, AI_CHAT.TOTAL_INPUT_TOKENS.plus(inputTokens))
+                .set(AI_CHAT.TOTAL_OUTPUT_TOKENS, AI_CHAT.TOTAL_OUTPUT_TOKENS.plus(outputTokens))
+                .where(AI_CHAT.ID.eq(chatId))
+                .execute());
+    }
+
+    @Override
+    public ChatUsage getUsage(final int chatId) {
+        return JooqUtil.contextResult(aiDbConnProvider, context -> context
+                        .select(AI_CHAT.MODEL_DOC_UUID,
+                                AI_CHAT.CONTEXT_WINDOW_TOKENS,
+                                AI_CHAT.LAST_INPUT_TOKENS,
+                                AI_CHAT.TOTAL_INPUT_TOKENS,
+                                AI_CHAT.TOTAL_OUTPUT_TOKENS)
+                        .from(AI_CHAT)
+                        .where(AI_CHAT.ID.eq(chatId))
+                        .fetchOptional())
+                .map(record -> new ChatUsage(record.value1(), record.value2(), record.value3(),
+                        record.value4(), record.value5()))
+                .orElse(new ChatUsage(null, null, null, 0, 0));
+    }
 }

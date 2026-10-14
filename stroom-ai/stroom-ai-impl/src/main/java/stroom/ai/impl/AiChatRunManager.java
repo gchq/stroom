@@ -328,6 +328,19 @@ public class AiChatRunManager {
         return localRun != null && localRun.unattended().get();
     }
 
+    /// Adds to the tokens and tool calls used by the chat's run on this node, if it has one.
+    ///
+    /// @param chatId       The chat.
+    /// @param inputTokens  Input tokens to add.
+    /// @param outputTokens Output tokens to add.
+    /// @param toolCalls    Tool calls to add.
+    public void addUsage(final int chatId, final long inputTokens, final long outputTokens, final int toolCalls) {
+        final LocalRun localRun = localRuns.get(chatId);
+        if (localRun != null) {
+            runDao.addUsage(localRun.runId(), inputTokens, outputTokens, toolCalls);
+        }
+    }
+
     /// Records that a browser is checking on a chat, i.e. its user is still there.
     ///
     /// @param chatId The chat.
