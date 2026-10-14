@@ -53,6 +53,27 @@ abstract class AbstractBuiltInTool implements BuiltInTool {
     }
 
     /**
+     * @return the value of the named string argument exactly as given (not trimmed), or null if it was absent.
+     */
+    protected String rawArg(final ToolExecutionRequest request, final String name) {
+        final String json = request.arguments();
+        if (json == null || json.isBlank()) {
+            return null;
+        }
+        try {
+            final Map<?, ?> args = JsonUtil.readValue(json, Map.class);
+            final Object value = args == null
+                    ? null
+                    : args.get(name);
+            return value == null
+                    ? null
+                    : String.valueOf(value);
+        } catch (final RuntimeException e) {
+            return null;
+        }
+    }
+
+    /**
      * @return the value of the named whole-number argument, or null if it was absent or not a whole number.
      */
     protected Integer intArg(final ToolExecutionRequest request, final String name) {

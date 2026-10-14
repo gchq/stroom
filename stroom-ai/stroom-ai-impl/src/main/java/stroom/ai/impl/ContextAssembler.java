@@ -19,6 +19,7 @@ package stroom.ai.impl;
 import stroom.ai.api.AiService;
 import stroom.ai.api.SimpleTokenCountEstimator;
 import stroom.ai.impl.AiDao.ChatUsage;
+import stroom.ai.impl.memory.AiMemoryService;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiChatAttachment;
 import stroom.ai.shared.AiChatMessage;
@@ -61,6 +62,7 @@ public class ContextAssembler {
 
     public static final String PART_SYSTEM_PROMPT = "System prompt";
     public static final String PART_TOOL_DEFINITIONS = "Tool definitions";
+    public static final String PART_MEMORY = "Memory";
     public static final String PART_EARLIER_TURNS = "Earlier turns (compacted)";
     public static final String PART_CONVERSATION = "Conversation";
     public static final String PART_ATTACHMENTS = "Attached tables";
@@ -87,6 +89,7 @@ public class ContextAssembler {
     private final AiDao aiDao;
     private final AiWorkspaceDao workspaceDao;
     private final ContextUsageTracker usageTracker;
+    private final AiMemoryService memoryService;
 
     @Inject
     ContextAssembler(final Provider<AskStroomAiConfig> defaultConfigProvider,
@@ -95,7 +98,8 @@ public class ContextAssembler {
                      final AiService aiService,
                      final AiDao aiDao,
                      final AiWorkspaceDao workspaceDao,
-                     final ContextUsageTracker usageTracker) {
+                     final ContextUsageTracker usageTracker,
+                     final AiMemoryService memoryService) {
         this.defaultConfigProvider = defaultConfigProvider;
         this.aiConfigProvider = aiConfigProvider;
         this.workspaceStore = workspaceStore;
@@ -103,6 +107,7 @@ public class ContextAssembler {
         this.aiDao = aiDao;
         this.workspaceDao = workspaceDao;
         this.usageTracker = usageTracker;
+        this.memoryService = memoryService;
     }
 
     /**
@@ -171,7 +176,10 @@ public class ContextAssembler {
         final List<AiChatMessage> relevantHistory = selectHistoryForModel(history);
         final Map<Integer, List<AiChatMessage>> toolMessagesByTurn = toolMessagesByTurn(history);
 
-        messages.add(new SystemMessage(systemPrompt()));
+        final String memory = memory(chatId);
+        messages.add(new SystemMessage(memory != null
+                ? systemPrompt() + "\n\n" + memory
+                : systemPrompt()));
 
         final String earlierTurns = earlierTurns(history, relevantHistory, compaction);
         if (earlierTurns != null) {
@@ -299,6 +307,7 @@ public class ContextAssembler {
         final Map<String, Long> parts = new LinkedHashMap<>();
         parts.put(PART_SYSTEM_PROMPT, (long) ESTIMATOR.estimateTokenCountInText(systemPrompt()));
         parts.put(PART_TOOL_DEFINITIONS, (long) usageTracker.getToolDefinitionTokens(chatId));
+        parts.put(PART_MEMORY, (long) ESTIMATOR.estimateTokenCountInText(NullSafe.string(memory(chatId))));
         parts.put(PART_EARLIER_TURNS, (long) ESTIMATOR.estimateTokenCountInText(
                 NullSafe.string(earlierTurns(history, relevantHistory, compaction))));
 
@@ -340,6 +349,22 @@ public class ContextAssembler {
                 defaultConfigProvider.get(),
                 AskStroomAiConfig::getChatSystemPrompt,
                 AskStroomAiConfig.DEFAULT_CHAT_SYSTEM_PROMPT);
+    }
+
+    /**
+     * @return What the agent is told about memory, and the memory it starts with, or null if memory cannot be
+     * read (the question is answered without it).
+     */
+    private String memory(final int chatId) {
+        if (memoryService == null) {
+            return null;
+        }
+        try {
+            return memoryService.preload(chatId);
+        } catch (final RuntimeException e) {
+            LOGGER.warn(() -> "Unable to load memory for chatId=" + chatId + ": " + e.getMessage(), e);
+            return null;
+        }
     }
 
     private int digestMaxRows() {

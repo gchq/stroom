@@ -58,7 +58,16 @@ public enum AiMessageType implements HasPrimitiveValue {
      * A record of the chat being compacted, as JSON (see {@code CompactionRecord}): which turns the model now
      * sees as digests, and any summary of the oldest of them.
      */
-    COMPACTION_SUMMARY(15);
+    COMPACTION_SUMMARY(15),
+    /**
+     * A change the agent made to memory, as JSON (see {@code MemoryChange}), shown to the user as a card.
+     */
+    MEMORY_UPDATE(16),
+    /**
+     * Something the agent wants to do that needs the user's approval first, as JSON (see {@code MemoryChange}
+     * for a memory change). Shown to the user as a card to accept or reject.
+     */
+    APPROVAL_REQUEST(17);
 
     public static final PrimitiveValueConverter<AiMessageType> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiMessageType.class, AiMessageType.values());

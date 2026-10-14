@@ -447,6 +447,45 @@ class TestMcpAgentChat {
                 .hasMessageContaining("context_length_exceeded");
     }
 
+    @Test
+    void mcpToolCallsTaintTheRun() {
+        final McpSyncClient client = Mockito.mock(McpSyncClient.class);
+        Mockito.when(client.callTool(Mockito.any(CallToolRequest.class)))
+                .thenReturn(CallToolResult.builder().content(List.of(new TextContent("data"))).build());
+        final StubToolCallingModel model = new StubToolCallingModel(
+                AiMessage.from(List.of(ToolExecutionRequest.builder()
+                        .id("call-1")
+                        .name("test__search")
+                        .arguments("{}")
+                        .build())),
+                AiMessage.from("done"));
+        Mockito.when(builtInTools.readsUntrustedContent("test__search")).thenReturn(true);
+
+        agentChat.chat(model, null, 7, messages, toolset(client, searchTool()), 99, new AtomicBoolean(false),
+                taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(runManager).markTainted(7);
+    }
+
+    @Test
+    void earlierToolOutputInTheChatTaintsTheRun() {
+        Mockito.when(aiService.getMessages(7)).thenReturn(List.of(
+                new AiChatMessage(1, 7, 0L, AiMessageType.TOOL_RESULT, null, "{}", 1, null)));
+
+        agentChat.chat(new StubToolCallingModel(AiMessage.from("hi")), null, 7, messages, McpToolset.EMPTY, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(runManager).markTainted(7);
+    }
+
+    @Test
+    void aCleanChatIsNotTainted() {
+        agentChat.chat(new StubToolCallingModel(AiMessage.from("hi")), null, 7, messages, McpToolset.EMPTY, 99,
+                new AtomicBoolean(false), taskContext, 1, new StringBuilder(), 0, ContextBudget.UNKNOWN);
+
+        Mockito.verify(runManager, Mockito.never()).markTainted(Mockito.anyInt());
+    }
+
     private static Tool searchTool() {
         return Tool.builder()
                 .name("search")

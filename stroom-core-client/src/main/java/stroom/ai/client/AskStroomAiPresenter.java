@@ -24,6 +24,7 @@ import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiConfig.DockLocation;
 import stroom.ai.shared.AskStroomAiConfig.DockType;
@@ -78,6 +79,8 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -98,6 +101,8 @@ public class AskStroomAiPresenter
     private static final String RUN_STATUS_ID = "ai-run-status";
     private static final String RESUME_RUN_ATTRIBUTE = "data-resume-run";
     private static final String RETRY_TURN_ATTRIBUTE = "data-retry-turn-id";
+    private static final String APPROVAL_ID_ATTRIBUTE = "data-approval-id";
+    private static final String APPROVAL_ANSWER_ATTRIBUTE = "data-approval-answer";
 
     private final DocSelectionBoxPresenter docSelectionBoxPresenter;
     private final MarkdownConverter markdownConverter;
@@ -110,6 +115,8 @@ public class AskStroomAiPresenter
     private final DateTimeFormatter dateTimeFormatter;
     private AskStroomAiContext data;
     private AiChat currentChat;
+    // The approval requests shown, so their cards can be redrawn once answered.
+    private final Map<Integer, AiChatMessage> approvalRequests = new HashMap<>();
     private boolean titleGenerated;
     private int lastSeenMessageId;
 
@@ -179,6 +186,14 @@ public class AskStroomAiPresenter
                     final String retryTurnIdStr = button.getAttribute(RETRY_TURN_ATTRIBUTE);
                     if (NullSafe.isNonBlankString(retryTurnIdStr)) {
                         onRetry(Integer.parseInt(retryTurnIdStr));
+                        return;
+                    }
+
+                    // Capture approval answers.
+                    final String approvalIdStr = button.getAttribute(APPROVAL_ID_ATTRIBUTE);
+                    if (NullSafe.isNonBlankString(approvalIdStr)) {
+                        onAnswerApproval(Integer.parseInt(approvalIdStr),
+                                "approve".equals(button.getAttribute(APPROVAL_ANSWER_ATTRIBUTE)));
                         return;
                     }
 
@@ -461,6 +476,33 @@ public class AskStroomAiPresenter
             // when the request returns.
             startPolling();
         }, getView()));
+    }
+
+    /**
+     * Approves or rejects something the agent asked the user's approval for, then shows the answer on its card.
+     *
+     * @param messageId The id of the APPROVAL_REQUEST message.
+     * @param approved  True to approve.
+     */
+    private void onAnswerApproval(final int messageId, final boolean approved) {
+        final AiChatMessage request = approvalRequests.get(messageId);
+        if (currentChat == null || request == null) {
+            return;
+        }
+        askStroomAiClient.answerApproval(new AnswerAiApprovalRequest(currentChat, messageId, approved), done -> {
+            final String status = approved
+                    ? (Boolean.TRUE.equals(done)
+                            ? "APPROVED"
+                            : "FAILED")
+                    : "REJECTED";
+            appendMessage(new AiChatMessage(request.getId(), request.getChatId(), request.getCreateTimeMs(),
+                    request.getMessageType(), request.getAttachmentId(),
+                    AiToolMessages.withStatus(request.getMessage(), status), request.getTurnId(),
+                    request.getTokenCount()), System.currentTimeMillis());
+            // A change made shows its own card.
+            startPolling();
+        }, error -> showError(error, "Unable to answer the request", () -> {
+        }), getView());
     }
 
     /**
@@ -755,6 +797,15 @@ public class AskStroomAiPresenter
                         "Result of " + AiToolMessages.getString(msg.getMessage(), "tool"),
                         AiToolMessages.resultMarkdown(msg.getMessage()), timeMs, nowMs);
                 break;
+            case MEMORY_UPDATE:
+                appendDetailsElement(hb, "ai-message ai-message--memory", SvgImage.INFO,
+                        "Memory updated: " + AiToolMessages.getString(msg.getMessage(), "path"),
+                        AiToolMessages.memoryChangeMarkdown(msg.getMessage()), timeMs, nowMs);
+                break;
+            case APPROVAL_REQUEST:
+                approvalRequests.put(messageId, msg);
+                appendApprovalCard(hb, msg, timeMs, nowMs);
+                break;
             case TURN_DIGEST:
                 // Only for the model.
                 break;
@@ -860,6 +911,33 @@ public class AskStroomAiPresenter
 
             }, Attribute.className("ai-message-footer"));
         }, Attribute.className(cssClass));
+    }
+
+    /**
+     * Appends a card asking the user to approve something the agent wants to do, with Approve and Reject buttons
+     * while it waits for an answer.
+     */
+    private void appendApprovalCard(final HtmlBuilder hb,
+                                    final AiChatMessage msg,
+                                    final long timeMs,
+                                    final long nowMs) {
+        final String json = msg.getMessage();
+        hb.div(card -> {
+            card.append(markdownConverter.convertUntrustedMarkdownToHtml(AiToolMessages.approvalMarkdown(json)));
+            card.div(footer -> {
+                if (AiToolMessages.isPendingApproval(json)) {
+                    footer.elem("Approve", BUTTON,
+                            Attribute.className("allow-focus ai-approval-button ai-approval-button--approve"),
+                            new Attribute(APPROVAL_ID_ATTRIBUTE, String.valueOf(msg.getId())),
+                            new Attribute(APPROVAL_ANSWER_ATTRIBUTE, "approve"));
+                    footer.elem("Reject", BUTTON,
+                            Attribute.className("allow-focus ai-approval-button"),
+                            new Attribute(APPROVAL_ID_ATTRIBUTE, String.valueOf(msg.getId())),
+                            new Attribute(APPROVAL_ANSWER_ATTRIBUTE, "reject"));
+                }
+                timestamp(footer, timeMs, nowMs);
+            }, Attribute.className("ai-message-footer"));
+        }, Attribute.className("ai-message ai-message--approval"));
     }
 
     /**

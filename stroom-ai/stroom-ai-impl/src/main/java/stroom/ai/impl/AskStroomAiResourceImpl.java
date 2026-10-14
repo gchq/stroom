@@ -21,6 +21,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
+import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
@@ -581,6 +582,37 @@ class AskStroomAiResourceImpl implements AskStroomAiResource {
                                 .build())
                         .build())
                 .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().undoCompaction(request))
+                .getResultAndLog();
+    }
+
+    @AutoLogged(OperationType.MANUALLY_LOGGED)
+    @Override
+    public Boolean answerApproval(final AnswerAiApprovalRequest request) {
+        final int chatId = NullSafe.getOrElse(request, AnswerAiApprovalRequest::getAiChat, AiChat::getId, 0);
+        return stroomEventLoggingServiceProvider.get().loggedWorkBuilder()
+                .withTypeId(StroomEventLoggingUtil.buildTypeId(this, "answerApproval"))
+                .withDescription((request.isApproved()
+                        ? "Approve"
+                        : "Reject") + " request " + request.getMessageId() + " in AI chat " + chatId)
+                .withDefaultEventAction(UpdateEventAction.builder()
+                        .withAfter(MultiObject.builder()
+                                .addObject(OtherObject.builder()
+                                        .withType("AiChat")
+                                        .withId(String.valueOf(chatId))
+                                        .addData(Data.builder()
+                                                .withName("Action")
+                                                .withValue(request.isApproved()
+                                                        ? "Approve"
+                                                        : "Reject")
+                                                .build())
+                                        .addData(Data.builder()
+                                                .withName("MessageId")
+                                                .withValue(String.valueOf(request.getMessageId()))
+                                                .build())
+                                        .build())
+                                .build())
+                        .build())
+                .withSimpleLoggedResult(() -> askStroomAIServiceProvider.get().answerApproval(request))
                 .getResultAndLog();
     }
 

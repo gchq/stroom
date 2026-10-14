@@ -48,7 +48,7 @@ class TestAskStroomAIService {
 
     private AskStroomAIService service() {
         return new AskStroomAIService(aiService, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, runManager, runDao, null, null, null, null, compactor);
+                null, null, null, null, null, runManager, runDao, null, null, null, null, compactor, null);
     }
 
     @Test

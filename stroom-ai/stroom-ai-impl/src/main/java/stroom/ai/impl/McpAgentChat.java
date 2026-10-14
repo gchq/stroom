@@ -98,6 +98,17 @@ class McpAgentChat {
     static final String STEER_PREFIX = "[Sent by the user while you were working] ";
 
     /**
+     * Chat messages holding content from tools or Stroom data, which could hold instructions planted by someone
+     * other than the user.
+     */
+    private static final Set<AiMessageType> UNTRUSTED_MESSAGE_TYPES = Set.of(
+            AiMessageType.TOOL_RESULT,
+            AiMessageType.ATTACHMENT,
+            AiMessageType.DASHBOARD_DATA,
+            AiMessageType.QUERY_DATA,
+            AiMessageType.TABLE_DATA);
+
+    /**
      * How many of the latest tool results are kept as they are when the conversation is getting too large.
      */
     static final int RECENT_RESULTS_KEPT = 2;
@@ -157,6 +168,11 @@ class McpAgentChat {
                       final int steerAfterMessageId,
                       final ContextBudget budget) {
         final SteerFeed steerFeed = new SteerFeed(chatId, steerAfterMessageId);
+        // Anything in the chat that came from tools or Stroom data could hold planted instructions.
+        if (aiService.getMessages(chatId).stream()
+                .anyMatch(m -> UNTRUSTED_MESSAGE_TYPES.contains(m.getMessageType()))) {
+            runManager.markTainted(chatId);
+        }
         final Map<ToolSpecification, ToolExecutor> tools = new LinkedHashMap<>();
         if (modelDoc == null || modelDoc.isToolsEnabled()) {
             tools.putAll(builtInTools.toolMap());
@@ -241,6 +257,9 @@ class McpAgentChat {
                     result = UNATTENDED_REFUSAL;
                     refused = true;
                 } else {
+                    if (builtInTools.readsUntrustedContent(toolRequest.name())) {
+                        runManager.markTainted(chatId);
+                    }
                     result = execute(tools, toolRequest, toolRequest.name(), chatId);
                     refused = false;
                 }
