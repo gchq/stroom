@@ -23,18 +23,21 @@ import stroom.ai.shared.AiChatRun;
 import stroom.ai.shared.AiChatRunStatus;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.QueryTableContext;
+import stroom.ai.shared.SetAiApproveEverythingRequest;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.dashboard.shared.DashboardSearchRequest;
 import stroom.dashboard.shared.Search;
 import stroom.docref.DocRef;
 import stroom.query.api.SearchRequestSource;
 import stroom.query.shared.QuerySearchRequest;
+import stroom.util.json.JsonUtil;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -53,10 +56,13 @@ class TestAskStroomAIService {
     private final AiChat chat = new AiChat(1, 0L, 0L, "user1", "chat");
 
     private final ChatCompactor compactor = Mockito.mock(ChatCompactor.class);
+    private final ToolApprovalService toolApprovalService = Mockito.mock(ToolApprovalService.class);
+    private final AiDao aiDao = Mockito.mock(AiDao.class);
 
     private AskStroomAIService service() {
-        return new AskStroomAIService(aiService, null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, runManager, runDao, null, null, null, null, compactor, null);
+        return new AskStroomAIService(aiService, null, null, null, null, null, null, () -> null, null, null,
+                null, null, null, null, null, runManager, runDao, null, null, null, null, compactor, null,
+                toolApprovalService, Mockito.mock(AiAuditLog.class), aiDao, AiConfig::new);
     }
 
     @Test
@@ -297,6 +303,75 @@ class TestAskStroomAIService {
                         .build()))).isEqualTo("query-uuid");
         assertThat(AskStroomAIService.sourceDocUuid(new DashboardTableContext("d", null, null))).isNull();
         assertThat(AskStroomAIService.sourceDocUuid(new GeneralTableContext("g", List.of(), List.of()))).isNull();
+    }
+
+    @Test
+    void testAnsweringToolCallsCarriesOnTheRun() {
+        final AiChatMessage request = toolApprovalMessage(20);
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(10, AiMessageType.USER_MESSAGE, "make the feed"), request));
+        Mockito.when(aiService.getChat(1)).thenReturn(chat);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage(null, null, null, 0, 0));
+        final AnswerAiApprovalRequest answer = new AnswerAiApprovalRequest(chat, 20, true);
+        Mockito.when(toolApprovalService.answer(1, request, answer)).thenReturn(ToolApprovalRequest.Status.ANSWERED);
+
+        assertThat(service().answerApproval(answer)).isTrue();
+
+        Mockito.verify(runManager).continueRun(Mockito.eq(1), Mockito.any());
+    }
+
+    @Test
+    void testPartlyAnsweredToolCallsKeepWaiting() {
+        final AiChatMessage request = toolApprovalMessage(20);
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(request));
+        final AnswerAiApprovalRequest answer = new AnswerAiApprovalRequest(chat, 20, true, null, null,
+                List.of("a"));
+        Mockito.when(toolApprovalService.answer(1, request, answer)).thenReturn(ToolApprovalRequest.Status.PENDING);
+
+        assertThat(service().answerApproval(answer)).isTrue();
+
+        Mockito.verify(runManager, Mockito.never()).continueRun(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testAMessageSentInsteadOfAnsweringDeniesTheCalls() {
+        final AiChatRun waiting = new AiChatRun(5, 1, AiChatRunStatus.WAITING_FOR_USER,
+                AiChatRunStopReason.NEEDS_APPROVAL, 0L, null, false, null);
+        Mockito.when(runDao.getActive(1)).thenReturn(Optional.of(waiting));
+        final AiChatMessage request = toolApprovalMessage(20);
+        Mockito.when(toolApprovalService.pending(1)).thenReturn(Optional.of(request));
+        Mockito.when(aiService.getMessages(1)).thenReturn(List.of(
+                message(10, AiMessageType.USER_MESSAGE, "make the feed"), request));
+        Mockito.when(aiService.getChat(1)).thenReturn(chat);
+        Mockito.when(aiDao.getUsage(1)).thenReturn(new AiDao.ChatUsage(null, null, null, 0, 0));
+
+        service().askStroomAi(new AskStroomAiRequest(chat, null, null, "no, use the other name"));
+
+        Mockito.verify(aiService).storeMessage(1, AiMessageType.STEER_MESSAGE, "no, use the other name");
+        Mockito.verify(toolApprovalService).denyAll(request, "The user sent a message instead: no, use the other "
+                                                             + "name");
+        Mockito.verify(runManager).continueRun(Mockito.eq(1), Mockito.any());
+        Mockito.verify(runManager, Mockito.never()).start(Mockito.anyInt(), Mockito.any());
+    }
+
+    @Test
+    void testApproveEverythingNeedsAnAdministrator() {
+        assertThatThrownBy(() -> service().setApproveEverything(new SetAiApproveEverythingRequest(chat, true)))
+                .hasMessageContaining("An administrator has not allowed");
+        Mockito.verify(aiDao, Mockito.never()).setApproveEverything(Mockito.anyInt(), Mockito.anyBoolean());
+
+        // It can always be turned off.
+        assertThat(service().setApproveEverything(new SetAiApproveEverythingRequest(chat, false))).isTrue();
+        Mockito.verify(aiDao).setApproveEverything(1, false);
+    }
+
+    private static AiChatMessage toolApprovalMessage(final int id) {
+        final ToolApprovalRequest.PendingCall call = new ToolApprovalRequest.PendingCall("a", "s__t", "s", "t",
+                "{}", List.of(), "h", "sh", null, null);
+        return new AiChatMessage(id, 1, System.currentTimeMillis(), AiMessageType.APPROVAL_REQUEST, null,
+                JsonUtil.writeValueAsString(new ToolApprovalRequest(ToolApprovalRequest.KIND,
+                        ToolApprovalRequest.Status.PENDING, "r", List.of(call), true, false), false),
+                10, null);
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {

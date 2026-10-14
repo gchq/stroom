@@ -53,6 +53,7 @@ import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
+import stroom.ai.shared.SetAiApproveEverythingRequest;
 import stroom.ai.shared.TableAnalysisConfig;
 import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.config.global.api.GlobalConfig;
@@ -171,6 +172,10 @@ public class AskStroomAIService {
     private final ContextUsageTracker usageTracker;
     private final ChatCompactor chatCompactor;
     private final AiMemoryService memoryService;
+    private final ToolApprovalService toolApprovalService;
+    private final AiAuditLog auditLog;
+    private final AiDao aiDao;
+    private final Provider<AiConfig> aiConfigProvider;
     private Duration stopWait = STOP_WAIT;
     private final McpAgentChat mcpAgentChat;
 
@@ -197,7 +202,11 @@ public class AskStroomAIService {
                               final ContextAssembler contextAssembler,
                               final ContextUsageTracker usageTracker,
                               final ChatCompactor chatCompactor,
-                              final AiMemoryService memoryService) {
+                              final AiMemoryService memoryService,
+                              final ToolApprovalService toolApprovalService,
+                              final AiAuditLog auditLog,
+                              final AiDao aiDao,
+                              final Provider<AiConfig> aiConfigProvider) {
         this.aiService = aiService;
         this.attachmentFileStore = attachmentFileStore;
         this.dashboardService = dashboardService;
@@ -220,6 +229,10 @@ public class AskStroomAIService {
         this.usageTracker = usageTracker;
         this.chatCompactor = chatCompactor;
         this.memoryService = memoryService;
+        this.toolApprovalService = toolApprovalService;
+        this.auditLog = auditLog;
+        this.aiDao = aiDao;
+        this.aiConfigProvider = aiConfigProvider;
         this.mcpAgentChat = mcpAgentChat;
     }
 
@@ -334,8 +347,72 @@ public class AskStroomAIService {
     public Boolean answerApproval(final AnswerAiApprovalRequest request) {
         final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
         aiService.verifyOwnership(chatId);
+        final AiChatMessage message = aiService.getMessages(chatId).stream()
+                .filter(m -> m.getId() == request.getMessageId()
+                             && m.getMessageType() == AiMessageType.APPROVAL_REQUEST)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("There is no request for approval "
+                                                        + request.getMessageId() + " in this chat."));
+        if (ToolApprovalService.read(message).isPresent()) {
+            final ToolApprovalRequest.Status status = toolApprovalService.answer(chatId, message, request);
+            if (status == ToolApprovalRequest.Status.ANSWERED) {
+                carryOn(chatId);
+            }
+            return status != ToolApprovalRequest.Status.EXPIRED;
+        }
         return memoryService.answerApproval(chatId, request.getMessageId(), request.isApproved())
                == ApprovalStatus.APPROVED;
+    }
+
+    /**
+     * Turns 'approve everything' on or off for a chat. It can only be turned on if an administrator allows it.
+     *
+     * @param request The chat, and whether to turn it on.
+     * @return True once done.
+     */
+    public Boolean setApproveEverything(final SetAiApproveEverythingRequest request) {
+        final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
+        aiService.verifyOwnership(chatId);
+        if (request.isEnabled()
+            && !NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::isAllowApproveEverything, false)) {
+            throw new RuntimeException("An administrator has not allowed 'approve everything'.");
+        }
+        aiDao.setApproveEverything(chatId, request.isEnabled());
+        return true;
+    }
+
+    /**
+     * Carries on answering the chat's latest question, e.g. once the user has answered a request to approve tool
+     * calls: in the run that is waiting for them, or in a new run if that run has stopped.
+     */
+    private void carryOn(final int chatId) {
+        final AskStroomAiRequest request = continuingRequest(chatId);
+        try {
+            runManager.continueRun(chatId, run -> answerQuestion(chatId, request));
+        } catch (final AiChatRunManager.AiChatBusyException e) {
+            if (runDao.getActive(chatId).isPresent()) {
+                throw e;
+            }
+            runManager.start(chatId, run -> answerQuestion(chatId, request));
+        }
+    }
+
+    /**
+     * @return A request to carry on answering the chat's latest question with the model it was being answered with.
+     */
+    private AskStroomAiRequest continuingRequest(final int chatId) {
+        final AiChat chat = aiService.getChat(chatId);
+        final String question = aiService.getMessages(chatId).reversed().stream()
+                .filter(m -> m.getMessageType() == AiMessageType.USER_MESSAGE)
+                .map(AiChatMessage::getMessage)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("There is no question to carry on with in this chat."));
+        final String modelUuid = aiDao.getUsage(chatId).modelDocUuid();
+        final AskStroomAiConfig defaultConfig = defaultConfigProvider.get();
+        final AskStroomAiConfig config = modelUuid == null || defaultConfig == null
+                ? defaultConfig
+                : defaultConfig.copy().modelRef(new DocRef(OpenAIModelDoc.TYPE, modelUuid)).build();
+        return new AskStroomAiRequest(chat, config, null, question);
     }
 
     /**
@@ -427,6 +504,15 @@ public class AskStroomAIService {
         if (active == null || active.getStatus() == AiChatRunStatus.STOPPING) {
             return false;
         }
+        if (active.getStatus() == AiChatRunStatus.WAITING_FOR_USER) {
+            // A message sent instead of answering a request for approval denies the calls, with the message as
+            // the reason, and the run carries on with it.
+            aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, message);
+            toolApprovalService.pending(chatId).ifPresent(pending ->
+                    toolApprovalService.denyAll(pending, "The user sent a message instead: " + message));
+            carryOn(chatId);
+            return true;
+        }
         final AiChatMessage steerMessage = aiService.storeMessage(chatId, AiMessageType.STEER_MESSAGE, message);
         if (runDao.getActive(chatId).isEmpty()) {
             // The run finished as the message arrived, so it will not see it. Ask it as a question instead.
@@ -487,12 +573,13 @@ public class AskStroomAIService {
 
             if (responseText != null && !CANCELLED_MESSAGE.equals(responseText)) {
                 aiService.storeMessage(chatId, AiMessageType.AI_RESPONSE, responseText);
+                auditLog.answer(chatId, request.getMessage(), responseText, runManager.isUnattended(chatId));
                 chatCompactor.writeDigest(chatId);
                 final String rt = responseText;
                 LOGGER.debug(() -> "Response stored for chatId=" + chatId
                                    + " responseLength=" + rt.length());
             }
-        } catch (final TaskTerminatedException e) {
+        } catch (final TaskTerminatedException | AiChatRunManager.WaitingForUserException e) {
             throw e;
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);

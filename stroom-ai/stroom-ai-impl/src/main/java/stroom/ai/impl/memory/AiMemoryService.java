@@ -18,6 +18,7 @@ package stroom.ai.impl.memory;
 
 import stroom.ai.api.AiService;
 import stroom.ai.impl.AiChatRunManager;
+import stroom.ai.impl.AiDao;
 import stroom.ai.impl.AiMemoryDao;
 import stroom.ai.impl.memory.MemoryChange.ApprovalStatus;
 import stroom.ai.impl.memory.MemoryChange.Operation;
@@ -74,16 +75,19 @@ public class AiMemoryService {
     private final AiService aiService;
     private final AiChatRunManager runManager;
     private final SecurityContext securityContext;
+    private final AiDao aiDao;
 
     @Inject
     AiMemoryService(final AiMemoryDao memoryDao,
                     final AiService aiService,
                     final AiChatRunManager runManager,
-                    final SecurityContext securityContext) {
+                    final SecurityContext securityContext,
+                    final AiDao aiDao) {
         this.memoryDao = memoryDao;
         this.aiService = aiService;
         this.runManager = runManager;
         this.securityContext = securityContext;
+        this.aiDao = aiDao;
     }
 
     /// @param chatId The chat.
@@ -295,7 +299,11 @@ public class AiMemoryService {
         } else {
             status = ApprovalStatus.FAILED;
         }
-        aiService.updateMessageText(messageId, JsonUtil.writeValueAsString(change.withStatus(status), false));
+        // Only one answer counts, e.g. if the request is answered from two browser tabs at once.
+        if (!aiDao.compareAndSetMessageText(messageId, message.getMessage(),
+                JsonUtil.writeValueAsString(change.withStatus(status), false))) {
+            throw new RuntimeException("This request has already been answered.");
+        }
         if (status == ApprovalStatus.APPROVED) {
             aiService.storeMessage(chatId, AiMessageType.MEMORY_UPDATE,
                     JsonUtil.writeValueAsString(change.withStatus(null), false));

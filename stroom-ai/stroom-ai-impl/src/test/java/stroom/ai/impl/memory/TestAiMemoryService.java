@@ -48,6 +48,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -107,7 +108,10 @@ class TestAiMemoryService {
         Mockito.when(securityContext.getUserIdentityForAudit()).thenReturn("user1");
         // An untainted run, with the user there.
         Mockito.when(runManager.isTainted(Mockito.anyInt())).thenReturn(false);
-        service = new AiMemoryService(memoryDao, aiService, runManager, securityContext);
+        // Messages are read from the database, so requests for approval stored there are found.
+        Mockito.when(aiService.getMessages(Mockito.anyInt()))
+                .thenAnswer(invocation -> aiDao.getMessages(invocation.getArgument(0)));
+        service = new AiMemoryService(memoryDao, aiService, runManager, securityContext, aiDao);
     }
 
     @Test
@@ -204,47 +208,48 @@ class TestAiMemoryService {
     }
 
     @Test
-    void testAnswerApproval() {
-        final AiChatMessage approve = pendingRequest(100, "/memories/prefs.md", null, "Times in UTC.", 0);
-        final AiChatMessage reject = pendingRequest(101, "/memories/other.md", null, "x", 0);
-        final AiChatMessage expired = pendingRequest(102, "/memories/old.md", null, "x",
+    void testAnswerApproval() throws SQLException {
+        final AiChatMessage approve = pendingRequest("/memories/prefs.md", null, "Times in UTC.", 0);
+        final AiChatMessage reject = pendingRequest("/memories/other.md", null, "x", 0);
+        final AiChatMessage expired = pendingRequest("/memories/old.md", null, "x",
                 System.currentTimeMillis() - AiMemoryService.APPROVAL_EXPIRY.toMillis() - 1000);
-        Mockito.when(aiService.getMessages(chatId)).thenReturn(List.of(approve, reject, expired));
 
-        assertThat(service.answerApproval(chatId, 100, true)).isEqualTo(ApprovalStatus.APPROVED);
-        assertThat(service.answerApproval(chatId, 101, false)).isEqualTo(ApprovalStatus.REJECTED);
-        assertThat(service.answerApproval(chatId, 102, true)).isEqualTo(ApprovalStatus.EXPIRED);
+        assertThat(service.answerApproval(chatId, approve.getId(), true)).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(service.answerApproval(chatId, reject.getId(), false)).isEqualTo(ApprovalStatus.REJECTED);
+        assertThat(service.answerApproval(chatId, expired.getId(), true)).isEqualTo(ApprovalStatus.EXPIRED);
 
         assertThat(memoryDao.list("user1", AiMemoryScope.USER, ""))
                 .extracting(AiMemory::getName)
                 .containsExactly("prefs.md");
         Mockito.verify(aiService).storeMessage(Mockito.eq(chatId), Mockito.eq(AiMessageType.MEMORY_UPDATE),
                 Mockito.contains("Times in UTC."));
-        Mockito.verify(aiService).updateMessageText(Mockito.eq(100), Mockito.contains("APPROVED"));
-        Mockito.verify(aiService).updateMessageText(Mockito.eq(101), Mockito.contains("REJECTED"));
-        Mockito.verify(aiService).updateMessageText(Mockito.eq(102), Mockito.contains("EXPIRED"));
+        assertThat(aiDao.getMessages(chatId))
+                .extracting(AiChatMessage::getMessage)
+                .anySatisfy(json -> assertThat(json).contains("prefs.md").contains("APPROVED"))
+                .anySatisfy(json -> assertThat(json).contains("other.md").contains("REJECTED"))
+                .anySatisfy(json -> assertThat(json).contains("old.md").contains("EXPIRED"));
+        // Each can only be answered once.
+        assertThatThrownBy(() -> service.answerApproval(chatId, reject.getId(), true))
+                .hasMessageContaining("already been answered");
     }
 
     @Test
-    void testAnswerApproval_memoryChangedSince() {
+    void testAnswerApproval_memoryChangedSince() throws SQLException {
         // The request was to create it, but it has been created since.
         service.write(chatId, "/memories/prefs.md", "already here", null);
-        final AiChatMessage request = pendingRequest(100, "/memories/prefs.md", null, "new", 0);
-        Mockito.when(aiService.getMessages(chatId)).thenReturn(List.of(request));
+        final AiChatMessage request = pendingRequest("/memories/prefs.md", null, "new", 0);
 
-        assertThat(service.answerApproval(chatId, 100, true)).isEqualTo(ApprovalStatus.FAILED);
+        assertThat(service.answerApproval(chatId, request.getId(), true)).isEqualTo(ApprovalStatus.FAILED);
         assertThat(service.read(chatId, "/memories/prefs.md")).endsWith("already here");
     }
 
     @Test
     void testAnswerApproval_onlyOnce() {
-        final AiChatMessage answered = new AiChatMessage(100, chatId, System.currentTimeMillis(),
-                AiMessageType.APPROVAL_REQUEST, null, JsonUtil.writeValueAsString(new MemoryChange(
-                MemoryChange.KIND, MemoryChange.Operation.CREATE, "/memories/a", null, null, "x",
-                ApprovalStatus.REJECTED, null), false), 1, null);
-        Mockito.when(aiService.getMessages(chatId)).thenReturn(List.of(answered));
+        final AiChatMessage answered = aiDao.storeMessage(chatId, AiMessageType.APPROVAL_REQUEST,
+                JsonUtil.writeValueAsString(new MemoryChange(MemoryChange.KIND, MemoryChange.Operation.CREATE,
+                        "/memories/a", null, null, "x", ApprovalStatus.REJECTED, null), false));
 
-        assertThatThrownBy(() -> service.answerApproval(chatId, 100, true))
+        assertThatThrownBy(() -> service.answerApproval(chatId, answered.getId(), true))
                 .hasMessageContaining("already been answered");
     }
 
@@ -286,16 +291,24 @@ class TestAiMemoryService {
         assertThat(memoryDao.delete(memory.getId(), 2)).isTrue();
     }
 
-    private AiChatMessage pendingRequest(final int id,
-                                         final String path,
+    /// Stores a request for approval of a change to memory, as if made the given time ago.
+    private AiChatMessage pendingRequest(final String path,
                                          final Integer baseVersion,
                                          final String after,
-                                         final long createTimeMs) {
+                                         final long createTimeMs) throws SQLException {
         final MemoryChange change = new MemoryChange(MemoryChange.KIND, MemoryChange.Operation.CREATE, path,
                 baseVersion, null, after, ApprovalStatus.PENDING, "reason");
-        return new AiChatMessage(id, chatId, createTimeMs == 0
-                ? System.currentTimeMillis()
-                : createTimeMs, AiMessageType.APPROVAL_REQUEST, null, JsonUtil.writeValueAsString(change, false),
-                1, null);
+        final AiChatMessage message = aiDao.storeMessage(chatId, AiMessageType.APPROVAL_REQUEST,
+                JsonUtil.writeValueAsString(change, false));
+        if (createTimeMs != 0) {
+            try (final Connection connection = aiDbConnProvider.getConnection();
+                    final PreparedStatement statement = connection.prepareStatement(
+                            "UPDATE ai_chat_message SET create_time_ms = ? WHERE id = ?")) {
+                statement.setLong(1, createTimeMs);
+                statement.setInt(2, message.getId());
+                statement.executeUpdate();
+            }
+        }
+        return message;
     }
 }
