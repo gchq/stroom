@@ -135,15 +135,9 @@ public class ContextAssembler {
      * @return The chat's latest compaction that is still in use, or {@link CompactionRecord#NONE}.
      */
     public static CompactionRecord currentCompaction(final List<AiChatMessage> history) {
-        for (final AiChatMessage message : history.reversed()) {
-            if (message.getMessageType() == AiMessageType.COMPACTION_SUMMARY) {
-                final CompactionRecord record = readCompaction(message);
-                if (record != null && !record.stale()) {
-                    return record;
-                }
-            }
-        }
-        return CompactionRecord.NONE;
+        return ChatCompactor.currentCompactionMessage(history)
+                .map(ContextAssembler::readCompaction)
+                .orElse(CompactionRecord.NONE);
     }
 
     /**

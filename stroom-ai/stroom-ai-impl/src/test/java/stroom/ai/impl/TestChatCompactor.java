@@ -194,6 +194,33 @@ class TestChatCompactor {
     }
 
     @Test
+    void testCompactNow() {
+        // 3 answered turns, with no question waiting.
+        final List<AiChatMessage> history = new ArrayList<>(turns(3, 100));
+        history.removeLast();
+        final List<AiChatMessage> afterwards = new ArrayList<>(history);
+        afterwards.add(compactionMessage(100, new CompactionRecord(10, 10, "S", 0, 0, 0, true, false)));
+        Mockito.when(aiService.getMessages(1)).thenReturn(history, history, afterwards);
+        final SummaryModel model = new SummaryModel("S");
+
+        assertThat(compactor.compactNow(1, model(100_000), model, null)).isTrue();
+
+        // The latest 2 answered turns are kept in full.
+        assertThat(storedCompaction().digestsUpToTurnId()).isEqualTo(10);
+        assertThat(storedCompaction().summary()).isEqualTo("S");
+    }
+
+    @Test
+    void testCompactNow_nothingToCompact() {
+        final List<AiChatMessage> history = new ArrayList<>(turns(2, 100));
+        history.removeLast();
+        history(history);
+
+        assertThat(compactor.compactNow(1, model(100_000), new SummaryModel("S"), null)).isFalse();
+        Mockito.verify(aiService, Mockito.never()).storeMessage(Mockito.anyInt(), Mockito.any(), Mockito.anyString());
+    }
+
+    @Test
     void testOnlyOneTurnNothingToCompact() {
         history(turns(0, 100));
 
