@@ -53,6 +53,15 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) AskStroomAiRequest request);
 
     @POST
+    @Path("/resumeRun")
+    @Operation(
+            summary = "Resume a chat whose last agent run stopped before finishing, by answering its last " +
+                      "question again",
+            operationId = "resumeRun")
+    AskStroomAiResponse resumeRun(
+            @Parameter(description = "request", required = true) AskStroomAiRequest request);
+
+    @POST
     @Path("/getDefaultConfig")
     @Operation(
             summary = "Get the default config to use for asking questions",
