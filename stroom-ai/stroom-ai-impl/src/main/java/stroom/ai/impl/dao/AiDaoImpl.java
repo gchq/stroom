@@ -661,7 +661,7 @@ public class AiDaoImpl implements AiDao {
         return JooqUtil.contextResult(aiDbConnProvider, context -> {
             final List<Record> chats = context
                     .select(AI_CHAT.ID, AI_CHAT.TITLE, AI_CHAT.UPDATE_TIME_MS, AI_CHAT.LAST_READ_MESSAGE_ID,
-                            AI_CHAT.AUTO_APPROVE)
+                            AI_CHAT.AUTO_APPROVE, AI_CHAT.LAST_OPENED_MS)
                     .from(AI_CHAT)
                     .where(AI_CHAT.USER_UUID.eq(userUuid))
                     .orderBy(AI_CHAT.UPDATE_TIME_MS.desc())
@@ -701,7 +701,8 @@ public class AiDaoImpl implements AiDao {
                                         ? null
                                         : AiChatRunStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(runStatus),
                                 lastMessages.getOrDefault(id, 0) > lastRead,
-                                Boolean.TRUE.equals(r.get(AI_CHAT.AUTO_APPROVE)));
+                                Boolean.TRUE.equals(r.get(AI_CHAT.AUTO_APPROVE)),
+                                r.get(AI_CHAT.LAST_OPENED_MS));
                     })
                     .toList();
         });

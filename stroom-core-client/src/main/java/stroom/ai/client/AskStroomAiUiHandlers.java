@@ -49,4 +49,14 @@ public interface AskStroomAiUiHandlers extends UiHandlers {
      * @param target The element to show it below.
      */
     void onShowSwitcher(Element target);
+
+    /**
+     * Scrolls the conversation to the latest message, and follows new messages from then on.
+     */
+    void onJumpToLatest();
+
+    /**
+     * Called when the user scrolls the conversation, to stop or start following new messages.
+     */
+    void onConversationScrolled();
 }

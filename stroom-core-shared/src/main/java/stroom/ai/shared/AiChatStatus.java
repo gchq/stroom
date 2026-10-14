@@ -43,6 +43,8 @@ public class AiChatStatus {
     private final boolean unread;
     @JsonProperty
     private final boolean approveEverything;
+    @JsonProperty
+    private final long lastOpenedMs;
 
     /**
      * @param chatId            The chat.
@@ -51,6 +53,7 @@ public class AiChatStatus {
      * @param runStatus         The status of its latest run, or null if it has never had one.
      * @param unread            True if it has messages the user has not seen.
      * @param approveEverything True if 'approve everything' is on for it.
+     * @param lastOpenedMs      When the user last looked at it, or 0.
      */
     @JsonCreator
     public AiChatStatus(@JsonProperty("chatId") final Integer chatId,
@@ -58,13 +61,15 @@ public class AiChatStatus {
                         @JsonProperty("updateTimeMs") final Long updateTimeMs,
                         @JsonProperty("runStatus") final AiChatRunStatus runStatus,
                         @JsonProperty("unread") final Boolean unread,
-                        @JsonProperty("approveEverything") final Boolean approveEverything) {
+                        @JsonProperty("approveEverything") final Boolean approveEverything,
+                        @JsonProperty("lastOpenedMs") final Long lastOpenedMs) {
         this.chatId = Objects.requireNonNullElse(chatId, 0);
         this.title = title;
         this.updateTimeMs = Objects.requireNonNullElse(updateTimeMs, 0L);
         this.runStatus = runStatus;
         this.unread = Objects.requireNonNullElse(unread, false);
         this.approveEverything = Objects.requireNonNullElse(approveEverything, false);
+        this.lastOpenedMs = Objects.requireNonNullElse(lastOpenedMs, 0L);
     }
 
     public int getChatId() {
@@ -89,6 +94,13 @@ public class AiChatStatus {
 
     public boolean isApproveEverything() {
         return approveEverything;
+    }
+
+    /**
+     * @return When the user last looked at the chat, or 0 if never.
+     */
+    public long getLastOpenedMs() {
+        return lastOpenedMs;
     }
 
     /**
@@ -117,12 +129,13 @@ public class AiChatStatus {
                && updateTimeMs == that.updateTimeMs
                && unread == that.unread
                && approveEverything == that.approveEverything
+               && lastOpenedMs == that.lastOpenedMs
                && Objects.equals(title, that.title)
                && runStatus == that.runStatus;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(chatId, title, updateTimeMs, runStatus, unread, approveEverything);
+        return Objects.hash(chatId, title, updateTimeMs, runStatus, unread, approveEverything, lastOpenedMs);
     }
 }

@@ -18,6 +18,10 @@
             </g:FlowPanel>
         </g:FlowPanel>
         <g:SimplePanel ui:field="markdownPreview" styleName="dock-max askStroomAiViewImpl-middle markdown-container"/>
+        <g:FlowPanel ui:field="jumpToLatestBar" styleName="dock-min askStroomAiViewImpl-jumpToLatestBar">
+            <g:Button ui:field="jumpToLatest" styleName="allow-focus askStroomAiViewImpl-jumpToLatest"
+                      text="Jump to latest ↓"/>
+        </g:FlowPanel>
         <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom">
             <g:Label ui:field="emptyPrompt" styleName="askStroomAiViewImpl-emptyPrompt" text="How can I help?"/>
             <g:FlowPanel styleName="dock-container-vertical dock-min askStroomAiViewImpl-bottom-inner">
