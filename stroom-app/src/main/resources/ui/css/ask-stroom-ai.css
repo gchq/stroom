@@ -834,3 +834,73 @@
 .ai-compaction-divider > .ai-message-footer > button {
     opacity: 1;
 }
+
+/* ---- Memory and Tool Approvals dialogs ---- */
+
+.aiMemory-intro {
+    font-size: 0.9em;
+    color: var(--control__text-color--disabled);
+    margin-bottom: 8px;
+}
+
+.aiMemory-main {
+    gap: 8px;
+    min-height: 200px;
+}
+
+.aiMemory-list {
+    width: 220px;
+    color: var(--control__text-color);
+    background: var(--control__background-color);
+    border: 1px solid var(--control__border-color);
+}
+
+.aiMemory-content {
+    resize: none;
+    align-self: stretch;
+    height: auto !important;
+    min-height: 200px;
+    font-family: monospace;
+    color: var(--control__text-color);
+    background: var(--control__background-color);
+    border: 1px solid var(--control__border-color);
+}
+
+.aiMemory-heading {
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.aiMemory-changes,
+.aiToolApprovals-list {
+    max-height: 160px;
+    overflow: auto;
+    font-size: 0.9em;
+}
+
+.aiToolApprovals-list {
+    max-height: none;
+}
+
+.aiMemory-changeRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--control__border-color);
+}
+
+.aiMemory-change {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.aiMemory-undone {
+    font-style: italic;
+    color: var(--control__text-color--disabled);
+}
+
+.aiToolApprovals-everything {
+    margin-top: 8px;
+}

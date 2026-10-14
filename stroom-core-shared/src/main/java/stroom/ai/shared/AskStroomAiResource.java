@@ -105,6 +105,58 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
     Boolean setApproveEverything(
             @Parameter(description = "request", required = true) SetAiApproveEverythingRequest request);
 
+    @POST
+    @Path("/listMemory/{chatId}")
+    @Operation(
+            summary = "List the memory a chat can see, and the changes the agent has made to memory in it",
+            operationId = "listAiMemory")
+    AiMemoryListResponse listMemory(@PathParam("chatId") int chatId);
+
+    @POST
+    @Path("/saveMemory")
+    @Operation(
+            summary = "Save a piece of memory the user has written or edited",
+            operationId = "saveAiMemory")
+    AiMemory saveMemory(@Parameter(description = "request", required = true) SaveAiMemoryRequest request);
+
+    @POST
+    @Path("/deleteMemory")
+    @Operation(
+            summary = "Delete a piece of memory, or all memory in a folder",
+            operationId = "deleteAiMemory")
+    Boolean deleteMemory(@Parameter(description = "request", required = true) DeleteAiMemoryRequest request);
+
+    @POST
+    @Path("/undoMemoryChange")
+    @Operation(
+            summary = "Undo a change the agent made to memory, if the memory has not changed since",
+            operationId = "undoAiMemoryChange")
+    Boolean undoMemoryChange(
+            @Parameter(description = "request", required = true) UndoAiMemoryChangeRequest request);
+
+    @POST
+    @Path("/listToolApprovals/{chatId}")
+    @Operation(
+            summary = "List the decisions the user has made about tools in a chat, and whether 'approve "
+                      + "everything' is on for it",
+            operationId = "listAiToolApprovals")
+    AiToolApprovalsResponse listToolApprovals(@PathParam("chatId") int chatId);
+
+    @POST
+    @Path("/removeToolApproval/{chatId}/{approvalId}")
+    @Operation(
+            summary = "Remove a decision the user made about a tool in a chat, so they are asked again",
+            operationId = "removeAiToolApproval")
+    Boolean removeToolApproval(@PathParam("chatId") int chatId,
+                               @PathParam("approvalId") int approvalId);
+
+    @POST
+    @Path("/resetToolApprovals/{chatId}")
+    @Operation(
+            summary = "Remove every decision the user made about tools in a chat, so they are asked again",
+            operationId = "resetAiToolApprovals")
+    Boolean resetToolApprovals(@PathParam("chatId") int chatId);
+
     @GET
     @Path("/getChatStatuses/{sinceVersion}")
     @Operation(

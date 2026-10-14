@@ -172,6 +172,8 @@ public class AskStroomAiPresenter
     private final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider;
     private final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider;
     private final Provider<DownloadChatPresenter> downloadChatPresenterProvider;
+    private final Provider<AiMemoryPresenter> memoryPresenterProvider;
+    private final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider;
     private final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider;
     private final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider;
     private final ContentManager contentManager;
@@ -222,6 +224,8 @@ public class AskStroomAiPresenter
                                 final Provider<AskStroomAiConfigPresenter> askStroomAiConfigPresenterProvider,
                                 final Provider<AiChatHistoryPresenter> aiChatHistoryPresenterProvider,
                                 final Provider<DownloadChatPresenter> downloadChatPresenterProvider,
+                                final Provider<AiMemoryPresenter> memoryPresenterProvider,
+                                final Provider<AiToolApprovalsPresenter> toolApprovalsPresenterProvider,
                                 final Provider<AiAttachmentDataPresenter> aiAttachmentDataPresenterProvider,
                                 final Provider<AskStroomAiTabPresenter> askStroomAiTabPresenterProvider,
                                 final ContentManager contentManager,
@@ -233,6 +237,8 @@ public class AskStroomAiPresenter
         this.askStroomAiConfigPresenterProvider = askStroomAiConfigPresenterProvider;
         this.aiChatHistoryPresenterProvider = aiChatHistoryPresenterProvider;
         this.downloadChatPresenterProvider = downloadChatPresenterProvider;
+        this.memoryPresenterProvider = memoryPresenterProvider;
+        this.toolApprovalsPresenterProvider = toolApprovalsPresenterProvider;
         this.aiAttachmentDataPresenterProvider = aiAttachmentDataPresenterProvider;
         this.askStroomAiTabPresenterProvider = askStroomAiTabPresenterProvider;
         this.contentManager = contentManager;
@@ -543,6 +549,16 @@ public class AskStroomAiPresenter
                         .text("Compact Context…")
                         .enabled(hasChat)
                         .command(this::onCompact))
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.INFO)
+                        .text("Memory…")
+                        .enabled(hasChat)
+                        .command(() -> memoryPresenterProvider.get().show(currentChat)))
+                .withIconMenuItem(item -> item
+                        .icon(SvgImage.OK)
+                        .text("Tool Approvals…")
+                        .enabled(hasChat)
+                        .command(() -> toolApprovalsPresenterProvider.get().show(currentChat)))
                 .withIconMenuItem(item -> item
                         .icon(SvgImage.DOWNLOAD)
                         .text("Download History…")

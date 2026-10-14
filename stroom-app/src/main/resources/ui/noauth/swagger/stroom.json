@@ -641,6 +641,36 @@
         "tags" : [ "AI" ]
       }
     },
+    "/ai/v1/deleteMemory" : {
+      "post" : {
+        "operationId" : "deleteAiMemory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/DeleteAiMemoryRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Delete a piece of memory, or all memory in a folder",
+        "tags" : [ "AI" ]
+      }
+    },
     "/ai/v1/deleteMessage/{chatId}/{messageId}" : {
       "post" : {
         "operationId" : "deleteMessage",
@@ -903,6 +933,62 @@
         "tags" : [ "AI" ]
       }
     },
+    "/ai/v1/listMemory/{chatId}" : {
+      "post" : {
+        "operationId" : "listAiMemory",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiMemoryListResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "List the memory a chat can see, and the changes the agent has made to memory in it",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/listToolApprovals/{chatId}" : {
+      "post" : {
+        "operationId" : "listAiToolApprovals",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiToolApprovalsResponse"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "List the decisions the user has made about tools in a chat, and whether 'approve everything' is on for it",
+        "tags" : [ "AI" ]
+      }
+    },
     "/ai/v1/pollMessages/{chatId}" : {
       "post" : {
         "operationId" : "pollMessages",
@@ -942,6 +1028,70 @@
         "tags" : [ "AI" ]
       }
     },
+    "/ai/v1/removeToolApproval/{chatId}/{approvalId}" : {
+      "post" : {
+        "operationId" : "removeAiToolApproval",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "in" : "path",
+          "name" : "approvalId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Remove a decision the user made about a tool in a chat, so they are asked again",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/resetToolApprovals/{chatId}" : {
+      "post" : {
+        "operationId" : "resetAiToolApprovals",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "chatId",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Remove every decision the user made about tools in a chat, so they are asked again",
+        "tags" : [ "AI" ]
+      }
+    },
     "/ai/v1/resumeRun" : {
       "post" : {
         "operationId" : "resumeRun",
@@ -969,6 +1119,36 @@
           }
         },
         "summary" : "Resume a chat whose last agent run stopped before finishing, by answering its last question again",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/saveMemory" : {
+      "post" : {
+        "operationId" : "saveAiMemory",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SaveAiMemoryRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AiMemory"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Save a piece of memory the user has written or edited",
         "tags" : [ "AI" ]
       }
     },
@@ -1059,6 +1239,36 @@
           }
         },
         "summary" : "Undo a chat's latest compaction, so the model sees the turns it covered as they were. Returns how much of the context window the chat now uses",
+        "tags" : [ "AI" ]
+      }
+    },
+    "/ai/v1/undoMemoryChange" : {
+      "post" : {
+        "operationId" : "undoAiMemoryChange",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UndoAiMemoryChangeRequest"
+              }
+            }
+          },
+          "description" : "request",
+          "required" : true
+        },
+        "responses" : {
+          "default" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "boolean"
+                }
+              }
+            },
+            "description" : "default response"
+          }
+        },
+        "summary" : "Undo a change the agent made to memory, if the memory has not changed since",
         "tags" : [ "AI" ]
       }
     },
@@ -15891,6 +16101,92 @@
           }
         }
       },
+      "AiMemory" : {
+        "type" : "object",
+        "properties" : {
+          "content" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "scope" : {
+            "type" : "string",
+            "enum" : [ "USER", "CHAT", "DOC" ]
+          },
+          "scopeKey" : {
+            "type" : "string"
+          },
+          "updateTimeMs" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "updateUser" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "AiMemoryListResponse" : {
+        "type" : "object",
+        "properties" : {
+          "changes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AiChatMessage"
+            }
+          },
+          "memories" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AiMemory"
+            }
+          }
+        }
+      },
+      "AiToolApproval" : {
+        "type" : "object",
+        "properties" : {
+          "decision" : {
+            "type" : "string",
+            "enum" : [ "ALLOW", "DENY" ]
+          },
+          "id" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "serverKey" : {
+            "type" : "string"
+          },
+          "toolName" : {
+            "type" : "string"
+          }
+        }
+      },
+      "AiToolApprovalsResponse" : {
+        "type" : "object",
+        "properties" : {
+          "approvals" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AiToolApproval"
+            }
+          },
+          "approveEverything" : {
+            "type" : "boolean"
+          },
+          "approveEverythingAllowed" : {
+            "type" : "boolean"
+          }
+        }
+      },
       "AnalyticDataShard" : {
         "type" : "object",
         "properties" : {
@@ -18682,6 +18978,21 @@
         "allOf" : [ {
           "$ref" : "#/components/schemas/Location"
         } ]
+      },
+      "DeleteAiMemoryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "aiChat" : {
+            "$ref" : "#/components/schemas/AiChat"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
       },
       "DeleteAnnotationEntryRequest" : {
         "type" : "object",
@@ -27802,6 +28113,24 @@
           }
         }
       },
+      "SaveAiMemoryRequest" : {
+        "type" : "object",
+        "properties" : {
+          "aiChat" : {
+            "$ref" : "#/components/schemas/AiChat"
+          },
+          "content" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
       "SavePipelineJsonRequest" : {
         "type" : "object",
         "properties" : {
@@ -31050,6 +31379,18 @@
         }
       },
       "UndoAiCompactionRequest" : {
+        "type" : "object",
+        "properties" : {
+          "aiChat" : {
+            "$ref" : "#/components/schemas/AiChat"
+          },
+          "messageId" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }
+      },
+      "UndoAiMemoryChangeRequest" : {
         "type" : "object",
         "properties" : {
           "aiChat" : {

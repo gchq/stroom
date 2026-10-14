@@ -25,6 +25,7 @@ import stroom.ai.shared.AiChat;
 import stroom.ai.shared.AiChatMessage;
 import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
+import stroom.ai.shared.AiToolApproval;
 import stroom.ai.shared.AiToolApprovalDecision;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.security.api.SecurityContext;
@@ -172,6 +173,39 @@ public class ToolApprovalService {
                               + " expired");
             runManager.stop(message.getChatId(), AiChatRunStopReason.APPROVAL_EXPIRED);
         }
+    }
+
+    /// @param chatId The chat.
+    /// @return The decisions the user has made about tools in the chat.
+    public List<AiToolApproval> list(final int chatId) {
+        return approvalDao.list(chatId).stream()
+                .map(approval -> new AiToolApproval(approval.id(), approval.serverKey(), approval.toolName(),
+                        approval.decision()))
+                .toList();
+    }
+
+    /// Removes a decision the user made about a tool in a chat, so they are asked again.
+    ///
+    /// @param chatId     The chat.
+    /// @param approvalId The decision.
+    /// @return True if it was removed, false if the chat has no such decision.
+    public boolean remove(final int chatId, final int approvalId) {
+        final boolean found = approvalDao.list(chatId).stream()
+                .anyMatch(approval -> approval.id() == approvalId);
+        if (found) {
+            approvalDao.delete(approvalId);
+        }
+        return found;
+    }
+
+    /// Removes every decision the user made about tools in a chat, so they are asked again.
+    ///
+    /// @param chatId The chat.
+    /// @return How many were removed.
+    public int reset(final int chatId) {
+        final List<AiToolApprovalDao.Approval> approvals = approvalDao.list(chatId);
+        approvals.forEach(approval -> approvalDao.delete(approval.id()));
+        return approvals.size();
     }
 
     /// @return True if the request was made too long ago to be answered.
