@@ -106,11 +106,13 @@
     border: thin solid var(--icon-button__border-color--on);
 }
 
-.toolbar-button:focus-visible {
+/* Keyboard focus, but not the focus a mouse press gives (ToolbarButton marks it data-pointer-focus,
+   as it focuses itself from code, which the browser treats as keyboard focus) */
+.toolbar-button:focus-visible:not([data-pointer-focus]) {
     box-shadow: var(--focus-shadow);
 }
 
-.toolbar-button:focus-visible::before {
+.toolbar-button:focus-visible:not([data-pointer-focus])::before {
     border: thin solid var(--focus-border) !important;
 }
 
@@ -149,7 +151,7 @@
     border-radius: .2rem;
 }
 
-.toolbar--header .toolbar-button:focus-visible {
+.toolbar--header .toolbar-button:focus-visible:not([data-pointer-focus]) {
     border-color: var(--focus-border);
 }
 

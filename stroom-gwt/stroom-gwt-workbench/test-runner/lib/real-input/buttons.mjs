@@ -30,6 +30,11 @@ async function focused(page) {
   });
 }
 
+// The focused element's drawn focus ring (its box shadow), or 'none'
+function ring(page) {
+  return page.evaluate(() => getComputedStyle(document.activeElement).boxShadow);
+}
+
 // The text of the focus tooltip (FocusTooltip) if it is showing, otherwise null
 async function tooltip(page) {
   return page.evaluate(() => {
@@ -104,5 +109,16 @@ export const CHECKS = {
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     assert.equal(await focused(page), 'Save', 'a click focuses the button');
     assert.equal(await tooltip(page), null, 'a mouse click shows no focus tooltip');
+    assert.equal(await ring(page), 'none', 'a mouse click shows no focus ring');
+    await press(page, 'ArrowRight', 'Save As', 'the arrow keys still move along the toolbar after a click');
+    assert.notEqual(await ring(page), 'none', 'the keyboard brings the focus ring back');
+  },
+  // A click on a toolbar button in a page where the keyboard hasn't been used shows no focus ring
+  'widgets-buttons-toolbar--default': async (page) => {
+    const button = page.locator('.toolbar-button').first();
+    const box = await button.boundingBox();
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    assert.ok(await button.evaluate((element) => element === document.activeElement), 'a click focuses the button');
+    assert.equal(await ring(page), 'none', 'a mouse click shows no focus ring');
   },
 };
