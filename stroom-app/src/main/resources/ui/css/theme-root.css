@@ -204,8 +204,9 @@
     /* Controls */
     --control__background-color: #fff;
     --control__background-color--disabled: rgba(0, 0, 0, 0.1);
-    /* 3:1 on white, so a field's edge identifies it (WCAG 1.4.11) */
-    --control__border-color: #858a94;
+    /* The lightest blue-grey that is 3:1 on everything a field sits on (white, the explorer and
+       striped rows), so a field's edge identifies it (WCAG 1.4.11) */
+    --control__border-color: #8c9098;
     --control__border-color--disabled: transparent;
     --control__text-color: rgba(0, 0, 0, 0.8);
     --control__text-color--disabled: #666;
