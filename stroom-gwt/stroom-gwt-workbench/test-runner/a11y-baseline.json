@@ -78,42 +78,6 @@
   "app-editors-documentationeditor--read-only": [
     "frame-title"
   ],
-  "app-editors-planbeditor--edit-enables-save": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--max-store-size-defaults-when-unset": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--metric": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--metric-read-only": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--metric-time-zone-offset": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--read-only": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--session": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--session-read-only": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--state": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--trace": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--trace-read-only": [
-    "color-contrast"
-  ],
-  "app-editors-planbeditor--unset-schema-fields-show-their-java-defaults": [
-    "color-contrast"
-  ],
   "app-editors-queryeditor--column-filter-menu": [
     "target-size"
   ],
@@ -578,9 +542,6 @@
   ],
   "widgets-editors-viewers-markdowneditor--read-only-preview": [
     "frame-title"
-  ],
-  "widgets-inputs-formgroup--disabled": [
-    "color-contrast"
   ],
   "widgets-inputs-linecolinput--basic": [
     "label"

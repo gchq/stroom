@@ -201,6 +201,11 @@
     color: var(--text-color--disabled);
 }
 
+/* Already greyed, so not faded as well (that took it under 4.5:1) */
+.form-group__description-row--disabled .form-group__description {
+    opacity: 1;
+}
+
 .form-group__description-row--disabled code {
     color: var(--code-color--disabled);
 }

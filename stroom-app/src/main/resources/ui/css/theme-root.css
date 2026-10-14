@@ -217,7 +217,8 @@
     --control__border-color: #8c9098;
     --control__border-color--disabled: transparent;
     --control__text-color: rgba(0, 0, 0, 0.8);
-    --control__text-color--disabled: #666;
+    /* 4.5:1 on the disabled fill, even in a translucent dialog */
+    --control__text-color--disabled: #595959;
     /* A read-only control's value: greyed, but still 4.5:1 on the control's white */
     --control__text-color--readonly: var(--text-color--muted);
 
