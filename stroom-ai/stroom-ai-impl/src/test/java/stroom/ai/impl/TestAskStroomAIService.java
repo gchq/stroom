@@ -25,8 +25,16 @@ import stroom.ai.shared.AiChatRunStopReason;
 import stroom.ai.shared.AiMessageType;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.CompactAiChatRequest;
+import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.EditAiMessageRequest;
+import stroom.ai.shared.GeneralTableContext;
+import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.UndoAiCompactionRequest;
+import stroom.dashboard.shared.DashboardSearchRequest;
+import stroom.dashboard.shared.Search;
+import stroom.docref.DocRef;
+import stroom.query.api.SearchRequestSource;
+import stroom.query.shared.QuerySearchRequest;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -272,6 +280,23 @@ class TestAskStroomAIService {
         service.compactChat(new CompactAiChatRequest(chat, null, "focus"));
 
         Mockito.verify(aiService).storeMessage(1, AiMessageType.WARNING, AskStroomAIService.NOTHING_TO_COMPACT);
+    }
+
+    @Test
+    void testSourceDocUuid() {
+        final DocRef dataSource = new DocRef("Index", "index-uuid");
+        final DocRef queryDoc = new DocRef("Query", "query-uuid");
+
+        assertThat(AskStroomAIService.sourceDocUuid(new DashboardTableContext("d", null,
+                DashboardSearchRequest.builder()
+                        .search(Search.builder().dataSourceRef(dataSource).build())
+                        .build()))).isEqualTo("index-uuid");
+        assertThat(AskStroomAIService.sourceDocUuid(new QueryTableContext("q", null,
+                QuerySearchRequest.builder()
+                        .searchRequestSource(SearchRequestSource.builder().ownerDocRef(queryDoc).build())
+                        .build()))).isEqualTo("query-uuid");
+        assertThat(AskStroomAIService.sourceDocUuid(new DashboardTableContext("d", null, null))).isNull();
+        assertThat(AskStroomAIService.sourceDocUuid(new GeneralTableContext("g", List.of(), List.of()))).isNull();
     }
 
     private static AiChatMessage message(final int id, final AiMessageType type, final String text) {

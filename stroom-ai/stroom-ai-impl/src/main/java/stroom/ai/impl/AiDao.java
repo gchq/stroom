@@ -119,6 +119,24 @@ public interface AiDao {
     Long getLastPollMs(String userUuid);
 
     /**
+     * @param timeMs A time.
+     * @param limit  The most to return.
+     * @return The ids of chats last changed before the time.
+     */
+    List<Integer> findChatsNotUpdatedSince(long timeMs, int limit);
+
+    /**
+     * @return The UUIDs of every user who has a chat.
+     */
+    List<String> getChatOwners();
+
+    /**
+     * @param userUuid A user.
+     * @return The ids of the user's chats.
+     */
+    List<Integer> getChatIds(String userUuid);
+
+    /**
      * What has been recorded about a chat's token use.
      *
      * @param modelDocUuid        The model last used, or null.

@@ -17,20 +17,27 @@
 package stroom.ai.impl.workspace;
 
 import stroom.ai.impl.AiAttachmentFileStore;
+import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiDao;
 import stroom.ai.impl.AiWorkspaceDao;
+import stroom.ai.impl.AiWorkspaceDao.FileInfo;
 import stroom.ai.impl.dao.AiDaoModule;
 import stroom.ai.impl.db.AiDbConnProvider;
 import stroom.ai.impl.db.AiDbModule;
+import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
 import stroom.ai.shared.AiChat;
 import stroom.collection.api.CollectionService;
 import stroom.dictionary.api.WordListProvider;
+import stroom.docref.DocRef;
 import stroom.docstore.api.DocFinder;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.TempDirProvider;
 import stroom.util.shared.UserRef;
+import stroom.util.time.StroomDuration;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -39,6 +46,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 import java.io.IOException;
@@ -46,9 +54,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TestWorkspaceStore {
 
@@ -74,6 +84,8 @@ class TestWorkspaceStore {
     private WorkspaceStore workspaceStore;
 
     private AiChat chat;
+    private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+    private AiConfig aiConfig = new AiConfig();
 
     @BeforeEach
     void setUp() throws SQLException {
@@ -88,6 +100,8 @@ class TestWorkspaceStore {
                         bind(CollectionService.class).toInstance(Mockito.mock(CollectionService.class));
                         bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
                         bind(TempDirProvider.class).toInstance(() -> tempDir);
+                        bind(SecurityContext.class).toInstance(securityContext);
+                        bind(AiConfig.class).toProvider(() -> aiConfig);
                     }
                 });
         injector.injectMembers(this);
@@ -166,5 +180,65 @@ class TestWorkspaceStore {
         // The chunks' foreign key must not stop the chat being deleted.
         aiDao.deleteChat(chat.getId());
         assertThat(workspaceDao.getTotalSize(chat.getId())).isZero();
+    }
+
+    @Test
+    void testFilesExpire() {
+        final int fileId = workspaceStore.createFile(chat.getId(), AiAttachmentType.TOOL_OUTPUT, "/outputs/f.txt",
+                null, "x\n");
+        final FileInfo info = workspaceDao.getFileInfo(fileId).orElseThrow();
+        // The default retention is 7 days.
+        assertThat(info.expireTimeMs()).isBetween(
+                System.currentTimeMillis() + Duration.ofDays(7).toMillis() - 60_000,
+                System.currentTimeMillis() + Duration.ofDays(7).toMillis());
+        assertThat(workspaceDao.findExpired(System.currentTimeMillis(), 10)).isEmpty();
+        assertThat(workspaceDao.findExpired(info.expireTimeMs(), 10)).containsExactly(fileId);
+
+        // Expire it.
+        workspaceDao.setRetention(fileId, null, System.currentTimeMillis() - 1);
+
+        assertThatThrownBy(() -> workspaceStore.readLines(fileId, 0, 10))
+                .isInstanceOf(WorkspaceFileUnavailableException.class)
+                .hasMessageContaining("/outputs/f.txt")
+                .hasMessageContaining("retention age");
+        assertThat(workspaceDao.getChunkInfo(fileId)).isEmpty();
+        assertThat(workspaceDao.getFileInfo(fileId).orElseThrow().status())
+                .isEqualTo(AiAttachmentStatus.UNAVAILABLE);
+        assertThat(workspaceDao.findAvailable(List.of(fileId))).isEmpty();
+        // And it stays unavailable.
+        assertThatThrownBy(() -> workspaceStore.localFile(fileId))
+                .isInstanceOf(WorkspaceFileUnavailableException.class);
+    }
+
+    @Test
+    void testNoRetention() {
+        aiConfig = new AiConfig(null, null, null, null, null, null, null, StroomDuration.ZERO, null);
+        final int fileId = workspaceStore.createFile(chat.getId(), AiAttachmentType.TOOL_OUTPUT, "/outputs/f.txt",
+                null, "x\n");
+
+        assertThat(workspaceDao.getFileInfo(fileId).orElseThrow().expireTimeMs()).isNull();
+    }
+
+    @Test
+    void testAccessToTheSourceIsCheckedAgain() {
+        final int fileId = workspaceStore.createFile(chat.getId(), AiAttachmentType.TOOL_OUTPUT, "/outputs/f.txt",
+                null, "x\n");
+        workspaceStore.setRetention(fileId, "source-uuid");
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.USE)))
+                .thenReturn(true);
+
+        assertThat(workspaceStore.readLines(fileId, 0, 10)).containsExactly("x");
+        final ArgumentCaptor<DocRef> docRef = ArgumentCaptor.forClass(DocRef.class);
+        Mockito.verify(securityContext).hasDocumentPermission(docRef.capture(), Mockito.eq(DocumentPermission.USE));
+        assertThat(docRef.getValue().getUuid()).isEqualTo("source-uuid");
+
+        // The user loses access.
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.eq(DocumentPermission.USE)))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> workspaceStore.readLines(fileId, 0, 10))
+                .isInstanceOf(WorkspaceFileUnavailableException.class)
+                .hasMessageContaining("no longer have access");
+        assertThat(workspaceDao.getChunkInfo(fileId)).isEmpty();
     }
 }

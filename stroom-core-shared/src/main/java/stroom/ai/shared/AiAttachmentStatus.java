@@ -26,7 +26,12 @@ public enum AiAttachmentStatus implements HasPrimitiveValue {
     PENDING(0),
     DOWNLOADING(1),
     READY(2),
-    ERROR(3);
+    ERROR(3),
+    /**
+     * The content has been removed, because it reached its retention age or the user no longer has access to the
+     * data it came from. The record is kept so the chat can say what happened to it.
+     */
+    UNAVAILABLE(4);
 
     public static final PrimitiveValueConverter<AiAttachmentStatus> PRIMITIVE_VALUE_CONVERTER =
             PrimitiveValueConverter.create(AiAttachmentStatus.class, AiAttachmentStatus.values());

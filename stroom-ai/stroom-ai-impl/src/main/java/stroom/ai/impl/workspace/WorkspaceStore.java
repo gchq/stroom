@@ -17,15 +17,24 @@
 package stroom.ai.impl.workspace;
 
 import stroom.ai.impl.AiAttachmentFileStore;
+import stroom.ai.impl.AiConfig;
 import stroom.ai.impl.AiWorkspaceDao;
 import stroom.ai.impl.AiWorkspaceDao.Chunk;
 import stroom.ai.impl.AiWorkspaceDao.ChunkInfo;
+import stroom.ai.impl.AiWorkspaceDao.FileInfo;
+import stroom.ai.shared.AiAttachmentStatus;
 import stroom.ai.shared.AiAttachmentType;
+import stroom.docref.DocRef;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermission;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.NullSafe;
+import stroom.util.time.StroomDuration;
 
 import com.github.luben.zstd.Zstd;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 
 import java.io.BufferedReader;
@@ -53,14 +62,74 @@ public class WorkspaceStore {
     static final int CHUNK_SIZE_BYTES = 1_048_576;
     private static final int COMPRESSION_LEVEL = 3;
 
+    static final String REASON_EXPIRED = "it reached its retention age";
+    static final String REASON_NO_ACCESS = "you no longer have access to the data it came from";
+    /// Document permissions are held by UUID, so the type of a source document need not be known to check them.
+    private static final String SOURCE_DOC_TYPE = "AiDataSource";
+
     private final AiWorkspaceDao workspaceDao;
     private final AiAttachmentFileStore fileStore;
+    private final Provider<AiConfig> aiConfigProvider;
+    private final SecurityContext securityContext;
 
     @Inject
     public WorkspaceStore(final AiWorkspaceDao workspaceDao,
-                          final AiAttachmentFileStore fileStore) {
+                          final AiAttachmentFileStore fileStore,
+                          final Provider<AiConfig> aiConfigProvider,
+                          final SecurityContext securityContext) {
         this.workspaceDao = workspaceDao;
         this.fileStore = fileStore;
+        this.aiConfigProvider = aiConfigProvider;
+        this.securityContext = securityContext;
+    }
+
+    /// Sets where a file's content came from, and when it expires (the configured retention from now). Files hold
+    /// copies of Stroom data, so they expire sooner than their chat, and the user's access to the data they came
+    /// from is checked again whenever they are used (S6).
+    ///
+    /// @param fileId        The file.
+    /// @param sourceDocUuid The UUID of the document the content came from (e.g. a data source), or null.
+    public void setRetention(final int fileId, final String sourceDocUuid) {
+        final StroomDuration retention = NullSafe.get(aiConfigProvider.get(), AiConfig::getWorkspaceFileRetention);
+        final Long expireTimeMs = retention != null && retention.toMillis() > 0
+                ? System.currentTimeMillis() + retention.toMillis()
+                : null;
+        workspaceDao.setRetention(fileId, sourceDocUuid, expireTimeMs);
+    }
+
+    /// Checks a file can still be used: it has not expired, and the user still has access to the data it came
+    /// from. If not, its content is removed.
+    ///
+    /// @param fileId The file.
+    /// @throws WorkspaceFileUnavailableException if it cannot be used.
+    public void checkAvailable(final int fileId) {
+        final FileInfo info = workspaceDao.getFileInfo(fileId).orElse(null);
+        if (info == null) {
+            return;
+        }
+        if (info.status() == AiAttachmentStatus.UNAVAILABLE) {
+            throw new WorkspaceFileUnavailableException(fileId, info.path(), info.errorMessage());
+        }
+        if (info.expireTimeMs() != null && info.expireTimeMs() <= System.currentTimeMillis()) {
+            makeUnavailable(fileId, REASON_EXPIRED);
+            throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_EXPIRED);
+        }
+        if (info.sourceDocUuid() != null
+            && !securityContext.hasDocumentPermission(new DocRef(SOURCE_DOC_TYPE, info.sourceDocUuid()),
+                DocumentPermission.USE)) {
+            makeUnavailable(fileId, REASON_NO_ACCESS);
+            throw new WorkspaceFileUnavailableException(fileId, info.path(), REASON_NO_ACCESS);
+        }
+    }
+
+    /// Removes a file's content, here and on this node's disk, keeping its record and the reason.
+    ///
+    /// @param fileId The file.
+    /// @param reason Why.
+    public void makeUnavailable(final int fileId, final String reason) {
+        LOGGER.info(() -> "Removing the content of workspace file " + fileId + " as " + reason);
+        workspaceDao.makeUnavailable(fileId, reason);
+        fileStore.deleteAttachmentFile(fileId);
     }
 
     /// Creates a workspace file with the given content.
@@ -77,6 +146,7 @@ public class WorkspaceStore {
                           final Integer sourceMessageId,
                           final String content) {
         final int fileId = workspaceDao.createFile(chatId, type, path, sourceMessageId);
+        setRetention(fileId, null);
         final Path localFile = fileStore.createAttachmentFile(fileId);
         try {
             Files.writeString(localFile, content, StandardCharsets.UTF_8);
@@ -131,6 +201,7 @@ public class WorkspaceStore {
     /// @return The node's local copy of the file, rebuilt from the database if it is missing. The path does not
     /// exist if the file has no stored content either.
     public Path localFile(final int fileId) {
+        checkAvailable(fileId);
         final Path localFile = fileStore.getAttachmentFile(fileId);
         if (Files.exists(localFile)) {
             return localFile;
@@ -164,6 +235,7 @@ public class WorkspaceStore {
     /// @param maxLines  The most lines to read.
     /// @return The lines, without line ends. Fewer than asked for if the file ends first.
     public List<String> readLines(final int fileId, final long fromLine, final int maxLines) {
+        checkAvailable(fileId);
         final List<String> lines = new ArrayList<>();
         final long toLine = fromLine + maxLines;
         for (final ChunkInfo chunk : workspaceDao.getChunkInfo(fileId)) {
@@ -193,6 +265,7 @@ public class WorkspaceStore {
     /// @param fileId The file's id.
     /// @return How many lines the file has.
     public long lineCount(final int fileId) {
+        checkAvailable(fileId);
         return workspaceDao.getChunkInfo(fileId).stream()
                 .mapToLong(ChunkInfo::lineCount)
                 .sum();
