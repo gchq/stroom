@@ -41,6 +41,7 @@ import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiContext;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResponse;
+import stroom.ai.shared.CompactAiChatRequest;
 import stroom.ai.shared.DashboardTableContext;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
@@ -49,6 +50,7 @@ import stroom.ai.shared.GeneralTableContext;
 import stroom.ai.shared.GetAttachmentDataRequest;
 import stroom.ai.shared.QueryTableContext;
 import stroom.ai.shared.TableAnalysisConfig;
+import stroom.ai.shared.UndoAiCompactionRequest;
 import stroom.config.global.api.GlobalConfig;
 import stroom.dashboard.impl.DashboardService;
 import stroom.dashboard.shared.ComponentResultRequest;
@@ -118,6 +120,9 @@ import java.util.stream.Collectors;
  */
 @Singleton
 public class AskStroomAIService {
+
+    static final String NOTHING_TO_COMPACT = "There is nothing to compact yet: the latest turns are always kept "
+                                             + "in full.";
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AskStroomAIService.class);
 
@@ -286,6 +291,59 @@ public class AskStroomAIService {
             answerQuestion(chatId, edited);
         });
         return new AskStroomAiResponse(null);
+    }
+
+    /**
+     * Compacts a chat now, in a run of its own: earlier turns are replaced, in what the model sees, by their
+     * digests and a summary written by the model. The latest turns are kept in full, and nothing is deleted.
+     *
+     * @param request The chat, the config giving the model, and what the summary should focus on.
+     * @return An empty response; the result appears in the chat.
+     * @throws AiChatRunManager.AiChatBusyException if the chat is busy.
+     */
+    public AskStroomAiResponse compactChat(final CompactAiChatRequest request) {
+        final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
+        aiService.verifyOwnership(chatId);
+        final OpenAIModelDoc modelDoc = getModelDocForCompaction(request.getConfig());
+        final ChatModel chatModel = modelDoc != null
+                ? getChatModel(modelDoc)
+                : null;
+        runManager.start(chatId, run -> {
+            if (!chatCompactor.compactNow(chatId, modelDoc, chatModel, request.getInstructions())) {
+                aiService.storeMessage(chatId, AiMessageType.WARNING, NOTHING_TO_COMPACT);
+            }
+        });
+        return new AskStroomAiResponse(null);
+    }
+
+    /**
+     * @return The model to write a compaction's summary with. Separate so tests need no model.
+     */
+    OpenAIModelDoc getModelDocForCompaction(final AskStroomAiConfig config) {
+        return getModelDoc(config);
+    }
+
+    /**
+     * Undoes a chat's latest compaction that is in use, so the model sees the turns it covered as an earlier
+     * compaction left them (or in full). If the chat is still too large, the next question compacts it again.
+     *
+     * @param request The chat, and the compaction to undo.
+     * @return True once undone.
+     * @throws AiChatRunManager.AiChatBusyException if the chat is busy.
+     */
+    public Boolean undoCompaction(final UndoAiCompactionRequest request) {
+        final Integer chatId = NullSafe.get(request.getAiChat(), AiChat::getId);
+        aiService.verifyOwnership(chatId);
+        if (runDao.getActive(chatId).isPresent()) {
+            throw new AiChatRunManager.AiChatBusyException(chatId);
+        }
+        final AiChatMessage latest = ChatCompactor.currentCompactionMessage(aiService.getMessages(chatId))
+                .orElse(null);
+        if (latest == null || latest.getId() != request.getMessageId()) {
+            throw new RuntimeException("Only the latest compaction of a chat can be undone.");
+        }
+        aiService.deleteMessage(latest.getId());
+        return true;
     }
 
     /**
