@@ -20,6 +20,7 @@ import stroom.ai.api.AiService;
 import stroom.ai.impl.ToolApprovalRequest.Decision;
 import stroom.ai.impl.ToolApprovalRequest.PendingCall;
 import stroom.ai.impl.tools.BuiltInTools;
+import stroom.ai.impl.tools.McpToolCaller;
 import stroom.ai.impl.tools.ToolRunContext;
 import stroom.ai.impl.workspace.WorkspaceStore;
 import stroom.ai.shared.AiAttachmentType;
@@ -182,10 +183,11 @@ class McpAgentChat {
                       final StringBuilder debugLog,
                       final int steerAfterMessageId,
                       final ContextBudget budget) {
-        // Built-in tools that need the model (e.g. to summarise) find it here.
-        return new ToolRunContext(chatModel, modelDoc, cancelled::get).run(() -> chatWithTools(chatModel, modelDoc,
-                chatId, messages, toolset, workingMessageId, cancelled, taskContext, attempt, debugLog,
-                steerAfterMessageId, budget));
+        // Built-in tools that need the model (e.g. to summarise) or the MCP tools (e.g. to upload) find them here.
+        final ToolRunContext context = new ToolRunContext(chatModel, modelDoc, cancelled::get,
+                mcpToolCaller(toolset, chatId));
+        return context.run(() -> chatWithTools(chatModel, modelDoc, chatId, messages, toolset, workingMessageId,
+                cancelled, taskContext, attempt, debugLog, steerAfterMessageId, budget));
     }
 
     private ChatResponse chatWithTools(final ChatModel chatModel,
@@ -669,6 +671,37 @@ class McpAgentChat {
     private int toolGroupThreshold() {
         return NullSafe.getOrElse(aiConfigProvider.get(), AiConfig::getToolGroupThreshold,
                 AiConfig.DEFAULT_TOOL_GROUP_THRESHOLD);
+    }
+
+    /**
+     * @return What calls the toolset's MCP tools, for built-in tools that work with them.
+     */
+    private static McpToolCaller mcpToolCaller(final McpToolset toolset, final int chatId) {
+        return new McpToolCaller() {
+            @Override
+            public boolean hasTool(final String toolName) {
+                return toolset.toolInfo(toolName).isPresent();
+            }
+
+            @Override
+            public String serverOf(final String toolName) {
+                return toolset.toolInfo(toolName).map(McpToolInfo::serverKey).orElse(null);
+            }
+
+            @Override
+            public String call(final String toolName, final String argumentsJson) {
+                final ToolExecutor executor = toolset.tools().entrySet().stream()
+                        .filter(entry -> entry.getKey().name().equals(toolName))
+                        .map(Map.Entry::getValue)
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("There is no MCP tool '" + toolName + "'."));
+                return executor.execute(ToolExecutionRequest.builder()
+                        .id("upload-" + chatId)
+                        .name(toolName)
+                        .arguments(argumentsJson)
+                        .build(), chatId);
+            }
+        };
     }
 
     /**

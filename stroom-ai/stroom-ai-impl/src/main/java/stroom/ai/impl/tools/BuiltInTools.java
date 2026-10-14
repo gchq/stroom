@@ -43,6 +43,7 @@ public class BuiltInTools {
     private final Set<String> readOnlyToolNames;
     private final Set<String> trustedToolNames;
     private final Set<String> boundedToolNames;
+    private final Set<String> alwaysAskToolNames;
 
     @Inject
     BuiltInTools(final Set<BuiltInTool> tools) {
@@ -50,6 +51,7 @@ public class BuiltInTools {
         final Set<String> readOnly = new HashSet<>();
         final Set<String> trusted = new HashSet<>();
         final Set<String> bounded = new HashSet<>();
+        final Set<String> alwaysAsk = new HashSet<>();
         for (final BuiltInTool tool : tools) {
             final ToolSpecification specification = tool.specification();
             if (tool.isReadOnly()) {
@@ -60,6 +62,9 @@ public class BuiltInTools {
             }
             if (tool.boundsItsOutput()) {
                 bounded.add(specification.name());
+            }
+            if (tool.alwaysAsks()) {
+                alwaysAsk.add(specification.name());
             }
             map.put(specification, (request, memoryId) -> {
                 try {
@@ -77,6 +82,7 @@ public class BuiltInTools {
         readOnlyToolNames = Set.copyOf(readOnly);
         trustedToolNames = Set.copyOf(trusted);
         boundedToolNames = Set.copyOf(bounded);
+        alwaysAskToolNames = Set.copyOf(alwaysAsk);
         LOGGER.debug(() -> "Registered " + toolMap.size() + " built-in tool(s): "
                            + toolMap.keySet().stream().map(ToolSpecification::name).sorted().toList());
     }
@@ -112,6 +118,14 @@ public class BuiltInTools {
      */
     public boolean boundsItsOutput(final String toolName) {
         return boundedToolNames.contains(toolName);
+    }
+
+    /**
+     * @param toolName A tool name.
+     * @return True if it is a built-in tool the user must approve every call of.
+     */
+    public boolean alwaysAsks(final String toolName) {
+        return alwaysAskToolNames.contains(toolName);
     }
 
     public boolean isEmpty() {

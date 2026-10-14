@@ -27,6 +27,8 @@ import stroom.openai.shared.OpenAIModelDoc;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.api.UserIdentityFactory;
+import stroom.security.openid.api.IdpType;
+import stroom.security.openid.api.OpenIdConfiguration;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.agent.tool.ToolSpecification;
@@ -68,10 +70,15 @@ class TestMcpToolServerFactory {
     private final UserIdentity userIdentity = Mockito.mock(UserIdentity.class);
     private final SecurityContext securityContext = Mockito.mock(SecurityContext.class);
     private final UserIdentityFactory userIdentityFactory = Mockito.mock(UserIdentityFactory.class);
+    private final OpenIdConfiguration openIdConfiguration = Mockito.mock(OpenIdConfiguration.class);
+
+    {
+        Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.EXTERNAL_IDP);
+    }
 
     private final McpToolServerFactory factory = new McpToolServerFactory(
             () -> storedSecrets, null, null, () -> securityContext, () -> userIdentityFactory, new McpClientCache(),
-            () -> null, AiConfig::new);
+            () -> null, AiConfig::new, () -> openIdConfiguration);
 
     @Test
     void noneMode() {
@@ -151,6 +158,17 @@ class TestMcpToolServerFactory {
                     .singleElement(org.assertj.core.api.InstanceOfAssertFactories.STRING)
                     .contains("'ssrf' is not allowed");
         }
+    }
+
+    @Test
+    void stroomSessionToken_needsAnExternalIdentityProvider() {
+        Mockito.when(openIdConfiguration.getIdentityProviderType()).thenReturn(IdpType.INTERNAL_IDP);
+
+        assertThatThrownBy(() -> headers(server(McpAuthMode.STROOM_SESSION_TOKEN, null)))
+                .hasMessageContaining("are unavailable")
+                .hasMessageContaining("external identity provider");
+        // Other modes don't depend on it.
+        assertThat(headers(server(McpAuthMode.NONE, null))).isEmpty();
     }
 
     private Map<String, String> headers(final McpToolServerConfig server) {
