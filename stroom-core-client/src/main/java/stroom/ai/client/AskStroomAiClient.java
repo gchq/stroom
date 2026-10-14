@@ -23,17 +23,24 @@ import stroom.ai.shared.AiChatPollRequest;
 import stroom.ai.shared.AiChatPollResponse;
 import stroom.ai.shared.AiChatStatusResponse;
 import stroom.ai.shared.AiContextUsage;
+import stroom.ai.shared.AiMemory;
+import stroom.ai.shared.AiMemoryListResponse;
+import stroom.ai.shared.AiToolApprovalsResponse;
 import stroom.ai.shared.AnswerAiApprovalRequest;
 import stroom.ai.shared.AskStroomAiConfig;
 import stroom.ai.shared.AskStroomAiRequest;
 import stroom.ai.shared.AskStroomAiResource;
 import stroom.ai.shared.AskStroomAiResponse;
 import stroom.ai.shared.CompactAiChatRequest;
+import stroom.ai.shared.DeleteAiMemoryRequest;
 import stroom.ai.shared.DownloadChatHistoryRequest;
 import stroom.ai.shared.EditAiMessageRequest;
 import stroom.ai.shared.FindAiChatHistoryCriteria;
 import stroom.ai.shared.GetAttachmentDataRequest;
+import stroom.ai.shared.SaveAiMemoryRequest;
+import stroom.ai.shared.SetAiApproveEverythingRequest;
 import stroom.ai.shared.UndoAiCompactionRequest;
+import stroom.ai.shared.UndoAiMemoryChangeRequest;
 import stroom.dispatch.client.RestErrorHandler;
 import stroom.dispatch.client.RestFactory;
 import stroom.preferences.client.UserPreferencesManager;
@@ -151,6 +158,135 @@ public class AskStroomAiClient {
         restFactory
                 .create(RESOURCE)
                 .method(res -> res.answerApproval(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Gets the memory a chat can see, and the changes the agent has made to memory in it.
+     */
+    void listMemory(final int chatId,
+                    final Consumer<AiMemoryListResponse> consumer,
+                    final RestErrorHandler errorHandler,
+                    final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.listMemory(chatId))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Saves a piece of memory the user has written or edited.
+     */
+    void saveMemory(final SaveAiMemoryRequest request,
+                    final Consumer<AiMemory> consumer,
+                    final RestErrorHandler errorHandler,
+                    final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.saveMemory(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Deletes a piece of memory, or all memory in a folder.
+     */
+    void deleteMemory(final DeleteAiMemoryRequest request,
+                      final Consumer<Boolean> consumer,
+                      final RestErrorHandler errorHandler,
+                      final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.deleteMemory(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Undoes a change the agent made to memory.
+     */
+    void undoMemoryChange(final UndoAiMemoryChangeRequest request,
+                          final Consumer<Boolean> consumer,
+                          final RestErrorHandler errorHandler,
+                          final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.undoMemoryChange(request))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Gets the decisions the user has made about tools in a chat.
+     */
+    void listToolApprovals(final int chatId,
+                           final Consumer<AiToolApprovalsResponse> consumer,
+                           final RestErrorHandler errorHandler,
+                           final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.listToolApprovals(chatId))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Removes a decision the user made about a tool in a chat.
+     */
+    void removeToolApproval(final int chatId,
+                            final int approvalId,
+                            final Consumer<Boolean> consumer,
+                            final RestErrorHandler errorHandler,
+                            final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.removeToolApproval(chatId, approvalId))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Removes every decision the user made about tools in a chat.
+     */
+    void resetToolApprovals(final int chatId,
+                            final Consumer<Boolean> consumer,
+                            final RestErrorHandler errorHandler,
+                            final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.resetToolApprovals(chatId))
+                .onSuccess(consumer)
+                .onFailure(errorHandler)
+                .taskMonitorFactory(taskMonitorFactory)
+                .exec();
+    }
+
+    /**
+     * Turns 'approve everything' on or off for a chat.
+     */
+    void setApproveEverything(final SetAiApproveEverythingRequest request,
+                              final Consumer<Boolean> consumer,
+                              final RestErrorHandler errorHandler,
+                              final TaskMonitorFactory taskMonitorFactory) {
+        restFactory
+                .create(RESOURCE)
+                .method(res -> res.setApproveEverything(request))
                 .onSuccess(consumer)
                 .onFailure(errorHandler)
                 .taskMonitorFactory(taskMonitorFactory)
