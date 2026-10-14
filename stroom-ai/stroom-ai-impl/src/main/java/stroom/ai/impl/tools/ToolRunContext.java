@@ -36,15 +36,28 @@ public final class ToolRunContext {
     private final ChatModel chatModel;
     private final OpenAIModelDoc modelDoc;
     private final BooleanSupplier cancelled;
+    private final McpToolCaller mcpToolCaller;
     private final Map<String, Integer> failures = new ConcurrentHashMap<>();
 
     /// @param chatModel The model the run uses.
     /// @param modelDoc  Its document, or null.
     /// @param cancelled True once the run has been asked to stop.
     public ToolRunContext(final ChatModel chatModel, final OpenAIModelDoc modelDoc, final BooleanSupplier cancelled) {
+        this(chatModel, modelDoc, cancelled, null);
+    }
+
+    /// @param chatModel     The model the run uses.
+    /// @param modelDoc      Its document, or null.
+    /// @param cancelled     True once the run has been asked to stop.
+    /// @param mcpToolCaller Calls the run's MCP tools, or null if it has none.
+    public ToolRunContext(final ChatModel chatModel,
+                          final OpenAIModelDoc modelDoc,
+                          final BooleanSupplier cancelled,
+                          final McpToolCaller mcpToolCaller) {
         this.chatModel = chatModel;
         this.modelDoc = modelDoc;
         this.cancelled = cancelled;
+        this.mcpToolCaller = mcpToolCaller;
     }
 
     /// Does some work with this as the current context.
@@ -77,6 +90,11 @@ public final class ToolRunContext {
 
     public BooleanSupplier getCancelled() {
         return cancelled;
+    }
+
+    /// @return What calls the run's MCP tools, if it has any.
+    public Optional<McpToolCaller> getMcpToolCaller() {
+        return Optional.ofNullable(mcpToolCaller);
     }
 
     /// Records that a kind of query failed.

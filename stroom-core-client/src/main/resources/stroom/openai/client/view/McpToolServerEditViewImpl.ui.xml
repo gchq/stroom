@@ -26,7 +26,10 @@
         <form:FormGroup identity="mcpToolServerAuthMode"
                         label="Authentication"
                         helpText="How Stroom authenticates to this server.">
-            <l:SelectionBox ui:field="authMode"/>
+            <g:FlowPanel>
+                <l:SelectionBox ui:field="authMode"/>
+                <g:Label ui:field="authModeWarning" styleName="mcpToolServer-warning"/>
+            </g:FlowPanel>
         </form:FormGroup>
         <form:FormGroup identity="mcpToolServerCredential"
                         label="Credential"

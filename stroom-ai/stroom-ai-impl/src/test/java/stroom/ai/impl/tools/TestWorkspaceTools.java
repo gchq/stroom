@@ -52,6 +52,7 @@ import org.mockito.Mockito;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -356,6 +357,49 @@ class TestWorkspaceTools {
         Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(false);
         assertThat(run(new ReadFileTool(workspace), "{\"path\":\"/outputs/hosts.csv\"}"))
                 .contains("no longer have access");
+    }
+
+    @Test
+    void testUploadFile_sendsTheFileToTheMcpTool() {
+        workspace.write(chatId, WorkspacePath.parse("/outputs/sample.log"), "line 1\nline 2\n", null);
+        final List<String> calls = new ArrayList<>();
+        final McpToolCaller caller = new McpToolCaller() {
+            @Override
+            public boolean hasTool(final String toolName) {
+                return "fastmcp__upload".equals(toolName);
+            }
+
+            @Override
+            public String serverOf(final String toolName) {
+                return "fastmcp";
+            }
+
+            @Override
+            public String call(final String toolName, final String argumentsJson) {
+                calls.add(toolName + " " + argumentsJson);
+                return "stored";
+            }
+        };
+        final UploadFileTool tool = new UploadFileTool(workspace);
+
+        final String result = new ToolRunContext(null, null, () -> false, caller).run(() -> run(tool,
+                "{\"path\":\"/outputs/sample.log\",\"tool\":\"fastmcp__upload\",\"argument\":\"data\","
+                + "\"arguments\":\"{\\\"feed\\\":\\\"ACME\\\"}\"}"));
+
+        assertThat(result).contains("Sent /outputs/sample.log (14 bytes) to fastmcp__upload on fastmcp")
+                .contains("stored");
+        assertThat(calls).containsExactly("fastmcp__upload {\"feed\":\"ACME\",\"data\":\"line 1\\nline 2\\n\"}");
+        // It sends data off the server, so the user is always asked, even while there.
+        assertThat(tool.alwaysAsks()).isTrue();
+        assertThat(tool.isReadOnly()).isFalse();
+    }
+
+    @Test
+    void testUploadFile_onlyToTheRunsMcpTools() {
+        workspace.write(chatId, WorkspacePath.parse("/outputs/sample.log"), "x", null);
+
+        assertThat(run(new UploadFileTool(workspace), "{\"path\":\"/outputs/sample.log\",\"tool\":\"ls\"}"))
+                .contains("there is no MCP tool 'ls'");
     }
 
     @Test

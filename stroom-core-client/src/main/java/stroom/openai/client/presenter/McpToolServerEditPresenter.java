@@ -29,6 +29,7 @@ import stroom.openai.shared.McpToolGroupRule;
 import stroom.openai.shared.McpToolPolicy;
 import stroom.openai.shared.McpToolPolicyRule;
 import stroom.openai.shared.McpToolServerConfig;
+import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.NullSafe;
 import stroom.util.shared.http.HttpClientConfig;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -54,6 +55,7 @@ public class McpToolServerEditPresenter
     private final EventBus eventBus;
     private final CredentialClient credentialClient;
     private final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider;
+    private final UiConfigCache uiConfigCache;
 
     private HttpClientConfig httpClientConfiguration;
     private boolean readOnly;
@@ -63,8 +65,10 @@ public class McpToolServerEditPresenter
             final EventBus eventBus,
             final McpToolServerEditView view,
             final CredentialClient credentialClient,
-            final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider) {
+            final Provider<HttpClientConfigPresenter> httpClientConfigPresenterProvider,
+            final UiConfigCache uiConfigCache) {
         super(eventBus, view);
+        this.uiConfigCache = uiConfigCache;
         this.eventBus = eventBus;
         this.credentialClient = credentialClient;
         this.httpClientConfigPresenterProvider = httpClientConfigPresenterProvider;
@@ -135,6 +139,7 @@ public class McpToolServerEditPresenter
     @Override
     public void onAuthModeChange() {
         updateCredentialModel(getView().getAuthModeSelectionBox().getValue());
+        updateAuthModeWarning(getView().getAuthModeSelectionBox().getValue());
         getView().setApiKeyFieldsVisible(getView().getAuthModeSelectionBox().getValue() == McpAuthMode.API_KEY);
     }
 
@@ -145,6 +150,23 @@ public class McpToolServerEditPresenter
                 httpClientConfiguration = updated;
             }
         });
+    }
+
+    /**
+     * Warns that passing the user's sign-in through needs an external identity provider, if Stroom does not use
+     * one (U3).
+     */
+    private void updateAuthModeWarning(final McpAuthMode authMode) {
+        getView().setAuthModeWarning(null);
+        if (authMode == McpAuthMode.STROOM_SESSION_TOKEN) {
+            uiConfigCache.get(config -> {
+                if (config != null && !config.isExternalIdentityProvider()) {
+                    getView().setAuthModeWarning("Stroom uses its internal identity provider, so it has no "
+                                                 + "sign-in to pass through. This server's tools will be "
+                                                 + "unavailable until Stroom uses an external identity provider.");
+                }
+            }, this);
+        }
     }
 
     private void updateCredentialModel(final McpAuthMode authMode) {
@@ -166,6 +188,7 @@ public class McpToolServerEditPresenter
         getView().setEndpoint(c.getEndpoint());
         getView().getAuthModeSelectionBox().setValue(c.getAuthMode());
         updateCredentialModel(c.getAuthMode());
+        updateAuthModeWarning(c.getAuthMode());
         if (NullSafe.isNonBlankString(c.getCredentialName())) {
             credentialClient.getCredentialByName(c.getCredentialName(),
                     credential -> getView().getCredentialSelectionBox().setValue(credential), this);
@@ -368,6 +391,13 @@ public class McpToolServerEditPresenter
         void setApiKeyValuePrefix(String apiKeyValuePrefix);
 
         void setApiKeyFieldsVisible(boolean visible);
+
+        /**
+         * Shows a warning about the authentication chosen, or hides it.
+         *
+         * @param warning The warning, or null.
+         */
+        void setAuthModeWarning(String warning);
 
         String getAllowedTools();
 

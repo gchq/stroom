@@ -106,6 +106,20 @@ public interface AskStroomAiResource extends RestResource, DirectRestService {
             @Parameter(description = "request", required = true) SetAiApproveEverythingRequest request);
 
     @POST
+    @Path("/listMcpPrompts")
+    @Operation(
+            summary = "List the prompts the model's MCP servers offer, as slash commands",
+            operationId = "listAiMcpPrompts")
+    List<AiMcpPrompt> listMcpPrompts(@Parameter(description = "config", required = true) AskStroomAiConfig config);
+
+    @POST
+    @Path("/getMcpPrompt")
+    @Operation(
+            summary = "Get an MCP server's prompt, filled in, for the user to check before sending it",
+            operationId = "getAiMcpPrompt")
+    AiMcpPromptText getMcpPrompt(@Parameter(description = "request", required = true) GetAiMcpPromptRequest request);
+
+    @POST
     @Path("/answerElicitation")
     @Operation(
             summary = "Answer a form an MCP tool asked the user to fill in. The answer goes to the MCP server, "
