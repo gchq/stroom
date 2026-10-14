@@ -27,10 +27,28 @@ public class ConfigProvidersModule extends AbstractModule {
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
     @Provides
     @SuppressWarnings("unused")
+    stroom.ai.impl.AiCompactionConfig getAiCompactionConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ai.impl.AiCompactionConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
     stroom.ai.impl.AiConfig getAiConfig(
             final ConfigMapper configMapper) {
         return configMapper.getConfigObject(
                 stroom.ai.impl.AiConfig.class);
+    }
+
+    @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")
+    @Provides
+    @SuppressWarnings("unused")
+    stroom.ai.impl.AiWorkspaceConfig getAiWorkspaceConfig(
+            final ConfigMapper configMapper) {
+        return configMapper.getConfigObject(
+                stroom.ai.impl.AiWorkspaceConfig.class);
     }
 
     @Generated("stroom.config.global.impl.GenerateConfigProvidersModule")

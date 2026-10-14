@@ -17,6 +17,7 @@
 package stroom.ai.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -104,6 +105,7 @@ public class AiContextUsage {
     /**
      * @return The percentage of the context window used, or -1 if the window is not known.
      */
+    @JsonIgnore
     public int getPercentUsed() {
         return contextWindowTokens > 0
                 ? (int) Math.min(999, (usedTokens * 100) / contextWindowTokens)

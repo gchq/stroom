@@ -22,10 +22,11 @@ import stroom.ai.api.TableSummariser;
 import stroom.ai.impl.AiProviderImpl;
 import stroom.ai.impl.OpenAIModelStoreImpl;
 import stroom.ai.impl.TableSummariserImpl;
-import stroom.ai.impl.tools.BuiltInToolsModule;
+import stroom.ai.impl.tools.BuiltInTool;
 import stroom.query.language.functions.AiProvider;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.multibindings.Multibinder;
 
 public class MockAiModule extends AbstractModule {
 
@@ -38,8 +39,9 @@ public class MockAiModule extends AbstractModule {
         // Backs the ai() StroomQL function, see ExpressionContextFactory.
         bind(AiProvider.class).to(AiProviderImpl.class);
 
-        // Built-in chat tools, so anything wiring the AI impl can resolve them.
-        install(new BuiltInToolsModule());
+        // No built-in chat tools, as they need the AI database, but an empty set, so anything wiring the AI impl
+        // can resolve BuiltInTools.
+        Multibinder.newSetBinder(binder(), BuiltInTool.class);
 
         // OpenAI Model
         bind(OpenAIModelStore.class).to(OpenAIModelStoreImpl.class);

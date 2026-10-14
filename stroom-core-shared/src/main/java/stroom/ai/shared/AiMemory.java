@@ -59,21 +59,21 @@ public class AiMemory {
      * @param updateUser   Who last changed it.
      */
     @JsonCreator
-    public AiMemory(@JsonProperty("id") final int id,
-                    @JsonProperty("version") final int version,
+    public AiMemory(@JsonProperty("id") final Integer id,
+                    @JsonProperty("version") final Integer version,
                     @JsonProperty("scope") final AiMemoryScope scope,
                     @JsonProperty("scopeKey") final String scopeKey,
                     @JsonProperty("name") final String name,
                     @JsonProperty("content") final String content,
-                    @JsonProperty("updateTimeMs") final long updateTimeMs,
+                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
                     @JsonProperty("updateUser") final String updateUser) {
-        this.id = id;
-        this.version = version;
+        this.id = Objects.requireNonNullElse(id, 0);
+        this.version = Objects.requireNonNullElse(version, 0);
         this.scope = scope;
         this.scopeKey = scopeKey;
         this.name = name;
         this.content = content;
-        this.updateTimeMs = updateTimeMs;
+        this.updateTimeMs = Objects.requireNonNullElse(updateTimeMs, 0L);
         this.updateUser = updateUser;
     }
 

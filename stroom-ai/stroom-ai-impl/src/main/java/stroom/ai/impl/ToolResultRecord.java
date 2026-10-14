@@ -16,12 +16,6 @@
 
 package stroom.ai.impl;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 /// The result of a tool call, as stored (as JSON) in a TOOL_RESULT message.
 ///
 /// @param callId     The model's id for the call.
@@ -31,18 +25,12 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 /// @param path       The workspace file holding the whole result, if it was too large to give in full.
 /// @param chars      The length of the whole result.
 /// @param durationMs How long the call took.
-@JsonInclude(Include.NON_NULL)
-@JsonPropertyOrder(alphabetic = true)
-public record ToolResultRecord(@JsonProperty("callId") String callId,
-                               @JsonProperty("tool") String tool,
-                               @JsonProperty("error") boolean error,
-                               @JsonProperty("text") String text,
-                               @JsonProperty("path") String path,
-                               @JsonProperty("chars") long chars,
-                               @JsonProperty("durationMs") long durationMs) {
+public record ToolResultRecord(String callId,
+                               String tool,
+                               boolean error,
+                               String text,
+                               String path,
+                               long chars,
+                               long durationMs) {
 
-    @JsonCreator
-    public ToolResultRecord {
-        // Explicit constructor for Jackson.
-    }
 }

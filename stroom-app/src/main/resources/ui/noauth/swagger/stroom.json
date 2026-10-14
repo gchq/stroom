@@ -16137,9 +16137,6 @@
           "approveEverything" : {
             "type" : "boolean"
           },
-          "busy" : {
-            "type" : "boolean"
-          },
           "chatId" : {
             "type" : "integer",
             "format" : "int32"
@@ -16147,9 +16144,6 @@
           "lastOpenedMs" : {
             "type" : "integer",
             "format" : "int64"
-          },
-          "needsYou" : {
-            "type" : "boolean"
           },
           "runStatus" : {
             "type" : "string",
@@ -16202,10 +16196,6 @@
               "type" : "integer",
               "format" : "int64"
             }
-          },
-          "percentUsed" : {
-            "type" : "integer",
-            "format" : "int32"
           },
           "usedTokens" : {
             "type" : "integer",
