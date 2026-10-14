@@ -18,7 +18,7 @@ package stroom.ai.impl.workspace;
 
 /// Thrown when a workspace file's content is no longer held: it reached its retention age, or the user no longer
 /// has access to the data it came from.
-public class WorkspaceFileUnavailableException extends RuntimeException {
+public class WorkspaceFileUnavailableException extends WorkspaceException {
 
     private final int fileId;
 

@@ -42,6 +42,9 @@ public class BuiltInToolsModule extends AbstractModule {
                 .addBinding(WcTool.class)
                 .addBinding(WriteFileTool.class)
                 .addBinding(StrReplaceTool.class)
-                .addBinding(DeleteFileTool.class);
+                .addBinding(DeleteFileTool.class)
+                .addBinding(JqTool.class)
+                .addBinding(XPathTool.class)
+                .addBinding(TableTool.class);
     }
 }

@@ -23,6 +23,7 @@ import stroom.ai.impl.workspace.WorkspacePath;
 
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -33,6 +34,7 @@ import java.util.Locale;
 abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
 
     static final String PATH_ARG = "path";
+    static final String OUT_ARG = "out";
     /**
      * Lines longer than this are cut short when shown.
      */
@@ -89,6 +91,43 @@ abstract class AbstractWorkspaceTool extends AbstractBuiltInTool {
         return value == null
                 ? other
                 : Boolean.parseBoolean(value.toLowerCase(Locale.ROOT));
+    }
+
+    /**
+     * @return The optional out path argument, or null.
+     */
+    protected WorkspacePath outArg(final ToolExecutionRequest request) {
+        final String out = stringArg(request, OUT_ARG);
+        if (out == null) {
+            return null;
+        }
+        final WorkspacePath path = WorkspacePath.parse(out);
+        workspace.checkWritable(path);
+        return path;
+    }
+
+    /**
+     * @return Result lines for the model, as many as fit, with a note of how many more there are.
+     */
+    protected String boundedLines(final List<String> lines, final long total) {
+        final StringBuilder sb = new StringBuilder();
+        int shown = 0;
+        for (final String line : lines) {
+            final String shortened = shortenLine(line);
+            if (shown >= limits().getMaxLinesPerRead()
+                || sb.length() + shortened.length() > limits().getMaxCharsPerRead()) {
+                break;
+            }
+            sb.append(shortened).append('\n');
+            shown++;
+        }
+        if (total == 0) {
+            return "No results.";
+        }
+        return sb.toString().stripTrailing() + (total > shown
+                ? "\n(" + total + " results in all; " + (total - shown) + " not shown. Give out to write them "
+                  + "all to a file.)"
+                : "");
     }
 
     protected AiWorkspaceConfig limits() {

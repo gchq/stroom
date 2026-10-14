@@ -80,6 +80,7 @@ class TestWorkspaceTools {
     private ChatWorkspace workspace;
 
     private final AiService aiService = Mockito.mock(AiService.class);
+    private final SecurityContext injectorSecurityContext = Mockito.mock(SecurityContext.class);
     private AiConfig aiConfig = new AiConfig();
     private int chatId;
     private int otherChatId;
@@ -97,7 +98,7 @@ class TestWorkspaceTools {
                         bind(CollectionService.class).toInstance(Mockito.mock(CollectionService.class));
                         bind(DocFinder.class).toInstance(Mockito.mock(DocFinder.class));
                         bind(TempDirProvider.class).toInstance(() -> tempDir);
-                        bind(SecurityContext.class).toInstance(Mockito.mock(SecurityContext.class));
+                        bind(SecurityContext.class).toInstance(injectorSecurityContext);
                         bind(AiService.class).toInstance(aiService);
                         bind(AiConfig.class).toProvider(() -> aiConfig);
                     }
@@ -281,6 +282,80 @@ class TestWorkspaceTools {
     }
 
     @Test
+    void testJq() {
+        workspace.write(chatId, WorkspacePath.parse("/outputs/events.json"),
+                "{\"host\":\"fw1\",\"n\":3}\n{\"host\":\"fw2\",\"n\":5}\n", null);
+
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/events.json\",\"query\":\".host\"}"))
+                .isEqualTo("\"fw1\"\n\"fw2\"");
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/events.json\",\"query\":\".host\","
+                                             + "\"raw\":true,\"out\":\"/outputs/hosts.txt\"}"))
+                .isEqualTo("Wrote 2 result(s) to /outputs/hosts.txt.");
+        assertThat(workspace.readLines(chatId, WorkspacePath.parse("/outputs/hosts.txt"), 0, 5))
+                .containsExactly("fw1", "fw2");
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/events.json\",\"query\":\"env\"}"))
+                .startsWith("Error:");
+        assertThat(run(new JqTool(workspace), "{\"path\":\"/outputs/events.log\",\"query\":\".\"}"))
+                .startsWith("Error: /outputs/events.log is not JSON");
+    }
+
+    @Test
+    void testXPath() {
+        workspace.write(chatId, WorkspacePath.parse("/outputs/events.xml"), """
+                <Events xmlns="event-logging:3">
+                  <Event><EventSource><Device><HostName>fw1</HostName></Device></EventSource></Event>
+                </Events>
+                """, null);
+
+        // The document's namespace is bound to 'd'.
+        assertThat(run(new XPathTool(workspace), "{\"path\":\"/outputs/events.xml\","
+                                                + "\"expression\":\"//d:HostName\"}"))
+                .isEqualTo("fw1");
+        assertThat(run(new XPathTool(workspace), "{\"path\":\"/outputs/events.xml\",\"expression\":\"//e:HostName\","
+                                                + "\"namespaces\":{\"e\":\"event-logging:3\"}}"))
+                .isEqualTo("fw1");
+        assertThat(run(new XPathTool(workspace), "{\"path\":\"/outputs/events.xml\","
+                                                + "\"expression\":\"doc('file:///etc/passwd')\"}"))
+                .startsWith("Error:");
+    }
+
+    @Test
+    void testTable() {
+        assertThat(run(new TableTool(workspace), "{\"path\":\"/attachments/7.md\",\"groupBy\":[\"host\"],"
+                                                + "\"aggregates\":[{\"function\":\"sum\",\"column\":\"n\"}]}"))
+                .startsWith("1 of 1 rows matched; the result has 1 row(s).")
+                .contains("| host | sum(n) |")
+                .contains("| fw1 | 3 |");
+        assertThat(run(new TableTool(workspace), "{\"path\":\"/attachments/7.md\",\"where\":[{\"column\":\"x\","
+                                                + "\"op\":\"=\",\"value\":\"1\"}]}"))
+                .startsWith("Error: There is no column 'x'");
+        assertThat(run(new TableTool(workspace), "{\"path\":\"/attachments/7.md\",\"where\":\"host = fw1\"}"))
+                .startsWith("Error: where must be a list of objects.");
+    }
+
+    @Test
+    void testResultsKeepTheirSource() {
+        final int attachment = workspaceStore.createFile(chatId, AiAttachmentType.WORKSPACE_FILE,
+                "/attachments/8.md", null, "| host |\n| --- |\n| fw1 |\n");
+        workspaceStore.setRetention(attachment, "index-uuid");
+        final SecurityContext securityContext = injectorSecurityContext;
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(true);
+
+        assertThat(run(new TableTool(workspace), "{\"path\":\"/attachments/8.md\",\"distinct\":true,"
+                                                + "\"out\":\"/outputs/hosts.csv\"}"))
+                .startsWith("Wrote the result to /outputs/hosts.csv.");
+        assertThat(workspace.readLines(chatId, WorkspacePath.parse("/outputs/hosts.csv"), 0, 5))
+                .containsExactly("host,count", "fw1,1");
+        assertThat(workspace.sourceDocUuid(chatId, WorkspacePath.parse("/outputs/hosts.csv")))
+                .isEqualTo("index-uuid");
+
+        // If the user loses access to the source, results made from it go too.
+        Mockito.when(securityContext.hasDocumentPermission(Mockito.any(), Mockito.any())).thenReturn(false);
+        assertThat(run(new ReadFileTool(workspace), "{\"path\":\"/outputs/hosts.csv\"}"))
+                .contains("no longer have access");
+    }
+
+    @Test
     void testRegistration() {
         final BuiltInTools tools = new BuiltInTools(Set.of(new LsTool(workspace), new ReadFileTool(workspace),
                 new GrepTool(workspace), new WcTool(workspace), new WriteFileTool(workspace),
@@ -289,6 +364,8 @@ class TestWorkspaceTools {
         assertThat(tools.toolMap().keySet()).extracting(spec -> spec.name())
                 .containsExactlyInAnyOrder("ls", "read_file", "grep", "wc", "write_file", "str_replace",
                         "delete_file");
+        assertThat(new JqTool(workspace).boundsItsOutput()).isTrue();
+        assertThat(new TableTool(workspace).readsUntrustedContent()).isTrue();
         // Reading files reads data that may hold planted instructions; writing does not.
         assertThat(tools.readsUntrustedContent("read_file")).isTrue();
         assertThat(tools.readsUntrustedContent("grep")).isTrue();
